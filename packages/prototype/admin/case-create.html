@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新建案件 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apple Typography System */
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2') format('woff2'); font-weight: 600; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2') format('woff2'); font-weight: 500; }
+        
+        :root {
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ED;
+            --apple-link: #0066cc;
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-text-main: #1d1d1f;
+            --apple-text-sec: rgba(0, 0, 0, 0.8);
+            --apple-text-tert: rgba(0, 0, 0, 0.48);
+            --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+        }
+
+        body {
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--apple-text-main);
+            -webkit-font-smoothing: antialiased;
+            letter-spacing: -0.02em;
+        }
+
+        .display-font { font-family: 'SF Pro Display', -apple-system, sans-serif; letter-spacing: -0.02em; }
+        .glass-nav { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+        
+        .btn-primary { background-color: var(--apple-blue); color: white; padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+        .btn-primary:hover { background-color: var(--apple-blue-hover); }
+        .btn-primary:active { transform: scale(0.98); }
+        
+        .btn-secondary { background-color: rgba(118, 118, 128, 0.12); color: var(--apple-text-main); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
+        .btn-secondary:hover { background-color: rgba(118, 118, 128, 0.2); }
+        .btn-secondary:active { transform: scale(0.98); }
+
+        .apple-card { background-color: var(--apple-card); border-radius: 16px; box-shadow: var(--apple-shadow); border: none; }
+        
+        /* Form Inputs */
+        .form-group { margin-bottom: 24px; }
+        .form-label { display: block; font-size: 14px; font-weight: 500; color: var(--apple-text-main); margin-bottom: 8px; }
+        .form-desc { font-size: 13px; color: var(--apple-text-tert); margin-bottom: 8px; display: block; }
+        .form-input { 
+            width: 100%; 
+            background-color: #ffffff; 
+            border: 1px solid #d2d2d7; 
+            border-radius: 10px; 
+            padding: 12px 16px; 
+            font-size: 15px; 
+            transition: all 0.2s; 
+            outline: none; 
+            color: var(--apple-text-main);
+        }
+        .form-input:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+        .form-select { 
+            width: 100%; 
+            background-color: #ffffff; 
+            border: 1px solid #d2d2d7; 
+            border-radius: 10px; 
+            padding: 12px 16px; 
+            font-size: 15px; 
+            transition: all 0.2s; 
+            outline: none; 
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%2386868B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            color: var(--apple-text-main);
+        }
+        .form-select:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+        
+        /* Section Divider */
+        .section-title { font-family: 'SF Pro Display'; font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--apple-text-main); border-bottom: 1px solid #f2f2f7; padding-bottom: 12px; }
+
+        /* Wizard Steps */
+        .step-container { display: flex; justify-content: space-between; position: relative; margin-bottom: 40px; }
+        .step-container::before { content: ''; position: absolute; top: 16px; left: 40px; right: 40px; height: 2px; background-color: #e5e5ea; z-index: 0; }
+        .step-progress { position: absolute; top: 16px; left: 40px; height: 2px; background-color: var(--apple-blue); z-index: 0; transition: width 0.3s ease; }
+        
+        .step-item { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 80px; }
+        .step-circle { width: 34px; height: 34px; border-radius: 50%; background-color: white; border: 2px solid #e5e5ea; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; color: #86868b; transition: all 0.3s ease; }
+        
+        .step-item.active .step-circle { border-color: var(--apple-blue); background-color: var(--apple-blue); color: white; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+        .step-item.completed .step-circle { border-color: var(--apple-blue); background-color: white; color: var(--apple-blue); }
+        
+        .step-label { margin-top: 8px; font-size: 13px; font-weight: 500; color: #86868b; text-align: center; transition: color 0.3s ease; }
+        .step-item.active .step-label { color: var(--apple-text-main); }
+        
+        .wizard-step { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .wizard-step.active { display: block; }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Global Glass Navigation -->
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+        <div class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center">
+            <div class="flex items-center space-x-8 flex-1 min-w-0">
+          <!-- Logo -->
+          <a
+            href="admin-prototype.html"
+            class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity flex-shrink-0 whitespace-nowrap"
+          >
+            Gyosei OS
+          </a>
+          <!-- Links -->
+          <div class="hidden md:flex items-center space-x-6 overflow-x-auto flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                    <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+                    <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+                    <a href="cases-list.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+                    <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+                    <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+                    <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+                    <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+                    <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+                    <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+                    <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-white/80 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">
+                    AD
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Form Area -->
+    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 w-full max-w-4xl mx-auto">
+        
+        <div class="mb-6">
+            <div class="text-[13px] text-[#86868b] mb-2"><a href="cases-list.html" class="hover:underline">案件 (Cases)</a> <span class="mx-1">/</span> 新建案件</div>
+            <h1 class="display-font text-[36px] font-semibold leading-tight">创建新案件</h1>
+            <p class="text-[16px] text-[#86868b] mt-2">按照步骤填写案件的基础信息与客户关联。</p>
+        </div>
+
+        <!-- Wizard Progress -->
+        <div class="step-container max-w-2xl mx-auto">
+            <div class="step-progress" style="width: 0%;" id="stepProgress"></div>
+            
+            <div class="step-item active" id="indicator-1">
+                <div class="step-circle">1</div>
+                <div class="step-label">业务信息</div>
+            </div>
+            
+            <div class="step-item" id="indicator-2">
+                <div class="step-circle">2</div>
+                <div class="step-label">客户关联</div>
+            </div>
+            
+            <div class="step-item" id="indicator-3">
+                <div class="step-circle">3</div>
+                <div class="step-label">分派与期限</div>
+            </div>
+            
+            <div class="step-item" id="indicator-4">
+                <div class="step-circle">4</div>
+                <div class="step-label">完成创建</div>
+            </div>
+        </div>
+
+        <div class="apple-card p-8 md:p-10">
+            <form id="createCaseForm" action="case-detail.html">
+                
+                <!-- Step 1: Business Type & Title -->
+                <div class="wizard-step active" id="step-1">
+                    <h2 class="section-title">业务信息</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">业务分类 (Category) *</label>
+                            <select class="form-select" required>
+                                <option value="">请选择业务大类</option>
+                                <option value="visa" selected>签证/在留资格</option>
+                                <option value="company">设立公司/法人</option>
+                                <option value="license">许认申请 (建设业等)</option>
+                                <option value="other">其他行政手续</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">具体手续 (Procedure) *</label>
+                            <select class="form-select" required>
+                                <option value="">请选择具体手续</option>
+                                <option value="hsp" selected>高度专门职 (HSP) 签证</option>
+                                <option value="work">技术・人文知识・国际业务</option>
+                                <option value="spouse">日本人配偶等</option>
+                                <option value="permanent">永住许可申请</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">案件名称 (Case Name) *</label>
+                        <span class="form-desc">建议包含客户名与核心业务，如："Michael T. - 高度人才签证申请"</span>
+                        <input type="text" class="form-input" placeholder="输入案件标题" value="Michael T. - 高度人才签证申请" required>
+                    </div>
+                </div>
+
+                <!-- Step 2: Customer Binding -->
+                <div class="wizard-step" id="step-2">
+                    <h2 class="section-title">客户关联</h2>
+                    <div class="form-group">
+                        <label class="form-label">关联客户 (Customer) *</label>
+                        <span class="form-desc">可以搜索现有客户，或直接创建一个新客户档案。</span>
+                        <div class="flex space-x-3">
+                            <div class="flex-grow relative">
+                                <svg class="w-5 h-5 text-[#86868b] absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                <input type="text" class="form-input pl-10" placeholder="搜索客户名称、邮箱或电话" value="Michael T. (mt.design@example.com)">
+                            </div>
+                            <button type="button" class="btn-secondary whitespace-nowrap">+ 新建客户</button>
+                        </div>
+                        <!-- Mock selected customer card -->
+                        <div class="mt-4 p-4 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] flex justify-between items-center transition-all hover:border-[var(--apple-blue)] cursor-pointer">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 rounded-full bg-[#0071e3] text-white flex items-center justify-center font-medium mr-4">MT</div>
+                                <div>
+                                    <div class="font-medium text-[15px]">Michael T.</div>
+                                    <div class="text-[13px] text-[#86868b]">首选语言: 英语 (EN) &nbsp;|&nbsp; 个人客户</div>
+                                </div>
+                            </div>
+                            <button type="button" class="text-[13px] text-[#d61818] hover:underline">更换</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Assignment & Due -->
+                <div class="wizard-step" id="step-3">
+                    <h2 class="section-title">分派与设置</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">负责人 (Owner) *</label>
+                            <select class="form-select">
+                                <option value="admin">Admin (我)</option>
+                                <option value="suzuki" selected>Suzuki</option>
+                                <option value="li">Li</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">预计提交期限 (Due Date)</label>
+                            <input type="date" class="form-input" value="2024-05-20">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">合同金额 (Contract Amount) *</label>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#86868b]">¥</span>
+                                <input type="number" class="form-input pl-8" placeholder="输入金额" value="150000" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">自动化选项</label>
+                        <div class="flex flex-col space-y-2 mt-2">
+                            <label class="flex items-center text-[14px] text-[#1d1d1f] cursor-pointer">
+                                <input type="checkbox" class="mr-2 rounded border-[#d2d2d7] text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]" checked> 根据业务类型自动生成资料清单模板
+                            </label>
+                            <label class="flex items-center text-[14px] text-[#1d1d1f] cursor-pointer">
+                                <input type="checkbox" class="mr-2 rounded border-[#d2d2d7] text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]" checked> 自动创建初始跟进任务
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group mt-4">
+                        <label class="form-label">内部备注 (Internal Notes)</label>
+                        <textarea class="form-input resize-none" rows="3" placeholder="添加一些关于此案件的背景说明或特殊要求..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 4: Summary -->
+                <div class="wizard-step" id="step-4">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 rounded-full bg-[#e5f9e7] text-[#28a745] flex items-center justify-center mx-auto mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                        </div>
+                        <h2 class="text-[24px] font-semibold display-font mb-2">信息已就绪</h2>
+                        <p class="text-[15px] text-[#86868b]">请确认以下信息，点击“创建案件”完成操作。</p>
+                    </div>
+                    
+                    <div class="bg-[#fbfbfd] rounded-xl p-6 border border-[#e5e5ea] mb-6">
+                        <div class="grid grid-cols-2 gap-y-4 text-[14px]">
+                            <div class="text-[#86868b]">案件名称</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">Michael T. - 高度人才签证申请</div>
+                            
+                            <div class="text-[#86868b]">业务类型</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">签证/在留资格 · 高度专门职 (HSP)</div>
+                            
+                            <div class="text-[#86868b]">关联客户</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">Michael T.</div>
+                            
+                            <div class="text-[#86868b]">负责人</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">Suzuki</div>
+                            
+                            <div class="text-[#86868b]">预计期限</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">2024-05-20</div>
+
+                            <div class="text-[#86868b]">合同金额</div>
+                            <div class="font-medium text-[#1d1d1f] text-right">¥150,000</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="pt-6 border-t border-[#f2f2f7] flex justify-between mt-8">
+                    <button type="button" class="btn-secondary" id="btnPrev" style="display: none;">上一步</button>
+                    <div class="flex-grow"></div>
+                    <button type="button" class="btn-primary" id="btnNext">下一步</button>
+                    <button type="submit" class="btn-primary" id="btnSubmit" style="display: none;" onclick="event.preventDefault(); window.location.href='case-detail.html'">创建案件</button>
+                </div>
+                
+            </form>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const steps = document.querySelectorAll('.wizard-step');
+            const indicators = [
+                document.getElementById('indicator-1'),
+                document.getElementById('indicator-2'),
+                document.getElementById('indicator-3'),
+                document.getElementById('indicator-4')
+            ];
+            const progressLine = document.getElementById('stepProgress');
+            const btnPrev = document.getElementById('btnPrev');
+            const btnNext = document.getElementById('btnNext');
+            const btnSubmit = document.getElementById('btnSubmit');
+            
+            let currentStep = 0;
+            const totalSteps = steps.length;
+            
+            function updateUI() {
+                // Update Step Content
+                steps.forEach((step, index) => {
+                    if (index === currentStep) {
+                        step.classList.add('active');
+                    } else {
+                        step.classList.remove('active');
+                    }
+                });
+                
+                // Update Indicators
+                indicators.forEach((indicator, index) => {
+                    indicator.classList.remove('active', 'completed');
+                    if (index === currentStep) {
+                        indicator.classList.add('active');
+                    } else if (index < currentStep) {
+                        indicator.classList.add('completed');
+                        // Add checkmark for completed
+                        indicator.querySelector('.step-circle').innerHTML = '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+                    } else {
+                        // Reset numbers for future steps
+                        indicator.querySelector('.step-circle').innerHTML = index + 1;
+                    }
+                });
+                
+                // Update Progress Line
+                const progressPercentage = (currentStep / (totalSteps - 1)) * 100;
+                progressLine.style.width = `calc(${progressPercentage}% - ${currentStep === 0 ? 0 : 20}px)`; // Small offset for visual
+                
+                // Update Buttons
+                if (currentStep === 0) {
+                    btnPrev.style.display = 'none';
+                } else {
+                    btnPrev.style.display = 'block';
+                }
+                
+                if (currentStep === totalSteps - 1) {
+                    btnNext.style.display = 'none';
+                    btnSubmit.style.display = 'block';
+                } else {
+                    btnNext.style.display = 'block';
+                    btnSubmit.style.display = 'none';
+                }
+            }
+            
+            btnNext.addEventListener('click', () => {
+                if (currentStep < totalSteps - 1) {
+                    currentStep++;
+                    updateUI();
+                }
+            });
+            
+            btnPrev.addEventListener('click', () => {
+                if (currentStep > 0) {
+                    currentStep--;
+                    updateUI();
+                }
+            });
+            
+            // Initialize
+            updateUI();
+        });
+    </script>
+</body>
+</html>

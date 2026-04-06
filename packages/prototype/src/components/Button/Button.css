@@ -1,0 +1,51 @@
+.Btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.Btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.Btn--primary {
+  background: var(--gradient-primary);
+  color: var(--color-on-primary);
+}
+
+.Btn--primary:hover {
+  filter: brightness(1.03);
+}
+
+.Btn--secondary {
+  background: transparent;
+  color: var(--color-primary);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-outline-variant) 22%, transparent) inset;
+}
+
+.Btn--secondary:hover {
+  background: color-mix(in oklab, var(--color-surface-container-lowest) 70%, var(--color-primary-container));
+}
+
+.Btn--ghost {
+  background: transparent;
+  color: var(--color-primary);
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 12px;
+}
+
+.Btn--ghost:hover {
+  background: color-mix(in oklab, var(--color-surface-container-lowest) 80%, var(--color-primary-container));
+}
+

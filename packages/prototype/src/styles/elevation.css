@@ -1,0 +1,8 @@
+.elevation-card {
+  box-shadow: var(--shadow-card);
+}
+
+.elevation-float {
+  box-shadow: var(--shadow-float);
+}
+

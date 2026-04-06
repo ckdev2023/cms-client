@@ -1,0 +1,45 @@
+.StageExplainer {
+  background: color-mix(in oklab, var(--color-surface-container) 70%, var(--color-surface));
+  border-radius: var(--radius-xl);
+}
+
+.StageExplainer__title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  font-size: 16px;
+}
+
+.StageExplainer__rows {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.StageExplainer__row {
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 16px;
+  padding: var(--space-4);
+}
+
+.StageExplainer__k {
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--color-primary);
+}
+
+.StageExplainer__v {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: var(--leading-relaxed);
+}
+
+.StageExplainer__actions {
+  margin-top: var(--space-4);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+

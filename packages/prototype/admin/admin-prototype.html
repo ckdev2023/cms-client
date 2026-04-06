@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gyosei OS - Apple Style Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Apple Typography System */
+      @font-face {
+        font-family: "SF Pro Display";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2")
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "SF Pro Display";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2")
+          format("woff2");
+        font-weight: 600;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "SF Pro Text";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2")
+          format("woff2");
+        font-weight: 400;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "SF Pro Text";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2")
+          format("woff2");
+        font-weight: 500;
+        font-style: normal;
+      }
+
+      :root {
+        --apple-blue: #0071e3;
+        --apple-blue-hover: #0077ed;
+        --apple-link: #0066cc;
+        --apple-bg: #f5f5f7;
+        --apple-card: #ffffff;
+        --apple-text-main: #1d1d1f;
+        --apple-text-sec: rgba(0, 0, 0, 0.8);
+        --apple-text-tert: rgba(0, 0, 0, 0.48);
+        --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+        --apple-shadow-hover: rgba(0, 0, 0, 0.12) 0px 8px 30px 0px;
+      }
+
+      body {
+        font-family:
+          "SF Pro Text",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background-color: var(--apple-bg);
+        color: var(--apple-text-main);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        letter-spacing: -0.02em; /* Apple universal negative tracking */
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      .display-font {
+        font-family:
+          "SF Pro Display",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        letter-spacing: -0.02em;
+      }
+
+      .text-hero {
+        font-size: 40px;
+        font-weight: 600;
+        line-height: 1.1;
+        letter-spacing: -0.01em;
+      }
+
+      .text-card-title {
+        font-size: 21px;
+        font-weight: 600;
+        line-height: 1.19;
+        letter-spacing: 0.01em;
+      }
+
+      /* Apple Glass Nav */
+      .glass-nav {
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+      }
+
+      /* Interactive Elements */
+      .btn-primary {
+        background-color: var(--apple-blue);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 400;
+        transition: all 0.2s ease;
+      }
+      .btn-primary:hover {
+        background-color: var(--apple-blue-hover);
+      }
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      .btn-pill {
+        color: var(--apple-link);
+        padding: 6px 16px;
+        border-radius: 980px;
+        font-size: 14px;
+        background: transparent;
+        border: 1px solid var(--apple-link);
+        transition: all 0.2s ease;
+      }
+      .btn-pill:hover {
+        background-color: var(--apple-link);
+        color: white;
+      }
+
+      .link-apple {
+        color: var(--apple-link);
+        font-size: 14px;
+        text-decoration: none;
+      }
+      .link-apple:hover {
+        text-decoration: underline;
+      }
+
+      /* Cards */
+      .apple-card {
+        background-color: var(--apple-card);
+        border-radius: 12px;
+        box-shadow: var(--apple-shadow);
+        transition:
+          box-shadow 0.3s ease,
+          transform 0.3s ease;
+        border: none;
+      }
+      .apple-card:hover {
+        box-shadow: var(--apple-shadow-hover);
+        transform: translateY(-2px);
+      }
+
+      /* Status Indicators */
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      .status-active {
+        background-color: #34c759;
+      } /* Apple Green */
+      .status-pending {
+        background-color: #ff9500;
+      } /* Apple Orange */
+      .status-alert {
+        background-color: #ff3b30;
+      } /* Apple Red */
+
+      /* Table */
+      .apple-table th {
+        font-size: 12px;
+        color: var(--apple-text-tert);
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        padding-bottom: 12px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .apple-table td {
+        padding: 16px 0;
+        font-size: 14px;
+        border-bottom: 1px solid #f2f2f7;
+        color: var(--apple-text-sec);
+      }
+      .apple-table tr:last-child td {
+        border-bottom: none;
+      }
+    </style>
+  </head>
+  <body class="antialiased min-h-screen flex flex-col">
+    <!-- Global Glass Navigation -->
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+      <div
+        class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center"
+      >
+        <div class="flex items-center space-x-8 flex-1 min-w-0">
+          <!-- Logo -->
+          <a
+            href="admin-prototype.html"
+            class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity flex-shrink-0 whitespace-nowrap"
+          >
+            Gyosei OS
+          </a>
+          <!-- Links -->
+          <div class="hidden md:flex items-center space-x-6 overflow-x-auto flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+            <a
+              href="admin-prototype.html"
+              class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >仪表盘 (Dashboard)</a
+            >
+            <a
+              href="customers.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >客户 (Customers)</a
+            >
+            <a
+              href="cases-list.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >案件 (Cases)</a
+            >
+            <a
+              href="documents.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >资料中心 (Docs)</a
+            >
+            <a
+              href="forms.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >文书中心 (Forms)</a
+            >
+            <a
+              href="tasks.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >任务与提醒 (Tasks)</a
+            >
+            <a
+              href="billing.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >收费与财务 (Billing)</a
+            >
+            <a
+              href="reports.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >报表 (Reports)</a
+            >
+            <a
+              href="settings.html"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >设置 (Settings)</a
+            >
+            <a
+              href="../src/index.html"
+              target="_blank"
+              class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap"
+              >客户门户 (Portal)</a
+            >
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button class="text-white/80 hover:text-white transition-colors">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </button>
+          <div
+            class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs"
+          >
+            AD
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 max-w-6xl mx-auto w-full">
+      <!-- Hero Section -->
+      <header class="mb-12 flex justify-between items-end">
+        <div>
+          <h1 class="text-hero mb-2">早上好，Admin</h1>
+          <p class="text-[17px] text-[#86868b] display-font">
+            这是今天事务所的业务概览。
+          </p>
+        </div>
+        <div class="flex space-x-3">
+          <button
+            class="btn-pill"
+            onclick="window.location.href = 'leads-messages.html'"
+          >
+            新建咨询 (Lead)
+          </button>
+          <button
+            class="btn-primary shadow-sm"
+            onclick="window.location.href = 'case-create.html'"
+          >
+            新建案件 (New Case)
+          </button>
+        </div>
+      </header>
+
+      <!-- Metrics Grid -->
+      <section class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <!-- Metric 1 -->
+        <div
+          class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer"
+        >
+          <div
+            class="absolute right-0 top-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"
+          ></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-medium text-[#86868b]"
+              >今日待办 (Todos)</span
+            >
+            <span class="status-dot status-alert"></span>
+          </div>
+          <div class="relative z-10">
+            <div
+              class="display-font text-[40px] font-semibold leading-none mb-1 text-[#1d1d1f]"
+            >
+              5
+            </div>
+            <div class="text-[13px] text-[#d61818] font-medium">2 个已逾期</div>
+          </div>
+        </div>
+        <!-- Metric 2 -->
+        <div
+          class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer"
+        >
+          <div
+            class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"
+          ></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-medium text-[#86868b]"
+              >即将到期案件 (Expiring)</span
+            >
+            <span class="status-dot status-pending"></span>
+          </div>
+          <div class="relative z-10">
+            <div
+              class="display-font text-[40px] font-semibold leading-none mb-1 text-[#1d1d1f]"
+            >
+              12
+            </div>
+            <div class="text-[13px] text-[#ff9500] font-medium">7天内到期</div>
+          </div>
+        </div>
+        <!-- Metric 3 -->
+        <div
+          class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer"
+        >
+          <div
+            class="absolute right-0 top-0 w-24 h-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"
+          ></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-medium text-[#86868b]"
+              >待补件案件 (Pending Docs)</span
+            >
+            <span class="status-dot status-active"></span>
+          </div>
+          <div class="relative z-10">
+            <div
+              class="display-font text-[40px] font-semibold leading-none mb-1 text-[#1d1d1f]"
+            >
+              28
+            </div>
+            <div class="text-[13px] text-[#118128] font-medium">
+              已发送自动催办提醒
+            </div>
+          </div>
+        </div>
+        <!-- Metric 4 -->
+        <div
+          class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer"
+        >
+          <div
+            class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"
+          ></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-medium text-[#86868b]"
+              >本月新增咨询 (New Leads)</span
+            >
+            <div
+              class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center"
+            >
+              <svg
+                class="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 4v16m8-8H4"
+                ></path>
+              </svg>
+            </div>
+          </div>
+          <div class="relative z-10">
+            <div
+              class="display-font text-[40px] font-semibold leading-none mb-1 text-[#1d1d1f]"
+            >
+              45
+            </div>
+            <div
+              class="text-[13px] text-[#0066cc] font-medium flex items-center"
+            >
+              <svg
+                class="w-3 h-3 mr-1"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 10l7-7m0 0l7 7m-7-7v18"
+                ></path>
+              </svg>
+              12% 较上月
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chart Section -->
+      <section class="mb-8">
+        <div class="apple-card p-8">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-card-title">业务趋势 (Business Trends)</h2>
+            <select
+              class="border border-[#d2d2d7] rounded-md px-2 py-1 text-[13px] outline-none bg-white"
+            >
+              <option>近 6 个月</option>
+              <option>今年</option>
+              <option>去年</option>
+            </select>
+          </div>
+          <div
+            class="h-64 w-full bg-[#fafafc] rounded-lg border border-[#f2f2f7] flex items-end justify-around px-8 pt-8 pb-4 relative"
+          >
+            <!-- Placeholder Chart Bars -->
+            <!-- Y-axis lines -->
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-1/4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-2/4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-3/4"
+            ></div>
+
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-32 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-20 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#86868b] mt-2">11月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-40 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-24 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#86868b] mt-2">12月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-28 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-16 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#86868b] mt-2">1月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-48 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-32 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#86868b] mt-2">2月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-56 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-40 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#86868b] mt-2">3月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-64 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-48 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[#1d1d1f] font-medium mt-2"
+                >本月</span
+              >
+            </div>
+
+            <!-- Legend -->
+            <div class="absolute top-4 right-6 flex space-x-4">
+              <div class="flex items-center text-[12px] text-[#86868b]">
+                <div class="w-3 h-3 rounded-full bg-blue-500 mr-1.5"></div>
+                已归档
+              </div>
+              <div class="flex items-center text-[12px] text-[#86868b]">
+                <div class="w-3 h-3 rounded-full bg-blue-100 mr-1.5"></div>
+                新增
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Two Column Layout for Lists -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column: Active Cases & Activity (takes up 2/3) -->
+        <section class="lg:col-span-2 space-y-8">
+          <!-- Recent Cases -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-card-title">近期案件 (Recent Cases)</h2>
+              <a href="#" class="link-apple"
+                >查看全部 <span class="ml-1 text-[10px]">❯</span></a
+              >
+            </div>
+
+            <table class="w-full apple-table text-left border-collapse">
+              <thead>
+                <tr>
+                  <th class="w-1/3">案件名称 (Case Type)</th>
+                  <th class="w-1/4">客户 (Customer)</th>
+                  <th class="w-1/4">状态 (Status)</th>
+                  <th class="w-1/6 text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="font-medium text-[#1d1d1f]">建设业许可更新</div>
+                    <div class="text-[12px] text-[#86868b] mt-0.5">
+                      CAS-2023-1001
+                    </div>
+                  </td>
+                  <td>田中建设株式会社</td>
+                  <td>
+                    <span class="status-dot status-active"></span>已提交待审核
+                  </td>
+                  <td class="text-right">
+                    <a href="#" class="link-apple">处理</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-medium text-[#1d1d1f]">就劳签证申请</div>
+                    <div class="text-[12px] text-[#86868b] mt-0.5">
+                      CAS-2023-1022
+                    </div>
+                  </td>
+                  <td>Wang Wei</td>
+                  <td>
+                    <span class="status-dot status-pending"></span>待提交
+                  </td>
+                  <td class="text-right">
+                    <a href="#" class="link-apple">处理</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-medium text-[#1d1d1f]">
+                      特定技能1号变更
+                    </div>
+                    <div class="text-[12px] text-[#86868b] mt-0.5">
+                      CAS-2023-1045
+                    </div>
+                  </td>
+                  <td>Global Tech KK</td>
+                  <td>
+                    <span class="status-dot status-alert"></span>待补正
+                  </td>
+                  <td class="text-right">
+                    <a href="#" class="link-apple">处理</a>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-medium text-[#1d1d1f]">配偶者签证延期</div>
+                    <div class="text-[12px] text-[#86868b] mt-0.5">
+                      CAS-2023-1089
+                    </div>
+                  </td>
+                  <td>Sarah Johnson</td>
+                  <td>
+                    <span class="status-dot status-active"></span>待提交
+                  </td>
+                  <td class="text-right">
+                    <a href="#" class="link-apple">处理</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-card-title">最近动态 (Recent Activity)</h2>
+              <a href="#" class="link-apple text-[14px]">查看全部</a>
+            </div>
+            <div class="space-y-6">
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 mt-1 flex-shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 border-b border-[#f2f2f7] pb-6">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[#1d1d1f]">
+                      <span class="font-medium">李律师</span> 上传了新文件
+                      <span class="font-medium text-blue-600"
+                        >营业执照副本.pdf</span
+                      >
+                    </div>
+                    <div class="text-[12px] text-[#86868b]">10分钟前</div>
+                  </div>
+                  <div class="text-[13px] text-[#86868b]">
+                    关联案件：建设业许可更新 (CAS-2023-1001)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 mt-1 flex-shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 border-b border-[#f2f2f7] pb-6">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[#1d1d1f]">
+                      案件
+                      <span class="font-medium">就劳签证申请</span> 状态更新为
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                        >待提交</span
+                      >
+                    </div>
+                    <div class="text-[12px] text-[#86868b]">2小时前</div>
+                  </div>
+                  <div class="text-[13px] text-[#86868b]">操作人：系统自动</div>
+                </div>
+              </div>
+
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 mt-1 flex-shrink-0"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 pb-2">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[#1d1d1f]">
+                      客户
+                      <span class="font-medium">Wang Wei</span>
+                      提交了新的咨询表单
+                    </div>
+                    <div class="text-[12px] text-[#86868b]">昨天 15:30</div>
+                  </div>
+                  <div class="text-[13px] text-[#86868b]">
+                    咨询类型：家族滞在签证
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Leads & Notifications (takes up 1/3) -->
+        <section class="space-y-8">
+          <!-- Tasks & Reminders -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-card-title">任务与提醒 (Tasks)</h2>
+              <a href="#" class="link-apple text-[14px]">查看全部</a>
+            </div>
+            <div class="space-y-5">
+              <!-- Task Item -->
+              <div class="group cursor-pointer">
+                <div class="flex justify-between items-start mb-1">
+                  <div class="font-medium text-[#1d1d1f] text-[14px]">
+                    复核王伟资料完整性
+                  </div>
+                  <div class="text-[12px] text-[#ff3b30]">今日到期</div>
+                </div>
+                <p
+                  class="text-[13px] text-[#86868b] line-clamp-2 leading-relaxed"
+                >
+                  关联案件：就劳签证申请
+                  <span
+                    class="text-[10px] bg-[#ff3b30]/10 px-1.5 py-0.5 rounded text-[#ff3b30] ml-1"
+                    >高优先级</span
+                  >
+                </p>
+              </div>
+              <!-- Task Item -->
+              <div class="group cursor-pointer pt-4 border-t border-[#f2f2f7]">
+                <div class="flex justify-between items-start mb-1">
+                  <div class="font-medium text-[#1d1d1f] text-[14px]">
+                    起草田中建设申请书
+                  </div>
+                  <div class="text-[12px] text-[#ff9500]">明日到期</div>
+                </div>
+                <p
+                  class="text-[13px] text-[#86868b] line-clamp-2 leading-relaxed"
+                >
+                  关联案件：建设业许可更新
+                  <span
+                    class="text-[10px] bg-[#f5f5f7] px-1.5 py-0.5 rounded text-[#1d1d1f] ml-1"
+                    >中优先级</span
+                  >
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Reminders -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-card-title">催办提醒</h2>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center p-3 bg-[#fafafc] rounded-lg">
+                <div
+                  class="w-8 h-8 rounded-full bg-[#ff9500]/10 flex items-center justify-center text-[#ff9500] mr-3"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-medium">王伟 的 纳税证明书</div>
+                  <div class="text-[11px] text-[#86868b]">
+                    已逾期 2 天，系统已自动发送邮件
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center p-3 bg-[#fafafc] rounded-lg">
+                <div
+                  class="w-8 h-8 rounded-full bg-[#ff3b30]/10 flex items-center justify-center text-[#ff3b30] mr-3"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-medium">
+                    田中建设 决算书 (补正)
+                  </div>
+                  <div class="text-[11px] text-[#86868b]">
+                    入管局补正期限剩 3 天
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

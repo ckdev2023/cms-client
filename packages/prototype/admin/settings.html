@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gyosei OS - 系统设置 (Settings)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SF Pro Display';
+            src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2') format('woff2');
+            font-weight: 600;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SF Pro Text';
+            src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2') format('woff2');
+            font-weight: 400;
+            font-style: normal;
+        }
+        @font-face {
+            font-family: 'SF Pro Text';
+            src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2') format('woff2');
+            font-weight: 500;
+            font-style: normal;
+        }
+        
+        :root {
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ED;
+            --apple-link: #0066cc;
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-text-main: #1d1d1f;
+            --apple-text-sec: rgba(0, 0, 0, 0.8);
+            --apple-text-tert: rgba(0, 0, 0, 0.48);
+            --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+            --apple-shadow-hover: rgba(0, 0, 0, 0.12) 0px 8px 30px 0px;
+        }
+
+        body {
+            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--apple-bg);
+            color: var(--apple-text-main);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.02em;
+        }
+
+        h1, h2, h3, h4, .display-font {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            letter-spacing: -0.02em;
+        }
+
+        .text-hero {
+            font-size: 40px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.01em;
+        }
+
+        .glass-nav {
+            background-color: rgba(0, 0, 0, 0.8);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .btn-primary {
+            background-color: var(--apple-blue);
+            color: white;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            transition: all 0.2s ease;
+        }
+        .btn-primary:hover {
+            background-color: var(--apple-blue-hover);
+        }
+
+        .btn-pill {
+            color: var(--apple-link);
+            padding: 6px 16px;
+            border-radius: 980px;
+            font-size: 14px;
+            background: transparent;
+            border: 1px solid var(--apple-link);
+            transition: all 0.2s ease;
+        }
+        .btn-pill:hover {
+            background-color: var(--apple-link);
+            color: white;
+        }
+
+        .apple-card {
+            background-color: var(--apple-card);
+            border-radius: 12px;
+            box-shadow: var(--apple-shadow);
+            transition: box-shadow 0.3s ease, transform 0.3s ease;
+            border: none;
+        }
+        .apple-card:hover {
+            box-shadow: var(--apple-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .setting-item {
+            display: flex;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #f2f2f7;
+        }
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col">
+
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+        <div class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center">
+            <div class="flex items-center space-x-8">
+                <a href="admin-prototype.html" class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity">Gyosei OS</a>
+                <div class="hidden md:flex space-x-6 overflow-x-auto">
+                    <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+                    <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+                    <a href="cases-list.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+                    <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+                    <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+                    <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+                    <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+                    <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+                    <a href="settings.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+                    <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-white/80 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">AD</div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 max-w-4xl mx-auto w-full">
+        <header class="mb-12">
+            <h1 class="text-hero mb-2">系统设置</h1>
+            <p class="text-[17px] text-[#86868b] display-font">管理您的账户和事务所偏好设置。</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Sidebar -->
+            <div class="w-full md:w-64 flex-shrink-0">
+                <div class="apple-card p-4">
+                    <ul class="space-y-1">
+                        <li>
+                            <a href="#" class="block px-4 py-2 rounded-lg bg-gray-100 text-[#1d1d1f] font-medium text-sm">个人资料</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block px-4 py-2 rounded-lg text-[#86868b] hover:bg-gray-50 hover:text-[#1d1d1f] transition-colors text-sm">事务所信息</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block px-4 py-2 rounded-lg text-[#86868b] hover:bg-gray-50 hover:text-[#1d1d1f] transition-colors text-sm">成员与权限</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block px-4 py-2 rounded-lg text-[#86868b] hover:bg-gray-50 hover:text-[#1d1d1f] transition-colors text-sm">通知设置</a>
+                        </li>
+                        <li>
+                            <a href="#" class="block px-4 py-2 rounded-lg text-[#86868b] hover:bg-gray-50 hover:text-[#1d1d1f] transition-colors text-sm">审计日志</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-grow">
+                <div class="apple-card p-8">
+                    <h2 class="text-xl font-semibold mb-6">个人资料</h2>
+                    
+                    <div class="flex items-center space-x-6 mb-8">
+                        <div class="w-20 h-20 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-2xl font-semibold">
+                            AD
+                        </div>
+                        <div>
+                            <button class="btn-pill mb-2">更改头像</button>
+                            <p class="text-xs text-[#86868b]">支持 JPG, PNG 格式。最大 5MB。</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-[#86868b] mb-2">姓名</label>
+                            <input type="text" value="Admin" class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-[15px]">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-[#86868b] mb-2">邮箱地址</label>
+                            <input type="email" value="admin@gyosei.com" class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-[15px]">
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-[#86868b] mb-2">系统语言</label>
+                            <select class="w-full p-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all text-[15px] bg-white">
+                                <option>中文 (简体)</option>
+                                <option>日本語</option>
+                                <option>English</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 pt-6 border-t border-gray-100 flex justify-end">
+                        <button class="btn-primary">保存更改</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+</body>
+</html>

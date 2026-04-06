@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>客户管理 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      /* Apple Typography System */
+      @font-face {
+        font-family: "SF Pro Display";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2")
+          format("woff2");
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "SF Pro Display";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2")
+          format("woff2");
+        font-weight: 600;
+      }
+      @font-face {
+        font-family: "SF Pro Text";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2")
+          format("woff2");
+        font-weight: 400;
+      }
+      @font-face {
+        font-family: "SF Pro Text";
+        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2")
+          format("woff2");
+        font-weight: 500;
+      }
+
+      :root {
+        --apple-blue: #0071e3;
+        --apple-blue-hover: #0077ed;
+        --apple-link: #0066cc;
+        --apple-bg: #f5f5f7;
+        --apple-card: #ffffff;
+        --apple-text-main: #1d1d1f;
+        --apple-text-sec: rgba(0, 0, 0, 0.8);
+        --apple-text-tert: rgba(0, 0, 0, 0.48);
+        --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+      }
+
+      body {
+        font-family:
+          "SF Pro Text",
+          -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        background-color: var(--apple-bg);
+        color: var(--apple-text-main);
+        -webkit-font-smoothing: antialiased;
+        letter-spacing: -0.02em;
+      }
+
+      .display-font {
+        font-family:
+          "SF Pro Display",
+          -apple-system,
+          sans-serif;
+        letter-spacing: -0.02em;
+      }
+      .glass-nav {
+        background-color: rgba(0, 0, 0, 0.8);
+        backdrop-filter: saturate(180%) blur(20px);
+        -webkit-backdrop-filter: saturate(180%) blur(20px);
+      }
+
+      .btn-primary {
+        background-color: var(--apple-blue);
+        color: white;
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .btn-primary:hover {
+        background-color: var(--apple-blue-hover);
+      }
+      .btn-primary:active {
+        transform: scale(0.98);
+      }
+
+      .btn-secondary {
+        background-color: rgba(118, 118, 128, 0.12);
+        color: var(--apple-text-main);
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+      .btn-secondary:hover {
+        background-color: rgba(118, 118, 128, 0.24);
+      }
+
+      .apple-card {
+        background-color: var(--apple-card);
+        border-radius: 12px;
+        box-shadow: var(--apple-shadow);
+        border: none;
+      }
+
+      /* Segmented Control (Apple Style Tabs) */
+      .segmented-control {
+        background-color: rgba(118, 118, 128, 0.12);
+        padding: 2px;
+        border-radius: 8px;
+        display: inline-flex;
+      }
+      .segment-btn {
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-text-main);
+        border-radius: 6px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .segment-btn.active {
+        background-color: white;
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.12),
+          0 3px 1px rgba(0, 0, 0, 0.04);
+      }
+
+      /* Table Styles */
+      .apple-table th {
+        font-size: 12px;
+        color: var(--apple-text-tert);
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e5ea;
+        text-align: left;
+      }
+      .apple-table td {
+        padding: 16px;
+        font-size: 14px;
+        border-bottom: 1px solid #f2f2f7;
+        color: var(--apple-text-sec);
+        vertical-align: middle;
+      }
+      .apple-table tr:hover td {
+        background-color: #fbfbfd;
+      }
+      .apple-table tr:last-child td {
+        border-bottom: none;
+      }
+      .link-apple {
+        color: var(--apple-link);
+        text-decoration: none;
+      }
+      .link-apple:hover {
+        text-decoration: underline;
+      }
+
+      /* Search Input */
+      .search-input {
+        background-color: rgba(118, 118, 128, 0.12);
+        border: none;
+        border-radius: 10px;
+        padding: 8px 12px 8px 36px;
+        font-size: 14px;
+        width: 240px;
+        transition: all 0.2s;
+        outline: none;
+      }
+      .search-input:focus {
+        background-color: white;
+        box-shadow: 0 0 0 2px var(--apple-blue);
+      }
+      
+      .badge {
+        padding: 2px 8px;
+        border-radius: 9999px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .badge-gray {
+        background-color: rgba(118, 118, 128, 0.12);
+        color: var(--apple-text-sec);
+      }
+      .badge-blue {
+        background-color: rgba(0, 113, 227, 0.1);
+        color: var(--apple-blue);
+      }
+
+      /* Modal Styles */
+      .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 100;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+      .modal-backdrop.show {
+        opacity: 1;
+        visibility: visible;
+      }
+      .apple-modal {
+        background-color: var(--apple-card);
+        border-radius: 14px;
+        width: 100%;
+        max-width: 540px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        max-height: 90vh;
+        display: flex;
+        flex-col;
+        overflow: hidden;
+      }
+      .modal-backdrop.show .apple-modal {
+        transform: translateY(0) scale(1);
+      }
+      
+      /* Form Inputs */
+      .apple-input {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #d2d2d7;
+        border-radius: 8px;
+        font-size: 14px;
+        transition: all 0.2s;
+        outline: none;
+        background-color: white;
+      }
+      .apple-input:focus {
+        border-color: var(--apple-blue);
+        box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+      }
+      .apple-label {
+        display: block;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-text-sec);
+        margin-bottom: 6px;
+      }
+    </style>
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <!-- Nav -->
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+      <div
+        class="max-w-7xl mx-auto px-4 w-full flex justify-between items-center"
+      >
+        <div class="flex items-center space-x-8">
+          <a
+            href="admin-prototype.html"
+            class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity"
+            >Gyosei OS</a
+          >
+          <div class="hidden md:flex space-x-6 overflow-x-auto">
+            <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+            <a href="customers.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+            <a href="cases-list.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+            <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+            <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+            <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+            <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+            <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+            <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+            <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+          </div>
+        </div>
+        <div class="flex items-center space-x-4">
+          <button class="text-white/80 hover:text-white transition-colors">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              ></path>
+            </svg>
+          </button>
+          <div
+            class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs"
+          >
+            AD
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+      <!-- Header -->
+      <div class="flex justify-between items-end mb-8">
+        <div>
+          <h1 class="text-3xl display-font font-semibold">客户</h1>
+          <p class="text-sm text-gray-500 mt-1">管理个人与企业客户信息</p>
+        </div>
+        <div class="flex space-x-3">
+          <button class="btn-secondary">导出</button>
+          <button class="btn-primary flex items-center" id="btnAddCustomer">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            添加客户
+          </button>
+        </div>
+      </div>
+
+      <!-- Controls Area -->
+      <div class="flex justify-between items-center mb-6">
+        <div class="segmented-control">
+          <div class="segment-btn active">全部客户</div>
+          <div class="segment-btn">个人客户</div>
+          <div class="segment-btn">企业客户</div>
+        </div>
+        
+        <div class="relative">
+          <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <input type="text" placeholder="搜索客户名称、电话或邮箱" class="search-input" />
+        </div>
+      </div>
+
+      <!-- Customers Table -->
+      <div class="apple-card overflow-hidden">
+        <table class="apple-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="w-1/4">客户名称</th>
+              <th class="w-[15%]">联系方式</th>
+              <th class="w-[10%]">类型</th>
+              <th class="w-[10%]">活跃案件</th>
+              <th class="w-[15%]">当前负责人</th>
+              <th class="w-[15%]">最近联系</th>
+              <th class="text-right w-[10%]">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">张</div>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] flex items-center">
+                      张伟
+                      <span class="badge badge-blue ml-2 scale-[0.8] origin-left">VIP</span>
+                    </div>
+                    <div class="text-xs text-gray-500">ID: CUS-2023-001 · 中国籍</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-[13px] text-[var(--apple-text-main)]">090-1234-5678</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">zhang.w@email.com</div>
+              </td>
+              <td><span class="badge badge-gray">个人</span></td>
+              <td>
+                <a href="case-detail.html" class="link-apple text-sm font-medium">1</a>
+              </td>
+              <td>
+                <div class="flex items-center text-sm">
+                  <div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>
+                  Admin
+                </div>
+              </td>
+              <td>
+                <div class="text-sm text-[var(--apple-text-main)]">2023-10-15</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">微信沟通</div>
+              </td>
+              <td class="text-right">
+                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
+                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded bg-gray-100 text-gray-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                  </div>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] flex items-center">
+                      Tech Innovators 株式會社
+                      <span class="badge badge-gray ml-2 scale-[0.8] origin-left">IT行业</span>
+                    </div>
+                    <div class="text-xs text-gray-500">法人: 王强 · 来源: 推荐</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-[13px] text-[var(--apple-text-main)]">03-5555-6666</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">info@techinnovators.co.jp</div>
+              </td>
+              <td><span class="badge badge-blue">企业</span></td>
+              <td>
+                <a href="#" class="link-apple text-sm font-medium">4</a>
+              </td>
+              <td>
+                <div class="flex items-center text-sm">
+                  <div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>
+                  Tom
+                </div>
+              </td>
+              <td>
+                <div class="text-sm text-[var(--apple-text-main)]">2023-10-12</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">面谈会议</div>
+              </td>
+              <td class="text-right">
+                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
+                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">L</div>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
+                    <div class="text-xs text-gray-500">ID: CUS-2023-003 · 新加坡籍</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <div class="text-[13px] text-gray-400 italic">未提供电话</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">liwei.test@email.com</div>
+              </td>
+              <td><span class="badge badge-gray">个人</span></td>
+              <td>
+                <span class="text-sm text-gray-400">0</span>
+              </td>
+              <td>
+                <div class="flex items-center text-sm text-gray-400">
+                  暂无
+                </div>
+              </td>
+              <td>
+                <div class="text-sm text-[var(--apple-text-main)]">2023-10-05</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">邮件回复</div>
+              </td>
+              <td class="text-right">
+                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
+                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        <!-- Pagination -->
+        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+          <div class="text-sm text-gray-500">显示 1 - 3 条，共 3 条</div>
+          <div class="flex space-x-2">
+            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Add Customer Modal -->
+    <div class="modal-backdrop" id="addCustomerModal">
+      <div class="apple-modal flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+          <h3 class="text-[17px] font-semibold text-[var(--apple-text-main)]">新建客户</h3>
+          <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" id="closeModalBtn">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+          <form class="space-y-5">
+            <!-- Customer Type -->
+            <div>
+              <label class="apple-label">客户类型</label>
+              <div class="flex space-x-4">
+                <label class="flex items-center cursor-pointer">
+                  <input type="radio" name="customerType" class="w-4 h-4 text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]" checked>
+                  <span class="ml-2 text-sm text-[var(--apple-text-main)]">个人客户</span>
+                </label>
+                <label class="flex items-center cursor-pointer">
+                  <input type="radio" name="customerType" class="w-4 h-4 text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]">
+                  <span class="ml-2 text-sm text-[var(--apple-text-main)]">企业客户</span>
+                </label>
+              </div>
+            </div>
+
+            <!-- Basic Info -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">姓名 / 企业名称 <span class="text-red-500">*</span></label>
+                <input type="text" class="apple-input" placeholder="输入客户名称">
+              </div>
+              <div>
+                <label class="apple-label">拼音 / 英文名</label>
+                <input type="text" class="apple-input" placeholder="输入拼音或英文名">
+              </div>
+            </div>
+
+            <!-- Contact Info -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">联系电话</label>
+                <input type="tel" class="apple-input" placeholder="输入手机号或座机">
+              </div>
+              <div>
+                <label class="apple-label">电子邮箱</label>
+                <input type="email" class="apple-input" placeholder="输入电子邮箱">
+              </div>
+            </div>
+
+            <!-- Other Details -->
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">国籍 / 所在地</label>
+                <input type="text" class="apple-input" placeholder="例如：中国、日本东京">
+              </div>
+              <div>
+                <label class="apple-label">客户来源</label>
+                <select class="apple-input appearance-none bg-white">
+                  <option value="" disabled selected>选择来源</option>
+                  <option>网站咨询</option>
+                  <option>客户推荐</option>
+                  <option>合作渠道</option>
+                  <option>其他</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div>
+              <label class="apple-label">备注</label>
+              <textarea class="apple-input resize-none h-24" placeholder="输入其他补充信息..."></textarea>
+            </div>
+          </form>
+        </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" id="cancelModalBtn">取消</button>
+          <button class="btn-primary px-5">保存客户</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const modal = document.getElementById('addCustomerModal');
+        const openBtn = document.getElementById('btnAddCustomer');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const cancelBtn = document.getElementById('cancelModalBtn');
+
+        const openModal = () => {
+          modal.classList.add('show');
+          document.body.style.overflow = 'hidden';
+        };
+
+        const closeModal = () => {
+          modal.classList.remove('show');
+          document.body.style.overflow = '';
+        };
+
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Close on backdrop click
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            closeModal();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

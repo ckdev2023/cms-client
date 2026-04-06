@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles/app.css" />
+    <link rel="stylesheet" href="./page.css" />
+    <title>工作台</title>
+  </head>
+  <body data-active-tab="home">
+    <div class="AppShell">
+      <div class="AppShell__phone">
+        <div class="AppShell__screen">
+          <div class="AppShell__safeTop"></div>
+          <include src="/components/TopBar/TopBar.html" data-title="工作台"></include>
+          <div class="AppShell__content stack-6">
+            <include src="/components/ActiveCaseCard/ActiveCaseCard.html"></include>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="待办事项"
+                data-action="查看全部"
+                data-href="/pages/todos/"
+              ></include>
+              <div class="stack-3">
+                <include
+                  src="/components/TodoItem/TodoItem.html"
+                  data-tone="warning"
+                  data-title="待提交材料"
+                  data-subtitle="3 项材料待补充"
+                  data-value="3"
+                  data-href="/pages/todos/"
+                ></include>
+                <include
+                  src="/components/TodoItem/TodoItem.html"
+                  data-tone="info"
+                  data-title="待确认信息"
+                  data-subtitle="检查个人信息与证件"
+                  data-value="1"
+                  data-href="/pages/todos/"
+                ></include>
+                <include
+                  src="/components/TodoItem/TodoItem.html"
+                  data-tone="success"
+                  data-title="进度更新"
+                  data-subtitle="已进入初审阶段"
+                  data-value="新"
+                  data-href="/pages/case/"
+                ></include>
+              </div>
+            </section>
+
+            <include src="/components/PaymentCard/PaymentCard.html"></include>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="快捷入口"
+                data-action=""
+                data-href="#"
+              ></include>
+              <include src="/components/QuickActions/QuickActions.html"></include>
+            </section>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="推荐服务"
+                data-action="查看更多"
+                data-href="/pages/profile/"
+              ></include>
+              <include src="/components/RecommendedServices/RecommendedServices.html"></include>
+            </section>
+          </div>
+          <include src="/components/BottomTabBar/BottomTabBar.html"></include>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./page.js"></script>
+  </body>
+</html>

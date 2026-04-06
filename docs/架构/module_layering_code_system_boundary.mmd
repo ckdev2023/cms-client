@@ -1,0 +1,64 @@
+flowchart TB
+    subgraph Client["客户端"]
+        U1[用户端 App / H5 / Web Portal]
+        U2[事务所后台 Web]
+        U3[平台管理后台]
+    end
+
+    subgraph AppLayer["应用层"]
+        A1[API / BFF]
+        A2[Auth / Session / Token]
+    end
+
+    subgraph DomainLayer["领域层"]
+        D1[Org / User / Permission]
+        D2[Lead / Consultation / Conversation / Message]
+        D3[Customer / Case]
+        D4[DocumentItem / Checklist]
+        D5[Reminder / Timeline]
+        D6[Templates / FeatureFlags]
+        D7[Files / Exports]
+    end
+
+    subgraph InfraLayer["基础设施层"]
+        I1[(PostgreSQL)]
+        I2[(Redis Queue / Cache)]
+        I3[Object Storage]
+        I4[Worker]
+        I5[Notification Adapters]
+        I6[Translation Adapters]
+    end
+
+    U1 --> A1
+    U2 --> A1
+    U3 --> A1
+
+    A1 --> A2
+    A1 --> D1
+    A1 --> D2
+    A1 --> D3
+    A1 --> D4
+    A1 --> D5
+    A1 --> D6
+    A1 --> D7
+
+    D1 --> I1
+    D2 --> I1
+    D3 --> I1
+    D4 --> I1
+    D5 --> I1
+    D6 --> I1
+    D7 --> I1
+
+    D2 --> I2
+    D4 --> I2
+    D5 --> I2
+    D7 --> I2
+
+    D7 --> I3
+
+    I2 --> I4
+    I4 --> I5
+    I4 --> I6
+    I4 --> I1
+    I4 --> I3

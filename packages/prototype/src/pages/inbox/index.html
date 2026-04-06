@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles/app.css" />
+    <link rel="stylesheet" href="./page.css" />
+    <title>消息中心</title>
+  </head>
+  <body data-active-tab="home">
+    <div class="AppShell">
+      <div class="AppShell__phone">
+        <div class="AppShell__screen">
+          <div class="AppShell__safeTop"></div>
+          <include src="/components/TopBar/TopBar.html" data-title="消息中心"></include>
+          <div class="AppShell__content stack-6">
+            <section class="Card InboxSummary">
+              <div class="Card__inner stack-3">
+                <div class="InboxSummary__title typo-title">你不会错过关键节点</div>
+                <div class="InboxSummary__sub typo-muted">进度更新、待补材料、费用提醒会自动汇总在这里。</div>
+              </div>
+            </section>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="待处理"
+                data-action="查看待办"
+                data-href="/pages/todos/"
+              ></include>
+              <div class="stack-3">
+                <a class="InboxItem InboxItem--blocker" href="/pages/todos/">
+                  <div class="InboxItem__left">
+                    <div class="InboxItem__title">待补充材料（阻塞进度）</div>
+                    <div class="InboxItem__sub typo-muted">缺 3 项 · 今天 18:00 前提交更稳妥</div>
+                  </div>
+                  <div class="InboxItem__right">去处理</div>
+                </a>
+                <a class="InboxItem" href="/pages/payment/">
+                  <div class="InboxItem__left">
+                    <div class="InboxItem__title">费用提醒</div>
+                    <div class="InboxItem__sub typo-muted">待付款 $2,450.00 · 支付后进入初审</div>
+                  </div>
+                  <div class="InboxItem__right">去支付</div>
+                </a>
+              </div>
+            </section>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="进度更新"
+                data-action="查看案例"
+                data-href="/pages/case/"
+              ></include>
+              <div class="stack-3">
+                <a class="InboxItem" href="/pages/case/">
+                  <div class="InboxItem__left">
+                    <div class="InboxItem__title">初审进行中</div>
+                    <div class="InboxItem__sub typo-muted">我们正在核对材料一致性，预计 04.12 前更新</div>
+                  </div>
+                  <div class="InboxItem__right">查看</div>
+                </a>
+                <a class="InboxItem" href="/pages/case/">
+                  <div class="InboxItem__left">
+                    <div class="InboxItem__title">资料收集已完成</div>
+                    <div class="InboxItem__sub typo-muted">已进入下一阶段：初审</div>
+                  </div>
+                  <div class="InboxItem__right">查看</div>
+                </a>
+              </div>
+            </section>
+          </div>
+          <include src="/components/BottomTabBar/BottomTabBar.html"></include>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./page.js"></script>
+  </body>
+</html>
+

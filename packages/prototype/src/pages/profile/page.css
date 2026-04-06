@@ -1,0 +1,45 @@
+.ProfileCard {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.ProfileCard__avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 20px;
+  background: color-mix(in oklab, var(--color-primary-container) 18%, var(--color-surface));
+  box-shadow: var(--shadow-card);
+}
+
+.ProfileCard__name {
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.ProfileCard__sub {
+  margin-top: 6px;
+  font-size: 12px;
+}
+
+.ProfileLink {
+  display: block;
+  cursor: pointer;
+}
+
+.ProfileLink__inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.ProfileLink__title {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ProfileLink__meta {
+  font-size: 12px;
+}
+

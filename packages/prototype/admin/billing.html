@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收费与财务 - Gyosei OS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --apple-bg: #f5f5f7;
+      --apple-card: #ffffff;
+      --apple-text-main: #1d1d1f;
+      --apple-text-muted: #86868b;
+      --apple-border: #d2d2d7;
+      --apple-blue: #0071e3;
+      --apple-green: #34c759;
+      --apple-orange: #f56300;
+      --apple-red: #ff3b30;
+    }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--apple-bg);
+      color: var(--apple-text-main);
+      -webkit-font-smoothing: antialiased;
+      letter-spacing: -0.01em;
+    }
+    .display-font {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      letter-spacing: -0.02em;
+    }
+    
+    /* Apple-style Glass Navigation */
+    .glass-nav {
+      background: rgba(29, 29, 31, 0.72);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+    
+    /* Apple Card */
+    .apple-card {
+      background-color: var(--apple-card);
+      border-radius: 18px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.02), 0 1px 3px rgba(0,0,0,0.04);
+      border: 1px solid rgba(210, 210, 215, 0.5);
+      overflow: hidden;
+    }
+    
+    /* Status Tags */
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .tag-green { background: #e3f5e1; color: #1a7f37; }
+    .tag-blue { background: #e1f0ff; color: #0071e3; }
+    .tag-orange { background: #ffe8d6; color: #c45100; }
+    .tag-red { background: #ffe3e3; color: #c92a2a; }
+    .tag-gray { background: #f5f5f7; color: #86868b; }
+
+    /* Button Styles */
+    .btn-primary {
+      background-color: var(--apple-blue);
+      color: white;
+      border-radius: 14px;
+      padding: 6px 16px;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: #0077ed;
+      transform: scale(0.98);
+    }
+    
+    .btn-secondary {
+      background-color: #f5f5f7;
+      color: var(--apple-text-main);
+      border-radius: 14px;
+      padding: 6px 16px;
+      font-weight: 500;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+    .btn-secondary:hover {
+      background-color: #e8e8ed;
+    }
+
+    /* Table Styles */
+    .apple-table th {
+      font-weight: 500;
+      color: var(--apple-text-muted);
+      font-size: 13px;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--apple-border);
+    }
+    .apple-table td {
+      padding: 16px;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(210, 210, 215, 0.4);
+    }
+    .apple-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .apple-table tbody tr:hover {
+      background-color: rgba(0, 0, 0, 0.01);
+    }
+
+    /* Segmented Control */
+    .segmented-control {
+      display: inline-flex;
+      background: rgba(118, 118, 128, 0.12);
+      border-radius: 8px;
+      padding: 2px;
+    }
+    .segmented-control button {
+      padding: 4px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--apple-text-main);
+    }
+    .segmented-control button.active {
+      background: white;
+      box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04);
+    }
+  </style>
+</head>
+<body class="pt-12">
+
+  <!-- Unified Navigation -->
+  <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+    <div class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center">
+      <div class="flex items-center space-x-8">
+        <a href="admin-prototype.html" class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity">Gyosei OS</a>
+        
+        <!-- Primary Nav Items (10 items as per 04-页面结构与工作台设计) -->
+        <div class="hidden md:flex space-x-6 overflow-x-auto">
+          <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+          <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+          <a href="cases-list.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+          <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+          <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+          <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+          <a href="billing.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+          <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+          <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+          <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+        </div>
+      </div>
+      
+      <div class="flex items-center space-x-4">
+        <button class="text-white/80 hover:text-white transition-colors">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </button>
+        <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">AD</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-end mb-8">
+      <div>
+        <h1 class="text-3xl font-semibold display-font text-[#1d1d1f] mb-2">收费与财务</h1>
+        <p class="text-[#86868b] text-sm">管理案件费用、收款节点及回款记录</p>
+      </div>
+      <div class="flex space-x-3">
+        <button class="btn-secondary flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+          导出报表
+        </button>
+        <button class="btn-primary flex items-center">
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          登记回款
+        </button>
+      </div>
+    </div>
+
+    <!-- Financial Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="apple-card p-5">
+        <div class="text-[13px] text-[#86868b] mb-1">本月新增应收 (JPY)</div>
+        <div class="text-2xl font-semibold display-font text-[#1d1d1f]">¥ 2,450,000</div>
+        <div class="text-[12px] text-green-600 mt-2 flex items-center">
+          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+          较上月增长 12%
+        </div>
+      </div>
+      <div class="apple-card p-5">
+        <div class="text-[13px] text-[#86868b] mb-1">本月已回款 (JPY)</div>
+        <div class="text-2xl font-semibold display-font text-[#1d1d1f]">¥ 1,850,000</div>
+        <div class="text-[12px] text-gray-500 mt-2">包含预付款和尾款</div>
+      </div>
+      <div class="apple-card p-5">
+        <div class="text-[13px] text-[#86868b] mb-1">总未收金额 (JPY)</div>
+        <div class="text-2xl font-semibold display-font text-[#0071e3]">¥ 3,200,000</div>
+        <div class="text-[12px] text-gray-500 mt-2">分布在 24 个活跃案件中</div>
+      </div>
+      <div class="apple-card p-5 bg-red-50/50 border-red-100">
+        <div class="text-[13px] text-red-600 mb-1">逾期欠款 (JPY)</div>
+        <div class="text-2xl font-semibold display-font text-red-600">¥ 450,000</div>
+        <div class="text-[12px] text-red-500 mt-2 font-medium flex items-center">
+          <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          3 笔逾期款项，需催收
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex justify-between items-center mb-4">
+      <div class="segmented-control">
+        <button class="active">案件收费列表</button>
+        <button>回款流水记录</button>
+        <button>发票管理</button>
+      </div>
+      
+      <div class="flex space-x-2">
+        <div class="relative">
+          <input type="text" placeholder="搜索案件或客户..." class="pl-8 pr-4 py-1.5 rounded-lg border border-gray-200 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 w-64">
+          <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <select class="rounded-lg border border-gray-200 text-sm px-3 py-1.5 focus:outline-none focus:border-blue-500">
+          <option>所有回款状态</option>
+          <option>部分回款</option>
+          <option>已确认待付款</option>
+          <option>已结清</option>
+          <option>有逾期</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Billing Table -->
+    <div class="apple-card mb-8">
+      <table class="apple-table w-full text-left border-collapse">
+        <thead>
+          <tr>
+            <th class="w-3/12">案件信息</th>
+            <th class="w-2/12">客户</th>
+            <th class="w-1/12 text-right">总额(¥)</th>
+            <th class="w-1/12 text-right">已收(¥)</th>
+            <th class="w-1/12 text-right">未收(¥)</th>
+            <th class="w-1/12">状态</th>
+            <th class="w-2/12">下一收款节点</th>
+            <th class="w-1/12 text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1: Partial payment, normal -->
+          <tr>
+            <td>
+              <a href="case-detail.html" class="font-medium text-[#1d1d1f] hover:text-[#0071e3] transition-colors">高度人才 (HSP) 申请</a>
+              <div class="text-xs text-[#86868b] mt-0.5">CAS-2023-1089</div>
+            </td>
+            <td>
+              <div class="text-sm text-[#1d1d1f]">Michael T.</div>
+              <div class="text-xs text-[#86868b]">个人</div>
+            </td>
+            <td class="text-right font-medium">350,000</td>
+            <td class="text-right text-green-600">175,000</td>
+            <td class="text-right text-orange-600">175,000</td>
+            <td>
+              <span class="tag tag-blue">部分回款</span>
+            </td>
+            <td>
+              <div class="text-sm">尾款 (50%)</div>
+              <div class="text-xs text-[#86868b]">申请获批后 7天内</div>
+            </td>
+            <td class="text-right">
+              <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</button>
+            </td>
+          </tr>
+          
+          <!-- Row 2: Overdue -->
+          <tr class="bg-red-50/20">
+            <td>
+              <a href="case-detail.html" class="font-medium text-[#1d1d1f] hover:text-[#0071e3] transition-colors">经营管理签证 新规</a>
+              <div class="text-xs text-[#86868b] mt-0.5">CAS-2023-1102</div>
+            </td>
+            <td>
+              <div class="text-sm text-[#1d1d1f]">Global Tech KK</div>
+              <div class="text-xs text-[#86868b]">企业</div>
+            </td>
+            <td class="text-right font-medium">500,000</td>
+            <td class="text-right text-green-600">0</td>
+            <td class="text-right text-red-600 font-medium">500,000</td>
+            <td>
+              <span class="tag tag-red">欠款逾期</span>
+            </td>
+            <td>
+              <div class="text-sm text-red-600 font-medium">首付款 (100%)</div>
+              <div class="text-xs text-red-500">已逾期 5 天 (2023-11-15)</div>
+            </td>
+            <td class="text-right">
+              <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">催收</button>
+            </td>
+          </tr>
+
+          <!-- Row 3: Paid in full -->
+          <tr>
+            <td>
+              <a href="case-detail.html" class="font-medium text-[#1d1d1f] hover:text-[#0071e3] transition-colors">家族滞在签证 续签</a>
+              <div class="text-xs text-[#86868b] mt-0.5">CAS-2023-0945</div>
+            </td>
+            <td>
+              <div class="text-sm text-[#1d1d1f]">Sarah W.</div>
+              <div class="text-xs text-[#86868b]">个人</div>
+            </td>
+            <td class="text-right font-medium">80,000</td>
+            <td class="text-right text-green-600">80,000</td>
+            <td class="text-right text-gray-400">0</td>
+            <td>
+              <span class="tag tag-green">已结清</span>
+            </td>
+            <td>
+              <div class="text-sm text-gray-500">-</div>
+            </td>
+            <td class="text-right">
+              <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</button>
+            </td>
+          </tr>
+
+          <!-- Row 4: Unpaid, not overdue -->
+          <tr>
+            <td>
+              <a href="case-detail.html" class="font-medium text-[#1d1d1f] hover:text-[#0071e3] transition-colors">就劳签证 变更</a>
+              <div class="text-xs text-[#86868b] mt-0.5">CAS-2023-1150</div>
+            </td>
+            <td>
+              <div class="text-sm text-[#1d1d1f]">Li M.</div>
+              <div class="text-xs text-[#86868b]">个人</div>
+            </td>
+            <td class="text-right font-medium">120,000</td>
+            <td class="text-right text-gray-400">0</td>
+            <td class="text-right text-orange-600">120,000</td>
+            <td>
+              <span class="tag tag-orange">已确认待付款</span>
+            </td>
+            <td>
+              <div class="text-sm">全款 (100%)</div>
+              <div class="text-xs text-[#86868b]">资料收集齐后 3天内</div>
+            </td>
+            <td class="text-right">
+              <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">详情</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</body>
+</html>

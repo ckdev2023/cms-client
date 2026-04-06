@@ -1,0 +1,55 @@
+.PaymentCard {
+  display: block;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-primary);
+  color: var(--color-on-primary);
+  box-shadow: var(--shadow-float);
+  cursor: pointer;
+}
+
+.PaymentCard__inner {
+  padding: var(--space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.PaymentCard__label {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.PaymentCard__amount {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-size: 22px;
+  line-height: var(--leading-tight);
+}
+
+.PaymentCard__hint {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.82;
+}
+
+.PaymentCard__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(16px);
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.PaymentCard:hover .PaymentCard__cta {
+  background: rgba(255, 255, 255, 0.2);
+}
+

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles/app.css" />
+    <link rel="stylesheet" href="./page.css" />
+    <title>待办</title>
+  </head>
+  <body data-active-tab="todos">
+    <div class="AppShell">
+      <div class="AppShell__phone">
+        <div class="AppShell__screen">
+          <div class="AppShell__safeTop"></div>
+          <include src="/components/TopBar/TopBar.html" data-title="待办"></include>
+          <div class="AppShell__content stack-6">
+            <section class="Card">
+              <div class="Card__inner stack-4">
+                <div class="TodosSummary">
+                  <div>
+                    <div class="TodosSummary__title typo-title">材料准备</div>
+                    <div class="TodosSummary__sub typo-muted">提交后将进入下一审核环节</div>
+                  </div>
+                  <include src="/components/Chip/Chip.html" data-tone="warning" data-label="3 项待补充"></include>
+                </div>
+                <div class="TodosActions">
+                  <button class="Btn Btn--primary" type="button" data-action="upload">上传材料</button>
+                  <a class="Btn Btn--secondary" href="/pages/case/">查看案例</a>
+                </div>
+              </div>
+            </section>
+
+            <section class="stack-3">
+              <include
+                src="/components/SectionHeader/SectionHeader.html"
+                data-title="待提交"
+                data-action="消息中心"
+                data-href="/pages/inbox/"
+              ></include>
+              <div class="stack-3">
+                <label class="TaskItem TaskItem--blocker">
+                  <input class="TaskItem__checkbox" type="checkbox" />
+                  <span class="TaskItem__body">
+                    <span class="TaskItem__title">护照信息页</span>
+                    <span class="TaskItem__sub typo-muted">阻塞进度 · 今天 18:00 前 · 约 2 分钟</span>
+                  </span>
+                  <span class="TaskItem__tags">
+                    <span class="TaskItem__tag TaskItem__tag--blocker">阻塞</span>
+                    <span class="TaskItem__tag TaskItem__tag--warn">必填</span>
+                  </span>
+                </label>
+                <label class="TaskItem TaskItem--blocker">
+                  <input class="TaskItem__checkbox" type="checkbox" />
+                  <span class="TaskItem__body">
+                    <span class="TaskItem__title">居住证明</span>
+                    <span class="TaskItem__sub typo-muted">阻塞进度 · 今天 18:00 前 · 约 3 分钟</span>
+                  </span>
+                  <span class="TaskItem__tags">
+                    <span class="TaskItem__tag TaskItem__tag--blocker">阻塞</span>
+                    <span class="TaskItem__tag TaskItem__tag--warn">必填</span>
+                  </span>
+                </label>
+                <label class="TaskItem">
+                  <input class="TaskItem__checkbox" type="checkbox" />
+                  <span class="TaskItem__body">
+                    <span class="TaskItem__title">照片</span>
+                    <span class="TaskItem__sub typo-muted">不阻塞 · 近 3 个月内 · 约 4 分钟</span>
+                  </span>
+                  <span class="TaskItem__tags">
+                    <span class="TaskItem__tag">可选</span>
+                  </span>
+                  为避免返工，请确保文字清晰、无遮挡、四角完整。上传后 24 小时内完成初审。
+                </div>
+              </div>
+          </div>
+          <include src="/components/BottomTabBar/BottomTabBar.html"></include>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./page.js"></script>
+  </body>
+</html>

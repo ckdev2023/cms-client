@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+npm run guard && exit 0
+
+npm run fix || exit 1
+
+if ! git diff --quiet; then
+  echo "pre-push: auto-fixed files. Please commit changes and push again."
+  exit 1
+fi
+
+npm run guard

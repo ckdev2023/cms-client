@@ -1,0 +1,53 @@
+{
+  "name": "cms-client",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "mobile:start": "npm --workspace mobile run start",
+    "mobile:ios": "npm --workspace mobile run ios",
+    "mobile:android": "npm --workspace mobile run android",
+    "mobile:web": "npm --workspace mobile run web",
+    "mobile:lint": "npm --workspace mobile run lint",
+    "mobile:lint:fix": "npm --workspace mobile run lint:fix",
+    "mobile:format": "npm --workspace mobile run format",
+    "mobile:format:check": "npm --workspace mobile run format:check",
+    "mobile:typecheck": "npm --workspace mobile run typecheck",
+    "mobile:test": "npm --workspace mobile run test",
+    "mobile:guard": "npm --workspace mobile run guard",
+    "mobile:fix": "npm --workspace mobile run fix",
+    "server:dev": "npm --workspace server run dev",
+    "server:build": "npm --workspace server run build",
+    "server:typecheck": "npm --workspace server run typecheck",
+    "server:test": "npm --workspace server run test",
+    "server:db:migrate": "npm --workspace server run db:migrate",
+    "server:guard": "npm --workspace server run guard",
+    "guard": "npm run mobile:guard && npm run server:guard",
+    "fix": "npm run mobile:fix && npm --workspace server run fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@types/react": "~19.1.0",
+    "@types/react-dom": "~19.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.2"
+  },
+  "lint-staged": {
+    "packages/mobile/**/*.{ts,tsx,js,jsx,json}": [
+      "npm --workspace mobile exec -- prettier --write",
+      "npm --workspace mobile exec -- eslint --fix"
+    ],
+    "packages/server/**/*.{ts,tsx,js,jsx,json,yml,yaml}": [
+      "npm --workspace server exec -- prettier --write",
+      "npm --workspace server exec -- eslint --fix"
+    ]
+  },
+  "workspaces": [
+    "packages/*"
+  ]
+}

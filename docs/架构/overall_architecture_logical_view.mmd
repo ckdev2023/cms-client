@@ -1,0 +1,44 @@
+flowchart TD
+    U[用户端 App / Web Portal<br/>多语言咨询 / 上传资料 / 查看进度]
+    A[API Gateway / BFF<br/>鉴权 / 路由 / 限流]
+    B[事务所后台 SaaS<br/>案件 / 客户 / 资料 / 提醒 / 沟通]
+    C[消息与咨询域<br/>Lead / Conversation / Message]
+    D[案件运营域<br/>Customer / Case / DocumentItem / Reminder / Timeline]
+    E[模板域<br/>CaseTemplate / ChecklistTemplate / StateFlow / ReminderRules]
+    F[权限与租户域<br/>Org / User / Role / FeatureFlag]
+    G[文件域<br/>Upload / Storage / OCR / Scan]
+    H[异步任务 Worker<br/>Translation / Notification / Reminder / Export / Routing]
+    I[(PostgreSQL)]
+    J[(Redis)]
+    K[Object Storage<br/>S3 Compatible / OSS]
+    L[通知通道<br/>Email / Push / In-app]
+    M[翻译服务<br/>LLM / MT Engine]
+    N[运营后台 / 管理台<br/>租户管理 / 质检 / SLA]
+
+    U --> A
+    B --> A
+    N --> A
+
+    A --> C
+    A --> D
+    A --> E
+    A --> F
+    A --> G
+
+    C --> I
+    D --> I
+    E --> I
+    F --> I
+    G --> I
+
+    G --> K
+
+    C --> J
+    D --> J
+    G --> J
+
+    J --> H
+    H --> M
+    H --> L
+    H --> I
+    H --> K

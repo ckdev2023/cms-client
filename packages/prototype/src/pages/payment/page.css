@@ -1,0 +1,57 @@
+.PaymentSummary__amount {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  line-height: var(--leading-tight);
+  color: var(--color-primary);
+}
+
+.PaymentSummary__sub {
+  font-size: 12px;
+  line-height: var(--leading-normal);
+}
+
+.PaymentSummary__rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: color-mix(in oklab, var(--color-surface-container-low) 70%, var(--color-surface));
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+}
+
+.PaymentRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-3);
+}
+
+.PaymentRow__k {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-on-surface-variant);
+}
+
+.PaymentRow__v {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.PaymentSuccess__title {
+  font-size: var(--text-xl);
+  line-height: var(--leading-tight);
+}
+
+.PaymentSuccess__sub {
+  font-size: 12px;
+  line-height: var(--leading-relaxed);
+}
+
+.PaymentSuccess__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+

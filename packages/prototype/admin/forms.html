@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文书中心 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Apple Typography System */
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2') format('woff2'); font-weight: 600; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2') format('woff2'); font-weight: 500; }
+        
+        :root {
+            --apple-blue: #0071e3;
+            --apple-blue-hover: #0077ED;
+            --apple-link: #0066cc;
+            --apple-bg: #f5f5f7;
+            --apple-card: #ffffff;
+            --apple-text-main: #1d1d1f;
+            --apple-text-sec: rgba(0, 0, 0, 0.8);
+            --apple-text-tert: rgba(0, 0, 0, 0.48);
+            --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+        }
+
+        body { font-family: 'SF Pro Text', sans-serif; background-color: var(--apple-bg); color: var(--apple-text-main); letter-spacing: -0.02em; }
+        .display-font { font-family: 'SF Pro Display', sans-serif; letter-spacing: -0.02em; }
+        .glass-nav { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+        
+        .btn-primary { background-color: var(--apple-blue); color: white; padding: 8px 15px; border-radius: 8px; font-size: 14px; transition: 0.2s; }
+        .btn-primary:hover { background-color: var(--apple-blue-hover); }
+        .btn-secondary { background-color: rgba(118, 118, 128, 0.12); color: var(--apple-text-main); padding: 8px 15px; border-radius: 8px; font-size: 14px; transition: 0.2s; }
+        .btn-secondary:hover { background-color: rgba(118, 118, 128, 0.24); }
+
+        .apple-card { background-color: var(--apple-card); border-radius: 12px; box-shadow: var(--apple-shadow); border: none; }
+        
+        .segmented-control { background-color: rgba(118, 118, 128, 0.12); padding: 2px; border-radius: 8px; display: inline-flex; }
+        .segment-btn { padding: 6px 14px; font-size: 13px; font-weight: 500; color: var(--apple-text-main); border-radius: 6px; transition: 0.2s; cursor: pointer; }
+        .segment-btn.active { background-color: white; box-shadow: 0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04); }
+
+        .apple-table th { font-size: 12px; color: var(--apple-text-tert); font-weight: 500; text-transform: uppercase; padding: 12px 16px; border-bottom: 1px solid #e5e5ea; text-align: left; }
+        .apple-table td { padding: 16px; font-size: 14px; border-bottom: 1px solid #f2f2f7; color: var(--apple-text-sec); vertical-align: middle; }
+        .apple-table tr:hover td { background-color: #fbfbfd; }
+        .apple-table tr:last-child td { border-bottom: none; }
+        
+        .search-input { background-color: rgba(118, 118, 128, 0.12); border: none; border-radius: 10px; padding: 8px 12px 8px 36px; font-size: 14px; width: 240px; transition: 0.2s; outline: none; }
+        .search-input:focus { background-color: white; box-shadow: 0 0 0 2px var(--apple-blue); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Global Glass Navigation -->
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+        <div class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center">
+            <div class="flex items-center space-x-8">
+                <a href="admin-prototype.html" class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity">Gyosei OS</a>
+                <div class="hidden md:flex space-x-6 overflow-x-auto">
+                    <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+                    <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+                    <a href="cases-list.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+                    <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+                    <a href="forms.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+                    <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+                    <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+                    <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+                    <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+                    <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-white/80 hover:text-white transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                </button>
+                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">AD</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 max-w-6xl mx-auto w-full">
+        <!-- Header -->
+        <div class="flex justify-between items-end mb-8">
+            <div>
+                <h1 class="text-3xl display-font font-semibold">文书中心</h1>
+                <p class="text-sm text-gray-500 mt-1">管理官方申请书模板与内部文书，支持自动变量填充</p>
+            </div>
+            <div class="flex space-x-3">
+                <button class="btn-primary flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    上传新模板
+                </button>
+            </div>
+        </div>
+
+        <!-- Controls Area -->
+        <div class="flex justify-between items-center mb-6">
+            <div class="segmented-control">
+                <div class="segment-btn active">全部模板</div>
+                <div class="segment-btn">就劳签证</div>
+                <div class="segment-btn">高度人才</div>
+                <div class="segment-btn">永住许可</div>
+                <div class="segment-btn">最近生成记录</div>
+            </div>
+            
+            <div class="relative">
+                <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <input type="text" placeholder="搜索文书模板名称" class="search-input" />
+            </div>
+        </div>
+
+        <!-- Forms Table -->
+        <div class="apple-card overflow-hidden">
+            <table class="apple-table w-full text-left border-collapse">
+                <thead>
+                    <tr>
+                        <th class="w-4/12">模板名称</th>
+                        <th class="w-2/12">适用类型</th>
+                        <th class="w-2/12">变量/填充字段</th>
+                        <th class="w-2/12">最近更新</th>
+                        <th class="w-2/12 text-right">操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <div>
+                                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">高度専門職ポイント計算表（高度学術研究活動）</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Excel 格式 · V3.2</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-sm">高度人才 (HSP)</span>
+                        </td>
+                        <td>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                12 个动态变量
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-sm">2023-11-01</div>
+                            <div class="text-xs text-gray-500">Admin</div>
+                        </td>
+                        <td class="text-right">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">生成测试</button>
+                            <button class="text-gray-500 hover:text-gray-800 text-sm font-medium">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <div>
+                                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">在留資格認定証明書交付申請書</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">PDF 表单 · V1.5</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-sm">通用就劳</span>
+                        </td>
+                        <td>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                45 个动态变量
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-sm">2023-10-15</div>
+                            <div class="text-xs text-gray-500">Suzuki</div>
+                        </td>
+                        <td class="text-right">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">生成测试</button>
+                            <button class="text-gray-500 hover:text-gray-800 text-sm font-medium">编辑</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-blue-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                <div>
+                                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">理由书模板 (通用)</div>
+                                    <div class="text-xs text-gray-500 mt-0.5">Word 格式 · V2.0</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-sm">所有类型</span>
+                        </td>
+                        <td>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                无变量 (纯文本模板)
+                            </span>
+                        </td>
+                        <td>
+                            <div class="text-sm">2023-09-20</div>
+                            <div class="text-xs text-gray-500">Admin</div>
+                        </td>
+                        <td class="text-right">
+                            <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-3">下载</button>
+                            <button class="text-gray-500 hover:text-gray-800 text-sm font-medium">编辑</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+</html>

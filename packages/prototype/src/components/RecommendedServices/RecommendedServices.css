@@ -1,0 +1,97 @@
+.RecommendedServices__grid {
+  display: grid;
+  grid-template-columns: 1fr 88px;
+  gap: var(--space-3);
+}
+
+.RecommendedServices__primary {
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  gap: var(--space-3);
+  align-items: center;
+  padding: var(--space-4);
+  border-radius: var(--radius-xl);
+  background: var(--color-surface-container-lowest);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.RecommendedServices__primary:hover {
+  background: color-mix(in oklab, var(--color-surface-container-lowest) 86%, var(--color-primary-container));
+}
+
+.RecommendedServices__thumb {
+  width: 56px;
+  height: 56px;
+  border-radius: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary-container);
+  background: color-mix(in oklab, var(--color-primary-container) 18%, var(--color-surface));
+  box-shadow: var(--shadow-card);
+}
+
+.RecommendedServices__main {
+  min-width: 0;
+}
+
+.RecommendedServices__title {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: var(--leading-normal);
+}
+
+.RecommendedServices__sub {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: var(--leading-normal);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.RecommendedServices__link {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+  color: var(--color-primary-container);
+  background: color-mix(in oklab, var(--color-primary-container) 12%, var(--color-surface));
+}
+
+.RecommendedServices__secondary {
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #0c162b 0%, #0b1b3a 55%, #00113a 100%);
+  box-shadow: var(--shadow-card);
+  color: rgba(255, 255, 255, 0.92);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.RecommendedServices__secondary:hover {
+  filter: brightness(1.05);
+}
+
+.RecommendedServices__secondaryTop {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.02em;
+}
+
+.RecommendedServices__secondaryBottom {
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}

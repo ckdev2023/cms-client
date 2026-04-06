@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案件详情 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2') format('woff2'); font-weight: 600; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2') format('woff2'); font-weight: 400; }
+        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2') format('woff2'); font-weight: 500; }
+        
+        :root { --apple-blue: #0071e3; --apple-bg: #f5f5f7; --apple-card: #ffffff; --apple-text-main: #1d1d1f; --apple-text-sec: rgba(0, 0, 0, 0.8); --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px; }
+        body { font-family: 'SF Pro Text', sans-serif; background-color: var(--apple-bg); color: var(--apple-text-main); letter-spacing: -0.02em; }
+        .display-font { font-family: 'SF Pro Display', sans-serif; letter-spacing: -0.02em; }
+        .glass-nav { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
+        
+        .btn-primary { background-color: var(--apple-blue); color: white; padding: 8px 15px; border-radius: 8px; font-size: 14px; transition: 0.2s; font-weight: 500; }
+        .btn-primary:hover { background-color: #0077ED; transform: scale(0.98); }
+        .btn-pill { color: #1d1d1f; padding: 6px 16px; border-radius: 980px; font-size: 14px; background: rgba(0,0,0,0.05); border: none; transition: 0.2s; font-weight: 500; }
+        .btn-pill:hover { background: rgba(0,0,0,0.08); transform: scale(0.98); }
+        
+        .apple-card { background-color: var(--apple-card); border-radius: 12px; box-shadow: var(--apple-shadow); border: none; transition: transform 0.2s, box-shadow 0.2s; }
+        .apple-card:hover { box-shadow: rgba(0, 0, 0, 0.12) 0px 8px 30px 0px; }
+        
+        .doc-item { border-bottom: 1px solid #f2f2f7; transition: background-color 0.2s; }
+        .doc-item:last-child { border-bottom: none; }
+        .doc-item:hover { background-color: #fbfbfd; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 980px; font-size: 12px; font-weight: 500; display: inline-flex; items-center; gap: 4px; }
+        .bg-green { background: #e3f8e6; color: #118128; }
+        .bg-orange { background: #fff0d8; color: #b75e00; }
+        .bg-red { background: #ffe5e5; color: #d61818; }
+        .bg-gray { background: #f2f2f7; color: #86868b; }
+        
+        /* Form Inputs */
+        .form-input { w-full; background-color: #f5f5f7; border: 1px solid transparent; border-radius: 8px; padding: 10px 12px; font-size: 14px; transition: all 0.2s; outline: none; }
+        .form-input:focus { background-color: #fff; border-color: var(--apple-blue); box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1); }
+        
+        /* Custom Scrollbar for Tabs */
+        .tabs-container::-webkit-scrollbar { height: 0px; background: transparent; }
+        
+        /* Timeline dot */
+        .timeline-dot { position: absolute; left: -5px; top: 6px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid white; box-shadow: 0 0 0 1px #e5e5ea; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Nav -->
+    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
+        <div class="max-w-7xl mx-auto px-4 w-full flex justify-between items-center">
+            <div class="flex items-center space-x-8">
+                <a href="admin-prototype.html" class="text-white display-font font-semibold text-lg tracking-tight">Gyosei OS</a>
+                <div class="hidden md:flex space-x-6 overflow-x-auto">
+                    <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
+                    <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
+                    <a href="cases-list.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
+                    <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
+                    <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
+                    <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
+                    <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
+                    <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
+                    <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
+                    <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+                </div>
+            </div>
+            <div class="flex items-center space-x-4">
+                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">AD</div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main -->
+    <main class="flex-grow pt-20 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+        
+        <!-- Breadcrumb & Header -->
+        <div class="mb-6">
+            <div class="text-[13px] text-[#86868b] mb-3 flex items-center space-x-2">
+                <a href="cases-list.html" class="hover:text-[#1d1d1f] transition-colors">案件 (Cases)</a>
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                <span class="font-medium text-[#1d1d1f]">CAS-2023-1001</span>
+            </div>
+            <div class="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
+                <div>
+                    <h1 class="display-font text-[32px] font-semibold leading-tight flex items-center">
+                        建设业许可更新 
+                        <span class="status-badge bg-green ml-4 text-[13px] translate-y-[-2px]">
+                            <span class="w-1.5 h-1.5 rounded-full bg-[#118128]"></span>
+                            已提交待审核
+                        </span>
+                    </h1>
+                    <p class="text-[15px] text-[#86868b] mt-2 flex items-center space-x-4">
+                        <span class="flex items-center"><svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg><a href="customers.html" class="text-[#1d1d1f] hover:text-[#0071e3] transition-colors">田中建设株式会社</a></span>
+                        <span class="text-[#d2d2d7]">|</span>
+                        <span class="flex items-center"><svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>Suzuki</span>
+                        <span class="text-[#d2d2d7]">|</span>
+                        <span class="flex items-center"><svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"></path></svg>东京都厅 建设局</span>
+                    </p>
+                </div>
+                <div class="flex space-x-3">
+                    <button class="btn-pill flex items-center"><svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>编辑信息</button>
+                    <button class="btn-pill flex items-center"><svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>导出 ZIP</button>
+                    <button class="btn-primary flex items-center">状态流转 <svg class="w-4 h-4 ml-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="border-b border-[#d2d2d7] mb-8 tabs-container overflow-x-auto relative">
+            <nav class="flex space-x-8 min-w-max px-1" aria-label="Tabs">
+                <a href="#" class="border-[#1d1d1f] text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    概览
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    基础信息
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    资料清单 <span class="bg-[#1d1d1f] text-white py-0.5 px-2 rounded-full text-[11px] ml-2 font-semibold">12/15</span>
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                    沟通记录
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                    文书/表单
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                    任务
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    期限
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    收费
+                </a>
+                <a href="#" class="border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    日志
+                </a>
+            </nav>
+        </div>
+
+        <!-- Tab Content: Overview (概览) -->
+        <div id="tab-overview" class="space-y-6">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="apple-card p-5 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                    <div class="absolute right-0 top-0 w-16 h-16 bg-[#e3f8e6] rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <svg class="absolute right-3 top-3 w-5 h-5 text-[#118128] opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="text-[13px] text-[#86868b] mb-1 font-medium">当前阶段</div>
+                    <div class="text-[18px] font-semibold text-[#1d1d1f] mt-1">已提交待审核</div>
+                    <div class="text-[12px] text-[#86868b] mt-2 flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>已停留 5 天</div>
+                </div>
+                <div class="apple-card p-5 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                    <div class="absolute right-0 top-0 w-16 h-16 bg-[#ffe5e5] rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <svg class="absolute right-3 top-3 w-5 h-5 text-[#d61818] opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <div class="text-[13px] text-[#86868b] mb-1 font-medium">预计截止日期</div>
+                    <div class="text-[18px] font-semibold text-[#d61818] mt-1">2024/05/20</div>
+                    <div class="text-[12px] text-[#d61818] mt-2 flex items-center font-medium"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>距今还有 45 天</div>
+                </div>
+                <div class="apple-card p-5 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                    <div class="absolute right-0 top-0 w-16 h-16 bg-blue-50 rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <svg class="absolute right-3 top-3 w-5 h-5 text-blue-500 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    <div class="text-[13px] text-[#86868b] mb-2 font-medium">资料收集进度</div>
+                    <div class="flex items-center space-x-3 mt-1">
+                        <div class="text-[18px] font-semibold text-[#1d1d1f]">80%</div>
+                        <div class="flex-grow bg-[#f5f5f7] rounded-full h-2 overflow-hidden">
+                            <div class="bg-[#0071e3] h-full rounded-full transition-all duration-500" style="width: 80%"></div>
+                        </div>
+                    </div>
+                    <div class="text-[12px] text-[#86868b] mt-2">12/15 项已收集</div>
+                </div>
+                <div class="apple-card p-5 relative overflow-hidden group hover:shadow-md transition-shadow cursor-default">
+                    <div class="absolute right-0 top-0 w-16 h-16 bg-[#fff0d8] rounded-bl-full opacity-50 transition-transform group-hover:scale-110"></div>
+                    <svg class="absolute right-3 top-3 w-5 h-5 text-[#b75e00] opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <div class="text-[13px] text-[#86868b] mb-1 font-medium">财务状况</div>
+                    <div class="text-[18px] font-semibold text-[#118128] mt-1">¥75,000 / ¥150K</div>
+                    <div class="text-[12px] text-[#d61818] mt-2 font-medium">尾款未付</div>
+                </div>
+            </div>
+
+            <!-- 2 Column Layout for Overview -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Action & Timeline -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Next Action / Reminders -->
+                    <div class="apple-card p-6 bg-gradient-to-r from-[#fffaf5] to-[#fbfbfd] border border-[#ff9500]/30 shadow-sm relative overflow-hidden">
+                        <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-[#fff0d8]/40 to-transparent pointer-events-none"></div>
+                        <div class="flex items-start space-x-4 relative z-10">
+                            <div class="w-10 h-10 rounded-full bg-white shadow-sm border border-[#ff9500]/20 flex items-center justify-center shrink-0">
+                                <svg class="w-5 h-5 text-[#ff9500]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                            </div>
+                            <div>
+                                <h3 class="text-[15px] font-semibold mb-1.5 text-[#1d1d1f]">下一关键动作</h3>
+                                <p class="text-[14px] text-[#1d1d1f] mb-4 leading-relaxed">审核最新提交的决算书，并继续催收纳税证明。</p>
+                                <div class="flex space-x-3">
+                                    <button class="btn-primary text-[13px] py-1.5 px-4 font-medium flex items-center shadow-sm">
+                                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        去审核
+                                    </button>
+                                    <button class="btn-pill text-[13px] py-1.5 px-4 bg-white shadow-sm border border-[#d2d2d7] hover:bg-[#f5f5f7] flex items-center">
+                                        <svg class="w-4 h-4 mr-1.5 text-[#86868b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                        发送催办通知
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Timeline -->
+                    <div class="apple-card p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-[17px] font-semibold display-font text-[#1d1d1f]">近期动态</h3>
+                            <button class="text-[#0071e3] text-[13px] hover:underline font-medium flex items-center bg-blue-50 px-2.5 py-1.5 rounded-lg transition-colors hover:bg-blue-100">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>添加记录
+                            </button>
+                        </div>
+                        <div class="relative border-l-2 border-[#e5e5ea] ml-3 space-y-7 pb-2">
+                            <div class="relative pl-6 group">
+                                <div class="absolute w-3 h-3 bg-white border-2 border-[#ff9500] rounded-full -left-[7px] top-1 group-hover:scale-125 transition-transform"></div>
+                                <div class="text-[12px] text-[#86868b] mb-1 font-medium flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>今天 14:00 · Suzuki</div>
+                                <div class="text-[14px] text-[#1d1d1f] font-semibold mb-2">电话跟进</div>
+                                <div class="text-[13px] text-[#1d1d1f] bg-[#fbfbfd] p-3.5 rounded-xl border border-[#e5e5ea] group-hover:border-[#d2d2d7] transition-colors leading-relaxed shadow-sm">客户表示决算书由于会计师原因会有延迟，大概需要下周一才能提供。已在系统中备注。</div>
+                            </div>
+                            <div class="relative pl-6 group">
+                                <div class="absolute w-3 h-3 bg-white border-2 border-[#0071e3] rounded-full -left-[7px] top-1 group-hover:scale-125 transition-transform"></div>
+                                <div class="text-[12px] text-[#86868b] mb-1 font-medium flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>今天 10:45 · System</div>
+                                <div class="text-[14px] text-[#1d1d1f] flex items-center font-medium">
+                                    客户上传了文件
+                                </div>
+                                <div class="mt-2 inline-flex items-center px-3 py-2 rounded-lg bg-blue-50 text-[#0071e3] text-[13px] font-medium border border-blue-100 hover:bg-blue-100 transition-colors cursor-pointer shadow-sm">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>决算书2023.pdf
+                                </div>
+                            </div>
+                            <div class="relative pl-6 group">
+                                <div class="absolute w-3 h-3 bg-white border-2 border-[#86868b] rounded-full -left-[7px] top-1 group-hover:scale-125 transition-transform"></div>
+                                <div class="text-[12px] text-[#86868b] mb-1 font-medium flex items-center"><svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>昨天 09:00 · Auto Reminder</div>
+                                <div class="text-[14px] text-[#1d1d1f] font-medium">向客户发送了 <span class="px-1.5 py-0.5 bg-[#f5f5f7] border border-[#e5e5ea] rounded-md mx-0.5 text-[13px]">纳税证明书</span> 的催办邮件。</div>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-[#f2f2f7] text-center">
+                            <button class="text-[13px] text-[#86868b] hover:text-[#1d1d1f] bg-[#f5f5f7] hover:bg-[#e5e5ea] px-4 py-1.5 rounded-full font-medium transition-colors">查看完整日志</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Quick Links & Team -->
+                <div class="space-y-6">
+                    <!-- Team -->
+                    <div class="apple-card p-6">
+                        <div class="flex justify-between items-center mb-5">
+                            <h3 class="text-[15px] font-semibold text-[#1d1d1f]">案件团队</h3>
+                            <button class="text-[#0071e3] text-[13px] font-medium hover:underline bg-blue-50 px-2.5 py-1 rounded-lg transition-colors hover:bg-blue-100">管理</button>
+                        </div>
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between group cursor-pointer p-2 -mx-2 rounded-xl hover:bg-[#fbfbfd] transition-colors border border-transparent hover:border-[#e5e5ea]">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#0071e3] to-[#005bb5] text-white flex items-center justify-center text-[15px] font-medium shadow-sm">SZ</div>
+                                    <div>
+                                        <div class="text-[14px] font-semibold text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors flex items-center">
+                                            Suzuki 
+                                            <span class="ml-2 text-[10px] bg-blue-50 text-[#0071e3] border border-blue-100 px-1.5 py-0.5 rounded font-bold tracking-wide">负责人</span>
+                                        </div>
+                                        <div class="text-[12px] text-[#86868b] mt-0.5">资深行政书士</div>
+                                    </div>
+                                </div>
+                                <button class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1d1d1f] hover:bg-white hover:shadow-sm border border-transparent hover:border-[#e5e5ea] opacity-0 group-hover:opacity-100 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg></button>
+                            </div>
+                            <div class="flex items-center justify-between group cursor-pointer p-2 -mx-2 rounded-xl hover:bg-[#fbfbfd] transition-colors border border-transparent hover:border-[#e5e5ea]">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#34c759] to-[#28a745] text-white flex items-center justify-center text-[15px] font-medium shadow-sm">TN</div>
+                                    <div>
+                                        <div class="text-[14px] font-semibold text-[#1d1d1f] group-hover:text-[#34c759] transition-colors">Tanaka</div>
+                                        <div class="text-[12px] text-[#86868b] mt-0.5">材料初审 (助理)</div>
+                                    </div>
+                                </div>
+                                <button class="w-8 h-8 rounded-full flex items-center justify-center text-gray-400 hover:text-[#1d1d1f] hover:bg-white hover:shadow-sm border border-transparent hover:border-[#e5e5ea] opacity-0 group-hover:opacity-100 transition-all"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Client Portal Link -->
+                    <div class="apple-card p-6 bg-gradient-to-b from-[#fbfbfd] to-[#f5f5f7] border border-[#e5e5ea]">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center mr-3">
+                                <svg class="w-4 h-4 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            </div>
+                            <h3 class="text-[15px] font-semibold text-[#1d1d1f]">客户门户链接</h3>
+                        </div>
+                        <p class="text-[13px] text-[#86868b] mb-4 leading-relaxed">客户可以通过此链接上传材料、查看进度、支付账单。</p>
+                        <div class="flex items-center bg-white border border-[#d2d2d7] rounded-xl p-1 shadow-sm focus-within:border-[#0071e3] focus-within:ring-2 focus-within:ring-[#0071e3]/20 transition-all">
+                            <input type="text" readonly value="https://portal.gyosei.os/c/abc123xyz" class="text-[13px] w-full outline-none text-[#1d1d1f] font-medium bg-transparent px-3 py-1.5">
+                            <button class="bg-[#f5f5f7] hover:bg-[#e5e5ea] text-[#1d1d1f] text-[12px] font-semibold py-1.5 px-3.5 rounded-lg transition-colors whitespace-nowrap shadow-sm">复制</button>
+                        </div>
+                        <div class="mt-4 flex space-x-3">
+                            <button class="flex-1 flex items-center justify-center space-x-1.5 py-2 text-[13px] text-white bg-[#0071e3] rounded-xl hover:bg-[#005bb5] shadow-sm transition-colors font-medium">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                <span>发送邮件</span>
+                            </button>
+                            <button class="w-10 h-10 flex items-center justify-center text-[#86868b] hover:text-[#d61818] bg-white border border-[#d2d2d7] rounded-xl hover:bg-red-50 hover:border-[#d61818]/30 transition-colors shadow-sm" title="重置链接">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Documents (资料清单) - Hidden by default in this prototype -->
+        <div id="tab-documents" class="hidden space-y-6">
+            <div class="apple-card p-0 overflow-hidden">
+                <div class="px-6 py-5 border-b border-[#f2f2f7] flex justify-between items-center bg-[#fbfbfd]">
+                    <div class="w-1/2">
+                        <h2 class="display-font text-[21px] font-semibold">资料清单 (Document Checklist)</h2>
+                        <div class="flex items-center mt-2">
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 mr-3">
+                                <div class="bg-blue-600 h-1.5 rounded-full" style="width: 80%"></div>
+                            </div>
+                            <span class="text-[13px] text-[#86868b] whitespace-nowrap">12/15 项已收集 (80%)</span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="text-[#0066cc] text-[14px] hover:underline">按模板重新生成</button>
+                        <button class="text-[#0066cc] text-[14px] hover:underline">+ 手动添加材料</button>
+                    </div>
+                </div>
+
+                <!-- List Items -->
+                <div class="doc-item px-6 py-4 flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="font-medium text-[#1d1d1f] text-[15px] mr-2">法人登记簿誊本 (履历事项全部证明书)</span>
+                            <span class="status-badge bg-green">审核通过</span>
+                        </div>
+                        <div class="text-[13px] text-[#86868b]">上传于 2023/11/05 &nbsp;|&nbsp; 来源: 客户上传 (App) &nbsp;|&nbsp; 审核人: Suzuki</div>
+                        <div class="mt-2 flex space-x-3">
+                            <a href="#" class="text-[13px] text-[#0066cc] flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> houjin_touhon_v2.pdf</a>
+                            <span class="text-[13px] text-gray-400">历史版本 (1)</span>
+                        </div>
+                    </div>
+                    <div class="text-right ml-4">
+                        <button class="text-[13px] text-[#86868b] hover:text-[#1d1d1f] px-2 py-1 border border-gray-200 rounded">重新审核</button>
+                    </div>
+                </div>
+
+                <div class="doc-item px-6 py-4 flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="font-medium text-[#1d1d1f] text-[15px] mr-2">近期 3 年决算书副本</span>
+                            <span class="status-badge bg-orange">已提交待审核</span>
+                        </div>
+                        <div class="text-[13px] text-[#86868b]">客户于 10 分钟前刚刚上传 (覆盖了旧版本)</div>
+                        <div class="mt-2 flex space-x-3">
+                            <a href="#" class="text-[13px] text-[#0066cc] flex items-center"><svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg> 决算书2023.pdf</a>
+                        </div>
+                    </div>
+                    <div class="text-right ml-4 flex flex-col space-y-2">
+                        <button class="text-[13px] bg-[#0071e3] text-white px-3 py-1.5 rounded-md hover:bg-[#0077ED] transition">通过</button>
+                        <button class="text-[13px] text-[#d61818] border border-[#d61818]/30 px-3 py-1.5 rounded-md hover:bg-[#ffe5e5] transition">驳回重传</button>
+                    </div>
+                </div>
+
+                <div class="doc-item px-6 py-4 flex items-start justify-between bg-[#fffaf5]">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="font-medium text-[#1d1d1f] text-[15px] mr-2">护照复印件 (全页)</span>
+                            <span class="status-badge bg-red text-white">需补正</span>
+                        </div>
+                        <div class="text-[13px] text-[#86868b]">上次更新: 2023/11/02</div>
+                        <div class="mt-2 p-2 bg-red-50 border border-red-100 rounded text-[13px] text-red-700">
+                            <strong>审核意见：</strong>第3页和第4页有反光，看不清出入境章，请重新扫描上传清晰版本。
+                        </div>
+                    </div>
+                    <div class="text-right ml-4 flex flex-col space-y-2">
+                        <button class="text-[13px] text-[#0066cc] border border-[#0066cc] px-3 py-1.5 rounded-md hover:bg-[#0066cc] hover:text-white transition">手动催办</button>
+                    </div>
+                </div>
+
+                <div class="doc-item px-6 py-4 flex items-start justify-between bg-[#fffaf5]">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="font-medium text-[#1d1d1f] text-[15px] mr-2">纳税证明书 (法人税・事业税等)</span>
+                            <span class="status-badge bg-red">待提交</span>
+                            <span class="text-[11px] text-[#d61818] ml-2">应于 11/15 前提交</span>
+                        </div>
+                        <div class="text-[13px] text-[#86868b]">未收到文件。已发送 2 次自动催办邮件。</div>
+                    </div>
+                    <div class="text-right ml-4">
+                        <button class="text-[13px] text-[#0066cc] border border-[#0066cc] px-3 py-1.5 rounded-md hover:bg-[#0066cc] hover:text-white transition">手动催办</button>
+                    </div>
+                </div>
+
+                <div class="doc-item px-6 py-4 flex items-start justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center mb-1">
+                            <span class="font-medium text-[#1d1d1f] text-[15px] mr-2">事务所内部调查表 (Intake Form)</span>
+                            <span class="status-badge bg-gray">待提交</span>
+                        </div>
+                        <div class="text-[13px] text-[#86868b]">由负责人 (Suzuki) 线下获取并上传</div>
+                    </div>
+                    <div class="text-right ml-4">
+                        <button class="text-[13px] text-[#1d1d1f] bg-[#f2f2f7] px-3 py-1.5 rounded-md hover:bg-[#e5e5ea] transition">上传文件</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Info (基础信息) -->
+        <div id="tab-info" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Main Form -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="apple-card p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-[17px] font-semibold display-font">案件属性</h2>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-[13px] font-medium text-[#1d1d1f] mb-1.5">案件编号</label>
+                                <input type="text" value="CAS-2023-1001" disabled class="form-input bg-gray-50 text-[#86868b] cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-[13px] font-medium text-[#1d1d1f] mb-1.5">业务类型</label>
+                                <select class="form-input w-full appearance-none">
+                                    <option>建设业许可更新</option>
+                                    <option>高度人才签证</option>
+                                    <option>公司设立</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[13px] font-medium text-[#1d1d1f] mb-1.5">受理日期</label>
+                                <input type="date" value="2023-11-01" class="form-input">
+                            </div>
+                            <div>
+                                <label class="block text-[13px] font-medium text-[#1d1d1f] mb-1.5">目标提交日期</label>
+                                <input type="date" value="2024-05-20" class="form-input">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[13px] font-medium text-[#1d1d1f] mb-1.5">管辖机构</label>
+                                <input type="text" value="东京都厅 建设局" class="form-input">
+                            </div>
+                        </div>
+                        <div class="mt-6 pt-5 border-t border-[#f2f2f7] flex justify-end">
+                            <button class="btn-primary">保存修改</button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right sidebar -->
+                <div class="space-y-6">
+                    <div class="apple-card p-6">
+                        <div class="flex items-center justify-between mb-5">
+                            <h2 class="text-[15px] font-semibold text-[#1d1d1f]">关联主体</h2>
+                            <button class="text-[#0066cc] text-[13px] hover:underline font-medium flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                添加
+                            </button>
+                        </div>
+                        <div class="space-y-5">
+                            <div>
+                                <div class="text-[12px] font-medium text-[#86868b] uppercase tracking-wider mb-2">客户 (委托人)</div>
+                                <div class="flex items-center justify-between bg-[#fbfbfd] border border-[#e5e5ea] rounded-xl p-3 transition-colors hover:border-[#d2d2d7]">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-9 h-9 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center text-sm font-semibold">田</div>
+                                        <div>
+                                            <div class="text-[14px] font-medium text-[#1d1d1f]">田中建设株式会社</div>
+                                            <div class="text-[12px] text-[#86868b] mt-0.5">企业客户</div>
+                                        </div>
+                                    </div>
+                                    <button class="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center text-gray-400 hover:text-[#1d1d1f] transition-colors">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-[12px] font-medium text-[#86868b] uppercase tracking-wider mb-2">相关人 (如配偶、雇员)</div>
+                                <button class="w-full border border-dashed border-[#d2d2d7] rounded-xl py-3 text-[13px] font-medium text-[#86868b] hover:bg-[#f5f5f7] hover:text-[#1d1d1f] hover:border-[#86868b] transition-all flex items-center justify-center">
+                                    <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    添加相关人
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Messages (沟通记录) -->
+        <div id="tab-messages" class="hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Left: Messages List -->
+                <div class="lg:col-span-2 space-y-4">
+                    <!-- Message Composer -->
+                    <div class="apple-card p-5">
+                        <textarea rows="3" placeholder="添加内部备注，或记录与客户的沟通内容..." class="form-input w-full resize-none bg-[#f5f5f7] mb-3 text-[14px] leading-relaxed"></textarea>
+                        <div class="flex justify-between items-center">
+                            <div class="flex space-x-1">
+                                <button class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#0071e3] hover:bg-blue-50 rounded-full transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg></button>
+                                <button class="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-[#0071e3] hover:bg-blue-50 rounded-full transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg></button>
+                            </div>
+                            <div class="flex space-x-3 items-center">
+                                <select class="form-input py-1.5 pl-3 pr-8 appearance-none text-[13px] bg-transparent border-transparent hover:bg-gray-100 cursor-pointer w-auto min-w-[100px] text-[#86868b] font-medium" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%2386868b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px;">
+                                    <option>内部备注</option>
+                                    <option>电话记录</option>
+                                    <option>线下会议</option>
+                                </select>
+                                <button class="btn-primary px-5 py-1.5 text-[13px]">发布记录</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Message Items -->
+                    <div class="apple-card p-5 group hover:bg-[#fbfbfd] transition-colors">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-[#0071e3] text-white flex items-center justify-center text-[11px] font-semibold shadow-sm">SZ</div>
+                                <span class="font-medium text-[14px] text-[#1d1d1f]">Suzuki</span>
+                                <span class="text-[11px] font-medium bg-blue-50 text-[#0071e3] px-2 py-0.5 rounded-full border border-blue-100">电话记录</span>
+                            </div>
+                            <span class="text-[12px] text-[#86868b] font-medium">今天 14:00</span>
+                        </div>
+                        <p class="text-[14px] text-[#1d1d1f] ml-9.5 leading-relaxed">客户表示决算书由于会计师原因会有延迟，大概需要下周一才能提供。已在系统中备注。</p>
+                        <div class="ml-9.5 mt-3 flex space-x-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button class="text-[12px] text-[#86868b] hover:text-[#0071e3] font-medium transition-colors">回复</button>
+                            <button class="text-[12px] text-[#86868b] hover:text-[#0071e3] font-medium transition-colors">编辑</button>
+                        </div>
+                    </div>
+
+                    <div class="apple-card p-5 group hover:bg-[#fbfbfd] transition-colors">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center space-x-2.5">
+                                <div class="w-7 h-7 rounded-full bg-[#e5e5ea] text-[#1d1d1f] flex items-center justify-center text-[11px] font-semibold shadow-sm">SYS</div>
+                                <span class="font-medium text-[14px] text-[#1d1d1f]">System</span>
+                                <span class="text-[11px] font-medium bg-gray-100 text-[#86868b] px-2 py-0.5 rounded-full border border-gray-200">自动邮件</span>
+                            </div>
+                            <span class="text-[12px] text-[#86868b] font-medium">昨天 09:00</span>
+                        </div>
+                        <p class="text-[14px] text-[#1d1d1f] ml-9.5 leading-relaxed">向客户发送了 <span class="font-medium px-1 bg-gray-100 rounded text-[#1d1d1f]">纳税证明书</span> 的催办邮件。</p>
+                        <div class="ml-9.5 mt-3">
+                            <button class="text-[12px] text-[#0071e3] hover:underline font-medium flex items-center">
+                                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                查看邮件内容
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Right sidebar -->
+                <div class="space-y-6">
+                    <div class="apple-card p-6">
+                        <div class="flex items-center justify-between mb-5">
+                            <h2 class="text-[15px] font-semibold text-[#1d1d1f]">过滤筛选</h2>
+                            <button class="text-[12px] text-[#86868b] hover:text-[#1d1d1f] transition-colors">重置</button>
+                        </div>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#f5f5f7] cursor-pointer transition-colors -ml-2">
+                                <input type="checkbox" checked class="w-4 h-4 rounded border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3]">
+                                <span class="text-[14px] text-[#1d1d1f] font-medium">所有记录</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#f5f5f7] cursor-pointer transition-colors -ml-2">
+                                <input type="checkbox" class="w-4 h-4 rounded border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3]">
+                                <span class="text-[14px] text-[#1d1d1f]">内部备注</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#f5f5f7] cursor-pointer transition-colors -ml-2">
+                                <input type="checkbox" class="w-4 h-4 rounded border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3]">
+                                <span class="text-[14px] text-[#1d1d1f]">客户邮件</span>
+                            </label>
+                            <label class="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#f5f5f7] cursor-pointer transition-colors -ml-2">
+                                <input type="checkbox" class="w-4 h-4 rounded border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3]">
+                                <span class="text-[14px] text-[#1d1d1f]">系统日志</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Forms (文书/表单) -->
+        <div id="tab-forms" class="hidden space-y-6">
+            <div class="apple-card p-0 overflow-hidden">
+                <div class="px-6 py-5 border-b border-[#f2f2f7] flex justify-between items-center bg-[#fbfbfd]">
+                    <h2 class="display-font text-[19px] font-semibold text-[#1d1d1f]">官方申请文书</h2>
+                    <div class="flex space-x-3">
+                        <button class="btn-primary flex items-center">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            生成文书
+                        </button>
+                    </div>
+                </div>
+                <div class="p-12 flex flex-col items-center justify-center text-center">
+                    <div class="w-16 h-16 bg-[#f5f5f7] rounded-full flex items-center justify-center mb-4">
+                        <svg class="w-8 h-8 text-[#86868b]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 class="text-[16px] font-semibold text-[#1d1d1f] mb-1">暂无生成的文书</h3>
+                    <p class="text-[14px] text-[#86868b] max-w-sm leading-relaxed">系统可根据客户信息和收集的资料自动生成 PDF 或 Word 格式的官方申请表单。</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Tasks (任务) -->
+        <div id="tab-tasks" class="hidden space-y-6">
+            <div class="apple-card p-0 overflow-hidden">
+                <div class="px-6 py-5 border-b border-[#f2f2f7] flex justify-between items-center bg-[#fbfbfd]">
+                    <h2 class="display-font text-[19px] font-semibold text-[#1d1d1f]">任务拆解</h2>
+                    <button class="text-[#0071e3] text-[14px] font-medium hover:underline flex items-center">
+                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        新增任务
+                    </button>
+                </div>
+                <div class="doc-item px-6 py-4 flex items-center justify-between group">
+                    <div class="flex items-center space-x-3 flex-1">
+                        <input type="checkbox" checked class="w-4.5 h-4.5 rounded-full border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3] cursor-pointer">
+                        <span class="text-[14px] text-[#86868b] line-through transition-colors">发送资料收集清单给客户</span>
+                    </div>
+                    <div class="flex items-center space-x-4 opacity-70 group-hover:opacity-100 transition-opacity">
+                        <span class="text-[12px] font-medium text-[#86868b] bg-[#f5f5f7] px-2 py-1 rounded-md">11/01</span>
+                        <div class="w-7 h-7 rounded-full bg-[#0071e3] text-white flex items-center justify-center text-[11px] font-semibold shadow-sm" title="Suzuki">SZ</div>
+                    </div>
+                </div>
+                <div class="doc-item px-6 py-4 flex items-center justify-between group">
+                    <div class="flex items-center space-x-3 flex-1">
+                        <input type="checkbox" class="w-4.5 h-4.5 rounded-full border-[#d2d2d7] text-[#0071e3] focus:ring-[#0071e3] cursor-pointer">
+                        <span class="text-[14px] font-medium text-[#1d1d1f] group-hover:text-[#0071e3] transition-colors">起草申请理由书</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <span class="text-[12px] font-medium text-[#d61818] bg-[#ffe5e5] px-2 py-1 rounded-md">11/20</span>
+                        <div class="w-7 h-7 rounded-full bg-[#34c759] text-white flex items-center justify-center text-[11px] font-semibold shadow-sm" title="Tanaka">TN</div>
+                    </div>
+                </div>
+                <div class="doc-item px-6 py-4 flex items-center justify-between group border-b-0">
+                    <button class="w-full text-left flex items-center space-x-3 py-1 text-[#86868b] hover:text-[#1d1d1f] transition-colors">
+                        <svg class="w-4.5 h-4.5 text-[#d2d2d7] group-hover:text-[#86868b] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <span class="text-[14px] font-medium">添加新任务...</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Deadlines (期限) -->
+        <div id="tab-deadlines" class="hidden space-y-6">
+            <div class="apple-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-[17px] font-semibold display-font text-[#1d1d1f]">关键期限</h2>
+                    <button class="btn-pill text-xs py-1.5 px-3 flex items-center">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        添加期限
+                    </button>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[#e5e5ea] rounded-xl relative overflow-hidden group hover:border-[#d61818]/30 transition-colors">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#d61818]"></div>
+                        <div class="pl-2">
+                            <div class="text-[15px] font-semibold text-[#1d1d1f]">在留资格到期日 (最终提交底线)</div>
+                            <div class="text-[13px] text-[#86868b] mt-1">必须在此之前向入管局提交申请</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[18px] font-bold text-[#d61818] tracking-tight">2024/05/20</div>
+                            <div class="text-[12px] font-medium text-[#d61818] mt-1 bg-[#ffe5e5] px-2 py-0.5 rounded-md inline-block">剩余 45 天</div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[#e5e5ea] rounded-xl relative overflow-hidden group hover:border-[#ff9500]/30 transition-colors">
+                        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[#ff9500]"></div>
+                        <div class="pl-2">
+                            <div class="text-[15px] font-semibold text-[#1d1d1f]">资料收集目标日</div>
+                            <div class="text-[13px] text-[#86868b] mt-1">内部设定的资料齐备目标日期</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[18px] font-bold text-[#1d1d1f] tracking-tight">2024/04/15</div>
+                            <div class="text-[12px] font-medium text-[#ff9500] mt-1 bg-[#fff0d8] px-2 py-0.5 rounded-md inline-block">剩余 9 天</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Billing (收费) -->
+        <div id="tab-billing" class="hidden space-y-6">
+            <div class="apple-card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-[17px] font-semibold display-font text-[#1d1d1f]">账单与收款</h2>
+                    <button class="btn-primary text-xs py-1.5 px-3 flex items-center">
+                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        创建新账单
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-[#f5f5f7] p-5 rounded-xl">
+                        <div class="text-[13px] font-medium text-[#86868b] mb-1">总费用</div>
+                        <div class="text-[20px] font-semibold text-[#1d1d1f]">¥150,000</div>
+                    </div>
+                    <div class="bg-[#e3f8e6]/50 p-5 rounded-xl">
+                        <div class="text-[13px] font-medium text-[#118128] mb-1">已付金额</div>
+                        <div class="text-[20px] font-semibold text-[#118128]">¥75,000</div>
+                    </div>
+                    <div class="bg-[#ffe5e5]/50 p-5 rounded-xl border border-[#d61818]/10">
+                        <div class="text-[13px] font-medium text-[#d61818] mb-1">未付尾款</div>
+                        <div class="text-[20px] font-semibold text-[#d61818]">¥75,000</div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-[#d2d2d7]">
+                                <th class="py-3 px-2 text-[12px] font-medium text-[#86868b] uppercase tracking-wider">日期</th>
+                                <th class="py-3 px-2 text-[12px] font-medium text-[#86868b] uppercase tracking-wider">类型</th>
+                                <th class="py-3 px-2 text-[12px] font-medium text-[#86868b] uppercase tracking-wider text-right">金额</th>
+                                <th class="py-3 px-2 text-[12px] font-medium text-[#86868b] uppercase tracking-wider text-center">状态</th>
+                                <th class="py-3 px-2 text-[12px] font-medium text-[#86868b] uppercase tracking-wider text-right">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-[#f2f2f7] hover:bg-[#fbfbfd] transition-colors group">
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f] font-medium">2023/11/01</td>
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f]">首付款 (着手金)</td>
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f] text-right font-medium">¥75,000</td>
+                                <td class="py-3 px-2 text-center"><span class="status-badge bg-green text-[11px]">已结清</span></td>
+                                <td class="py-3 px-2 text-right">
+                                    <button class="text-[#0071e3] text-[13px] font-medium hover:underline opacity-0 group-hover:opacity-100 transition-opacity">查看收据</button>
+                                </td>
+                            </tr>
+                            <tr class="hover:bg-[#fbfbfd] transition-colors group">
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f] font-medium">2024/05/01</td>
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f]">尾款 (成功酬金)</td>
+                                <td class="py-3 px-2 text-[14px] text-[#1d1d1f] text-right font-medium">¥75,000</td>
+                                <td class="py-3 px-2 text-center"><span class="status-badge bg-orange text-[11px]">未报价</span></td>
+                                <td class="py-3 px-2 text-right">
+                                    <button class="text-[#0071e3] text-[13px] font-medium hover:underline opacity-0 group-hover:opacity-100 transition-opacity">生成账单</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Content: Audit Log (日志) -->
+        <div id="tab-log" class="hidden space-y-6">
+            <div class="apple-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-[17px] font-semibold display-font text-[#1d1d1f]">系统操作日志</h2>
+                    <div class="flex items-center space-x-2">
+                        <select class="form-input py-1.5 pl-3 pr-8 appearance-none text-[13px] bg-[#f5f5f7] border-transparent cursor-pointer w-auto min-w-[120px]" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%2386868b%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 8px center; background-size: 14px;">
+                            <option>所有操作</option>
+                            <option>文件操作</option>
+                            <option>系统通知</option>
+                            <option>状态变更</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-0 border-l-2 border-[#f2f2f7] ml-2">
+                    <div class="relative pl-6 py-4 border-b border-[#f2f2f7] hover:bg-[#fbfbfd] transition-colors group">
+                        <div class="absolute left-[-5px] top-5 w-2 h-2 rounded-full bg-[#d2d2d7] group-hover:bg-[#0071e3] transition-colors"></div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-[#e5e5ea] text-[#1d1d1f] flex items-center justify-center text-[9px] font-bold">SYS</div>
+                                <div class="text-[14px] text-[#1d1d1f]">更新了文件 <span class="font-medium text-[#0071e3]">决算书2023.pdf</span> 的状态为：已提交待审核</div>
+                            </div>
+                            <div class="text-[12px] font-medium text-[#86868b]">今天 10:45:12</div>
+                        </div>
+                    </div>
+                    <div class="relative pl-6 py-4 border-b border-[#f2f2f7] hover:bg-[#fbfbfd] transition-colors group">
+                        <div class="absolute left-[-5px] top-5 w-2 h-2 rounded-full bg-[#d2d2d7] group-hover:bg-[#0071e3] transition-colors"></div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-[#e5e5ea] text-[#1d1d1f] flex items-center justify-center text-[9px] font-bold">SYS</div>
+                                <div class="text-[14px] text-[#1d1d1f]">触发自动提醒规则：发送纳税证明书催办邮件给客户</div>
+                            </div>
+                            <div class="text-[12px] font-medium text-[#86868b]">昨天 09:00:00</div>
+                        </div>
+                    </div>
+                    <div class="relative pl-6 py-4 hover:bg-[#fbfbfd] transition-colors group border-b border-transparent">
+                        <div class="absolute left-[-5px] top-5 w-2 h-2 rounded-full bg-[#d2d2d7] group-hover:bg-[#0071e3] transition-colors"></div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-6 h-6 rounded-full bg-[#0071e3] text-white flex items-center justify-center text-[9px] font-bold">SZ</div>
+                                <div class="text-[14px] text-[#1d1d1f]">审核通过了文件 <span class="font-medium">法人登记簿誊本</span></div>
+                            </div>
+                            <div class="text-[12px] font-medium text-[#86868b]">2023/11/05 14:20:05</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Script for Tab Switching in Prototype -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const tabs = document.querySelectorAll('nav[aria-label="Tabs"] a');
+                
+                const tabContents = [
+                    document.getElementById('tab-overview'),
+                    document.getElementById('tab-info'),
+                    document.getElementById('tab-documents'),
+                    document.getElementById('tab-messages'),
+                    document.getElementById('tab-forms'),
+                    document.getElementById('tab-tasks'),
+                    document.getElementById('tab-deadlines'),
+                    document.getElementById('tab-billing'),
+                    document.getElementById('tab-log')
+                ];
+
+                tabs.forEach((tab, index) => {
+                    tab.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        
+                        // Reset all tabs
+                        tabs.forEach(t => {
+                            t.className = 'border-transparent text-[#86868b] hover:text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors';
+                        });
+
+                        // Set active tab
+                        tab.className = 'border-[#1d1d1f] text-[#1d1d1f] whitespace-nowrap py-3 border-b-2 font-medium text-[14px] flex items-center transition-colors';
+
+                        // Hide all content
+                        tabContents.forEach(content => {
+                            if (content) content.classList.add('hidden');
+                        });
+
+                        // Show specific content based on tab index
+                        if (tabContents[index]) {
+                            tabContents[index].classList.remove('hidden');
+                        }
+                    });
+                });
+            });
+        </script>
+    </main>
+</body>
+</html>

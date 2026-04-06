@@ -1,0 +1,50 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "node dist/main.js",
+    "build": "tsc -p tsconfig.build.json",
+    "worker:dev": "node --import tsx src/worker.ts",
+    "lint": "eslint src",
+    "lint:fix": "eslint src --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test",
+    "db:migrate": "tsx src/infra/db/runMigrations.ts migrate",
+    "db:rollback": "tsx src/infra/db/runMigrations.ts rollback",
+    "db:migrations:check": "tsx src/infra/db/runMigrations.ts check",
+    "arch:check": "depcruise --config .dependency-cruiser.cjs src --validate",
+    "lock:check": "node -e \"const fs=require('fs');const path=require('path');const root=path.resolve(__dirname,'../..');const forbidden=['yarn.lock','pnpm-lock.yaml','bun.lockb'];for(const f of forbidden){if(fs.existsSync(path.join(root,f))){console.error('门禁：发现不允许的锁文件',f);process.exit(1)}}const required=path.join(root,'package-lock.json');if(!fs.existsSync(required)){console.error('门禁：缺少 package-lock.json');process.exit(1)}\"",
+    "secrets:check": "node -e \"const fs=require('fs');const path=require('path');const exts=new Set(['.ts','.tsx','.js','.jsx','.json','.yml','.yaml']);const patterns=[/AKIA[0-9A-Z]{16}/,/-----BEGIN (RSA|EC|OPENSSH) PRIVATE KEY-----/,/(secret|token|password)\\s*[:=]\\s*['\\\"][^'\\\"]{8,}/i,/postgres:\\/\\/[^\\s]+:[^\\s]+@/i];const ignoreDirs=new Set(['node_modules','.git','dist','build']);function walk(dir){for(const ent of fs.readdirSync(dir,{withFileTypes:true})){if(ignoreDirs.has(ent.name)) continue;const p=path.join(dir,ent.name);if(ent.isDirectory()) walk(p);else if(exts.has(path.extname(ent.name))){const c=fs.readFileSync(p,'utf8');for(const r of patterns){if(r.test(c)){console.error('门禁：疑似敏感信息：',p);process.exit(1)}}}}}walk(path.resolve(__dirname,'src'));\"",
+    "guard": "npm run lint && npm run typecheck && npm run arch:check && npm run db:migrations:check && npm run lock:check && npm run secrets:check && npm run test",
+    "fix": "node -e \"process.stdout.write('no-op\\n')\""
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "helmet": "^8.1.0",
+    "pg": "^8.16.3",
+    "redis": "^5.8.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.35.0",
+    "@types/node": "^24.0.0",
+    "@types/pg": "^8.15.5",
+    "dependency-cruiser": "^17.3.10",
+    "eslint": "^9.35.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsdoc": "^57.2.1",
+    "globals": "^16.4.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.5",
+    "typescript": "~5.9.2",
+    "typescript-eslint": "^8.43.0"
+  }
+}
