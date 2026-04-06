@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
-import { DocumentItemsService } from "./documentItems.service";
+import {
+  DocumentItemsService,
+  ALLOWED_TRANSITIONS,
+} from "./documentItems.service";
 import type { RequestContext } from "../tenancy/requestContext";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -37,17 +40,15 @@ function makeItemRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
-type PoolClientLike = {
-  query: (
-    sql: string,
-    params?: unknown[],
-  ) => Promise<{ rows: unknown[]; rowCount: number }>;
-  release: () => void;
+type QueryFn = (
+  sql: string,
+  params?: unknown[],
+) => Promise<{ rows: unknown[]; rowCount: number }>;
+type PoolLike = {
+  connect: () => Promise<{ query: QueryFn; release: () => void }>;
 };
 
-type PoolLike = { connect: () => Promise<PoolClientLike> };
-
-function makePool(queryFn: PoolClientLike["query"]): PoolLike {
+function makePool(queryFn: QueryFn): PoolLike {
   return {
     connect: () =>
       Promise.resolve({ query: queryFn, release: () => undefined }),
@@ -219,41 +220,46 @@ void test("DocumentItemsService.update throws NotFoundException when not found",
   );
 });
 
-// ── transition (valid: pending → requested) ──
-void test("DocumentItemsService.transition allows valid transition", async () => {
-  const pool = makePool((sql, params) => {
+// ── transition: all valid pairs from ALLOWED_TRANSITIONS ──
+function transitionPool(toStatus: string, fromStatus: string) {
+  return makePool((sql, params) => {
     if (sql.includes("update document_items") && sql.includes("status = $")) {
       return Promise.resolve({
-        rows: [
-          makeItemRow({
-            status: "requested",
-            requested_at: "2026-01-02T00:00:00.000Z",
-          }),
-        ],
+        rows: [makeItemRow({ status: toStatus })],
         rowCount: 1,
       });
     }
     if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
-      return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
+      return Promise.resolve({
+        rows: [makeItemRow({ status: fromStatus })],
+        rowCount: 1,
+      });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
+}
 
-  const timeline = makeTimeline();
-  const svc = createService(pool, timeline);
-  const result = await svc.transition(makeCtx(), ITEM_ID, {
-    toStatus: "requested",
+const ALL_VALID_PAIRS: [string, string][] = Object.entries(
+  ALLOWED_TRANSITIONS,
+).flatMap(([from, tos]) =>
+  (tos ?? []).map((to): [string, string] => [from, to]),
+);
+
+for (const [from, to] of ALL_VALID_PAIRS) {
+  void test(`transition: allows ${from} → ${to}`, async () => {
+    const timeline = makeTimeline();
+    const svc = createService(transitionPool(to, from), timeline);
+    const result = await svc.transition(makeCtx(), ITEM_ID, { toStatus: to });
+    assert.equal(result.status, to);
+    assert.equal(timeline.writes.length, 1);
+    assert.deepEqual(
+      (timeline.writes[0] as Record<string, unknown>).action,
+      "document_item.transitioned",
+    );
   });
+}
 
-  assert.equal(result.status, "requested");
-  assert.equal(timeline.writes.length, 1);
-  assert.deepEqual(
-    (timeline.writes[0] as Record<string, unknown>).action,
-    "document_item.transitioned",
-  );
-});
-
-// ── transition (invalid: pending → reviewed) ──
+// ── transition (invalid: pending → approved) ──
 void test("DocumentItemsService.transition rejects invalid transition", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
@@ -264,7 +270,7 @@ void test("DocumentItemsService.transition rejects invalid transition", async ()
 
   const svc = createService(pool, makeTimeline());
   await assert.rejects(
-    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "reviewed" }),
+    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "approved" }),
     (err) => {
       assert.ok(err instanceof Error);
       assert.ok(err.message.includes("not allowed"));
@@ -273,13 +279,12 @@ void test("DocumentItemsService.transition rejects invalid transition", async ()
   );
 });
 
-// ── transition not found ──
-void test("DocumentItemsService.transition throws when not found", async () => {
+void test("transition: throws when not found", async () => {
   const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
   const svc = createService(pool, makeTimeline());
-
   await assert.rejects(
-    () => svc.transition(makeCtx(), "nonexistent", { toStatus: "requested" }),
+    () =>
+      svc.transition(makeCtx(), "nonexistent", { toStatus: "waiting_upload" }),
     (err) => {
       assert.ok(err instanceof Error);
       return true;
@@ -287,23 +292,17 @@ void test("DocumentItemsService.transition throws when not found", async () => {
   );
 });
 
-// ── transition concurrent change ──
-void test("DocumentItemsService.transition fails on concurrent status change", async () => {
+void test("transition: fails on concurrent status change", async () => {
   const pool = makePool((sql, params) => {
-    // get() returns an item with 'pending' status
-    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID)
       return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
-    }
-    // update returns 0 rows (simulate someone else already changed the status to requested)
-    if (sql.includes("update document_items")) {
+    if (sql.includes("update document_items"))
       return Promise.resolve({ rows: [], rowCount: 0 });
-    }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
-
   const svc = createService(pool, makeTimeline());
   await assert.rejects(
-    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "requested" }),
+    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "waiting_upload" }),
     (err) => {
       assert.ok(err instanceof Error);
       assert.ok(
@@ -314,32 +313,101 @@ void test("DocumentItemsService.transition fails on concurrent status change", a
   );
 });
 
-// ── followUp ──
-void test("DocumentItemsService.followUp updates lastFollowUpAt and writes timeline", async () => {
-  const pool = makePool((sql, params) => {
-    if (sql.includes("last_follow_up_at = now()")) {
-      return Promise.resolve({
-        rows: [makeItemRow({ last_follow_up_at: "2026-01-15T00:00:00.000Z" })],
-        rowCount: 1,
-      });
-    }
-    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
-      return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
-    }
-    return Promise.resolve({ rows: [], rowCount: 0 });
+// ── transition: timestamp mapping ──
+const TIMESTAMP_CASES: {
+  toStatus: string;
+  fromStatus: string;
+  dbCol: string;
+  entityField: keyof Awaited<ReturnType<DocumentItemsService["transition"]>>;
+}[] = [
+  {
+    toStatus: "waiting_upload",
+    fromStatus: "pending",
+    dbCol: "requested_at",
+    entityField: "requestedAt",
+  },
+  {
+    toStatus: "uploaded_reviewing",
+    fromStatus: "waiting_upload",
+    dbCol: "received_at",
+    entityField: "receivedAt",
+  },
+  {
+    toStatus: "approved",
+    fromStatus: "uploaded_reviewing",
+    dbCol: "reviewed_at",
+    entityField: "reviewedAt",
+  },
+];
+
+for (const tc of TIMESTAMP_CASES) {
+  void test(`transition: ${tc.toStatus} sets ${tc.dbCol}`, async () => {
+    const calls: { sql: string }[] = [];
+    const ts = "2026-01-02T00:00:00.000Z";
+    const pool = makePool((sql, params) => {
+      calls.push({ sql });
+      if (sql.includes("update document_items") && sql.includes("status = $")) {
+        return Promise.resolve({
+          rows: [makeItemRow({ status: tc.toStatus, [tc.dbCol]: ts })],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+        return Promise.resolve({
+          rows: [makeItemRow({ status: tc.fromStatus })],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const svc = createService(pool, makeTimeline());
+    const result = await svc.transition(makeCtx(), ITEM_ID, {
+      toStatus: tc.toStatus,
+    });
+    assert.equal(result[tc.entityField], ts);
+    const updateSql = calls.find((c) =>
+      c.sql.includes("update document_items"),
+    );
+    assert.ok(updateSql?.sql.includes(`${tc.dbCol} = now()`));
   });
+}
 
-  const timeline = makeTimeline();
-  const svc = createService(pool, timeline);
-  const result = await svc.followUp(makeCtx(), ITEM_ID);
+// ── followUp (valid statuses) ──
+for (const validStatus of ["waiting_upload", "revision_required"]) {
+  void test(`followUp: allowed in ${validStatus}`, async () => {
+    const pool = makePool((sql, params) => {
+      if (sql.includes("last_follow_up_at = now()")) {
+        return Promise.resolve({
+          rows: [
+            makeItemRow({
+              status: validStatus,
+              last_follow_up_at: "2026-01-15T00:00:00.000Z",
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+        return Promise.resolve({
+          rows: [makeItemRow({ status: validStatus })],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
 
-  assert.equal(result.lastFollowUpAt, "2026-01-15T00:00:00.000Z");
-  assert.equal(timeline.writes.length, 1);
-  assert.deepEqual(
-    (timeline.writes[0] as Record<string, unknown>).action,
-    "document_item_follow_up",
-  );
-});
+    const timeline = makeTimeline();
+    const svc = createService(pool, timeline);
+    const result = await svc.followUp(makeCtx(), ITEM_ID);
+    assert.equal(result.lastFollowUpAt, "2026-01-15T00:00:00.000Z");
+    assert.equal(timeline.writes.length, 1);
+    assert.deepEqual(
+      (timeline.writes[0] as Record<string, unknown>).action,
+      "document_item_follow_up",
+    );
+  });
+}
 
 // ── followUp not found ──
 void test("DocumentItemsService.followUp throws when not found", async () => {
@@ -356,27 +424,35 @@ void test("DocumentItemsService.followUp throws when not found", async () => {
 });
 
 // ── followUp invalid status ──
-void test("DocumentItemsService.followUp throws when status is reviewed or rejected", async () => {
-  const pool = makePool((sql, params) => {
-    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
-      return Promise.resolve({
-        rows: [makeItemRow({ status: "reviewed" })],
-        rowCount: 1,
-      });
-    }
-    return Promise.resolve({ rows: [], rowCount: 0 });
-  });
+for (const invalidStatus of [
+  "pending",
+  "uploaded_reviewing",
+  "approved",
+  "waived",
+  "expired",
+]) {
+  void test(`DocumentItemsService.followUp throws when status is ${invalidStatus}`, async () => {
+    const pool = makePool((sql, params) => {
+      if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+        return Promise.resolve({
+          rows: [makeItemRow({ status: invalidStatus })],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
 
-  const svc = createService(pool, makeTimeline());
-  await assert.rejects(
-    () => svc.followUp(makeCtx(), ITEM_ID),
-    (err) => {
-      assert.ok(err instanceof Error);
-      assert.ok(err.message.includes("Cannot follow up"));
-      return true;
-    },
-  );
-});
+    const svc = createService(pool, makeTimeline());
+    await assert.rejects(
+      () => svc.followUp(makeCtx(), ITEM_ID),
+      (err) => {
+        assert.ok(err instanceof Error);
+        assert.ok(err.message.includes("Cannot follow up"));
+        return true;
+      },
+    );
+  });
+}
 
 // ── softDelete ──
 void test("DocumentItemsService.softDelete marks as deleted and writes timeline", async () => {

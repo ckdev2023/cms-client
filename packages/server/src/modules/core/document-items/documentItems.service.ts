@@ -102,13 +102,23 @@ export type DocumentItemTransitionInput = {
 };
 
 /**
- * 合法的状态流转映射。
+ * 合法的状态流转映射（7 状态）。
+ *
+ * 旧状态迁移方案（数据库 status 列为 text，无约束，旧值仍可存在）：
+ *   - requested → 对应新状态 waiting_upload
+ *   - received  → 对应新状态 uploaded_reviewing
+ *   - reviewed  → 对应新状态 approved
+ *   - rejected  → 对应新状态 revision_required
+ * 已有旧状态数据需通过数据迁移脚本批量更新。
  */
-const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> = {
-  pending: ["requested"],
-  requested: ["received"],
-  received: ["reviewed", "rejected"],
-  rejected: ["requested"],
+export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> = {
+  pending: ["waiting_upload", "waived"],
+  waiting_upload: ["uploaded_reviewing", "waived"],
+  uploaded_reviewing: ["approved", "revision_required"],
+  revision_required: ["waiting_upload"],
+  approved: ["expired"],
+  waived: ["pending"],
+  expired: ["waiting_upload"],
 };
 
 const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, created_at, updated_at`;
@@ -311,11 +321,13 @@ export class DocumentItemsService {
     }
 
     // 根据目标状态设置对应时间戳
+    // waiting_upload → requestedAt, uploaded_reviewing → receivedAt, approved → reviewedAt
     const timestampUpdates: string[] = [];
-    if (toStatus === "requested") timestampUpdates.push("requested_at = now()");
-    if (toStatus === "received") timestampUpdates.push("received_at = now()");
-    if (toStatus === "reviewed" || toStatus === "rejected")
-      timestampUpdates.push("reviewed_at = now()");
+    if (toStatus === "waiting_upload")
+      timestampUpdates.push("requested_at = now()");
+    if (toStatus === "uploaded_reviewing")
+      timestampUpdates.push("received_at = now()");
+    if (toStatus === "approved") timestampUpdates.push("reviewed_at = now()");
 
     const extraSets =
       timestampUpdates.length > 0 ? ", " + timestampUpdates.join(", ") : "";
@@ -358,7 +370,10 @@ export class DocumentItemsService {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Document item not found");
 
-    if (current.status !== "pending" && current.status !== "requested") {
+    if (
+      current.status !== "waiting_upload" &&
+      current.status !== "revision_required"
+    ) {
       throw new BadRequestException(
         `Cannot follow up on a document item with status '${current.status}'`,
       );
