@@ -21,6 +21,80 @@ const LANGUAGES = [
   { code: "en", label: "English" },
 ];
 
+function ProfileNameField(props: {
+  name: string;
+  editName: string | null;
+  setEditName: (v: string | null) => void;
+  updateProfile: (d: { name?: string; preferredLanguage?: string }) => void;
+}) {
+  const { name, editName, setEditName, updateProfile } = props;
+  return (
+    <YStack gap="$1">
+      <Text fontWeight="600">名前</Text>
+      <Input
+        testID="name-input"
+        value={editName ?? name}
+        onChangeText={setEditName}
+        onBlur={() => {
+          if (editName !== null && editName !== name)
+            updateProfile({ name: editName });
+        }}
+      />
+    </YStack>
+  );
+}
+
+function ProfileReadOnlyField(props: { label: string; value: string }) {
+  const { label, value } = props;
+  return (
+    <YStack gap="$1">
+      <Text fontWeight="600">{label}</Text>
+      <BodyText>{value}</BodyText>
+    </YStack>
+  );
+}
+
+function LanguageSelector(props: {
+  preferredLanguage?: string;
+  updateProfile: (d: { name?: string; preferredLanguage?: string }) => void;
+}) {
+  const { preferredLanguage, updateProfile } = props;
+  return (
+    <YStack gap="$1">
+      <Text fontWeight="600">言語設定</Text>
+      {LANGUAGES.map((l) => (
+        <Button
+          key={l.code}
+          testID={`lang-${l.code}`}
+          variant={preferredLanguage === l.code ? undefined : "outlined"}
+          onPress={() => updateProfile({ preferredLanguage: l.code })}
+        >
+          {l.label}
+        </Button>
+      ))}
+    </YStack>
+  );
+}
+
+function LogoutButton(props: {
+  logout: () => Promise<void>;
+  onLogout?: () => void;
+}) {
+  const { logout, onLogout } = props;
+  return (
+    <Button
+      testID="logout-btn"
+      theme="red"
+      onPress={async () => {
+        await logout();
+        onLogout?.();
+      }}
+    >
+      ログアウト
+    </Button>
+  );
+}
+
 /**
  * プロフィール情報表示部分。
  *
@@ -51,49 +125,19 @@ function ProfileBody(props: {
   } = props;
   return (
     <YStack gap="$3">
-      <YStack gap="$1">
-        <Text fontWeight="600">名前</Text>
-        <Input
-          testID="name-input"
-          value={editName ?? user.name}
-          onChangeText={setEditName}
-          onBlur={() => {
-            if (editName !== null && editName !== user.name)
-              updateProfile({ name: editName });
-          }}
-        />
-      </YStack>
-      <YStack gap="$1">
-        <Text fontWeight="600">メール</Text>
-        <BodyText>{user.email ?? "—"}</BodyText>
-      </YStack>
-      <YStack gap="$1">
-        <Text fontWeight="600">電話番号</Text>
-        <BodyText>{user.phone ?? "—"}</BodyText>
-      </YStack>
-      <YStack gap="$1">
-        <Text fontWeight="600">言語設定</Text>
-        {LANGUAGES.map((l) => (
-          <Button
-            key={l.code}
-            testID={`lang-${l.code}`}
-            variant={user.preferredLanguage === l.code ? undefined : "outlined"}
-            onPress={() => updateProfile({ preferredLanguage: l.code })}
-          >
-            {l.label}
-          </Button>
-        ))}
-      </YStack>
-      <Button
-        testID="logout-btn"
-        theme="red"
-        onPress={async () => {
-          await doLogout();
-          onLogout?.();
-        }}
-      >
-        ログアウト
-      </Button>
+      <ProfileNameField
+        name={user.name}
+        editName={editName}
+        setEditName={setEditName}
+        updateProfile={updateProfile}
+      />
+      <ProfileReadOnlyField label="メール" value={user.email ?? "—"} />
+      <ProfileReadOnlyField label="電話番号" value={user.phone ?? "—"} />
+      <LanguageSelector
+        preferredLanguage={user.preferredLanguage}
+        updateProfile={updateProfile}
+      />
+      <LogoutButton logout={doLogout} onLogout={onLogout} />
     </YStack>
   );
 }

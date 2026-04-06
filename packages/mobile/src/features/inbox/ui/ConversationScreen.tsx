@@ -16,6 +16,60 @@ import { getDisplayText, type Message } from "@domain/inbox/Message";
 
 import { useConversationViewModel } from "../model/useConversationViewModel";
 
+function ConversationHeader(props: {
+  showOriginal: boolean;
+  toggleTranslation: () => void;
+}) {
+  const { showOriginal, toggleTranslation } = props;
+  return (
+    <XStack justifyContent="flex-end" marginBottom="$2">
+      <Button size="$2" onPress={toggleTranslation}>
+        {showOriginal ? "翻訳を表示" : "原文を表示"}
+      </Button>
+    </XStack>
+  );
+}
+
+function MessagesList(props: {
+  messages: Message[];
+  showOriginal: boolean;
+  lang: string;
+}) {
+  const { messages, showOriginal, lang } = props;
+  return (
+    <FlatList
+      data={messages}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => (
+        <MessageBubble message={item} showOriginal={showOriginal} lang={lang} />
+      )}
+      style={{ flex: 1 }}
+    />
+  );
+}
+
+function MessageComposer(props: {
+  text: string;
+  setText: (v: string) => void;
+  onSend: () => Promise<void>;
+}) {
+  const { text, setText, onSend } = props;
+  return (
+    <XStack gap="$2" paddingTop="$2">
+      <Input
+        flex={1}
+        testID="message-input"
+        placeholder="メッセージを入力"
+        value={text}
+        onChangeText={setText}
+      />
+      <Button testID="send-btn" onPress={onSend}>
+        送信
+      </Button>
+    </XStack>
+  );
+}
+
 /**
  * メッセージ吹き出し。
  *
@@ -89,44 +143,25 @@ export function ConversationScreen(props: {
     );
   }
 
+  const onSend = async () => {
+    const trimmed = text.trim();
+    if (trimmed.length === 0) return;
+    await sendMessage(trimmed);
+    setText("");
+  };
+
   return (
     <Screen>
-      <XStack justifyContent="flex-end" marginBottom="$2">
-        <Button size="$2" onPress={toggleTranslation}>
-          {showOriginal ? "翻訳を表示" : "原文を表示"}
-        </Button>
-      </XStack>
-      <FlatList
-        data={state.messages}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <MessageBubble
-            message={item}
-            showOriginal={showOriginal}
-            lang={lang}
-          />
-        )}
-        style={{ flex: 1 }}
+      <ConversationHeader
+        showOriginal={showOriginal}
+        toggleTranslation={toggleTranslation}
       />
-      <XStack gap="$2" paddingTop="$2">
-        <Input
-          flex={1}
-          testID="message-input"
-          placeholder="メッセージを入力"
-          value={text}
-          onChangeText={setText}
-        />
-        <Button
-          testID="send-btn"
-          onPress={async () => {
-            if (text.trim().length === 0) return;
-            await sendMessage(text.trim());
-            setText("");
-          }}
-        >
-          送信
-        </Button>
-      </XStack>
+      <MessagesList
+        messages={state.messages}
+        showOriginal={showOriginal}
+        lang={lang}
+      />
+      <MessageComposer text={text} setText={setText} onSend={onSend} />
     </Screen>
   );
 }
