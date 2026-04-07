@@ -101,6 +101,16 @@ export type DocumentItemTransitionInput = {
   toStatus: string;
 };
 
+/** 案件资料完成率汇总结果。 */
+export type DocumentCompletionRate = {
+  caseId: string;
+  total: number;
+  completed: number;
+  approved: number;
+  waived: number;
+  completionRate: number;
+};
+
 /**
  * 合法的状态流转映射（7 状态）。
  *
@@ -249,6 +259,41 @@ export class DocumentItemsService {
     );
 
     return { items: result.rows.map(mapDocumentItemRow), total };
+  }
+
+  /**
+   * 统计案件资料完成率：(approved + waived) / total * 100。
+   * @param ctx 请求上下文
+   * @param caseId 案件 ID
+   * @returns 完成率汇总结果
+   */
+  async getCompletionRate(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<DocumentCompletionRate> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<{ status: string; count: string }>(
+      `select status, count(*)::text as count from document_items where case_id = $1 and status != 'deleted' group by status`,
+      [caseId],
+    );
+    let total = 0;
+    let approved = 0;
+    let waived = 0;
+    for (const row of result.rows) {
+      const count = parseInt(row.count, 10) || 0;
+      total += count;
+      if (row.status === "approved") approved = count;
+      if (row.status === "waived") waived = count;
+    }
+    const completed = approved + waived;
+    return {
+      caseId,
+      total,
+      completed,
+      approved,
+      waived,
+      completionRate: total === 0 ? 0 : (completed / total) * 100,
+    };
   }
 
   /**

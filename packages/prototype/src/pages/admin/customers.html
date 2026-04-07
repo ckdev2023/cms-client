@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/admin.css" />
+    <title>客户 - Gyosei OS</title>
+  </head>
+  <body data-nav-open="false" data-active-nav="customers">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <include src="/components/Admin/MobileNav.html"></include>
+
+    <div class="app-shell">
+      <aside class="side-nav" aria-label="侧边栏导航">
+        <include src="/components/Admin/SideNav.html"></include>
+      </aside>
+
+      <div>
+        <include
+          src="/components/Admin/TopBar.html"
+          data-search-placeholder="搜索：客户姓名 / 手机 / 邮箱..."
+        ></include>
+
+        <main id="main" class="page">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">客户</h1>
+              <p class="page-subtitle">客户档案、联系人与历史案件</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn-secondary" type="button">批量导入</button>
+              <button class="btn-primary" type="button">新建客户</button>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="apple-card">
+              <div class="table-wrap">
+                <table class="apple-table" aria-label="客户列表">
+                  <thead>
+                    <tr>
+                      <th>客户</th>
+                      <th>联系方式</th>
+                      <th>在办案件</th>
+                      <th>负责人</th>
+                      <th>更新时间</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <a class="link-apple" href="cases-list.html">王小明</a>
+                        <div class="muted">客户编号 C-00192</div>
+                      </td>
+                      <td>
+                        <div>+81 90-1234-5678</div>
+                        <div class="muted">xm.wang@example.com</div>
+                      </td>
+                      <td><span class="badge badge-active">2</span></td>
+                      <td>AD</td>
+                      <td>今天</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a class="link-apple" href="cases-list.html">陈雨</a>
+                        <div class="muted">客户编号 C-00187</div>
+                      </td>
+                      <td>
+                        <div>+81 80-3333-2222</div>
+                        <div class="muted">y.chen@example.com</div>
+                      </td>
+                      <td><span class="badge badge-pending">1</span></td>
+                      <td>YX</td>
+                      <td>昨天</td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <a class="link-apple" href="cases-list.html">佐藤健</a>
+                        <div class="muted">客户编号 C-00152</div>
+                      </td>
+                      <td>
+                        <div>+81 70-8888-9999</div>
+                        <div class="muted">t.sato@example.com</div>
+                      </td>
+                      <td><span class="badge badge-done">0</span></td>
+                      <td>HG</td>
+                      <td>上周</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>

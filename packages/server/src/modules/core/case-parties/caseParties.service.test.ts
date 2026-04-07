@@ -87,7 +87,7 @@ void test("mapCasePartyRow handles null optional fields", () => {
 
 // ── create ──
 
-void test("CasePartiesService.create inserts row and writes timeline", async () => {
+void test("CasePartiesService.create inserts row and writes both timelines", async () => {
   const tl = makeTimeline();
   const pool = makePool((sql) => {
     if (sql.includes("select id from cases"))
@@ -106,12 +106,18 @@ void test("CasePartiesService.create inserts row and writes timeline", async () 
 
   assert.equal(party.id, PARTY_ID);
   assert.equal(party.partyType, "spouse");
-  assert.equal(tl.writes.length, 1);
+  assert.equal(tl.writes.length, 2);
   assert.deepEqual(tl.writes[0], {
     entityType: "case_party",
     entityId: PARTY_ID,
     action: "case_party.created",
     payload: { caseId: CASE_ID, partyType: "spouse" },
+  });
+  assert.deepEqual(tl.writes[1], {
+    entityType: "case",
+    entityId: CASE_ID,
+    action: "case_party.created",
+    payload: { casePartyId: PARTY_ID, partyType: "spouse" },
   });
 });
 
@@ -281,7 +287,7 @@ void test("CasePartiesService.list filters by caseId", async () => {
 
 // ── update ──
 
-void test("CasePartiesService.update updates and writes timeline", async () => {
+void test("CasePartiesService.update updates and writes both timelines", async () => {
   const tl = makeTimeline();
   const pool = makePool((sql, params) => {
     // get() by id
@@ -304,7 +310,17 @@ void test("CasePartiesService.update updates and writes timeline", async () => {
     partyType: "child",
   });
   assert.equal(updated.partyType, "child");
-  assert.equal(tl.writes.length, 1);
+  assert.equal(tl.writes.length, 2);
+  assert.deepEqual(tl.writes[1], {
+    entityType: "case",
+    entityId: CASE_ID,
+    action: "case_party.updated",
+    payload: {
+      casePartyId: PARTY_ID,
+      before: mapCasePartyRow(sampleRow),
+      after: mapCasePartyRow({ ...sampleRow, party_type: "child" }),
+    },
+  });
 });
 
 void test("CasePartiesService.update throws NotFoundException when not found", async () => {
@@ -353,7 +369,7 @@ void test("CasePartiesService.update rejects is_primary conflict", async () => {
 
 // ── hardDelete ──
 
-void test("CasePartiesService.hardDelete deletes and writes timeline", async () => {
+void test("CasePartiesService.hardDelete deletes and writes both timelines", async () => {
   const tl = makeTimeline();
   const pool = makePool((sql) => {
     if (sql.includes("from case_parties") && !sql.includes("delete"))
@@ -364,12 +380,18 @@ void test("CasePartiesService.hardDelete deletes and writes timeline", async () 
   });
 
   await svc(pool, tl).hardDelete(makeCtx(), PARTY_ID);
-  assert.equal(tl.writes.length, 1);
+  assert.equal(tl.writes.length, 2);
   assert.deepEqual(tl.writes[0], {
     entityType: "case_party",
     entityId: PARTY_ID,
     action: "case_party.deleted",
     payload: { caseId: CASE_ID, partyType: "spouse" },
+  });
+  assert.deepEqual(tl.writes[1], {
+    entityType: "case",
+    entityId: CASE_ID,
+    action: "case_party.deleted",
+    payload: { casePartyId: PARTY_ID, partyType: "spouse" },
   });
 });
 

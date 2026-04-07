@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/admin.css" />
+    <title>任务与提醒 - Gyosei OS</title>
+  </head>
+  <body data-nav-open="false" data-active-nav="tasks">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <include src="/components/Admin/MobileNav.html"></include>
+
+    <div class="app-shell">
+      <aside class="side-nav" aria-label="侧边栏导航">
+        <include src="/components/Admin/SideNav.html"></include>
+      </aside>
+
+      <div>
+        <include
+          src="/components/Admin/TopBar.html"
+          data-search-placeholder="搜索：任务 / 客户 / 案件..."
+        ></include>
+
+        <main id="main" class="page">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">任务与提醒</h1>
+              <p class="page-subtitle">跨案件的待办视图，支持负责人分配与截止时间</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn-secondary" type="button">批量完成</button>
+              <button class="btn-primary" type="button">新建任务</button>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="apple-card">
+              <div class="table-wrap">
+                <table class="apple-table" aria-label="任务列表">
+                  <thead>
+                    <tr>
+                      <th>任务</th>
+                      <th>关联</th>
+                      <th>负责人</th>
+                      <th>截止</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">催收材料：公司章程</div>
+                        <div class="muted">需客户补充扫描件</div>
+                      </td>
+                      <td><a class="link-apple" href="case-detail.html">JP-2026-0192</a></td>
+                      <td>AD</td>
+                      <td>今天</td>
+                      <td><span class="badge badge-alert">高优先</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">核对客户信息</div>
+                        <div class="muted">身份证件与住址一致性</div>
+                      </td>
+                      <td><a class="link-apple" href="case-detail.html">JP-2026-0187</a></td>
+                      <td>YX</td>
+                      <td>明天</td>
+                      <td><span class="badge badge-pending">待处理</span></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">生成材料清单（v2）</div>
+                        <div class="muted">经营管理签证</div>
+                      </td>
+                      <td><a class="link-apple" href="forms.html">模板</a></td>
+                      <td>HG</td>
+                      <td>本周</td>
+                      <td><span class="badge badge-active">进行中</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>

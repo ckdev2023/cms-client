@@ -1,0 +1,323 @@
+{
+  "meta": {
+    "schemaVersion": "1.0",
+    "generatedAt": "2026-04-07T10:00:00.000Z",
+    "locale": "zh-CN",
+    "timezone": "Asia/Tokyo",
+    "disclaimer": "All data is fictional and for prototype/demo only."
+  },
+  "visaTypes": [
+    {
+      "id": "vt_jp_work_ehis",
+      "country": "JP",
+      "category": "work",
+      "nameZh": "技术·人文知识·国际业务（就劳签）",
+      "nameJa": "技術・人文知識・国際業務",
+      "nameEn": "Engineer / Specialist in Humanities / International Services",
+      "shortCode": "E/H/IS",
+      "commonDurationsMonths": [12, 36, 60],
+      "processingDaysRange": { "min": 14, "max": 60 },
+      "complexity": "medium",
+      "commonUseCases": ["IT 工程师入职", "翻译/市场岗位入职", "海外派遣转日本本地雇用"],
+      "riskFactors": ["学历与岗位不匹配", "收入偏低", "雇主资质材料不完整"]
+    },
+    {
+      "id": "vt_jp_work_ssw1",
+      "country": "JP",
+      "category": "work",
+      "nameZh": "特定技能 1 号",
+      "nameJa": "特定技能１号",
+      "nameEn": "Specified Skilled Worker (i)",
+      "shortCode": "SSW1",
+      "commonDurationsMonths": [6, 12, 36, 60],
+      "processingDaysRange": { "min": 21, "max": 75 },
+      "complexity": "high",
+      "commonUseCases": ["外食/介护/建筑等行业就职", "技能实习转特定技能"],
+      "riskFactors": ["支援计划不合规", "行业/考试资格不清晰", "雇佣合同与实际工时冲突"]
+    },
+    {
+      "id": "vt_jp_family_dependent",
+      "country": "JP",
+      "category": "family",
+      "nameZh": "家族滞在",
+      "nameJa": "家族滞在",
+      "nameEn": "Dependent",
+      "shortCode": "DEP",
+      "commonDurationsMonths": [6, 12, 36, 60],
+      "processingDaysRange": { "min": 10, "max": 45 },
+      "complexity": "low",
+      "commonUseCases": ["配偶随行", "子女随行", "留学生家属随行"],
+      "riskFactors": ["抚养能力（收入/存款）不足", "婚姻关系证明链条不完整", "共同生活证据不足"]
+    },
+    {
+      "id": "vt_jp_family_spouse_jp",
+      "country": "JP",
+      "category": "family",
+      "nameZh": "日本人/永住者的配偶者等",
+      "nameJa": "日本人の配偶者等 / 永住者の配偶者等",
+      "nameEn": "Spouse of Japanese National / Permanent Resident",
+      "shortCode": "SP",
+      "commonDurationsMonths": [6, 12, 36, 60],
+      "processingDaysRange": { "min": 21, "max": 90 },
+      "complexity": "high",
+      "commonUseCases": ["国际婚姻在留申请", "配偶签续签", "从其他在留资格变更"],
+      "riskFactors": ["同居事实弱", "婚姻历史复杂", "收入/住居信息不一致"]
+    },
+    {
+      "id": "vt_jp_study_student",
+      "country": "JP",
+      "category": "study",
+      "nameZh": "留学",
+      "nameJa": "留学",
+      "nameEn": "Student",
+      "shortCode": "STU",
+      "commonDurationsMonths": [6, 12, 24],
+      "processingDaysRange": { "min": 21, "max": 75 },
+      "complexity": "medium",
+      "commonUseCases": ["语言学校入学", "专门学校/大学入学", "在日续签"],
+      "riskFactors": ["资金来源不清晰", "学习计划薄弱", "出勤率/成绩风险"]
+    },
+    {
+      "id": "vt_jp_business_manager",
+      "country": "JP",
+      "category": "work",
+      "nameZh": "经营·管理",
+      "nameJa": "経営・管理",
+      "nameEn": "Business Manager",
+      "shortCode": "BM",
+      "commonDurationsMonths": [12, 36, 60],
+      "processingDaysRange": { "min": 30, "max": 120 },
+      "complexity": "high",
+      "commonUseCases": ["新设公司创业", "既存公司经营者在留", "公司变更/续签"],
+      "riskFactors": ["办公地址不合规", "资金/出资结构不清", "业务计划与财务不匹配"]
+    }
+  ],
+  "requirementSets": [
+    {
+      "id": "reqset_ehis_new",
+      "visaTypeId": "vt_jp_work_ehis",
+      "scenario": "new",
+      "titleZh": "就劳签（E/H/IS）- 新规申请 - 资料清单",
+      "jurisdiction": "Tokyo",
+      "sections": [
+        {
+          "id": "sec_applicant_core",
+          "titleZh": "申请人（本人）",
+          "items": [
+            {
+              "id": "doc_passport",
+              "nameZh": "护照复印件（含照片页与出入境记录页）",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["页码需连续可读", "护照有效期建议 >= 6 个月"]
+            },
+            {
+              "id": "doc_photo_4x3",
+              "nameZh": "证件照（4cm×3cm）",
+              "required": true,
+              "owner": "applicant",
+              "format": ["jpg", "png"],
+              "validityDays": 180,
+              "translationRequired": false,
+              "reviewHints": ["近 3 个月", "白底/无修图"]
+            },
+            {
+              "id": "doc_cv",
+              "nameZh": "履历书（含教育/工作经历）",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["时间线无断档", "岗位与专业关联清晰"]
+            },
+            {
+              "id": "doc_degree",
+              "nameZh": "毕业证/学位证",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": "if_not_japanese_or_english",
+              "reviewHints": ["学校名称与认证信息一致"]
+            }
+          ]
+        },
+        {
+          "id": "sec_employer",
+          "titleZh": "雇主（公司）",
+          "items": [
+            {
+              "id": "doc_job_offer",
+              "nameZh": "雇用合同/内定通知书（含职位、薪资、工时）",
+              "required": true,
+              "owner": "employer",
+              "format": ["pdf"],
+              "validityDays": 90,
+              "translationRequired": false,
+              "reviewHints": ["薪资需与同岗位相当", "雇佣开始日与申请计划一致"]
+            },
+            {
+              "id": "doc_company_registry",
+              "nameZh": "公司登記事项证明书（履历事项全部证明书）",
+              "required": true,
+              "owner": "employer",
+              "format": ["pdf"],
+              "validityDays": 90,
+              "translationRequired": false,
+              "reviewHints": ["3 个月内", "法人名/地址与其他材料一致"]
+            },
+            {
+              "id": "doc_company_financials",
+              "nameZh": "决算报告/财务报表（最近 1 期）",
+              "required": true,
+              "owner": "employer",
+              "format": ["pdf"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["赤字需补充说明", "与纳税证明形成闭环"]
+            }
+          ]
+        }
+      ],
+      "lastUpdatedAt": "2026-04-07T10:00:00.000Z"
+    },
+    {
+      "id": "reqset_dependent_new",
+      "visaTypeId": "vt_jp_family_dependent",
+      "scenario": "new",
+      "titleZh": "家族滞在 - 新规申请 - 资料清单",
+      "jurisdiction": "Tokyo",
+      "sections": [
+        {
+          "id": "sec_sponsor",
+          "titleZh": "扶养者（在日）",
+          "items": [
+            {
+              "id": "doc_residence_card",
+              "nameZh": "在留卡（正反面）",
+              "required": true,
+              "owner": "sponsor",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["在留期限需覆盖预计同住周期"]
+            },
+            {
+              "id": "doc_tax_certificate",
+              "nameZh": "课税证明书/纳税证明书（市区町村）",
+              "required": true,
+              "owner": "sponsor",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": 365,
+              "translationRequired": false,
+              "reviewHints": ["显示所得与纳税情况", "无欠缴"]
+            },
+            {
+              "id": "doc_employment_certificate",
+              "nameZh": "在职证明（如适用）",
+              "required": false,
+              "owner": "sponsor",
+              "format": ["pdf"],
+              "validityDays": 60,
+              "translationRequired": false,
+              "reviewHints": ["与工资单/源泉票一致"]
+            }
+          ]
+        },
+        {
+          "id": "sec_family_relationship",
+          "titleZh": "亲属关系",
+          "items": [
+            {
+              "id": "doc_marriage_certificate",
+              "nameZh": "结婚证/婚姻关系证明",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": "if_not_japanese",
+              "reviewHints": ["姓名拼写一致", "必要时补充公证/认证链条"]
+            },
+            {
+              "id": "doc_household_register",
+              "nameZh": "户口本/亲属关系证明（如适用）",
+              "required": false,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": "if_not_japanese",
+              "reviewHints": ["用于补强关系链条"]
+            }
+          ]
+        }
+      ],
+      "lastUpdatedAt": "2026-04-07T10:00:00.000Z"
+    },
+    {
+      "id": "reqset_ssw1_change",
+      "visaTypeId": "vt_jp_work_ssw1",
+      "scenario": "change_status",
+      "titleZh": "特定技能 1 号 - 在留资格变更 - 资料清单",
+      "jurisdiction": "Osaka",
+      "sections": [
+        {
+          "id": "sec_ssw1_applicant",
+          "titleZh": "申请人（本人）",
+          "items": [
+            {
+              "id": "doc_skill_exam",
+              "nameZh": "技能测定合格证明（或移行要件证明）",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["领域/行业需对应雇用内容"]
+            },
+            {
+              "id": "doc_japanese_exam",
+              "nameZh": "日语能力证明（JLPT/NAT 等）",
+              "required": true,
+              "owner": "applicant",
+              "format": ["pdf", "jpg", "png"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["等级满足领域要求"]
+            }
+          ]
+        },
+        {
+          "id": "sec_ssw1_employment",
+          "titleZh": "雇用与支援",
+          "items": [
+            {
+              "id": "doc_employment_conditions",
+              "nameZh": "雇用条件书（工资、工时、待遇、住宿等）",
+              "required": true,
+              "owner": "employer",
+              "format": ["pdf"],
+              "validityDays": 90,
+              "translationRequired": false,
+              "reviewHints": ["与实际排班一致", "最低工资与同工同酬校验"]
+            },
+            {
+              "id": "doc_support_plan",
+              "nameZh": "支援计划书（实施体制/频率/记录方式）",
+              "required": true,
+              "owner": "support_org",
+              "format": ["pdf"],
+              "validityDays": null,
+              "translationRequired": false,
+              "reviewHints": ["支援责任人与记录台账明确"]
+            }
+          ]
+        }
+      ],
+      "lastUpdatedAt": "2026-04-07T10:00:00.000Z"
+    }
+  ]
+}

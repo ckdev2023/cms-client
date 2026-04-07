@@ -133,7 +133,9 @@ void test("CompaniesService.create throws on insert failure", async () => {
 // ── get ──
 
 void test("CompaniesService.get returns company or null", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql, params) => {
+    calls.push(sql.trim());
     if (sql.includes("from companies") && params?.[0] === "comp1") {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
@@ -147,6 +149,7 @@ void test("CompaniesService.get returns company or null", async () => {
 
   const c2 = await service.get(makeCtx("viewer"), "not-found");
   assert.equal(c2, null);
+  assert.ok(calls.some((sql) => sql.includes("deleted_at is null")));
 });
 
 // ── list ──
@@ -192,12 +195,15 @@ void test("CompaniesService.list with keyword filter", async () => {
   const countCall = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(countCall);
   assert.ok(countCall.sql.includes("ilike"));
+  assert.ok(countCall.sql.includes("deleted_at is null"));
 });
 
 // ── update ──
 
 void test("CompaniesService.update updates and writes timeline", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql) => {
+    calls.push(sql.trim());
     if (
       sql.includes("from companies") &&
       sql.includes("where id") &&
@@ -225,6 +231,12 @@ void test("CompaniesService.update updates and writes timeline", async () => {
   const write = tl.writes[0] as Record<string, unknown>;
   assert.equal(write.action, "company.updated");
   assert.equal(write.entityType, "company");
+  assert.ok(
+    calls.some(
+      (sql) =>
+        sql.includes("update companies") && sql.includes("deleted_at is null"),
+    ),
+  );
 });
 
 void test("CompaniesService.update throws NotFoundException when not found", async () => {
@@ -262,19 +274,21 @@ void test("CompaniesService.update throws on update failure", async () => {
 
 // ── softDelete ──
 
-void test("CompaniesService.softDelete deletes and writes timeline", async () => {
+void test("CompaniesService.softDelete marks deleted_at and writes timeline", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql, params) => {
+    calls.push(sql.trim());
     if (
       sql.includes("from companies") &&
       params?.[0] === "comp1" &&
-      !sql.includes("delete")
+      !sql.includes("update companies")
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
     if (sql.includes("exists")) {
       return Promise.resolve({ rows: [{ exists: false }], rowCount: 1 });
     }
-    if (sql.includes("delete from companies")) {
+    if (sql.includes("update companies set deleted_at = now()")) {
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -288,6 +302,7 @@ void test("CompaniesService.softDelete deletes and writes timeline", async () =>
   const write = tl.writes[0] as Record<string, unknown>;
   assert.equal(write.action, "company.deleted");
   assert.equal(write.entityType, "company");
+  assert.ok(calls.some((sql) => sql.includes("set deleted_at = now()")));
 });
 
 void test("CompaniesService.softDelete throws NotFoundException when not found", async () => {
@@ -307,9 +322,9 @@ void test("CompaniesService.softDelete throws NotFoundException when not found",
 void test("CompaniesService.softDelete throws BadRequestException when cases exist", async () => {
   const pool = makePool((sql, params) => {
     if (
+      sql.includes("select") &&
       sql.includes("from companies") &&
-      params?.[0] === "comp1" &&
-      !sql.includes("delete")
+      params?.[0] === "comp1"
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
@@ -333,16 +348,20 @@ void test("CompaniesService.softDelete throws BadRequestException when cases exi
 void test("CompaniesService.softDelete throws on delete failure", async () => {
   const pool = makePool((sql, params) => {
     if (
+      sql.includes("select") &&
       sql.includes("from companies") &&
-      params?.[0] === "comp1" &&
-      !sql.includes("delete")
+      params?.[0] === "comp1"
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
     if (sql.includes("exists")) {
       return Promise.resolve({ rows: [{ exists: false }], rowCount: 1 });
     }
-    if (sql.includes("delete from companies")) {
+    if (
+      sql.includes(
+        "update companies set deleted_at = now(), updated_at = now()",
+      )
+    ) {
       return Promise.resolve({ rows: [], rowCount: 0 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });

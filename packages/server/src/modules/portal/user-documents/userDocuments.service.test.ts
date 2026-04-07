@@ -2,13 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
-import { UserDocumentsService, STORAGE_ADAPTER } from "./userDocuments.service";
-import type { StorageAdapter } from "../../../infra/storage/storageAdapter";
+import { UserDocumentsService } from "./userDocuments.service";
+import {
+  STORAGE_ADAPTER,
+  type StorageAdapter,
+} from "../../../infra/storage/storageAdapter";
 
 // Suppress unused import warning
 void STORAGE_ADAPTER;
 
-type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+type QueryFn = (
+  sql: string,
+  params?: unknown[],
+) => Promise<{ rows: unknown[] }>;
 
 function makePool(qf: QueryFn) {
   return { query: qf } as unknown as Pool;
@@ -51,7 +57,10 @@ function makeMockStorage() {
 function createService(poolFn: QueryFn) {
   const pool = makePool(poolFn);
   const mock = makeMockStorage();
-  const svc = new (UserDocumentsService as unknown as new (pool: Pool, storage: StorageAdapter) => UserDocumentsService)(pool, mock.adapter);
+  const svc = new (UserDocumentsService as unknown as new (
+    pool: Pool,
+    storage: StorageAdapter,
+  ) => UserDocumentsService)(pool, mock.adapter);
   return { svc, ...mock };
 }
 
@@ -72,10 +81,32 @@ void test("UserDocumentsService.upload calls StorageAdapter.upload and inserts r
   assert.ok(uploadCalls[0].key.includes("user-docs/au-1/"));
 });
 
+void test("UserDocumentsService.upload removes uploaded object when DB insert fails", async () => {
+  const { svc, uploadCalls, removeCalls } = createService(() =>
+    Promise.resolve({ rows: [] }),
+  );
+
+  await assert.rejects(
+    () =>
+      svc.upload({
+        appUserId: "au-1",
+        fileName: "test.pdf",
+        data: Buffer.from("hello"),
+        contentType: "application/pdf",
+      }),
+    /Failed to upload document/,
+  );
+
+  assert.equal(uploadCalls.length, 1);
+  assert.equal(removeCalls.length, 1);
+});
+
 // ── get ──
 
 void test("UserDocumentsService.get returns document", async () => {
-  const { svc } = createService(() => Promise.resolve({ rows: [SAMPLE_DOC_ROW] }));
+  const { svc } = createService(() =>
+    Promise.resolve({ rows: [SAMPLE_DOC_ROW] }),
+  );
   const result = await svc.get("doc-1");
   assert.ok(result);
   assert.equal(result.id, "doc-1");
@@ -87,7 +118,8 @@ void test("UserDocumentsService.list filters by appUserId", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc } = createService((sql, params) => {
     calls.push({ sql, params });
-    if (sql.includes("count(*)")) return Promise.resolve({ rows: [{ count: "1" }] });
+    if (sql.includes("count(*)"))
+      return Promise.resolve({ rows: [{ count: "1" }] });
     return Promise.resolve({ rows: [SAMPLE_DOC_ROW] });
   });
   const result = await svc.list({ appUserId: "au-1" });
@@ -98,7 +130,9 @@ void test("UserDocumentsService.list filters by appUserId", async () => {
 // ── downloadUrl ──
 
 void test("UserDocumentsService.getDownloadUrl returns signed url", async () => {
-  const { svc } = createService(() => Promise.resolve({ rows: [SAMPLE_DOC_ROW] }));
+  const { svc } = createService(() =>
+    Promise.resolve({ rows: [SAMPLE_DOC_ROW] }),
+  );
   const url = await svc.getDownloadUrl("doc-1");
   assert.equal(url, "https://example.com/signed");
 });

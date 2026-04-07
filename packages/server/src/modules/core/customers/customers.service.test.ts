@@ -27,7 +27,7 @@ void test("CustomersService.create inserts row and writes timeline", async () =>
               id: "c1",
               org_id: "00000000-0000-4000-8000-000000000000",
               type: "individual",
-              base_profile: { name: "Alice" },
+              base_profile: { name_cn: "Alice" },
               contacts: [],
               created_at: "2026-01-01T00:00:00.000Z",
               updated_at: "2026-01-01T00:00:00.000Z",
@@ -63,7 +63,7 @@ void test("CustomersService.create inserts row and writes timeline", async () =>
 
   const customer = await service.create(ctx, {
     type: "individual",
-    baseProfile: { name: "Alice" },
+    baseProfile: { name_cn: "Alice" },
   });
 
   assert.equal(customer.id, "c1");
@@ -75,7 +75,7 @@ void test("CustomersService.create inserts row and writes timeline", async () =>
   assert.deepEqual(insertCall.params, [
     "00000000-0000-4000-8000-000000000000",
     "individual",
-    JSON.stringify({ name: "Alice" }),
+    JSON.stringify({ name_cn: "Alice" }),
     "[]",
   ]);
 
@@ -105,13 +105,114 @@ void test("CustomersService.create throws BadRequestException on insert failure"
 
   await assert.rejects(
     async () => {
-      await service.create(ctx, { type: "individual" });
+      await service.create(ctx, {
+        type: "individual",
+        baseProfile: { name_cn: "Alice" },
+      });
     },
     (err) => {
       assert.ok(err instanceof Error);
       assert.equal(err.message, "Failed to create customer");
       return true;
     },
+  );
+});
+
+void test("CustomersService.create validates individual baseProfile names", async () => {
+  let called = false;
+  const client = {
+    query: () => {
+      called = true;
+      return Promise.resolve({ rows: [] });
+    },
+    release: () => undefined,
+  };
+  const service = new CustomersService(
+    { connect: () => Promise.resolve(client) } as unknown as Pool,
+    {} as never,
+  );
+
+  await assert.rejects(
+    () =>
+      service.create(
+        {
+          orgId: "00000000-0000-4000-8000-000000000000",
+          userId: "00000000-0000-4000-8000-000000000001",
+          role: "staff",
+        },
+        { type: "individual", baseProfile: { nationality: "CN" } },
+      ),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("name_cn"));
+      return true;
+    },
+  );
+  assert.equal(called, false);
+});
+
+void test("CustomersService.update merges baseProfile before validation", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const client = {
+    query: (sql: string, params?: unknown[]) => {
+      calls.push({ sql: sql.trim(), params });
+      if (sql.includes("where id = $1") && !sql.includes("update customers")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: "c1",
+              org_id: "00000000-0000-4000-8000-000000000000",
+              type: "individual",
+              base_profile: { name_cn: "Alice" },
+              contacts: [],
+              created_at: "2026-01-01T00:00:00.000Z",
+              updated_at: "2026-01-01T00:00:00.000Z",
+            },
+          ],
+        });
+      }
+      if (sql.includes("update customers")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: "c1",
+              org_id: "00000000-0000-4000-8000-000000000000",
+              type: "individual",
+              base_profile: { name_cn: "Alice", nationality: "CN" },
+              contacts: [],
+              created_at: "2026-01-01T00:00:00.000Z",
+              updated_at: "2026-01-02T00:00:00.000Z",
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ rows: [] });
+    },
+    release: () => undefined,
+  };
+  const service = new CustomersService(
+    { connect: () => Promise.resolve(client) } as unknown as Pool,
+    { write: () => Promise.resolve() } as never,
+  );
+
+  const updated = await service.update(
+    {
+      orgId: "00000000-0000-4000-8000-000000000000",
+      userId: "00000000-0000-4000-8000-000000000001",
+      role: "staff",
+    },
+    "c1",
+    { baseProfile: { nationality: "CN" } },
+  );
+
+  assert.equal(updated.baseProfile.name_cn, "Alice");
+  assert.equal(updated.baseProfile.nationality, "CN");
+  const updateCall = calls.find((call) =>
+    call.sql.includes("update customers"),
+  );
+  assert.deepEqual(
+    updateCall?.params?.[2],
+    JSON.stringify({ name_cn: "Alice", nationality: "CN" }),
   );
 });
 
@@ -122,7 +223,8 @@ void test("CustomersService.get returns customer or null", async () => {
     query: (sql: string, params?: unknown[]) => {
       calls.push({ sql: sql.trim(), params });
       if (
-        sql.includes("where") && sql.includes("id = $1") &&
+        sql.includes("where") &&
+        sql.includes("id = $1") &&
         params?.[0] === "c1" &&
         !sql.includes("update customers")
       ) {
@@ -247,7 +349,6 @@ void test("CustomersService.list handles default parameters and empty counts", a
   assert.deepEqual(listCall.params, [50, 0]); // Default limit 50, page 1 (offset 0)
 });
 
-
 void test("CustomersService.get returns null when not found", async () => {
   const client = {
     query: () => Promise.resolve({ rows: [] }),
@@ -266,15 +367,20 @@ void test("CustomersService.get returns null when not found", async () => {
 
 void test("CustomersService.get handles null contacts", async () => {
   const client = {
-    query: () => Promise.resolve({ rows: [{
-      id: "c-null-contacts",
-      org_id: "00000000-0000-4000-8000-000000000000",
-      type: "individual",
-      base_profile: { name: "Test" },
-      contacts: null,
-      created_at: "2026-01-01T00:00:00.000Z",
-      updated_at: "2026-01-01T00:00:00.000Z",
-    }] }),
+    query: () =>
+      Promise.resolve({
+        rows: [
+          {
+            id: "c-null-contacts",
+            org_id: "00000000-0000-4000-8000-000000000000",
+            type: "individual",
+            base_profile: { name: "Test" },
+            contacts: null,
+            created_at: "2026-01-01T00:00:00.000Z",
+            updated_at: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      }),
     release: () => undefined,
   };
   const pool = { connect: () => Promise.resolve(client) };
@@ -295,15 +401,19 @@ void test("CustomersService.list handles items and count", async () => {
       if (sql.includes("select count(*)")) {
         return Promise.resolve({ rows: [{ count: "10" }] });
       }
-      return Promise.resolve({ rows: [{
-        id: "c-list-1",
-        org_id: "00000000-0000-4000-8000-000000000000",
-        type: "individual",
-        base_profile: { name: "Test" },
-        contacts: [],
-        created_at: "2026-01-01T00:00:00.000Z",
-        updated_at: "2026-01-01T00:00:00.000Z",
-      }] });
+      return Promise.resolve({
+        rows: [
+          {
+            id: "c-list-1",
+            org_id: "00000000-0000-4000-8000-000000000000",
+            type: "individual",
+            base_profile: { name: "Test" },
+            contacts: [],
+            created_at: "2026-01-01T00:00:00.000Z",
+            updated_at: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      });
     },
     release: () => undefined,
   };

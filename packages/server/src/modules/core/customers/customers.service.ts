@@ -70,6 +70,71 @@ export type CustomerListInput = {
   limit?: number;
 };
 
+type BaseProfileSchemaField = {
+  type: "string" | "date";
+};
+
+const INDIVIDUAL_BASE_PROFILE_SCHEMA: Record<string, BaseProfileSchemaField> = {
+  name_cn: { type: "string" },
+  name_en: { type: "string" },
+  name_jp: { type: "string" },
+  gender: { type: "string" },
+  nationality: { type: "string" },
+  birthday: { type: "date" },
+  birthplace: { type: "string" },
+  passport_no: { type: "string" },
+  passport_expiry_date: { type: "date" },
+  residence_card_no: { type: "string" },
+  residence_expiry_date: { type: "date" },
+};
+
+const INDIVIDUAL_REQUIRED_NAME_FIELDS = ["name_cn", "name_en", "name_jp"];
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+function isNonEmptyString(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+function validateBaseProfile(
+  type: string,
+  baseProfile: unknown,
+): Record<string, unknown> {
+  if (!isPlainRecord(baseProfile)) {
+    throw new BadRequestException("baseProfile must be an object");
+  }
+  if (type !== "individual") return baseProfile;
+
+  const errors: string[] = [];
+  const hasName = INDIVIDUAL_REQUIRED_NAME_FIELDS.some((field) =>
+    isNonEmptyString(baseProfile[field]),
+  );
+  if (!hasName) {
+    errors.push("at least one of name_cn, name_en or name_jp is required");
+  }
+
+  for (const [field, schema] of Object.entries(
+    INDIVIDUAL_BASE_PROFILE_SCHEMA,
+  )) {
+    const value = baseProfile[field];
+    if (value === undefined || value === null) continue;
+    if (schema.type === "string") {
+      if (typeof value !== "string") errors.push(`${field} must be a string`);
+      continue;
+    }
+    if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+      errors.push(`${field} must be a valid date string`);
+    }
+  }
+
+  if (errors.length > 0) {
+    throw new BadRequestException(`Invalid baseProfile: ${errors.join("; ")}`);
+  }
+  return baseProfile;
+}
+
 /**
  * 客户服务，提供客户信息的 CRUD 与软删除能力，以及 Timeline 日志记录。
  */
@@ -97,7 +162,10 @@ export class CustomersService {
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
 
-    const baseProfile = input.baseProfile ?? {};
+    const baseProfile = validateBaseProfile(
+      input.type,
+      input.baseProfile ?? {},
+    );
     const contacts = input.contacts ?? [];
 
     const result = await tenantDb.query<CustomerQueryRow>(
@@ -207,7 +275,10 @@ export class CustomersService {
     if (!current) throw new NotFoundException("Customer not found or deleted");
 
     const nextType = input.type ?? current.type;
-    const nextBaseProfile = input.baseProfile ?? current.baseProfile;
+    const nextBaseProfile = validateBaseProfile(nextType, {
+      ...current.baseProfile,
+      ...(input.baseProfile ?? {}),
+    });
     const nextContacts = input.contacts ?? current.contacts;
 
     const result = await tenantDb.query<CustomerQueryRow>(

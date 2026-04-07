@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -14,6 +15,7 @@ import {
 } from "@nestjs/common";
 
 import { RequireRoles } from "../auth/auth.decorators";
+import { PermissionsService } from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CustomersService } from "./customers.service";
 
@@ -95,10 +97,13 @@ export class CustomersController {
   /**
    * 构造函数。
    * @param customersService 客户服务实例
+   * @param permissionsService 权限服务实例
    */
   constructor(
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   /**
@@ -171,11 +176,17 @@ export class CustomersController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    this.assertCanEditCustomer(ctx);
+
     const type = body.type !== undefined ? parseType(body.type) : undefined;
     const baseProfile = parseObject(body.baseProfile);
     const contacts = parseContacts(body.contacts);
 
-    return this.customersService.update(ctx, id, { type, baseProfile, contacts });
+    return this.customersService.update(ctx, id, {
+      type,
+      baseProfile,
+      contacts,
+    });
   }
 
   /**
@@ -190,7 +201,15 @@ export class CustomersController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    this.assertCanEditCustomer(ctx);
+
     await this.customersService.softDelete(ctx, id);
     return { ok: true };
+  }
+
+  private assertCanEditCustomer(ctx: RequestContext): void {
+    if (!this.permissionsService.canEditCustomer(ctx.userId, ctx.role)) {
+      throw new ForbiddenException("Insufficient permissions to edit customer");
+    }
   }
 }

@@ -1,0 +1,290 @@
+{
+  "meta": {
+    "schemaVersion": "1.0",
+    "generatedAt": "2026-04-07T10:00:00.000Z",
+    "locale": "zh-CN",
+    "timezone": "Asia/Tokyo",
+    "disclaimer": "All data is fictional and for prototype/demo only."
+  },
+  "contacts": [
+    {
+      "id": "ct_wang_wei",
+      "type": "person",
+      "displayName": "Wang Wei",
+      "nameNative": "王伟",
+      "locale": "zh-CN",
+      "channels": {
+        "email": "wang.wei@example.test",
+        "phone": "+81-90-0000-1001",
+        "wechat": "ww_jp_1001",
+        "line": null
+      },
+      "tags": ["lead", "work_visa"],
+      "createdAt": "2026-03-12T02:10:00.000Z",
+      "lastContactAt": "2026-04-06T09:15:00.000Z"
+    },
+    {
+      "id": "ct_tanaka_construction",
+      "type": "organization",
+      "displayName": "田中建设株式会社",
+      "nameNative": "田中建設株式会社",
+      "locale": "ja-JP",
+      "channels": {
+        "email": "hr@tanaka.example.test",
+        "phone": "+81-3-0000-2200",
+        "wechat": null,
+        "line": null
+      },
+      "tags": ["employer"],
+      "createdAt": "2026-02-01T03:00:00.000Z",
+      "lastContactAt": "2026-04-05T06:40:00.000Z"
+    },
+    {
+      "id": "ct_sarah_johnson",
+      "type": "person",
+      "displayName": "Sarah Johnson",
+      "nameNative": null,
+      "locale": "en-US",
+      "channels": {
+        "email": "sarah.j@example.test",
+        "phone": "+81-80-0000-3003",
+        "wechat": null,
+        "line": "sarahjp_3003"
+      },
+      "tags": ["customer", "spouse_visa"],
+      "createdAt": "2026-01-22T01:30:00.000Z",
+      "lastContactAt": "2026-04-06T04:08:00.000Z"
+    },
+    {
+      "id": "ct_global_tech",
+      "type": "organization",
+      "displayName": "Global Tech KK",
+      "nameNative": "グローバルテック株式会社",
+      "locale": "ja-JP",
+      "channels": {
+        "email": "ops@globaltech.example.test",
+        "phone": "+81-6-0000-4400",
+        "wechat": null,
+        "line": null
+      },
+      "tags": ["customer", "employer"],
+      "createdAt": "2025-12-18T08:20:00.000Z",
+      "lastContactAt": "2026-04-04T10:00:00.000Z"
+    },
+    {
+      "id": "ct_staff_li",
+      "type": "staff",
+      "displayName": "Li (担当)",
+      "nameNative": "李",
+      "locale": "zh-CN",
+      "channels": {
+        "email": "li@example.test",
+        "phone": null,
+        "wechat": null,
+        "line": null
+      },
+      "tags": ["staff", "case_manager"],
+      "createdAt": "2025-10-01T00:00:00.000Z",
+      "lastContactAt": "2026-04-06T09:30:00.000Z"
+    }
+  ],
+  "conversations": [
+    {
+      "id": "cv_10001",
+      "subject": "就劳签证申请 - 缺件确认",
+      "channel": "wechat",
+      "status": "open",
+      "priority": "high",
+      "participants": ["ct_wang_wei", "ct_staff_li"],
+      "related": {
+        "leadId": "lead_2026_0312_001",
+        "caseId": "CAS-2023-1022",
+        "visaTypeId": "vt_jp_work_ehis"
+      },
+      "lastMessageAt": "2026-04-06T09:15:00.000Z",
+      "unreadCountByRole": { "staff": 0, "customer": 1 },
+      "createdAt": "2026-03-12T02:12:00.000Z",
+      "updatedAt": "2026-04-06T09:15:00.000Z"
+    },
+    {
+      "id": "cv_10002",
+      "subject": "建设业许可更新 - 审核进度",
+      "channel": "email",
+      "status": "open",
+      "priority": "medium",
+      "participants": ["ct_tanaka_construction", "ct_staff_li"],
+      "related": {
+        "leadId": null,
+        "caseId": "CAS-2023-1001",
+        "visaTypeId": null
+      },
+      "lastMessageAt": "2026-04-05T06:40:00.000Z",
+      "unreadCountByRole": { "staff": 2, "customer": 0 },
+      "createdAt": "2026-02-01T03:10:00.000Z",
+      "updatedAt": "2026-04-05T06:40:00.000Z"
+    },
+    {
+      "id": "cv_10003",
+      "subject": "配偶者签证延期 - 表格填写问题",
+      "channel": "line",
+      "status": "waiting_customer",
+      "priority": "low",
+      "participants": ["ct_sarah_johnson", "ct_staff_li"],
+      "related": {
+        "leadId": null,
+        "caseId": "CAS-2023-1089",
+        "visaTypeId": "vt_jp_family_spouse_jp"
+      },
+      "lastMessageAt": "2026-04-06T04:08:00.000Z",
+      "unreadCountByRole": { "staff": 1, "customer": 0 },
+      "createdAt": "2026-01-22T01:35:00.000Z",
+      "updatedAt": "2026-04-06T04:08:00.000Z"
+    },
+    {
+      "id": "cv_10004",
+      "subject": "特定技能 1 号变更 - 补正通知",
+      "channel": "email",
+      "status": "action_required",
+      "priority": "high",
+      "participants": ["ct_global_tech", "ct_staff_li"],
+      "related": {
+        "leadId": null,
+        "caseId": "CAS-2023-1045",
+        "visaTypeId": "vt_jp_work_ssw1"
+      },
+      "lastMessageAt": "2026-04-04T10:00:00.000Z",
+      "unreadCountByRole": { "staff": 3, "customer": 0 },
+      "createdAt": "2025-12-18T08:25:00.000Z",
+      "updatedAt": "2026-04-04T10:00:00.000Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg_90001",
+      "conversationId": "cv_10001",
+      "senderType": "customer",
+      "senderId": "ct_wang_wei",
+      "sentAt": "2026-04-06T08:58:00.000Z",
+      "contentType": "text",
+      "text": "老师，我这周能把毕业证补上。纳税证明需要去区役所开，对吗？",
+      "attachments": [],
+      "deliveryStatus": "read",
+      "meta": { "language": "zh-CN" }
+    },
+    {
+      "id": "msg_90002",
+      "conversationId": "cv_10001",
+      "senderType": "staff",
+      "senderId": "ct_staff_li",
+      "sentAt": "2026-04-06T09:05:00.000Z",
+      "contentType": "text",
+      "text": "对，市区町村开具的课税证明书/纳税证明书都需要。你先把毕业证+简历发我，我这边把雇主材料先走内部审核。",
+      "attachments": [],
+      "deliveryStatus": "read",
+      "meta": { "language": "zh-CN" }
+    },
+    {
+      "id": "msg_90003",
+      "conversationId": "cv_10001",
+      "senderType": "system",
+      "senderId": null,
+      "sentAt": "2026-04-06T09:06:00.000Z",
+      "contentType": "system",
+      "text": "已创建待办：收集「毕业证/学位证」与「课税证明书」；截止：2026/04/07。",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "event": "todo_created", "severity": "info" }
+    },
+    {
+      "id": "msg_90004",
+      "conversationId": "cv_10001",
+      "senderType": "customer",
+      "senderId": "ct_wang_wei",
+      "sentAt": "2026-04-06T09:15:00.000Z",
+      "contentType": "file",
+      "text": "先发简历（PDF）。毕业证今晚补。",
+      "attachments": [
+        {
+          "fileName": "CV_WangWei_2026.pdf",
+          "fileType": "application/pdf",
+          "url": "https://example.test/files/CV_WangWei_2026.pdf",
+          "sizeKB": 284
+        }
+      ],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "zh-CN" }
+    },
+    {
+      "id": "msg_91001",
+      "conversationId": "cv_10002",
+      "senderType": "customer",
+      "senderId": "ct_tanaka_construction",
+      "sentAt": "2026-04-05T05:50:00.000Z",
+      "contentType": "text",
+      "text": "更新分包合同清单已整理，请确认格式是否可以提交。",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "ja-JP" }
+    },
+    {
+      "id": "msg_91002",
+      "conversationId": "cv_10002",
+      "senderType": "staff",
+      "senderId": "ct_staff_li",
+      "sentAt": "2026-04-05T06:40:00.000Z",
+      "contentType": "text",
+      "text": "收到。表头建议补上「契约日」与「金额区分」。我发你一个可直接复制的模板。",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "zh-CN" }
+    },
+    {
+      "id": "msg_92001",
+      "conversationId": "cv_10003",
+      "senderType": "customer",
+      "senderId": "ct_sarah_johnson",
+      "sentAt": "2026-04-06T03:40:00.000Z",
+      "contentType": "text",
+      "text": "For the renewal form, should I write my previous address history in Japan or only the current one?",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "en-US" }
+    },
+    {
+      "id": "msg_92002",
+      "conversationId": "cv_10003",
+      "senderType": "staff",
+      "senderId": "ct_staff_li",
+      "sentAt": "2026-04-06T04:08:00.000Z",
+      "contentType": "text",
+      "text": "Please include the address history for the required period on the form. If space is limited, attach a separate sheet. I can format it for you if you send the dates.",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "en-US" }
+    },
+    {
+      "id": "msg_93001",
+      "conversationId": "cv_10004",
+      "senderType": "system",
+      "senderId": null,
+      "sentAt": "2026-04-04T09:20:00.000Z",
+      "contentType": "system",
+      "text": "状态变更：案件 CAS-2023-1045 进入「待补正」；原因：支援计划书签章缺失。",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "event": "case_status_changed", "severity": "warning" }
+    },
+    {
+      "id": "msg_93002",
+      "conversationId": "cv_10004",
+      "senderType": "staff",
+      "senderId": "ct_staff_li",
+      "sentAt": "2026-04-04T10:00:00.000Z",
+      "contentType": "text",
+      "text": "补正点：支援计划书需补齐签名/盖章页。建议今天下班前回收扫描件，避免影响整体审理。",
+      "attachments": [],
+      "deliveryStatus": "delivered",
+      "meta": { "language": "zh-CN" }
+    }
+  ]
+}

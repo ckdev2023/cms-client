@@ -6,143 +6,745 @@
     <title>新建案件 - Gyosei OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Apple Typography System */
-        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2') format('woff2'); font-weight: 400; }
-        @font-face { font-family: 'SF Pro Display'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2') format('woff2'); font-weight: 600; }
-        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2') format('woff2'); font-weight: 400; }
-        @font-face { font-family: 'SF Pro Text'; src: url('https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2') format('woff2'); font-weight: 500; }
-        
+        @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
         :root {
-            --apple-blue: #0071e3;
-            --apple-blue-hover: #0077ED;
-            --apple-link: #0066cc;
-            --apple-bg: #f5f5f7;
-            --apple-card: #ffffff;
-            --apple-text-main: #1d1d1f;
-            --apple-text-sec: rgba(0, 0, 0, 0.8);
-            --apple-text-tert: rgba(0, 0, 0, 0.48);
-            --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+            --bg: #f8fafc;
+            --surface: #ffffff;
+            --surface-2: #f1f5f9;
+            --border: #e2e8f0;
+            --text: #0f172a;
+            --muted: #475569;
+            --muted-2: #64748b;
+            --primary: #0369a1;
+            --primary-hover: #075985;
+            --success: #16a34a;
+            --warning: #f59e0b;
+            --danger: #dc2626;
+            --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 28px rgba(15, 23, 42, 0.08);
+            --radius: 14px;
         }
 
         body {
-            font-family: 'SF Pro Text', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: var(--apple-bg);
-            color: var(--apple-text-main);
+            font-family:
+                "Plus Jakarta Sans",
+                -apple-system,
+                BlinkMacSystemFont,
+                "Segoe UI",
+                Roboto,
+                Helvetica,
+                Arial,
+                sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            letter-spacing: -0.01em;
+        }
+
+        .text-hero {
+            font-size: 34px;
+            font-weight: 800;
+            line-height: 1.12;
             letter-spacing: -0.02em;
         }
 
-        .display-font { font-family: 'SF Pro Display', -apple-system, sans-serif; letter-spacing: -0.02em; }
-        .glass-nav { background-color: rgba(0, 0, 0, 0.8); backdrop-filter: saturate(180%) blur(20px); -webkit-backdrop-filter: saturate(180%) blur(20px); }
-        
-        .btn-primary { background-color: var(--apple-blue); color: white; padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
-        .btn-primary:hover { background-color: var(--apple-blue-hover); }
-        .btn-primary:active { transform: scale(0.98); }
-        
-        .btn-secondary { background-color: rgba(118, 118, 128, 0.12); color: var(--apple-text-main); padding: 10px 20px; border-radius: 8px; font-size: 15px; font-weight: 500; transition: all 0.2s; }
-        .btn-secondary:hover { background-color: rgba(118, 118, 128, 0.2); }
-        .btn-secondary:active { transform: scale(0.98); }
-
-        .apple-card { background-color: var(--apple-card); border-radius: 16px; box-shadow: var(--apple-shadow); border: none; }
-        
-        /* Form Inputs */
-        .form-group { margin-bottom: 24px; }
-        .form-label { display: block; font-size: 14px; font-weight: 500; color: var(--apple-text-main); margin-bottom: 8px; }
-        .form-desc { font-size: 13px; color: var(--apple-text-tert); margin-bottom: 8px; display: block; }
-        .form-input { 
-            width: 100%; 
-            background-color: #ffffff; 
-            border: 1px solid #d2d2d7; 
-            border-radius: 10px; 
-            padding: 12px 16px; 
-            font-size: 15px; 
-            transition: all 0.2s; 
-            outline: none; 
-            color: var(--apple-text-main);
+        .display-font {
+            font-weight: 900;
+            letter-spacing: -0.02em;
         }
-        .form-input:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
-        .form-select { 
-            width: 100%; 
-            background-color: #ffffff; 
-            border: 1px solid #d2d2d7; 
-            border-radius: 10px; 
-            padding: 12px 16px; 
-            font-size: 15px; 
-            transition: all 0.2s; 
-            outline: none; 
+
+        .skip-link {
+            position: absolute;
+            left: 16px;
+            top: 8px;
+            transform: translateY(-200%);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 8px 12px;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+        }
+        .skip-link:focus {
+            transform: translateY(0);
+        }
+
+        :where(a, button, input, select, textarea):focus-visible {
+            outline: 2px solid rgba(3, 105, 161, 0.35);
+            outline-offset: 2px;
+        }
+
+        .app-shell {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 1024px) {
+            .app-shell {
+                grid-template-columns: 280px 1fr;
+            }
+        }
+
+        .side-nav {
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+        }
+        .side-nav-inner {
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 14px;
+            gap: 14px;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 10px 10px 6px 10px;
+        }
+        .brand-title {
+            font-size: 15px;
+            font-weight: 900;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-group-title {
+            font-size: 11px;
+            color: var(--muted-2);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 10px 10px 6px 10px;
+        }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 10px;
+            border-radius: 12px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 800;
+            transition: background-color 160ms ease, color 160ms ease;
+        }
+        .nav-item:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .nav-item[aria-current="page"] {
+            background: rgba(3, 105, 161, 0.1);
+            color: var(--text);
+        }
+        .nav-item svg {
+            width: 18px;
+            height: 18px;
+            flex: 0 0 auto;
+        }
+
+        .topbar {
+            position: sticky;
+            top: 0;
+            z-index: 40;
+            background: rgba(248, 250, 252, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+        .topbar-inner {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 14px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .icon-btn {
+            width: 38px;
+            height: 38px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--surface);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--muted);
+            transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease;
+        }
+        .icon-btn:hover {
+            background: var(--surface-2);
+            color: var(--text);
+        }
+        .icon-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .search {
+            flex: 1 1 auto;
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--surface);
+            box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+        }
+        .search input {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text);
+            background: transparent;
+        }
+        .search input::placeholder {
+            color: rgba(100, 116, 139, 0.9);
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: 900;
+            transition: background-color 160ms ease, transform 120ms ease;
+            box-shadow: 0 8px 18px rgba(3, 105, 161, 0.22);
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+        .btn-primary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-secondary {
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            transition: background-color 160ms ease, transform 120ms ease;
+            font-weight: 900;
+        }
+        .btn-secondary:hover {
+            background: rgba(15, 23, 42, 0.07);
+        }
+        .btn-secondary:active {
+            transform: translateY(1px);
+        }
+
+        .btn-pill {
+            color: var(--text);
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-size: 14px;
+            background: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            transition: background-color 160ms ease, transform 120ms ease;
+            font-weight: 900;
+        }
+        .btn-pill:hover {
+            background: rgba(15, 23, 42, 0.07);
+        }
+        .btn-pill:active {
+            transform: translateY(1px);
+        }
+
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-size: 12px;
+            font-weight: 900;
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            background: rgba(241, 245, 249, 0.9);
+            color: var(--text);
+        }
+
+        .apple-card {
+            background-color: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 800;
+            color: var(--text);
+            margin-bottom: 8px;
+        }
+        .form-desc {
+            font-size: 13px;
+            color: var(--muted-2);
+            margin-bottom: 8px;
+            display: block;
+            font-weight: 600;
+        }
+        .form-input {
+            width: 100%;
+            background-color: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 12px;
+            padding: 12px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+            outline: none;
+            color: var(--text);
+        }
+        .form-input:focus {
+            background-color: var(--surface);
+            border-color: rgba(3, 105, 161, 0.35);
+            box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.18);
+        }
+        .form-select {
+            width: 100%;
+            background-color: rgba(15, 23, 42, 0.04);
+            border: 1px solid rgba(226, 232, 240, 0.9);
+            border-radius: 12px;
+            padding: 12px 38px 12px 14px;
+            font-size: 14px;
+            font-weight: 700;
+            transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+            outline: none;
             appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%2386868B' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+            background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 12 12' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%2364748b' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            background-position: right 16px center;
-            color: var(--apple-text-main);
+            background-position: right 14px center;
+            color: var(--text);
         }
-        .form-select:focus { border-color: var(--apple-blue); box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
-        
-        /* Section Divider */
-        .section-title { font-family: 'SF Pro Display'; font-size: 20px; font-weight: 600; margin-bottom: 20px; color: var(--apple-text-main); border-bottom: 1px solid #f2f2f7; padding-bottom: 12px; }
+        .form-select:focus {
+            background-color: var(--surface);
+            border-color: rgba(3, 105, 161, 0.35);
+            box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.18);
+        }
 
-        /* Wizard Steps */
-        .step-container { display: flex; justify-content: space-between; position: relative; margin-bottom: 40px; }
-        .step-container::before { content: ''; position: absolute; top: 16px; left: 40px; right: 40px; height: 2px; background-color: #e5e5ea; z-index: 0; }
-        .step-progress { position: absolute; top: 16px; left: 40px; height: 2px; background-color: var(--apple-blue); z-index: 0; transition: width 0.3s ease; }
-        
-        .step-item { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; width: 80px; }
-        .step-circle { width: 34px; height: 34px; border-radius: 50%; background-color: white; border: 2px solid #e5e5ea; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 14px; color: #86868b; transition: all 0.3s ease; }
-        
-        .step-item.active .step-circle { border-color: var(--apple-blue); background-color: var(--apple-blue); color: white; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
-        .step-item.completed .step-circle { border-color: var(--apple-blue); background-color: white; color: var(--apple-blue); }
-        
-        .step-label { margin-top: 8px; font-size: 13px; font-weight: 500; color: #86868b; text-align: center; transition: color 0.3s ease; }
-        .step-item.active .step-label { color: var(--apple-text-main); }
-        
-        .wizard-step { display: none; animation: fadeIn 0.3s ease-in-out; }
-        .wizard-step.active { display: block; }
-        
+        .section-title {
+            font-size: 18px;
+            font-weight: 900;
+            margin-bottom: 18px;
+            color: var(--text);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+            padding-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        .step-container {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin-bottom: 40px;
+        }
+        .step-container::before {
+            content: "";
+            position: absolute;
+            top: 16px;
+            left: 40px;
+            right: 40px;
+            height: 2px;
+            background-color: var(--border);
+            z-index: 0;
+        }
+        .step-progress {
+            position: absolute;
+            top: 16px;
+            left: 40px;
+            height: 2px;
+            background-color: var(--primary);
+            z-index: 0;
+            transition: width 0.3s ease;
+        }
+
+        .step-item {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 86px;
+        }
+        .step-circle {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background-color: var(--surface);
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 13px;
+            color: var(--muted-2);
+            transition: all 0.3s ease;
+        }
+
+        .step-item.active .step-circle {
+            border-color: rgba(3, 105, 161, 0.35);
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 0 0 4px rgba(3, 105, 161, 0.16);
+        }
+        .step-item.completed .step-circle {
+            border-color: rgba(3, 105, 161, 0.35);
+            background-color: var(--surface);
+            color: var(--primary);
+        }
+
+        .step-label {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--muted-2);
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+        .step-item.active .step-label {
+            color: var(--text);
+        }
+
+        .wizard-step {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        .wizard-step.active {
+            display: block;
+        }
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .mobile-nav {
+            position: fixed;
+            inset: 0;
+            z-index: 60;
+            display: none;
+        }
+        body[data-nav-open="true"] .mobile-nav {
+            display: block;
+        }
+        .mobile-nav-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(2, 6, 23, 0.56);
+        }
+        .mobile-nav-panel {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: min(320px, 88vw);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            transform: translateX(-100%);
+            transition: transform 220ms ease;
+        }
+        body[data-nav-open="true"] .mobile-nav-panel {
+            transform: translateX(0);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+                scroll-behavior: auto !important;
+            }
+        }
+        
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        .modal-backdrop.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .apple-modal {
+            background-color: var(--surface);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .modal-backdrop.show .apple-modal {
+            transform: translateY(0) scale(1);
+        }
+        .apple-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #d2d2d7;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+            background-color: white;
+            color: var(--text);
+        }
+        .apple-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.12);
+        }
+        .apple-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--muted-2);
+            margin-bottom: 6px;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col">
-    <!-- Global Glass Navigation -->
-    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
-        <div class="max-w-6xl mx-auto px-4 w-full flex justify-between items-center">
-            <div class="flex items-center space-x-8 flex-1 min-w-0">
-          <!-- Logo -->
-          <a
-            href="admin-prototype.html"
-            class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity flex-shrink-0 whitespace-nowrap"
-          >
-            Gyosei OS
-          </a>
-          <!-- Links -->
-          <div class="hidden md:flex items-center space-x-6 overflow-x-auto flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                    <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
-                    <a href="customers.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
-                    <a href="cases-list.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
-                    <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
-                    <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
-                    <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
-                    <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
-                    <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
-                    <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
-                    <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+<body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <div class="mobile-nav" aria-hidden="true">
+        <div class="mobile-nav-backdrop" data-nav-close></div>
+        <div class="mobile-nav-panel">
+            <div class="side-nav-inner">
+                <div class="brand">
+                    <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+                    <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button class="text-white/80 hover:text-white transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </button>
-                <div class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs">
-                    AD
-                </div>
+                <nav aria-label="主导航">
+                    <div class="nav-group-title">工作台</div>
+                    <a class="nav-item" href="admin-prototype.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+                        </svg>
+                        仪表盘
+                    </a>
+                    <div class="nav-group-title">业务</div>
+                    <a class="nav-item" href="leads-messages.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        咨询与会话
+                    </a>
+                    <a class="nav-item" href="customers.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        客户
+                    </a>
+                    <a class="nav-item" href="cases-list.html" aria-current="page">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        案件
+                    </a>
+                    <a class="nav-item" href="tasks.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                        任务与提醒
+                    </a>
+                    <div class="nav-group-title">内容</div>
+                    <a class="nav-item" href="documents.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                        资料中心
+                    </a>
+                    <a class="nav-item" href="forms.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        文书中心
+                    </a>
+                    <div class="nav-group-title">财务</div>
+                    <a class="nav-item" href="billing.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+                        </svg>
+                        收费与财务
+                    </a>
+                    <a class="nav-item" href="reports.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+                        </svg>
+                        报表
+                    </a>
+                    <div class="nav-group-title">系统</div>
+                    <a class="nav-item" href="settings.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        设置
+                    </a>
+                    <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+                        </svg>
+                        客户门户
+                    </a>
+                </nav>
             </div>
         </div>
-    </nav>
+    </div>
 
-    <!-- Main Form Area -->
-    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 w-full max-w-4xl mx-auto">
+    <div class="app-shell">
+        <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+            <div class="side-nav-inner">
+                <div class="brand">
+                    <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+                    <span class="chip">事务所后台</span>
+                </div>
+                <nav aria-label="主导航">
+                    <div class="nav-group-title">工作台</div>
+                    <a class="nav-item" href="admin-prototype.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+                        </svg>
+                        仪表盘
+                    </a>
+                    <div class="nav-group-title">业务</div>
+                    <a class="nav-item" href="leads-messages.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                        </svg>
+                        咨询与会话
+                    </a>
+                    <a class="nav-item" href="customers.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        客户
+                    </a>
+                    <a class="nav-item" href="cases-list.html" aria-current="page">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        案件
+                    </a>
+                    <a class="nav-item" href="tasks.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                        </svg>
+                        任务与提醒
+                    </a>
+                    <div class="nav-group-title">内容</div>
+                    <a class="nav-item" href="documents.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                        资料中心
+                    </a>
+                    <a class="nav-item" href="forms.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                        文书中心
+                    </a>
+                    <div class="nav-group-title">财务</div>
+                    <a class="nav-item" href="billing.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+                        </svg>
+                        收费与财务
+                    </a>
+                    <a class="nav-item" href="reports.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+                        </svg>
+                        报表
+                    </a>
+                    <div class="nav-group-title">系统</div>
+                    <a class="nav-item" href="settings.html">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        设置
+                    </a>
+                    <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+                        </svg>
+                        客户门户
+                    </a>
+                </nav>
+            </div>
+        </aside>
+
+        <div>
+            <header class="topbar" aria-label="顶部工具栏">
+                <div class="topbar-inner">
+                    <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+
+                    <div class="search" role="search">
+                        <svg class="w-[18px] h-[18px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                        </svg>
+                        <input type="search" placeholder="搜索：客户 / 案件 / 资料 / 文书..." aria-label="全局搜索" />
+                        <span class="hidden sm:inline-flex chip">⌘K</span>
+                    </div>
+
+                    <button class="btn-pill hidden sm:inline-flex" type="button" onclick="window.location.href = 'leads-messages.html'">
+                        新建咨询
+                    </button>
+                    <button class="btn-primary" type="button" onclick="window.location.href = 'case-create.html'">
+                        新建案件
+                    </button>
+
+                    <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">
+                        AD
+                    </div>
+                </div>
+            </header>
+
+            <main id="main" class="pt-6 pb-20 px-4 md:px-8 w-full max-w-4xl mx-auto">
         
         <div class="mb-6">
             <div class="text-[13px] text-[#86868b] mb-2"><a href="cases-list.html" class="hover:underline">案件 (Cases)</a> <span class="mx-1">/</span> 新建案件</div>
@@ -184,7 +786,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="form-group">
                             <label class="form-label">业务分类 (Category) *</label>
-                            <select class="form-select" required>
+                            <select class="form-select" id="categorySelect" required>
                                 <option value="">请选择业务大类</option>
                                 <option value="visa" selected>签证/在留资格</option>
                                 <option value="company">设立公司/法人</option>
@@ -194,45 +796,166 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">具体手续 (Procedure) *</label>
-                            <select class="form-select" required>
-                                <option value="">请选择具体手续</option>
-                                <option value="hsp" selected>高度专门职 (HSP) 签证</option>
-                                <option value="work">技术・人文知识・国际业务</option>
-                                <option value="spouse">日本人配偶等</option>
-                                <option value="permanent">永住许可申请</option>
+                            <select class="form-select" id="procedureSelect" required>
+                                <option value="">加载中...</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label class="form-label">办理对象设置</label>
+                            <label class="flex items-center text-[14px] text-[#1d1d1f] cursor-pointer">
+                                <input type="checkbox" class="mr-2 rounded border-[#d2d2d7] text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]" id="primaryExternalCheckbox"> 主申请人不在本事务所办理
+                            </label>
+                        </div>
+                        <div class="form-group" id="externalMainFields" style="display: none;">
+                            <label class="form-label">主申请人信息（外部办理）</label>
+                            <div class="grid grid-cols-1 gap-3">
+                                <input type="text" class="form-input" id="externalMainName" placeholder="主申请人姓名（可选）">
+                                <input type="text" class="form-input" id="externalMainNationality" placeholder="主申请人国籍/所在地（可选）">
+                            </div>
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">案件名称 (Case Name) *</label>
                         <span class="form-desc">建议包含客户名与核心业务，如："Michael T. - 高度人才签证申请"</span>
-                        <input type="text" class="form-input" placeholder="输入案件标题" value="Michael T. - 高度人才签证申请" required>
+                        <input type="text" class="form-input" id="caseNameInput" placeholder="输入案件标题" value="Michael T. - 高度人才签证申请" required>
                     </div>
                 </div>
 
                 <!-- Step 2: Customer Binding -->
                 <div class="wizard-step" id="step-2">
-                    <h2 class="section-title">客户关联</h2>
+                    <h2 class="section-title">关联申请人</h2>
                     <div class="form-group">
-                        <label class="form-label">关联客户 (Customer) *</label>
-                        <span class="form-desc">可以搜索现有客户，或直接创建一个新客户档案。</span>
+                        <label class="form-label">主申请人或家庭成员 *</label>
+                        <span class="form-desc">搜索现有客户或新建客户，支持添加配偶/子女等家庭成员。</span>
                         <div class="flex space-x-3">
                             <div class="flex-grow relative">
                                 <svg class="w-5 h-5 text-[#86868b] absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                                 <input type="text" class="form-input pl-10" placeholder="搜索客户名称、邮箱或电话" value="Michael T. (mt.design@example.com)">
                             </div>
-                            <button type="button" class="btn-secondary whitespace-nowrap">+ 新建客户</button>
+                            <button type="button" class="btn-secondary whitespace-nowrap" id="btnCreateCustomer">+ 新建客户</button>
+                            <button type="button" class="btn-secondary whitespace-nowrap" id="btnAddApplicant">+ 添加申请人</button>
                         </div>
                         <!-- Mock selected customer card -->
-                        <div class="mt-4 p-4 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] flex justify-between items-center transition-all hover:border-[var(--apple-blue)] cursor-pointer">
+                        <div class="mt-4 p-4 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] flex justify-between items-center transition-all hover:border-[var(--apple-blue)] cursor-pointer" id="selectedCustomerCard">
                             <div class="flex items-center">
-                                <div class="w-10 h-10 rounded-full bg-[#0071e3] text-white flex items-center justify-center font-medium mr-4">MT</div>
+                                <div class="w-10 h-10 rounded-full bg-[#0071e3] text-white flex items-center justify-center font-medium mr-4" id="selectedCustomerInitials">MT</div>
                                 <div>
-                                    <div class="font-medium text-[15px]">Michael T.</div>
-                                    <div class="text-[13px] text-[#86868b]">首选语言: 英语 (EN) &nbsp;|&nbsp; 个人客户</div>
+                                    <div class="font-medium text-[15px]" id="selectedCustomerName">Michael T.</div>
+                                    <div class="text-[13px] text-[#86868b]" id="selectedCustomerMeta">首选语言: 英语 (EN) &nbsp;|&nbsp; 个人客户</div>
                                 </div>
                             </div>
-                            <button type="button" class="text-[13px] text-[#d61818] hover:underline">更换</button>
+                            <button type="button" class="text-[13px] text-[#d61818] hover:underline" id="btnChangeCustomer">更换</button>
+                        </div>
+                        <div class="mt-4 space-y-3" id="applicantsList"></div>
+                        <div class="mt-6 p-5 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]" id="sponsorInfoCard">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="font-semibold text-[16px]">主申请人（担保人）信息</div>
+                                <span class="chip" id="sponsorVisaChip">家族滞在</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label">姓名 *</label>
+                                    <input type="text" class="form-input" id="sponsorName" placeholder="输入担保人姓名">
+                                </div>
+                                <div>
+                                    <label class="form-label">国籍</label>
+                                    <input type="text" class="form-input" id="sponsorNationality" placeholder="输入国籍或所在地区">
+                                </div>
+                                <div>
+                                    <label class="form-label">在留资格（签证类型） *</label>
+                                    <select class="form-select" id="sponsorStatus">
+                                        <option value="" disabled selected>选择在留资格</option>
+                                        <option>高度专门职（HSP）</option>
+                                        <option>技术・人文知识・国际业务</option>
+                                        <option>经营・管理</option>
+                                        <option>留学</option>
+                                        <option>其他</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">在留期限</label>
+                                    <input type="date" class="form-input" id="sponsorStatusPeriod">
+                                </div>
+                                <div>
+                                    <label class="form-label">在留卡号码 *</label>
+                                    <input type="text" class="form-input" id="sponsorResidenceCardNo" placeholder="输入在留卡号码">
+                                </div>
+                                <div>
+                                    <label class="form-label">护照号码</label>
+                                    <input type="text" class="form-input" id="sponsorPassportNo" placeholder="输入护照号码">
+                                </div>
+                                <div>
+                                    <label class="form-label">就职单位</label>
+                                    <input type="text" class="form-input" id="sponsorEmployer" placeholder="输入公司名称">
+                                </div>
+                                <div>
+                                    <label class="form-label">职务</label>
+                                    <input type="text" class="form-input" id="sponsorJobTitle" placeholder="输入职位">
+                                </div>
+                                <div>
+                                    <label class="form-label">年收入（JPY）</label>
+                                    <input type="number" class="form-input" id="sponsorAnnualIncome" placeholder="输入年收入">
+                                </div>
+                                <div>
+                                    <label class="form-label">居住地址</label>
+                                    <input type="text" class="form-input" id="sponsorAddress" placeholder="输入居住地址">
+                                </div>
+                                <div>
+                                    <label class="form-label">婚姻状况</label>
+                                    <select class="form-select" id="sponsorMaritalStatus">
+                                        <option value="" disabled selected>选择婚姻状况</option>
+                                        <option>已婚</option>
+                                        <option>未婚</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="form-label">电子邮箱</label>
+                                    <input type="email" class="form-input" id="sponsorEmail" placeholder="输入邮箱">
+                                </div>
+                                <div>
+                                    <label class="form-label">联系电话</label>
+                                    <input type="tel" class="form-input" id="sponsorPhone" placeholder="输入手机号或座机">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-5 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]" id="workInfoCard" style="display: none;">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="font-semibold text-[16px]">工作签（雇主）信息</div>
+                                <span class="chip" id="workVisaChip">就劳签</span>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="form-label">公司名称 *</label>
+                                    <input type="text" class="form-input" id="employerName" placeholder="输入公司名称">
+                                </div>
+                                <div>
+                                    <label class="form-label">岗位（职位） *</label>
+                                    <input type="text" class="form-input" id="jobTitle" placeholder="输入职位">
+                                </div>
+                                <div>
+                                    <label class="form-label">联系人邮箱</label>
+                                    <input type="email" class="form-input" id="employerEmail" placeholder="输入邮箱">
+                                </div>
+                                <div>
+                                    <label class="form-label">联系人电话</label>
+                                    <input type="tel" class="form-input" id="employerPhone" placeholder="输入电话">
+                                </div>
+                                <div>
+                                    <label class="form-label">预计年薪（JPY）</label>
+                                    <input type="number" class="form-input" id="annualSalary" placeholder="输入年薪">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6 p-5 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd]" id="requirementsCard">
+                            <div class="flex items-center justify-between mb-1">
+                                <div class="font-semibold text-[16px]">资料清单模板</div>
+                                <span class="chip" id="requirementsVisaChip">-</span>
+                            </div>
+                            <div class="text-[13px] text-[#86868b]" id="requirementsMeta"></div>
+                            <div class="mt-4 space-y-4" id="requirementsSections"></div>
+                            <div class="mt-2 text-[13px] text-[#86868b]" id="docsProgress">资料完成 0 / 0（必填）</div>
                         </div>
                     </div>
                 </div>
@@ -243,7 +966,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="form-group">
                             <label class="form-label">负责人 (Owner) *</label>
-                            <select class="form-select">
+                            <select class="form-select" id="ownerSelect">
                                 <option value="admin">Admin (我)</option>
                                 <option value="suzuki" selected>Suzuki</option>
                                 <option value="li">Li</option>
@@ -251,7 +974,7 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">预计提交期限 (Due Date)</label>
-                            <input type="date" class="form-input" value="2024-05-20">
+                            <input type="date" class="form-input" id="dueDateInput" value="2024-05-20">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -259,7 +982,7 @@
                             <label class="form-label">合同金额 (Contract Amount) *</label>
                             <div class="relative">
                                 <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#86868b]">¥</span>
-                                <input type="number" class="form-input pl-8" placeholder="输入金额" value="150000" required>
+                                <input type="number" class="form-input pl-8" id="contractAmountInput" placeholder="输入金额" value="150000" required>
                             </div>
                         </div>
                     </div>
@@ -292,23 +1015,29 @@
                     
                     <div class="bg-[#fbfbfd] rounded-xl p-6 border border-[#e5e5ea] mb-6">
                         <div class="grid grid-cols-2 gap-y-4 text-[14px]">
-                            <div class="text-[#86868b]">案件名称</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">Michael T. - 高度人才签证申请</div>
+                            <div class="text-[#86868b]">案件名称 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="0">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryCaseName">Michael T. - 高度人才签证申请</div>
                             
-                            <div class="text-[#86868b]">业务类型</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">签证/在留资格 · 高度专门职 (HSP)</div>
+                            <div class="text-[#86868b]">业务类型 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="0">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryBusinessType">签证/在留资格 · 高度专门职 (HSP)</div>
                             
-                            <div class="text-[#86868b]">关联客户</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">Michael T.</div>
+                            <div class="text-[#86868b]">关联客户 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="1">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryCustomer">Michael T.</div>
                             
-                            <div class="text-[#86868b]">负责人</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">Suzuki</div>
+                            <div class="text-[#86868b]">主申请人外部办理 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="0">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryPrimaryExternal">否</div>
                             
-                            <div class="text-[#86868b]">预计期限</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">2024-05-20</div>
+                            <div class="text-[#86868b]">家庭成员申请人 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="1">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryApplicants">无</div>
+                            
+                            <div class="text-[#86868b]">负责人 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="2">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryOwner">Suzuki</div>
+                            
+                            <div class="text-[#86868b]">预计期限 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="2">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryDueDate">2024-05-20</div>
 
-                            <div class="text-[#86868b]">合同金额</div>
-                            <div class="font-medium text-[#1d1d1f] text-right">¥150,000</div>
+                            <div class="text-[#86868b]">合同金额 <button type="button" class="text-[13px] text-[var(--primary)] ml-2" data-jump-step="2">编辑</button></div>
+                            <div class="font-medium text-[#1d1d1f] text-right" id="summaryAmount">¥150,000</div>
                         </div>
                     </div>
                 </div>
@@ -324,6 +1053,90 @@
             </form>
         </div>
     </main>
+    
+    <div class="modal-backdrop" id="addCustomerModal">
+        <div class="apple-modal flex flex-col">
+            <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative">
+                <h3 class="text-[17px] font-semibold">新建客户</h3>
+                <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" id="closeCustomerModalBtn">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+                <form class="space-y-5">
+                    <div>
+                        <label class="apple-label">客户类型</label>
+                        <div class="flex space-x-4">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="modalCustomerType" class="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]" value="personal" checked>
+                                <span class="ml-2 text-sm">个人客户</span>
+                            </label>
+                            <label class="flex items-center cursor-pointer">
+                                <input type="radio" name="modalCustomerType" class="w-4 h-4 text-[var(--primary)] focus:ring-[var(--primary)]" value="company">
+                                <span class="ml-2 text-sm">企业客户</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="apple-label">申请人角色</label>
+                        <select class="apple-input" id="newApplicantRole">
+                            <option value="配偶" selected>配偶</option>
+                            <option value="子女">子女</option>
+                        </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="apple-label">姓名 / 企业名称 *</label>
+                            <input type="text" class="apple-input" id="newCustomerName" placeholder="输入客户名称">
+                        </div>
+                        <div>
+                            <label class="apple-label">拼音 / 英文名</label>
+                            <input type="text" class="apple-input" id="newCustomerAltName" placeholder="输入拼音或英文名">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="apple-label">联系电话</label>
+                            <input type="tel" class="apple-input" id="newCustomerPhone" placeholder="输入手机号或座机">
+                        </div>
+                        <div>
+                            <label class="apple-label">电子邮箱</label>
+                            <input type="email" class="apple-input" id="newCustomerEmail" placeholder="输入电子邮箱">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="apple-label">首选语言</label>
+                            <select class="apple-input" id="newCustomerLang">
+                                <option value="" disabled selected>选择语言</option>
+                                <option value="中文">中文</option>
+                                <option value="英语">英语</option>
+                                <option value="日语">日语</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="apple-label">客户来源</label>
+                            <select class="apple-input" id="newCustomerSource">
+                                <option value="" disabled selected>选择来源</option>
+                                <option>网站咨询</option>
+                                <option>客户推荐</option>
+                                <option>合作渠道</option>
+                                <option>其他</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="apple-label">备注</label>
+                        <textarea class="apple-input resize-none h-24" id="newCustomerNotes" placeholder="输入其他补充信息..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+                <button class="btn-secondary px-5" id="cancelCustomerModalBtn">取消</button>
+                <button class="btn-primary px-5" id="saveCustomerBtn">保存客户</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -338,10 +1151,197 @@
             const btnPrev = document.getElementById('btnPrev');
             const btnNext = document.getElementById('btnNext');
             const btnSubmit = document.getElementById('btnSubmit');
+            const categorySelect = document.getElementById('categorySelect');
+            const procedureSelect = document.getElementById('procedureSelect');
+            const caseNameInput = document.getElementById('caseNameInput');
+            const customerSearchInput = document.querySelector('#step-2 input[type="text"]');
+            const selectedCustomerCard = document.getElementById('selectedCustomerCard');
+            const selectedCustomerName = document.getElementById('selectedCustomerName');
+            const selectedCustomerMeta = document.getElementById('selectedCustomerMeta');
+            const selectedCustomerInitials = document.getElementById('selectedCustomerInitials');
+            const btnCreateCustomer = document.getElementById('btnCreateCustomer');
+            const btnChangeCustomer = document.getElementById('btnChangeCustomer');
+            const btnAddApplicant = document.getElementById('btnAddApplicant');
+            const modal = document.getElementById('addCustomerModal');
+            const closeModalBtn = document.getElementById('closeCustomerModalBtn');
+            const cancelModalBtn = document.getElementById('cancelCustomerModalBtn');
+            const saveCustomerBtn = document.getElementById('saveCustomerBtn');
+            const applicantsList = document.getElementById('applicantsList');
+            const primaryExternalCheckbox = document.getElementById('primaryExternalCheckbox');
+            const externalMainFields = document.getElementById('externalMainFields');
+            const sponsorInfoCard = document.getElementById('sponsorInfoCard');
+            const sponsorVisaChip = document.getElementById('sponsorVisaChip');
+            const workInfoCard = document.getElementById('workInfoCard');
+            const workVisaChip = document.getElementById('workVisaChip');
+            const requirementsCard = document.getElementById('requirementsCard');
+            const requirementsVisaChip = document.getElementById('requirementsVisaChip');
+            const requirementsMeta = document.getElementById('requirementsMeta');
+            const requirementsSections = document.getElementById('requirementsSections');
             
             let currentStep = 0;
             const totalSteps = steps.length;
+            let hasSelectedCustomer = true;
+            let userEditedCaseName = false;
+            let userEditedApplicant = false;
+            let modalContext = 'main';
+            const applicants = [];
+            let visasData = null;
+            let communicationsData = null;
+            const visaTypesById = new Map();
+            const requirementSetByVisaTypeId = new Map();
+            const allowedVisaTypeIds = new Set(['vt_jp_family_dependent', 'vt_jp_work_ehis']);
+            const requirementCheckStateByVisaTypeId = new Map();
+            let renderedRequirementsVisaTypeId = '';
             
+            function getSelectedVisaType() {
+                if (!procedureSelect) return null;
+                if (!procedureSelect.value) return null;
+                return visaTypesById.get(procedureSelect.value) ?? null;
+            }
+            function ownerLabel(owner) {
+                if (owner === 'applicant') return '申请人';
+                if (owner === 'sponsor') return '担保人';
+                if (owner === 'employer') return '雇主';
+                if (owner === 'support_org') return '支援机构';
+                return '其他';
+            }
+            function setProcedureOptions() {
+                if (!procedureSelect) return;
+                const prev = procedureSelect.value;
+                procedureSelect.innerHTML = '';
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = '请选择具体手续';
+                procedureSelect.appendChild(placeholder);
+                const visaTypes = (visasData?.visaTypes ?? []).filter(v => allowedVisaTypeIds.has(v.id));
+                visaTypes.forEach(v => {
+                    const opt = document.createElement('option');
+                    opt.value = v.id;
+                    opt.textContent = v.nameZh;
+                    procedureSelect.appendChild(opt);
+                });
+                const defaultId = visaTypes.find(v => v.id === prev)?.id ?? visaTypes.at(0)?.id ?? '';
+                if (defaultId) procedureSelect.value = defaultId;
+            }
+            function updateRequirementsProgress() {
+                const el = document.getElementById('docsProgress');
+                if (!el || !requirementsSections) return;
+                const required = Array.from(requirementsSections.querySelectorAll('input[type="checkbox"][data-required="true"]'));
+                const total = required.length;
+                const done = required.reduce((acc, c) => acc + (c.checked ? 1 : 0), 0);
+                el.textContent = `资料完成 ${done} / ${total}（必填）`;
+            }
+            function renderRequirements(visaTypeId) {
+                if (!requirementsSections) return;
+                requirementsSections.innerHTML = '';
+                renderedRequirementsVisaTypeId = visaTypeId;
+                const visaType = visaTypesById.get(visaTypeId);
+                const reqSet = requirementSetByVisaTypeId.get(visaTypeId);
+                const checkedSet = requirementCheckStateByVisaTypeId.get(visaTypeId) ?? new Set();
+                if (requirementsVisaChip) requirementsVisaChip.textContent = visaType?.shortCode ?? '-';
+                if (requirementsMeta) {
+                    if (visaType && reqSet) {
+                        const days = visaType.processingDaysRange ? `${visaType.processingDaysRange.min}-${visaType.processingDaysRange.max} 天` : '-';
+                        requirementsMeta.textContent = `${reqSet.titleZh ?? ''}（参考审理：${days}）`;
+                    } else if (visaType) {
+                        requirementsMeta.textContent = '暂无对应资料模板';
+                    } else {
+                        requirementsMeta.textContent = '';
+                    }
+                }
+                if (!reqSet) {
+                    updateRequirementsProgress();
+                    return;
+                }
+                (reqSet.sections ?? []).forEach(section => {
+                    const box = document.createElement('div');
+                    box.className = 'p-4 rounded-xl border border-[#e5e5ea] bg-white';
+                    const title = document.createElement('div');
+                    title.className = 'font-medium text-[14px] mb-3';
+                    title.textContent = section.titleZh ?? '-';
+                    box.appendChild(title);
+                    const itemsWrap = document.createElement('div');
+                    itemsWrap.className = 'grid grid-cols-1 md:grid-cols-2 gap-2';
+                    (section.items ?? []).forEach(item => {
+                        const label = document.createElement('label');
+                        label.className = 'flex items-start text-[14px] cursor-pointer';
+                        const input = document.createElement('input');
+                        input.type = 'checkbox';
+                        input.className = 'mr-2 mt-1';
+                        input.id = `req_${visaTypeId}_${item.id}`;
+                        input.dataset.itemId = item.id;
+                        input.dataset.required = String(!!item.required);
+                        input.checked = checkedSet.has(item.id);
+                        input.addEventListener('change', () => {
+                            const set = requirementCheckStateByVisaTypeId.get(visaTypeId) ?? new Set();
+                            const itemId = input.dataset.itemId ?? '';
+                            if (input.checked) set.add(itemId);
+                            else set.delete(itemId);
+                            requirementCheckStateByVisaTypeId.set(visaTypeId, set);
+                            updateRequirementsProgress();
+                        });
+                        const text = document.createElement('div');
+                        const name = document.createElement('div');
+                        name.textContent = item.nameZh ?? '-';
+                        const meta = document.createElement('div');
+                        meta.className = 'text-[12px] text-[#86868b]';
+                        const parts = [];
+                        if (item.owner) parts.push(ownerLabel(item.owner));
+                        if (item.required) parts.push('必填');
+                        if (item.translationRequired) parts.push('可能需翻译');
+                        meta.textContent = parts.join(' · ');
+                        text.appendChild(name);
+                        if (parts.length > 0) text.appendChild(meta);
+                        label.appendChild(input);
+                        label.appendChild(text);
+                        itemsWrap.appendChild(label);
+                    });
+                    box.appendChild(itemsWrap);
+                    requirementsSections.appendChild(box);
+                });
+                updateRequirementsProgress();
+            }
+            function applySuggestedApplicant(visaTypeId) {
+                if (!communicationsData || userEditedApplicant) return;
+                const contacts = communicationsData.contacts ?? [];
+                const desiredTag = visaTypeId === 'vt_jp_work_ehis' ? 'work_visa' : 'spouse_visa';
+                const candidate = contacts.find(c => Array.isArray(c.tags) && c.tags.includes(desiredTag)) ?? contacts.at(0);
+                if (!candidate) return;
+                const displayName = candidate.displayName ?? '';
+                const email = candidate.channels?.email ?? '';
+                const phone = candidate.channels?.phone ?? '';
+                const label = displayName && (email || phone) ? `${displayName} (${email || phone})` : displayName;
+                if (customerSearchInput) customerSearchInput.value = label;
+                if (selectedCustomerName) selectedCustomerName.textContent = displayName || '-';
+                if (selectedCustomerInitials) {
+                    const initials = (displayName || '-').split(' ').filter(Boolean).slice(0, 2).map(s => s[0].toUpperCase()).join('');
+                    selectedCustomerInitials.textContent = initials || '-';
+                }
+                if (selectedCustomerMeta) {
+                    const locale = candidate.locale ?? '-';
+                    const type = candidate.type === 'organization' ? '组织客户' : '个人客户';
+                    selectedCustomerMeta.textContent = `首选语言: ${locale} \u00A0|\u00A0 ${type}`;
+                }
+                hasSelectedCustomer = true;
+            }
+            function syncVisaLayout() {
+                const isVisa = (categorySelect?.value ?? '') === 'visa';
+                const visaTypeId = procedureSelect?.value ?? '';
+                const visaType = getSelectedVisaType();
+                const isFamily = !!(visaType && visaType.category === 'family');
+                if (procedureSelect) procedureSelect.disabled = !isVisa;
+                if (sponsorInfoCard) sponsorInfoCard.style.display = isVisa && isFamily ? 'block' : 'none';
+                if (workInfoCard) workInfoCard.style.display = isVisa && !isFamily ? 'block' : 'none';
+                if (sponsorVisaChip) sponsorVisaChip.textContent = visaType?.nameZh ?? '家族滞在';
+                if (workVisaChip) workVisaChip.textContent = visaType?.nameZh ?? '就劳签';
+                if (requirementsCard) requirementsCard.style.display = isVisa && !!visaTypeId ? 'block' : 'none';
+                if (isVisa && visaTypeId) {
+                    if (renderedRequirementsVisaTypeId !== visaTypeId) renderRequirements(visaTypeId);
+                    if (renderedRequirementsVisaTypeId === visaTypeId) updateRequirementsProgress();
+                    applySuggestedApplicant(visaTypeId);
+                }
+            }
+
             function updateUI() {
                 // Update Step Content
                 steps.forEach((step, index) => {
@@ -385,6 +1385,122 @@
                     btnNext.style.display = 'block';
                     btnSubmit.style.display = 'none';
                 }
+                
+                btnNext.textContent = currentStep === 0 ? '下一步：客户关联' : currentStep === 1 ? '下一步：分派与设置' : '下一步：完成创建';
+                btnNext.disabled = !canProceed(currentStep);
+                syncVisaLayout();
+                updateRequirementsProgress();
+                
+                if (steps[currentStep]) {
+                    const firstInput = steps[currentStep].querySelector('input, select, textarea, button');
+                    if (firstInput && typeof firstInput.focus === 'function') firstInput.focus();
+                }
+                
+                if (currentStep === totalSteps - 1) {
+                    updateSummary();
+                }
+            }
+            
+            function canProceed(stepIndex) {
+                if (stepIndex === 0) {
+                    return !!(categorySelect && categorySelect.value && procedureSelect && procedureSelect.value && caseNameInput && caseNameInput.value.trim().length > 0);
+                }
+                if (stepIndex === 1) {
+                    const sponsorName = document.getElementById('sponsorName')?.value.trim();
+                    const sponsorStatus = document.getElementById('sponsorStatus')?.value;
+                    const sponsorCardNo = document.getElementById('sponsorResidenceCardNo')?.value.trim();
+                    const visaType = getSelectedVisaType();
+                    const isFamily = !!(visaType && visaType.category === 'family');
+                    const sponsorOk = isFamily ? !!(sponsorName && sponsorStatus && sponsorCardNo) : true;
+                    const employerName = document.getElementById('employerName')?.value.trim();
+                    const jobTitle = document.getElementById('jobTitle')?.value.trim();
+                    const workOk = !isFamily ? !!(employerName && jobTitle) : true;
+                    const hasApplicant = !!(hasSelectedCustomer || applicants.length > 0 || (customerSearchInput && customerSearchInput.value.trim().length > 0));
+                    return sponsorOk && workOk && hasApplicant;
+                }
+                if (stepIndex === 2) {
+                    const ownerSelectEl = document.getElementById('ownerSelect');
+                    const amountInputEl = document.getElementById('contractAmountInput');
+                    return !!(ownerSelectEl && ownerSelectEl.value && amountInputEl && amountInputEl.value.trim().length > 0);
+                }
+                return true;
+            }
+            
+            function getProcedureText() {
+                const visaType = getSelectedVisaType();
+                if (visaType) return visaType.nameZh ?? '';
+                if (!procedureSelect) return '';
+                const idx = procedureSelect.selectedIndex;
+                if (idx < 0) return '';
+                return procedureSelect.options[idx].text;
+            }
+            function getCategoryText() {
+                if (!categorySelect) return '';
+                const idx = categorySelect.selectedIndex;
+                if (idx < 0) return '';
+                return categorySelect.options[idx].text;
+            }
+            function getCustomerDisplayName() {
+                if (hasSelectedCustomer && selectedCustomerName) return selectedCustomerName.textContent || '';
+                if (!customerSearchInput) return '';
+                const v = customerSearchInput.value.trim();
+                const i = v.indexOf('(');
+                return i > 0 ? v.slice(0, i).trim() : v;
+            }
+            function updateSuggestedCaseName() {
+                if (userEditedCaseName) return;
+                const customer = getCustomerDisplayName();
+                const proc = getProcedureText();
+                if (customer && proc) {
+                    caseNameInput.value = `${customer} - ${proc}`;
+                }
+                updateUI();
+            }
+            function updateSummary() {
+                const summaryCaseName = document.getElementById('summaryCaseName');
+                const summaryBusinessType = document.getElementById('summaryBusinessType');
+                const summaryCustomer = document.getElementById('summaryCustomer');
+                const summaryPrimaryExternal = document.getElementById('summaryPrimaryExternal');
+                const summaryApplicants = document.getElementById('summaryApplicants');
+                const summaryOwner = document.getElementById('summaryOwner');
+                const summaryDueDate = document.getElementById('summaryDueDate');
+                const summaryAmount = document.getElementById('summaryAmount');
+                const docsProgressEl = document.getElementById('docsProgress');
+                if (summaryCaseName) summaryCaseName.textContent = caseNameInput ? caseNameInput.value.trim() : '';
+                const cat = getCategoryText();
+                const proc = getProcedureText();
+                if (summaryBusinessType) summaryBusinessType.textContent = cat && proc ? `${cat} · ${proc}` : (cat || proc || '');
+                if (summaryCustomer) summaryCustomer.textContent = getCustomerDisplayName();
+                if (summaryPrimaryExternal && primaryExternalCheckbox) summaryPrimaryExternal.textContent = primaryExternalCheckbox.checked ? '是' : '否';
+                if (summaryApplicants) {
+                    if (applicants.length === 0) {
+                        summaryApplicants.textContent = '无';
+                    } else {
+                        summaryApplicants.textContent = applicants.map(a => `${a.name}（${a.role}）`).join('，');
+                    }
+                }
+                if (docsProgressEl) {
+                    updateRequirementsProgress();
+                }
+                const ownerEl = document.getElementById('ownerSelect');
+                if (summaryOwner && ownerEl) {
+                    const idx = ownerEl.selectedIndex;
+                    summaryOwner.textContent = idx >= 0 ? ownerEl.options[idx].text : '';
+                }
+                const dueEl = document.getElementById('dueDateInput');
+                if (summaryDueDate && dueEl) summaryDueDate.textContent = dueEl.value || '';
+                const amtEl = document.getElementById('contractAmountInput');
+                if (summaryAmount && amtEl) {
+                    const v = amtEl.value.trim();
+                    summaryAmount.textContent = v ? `¥${Number(v).toLocaleString()}` : '';
+                }
+                document.querySelectorAll('[data-jump-step]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const s = Number(btn.getAttribute('data-jump-step') || '0');
+                        currentStep = Math.min(Math.max(s, 0), totalSteps - 1);
+                        updateUI();
+                    });
+                });
             }
             
             btnNext.addEventListener('click', () => {
@@ -401,9 +1517,170 @@
                 }
             });
             
+            [categorySelect, procedureSelect, caseNameInput, customerSearchInput].forEach(el => {
+                if (el) el.addEventListener('input', () => updateUI());
+                if (el && el.tagName === 'SELECT') el.addEventListener('change', () => updateUI());
+            });
+            if (caseNameInput) {
+                caseNameInput.addEventListener('input', () => {
+                    userEditedCaseName = true;
+                });
+            }
+            if (procedureSelect) {
+                procedureSelect.addEventListener('change', updateSuggestedCaseName);
+            }
+            if (customerSearchInput) {
+                customerSearchInput.addEventListener('input', updateSuggestedCaseName);
+                customerSearchInput.addEventListener('input', () => {
+                    userEditedApplicant = true;
+                });
+            }
+            if (primaryExternalCheckbox && externalMainFields) {
+                primaryExternalCheckbox.addEventListener('change', () => {
+                    externalMainFields.style.display = primaryExternalCheckbox.checked ? 'block' : 'none';
+                    updateUI();
+                });
+            }
+            ['sponsorName','sponsorNationality','sponsorStatus','sponsorStatusPeriod','sponsorResidenceCardNo','sponsorPassportNo','sponsorEmployer','sponsorJobTitle','sponsorAnnualIncome','sponsorAddress','sponsorMaritalStatus','sponsorEmail','sponsorPhone','employerName','jobTitle','employerEmail','employerPhone','annualSalary'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.addEventListener('input', () => updateUI());
+                if (el && el.tagName === 'SELECT') el.addEventListener('change', () => updateUI());
+            });
+            
+            function openCustomerModal() {
+                modal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            function closeCustomerModal() {
+                modal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+            if (btnCreateCustomer) btnCreateCustomer.addEventListener('click', () => { userEditedApplicant = true; modalContext = 'main'; openCustomerModal(); });
+            if (btnAddApplicant) btnAddApplicant.addEventListener('click', () => { userEditedApplicant = true; modalContext = 'additional'; openCustomerModal(); });
+            if (closeModalBtn) closeModalBtn.addEventListener('click', closeCustomerModal);
+            if (cancelModalBtn) cancelModalBtn.addEventListener('click', closeCustomerModal);
+            if (modal) {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeCustomerModal();
+                });
+            }
+            if (btnChangeCustomer) btnChangeCustomer.addEventListener('click', () => {
+                userEditedApplicant = true;
+                hasSelectedCustomer = false;
+                selectedCustomerCard.style.display = 'none';
+                customerSearchInput.value = '';
+                updateUI();
+            });
+            function renderApplicants() {
+                if (!applicantsList) return;
+                applicantsList.innerHTML = '';
+                applicants.forEach((a, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'p-4 rounded-xl border border-[#e5e5ea] bg-[#fbfbfd] flex justify-between items-center';
+                    div.innerHTML = `
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-[#34c759] text-white flex items-center justify-center font-medium mr-4">${a.initials}</div>
+                            <div>
+                                <div class="font-medium text-[15px]">${a.name} <span class="chip ml-2">${a.role}</span></div>
+                                <div class="text-[13px] text-[#86868b]">${a.lang ? '首选语言: ' + a.lang : '首选语言: 未设置'}  |  ${a.type || '个人客户'}</div>
+                            </div>
+                        </div>
+                        <button type="button" class="text-[13px] text-[#d61818] hover:underline" data-remove="${idx}">移除</button>
+                    `;
+                    applicantsList.appendChild(div);
+                });
+                applicantsList.querySelectorAll('[data-remove]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const i = Number(btn.getAttribute('data-remove'));
+                        applicants.splice(i, 1);
+                        renderApplicants();
+                        updateUI();
+                    });
+                });
+            }
+            if (saveCustomerBtn) saveCustomerBtn.addEventListener('click', () => {
+                const name = document.getElementById('newCustomerName').value.trim();
+                const email = document.getElementById('newCustomerEmail').value.trim();
+                const phone = document.getElementById('newCustomerPhone').value.trim();
+                const lang = document.getElementById('newCustomerLang').value || '';
+                const typeEl = document.querySelector('input[name="modalCustomerType"]:checked');
+                const type = typeEl ? (typeEl.value === 'company' ? '企业客户' : '个人客户') : '';
+                const role = document.getElementById('newApplicantRole').value || '配偶';
+                if (!name) return;
+                const initials = name.replace(/\s+/g, '').slice(0, 2).toUpperCase();
+                if (modalContext === 'main') {
+                    selectedCustomerInitials.textContent = initials;
+                    selectedCustomerName.textContent = name;
+                    selectedCustomerMeta.textContent = (lang ? '首选语言: ' + lang : '首选语言: 未设置') + '  |  ' + (type || '类型未设置');
+                    customerSearchInput.value = email ? `${name} (${email})` : name;
+                    selectedCustomerCard.style.display = 'flex';
+                    hasSelectedCustomer = true;
+                } else {
+                    applicants.push({ name, email, phone, lang, type, role, initials });
+                    renderApplicants();
+                }
+                closeCustomerModal();
+                updateUI();
+                currentStep = 2;
+                updateUI();
+                updateSuggestedCaseName();
+            });
+            
             // Initialize
             updateUI();
+            updateSuggestedCaseName();
+            (async () => {
+                try {
+                    const [v, c] = await Promise.all([
+                        fetch('../data/visas.json').then(r => r.ok ? r.json() : Promise.reject(new Error('visas.json'))),
+                        fetch('../data/communications.json').then(r => r.ok ? r.json() : Promise.reject(new Error('communications.json'))),
+                    ]);
+                    visasData = v;
+                    communicationsData = c;
+                    (visasData.visaTypes ?? []).forEach(t => visaTypesById.set(t.id, t));
+                    (visasData.requirementSets ?? []).filter(rs => rs.scenario === 'new').forEach(rs => requirementSetByVisaTypeId.set(rs.visaTypeId, rs));
+                    setProcedureOptions();
+                } catch (e) {
+                    visasData = {
+                        visaTypes: [
+                            { id: 'vt_jp_family_dependent', category: 'family', nameZh: '家族滞在', shortCode: 'DEP', processingDaysRange: { min: 10, max: 45 } },
+                            { id: 'vt_jp_work_ehis', category: 'work', nameZh: '技术·人文知识·国际业务（就劳签）', shortCode: 'E/H/IS', processingDaysRange: { min: 14, max: 60 } },
+                        ],
+                        requirementSets: [],
+                    };
+                    (visasData.visaTypes ?? []).forEach(t => visaTypesById.set(t.id, t));
+                    setProcedureOptions();
+                } finally {
+                    syncVisaLayout();
+                    updateSuggestedCaseName();
+                    updateUI();
+                }
+            })();
         });
     </script>
+    <script>
+        (function () {
+            var openButtons = document.querySelectorAll("[data-nav-open]");
+            var closeButtons = document.querySelectorAll("[data-nav-close]");
+            function setOpen(open) {
+                document.body.setAttribute("data-nav-open", open ? "true" : "false");
+            }
+            openButtons.forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    setOpen(true);
+                });
+            });
+            closeButtons.forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    setOpen(false);
+                });
+            });
+            document.addEventListener("keydown", function (e) {
+                if (e.key === "Escape") setOpen(false);
+            });
+        })();
+    </script>
+        </div>
+    </div>
 </body>
 </html>

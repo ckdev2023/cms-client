@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
@@ -175,6 +176,59 @@ void test("DocumentItemsService.list applies caseId/status filters", async () =>
   assert.ok(countCall);
   assert.ok(countCall.sql.includes("case_id = $"));
   assert.ok(countCall.sql.includes("status = $"));
+});
+
+void test("DocumentItemsService.getCompletionRate returns aggregated percentage", async () => {
+  const pool = makePool((sql) => {
+    if (/^(begin|commit|rollback|select set_config)/i.test(sql.trim())) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({
+      rows: [
+        { status: "approved", count: "1" },
+        { status: "waived", count: "1" },
+        { status: "pending", count: "1" },
+        { status: "revision_required", count: "1" },
+      ],
+      rowCount: 4,
+    });
+  });
+
+  const result = await createService(pool, makeTimeline()).getCompletionRate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.deepEqual(result, {
+    caseId: CASE_ID,
+    total: 4,
+    completed: 2,
+    approved: 1,
+    waived: 1,
+    completionRate: 50,
+  });
+});
+
+void test("DocumentItemsService.getCompletionRate returns zero and keeps tenant context", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const result = await createService(pool, makeTimeline()).getCompletionRate(
+    makeCtx(),
+    "case-empty",
+  );
+  assert.deepEqual(result, {
+    caseId: "case-empty",
+    total: 0,
+    completed: 0,
+    approved: 0,
+    waived: 0,
+    completionRate: 0,
+  });
+  const orgCall = calls.find((call) => call.sql.includes("app.org_id"));
+  assert.equal(orgCall?.params?.[0], ORG_ID);
 });
 
 // ── update ──

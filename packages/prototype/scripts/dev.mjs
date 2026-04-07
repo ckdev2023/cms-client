@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 const SRC_ROOT = path.resolve(__dirname, '../src')
+const DATA_ROOT = path.resolve(__dirname, '../data')
 const PORT = Number(process.env.PORT || 5175)
 
 const MIME = {
@@ -45,6 +46,14 @@ function resolveWithinRoot(candidatePath) {
   return resolved
 }
 
+function resolveWithinDataRoot(candidatePath) {
+  const resolved = path.resolve(candidatePath)
+  if (!resolved.startsWith(DATA_ROOT + path.sep) && resolved !== DATA_ROOT) {
+    return null
+  }
+  return resolved
+}
+
 async function fileExists(p) {
   try {
     const s = await stat(p)
@@ -67,8 +76,11 @@ async function resolveRequestToFile(requestPath) {
   const decoded = decodeURIComponent(requestPath)
   const withoutQuery = decoded.split('?')[0].split('#')[0]
   const rel = withoutQuery.startsWith('/') ? withoutQuery.slice(1) : withoutQuery
-
-  const base = resolveWithinRoot(path.join(SRC_ROOT, rel))
+  const isData = rel === 'data' || rel.startsWith('data/')
+  const dataRel = rel === 'data' ? '' : rel.slice('data/'.length)
+  const base = isData
+    ? resolveWithinDataRoot(path.join(DATA_ROOT, dataRel))
+    : resolveWithinRoot(path.join(SRC_ROOT, rel))
   if (!base) return null
 
   if (await fileExists(base)) return base

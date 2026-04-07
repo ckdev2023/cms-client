@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/admin.css" />
+    <title>文书中心 - Gyosei OS</title>
+  </head>
+  <body data-nav-open="false" data-active-nav="forms">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <include src="/components/Admin/MobileNav.html"></include>
+
+    <div class="app-shell">
+      <aside class="side-nav" aria-label="侧边栏导航">
+        <include src="/components/Admin/SideNav.html"></include>
+      </aside>
+
+      <div>
+        <include
+          src="/components/Admin/TopBar.html"
+          data-search-placeholder="搜索：文书模板 / 条款 / 字段..."
+        ></include>
+
+        <main id="main" class="page">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">文书中心</h1>
+              <p class="page-subtitle">模板管理、字段配置、导出与版本控制</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn-secondary" type="button">导入模板</button>
+              <button class="btn-primary" type="button">新建模板</button>
+            </div>
+          </div>
+
+          <section class="section">
+            <div class="grid grid-3">
+              <div class="apple-card panel">
+                <div class="text-card-title">委任状</div>
+                <div class="muted" style="font-size: 13px; font-weight: 700; margin-top: 6px">通用 · v5</div>
+                <div class="divider" style="margin: 12px 0"></div>
+                <div style="display: flex; gap: 10px">
+                  <button class="btn-secondary" type="button">预览</button>
+                  <button class="btn-primary" type="button">编辑</button>
+                </div>
+              </div>
+              <div class="apple-card panel">
+                <div class="text-card-title">材料清单</div>
+                <div class="muted" style="font-size: 13px; font-weight: 700; margin-top: 6px">经营管理 · v3</div>
+                <div class="divider" style="margin: 12px 0"></div>
+                <div style="display: flex; gap: 10px">
+                  <button class="btn-secondary" type="button">预览</button>
+                  <button class="btn-primary" type="button">编辑</button>
+                </div>
+              </div>
+              <div class="apple-card panel">
+                <div class="text-card-title">客户信息表</div>
+                <div class="muted" style="font-size: 13px; font-weight: 700; margin-top: 6px">通用 · v2</div>
+                <div class="divider" style="margin: 12px 0"></div>
+                <div style="display: flex; gap: 10px">
+                  <button class="btn-secondary" type="button">预览</button>
+                  <button class="btn-primary" type="button">编辑</button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>

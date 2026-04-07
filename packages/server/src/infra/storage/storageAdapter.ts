@@ -4,6 +4,11 @@ import * as path from "node:path";
 /**
  * 文件存储适配器接口。
  */
+export const STORAGE_ADAPTER = Symbol("STORAGE_ADAPTER");
+
+/**
+ * 文件存储适配器接口。
+ */
 export type StorageAdapter = {
   upload(key: string, data: Buffer, contentType: string): Promise<void>;
   download(key: string): Promise<Buffer>;

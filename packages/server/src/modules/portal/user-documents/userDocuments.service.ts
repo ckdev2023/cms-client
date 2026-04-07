@@ -6,9 +6,10 @@ import type {
   UserDocumentQueryRow,
 } from "../model/portalEntities";
 import { mapUserDocumentRow } from "../model/portalEntities";
-import type { StorageAdapter } from "../../../infra/storage/storageAdapter";
-
-export const STORAGE_ADAPTER = Symbol("STORAGE_ADAPTER");
+import {
+  STORAGE_ADAPTER,
+  type StorageAdapter,
+} from "../../../infra/storage/storageAdapter";
 
 /** UserDocument 上传入参。 */
 export type UserDocumentUploadInput = {
@@ -33,6 +34,11 @@ export type UserDocumentListInput = {
 
 const DOC_COLS = `id, app_user_id, org_id, lead_id, case_id, file_key, file_name, doc_type, status, uploaded_at`;
 
+function buildStorageKey(appUserId: string, fileName: string): string {
+  const sanitizedFileName = fileName.replace(/[/\\]/g, "_");
+  return `user-docs/${appUserId}/${String(Date.now())}_${sanitizedFileName}`;
+}
+
 /**
  * UserDocuments 服务：文件上传 + 资料管理。
  */
@@ -48,31 +54,40 @@ export class UserDocumentsService {
     @Inject(STORAGE_ADAPTER) private readonly storage: StorageAdapter,
   ) {}
 
+  private async deleteUploadedObject(fileKey: string): Promise<void> {
+    await this.storage.remove(fileKey).catch(() => undefined);
+  }
+
   /**
    * 上传文件。
    * @param input 上传参数
    * @returns 创建的文档记录
    */
   async upload(input: UserDocumentUploadInput): Promise<UserDocument> {
-    const fileKey = `user-docs/${input.appUserId}/${String(Date.now())}_${input.fileName}`;
+    const fileKey = buildStorageKey(input.appUserId, input.fileName);
     await this.storage.upload(fileKey, input.data, input.contentType);
 
-    const result = await this.pool.query<UserDocumentQueryRow>(
-      `insert into user_documents (app_user_id, org_id, lead_id, case_id, file_key, file_name, doc_type)
-       values ($1, $2, $3, $4, $5, $6, $7) returning ${DOC_COLS}`,
-      [
-        input.appUserId,
-        input.orgId ?? null,
-        input.leadId ?? null,
-        input.caseId ?? null,
-        fileKey,
-        input.fileName,
-        input.docType ?? "general",
-      ],
-    );
-    const row = result.rows.at(0);
-    if (!row) throw new BadRequestException("Failed to upload document");
-    return mapUserDocumentRow(row);
+    try {
+      const result = await this.pool.query<UserDocumentQueryRow>(
+        `insert into user_documents (app_user_id, org_id, lead_id, case_id, file_key, file_name, doc_type)
+         values ($1, $2, $3, $4, $5, $6, $7) returning ${DOC_COLS}`,
+        [
+          input.appUserId,
+          input.orgId ?? null,
+          input.leadId ?? null,
+          input.caseId ?? null,
+          fileKey,
+          input.fileName,
+          input.docType ?? "general",
+        ],
+      );
+      const row = result.rows.at(0);
+      if (!row) throw new BadRequestException("Failed to upload document");
+      return mapUserDocumentRow(row);
+    } catch (error) {
+      await this.deleteUploadedObject(fileKey);
+      throw error;
+    }
   }
 
   /**

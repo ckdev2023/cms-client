@@ -14,6 +14,7 @@ import {
 } from "@nestjs/common";
 
 import { Public } from "../../core/auth/auth.decorators";
+import { isUuid } from "../../core/tenancy/uuid";
 import { AppUserAuthGuard } from "../auth/appUserAuth.guard";
 import type { AppUserContext } from "../auth/appUserAuth.service";
 import { UserDocumentsService } from "./userDocuments.service";
@@ -53,13 +54,24 @@ function parseOptionalString(
   return requireString(value, field);
 }
 
-function parseOptionalNullableString(
+function parseUuid(value: unknown, field: string): string {
+  const str = requireString(value, field);
+  if (!isUuid(str)) throw new BadRequestException(`Invalid ${field}`);
+  return str;
+}
+
+function parseOptionalUuid(value: unknown, field: string): string | undefined {
+  if (value === undefined) return undefined;
+  return parseUuid(value, field);
+}
+
+function parseOptionalNullableUuid(
   value: unknown,
   field: string,
 ): string | null | undefined {
   if (value === undefined) return undefined;
   if (value === null) return null;
-  return requireString(value, field);
+  return parseUuid(value, field);
 }
 
 function parsePage(value: unknown): number | undefined {
@@ -77,6 +89,24 @@ function parseLimit(value: unknown): number | undefined {
   const i = Math.floor(n);
   if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
   return i;
+}
+
+function parseBase64Data(value: unknown): Buffer {
+  const str = requireString(value, "data");
+  const padding = str.endsWith("==") ? 2 : str.endsWith("=") ? 1 : 0;
+  const estimatedSize = (str.length / 4) * 3 - padding;
+  if (str.length > MAX_BASE64_LENGTH || estimatedSize > MAX_FILE_SIZE) {
+    throw new BadRequestException("File too large (max 10MB)");
+  }
+  if (!STRICT_BASE64_REGEX.test(str)) {
+    throw new BadRequestException("Invalid data");
+  }
+  const data = Buffer.from(str, "base64");
+  if (data.length === 0) throw new BadRequestException("Invalid data");
+  if (data.length > MAX_FILE_SIZE) {
+    throw new BadRequestException("File too large (max 10MB)");
+  }
+  return data;
 }
 
 type HttpRequest = {
@@ -110,32 +140,17 @@ export class UserDocumentsController {
   async upload(@Req() req: HttpRequest, @Body() body: UploadBody) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
-    const dataStr = requireString(body.data, "data");
-    const data = Buffer.from(dataStr, "base64");
-
-    // P0-3: 文件大小限制（10MB）
-    const MAX_FILE_SIZE = 10 * 1024 * 1024;
-    if (data.length > MAX_FILE_SIZE) {
-      throw new BadRequestException("File too large (max 10MB)");
-    }
-
-    // P0-3: 文件名清理
-    const rawFileName = requireString(body.fileName, "fileName");
-    const fileName = sanitizeFileName(rawFileName);
-
-    // P0-3: Content-Type 白名单
-    const contentType =
-      parseOptionalString(body.contentType, "contentType") ??
-      "application/octet-stream";
-    validateContentType(contentType);
+    const data = parseBase64Data(body.data);
+    const fileName = sanitizeFileName(requireString(body.fileName, "fileName"));
+    const contentType = parseContentType(body.contentType);
 
     return this.userDocumentsService.upload({
       appUserId: ctx.appUserId,
       fileName,
       docType: parseOptionalString(body.docType, "docType"),
-      leadId: parseOptionalNullableString(body.leadId, "leadId"),
-      caseId: parseOptionalNullableString(body.caseId, "caseId"),
-      orgId: parseOptionalNullableString(body.orgId, "orgId"),
+      leadId: parseOptionalNullableUuid(body.leadId, "leadId"),
+      caseId: parseOptionalNullableUuid(body.caseId, "caseId"),
+      orgId: parseOptionalNullableUuid(body.orgId, "orgId"),
       data,
       contentType,
     });
@@ -155,8 +170,8 @@ export class UserDocumentsController {
     if (!ctx) throw new UnauthorizedException("Missing app user context");
     const input: UserDocumentListInput = {
       appUserId: ctx.appUserId,
-      leadId: parseOptionalString(query.leadId, "leadId"),
-      caseId: parseOptionalString(query.caseId, "caseId"),
+      leadId: parseOptionalUuid(query.leadId, "leadId"),
+      caseId: parseOptionalUuid(query.caseId, "caseId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     };
@@ -175,7 +190,7 @@ export class UserDocumentsController {
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
-    const doc = await this.userDocumentsService.get(id);
+    const doc = await this.userDocumentsService.get(parseUuid(id, "id"));
     if (!doc) throw new BadRequestException("Document not found");
     if (doc.appUserId !== ctx.appUserId)
       throw new UnauthorizedException("Cannot access other user's document");
@@ -194,12 +209,13 @@ export class UserDocumentsController {
   async downloadUrl(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
-    const doc = await this.userDocumentsService.get(id);
+    const parsedId = parseUuid(id, "id");
+    const doc = await this.userDocumentsService.get(parsedId);
     if (!doc) throw new BadRequestException("Document not found");
     if (doc.appUserId !== ctx.appUserId)
       throw new UnauthorizedException("Cannot access other user's document");
-    const url = await this.userDocumentsService.getDownloadUrl(id);
-    return { url };
+    const url = await this.userDocumentsService.getDownloadUrl(parsedId);
+    return { url, downloadUrl: url };
   }
 
   /**
@@ -214,16 +230,22 @@ export class UserDocumentsController {
   async remove(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
-    const doc = await this.userDocumentsService.get(id);
+    const parsedId = parseUuid(id, "id");
+    const doc = await this.userDocumentsService.get(parsedId);
     if (!doc) throw new BadRequestException("Document not found");
     if (doc.appUserId !== ctx.appUserId)
       throw new UnauthorizedException("Cannot delete other user's document");
-    await this.userDocumentsService.remove(id);
+    await this.userDocumentsService.remove(parsedId);
     return { ok: true };
   }
 }
 
 // ── P0-3 安全辅助函数 ──
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_BASE64_LENGTH = Math.ceil(MAX_FILE_SIZE / 3) * 4;
+const STRICT_BASE64_REGEX =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 const ALLOWED_CONTENT_TYPES = new Set([
   "application/pdf",
@@ -240,10 +262,13 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "application/octet-stream",
 ]);
 
-function validateContentType(contentType: string): void {
+function parseContentType(value: unknown): string {
+  if (value === undefined) return "application/octet-stream";
+  const contentType = requireString(value, "contentType");
   if (!ALLOWED_CONTENT_TYPES.has(contentType)) {
-    throw new BadRequestException(`Unsupported content type: ${contentType}`);
+    throw new BadRequestException("Invalid contentType");
   }
+  return contentType;
 }
 
 function sanitizeFileName(raw: string): string {
@@ -254,7 +279,7 @@ function sanitizeFileName(raw: string): string {
     .replace(/[^\w.\-() ]/g, "_")
     .trim();
   if (cleaned.length === 0 || cleaned.length > 255) {
-    throw new BadRequestException("Invalid file name");
+    throw new BadRequestException("Invalid fileName");
   }
   return cleaned;
 }

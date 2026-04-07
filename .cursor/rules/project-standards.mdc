@@ -1,0 +1,33 @@
+---
+description: CMS client project-wide engineering and architecture guardrails
+alwaysApply: true
+---
+
+# CMS Client Project Standards
+
+## Workflow
+
+- All code changes must pass `npm run guard`.
+- Before finishing any code task, run `npm run fix` and then rerun `npm run guard`.
+- Prefer adding or updating tests for changed logic, especially in `model`, `domain`, and `data`.
+- Do not introduce new dependencies unless the repository truly requires them; if you do, also update tests and related guardrails.
+
+## Architecture
+
+- Keep business logic out of pages/components. Put it in the feature `model` layer (Hook/ViewModel).
+- The `domain` layer must stay pure TypeScript only: types, entities, interfaces, and domain logic. Do not depend on React Native, navigation, or concrete network/storage implementations.
+- The `data` layer implements `domain` interfaces. `infra` provides shared capabilities such as HTTP, storage, and logging, and must not depend back on business features.
+- Features must not depend directly on other features. Cross-feature collaboration must go through `domain`, `shared`, or a public API exposed by the target feature.
+- Feature code must not import `data` or `infra` directly; use the app container plus `domain`/`shared` abstractions.
+- Feature code must not import `tamagui` or `@tamagui/*` directly; use components wrapped in `shared/ui`.
+- `domain` and `data` must not depend on `shared/ui`.
+
+## Coding Rules
+
+- Use TypeScript-first code and keep strict typing.
+- Avoid adding comments unless the user explicitly asks or the code is genuinely hard to understand.
+- Keep each TS/TSX file under 500 lines; split files before they become large.
+- Keep functions focused and short; avoid stacking too much workflow or business logic in one method.
+- Tests must not make real network requests; mock fetch or inject stubs instead.
+- Never introduce or commit secrets, tokens, keys, or password-like material.
+- Use `npm` only. Keep `package-lock.json` authoritative and do not add other lockfiles.

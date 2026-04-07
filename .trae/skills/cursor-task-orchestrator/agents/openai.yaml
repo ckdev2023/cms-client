@@ -1,0 +1,10 @@
+interface:
+  display_name: Cursor Task Orchestrator
+  short_description: "为 Cursor 3.0 多 agent 执行生成原子任务、manifest、结果工件与运行手册"
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true

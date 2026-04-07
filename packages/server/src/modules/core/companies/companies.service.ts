@@ -35,6 +35,7 @@ export type CompanyQueryRow = {
 };
 
 const COMPANY_COLS = `id, org_id, company_no, company_name, corporate_number, established_date, capital_amount, address, business_scope, employee_count, fiscal_year_end, website, contact_phone, contact_email, owner_user_id, created_at, updated_at`;
+const ACTIVE_COMPANY_PREDICATE = `deleted_at is null`;
 
 /**
  * 将数据库查询结果行映射为 Company 实体。
@@ -199,7 +200,7 @@ export class CompaniesService {
   async get(ctx: RequestContext, id: string): Promise<Company | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<CompanyQueryRow>(
-      `select ${COMPANY_COLS} from companies where id = $1 limit 1`,
+      `select ${COMPANY_COLS} from companies where id = $1 and ${ACTIVE_COMPANY_PREDICATE} limit 1`,
       [id],
     );
     const row = result.rows.at(0);
@@ -221,7 +222,7 @@ export class CompaniesService {
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const where: string[] = [];
+    const where: string[] = [ACTIVE_COMPANY_PREDICATE];
     const params: unknown[] = [];
 
     if (input.keyword) {
@@ -272,7 +273,7 @@ export class CompaniesService {
             business_scope = $8, employee_count = $9, fiscal_year_end = $10,
             website = $11, contact_phone = $12, contact_email = $13,
             owner_user_id = $14, updated_at = now()
-        where id = $1
+        where id = $1 and ${ACTIVE_COMPANY_PREDICATE}
         returning ${COMPANY_COLS}
       `,
       [id, next.companyName, ...OPTIONAL_KEYS.map((k) => next[k])],
@@ -294,7 +295,7 @@ export class CompaniesService {
   }
 
   /**
-   * 软删除企业客户（物理删除行）。
+   * 软删除企业客户（标记 deleted_at）。
    * @param ctx 请求上下文
    * @param id 企业客户 ID
    */
@@ -314,9 +315,10 @@ export class CompaniesService {
       );
     }
 
-    const result = await tenantDb.query(`delete from companies where id = $1`, [
-      id,
-    ]);
+    const result = await tenantDb.query(
+      `update companies set deleted_at = now(), updated_at = now() where id = $1 and ${ACTIVE_COMPANY_PREDICATE}`,
+      [id],
+    );
 
     if (!result.rowCount || result.rowCount === 0)
       throw new BadRequestException("Failed to delete company");

@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "task result artifact",
+  "type": "object",
+  "required": [
+    "task_id",
+    "status",
+    "changed_files",
+    "tests",
+    "summary",
+    "risks",
+    "blockers"
+  ],
+  "properties": {
+    "task_id": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed", "blocked", "partial"]
+    },
+    "changed_files": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "tests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["command", "status"],
+        "properties": {
+          "command": {"type": "string"},
+          "status": {"type": "string", "enum": ["passed", "failed", "skipped"]},
+          "notes": {"type": "string"}
+        }
+      }
+    },
+    "summary": {"type": "string"},
+    "risks": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "blockers": {
+      "type": "array",
+      "items": {"type": "string"}
+    }
+  }
+}

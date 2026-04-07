@@ -30,6 +30,7 @@ export type ContactPersonQueryRow = {
 };
 
 const CONTACT_PERSON_COLS = `id, org_id, company_id, customer_id, name, role_title, relation_type, phone, email, preferred_language, created_at, updated_at`;
+const ACTIVE_CONTACT_PERSON_PREDICATE = `deleted_at is null`;
 
 /**
  * 将数据库查询结果行映射为 ContactPerson 实体。
@@ -190,7 +191,7 @@ export class ContactPersonsService {
   async get(ctx: RequestContext, id: string): Promise<ContactPerson | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<ContactPersonQueryRow>(
-      `select ${CONTACT_PERSON_COLS} from contact_persons where id = $1 limit 1`,
+      `select ${CONTACT_PERSON_COLS} from contact_persons where id = $1 and ${ACTIVE_CONTACT_PERSON_PREDICATE} limit 1`,
       [id],
     );
     const row = result.rows.at(0);
@@ -212,7 +213,7 @@ export class ContactPersonsService {
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const where: string[] = [];
+    const where: string[] = [ACTIVE_CONTACT_PERSON_PREDICATE];
     const params: unknown[] = [];
 
     if (input.companyId) {
@@ -265,7 +266,7 @@ export class ContactPersonsService {
         set name = $2, company_id = $3, customer_id = $4,
             role_title = $5, relation_type = $6, phone = $7,
             email = $8, preferred_language = $9, updated_at = now()
-        where id = $1
+        where id = $1 and ${ACTIVE_CONTACT_PERSON_PREDICATE}
         returning ${CONTACT_PERSON_COLS}
       `,
       [id, ...merged],
@@ -287,7 +288,7 @@ export class ContactPersonsService {
   }
 
   /**
-   * 软删除联系人（物理删除行）。
+   * 软删除联系人（标记 deleted_at）。
    * @param ctx 请求上下文
    * @param id 联系人 ID
    */
@@ -308,7 +309,7 @@ export class ContactPersonsService {
     }
 
     const result = await tenantDb.query(
-      `delete from contact_persons where id = $1`,
+      `update contact_persons set deleted_at = now(), updated_at = now() where id = $1 and ${ACTIVE_CONTACT_PERSON_PREDICATE}`,
       [id],
     );
 

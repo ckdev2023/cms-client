@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/styles/admin.css" />
+    <title>设置 - Gyosei OS</title>
+  </head>
+  <body data-nav-open="false" data-active-nav="settings">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <include src="/components/Admin/MobileNav.html"></include>
+
+    <div class="app-shell">
+      <aside class="side-nav" aria-label="侧边栏导航">
+        <include src="/components/Admin/SideNav.html"></include>
+      </aside>
+
+      <div>
+        <include
+          src="/components/Admin/TopBar.html"
+          data-search-placeholder="搜索：设置项 / 成员 / 权限..."
+        ></include>
+
+        <main id="main" class="page" style="max-width: 980px">
+          <div class="page-header">
+            <div>
+              <h1 class="page-title">设置</h1>
+              <p class="page-subtitle">事务所信息、成员与权限、通知与集成（原型）</p>
+            </div>
+            <div class="page-actions">
+              <button class="btn-secondary" type="button">恢复默认</button>
+              <button class="btn-primary" type="button">保存变更</button>
+            </div>
+          </div>
+
+          <div class="split" style="grid-template-columns: 1fr">
+            <section class="apple-card panel">
+              <h2 class="section-title">事务所信息</h2>
+              <div class="divider" style="margin: 12px 0"></div>
+              <div class="form">
+                <div class="field">
+                  <label class="label" for="orgName">事务所名称</label>
+                  <input class="input" id="orgName" value="Gyosei Partners" />
+                </div>
+                <div class="field">
+                  <label class="label" for="timezone">时区</label>
+                  <select class="select" id="timezone">
+                    <option>Asia/Tokyo</option>
+                    <option>Asia/Shanghai</option>
+                  </select>
+                </div>
+              </div>
+            </section>
+
+            <section class="apple-card panel">
+              <h2 class="section-title">成员与权限</h2>
+              <div class="divider" style="margin: 12px 0"></div>
+              <div class="table-wrap">
+                <table class="apple-table" aria-label="成员列表">
+                  <thead>
+                    <tr>
+                      <th>成员</th>
+                      <th>角色</th>
+                      <th>状态</th>
+                      <th>操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">AD</div>
+                        <div class="muted">owner@gyosei.example</div>
+                      </td>
+                      <td><span class="badge badge-active">Owner</span></td>
+                      <td>启用</td>
+                      <td><a class="link-apple" href="#">管理</a></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">YX</div>
+                        <div class="muted">staff1@gyosei.example</div>
+                      </td>
+                      <td><span class="badge badge-pending">Staff</span></td>
+                      <td>启用</td>
+                      <td><a class="link-apple" href="#">管理</a></td>
+                    </tr>
+                    <tr>
+                      <td>
+                        <div class="text-card-title">HG</div>
+                        <div class="muted">staff2@gyosei.example</div>
+                      </td>
+                      <td><span class="badge badge-pending">Staff</span></td>
+                      <td>邀请中</td>
+                      <td><a class="link-apple" href="#">重发邀请</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script type="module" src="./admin.js"></script>
+  </body>
+</html>

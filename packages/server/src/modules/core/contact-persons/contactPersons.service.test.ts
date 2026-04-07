@@ -179,7 +179,9 @@ void test("ContactPersonsService.create with customerId only succeeds", async ()
 // ── get ──
 
 void test("ContactPersonsService.get returns contact person or null", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql, params) => {
+    calls.push(sql.trim());
     if (sql.includes("from contact_persons") && params?.[0] === "cp1") {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
@@ -193,6 +195,7 @@ void test("ContactPersonsService.get returns contact person or null", async () =
 
   const cp2 = await service.get(makeCtx("viewer"), "not-found");
   assert.equal(cp2, null);
+  assert.ok(calls.some((sql) => sql.includes("deleted_at is null")));
 });
 
 // ── list ──
@@ -238,6 +241,7 @@ void test("ContactPersonsService.list with companyId filter", async () => {
   const countCall = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(countCall);
   assert.ok(countCall.sql.includes("company_id"));
+  assert.ok(countCall.sql.includes("deleted_at is null"));
 });
 
 void test("ContactPersonsService.list with customerId filter", async () => {
@@ -259,7 +263,9 @@ void test("ContactPersonsService.list with customerId filter", async () => {
 // ── update ──
 
 void test("ContactPersonsService.update updates and writes timeline", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql) => {
+    calls.push(sql.trim());
     if (
       sql.includes("from contact_persons") &&
       sql.includes("where id") &&
@@ -287,6 +293,13 @@ void test("ContactPersonsService.update updates and writes timeline", async () =
   const write = tl.writes[0] as Record<string, unknown>;
   assert.equal(write.action, "contact_person.updated");
   assert.equal(write.entityType, "contact_person");
+  assert.ok(
+    calls.some(
+      (sql) =>
+        sql.includes("update contact_persons") &&
+        sql.includes("deleted_at is null"),
+    ),
+  );
 });
 
 void test("ContactPersonsService.update throws NotFoundException when not found", async () => {
@@ -327,19 +340,21 @@ void test("ContactPersonsService.update throws on update failure", async () => {
 
 // ── softDelete ──
 
-void test("ContactPersonsService.softDelete deletes and writes timeline", async () => {
+void test("ContactPersonsService.softDelete marks deleted_at and writes timeline", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql, params) => {
+    calls.push(sql.trim());
     if (
       sql.includes("from contact_persons") &&
       params?.[0] === "cp1" &&
-      !sql.includes("delete")
+      !sql.includes("update contact_persons")
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
     if (sql.includes("exists")) {
       return Promise.resolve({ rows: [{ exists: false }], rowCount: 1 });
     }
-    if (sql.includes("delete from contact_persons")) {
+    if (sql.includes("update contact_persons set deleted_at = now()")) {
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -353,6 +368,7 @@ void test("ContactPersonsService.softDelete deletes and writes timeline", async 
   const write = tl.writes[0] as Record<string, unknown>;
   assert.equal(write.action, "contact_person.deleted");
   assert.equal(write.entityType, "contact_person");
+  assert.ok(calls.some((sql) => sql.includes("set deleted_at = now()")));
 });
 
 void test("ContactPersonsService.softDelete throws NotFoundException when not found", async () => {
@@ -372,9 +388,9 @@ void test("ContactPersonsService.softDelete throws NotFoundException when not fo
 void test("ContactPersonsService.softDelete throws BadRequestException when case_parties exist", async () => {
   const pool = makePool((sql, params) => {
     if (
+      sql.includes("select") &&
       sql.includes("from contact_persons") &&
-      params?.[0] === "cp1" &&
-      !sql.includes("delete")
+      params?.[0] === "cp1"
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
@@ -401,16 +417,20 @@ void test("ContactPersonsService.softDelete throws BadRequestException when case
 void test("ContactPersonsService.softDelete throws on delete failure", async () => {
   const pool = makePool((sql, params) => {
     if (
+      sql.includes("select") &&
       sql.includes("from contact_persons") &&
-      params?.[0] === "cp1" &&
-      !sql.includes("delete")
+      params?.[0] === "cp1"
     ) {
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
     }
     if (sql.includes("exists")) {
       return Promise.resolve({ rows: [{ exists: false }], rowCount: 1 });
     }
-    if (sql.includes("delete from contact_persons")) {
+    if (
+      sql.includes(
+        "update contact_persons set deleted_at = now(), updated_at = now()",
+      )
+    ) {
       return Promise.resolve({ rows: [], rowCount: 0 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });

@@ -160,6 +160,7 @@ export type CaseUpdateInput = {
   ownerUserId?: string;
   dueAt?: string | null;
   metadata?: Record<string, unknown>;
+  caseNo?: string | null;
   caseName?: string | null;
   caseSubtype?: string | null;
   applicationType?: string | null;
@@ -194,6 +195,8 @@ export type CaseTransitionInput = {
 };
 
 const CASE_COLS = `id, org_id, customer_id, case_type_code, status, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, created_at, updated_at`;
+const CASE_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
+const CASE_RISK_LEVELS = new Set(["low", "medium", "high"]);
 
 /** 列表过滤条件构建器（提取以降低 list 方法复杂度）。 */
 function buildCaseListFilter(input: CaseListInput): {
@@ -228,6 +231,34 @@ function pickDefined<T>(v: T | undefined, fallback: T): T {
   return v !== undefined ? v : fallback;
 }
 
+const DEFAULT_CASE_PREFIX = "CASE";
+
+function formatCaseYearMonth(date: Date): string {
+  return `${String(date.getFullYear())}${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function formatCaseNo(prefix: string, date: Date, seq: number): string {
+  return `${prefix}-${formatCaseYearMonth(date)}-${String(seq).padStart(4, "0")}`;
+}
+
+function resolveCasePrefix(settings: unknown): string {
+  if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+    return DEFAULT_CASE_PREFIX;
+  }
+  const value = (settings as Record<string, unknown>).case_prefix;
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : DEFAULT_CASE_PREFIX;
+}
+
+function isCaseNoConflict(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const pgError = error as { code?: unknown; constraint?: unknown };
+  return (
+    pgError.code === "23505" && pgError.constraint === "uq_cases_org_case_no"
+  );
+}
+
 /** 将 CaseUpdateInput 与 current Case 合并，返回各字段的最终值。 */
 function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
   return {
@@ -235,6 +266,7 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
     ownerUserId: input.ownerUserId ?? current.ownerUserId,
     dueAt: pickDefined(input.dueAt, current.dueAt),
     metadata: input.metadata ?? current.metadata,
+    caseNo: current.caseNo,
     caseName: pickDefined(input.caseName, current.caseName),
     caseSubtype: pickDefined(input.caseSubtype, current.caseSubtype),
     applicationType: pickDefined(
@@ -259,6 +291,18 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
     ),
     archivedAt: pickDefined(input.archivedAt, current.archivedAt),
   };
+}
+
+function validateCaseEnums(input: {
+  priority?: string;
+  riskLevel?: string;
+}): void {
+  if (input.priority !== undefined && !CASE_PRIORITIES.has(input.priority)) {
+    throw new BadRequestException("Invalid priority");
+  }
+  if (input.riskLevel !== undefined && !CASE_RISK_LEVELS.has(input.riskLevel)) {
+    throw new BadRequestException("Invalid riskLevel");
+  }
 }
 
 /** 将 CaseCreateInput 展平为 insert 参数数组。 */
@@ -316,6 +360,7 @@ export class CasesService {
    * @param ctx 请求上下文 @param input 创建参数 @returns Case 实体 */
   async create(ctx: RequestContext, input: CaseCreateInput): Promise<Case> {
     validateDueAt(input.dueAt);
+    validateCaseEnums(input);
     const checklistItems = await this.resolveChecklistItems(
       ctx,
       input.caseTypeCode,
@@ -332,7 +377,7 @@ export class CasesService {
         await this.assertBelongsToOrg(tx, "users", input.assistantUserId);
       }
 
-      const created = await this.insertCase(tx, ctx, input);
+      const created = await this.insertCaseWithAutoNumber(tx, ctx, input);
       await this.insertDocumentItems(tx, ctx.orgId, created.id, checklistItems);
       await writeTimelineInTx(tx, ctx, {
         entityType: "case",
@@ -413,6 +458,7 @@ export class CasesService {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Case not found or deleted");
     validateDueAt(input.dueAt);
+    validateCaseEnums(input);
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const f = resolveCaseUpdateFields(input, current);
 
@@ -587,6 +633,39 @@ export class CasesService {
     return mapCaseRow(row);
   }
 
+  private async insertCaseWithAutoNumber(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    input: CaseCreateInput,
+  ): Promise<Case> {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const caseNo = await this.generateCaseNo(tx, ctx.orgId);
+      try {
+        return await this.insertCase(tx, ctx, { ...input, caseNo });
+      } catch (error) {
+        if (attempt === 0 && isCaseNoConflict(error)) continue;
+        throw error;
+      }
+    }
+    throw new BadRequestException("Failed to create case");
+  }
+
+  private async generateCaseNo(tx: TenantDbTx, orgId: string): Promise<string> {
+    const settingsResult = await tx.query<{ settings: unknown }>(
+      `select settings from organizations where id = $1 limit 1`,
+      [orgId],
+    );
+    const now = new Date();
+    const prefix = resolveCasePrefix(settingsResult.rows[0]?.settings);
+    const period = `${prefix}-${formatCaseYearMonth(now)}-%`;
+    const countResult = await tx.query<{ count: string }>(
+      `select count(*) as count from cases where org_id = $1 and case_no like $2`,
+      [orgId, period],
+    );
+    const seq = parseInt(countResult.rows[0]?.count ?? "0", 10) + 1;
+    return formatCaseNo(prefix, now, seq);
+  }
+
   /** 执行 Case 更新 SQL 并返回更新后的 Case。 */
   private async executeUpdateCase(
     tx: TenantDbTx,
@@ -596,11 +675,11 @@ export class CasesService {
     const result = await tx.query<CaseQueryRow>(
       `update cases
        set case_type_code = $2, owner_user_id = $3, due_at = $4,
-           metadata = $5::jsonb, case_name = $6, case_subtype = $7,
-           application_type = $8, company_id = $9, priority = $10,
-           risk_level = $11, assistant_user_id = $12, source_channel = $13,
-           signed_at = $14, accepted_at = $15, submission_date = $16,
-           result_date = $17, residence_expiry_date = $18, archived_at = $19,
+           metadata = $5::jsonb, case_no = $6, case_name = $7, case_subtype = $8,
+           application_type = $9, company_id = $10, priority = $11,
+           risk_level = $12, assistant_user_id = $13, source_channel = $14,
+           signed_at = $15, accepted_at = $16, submission_date = $17,
+           result_date = $18, residence_expiry_date = $19, archived_at = $20,
            updated_at = now()
        where id = $1 and coalesce(metadata->>'_status', '') is distinct from 'deleted'
        returning ${CASE_COLS}`,
@@ -610,6 +689,7 @@ export class CasesService {
         f.ownerUserId,
         f.dueAt,
         JSON.stringify(f.metadata),
+        f.caseNo,
         f.caseName,
         f.caseSubtype,
         f.applicationType,

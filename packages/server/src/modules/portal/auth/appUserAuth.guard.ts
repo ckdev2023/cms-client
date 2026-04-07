@@ -4,9 +4,6 @@ import {
   UnauthorizedException,
   type ExecutionContext,
 } from "@nestjs/common";
-import { Reflector } from "@nestjs/core";
-
-import { IS_PUBLIC_KEY } from "../../core/auth/auth.decorators";
 import { verifyAppUserJwt, readJwtSecret } from "./appUserAuth.service";
 import type { AppUserContext } from "./appUserAuth.service";
 
@@ -26,23 +23,11 @@ type HttpRequest = {
 @Injectable()
 export class AppUserAuthGuard implements CanActivate {
   /**
-   * 创建 Guard 实例。
-   * @param reflector NestJS Reflector
-   */
-  constructor(private readonly reflector: Reflector) {}
-
-  /**
    * 验证请求中的 AppUser JWT。
    * @param context 执行上下文
    * @returns 是否通过验证
    */
   canActivate(context: ExecutionContext): boolean {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
-
     const req = context.switchToHttp().getRequest<HttpRequest>();
     const authHeader =
       typeof req.headers?.authorization === "string"

@@ -6,6 +6,9 @@ type ContactPersonId = string;
 type CaseId = string;
 type CasePartyId = string;
 type DocumentItemId = string;
+type DocumentFileId = string;
+type BillingRecordId = string;
+type PaymentRecordId = string;
 type TimelineLogId = string;
 
 type OrganizationPlan = string;
@@ -22,6 +25,18 @@ type DocumentItemOwnerSide = string;
 
 type ReminderStatus = string;
 type ReminderEntityType = string;
+
+type BillingType = string;
+type BillingRecordStatus = string;
+/**
+ * 发票开具/开票状态。
+ */
+type BillingInvoiceStatus = string;
+
+/**
+ * 回款方式枚举。
+ */
+export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "other";
 
 /**
  * Timeline 记录所指向的实体类型（核心对象）。
@@ -142,6 +157,28 @@ export type DocumentItem = {
 };
 
 /**
+ * DocumentFile 核心对象（资料项下的文件版本）。
+ */
+export type DocumentFile = {
+  id: DocumentFileId;
+  orgId: OrganizationId;
+  requirementId: DocumentItemId;
+  fileName: string;
+  fileUrl: string;
+  fileType: string | null;
+  fileSize: number | null;
+  versionNo: number;
+  uploadedBy: UserId | null;
+  uploadedAt: string;
+  reviewStatus: string;
+  reviewBy: UserId | null;
+  reviewAt: string | null;
+  expiryDate: string | null;
+  hashValue: string | null;
+  createdAt: string;
+};
+
+/**
  * CaseParty 核心对象（案件关联人）。
  */
 export type CaseParty = {
@@ -211,6 +248,82 @@ export type Reminder = {
   payload: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/**
+ * Task 核心对象（任务）。
+ */
+export type Task = {
+  id: string;
+  orgId: OrganizationId;
+  caseId: CaseId | null;
+  title: string;
+  description: string | null;
+  taskType: string;
+  assigneeUserId: UserId | null;
+  priority: string;
+  dueAt: string | null;
+  status: string;
+  sourceType: string | null;
+  sourceId: string | null;
+  completedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * CommunicationLog 核心对象（沟通记录）。
+ */
+export type CommunicationLog = {
+  id: string;
+  orgId: OrganizationId;
+  caseId: CaseId | null;
+  customerId: CustomerId | null;
+  companyId: CompanyId | null;
+  channelType: string;
+  direction: string;
+  subject: string | null;
+  contentSummary: string | null;
+  fullContent: string | null;
+  visibleToClient: boolean;
+  createdBy: UserId | null;
+  followUpRequired: boolean;
+  followUpDueAt: string | null;
+  createdAt: string;
+};
+
+/**
+ * BillingRecord 核心对象（收费计划/收费条目）。
+ */
+export type BillingRecord = {
+  id: BillingRecordId;
+  orgId: OrganizationId;
+  caseId: CaseId;
+  billingType: BillingType;
+  milestoneName: string | null;
+  amountDue: number;
+  dueDate: string | null;
+  status: BillingRecordStatus;
+  invoiceStatus: BillingInvoiceStatus;
+  remark: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * PaymentRecord 核心对象（回款记录）。
+ */
+export type PaymentRecord = {
+  id: PaymentRecordId;
+  orgId: OrganizationId;
+  billingRecordId: BillingRecordId;
+  caseId: CaseId;
+  amountReceived: number;
+  receivedAt: string;
+  paymentMethod: PaymentMethod | null;
+  receiptFileUrl: string | null;
+  recordedBy: UserId | null;
+  createdAt: string;
 };
 
 /**

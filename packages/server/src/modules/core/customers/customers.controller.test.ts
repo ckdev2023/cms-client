@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ForbiddenException,
+  UnauthorizedException,
+} from "@nestjs/common";
 
+import { PermissionsService } from "../auth/permissions.service";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
 import type { Customer } from "../model/coreEntities";
@@ -16,12 +21,18 @@ const mockCustomer: Customer = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+function makePermissions(
+  canEditCustomer: PermissionsService["canEditCustomer"] = () => true,
+): PermissionsService {
+  return { canEditCustomer } as unknown as PermissionsService;
+}
+
 void test("CustomersController create validates DTO and requires context", async () => {
   const service = {
     create: () => Promise.resolve(mockCustomer),
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service);
+  const controller = new CustomersController(service, makePermissions());
 
   await assert.rejects(
     async () => {
@@ -65,7 +76,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", baseProfile: "string_is_invalid" });
+      await controller.create(req as never, {
+        type: "individual",
+        baseProfile: "string_is_invalid",
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -76,7 +90,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", baseProfile: [] });
+      await controller.create(req as never, {
+        type: "individual",
+        baseProfile: [],
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -87,7 +104,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", contacts: "not_an_array" });
+      await controller.create(req as never, {
+        type: "individual",
+        contacts: "not_an_array",
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -98,7 +118,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", contacts: ["string_item"] });
+      await controller.create(req as never, {
+        type: "individual",
+        contacts: ["string_item"],
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -109,7 +132,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", contacts: [[]] });
+      await controller.create(req as never, {
+        type: "individual",
+        contacts: [[]],
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -120,7 +146,10 @@ void test("CustomersController create validates DTO and requires context", async
 
   await assert.rejects(
     async () => {
-      await controller.create(req as never, { type: "individual", contacts: [null] });
+      await controller.create(req as never, {
+        type: "individual",
+        contacts: [null],
+      });
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -129,10 +158,10 @@ void test("CustomersController create validates DTO and requires context", async
     },
   );
 
-  const res = await controller.create(req as never, { 
-    type: "individual", 
-    baseProfile: { name: "Alice" }, 
-    contacts: [{ email: "alice@example.com" }] 
+  const res = await controller.create(req as never, {
+    type: "individual",
+    baseProfile: { name: "Alice" },
+    contacts: [{ email: "alice@example.com" }],
   });
   assert.equal(res.id, "c1");
 });
@@ -147,7 +176,7 @@ void test("CustomersController list parses page and limit", async () => {
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service);
+  const controller = new CustomersController(service, makePermissions());
 
   await assert.rejects(
     async () => {
@@ -239,7 +268,7 @@ void test("CustomersController get validates context and handles not found", asy
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service);
+  const controller = new CustomersController(service, makePermissions());
 
   await assert.rejects(
     async () => {
@@ -279,7 +308,7 @@ void test("CustomersController update validates DTO", async () => {
     update: () => Promise.resolve(mockCustomer),
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service);
+  const controller = new CustomersController(service, makePermissions());
 
   await assert.rejects(
     async () => {
@@ -309,11 +338,41 @@ void test("CustomersController update validates DTO", async () => {
     },
   );
 
-  const res = await controller.update(req as never, "c1", { type: "corporation" });
+  const res = await controller.update(req as never, "c1", {
+    type: "corporation",
+  });
   assert.equal(res.id, "c1");
 
   const resWithoutType = await controller.update(req as never, "c1", {});
   assert.equal(resWithoutType.id, "c1");
+});
+
+void test("CustomersController update throws when canEditCustomer denies", async () => {
+  let updateCalled = false;
+  const service = {
+    update: () => {
+      updateCalled = true;
+      return Promise.resolve(mockCustomer);
+    },
+  } as unknown as CustomersService;
+
+  const controller = new CustomersController(
+    service,
+    makePermissions(() => false),
+  );
+  const req = {
+    requestContext: {
+      orgId: "org1",
+      userId: "user1",
+      role: "staff",
+    },
+  };
+
+  await assert.rejects(
+    () => controller.update(req as never, "c1", { type: "corporation" }),
+    ForbiddenException,
+  );
+  assert.equal(updateCalled, false);
 });
 
 void test("CustomersController delete validates context", async () => {
@@ -325,7 +384,7 @@ void test("CustomersController delete validates context", async () => {
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service);
+  const controller = new CustomersController(service, makePermissions());
 
   await assert.rejects(
     async () => {
@@ -348,4 +407,32 @@ void test("CustomersController delete validates context", async () => {
   const res = await controller.delete(req as never, "c1");
   assert.equal(res.ok, true);
   assert.equal(deletedId, "c1");
+});
+
+void test("CustomersController delete throws when canEditCustomer denies", async () => {
+  let deleted = false;
+  const service = {
+    softDelete: () => {
+      deleted = true;
+      return Promise.resolve();
+    },
+  } as unknown as CustomersService;
+
+  const controller = new CustomersController(
+    service,
+    makePermissions(() => false),
+  );
+  const req = {
+    requestContext: {
+      orgId: "org1",
+      userId: "user1",
+      role: "manager",
+    },
+  };
+
+  await assert.rejects(
+    () => controller.delete(req as never, "c1"),
+    ForbiddenException,
+  );
+  assert.equal(deleted, false);
 });

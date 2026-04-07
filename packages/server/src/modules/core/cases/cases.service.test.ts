@@ -122,6 +122,45 @@ void test("create: inserts row + timeline, no template", async () => {
   );
 });
 
+void test("create: generates case_no from org prefix and month", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const now = new Date();
+  const yyyymm = `${String(now.getFullYear())}${String(now.getMonth() + 1).padStart(2, "0")}`;
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    ) {
+      return ok([{ id: params?.[0] }]);
+    }
+    if (sql.includes("select settings from organizations")) {
+      return ok([{ settings: { case_prefix: "TOKYO" } }]);
+    }
+    if (
+      sql.includes(
+        "select count(*) as count from cases where org_id = $1 and case_no like $2",
+      )
+    ) {
+      return ok([{ count: "12" }]);
+    }
+    if (sql.includes("insert into cases")) {
+      return ok([makeCaseRow({ case_no: params?.[7] })]);
+    }
+    return ok();
+  });
+
+  const created = await svc(pool, makeTemplates()).create(
+    makeCtx(),
+    CREATE_INPUT,
+  );
+  assert.equal(created.caseNo, `TOKYO-${yyyymm}-0013`);
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into cases"),
+  );
+  assert.equal(insertCall?.params?.[7], `TOKYO-${yyyymm}-0013`);
+});
+
 // ── create (with template → generates document_items) ──
 void test("create: generates document_items from template", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
@@ -298,6 +337,32 @@ void test("update: updates + timeline in transaction", async () => {
     calls.filter((c) => c.sql.includes("insert into timeline_logs")).length,
     1,
   );
+});
+
+void test("update: ignores incoming caseNo", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const currentCaseNo = "TOKYO-202604-0001";
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("update cases")) {
+      return ok([
+        makeCaseRow({ case_no: currentCaseNo, case_name: "Updated" }),
+      ]);
+    }
+    if (sql.includes("from cases") && params?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ case_no: currentCaseNo })]);
+    }
+    return ok();
+  });
+
+  const updated = await svc(pool, makeTemplates()).update(makeCtx(), CASE_ID, {
+    caseNo: "HACK-202604-9999",
+    caseName: "Updated",
+  });
+
+  assert.equal(updated.caseNo, currentCaseNo);
+  const updateCall = calls.find((call) => call.sql.includes("update cases"));
+  assert.equal(updateCall?.params?.[5], currentCaseNo);
 });
 
 void test("update: throws when not found", async () => {

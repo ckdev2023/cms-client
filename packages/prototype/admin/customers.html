@@ -6,101 +6,330 @@
     <title>客户管理 - Gyosei OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      /* Apple Typography System */
-      @font-face {
-        font-family: "SF Pro Display";
-        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-regular-webfont.woff2")
-          format("woff2");
-        font-weight: 400;
-      }
-      @font-face {
-        font-family: "SF Pro Display";
-        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscodisplay-semibold-webfont.woff2")
-          format("woff2");
-        font-weight: 600;
-      }
-      @font-face {
-        font-family: "SF Pro Text";
-        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-regular-webfont.woff2")
-          format("woff2");
-        font-weight: 400;
-      }
-      @font-face {
-        font-family: "SF Pro Text";
-        src: url("https://applesocial.s3.amazonaws.com/assets/fonts/sanfrancisco/sanfranciscotext-medium-webfont.woff2")
-          format("woff2");
-        font-weight: 500;
-      }
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
       :root {
-        --apple-blue: #0071e3;
-        --apple-blue-hover: #0077ed;
-        --apple-link: #0066cc;
-        --apple-bg: #f5f5f7;
-        --apple-card: #ffffff;
-        --apple-text-main: #1d1d1f;
-        --apple-text-sec: rgba(0, 0, 0, 0.8);
-        --apple-text-tert: rgba(0, 0, 0, 0.48);
-        --apple-shadow: rgba(0, 0, 0, 0.08) 0px 4px 20px 0px;
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --muted: #475569;
+        --muted-2: #64748b;
+        --primary: #0369a1;
+        --primary-hover: #075985;
+        --success: #16a34a;
+        --warning: #f59e0b;
+        --danger: #dc2626;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.06),
+          0 10px 28px rgba(15, 23, 42, 0.08);
+        --radius: 14px;
+
+        --apple-blue: var(--primary);
+        --apple-blue-hover: var(--primary-hover);
+        --apple-link: var(--primary);
+        --apple-bg: var(--bg);
+        --apple-card: var(--surface);
+        --apple-text-main: var(--text);
+        --apple-text-sec: var(--muted);
+        --apple-text-tert: var(--muted-2);
+        --apple-shadow: var(--shadow);
       }
 
       body {
         font-family:
-          "SF Pro Text",
+          "Plus Jakarta Sans",
           -apple-system,
           BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
           sans-serif;
-        background-color: var(--apple-bg);
-        color: var(--apple-text-main);
+        background-color: var(--bg);
+        color: var(--text);
         -webkit-font-smoothing: antialiased;
-        letter-spacing: -0.02em;
+        -moz-osx-font-smoothing: grayscale;
+        letter-spacing: -0.01em;
       }
 
       .display-font {
-        font-family:
-          "SF Pro Display",
-          -apple-system,
-          sans-serif;
+        font-weight: 900;
         letter-spacing: -0.02em;
       }
-      .glass-nav {
-        background-color: rgba(0, 0, 0, 0.8);
-        backdrop-filter: saturate(180%) blur(20px);
-        -webkit-backdrop-filter: saturate(180%) blur(20px);
+
+      .skip-link {
+        position: absolute;
+        left: 16px;
+        top: 8px;
+        transform: translateY(-200%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      :where(a, button, input, select, textarea):focus-visible {
+        outline: 2px solid rgba(3, 105, 161, 0.35);
+        outline-offset: 2px;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1024px) {
+        .app-shell {
+          grid-template-columns: 280px 1fr;
+        }
+      }
+
+      .side-nav {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+      }
+      .side-nav-inner {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 14px;
+        gap: 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 10px 6px 10px;
+      }
+      .brand-title {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .nav-group-title {
+        font-size: 11px;
+        color: var(--muted-2);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 10px 10px 6px 10px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+        transition:
+          background-color 160ms ease,
+          color 160ms ease;
+      }
+      .nav-item:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .nav-item[aria-current="page"] {
+        background: rgba(3, 105, 161, 0.1);
+        color: var(--text);
+      }
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(248, 250, 252, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        transition:
+          background-color 160ms ease,
+          border-color 160ms ease,
+          color 160ms ease;
+      }
+      .icon-btn:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .search {
+        flex: 1 1 auto;
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+      }
+      .search input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: transparent;
+      }
+      .search input::placeholder {
+        color: rgba(100, 116, 139, 0.9);
+        font-weight: 600;
       }
 
       .btn-primary {
-        background-color: var(--apple-blue);
+        background-color: var(--primary);
         color: white;
-        padding: 8px 15px;
-        border-radius: 8px;
+        padding: 10px 14px;
+        border-radius: 14px;
         font-size: 14px;
-        transition: all 0.2s;
+        font-weight: 900;
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        box-shadow: 0 8px 18px rgba(3, 105, 161, 0.22);
       }
       .btn-primary:hover {
-        background-color: var(--apple-blue-hover);
+        background-color: var(--primary-hover);
       }
       .btn-primary:active {
-        transform: scale(0.98);
+        transform: translateY(1px);
       }
 
       .btn-secondary {
-        background-color: rgba(118, 118, 128, 0.12);
-        color: var(--apple-text-main);
-        padding: 8px 15px;
-        border-radius: 8px;
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 14px;
         font-size: 14px;
-        transition: all 0.2s;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        font-weight: 900;
       }
       .btn-secondary:hover {
-        background-color: rgba(118, 118, 128, 0.24);
+        background: rgba(15, 23, 42, 0.07);
+      }
+      .btn-secondary:active {
+        transform: translateY(1px);
+      }
+
+      .btn-pill {
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        font-weight: 900;
+      }
+      .btn-pill:hover {
+        background: rgba(15, 23, 42, 0.07);
+      }
+      .btn-pill:active {
+        transform: translateY(1px);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 900;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(241, 245, 249, 0.9);
+        color: var(--text);
       }
 
       .apple-card {
-        background-color: var(--apple-card);
-        border-radius: 12px;
-        box-shadow: var(--apple-shadow);
-        border: none;
+        background-color: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+      }
+
+      .mobile-nav {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: none;
+      }
+      body[data-nav-open="true"] .mobile-nav {
+        display: block;
+      }
+      .mobile-nav-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.56);
+      }
+      .mobile-nav-panel {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(320px, 88vw);
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        transform: translateX(-100%);
+        transition: transform 220ms ease;
+      }
+      body[data-nav-open="true"] .mobile-nav-panel {
+        transform: translateX(0);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
       }
 
       /* Segmented Control (Apple Style Tabs) */
@@ -251,58 +480,210 @@
       }
     </style>
   </head>
-  <body class="min-h-screen flex flex-col">
-    <!-- Nav -->
-    <nav class="glass-nav fixed w-full top-0 z-50 h-12 flex items-center">
-      <div
-        class="max-w-7xl mx-auto px-4 w-full flex justify-between items-center"
-      >
-        <div class="flex items-center space-x-8 flex-1 min-w-0">
-          <a
-            href="admin-prototype.html"
-            class="text-white display-font font-semibold text-lg tracking-tight hover:opacity-80 transition-opacity"
-            >Gyosei OS</a
-          >
-          <div class="hidden md:flex items-center space-x-6 overflow-x-auto flex-1 min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-            <a href="admin-prototype.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">仪表盘 (Dashboard)</a>
-            <a href="customers.html" class="text-white/90 text-xs hover:text-white transition-colors whitespace-nowrap">客户 (Customers)</a>
-            <a href="cases-list.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">案件 (Cases)</a>
-            <a href="documents.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">资料中心 (Docs)</a>
-            <a href="forms.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">文书中心 (Forms)</a>
-            <a href="tasks.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">任务与提醒 (Tasks)</a>
-            <a href="billing.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">收费与财务 (Billing)</a>
-            <a href="reports.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">报表 (Reports)</a>
-            <a href="settings.html" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">设置 (Settings)</a>
-            <a href="../src/index.html" target="_blank" class="text-white/60 text-xs hover:text-white transition-colors whitespace-nowrap">客户门户 (Portal)</a>
+  <body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <div class="mobile-nav" aria-hidden="true">
+      <div class="mobile-nav-backdrop" data-nav-close></div>
+      <div class="mobile-nav-panel">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
           </div>
-        </div>
-        <div class="flex items-center space-x-4">
-          <button class="text-white/80 hover:text-white transition-colors">
-            <svg
-              class="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
-            </svg>
-          </button>
-          <div
-            class="w-6 h-6 rounded-full bg-white/20 flex items-center justify-center text-white text-xs"
-          >
-            AD
-          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="customers.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="cases-list.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a>
+          </nav>
         </div>
       </div>
-    </nav>
+    </div>
 
-    <!-- Main Content -->
-    <main class="flex-grow pt-24 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+    <div class="app-shell">
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="customers.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="cases-list.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <div>
+        <header class="topbar" aria-label="顶部工具栏">
+          <div class="topbar-inner">
+            <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+
+            <div class="search" role="search">
+              <svg class="w-[18px] h-[18px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input type="search" placeholder="搜索：客户 / 案件 / 资料 / 文书..." aria-label="全局搜索" />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+
+            <button class="btn-pill hidden sm:inline-flex" type="button" onclick="window.location.href = 'leads-messages.html'">新建咨询</button>
+            <button class="btn-primary" type="button" onclick="window.location.href = 'case-create.html'">新建案件</button>
+
+            <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">
+              AD
+            </div>
+          </div>
+        </header>
+
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
       <!-- Header -->
       <div class="flex justify-between items-end mb-8">
         <div>
@@ -503,7 +884,7 @@
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="apple-label">姓名 / 企业名称 <span class="text-red-500">*</span></label>
-                <input type="text" class="apple-input" placeholder="输入客户名称">
+                <input type="text" class="apple-input" id="addCustomerName" placeholder="输入客户名称">
               </div>
               <div>
                 <label class="apple-label">拼音 / 英文名</label>
@@ -552,9 +933,12 @@
         <!-- Footer -->
         <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
           <button class="btn-secondary px-5" id="cancelModalBtn">取消</button>
-          <button class="btn-primary px-5">保存客户</button>
+          <button class="btn-primary px-5" id="saveCustomerBtn">保存客户</button>
         </div>
       </div>
+    </div>
+
+        </div>
     </div>
 
     <script>
@@ -563,6 +947,8 @@
         const openBtn = document.getElementById('btnAddCustomer');
         const closeBtn = document.getElementById('closeModalBtn');
         const cancelBtn = document.getElementById('cancelModalBtn');
+        const saveBtn = document.getElementById('saveCustomerBtn');
+        const nameInput = document.getElementById('addCustomerName');
 
         const openModal = () => {
           modal.classList.add('show');
@@ -577,6 +963,12 @@
         openBtn.addEventListener('click', openModal);
         closeBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
+        if (saveBtn && nameInput) {
+          saveBtn.disabled = true;
+          nameInput.addEventListener('input', () => {
+            saveBtn.disabled = nameInput.value.trim().length === 0;
+          });
+        }
 
         // Close on backdrop click
         modal.addEventListener('click', (e) => {
@@ -585,6 +977,28 @@
           }
         });
       });
+    </script>
+    <script>
+      (function () {
+        var openButtons = document.querySelectorAll("[data-nav-open]");
+        var closeButtons = document.querySelectorAll("[data-nav-close]");
+        function setOpen(open) {
+          document.body.setAttribute("data-nav-open", open ? "true" : "false");
+        }
+        openButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setOpen(true);
+          });
+        });
+        closeButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setOpen(false);
+          });
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") setOpen(false);
+        });
+      })();
     </script>
   </body>
 </html>

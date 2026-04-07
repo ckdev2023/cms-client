@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { HealthController } from "./health/health.controller";
 import { AuthController } from "./modules/core/auth/auth.controller";
 import { AuthGuard } from "./modules/core/auth/auth.guard";
+import { PermissionsService } from "./modules/core/auth/permissions.service";
 import { RequestContextInterceptor } from "./modules/core/auth/requestContext.interceptor";
 import { JobsController } from "./modules/core/jobs/jobs.controller";
 import { JobsService } from "./modules/core/jobs/jobs.service";
@@ -13,10 +14,20 @@ import {
   CasesService,
   TEMPLATES_RESOLVER,
 } from "./modules/core/cases/cases.service";
+import { BillingRecordsController } from "./modules/core/billing/billingRecords.controller";
+import { BillingRecordsService } from "./modules/core/billing/billingRecords.service";
+import { PaymentRecordsController } from "./modules/core/billing/paymentRecords.controller";
+import { PaymentRecordsService } from "./modules/core/billing/paymentRecords.service";
+import { DocumentFilesController } from "./modules/core/document-files/documentFiles.controller";
+import { DocumentFilesService } from "./modules/core/document-files/documentFiles.service";
 import { DocumentItemsController } from "./modules/core/document-items/documentItems.controller";
 import { DocumentItemsService } from "./modules/core/document-items/documentItems.service";
 import { RemindersController } from "./modules/core/reminders/reminders.controller";
 import { RemindersService } from "./modules/core/reminders/reminders.service";
+import { CommunicationLogsController } from "./modules/core/communication-logs/communicationLogs.controller";
+import { CommunicationLogsService } from "./modules/core/communication-logs/communicationLogs.service";
+import { TasksController } from "./modules/core/tasks/tasks.controller";
+import { TasksService } from "./modules/core/tasks/tasks.service";
 import { CompaniesController } from "./modules/core/companies/companies.controller";
 import { CompaniesService } from "./modules/core/companies/companies.service";
 import { ContactPersonsController } from "./modules/core/contact-persons/contactPersons.controller";
@@ -40,10 +51,7 @@ import { ConversationsService } from "./modules/portal/conversations/conversatio
 import { MessagesController } from "./modules/portal/messages/messages.controller";
 import { MessagesService } from "./modules/portal/messages/messages.service";
 import { UserDocumentsController } from "./modules/portal/user-documents/userDocuments.controller";
-import {
-  UserDocumentsService,
-  STORAGE_ADAPTER,
-} from "./modules/portal/user-documents/userDocuments.service";
+import { UserDocumentsService } from "./modules/portal/user-documents/userDocuments.service";
 import { IntakeController } from "./modules/portal/intake/intake.controller";
 import { IntakeService } from "./modules/portal/intake/intake.service";
 import { AppUserAuthController } from "./modules/portal/auth/appUserAuth.controller";
@@ -55,7 +63,10 @@ import {
   createRedisClient,
   REDIS_CLIENT,
 } from "./infra/redis/createRedisClient";
-import { createStorageAdapter } from "./infra/storage/storageAdapter";
+import {
+  STORAGE_ADAPTER,
+  createStorageAdapter,
+} from "./infra/storage/storageAdapter";
 
 /**
  * 应用根模块。
@@ -72,9 +83,14 @@ import { createStorageAdapter } from "./infra/storage/storageAdapter";
     ContactPersonsController,
     CustomersController,
     CasesController,
+    BillingRecordsController,
+    PaymentRecordsController,
     CasePartiesController,
+    DocumentFilesController,
     DocumentItemsController,
     RemindersController,
+    TasksController,
+    CommunicationLogsController,
     AppUsersController,
     LeadsController,
     ConversationsController,
@@ -85,6 +101,7 @@ import { createStorageAdapter } from "./infra/storage/storageAdapter";
   ],
   providers: [
     Reflector,
+    PermissionsService,
     {
       provide: Pool,
       useFactory: () => createPgPool(loadEnv().dbUrl),
@@ -101,9 +118,14 @@ import { createStorageAdapter } from "./infra/storage/storageAdapter";
     ContactPersonsService,
     CustomersService,
     CasesService,
+    BillingRecordsService,
+    PaymentRecordsService,
     CasePartiesService,
+    DocumentFilesService,
     DocumentItemsService,
     RemindersService,
+    TasksService,
+    CommunicationLogsService,
     AppUsersService,
     LeadsService,
     ConversationsService,

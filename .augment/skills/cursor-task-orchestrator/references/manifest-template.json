@@ -1,0 +1,45 @@
+{
+  "project": "example-project",
+  "base_branch": "main",
+  "assumptions": [
+    "replace with explicit assumptions"
+  ],
+  "global_constraints": [
+    "do not edit unrelated modules",
+    "do not change ci or deployment config unless explicitly requested"
+  ],
+  "shared_hotspots": [
+    "src/routes.ts",
+    "package.json"
+  ],
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "extract shared button variants",
+      "prompt_file": "tasks/T01.md",
+      "depends_on": [],
+      "parallel_group": "ui-core",
+      "allowed_paths": [
+        "src/components/button",
+        "src/theme/button.ts"
+      ],
+      "forbidden_paths": [
+        "package.json",
+        "pnpm-lock.yaml",
+        ".github"
+      ],
+      "test_commands": [
+        "pnpm test --filter button",
+        "pnpm lint"
+      ],
+      "expected_artifacts": [
+        "artifacts/T01.result.json",
+        "artifacts/T01.summary.md"
+      ],
+      "stop_conditions": [
+        "change requires editing shared route registry",
+        "change requires new package dependency"
+      ]
+    }
+  ]
+}

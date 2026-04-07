@@ -106,39 +106,51 @@ export class CasePartiesService {
     @Inject(TimelineService) private readonly timelineService: TimelineService,
   ) {}
 
-  /**
-   * 添加关联人到案件。
-   * @param ctx 请求上下文
-   * @param input 创建参数
-   * @returns 创建成功的 CaseParty 实体
-   */
-  async create(
+  private async writeCaseTimeline(
     ctx: RequestContext,
-    input: CasePartyCreateInput,
-  ): Promise<CaseParty> {
+    caseId: string,
+    action: string,
+    payload: Record<string, unknown>,
+  ): Promise<void> {
+    await this.timelineService.write(ctx, {
+      entityType: "case",
+      entityId: caseId,
+      action,
+      payload,
+    });
+  }
+
+  private validateCreateInput(input: CasePartyCreateInput): void {
     validatePartyType(input.partyType);
     if (!input.customerId && !input.contactPersonId) {
       throw new BadRequestException(
         "customerId or contactPersonId is required",
       );
     }
+  }
 
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
-    // 校验 caseId 属于同 org（RLS 已保证）
+  private async assertCaseExists(
+    tenantDb: TenantDb,
+    caseId: string,
+  ): Promise<void> {
     const caseCheck = await tenantDb.query<{ id: string }>(
       `select id from cases where id = $1 limit 1`,
-      [input.caseId],
+      [caseId],
     );
     if (caseCheck.rows.length === 0) {
       throw new BadRequestException(
         "Referenced cases record not found in current organization",
       );
     }
+  }
 
-    const isPrimary = input.isPrimary ?? false;
-
-    // is_primary 唯一约束：同一 case 同类 party_type 只允许一个 is_primary
+  private async insertCaseParty(
+    ctx: RequestContext,
+    input: CasePartyCreateInput,
+    isPrimary: boolean,
+  ): Promise<CaseParty> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    await this.assertCaseExists(tenantDb, input.caseId);
     if (isPrimary) {
       await assertNoPrimaryConflict(tenantDb, input.caseId, input.partyType);
     }
@@ -160,15 +172,39 @@ export class CasePartiesService {
 
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to create case party");
+    return mapCasePartyRow(row);
+  }
 
-    const party = mapCasePartyRow(row);
-
+  private async writeCreateTimelines(
+    ctx: RequestContext,
+    party: CaseParty,
+  ): Promise<void> {
     await this.timelineService.write(ctx, {
       entityType: "case_party",
       entityId: party.id,
       action: "case_party.created",
       payload: { caseId: party.caseId, partyType: party.partyType },
     });
+    await this.writeCaseTimeline(ctx, party.caseId, "case_party.created", {
+      casePartyId: party.id,
+      partyType: party.partyType,
+    });
+  }
+
+  /**
+   * 添加关联人到案件。
+   * @param ctx 请求上下文
+   * @param input 创建参数
+   * @returns 创建成功的 CaseParty 实体
+   */
+  async create(
+    ctx: RequestContext,
+    input: CasePartyCreateInput,
+  ): Promise<CaseParty> {
+    this.validateCreateInput(input);
+    const isPrimary = input.isPrimary ?? false;
+    const party = await this.insertCaseParty(ctx, input, isPrimary);
+    await this.writeCreateTimelines(ctx, party);
 
     return party;
   }
@@ -262,6 +298,11 @@ export class CasePartiesService {
       action: "case_party.updated",
       payload: { before: current, after: updated },
     });
+    await this.writeCaseTimeline(ctx, updated.caseId, "case_party.updated", {
+      casePartyId: updated.id,
+      before: current,
+      after: updated,
+    });
     return updated;
   }
 
@@ -289,6 +330,10 @@ export class CasePartiesService {
       entityId: id,
       action: "case_party.deleted",
       payload: { caseId: current.caseId, partyType: current.partyType },
+    });
+    await this.writeCaseTimeline(ctx, current.caseId, "case_party.deleted", {
+      casePartyId: id,
+      partyType: current.partyType,
     });
   }
 }

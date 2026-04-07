@@ -3,6 +3,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Inject,
   Param,
@@ -14,6 +15,7 @@ import {
 } from "@nestjs/common";
 
 import { RequireRoles } from "../auth/auth.decorators";
+import { PermissionsService } from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CasesService } from "./cases.service";
 
@@ -49,6 +51,7 @@ type UpdateCaseBody = {
   ownerUserId?: unknown;
   dueAt?: unknown;
   metadata?: unknown;
+  caseNo?: unknown;
   caseName?: unknown;
   caseSubtype?: unknown;
   applicationType?: unknown;
@@ -138,10 +141,13 @@ export class CasesController {
   /**
    * 构造函数。
    * @param casesService 案件服务实例
+   * @param permissionsService 权限服务实例
    */
   constructor(
     @Inject(CasesService)
     private readonly casesService: CasesService,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   /**
@@ -253,11 +259,14 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    await this.assertCanEditCase(ctx, id);
+
     return this.casesService.update(ctx, id, {
       caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
       ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
       dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
       metadata: parseObject(body.metadata),
+      caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
       caseName: parseOptionalNullableString(body.caseName, "caseName"),
       caseSubtype: parseOptionalNullableString(body.caseSubtype, "caseSubtype"),
       applicationType: parseOptionalNullableString(
@@ -324,7 +333,23 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    await this.assertCanEditCase(ctx, id);
+
     await this.casesService.softDelete(ctx, id);
     return { ok: true };
+  }
+
+  private async assertCanEditCase(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, id);
+    if (!caseEntity) return;
+
+    if (
+      !this.permissionsService.canEditCase(ctx.userId, ctx.role, caseEntity)
+    ) {
+      throw new ForbiddenException("Insufficient permissions to edit case");
+    }
   }
 }
