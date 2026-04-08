@@ -55,45 +55,10 @@ export class AuthGuard implements CanActivate {
    * @returns 是否允许
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
-    if (isPublic) return true;
-
+    if (this.isPublicRoute(context)) return true;
     const req = context.switchToHttp().getRequest<HttpRequest>();
-    const input =
-      req.requestAuthInput ??
-      parseVerifiedRequestAuthInputFromHeaders(req.headers, readAuthConfigFromEnv());
-    if (!input) {
-      throw new UnauthorizedException(
-        "Missing authorization",
-      );
-    }
-
-    if (!isUuid(input.orgId) || !isUuid(input.userId)) {
-      throw new UnauthorizedException("Invalid auth context");
-    }
-
-    const tenantDb = createTenantDb(this.pool, input.orgId, input.userId);
-    const userResult = await tenantDb.query<{
-      id: string;
-      role: string;
-      status: string;
-    }>("select id, role, status from users where id = $1 limit 1", [input.userId]);
-
-    if (userResult.rows.length === 0) {
-      throw new UnauthorizedException("User not found in organization");
-    }
-    const user = userResult.rows[0];
-
-    const role = parseRole(user.role);
-    if (!role) {
-      throw new ForbiddenException("Invalid role");
-    }
-    if (user.status !== "active") {
-      throw new ForbiddenException("Inactive user");
-    }
+    const input = this.readRequestAuthInput(req);
+    const role = await this.resolveActiveRole(input);
 
     req.requestContext = {
       orgId: input.orgId,
@@ -112,5 +77,53 @@ export class AuthGuard implements CanActivate {
     }
 
     return true;
+  }
+
+  private isPublicRoute(context: ExecutionContext): boolean {
+    return this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+  }
+
+  private readRequestAuthInput(req: HttpRequest): RequestAuthInput {
+    const input =
+      req.requestAuthInput ??
+      parseVerifiedRequestAuthInputFromHeaders(
+        req.headers,
+        readAuthConfigFromEnv(),
+      );
+    if (!input) {
+      throw new UnauthorizedException("Missing authorization");
+    }
+    if (!isUuid(input.orgId) || !isUuid(input.userId)) {
+      throw new UnauthorizedException("Invalid auth context");
+    }
+    return input;
+  }
+
+  private async resolveActiveRole(input: RequestAuthInput): Promise<Role> {
+    const tenantDb = createTenantDb(this.pool, input.orgId, input.userId);
+    const userResult = await tenantDb.query<{
+      id: string;
+      role: string;
+      status: string;
+    }>("select id, role, status from users where id = $1 limit 1", [
+      input.userId,
+    ]);
+    if (userResult.rows.length === 0) {
+      throw new UnauthorizedException("User not found in organization");
+    }
+
+    const user = userResult.rows[0];
+    const role = parseRole(user.role);
+    if (!role) {
+      throw new ForbiddenException("Invalid role");
+    }
+    if (user.status !== "active") {
+      throw new ForbiddenException("Inactive user");
+    }
+
+    return role;
   }
 }

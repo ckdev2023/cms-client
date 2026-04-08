@@ -1,3 +1,5 @@
+import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
 import {
   BadRequestException,
   Inject,
@@ -6,14 +8,13 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
+import { communicationLogs } from "../../../infra/db/drizzle/schema";
 import type { CommunicationLog } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
-import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
+import { createTenantDrizzleRepository } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 import {
-  COMM_LOG_COLS,
-  buildRelationWhere,
-  mapCommunicationLogRow,
+  mapCommunicationLogRecord,
   resolveCommunicationLogUpdate,
   validateChannelType,
   validateDirection,
@@ -24,9 +25,7 @@ import type {
   CommunicationLogCreateInput,
   CommunicationLogFollowUpsInput,
   CommunicationLogListInput,
-  CommunicationLogQueryRow,
   CommunicationLogUpdateInput,
-  ResolvedCommunicationLogUpdate,
 } from "./communicationLogs.shared";
 
 export { mapCommunicationLogRow } from "./communicationLogs.shared";
@@ -34,7 +33,6 @@ export type {
   CommunicationLogCreateInput,
   CommunicationLogFollowUpsInput,
   CommunicationLogListInput,
-  CommunicationLogQueryRow,
   CommunicationLogUpdateInput,
 } from "./communicationLogs.shared";
 
@@ -43,12 +41,6 @@ export type {
  */
 @Injectable()
 export class CommunicationLogsService {
-  private static readonly ALLOWED_ASSERT_TABLES = new Set([
-    "cases",
-    "customers",
-    "companies",
-  ]);
-
   /**
    * Creates the service with tenant-aware database access and timeline writes.
    *
@@ -80,8 +72,37 @@ export class CommunicationLogsService {
     validateDirection(input.direction ?? "inbound");
     validateTimestamp(input.followUpDueAt, "followUpDueAt");
 
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const created = await this.insertCommunicationLog(tenantDb, ctx, input);
+    const tenantRepo = this.createTenantRepository(ctx);
+    const created = await tenantRepo.transaction(async (session) => {
+      await this.assertRefs(
+        (table, refId) => session.assertBelongsToOrg(table, refId),
+        input.caseId,
+        input.customerId,
+        input.companyId,
+      );
+      const rows = await session.db
+        .insert(communicationLogs)
+        .values({
+          orgId: ctx.orgId,
+          caseId: input.caseId ?? null,
+          customerId: input.customerId ?? null,
+          companyId: input.companyId ?? null,
+          channelType: input.channelType,
+          direction: input.direction ?? "inbound",
+          subject: input.subject ?? null,
+          contentSummary: input.contentSummary ?? null,
+          fullContent: input.fullContent ?? null,
+          visibleToClient: input.visibleToClient ?? false,
+          createdBy: ctx.userId,
+          followUpRequired: input.followUpRequired ?? false,
+          followUpDueAt: input.followUpDueAt ?? null,
+        })
+        .returning();
+      if (rows.length === 0) {
+        throw new BadRequestException("Failed to create communication log");
+      }
+      return mapCommunicationLogRecord(rows[0]);
+    });
     await this.writeCreateTimelines(ctx, created);
     return created;
   }
@@ -94,13 +115,16 @@ export class CommunicationLogsService {
    * @returns The communication log when found, otherwise `null`.
    */
   async get(ctx: RequestContext, id: string): Promise<CommunicationLog | null> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<CommunicationLogQueryRow>(
-      `select ${COMM_LOG_COLS} from communication_logs where id = $1 limit 1`,
-      [id],
-    );
-    const row = result.rows.at(0);
-    return row ? mapCommunicationLogRow(row) : null;
+    const tenantRepo = this.createTenantRepository(ctx);
+    return tenantRepo.query(async ({ db }) => {
+      const rows = await db
+        .select()
+        .from(communicationLogs)
+        .where(eq(communicationLogs.id, id))
+        .limit(1);
+      if (rows.length === 0) return null;
+      return mapCommunicationLogRecord(rows[0]);
+    });
   }
 
   /**
@@ -114,27 +138,29 @@ export class CommunicationLogsService {
     ctx: RequestContext,
     input: CommunicationLogListInput = {},
   ): Promise<{ items: CommunicationLog[]; total: number }> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const tenantRepo = this.createTenantRepository(ctx);
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
+    return tenantRepo.query(async ({ db }) => {
+      const where = this.buildRelationWhere(input);
+      const [countResult] = await db
+        .select({ count: sql<string>`count(*)` })
+        .from(communicationLogs)
+        .where(where);
+      const result = await db
+        .select()
+        .from(communicationLogs)
+        .where(where)
+        .orderBy(desc(communicationLogs.createdAt), desc(communicationLogs.id))
+        .limit(limit)
+        .offset(offset);
 
-    const { whereClause, params } = buildRelationWhere(input);
-    const countResult = await tenantDb.query<{ count: string }>(
-      `select count(*) as count from communication_logs ${whereClause}`,
-      params,
-    );
-    const total = Number.parseInt(countResult.rows[0]?.count ?? "0", 10);
-
-    const listParams = [...params, limit, offset];
-    const result = await tenantDb.query<CommunicationLogQueryRow>(
-      `select ${COMM_LOG_COLS} from communication_logs ${whereClause}
-       order by created_at desc, id desc
-       limit $${String(listParams.length - 1)} offset $${String(listParams.length)}`,
-      listParams,
-    );
-
-    return { items: result.rows.map(mapCommunicationLogRow), total };
+      return {
+        items: result.map((row) => mapCommunicationLogRecord(row)),
+        total: Number.parseInt(countResult.count, 10),
+      };
+    });
   }
 
   /**
@@ -159,8 +185,36 @@ export class CommunicationLogsService {
     validateDirection(next.direction);
     validateTimestamp(next.followUpDueAt, "followUpDueAt");
 
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const updated = await this.updateCommunicationLog(tenantDb, id, next);
+    const tenantRepo = this.createTenantRepository(ctx);
+    const updated = await tenantRepo.transaction(async (session) => {
+      await this.assertRefs(
+        (table, refId) => session.assertBelongsToOrg(table, refId),
+        next.caseId,
+        next.customerId,
+        next.companyId,
+      );
+      const rows = await session.db
+        .update(communicationLogs)
+        .set({
+          caseId: next.caseId,
+          customerId: next.customerId,
+          companyId: next.companyId,
+          channelType: next.channelType,
+          direction: next.direction,
+          subject: next.subject,
+          contentSummary: next.contentSummary,
+          fullContent: next.fullContent,
+          visibleToClient: next.visibleToClient,
+          followUpRequired: next.followUpRequired,
+          followUpDueAt: next.followUpDueAt,
+        })
+        .where(eq(communicationLogs.id, id))
+        .returning();
+      if (rows.length === 0) {
+        throw new BadRequestException("Failed to update communication log");
+      }
+      return mapCommunicationLogRecord(rows[0]);
+    });
     await this.writeUpdateTimelines(ctx, current, updated);
     return updated;
   }
@@ -176,105 +230,62 @@ export class CommunicationLogsService {
     ctx: RequestContext,
     input: CommunicationLogFollowUpsInput = {},
   ): Promise<CommunicationLog[]> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const { whereClause, params } = buildRelationWhere(input, [
-      "follow_up_required = true",
-      "follow_up_due_at is not null",
-      "follow_up_due_at <= now()",
+    const tenantRepo = this.createTenantRepository(ctx);
+    return tenantRepo.query(async ({ db }) => {
+      const where = this.buildRelationWhere(input, [
+        eq(communicationLogs.followUpRequired, true),
+        isNotNull(communicationLogs.followUpDueAt),
+        sql`${communicationLogs.followUpDueAt} <= now()`,
+      ]);
+      const result = await db
+        .select()
+        .from(communicationLogs)
+        .where(where)
+        .orderBy(
+          communicationLogs.followUpDueAt,
+          desc(communicationLogs.createdAt),
+          desc(communicationLogs.id),
+        );
+
+      return result.map((row) => mapCommunicationLogRecord(row));
+    });
+  }
+
+  /**
+   * Creates a tenant-scoped Drizzle repository for communication log workflows.
+   *
+   * @param ctx Request context containing tenant and actor information.
+   * @returns Tenant-scoped repository with relation assertion support.
+   */
+  private createTenantRepository(ctx: RequestContext) {
+    return createTenantDrizzleRepository(this.pool, ctx.orgId, ctx.userId, [
+      "cases",
+      "customers",
+      "companies",
     ]);
-
-    const result = await tenantDb.query<CommunicationLogQueryRow>(
-      `select ${COMM_LOG_COLS} from communication_logs ${whereClause}
-       order by follow_up_due_at asc, created_at desc, id desc`,
-      params,
-    );
-
-    return result.rows.map(mapCommunicationLogRow);
   }
 
-  private async insertCommunicationLog(
-    tenantDb: ReturnType<typeof createTenantDb>,
-    ctx: RequestContext,
-    input: CommunicationLogCreateInput,
-  ): Promise<CommunicationLog> {
-    return tenantDb.transaction(async (tx) => {
-      await this.assertRefs(
-        tx,
-        input.caseId,
-        input.customerId,
-        input.companyId,
-      );
-      const result = await tx.query<CommunicationLogQueryRow>(
-        `insert into communication_logs (org_id, case_id, customer_id, company_id, channel_type, direction, subject, content_summary, full_content, visible_to_client, created_by, follow_up_required, follow_up_due_at)
-         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-         returning ${COMM_LOG_COLS}`,
-        [
-          ctx.orgId,
-          input.caseId ?? null,
-          input.customerId ?? null,
-          input.companyId ?? null,
-          input.channelType,
-          input.direction ?? "inbound",
-          input.subject ?? null,
-          input.contentSummary ?? null,
-          input.fullContent ?? null,
-          input.visibleToClient ?? false,
-          ctx.userId,
-          input.followUpRequired ?? false,
-          input.followUpDueAt ?? null,
-        ],
-      );
-
-      const row = result.rows.at(0);
-      if (!row)
-        throw new BadRequestException("Failed to create communication log");
-      return mapCommunicationLogRow(row);
-    });
-  }
-
-  private async updateCommunicationLog(
-    tenantDb: ReturnType<typeof createTenantDb>,
-    id: string,
-    next: ResolvedCommunicationLogUpdate,
-  ): Promise<CommunicationLog> {
-    return tenantDb.transaction(async (tx) => {
-      await this.assertRefs(tx, next.caseId, next.customerId, next.companyId);
-      const result = await tx.query<CommunicationLogQueryRow>(
-        `update communication_logs
-         set case_id = $2,
-             customer_id = $3,
-             company_id = $4,
-             channel_type = $5,
-             direction = $6,
-             subject = $7,
-             content_summary = $8,
-             full_content = $9,
-             visible_to_client = $10,
-             follow_up_required = $11,
-             follow_up_due_at = $12
-         where id = $1
-         returning ${COMM_LOG_COLS}`,
-        [
-          id,
-          next.caseId,
-          next.customerId,
-          next.companyId,
-          next.channelType,
-          next.direction,
-          next.subject,
-          next.contentSummary,
-          next.fullContent,
-          next.visibleToClient,
-          next.followUpRequired,
-          next.followUpDueAt,
-        ],
-      );
-
-      const row = result.rows.at(0);
-      if (!row)
-        throw new BadRequestException("Failed to update communication log");
-      return mapCommunicationLogRow(row);
-    });
+  /**
+   * Builds a Drizzle condition for optional relation filters plus extra predicates.
+   *
+   * @param input Relation filters supplied by the caller.
+   * @param extra Additional predicates to append.
+   * @returns Combined Drizzle condition or `undefined`.
+   */
+  private buildRelationWhere(
+    input: CommunicationLogListInput | CommunicationLogFollowUpsInput,
+    extra: SQL[] = [],
+  ): SQL | undefined {
+    const conditions = [...extra];
+    if (input.caseId)
+      conditions.push(eq(communicationLogs.caseId, input.caseId));
+    if (input.customerId) {
+      conditions.push(eq(communicationLogs.customerId, input.customerId));
+    }
+    if (input.companyId) {
+      conditions.push(eq(communicationLogs.companyId, input.companyId));
+    }
+    return conditions.length > 0 ? and(...conditions) : undefined;
   }
 
   private async writeCreateTimelines(
@@ -335,33 +346,14 @@ export class CommunicationLogsService {
   }
 
   private async assertRefs(
-    tx: TenantDbTx,
+    assertBelongsToOrg: (table: string, id: string) => Promise<void>,
     caseId?: string | null,
     customerId?: string | null,
     companyId?: string | null,
   ): Promise<void> {
-    if (caseId) await this.assertBelongsToOrg(tx, "cases", caseId);
-    if (customerId) await this.assertBelongsToOrg(tx, "customers", customerId);
-    if (companyId) await this.assertBelongsToOrg(tx, "companies", companyId);
-  }
-
-  private async assertBelongsToOrg(
-    tx: TenantDbTx,
-    table: string,
-    id: string,
-  ): Promise<void> {
-    if (!CommunicationLogsService.ALLOWED_ASSERT_TABLES.has(table)) {
-      throw new Error(`assertBelongsToOrg: disallowed table "${table}"`);
-    }
-    const result = await tx.query<{ id: string }>(
-      `select id from ${table} where id = $1 limit 1`,
-      [id],
-    );
-    if (result.rows.length === 0) {
-      throw new BadRequestException(
-        `Referenced ${table} record not found in current organization`,
-      );
-    }
+    if (caseId) await assertBelongsToOrg("cases", caseId);
+    if (customerId) await assertBelongsToOrg("customers", customerId);
+    if (companyId) await assertBelongsToOrg("companies", companyId);
   }
 
   private async writeCaseTimelinesForUpdate(

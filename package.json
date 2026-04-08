@@ -7,6 +7,7 @@
   "type": "commonjs",
   "private": true,
   "scripts": {
+    "diagram:check": "for f in docs/架构/*.mmd; do echo \"[diagram:check] $f\"; npx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o - > /dev/null; done",
     "mobile:start": "npm --workspace mobile run start",
     "mobile:ios": "npm --workspace mobile run ios",
     "mobile:android": "npm --workspace mobile run android",
@@ -38,13 +39,19 @@
     "lint-staged": "^16.2.2"
   },
   "lint-staged": {
-    "packages/mobile/**/*.{ts,tsx,js,jsx,json}": [
+    "packages/mobile/**/*.{ts,tsx,js,jsx}": [
       "npm --workspace mobile exec -- prettier --write",
       "npm --workspace mobile exec -- eslint --fix"
     ],
-    "packages/server/**/*.{ts,tsx,js,jsx,json,yml,yaml}": [
+    "packages/mobile/**/*.json": [
+      "npm --workspace mobile exec -- prettier --write"
+    ],
+    "packages/server/**/*.{ts,tsx,js,jsx,mjs,cjs}": [
       "npm --workspace server exec -- prettier --write",
       "npm --workspace server exec -- eslint --fix"
+    ],
+    "packages/server/**/*.{json,yml,yaml}": [
+      "npm --workspace server exec -- prettier --write"
     ]
   },
   "workspaces": [

@@ -5,20 +5,25 @@ const prettierConfig = require("eslint-config-prettier");
 const tseslint = require("typescript-eslint");
 
 module.exports = [
+  {
+    ignores: ["dist/**", "node_modules/**", "drizzle/meta/**"],
+  },
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {
     languageOptions: {
       globals: globals.node,
-      parserOptions: {
-        projectService: true,
-        tsconfigRootDir: __dirname,
-      },
     },
   },
   {
     files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.eslint.json"],
+        tsconfigRootDir: __dirname,
+      },
+    },
     plugins: {
       jsdoc: jsdocPlugin,
     },
@@ -71,6 +76,16 @@ module.exports = [
       "jsdoc/require-param-description": "error",
       "jsdoc/require-returns": "error",
       "jsdoc/require-returns-description": "error",
+    },
+  },
+  {
+    files: ["**/*.{js,mjs,cjs}"],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    files: ["**/*.cjs"],
+    rules: {
+      "@typescript-eslint/no-require-imports": "off",
     },
   },
   {

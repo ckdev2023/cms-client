@@ -286,6 +286,8 @@
         border: 1px solid rgba(226, 232, 240, 0.9);
         background: rgba(241, 245, 249, 0.9);
         color: var(--text);
+        white-space: nowrap;
+        line-height: 1.1;
       }
 
       .apple-card {
@@ -354,23 +356,27 @@
           0 3px 8px rgba(0, 0, 0, 0.12),
           0 3px 1px rgba(0, 0, 0, 0.04);
       }
+      .segment-btn[aria-disabled='true'] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
       /* Table Styles */
       .apple-table th {
         font-size: 12px;
         color: var(--apple-text-tert);
-        font-weight: 500;
-        text-transform: uppercase;
-        padding: 12px 16px;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        padding: 10px 14px;
         border-bottom: 1px solid #e5e5ea;
         text-align: left;
       }
       .apple-table td {
-        padding: 16px;
+        padding: 12px 14px;
         font-size: 14px;
         border-bottom: 1px solid #f2f2f7;
         color: var(--apple-text-sec);
-        vertical-align: middle;
+        vertical-align: top;
       }
       .apple-table tr:hover td {
         background-color: #fbfbfd;
@@ -443,7 +449,7 @@
         background-color: var(--apple-card);
         border-radius: 14px;
         width: 100%;
-        max-width: 540px;
+        max-width: 760px;
         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
         transform: translateY(20px) scale(0.95);
         transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
@@ -688,7 +694,7 @@
       <div class="flex justify-between items-end mb-8">
         <div>
           <h1 class="text-3xl display-font font-semibold">客户</h1>
-          <p class="text-sm text-gray-500 mt-1">管理个人与企业客户信息</p>
+          <p class="text-sm text-gray-500 mt-1">P0 以个人客户建档为主；企业主数据后置到 P1/P2</p>
         </div>
         <div class="flex space-x-3">
           <button class="btn-secondary">导出</button>
@@ -700,16 +706,46 @@
       </div>
 
       <!-- Controls Area -->
-      <div class="flex justify-between items-center mb-6">
-        <div class="segmented-control">
-          <div class="segment-btn active">全部客户</div>
-          <div class="segment-btn">个人客户</div>
-          <div class="segment-btn">企业客户</div>
+      <div class="flex flex-col gap-3 mb-6">
+        <div class="flex flex-wrap justify-between items-center gap-3">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="segmented-control" aria-label="数据范围">
+              <div class="segment-btn active">我的</div>
+              <div class="segment-btn">本组</div>
+              <div class="segment-btn">全所（管理员）</div>
+            </div>
+            <div class="segmented-control" aria-label="客户类型">
+              <div class="segment-btn active">个人</div>
+              <div class="segment-btn" aria-disabled="true" title="企业主数据为 P1/P2 能力">企业（P1）</div>
+            </div>
+          </div>
+
+          <div class="relative">
+            <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" placeholder="搜索：客户名 / 假名 / 电话 / 邮箱" class="search-input" />
+          </div>
         </div>
-        
-        <div class="relative">
-          <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-          <input type="text" placeholder="搜索客户名称、电话或邮箱" class="search-input" />
+
+        <div class="flex flex-wrap items-center gap-2">
+          <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+            <option selected>Group：全部</option>
+            <option>东京一组</option>
+            <option>东京二组</option>
+            <option>大阪组</option>
+          </select>
+          <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+            <option selected>负责人：全部</option>
+            <option>Admin</option>
+            <option>Tom</option>
+            <option>助理 A</option>
+          </select>
+          <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+            <option selected>活跃案件：全部</option>
+            <option>有活跃案件</option>
+            <option>无活跃案件</option>
+          </select>
+          <button class="btn-secondary h-9 px-4 text-[13px]">保存视图</button>
+          <button class="btn-secondary h-9 px-4 text-[13px]">重置</button>
         </div>
       </div>
 
@@ -718,13 +754,15 @@
         <table class="apple-table w-full text-left border-collapse">
           <thead>
             <tr>
-              <th class="w-1/4">客户名称</th>
-              <th class="w-[15%]">联系方式</th>
-              <th class="w-[10%]">类型</th>
-              <th class="w-[10%]">活跃案件</th>
-              <th class="w-[15%]">当前负责人</th>
-              <th class="w-[15%]">最近联系</th>
-              <th class="text-right w-[10%]">操作</th>
+              <th class="w-[34%]">客户</th>
+              <th class="hidden lg:table-cell w-[140px]">假名</th>
+              <th class="w-[92px]">活跃案件</th>
+              <th class="hidden md:table-cell w-[140px]">最近联系</th>
+              <th class="hidden md:table-cell w-[140px]">负责人</th>
+              <th class="hidden xl:table-cell w-[180px]">来源/介绍人</th>
+              <th class="hidden lg:table-cell w-[120px]">Group</th>
+              <th class="hidden xl:table-cell w-[220px]">标签</th>
+              <th class="text-right w-[96px]">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -734,74 +772,104 @@
                   <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">张</div>
                   <div>
                     <div class="font-medium text-[var(--apple-text-main)] flex items-center">
-                      张伟
-                      <span class="badge badge-blue ml-2 scale-[0.8] origin-left">VIP</span>
+                      <a href="#" class="link-apple">张伟（就劳）</a>
+                      <span class="badge badge-blue ml-2 scale-[0.8] origin-left">重点</span>
                     </div>
-                    <div class="text-xs text-gray-500">ID: CUS-2023-001 · 中国籍</div>
+                    <div class="text-xs text-gray-500">CUS-2026-0102 · 中国籍 · 090-1234-5678 · zhang.w@email.com</div>
                   </div>
                 </div>
               </td>
-              <td>
-                <div class="text-[13px] text-[var(--apple-text-main)]">090-1234-5678</div>
-                <div class="text-[12px] text-gray-500 mt-0.5">zhang.w@email.com</div>
-              </td>
-              <td><span class="badge badge-gray">个人</span></td>
-              <td>
-                <a href="case-detail.html" class="link-apple text-sm font-medium">1</a>
+              <td class="hidden lg:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)] font-semibold">チョウ イ</div>
               </td>
               <td>
+                <a href="cases-list.html" class="link-apple text-sm font-medium">1</a>
+              </td>
+              <td class="hidden md:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">2026-03-28</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">WeChat</div>
+              </td>
+              <td class="hidden md:table-cell">
                 <div class="flex items-center text-sm">
                   <div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>
                   Admin
                 </div>
               </td>
-              <td>
-                <div class="text-sm text-[var(--apple-text-main)]">2023-10-15</div>
-                <div class="text-[12px] text-gray-500 mt-0.5">微信沟通</div>
+              <td class="hidden xl:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">客户推荐</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">介绍人：李女士</div>
               </td>
-              <td class="text-right">
-                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
-                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                </button>
+              <td class="hidden lg:table-cell">
+                <span class="chip">东京一组</span>
+              </td>
+              <td class="hidden xl:table-cell">
+                <div class="flex flex-wrap gap-1">
+                  <span class="chip">家族滞在</span>
+                  <span class="chip">需催办</span>
+                </div>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-2">
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="查看">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="为该客户建案" onclick="window.location.href='case-create.html'">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr>
               <td>
                 <div class="flex items-center">
-                  <div class="w-8 h-8 rounded bg-gray-100 text-gray-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                  </div>
+                  <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">陈</div>
                   <div>
                     <div class="font-medium text-[var(--apple-text-main)] flex items-center">
-                      Tech Innovators 株式會社
-                      <span class="badge badge-gray ml-2 scale-[0.8] origin-left">IT行业</span>
+                      <a href="#" class="link-apple">陈丽</a>
+                      <span class="badge badge-gray ml-2 scale-[0.8] origin-left">个人</span>
                     </div>
-                    <div class="text-xs text-gray-500">法人: 王强 · 来源: 推荐</div>
+                    <div class="text-xs text-gray-500">CUS-2026-0120 · 越南籍 · 080-2222-3333 · chen.li@email.com</div>
                   </div>
                 </div>
               </td>
-              <td>
-                <div class="text-[13px] text-[var(--apple-text-main)]">03-5555-6666</div>
-                <div class="text-[12px] text-gray-500 mt-0.5">info@techinnovators.co.jp</div>
-              </td>
-              <td><span class="badge badge-blue">企业</span></td>
-              <td>
-                <a href="#" class="link-apple text-sm font-medium">4</a>
+              <td class="hidden lg:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)] font-semibold">チェン リ</div>
               </td>
               <td>
+                <a href="cases-list.html" class="link-apple text-sm font-medium">2</a>
+              </td>
+              <td class="hidden md:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">2026-03-22</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">电话沟通</div>
+              </td>
+              <td class="hidden md:table-cell">
                 <div class="flex items-center text-sm">
                   <div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>
                   Tom
                 </div>
               </td>
-              <td>
-                <div class="text-sm text-[var(--apple-text-main)]">2023-10-12</div>
-                <div class="text-[12px] text-gray-500 mt-0.5">面谈会议</div>
+              <td class="hidden xl:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">Web 表单</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">介绍人：—</div>
               </td>
-              <td class="text-right">
-                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
-                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                </button>
+              <td class="hidden lg:table-cell">
+                <span class="chip">东京二组</span>
+              </td>
+              <td class="hidden xl:table-cell">
+                <div class="flex flex-wrap gap-1">
+                  <span class="chip">技人国</span>
+                  <span class="chip">在留到期 60 天</span>
+                </div>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-2">
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="查看">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="为该客户建案" onclick="window.location.href='case-create.html'">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                </div>
               </td>
             </tr>
             <tr>
@@ -809,32 +877,45 @@
                 <div class="flex items-center">
                   <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">L</div>
                   <div>
-                    <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
-                    <div class="text-xs text-gray-500">ID: CUS-2023-003 · 新加坡籍</div>
+                    <div class="font-medium text-[var(--apple-text-main)]"><a href="#" class="link-apple">Li Wei</a></div>
+                    <div class="text-xs text-gray-500">CUS-2026-0128 · 新加坡籍 · 未提供电话 · liwei.test@email.com</div>
                   </div>
                 </div>
               </td>
-              <td>
-                <div class="text-[13px] text-gray-400 italic">未提供电话</div>
-                <div class="text-[12px] text-gray-500 mt-0.5">liwei.test@email.com</div>
+              <td class="hidden lg:table-cell">
+                <div class="text-sm text-gray-400">—</div>
               </td>
-              <td><span class="badge badge-gray">个人</span></td>
               <td>
                 <span class="text-sm text-gray-400">0</span>
               </td>
-              <td>
-                <div class="flex items-center text-sm text-gray-400">
-                  暂无
-                </div>
-              </td>
-              <td>
-                <div class="text-sm text-[var(--apple-text-main)]">2023-10-05</div>
+              <td class="hidden md:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">2026-03-18</div>
                 <div class="text-[12px] text-gray-500 mt-0.5">邮件回复</div>
               </td>
-              <td class="text-right">
-                <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1">
-                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                </button>
+              <td class="hidden md:table-cell">
+                <div class="flex items-center text-sm text-gray-400">暂无</div>
+              </td>
+              <td class="hidden xl:table-cell">
+                <div class="text-sm text-[var(--apple-text-main)]">咨询转化</div>
+                <div class="text-[12px] text-gray-500 mt-0.5">介绍人：—</div>
+              </td>
+              <td class="hidden lg:table-cell">
+                <span class="chip">大阪组</span>
+              </td>
+              <td class="hidden xl:table-cell">
+                <div class="flex flex-wrap gap-1">
+                  <span class="chip">待建案</span>
+                </div>
+              </td>
+              <td class="text-right whitespace-nowrap">
+                <div class="inline-flex items-center justify-end gap-2">
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="查看">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                  </button>
+                  <button class="text-gray-400 hover:text-[var(--apple-blue)] transition-colors p-1" title="为该客户建案" onclick="window.location.href='case-create.html'">
+                    <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -864,81 +945,270 @@
         
         <!-- Body -->
         <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
-          <form class="space-y-5">
-            <!-- Customer Type -->
-            <div>
-              <label class="apple-label">客户类型</label>
-              <div class="flex space-x-4">
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="customerType" class="w-4 h-4 text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]" checked>
-                  <span class="ml-2 text-sm text-[var(--apple-text-main)]">个人客户</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                  <input type="radio" name="customerType" class="w-4 h-4 text-[var(--apple-blue)] focus:ring-[var(--apple-blue)]">
-                  <span class="ml-2 text-sm text-[var(--apple-text-main)]">企业客户</span>
-                </label>
+          <div class="flex items-center justify-between gap-3 mb-5">
+            <div class="segmented-control" role="tablist" aria-label="建档模式">
+              <button class="segment-btn active" type="button" id="modeQuickBtn" role="tab" aria-selected="true">快速建档</button>
+              <button class="segment-btn" type="button" id="modeFamilyBtn" role="tab" aria-selected="false">家庭建档向导</button>
+            </div>
+            <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">
+              P0 以个人客户建档为主；企业主数据为 P1/P2 能力
+            </div>
+          </div>
+
+          <div id="customerModeQuick" class="space-y-5">
+            <div id="dedupeHint" class="hidden p-3 rounded-xl border border-[#fde68a] bg-[#fffbeb]">
+              <div class="text-[13px] font-semibold text-[#92400e]">检测到可能重复的客户</div>
+              <div class="text-[12px] text-[#92400e] mt-1">请确认是否为同一人，避免重复建档。保存前也可先用全局搜索核对。</div>
+              <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
+                  <div class="text-[13px] font-semibold text-[var(--apple-text-main)]">Wang Wei</div>
+                  <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5">CUS-2026-0102 · 090-1234-5678 · 东京一组</div>
+                </div>
+                <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
+                  <div class="text-[13px] font-semibold text-[var(--apple-text-main)]">王伟</div>
+                  <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5">CUS-2025-0831 · wang.wei@email.com · 东京二组</div>
+                </div>
               </div>
             </div>
 
-            <!-- Basic Info -->
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="apple-label">姓名 / 企业名称 <span class="text-red-500">*</span></label>
-                <input type="text" class="apple-input" id="addCustomerName" placeholder="输入客户名称">
+                <label class="apple-label">识别名（对内显示）</label>
+                <input type="text" class="apple-input" id="quickDisplayName" placeholder="例如：王伟（就劳）">
               </div>
               <div>
-                <label class="apple-label">拼音 / 英文名</label>
-                <input type="text" class="apple-input" placeholder="输入拼音或英文名">
-              </div>
-            </div>
-
-            <!-- Contact Info -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="apple-label">联系电话</label>
-                <input type="tel" class="apple-input" placeholder="输入手机号或座机">
-              </div>
-              <div>
-                <label class="apple-label">电子邮箱</label>
-                <input type="email" class="apple-input" placeholder="输入电子邮箱">
-              </div>
-            </div>
-
-            <!-- Other Details -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="apple-label">国籍 / 所在地</label>
-                <input type="text" class="apple-input" placeholder="例如：中国、日本东京">
-              </div>
-              <div>
-                <label class="apple-label">客户来源</label>
-                <select class="apple-input appearance-none bg-white">
-                  <option value="" disabled selected>选择来源</option>
-                  <option>网站咨询</option>
-                  <option>客户推荐</option>
-                  <option>合作渠道</option>
-                  <option>其他</option>
+                <label class="apple-label">所属 Group <span class="text-red-500">*</span></label>
+                <select class="apple-input appearance-none bg-white" id="quickGroup">
+                  <option value="" disabled selected>请选择 Group</option>
+                  <option value="tokyo-1">东京一组</option>
+                  <option value="tokyo-2">东京二组</option>
+                  <option value="osaka">大阪组</option>
                 </select>
               </div>
             </div>
 
-            <!-- Notes -->
-            <div>
-              <label class="apple-label">备注</label>
-              <textarea class="apple-input resize-none h-24" placeholder="输入其他补充信息..."></textarea>
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">姓名（法定） <span class="text-red-500">*</span></label>
+                <input type="text" class="apple-input" id="quickLegalName" placeholder="请输入姓名">
+              </div>
+              <div>
+                <label class="apple-label">假名（片假名）</label>
+                <input type="text" class="apple-input" id="quickKana" placeholder="例如：ワン ウェイ">
+              </div>
             </div>
-          </form>
+
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label class="apple-label">性別</label>
+                <select class="apple-input appearance-none bg-white" id="quickGender">
+                  <option value="" selected>不限</option>
+                  <option>男</option>
+                  <option>女</option>
+                </select>
+              </div>
+              <div>
+                <label class="apple-label">生年月日</label>
+                <input type="date" class="apple-input" id="quickBirthDate">
+              </div>
+              <div>
+                <label class="apple-label">国籍</label>
+                <input type="text" class="apple-input" id="quickNationality" placeholder="例：中国">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">电话 <span class="text-red-500">*</span></label>
+                <input type="tel" class="apple-input" id="quickPhone" placeholder="手机/座机">
+                <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项（用于去重与联系）</div>
+              </div>
+              <div>
+                <label class="apple-label">邮箱</label>
+                <input type="email" class="apple-input" id="quickEmail" placeholder="邮箱地址">
+              </div>
+            </div>
+
+            <div>
+              <label class="apple-label">住所</label>
+              <input type="text" class="apple-input" id="quickAddress" placeholder="例如：东京都新宿区...">
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">来源 / 介绍人</label>
+                <input type="text" class="apple-input" id="quickReferrer" placeholder="例如：推荐 / 介绍人">
+              </div>
+              <div>
+                <label class="apple-label">联系语言</label>
+                <select class="apple-input appearance-none bg-white" id="quickLanguage">
+                  <option>中国語</option>
+                  <option>日本語</option>
+                  <option>英語</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="apple-label">头像</label>
+                <input type="file" class="apple-input" />
+              </div>
+              <div>
+                <label class="apple-label">备注（可搜索）</label>
+                <input type="text" class="apple-input" id="quickNote" placeholder="例如：交接事项、偏好、注意点...">
+              </div>
+            </div>
+          </div>
+
+          <div id="customerModeFamily" class="hidden space-y-5">
+            <div class="p-4 rounded-2xl border border-[var(--border)] bg-[var(--surface-2)]">
+              <div class="flex items-center justify-between gap-3">
+                <div>
+                  <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]">家庭建档向导</div>
+                  <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">覆盖高频场景：扶养者（就劳类）+ 配偶/子女家族滞在等</div>
+                </div>
+                <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold" id="familyStepText">Step 1/3</div>
+              </div>
+              <div class="mt-3 grid grid-cols-3 gap-2">
+                <div class="p-2 rounded-xl border border-[var(--border)] bg-white text-center text-[12px] font-extrabold text-[var(--apple-text-main)]" id="familyStepIndicator1">1 咨询人</div>
+                <div class="p-2 rounded-xl border border-[var(--border)] bg-white text-center text-[12px] font-extrabold text-[var(--apple-text-tert)]" id="familyStepIndicator2">2 办理对象</div>
+                <div class="p-2 rounded-xl border border-[var(--border)] bg-white text-center text-[12px] font-extrabold text-[var(--apple-text-tert)]" id="familyStepIndicator3">3 在留信息</div>
+              </div>
+            </div>
+
+            <div data-family-step="1" class="space-y-5">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">咨询人（扶养者/保证人）姓名 <span class="text-red-500">*</span></label>
+                  <input type="text" class="apple-input" id="familyConsultantName" placeholder="姓名/识别名">
+                </div>
+                <div>
+                  <label class="apple-label">所属 Group <span class="text-red-500">*</span></label>
+                  <select class="apple-input appearance-none bg-white" id="familyGroup">
+                    <option value="" disabled selected>请选择 Group</option>
+                    <option value="tokyo-1">东京一组</option>
+                    <option value="tokyo-2">东京二组</option>
+                    <option value="osaka">大阪组</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">意向类型 <span class="text-red-500">*</span></label>
+                  <select class="apple-input appearance-none bg-white" id="familyIntendedType">
+                    <option value="family" selected>家庭（家族滞在/配偶/扶养）</option>
+                    <option value="work">就劳（技人国等）</option>
+                    <option value="other">其他</option>
+                  </select>
+                  <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">选择“家庭”时：Step 3 需补齐在留信息 + 在留卡影像才能完成</div>
+                </div>
+                <div>
+                  <label class="apple-label">来源 / 介绍人 <span class="text-red-500">*</span></label>
+                  <input type="text" class="apple-input" id="familySource" placeholder="例如：客户推荐 / 渠道">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">电话</label>
+                  <input type="tel" class="apple-input" id="familyConsultantPhone" placeholder="手机/座机">
+                  <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项（用于去重与联系）</div>
+                </div>
+                <div>
+                  <label class="apple-label">邮箱</label>
+                  <input type="email" class="apple-input" id="familyConsultantEmail" placeholder="邮箱地址">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">在留到期（可选）</label>
+                  <input type="date" class="apple-input" id="familyResidenceExpiryOptional">
+                </div>
+                <div>
+                  <label class="apple-label">备注</label>
+                  <textarea class="apple-input resize-none h-24" id="familyConsultantNote" placeholder="例如：期望案件、关键要点..."></textarea>
+                </div>
+              </div>
+            </div>
+
+            <div data-family-step="2" class="hidden space-y-5">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]">办理对象（申请人）</div>
+                  <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">支持配偶/子女等多人一次性录入</div>
+                </div>
+                <button class="btn-secondary" type="button" id="familyAddApplicantBtn">添加成员</button>
+              </div>
+
+              <div id="familyApplicants" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <div data-family-step="3" class="hidden space-y-5">
+              <div class="p-3 rounded-xl border border-[#fecaca] bg-[#fff1f2]">
+                <div class="text-[13px] font-semibold text-[#9f1239]">必須条件</div>
+                <div class="text-[12px] text-[#9f1239] mt-1">选择“家庭”时：扶养者的在留到期日与在留卡影像必须补齐才能完成。未补齐也可先保存为草稿，并自动生成“待补齐”任务。</div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-4">
+                <div class="col-span-2">
+                  <label class="apple-label">在留资格 <span class="text-red-500">*</span></label>
+                  <select class="apple-input appearance-none bg-white" id="familyResidenceType">
+                    <option value="" disabled selected>请选择在留资格</option>
+                    <option>技人国</option>
+                    <option>经营·管理</option>
+                    <option>留学</option>
+                    <option>其他</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="apple-label">在留到期 <span class="text-red-500">*</span></label>
+                  <input type="date" class="apple-input" id="familyResidenceExpiry">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">在留卡号（可选）</label>
+                  <input type="text" class="apple-input" id="familyResidenceCardNo" placeholder="例：AB12345678CD">
+                </div>
+                <div>
+                  <label class="apple-label">护照号（可选）</label>
+                  <input type="text" class="apple-input" placeholder="护照号">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">在留卡（正面）<span class="text-red-500">*</span></label>
+                  <input type="file" class="apple-input" id="familyResidenceCardFront">
+                </div>
+                <div>
+                  <label class="apple-label">在留卡（反面）<span class="text-red-500">*</span></label>
+                  <input type="file" class="apple-input" id="familyResidenceCardBack">
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <!-- Footer -->
         <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
-          <button class="btn-secondary px-5" id="cancelModalBtn">取消</button>
-          <button class="btn-primary px-5" id="saveCustomerBtn">保存客户</button>
+          <button class="btn-secondary px-5" id="cancelModalBtn" type="button">取消</button>
+          <button class="btn-secondary px-5 hidden" id="familyPrevBtn" type="button">上一步</button>
+          <button class="btn-secondary px-5" id="saveDraftBtn" type="button">保存草稿</button>
+          <button class="btn-primary px-5" id="createCustomerBtn" type="button">创建客户</button>
         </div>
       </div>
     </div>
 
-        </div>
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+      <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+        <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]" id="toastTitle">已保存</div>
+        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5" id="toastDesc">草稿已保存</div>
+      </div>
     </div>
 
     <script>
@@ -947,8 +1217,48 @@
         const openBtn = document.getElementById('btnAddCustomer');
         const closeBtn = document.getElementById('closeModalBtn');
         const cancelBtn = document.getElementById('cancelModalBtn');
-        const saveBtn = document.getElementById('saveCustomerBtn');
-        const nameInput = document.getElementById('addCustomerName');
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const createBtn = document.getElementById('createCustomerBtn');
+        const modeQuickBtn = document.getElementById('modeQuickBtn');
+        const modeFamilyBtn = document.getElementById('modeFamilyBtn');
+        const quickPanel = document.getElementById('customerModeQuick');
+        const familyPanel = document.getElementById('customerModeFamily');
+        const dedupeHint = document.getElementById('dedupeHint');
+        const familyPrevBtn = document.getElementById('familyPrevBtn');
+        const familyAddApplicantBtn = document.getElementById('familyAddApplicantBtn');
+        const familyApplicants = document.getElementById('familyApplicants');
+        const toast = document.getElementById('toast');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastDesc = document.getElementById('toastDesc');
+
+        const quickLegalName = document.getElementById('quickLegalName');
+        const quickGroup = document.getElementById('quickGroup');
+        const quickPhone = document.getElementById('quickPhone');
+        const quickEmail = document.getElementById('quickEmail');
+
+        const familyStepText = document.getElementById('familyStepText');
+        const familyStepIndicator1 = document.getElementById('familyStepIndicator1');
+        const familyStepIndicator2 = document.getElementById('familyStepIndicator2');
+        const familyStepIndicator3 = document.getElementById('familyStepIndicator3');
+        const familySteps = Array.from(document.querySelectorAll('[data-family-step]'));
+        const familyConsultantName = document.getElementById('familyConsultantName');
+        const familyGroup = document.getElementById('familyGroup');
+        const familyConsultantPhone = document.getElementById('familyConsultantPhone');
+        const familyConsultantEmail = document.getElementById('familyConsultantEmail');
+        const familySource = document.getElementById('familySource');
+        const familyIntendedType = document.getElementById('familyIntendedType');
+        const familyResidenceType = document.getElementById('familyResidenceType');
+        const familyResidenceExpiry = document.getElementById('familyResidenceExpiry');
+        const familyResidenceCardFront = document.getElementById('familyResidenceCardFront');
+        const familyResidenceCardBack = document.getElementById('familyResidenceCardBack');
+
+        const showToast = ({ title, desc }) => {
+          toastTitle.textContent = title;
+          toastDesc.textContent = desc;
+          toast.classList.remove('hidden');
+          window.clearTimeout(showToast._t);
+          showToast._t = window.setTimeout(() => toast.classList.add('hidden'), 2200);
+        };
 
         const openModal = () => {
           modal.classList.add('show');
@@ -960,15 +1270,624 @@
           document.body.style.overflow = '';
         };
 
-        openBtn.addEventListener('click', openModal);
+        const setMode = (mode) => {
+          const isQuick = mode === 'quick';
+          modeQuickBtn.classList.toggle('active', isQuick);
+          modeFamilyBtn.classList.toggle('active', !isQuick);
+          modeQuickBtn.setAttribute('aria-selected', isQuick ? 'true' : 'false');
+          modeFamilyBtn.setAttribute('aria-selected', isQuick ? 'false' : 'true');
+          quickPanel.classList.toggle('hidden', !isQuick);
+          familyPanel.classList.toggle('hidden', isQuick);
+          familyPrevBtn.classList.toggle('hidden', isQuick);
+          updateFooterButtons();
+          updateCreateEnabled();
+        };
+
+        let familyStep = 1;
+        const setFamilyStep = (nextStep) => {
+          familyStep = Math.max(1, Math.min(3, nextStep));
+          familySteps.forEach((el) => {
+            el.classList.toggle('hidden', Number(el.getAttribute('data-family-step')) !== familyStep);
+          });
+          familyStepText.textContent = `Step ${familyStep}/3`;
+
+          const activeClasses = ['text-[var(--apple-text-main)]', 'bg-white'];
+          const inactiveClasses = ['text-[var(--apple-text-tert)]', 'bg-white'];
+
+          familyStepIndicator1.classList.remove(...inactiveClasses, ...activeClasses);
+          familyStepIndicator2.classList.remove(...inactiveClasses, ...activeClasses);
+          familyStepIndicator3.classList.remove(...inactiveClasses, ...activeClasses);
+
+          if (familyStep === 1) familyStepIndicator1.classList.add(...activeClasses);
+          if (familyStep === 2) familyStepIndicator2.classList.add(...activeClasses);
+          if (familyStep === 3) familyStepIndicator3.classList.add(...activeClasses);
+
+          if (familyStep !== 1) familyStepIndicator1.classList.add(...inactiveClasses);
+          if (familyStep !== 2) familyStepIndicator2.classList.add(...inactiveClasses);
+          if (familyStep !== 3) familyStepIndicator3.classList.add(...inactiveClasses);
+
+          updateFooterButtons();
+          updateCreateEnabled();
+        };
+
+        const updateFooterButtons = () => {
+          const isQuick = !quickPanel.classList.contains('hidden');
+          if (isQuick) {
+            familyPrevBtn.classList.add('hidden');
+            createBtn.textContent = '创建客户';
+            return;
+          }
+          familyPrevBtn.classList.toggle('hidden', familyStep === 1);
+          createBtn.textContent = familyStep === 3 ? '完成建档' : '下一步';
+        };
+
+        let applicantSeq = 0;
+        const fillApplicantCard = (card, applicant) => {
+          const setValue = (field, value) => {
+            const el = card.querySelector(`[data-field="${field}"]`);
+            if (!el) return;
+            if (el.type === 'checkbox') {
+              el.checked = value === true || value === '1';
+              return;
+            }
+            el.value = value ?? '';
+          };
+
+          setValue('role', applicant.role ?? 'spouse');
+          setValue('name', applicant.name ?? '');
+          setValue('kana', applicant.kana ?? '');
+          setValue('gender', applicant.gender ?? '');
+          setValue('birthDate', applicant.birthDate ?? '');
+          setValue('phone', applicant.phone ?? '');
+          setValue('email', applicant.email ?? '');
+          setValue('minor', applicant.minor ?? false);
+          setValue('address', applicant.address ?? '');
+        };
+
+        const createApplicantCard = ({ role, applicant }) => {
+          applicantSeq += 1;
+          const card = document.createElement('div');
+          card.className = 'p-4 rounded-2xl border border-[var(--border)] bg-white';
+          card.setAttribute('data-applicant-card', String(applicantSeq));
+          card.innerHTML = `
+            <div class="flex items-center justify-between gap-3 mb-3">
+              <div class="flex items-center gap-2">
+                <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]">办理对象</div>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold" data-field="role">
+                  <option value="spouse"${role === 'spouse' ? ' selected' : ''}>配偶</option>
+                  <option value="child"${role === 'child' ? ' selected' : ''}>子女</option>
+                  <option value="other"${role === 'other' ? ' selected' : ''}>其他</option>
+                </select>
+              </div>
+              <button class="text-[12px] font-extrabold text-[var(--apple-text-tert)] hover:text-[var(--apple-text-main)]" type="button" data-action="remove">删除</button>
+            </div>
+            <div class="space-y-3">
+              <div>
+                <label class="apple-label">姓名 <span class="text-red-500">*</span></label>
+                <input type="text" class="apple-input" data-field="name" placeholder="姓名/识别名">
+              </div>
+              <div>
+                <label class="apple-label">假名（片假名） <span class="text-red-500">*</span></label>
+                <input type="text" class="apple-input" data-field="kana" placeholder="例如：チェン リ">
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="apple-label">性別 <span class="text-red-500">*</span></label>
+                  <select class="apple-input appearance-none bg-white" data-field="gender">
+                    <option value="" selected>请选择</option>
+                    <option value="male">男</option>
+                    <option value="female">女</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="apple-label">生年月日 <span class="text-red-500">*</span></label>
+                  <input type="date" class="apple-input" data-field="birthDate">
+                </div>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="apple-label">电话</label>
+                  <input type="tel" class="apple-input" data-field="phone" placeholder="手机/座机">
+                </div>
+                <div>
+                  <label class="apple-label">邮箱</label>
+                  <input type="email" class="apple-input" data-field="email" placeholder="邮箱地址">
+                </div>
+              </div>
+              <div class="flex items-center justify-between gap-3">
+                <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">未成年人可不填联系方式</div>
+                <label class="inline-flex items-center gap-2 text-[12px] font-extrabold text-[var(--apple-text-main)]">
+                  <input type="checkbox" class="accent-[var(--apple-blue)]" data-field="minor">
+                  未成年人
+                </label>
+              </div>
+              <div>
+                <label class="apple-label">住所 <span class="text-red-500">*</span></label>
+                <input type="text" class="apple-input" data-field="address" placeholder="例如：东京都...">
+              </div>
+            </div>
+          `;
+          if (applicant) fillApplicantCard(card, applicant);
+          return card;
+        };
+
+        const resetApplicants = () => {
+          familyApplicants.innerHTML = '';
+          familyApplicants.appendChild(createApplicantCard({ role: 'spouse' }));
+        };
+
+        const isApplicantCardValid = (card) => {
+          const getValue = (field) => {
+            const el = card.querySelector(`[data-field="${field}"]`);
+            if (!el) return '';
+            if (el.type === 'checkbox') return el.checked ? '1' : '';
+            return String(el.value || '').trim();
+          };
+          const name = getValue('name');
+          const kana = getValue('kana');
+          const gender = getValue('gender');
+          const birthDate = getValue('birthDate');
+          const address = getValue('address');
+          const minor = getValue('minor') === '1';
+          const phone = getValue('phone');
+          const email = getValue('email');
+          const hasContact = phone.length > 0 || email.length > 0;
+          if (!name || !kana || !gender || !birthDate || !address) return false;
+          if (!minor && !hasContact) return false;
+          return true;
+        };
+
+        const validateApplicants = () => {
+          const cards = Array.from(familyApplicants.querySelectorAll('[data-applicant-card]'));
+          if (cards.length === 0) return false;
+          return cards.every(isApplicantCardValid);
+        };
+
+        const updateCreateEnabled = () => {
+          const isQuick = !quickPanel.classList.contains('hidden');
+          if (isQuick) {
+            const hasName = quickLegalName.value.trim().length > 0;
+            const hasGroup = !!quickGroup.value;
+            const hasContact = quickPhone.value.trim().length > 0 || quickEmail.value.trim().length > 0;
+            createBtn.disabled = !(hasName && hasGroup && hasContact);
+            return;
+          }
+
+          if (familyStep === 1) {
+            const hasContact = familyConsultantPhone.value.trim().length > 0 || familyConsultantEmail.value.trim().length > 0;
+            const ok =
+              familyConsultantName.value.trim().length > 0 &&
+              !!familyGroup.value &&
+              familySource.value.trim().length > 0 &&
+              !!familyIntendedType.value &&
+              hasContact;
+            createBtn.disabled = !ok;
+            return;
+          }
+          if (familyStep === 2) {
+            createBtn.disabled = !validateApplicants();
+            return;
+          }
+          if (familyStep === 3) {
+            if (familyIntendedType.value !== 'family') {
+              createBtn.disabled = false;
+              return;
+            }
+            const ok =
+              !!familyResidenceType.value &&
+              familyResidenceExpiry.value.trim().length > 0 &&
+              familyResidenceCardFront.files.length > 0 &&
+              familyResidenceCardBack.files.length > 0;
+            createBtn.disabled = !ok;
+          }
+        };
+
+        const updateDedupeHint = () => {
+          const hasContact = quickPhone.value.trim().length > 0 || quickEmail.value.trim().length > 0;
+          dedupeHint.classList.toggle('hidden', !hasContact);
+        };
+
+        const draftsStorageKey = 'gyosei_os_customer_drafts_v1';
+        const getDrafts = () => {
+          try {
+            const raw = window.localStorage.getItem(draftsStorageKey);
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            if (!Array.isArray(parsed)) return [];
+            return parsed;
+          } catch {
+            return [];
+          }
+        };
+
+        const setDrafts = (drafts) => {
+          window.localStorage.setItem(draftsStorageKey, JSON.stringify(drafts));
+        };
+
+        const upsertDraft = (draft) => {
+          const drafts = getDrafts();
+          const idx = drafts.findIndex((d) => d.id === draft.id);
+          const next = idx === -1 ? [draft, ...drafts] : drafts.map((d) => (d.id === draft.id ? draft : d));
+          setDrafts(next);
+          return next;
+        };
+
+        const removeDraft = (draftId) => {
+          const drafts = getDrafts().filter((d) => d.id !== draftId);
+          setDrafts(drafts);
+          return drafts;
+        };
+
+        const getNowLabel = () => {
+          const d = new Date();
+          const pad = (n) => String(n).padStart(2, '0');
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+
+        const serializeState = () => {
+          const isQuick = !quickPanel.classList.contains('hidden');
+          if (isQuick) {
+            return {
+              mode: 'quick',
+              quick: {
+                legalName: document.getElementById('quickLegalName')?.value ?? '',
+                group: document.getElementById('quickGroup')?.value ?? '',
+                birthDate: document.getElementById('quickBirthDate')?.value ?? '',
+                nationality: document.getElementById('quickNationality')?.value ?? '',
+                phone: document.getElementById('quickPhone')?.value ?? '',
+                email: document.getElementById('quickEmail')?.value ?? '',
+                address: document.getElementById('quickAddress')?.value ?? '',
+                referrer: document.getElementById('quickReferrer')?.value ?? '',
+                language: document.getElementById('quickLanguage')?.value ?? '',
+                note: document.getElementById('quickNote')?.value ?? '',
+              },
+            };
+          }
+
+          const cards = Array.from(familyApplicants.querySelectorAll('[data-applicant-card]'));
+          const applicants = cards.map((card) => {
+            const getField = (field) => {
+              const el = card.querySelector(`[data-field="${field}"]`);
+              if (!el) return '';
+              if (el.type === 'checkbox') return el.checked;
+              return String(el.value ?? '');
+            };
+            return {
+              role: getField('role') || 'spouse',
+              name: getField('name'),
+              kana: getField('kana'),
+              gender: getField('gender'),
+              birthDate: getField('birthDate'),
+              phone: getField('phone'),
+              email: getField('email'),
+              minor: Boolean(getField('minor')),
+              address: getField('address'),
+            };
+          });
+
+          return {
+            mode: 'family',
+            family: {
+              step: familyStep,
+              consultantName: familyConsultantName.value ?? '',
+              group: familyGroup.value ?? '',
+              intendedType: familyIntendedType.value ?? '',
+              source: familySource.value ?? '',
+              phone: familyConsultantPhone.value ?? '',
+              email: familyConsultantEmail.value ?? '',
+              residenceType: familyResidenceType.value ?? '',
+              residenceExpiry: familyResidenceExpiry.value ?? '',
+              residenceCardNo: document.getElementById('familyResidenceCardNo')?.value ?? '',
+              applicants,
+            },
+          };
+        };
+
+        const applyState = (state) => {
+          if (!state || !state.mode) return;
+          if (state.mode === 'quick') {
+            setMode('quick');
+            const quick = state.quick ?? {};
+            const set = (id, value) => {
+              const el = document.getElementById(id);
+              if (el) el.value = value ?? '';
+            };
+            set('quickLegalName', quick.legalName);
+            set('quickGroup', quick.group);
+            set('quickBirthDate', quick.birthDate);
+            set('quickNationality', quick.nationality);
+            set('quickPhone', quick.phone);
+            set('quickEmail', quick.email);
+            set('quickAddress', quick.address);
+            set('quickReferrer', quick.referrer);
+            set('quickLanguage', quick.language);
+            set('quickNote', quick.note);
+            updateDedupeHint();
+            updateCreateEnabled();
+            return;
+          }
+
+          setMode('family');
+          const family = state.family ?? {};
+          setFamilyStep(family.step ?? 1);
+          familyConsultantName.value = family.consultantName ?? '';
+          familyGroup.value = family.group ?? '';
+          familyIntendedType.value = family.intendedType ?? 'family';
+          familySource.value = family.source ?? '';
+          familyConsultantPhone.value = family.phone ?? '';
+          familyConsultantEmail.value = family.email ?? '';
+          familyResidenceType.value = family.residenceType ?? '';
+          familyResidenceExpiry.value = family.residenceExpiry ?? '';
+          const residenceCardNo = document.getElementById('familyResidenceCardNo');
+          if (residenceCardNo) residenceCardNo.value = family.residenceCardNo ?? '';
+          familyApplicants.innerHTML = '';
+          const applicants = Array.isArray(family.applicants) ? family.applicants : [];
+          if (applicants.length === 0) {
+            resetApplicants();
+          } else {
+            applicants.forEach((applicant) => {
+              familyApplicants.appendChild(
+                createApplicantCard({ role: applicant.role ?? 'spouse', applicant }),
+              );
+            });
+          }
+          updateCreateEnabled();
+        };
+
+        const customersTbody = document.querySelector('table.apple-table tbody');
+        const draftRowIdPrefix = 'draft-row-';
+        const escapeHtml = (value) => {
+          return String(value ?? '').replace(/[&<>"']/g, (ch) => {
+            if (ch === '&') return '&amp;';
+            if (ch === '<') return '&lt;';
+            if (ch === '>') return '&gt;';
+            if (ch === '"') return '&quot;';
+            return '&#39;';
+          });
+        };
+
+        const renderDraftRow = (draft) => {
+          if (!customersTbody) return;
+          const existing = document.getElementById(`${draftRowIdPrefix}${draft.id}`);
+          if (existing) existing.remove();
+
+          const name = escapeHtml(draft.displayName ?? '未命名草稿');
+          const contactPrimary = escapeHtml(draft.displayContact ?? '—');
+          const typeLabel = escapeHtml(draft.displayType ?? '草稿');
+          const statusText = escapeHtml(draft.status ?? '草稿');
+          const updatedAt = escapeHtml(draft.updatedAtLabel ?? '刚刚');
+          const groupId =
+            draft?.state?.mode === 'quick' ? draft?.state?.quick?.group : draft?.state?.family?.group;
+          const groupLabelMap = {
+            'tokyo-1': '东京一组',
+            'tokyo-2': '东京二组',
+            osaka: '大阪组',
+          };
+          const groupLabel = escapeHtml(groupLabelMap[groupId] ?? '—');
+          const sourceLabel =
+            draft?.state?.mode === 'quick'
+              ? draft?.state?.quick?.referrer
+              : draft?.state?.family?.source;
+          const sourceText = escapeHtml(sourceLabel?.trim()?.length ? sourceLabel : '—');
+
+          const tr = document.createElement('tr');
+          tr.id = `${draftRowIdPrefix}${draft.id}`;
+          tr.innerHTML = `
+            <td>
+              <div class="flex items-center">
+                <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">草</div>
+                <div>
+                  <div class="font-medium text-[var(--apple-text-main)] flex items-center">
+                    ${name}
+                    <span class="badge badge-gray ml-2 scale-[0.8] origin-left">${statusText}</span>
+                    <span class="badge badge-gray ml-2 scale-[0.8] origin-left">${typeLabel}</span>
+                  </div>
+                  <div class="text-xs text-gray-500">草稿 · ${updatedAt} · ${contactPrimary}</div>
+                </div>
+              </div>
+            </td>
+            <td class="hidden lg:table-cell"><span class="text-sm text-[var(--apple-text-sec)]">—</span></td>
+            <td><span class="text-sm text-[var(--apple-text-sec)]">—</span></td>
+            <td class="hidden md:table-cell">
+              <div class="text-sm text-[var(--apple-text-main)]">${updatedAt.split(' ')[0] ?? '—'}</div>
+              <div class="text-[12px] text-gray-500 mt-0.5">草稿保存</div>
+            </td>
+            <td class="hidden md:table-cell">
+              <div class="flex items-center text-sm">
+                <div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>
+                Admin
+              </div>
+            </td>
+            <td class="hidden xl:table-cell">
+              <div class="text-sm text-[var(--apple-text-main)]">${sourceText}</div>
+              <div class="text-[12px] text-gray-500 mt-0.5">介绍人：—</div>
+            </td>
+            <td class="hidden lg:table-cell"><span class="chip">${groupLabel}</span></td>
+            <td class="hidden xl:table-cell">
+              <div class="flex flex-wrap gap-1">
+                <span class="chip">草稿</span>
+              </div>
+            </td>
+            <td class="text-right whitespace-nowrap">
+              <button class="text-[12px] font-extrabold text-[var(--apple-blue)] hover:underline" type="button" data-action="resume-draft" data-draft-id="${draft.id}">继续</button>
+            </td>
+          `;
+          customersTbody.prepend(tr);
+        };
+
+        const renderAllDrafts = () => {
+          const drafts = getDrafts();
+          drafts.forEach(renderDraftRow);
+        };
+
+        let currentDraftId = null;
+
+        const handleCreate = () => {
+          if (!quickPanel.classList.contains('hidden')) {
+            if (currentDraftId) {
+              removeDraft(currentDraftId);
+              const row = document.getElementById(`${draftRowIdPrefix}${currentDraftId}`);
+              if (row) row.remove();
+              currentDraftId = null;
+            }
+            showToast({ title: '客户已创建（示例）', desc: '已生成客户档案，可继续建案' });
+            closeModal();
+            return;
+          }
+          if (familyStep < 3) {
+            setFamilyStep(familyStep + 1);
+            return;
+          }
+          if (familyIntendedType.value === 'family') {
+            const sponsorOk =
+              !!familyResidenceType.value &&
+              familyResidenceExpiry.value.trim().length > 0 &&
+              familyResidenceCardFront.files.length > 0 &&
+              familyResidenceCardBack.files.length > 0;
+            if (!sponsorOk) {
+              showToast({ title: '无法完成建档', desc: '家庭类意向需要补齐扶养者在留信息与在留卡影像' });
+              updateCreateEnabled();
+              return;
+            }
+          }
+          if (currentDraftId) {
+            removeDraft(currentDraftId);
+            const row = document.getElementById(`${draftRowIdPrefix}${currentDraftId}`);
+            if (row) row.remove();
+            currentDraftId = null;
+          }
+          showToast({ title: '家庭建档完成（示例）', desc: '已创建咨询人 + 办理对象，并可继续批量建案' });
+          closeModal();
+        };
+
+        openBtn.addEventListener('click', () => {
+          currentDraftId = null;
+          setMode('quick');
+          setFamilyStep(1);
+          resetApplicants();
+          openModal();
+        });
         closeBtn.addEventListener('click', closeModal);
         cancelBtn.addEventListener('click', closeModal);
-        if (saveBtn && nameInput) {
-          saveBtn.disabled = true;
-          nameInput.addEventListener('input', () => {
-            saveBtn.disabled = nameInput.value.trim().length === 0;
+        modeQuickBtn.addEventListener('click', () => setMode('quick'));
+        modeFamilyBtn.addEventListener('click', () => {
+          setMode('family');
+          setFamilyStep(1);
+          resetApplicants();
+        });
+
+        familyPrevBtn.addEventListener('click', () => setFamilyStep(familyStep - 1));
+
+        saveDraftBtn.addEventListener('click', () => {
+          const isFamily = quickPanel.classList.contains('hidden');
+          if (!isFamily) {
+            const state = serializeState();
+            const draftId = currentDraftId ?? `d_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+            const name = state.quick?.legalName?.trim() || '未命名（快速）';
+            const contact = state.quick?.phone?.trim() || state.quick?.email?.trim() || '—';
+            const draft = {
+              id: draftId,
+              kind: 'quick',
+              status: '草稿',
+              updatedAt: Date.now(),
+              updatedAtLabel: getNowLabel(),
+              displayName: name,
+              displayContact: contact,
+              displayType: '个人',
+              state,
+            };
+            upsertDraft(draft);
+            renderDraftRow(draft);
+            currentDraftId = draftId;
+            showToast({ title: '草稿已保存', desc: '可在客户列表中点击“继续”完成建档' });
+            closeModal();
+            return;
+          }
+          const needsSponsorGate = familyIntendedType.value === 'family';
+          const sponsorOk =
+            !!familyResidenceType.value &&
+            familyResidenceExpiry.value.trim().length > 0 &&
+            familyResidenceCardFront.files.length > 0 &&
+            familyResidenceCardBack.files.length > 0;
+          const state = serializeState();
+          const draftId = currentDraftId ?? `d_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+          const name = state.family?.consultantName?.trim() || '未命名（家庭）';
+          const contact = state.family?.phone?.trim() || state.family?.email?.trim() || '—';
+          const status = needsSponsorGate && !sponsorOk ? '待补齐' : '草稿';
+          const draft = {
+            id: draftId,
+            kind: 'family',
+            status,
+            updatedAt: Date.now(),
+            updatedAtLabel: getNowLabel(),
+            displayName: name,
+            displayContact: contact,
+            displayType: '家庭',
+            state,
+          };
+          upsertDraft(draft);
+          renderDraftRow(draft);
+          currentDraftId = draftId;
+          showToast({
+            title: status === '待补齐' ? '草稿已保存（待补齐）' : '草稿已保存',
+            desc: status === '待补齐' ? '可继续完善在留信息后完成建档' : '可随时继续补充并完成建档',
           });
-        }
+          closeModal();
+        });
+        createBtn.addEventListener('click', handleCreate);
+
+        ;[quickLegalName, quickGroup, quickPhone, quickEmail].forEach((el) => {
+          el.addEventListener('input', () => {
+            updateDedupeHint();
+            updateCreateEnabled();
+          });
+          el.addEventListener('change', () => {
+            updateDedupeHint();
+            updateCreateEnabled();
+          });
+        });
+
+        ;[
+          familyConsultantName,
+          familyGroup,
+          familyConsultantPhone,
+          familyConsultantEmail,
+          familySource,
+          familyIntendedType,
+          familyResidenceType,
+          familyResidenceExpiry,
+          familyResidenceCardFront,
+          familyResidenceCardBack,
+        ].forEach((el) => {
+          el.addEventListener('input', updateCreateEnabled);
+          el.addEventListener('change', updateCreateEnabled);
+        });
+
+        familyAddApplicantBtn.addEventListener('click', () => {
+          const cards = familyApplicants.querySelectorAll('[data-applicant-card]');
+          const nextRole = cards.length === 0 ? 'spouse' : 'child';
+          familyApplicants.appendChild(createApplicantCard({ role: nextRole }));
+          updateCreateEnabled();
+        });
+
+        familyApplicants.addEventListener('click', (e) => {
+          const btn = e.target.closest('[data-action="remove"]');
+          if (!btn) return;
+          const card = btn.closest('[data-applicant-card]');
+          if (!card) return;
+          card.remove();
+          updateCreateEnabled();
+        });
+
+        familyApplicants.addEventListener('input', (e) => {
+          if (!e.target.closest('[data-applicant-card]')) return;
+          updateCreateEnabled();
+        });
+
+        familyApplicants.addEventListener('change', (e) => {
+          if (!e.target.closest('[data-applicant-card]')) return;
+          updateCreateEnabled();
+        });
 
         // Close on backdrop click
         modal.addEventListener('click', (e) => {
@@ -976,6 +1895,36 @@
             closeModal();
           }
         });
+
+        if (customersTbody) {
+          customersTbody.addEventListener('click', (e) => {
+            const btn = e.target.closest('[data-action="resume-draft"]');
+            if (!btn) return;
+            const draftId = btn.getAttribute('data-draft-id');
+            if (!draftId) return;
+            const draft = getDrafts().find((d) => d.id === draftId);
+            if (!draft) return;
+            currentDraftId = draftId;
+            applyState(draft.state);
+            openModal();
+            showToast({ title: '已载入草稿', desc: '继续完善后即可完成建档' });
+          });
+        }
+
+        if (window.location.hash === '#new') {
+          currentDraftId = null;
+          setMode('quick');
+          setFamilyStep(1);
+          resetApplicants();
+          openModal();
+        } else {
+          setMode('quick');
+          setFamilyStep(1);
+          resetApplicants();
+          updateCreateEnabled();
+        }
+
+        renderAllDrafts();
       });
     </script>
     <script>

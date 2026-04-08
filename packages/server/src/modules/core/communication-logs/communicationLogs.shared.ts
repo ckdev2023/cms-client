@@ -1,5 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
 
+import { communicationLogs } from "../../../infra/db/drizzle/schema";
 import type { CommunicationLog } from "../model/coreEntities";
 
 /**
@@ -97,6 +98,11 @@ export type ResolvedCommunicationLogUpdate = {
 export const COMM_LOG_COLS =
   "id, org_id, case_id, customer_id, company_id, channel_type, direction, subject, content_summary, full_content, visible_to_client, created_by, follow_up_required, follow_up_due_at, created_at";
 
+/**
+ * Drizzle `communication_logs` select row shape.
+ */
+export type CommunicationLogDrizzleRow = typeof communicationLogs.$inferSelect;
+
 const VALID_CHANNEL_TYPES = new Set([
   "phone",
   "email",
@@ -139,6 +145,34 @@ export function mapCommunicationLogRow(
     followUpRequired: row.follow_up_required,
     followUpDueAt: toTimestampStringOrNull(row.follow_up_due_at),
     createdAt: String(row.created_at),
+  };
+}
+
+/**
+ * Maps a Drizzle select row into the domain communication log shape.
+ *
+ * @param row Communication log row returned from Drizzle.
+ * @returns Communication log in API/domain format.
+ */
+export function mapCommunicationLogRecord(
+  row: CommunicationLogDrizzleRow,
+): CommunicationLog {
+  return {
+    id: row.id,
+    orgId: row.orgId,
+    caseId: row.caseId,
+    customerId: row.customerId,
+    companyId: row.companyId,
+    channelType: row.channelType,
+    direction: row.direction,
+    subject: row.subject,
+    contentSummary: row.contentSummary,
+    fullContent: row.fullContent,
+    visibleToClient: row.visibleToClient,
+    createdBy: row.createdBy,
+    followUpRequired: row.followUpRequired,
+    followUpDueAt: row.followUpDueAt,
+    createdAt: row.createdAt,
   };
 }
 

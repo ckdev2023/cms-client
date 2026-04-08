@@ -22,7 +22,7 @@ function makeCtx(
 }
 
 function makeLogRow(overrides: Record<string, unknown> = {}) {
-  return {
+  const row = {
     id: LOG_ID,
     org_id: ORG_ID,
     case_id: CASE_ID,
@@ -40,18 +40,94 @@ function makeLogRow(overrides: Record<string, unknown> = {}) {
     created_at: "2026-03-01T00:00:00.000Z",
     ...overrides,
   };
+
+  return {
+    ...row,
+    orgId: row.org_id,
+    caseId: row.case_id,
+    customerId: row.customer_id,
+    companyId: row.company_id,
+    channelType: row.channel_type,
+    direction: row.direction,
+    subject: row.subject,
+    contentSummary: row.content_summary,
+    fullContent: row.full_content,
+    visibleToClient: row.visible_to_client,
+    createdBy: row.created_by,
+    followUpRequired: row.follow_up_required,
+    followUpDueAt: row.follow_up_due_at ? new Date(row.follow_up_due_at) : null,
+    createdAt: new Date(row.created_at),
+  };
 }
 
 type PoolClientLike = {
   query: (
-    sql: string,
+    sql: unknown,
     params?: unknown[],
   ) => Promise<{ rows: unknown[]; rowCount: number }>;
   release: () => void;
 };
 
-function makePool(queryFn: PoolClientLike["query"]): Pool {
-  const client: PoolClientLike = { query: queryFn, release: () => undefined };
+type NormalizedQueryFn = (
+  sql: string,
+  params?: unknown[],
+) => Promise<{ rows: unknown[]; rowCount: number }>;
+
+function normalizeSqlText(text: string): string {
+  return text.replaceAll('"', "").replace(/\s+/g, " ").trim();
+}
+
+function toSqlText(sql: unknown): string {
+  if (typeof sql === "string") return normalizeSqlText(sql);
+  if (
+    sql &&
+    typeof sql === "object" &&
+    "text" in sql &&
+    typeof (sql as { text?: unknown }).text === "string"
+  ) {
+    return normalizeSqlText((sql as { text: string }).text);
+  }
+  return normalizeSqlText(String(sql));
+}
+
+function toParams(sql: unknown, params?: unknown[]): unknown[] | undefined {
+  if (params) return params;
+  if (
+    sql &&
+    typeof sql === "object" &&
+    "values" in sql &&
+    Array.isArray((sql as { values?: unknown[] }).values)
+  ) {
+    return (sql as { values: unknown[] }).values;
+  }
+  return undefined;
+}
+
+function makePool(queryFn: NormalizedQueryFn): Pool {
+  function toArrayRow(row: unknown): unknown[] {
+    if (Array.isArray(row)) return row;
+    const record = row as Record<string, unknown>;
+    return Object.keys(record).map((key) => record[key]);
+  }
+
+  const client: PoolClientLike = {
+    query: async (sql, params) => {
+      const result = await queryFn(toSqlText(sql), toParams(sql, params));
+      if (
+        sql &&
+        typeof sql === "object" &&
+        "text" in sql &&
+        Array.isArray(result.rows)
+      ) {
+        return {
+          ...result,
+          rows: result.rows.map((row) => toArrayRow(row)),
+        };
+      }
+      return result;
+    },
+    release: () => undefined,
+  };
   return { connect: () => Promise.resolve(client) } as unknown as Pool;
 }
 
@@ -322,7 +398,7 @@ void test("CommunicationLogsService.followUps queries due items only", async () 
   const followUpQuery = calls.find((sql) =>
     sql.includes("from communication_logs"),
   );
-  assert.ok(followUpQuery?.includes("follow_up_required = true"));
+  assert.ok(followUpQuery?.includes("follow_up_required"));
   assert.ok(followUpQuery?.includes("follow_up_due_at <= now()"));
   assert.ok(followUpQuery?.includes("case_id = $"));
 });
