@@ -1,0 +1,123 @@
+<!--
+  section: create-modal.html
+  "新建个人客户" modal with 12 form fields + dedupe hint.
+  P0 CONTRACT §4 (form fields, dedupe, button states, #new entry).
+
+  Rendered outside <main>, as a sibling to the shell wrapper's content area.
+-->
+<div class="modal-backdrop" id="addCustomerModal">
+  <div class="apple-modal flex flex-col">
+    <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+      <h3 class="text-[17px] font-semibold text-[var(--apple-text-main)]">新建个人客户</h3>
+      <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" id="closeModalBtn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+      <div class="mb-5">
+        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">
+          请填写基础信息完成个人客户建档。电话/邮箱至少填一项用于去重，并保留国籍主数据。
+        </div>
+      </div>
+
+      <div id="customerFormFields" class="space-y-5">
+        <div id="dedupeHint" class="hidden p-3 rounded-xl border border-[#fde68a] bg-[#fffbeb]">
+          <div class="text-[13px] font-semibold text-[#92400e]">检测到可能重复的客户</div>
+          <div class="text-[12px] text-[#92400e] mt-1">请确认是否为同一人，避免重复建档。保存前也可先用全局搜索核对。</div>
+          <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
+              <div class="text-[13px] font-semibold text-[var(--apple-text-main)]">Wang Wei</div>
+              <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5">CUS-2026-0102 · 090-1234-5678 · 东京一组</div>
+            </div>
+            <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
+              <div class="text-[13px] font-semibold text-[var(--apple-text-main)]">王伟</div>
+              <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5">CUS-2025-0831 · wang.wei@email.com · 东京二组</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">识别名（对内显示）</label>
+            <input type="text" class="apple-input" id="quickDisplayName" placeholder="例如：王伟（就劳）">
+          </div>
+          <div>
+            <label class="apple-label">所属 Group <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="quickGroup">
+              <option value="" disabled selected>请选择 Group</option>
+              <option value="tokyo-1">东京一组</option>
+              <option value="tokyo-2">东京二组</option>
+              <option value="osaka">大阪组</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">姓名（法定） <span class="text-red-500">*</span></label>
+            <input type="text" class="apple-input" id="quickLegalName" placeholder="请输入姓名">
+          </div>
+          <div>
+            <label class="apple-label">假名（片假名）</label>
+            <input type="text" class="apple-input" id="quickKana" placeholder="例如：ワン ウェイ">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">性別</label>
+            <select class="apple-input appearance-none bg-white" id="quickGender">
+              <option value="" selected>不限</option>
+              <option>男</option>
+              <option>女</option>
+            </select>
+          </div>
+          <div>
+            <label class="apple-label">生年月日</label>
+            <input type="date" class="apple-input" id="quickBirthDate">
+          </div>
+        </div>
+
+      <div>
+        <label class="apple-label">国籍</label>
+        <input type="text" class="apple-input" id="quickNationality" placeholder="例如：中国 / 日本">
+      </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">电话 <span class="text-red-500">*</span></label>
+            <input type="tel" class="apple-input" id="quickPhone" placeholder="手机/座机">
+            <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项（用于去重与联系）</div>
+          </div>
+          <div>
+            <label class="apple-label">邮箱</label>
+            <input type="email" class="apple-input" id="quickEmail" placeholder="邮箱地址">
+          </div>
+        </div>
+
+        <div>
+          <label class="apple-label">来源 / 介绍人</label>
+          <input type="text" class="apple-input" id="quickReferrer" placeholder="例如：推荐 / 介绍人">
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">头像</label>
+            <input type="file" class="apple-input" id="quickAvatar" />
+          </div>
+          <div>
+            <label class="apple-label">备注（可搜索）</label>
+            <input type="text" class="apple-input" id="quickNote" placeholder="例如：交接事项、偏好、注意点...">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" id="cancelModalBtn" type="button">取消</button>
+      <button class="btn-secondary px-5" id="saveDraftBtn" type="button">保存草稿</button>
+      <button class="btn-primary px-5" id="createCustomerBtn" type="button">创建客户</button>
+    </div>
+  </div>
+</div>

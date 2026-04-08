@@ -1,0 +1,55 @@
+<section class="toolbar-grid mb-6">
+  <div class="flex flex-col gap-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="segmented-control" role="group" aria-label="数据范围">
+        <button class="segment-btn active" type="button" data-scope-btn="mine" aria-pressed="true">我的</button>
+        <button class="segment-btn" type="button" data-scope-btn="group" aria-pressed="false">本组</button>
+        <button class="segment-btn" type="button" data-scope-btn="all" aria-pressed="false">全所（管理员）</button>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2">
+      <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[148px]" id="filterStage">
+        <option value="all" selected>当前阶段：全部</option>
+        <option value="S1">S1 建档</option>
+        <option value="S2">S2 资料收集</option>
+        <option value="S3">S3 审核补正</option>
+        <option value="S4">S4 文书生成</option>
+        <option value="S5">S5 校验提交</option>
+        <option value="S7">S7 已提交待回执</option>
+        <option value="S9">S9 已归档</option>
+      </select>
+      <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[132px]" id="filterOwner">
+        <option value="all" selected>负责人：全部</option>
+        <option value="suzuki">Suzuki</option>
+        <option value="tanaka">Tanaka</option>
+        <option value="li">Li</option>
+        <option value="sato">Sato</option>
+      </select>
+      <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[132px]" id="filterGroup">
+        <option value="all" selected>Group：全部</option>
+        <option value="tokyo-1">东京一组</option>
+        <option value="tokyo-2">东京二组</option>
+        <option value="osaka">大阪组</option>
+      </select>
+      <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[138px]" id="filterRisk">
+        <option value="all" selected>风险状态：全部</option>
+        <option value="normal">正常</option>
+        <option value="attention">关注</option>
+        <option value="critical">高风险</option>
+      </select>
+      <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[138px]" id="filterValidation">
+        <option value="all" selected>校验状态：全部</option>
+        <option value="passed">passed</option>
+        <option value="pending">pending</option>
+        <option value="failed">failed</option>
+      </select>
+      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="resetFiltersBtn">重置</button>
+    </div>
+  </div>
+
+  <div class="relative">
+    <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <input type="text" class="search-input" id="searchInput" placeholder="搜索：案件编号 / 案件名称 / 主申请人 / Group" />
+  </div>
+</section>

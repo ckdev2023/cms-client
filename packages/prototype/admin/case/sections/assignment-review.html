@@ -1,0 +1,63 @@
+<section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
+  <div>
+    <div class="section-kicker">Step 3</div>
+    <div class="section-title mt-2">分派与初始设置</div>
+    <div class="meta-text mt-2">创建案件后默认生成资料清单，也可同步生成催办/跟进任务。</div>
+  </div>
+
+  <div class="field-grid three">
+    <div>
+      <label class="apple-label" for="ownerSelect">负责人</label>
+      <select class="apple-input" id="ownerSelect"></select>
+    </div>
+    <div>
+      <label class="apple-label" for="dueDateInput">预计提交期限</label>
+      <input class="apple-input" id="dueDateInput" type="date" />
+    </div>
+    <div>
+      <label class="apple-label" for="amountInput">合同金额（JPY）</label>
+      <input class="apple-input" id="amountInput" type="number" />
+    </div>
+  </div>
+
+  <div class="hidden" id="crossGroupReasonRow">
+    <label class="apple-label" for="crossGroupReason">跨组建案原因</label>
+    <textarea class="apple-input min-h-[96px]" id="crossGroupReason"></textarea>
+  </div>
+
+  <label class="flex items-start gap-3">
+    <input id="createChecklist" type="checkbox" checked class="mt-1" />
+    <div>
+      <div class="font-extrabold text-[var(--text)] text-[14px]">自动生成资料清单</div>
+      <div class="meta-text mt-1">按模板创建主申请人/扶养者或雇主/事务所内部资料项。</div>
+    </div>
+  </label>
+
+  <label class="flex items-start gap-3">
+    <input id="createTasks" type="checkbox" checked class="mt-1" />
+    <div>
+      <div class="font-extrabold text-[var(--text)] text-[14px]">同步生成初始任务</div>
+      <div class="meta-text mt-1">创建后自动生成催办、补件或跟进任务占位。</div>
+    </div>
+  </label>
+</section>
+
+<section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
+  <div>
+    <div class="section-kicker">Step 4</div>
+    <div class="section-title mt-2">完成创建</div>
+  </div>
+  <div class="success-banner hidden" id="successBanner">案件已创建（示例）</div>
+  <div class="summary-grid">
+    <div class="summary-box"><div class="summary-label">模板 / 申请类型</div><div class="summary-value" id="summaryTemplate">-</div></div>
+    <div class="summary-box"><div class="summary-label">主申请人</div><div class="summary-value" id="summaryCustomer">-</div></div>
+    <div class="summary-box"><div class="summary-label">关联人 / 批量对象</div><div class="summary-value" id="summaryParties">-</div></div>
+    <div class="summary-box"><div class="summary-label">负责人 / Group</div><div class="summary-value" id="summaryOwner">-</div></div>
+    <div class="summary-box"><div class="summary-label">预计提交期限</div><div class="summary-value" id="summaryDueDate">-</div></div>
+    <div class="summary-box"><div class="summary-label">合同金额</div><div class="summary-value" id="summaryAmount">-</div></div>
+  </div>
+  <div class="summary-box">
+    <div class="summary-label">创建动作</div>
+    <div class="summary-value" id="summaryChecklist">-</div>
+  </div>
+</section>

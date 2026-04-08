@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>案件列表 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../shared/styles/tokens.css" />
+    <link rel="stylesheet" href="../shared/styles/shell.css" />
+    <link rel="stylesheet" href="../shared/styles/components.css" />
+    <style>
+      .summary-card {
+        padding: 18px;
+      }
+
+      .summary-value {
+        font-size: 28px;
+        line-height: 1;
+        font-weight: 800;
+        color: var(--text);
+      }
+
+      .summary-label {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--muted-2);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .status-pill::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .status-stage-active {
+        background: rgba(14, 165, 233, 0.12);
+        border-color: rgba(14, 165, 233, 0.18);
+        color: #0369a1;
+      }
+
+      .status-stage-waiting {
+        background: rgba(245, 158, 11, 0.14);
+        border-color: rgba(245, 158, 11, 0.2);
+        color: #b45309;
+      }
+
+      .status-stage-done {
+        background: rgba(100, 116, 139, 0.12);
+        border-color: rgba(100, 116, 139, 0.16);
+        color: #475569;
+      }
+
+      .status-validation-passed {
+        background: rgba(22, 163, 74, 0.12);
+        border-color: rgba(22, 163, 74, 0.18);
+        color: #166534;
+      }
+
+      .status-validation-pending {
+        background: rgba(245, 158, 11, 0.14);
+        border-color: rgba(245, 158, 11, 0.22);
+        color: #92400e;
+      }
+
+      .status-validation-failed {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: rgba(220, 38, 38, 0.16);
+        color: #b91c1c;
+      }
+
+      .status-risk-normal {
+        background: rgba(148, 163, 184, 0.12);
+        border-color: rgba(148, 163, 184, 0.2);
+        color: #475569;
+      }
+
+      .status-risk-attention {
+        background: rgba(249, 115, 22, 0.12);
+        border-color: rgba(249, 115, 22, 0.2);
+        color: #c2410c;
+      }
+
+      .status-risk-critical {
+        background: rgba(220, 38, 38, 0.1);
+        border-color: rgba(220, 38, 38, 0.16);
+        color: #b91c1c;
+      }
+
+      .progress-track {
+        width: 100%;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(148, 163, 184, 0.18);
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #0ea5e9 0%, #0284c7 100%);
+      }
+
+      .table-meta {
+        font-size: 12px;
+        color: var(--muted-2);
+        font-weight: 600;
+      }
+
+      .toolbar-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      @media (min-width: 1024px) {
+        .toolbar-grid {
+          grid-template-columns: 1fr auto;
+          align-items: start;
+        }
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <!-- shell: mobile-nav.html (paths adjusted for case/ subdirectory) -->
+    <div class="mobile-nav" aria-hidden="true">
+      <div class="mobile-nav-backdrop" data-nav-close></div>
+      <div class="mobile-nav-panel">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="../admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              客户
+            </a>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="../documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="../forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
+              报表
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <!-- shell: side-nav.html (paths adjusted for case/ subdirectory) -->
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="../admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              客户
+            </a>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+              任务与提醒
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <div>
+        <!-- shell: topbar.html (paths adjusted for case/ subdirectory) -->
+        <header class="topbar" aria-label="顶部工具栏">
+          <div class="topbar-inner">
+            <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+
+            <div class="search" role="search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="search" placeholder="搜索：客户 / 案件 / 资料 / 文书..." aria-label="全局搜索" />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+
+            <button class="btn-pill hidden sm:inline-flex" type="button" data-navigate="create.html#family-bulk">家族签批量建案</button>
+            <button class="btn-primary" type="button" data-navigate="create.html">新建案件</button>
+          </div>
+        </header>
+
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-[1600px] mx-auto w-full">
+          <!-- section: sections/header.html -->
+          <section class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between mb-8">
+            <div>
+              <div class="inline-flex items-center gap-2 chip mb-3">P0 案件列表</div>
+              <h1 class="text-3xl display-font font-semibold">案件</h1>
+              <p class="text-sm text-gray-500 mt-2">覆盖建档、资料收集、Gate 校验、提交包与归档前的统一列表视图。</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="chip">默认筛选：阶段 / 负责人 / Group / 风险 / 校验</span>
+              <span class="chip">批量动作：负责人 / 协作者 / 截止日 / 任务</span>
+            </div>
+          </section>
+          <!-- /section: sections/header.html -->
+
+          <!-- section: sections/summary-cards.html -->
+          <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+            <div class="apple-card summary-card">
+              <div class="summary-label">进行中案件</div>
+              <div class="summary-value mt-3" id="summaryActiveCases">0</div>
+              <div class="table-meta mt-2">当前过滤结果中的活跃案件</div>
+            </div>
+            <div class="apple-card summary-card">
+              <div class="summary-label">失败校验</div>
+              <div class="summary-value mt-3" id="summaryFailedValidations">0</div>
+              <div class="table-meta mt-2">存在硬性阻断或待修复案件</div>
+            </div>
+            <div class="apple-card summary-card">
+              <div class="summary-label">近 7 日截止</div>
+              <div class="summary-value mt-3" id="summaryDueSoon">0</div>
+              <div class="table-meta mt-2">优先跟进补件 / 提交 / 到期事项</div>
+            </div>
+            <div class="apple-card summary-card">
+              <div class="summary-label">未收金额</div>
+              <div class="summary-value mt-3" id="summaryUnpaidTotal">¥0</div>
+              <div class="table-meta mt-2">过滤结果中的未收合计</div>
+            </div>
+          </section>
+          <!-- /section: sections/summary-cards.html -->
+
+          <!-- section: sections/filters.html -->
+          <section class="toolbar-grid mb-6">
+            <div class="flex flex-col gap-3">
+              <div class="flex flex-wrap items-center gap-3">
+                <div class="segmented-control" role="group" aria-label="数据范围">
+                  <button class="segment-btn active" type="button" data-scope-btn="mine" aria-pressed="true">我的</button>
+                  <button class="segment-btn" type="button" data-scope-btn="group" aria-pressed="false">本组</button>
+                  <button class="segment-btn" type="button" data-scope-btn="all" aria-pressed="false">全所（管理员）</button>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[148px]" id="filterStage">
+                  <option value="all" selected>当前阶段：全部</option>
+                  <option value="S1">S1 建档</option>
+                  <option value="S2">S2 资料收集</option>
+                  <option value="S3">S3 审核补正</option>
+                  <option value="S4">S4 文书生成</option>
+                  <option value="S5">S5 校验提交</option>
+                  <option value="S7">S7 已提交待回执</option>
+                  <option value="S9">S9 已归档</option>
+                </select>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[132px]" id="filterOwner">
+                  <option value="all" selected>负责人：全部</option>
+                  <option value="suzuki">Suzuki</option>
+                  <option value="tanaka">Tanaka</option>
+                  <option value="li">Li</option>
+                  <option value="sato">Sato</option>
+                </select>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[132px]" id="filterGroup">
+                  <option value="all" selected>Group：全部</option>
+                  <option value="tokyo-1">东京一组</option>
+                  <option value="tokyo-2">东京二组</option>
+                  <option value="osaka">大阪组</option>
+                </select>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[138px]" id="filterRisk">
+                  <option value="all" selected>风险状态：全部</option>
+                  <option value="normal">正常</option>
+                  <option value="attention">关注</option>
+                  <option value="critical">高风险</option>
+                </select>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[138px]" id="filterValidation">
+                  <option value="all" selected>校验状态：全部</option>
+                  <option value="passed">passed</option>
+                  <option value="pending">pending</option>
+                  <option value="failed">failed</option>
+                </select>
+                <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="resetFiltersBtn">重置</button>
+              </div>
+            </div>
+
+            <div class="relative">
+              <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <input type="text" class="search-input" id="searchInput" placeholder="搜索：案件编号 / 案件名称 / 主申请人 / Group" />
+            </div>
+          </section>
+          <!-- /section: sections/filters.html -->
+
+          <!-- section: sections/table.html -->
+          <section class="apple-card overflow-hidden">
+            <div
+              id="bulkActionBar"
+              class="hidden px-4 md:px-6 py-3 border-b border-[#f2f2f7] bg-[#fbfbfd] flex flex-col gap-3"
+              role="region"
+              aria-label="批量操作"
+            >
+              <div class="flex flex-col gap-2 xl:flex-row xl:items-center xl:justify-between">
+                <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--text)]">
+                  已选择 <span id="selectedCount">0</span> 条
+                  <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]" type="button" id="bulkClearBtn">
+                    清除
+                  </button>
+                </div>
+                <div class="table-meta">批量能力用于负责人/协作者调整、统一截止日与生成催办任务。</div>
+              </div>
+              <div class="flex flex-wrap items-center gap-2">
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" id="bulkOwnerSelect">
+                  <option value="" selected>批量指派负责人</option>
+                  <option value="suzuki">Suzuki</option>
+                  <option value="tanaka">Tanaka</option>
+                  <option value="li">Li</option>
+                  <option value="sato">Sato</option>
+                </select>
+                <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkOwnerApplyBtn">应用</button>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[180px]" id="bulkCollaboratorSelect">
+                  <option value="" selected>批量指派协作者</option>
+                  <option value="assistant-a">助理 A</option>
+                  <option value="assistant-b">助理 B</option>
+                  <option value="finance">财务</option>
+                </select>
+                <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkCollaboratorApplyBtn">应用</button>
+                <input class="apple-input bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" type="date" id="bulkDueDateInput" />
+                <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkDueDateApplyBtn">调整截止日</button>
+                <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[170px]" id="bulkTaskSelect">
+                  <option value="" selected>批量生成任务</option>
+                  <option value="催办">催办</option>
+                  <option value="补正">补正</option>
+                  <option value="跟进">跟进</option>
+                </select>
+                <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkTaskApplyBtn">生成</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="apple-table w-full text-left border-collapse min-w-[1480px]">
+                <thead>
+                  <tr>
+                    <th class="w-[48px] text-center">
+                      <input type="checkbox" id="selectAllCases" class="accent-[var(--primary)] table-checkbox" aria-label="全选案件" />
+                    </th>
+                    <th class="min-w-[220px]">案件编号 / 名称</th>
+                    <th class="min-w-[120px]">案件类型</th>
+                    <th class="min-w-[120px]">主申请人</th>
+                    <th class="min-w-[110px]">Group</th>
+                    <th class="min-w-[130px]">当前阶段</th>
+                    <th class="min-w-[110px]">负责人</th>
+                    <th class="min-w-[180px]">资料完成率</th>
+                    <th class="min-w-[180px]">最新校验</th>
+                    <th class="min-w-[120px] text-right">未收金额</th>
+                    <th class="min-w-[130px]">最近更新</th>
+                    <th class="min-w-[120px]">截止日</th>
+                    <th class="min-w-[100px]">风险状态</th>
+                    <th class="min-w-[72px] text-right">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="caseTableBody"></tbody>
+              </table>
+            </div>
+
+            <div class="px-6 py-4 border-t border-gray-100 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div class="text-sm text-gray-500" id="paginationSummary">显示 0 条</div>
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" type="button">上一页</button>
+                <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" type="button">下一页</button>
+              </div>
+            </div>
+          </section>
+          <!-- /section: sections/table.html -->
+        </main>
+      </div>
+    </div>
+
+    <!-- section: sections/toast.html -->
+    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+      <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+        <div class="text-[13px] font-extrabold text-[var(--text)]" id="toastTitle">已保存</div>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
+      </div>
+    </div>
+    <!-- /section: sections/toast.html -->
+
+    <script src="data/case-list.js"></script>
+    <script src="scripts/case-page.js"></script>
+    <script src="../shared/scripts/navigate.js"></script>
+    <script src="../shared/scripts/mobile-nav.js"></script>
+  </body>
+</html>

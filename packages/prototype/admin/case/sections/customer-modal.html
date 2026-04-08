@@ -1,0 +1,53 @@
+<div class="modal-backdrop" id="caseCustomerModal">
+  <div class="apple-modal max-w-[640px] border border-[var(--border)]">
+    <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between gap-4">
+      <div>
+        <div class="font-extrabold text-[18px] text-[var(--text)]">新增客户 / 关联人</div>
+        <div class="meta-text mt-1">用于当前建案流程的快速录入，不代表完整客户建档。</div>
+      </div>
+      <button class="icon-btn" type="button" aria-label="关闭弹窗" data-close-customer-modal>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="px-6 py-6 section-stack">
+      <form id="caseCustomerModalForm" class="section-stack">
+        <input type="hidden" id="caseCustomerModalMode" value="primary" />
+        <div class="field-grid two">
+          <div>
+            <label class="apple-label" for="newCaseCustomerName">姓名</label>
+            <input class="apple-input" id="newCaseCustomerName" type="text" />
+          </div>
+          <div>
+            <label class="apple-label" for="newCaseCustomerRole">角色</label>
+            <select class="apple-input" id="newCaseCustomerRole"></select>
+          </div>
+        </div>
+        <div class="field-grid two">
+          <div>
+            <label class="apple-label" for="newCaseCustomerGroup">所属 Group</label>
+            <select class="apple-input" id="newCaseCustomerGroup"></select>
+          </div>
+          <div>
+            <label class="apple-label" for="newCaseCustomerPhone">电话</label>
+            <input class="apple-input" id="newCaseCustomerPhone" type="tel" />
+          </div>
+        </div>
+        <div>
+          <label class="apple-label" for="newCaseCustomerEmail">邮箱</label>
+          <input class="apple-input" id="newCaseCustomerEmail" type="email" />
+        </div>
+        <div>
+          <label class="apple-label" for="newCaseCustomerNote">备注</label>
+          <textarea class="apple-input min-h-[88px]" id="newCaseCustomerNote"></textarea>
+        </div>
+        <div class="text-[13px] font-semibold text-red-600" id="caseCustomerModalError"></div>
+      </form>
+    </div>
+    <div class="px-6 py-5 border-t border-[var(--border)] flex items-center justify-end gap-2">
+      <button class="btn-secondary" type="button" data-close-customer-modal>取消</button>
+      <button class="btn-primary" type="button" id="caseCustomerModalSave">保存并回填</button>
+    </div>
+  </div>
+</div>

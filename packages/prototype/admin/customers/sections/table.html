@@ -1,0 +1,197 @@
+<!--
+  section: table.html
+  Customer table wrapped in .apple-card, including:
+    - Bulk action bar (#bulkActionBar) — visible when selectedCount > 0
+    - <table> with 8 data columns + checkbox column + actions column
+    - 3 static sample rows (张伟、陈丽、Li Wei)
+  P0 CONTRACT §1 (columns), §3 (bulk actions).
+
+  Note: this section shares the .apple-card wrapper with pagination.html.
+  The wrapper opens here and closes in pagination.html.
+-->
+<div class="apple-card overflow-hidden">
+  <div
+    id="bulkActionBar"
+    class="hidden px-4 md:px-6 py-3 border-b border-[#f2f2f7] bg-[#fbfbfd] flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+    role="region"
+    aria-label="批量操作"
+  >
+    <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--apple-text-main)]">
+      已选择 <span id="selectedCount">0</span> 条
+      <button class="text-[12px] font-extrabold text-[var(--apple-text-tert)] hover:text-[var(--apple-text-main)]" type="button" id="bulkClearBtn">
+        清除
+      </button>
+    </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <div class="flex items-center gap-2">
+        <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">指派负责人</span>
+        <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" id="bulkAssignSelect">
+          <option value="" selected>选择负责人</option>
+          <option value="admin">Admin</option>
+          <option value="tom">Tom</option>
+          <option value="assistant-a">助理 A</option>
+        </select>
+        <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkAssignApplyBtn">应用</button>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">调整分组</span>
+        <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" id="bulkGroupSelect">
+          <option value="" selected>选择分组</option>
+          <option value="tokyo-1">东京一组</option>
+          <option value="tokyo-2">东京二组</option>
+          <option value="osaka">大阪组</option>
+        </select>
+        <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkGroupApplyBtn">应用</button>
+      </div>
+    </div>
+  </div>
+  <table class="apple-table w-full text-left border-collapse">
+    <thead>
+      <tr>
+        <th class="w-[44px] text-center">
+          <label class="inline-flex items-center justify-center w-full">
+            <input
+              type="checkbox"
+              id="selectAllCustomers"
+              class="accent-[var(--apple-blue)] table-checkbox"
+              aria-label="全选客户"
+            />
+          </label>
+        </th>
+        <th>客户</th>
+        <th class="hidden md:table-cell">フリガナ</th>
+        <th class="w-[80px] text-center">累计案件</th>
+        <th class="w-[80px] text-center">活跃案件</th>
+        <th class="hidden md:table-cell w-[120px]">最近联系</th>
+        <th class="hidden md:table-cell w-[100px]">负责人</th>
+        <th class="hidden lg:table-cell w-[110px]">介绍人/来源</th>
+        <th class="hidden lg:table-cell w-[100px]">所属分组</th>
+        <th class="text-right w-[60px]">操作</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0102" aria-label="选择 张伟（就劳）" />
+        </td>
+        <td>
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">张</div>
+            <div>
+              <div class="font-medium text-[var(--apple-text-main)]">张伟（就劳）</div>
+              <div class="text-xs text-gray-500 mt-0.5">CUS-2026-0102 · 090-1234-5678 · zhang.w@email.com</div>
+            </div>
+          </div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チョウ イ</td>
+        <td class="text-center">
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
+        </td>
+        <td class="text-center">
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">1</a>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--apple-text-main)]">2026-03-28</div>
+          <div class="text-[12px] text-gray-500 mt-0.5">WeChat</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="flex items-center text-sm">
+            <div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>
+            Admin
+          </div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">客户推荐</td>
+        <td class="hidden lg:table-cell">
+          <span class="chip">东京一组</span>
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <div class="table-actions">
+            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0120" aria-label="选择 陈丽" />
+        </td>
+        <td>
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">陈</div>
+            <div>
+              <div class="font-medium text-[var(--apple-text-main)]">陈丽</div>
+              <div class="text-xs text-gray-500">CUS-2026-0120 · 080-2222-3333 · chen.li@email.com</div>
+            </div>
+          </div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チン リ</td>
+        <td class="text-center">
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
+        </td>
+        <td class="text-center">
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--apple-text-main)]">2026-03-22</div>
+          <div class="text-[12px] text-gray-500 mt-0.5">电话沟通</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="flex items-center text-sm">
+            <div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>
+            Tom
+          </div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">紹介（渡辺様）</td>
+        <td class="hidden lg:table-cell">
+          <span class="chip">东京二组</span>
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <div class="table-actions">
+            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr>
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0128" aria-label="选择 Li Wei" />
+        </td>
+        <td>
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">L</div>
+            <div>
+              <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
+              <div class="text-xs text-gray-500">CUS-2026-0128 · 未提供电话 · liwei.test@email.com</div>
+            </div>
+          </div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">リ ウェイ</td>
+        <td class="text-center">
+          <span class="text-sm text-gray-400">0</span>
+        </td>
+        <td class="text-center">
+          <span class="text-sm text-gray-400">0</span>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--apple-text-main)]">2026-03-18</div>
+          <div class="text-[12px] text-gray-500 mt-0.5">邮件回复</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="flex items-center text-sm text-gray-400">暂无</div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-gray-400">—</td>
+        <td class="hidden lg:table-cell">
+          <span class="chip">大阪组</span>
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <div class="table-actions">
+            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>

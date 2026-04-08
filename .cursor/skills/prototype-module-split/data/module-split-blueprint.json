@@ -1,0 +1,82 @@
+{
+  "artifactVersion": 1,
+  "requiredDocs": [
+    "P0-CONTRACT.md",
+    "SPLIT-ARCHITECTURE.md",
+    "MIGRATION-MAPPING.md",
+    "split-manifest.json"
+  ],
+  "requiredDirectories": [
+    "sections",
+    "scripts",
+    "data"
+  ],
+  "manifestRequiredKeys": [
+    "artifactVersion",
+    "moduleId",
+    "moduleLabel",
+    "moduleDir",
+    "entryFile",
+    "referenceDocs",
+    "sharedCandidates",
+    "sections",
+    "dataFiles",
+    "scripts",
+    "productionMapping",
+    "regressionChecklist",
+    "notes"
+  ],
+  "sharedCandidateBuckets": [
+    "styles",
+    "shell",
+    "scripts"
+  ],
+  "productionMappingBuckets": [
+    "domain",
+    "data",
+    "model",
+    "ui",
+    "shared"
+  ],
+  "sectionRecord": {
+    "file": "sections/example.html",
+    "purpose": "",
+    "sourceAnchors": [],
+    "contractRefs": [],
+    "productionTarget": ""
+  },
+  "dataRecord": {
+    "file": "data/example-config.js",
+    "purpose": "",
+    "exports": [],
+    "consumers": [],
+    "demoOnly": false,
+    "productionTarget": ""
+  },
+  "scriptRecord": {
+    "file": "scripts/example-page.js",
+    "purpose": "",
+    "domHooks": [],
+    "dependsOn": [],
+    "demoOnly": false,
+    "productionTarget": ""
+  },
+  "heuristics": {
+    "sharedRules": [
+      "Content reusable across multiple prototype pages belongs in shared.",
+      "Business-specific text, fields, and state machines stay in the module directory."
+    ],
+    "dataRules": [
+      "Use data files for declarative config, option lists, static demo rows, storage keys, and label maps.",
+      "Do not put querySelector, addEventListener, or DOM mutations in data files."
+    ],
+    "scriptRules": [
+      "One script file should own one behavior capability.",
+      "Split page bootstrap, modal, drafts, search/filter, and bulk actions into separate files when present."
+    ],
+    "referenceRules": [
+      "Document demo-only behavior separately from production intent.",
+      "Always include a production mapping aligned to domain, data, model, ui, and shared."
+    ]
+  }
+}

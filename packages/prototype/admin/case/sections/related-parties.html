@@ -1,0 +1,49 @@
+<section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
+  <div>
+    <div class="section-kicker">Step 2</div>
+    <div class="section-title mt-2">关联人与资料模板</div>
+    <div class="meta-text mt-2">主申请人为必选。家族签支持扶养者/保证人，技人国强调雇主信息。</div>
+  </div>
+
+  <div class="field-grid two">
+    <div>
+      <label class="apple-label" for="primaryCustomerSelect">选择主申请人</label>
+      <select class="apple-input" id="primaryCustomerSelect"></select>
+    </div>
+    <div class="flex items-end gap-2">
+      <button class="btn-secondary" type="button" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
+      <button class="btn-pill" type="button" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
+    </div>
+  </div>
+
+  <div class="summary-box" id="primaryCustomerCard">
+    <div class="summary-label">主申请人</div>
+    <div class="summary-value" id="primaryCustomerName">-</div>
+    <div class="meta-text mt-2" id="primaryCustomerMeta">-</div>
+    <div class="meta-text mt-2" id="primaryCustomerContact">-</div>
+  </div>
+
+  <div id="additionalParties"></div>
+
+  <div class="summary-box" id="familyScenarioPanel">
+    <div class="section-title" id="familyScenarioTitle">家族签批量建案</div>
+    <div class="meta-text mt-2" id="familyScenarioSummary"></div>
+    <div class="flex flex-wrap gap-2 mt-4" id="familyRoleChips"></div>
+    <div class="summary-grid mt-4" id="familyDependents"></div>
+  </div>
+
+  <div class="summary-box hidden" id="workScenarioPanel">
+    <div class="section-title">雇主信息沉淀</div>
+    <div class="meta-text mt-2">P0 不引入企业客户实体，先把雇主信息作为案件字段快照保存。</div>
+    <div class="flex flex-wrap gap-2 mt-4" id="workFieldList"></div>
+  </div>
+
+  <div class="section-stack">
+    <div>
+      <div class="section-title">资料清单模板</div>
+      <div class="meta-text mt-1" id="requirementsMeta"></div>
+    </div>
+    <div id="requirementsList" class="section-stack"></div>
+    <div class="meta-text" id="requirementsProgress"></div>
+  </div>
+</section>

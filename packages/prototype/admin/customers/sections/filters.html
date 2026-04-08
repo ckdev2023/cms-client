@@ -1,0 +1,42 @@
+<!--
+  section: filters.html
+  Scope toggle (我的/本组/全所) + search input + 3 filter selects + reset button.
+  P0 CONTRACT §2: search + filters + scope toggle + reset.
+-->
+<div class="flex flex-col gap-3 mb-6">
+  <div class="flex flex-wrap justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
+      <div class="segmented-control" role="group" aria-label="数据范围">
+        <button class="segment-btn active" type="button" data-scope-btn="mine" aria-pressed="true">我的</button>
+        <button class="segment-btn" type="button" data-scope-btn="group" aria-pressed="false">本组</button>
+        <button class="segment-btn" type="button" data-scope-btn="all" aria-pressed="false">全所（管理员）</button>
+      </div>
+    </div>
+
+    <div class="relative">
+      <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <input type="text" placeholder="搜索：客户名 / フリガナ / 电话 / 邮箱" class="search-input" />
+    </div>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option selected>所属分组：全部</option>
+      <option>东京一组</option>
+      <option>东京二组</option>
+      <option>大阪组</option>
+    </select>
+    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option selected>负责人：全部</option>
+      <option>Admin</option>
+      <option>Tom</option>
+      <option>助理 A</option>
+    </select>
+    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option selected>活跃案件：全部</option>
+      <option>有活跃案件</option>
+      <option>无活跃案件</option>
+    </select>
+    <button class="btn-secondary h-9 px-4 text-[13px]" type="button" data-action="reset-filters">重置</button>
+  </div>
+</div>

@@ -1,0 +1,229 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "case-create",
+  "moduleLabel": "案件新建",
+  "moduleDir": "packages/prototype/admin/case",
+  "entryFile": "packages/prototype/admin/case/create.html",
+  "referenceDocs": [
+    "packages/prototype/admin/case/P0-CONTRACT.md",
+    "packages/prototype/admin/case/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/case/MIGRATION-MAPPING.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/create-header.html",
+      "purpose": "面包屑、标题、副标题与 P0 范围 chips",
+      "sourceAnchors": [
+        "page-title",
+        "link-apple"
+      ],
+      "contractRefs": [
+        "§1 必保留区块"
+      ],
+      "productionTarget": "features/case/ui/CreateCaseHeader"
+    },
+    {
+      "file": "sections/create-stepper.html",
+      "purpose": "四步 stepper 视觉与当前进度指示",
+      "sourceAnchors": [
+        "data-step-indicator",
+        "wizard-step-item"
+      ],
+      "contractRefs": [
+        "§1 必保留区块",
+        "§5 关键可用态"
+      ],
+      "productionTarget": "features/case/ui/CreateCaseStepper"
+    },
+    {
+      "file": "sections/business-form.html",
+      "purpose": "模板选择、申请类型、Group、案件标题",
+      "sourceAnchors": [
+        "data-template-card",
+        "applicationTypeSelect",
+        "groupSelect",
+        "caseNameInput"
+      ],
+      "contractRefs": [
+        "§2.1 Step 1 必保留字段"
+      ],
+      "productionTarget": "features/case/ui/CreateCaseBusinessForm"
+    },
+    {
+      "file": "sections/related-parties.html",
+      "purpose": "主申请人、关联人、家族签/技人国场景卡、资料模板",
+      "sourceAnchors": [
+        "primaryCustomerSelect",
+        "additionalParties",
+        "familyScenarioPanel",
+        "workScenarioPanel",
+        "requirementsList"
+      ],
+      "contractRefs": [
+        "§2.2 Step 2 必保留字段",
+        "§3 模板与批量模式"
+      ],
+      "productionTarget": "features/case/ui/CreateCasePartiesSection"
+    },
+    {
+      "file": "sections/assignment-review.html",
+      "purpose": "负责人、期限、金额、自动动作与最终汇总",
+      "sourceAnchors": [
+        "ownerSelect",
+        "dueDateInput",
+        "amountInput",
+        "createChecklist",
+        "summaryTemplate"
+      ],
+      "contractRefs": [
+        "§2.3 Step 3 必保留字段",
+        "§5 关键可用态"
+      ],
+      "productionTarget": "features/case/ui/CreateCaseAssignmentSection + CreateCaseReviewSection"
+    },
+    {
+      "file": "sections/customer-modal.html",
+      "purpose": "快速新建主申请人或关联人 modal",
+      "sourceAnchors": [
+        "caseCustomerModal",
+        "caseCustomerModalForm",
+        "caseCustomerModalSave"
+      ],
+      "contractRefs": [
+        "§4 Modal 快速新建客户"
+      ],
+      "productionTarget": "features/case/ui/CasePartyQuickCreateModal"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "创建成功与回填反馈 toast",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "contractRefs": [
+        "§7 Toast / 反馈"
+      ],
+      "productionTarget": "shared/ui/Toast"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/case-create-config.js",
+      "purpose": "集中声明模板、客户、负责人、默认状态、toast 文案",
+      "exports": [
+        "groups",
+        "owners",
+        "customers",
+        "templates",
+        "defaultState",
+        "toast"
+      ],
+      "consumers": [
+        "scripts/case-create-page.js",
+        "scripts/case-create-modal.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/case/CaseDraft.ts + caseTemplateConstants.ts"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/case-create-page.js",
+      "purpose": "stepper、模板切换、主申请人回填、资料模板渲染、汇总与创建反馈",
+      "domHooks": [
+        "data-step-panel",
+        "data-template-card",
+        "primaryCustomerSelect",
+        "requirementsList",
+        "btnNextStep",
+        "btnSubmitCase"
+      ],
+      "dependsOn": [
+        "data/case-create-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/case/model/useCreateCaseViewModel"
+    },
+    {
+      "file": "scripts/case-create-modal.js",
+      "purpose": "modal 打开关闭、字段校验、回填主申请人或关联人",
+      "domHooks": [
+        "caseCustomerModal",
+        "data-open-customer-modal",
+        "caseCustomerModalSave",
+        "caseCustomerModalError"
+      ],
+      "dependsOn": [
+        "scripts/case-create-page.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/case/model/useCasePartyPicker"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/case/CaseDraft.ts",
+      "packages/mobile/src/domain/case/CaseTemplateRepository.ts",
+      "packages/mobile/src/domain/case/caseTemplateConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/case/CaseTemplateApi.ts",
+      "packages/mobile/src/data/case/createCaseRepository.ts",
+      "packages/mobile/src/data/customer/createCustomerRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/case/model/useCreateCaseViewModel.ts",
+      "packages/mobile/src/features/case/model/useCasePartyPicker.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/case/ui/CreateCaseScreen.tsx",
+      "packages/mobile/src/features/case/ui/CreateCaseHeader.tsx",
+      "packages/mobile/src/features/case/ui/CreateCaseStepper.tsx",
+      "packages/mobile/src/features/case/ui/CreateCaseBusinessForm.tsx",
+      "packages/mobile/src/features/case/ui/CreateCasePartiesSection.tsx",
+      "packages/mobile/src/features/case/ui/CreateCaseAssignmentSection.tsx",
+      "packages/mobile/src/features/case/ui/CreateCaseReviewSection.tsx",
+      "packages/mobile/src/features/case/ui/CasePartyQuickCreateModal.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "case/index.html 可进入 create.html",
+    "create.html#family-bulk 默认进入家族签模式",
+    "四步 stepper 可切换",
+    "家族滞在 / 技人国 模板切换正常",
+    "主申请人选择后案件标题自动回填",
+    "modal 可回填主申请人或追加关联人",
+    "资料清单按模板切换",
+    "跨组建案时显示原因输入",
+    "创建成功 banner 与 toast 显示",
+    "customers/index.html 与 admin-prototype.html 新建案件入口改到新路径"
+  ],
+  "notes": [
+    "create.html 是新增案件的原型入口，index.html 仍保留案件列表页。",
+    "创建案件、快速新建客户、资料模板勾选都属于 demo-only 行为，不代表真实落库或真实任务生成。"
+  ]
+}
