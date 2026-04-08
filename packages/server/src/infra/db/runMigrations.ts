@@ -95,7 +95,10 @@ function validateLegacyFiles(legacyFiles: string[]) {
   }
 }
 
-function validatePairedFiles(upFiles: Map<string, string>, downFiles: Map<string, string>) {
+function validatePairedFiles(
+  upFiles: Map<string, string>,
+  downFiles: Map<string, string>,
+) {
   const missingDown = [...upFiles.keys()].filter((k) => !downFiles.has(k));
   if (missingDown.length > 0) {
     throw new Error(`missing .down.sql for: ${missingDown.join(", ")}`);
@@ -103,7 +106,9 @@ function validatePairedFiles(upFiles: Map<string, string>, downFiles: Map<string
 
   const orphanDown = [...downFiles.keys()].filter((k) => !upFiles.has(k));
   if (orphanDown.length > 0) {
-    throw new Error(`.down.sql exists without .up.sql for: ${orphanDown.join(", ")}`);
+    throw new Error(
+      `.down.sql exists without .up.sql for: ${orphanDown.join(", ")}`,
+    );
   }
 }
 

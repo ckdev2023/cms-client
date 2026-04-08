@@ -4,7 +4,10 @@ import type { Pool } from "pg";
 
 import { ConversationsService } from "./conversations.service";
 
-type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+type QueryFn = (
+  sql: string,
+  params?: unknown[],
+) => Promise<{ rows: unknown[] }>;
 
 function makePool(qf: QueryFn) {
   return { query: qf } as unknown as Pool;
@@ -41,10 +44,15 @@ void test("ConversationsService.create auto-fills preferredLanguage from AppUser
 
 void test("ConversationsService.create uses explicit preferredLanguage when provided", async () => {
   const pool = makePool(() =>
-    Promise.resolve({ rows: [{ ...SAMPLE_CONV_ROW, preferred_language: "zh" }] }),
+    Promise.resolve({
+      rows: [{ ...SAMPLE_CONV_ROW, preferred_language: "zh" }],
+    }),
   );
   const svc = new ConversationsService(pool);
-  const result = await svc.create({ appUserId: "au-1", preferredLanguage: "zh" });
+  const result = await svc.create({
+    appUserId: "au-1",
+    preferredLanguage: "zh",
+  });
   assert.equal(result.preferredLanguage, "zh");
 });
 
@@ -68,8 +76,11 @@ void test("ConversationsService.get returns null for missing", async () => {
 
 void test("ConversationsService.list returns items and total", async () => {
   const pool = makePool((sql) => {
-    if (sql.includes("count(*)")) return Promise.resolve({ rows: [{ count: "2" }] });
-    return Promise.resolve({ rows: [SAMPLE_CONV_ROW, { ...SAMPLE_CONV_ROW, id: "conv-2" }] });
+    if (sql.includes("count(*)"))
+      return Promise.resolve({ rows: [{ count: "2" }] });
+    return Promise.resolve({
+      rows: [SAMPLE_CONV_ROW, { ...SAMPLE_CONV_ROW, id: "conv-2" }],
+    });
   });
   const svc = new ConversationsService(pool);
   const result = await svc.list({ appUserId: "au-1" });

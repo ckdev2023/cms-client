@@ -40,4 +40,3 @@ export function isInRollout(
   const bucket = hash.readUInt32BE(0) % 100;
   return bucket < percentage;
 }
-

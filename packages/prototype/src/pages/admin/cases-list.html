@@ -23,76 +23,9 @@
         ></include>
 
         <main id="main" class="page">
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">案件</h1>
-              <p class="page-subtitle">统一管理所有在办与已归档案件</p>
-            </div>
-            <div class="page-actions">
-              <a class="btn-secondary" href="reports.html">查看报表</a>
-              <a class="btn-primary" href="case-create.html">新建案件</a>
-            </div>
-          </div>
+          <include src="/pages/admin/_parts/cases-list/PageHeader.html"></include>
 
-          <section class="section">
-            <div class="apple-card">
-              <div class="table-wrap">
-                <table class="apple-table" aria-label="案件列表">
-                  <thead>
-                    <tr>
-                      <th>案件</th>
-                      <th>客户</th>
-                      <th>状态</th>
-                      <th>负责人</th>
-                      <th>更新时间</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="case-detail.html">JP-2026-0192</a>
-                        <div class="muted">经营管理签证</div>
-                      </td>
-                      <td>王小明</td>
-                      <td><span class="badge badge-active">进行中</span></td>
-                      <td>AD</td>
-                      <td>今天 10:24</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="case-detail.html">JP-2026-0187</a>
-                        <div class="muted">留学签证</div>
-                      </td>
-                      <td>陈雨</td>
-                      <td><span class="badge badge-pending">待材料</span></td>
-                      <td>YX</td>
-                      <td>昨天 18:06</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="case-detail.html">JP-2026-0169</a>
-                        <div class="muted">家族滞在</div>
-                      </td>
-                      <td>李娜</td>
-                      <td><span class="badge badge-alert">超时风险</span></td>
-                      <td>AD</td>
-                      <td>2 天前</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="case-detail.html">JP-2026-0152</a>
-                        <div class="muted">签证更新</div>
-                      </td>
-                      <td>佐藤健</td>
-                      <td><span class="badge badge-done">已完成</span></td>
-                      <td>HG</td>
-                      <td>上周</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <include src="/pages/admin/_parts/cases-list/CaseListTable.html"></include>
         </main>
       </div>
     </div>

@@ -23,66 +23,11 @@
         ></include>
 
         <main id="main" class="page">
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">资料中心</h1>
-              <p class="page-subtitle">材料清单、模板、上传与归档</p>
-            </div>
-            <div class="page-actions">
-              <button class="btn-secondary" type="button">新建文件夹</button>
-              <button class="btn-primary" type="button">上传资料</button>
-            </div>
-          </div>
+          <include src="/pages/admin/_parts/documents/PageHeader.html"></include>
 
-          <section class="section">
-            <div class="apple-card">
-              <div class="table-wrap">
-                <table class="apple-table" aria-label="资料列表">
-                  <thead>
-                    <tr>
-                      <th>名称</th>
-                      <th>类型</th>
-                      <th>适用范围</th>
-                      <th>更新时间</th>
-                      <th>操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">材料清单（经营管理签证）</div>
-                        <div class="muted">模板 · v3</div>
-                      </td>
-                      <td>模板</td>
-                      <td><span class="badge badge-active">经营管理</span></td>
-                      <td>今天</td>
-                      <td><a class="link-apple" href="#">下载</a></td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">委任状（通用）</div>
-                        <div class="muted">模板 · v5</div>
-                      </td>
-                      <td>模板</td>
-                      <td><span class="badge badge-pending">通用</span></td>
-                      <td>本周</td>
-                      <td><a class="link-apple" href="#">下载</a></td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">公司章程（扫描件）</div>
-                        <div class="muted">案件：JP-2026-0192</div>
-                      </td>
-                      <td>文件</td>
-                      <td><span class="badge badge-active">案件资料</span></td>
-                      <td>今天</td>
-                      <td><a class="link-apple" href="case-detail.html">查看</a></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <include src="/pages/admin/_parts/documents/DocumentList.html"></include>
+
+          <include src="/pages/admin/_parts/documents/UploadModal.html"></include>
         </main>
       </div>
     </div>

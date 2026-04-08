@@ -56,7 +56,9 @@ function createOpenAIAdapter(_apiKey: string): TranslationAdapter {
   // TODO: 使用 OpenAI / Claude API 实现
   return {
     translate() {
-      return Promise.reject(new Error("OpenAI translation adapter not implemented"));
+      return Promise.reject(
+        new Error("OpenAI translation adapter not implemented"),
+      );
     },
   };
 }
@@ -70,7 +72,9 @@ function createDeepLAdapter(_apiKey: string): TranslationAdapter {
   // TODO: 使用 DeepL API 实现
   return {
     translate() {
-      return Promise.reject(new Error("DeepL translation adapter not implemented"));
+      return Promise.reject(
+        new Error("DeepL translation adapter not implemented"),
+      );
     },
   };
 }

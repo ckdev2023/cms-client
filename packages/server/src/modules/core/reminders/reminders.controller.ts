@@ -51,7 +51,9 @@ function parseISODate(value: unknown, field: string): string {
   const str = requireString(value, field);
   const d = new Date(str);
   if (isNaN(d.getTime())) {
-    throw new BadRequestException(`Invalid ${field}, must be a valid ISO date string`);
+    throw new BadRequestException(
+      `Invalid ${field}, must be a valid ISO date string`,
+    );
   }
   return d.toISOString();
 }
@@ -67,7 +69,9 @@ function parseOptionalISODate(
 function parseEntityType(value: unknown): string {
   const str = requireString(value, "entityType");
   if (str !== "case" && str !== "document_item") {
-    throw new BadRequestException("Invalid entityType, must be 'case' or 'document_item'");
+    throw new BadRequestException(
+      "Invalid entityType, must be 'case' or 'document_item'",
+    );
   }
   return str;
 }

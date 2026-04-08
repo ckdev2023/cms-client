@@ -70,7 +70,8 @@ type SetModeBody = {
 function parseKey(v: unknown): string {
   if (typeof v !== "string") throw new BadRequestException("Invalid key");
   const key = v.trim();
-  if (key.length === 0 || key.length > 200) throw new BadRequestException("Invalid key");
+  if (key.length === 0 || key.length > 200)
+    throw new BadRequestException("Invalid key");
   return key;
 }
 
@@ -94,8 +95,13 @@ function parseKind(v: unknown): TemplateKind {
 function parseLimit(v: unknown): number | undefined {
   if (v === undefined) return undefined;
   const n =
-    typeof v === "number" ? v : typeof v === "string" && v.length > 0 ? Number(v) : NaN;
-  if (!Number.isFinite(n) || n <= 0) throw new BadRequestException("Invalid limit");
+    typeof v === "number"
+      ? v
+      : typeof v === "string" && v.length > 0
+        ? Number(v)
+        : NaN;
+  if (!Number.isFinite(n) || n <= 0)
+    throw new BadRequestException("Invalid limit");
   return n;
 }
 
@@ -149,7 +155,8 @@ function parseRollout(v: unknown): TemplateRollout | undefined {
     throw new BadRequestException("Invalid rollout");
   }
   if (v.type === "all") return { type: "all" };
-  if (v.type !== "percentage") throw new BadRequestException("Invalid rollout.type");
+  if (v.type !== "percentage")
+    throw new BadRequestException("Invalid rollout.type");
   const percentage = parseRolloutPercentage(v.percentage);
   const salt = parseRolloutSalt(v.salt);
   return { type: "percentage", percentage, salt };
@@ -179,7 +186,8 @@ function parseEntityId(v: unknown): string | undefined {
   if (v === undefined) return undefined;
   if (typeof v !== "string") throw new BadRequestException("Invalid entityId");
   const entityId = v.trim();
-  if (entityId.length === 0 || entityId.length > 200) throw new BadRequestException("Invalid entityId");
+  if (entityId.length === 0 || entityId.length > 200)
+    throw new BadRequestException("Invalid entityId");
   return entityId;
 }
 
@@ -194,7 +202,8 @@ export class TemplatesController {
    * @param templatesService templates service
    */
   constructor(
-    @Inject(TemplatesService) private readonly templatesService: TemplatesService,
+    @Inject(TemplatesService)
+    private readonly templatesService: TemplatesService,
   ) {}
 
   /**
@@ -205,7 +214,10 @@ export class TemplatesController {
    * @returns 版本列表
    */
   @Get("versions")
-  async listVersions(@Req() req: HttpRequest, @Query() query: TemplatesVersionsQuery) {
+  async listVersions(
+    @Req() req: HttpRequest,
+    @Query() query: TemplatesVersionsQuery,
+  ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const kind = parseKind(query.kind);
@@ -223,7 +235,10 @@ export class TemplatesController {
    */
   @RequireRoles("manager")
   @Post("versions")
-  async createVersion(@Req() req: HttpRequest, @Body() body: CreateVersionBody) {
+  async createVersion(
+    @Req() req: HttpRequest,
+    @Body() body: CreateVersionBody,
+  ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const kind = parseKind(body.kind);
@@ -240,7 +255,10 @@ export class TemplatesController {
    * @returns 发布记录
    */
   @Get("release")
-  async getRelease(@Req() req: HttpRequest, @Query() query: TemplatesVersionsQuery) {
+  async getRelease(
+    @Req() req: HttpRequest,
+    @Query() query: TemplatesVersionsQuery,
+  ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const kind = parseKind(query.kind);
@@ -264,7 +282,12 @@ export class TemplatesController {
     const key = parseKey(body.key);
     const version = parseVersion(body.version);
     const rollout = parseRollout(body.rollout);
-    return this.templatesService.releaseVersion(ctx, { kind, key, version, rollout });
+    return this.templatesService.releaseVersion(ctx, {
+      kind,
+      key,
+      version,
+      rollout,
+    });
   }
 
   /**
@@ -281,7 +304,8 @@ export class TemplatesController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const kind = parseKind(body.kind);
     const key = parseKey(body.key);
-    const toVersion = body.toVersion === undefined ? undefined : parseVersion(body.toVersion);
+    const toVersion =
+      body.toVersion === undefined ? undefined : parseVersion(body.toVersion);
     return this.templatesService.rollback(ctx, { kind, key, toVersion });
   }
 
@@ -311,7 +335,10 @@ export class TemplatesController {
    * @returns 解析结果
    */
   @Get("resolve")
-  async resolve(@Req() req: HttpRequest, @Query() query: TemplatesResolveQuery) {
+  async resolve(
+    @Req() req: HttpRequest,
+    @Query() query: TemplatesResolveQuery,
+  ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const kind = parseKind(query.kind);

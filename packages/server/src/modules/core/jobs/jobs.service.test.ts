@@ -75,7 +75,9 @@ void test("JobsService.enqueue uses idempotencyKey conflict target", async () =>
   if (!insertCall) throw new Error("missing insert call");
 
   assert.equal(
-    insertCall.sql.includes("on conflict (org_id, type, idempotency_key) where idempotency_key is not null"),
+    insertCall.sql.includes(
+      "on conflict (org_id, type, idempotency_key) where idempotency_key is not null",
+    ),
     true,
   );
 

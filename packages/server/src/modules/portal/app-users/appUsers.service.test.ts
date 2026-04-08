@@ -6,7 +6,10 @@ import { AppUsersService } from "./appUsers.service";
 
 // ── Test helpers ──
 
-type QueryFn = (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+type QueryFn = (
+  sql: string,
+  params?: unknown[],
+) => Promise<{ rows: unknown[] }>;
 
 function makePool(qf: QueryFn) {
   return { query: qf } as unknown as Pool;
@@ -47,7 +50,9 @@ void test("AppUsersService.create defaults preferredLanguage to en", async () =>
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
-    return Promise.resolve({ rows: [{ ...SAMPLE_ROW, preferred_language: "en" }] });
+    return Promise.resolve({
+      rows: [{ ...SAMPLE_ROW, preferred_language: "en" }],
+    });
   });
   const svc = new AppUsersService(pool);
 

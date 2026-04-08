@@ -17,7 +17,10 @@ const ROLE_RANK: Record<Role, number> = {
  * @param requiredRoles 允许的角色集合
  * @returns 是否满足
  */
-export function hasRequiredRole(userRole: Role, requiredRoles: Role[]): boolean {
+export function hasRequiredRole(
+  userRole: Role,
+  requiredRoles: Role[],
+): boolean {
   if (requiredRoles.length === 0) return true;
   const userRank = ROLE_RANK[userRole];
   return requiredRoles.some((r) => userRank >= ROLE_RANK[r]);

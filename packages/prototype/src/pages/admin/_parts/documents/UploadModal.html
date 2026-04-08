@@ -1,0 +1,50 @@
+<style>
+  .documents-upload-backdrop{position:fixed;inset:0;background:rgba(2,6,23,.56);display:none;align-items:center;justify-content:center;z-index:80;padding:16px}
+  .documents-upload-backdrop[data-open='true']{display:flex}
+  .documents-upload-panel{width:min(760px,calc(100vw - 32px));max-height:90vh;overflow:hidden;display:flex;flex-direction:column}
+  .documents-upload-header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid rgba(226,232,240,.85);background:var(--surface)}
+  .documents-upload-title{margin:0;font-size:16px;font-weight:900;letter-spacing:-.01em}
+  .documents-upload-body{padding:16px 18px;overflow:auto}
+  .documents-upload-footer{padding:14px 18px;border-top:1px solid rgba(226,232,240,.85);background:rgba(248,250,252,.92);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+  .documents-drop-zone{border:1px dashed rgba(226,232,240,.95);border-radius:14px;padding:18px;background:rgba(241,245,249,.6);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;transition:border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease}
+  .documents-drop-zone.dragover{border-color:rgba(3,105,161,.45);background:rgba(3,105,161,.08);box-shadow:0 0 0 3px rgba(3,105,161,.12)}
+  .documents-drop-title{font-size:14px;font-weight:900;color:var(--text)}
+  .documents-drop-hint{font-size:12px;font-weight:800;color:var(--muted-2)}
+  .documents-drop-zone svg{width:44px;height:44px;color:var(--muted-2)}
+</style>
+
+<div class="documents-upload-backdrop" data-documents-modal="backdrop" data-open="false" aria-hidden="true">
+  <div class="documents-upload-panel apple-card" role="dialog" aria-modal="true" aria-labelledby="documentsUploadTitle">
+    <div class="documents-upload-header">
+      <h3 class="documents-upload-title" id="documentsUploadTitle">上传文件</h3>
+      <button class="icon-btn" type="button" data-documents-action="close-upload-modal" aria-label="关闭">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <div class="documents-upload-body">
+      <div class="documents-drop-zone" data-documents-drop-zone tabindex="0">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+        <div class="documents-drop-title">拖拽文件到此处</div>
+        <div class="documents-drop-hint">仅视觉交互演示（不执行真实上传）</div>
+      </div>
+
+      <div class="form" style="margin-top:14px;">
+        <div class="field">
+          <div class="label">关联案件（可选）</div>
+          <select class="select">
+            <option selected>选择要关联的案件...</option>
+            <option>永住许可申请（张伟）</option>
+            <option>就劳签证续签（Tech Innovators）</option>
+            <option>家族滞在（李明）</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="documents-upload-footer">
+      <button class="btn-secondary" type="button" data-documents-action="close-upload-modal">取消</button>
+      <button class="btn-primary" type="button" data-documents-action="close-upload-modal">开始上传</button>
+    </div>
+  </div>
+</div>

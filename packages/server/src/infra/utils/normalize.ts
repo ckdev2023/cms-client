@@ -27,4 +27,3 @@ export function normalizeObject(value: unknown): Record<string, unknown> {
   }
   return {};
 }
-

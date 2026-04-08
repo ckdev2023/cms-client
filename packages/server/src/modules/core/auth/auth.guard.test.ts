@@ -1,7 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { ForbiddenException, UnauthorizedException, type ExecutionContext } from "@nestjs/common";
+import {
+  ForbiddenException,
+  UnauthorizedException,
+  type ExecutionContext,
+} from "@nestjs/common";
 import type { Pool } from "pg";
 
 import { AuthGuard } from "./auth.guard";
@@ -25,7 +29,9 @@ function createExecutionContext(req: unknown): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
-function createPoolStub(userRow: { id: string; role: string; status: string } | null): Pool {
+function createPoolStub(
+  userRow: { id: string; role: string; status: string } | null,
+): Pool {
   const client = {
     query: (sql: string, params?: unknown[]) => {
       void params;
@@ -89,7 +95,11 @@ void test("AuthGuard accepts requestAuthInput and attaches verified requestConte
 
   const req: {
     requestAuthInput?: { orgId: string; userId: string };
-    requestContext?: { orgId: string; userId: string; role: "owner" | "manager" | "staff" | "viewer" };
+    requestContext?: {
+      orgId: string;
+      userId: string;
+      role: "owner" | "manager" | "staff" | "viewer";
+    };
   } = {
     requestAuthInput: { orgId, userId },
   };

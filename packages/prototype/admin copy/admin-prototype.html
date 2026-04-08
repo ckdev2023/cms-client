@@ -1,0 +1,1348 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gyosei OS - Apple Style Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+      :root {
+        --apple-blue: #0369a1;
+        --apple-blue-hover: #075985;
+        --apple-link: #0369a1;
+        --apple-bg: #f8fafc;
+        --apple-card: #ffffff;
+        --apple-text-main: #0f172a;
+        --apple-text-sec: #475569;
+        --apple-text-tert: #64748b;
+        --apple-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 10px 28px rgba(15, 23, 42, 0.08);
+        --apple-shadow-hover: 0 2px 6px rgba(15, 23, 42, 0.08), 0 18px 44px rgba(15, 23, 42, 0.12);
+        --border: #e2e8f0;
+        --surface-2: #f1f5f9;
+        --radius: 14px;
+        --bg: var(--apple-bg);
+        --surface: var(--apple-card);
+        --text: var(--apple-text-main);
+        --muted: var(--apple-text-sec);
+        --muted-2: var(--apple-text-tert);
+        --primary: var(--apple-blue);
+        --primary-hover: var(--apple-blue-hover);
+        --shadow: var(--apple-shadow);
+      }
+
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background-color: var(--apple-bg);
+        color: var(--apple-text-main);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        letter-spacing: -0.01em;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      .display-font {
+        font-family: inherit;
+        letter-spacing: -0.01em;
+      }
+
+      .text-hero {
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.12;
+        letter-spacing: -0.02em;
+      }
+
+      .text-card-title {
+        font-size: 16px;
+        font-weight: 800;
+        line-height: 1.25;
+      }
+
+      /* Apple Glass Nav */
+      .glass-nav {
+        background: rgba(248, 250, 252, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1024px) {
+        .app-shell {
+          grid-template-columns: 280px 1fr;
+        }
+      }
+
+      .side-nav {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+      }
+      .side-nav-inner {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 14px;
+        gap: 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 10px 6px 10px;
+      }
+      .brand-title {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 900;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(241, 245, 249, 0.9);
+        color: var(--text);
+      }
+      .nav-group-title {
+        font-size: 11px;
+        color: var(--muted-2);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 10px 10px 6px 10px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+        transition:
+          background-color 160ms ease,
+          color 160ms ease;
+      }
+      .nav-item:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .nav-item[aria-current="page"] {
+        background: rgba(3, 105, 161, 0.1);
+        color: var(--text);
+      }
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(248, 250, 252, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .search {
+        flex: 1 1 auto;
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+      }
+      .search svg {
+        width: 18px;
+        height: 18px;
+        color: var(--muted-2);
+        flex: 0 0 auto;
+      }
+      .search input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: transparent;
+      }
+      .search input::placeholder {
+        color: rgba(100, 116, 139, 0.9);
+        font-weight: 600;
+      }
+
+      /* Interactive Elements */
+      .btn-primary {
+        background-color: var(--apple-blue);
+        color: white;
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 14px;
+        font-weight: 800;
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        box-shadow: 0 8px 18px rgba(3, 105, 161, 0.22);
+      }
+      .btn-primary:hover {
+        background-color: var(--apple-blue-hover);
+      }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+
+      .btn-pill {
+        color: var(--apple-text-main);
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 14px;
+        font-weight: 800;
+        background: var(--apple-card);
+        border: 1px solid var(--border);
+        transition:
+          background-color 160ms ease,
+          border-color 160ms ease,
+          transform 120ms ease;
+      }
+      .btn-pill:hover {
+        background-color: var(--surface-2);
+      }
+      .btn-pill:active {
+        transform: translateY(1px);
+      }
+
+      .segmented-control {
+        background: rgba(118, 118, 128, 0.12);
+        padding: 2px;
+        border-radius: 12px;
+        display: inline-flex;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+      }
+      .segment-btn {
+        padding: 8px 12px;
+        font-size: 13px;
+        font-weight: 900;
+        color: var(--muted);
+        border-radius: 10px;
+        transition:
+          background-color 160ms ease,
+          color 160ms ease;
+        cursor: pointer;
+        user-select: none;
+      }
+      .segment-btn.active {
+        background: var(--surface);
+        color: var(--text);
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.12),
+          0 3px 1px rgba(0, 0, 0, 0.04);
+      }
+
+      .link-apple {
+        color: var(--apple-link);
+        font-size: 14px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+      .link-apple:hover {
+        opacity: 0.85;
+      }
+
+      /* Cards */
+      .apple-card {
+        background-color: var(--apple-card);
+        border-radius: var(--radius);
+        box-shadow: var(--apple-shadow);
+        transition:
+          box-shadow 0.3s ease,
+          transform 0.3s ease;
+        border: 1px solid var(--border);
+      }
+      .apple-card:hover {
+        box-shadow: var(--apple-shadow-hover);
+        transform: translateY(-1px);
+      }
+
+      /* Status Indicators */
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-right: 6px;
+      }
+      .status-active {
+        background-color: #34c759;
+      } /* Apple Green */
+      .status-pending {
+        background-color: #ff9500;
+      } /* Apple Orange */
+      .status-alert {
+        background-color: #ff3b30;
+      } /* Apple Red */
+
+      /* Table */
+      .apple-table th {
+        font-size: 12px;
+        color: var(--apple-text-tert);
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border);
+      }
+      .apple-table td {
+        padding: 16px 0;
+        font-size: 14px;
+        border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+        color: var(--apple-text-sec);
+      }
+      .apple-table tr:last-child td {
+        border-bottom: none;
+      }
+
+      .skip-link {
+        position: absolute;
+        left: 16px;
+        top: 8px;
+        transform: translateY(-200%);
+        background: var(--apple-card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        box-shadow: var(--apple-shadow);
+        z-index: 1000;
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      :where(a, button, input, select, textarea):focus-visible {
+        outline: 2px solid rgba(3, 105, 161, 0.35);
+        outline-offset: 2px;
+        border-radius: 10px;
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+    <div class="app-shell">
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="admin-prototype.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="customers.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="cases-list.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h10M7 11h10M7 15h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6M9 16h6M9 8h6M5 3h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-2m2-4h-6m6 0l-2 2m2-2l-2-2"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3v18m4-16v16m4-12v12M7 7v14M3 11v10"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm8 4a8 8 0 01-.31 2.22l2.02 1.57-2 3.46-2.42-.98a8.06 8.06 0 01-1.92 1.12l-.36 2.54H9.98l-.36-2.54a8.06 8.06 0 01-1.92-1.12l-2.42.98-2-3.46 2.02-1.57A8 8 0 014 12c0-.76.1-1.49.31-2.22L2.29 8.21l2-3.46 2.42.98c.6-.45 1.24-.83 1.92-1.12L9.98 2h4.04l.36 2.54c.68.29 1.32.67 1.92 1.12l2.42-.98 2 3.46-2.02 1.57c.2.73.3 1.46.3 2.22z"></path>
+              </svg>
+              设置
+            </a>
+            <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <div class="min-w-0 flex flex-col">
+        <header class="topbar" aria-label="顶部栏">
+          <div class="topbar-inner">
+            <div class="search" role="search">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input type="search" placeholder="搜索：案件编号 / 客户名 / 电话 / 邮箱 / 公司名" aria-label="全局搜索" />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+
+            <button class="btn-pill hidden sm:inline-flex" type="button" onclick="window.location.href = 'leads-messages.html'">新建咨询</button>
+            <button class="btn-pill hidden sm:inline-flex" type="button" onclick="window.location.href = 'customers.html#new'">新建客户</button>
+            <button class="btn-primary" type="button" onclick="window.location.href = 'case-create.html'">新建案件</button>
+
+            <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">
+              AD
+            </div>
+          </div>
+        </header>
+
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+      <!-- Hero Section -->
+      <header class="mb-10">
+        <div>
+          <h1 class="text-hero mb-2" id="heroGreeting">早上好，Admin</h1>
+          <p class="text-[15px] text-[color:var(--apple-text-tert)] font-semibold" id="heroSubtitle">
+            今天优先关注：待提交、风险、到期与欠款影响提交。
+          </p>
+          <div class="mt-5 flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+            <div class="flex items-center gap-3 flex-wrap">
+              <div class="segmented-control" role="group" aria-label="工作台范围">
+                <button class="segment-btn active" type="button" data-scope-btn="mine" aria-pressed="true">我的</button>
+                <button class="segment-btn" type="button" data-scope-btn="group" aria-pressed="false">本组</button>
+                <button class="segment-btn" type="button" data-scope-btn="all" aria-pressed="false">全所</button>
+              </div>
+              <select
+                class="border border-[color:var(--border)] rounded-xl px-3 py-2 text-[13px] outline-none bg-[color:var(--apple-card)] font-semibold text-[color:var(--apple-text-main)]"
+                aria-label="Group 过滤"
+              >
+                <option>全部 Group</option>
+                <option>东京一组</option>
+                <option>东京二组</option>
+                <option>大阪组</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-2 flex-wrap md:ml-auto">
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">默认视图</span>
+              <button class="chip cursor-pointer" type="button" data-role-btn="principal" aria-pressed="true">主办人</button>
+              <button class="chip cursor-pointer" type="button" data-role-btn="assistant" aria-pressed="false">助理</button>
+              <button class="chip cursor-pointer" type="button" data-role-btn="sales" aria-pressed="false">销售</button>
+              <button class="chip cursor-pointer" type="button" data-role-btn="finance" aria-pressed="false">财务</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <section class="mb-8">
+        <div class="apple-card p-6 md:p-8">
+          <div class="flex justify-between items-center mb-5">
+            <div>
+              <h2 class="text-card-title">快捷动作</h2>
+              <div class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold mt-1">优先把“下一步动作”做成可点、可追踪。</div>
+            </div>
+            <a href="tasks.html" class="link-apple text-[14px]">查看我的待办 <span class="ml-1 text-[10px]">❯</span></a>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+            <a href="leads-messages.html" class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] hover:bg-[color:var(--surface-2)] transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl bg-blue-50 text-blue-700 flex items-center justify-center border border-[color:var(--border)]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[14px] font-extrabold text-[color:var(--apple-text-main)]">新建咨询线索</div>
+                  <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">先承接咨询，再转客户/案件</div>
+                </div>
+              </div>
+            </a>
+            <a href="customers.html#new" class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] hover:bg-[color:var(--surface-2)] transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl bg-indigo-50 text-indigo-700 flex items-center justify-center border border-[color:var(--border)]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[14px] font-extrabold text-[color:var(--apple-text-main)]">新建客户</div>
+                  <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">个人客户为主，支持家庭建档</div>
+                </div>
+              </div>
+            </a>
+            <a href="case-create.html" class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] hover:bg-[color:var(--surface-2)] transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center border border-[color:var(--border)]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[14px] font-extrabold text-[color:var(--apple-text-main)]">新建案件</div>
+                  <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">按模板自动生成资料清单</div>
+                </div>
+              </div>
+            </a>
+            <a href="tasks.html" class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] hover:bg-[color:var(--surface-2)] transition-colors">
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-2xl bg-rose-50 text-rose-700 flex items-center justify-center border border-[color:var(--border)]">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-[14px] font-extrabold text-[color:var(--apple-text-main)]">去催办 / 到期</div>
+                  <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">聚合缺件、补正与期限</div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- Metrics Grid -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 mb-8">
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-red-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">今日待办</span>
+            <span class="status-dot status-alert"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="todoCount">8</div>
+            <div class="text-[13px] text-[#d61818] font-medium" data-metric-sub="todoSub">今日到期 3 · 已逾期 2</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-orange-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">即将到期案件</span>
+            <span class="status-dot status-pending"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="dueCount">12</div>
+            <div class="text-[13px] text-[#ff9500] font-medium" data-metric-sub="dueSub">7 天内 5 · 30 天内 12</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-green-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">待补件案件</span>
+            <span class="status-dot status-active"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="missingCount">28</div>
+            <div class="text-[13px] text-[#118128] font-medium" data-metric-sub="missingSub">近 24h 退回补正 6</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-indigo-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">待提交案件（S6）</span>
+            <span class="status-dot status-pending"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="submitCount">6</div>
+            <div class="text-[13px] text-[color:var(--apple-link)] font-semibold" data-metric-sub="submitSub">校验通过待复核 2</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-rose-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">风险案件</span>
+            <span class="status-dot status-alert"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="riskCount">3</div>
+            <div class="text-[13px] text-[#d61818] font-medium" data-metric-sub="riskSub">硬性阻断 1 · 欠款影响提交 1</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-teal-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">审理中案件（S7）</span>
+            <span class="status-dot status-active"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="reviewingCount">19</div>
+            <div class="text-[13px] text-[#118128] font-medium" data-metric-sub="reviewingSub">本周新增补正任务 4</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-amber-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">待回款案件</span>
+            <span class="status-dot status-pending"></span>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="receivableCount">7</div>
+            <div class="text-[13px] text-[#ff9500] font-medium" data-metric-sub="receivableSub">未收 ¥1,280,000</div>
+          </div>
+        </div>
+
+        <div class="apple-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group cursor-pointer">
+          <div class="absolute right-0 top-0 w-24 h-24 bg-blue-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+          <div class="flex justify-between items-start relative z-10">
+            <span class="text-sm font-semibold text-[color:var(--apple-text-tert)]">本月新增案件</span>
+            <div class="w-9 h-9 rounded-full bg-[color:var(--surface-2)] text-[color:var(--apple-blue)] flex items-center justify-center border border-[color:var(--border)]">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="relative z-10">
+            <div class="display-font text-[40px] font-extrabold leading-none mb-1 text-[color:var(--apple-text-main)]" data-metric="newCasesCount">23</div>
+            <div class="text-[13px] text-[color:var(--apple-link)] font-semibold flex items-center">
+              <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+              </svg>
+              <span data-metric-sub="newCasesSub">9% 较上月</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chart Section -->
+      <section class="mb-8">
+        <div class="apple-card p-8">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="text-card-title">业务趋势 (Business Trends)</h2>
+            <select
+              class="border border-[color:var(--border)] rounded-xl px-3 py-2 text-[13px] outline-none bg-[color:var(--apple-card)] font-semibold text-[color:var(--apple-text-main)]"
+            >
+              <option>近 6 个月</option>
+              <option>今年</option>
+              <option>去年</option>
+            </select>
+          </div>
+          <div
+            class="h-64 w-full bg-[color:var(--surface-2)] rounded-2xl border border-[color:var(--border)] flex items-end justify-around px-6 md:px-8 pt-8 pb-4 relative"
+          >
+            <!-- Placeholder Chart Bars -->
+            <!-- Y-axis lines -->
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-1/4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-2/4"
+            ></div>
+            <div
+              class="absolute left-0 w-full border-t border-dashed border-gray-200 bottom-3/4"
+            ></div>
+
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-32 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-20 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] mt-2 font-semibold">11月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-40 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-24 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] mt-2 font-semibold">12月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-28 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-16 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] mt-2 font-semibold">1月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-48 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-32 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] mt-2 font-semibold">2月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-56 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-40 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-tert)] mt-2 font-semibold">3月</span>
+            </div>
+            <div class="flex flex-col items-center z-10 group">
+              <div
+                class="w-12 bg-blue-100 rounded-t-md h-64 group-hover:bg-blue-200 transition-colors relative"
+              >
+                <div
+                  class="absolute bottom-0 w-full bg-blue-500 rounded-t-md h-48 group-hover:bg-blue-600 transition-colors"
+                ></div>
+              </div>
+              <span class="text-[12px] text-[color:var(--apple-text-main)] font-extrabold mt-2"
+                >本月</span
+              >
+            </div>
+
+            <!-- Legend -->
+            <div class="absolute top-4 right-6 flex space-x-4">
+              <div class="flex items-center text-[12px] text-[color:var(--apple-text-tert)] font-semibold">
+                <div class="w-3 h-3 rounded-full bg-blue-500 mr-1.5"></div>
+                已归档
+              </div>
+              <div class="flex items-center text-[12px] text-[color:var(--apple-text-tert)] font-semibold">
+                <div class="w-3 h-3 rounded-full bg-blue-100 mr-1.5"></div>
+                新增
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Two Column Layout for Lists -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Column: Active Cases & Activity (takes up 2/3) -->
+        <section class="lg:col-span-2 space-y-8">
+          <!-- Recent Cases -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-card-title">重点案件</h2>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="chip">待提交（S6）</span>
+                  <span class="chip">风险</span>
+                  <span class="chip">即将到期</span>
+                  <span class="chip">待回款</span>
+                </div>
+              </div>
+              <a href="cases-list.html" class="link-apple">查看案件列表 <span class="ml-1 text-[10px]">❯</span></a>
+            </div>
+
+            <table class="w-full apple-table text-left border-collapse">
+              <thead>
+                <tr>
+                  <th class="w-[28%]">案件</th>
+                  <th class="w-[12%]">阶段</th>
+                  <th class="w-[18%]">下一步动作</th>
+                  <th class="w-[14%]">Group</th>
+                  <th class="w-[12%]">负责人</th>
+                  <th class="w-[10%]">截止日</th>
+                  <th class="w-[6%] text-right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    <div class="font-extrabold text-[color:var(--apple-text-main)]">就劳签证申请</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold mt-0.5">
+                      CAS-2026-0128 · Wang Wei
+                    </div>
+                  </td>
+                  <td><span class="status-dot status-pending"></span>S6 待提交</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">提交前复核（校验已通过）</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">东京一组</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">Admin</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">4/10</td>
+                  <td class="text-right"><a href="case-detail.html" class="link-apple">进入</a></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-extrabold text-[color:var(--apple-text-main)]">家族滞在（更新）</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold mt-0.5">
+                      CAS-2026-0132 · Chen Li（配偶）
+                    </div>
+                  </td>
+                  <td><span class="status-dot status-alert"></span>S5 待校验</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">补齐扶养者在留卡影像</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">东京一组</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">Aki</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">4/12</td>
+                  <td class="text-right"><a href="case-detail.html" class="link-apple">进入</a></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-extrabold text-[color:var(--apple-text-main)]">
+                      特定技能（认定）
+                    </div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold mt-0.5">
+                      CAS-2026-0117 · Global Tech KK
+                    </div>
+                  </td>
+                  <td><span class="status-dot status-active"></span>S3 资料审核中</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">退回补正：决算书（原因已填）</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">大阪组</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">Tom</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">4/09</td>
+                  <td class="text-right"><a href="case-detail.html" class="link-apple">进入</a></td>
+                </tr>
+                <tr>
+                  <td>
+                    <div class="font-extrabold text-[color:var(--apple-text-main)]">经营管理（更新）</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold mt-0.5">
+                      CAS-2026-0099 · 田中建设株式会社
+                    </div>
+                  </td>
+                  <td><span class="status-dot status-alert"></span>S6 待提交</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">待回款：未结清影响提交</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">东京二组</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">Rina</td>
+                  <td class="font-semibold text-[color:var(--apple-text-sec)]">4/08</td>
+                  <td class="text-right"><a href="case-detail.html" class="link-apple">进入</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Recent Activity -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-card-title">最近动态 (Recent Activity)</h2>
+              <a href="#" class="link-apple text-[14px]">查看全部</a>
+            </div>
+            <div class="space-y-6">
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-9 h-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 mt-1 flex-shrink-0 border border-[color:var(--border)]"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 border-b border-[color:var(--border)] pb-6">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[color:var(--apple-text-main)]">
+                      <span class="font-extrabold">李律师</span> 上传了新文件
+                      <span class="font-extrabold text-blue-700"
+                        >营业执照副本.pdf</span
+                      >
+                    </div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">10分钟前</div>
+                  </div>
+                  <div class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold">
+                    关联案件：建设业许可更新 (CAS-2023-1001)
+                  </div>
+                </div>
+              </div>
+
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-9 h-9 rounded-full bg-green-100 flex items-center justify-center text-green-700 mt-1 flex-shrink-0 border border-[color:var(--border)]"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 border-b border-[color:var(--border)] pb-6">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[color:var(--apple-text-main)]">
+                      案件
+                      <span class="font-extrabold">就劳签证申请</span> 状态更新为
+                      <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                        >待提交</span
+                      >
+                    </div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">2小时前</div>
+                  </div>
+                  <div class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold">操作人：系统自动</div>
+                </div>
+              </div>
+
+              <!-- Activity Item -->
+              <div class="flex items-start">
+                <div
+                  class="w-9 h-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-700 mt-1 flex-shrink-0 border border-[color:var(--border)]"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="ml-4 flex-1 pb-2">
+                  <div class="flex justify-between items-start mb-1">
+                    <div class="text-[14px] text-[color:var(--apple-text-main)]">
+                      客户
+                      <span class="font-extrabold">Wang Wei</span>
+                      提交了新的咨询表单
+                    </div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">昨天 15:30</div>
+                  </div>
+                  <div class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold">
+                    咨询类型：家族滞在签证
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Right Column: Leads & Notifications (takes up 1/3) -->
+        <section class="space-y-8">
+          <!-- Tasks & Reminders -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-card-title">我的待办</h2>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="chip">待我处理</span>
+                  <span class="chip">今日到期</span>
+                  <span class="chip">已逾期</span>
+                </div>
+              </div>
+              <a href="tasks.html" class="link-apple text-[14px]">查看全部</a>
+            </div>
+            <div class="space-y-5">
+              <!-- Task Item -->
+              <div class="group cursor-pointer">
+                <div class="flex justify-between items-start mb-1">
+                  <div class="font-extrabold text-[color:var(--apple-text-main)] text-[14px]">
+                    复核王伟资料完整性
+                  </div>
+                  <div class="text-[12px] text-[#ff3b30]">今日到期</div>
+                </div>
+                <p
+                  class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold line-clamp-2 leading-relaxed"
+                >
+                  关联案件：就劳签证申请
+                  <span
+                    class="text-[10px] bg-[#ff3b30]/10 px-1.5 py-0.5 rounded text-[#ff3b30] ml-1"
+                    >高优先级</span
+                  >
+                </p>
+              </div>
+              <!-- Task Item -->
+              <div class="group cursor-pointer pt-4 border-t border-[color:var(--border)]">
+                <div class="flex justify-between items-start mb-1">
+                  <div class="font-extrabold text-[color:var(--apple-text-main)] text-[14px]">
+                    起草田中建设申请书
+                  </div>
+                  <div class="text-[12px] text-[#ff9500]">明日到期</div>
+                </div>
+                <p
+                  class="text-[13px] text-[color:var(--apple-text-tert)] font-semibold line-clamp-2 leading-relaxed"
+                >
+                  关联案件：建设业许可更新
+                  <span
+                    class="text-[10px] bg-[color:var(--surface-2)] px-1.5 py-0.5 rounded text-[color:var(--apple-text-main)] ml-1 font-bold"
+                    >中优先级</span
+                  >
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-card-title">本月回款</h2>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="chip">实收</span>
+                  <span class="chip">应收</span>
+                </div>
+              </div>
+              <a href="billing.html" class="link-apple text-[14px]">进入财务</a>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)]">
+                <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">本月实收</div>
+                <div class="mt-2 text-[22px] font-extrabold text-[color:var(--apple-text-main)]" data-metric="monthPaid">¥3,420,000</div>
+                <div class="mt-1 text-[12px] text-[color:var(--apple-text-tert)] font-semibold" data-metric-sub="monthPaidSub">较上月 +12%</div>
+              </div>
+              <div class="p-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)]">
+                <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">本月应收</div>
+                <div class="mt-2 text-[22px] font-extrabold text-[color:var(--apple-text-main)]" data-metric="monthReceivable">¥4,680,000</div>
+                <div class="mt-1 text-[12px] text-[color:var(--apple-text-tert)] font-semibold" data-metric-sub="monthReceivableSub">未收占比 27%</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-card-title">员工负载</h2>
+                <div class="mt-2 text-[12px] text-[color:var(--apple-text-tert)] font-semibold">按“待我处理 + 到期 + 风险”综合</div>
+              </div>
+              <a href="tasks.html" class="link-apple text-[14px]">查看任务</a>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between p-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)]">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-white border border-[color:var(--border)] flex items-center justify-center text-[12px] font-extrabold text-[color:var(--apple-text-main)]">AD</div>
+                  <div class="min-w-0">
+                    <div class="text-[13px] font-extrabold text-[color:var(--apple-text-main)]">Admin</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">待处理 8 · 到期 3 · 风险 1</div>
+                  </div>
+                </div>
+                <div class="text-[12px] font-extrabold text-[#ff3b30]">高</div>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)]">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-white border border-[color:var(--border)] flex items-center justify-center text-[12px] font-extrabold text-[color:var(--apple-text-main)]">AK</div>
+                  <div class="min-w-0">
+                    <div class="text-[13px] font-extrabold text-[color:var(--apple-text-main)]">Aki</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">待处理 6 · 到期 2 · 风险 0</div>
+                  </div>
+                </div>
+                <div class="text-[12px] font-extrabold text-[#ff9500]">中</div>
+              </div>
+              <div class="flex items-center justify-between p-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-2)]">
+                <div class="flex items-center gap-3 min-w-0">
+                  <div class="w-9 h-9 rounded-full bg-white border border-[color:var(--border)] flex items-center justify-center text-[12px] font-extrabold text-[color:var(--apple-text-main)]">RI</div>
+                  <div class="min-w-0">
+                    <div class="text-[13px] font-extrabold text-[color:var(--apple-text-main)]">Rina</div>
+                    <div class="text-[12px] text-[color:var(--apple-text-tert)] font-semibold">待处理 5 · 到期 1 · 风险 1</div>
+                  </div>
+                </div>
+                <div class="text-[12px] font-extrabold text-[#ff3b30]">高</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Document Reminders -->
+          <div class="apple-card p-8">
+            <div class="flex justify-between items-center mb-6">
+              <div>
+                <h2 class="text-card-title">缺件催办</h2>
+                <div class="mt-2 flex flex-wrap gap-2">
+                  <span class="chip">已触达留痕</span>
+                  <span class="chip">即将到期</span>
+                </div>
+              </div>
+            </div>
+            <div class="space-y-4">
+              <div class="flex items-center p-3 bg-[color:var(--surface-2)] rounded-2xl border border-[color:var(--border)]">
+                <div
+                  class="w-8 h-8 rounded-full bg-[#ff9500]/10 flex items-center justify-center text-[#ff9500] mr-3"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-extrabold text-[color:var(--apple-text-main)]">王伟 的 纳税证明书</div>
+                  <div class="text-[11px] text-[color:var(--apple-text-tert)] font-semibold">
+                    已逾期 2 天 · 客户侧邮件已发送并留痕
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center p-3 bg-[color:var(--surface-2)] rounded-2xl border border-[color:var(--border)]">
+                <div
+                  class="w-8 h-8 rounded-full bg-[#ff3b30]/10 flex items-center justify-center text-[#ff3b30] mr-3"
+                >
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                    ></path>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="text-[13px] font-extrabold text-[color:var(--apple-text-main)]">
+                    田中建设 决算书 (补正)
+                  </div>
+                  <div class="text-[11px] text-[color:var(--apple-text-tert)] font-semibold">
+                    补正期限剩 3 天 · 已升级提醒负责人
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+        </main>
+      </div>
+    </div>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const scopeButtons = Array.from(document.querySelectorAll('[data-scope-btn]'));
+        const roleButtons = Array.from(document.querySelectorAll('[data-role-btn]'));
+        const heroGreeting = document.getElementById('heroGreeting');
+        const heroSubtitle = document.getElementById('heroSubtitle');
+
+        const metricEl = (key) => document.querySelector(`[data-metric="${key}"]`);
+        const metricSubEl = (key) => document.querySelector(`[data-metric-sub="${key}"]`);
+
+        const scopeData = {
+          mine: {
+            todoCount: '8',
+            todoSub: '今日到期 3 · 已逾期 2',
+            dueCount: '12',
+            dueSub: '7 天内 5 · 30 天内 12',
+            missingCount: '28',
+            missingSub: '近 24h 退回补正 6',
+            submitCount: '6',
+            submitSub: '校验通过待复核 2',
+            riskCount: '3',
+            riskSub: '硬性阻断 1 · 欠款影响提交 1',
+            reviewingCount: '19',
+            reviewingSub: '本周新增补正任务 4',
+            receivableCount: '7',
+            receivableSub: '未收 ¥1,280,000',
+            newCasesCount: '23',
+            newCasesSub: '9% 较上月',
+            monthPaid: '¥3,420,000',
+            monthPaidSub: '较上月 +12%',
+            monthReceivable: '¥4,680,000',
+            monthReceivableSub: '未收占比 27%',
+          },
+          group: {
+            todoCount: '23',
+            todoSub: '今日到期 9 · 已逾期 4',
+            dueCount: '38',
+            dueSub: '7 天内 16 · 30 天内 38',
+            missingCount: '64',
+            missingSub: '近 24h 退回补正 11',
+            submitCount: '14',
+            submitSub: '校验通过待复核 5',
+            riskCount: '9',
+            riskSub: '硬性阻断 3 · 欠款影响提交 2',
+            reviewingCount: '51',
+            reviewingSub: '本周新增补正任务 12',
+            receivableCount: '19',
+            receivableSub: '未收 ¥4,120,000',
+            newCasesCount: '61',
+            newCasesSub: '13% 较上月',
+            monthPaid: '¥10,820,000',
+            monthPaidSub: '较上月 +8%',
+            monthReceivable: '¥13,900,000',
+            monthReceivableSub: '未收占比 22%',
+          },
+          all: {
+            todoCount: '58',
+            todoSub: '今日到期 21 · 已逾期 9',
+            dueCount: '102',
+            dueSub: '7 天内 41 · 30 天内 102',
+            missingCount: '188',
+            missingSub: '近 24h 退回补正 36',
+            submitCount: '31',
+            submitSub: '校验通过待复核 12',
+            riskCount: '21',
+            riskSub: '硬性阻断 7 · 欠款影响提交 6',
+            reviewingCount: '164',
+            reviewingSub: '本周新增补正任务 28',
+            receivableCount: '63',
+            receivableSub: '未收 ¥12,840,000',
+            newCasesCount: '172',
+            newCasesSub: '6% 较上月',
+            monthPaid: '¥28,420,000',
+            monthPaidSub: '较上月 +5%',
+            monthReceivable: '¥34,680,000',
+            monthReceivableSub: '未收占比 18%',
+          },
+        };
+
+        const roleCopy = {
+          principal: {
+            titleSuffix: '主办人',
+            subtitle: '今天优先关注：待提交、风险、到期与欠款影响提交。',
+          },
+          assistant: {
+            titleSuffix: '助理',
+            subtitle: '今天优先关注：缺件催办、资料审核、到期与补正截止。',
+          },
+          sales: {
+            titleSuffix: '销售',
+            subtitle: '今天优先关注：新线索跟进、待签约与线索转案件。',
+          },
+          finance: {
+            titleSuffix: '财务',
+            subtitle: '今天优先关注：到期应收、欠款影响提交与凭证归档。',
+          },
+        };
+
+        let activeScope = 'mine';
+        let activeRole = 'principal';
+
+        const applyScope = (scope) => {
+          activeScope = scope;
+          scopeButtons.forEach((btn) => {
+            const isActive = btn.getAttribute('data-scope-btn') === scope;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          });
+
+          const data = scopeData[scope];
+          if (!data) return;
+
+          Object.entries(data).forEach(([key, value]) => {
+            const el = metricEl(key);
+            if (el) el.textContent = value;
+            const subEl = metricSubEl(key);
+            if (subEl) subEl.textContent = value;
+          });
+        };
+
+        const applyRole = (role) => {
+          activeRole = role;
+          roleButtons.forEach((btn) => {
+            const isActive = btn.getAttribute('data-role-btn') === role;
+            btn.classList.toggle('ring-2', isActive);
+            btn.classList.toggle('ring-[color:var(--apple-blue)]', isActive);
+            btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+          });
+          const copy = roleCopy[role];
+          if (!copy) return;
+          heroGreeting.textContent = `早上好，Admin · ${copy.titleSuffix}`;
+          heroSubtitle.textContent = copy.subtitle;
+        };
+
+        scopeButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const scope = btn.getAttribute('data-scope-btn');
+            if (!scope) return;
+            applyScope(scope);
+          });
+        });
+
+        roleButtons.forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const role = btn.getAttribute('data-role-btn');
+            if (!role) return;
+            applyRole(role);
+          });
+        });
+
+        applyScope(activeScope);
+        applyRole(activeRole);
+      });
+    </script>
+  </body>
+</html>

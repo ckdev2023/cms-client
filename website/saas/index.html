@@ -1,0 +1,2065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CMS SaaS｜把服务交付做成可复制的系统</title>
+    <meta
+        name="description"
+        content="一个为服务型业务打造的 SaaS：流程、客户协作、文档与收费，一站式完成。"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta property="og:title" content="CMS SaaS｜把服务交付做成可复制的系统" />
+    <meta
+        property="og:description"
+        content="流程、客户协作、文档与收费，一站式完成。"
+    />
+    <meta property="og:type" content="website" />
+    <style>
+        :root {
+            --pure-black: #000000;
+            --near-black: #1d1d1f;
+            --light-gray: #f5f5f7;
+            --white: #ffffff;
+            --apple-blue: #0071e3;
+            --link-blue: #0066cc;
+            --link-blue-dark: #2997ff;
+            --accent-indigo: #6366f1;
+            --accent-purple: #7c3aed;
+            --accent-pink: #f43f5e;
+            --accent-amber: #f97316;
+            --gray-80: rgba(0, 0, 0, 0.8);
+            --gray-48: rgba(0, 0, 0, 0.48);
+            --dark-surface-1: #272729;
+            --dark-surface-2: #28282a;
+            --border-light: rgba(0, 0, 0, 0.14);
+            --border-dark: rgba(255, 255, 255, 0.16);
+            --shadow-card: rgba(0, 0, 0, 0.22) 3px 5px 30px 0px;
+            --nav-bg: rgba(0, 0, 0, 0.8);
+            --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+            --ease-in: cubic-bezier(0.4, 0, 1, 1);
+            --dur-150: 150ms;
+            --dur-220: 220ms;
+            --cta-gradient: linear-gradient(
+                135deg,
+                #0071e3 0%,
+                #4f46e5 55%,
+                #7c3aed 100%
+            );
+            --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+                "SF Pro Text", "Segoe UI", Helvetica, Arial, sans-serif;
+            --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text",
+                "SF Pro Display", "Segoe UI", Helvetica, Arial, sans-serif;
+            --radius-8: 8px;
+            --radius-12: 12px;
+            --radius-pill: 980px;
+            --container: 980px;
+            --pad-x: 32px;
+            --section-y: 88px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-text);
+            font-size: 17px;
+            font-weight: 400;
+            line-height: 1.47;
+            letter-spacing: -0.374px;
+            color: var(--near-black);
+            background: var(--white);
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input {
+            font: inherit;
+        }
+
+        .skip {
+            position: absolute;
+            left: 12px;
+            top: 10px;
+            transform: translateY(-200%);
+            padding: 10px 14px;
+            background: var(--white);
+            color: var(--near-black);
+            border-radius: var(--radius-8);
+            box-shadow: var(--shadow-card);
+            z-index: 200;
+        }
+
+        .skip:focus {
+            transform: translateY(0);
+            outline: 3px solid rgba(0, 113, 227, 0.3);
+            outline-offset: 2px;
+        }
+
+        .nav {
+            position: sticky;
+            top: 0;
+            z-index: 120;
+            background: var(--nav-bg);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+        }
+
+        .nav-inner {
+            max-width: calc(var(--container) + var(--pad-x) * 2);
+            margin: 0 auto;
+            padding: 0 var(--pad-x);
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            position: relative;
+        }
+
+        .nav-inner::after {
+            content: "";
+            position: absolute;
+            left: var(--pad-x);
+            right: var(--pad-x);
+            bottom: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+        }
+
+        .brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--white);
+        }
+
+        .brand-mark {
+            width: 18px;
+            height: 18px;
+            border-radius: 6px;
+            background: var(--white);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.22);
+        }
+
+        .brand-name {
+            font-size: 12px;
+            letter-spacing: -0.12px;
+            font-weight: 600;
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 22px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            font-size: 12px;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.82);
+            transition: color var(--dur-150) var(--ease-out);
+        }
+
+        .nav-links a:hover {
+            color: var(--white);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-cta {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            height: 28px;
+            padding: 0 12px;
+            border-radius: var(--radius-pill);
+            background: var(--cta-gradient);
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 400;
+            transition: opacity var(--dur-150) var(--ease-out),
+                transform var(--dur-150) var(--ease-out),
+                filter var(--dur-150) var(--ease-out);
+        }
+
+        .nav-cta:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .nav-cta:active {
+            transform: translateY(0);
+            filter: brightness(0.96);
+        }
+
+        .nav-toggle {
+            display: none;
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--white);
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background var(--dur-150) var(--ease-out),
+                border-color var(--dur-150) var(--ease-out),
+                transform var(--dur-150) var(--ease-out);
+        }
+
+        .nav-toggle:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.22);
+            transform: translateY(-1px);
+        }
+
+        .nav-toggle:active {
+            transform: translateY(0);
+        }
+
+        .nav-toggle:focus-visible,
+        .nav-cta:focus-visible,
+        .btn:focus-visible,
+        .link-pill:focus-visible,
+        .input:focus-visible,
+        summary:focus-visible {
+            outline: 3px solid rgba(0, 113, 227, 0.35);
+            outline-offset: 3px;
+        }
+
+        .container {
+            max-width: var(--container);
+            margin: 0 auto;
+            padding: 0 var(--pad-x);
+        }
+
+        .hero {
+            background: radial-gradient(
+                    1200px circle at 68% 22%,
+                    rgba(0, 113, 227, 0.22),
+                    transparent 58%
+                ),
+                radial-gradient(
+                    980px circle at 26% 10%,
+                    rgba(124, 58, 237, 0.18),
+                    transparent 52%
+                ),
+                radial-gradient(
+                    880px circle at 84% 78%,
+                    rgba(244, 63, 94, 0.12),
+                    transparent 56%
+                ),
+                radial-gradient(
+                    980px circle at 20% 82%,
+                    rgba(255, 255, 255, 0.06),
+                    transparent 62%
+                ),
+                var(--pure-black);
+            color: var(--white);
+            padding: calc(var(--section-y) + 16px) 0 var(--section-y);
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.05fr 0.95fr;
+            gap: 48px;
+            align-items: center;
+        }
+
+        .eyebrow {
+            font-size: 12px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.62);
+            margin-bottom: 14px;
+            animation: fade-in-up 420ms var(--ease-out) both;
+            animation-delay: 20ms;
+        }
+
+        .h1 {
+            font-family: var(--font-display);
+            font-size: 56px;
+            font-weight: 600;
+            line-height: 1.07;
+            letter-spacing: -0.28px;
+            margin-bottom: 16px;
+            animation: fade-in-up 520ms var(--ease-out) both;
+            animation-delay: 80ms;
+        }
+
+        .subhead {
+            font-family: var(--font-display);
+            font-size: 21px;
+            font-weight: 400;
+            line-height: 1.19;
+            letter-spacing: 0.231px;
+            color: rgba(255, 255, 255, 0.78);
+            max-width: 520px;
+            margin-bottom: 26px;
+            animation: fade-in-up 560ms var(--ease-out) both;
+            animation-delay: 140ms;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 18px;
+            animation: fade-in-up 560ms var(--ease-out) both;
+            animation-delay: 190ms;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 22px;
+            border-radius: var(--radius-pill);
+            border: 1px solid transparent;
+            cursor: pointer;
+            transition: opacity var(--dur-150) var(--ease-out),
+                background var(--dur-150) var(--ease-out),
+                border-color var(--dur-150) var(--ease-out),
+                transform var(--dur-150) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out);
+            user-select: none;
+        }
+
+        .btn-primary {
+            background: var(--cta-gradient);
+            color: var(--white);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+            opacity: 0.92;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--white);
+            border-color: rgba(255, 255, 255, 0.36);
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateY(-1px);
+        }
+
+        .btn-outline:active {
+            transform: translateY(0);
+        }
+
+        .hero-meta {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.64);
+            font-size: 12px;
+            letter-spacing: -0.12px;
+            animation: fade-in-up 560ms var(--ease-out) both;
+            animation-delay: 240ms;
+        }
+
+        .hero-meta strong {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .hero-visual {
+            border-radius: 20px;
+            padding: 18px;
+            background: radial-gradient(
+                    700px circle at 30% 20%,
+                    rgba(0, 113, 227, 0.12),
+                    transparent 60%
+                ),
+                #0b0b0c;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.09);
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out);
+            animation: fade-in-up 640ms var(--ease-out) both;
+            animation-delay: 140ms;
+        }
+
+        .hero-visual:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12),
+                rgba(0, 0, 0, 0.42) 0px 18px 60px 0px;
+        }
+
+        .frame {
+            border-radius: 16px;
+            background: var(--near-black);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .frame-bar {
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 14px;
+            background: rgba(255, 255, 255, 0.06);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 12px;
+            letter-spacing: -0.12px;
+        }
+
+        .dots {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .frame-body {
+            padding: 18px;
+            background: #121214;
+        }
+
+        .skeleton {
+            display: grid;
+            grid-template-columns: 1fr 0.72fr;
+            gap: 14px;
+            min-height: 300px;
+        }
+
+        .panel {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+            padding: 16px;
+        }
+
+        .line {
+            height: 10px;
+            border-radius: var(--radius-pill);
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.08),
+                rgba(255, 255, 255, 0.18),
+                rgba(255, 255, 255, 0.08)
+            );
+            background-size: 220% 100%;
+            animation: shimmer 1400ms var(--ease-out) 2;
+        }
+
+        .line + .line {
+            margin-top: 10px;
+        }
+
+        .line.w-70 {
+            width: 70%;
+        }
+
+        .line.w-40 {
+            width: 40%;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 26px;
+        }
+
+        .mini-card {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.06);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
+            padding: 14px;
+        }
+
+        .mini-title {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.72);
+            margin-bottom: 10px;
+        }
+
+        .section {
+            padding: var(--section-y) 0;
+        }
+
+        .section.gray {
+            background: radial-gradient(
+                    1000px circle at 18% -10%,
+                    rgba(0, 113, 227, 0.06),
+                    transparent 48%
+                ),
+                radial-gradient(
+                    900px circle at 92% 22%,
+                    rgba(99, 102, 241, 0.06),
+                    transparent 55%
+                ),
+                linear-gradient(180deg, var(--light-gray), #ffffff);
+        }
+
+        .section.dark {
+            background: radial-gradient(
+                    1100px circle at 82% 12%,
+                    rgba(0, 113, 227, 0.16),
+                    transparent 60%
+                ),
+                radial-gradient(
+                    980px circle at 16% 88%,
+                    rgba(124, 58, 237, 0.12),
+                    transparent 58%
+                ),
+                var(--pure-black);
+            color: var(--white);
+        }
+
+        .kicker {
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--gray-48);
+            margin-bottom: 10px;
+        }
+
+        .dark .kicker {
+            color: rgba(255, 255, 255, 0.48);
+        }
+
+        .h2 {
+            font-family: var(--font-display);
+            font-size: 40px;
+            font-weight: 600;
+            line-height: 1.1;
+            letter-spacing: -0.28px;
+            margin-bottom: 18px;
+        }
+
+        .lead {
+            color: var(--gray-80);
+            max-width: 720px;
+        }
+
+        .dark .lead {
+            color: rgba(255, 255, 255, 0.74);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            margin-top: 34px;
+        }
+
+        .feature {
+            border-radius: var(--radius-12);
+            background: rgba(255, 255, 255, 0.86);
+            padding: 26px 22px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out),
+                background var(--dur-220) var(--ease-out);
+        }
+
+        .feature:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.92);
+            box-shadow: rgba(0, 0, 0, 0.12) 0px 18px 50px 0px;
+        }
+
+        .feature-title {
+            font-family: var(--font-display);
+            font-size: 21px;
+            font-weight: 600;
+            line-height: 1.19;
+            letter-spacing: 0.231px;
+            margin-bottom: 10px;
+        }
+
+        .feature-desc {
+            color: var(--gray-80);
+            font-size: 14px;
+            letter-spacing: -0.224px;
+            line-height: 1.43;
+        }
+
+        .dark .feature {
+            background: var(--dark-surface-1);
+            box-shadow: none;
+        }
+
+        .dark .feature:hover {
+            transform: translateY(-2px);
+            background: #2a2a2d;
+            box-shadow: rgba(0, 0, 0, 0.45) 0px 18px 55px 0px;
+        }
+
+        .dark .feature-title {
+            color: var(--white);
+        }
+
+        .dark .feature-desc {
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .split {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 42px;
+            align-items: center;
+            margin-top: 38px;
+        }
+
+        .bullets {
+            margin-top: 18px;
+            display: grid;
+            gap: 12px;
+        }
+
+        .bullet {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .bullet svg {
+            flex: 0 0 auto;
+            margin-top: 4px;
+        }
+
+        .bullet p {
+            color: var(--gray-80);
+        }
+
+        .dark .bullet p {
+            color: rgba(255, 255, 255, 0.74);
+        }
+
+        .link-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(0, 102, 204, 0.35);
+            color: var(--link-blue);
+            margin-top: 18px;
+            transition: background var(--dur-150) var(--ease-out),
+                border-color var(--dur-150) var(--ease-out),
+                transform var(--dur-150) var(--ease-out);
+        }
+
+        .link-pill:hover {
+            background: rgba(0, 102, 204, 0.06);
+            border-color: rgba(0, 102, 204, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .link-pill:active {
+            transform: translateY(0);
+        }
+
+        .dark .link-pill {
+            border-color: rgba(41, 151, 255, 0.35);
+            color: var(--link-blue-dark);
+        }
+
+        .dark .link-pill:hover {
+            background: rgba(41, 151, 255, 0.1);
+            border-color: rgba(41, 151, 255, 0.55);
+        }
+
+        .logos {
+            margin-top: 28px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+        }
+
+        .logo {
+            height: 54px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.72);
+            display: grid;
+            place-items: center;
+            color: rgba(0, 0, 0, 0.62);
+            font-size: 12px;
+            letter-spacing: -0.12px;
+            user-select: none;
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out),
+                background var(--dur-220) var(--ease-out);
+        }
+
+        .logo:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 16px 42px 0px;
+        }
+
+        .stats {
+            margin-top: 18px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .stat {
+            border-radius: var(--radius-12);
+            background: rgba(255, 255, 255, 0.72);
+            padding: 20px 18px;
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out),
+                background var(--dur-220) var(--ease-out);
+        }
+
+        .stat:hover {
+            transform: translateY(-2px);
+            background: rgba(255, 255, 255, 0.88);
+            box-shadow: rgba(0, 0, 0, 0.1) 0px 16px 42px 0px;
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+            letter-spacing: 0.196px;
+            line-height: 1.14;
+        }
+
+        .stat-label {
+            margin-top: 6px;
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.62);
+        }
+
+        .pricing {
+            margin-top: 36px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .plan {
+            border-radius: 18px;
+            background: var(--white);
+            padding: 26px 22px;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            min-height: 340px;
+            position: relative;
+            overflow: hidden;
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out);
+        }
+
+        .plan::before {
+            content: "";
+            position: absolute;
+            left: -20%;
+            right: -20%;
+            top: -40%;
+            height: 55%;
+            background: radial-gradient(
+                    520px circle at 50% 72%,
+                    rgba(0, 113, 227, 0.09),
+                    transparent 62%
+                ),
+                radial-gradient(
+                    520px circle at 22% 60%,
+                    rgba(124, 58, 237, 0.08),
+                    transparent 60%
+                ),
+                radial-gradient(
+                    520px circle at 78% 64%,
+                    rgba(244, 63, 94, 0.06),
+                    transparent 62%
+            );
+            pointer-events: none;
+            opacity: 0.85;
+        }
+
+        .plan.featured {
+            box-shadow: var(--shadow-card);
+        }
+
+        .plan.featured::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 18px;
+            padding: 1px;
+            background: linear-gradient(
+                135deg,
+                rgba(0, 113, 227, 0.75),
+                rgba(124, 58, 237, 0.65),
+                rgba(244, 63, 94, 0.5)
+            );
+            -webkit-mask: linear-gradient(#000 0 0) content-box,
+                linear-gradient(#000 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0.9;
+        }
+
+        .plan:hover {
+            transform: translateY(-3px);
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 22px 60px 0px;
+        }
+
+        .plan.featured:hover {
+            box-shadow: rgba(0, 0, 0, 0.22) 0px 24px 70px 0px;
+        }
+
+        .plan-name {
+            font-family: var(--font-display);
+            font-size: 21px;
+            font-weight: 600;
+            line-height: 1.19;
+            letter-spacing: 0.231px;
+        }
+
+        .plan-desc {
+            margin-top: 8px;
+            font-size: 14px;
+            line-height: 1.43;
+            letter-spacing: -0.224px;
+            color: var(--gray-80);
+        }
+
+        .price {
+            margin-top: 18px;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .price strong {
+            font-family: var(--font-display);
+            font-size: 40px;
+            font-weight: 600;
+            letter-spacing: -0.28px;
+            line-height: 1.1;
+        }
+
+        .price span {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.62);
+        }
+
+        .plan ul {
+            list-style: none;
+            display: grid;
+            gap: 10px;
+            margin-top: 18px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border-light);
+        }
+
+        .plan li {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            font-size: 14px;
+            letter-spacing: -0.224px;
+            color: var(--gray-80);
+        }
+
+        .plan li svg {
+            margin-top: 3px;
+            flex: 0 0 auto;
+        }
+
+        .plan-actions {
+            margin-top: auto;
+            padding-top: 22px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border-color: rgba(0, 0, 0, 0.18);
+            color: var(--near-black);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(0, 0, 0, 0.04);
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost:active {
+            transform: translateY(0);
+        }
+
+        .faq {
+            margin-top: 26px;
+            display: grid;
+            gap: 10px;
+        }
+
+        details {
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.72);
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            transition: box-shadow var(--dur-220) var(--ease-out),
+                transform var(--dur-220) var(--ease-out),
+                background var(--dur-220) var(--ease-out);
+        }
+
+        details:hover {
+            transform: translateY(-1px);
+            background: rgba(255, 255, 255, 0.86);
+            box-shadow: rgba(0, 0, 0, 0.08) 0px 14px 40px 0px;
+        }
+
+        summary {
+            cursor: pointer;
+            list-style: none;
+            padding: 18px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            font-weight: 600;
+            color: var(--near-black);
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .faq-body {
+            padding: 0 18px 18px;
+            font-size: 14px;
+            letter-spacing: -0.224px;
+            line-height: 1.43;
+            color: var(--gray-80);
+        }
+
+        details[open] .faq-body {
+            animation: fade-in-up 200ms var(--ease-out);
+        }
+
+        .chev {
+            width: 18px;
+            height: 18px;
+            color: rgba(0, 0, 0, 0.62);
+            transition: transform 0.18s ease;
+        }
+
+        details[open] .chev {
+            transform: rotate(180deg);
+        }
+
+        .checkout {
+            margin-top: 34px;
+            border-radius: 22px;
+            background: var(--white);
+            box-shadow: var(--shadow-card);
+            padding: 26px 22px;
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 16px;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+            transition: transform var(--dur-220) var(--ease-out),
+                box-shadow var(--dur-220) var(--ease-out);
+        }
+
+        .checkout::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(
+                620px circle at 18% 18%,
+                rgba(0, 113, 227, 0.08),
+                transparent 55%
+            );
+            pointer-events: none;
+        }
+
+        .checkout:hover {
+            transform: translateY(-2px);
+            box-shadow: rgba(0, 0, 0, 0.18) 0px 22px 60px 0px;
+        }
+
+        .checkout h3 {
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+            line-height: 1.14;
+            letter-spacing: 0.196px;
+        }
+
+        .checkout p {
+            margin-top: 8px;
+            font-size: 14px;
+            letter-spacing: -0.224px;
+            line-height: 1.43;
+            color: var(--gray-80);
+        }
+
+        .checkout-form {
+            display: grid;
+            gap: 10px;
+            justify-items: stretch;
+        }
+
+        .input {
+            width: 100%;
+            height: 44px;
+            padding: 0 14px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.16);
+            background: var(--white);
+            color: var(--near-black);
+            outline: none;
+            transition: border-color var(--dur-150) var(--ease-out),
+                box-shadow var(--dur-150) var(--ease-out),
+                transform var(--dur-150) var(--ease-out);
+        }
+
+        .input:hover {
+            border-color: rgba(0, 0, 0, 0.24);
+        }
+
+        .form-note {
+            font-size: 12px;
+            color: rgba(0, 0, 0, 0.62);
+        }
+
+        .toast {
+            position: fixed;
+            left: 50%;
+            bottom: 18px;
+            transform: translate(-50%, 18px);
+            opacity: 0;
+            pointer-events: none;
+            max-width: min(560px, calc(100vw - 24px));
+            padding: 12px 14px;
+            border-radius: 14px;
+            background: rgba(29, 29, 31, 0.92);
+            color: rgba(255, 255, 255, 0.92);
+            box-shadow: var(--shadow-card);
+            transition: opacity 0.18s ease, transform 0.18s ease;
+            font-size: 14px;
+            letter-spacing: -0.224px;
+            z-index: 160;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .footer {
+            padding: 44px 0;
+            background: var(--light-gray);
+            color: rgba(0, 0, 0, 0.62);
+            font-size: 12px;
+            letter-spacing: -0.12px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 14px;
+            align-items: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 14px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .footer a {
+            color: var(--link-blue);
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 980px) {
+            :root {
+                --pad-x: 20px;
+                --section-y: 72px;
+            }
+
+            .hero-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+            }
+
+            .card-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .split {
+                grid-template-columns: 1fr;
+                gap: 26px;
+            }
+
+            .logos {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing {
+                grid-template-columns: 1fr;
+            }
+
+            .checkout {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-toggle {
+                display: inline-flex;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .nav-links.open {
+                display: grid;
+                position: absolute;
+                left: 0;
+                right: 0;
+                top: 48px;
+                background: rgba(0, 0, 0, 0.92);
+                padding: 14px 20px 18px;
+                gap: 10px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+            }
+
+            .nav-links.open a {
+                font-size: 14px;
+                padding: 10px 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            html {
+                scroll-behavior: auto;
+            }
+
+            * {
+                transition-duration: 0.01ms !important;
+                animation-duration: 0.01ms !important;
+            }
+        }
+
+        @keyframes shimmer {
+            0% {
+                background-position: 160% 0;
+            }
+            100% {
+                background-position: -60% 0;
+            }
+        }
+
+        @keyframes fade-in-up {
+            0% {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <a class="skip" href="#main">跳到主要内容</a>
+
+    <header class="nav" aria-label="主导航">
+        <div class="nav-inner">
+            <a class="brand" href="#top" aria-label="CMS SaaS 首页">
+                <span class="brand-mark" aria-hidden="true"></span>
+                <span class="brand-name">CMS SaaS</span>
+            </a>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a href="#product">产品</a></li>
+                <li><a href="#features">功能</a></li>
+                <li><a href="#pricing">定价</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a class="nav-cta" href="#pricing">立即开通</a>
+                <button
+                    class="nav-toggle"
+                    type="button"
+                    aria-label="打开菜单"
+                    aria-expanded="false"
+                    aria-controls="navLinks"
+                    id="navToggle"
+                >
+                    <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                        aria-hidden="true"
+                    >
+                        <path
+                            d="M4 7h16M4 12h16M4 17h16"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                        />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main id="main">
+        <section class="hero" id="top">
+            <div class="container">
+                <div class="hero-grid">
+                    <div>
+                        <div class="eyebrow">为服务交付而生的 SaaS</div>
+                        <h1 class="h1">把你的服务，做成可复制的系统。</h1>
+                        <p class="subhead">
+                            流程、客户协作、文档与收费，统一在一个清晰的工作台里。让交付更稳、更快、更可追踪。
+                        </p>
+                        <div class="hero-actions">
+                            <a class="btn btn-primary" href="#pricing"
+                                >查看定价</a
+                            >
+                            <a class="btn btn-outline" href="#product"
+                                >了解产品</a
+                            >
+                        </div>
+                        <div class="hero-meta">
+                            <span><strong>7 天免费试用</strong></span>
+                            <span>随时取消</span>
+                            <span>支持企业付款</span>
+                        </div>
+                    </div>
+
+                    <div class="hero-visual" aria-label="产品预览">
+                        <div class="frame">
+                            <div class="frame-bar">
+                                <span class="dots" aria-hidden="true">
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                    <span class="dot"></span>
+                                </span>
+                                <span>工作台 · 今天</span>
+                                <span aria-hidden="true">•••</span>
+                            </div>
+                            <div class="frame-body">
+                                <div class="skeleton">
+                                    <div class="panel">
+                                        <div class="line w-70"></div>
+                                        <div class="line"></div>
+                                        <div class="line"></div>
+                                        <div class="line w-40"></div>
+                                        <div class="card-grid">
+                                            <div class="mini-card">
+                                                <div class="mini-title">
+                                                    待办
+                                                </div>
+                                                <div class="line w-70"></div>
+                                                <div class="line w-40"></div>
+                                            </div>
+                                            <div class="mini-card">
+                                                <div class="mini-title">
+                                                    案件
+                                                </div>
+                                                <div class="line w-70"></div>
+                                                <div class="line w-40"></div>
+                                            </div>
+                                            <div class="mini-card">
+                                                <div class="mini-title">
+                                                    消息
+                                                </div>
+                                                <div class="line w-70"></div>
+                                                <div class="line w-40"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="panel">
+                                        <div class="line w-70"></div>
+                                        <div class="line"></div>
+                                        <div class="line w-40"></div>
+                                        <div
+                                            class="mini-card"
+                                            style="margin-top: 14px"
+                                        >
+                                            <div class="mini-title">
+                                                客户门户
+                                            </div>
+                                            <div class="line w-70"></div>
+                                            <div class="line"></div>
+                                            <div class="line w-40"></div>
+                                        </div>
+                                        <div
+                                            class="mini-card"
+                                            style="margin-top: 14px"
+                                        >
+                                            <div class="mini-title">
+                                                收费
+                                            </div>
+                                            <div class="line w-70"></div>
+                                            <div class="line w-40"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section gray" id="product">
+            <div class="container">
+                <div class="kicker">产品</div>
+                <h2 class="h2">把“交付”变成可见的流程。</h2>
+                <p class="lead">
+                    每个客户、每个任务、每份资料、每笔费用都有清晰状态。你只需要专注服务本身。
+                </p>
+
+                <div class="feature-grid">
+                    <div class="feature">
+                        <div class="feature-title">工作台</div>
+                        <div class="feature-desc">
+                            今日待办、关键风险、客户消息集中呈现，减少切换与遗漏。
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-title">客户门户</div>
+                        <div class="feature-desc">
+                            让客户自己上传资料、查看进度、补充信息，交付更顺畅。
+                        </div>
+                    </div>
+                    <div class="feature">
+                        <div class="feature-title">收费与对账</div>
+                        <div class="feature-desc">
+                            订单、发票、付款状态自动同步，减少人工追款与对账成本。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section dark" id="features">
+            <div class="container">
+                <div class="kicker">功能</div>
+                <h2 class="h2">每一步都有状态，每一次都有记录。</h2>
+                <p class="lead">
+                    你可以像搭积木一样，把你的服务流程配置出来，并在团队协作与客户协作之间保持一致体验。
+                </p>
+
+                <div class="split">
+                    <div>
+                        <div class="hero-visual" style="padding: 14px">
+                            <div class="frame">
+                                <div class="frame-bar">
+                                    <span class="dots" aria-hidden="true">
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                        <span class="dot"></span>
+                                    </span>
+                                    <span>流程 · 状态流转</span>
+                                    <span aria-hidden="true">•••</span>
+                                </div>
+                                <div class="frame-body">
+                                    <div
+                                        class="panel"
+                                        style="
+                                            background: rgba(
+                                                255,
+                                                255,
+                                                255,
+                                                0.05
+                                            );
+                                        "
+                                    >
+                                        <div class="line w-70"></div>
+                                        <div class="line"></div>
+                                        <div class="line"></div>
+                                        <div class="line w-40"></div>
+                                        <div
+                                            class="mini-card"
+                                            style="
+                                                margin-top: 14px;
+                                                background: rgba(
+                                                    255,
+                                                    255,
+                                                    255,
+                                                    0.08
+                                                );
+                                            "
+                                        >
+                                            <div class="mini-title">
+                                                阶段：资料收集中
+                                            </div>
+                                            <div class="line w-70"></div>
+                                            <div class="line"></div>
+                                            <div class="line w-40"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="bullets">
+                            <div class="bullet">
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#2997ff"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                <p>
+                                    状态驱动的工作流，减少“靠记忆推进”的不确定性。
+                                </p>
+                            </div>
+                            <div class="bullet">
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#2997ff"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                <p>
+                                    客户协作与团队协作同一套数据结构，减少重复沟通。
+                                </p>
+                            </div>
+                            <div class="bullet">
+                                <svg
+                                    width="18"
+                                    height="18"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#2997ff"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                <p>
+                                    审计轨迹自动沉淀，关键节点可追踪、可复盘、可复用。
+                                </p>
+                            </div>
+                        </div>
+
+                        <a class="link-pill" href="#pricing">
+                            看看如何开始
+                            <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M9 18l6-6-6-6"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section gray">
+            <div class="container">
+                <div class="kicker">信任</div>
+                <h2 class="h2">体验优先，数据可信。</h2>
+                <p class="lead">
+                    交互尽量少一步，信息尽量多一分确定性。让用户更快完成任务，也更少出错。
+                </p>
+
+                <div class="logos" aria-label="示例客户">
+                    <div class="logo">Company A</div>
+                    <div class="logo">Company B</div>
+                    <div class="logo">Company C</div>
+                    <div class="logo">Company D</div>
+                    <div class="logo">Company E</div>
+                </div>
+
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value">-38%</div>
+                        <div class="stat-label">平均跟进耗时</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">+2.1x</div>
+                        <div class="stat-label">资料收集完成率</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">0</div>
+                        <div class="stat-label">关键节点遗漏</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section gray" id="pricing">
+            <div class="container">
+                <div class="kicker">定价</div>
+                <h2 class="h2">从试用开始，随业务增长升级。</h2>
+                <p class="lead">
+                    先用起来，再决定买哪个版本。付款能力会在你准备好时接入。
+                </p>
+
+                <div class="pricing">
+                    <div class="plan">
+                        <div class="plan-name">Starter</div>
+                        <div class="plan-desc">适合个人与小团队的轻量交付。</div>
+                        <div class="price">
+                            <strong>¥0</strong><span>/试用期</span>
+                        </div>
+                        <ul>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                客户与案件基础管理
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                资料上传与状态看板
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                基础通知与待办
+                            </li>
+                        </ul>
+                        <div class="plan-actions">
+                            <button
+                                class="btn btn-primary"
+                                type="button"
+                                data-plan="Starter"
+                            >
+                                开始试用
+                            </button>
+                            <button
+                                class="btn btn-ghost"
+                                type="button"
+                                data-plan="Starter"
+                                data-action="buy"
+                            >
+                                预留购买入口
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="plan featured">
+                        <div class="plan-name">Pro</div>
+                        <div class="plan-desc">适合持续交付与协作的主力版本。</div>
+                        <div class="price">
+                            <strong>¥199</strong><span>/月</span>
+                        </div>
+                        <ul>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                可配置流程与状态流转
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                客户门户自助协作
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                基础收费与对账模块
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                团队协作与审计记录
+                            </li>
+                        </ul>
+                        <div class="plan-actions">
+                            <button
+                                class="btn btn-primary"
+                                type="button"
+                                data-plan="Pro"
+                                data-action="buy"
+                            >
+                                立即购买
+                            </button>
+                            <button
+                                class="btn btn-ghost"
+                                type="button"
+                                data-plan="Pro"
+                            >
+                                预约演示
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="plan">
+                        <div class="plan-name">Business</div>
+                        <div class="plan-desc">适合多角色权限与更强配置化。</div>
+                        <div class="price">
+                            <strong>定制</strong><span>/年</span>
+                        </div>
+                        <ul>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                角色与权限（RBAC）
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                多租户与隔离策略
+                            </li>
+                            <li>
+                                <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                >
+                                    <path
+                                        d="M20 6L9 17l-5-5"
+                                        stroke="#0071e3"
+                                        stroke-width="2"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    />
+                                </svg>
+                                高级审核、日志与导出
+                            </li>
+                        </ul>
+                        <div class="plan-actions">
+                            <button
+                                class="btn btn-primary"
+                                type="button"
+                                data-plan="Business"
+                            >
+                                联系我们
+                            </button>
+                            <a class="btn btn-ghost" href="#faq">常见问题</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout" id="checkout" aria-label="开通入口">
+                    <div>
+                        <h3>准备好上线付款了？</h3>
+                        <p>
+                            这里先做成可接入的“付款入口占位”。后续只需要把按钮指向你的支付
+                            Checkout 即可（例如 Stripe / Paddle / 自建收银台）。
+                        </p>
+                    </div>
+                    <form class="checkout-form" id="checkoutForm">
+                        <input
+                            class="input"
+                            type="email"
+                            name="email"
+                            placeholder="输入邮箱，用于接收开通信息"
+                            autocomplete="email"
+                            required
+                        />
+                        <button class="btn btn-primary" type="submit">
+                            继续
+                        </button>
+                        <div class="form-note">
+                            不会发送垃圾邮件。你可以随时取消。
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <section class="section gray" id="faq">
+            <div class="container">
+                <div class="kicker">FAQ</div>
+                <h2 class="h2">你可能会关心的问题。</h2>
+                <p class="lead">
+                    先把关键疑虑讲清楚，减少试用前的认知成本。
+                </p>
+
+                <div class="faq">
+                    <details>
+                        <summary>
+                            这页现在真的可以付款吗？
+                            <svg
+                                class="chev"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M6 9l6 6 6-6"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </summary>
+                        <div class="faq-body">
+                            目前是“预留购买入口”的效果稿：按钮与表单都具备交互与状态反馈，后续接入支付时只需要替换跳转链接或接入你的 Checkout API。
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>
+                            为什么是 Apple 风格？
+                            <svg
+                                class="chev"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M6 9l6 6 6-6"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </summary>
+                        <div class="faq-body">
+                            这种风格强调克制、留白与信息层级：让“产品与价值”成为视觉主角，交互只用一个主色（蓝）承担所有行动提示，降低噪音并提升可信度。
+                        </div>
+                    </details>
+
+                    <details>
+                        <summary>
+                            后续要接入 Stripe 怎么做？
+                            <svg
+                                class="chev"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                xmlns="http://www.w3.org/2000/svg"
+                                aria-hidden="true"
+                            >
+                                <path
+                                    d="M6 9l6 6 6-6"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                />
+                            </svg>
+                        </summary>
+                        <div class="faq-body">
+                            最直接的做法是：每个套餐按钮携带 planId，点击后创建 Checkout Session 并跳转到 Stripe Checkout。你只需要保留这页的定价结构与按钮语义即可。
+                        </div>
+                    </details>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>© <span id="year"></span> CMS SaaS</div>
+                <div class="footer-links">
+                    <a href="#top">返回顶部</a>
+                    <a href="#pricing">定价</a>
+                    <a href="#faq">FAQ</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="toast" role="status" aria-live="polite" id="toast"></div>
+
+    <script>
+        const year = document.getElementById("year");
+        if (year) year.textContent = String(new Date().getFullYear());
+
+        const navToggle = document.getElementById("navToggle");
+        const navLinks = document.getElementById("navLinks");
+
+        function setMenuOpen(isOpen) {
+            if (!navToggle || !navLinks) return;
+            navToggle.setAttribute("aria-expanded", String(isOpen));
+            navLinks.classList.toggle("open", isOpen);
+        }
+
+        if (navToggle && navLinks) {
+            navToggle.addEventListener("click", () => {
+                const isOpen = navToggle.getAttribute("aria-expanded") === "true";
+                setMenuOpen(!isOpen);
+            });
+
+            navLinks.addEventListener("click", (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLElement)) return;
+                if (target.tagName.toLowerCase() !== "a") return;
+                setMenuOpen(false);
+            });
+
+            window.addEventListener("keydown", (event) => {
+                if (event.key !== "Escape") return;
+                setMenuOpen(false);
+            });
+        }
+
+        const toast = document.getElementById("toast");
+        let toastTimer;
+        function showToast(message) {
+            if (!toast) return;
+            toast.textContent = message;
+            toast.classList.add("show");
+            window.clearTimeout(toastTimer);
+            toastTimer = window.setTimeout(() => {
+                toast.classList.remove("show");
+            }, 2400);
+        }
+
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLElement)) return;
+            const button = target.closest("button[data-plan]");
+            if (!(button instanceof HTMLButtonElement)) return;
+            const plan = button.dataset.plan || "当前方案";
+            const action = button.dataset.action;
+
+            if (action === "buy") {
+                showToast(
+                    `已选择 ${plan}。付款入口已预留，后续接入 Checkout 后即可完成支付。`
+                );
+                const checkout = document.getElementById("checkout");
+                if (checkout) checkout.scrollIntoView({ block: "start" });
+                return;
+            }
+
+            showToast(`已选择 ${plan}。你可以先试用，后续再开通付费。`);
+        });
+
+        const checkoutForm = document.getElementById("checkoutForm");
+        if (checkoutForm instanceof HTMLFormElement) {
+            checkoutForm.addEventListener("submit", (event) => {
+                event.preventDefault();
+                const formData = new FormData(checkoutForm);
+                const email = String(formData.get("email") || "").trim();
+                if (!email) return;
+                showToast(`已记录：${email}。后续接入支付后将用于开通与通知。`);
+                checkoutForm.reset();
+            });
+        }
+    </script>
+</body>
+</html>

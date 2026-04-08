@@ -10,7 +10,10 @@ import {
   parseVerifiedRequestAuthInputFromHeaders,
   readAuthConfigFromEnv,
 } from "../tenancy/requestContext";
-import type { RequestAuthInput, RequestContext } from "../tenancy/requestContext";
+import type {
+  RequestAuthInput,
+  RequestContext,
+} from "../tenancy/requestContext";
 
 type HttpRequest = {
   headers: Record<string, unknown>;

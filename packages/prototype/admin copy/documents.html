@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>资料中心 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+      :root {
+        --bg: #f8fafc;
+        --surface: #ffffff;
+        --surface-2: #f1f5f9;
+        --border: #e2e8f0;
+        --text: #0f172a;
+        --muted: #475569;
+        --muted-2: #64748b;
+        --primary: #0369a1;
+        --primary-hover: #075985;
+        --shadow: 0 1px 2px rgba(15, 23, 42, 0.06),
+          0 10px 28px rgba(15, 23, 42, 0.08);
+        --radius: 14px;
+
+        --apple-blue: var(--primary);
+        --apple-blue-hover: var(--primary-hover);
+        --apple-link: var(--primary);
+        --apple-bg: var(--bg);
+        --apple-card: var(--surface);
+        --apple-text-main: var(--text);
+        --apple-text-sec: var(--muted);
+        --apple-text-tert: var(--muted-2);
+        --apple-shadow: var(--shadow);
+      }
+
+      body {
+        font-family:
+          "Plus Jakarta Sans",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          Helvetica,
+          Arial,
+          sans-serif;
+        background-color: var(--bg);
+        color: var(--text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        letter-spacing: -0.01em;
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      .display-font {
+        font-family: inherit;
+        letter-spacing: -0.01em;
+      }
+
+      .display-font {
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .skip-link {
+        position: absolute;
+        left: 16px;
+        top: 8px;
+        transform: translateY(-200%);
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 8px 12px;
+        box-shadow: var(--shadow);
+        z-index: 1000;
+      }
+      .skip-link:focus {
+        transform: translateY(0);
+      }
+
+      :where(a, button, input, select, textarea):focus-visible {
+        outline: 2px solid rgba(3, 105, 161, 0.35);
+        outline-offset: 2px;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+      @media (min-width: 1024px) {
+        .app-shell {
+          grid-template-columns: 280px 1fr;
+        }
+      }
+
+      .side-nav {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+      }
+      .side-nav-inner {
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 14px;
+        gap: 14px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 10px 6px 10px;
+      }
+      .brand-title {
+        font-size: 15px;
+        font-weight: 900;
+        letter-spacing: -0.02em;
+      }
+
+      .nav-group-title {
+        font-size: 11px;
+        color: var(--muted-2);
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 10px 10px 6px 10px;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 800;
+        transition:
+          background-color 160ms ease,
+          color 160ms ease;
+      }
+      .nav-item:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .nav-item[aria-current="page"] {
+        background: rgba(3, 105, 161, 0.1);
+        color: var(--text);
+      }
+      .nav-item svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(248, 250, 252, 0.92);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar-inner {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .icon-btn {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        transition:
+          background-color 160ms ease,
+          border-color 160ms ease,
+          color 160ms ease;
+      }
+      .icon-btn:hover {
+        background: var(--surface-2);
+        color: var(--text);
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .search {
+        flex: 1 1 auto;
+        min-width: 180px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 1px 0 rgba(15, 23, 42, 0.03);
+      }
+      .search input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        background: transparent;
+      }
+      .search input::placeholder {
+        color: rgba(100, 116, 139, 0.9);
+        font-weight: 600;
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 900;
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        box-shadow: 0 8px 18px rgba(3, 105, 161, 0.22);
+      }
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+      }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+
+      .btn-secondary {
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        font-weight: 900;
+      }
+      .btn-secondary:hover {
+        background: rgba(15, 23, 42, 0.07);
+      }
+      .btn-secondary:active {
+        transform: translateY(1px);
+      }
+
+      .btn-pill {
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 14px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        font-weight: 900;
+      }
+      .btn-pill:hover {
+        background: rgba(15, 23, 42, 0.07);
+      }
+      .btn-pill:active {
+        transform: translateY(1px);
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 12px;
+        font-weight: 900;
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        background: rgba(241, 245, 249, 0.9);
+        color: var(--text);
+      }
+
+      .apple-card {
+        background-color: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+      }
+
+      .mobile-nav {
+        position: fixed;
+        inset: 0;
+        z-index: 60;
+        display: none;
+      }
+      body[data-nav-open="true"] .mobile-nav {
+        display: block;
+      }
+      .mobile-nav-backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(2, 6, 23, 0.56);
+      }
+      .mobile-nav-panel {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: min(320px, 88vw);
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        transform: translateX(-100%);
+        transition: transform 220ms ease;
+      }
+      body[data-nav-open="true"] .mobile-nav-panel {
+        transform: translateX(0);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          transition: none !important;
+          animation: none !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      .btn-primary {
+        background-color: var(--primary);
+        color: white;
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        font-weight: 900;
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        box-shadow: 0 8px 18px rgba(3, 105, 161, 0.22);
+      }
+      .btn-primary:hover {
+        background-color: var(--primary-hover);
+      }
+      .btn-primary:active {
+        transform: translateY(1px);
+      }
+
+      .btn-secondary {
+        color: var(--text);
+        padding: 10px 14px;
+        border-radius: 14px;
+        font-size: 14px;
+        background: rgba(15, 23, 42, 0.04);
+        border: 1px solid rgba(226, 232, 240, 0.9);
+        transition:
+          background-color 160ms ease,
+          transform 120ms ease;
+        font-weight: 900;
+      }
+      .btn-secondary:hover {
+        background: rgba(15, 23, 42, 0.07);
+      }
+      .btn-secondary:active {
+        transform: translateY(1px);
+      }
+
+      .apple-card {
+        background-color: var(--surface);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
+      }
+
+      /* Segmented Control (Apple Style Tabs) */
+      .segmented-control {
+        background-color: rgba(118, 118, 128, 0.12);
+        padding: 2px;
+        border-radius: 8px;
+        display: inline-flex;
+      }
+      .segment-btn {
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-text-main);
+        border-radius: 6px;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .segment-btn.active {
+        background-color: white;
+        box-shadow:
+          0 3px 8px rgba(0, 0, 0, 0.12),
+          0 3px 1px rgba(0, 0, 0, 0.04);
+      }
+
+      /* Table Styles */
+      .apple-table th {
+        font-size: 12px;
+        color: var(--apple-text-tert);
+        font-weight: 500;
+        text-transform: uppercase;
+        padding: 12px 16px;
+        border-bottom: 1px solid #e5e5ea;
+        text-align: left;
+      }
+      .apple-table td {
+        padding: 16px;
+        font-size: 14px;
+        border-bottom: 1px solid #f2f2f7;
+        color: var(--apple-text-sec);
+        vertical-align: middle;
+      }
+      .apple-table tr:hover td {
+        background-color: #fbfbfd;
+      }
+      .apple-table tr:last-child td {
+        border-bottom: none;
+      }
+      .link-apple {
+        color: var(--apple-link);
+        text-decoration: none;
+        cursor: pointer;
+      }
+      .link-apple:hover {
+        text-decoration: underline;
+      }
+
+      /* Search Input */
+      .search-input {
+        background-color: rgba(118, 118, 128, 0.12);
+        border: none;
+        border-radius: 10px;
+        padding: 8px 12px 8px 36px;
+        font-size: 14px;
+        width: 240px;
+        transition: all 0.2s;
+        outline: none;
+      }
+      .search-input:focus {
+        background-color: white;
+        box-shadow: 0 0 0 2px var(--apple-blue);
+      }
+
+      .icon-doc {
+        color: #0071e3;
+        width: 20px;
+        height: 20px;
+      }
+      .icon-pdf {
+        color: #ff3b30;
+        width: 20px;
+        height: 20px;
+      }
+      .icon-img {
+        color: #34c759;
+        width: 20px;
+        height: 20px;
+      }
+      .icon-folder {
+        color: #5ac8fa;
+        width: 20px;
+        height: 20px;
+      }
+
+      /* Sidebar */
+      .sidebar {
+        width: 240px;
+        flex-shrink: 0;
+        border-right: 1px solid #e5e5ea;
+        padding-right: 24px;
+        height: calc(100vh - 132px);
+        overflow-y: auto;
+        position: sticky;
+        top: 96px;
+      }
+      .sidebar::-webkit-scrollbar {
+        display: none;
+      }
+      .sidebar-item {
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 14px;
+        color: var(--apple-text-sec);
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-bottom: 4px;
+      }
+      .sidebar-item:hover {
+        background-color: rgba(118, 118, 128, 0.08);
+      }
+      .sidebar-item.active {
+        background-color: rgba(0, 113, 227, 0.1);
+        color: var(--apple-blue);
+        font-weight: 500;
+      }
+      .sidebar-item svg {
+        margin-right: 10px;
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      
+      /* Grid View */
+      .grid-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 16px;
+      }
+      .grid-item {
+        background-color: transparent;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        padding: 16px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: all 0.2s;
+        cursor: pointer;
+      }
+      .grid-item:hover {
+        background-color: rgba(118, 118, 128, 0.08);
+      }
+      .grid-item.selected {
+        background-color: rgba(0, 113, 227, 0.1);
+        border-color: rgba(0, 113, 227, 0.2);
+      }
+      .grid-icon {
+        width: 56px;
+        height: 56px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .grid-icon svg {
+        width: 100%;
+        height: 100%;
+      }
+      .grid-title {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--apple-text-main);
+        margin-bottom: 4px;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+        word-break: break-all;
+        line-height: 1.4;
+      }
+      .grid-subtitle {
+        font-size: 11px;
+        color: var(--apple-text-tert);
+      }
+
+      /* View Toggle */
+      .view-toggle {
+        display: flex;
+        background-color: rgba(118, 118, 128, 0.12);
+        border-radius: 8px;
+        padding: 2px;
+      }
+      .view-toggle-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        color: var(--apple-text-sec);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .view-toggle-btn.active {
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        color: var(--apple-text-main);
+      }
+      .view-toggle-btn svg {
+        width: 16px;
+        height: 16px;
+      }
+      
+      .view-container {
+        display: none;
+      }
+      .view-container.active {
+        display: block;
+      }
+
+      /* Upload Modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background-color: rgba(0, 0, 0, 0.4);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+      .modal-backdrop.active {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .modal-content {
+        background-color: var(--apple-card);
+        border-radius: 16px;
+        width: 100%;
+        max-width: 500px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        transform: scale(0.95) translateY(10px);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .modal-backdrop.active .modal-content {
+        transform: scale(1) translateY(0);
+      }
+      
+      .drop-zone {
+        border: 2px dashed #c7c7cc;
+        border-radius: 12px;
+        padding: 40px 20px;
+        text-align: center;
+        transition: all 0.2s;
+        background-color: var(--apple-bg);
+        cursor: pointer;
+      }
+      .drop-zone:hover, .drop-zone.dragover {
+        border-color: var(--apple-blue);
+        background-color: rgba(0, 113, 227, 0.04);
+      }
+    </style>
+  </head>
+  <body data-nav-open="false">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <div class="mobile-nav" aria-hidden="true">
+      <div class="mobile-nav-backdrop" data-nav-close></div>
+      <div class="mobile-nav-panel">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="customers.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="cases-list.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="documents.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="admin-prototype.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="customers.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="cases-list.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="documents.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <a class="nav-item" href="../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <div>
+        <header class="topbar" aria-label="顶部工具栏">
+          <div class="topbar-inner">
+            <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+
+            <div class="search" role="search">
+              <svg class="w-[18px] h-[18px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input type="search" placeholder="搜索：客户 / 案件 / 资料 / 文书..." aria-label="全局搜索" />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+
+            <button class="btn-pill hidden sm:inline-flex" type="button" onclick="window.location.href = 'leads-messages.html'">新建咨询</button>
+            <button class="btn-primary" type="button" onclick="window.location.href = 'case-create.html'">新建案件</button>
+
+            <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">
+              AD
+            </div>
+          </div>
+        </header>
+
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+          <div class="w-full flex">
+            <!-- Sidebar -->
+      <aside class="sidebar hidden md:block">
+        <div class="mb-6">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">文件库</div>
+          <div class="sidebar-item active">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            全部资料
+          </div>
+          <div class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            最近访问
+          </div>
+          <div class="sidebar-item">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+            星标文件
+          </div>
+        </div>
+        
+        <div class="mb-6">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">案件文件夹</div>
+          <div class="sidebar-item">
+            <svg class="text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+            永住许可申请 (张伟)
+          </div>
+          <div class="sidebar-item">
+            <svg class="text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+            就劳签证续签 (Tech...)
+          </div>
+          <div class="sidebar-item">
+            <svg class="text-blue-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z"></path></svg>
+            家族滞在 (李明)
+          </div>
+        </div>
+        
+        <div>
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">标签</div>
+          <div class="flex flex-wrap gap-2 px-3">
+            <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-xs cursor-pointer hover:bg-red-200 transition-colors">紧急</span>
+            <span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-xs cursor-pointer hover:bg-yellow-200 transition-colors">模板</span>
+            <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs cursor-pointer hover:bg-blue-200 transition-colors">已提交待审核</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Content Area -->
+      <div class="flex-grow md:pl-8 overflow-hidden w-full">
+        <!-- Header -->
+        <div class="flex justify-between items-end mb-8">
+          <div>
+            <h1 class="text-3xl display-font font-semibold">资料中心</h1>
+            <p class="text-sm text-gray-500 mt-1">按状态、案件类型管理客户资料及内部模板</p>
+          </div>
+          <div class="flex space-x-3">
+            <button class="btn-secondary flex items-center">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+              案件模板生成
+            </button>
+            <button class="btn-primary flex items-center" onclick="openUploadModal()">
+              <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+              上传文件
+            </button>
+          </div>
+        </div>
+
+      <!-- Controls Area -->
+      <div class="flex justify-between items-center mb-6">
+        <div class="segmented-control">
+          <div class="segment-btn active">全部资料</div>
+          <div class="segment-btn relative">
+            已提交待审核 <span class="absolute top-0 -right-1 flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span></span>
+          </div>
+          <div class="segment-btn">缺件资料</div>
+          <div class="segment-btn">即将过期</div>
+          <div class="segment-btn">已过期</div>
+          <div class="segment-btn">资料模板</div>
+        </div>
+        
+        <div class="relative flex items-center space-x-2">
+          <div class="view-toggle mr-2">
+            <div class="view-toggle-btn active" id="btn-view-list" onclick="switchView('list')" title="列表视图">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </div>
+            <div class="view-toggle-btn" id="btn-view-grid" onclick="switchView('grid')" title="网格视图">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+            </div>
+          </div>
+          <select class="search-input !w-auto bg-white border border-gray-200" style="padding-left: 12px;">
+            <option>所有案件类型</option>
+            <option>就劳签证</option>
+            <option>永住许可</option>
+            <option>家族滞在</option>
+          </select>
+          <div class="relative">
+            <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            <input type="text" placeholder="搜索资料名称、案件号" class="search-input" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Breadcrumbs -->
+      <div class="flex items-center text-sm text-gray-500 mb-4">
+        <a class="link-apple text-gray-500">资料中心</a>
+        <svg class="w-4 h-4 mx-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        <span class="text-gray-800 font-medium">已提交待审核资料 (12)</span>
+      </div>
+
+      <!-- Documents Table -->
+      <div id="view-list" class="view-container active">
+        <div class="apple-card overflow-hidden">
+          <table class="apple-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="w-3/12">资料名称</th>
+              <th class="w-2/12">关联案件/客户</th>
+              <th class="w-2/12">类型/完成率</th>
+              <th class="w-2/12">状态</th>
+              <th class="w-2/12">更新时间</th>
+              <th class="w-1/12 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <svg class="icon-img mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">在留卡正面_扫描件.jpg</div>
+                    <div class="text-xs text-gray-500 mt-0.5">V2 版本 · 3.5 MB</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="case-detail.html" class="link-apple text-sm block">永住许可申请 (张伟)</a>
+                <span class="text-xs text-gray-500">就劳签证 -> 永住</span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-700 block">客户上传</span>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: 85%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500">案件整体资料 85%</span>
+              </td>
+              <td>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800">
+                    已提交待审核
+                  </span>
+                  <div class="text-xs text-gray-500 mt-1">重新上传待确认</div>
+                </td>
+              <td>
+                <div class="text-sm">2023-10-10 10:20</div>
+                <div class="text-xs text-gray-500">张伟 (客户)</div>
+              </td>
+              <td class="text-right">
+                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium mr-2">审核</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <svg class="icon-pdf mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">护照复印件_王强.pdf</div>
+                    <div class="text-xs text-gray-500 mt-0.5">V1 版本 · 2.4 MB</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="customers.html" class="link-apple text-sm block">Tech Innovators 株式會社</a>
+                <span class="text-xs text-gray-500">就劳签证续签 (3人)</span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-700 block">客户上传</span>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                  <div class="bg-red-500 h-1.5 rounded-full" style="width: 45%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500">案件整体资料 45%</span>
+              </td>
+              <td>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                  不合格
+                </span>
+                <div class="text-xs text-red-600 mt-1 truncate max-w-[120px]" title="照片反光，看不清护照号码，请重新扫描上传">照片反光，看不清...</div>
+              </td>
+              <td>
+                <div class="text-sm">2023-10-14 09:15</div>
+                <div class="text-xs text-gray-500">Admin 审核</div>
+              </td>
+              <td class="text-right">
+                <button class="text-gray-400 hover:text-gray-700 mr-2" title="查看">
+                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+                <button class="text-gray-400 hover:text-gray-700" title="催办">
+                  <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <svg class="icon-doc mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">课税证明书_李明</div>
+                    <div class="text-xs text-red-500 mt-0.5">距到期还有 5 天</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="case-detail.html" class="link-apple text-sm block">家族滞在 (李明)</a>
+                <span class="text-xs text-gray-500">家族滞在申请</span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-700 block">用户上传</span>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: 100%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500">案件整体资料 100%</span>
+              </td>
+              <td>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-orange-100 text-orange-800">
+                  即将过期
+                </span>
+                <div class="text-xs text-gray-500 mt-1">3个月有效期</div>
+              </td>
+              <td>
+                <div class="text-sm">2023-08-15 16:45</div>
+                <div class="text-xs text-gray-500">李明 (客户)</div>
+              </td>
+              <td class="text-right">
+                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">重新索要</button>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <div class="flex items-center">
+                  <svg class="icon-folder mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+                  <div>
+                    <div class="font-medium text-[var(--apple-text-main)] cursor-pointer hover:text-blue-600 transition-colors">高度人才积分表(IT)</div>
+                    <div class="text-xs text-gray-500 mt-0.5">未上传</div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="case-detail.html" class="link-apple text-sm block">高度专门职 (陈某)</a>
+                <span class="text-xs text-gray-500">高度专门职1号(罗)</span>
+              </td>
+              <td>
+                <span class="text-sm text-gray-700 block">模板要求</span>
+                <div class="w-full bg-gray-200 rounded-full h-1.5 mt-1.5">
+                  <div class="bg-blue-600 h-1.5 rounded-full" style="width: 60%"></div>
+                </div>
+                <span class="text-[10px] text-gray-500">案件整体资料 60%</span>
+              </td>
+              <td>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                  待上传 (缺件)
+                </span>
+                <div class="text-xs text-gray-500 mt-1">需客户提供</div>
+              </td>
+              <td>
+                <div class="text-sm text-gray-400">-</div>
+                <div class="text-xs text-gray-400">-</div>
+              </td>
+              <td class="text-right">
+                <button class="text-blue-600 hover:text-blue-800 text-sm font-medium">发送提醒</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+        
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <div id="view-grid" class="view-container">
+        <div class="grid-view">
+          <!-- Item 1 -->
+          <div class="grid-item apple-card">
+            <div class="grid-icon">
+              <svg class="icon-img" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            <div class="grid-title">在留卡正面_扫描件.jpg</div>
+            <div class="grid-subtitle">3.5 MB · 已提交待审核</div>
+          </div>
+          <!-- Item 2 -->
+          <div class="grid-item apple-card">
+            <div class="grid-icon">
+              <svg class="icon-pdf" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+            </div>
+            <div class="grid-title">护照复印件_王强.pdf</div>
+            <div class="grid-subtitle">2.4 MB · 不合格</div>
+          </div>
+          <!-- Item 3 -->
+          <div class="grid-item apple-card">
+            <div class="grid-icon">
+              <svg class="icon-doc" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            </div>
+            <div class="grid-title">课税证明书_李明</div>
+            <div class="grid-subtitle">即将过期</div>
+          </div>
+          <!-- Item 4 -->
+          <div class="grid-item apple-card">
+            <div class="grid-icon">
+              <svg class="icon-folder" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+            </div>
+            <div class="grid-title">高度人才积分表(IT)</div>
+            <div class="grid-subtitle">缺件资料</div>
+          </div>
+        </div>
+        
+        <!-- Pagination for Grid -->
+        <div class="px-6 py-4 mt-6 flex items-center justify-between">
+          <div class="text-sm text-gray-500">显示 1 - 4 条，共 12 条已提交待审核资料</div>
+          <div class="flex space-x-2">
+            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed bg-white">上一页</button>
+            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-700 hover:bg-gray-50 bg-white">下一页</button>
+          </div>
+        </div>
+      </div>
+
+          </div>
+        </main>
+
+        <div id="upload-modal" class="modal-backdrop">
+          <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-xl font-semibold display-font">上传文件</h2>
+              <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="closeUploadModal()">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+
+            <div class="drop-zone mb-6" id="drop-zone">
+              <svg class="w-12 h-12 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+              <p class="text-gray-700 font-medium mb-1">拖拽文件到此处，或 <span class="text-blue-600 cursor-pointer hover:underline">浏览文件</span></p>
+              <p class="text-xs text-gray-500">支持 PDF, JPG, PNG, DOCX 格式，最大 50MB</p>
+            </div>
+
+            <div class="mb-4">
+              <label class="block text-sm font-medium text-gray-700 mb-2">关联案件 (可选)</label>
+              <select class="w-full search-input !w-full bg-gray-50 border border-gray-200">
+                <option>选择要关联的案件...</option>
+                <option>永住许可申请 (张伟)</option>
+                <option>就劳签证续签 (Tech Innovators)</option>
+                <option>家族滞在 (李明)</option>
+              </select>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-8">
+              <button class="btn-secondary" onclick="closeUploadModal()">取消</button>
+              <button class="btn-primary" onclick="closeUploadModal()">开始上传</button>
+            </div>
+          </div>
+        </div>
+
+    <script>
+      function switchView(viewType) {
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelectorAll('.view-container').forEach(container => {
+          container.classList.remove('active');
+        });
+        
+        document.getElementById(`btn-view-${viewType}`).classList.add('active');
+        document.getElementById(`view-${viewType}`).classList.add('active');
+      }
+
+      function openUploadModal() {
+        document.getElementById('upload-modal').classList.add('active');
+      }
+
+      function closeUploadModal() {
+        document.getElementById('upload-modal').classList.remove('active');
+      }
+
+      // Drop zone interactions
+      const dropZone = document.getElementById('drop-zone');
+      ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+      });
+
+      function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, highlight, false);
+      });
+
+      ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, unhighlight, false);
+      });
+
+      function highlight(e) {
+        dropZone.classList.add('dragover');
+      }
+
+      function unhighlight(e) {
+        dropZone.classList.remove('dragover');
+      }
+    </script>
+
+    <script>
+      (function () {
+        var openButtons = document.querySelectorAll("[data-nav-open]");
+        var closeButtons = document.querySelectorAll("[data-nav-close]");
+        function setOpen(open) {
+          document.body.setAttribute("data-nav-open", open ? "true" : "false");
+        }
+        openButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setOpen(true);
+          });
+        });
+        closeButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            setOpen(false);
+          });
+        });
+        document.addEventListener("keydown", function (e) {
+          if (e.key === "Escape") setOpen(false);
+        });
+      })();
+    </script>
+      </div>
+    </div>
+  </body>
+</html>

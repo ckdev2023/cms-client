@@ -238,7 +238,10 @@ void test("AppUserAuthService.requestCode auto-creates user if not found", async
     }
     return Promise.resolve({ rows: [] });
   });
-  const svc = new (AppUserAuthService as unknown as new (pool: Pool, redis: unknown) => AppUserAuthService)(pool, redis);
+  const svc = new (AppUserAuthService as unknown as new (
+    pool: Pool,
+    redis: unknown,
+  ) => AppUserAuthService)(pool, redis);
   await svc.requestCode({ email: "new@example.com" });
   assert.ok(insertCalled, "Should create new app user");
 });
@@ -248,6 +251,9 @@ void test("AppUserAuthService.requestCode auto-creates user if not found", async
 void test("AppUserAuthService.me throws if user not found", async () => {
   const redis = makeMockRedis();
   const pool = makePool(() => Promise.resolve({ rows: [] }));
-  const svc = new (AppUserAuthService as unknown as new (pool: Pool, redis: unknown) => AppUserAuthService)(pool, redis);
+  const svc = new (AppUserAuthService as unknown as new (
+    pool: Pool,
+    redis: unknown,
+  ) => AppUserAuthService)(pool, redis);
   await assert.rejects(() => svc.me("nonexistent"), /not found/);
 });

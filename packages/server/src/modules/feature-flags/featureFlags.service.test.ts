@@ -8,11 +8,17 @@ import { FeatureFlagsService } from "./featureFlags.service";
 void test("shouldEnableFlagByRollout supports all/percentage", () => {
   assert.equal(shouldEnableFlagByRollout({ type: "all" }, undefined), true);
   assert.equal(
-    shouldEnableFlagByRollout({ type: "percentage", percentage: 0, salt: "s" }, "e1"),
+    shouldEnableFlagByRollout(
+      { type: "percentage", percentage: 0, salt: "s" },
+      "e1",
+    ),
     false,
   );
   assert.equal(
-    shouldEnableFlagByRollout({ type: "percentage", percentage: 100, salt: "s" }, "e1"),
+    shouldEnableFlagByRollout(
+      { type: "percentage", percentage: 100, salt: "s" },
+      "e1",
+    ),
     true,
   );
 
@@ -57,7 +63,9 @@ void test("FeatureFlagsService.resolve returns missing/disabled/rollout/used", a
                 org_id: "00000000-0000-4000-8000-000000000000",
                 key: "rollout",
                 enabled: true,
-                payload: { rollout: { type: "percentage", percentage: 0, salt: "s" } },
+                payload: {
+                  rollout: { type: "percentage", percentage: 0, salt: "s" },
+                },
                 created_at: "2026-01-01T00:00:00.000Z",
                 updated_at: "2026-01-01T00:00:00.000Z",
               },
@@ -118,17 +126,23 @@ void test("FeatureFlagsService.resolve returns missing/disabled/rollout/used", a
     used: false,
     reason: "disabled",
   });
-  assert.deepEqual(await service.resolve(ctx, { key: "rollout", entityId: "e1" }), {
-    key: "rollout",
-    enabled: false,
-    used: false,
-    reason: "rollout",
-  });
-  assert.deepEqual(await service.resolve(ctx, { key: "used", entityId: "e1" }), {
-    key: "used",
-    enabled: true,
-    used: true,
-  });
+  assert.deepEqual(
+    await service.resolve(ctx, { key: "rollout", entityId: "e1" }),
+    {
+      key: "rollout",
+      enabled: false,
+      used: false,
+      reason: "rollout",
+    },
+  );
+  assert.deepEqual(
+    await service.resolve(ctx, { key: "used", entityId: "e1" }),
+    {
+      key: "used",
+      enabled: true,
+      used: true,
+    },
+  );
 
   assert.equal(timelineWrites.length, 0);
 });
@@ -196,7 +210,9 @@ void test("FeatureFlagsService.upsert writes flag and timeline", async () => {
   assert.equal(created.key, "k1");
   assert.equal(created.enabled, true);
 
-  const upsertCall = calls.find((c) => c.sql.includes("insert into feature_flags"));
+  const upsertCall = calls.find((c) =>
+    c.sql.includes("insert into feature_flags"),
+  );
   if (!upsertCall) throw new Error("missing upsert call");
   assert.deepEqual(upsertCall.params?.slice(0, 3), [
     "00000000-0000-4000-8000-000000000000",
@@ -206,4 +222,3 @@ void test("FeatureFlagsService.upsert writes flag and timeline", async () => {
 
   assert.equal(timelineWrites.length, 1);
 });
-

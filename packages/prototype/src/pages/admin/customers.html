@@ -23,78 +23,15 @@
         ></include>
 
         <main id="main" class="page">
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">客户</h1>
-              <p class="page-subtitle">客户档案、联系人与历史案件</p>
-            </div>
-            <div class="page-actions">
-              <button class="btn-secondary" type="button">批量导入</button>
-              <button class="btn-primary" type="button">新建客户</button>
-            </div>
-          </div>
+          <include src="/pages/admin/_parts/customers/PageHeader.html"></include>
 
-          <section class="section">
-            <div class="apple-card">
-              <div class="table-wrap">
-                <table class="apple-table" aria-label="客户列表">
-                  <thead>
-                    <tr>
-                      <th>客户</th>
-                      <th>联系方式</th>
-                      <th>在办案件</th>
-                      <th>负责人</th>
-                      <th>更新时间</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="cases-list.html">王小明</a>
-                        <div class="muted">客户编号 C-00192</div>
-                      </td>
-                      <td>
-                        <div>+81 90-1234-5678</div>
-                        <div class="muted">xm.wang@example.com</div>
-                      </td>
-                      <td><span class="badge badge-active">2</span></td>
-                      <td>AD</td>
-                      <td>今天</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="cases-list.html">陈雨</a>
-                        <div class="muted">客户编号 C-00187</div>
-                      </td>
-                      <td>
-                        <div>+81 80-3333-2222</div>
-                        <div class="muted">y.chen@example.com</div>
-                      </td>
-                      <td><span class="badge badge-pending">1</span></td>
-                      <td>YX</td>
-                      <td>昨天</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <a class="link-apple" href="cases-list.html">佐藤健</a>
-                        <div class="muted">客户编号 C-00152</div>
-                      </td>
-                      <td>
-                        <div>+81 70-8888-9999</div>
-                        <div class="muted">t.sato@example.com</div>
-                      </td>
-                      <td><span class="badge badge-done">0</span></td>
-                      <td>HG</td>
-                      <td>上周</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <include src="/pages/admin/_parts/customers/CustomerTable.html"></include>
         </main>
       </div>
     </div>
+
+    <include src="/pages/admin/_parts/customers/AddCustomerModal.html"></include>
+    <include src="/pages/admin/_parts/customers/Toast.html"></include>
 
     <script type="module" src="./admin.js"></script>
   </body>

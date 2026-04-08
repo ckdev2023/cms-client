@@ -1,0 +1,26 @@
+<div class="case-create-wizard">
+  <include src="/pages/admin/_parts/case-create/Stepper.html"></include>
+
+  <div class="case-create-panels">
+    <div class="case-create-panel" data-case-create-step-panel="0">
+      <include src="/pages/admin/_parts/case-create/StepBusiness.html"></include>
+    </div>
+
+    <div class="case-create-panel" data-case-create-step-panel="1" hidden>
+      <include src="/pages/admin/_parts/case-create/StepCustomer.html"></include>
+    </div>
+
+    <div class="case-create-panel" data-case-create-step-panel="2" hidden>
+      <include src="/pages/admin/_parts/case-create/StepAssignment.html"></include>
+    </div>
+
+    <div class="case-create-panel" data-case-create-step-panel="3" hidden>
+      <include src="/pages/admin/_parts/case-create/StepConfirm.html"></include>
+    </div>
+  </div>
+
+  <div class="case-create-footer">
+    <button class="btn-secondary" type="button" data-case-create-action="prev" hidden>上一步</button>
+    <button class="btn-primary" type="button" data-case-create-action="next">下一步：客户关联</button>
+  </div>
+</div>

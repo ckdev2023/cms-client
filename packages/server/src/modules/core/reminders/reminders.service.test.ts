@@ -200,7 +200,10 @@ void test("RemindersService.update throws when not found", async () => {
 void test("RemindersService.update throws when not pending", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("from reminders") && params?.[0] === REMINDER_ID) {
-      return Promise.resolve({ rows: [makeReminderRow({ status: "sent" })], rowCount: 1 });
+      return Promise.resolve({
+        rows: [makeReminderRow({ status: "sent" })],
+        rowCount: 1,
+      });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
@@ -211,7 +214,10 @@ void test("RemindersService.update throws when not pending", async () => {
       svc.update(makeCtx(), REMINDER_ID, {
         scheduledAt: "2026-07-01T00:00:00.000Z",
       }),
-    { name: "BadRequestException", message: "Only pending reminders can be updated" },
+    {
+      name: "BadRequestException",
+      message: "Only pending reminders can be updated",
+    },
   );
 });
 
@@ -262,7 +268,10 @@ void test("RemindersService.cancel throws when not found", async () => {
 void test("RemindersService.cancel throws when not pending", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("from reminders") && params?.[0] === REMINDER_ID) {
-      return Promise.resolve({ rows: [makeReminderRow({ status: "cancelled" })], rowCount: 1 });
+      return Promise.resolve({
+        rows: [makeReminderRow({ status: "cancelled" })],
+        rowCount: 1,
+      });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });

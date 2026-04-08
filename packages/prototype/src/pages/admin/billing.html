@@ -23,86 +23,11 @@
         ></include>
 
         <main id="main" class="page">
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">收费与财务</h1>
-              <p class="page-subtitle">账单、收款、退款与对账（原型）</p>
-            </div>
-            <div class="page-actions">
-              <button class="btn-secondary" type="button">对账</button>
-              <button class="btn-primary" type="button">创建账单</button>
-            </div>
-          </div>
+          <include src="/pages/admin/_parts/billing/PageHeader.html"></include>
 
-          <section class="section">
-            <div class="grid grid-3">
-              <div class="apple-card stat-card">
-                <div class="stat-label">本月应收</div>
-                <div class="stat-value">¥120,000</div>
-                <div class="stat-meta">含未付款账单</div>
-              </div>
-              <div class="apple-card stat-card">
-                <div class="stat-label">本月已收</div>
-                <div class="stat-value">¥86,400</div>
-                <div class="stat-meta">到账成功</div>
-              </div>
-              <div class="apple-card stat-card">
-                <div class="stat-label">逾期账单</div>
-                <div class="stat-value">3</div>
-                <div class="stat-meta">建议自动催收</div>
-              </div>
-            </div>
-          </section>
+          <include src="/pages/admin/_parts/billing/Summary.html"></include>
 
-          <section class="section">
-            <div class="apple-card">
-              <div class="table-wrap">
-                <table class="apple-table" aria-label="账单列表">
-                  <thead>
-                    <tr>
-                      <th>账单</th>
-                      <th>客户</th>
-                      <th>金额</th>
-                      <th>状态</th>
-                      <th>到期</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">INV-2026-00192</div>
-                        <div class="muted">案件：JP-2026-0192</div>
-                      </td>
-                      <td>王小明</td>
-                      <td>¥38,000</td>
-                      <td><span class="badge badge-active">已支付</span></td>
-                      <td>2026-04-05</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">INV-2026-00187</div>
-                        <div class="muted">案件：JP-2026-0187</div>
-                      </td>
-                      <td>陈雨</td>
-                      <td>¥24,000</td>
-                      <td><span class="badge badge-pending">待支付</span></td>
-                      <td>2026-04-12</td>
-                    </tr>
-                    <tr>
-                      <td>
-                        <div class="text-card-title">INV-2026-00169</div>
-                        <div class="muted">案件：JP-2026-0169</div>
-                      </td>
-                      <td>李娜</td>
-                      <td>¥18,000</td>
-                      <td><span class="badge badge-alert">逾期</span></td>
-                      <td>2026-03-28</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
+          <include src="/pages/admin/_parts/billing/BillingTable.html"></include>
         </main>
       </div>
     </div>

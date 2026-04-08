@@ -3,76 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="/styles/admin.css" />
-    <title>Gyosei OS - 后台仪表盘</title>
+    <include src="/pages/admin/_parts/admin-prototype/Head.html"></include>
   </head>
-  <body data-nav-open="false" data-active-nav="dashboard">
+  <body class="antialiased" data-active-nav="admin-prototype">
     <a href="#main" class="skip-link">跳到主要内容</a>
 
-    <include src="/components/Admin/MobileNav.html"></include>
-
     <div class="app-shell">
-      <aside class="side-nav" aria-label="侧边栏导航">
-        <include src="/components/Admin/SideNav.html"></include>
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <include src="/pages/admin/_parts/admin-prototype/SideNav.html"></include>
       </aside>
 
-      <div>
-        <include
-          src="/components/Admin/TopBar.html"
-          data-search-placeholder="搜索：咨询 / 客户 / 案件..."
-        ></include>
+      <div class="min-w-0 flex flex-col">
+        <include src="/pages/admin/_parts/admin-prototype/TopBar.html"></include>
 
-        <main id="main" class="page">
-          <div class="page-header">
-            <div>
-              <h1 class="page-title">仪表盘</h1>
-              <p class="page-subtitle">今天的经营概览与待处理事项</p>
-            </div>
-            <div class="page-actions">
-              <a class="btn-secondary" href="leads-messages.html">新建咨询</a>
-              <a class="btn-primary" href="case-create.html">新建案件</a>
-            </div>
-          </div>
-
-          <section class="section">
-            <div class="grid grid-3">
-              <div class="apple-card stat-card">
-                <div class="stat-label">进行中案件</div>
-                <div class="stat-value">18</div>
-                <div class="stat-meta">其中 3 个需要补材料</div>
-              </div>
-              <div class="apple-card stat-card">
-                <div class="stat-label">待跟进咨询</div>
-                <div class="stat-value">12</div>
-                <div class="stat-meta">2 个超过 24 小时未回复</div>
-              </div>
-              <div class="apple-card stat-card">
-                <div class="stat-label">本月回款</div>
-                <div class="stat-value">¥86,400</div>
-                <div class="stat-meta">较上月 +9.2%</div>
-              </div>
-            </div>
-          </section>
-
-          <div class="divider"></div>
-
-          <section class="section">
-            <h2 class="section-title">快捷入口</h2>
-            <div class="grid grid-3">
-              <a class="apple-card stat-card" href="cases-list.html">
-                <div class="text-card-title">案件管理</div>
-                <div class="muted">查看列表、创建案件、维护状态</div>
-              </a>
-              <a class="apple-card stat-card" href="documents.html">
-                <div class="text-card-title">资料中心</div>
-                <div class="muted">材料清单、模板、上传与归档</div>
-              </a>
-              <a class="apple-card stat-card" href="billing.html">
-                <div class="text-card-title">收费与财务</div>
-                <div class="muted">账单、收款记录与对账</div>
-              </a>
-            </div>
-          </section>
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+          <include src="/pages/admin/_parts/admin-prototype/Main.html"></include>
         </main>
       </div>
     </div>

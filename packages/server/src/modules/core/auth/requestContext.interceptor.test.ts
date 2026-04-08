@@ -22,10 +22,7 @@ function createNext(): CallHandler {
   } as unknown as CallHandler;
 }
 
-function createJwt(
-  secret: string,
-  payload: Record<string, unknown>,
-): string {
+function createJwt(secret: string, payload: Record<string, unknown>): string {
   const header = { alg: "HS256", typ: "JWT" };
   const headerB64 = Buffer.from(JSON.stringify(header)).toString("base64url");
   const payloadB64 = Buffer.from(JSON.stringify(payload)).toString("base64url");
@@ -59,7 +56,9 @@ void test("RequestContextInterceptor attaches requestAuthInput for valid jwt", a
       },
     };
 
-    await firstValueFrom(interceptor.intercept(createExecutionContext(req), createNext()));
+    await firstValueFrom(
+      interceptor.intercept(createExecutionContext(req), createNext()),
+    );
     assert.deepEqual(req.requestAuthInput, {
       orgId: "00000000-0000-4000-8000-000000000000",
       userId: "00000000-0000-4000-8000-000000000001",
@@ -89,7 +88,9 @@ void test("RequestContextInterceptor can attach requestAuthInput from headers wh
       },
     };
 
-    await firstValueFrom(interceptor.intercept(createExecutionContext(req), createNext()));
+    await firstValueFrom(
+      interceptor.intercept(createExecutionContext(req), createNext()),
+    );
     assert.deepEqual(req.requestAuthInput, {
       orgId: "00000000-0000-4000-8000-000000000000",
       userId: "00000000-0000-4000-8000-000000000001",
@@ -119,7 +120,9 @@ void test("RequestContextInterceptor ignores headers when not allowed", async ()
       },
     };
 
-    await firstValueFrom(interceptor.intercept(createExecutionContext(req), createNext()));
+    await firstValueFrom(
+      interceptor.intercept(createExecutionContext(req), createNext()),
+    );
     assert.equal(req.requestAuthInput, undefined);
     assert.equal(req.requestContext, undefined);
   } finally {
@@ -146,7 +149,9 @@ void test("RequestContextInterceptor ignores invalid uuids", async () => {
       },
     };
 
-    await firstValueFrom(interceptor.intercept(createExecutionContext(req), createNext()));
+    await firstValueFrom(
+      interceptor.intercept(createExecutionContext(req), createNext()),
+    );
     assert.equal(req.requestAuthInput, undefined);
     assert.equal(req.requestContext, undefined);
   } finally {

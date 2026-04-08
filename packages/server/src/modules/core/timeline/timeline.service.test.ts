@@ -35,10 +35,17 @@ void test("TimelineService writes timeline_logs with org/user from context", asy
       userId: "00000000-0000-4000-8000-000000000001",
       role: "staff",
     },
-    { entityType: "case", entityId: "c1", action: "created", payload: { a: 1 } },
+    {
+      entityType: "case",
+      entityId: "c1",
+      action: "created",
+      payload: { a: 1 },
+    },
   );
 
-  const insertCall = calls.find((c) => c.sql.includes("insert into timeline_logs"));
+  const insertCall = calls.find((c) =>
+    c.sql.includes("insert into timeline_logs"),
+  );
   if (!insertCall) throw new Error("missing insert call");
   assert.deepEqual(insertCall.params.slice(0, 5), [
     "00000000-0000-4000-8000-000000000000",

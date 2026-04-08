@@ -1,0 +1,14 @@
+<style>
+  .customer-toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:90;display:none}
+  .customer-toast[data-open='true']{display:block}
+  .customer-toast-inner{padding:12px 14px;min-width:min(420px,calc(100vw - 32px))}
+  .customer-toast-title{font-size:13px;font-weight:900;color:var(--text)}
+  .customer-toast-desc{margin-top:4px;font-size:12px;font-weight:800;color:var(--muted-2)}
+</style>
+
+<div id="toast" class="customer-toast" data-customer-toast="root" data-open="false" aria-live="polite" aria-atomic="true">
+  <div class="apple-card customer-toast-inner">
+    <div class="customer-toast-title" id="toastTitle">已保存</div>
+    <div class="customer-toast-desc" id="toastDesc">草稿已保存</div>
+  </div>
+</div>

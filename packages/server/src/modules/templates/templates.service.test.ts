@@ -8,11 +8,17 @@ import { TemplatesService } from "./templates.service";
 void test("shouldUseTemplateByRollout supports all/percentage", () => {
   assert.equal(shouldUseTemplateByRollout({ type: "all" }, undefined), true);
   assert.equal(
-    shouldUseTemplateByRollout({ type: "percentage", percentage: 0, salt: "s" }, "e1"),
+    shouldUseTemplateByRollout(
+      { type: "percentage", percentage: 0, salt: "s" },
+      "e1",
+    ),
     false,
   );
   assert.equal(
-    shouldUseTemplateByRollout({ type: "percentage", percentage: 100, salt: "s" }, "e1"),
+    shouldUseTemplateByRollout(
+      { type: "percentage", percentage: 100, salt: "s" },
+      "e1",
+    ),
     true,
   );
 
@@ -76,7 +82,9 @@ void test("TemplatesService.createVersion allocates next version per kind+key", 
 
   assert.equal(created.version, 3);
 
-  const insertCall = calls.find((c) => c.sql.includes("insert into template_versions"));
+  const insertCall = calls.find((c) =>
+    c.sql.includes("insert into template_versions"),
+  );
   if (!insertCall) throw new Error("missing insert call");
   assert.deepEqual(insertCall.params?.slice(0, 6), [
     "00000000-0000-4000-8000-000000000000",
@@ -160,15 +168,17 @@ void test("TemplatesService.releaseVersion stores previous_version for rollback"
   assert.equal(release.currentVersion, 4);
   assert.equal(release.previousVersion, 3);
 
-  const upsertCall = calls.find((c) => c.sql.includes("insert into template_releases"));
+  const upsertCall = calls.find((c) =>
+    c.sql.includes("insert into template_releases"),
+  );
   if (!upsertCall) throw new Error("missing upsert call");
   assert.deepEqual(upsertCall.params?.slice(0, 7), [
-          "00000000-0000-4000-8000-000000000000",
-          "case_type",
-          "k1",
-          4,
-          3,
-          JSON.stringify({ type: "all" }),
-          "00000000-0000-4000-8000-000000000001",
-        ]);
+    "00000000-0000-4000-8000-000000000000",
+    "case_type",
+    "k1",
+    4,
+    3,
+    JSON.stringify({ type: "all" }),
+    "00000000-0000-4000-8000-000000000001",
+  ]);
 });
