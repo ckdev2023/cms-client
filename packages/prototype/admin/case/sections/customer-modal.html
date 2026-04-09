@@ -3,7 +3,7 @@
     <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between gap-4">
       <div>
         <div class="font-extrabold text-[18px] text-[var(--text)]">新增客户 / 关联人</div>
-        <div class="meta-text mt-1">用于当前建案流程的快速录入，不代表完整客户建档。</div>
+        <div class="meta-text mt-1">保存后会自动回填到当前案件。</div>
       </div>
       <button class="icon-btn" type="button" aria-label="关闭弹窗" data-close-customer-modal>
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@
         </div>
         <div>
           <label class="apple-label" for="newCaseCustomerNote">备注</label>
-          <textarea class="apple-input min-h-[88px]" id="newCaseCustomerNote"></textarea>
+          <textarea class="apple-input min-h-[88px]" id="newCaseCustomerNote" placeholder="例如：与主申请人共用扶养者资料 / 仅做雇主联系人"></textarea>
         </div>
         <div class="text-[13px] font-semibold text-red-600" id="caseCustomerModalError"></div>
       </form>

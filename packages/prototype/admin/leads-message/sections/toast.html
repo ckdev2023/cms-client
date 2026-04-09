@@ -1,0 +1,22 @@
+<!--
+  section: toast.html
+  Shared toast feedback component.
+  P0-CONTRACT §6, §11
+
+  Presets (from data/leads-config.js TOASTS):
+    - leadCreated       已创建 / 新线索已添加到列表
+    - contactMissing    无法创建 / 请至少填写电话或邮箱
+    - nameMissing       无法创建 / 请填写联系人姓名
+    - bulkAssign        批量指派负责人（示例） / ...
+    - bulkFollowUp      批量调整跟进时间（示例） / ...
+    - bulkStatus        批量标记状态（示例） / ...
+    - dedupHit          检测到可能重复 / ...
+    - conversionSuccess 转化成功（示例） / ...
+    - detailUnavailable 详情页建设中 / ...
+-->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+  <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+    <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]" id="toastTitle">已保存</div>
+    <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
+  </div>
+</div>

@@ -1,0 +1,300 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "leads-message-detail",
+  "moduleLabel": "咨询线索（详情页）",
+  "moduleDir": "packages/prototype/admin/leads-message",
+  "entryFile": "packages/prototype/admin/leads-message/detail.html",
+  "migrationSource": "packages/prototype/admin/leads-messages.html",
+  "referenceDocs": [
+    "packages/prototype/admin/leads-message/P0-CONTRACT-DETAIL.md",
+    "packages/prototype/admin/leads-message/SPLIT-ARCHITECTURE-DETAIL.md",
+    "packages/prototype/admin/leads-message/MIGRATION-MAPPING-DETAIL.md",
+    "packages/prototype/admin/leads-message/SPEC-GAP-MATRIX-DETAIL.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/detail-header.html",
+      "purpose": "面包屑、线索标题、状态 badge、负责人、Group、样本切换、操作按钮组",
+      "sourceAnchors": [
+        "breadcrumb",
+        "leadTitle",
+        "leadStatusBadge",
+        "leadOwner",
+        "leadGroup",
+        "leadSampleSelect",
+        "btnEditInfo",
+        "btnChangeStatus",
+        "btnConvertCustomer",
+        "btnConvertCase",
+        "btnMarkLost"
+      ],
+      "contractRefs": [
+        "§1 必保留区块",
+        "§3 详情 Header 字段"
+      ],
+      "productionTarget": "features/lead/ui/LeadDetailHeader"
+    },
+    {
+      "file": "sections/detail-tabs.html",
+      "purpose": "4-Tab 横向导航（基础信息/跟进记录/转化信息/日志）",
+      "sourceAnchors": [
+        "data-tab"
+      ],
+      "contractRefs": [
+        "§2 Tab 定义与 ID 映射"
+      ],
+      "productionTarget": "features/lead/ui/LeadDetailTabs"
+    },
+    {
+      "file": "sections/detail-info.html",
+      "purpose": "基础信息 8 字段结构化展示 + 编辑入口",
+      "sourceAnchors": [
+        "tab-info"
+      ],
+      "contractRefs": [
+        "§4 基础信息 Tab"
+      ],
+      "productionTarget": "features/lead/ui/LeadInfoTab"
+    },
+    {
+      "file": "sections/detail-followups.html",
+      "purpose": "跟进时间线（渠道 chip + 摘要 + 结论 + 下一步 + 时间 + 一键转任务）+ 新增表单 + 空态",
+      "sourceAnchors": [
+        "tab-followups",
+        "followupTimeline",
+        "followupForm",
+        "btnAddFollowup",
+        "data-convert-task"
+      ],
+      "contractRefs": [
+        "§5 跟进记录 Tab"
+      ],
+      "productionTarget": "features/lead/ui/LeadFollowupsTab + FollowupTimeline + FollowupForm"
+    },
+    {
+      "file": "sections/detail-conversion.html",
+      "purpose": "去重匹配面板 + 转客户/转案件操作 + 已转化 Customer/Case 卡片 + 跳转入口",
+      "sourceAnchors": [
+        "tab-conversion",
+        "conversionPanel",
+        "dedupPanel",
+        "convertCustomerModal",
+        "convertCaseModal",
+        "convertedCustomerCard",
+        "convertedCaseCard"
+      ],
+      "contractRefs": [
+        "§6 转化信息 Tab"
+      ],
+      "productionTarget": "features/lead/ui/LeadConversionTab + DedupPanel + ConversionCard + ConversionModal"
+    },
+    {
+      "file": "sections/detail-log.html",
+      "purpose": "三分类筛选（全部/状态变更/人员变更/Group 变更）+ 变更日志时间线",
+      "sourceAnchors": [
+        "tab-log",
+        "logCategoryFilter",
+        "logTimeline"
+      ],
+      "contractRefs": [
+        "§7 日志 Tab"
+      ],
+      "productionTarget": "features/lead/ui/LeadLogTab + LogTimeline"
+    },
+    {
+      "file": "sections/detail-readonly-banner.html",
+      "purpose": "已流失态只读横幅（浅灰底 + 锁图标 + 文案，不可关闭）",
+      "sourceAnchors": [
+        "readonlyBanner"
+      ],
+      "contractRefs": [
+        "§8 状态与异常态"
+      ],
+      "productionTarget": "shared/ui/ReadonlyBanner"
+    },
+    {
+      "file": "sections/detail-warning-banner.html",
+      "purpose": "已签约未转化态 warning 横幅（浅黄底 + 警告图标 + 文案 + 行动按钮，不可关闭）",
+      "sourceAnchors": [
+        "warningBanner"
+      ],
+      "contractRefs": [
+        "§8 状态与异常态"
+      ],
+      "productionTarget": "shared/ui/WarningBanner"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/leads-detail-config.js",
+      "purpose": "集中声明 Tab 定义、8 种样本场景、状态/渠道/日志映射、Header 按钮状态矩阵、toast preset",
+      "exports": [
+        "tabDefinitions",
+        "samples",
+        "defaultSample",
+        "statusDefinitions",
+        "channelDefinitions",
+        "logCategories",
+        "headerButtonMatrix",
+        "toasts"
+      ],
+      "consumers": [
+        "scripts/leads-detail-page.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/lead/leadConstants.ts + Lead.ts + FollowUp.ts + LeadAuditLog.ts"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/leads-detail-page.js",
+      "purpose": "Tab 切换、样本切换、Header 按钮状态矩阵、只读/Warning 控制、跟进录入、一键转任务、转化弹窗、标记流失、日志分类、toast",
+      "domHooks": [
+        "data-tab",
+        "tab-info",
+        "tab-followups",
+        "tab-conversion",
+        "tab-log",
+        "leadSampleSelect",
+        "readonlyBanner",
+        "warningBanner",
+        "followupTimeline",
+        "followupForm",
+        "conversionPanel",
+        "dedupPanel",
+        "convertCustomerModal",
+        "convertCaseModal",
+        "logCategoryFilter",
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "dependsOn": [
+        "data/leads-detail-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/lead/model/useLeadDetailViewModel"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/lead/Lead.ts",
+      "packages/mobile/src/domain/lead/LeadRepository.ts",
+      "packages/mobile/src/domain/lead/FollowUp.ts",
+      "packages/mobile/src/domain/lead/LeadConversion.ts",
+      "packages/mobile/src/domain/lead/LeadAuditLog.ts",
+      "packages/mobile/src/domain/lead/LeadDedupService.ts",
+      "packages/mobile/src/domain/lead/LeadStatusMachine.ts",
+      "packages/mobile/src/domain/lead/leadConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/lead/LeadApi.ts",
+      "packages/mobile/src/data/lead/createLeadRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/lead/model/useLeadDetailViewModel.ts",
+      "packages/mobile/src/features/lead/model/useLeadFollowups.ts",
+      "packages/mobile/src/features/lead/model/useLeadConversion.ts",
+      "packages/mobile/src/features/lead/model/useLeadLog.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/lead/ui/LeadDetailScreen.tsx",
+      "packages/mobile/src/features/lead/ui/LeadDetailHeader.tsx",
+      "packages/mobile/src/features/lead/ui/LeadDetailTabs.tsx",
+      "packages/mobile/src/features/lead/ui/LeadInfoTab.tsx",
+      "packages/mobile/src/features/lead/ui/LeadFollowupsTab.tsx",
+      "packages/mobile/src/features/lead/ui/FollowupTimeline.tsx",
+      "packages/mobile/src/features/lead/ui/FollowupForm.tsx",
+      "packages/mobile/src/features/lead/ui/LeadConversionTab.tsx",
+      "packages/mobile/src/features/lead/ui/DedupPanel.tsx",
+      "packages/mobile/src/features/lead/ui/ConversionCard.tsx",
+      "packages/mobile/src/features/lead/ui/ConversionModal.tsx",
+      "packages/mobile/src/features/lead/ui/LeadLogTab.tsx",
+      "packages/mobile/src/features/lead/ui/LogTimeline.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/ui/Modal.tsx",
+      "packages/mobile/src/shared/ui/ReadonlyBanner.tsx",
+      "packages/mobile/src/shared/ui/WarningBanner.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "deferredRisks": [
+    {
+      "risk": "旧 leads-messages.html 与新模块并存",
+      "impact": "旧页面无独立详情页（仅右侧会话面板），用户体验完全不同",
+      "mitigation": "本轮不改旧入口；后续导航统一任务处理重定向/下线"
+    },
+    {
+      "risk": "主导航（侧边栏/Topbar）未统一改为新路径",
+      "impact": "从其他页面进入仍会到旧 leads-messages.html",
+      "mitigation": "新模块自身导航指向正确路径；全局统一后续处理"
+    },
+    {
+      "risk": "旧页面 chat 布局与新详情页时间线布局差异大",
+      "impact": "从旧页迁移时用户体验跳跃",
+      "mitigation": "在 MIGRATION-MAPPING-DETAIL.md 中记录旧 chat → 新时间线的对照关系"
+    },
+    {
+      "risk": "转化链路无真实数据写入",
+      "impact": "转化后切换页面会丢失状态",
+      "mitigation": "通过样本切换独立展示「已转化」场景；toast 提供视觉反馈"
+    },
+    {
+      "risk": "跟进记录与任务系统未真实联通",
+      "impact": "一键转任务仅为 UI 演示",
+      "mitigation": "toast + 文案说明 demo-only"
+    }
+  ],
+  "regressionChecklist": [
+    "detail.html 可独立运行",
+    "4 个 Tab 全部可切换且内容不为空",
+    "面包屑路径正确：咨询线索 → {联系人姓名}",
+    "Header 完整：标题 + 状态 badge + 负责人 + Group + 操作按钮",
+    "样本切换 8 种场景正常",
+    "基础信息 Tab 8 字段完整",
+    "跟进记录 Tab 至少 3 条时间线 + 新增表单",
+    "每条跟进含渠道 chip + 摘要 + 结论 + 下一步 + 时间",
+    "一键转任务按钮存在",
+    "空跟进记录态引导可见",
+    "转化信息 Tab 含去重面板 + 转客户/转案件入口",
+    "去重命中 Lead（电话匹配）可演示",
+    "去重命中 Customer（邮箱匹配）可演示",
+    "已转化 Customer/Case 卡片 + 跳转入口可见",
+    "Group 继承提示在转化弹窗中可见",
+    "日志 Tab 三分类筛选可用",
+    "每条日志含操作类型/操作人/时间/变更前后值",
+    "已流失态 → 只读 banner 显示 + 字段禁用 + 按钮禁用",
+    "已签约未转化态 → warning banner 显示 + 转化按钮高亮",
+    "从列表页行点击可跳转到详情页",
+    "面包屑「咨询线索」可返回列表页",
+    "移动端导航正常",
+    "侧边栏「咨询线索」项 aria-current=page 高亮"
+  ],
+  "notes": [
+    "detail.html 为全新构建，旧 leads-messages.html 无独立详情页。",
+    "所有跟进录入、转化、标记流失、一键转任务、编辑信息都属于 demo-only 行为，不代表真实落库。",
+    "样本切换提供 8 种场景（following/lost/signed/converted-customer/converted-case/dedup-lead/dedup-customer/empty-followups），用于验收不同业务状态。",
+    "本 manifest 与 split-manifest.json（列表页）并行，各管各的页面范围。",
+    "旧 leads-messages.html 的右侧会话面板布局在新详情页中被完全替代为 Tab + 时间线架构。"
+  ]
+}

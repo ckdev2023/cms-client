@@ -323,8 +323,7 @@
               </th>
               <th>客户</th>
               <th class="hidden md:table-cell">フリガナ</th>
-              <th class="w-[80px] text-center">累计案件</th>
-              <th class="w-[80px] text-center">活跃案件</th>
+              <th class="w-[140px] text-center whitespace-nowrap">案件</th>
               <th class="hidden md:table-cell w-[120px]">最近联系</th>
               <th class="hidden md:table-cell w-[100px]">负责人</th>
               <th class="hidden lg:table-cell w-[110px]">介绍人/来源</th>
@@ -341,17 +340,32 @@
                 <div class="flex items-center">
                   <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">张</div>
                   <div>
-                    <div class="font-medium text-[var(--apple-text-main)]">张伟（就劳）</div>
-                    <div class="text-xs text-gray-500 mt-0.5">CUS-2026-0102 · 090-1234-5678 · zhang.w@email.com</div>
+                    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <div class="font-medium text-[var(--apple-text-main)]">张伟（就劳）</div>
+                      <div class="text-xs text-gray-500">CUS-2026-0102 · 中国</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-0.5">090-1234-5678 · zhang.w@email.com</div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                      <a href="../case/index.html" class="chip">技人国更新</a>
+                      <div class="hidden flex-wrap items-center gap-2" data-case-tags-extra>
+                        <a href="../case/index.html" class="chip">永住申请</a>
+                      </div>
+                      <button
+                        class="text-[12px] font-semibold text-[var(--apple-blue)] hover:underline"
+                        type="button"
+                        data-case-tags-toggle
+                        data-more-count="1"
+                        aria-expanded="false"
+                      >
+                        +1
+                      </button>
+                    </div>
                   </div>
                 </div>
               </td>
               <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チョウ イ</td>
-              <td class="text-center">
-                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
-              </td>
-              <td class="text-center">
-                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">1</a>
+              <td class="text-center whitespace-nowrap">
+                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">累计 2 · 活跃 1</a>
               </td>
               <td class="hidden md:table-cell">
                 <div class="text-sm text-[var(--apple-text-main)]">2026-03-28</div>
@@ -383,17 +397,32 @@
                 <div class="flex items-center">
                   <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">陈</div>
                   <div>
-                    <div class="font-medium text-[var(--apple-text-main)]">陈丽</div>
-                    <div class="text-xs text-gray-500">CUS-2026-0120 · 080-2222-3333 · chen.li@email.com</div>
+                    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <div class="font-medium text-[var(--apple-text-main)]">陈丽</div>
+                      <div class="text-xs text-gray-500">CUS-2026-0120 · 中国</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-0.5">080-2222-3333 · chen.li@email.com</div>
+                    <div class="mt-2 flex flex-wrap items-center gap-2">
+                      <a href="../case/index.html" class="chip">家族滞在更新</a>
+                      <div class="hidden flex-wrap items-center gap-2" data-case-tags-extra>
+                        <a href="../case/index.html" class="chip">资格外活动许可</a>
+                      </div>
+                      <button
+                        class="text-[12px] font-semibold text-[var(--apple-blue)] hover:underline"
+                        type="button"
+                        data-case-tags-toggle
+                        data-more-count="1"
+                        aria-expanded="false"
+                      >
+                        +1
+                      </button>
+                    </div>
                   </div>
                 </div>
               </td>
               <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チン リ</td>
-              <td class="text-center">
-                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
-              </td>
-              <td class="text-center">
-                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">2</a>
+              <td class="text-center whitespace-nowrap">
+                <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">累计 2 · 活跃 2</a>
               </td>
               <td class="hidden md:table-cell">
                 <div class="text-sm text-[var(--apple-text-main)]">2026-03-22</div>
@@ -425,17 +454,18 @@
                 <div class="flex items-center">
                   <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">L</div>
                   <div>
-                    <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
-                    <div class="text-xs text-gray-500">CUS-2026-0128 · 未提供电话 · liwei.test@email.com</div>
+                    <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
+                      <div class="text-xs text-gray-500">CUS-2026-0128 · 中国</div>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-0.5">未提供电话 · liwei.test@email.com</div>
+                    <div class="mt-2 text-[12px] text-gray-400">暂无关联案件</div>
                   </div>
                 </div>
               </td>
               <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">リ ウェイ</td>
-              <td class="text-center">
-                <span class="text-sm text-gray-400">0</span>
-              </td>
-              <td class="text-center">
-                <span class="text-sm text-gray-400">0</span>
+              <td class="text-center whitespace-nowrap">
+                <span class="text-sm text-gray-400">累计 0 · 活跃 0</span>
               </td>
               <td class="hidden md:table-cell">
                 <div class="text-sm text-[var(--apple-text-main)]">2026-03-18</div>
@@ -550,7 +580,7 @@
             </div>
 
             <div>
-              <label class="apple-label">国籍</label>
+              <label class="apple-label">国籍 <span class="text-red-500">*</span></label>
               <input type="text" class="apple-input" id="quickNationality" placeholder="例如：中国 / 日本">
             </div>
 

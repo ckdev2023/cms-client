@@ -33,8 +33,7 @@
     TABLE_COLUMNS: [
       { key: 'customer', label: '客户' },
       { key: 'kana', label: 'フリガナ', responsive: 'md' },
-      { key: 'totalCases', label: '累计案件', width: '80px', align: 'center' },
-      { key: 'activeCases', label: '活跃案件', width: '80px', align: 'center' },
+      { key: 'cases', label: '案件', width: '140px', align: 'center' },
       { key: 'lastContact', label: '最近联系', responsive: 'md', width: '120px' },
       { key: 'owner', label: '负责人', responsive: 'md', width: '100px' },
       { key: 'referrer', label: '介绍人/来源', responsive: 'lg', width: '110px' },
@@ -71,7 +70,7 @@
       { id: 'quickKana', key: 'kana', label: '假名（片假名）', type: 'text', required: false, placeholder: '例如：ワン ウェイ', grid: 'half' },
       { id: 'quickGender', key: 'gender', label: '性別', type: 'select', required: false, options: [{ value: '', label: '不限' }, { value: '男', label: '男' }, { value: '女', label: '女' }], grid: 'half' },
       { id: 'quickBirthDate', key: 'birthDate', label: '生年月日', type: 'date', required: false, grid: 'half' },
-      { id: 'quickNationality', key: 'nationality', label: '国籍', type: 'text', required: false, placeholder: '例如：中国 / 日本', grid: 'full' },
+      { id: 'quickNationality', key: 'nationality', label: '国籍', type: 'text', required: true, placeholder: '例如：中国 / 日本', grid: 'full' },
       { id: 'quickPhone', key: 'phone', label: '电话', type: 'tel', required: 'conditional', placeholder: '手机/座机', hint: '电话/邮箱至少填写一项（用于去重与联系）', grid: 'half' },
       { id: 'quickEmail', key: 'email', label: '邮箱', type: 'email', required: 'conditional', placeholder: '邮箱地址', grid: 'half' },
       { id: 'quickReferrer', key: 'referrer', label: '来源 / 介绍人', type: 'text', required: false, placeholder: '例如：推荐 / 介绍人', grid: 'full' },
@@ -93,7 +92,7 @@
       { id: 'quickNote', key: 'note' },
     ],
 
-    CREATE_REQUIRED_IDS: ['quickLegalName', 'quickGroup'],
+    CREATE_REQUIRED_IDS: ['quickLegalName', 'quickGroup', 'quickNationality'],
     CREATE_CONTACT_IDS: ['quickPhone', 'quickEmail'],
     DEDUPE_TRIGGER_IDS: ['quickPhone', 'quickEmail'],
 

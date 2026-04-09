@@ -1,0 +1,158 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "dashboard",
+  "moduleLabel": "仪表盘",
+  "moduleDir": "packages/prototype/admin/dashboard",
+  "entryFile": "packages/prototype/admin/dashboard/index.html",
+  "referenceDocs": [
+    "packages/prototype/admin/dashboard/P0-CONTRACT.md",
+    "packages/prototype/admin/dashboard/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/dashboard/MIGRATION-MAPPING.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/header.html",
+      "purpose": "页面标题、副标题与 P0 范围说明",
+      "contractRefs": [
+        "§1 必保留卡片"
+      ],
+      "productionTarget": "features/dashboard/ui/DashboardHeader"
+    },
+    {
+      "file": "sections/filters.html",
+      "purpose": "聚合范围切换、时间窗口切换、关键动作入口",
+      "contractRefs": [
+        "§2 视角与窗口切换",
+        "§4 关键动作"
+      ],
+      "productionTarget": "features/dashboard/ui/DashboardToolbar"
+    },
+    {
+      "file": "sections/summary-cards.html",
+      "purpose": "7 张核心聚合卡片",
+      "contractRefs": [
+        "§1 必保留卡片"
+      ],
+      "productionTarget": "features/dashboard/ui/DashboardSummaryGrid"
+    },
+    {
+      "file": "sections/worklists.html",
+      "purpose": "今日待办、临期、补件、待提交、风险、回款列表",
+      "contractRefs": [
+        "§3 必保留列表区块"
+      ],
+      "productionTarget": "features/dashboard/ui/DashboardWorklists"
+    },
+    {
+      "file": "sections/visibility-notes.html",
+      "purpose": "权限、可见性、demo-only 说明",
+      "contractRefs": [
+        "§5 状态与异常态",
+        "§6 权限与可见性说明",
+        "§7 Demo-only 行为"
+      ],
+      "productionTarget": "features/dashboard/ui/DashboardNotes"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "动作反馈 toast",
+      "contractRefs": [
+        "§4 关键动作"
+      ],
+      "productionTarget": "shared/ui/Toast"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/dashboard-config.js",
+      "purpose": "集中声明默认视角、聚合卡片、列表数据、权限说明与 toast 文案",
+      "exports": [
+        "defaultScope",
+        "defaultWindow",
+        "scopeLabels",
+        "scopeSummary",
+        "visibilityNotes",
+        "metrics",
+        "lists",
+        "toasts"
+      ],
+      "consumers": [
+        "scripts/dashboard-page.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/dashboard/DashboardSummary.ts + dashboardConstants.ts"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/dashboard-page.js",
+      "purpose": "渲染卡片与列表、切换 scope/window、展示骨架屏和 toast",
+      "dependsOn": [
+        "data/dashboard-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/dashboard/model/useDashboardViewModel"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/dashboard/DashboardSummary.ts",
+      "packages/mobile/src/domain/dashboard/DashboardWorkItem.ts",
+      "packages/mobile/src/domain/dashboard/DashboardRepository.ts",
+      "packages/mobile/src/domain/dashboard/dashboardConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/dashboard/DashboardApi.ts",
+      "packages/mobile/src/data/dashboard/createDashboardRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/dashboard/model/useDashboardViewModel.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/dashboard/ui/DashboardScreen.tsx",
+      "packages/mobile/src/features/dashboard/ui/DashboardHeader.tsx",
+      "packages/mobile/src/features/dashboard/ui/DashboardToolbar.tsx",
+      "packages/mobile/src/features/dashboard/ui/DashboardSummaryGrid.tsx",
+      "packages/mobile/src/features/dashboard/ui/DashboardWorklists.tsx",
+      "packages/mobile/src/features/dashboard/ui/DashboardNotes.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SegmentedControl.tsx",
+      "packages/mobile/src/shared/ui/SkeletonBlock.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx"
+    ]
+  },
+  "regressionChecklist": [
+    "dashboard/index.html 可独立运行",
+    "7 张卡片完整显示",
+    "6 个列表区块完整显示",
+    "scope 切换时卡片与列表同步刷新",
+    "7 天 / 30 天切换会影响即将到期列表",
+    "骨架屏加载态存在",
+    "空状态文案存在",
+    "关键动作会触发示例反馈",
+    "demo-only 说明在页面与文档中存在"
+  ],
+  "notes": [
+    "仪表盘模块延续共享 shell 和样式，不重复定义通用壳层能力。",
+    "所有聚合值和列表内容均为原型静态数据，未来必须替换为真实聚合查询。"
+  ]
+}

@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../shared/styles/components.css" />
     <style>
       .page-shell {
-        max-width: 1180px;
+        max-width: 1220px;
       }
 
       .page-title {
@@ -22,6 +22,7 @@
 
       .meta-text {
         font-size: 13px;
+        line-height: 1.6;
         font-weight: 600;
         color: var(--muted-2);
       }
@@ -29,7 +30,7 @@
       .section-stack {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 20px;
       }
 
       .section-title {
@@ -48,7 +49,7 @@
 
       .field-grid {
         display: grid;
-        gap: 16px;
+        gap: 18px;
       }
 
       @media (min-width: 768px) {
@@ -63,7 +64,7 @@
 
       .template-grid {
         display: grid;
-        gap: 14px;
+        gap: 16px;
       }
 
       @media (min-width: 768px) {
@@ -75,7 +76,7 @@
       .template-card {
         border: 1px solid var(--border);
         border-radius: 18px;
-        padding: 18px;
+        padding: 20px;
         background: var(--surface);
         transition:
           border-color 160ms ease,
@@ -96,7 +97,7 @@
 
       .wizard-steps {
         display: grid;
-        gap: 12px;
+        gap: 14px;
       }
 
       @media (min-width: 768px) {
@@ -108,7 +109,8 @@
       .wizard-step-item {
         border: 1px solid var(--border);
         border-radius: 16px;
-        padding: 14px 16px;
+        min-height: 120px;
+        padding: 16px 18px;
         background: var(--surface);
       }
 
@@ -182,7 +184,7 @@
       .requirement-section {
         border: 1px solid var(--border);
         border-radius: 18px;
-        padding: 16px;
+        padding: 18px;
         background: #fff;
       }
 
@@ -208,7 +210,7 @@
 
       .summary-grid {
         display: grid;
-        gap: 14px;
+        gap: 16px;
       }
 
       @media (min-width: 768px) {
@@ -220,7 +222,7 @@
       .summary-box {
         border: 1px solid var(--border);
         border-radius: 18px;
-        padding: 16px;
+        padding: 18px;
         background: #fff;
       }
 
@@ -235,6 +237,7 @@
       .summary-value {
         margin-top: 8px;
         font-size: 18px;
+        line-height: 1.35;
         font-weight: 900;
         color: var(--text);
       }
@@ -242,10 +245,57 @@
       .toolbar-footer {
         position: sticky;
         bottom: 0;
-        border-top: 1px solid rgba(226, 232, 240, 0.9);
-        background: rgba(255, 255, 255, 0.92);
-        backdrop-filter: blur(10px);
-        padding: 16px 0 0;
+        z-index: 20;
+        padding: 14px 0 calc(12px + env(safe-area-inset-bottom, 0px));
+        margin-top: 8px;
+      }
+
+      .toolbar-footer-inner {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        border-radius: 22px;
+        background: rgba(255, 255, 255, 0.94);
+        backdrop-filter: blur(14px);
+        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+        padding: 14px;
+      }
+
+      .toolbar-hint {
+        max-width: 620px;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .toolbar-actions > button {
+        min-height: 44px;
+      }
+
+      @media (max-width: 767px) {
+        .toolbar-actions > button {
+          width: 100%;
+          justify-content: center;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .toolbar-footer-inner {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 16px 18px;
+        }
+
+        .toolbar-actions {
+          justify-content: flex-end;
+          flex-shrink: 0;
+        }
       }
 
       .success-banner {
@@ -295,6 +345,33 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="../documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="../forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              设置
+            </a>
+            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+              客户门户
+            </a>
           </nav>
         </div>
       </div>
@@ -330,6 +407,33 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="../documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="../forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              设置
+            </a>
+            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+              客户门户
+            </a>
           </nav>
         </div>
       </aside>
@@ -356,15 +460,14 @@
           </div>
         </header>
 
-        <main id="main" class="pt-6 pb-20 px-4 md:px-8 page-shell mx-auto w-full">
+        <main id="main" class="pt-6 pb-28 md:pb-24 px-4 md:px-8 page-shell mx-auto w-full">
           <!-- section: sections/create-header.html -->
           <section class="mb-8">
             <div class="meta-text mb-3"><a href="index.html" class="link-apple">案件</a> / 新增案件</div>
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <div class="section-kicker mb-3">P0 New Case Flow</div>
                 <h1 class="page-title">新增案件</h1>
-                <p class="meta-text mt-3">覆盖模板选择、客户关联、资料清单生成、负责人分派与家族签批量建案入口。</p>
+                <p class="meta-text mt-3">选择模板、关联客户并完成分派。</p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <span class="chip">模板：家族滞在 / 技人国</span>
@@ -394,7 +497,7 @@
             <div class="wizard-step-item" data-step-indicator>
               <div class="wizard-step-index">4</div>
               <div class="mt-3 font-extrabold text-[var(--text)]">完成创建</div>
-              <div class="meta-text mt-1">复核创建结果与 P0 风险提示</div>
+              <div class="meta-text mt-1">复核创建结果</div>
             </div>
           </section>
 
@@ -404,25 +507,23 @@
               <div>
                 <div class="section-kicker">Step 1</div>
                 <div class="section-title mt-2">业务信息</div>
-                <div class="meta-text mt-2">P0 先支持家族滞在与技人国模板，创建即进入 S1 建档。</div>
+                <div class="meta-text mt-2">选择模板、申请类型与归属 Group。</div>
               </div>
 
               <div class="template-grid">
                 <button class="template-card text-left is-active" type="button" data-template-card="family">
                   <div class="flex items-center justify-between gap-3">
                     <div class="text-[16px] font-extrabold text-[var(--text)]">家族滞在</div>
-                    <span class="chip">P0 高频模板</span>
+                    <span class="chip">家族签</span>
                   </div>
                   <div class="meta-text mt-2">适合配偶/子女批量建案，自动展开扶养者/保证人资料。</div>
-                  <div class="meta-text mt-3">支持 `#family-bulk` 直接进入批量模式。</div>
                 </button>
                 <button class="template-card text-left" type="button" data-template-card="work">
                   <div class="flex items-center justify-between gap-3">
                     <div class="text-[16px] font-extrabold text-[var(--text)]">技人国</div>
-                    <span class="chip">P0 高频模板</span>
+                    <span class="chip">工作类</span>
                   </div>
                   <div class="meta-text mt-2">适合雇主/职位信息驱动的工作类建案，自动带出雇主资料区块。</div>
-                  <div class="meta-text mt-3">P0 先沉淀到案件字段，不引入企业实体。</div>
                 </button>
               </div>
 
@@ -442,9 +543,9 @@
               </div>
 
               <div>
-                <label class="apple-label" for="caseNameInput">案件标题</label>
+                <label class="apple-label" for="caseNameInput" id="caseNameLabel">案件标题</label>
                 <input class="apple-input" id="caseNameInput" type="text" />
-                <div class="meta-text mt-2">默认由“主申请人 + 模板 + 申请类型”生成，也支持手动改名。</div>
+                <div class="meta-text mt-2" id="caseNameHint">默认由“主申请人 + 模板 + 申请类型”生成，也支持手动改名。</div>
               </div>
             </section>
 
@@ -453,22 +554,23 @@
               <div>
                 <div class="section-kicker">Step 2</div>
                 <div class="section-title mt-2">关联人与资料模板</div>
-                <div class="meta-text mt-2">主申请人为必选。家族签支持扶养者/保证人，技人国强调雇主信息。</div>
+                <div class="meta-text mt-2" id="relatedStepHint">先选择主申请人，再按案件类型补充关联人。</div>
               </div>
 
               <div class="field-grid two">
                 <div>
-                  <label class="apple-label" for="primaryCustomerSelect">选择主申请人</label>
+                  <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">选择主申请人</label>
                   <select class="apple-input" id="primaryCustomerSelect"></select>
                 </div>
                 <div class="flex items-end gap-2">
-                  <button class="btn-secondary" type="button" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
-                  <button class="btn-pill" type="button" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
+                  <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
+                  <button class="btn-pill" type="button" id="relatedModalBtn" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
+                  <button class="btn-pill hidden" type="button" id="supportingPartyBtn" data-open-customer-modal="related" data-default-role="保证人">追加保证人</button>
                 </div>
               </div>
 
               <div class="summary-box" id="primaryCustomerCard">
-                <div class="summary-label">主申请人</div>
+                <div class="summary-label" id="primaryCustomerCardLabel">主申请人</div>
                 <div class="summary-value" id="primaryCustomerName">-</div>
                 <div class="meta-text mt-2" id="primaryCustomerMeta">-</div>
                 <div class="meta-text mt-2" id="primaryCustomerContact">-</div>
@@ -477,8 +579,8 @@
               <div class="section-stack">
                 <div class="flex items-center justify-between gap-3">
                   <div>
-                    <div class="section-title">关联人</div>
-                    <div class="meta-text mt-1">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
+                    <div class="section-title" id="additionalPartiesTitle">关联人</div>
+                    <div class="meta-text mt-1" id="additionalPartiesHint">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
                   </div>
                   <button class="btn-pill" type="button" data-open-customer-modal="related" data-default-role="子女">添加办理对象</button>
                 </div>
@@ -497,9 +599,22 @@
                 <div class="summary-grid mt-4" id="familyDependents"></div>
               </div>
 
+              <div class="summary-box hidden" id="familyKeyPartyPanel">
+                <div class="section-title">CaseParty 关键关系人绑定</div>
+                <div class="meta-text mt-2">批量建案时先绑定扶养者 / 保证人，后续每个案件自动挂入 CaseParty。</div>
+                <div class="section-stack mt-4" id="familyKeyPartyList"></div>
+                <div class="section-stack mt-4" id="familyGateNotes"></div>
+              </div>
+
+              <div class="summary-box hidden" id="familyCaseMatrixPanel">
+                <div class="section-title">批量建案预览</div>
+                <div class="meta-text mt-2">每位办理对象会生成独立 Case，并继承同一 Group、来源与默认负责人。</div>
+                <div class="summary-grid mt-4" id="familyCaseMatrix"></div>
+              </div>
+
               <div class="summary-box hidden" id="workScenarioPanel">
                 <div class="section-title">雇主信息沉淀</div>
-                <div class="meta-text mt-2">P0 不引入企业客户实体，先把雇主信息作为案件字段快照保存。</div>
+                <div class="meta-text mt-2">保存当前案件所需的雇主联系人与基础信息。</div>
                 <div class="flex flex-wrap gap-2 mt-4" id="workFieldList"></div>
               </div>
 
@@ -518,7 +633,7 @@
               <div>
                 <div class="section-kicker">Step 3</div>
                 <div class="section-title mt-2">分派与初始设置</div>
-                <div class="meta-text mt-2">创建案件后默认生成资料清单，也可同步生成催办/跟进任务。</div>
+                <div class="meta-text mt-2">设置负责人、期限和创建后的初始动作。</div>
               </div>
 
               <div class="field-grid three">
@@ -562,18 +677,29 @@
                   </div>
                 </label>
               </div>
+
+              <div class="summary-box hidden" id="familyCreationPanel">
+                <div class="section-title">家族批量建案动作</div>
+                <div class="meta-text mt-2" id="familyCreationSummary">-</div>
+                <div class="section-stack mt-4" id="familyCreationTasks"></div>
+              </div>
             </section>
 
             <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
               <div>
                 <div class="section-kicker">Step 4</div>
                 <div class="section-title mt-2">完成创建</div>
-                <div class="meta-text mt-2">创建后进入 S1 建档，后续从列表或详情推进资料收集、Gate 校验与提交。</div>
+                <div class="meta-text mt-2">确认关键信息后创建案件。</div>
               </div>
 
               <div class="success-banner hidden" id="successBanner">
-                <div class="font-extrabold">案件已创建（示例）</div>
-                <div class="meta-text mt-2">已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。</div>
+                <div class="font-extrabold" id="successBannerTitle">案件已创建</div>
+                <div class="meta-text mt-2" id="successBannerDesc">已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。</div>
+                <div class="flex flex-wrap gap-2 mt-4">
+                  <button class="btn-primary" type="button" id="viewCaseDocumentsBtn">去上传资料</button>
+                  <button class="btn-secondary" type="button" id="viewCaseDetailBtn">查看案件详情</button>
+                  <button class="btn-secondary" type="button" id="viewCreatedCasesBtn">查看案件列表结果</button>
+                </div>
               </div>
 
               <div class="summary-grid">
@@ -606,17 +732,16 @@
               <div class="summary-box">
                 <div class="summary-label">创建动作</div>
                 <div class="summary-value" id="summaryChecklist">-</div>
-                <div class="meta-text mt-3">P0 仍为原型演示，CaseParty 绑定、提交包锁定与收费节点回写在真实实现阶段完成。</div>
               </div>
             </section>
 
             <div class="toolbar-footer">
-              <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div class="meta-text" id="submitHint">创建后进入 S1 建档，并按模板生成资料清单与初始任务。</div>
-                <div class="flex items-center gap-2">
+              <div class="toolbar-footer-inner">
+                <div class="meta-text toolbar-hint" id="submitHint">创建后会自动生成资料清单与初始任务。</div>
+                <div class="toolbar-actions">
                   <button class="btn-secondary hidden" type="button" id="btnPrevStep">上一步</button>
                   <button class="btn-primary" type="button" id="btnNextStep">下一步：关联人与资料模板</button>
-                  <button class="btn-primary hidden" type="button" id="btnSubmitCase">创建案件（示例）</button>
+                  <button class="btn-primary hidden" type="button" id="btnSubmitCase">创建案件</button>
                 </div>
               </div>
             </div>
@@ -631,7 +756,7 @@
         <div class="px-6 py-5 border-b border-[var(--border)] flex items-center justify-between gap-4">
           <div>
             <div class="font-extrabold text-[18px] text-[var(--text)]">新增客户 / 关联人</div>
-            <div class="meta-text mt-1">用于当前建案流程的快速录入，不代表完整客户建档。</div>
+            <div class="meta-text mt-1">保存后会自动回填到当前案件。</div>
           </div>
           <button class="icon-btn" type="button" aria-label="关闭弹窗" data-close-customer-modal>
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">

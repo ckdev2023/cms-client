@@ -1,0 +1,285 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "case-detail",
+  "moduleLabel": "案件詳情",
+  "moduleDir": "packages/prototype/admin/case",
+  "entryFile": "packages/prototype/admin/case/detail.html",
+  "migrationSource": "packages/prototype/admin/case-detail.html",
+  "referenceDocs": [
+    "packages/prototype/admin/case/P0-CONTRACT-DETAIL.md",
+    "packages/prototype/admin/case/SPLIT-ARCHITECTURE-DETAIL.md",
+    "packages/prototype/admin/case/MIGRATION-MAPPING-DETAIL.md",
+    "packages/prototype/admin/case/SPEC-GAP-MATRIX-DETAIL.md",
+    "docs/gyoseishoshi_saas_md/06-页面规格/案件.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/detail-header.html",
+      "purpose": "面包屑、案件标题、阶段 badge、负責人、管轄機構、操作欄、樣本切換",
+      "sourceAnchors": [
+        "breadcrumb",
+        "caseTitle",
+        "caseStageBadge",
+        "caseOwner",
+        "caseSampleSelect"
+      ],
+      "contractRefs": ["§1 必保留區塊", "§3 Header 字段"],
+      "productionTarget": "features/case/ui/CaseDetailHeader"
+    },
+    {
+      "file": "sections/detail-tabs.html",
+      "purpose": "10 個 Tab 橫向導航",
+      "sourceAnchors": ["data-tab"],
+      "contractRefs": ["§2 Tab 定義"],
+      "productionTarget": "features/case/ui/CaseDetailTabs"
+    },
+    {
+      "file": "sections/detail-overview.html",
+      "purpose": "4 張 summary card + 按提供方完成率 + 阻斷/風險摘要 + 下一步動作 + 時間線",
+      "sourceAnchors": [
+        "tab-overview",
+        "providerProgress",
+        "riskSummary",
+        "nextAction",
+        "timeline"
+      ],
+      "contractRefs": ["§4 概覽 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailOverview"
+    },
+    {
+      "file": "sections/detail-info.html",
+      "purpose": "案件類型、申請類型、申請對象、關聯企業、風險標籤",
+      "sourceAnchors": ["tab-info"],
+      "contractRefs": ["§5 基礎信息 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailInfo"
+    },
+    {
+      "file": "sections/detail-documents.html",
+      "purpose": "按提供方分組的資料清單 + 狀態 + 催辦 + waived/expired + 標記操作",
+      "sourceAnchors": [
+        "tab-documents",
+        "documentsByProvider",
+        "waivedExample",
+        "expiredExample"
+      ],
+      "contractRefs": ["§6 資料清單 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailDocuments"
+    },
+    {
+      "file": "sections/detail-messages.html",
+      "purpose": "消息時間線 + 撰寫區 + 類型篩選",
+      "sourceAnchors": ["tab-messages"],
+      "contractRefs": ["§7 溝通記錄 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailMessages"
+    },
+    {
+      "file": "sections/detail-forms.html",
+      "purpose": "文書模板列表 + 生成記錄 + 版本 + 導出",
+      "sourceAnchors": ["tab-forms"],
+      "contractRefs": ["§8 文書 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailForms"
+    },
+    {
+      "file": "sections/detail-tasks.html",
+      "purpose": "任務列表 + 新增入口",
+      "sourceAnchors": ["tab-tasks"],
+      "contractRefs": ["§9 任務 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailTasks"
+    },
+    {
+      "file": "sections/detail-deadlines.html",
+      "purpose": "4 種期限項（在留到期/補件截止/提交預約/結果預計）",
+      "sourceAnchors": ["tab-deadlines"],
+      "contractRefs": ["§10 期限 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailDeadlines"
+    },
+    {
+      "file": "sections/detail-validation.html",
+      "purpose": "校驗報告（Gate 標注）+ 複核 + 提交包 + 補正包 + 風險確認",
+      "sourceAnchors": [
+        "tab-validation",
+        "gateLabel",
+        "reviewRecord",
+        "submissionPackages",
+        "correctionPackage",
+        "riskConfirmation"
+      ],
+      "contractRefs": ["§11 校驗與提交 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailValidation"
+    },
+    {
+      "file": "sections/detail-billing.html",
+      "purpose": "統計卡 + 收款節點表格 + 登記回款",
+      "sourceAnchors": ["tab-billing"],
+      "contractRefs": ["§12 收費 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailBilling"
+    },
+    {
+      "file": "sections/detail-log.html",
+      "purpose": "三分類日誌（操作/審核/狀態變更）",
+      "sourceAnchors": ["tab-log", "logCategoryFilter"],
+      "contractRefs": ["§13 日誌 Tab"],
+      "productionTarget": "features/case/ui/CaseDetailLog"
+    },
+    {
+      "file": "sections/detail-readonly-banner.html",
+      "purpose": "S9 歸檔只讀橫幅",
+      "sourceAnchors": ["readonlyBanner"],
+      "contractRefs": ["§15 狀態與異常態"],
+      "productionTarget": "features/case/ui/CaseReadonlyBanner"
+    },
+    {
+      "file": "sections/detail-risk-confirmation.html",
+      "purpose": "欠款風險確認彈窗（確認人/原因/憑證/時間）",
+      "sourceAnchors": ["riskConfirmModal"],
+      "contractRefs": ["§15 狀態與異常態"],
+      "productionTarget": "features/case/ui/RiskConfirmationModal"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/case-detail-config.js",
+      "purpose": "集中聲明 Tab 定義、6 種樣本場景、階段映射、校驗狀態、資料狀態、收費狀態、日誌分類、toast 文案",
+      "exports": [
+        "tabDefinitions",
+        "samples",
+        "defaultSample",
+        "stageDefinitions",
+        "validationStatuses",
+        "documentStatuses",
+        "billingStatuses",
+        "logCategories",
+        "toasts"
+      ],
+      "consumers": ["scripts/case-detail-page.js"],
+      "demoOnly": true,
+      "productionTarget": "domain/case/caseConstants.ts + CaseDetail types"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/case-detail-page.js",
+      "purpose": "Tab 切換、樣本切換、概要卡更新、按提供方完成率折疊、只讀控制、風險確認彈窗、日誌分類、toast",
+      "domHooks": [
+        "data-tab",
+        "tab-overview",
+        "tab-info",
+        "tab-documents",
+        "tab-messages",
+        "tab-forms",
+        "tab-tasks",
+        "tab-deadlines",
+        "tab-validation",
+        "tab-billing",
+        "tab-log",
+        "caseSampleSelect",
+        "readonlyBanner",
+        "riskConfirmModal",
+        "providerProgress",
+        "logCategoryFilter",
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "dependsOn": ["data/case-detail-config.js"],
+      "demoOnly": true,
+      "productionTarget": "features/case/model/useCaseDetailViewModel"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/case/Case.ts",
+      "packages/mobile/src/domain/case/CaseRepository.ts",
+      "packages/mobile/src/domain/case/DocumentRequirement.ts",
+      "packages/mobile/src/domain/case/ValidationRun.ts",
+      "packages/mobile/src/domain/case/ReviewRecord.ts",
+      "packages/mobile/src/domain/case/SubmissionPackage.ts",
+      "packages/mobile/src/domain/case/RiskConfirmation.ts",
+      "packages/mobile/src/domain/case/AuditLog.ts",
+      "packages/mobile/src/domain/case/CaseDeadline.ts",
+      "packages/mobile/src/domain/case/Communication.ts",
+      "packages/mobile/src/domain/case/caseConstants.ts",
+      "packages/mobile/src/domain/billing/BillingPlan.ts",
+      "packages/mobile/src/domain/billing/BillingRepository.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/case/CaseApi.ts",
+      "packages/mobile/src/data/case/createCaseRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/case/model/useCaseDetailViewModel.ts",
+      "packages/mobile/src/features/case/model/useCaseDetailOverview.ts",
+      "packages/mobile/src/features/case/model/useCaseDocumentList.ts",
+      "packages/mobile/src/features/case/model/useCaseValidation.ts",
+      "packages/mobile/src/features/case/model/useCaseBilling.ts",
+      "packages/mobile/src/features/case/model/useCaseAuditLog.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/case/ui/CaseDetailScreen.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailHeader.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailTabs.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailOverview.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailInfo.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailDocuments.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailMessages.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailForms.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailTasks.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailDeadlines.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailValidation.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailBilling.tsx",
+      "packages/mobile/src/features/case/ui/CaseDetailLog.tsx",
+      "packages/mobile/src/features/case/ui/CaseReadonlyBanner.tsx",
+      "packages/mobile/src/features/case/ui/RiskConfirmationModal.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/ui/Modal.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "detail.html 可獨立運行",
+    "10 個 Tab 全部可切換且內容不為空",
+    "面包屑路徑正確：案件 → {案件編號}",
+    "Header 完整：標題 + 狀態 badge + 負責人 + 管轄機構 + 操作按鈕",
+    "概覽 Tab 4 張 card 完整",
+    "按提供方完成率可折疊/展開",
+    "資料清單按提供方分組 + waived/expired 示例",
+    "文書 Tab 至少 1 個已生成示例",
+    "期限 Tab 4 種期限項齊全",
+    "校驗 Tab 含 Gate 標注 + 補正包 + 風險確認",
+    "收費 Tab 含登記回款入口",
+    "日誌 Tab 三分類篩選可用",
+    "S9 只讀 banner + 字段禁用",
+    "風險確認彈窗可觸發",
+    "樣本切換 6 種場景正常",
+    "從案件列表可跳轉到新詳情頁",
+    "admin-prototype.html 入口指向新路徑",
+    "舊 case-detail.html 不再作為主入口",
+    "移動端導航正常",
+    "側邊欄「案件」項 aria-current=page 高亮"
+  ],
+  "notes": [
+    "detail.html 是案件詳情的原型入口，從旧 case-detail.html 遷入並補齊規格缺口。",
+    "所有校驗、提交包、風險確認、歸檔、回款登記都屬於 demo-only 行為，不代表真實落庫。",
+    "樣本切換提供 6 種場景（work/family/gate-failed/debt-submit/correction/archived），用於驗收不同業務狀態。",
+    "本 manifest 與 split-manifest.json（列表/新建）並行，各管各的頁面範圍。"
+  ]
+}

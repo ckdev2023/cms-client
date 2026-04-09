@@ -61,15 +61,29 @@
     if (customersTbody) {
       customersTbody.addEventListener('click', (e) => {
         var btn = e.target.closest('[data-action="resume-draft"]');
-        if (!btn) return;
-        var draftId = btn.getAttribute('data-draft-id');
-        if (!draftId) return;
-        var draft = drafts.getDrafts().find((d) => d.id === draftId);
-        if (!draft) return;
-        modal.currentDraftId = draftId;
-        modal.applyState(draft.state);
-        modal.openModal();
-        showToast(config.TOAST.draftLoaded);
+        if (btn) {
+          var draftId = btn.getAttribute('data-draft-id');
+          if (!draftId) return;
+          var draft = drafts.getDrafts().find((d) => d.id === draftId);
+          if (!draft) return;
+          modal.currentDraftId = draftId;
+          modal.applyState(draft.state);
+          modal.openModal();
+          showToast(config.TOAST.draftLoaded);
+          return;
+        }
+
+        var caseToggle = e.target.closest('[data-case-tags-toggle]');
+        if (!caseToggle) return;
+        var container = caseToggle.parentElement;
+        var extraTags = container?.querySelector('[data-case-tags-extra]');
+        if (!extraTags) return;
+
+        var isExpanded = caseToggle.getAttribute('aria-expanded') === 'true';
+        extraTags.classList.toggle('hidden', isExpanded);
+        extraTags.classList.toggle('flex', !isExpanded);
+        caseToggle.setAttribute('aria-expanded', String(!isExpanded));
+        caseToggle.textContent = isExpanded ? `+${caseToggle.getAttribute('data-more-count') || '0'}` : '收起';
       });
     }
 

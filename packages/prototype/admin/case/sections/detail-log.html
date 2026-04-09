@@ -1,0 +1,23 @@
+<!--
+  Section: detail-log.html
+  Purpose: 三分類日誌（操作/審核/狀態變更）
+  Contract: P0-CONTRACT-DETAIL.md §13
+  Production target: features/case/ui/CaseDetailLog
+
+  DOM hooks: #logCategoryFilter, [data-log-category], [data-log-type]
+
+  Log categories:
+    - all: 全部
+    - operation: 操作日志
+    - review: 審核日誌
+    - status: 狀態變更日誌
+
+  Spec gap fixes:
+    - Title changed from "系統操作日誌" to "日誌"
+    - Filter changed from "所有操作/文件操作/系統通知/狀態變更" to three-category segmented control
+    - Added review log examples (approve + reject)
+    - Added status change log examples
+    - Each log item tagged with category chip
+    - Log items include: object type + operation type + operator + time + change content
+-->
+<!-- Content is inlined in detail.html. This file documents the structural boundary. -->

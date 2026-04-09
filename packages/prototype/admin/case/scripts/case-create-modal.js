@@ -43,6 +43,8 @@
         role: roleInput ? roleInput.value : '关联人',
         group: groupSelect ? groupSelect.value : '',
         groupLabel: groupOption ? groupOption.textContent : '',
+        phone: phone,
+        email: email,
         contact: [email, phone].filter(Boolean).join(' / ') || '未填写联系方式',
         note: document.getElementById('newCaseCustomerNote').value.trim(),
         initials: name.replace(/\s+/g, '').slice(0, 2).toUpperCase() || '新',

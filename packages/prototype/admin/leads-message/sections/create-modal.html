@@ -1,0 +1,27 @@
+<!--
+  section: create-modal.html
+  Full-field create-lead modal with dedup hint panel.
+  P0-CONTRACT §5
+
+  Fields (12):
+    1.  联系人姓名      text        required
+    2.  电话            tel         conditional (phone/email at least one)
+    3.  邮箱            email       conditional
+    4.  来源            select      Web / 介绍 / 来访 / 电话 / 其他
+    5.  介绍人          text        shown when source = referral
+    6.  意向业务类型    select      高度人才 / 技人国 / 家族滞在 / 设立法人 / 永住 / 其他
+    7.  归属 Group      select      东京一组 / 东京二组 / 大阪组
+    8.  负责人          select      Suzuki / Tanaka / Sato
+    9.  首选语言        select      日本語 / 中文 / English / Tiếng Việt
+   10.  下一步动作      text
+   11.  下次跟进时间    datetime-local  (default: tomorrow 10:00)
+   12.  备注            textarea
+
+  Dedup hint panel:
+    - Yellow/orange background card
+    - Matched record summary (name, id, contact, group)
+    - "继续创建" + "查看已有记录" buttons
+-->
+
+<!-- See index.html for the full integrated HTML.
+     This file exists as a logical boundary reference per SPLIT-ARCHITECTURE.md §2. -->

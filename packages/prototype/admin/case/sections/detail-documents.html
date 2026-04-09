@@ -1,0 +1,24 @@
+<!--
+  Section: detail-documents.html
+  Purpose: 按提供方分組的資料清單 + 狀態 + 催辦 + waived/expired + 標記操作
+  Contract: P0-CONTRACT-DETAIL.md §6
+  Production target: features/case/ui/CaseDetailDocuments
+
+  DOM hooks: #documentsByProvider, #docsProgressBar, #docsProgressLabel,
+             #waivedExample, #expiredExample
+
+  Provider groups:
+    1. 主申請人提供 (3/5)
+    2. 扶養者/保証人提供 (2/3)
+    3. 雇主/所屬機構提供 (2/5)
+    4. 事務所內部準備 (1/3)
+
+  Spec gap fixes:
+    - Provider-grouped view (NEW)
+    - waived example: 課税証明書 with reason + operator + timestamp
+    - expired example: 納税証明書 with danger styling
+    - Last reminder time per item
+    - "標記無需提供" action button on pending items
+    - waived items excluded from denominator but visible in list (greyed)
+-->
+<!-- Content is inlined in detail.html. This file documents the structural boundary. -->

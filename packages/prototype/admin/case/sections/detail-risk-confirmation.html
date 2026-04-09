@@ -1,0 +1,32 @@
+<!--
+  Section: detail-risk-confirmation.html
+  Purpose: 欠款風險確認彈窗（確認人/原因/憑證/時間）
+  Contract: P0-CONTRACT-DETAIL.md §15
+  Production target: features/case/ui/RiskConfirmationModal
+
+  DOM hooks: #riskConfirmModal, #riskConfirmReason, #riskConfirmPerson,
+             #riskConfirmSubmit, [data-close-risk-modal]
+  Trigger: #triggerRiskConfirm button in validation tab
+-->
+<div class="modal-backdrop" id="riskConfirmModal">
+  <div class="apple-modal max-w-[540px] border border-[var(--border)]">
+    <div class="px-6 py-5 border-b border-[var(--border)]">
+      <div class="font-extrabold text-[18px] text-[var(--text)]">欠款风险确认</div>
+      <div class="meta-text mt-1">当前案件存在未结清费用。确认后将留痕并允许继续提交。</div>
+    </div>
+    <div class="px-6 py-6 section-stack">
+      <div>
+        <label class="apple-label" for="riskConfirmReason">确认原因</label>
+        <textarea class="apple-input min-h-[88px]" id="riskConfirmReason" placeholder="说明为何在欠款状态下继续提交"></textarea>
+      </div>
+      <div>
+        <label class="apple-label" for="riskConfirmPerson">确认人</label>
+        <input class="apple-input" id="riskConfirmPerson" type="text" placeholder="输入确认人姓名" />
+      </div>
+    </div>
+    <div class="px-6 py-5 border-t border-[var(--border)] flex items-center justify-end gap-2">
+      <button class="btn-secondary" type="button" data-close-risk-modal>取消</button>
+      <button class="btn-primary" type="button" id="riskConfirmSubmit">确认并继续提交</button>
+    </div>
+  </div>
+</div>

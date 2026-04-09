@@ -305,18 +305,15 @@
 
 ## 9 详情页与后续入口
 
-当前 `case/index.html` 只覆盖列表页，但拆分设计必须为以下详情维度预留映射：
+当前 `case/index.html` 只覆盖列表页。详情页拆分已独立为专属文档集：
 
-- 概览
-- 基础信息
-- 资料清单
-- 文书
-- 任务
-- 期限
-- 校验与提交
-- 收费
-- 沟通记录
-- 日志
+- 约束清单：[P0-CONTRACT-DETAIL.md](./P0-CONTRACT-DETAIL.md)
+- 拆分架构：[SPLIT-ARCHITECTURE-DETAIL.md](./SPLIT-ARCHITECTURE-DETAIL.md)
+- 迁移映射：[MIGRATION-MAPPING-DETAIL.md](./MIGRATION-MAPPING-DETAIL.md)
+- Manifest：[split-manifest-detail.json](./split-manifest-detail.json)
+- 缺口矩阵：[SPEC-GAP-MATRIX-DETAIL.md](./SPEC-GAP-MATRIX-DETAIL.md)
+
+详情页覆盖 10 个 Tab：概览、基础信息、资料清单、沟通记录、文書、任务、期限、校验与提交、收费、日志。
 
 ## 10 P0 明确不做
 

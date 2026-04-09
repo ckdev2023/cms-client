@@ -328,7 +328,16 @@ packages/prototype/admin/
 
 ---
 
-## 6 从原型 Section 到生产组件的映射表（前瞻）
+## 6 详情页子模块
+
+详情页（`detail.html`）的拆分架构、约束与映射已独立管理：
+
+- [SPLIT-ARCHITECTURE-DETAIL.md](./SPLIT-ARCHITECTURE-DETAIL.md)
+- [P0-CONTRACT-DETAIL.md](./P0-CONTRACT-DETAIL.md)
+- [MIGRATION-MAPPING-DETAIL.md](./MIGRATION-MAPPING-DETAIL.md)
+- [split-manifest-detail.json](./split-manifest-detail.json)
+
+## 7 从原型 Section 到生产组件的映射表（前瞻）
 
 完整映射见 [MIGRATION-MAPPING.md](./MIGRATION-MAPPING.md)。这里保留速查摘要：
 

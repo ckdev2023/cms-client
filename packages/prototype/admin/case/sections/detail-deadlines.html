@@ -1,0 +1,17 @@
+<!--
+  Section: detail-deadlines.html
+  Purpose: 4 種期限項（在留到期/補件截止/提交預約/結果預計）
+  Contract: P0-CONTRACT-DETAIL.md §10
+  Production target: features/case/ui/CaseDetailDeadlines
+
+  DOM hooks: #deadline1, #deadline1Title, #deadline1Desc, #deadline1Date, #deadline1Remaining,
+             #deadline2, #deadline3, #deadline4
+
+  Spec gap fixes:
+    - Added 補件截止日 (placeholder "暫無")
+    - Added 提交預約日 (2026/04/22)
+    - Added 結果預計日 (2026/06/15)
+    - Each item color-coded by urgency: red (danger) / amber (warning) / blue (info) / gray (inactive)
+    - Left color bar indicator per item
+-->
+<!-- Content is inlined in detail.html. This file documents the structural boundary. -->

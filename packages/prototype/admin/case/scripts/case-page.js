@@ -3,7 +3,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     var store = window.CaseListData || { owners: {}, cases: [] };
-    var cases = Array.isArray(store.cases) ? store.cases : [];
+    var CASE_LIST_DRAFTS_KEY = 'prototype.caseListDrafts';
+    var CASE_LIST_FLASH_KEY = 'prototype.caseListFlash';
+    var cases = Array.isArray(store.cases) ? store.cases.slice() : [];
     var owners = store.owners || {};
 
     var state = {
@@ -17,6 +19,8 @@
         validation: 'all',
       },
       selectedIds: new Set(),
+      focusIds: null,
+      latestFlash: null,
     };
 
     var elements = {
@@ -48,6 +52,11 @@
       summaryFailedValidations: document.getElementById('summaryFailedValidations'),
       summaryDueSoon: document.getElementById('summaryDueSoon'),
       summaryUnpaidTotal: document.getElementById('summaryUnpaidTotal'),
+      creationFlashBanner: document.getElementById('creationFlashBanner'),
+      creationFlashTitle: document.getElementById('creationFlashTitle'),
+      creationFlashDesc: document.getElementById('creationFlashDesc'),
+      creationFlashFilterBtn: document.getElementById('creationFlashFilterBtn'),
+      creationFlashDismiss: document.getElementById('creationFlashDismiss'),
     };
 
     function formatCurrency(value) {
@@ -76,8 +85,46 @@
       return 'status-risk-normal';
     }
 
+    function readSessionJson(key) {
+      try {
+        var raw = window.sessionStorage.getItem(key);
+        return raw ? JSON.parse(raw) : null;
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function removeSessionKey(key) {
+      try {
+        window.sessionStorage.removeItem(key);
+      } catch (error) {
+        return;
+      }
+    }
+
+    function bootstrapDraftCases() {
+      var draftCases = readSessionJson(CASE_LIST_DRAFTS_KEY);
+      if (!Array.isArray(draftCases) || !draftCases.length) return;
+
+      var seenIds = new Set(cases.map(function (item) { return item.id; }));
+      draftCases.slice().reverse().forEach(function (item) {
+        if (!seenIds.has(item.id)) {
+          cases.unshift(item);
+          seenIds.add(item.id);
+        }
+      });
+    }
+
+    function loadFlash() {
+      var flash = readSessionJson(CASE_LIST_FLASH_KEY);
+      if (!flash) return null;
+      removeSessionKey(CASE_LIST_FLASH_KEY);
+      return flash;
+    }
+
     function getFilteredCases() {
       return cases.filter(function (item) {
+        if (state.focusIds && !state.focusIds.has(item.id)) return false;
         if (!item.visibleScopes.includes(state.scope)) return false;
         if (state.filters.stage !== 'all' && item.stageId !== state.filters.stage) return false;
         if (state.filters.owner !== 'all' && item.ownerId !== state.filters.owner) return false;
@@ -134,13 +181,18 @@
         var owner = owners[item.ownerId] || { name: '未指派', initial: '?', avatarClass: 'bg-slate-100 text-slate-600' };
         var checked = state.selectedIds.has(item.id) ? 'checked' : '';
         var dueClass = item.riskStatus === 'critical' ? 'text-red-600' : item.riskStatus === 'attention' ? 'text-amber-600' : 'text-[var(--text)]';
+        var metaBits = [item.id];
+        if (item.batchLabel) metaBits.push(item.batchLabel);
+        if (item.isDraft) metaBits.push('本次新建');
 
         return [
           '<tr>',
           '<td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-case-select value="' + item.id + '" aria-label="选择 ' + item.name + '" ' + checked + ' /></td>',
           '<td>',
           '<div class="font-semibold text-[var(--text)]">' + item.name + '</div>',
-          '<div class="table-meta mt-1">' + item.id + '</div>',
+          '<div class="table-meta mt-1">' + metaBits.join(' · ') + '</div>',
+          (item.casePartySummary ? '<div class="table-meta mt-1">' + item.casePartySummary + '</div>' : ''),
+          (item.materialSummary ? '<div class="table-meta mt-1">' + item.materialSummary + '</div>' : ''),
           '</td>',
           '<td><div class="font-semibold text-[var(--text)]">' + item.type + '</div></td>',
           '<td><div class="font-semibold text-[var(--text)]">' + item.applicant + '</div></td>',
@@ -166,7 +218,7 @@
           '<td><div class="font-semibold text-[var(--text)]">' + item.updatedAtLabel + '</div></td>',
           '<td><div class="font-semibold ' + dueClass + '">' + item.dueDateLabel + '</div><div class="table-meta mt-1">' + item.dueDate + '</div></td>',
           '<td><span class="status-pill ' + riskClass(item.riskStatus) + '">' + item.riskLabel + '</span></td>',
-          '<td class="text-right"><div class="table-actions"><button class="table-icon-btn" type="button" data-navigate="../case-detail.html" title="查看详情"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z"></path></svg></button></div></td>',
+          '<td class="text-right"><div class="table-actions"><button class="table-icon-btn" type="button" data-navigate="detail.html" title="查看详情"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z"></path></svg></button></div></td>',
           '</tr>',
         ].join('');
       }).join('');
@@ -321,6 +373,35 @@
       if (!taskType || state.selectedIds.size === 0) return;
       showToast('批量生成任务（示例）', '已选择 ' + state.selectedIds.size + ' 条，任务：' + taskType);
     });
+
+    if (elements.creationFlashFilterBtn) {
+      elements.creationFlashFilterBtn.addEventListener('click', function () {
+        if (!state.latestFlash || !Array.isArray(state.latestFlash.caseIds)) return;
+        var isFocused = !!state.focusIds;
+        state.focusIds = isFocused ? null : new Set(state.latestFlash.caseIds);
+        elements.creationFlashFilterBtn.textContent = isFocused ? '仅看本次结果' : '查看全部案件';
+        render();
+      });
+    }
+
+    if (elements.creationFlashDismiss) {
+      elements.creationFlashDismiss.addEventListener('click', function () {
+        if (elements.creationFlashBanner) elements.creationFlashBanner.classList.add('hidden');
+      });
+    }
+
+    bootstrapDraftCases();
+    state.latestFlash = loadFlash();
+    if (state.latestFlash && elements.creationFlashBanner) {
+      elements.creationFlashBanner.classList.remove('hidden');
+      elements.creationFlashTitle.textContent = state.latestFlash.isFamilyBulk
+        ? '家族批量建案已进入列表'
+        : '新建案件已进入列表';
+      elements.creationFlashDesc.textContent = state.latestFlash.isFamilyBulk
+        ? '刚刚为 ' + state.latestFlash.primaryName + ' 创建了 ' + state.latestFlash.count + ' 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。'
+        : '刚刚创建了 1 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。';
+      showToast(elements.creationFlashTitle.textContent, elements.creationFlashDesc.textContent);
+    }
 
     render();
   });

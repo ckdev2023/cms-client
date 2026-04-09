@@ -2,21 +2,21 @@
   <div>
     <div class="section-kicker">Step 1</div>
     <div class="section-title mt-2">业务信息</div>
-    <div class="meta-text mt-2">P0 先支持家族滞在与技人国模板，创建即进入 S1 建档。</div>
+    <div class="meta-text mt-2">选择模板、申请类型与归属 Group。</div>
   </div>
 
   <div class="template-grid">
     <button class="template-card text-left is-active" type="button" data-template-card="family">
       <div class="flex items-center justify-between gap-3">
         <div class="text-[16px] font-extrabold text-[var(--text)]">家族滞在</div>
-        <span class="chip">P0 高频模板</span>
+        <span class="chip">家族签</span>
       </div>
       <div class="meta-text mt-2">适合配偶/子女批量建案，自动展开扶养者/保证人资料。</div>
     </button>
     <button class="template-card text-left" type="button" data-template-card="work">
       <div class="flex items-center justify-between gap-3">
         <div class="text-[16px] font-extrabold text-[var(--text)]">技人国</div>
-        <span class="chip">P0 高频模板</span>
+        <span class="chip">工作类</span>
       </div>
       <div class="meta-text mt-2">适合雇主/职位信息驱动的工作类建案，自动带出雇主资料区块。</div>
     </button>
@@ -34,8 +34,8 @@
   </div>
 
   <div>
-    <label class="apple-label" for="caseNameInput">案件标题</label>
+    <label class="apple-label" for="caseNameInput" id="caseNameLabel">案件标题</label>
     <input class="apple-input" id="caseNameInput" type="text" />
-    <div class="meta-text mt-2">默认由“主申请人 + 模板 + 申请类型”生成，也支持手动改名。</div>
+    <div class="meta-text mt-2" id="caseNameHint">默认由“主申请人 + 模板 + 申请类型”生成，也支持手动改名。</div>
   </div>
 </section>

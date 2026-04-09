@@ -1,0 +1,25 @@
+<!--
+  Section: detail-overview.html
+  Purpose: 4 張 summary card + 按提供方完成率（折疊/展開） + 阻斷/風險摘要 + 下一步動作 + 時間線 + 團隊
+  Contract: P0-CONTRACT-DETAIL.md §4
+  Production target: features/case/ui/CaseDetailOverview
+
+  DOM hooks:
+    #overviewStageText, #overviewStageMeta, #overviewDeadlineDate, #overviewDeadlineMeta,
+    #overviewProgressPercent, #overviewProgressBar, #overviewProgressCount,
+    #overviewBillingAmount, #overviewBillingMeta,
+    #providerProgress, #providerToggle, #providerChevron, #providerProgressBody,
+    #providerApplicant, #providerDependant, #providerEmployer, #providerOffice,
+    #riskBlockingCount, #riskArrearsStatus, #riskDeadlineAlert,
+    #riskLastValidation, #riskReviewStatus,
+    #overviewNextActionText, #overviewValidationHint, #openValidationTab
+
+  Layout: summary-grid-4 → provider progress → 3-col (2/3 left: action+timeline, 1/3 right: risk+team+hint)
+
+  Spec coverage:
+    §4.1 Summary Cards (4)
+    §4.2 Provider progress (collapsible)
+    §4.3 Blocking & risk summary
+    §4.4 Timeline & next action
+-->
+<!-- Content is inlined in detail.html. This file documents the structural boundary. -->

@@ -1,0 +1,75 @@
+<section class="apple-card quick-actions-card">
+  <div class="quick-actions-head">
+    <div>
+      <h2 class="text-card-title">快捷动作</h2>
+      <p class="panel-subtitle">优先把“下一步动作”做成可点、可追踪。</p>
+    </div>
+    <a href="../tasks.html" class="link-apple text-sm font-semibold">查看我的待办</a>
+  </div>
+  <div class="quick-actions-grid">
+    <button class="quick-action-card" type="button" data-navigate="../leads-messages.html">
+      <span class="quick-action-icon" data-tone="blue" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+      </span>
+      <span class="quick-action-copy">
+        <span class="quick-action-title">新建咨询线索</span>
+        <span class="quick-action-desc">先承接咨询，再转客户/案件</span>
+      </span>
+    </button>
+    <button class="quick-action-card" type="button" data-navigate="../customers/index.html#new">
+      <span class="quick-action-icon" data-tone="indigo" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+        </svg>
+      </span>
+      <span class="quick-action-copy">
+        <span class="quick-action-title">新建客户</span>
+        <span class="quick-action-desc">快速录入个人客户基础信息</span>
+      </span>
+    </button>
+    <button class="quick-action-card" type="button" data-navigate="../case/create.html">
+      <span class="quick-action-icon" data-tone="teal" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+      </span>
+      <span class="quick-action-copy">
+        <span class="quick-action-title">新建案件</span>
+        <span class="quick-action-desc">按模板自动生成资料清单</span>
+      </span>
+    </button>
+    <button class="quick-action-card" type="button" data-navigate="../tasks.html">
+      <span class="quick-action-icon" data-tone="rose" aria-hidden="true">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </span>
+      <span class="quick-action-copy">
+        <span class="quick-action-title">去催办 / 到期</span>
+        <span class="quick-action-desc">聚合缺件、补正与期限</span>
+      </span>
+    </button>
+  </div>
+  <div class="toolbar-meta">
+    <div class="grid gap-3">
+      <div>
+        <div class="summary-card-label">到期窗口</div>
+        <div class="segmented-control mt-2" role="tablist" aria-label="到期窗口">
+          <button class="segment-btn active" type="button" data-window-btn="7">7 天</button>
+          <button class="segment-btn" type="button" data-window-btn="30">30 天</button>
+        </div>
+      </div>
+      <div class="scope-summary-note" id="scopeSummary">
+        当前显示我负责或参与的案件与任务，卡片和列表会一起更新。
+      </div>
+    </div>
+    <div class="toolbar-inline-actions">
+      <button class="mini-btn" type="button" data-action-id="followup">一键创建跟进任务</button>
+      <button class="mini-btn" type="button" data-action-id="batchComplete">批量完成今日待办</button>
+      <button class="mini-btn" type="button" data-action-id="submit">进入校验与提交</button>
+      <button class="mini-btn" type="button" data-action-id="payment">登记回款 / 上传凭证</button>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,284 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "leads-message",
+  "moduleLabel": "咨询线索（列表页）",
+  "moduleDir": "packages/prototype/admin/leads-message",
+  "entryFile": "packages/prototype/admin/leads-message/index.html",
+  "migrationSource": "packages/prototype/admin/leads-messages.html",
+  "referenceDocs": [
+    "packages/prototype/admin/leads-message/P0-CONTRACT.md",
+    "packages/prototype/admin/leads-message/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/leads-message/MIGRATION-MAPPING.md",
+    "packages/prototype/admin/leads-message/SPEC-GAP-MATRIX.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/header.html",
+      "purpose": "页面标题「咨询线索」、副标题、「新建线索」主按钮",
+      "sourceAnchors": [
+        "btnAddLead",
+        "topbarAddLead"
+      ],
+      "contractRefs": [
+        "§1 必保留区块"
+      ],
+      "productionTarget": "features/lead/ui/LeadListHeader"
+    },
+    {
+      "file": "sections/filters.html",
+      "purpose": "scope 切换 + 状态/负责人/Group/业务类型 select + 日期范围 + 搜索 + 重置",
+      "sourceAnchors": [
+        "data-scope-btn",
+        "leadSearch",
+        "filterStatus",
+        "filterOwner",
+        "filterGroup",
+        "filterBusinessType",
+        "filterDateFrom",
+        "filterDateTo",
+        "data-action=reset-filters"
+      ],
+      "contractRefs": [
+        "§3 搜索与筛选"
+      ],
+      "productionTarget": "features/lead/ui/LeadListFilters"
+    },
+    {
+      "file": "sections/table.html",
+      "purpose": "批量动作工具栏 + 11 列表格（thead + tbody 8 行）+ 空状态 + 分页",
+      "sourceAnchors": [
+        "selectAllLeads",
+        "data-lead-select",
+        "leadsTableBody",
+        "bulkActionBar",
+        "selectedCount",
+        "bulkClearBtn",
+        "bulkAssignSelect",
+        "bulkAssignApplyBtn",
+        "bulkFollowUpInput",
+        "bulkFollowUpApplyBtn",
+        "bulkStatusSelect",
+        "bulkStatusApplyBtn",
+        "leadsEmptyState"
+      ],
+      "contractRefs": [
+        "§2 列表字段",
+        "§4 批量动作"
+      ],
+      "productionTarget": "features/lead/ui/LeadTable + LeadBulkActionBar"
+    },
+    {
+      "file": "sections/create-modal.html",
+      "purpose": "新建线索弹窗 12 字段 + 去重提示面板 + 创建反馈",
+      "sourceAnchors": [
+        "createLeadModal",
+        "createLeadForm",
+        "leadName",
+        "leadPhone",
+        "leadEmail",
+        "leadSource",
+        "leadReferrer",
+        "leadBusinessType",
+        "leadGroup",
+        "leadOwner",
+        "leadLanguage",
+        "leadNextAction",
+        "leadNextFollowUp",
+        "leadNote",
+        "dedupHint",
+        "dedupHintTitle",
+        "dedupHintMessage",
+        "dedupHintCards",
+        "dedupContinueBtn",
+        "dedupViewBtn",
+        "createLeadBtn"
+      ],
+      "contractRefs": [
+        "§5 新建线索弹窗"
+      ],
+      "productionTarget": "features/lead/ui/CreateLeadModal"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "创建/批量操作/转化/去重等反馈 toast",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "contractRefs": [
+        "§6 页面入口与单行操作",
+        "§11 Toast / 反馈"
+      ],
+      "productionTarget": "shared/ui/Toast"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/leads-config.js",
+      "purpose": "集中声明状态枚举、列定义、筛选项、批量动作、表单 schema、去重样例、演示行、toast preset",
+      "exports": [
+        "LEAD_STATUSES",
+        "TABLE_COLUMNS",
+        "FILTER_OPTIONS",
+        "BATCH_ACTIONS",
+        "CREATE_FORM_FIELDS",
+        "DEDUP_SAMPLES",
+        "DEMO_LEADS",
+        "TOAST_PRESETS"
+      ],
+      "consumers": [
+        "scripts/leads-page.js",
+        "scripts/leads-create-modal.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/lead/Lead.ts + leadConstants.ts + LeadDedupService.ts"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/leads-page.js",
+      "purpose": "列表初始化、scope/筛选管理、批量选择与动作、行跳转、toast、#new hash 入口",
+      "domHooks": [
+        "data-scope-btn",
+        "leadSearch",
+        "filterStatus",
+        "filterOwner",
+        "filterGroup",
+        "filterBusinessType",
+        "filterDateFrom",
+        "filterDateTo",
+        "data-action=reset-filters",
+        "selectAllLeads",
+        "data-lead-select",
+        "leadsTableBody",
+        "bulkActionBar",
+        "bulkAssignApplyBtn",
+        "bulkFollowUpApplyBtn",
+        "bulkStatusApplyBtn",
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "dependsOn": [
+        "data/leads-config.js",
+        "scripts/leads-create-modal.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/lead/model/useLeadListViewModel"
+    },
+    {
+      "file": "scripts/leads-create-modal.js",
+      "purpose": "弹窗开关、必填校验、来源条件显示、去重提示、创建反馈",
+      "domHooks": [
+        "createLeadModal",
+        "data-lead-modal-close",
+        "createLeadBtn",
+        "leadName",
+        "leadPhone",
+        "leadEmail",
+        "leadSource",
+        "referrerFieldWrap",
+        "dedupHint",
+        "dedupContinueBtn",
+        "dedupViewBtn"
+      ],
+      "dependsOn": [
+        "data/leads-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/lead/model/useCreateLeadModal + useLeadDedup"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/lead/Lead.ts",
+      "packages/mobile/src/domain/lead/LeadRepository.ts",
+      "packages/mobile/src/domain/lead/LeadDedupService.ts",
+      "packages/mobile/src/domain/lead/leadConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/lead/LeadApi.ts",
+      "packages/mobile/src/data/lead/createLeadRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/lead/model/useLeadListViewModel.ts",
+      "packages/mobile/src/features/lead/model/useCreateLeadModal.ts",
+      "packages/mobile/src/features/lead/model/useLeadDedup.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/lead/ui/LeadListScreen.tsx",
+      "packages/mobile/src/features/lead/ui/LeadListHeader.tsx",
+      "packages/mobile/src/features/lead/ui/LeadListFilters.tsx",
+      "packages/mobile/src/features/lead/ui/LeadTable.tsx",
+      "packages/mobile/src/features/lead/ui/LeadBulkActionBar.tsx",
+      "packages/mobile/src/features/lead/ui/CreateLeadModal.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/ui/Modal.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "deferredRisks": [
+    {
+      "risk": "旧 leads-messages.html 与新模块并存",
+      "impact": "用户可能访问旧页面看到过时 UI",
+      "mitigation": "本轮不改旧入口；后续导航统一任务处理重定向/下线"
+    },
+    {
+      "risk": "主导航（侧边栏/Topbar）未统一改为新路径",
+      "impact": "从其他页面进入仍会到旧 leads-messages.html",
+      "mitigation": "新模块自身导航指向正确路径；全局统一后续处理"
+    },
+    {
+      "risk": "去重逻辑为前端静态匹配",
+      "impact": "与真实后端去重行为可能不一致",
+      "mitigation": "demo-only 标注明确；预设匹配规则覆盖电话/邮箱两种场景"
+    }
+  ],
+  "regressionChecklist": [
+    "index.html 可独立运行",
+    "页面 header 包含标题「咨询线索」、副标题、「新建线索」主按钮",
+    "筛选面板 5 个筛选条件 + 搜索 + 重置可用",
+    "表格 11 列完整显示",
+    "至少 8 行样例数据覆盖全部 6 种状态",
+    "已签约未转化行有 warning 高亮",
+    "已流失行有淡化样式",
+    "批量选择 checkbox + 批量动作工具栏可用",
+    "批量指派负责人 / 批量调跟进时间 / 批量改状态可演示",
+    "新建弹窗 12 字段完整",
+    "电话/邮箱至少填一项校验可用",
+    "去重提示面板（电话命中 / 邮箱命中 / 人工确认继续）",
+    "创建后 toast 显示",
+    "行点击跳转到 detail.html",
+    "#new hash 入口自动打开新建弹窗",
+    "空状态引导可见",
+    "移动端导航正常",
+    "侧边栏「咨询线索」项 aria-current=page 高亮"
+  ],
+  "notes": [
+    "列表页从旧 leads-messages.html 的 IM 风格重构为标准 CRUD 列表架构。",
+    "所有筛选、批量动作、新建、去重都属于 demo-only 行为，不代表真实落库。",
+    "详情页由独立的 split-manifest-detail.json 管理。",
+    "旧 leads-messages.html 仅作迁移参考（电话/邮箱至少填一项校验、部分弹窗结构、状态文案）；信息架构不复用。"
+  ]
+}

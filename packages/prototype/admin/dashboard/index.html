@@ -1,0 +1,1250 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>仪表盘 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../shared/styles/tokens.css" />
+    <link rel="stylesheet" href="../shared/styles/shell.css" />
+    <link rel="stylesheet" href="../shared/styles/components.css" />
+    <style>
+      .page-wrap {
+        max-width: 1440px;
+        margin: 0 auto;
+        padding: 28px 20px 72px;
+      }
+
+      .hero-shell {
+        display: grid;
+        gap: 18px;
+      }
+
+      .hero-title {
+        font-size: 40px;
+        line-height: 1.08;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+
+      .hero-subtitle {
+        margin-top: 8px;
+        font-size: 15px;
+        line-height: 1.7;
+        color: var(--muted);
+        font-weight: 700;
+        max-width: 920px;
+      }
+
+      .hero-toolbar {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .hero-toolbar-row {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+
+      @media (min-width: 1024px) {
+        .hero-toolbar {
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+        }
+      }
+
+      .filter-select {
+        min-width: 136px;
+        border-radius: 14px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        background: rgba(255, 255, 255, 0.92);
+        padding: 10px 14px;
+        font-size: 13px;
+        line-height: 1.3;
+        font-weight: 700;
+        color: var(--text);
+        outline: none;
+      }
+
+      .role-switch {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .role-switch-label {
+        font-size: 12px;
+        line-height: 1.4;
+        color: var(--muted-2);
+        font-weight: 800;
+      }
+
+      .role-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        background: rgba(255, 255, 255, 0.88);
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.2;
+        font-weight: 800;
+        transition:
+          border-color 160ms ease,
+          box-shadow 160ms ease,
+          color 160ms ease,
+          background-color 160ms ease;
+      }
+
+      .role-btn.active {
+        color: #0f172a;
+        border-color: rgba(14, 165, 233, 0.28);
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.12);
+      }
+
+      .text-card-title {
+        font-size: 18px;
+        line-height: 1.28;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .quick-actions-card {
+        padding: 24px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .quick-actions-head {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .quick-actions-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      @media (min-width: 768px) {
+        .quick-actions-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 1280px) {
+        .quick-actions-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+
+      .quick-action-card {
+        width: 100%;
+        border-radius: 20px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        background: rgba(255, 255, 255, 0.92);
+        padding: 18px 16px;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease,
+          background-color 160ms ease;
+      }
+
+      .quick-action-card:hover {
+        transform: translateY(-1px);
+        background: rgba(248, 250, 252, 1);
+        box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+      }
+
+      .quick-action-icon {
+        width: 40px;
+        height: 40px;
+        flex: 0 0 auto;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+      }
+
+      .quick-action-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .quick-action-icon[data-tone="blue"] {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+
+      .quick-action-icon[data-tone="indigo"] {
+        background: #eef2ff;
+        color: #4338ca;
+      }
+
+      .quick-action-icon[data-tone="teal"] {
+        background: #ecfeff;
+        color: #0f766e;
+      }
+
+      .quick-action-icon[data-tone="rose"] {
+        background: #fff1f2;
+        color: #be123c;
+      }
+
+      .quick-action-title {
+        display: block;
+        font-size: 15px;
+        line-height: 1.35;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .quick-action-desc {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .quick-action-copy {
+        min-width: 0;
+        display: block;
+      }
+
+      .toolbar-meta {
+        display: grid;
+        gap: 14px;
+        padding-top: 2px;
+      }
+
+      @media (min-width: 1024px) {
+        .toolbar-meta {
+          grid-template-columns: auto minmax(0, 1fr);
+          align-items: end;
+        }
+      }
+
+      .toolbar-inline-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: flex-start;
+      }
+
+      @media (min-width: 1024px) {
+        .toolbar-inline-actions {
+          justify-content: flex-end;
+        }
+      }
+
+      .scope-summary-note {
+        font-size: 13px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .summary-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      @media (min-width: 768px) {
+        .summary-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 1280px) {
+        .summary-grid {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+
+      .summary-card {
+        position: relative;
+        overflow: hidden;
+        padding: 22px;
+        display: grid;
+        gap: 16px;
+        min-height: 188px;
+        transition:
+          transform 180ms ease,
+          box-shadow 180ms ease,
+          border-color 180ms ease;
+      }
+
+      .summary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+      }
+
+      .summary-card-orb {
+        position: absolute;
+        top: -18px;
+        right: -18px;
+        width: 104px;
+        height: 104px;
+        border-radius: 0 0 0 999px;
+        opacity: 0.94;
+        transition: transform 180ms ease;
+      }
+
+      .summary-card:hover .summary-card-orb {
+        transform: scale(1.06);
+      }
+
+      .summary-card[data-tone="info"] .summary-card-orb {
+        background: #eff6ff;
+      }
+
+      .summary-card[data-tone="warn"] .summary-card-orb {
+        background: #fff7ed;
+      }
+
+      .summary-card[data-tone="success"] .summary-card-orb {
+        background: #ecfdf5;
+      }
+
+      .summary-card[data-tone="review"] .summary-card-orb {
+        background: #ecfeff;
+      }
+
+      .summary-card[data-tone="risk"] {
+        border-color: rgba(220, 38, 38, 0.16);
+        box-shadow: 0 12px 32px rgba(220, 38, 38, 0.08);
+      }
+
+      .summary-card[data-tone="billing"] {
+        border-color: rgba(245, 158, 11, 0.16);
+      }
+
+      .summary-card[data-tone="risk"] .summary-card-orb {
+        background: #fff1f2;
+      }
+
+      .summary-card[data-tone="billing"] .summary-card-orb {
+        background: #fffbeb;
+      }
+
+      .summary-card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        position: relative;
+        z-index: 1;
+      }
+
+      .summary-card-label {
+        font-size: 12px;
+        line-height: 1.4;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-weight: 900;
+        color: var(--muted-2);
+      }
+
+      .summary-card-value {
+        margin-top: 14px;
+        font-size: 40px;
+        line-height: 1;
+        font-weight: 900;
+        color: var(--text);
+        letter-spacing: -0.03em;
+      }
+
+      .summary-card-helper {
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+        font-weight: 700;
+        position: relative;
+        z-index: 1;
+      }
+
+      .summary-card-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      .summary-card-meta {
+        font-size: 12px;
+        color: var(--muted-2);
+        font-weight: 700;
+      }
+
+      .summary-card-body {
+        position: relative;
+        z-index: 1;
+      }
+
+      .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        line-height: 1.2;
+        font-weight: 800;
+        border: 1px solid transparent;
+        white-space: nowrap;
+      }
+
+      .status-pill::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: currentColor;
+      }
+
+      .status-info {
+        color: #0369a1;
+        background: rgba(14, 165, 233, 0.12);
+        border-color: rgba(14, 165, 233, 0.2);
+      }
+
+      .status-warn {
+        color: #b45309;
+        background: rgba(245, 158, 11, 0.14);
+        border-color: rgba(245, 158, 11, 0.22);
+      }
+
+      .status-danger {
+        color: #b91c1c;
+        background: rgba(220, 38, 38, 0.1);
+        border-color: rgba(220, 38, 38, 0.16);
+      }
+
+      .status-muted {
+        color: #475569;
+        background: rgba(148, 163, 184, 0.12);
+        border-color: rgba(148, 163, 184, 0.2);
+      }
+
+      .panel-grid {
+        display: grid;
+        gap: 18px;
+      }
+
+      @media (min-width: 1200px) {
+        .panel-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .work-panel {
+        padding: 22px;
+        display: grid;
+        gap: 18px;
+        align-content: start;
+        min-height: 100%;
+      }
+
+      .work-panel-featured {
+        border-color: rgba(14, 165, 233, 0.16);
+        box-shadow: 0 18px 44px rgba(14, 165, 233, 0.08);
+      }
+
+      @media (min-width: 1200px) {
+        .work-panel-featured {
+          grid-column: span 2;
+        }
+      }
+
+      .work-panel-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        width: fit-content;
+        padding: 5px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        background: rgba(248, 250, 252, 0.9);
+        color: var(--muted-2);
+        font-size: 11px;
+        line-height: 1.2;
+        font-weight: 900;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+
+      .work-panel-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .panel-title {
+        font-size: 18px;
+        line-height: 1.3;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .panel-subtitle {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .work-panel-action {
+        flex: 0 0 auto;
+      }
+
+      .work-panel-intro {
+        display: grid;
+        gap: 10px;
+      }
+
+      .work-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .work-item {
+        border: 1px solid rgba(226, 232, 240, 0.88);
+        border-radius: 18px;
+        padding: 16px 16px 15px;
+        background: rgba(255, 255, 255, 0.88);
+        display: grid;
+        gap: 12px;
+        transition:
+          transform 160ms ease,
+          box-shadow 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .work-item:hover {
+        transform: translateY(-1px);
+        border-color: rgba(203, 213, 225, 0.96);
+        box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+      }
+
+      .work-item-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .work-item-title {
+        font-size: 15px;
+        line-height: 1.45;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .work-item-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--muted-2);
+        font-weight: 800;
+        margin-top: 6px;
+      }
+
+      .work-item-desc {
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--muted);
+        font-weight: 700;
+      }
+
+      .work-item-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .mini-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-weight: 800;
+        border: 1px solid rgba(226, 232, 240, 0.92);
+        background: rgba(248, 250, 252, 0.92);
+        color: var(--text);
+        transition: background-color 160ms ease;
+      }
+
+      .mini-btn:hover {
+        background: rgba(241, 245, 249, 1);
+      }
+
+      .note-grid {
+        display: grid;
+        gap: 16px;
+      }
+
+      @media (min-width: 960px) {
+        .note-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      .note-card {
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .note-list {
+        display: grid;
+        gap: 10px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .empty-state {
+        border: 1px dashed rgba(148, 163, 184, 0.45);
+        border-radius: 16px;
+        padding: 18px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted);
+        background: rgba(248, 250, 252, 0.8);
+      }
+
+      .skeleton-line {
+        height: 12px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 0%, rgba(241, 245, 249, 1) 50%, rgba(226, 232, 240, 0.6) 100%);
+        background-size: 200% 100%;
+        animation: skeleton 1.2s linear infinite;
+      }
+
+      .skeleton-block {
+        height: 76px;
+        border-radius: 16px;
+        background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 0%, rgba(241, 245, 249, 1) 50%, rgba(226, 232, 240, 0.6) 100%);
+        background-size: 200% 100%;
+        animation: skeleton 1.2s linear infinite;
+      }
+
+      .toast-shell {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 70;
+        width: min(360px, calc(100vw - 32px));
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(12px);
+        transition:
+          opacity 180ms ease,
+          transform 180ms ease;
+      }
+
+      .toast-shell[data-open="true"] {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+
+      .toast-card {
+        padding: 16px 18px;
+      }
+
+      .toast-title {
+        font-size: 14px;
+        font-weight: 900;
+        color: var(--text);
+      }
+
+      .toast-desc {
+        margin-top: 6px;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      @keyframes skeleton {
+        0% {
+          background-position: 200% 0;
+        }
+        100% {
+          background-position: -200% 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .skeleton-line,
+        .skeleton-block,
+        .toast-shell {
+          animation: none;
+          transition: none;
+        }
+      }
+    </style>
+  </head>
+  <body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <!-- shell: mobile-nav.html (paths adjusted for dashboard/ subdirectory) -->
+    <div class="mobile-nav" aria-hidden="true">
+      <div class="mobile-nav-backdrop" data-nav-close></div>
+      <div class="mobile-nav-panel">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="index.html" class="brand-title">Gyosei OS</a>
+            <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="../case/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="../documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="../forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <!-- shell: side-nav.html (paths adjusted for dashboard/ subdirectory) -->
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="index.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-messages.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="../case/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="../documents.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <a class="nav-item" href="../forms.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              文书中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a>
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+          </nav>
+        </div>
+      </aside>
+
+      <div>
+        <!-- shell: topbar.html -->
+        <header class="topbar">
+          <div class="topbar-inner">
+            <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+            <div class="search" role="search" aria-label="全局搜索">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 10.5A6.5 6.5 0 114 10.5a6.5 6.5 0 0113 0z"></path>
+              </svg>
+              <input
+                type="search"
+                placeholder="搜索：客户 / 案件 / 资料 / 文书..."
+                aria-label="全局搜索"
+                autocomplete="off"
+                spellcheck="false"
+              />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+            <span class="chip" id="scopeVisibilityChip">我的视角</span>
+            <button class="btn-secondary" type="button" data-navigate="../case/index.html">进入案件列表</button>
+          </div>
+        </header>
+
+        <main id="main" class="page-wrap">
+          <!-- section: header.html -->
+          <section class="hero-shell">
+            <div>
+              <h1 class="hero-title" id="heroGreeting">早上好，Admin · 主办人</h1>
+              <p class="hero-subtitle" id="heroSubtitle">
+                今天优先关注：待提交、风险、到期与欠款影响提交。
+              </p>
+            </div>
+            <div class="hero-toolbar">
+              <div class="hero-toolbar-row">
+                <div class="segmented-control" role="tablist" aria-label="查看范围">
+                  <button class="segment-btn active" type="button" data-scope-btn="mine">我的</button>
+                  <button class="segment-btn" type="button" data-scope-btn="group">本组</button>
+                  <button class="segment-btn" type="button" data-scope-btn="all">全所</button>
+                </div>
+                <select class="filter-select" aria-label="Group 过滤">
+                  <option>全部 Group</option>
+                  <option>东京一组</option>
+                  <option>东京二组</option>
+                  <option>大阪组</option>
+                </select>
+              </div>
+              <div class="role-switch" aria-label="默认视图">
+                <span class="role-switch-label">默认视图</span>
+                <button class="role-btn active" type="button" data-role-btn="principal">主办人</button>
+                <button class="role-btn" type="button" data-role-btn="assistant">助理</button>
+                <button class="role-btn" type="button" data-role-btn="sales">销售</button>
+                <button class="role-btn" type="button" data-role-btn="finance">财务</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- section: filters.html -->
+          <section class="apple-card quick-actions-card mt-6">
+            <div class="quick-actions-head">
+              <div>
+                <h2 class="text-card-title">快捷动作</h2>
+                <p class="panel-subtitle">优先把“下一步动作”做成可点、可追踪。</p>
+              </div>
+              <a href="../tasks.html" class="link-apple text-sm font-semibold">查看我的待办</a>
+            </div>
+            <div class="quick-actions-grid">
+              <button class="quick-action-card" type="button" data-navigate="../leads-messages.html">
+                <span class="quick-action-icon" data-tone="blue" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+                  </svg>
+                </span>
+                <span class="quick-action-copy">
+                  <span class="quick-action-title">新建咨询线索</span>
+                  <span class="quick-action-desc">先承接咨询，再转客户/案件</span>
+                </span>
+              </button>
+              <button class="quick-action-card" type="button" data-navigate="../customers/index.html#new">
+                <span class="quick-action-icon" data-tone="indigo" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+                  </svg>
+                </span>
+                <span class="quick-action-copy">
+                  <span class="quick-action-title">新建客户</span>
+                  <span class="quick-action-desc">快速录入个人客户基础信息</span>
+                </span>
+              </button>
+              <button class="quick-action-card" type="button" data-navigate="../case/create.html">
+                <span class="quick-action-icon" data-tone="teal" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                </span>
+                <span class="quick-action-copy">
+                  <span class="quick-action-title">新建案件</span>
+                  <span class="quick-action-desc">按模板自动生成资料清单</span>
+                </span>
+              </button>
+              <button class="quick-action-card" type="button" data-navigate="../tasks.html">
+                <span class="quick-action-icon" data-tone="rose" aria-hidden="true">
+                  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                </span>
+                <span class="quick-action-copy">
+                  <span class="quick-action-title">去催办 / 到期</span>
+                  <span class="quick-action-desc">聚合缺件、补正与期限</span>
+                </span>
+              </button>
+            </div>
+            <div class="toolbar-meta">
+              <div class="grid gap-3">
+                <div>
+                  <div class="summary-card-label">时间范围</div>
+                  <div class="segmented-control mt-2" role="tablist" aria-label="时间范围">
+                    <button class="segment-btn active" type="button" data-window-btn="7">7 天</button>
+                    <button class="segment-btn" type="button" data-window-btn="30">30 天</button>
+                  </div>
+                </div>
+                <div class="scope-summary-note" id="scopeSummary">
+                  当前显示我负责或参与的案件与任务，卡片和列表会一起更新。
+                </div>
+              </div>
+              <div class="toolbar-inline-actions">
+                <button class="mini-btn" type="button" data-action-id="followup">一键创建跟进任务</button>
+                <button class="mini-btn" type="button" data-action-id="batchComplete">批量完成今日待办</button>
+                <button class="mini-btn" type="button" data-action-id="submit">进入校验与提交</button>
+                <button class="mini-btn" type="button" data-action-id="payment">登记回款 / 上传凭证</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- section: summary-cards.html -->
+          <section class="mt-6">
+            <div class="summary-grid">
+              <article class="apple-card summary-card" data-card-id="todayTasks" data-tone="info">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">今日待办</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-info">核心动作</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>今日必须处理的任务、跟进与催办。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>今日需要处理</span>
+                  <button class="mini-btn" type="button" data-action-id="batchComplete">批量完成</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="upcomingCases" data-tone="warn">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">即将到期案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-warn">临近到期</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>近期需要优先跟进的案件。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>按截止日统计</span>
+                  <button class="mini-btn" type="button" data-action-id="followup">创建任务</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="pendingDocuments" data-tone="success">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">待补件案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-muted">资料清单</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>有缺件或退回补正，需定位到资料清单。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>缺件或补正中</span>
+                  <button class="mini-btn" type="button" data-action-id="documents">查看补件</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="pendingSubmissions" data-tone="info">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">待提交案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-info">可继续提交</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>资料和校验已通过，可继续复核与提交。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>等待提交</span>
+                  <button class="mini-btn" type="button" data-action-id="submit">进入提交</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="inReview" data-tone="review">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">审理中案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-muted">等待结果</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>已提交等待结果，重点关注回执与补正期限。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>提交后跟进</span>
+                  <button class="mini-btn" type="button" data-navigate="../case/index.html">查看列表</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="pendingBilling" data-tone="billing">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">待回款案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-warn">收费节点</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>收费节点已到但未结清，优先登记回款。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>待确认到账</span>
+                  <button class="mini-btn" type="button" data-action-id="payment">登记回款</button>
+                </div>
+              </article>
+
+              <article class="apple-card summary-card" data-card-id="riskCases" data-tone="risk">
+                <div class="summary-card-orb" aria-hidden="true"></div>
+                <div class="summary-card-head">
+                  <div class="summary-card-body">
+                    <div class="summary-card-label">风险案件</div>
+                    <div class="summary-card-value" data-card-value>0</div>
+                  </div>
+                  <span class="status-pill status-danger">优先处理</span>
+                </div>
+                <p class="summary-card-helper" data-card-helper>硬阻断、逾期资料、补正临近到期或欠款风险。</p>
+                <div class="summary-card-footer">
+                  <span class="summary-card-meta" data-card-meta>阻断、逾期或欠款</span>
+                  <button class="mini-btn" type="button" data-action-id="risk">定位阻断项</button>
+                </div>
+              </article>
+            </div>
+          </section>
+
+          <!-- section: worklists.html -->
+          <section class="mt-6">
+            <div class="panel-grid">
+              <article class="apple-card work-panel work-panel-featured">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Top Priority</span>
+                    <h2 class="panel-title">今日待办</h2>
+                    <p class="panel-subtitle">优先处理今天到期的催办、回执上传和补件确认。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="batchComplete">批量完成</button>
+                </div>
+                <div class="work-list" id="todoList"></div>
+              </article>
+
+              <article class="apple-card work-panel">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Deadlines</span>
+                    <h2 class="panel-title">即将到期案件</h2>
+                    <p class="panel-subtitle">按时间范围查看需要尽快跟进的案件。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="followup">创建跟进</button>
+                </div>
+                <div class="work-list" id="deadlineList"></div>
+              </article>
+
+              <article class="apple-card work-panel">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Documents</span>
+                    <h2 class="panel-title">待补件案件</h2>
+                    <p class="panel-subtitle">有缺件或退回补正时，直接跳转资料清单继续处理。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="documents">定位缺件</button>
+                </div>
+                <div class="work-list" id="documentList"></div>
+              </article>
+
+              <article class="apple-card work-panel">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Submission</span>
+                    <h2 class="panel-title">待提交案件</h2>
+                    <p class="panel-subtitle">适合集中处理复核、提交和回执上传。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="submit">进入校验与提交</button>
+                </div>
+                <div class="work-list" id="submissionList"></div>
+              </article>
+
+              <article class="apple-card work-panel">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Risks</span>
+                    <h2 class="panel-title">风险案件</h2>
+                    <p class="panel-subtitle">优先暴露硬阻断、补正临期和欠款风险，支持一键定位。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="risk">批量指派责任人</button>
+                </div>
+                <div class="work-list" id="riskList"></div>
+              </article>
+
+              <article class="apple-card work-panel">
+                <div class="work-panel-head">
+                  <div class="work-panel-intro">
+                    <span class="work-panel-tag">Billing</span>
+                    <h2 class="panel-title">待回款案件</h2>
+                    <p class="panel-subtitle">收费节点已到但未结清，支持登记回款、上传凭证和催款。</p>
+                  </div>
+                  <button class="mini-btn work-panel-action" type="button" data-action-id="payment">登记回款</button>
+                </div>
+                <div class="work-list" id="billingList"></div>
+              </article>
+            </div>
+          </section>
+
+          <!-- section: visibility-notes.html -->
+          <section class="mt-6">
+            <div class="note-grid">
+              <article class="apple-card note-card">
+                <div class="summary-card-label">权限与可见性</div>
+                <h2 class="panel-title">当前视角说明</h2>
+                <div class="note-list" id="visibilityNotes"></div>
+              </article>
+              <article class="apple-card note-card">
+                <div class="summary-card-label">补充说明</div>
+                <h2 class="panel-title">使用提示</h2>
+                <div class="note-list">
+                  <div>卡片计数为 0 时仍保留卡片，不做隐藏。</div>
+                  <div>切换范围与窗口时会先展示骨架屏，再同步刷新卡片与列表。</div>
+                  <div>这里优先展示最需要处理的工作，帮助你快速安排当天任务。</div>
+                  <div>如需继续处理案件详情、资料或收费，可从对应入口进入下一步。</div>
+                </div>
+              </article>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <!-- section: toast.html -->
+    <div class="toast-shell" id="toast" data-open="false" aria-live="polite" aria-atomic="true">
+      <div class="apple-card toast-card">
+        <div class="toast-title" id="toastTitle">操作已完成</div>
+        <p class="toast-desc" id="toastDesc">已为你打开对应操作入口。</p>
+      </div>
+    </div>
+
+    <script src="../shared/scripts/mobile-nav.js"></script>
+    <script src="../shared/scripts/navigate.js"></script>
+    <script src="./data/dashboard-config.js"></script>
+    <script src="./scripts/dashboard-page.js"></script>
+  </body>
+</html>

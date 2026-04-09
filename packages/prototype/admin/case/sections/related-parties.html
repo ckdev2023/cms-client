@@ -2,28 +2,35 @@
   <div>
     <div class="section-kicker">Step 2</div>
     <div class="section-title mt-2">关联人与资料模板</div>
-    <div class="meta-text mt-2">主申请人为必选。家族签支持扶养者/保证人，技人国强调雇主信息。</div>
+    <div class="meta-text mt-2" id="relatedStepHint">先选择主申请人，再按案件类型补充关联人。</div>
   </div>
 
   <div class="field-grid two">
     <div>
-      <label class="apple-label" for="primaryCustomerSelect">选择主申请人</label>
+      <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">选择主申请人</label>
       <select class="apple-input" id="primaryCustomerSelect"></select>
     </div>
     <div class="flex items-end gap-2">
-      <button class="btn-secondary" type="button" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
-      <button class="btn-pill" type="button" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
+      <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
+      <button class="btn-pill" type="button" id="relatedModalBtn" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
+      <button class="btn-pill hidden" type="button" id="supportingPartyBtn" data-open-customer-modal="related" data-default-role="保证人">追加保证人</button>
     </div>
   </div>
 
   <div class="summary-box" id="primaryCustomerCard">
-    <div class="summary-label">主申请人</div>
+    <div class="summary-label" id="primaryCustomerCardLabel">主申请人</div>
     <div class="summary-value" id="primaryCustomerName">-</div>
     <div class="meta-text mt-2" id="primaryCustomerMeta">-</div>
     <div class="meta-text mt-2" id="primaryCustomerContact">-</div>
   </div>
 
-  <div id="additionalParties"></div>
+  <div class="section-stack">
+    <div>
+      <div class="section-title" id="additionalPartiesTitle">关联人</div>
+      <div class="meta-text mt-1" id="additionalPartiesHint">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
+    </div>
+    <div id="additionalParties"></div>
+  </div>
 
   <div class="summary-box" id="familyScenarioPanel">
     <div class="section-title" id="familyScenarioTitle">家族签批量建案</div>
@@ -32,9 +39,22 @@
     <div class="summary-grid mt-4" id="familyDependents"></div>
   </div>
 
+  <div class="summary-box hidden" id="familyKeyPartyPanel">
+    <div class="section-title">CaseParty 关键关系人绑定</div>
+    <div class="meta-text mt-2">批量建案时先绑定扶养者 / 保证人，后续每个案件自动挂入 CaseParty。</div>
+    <div class="section-stack mt-4" id="familyKeyPartyList"></div>
+    <div class="section-stack mt-4" id="familyGateNotes"></div>
+  </div>
+
+  <div class="summary-box hidden" id="familyCaseMatrixPanel">
+    <div class="section-title">批量建案预览</div>
+    <div class="meta-text mt-2">每位办理对象会生成独立 Case，并继承同一 Group、来源与默认负责人。</div>
+    <div class="summary-grid mt-4" id="familyCaseMatrix"></div>
+  </div>
+
   <div class="summary-box hidden" id="workScenarioPanel">
     <div class="section-title">雇主信息沉淀</div>
-    <div class="meta-text mt-2">P0 不引入企业客户实体，先把雇主信息作为案件字段快照保存。</div>
+    <div class="meta-text mt-2">保存当前案件所需的雇主联系人与基础信息。</div>
     <div class="flex flex-wrap gap-2 mt-4" id="workFieldList"></div>
   </div>
 

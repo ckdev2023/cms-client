@@ -84,8 +84,7 @@
         </div>
       </td>
       <td class="hidden md:table-cell text-sm text-gray-400">${kana}</td>
-      <td class="text-center"><span class="text-sm text-[var(--apple-text-sec)]">—</span></td>
-      <td class="text-center"><span class="text-sm text-[var(--apple-text-sec)]">—</span></td>
+      <td class="text-center whitespace-nowrap"><span class="text-sm text-[var(--apple-text-sec)]">累计 — · 活跃 —</span></td>
       <td class="hidden md:table-cell">
         <div class="text-sm text-[var(--apple-text-main)]">${updatedAt.split(' ')[0] ?? '—'}</div>
         <div class="text-[12px] text-gray-500 mt-0.5">草稿保存</div>

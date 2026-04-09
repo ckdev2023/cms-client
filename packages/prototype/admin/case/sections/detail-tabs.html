@@ -1,0 +1,23 @@
+<!--
+  Section: detail-tabs.html
+  Purpose: 10 個 Tab 橫向導航
+  Contract: P0-CONTRACT-DETAIL.md §2
+  Production target: features/case/ui/CaseDetailTabs
+
+  DOM hooks: [data-tab], .detail-tab, #docsNavCounter
+  Tab keys: overview, info, documents, messages, forms, tasks, deadlines, validation, billing, log
+-->
+<div class="detail-tabs mb-8">
+  <nav class="flex" aria-label="详情页 Tab 导航">
+    <a href="#" class="detail-tab is-active" data-tab="overview">概览</a>
+    <a href="#" class="detail-tab" data-tab="info">基础信息</a>
+    <a href="#" class="detail-tab" data-tab="documents">资料清单 <span class="tab-counter" id="docsNavCounter">8/16</span></a>
+    <a href="#" class="detail-tab" data-tab="messages">沟通记录</a>
+    <a href="#" class="detail-tab" data-tab="forms">文书</a>
+    <a href="#" class="detail-tab" data-tab="tasks">任务</a>
+    <a href="#" class="detail-tab" data-tab="deadlines">期限</a>
+    <a href="#" class="detail-tab" data-tab="validation">校验与提交</a>
+    <a href="#" class="detail-tab" data-tab="billing">收费</a>
+    <a href="#" class="detail-tab" data-tab="log">日志</a>
+  </nav>
+</div>

@@ -2,7 +2,7 @@
   <div>
     <div class="section-kicker">Step 3</div>
     <div class="section-title mt-2">分派与初始设置</div>
-    <div class="meta-text mt-2">创建案件后默认生成资料清单，也可同步生成催办/跟进任务。</div>
+    <div class="meta-text mt-2">设置负责人、期限和创建后的初始动作。</div>
   </div>
 
   <div class="field-grid three">
@@ -40,14 +40,24 @@
       <div class="meta-text mt-1">创建后自动生成催办、补件或跟进任务占位。</div>
     </div>
   </label>
+
+  <div class="summary-box hidden" id="familyCreationPanel">
+    <div class="section-title">家族批量建案动作</div>
+    <div class="meta-text mt-2" id="familyCreationSummary">-</div>
+    <div class="section-stack mt-4" id="familyCreationTasks"></div>
+  </div>
 </section>
 
 <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
   <div>
     <div class="section-kicker">Step 4</div>
     <div class="section-title mt-2">完成创建</div>
+    <div class="meta-text mt-2">确认关键信息后创建案件。</div>
   </div>
-  <div class="success-banner hidden" id="successBanner">案件已创建（示例）</div>
+  <div class="success-banner hidden" id="successBanner">
+    <div class="font-extrabold" id="successBannerTitle">案件已创建</div>
+    <div class="meta-text mt-2" id="successBannerDesc">已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。</div>
+  </div>
   <div class="summary-grid">
     <div class="summary-box"><div class="summary-label">模板 / 申请类型</div><div class="summary-value" id="summaryTemplate">-</div></div>
     <div class="summary-box"><div class="summary-label">主申请人</div><div class="summary-value" id="summaryCustomer">-</div></div>
