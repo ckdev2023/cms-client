@@ -1,9 +1,7 @@
-/* eslint-disable jsdoc/require-jsdoc */
 import {
   BadRequestException,
   Body,
   Controller,
-  Delete,
   Get,
   Inject,
   Param,
@@ -18,20 +16,23 @@ import type { PaymentMethod } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { PaymentRecordsService } from "./paymentRecords.service";
 
-type HttpRequest = {
-  requestContext?: RequestContext;
-};
+type HttpRequest = { requestContext?: RequestContext };
 
 type CreatePaymentRecordBody = {
-  billingRecordId: unknown;
+  billingPlanId: unknown;
   amountReceived: unknown;
   receivedAt: unknown;
   paymentMethod?: unknown;
-  receiptFileUrl?: unknown;
+  note?: unknown;
+};
+
+type VoidPaymentRecordBody = {
+  reasonCode: unknown;
+  reasonNote?: unknown;
 };
 
 type PaymentRecordListQuery = {
-  billingRecordId?: unknown;
+  billingPlanId?: unknown;
   caseId?: unknown;
   page?: unknown;
   limit?: unknown;
@@ -100,67 +101,100 @@ function parseLimit(value: unknown): number | undefined {
   return Math.floor(n);
 }
 
+/**
+ * PaymentRecords REST controller (P0 §3.20 / §6).
+ */
 @Controller("payment-records")
 export class PaymentRecordsController {
+  /**
+   * Initialize payment records controller.
+   *
+   * @param paymentRecordsService - payment records service
+   */
   constructor(
     @Inject(PaymentRecordsService)
     private readonly paymentRecordsService: PaymentRecordsService,
   ) {}
 
+  /**
+   * Record a new payment.
+   *
+   * @param req - HTTP request
+   * @param body - creation body
+   * @returns created PaymentRecord
+   */
   @RequireRoles("staff")
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreatePaymentRecordBody) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
-
     return this.paymentRecordsService.create(ctx, {
-      billingRecordId: requireString(body.billingRecordId, "billingRecordId"),
+      billingPlanId: requireString(body.billingPlanId, "billingPlanId"),
       amountReceived: parseNumber(body.amountReceived, "amountReceived"),
       receivedAt: parseISODateTime(body.receivedAt, "receivedAt"),
       paymentMethod: parseOptionalPaymentMethod(body.paymentMethod),
-      receiptFileUrl: parseOptionalNullableString(
-        body.receiptFileUrl,
-        "receiptFileUrl",
-      ),
+      note: parseOptionalNullableString(body.note, "note"),
     });
   }
 
+  /**
+   * List payment records.
+   *
+   * @param req - HTTP request
+   * @param query - query params
+   * @returns paginated PaymentRecord list
+   */
   @RequireRoles("viewer")
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: PaymentRecordListQuery) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
-
     return this.paymentRecordsService.list(ctx, {
-      billingRecordId: parseOptionalString(
-        query.billingRecordId,
-        "billingRecordId",
-      ),
+      billingPlanId: parseOptionalString(query.billingPlanId, "billingPlanId"),
       caseId: parseOptionalString(query.caseId, "caseId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
   }
 
+  /**
+   * Get a single payment record.
+   *
+   * @param req - HTTP request
+   * @param id - payment record ID
+   * @returns PaymentRecord
+   */
   @RequireRoles("viewer")
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
-
     const paymentRecord = await this.paymentRecordsService.get(ctx, id);
     if (!paymentRecord)
       throw new BadRequestException("Payment record not found");
     return paymentRecord;
   }
 
+  /**
+   * Void a payment record (soft-delete per P0 §6.2).
+   *
+   * @param req - HTTP request
+   * @param id - payment record ID
+   * @param body - void reason
+   * @returns voided PaymentRecord
+   */
   @RequireRoles("manager")
-  @Delete(":id")
-  async delete(@Req() req: HttpRequest, @Param("id") id: string) {
+  @Post(":id/void")
+  async void(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: VoidPaymentRecordBody,
+  ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
-
-    await this.paymentRecordsService.delete(ctx, id);
-    return { ok: true };
+    return this.paymentRecordsService.void(ctx, id, {
+      reasonCode: requireString(body.reasonCode, "reasonCode"),
+      reasonNote: parseOptionalNullableString(body.reasonNote, "reasonNote"),
+    });
   }
 }

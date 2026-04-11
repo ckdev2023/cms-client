@@ -1,0 +1,494 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "tasks",
+  "moduleLabel": "任务与提醒",
+  "moduleDir": "packages/prototype/admin/tasks",
+  "entryFile": "packages/prototype/admin/tasks/index.html",
+  "migrationSource": "packages/prototype/admin/tasks.html",
+  "referenceDocs": [
+    "packages/prototype/admin/tasks/P0-CONTRACT.md",
+    "packages/prototype/admin/tasks/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/tasks/MIGRATION-MAPPING.md",
+    "packages/prototype/admin/tasks/INVENTORY.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/任务与提醒.md",
+    "design/gyosei-os-admin/DESIGN.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sharedReuse": {
+    "cssLinks": [
+      { "canonical": "packages/prototype/admin/shared/styles/tokens.css", "href": "../shared/styles/tokens.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/shell.css", "href": "../shared/styles/shell.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/components.css", "href": "../shared/styles/components.css" }
+    ],
+    "scriptLinks": [
+      { "canonical": "packages/prototype/admin/shared/scripts/mobile-nav.js", "src": "../shared/scripts/mobile-nav.js", "loadOrder": 1 },
+      { "canonical": "packages/prototype/admin/shared/scripts/navigate.js", "src": "../shared/scripts/navigate.js", "loadOrder": 2 }
+    ],
+    "shellFragments": [
+      { "canonical": "packages/prototype/admin/shared/shell/mobile-nav.html", "comment": "shell: mobile-nav.html (paths adjusted for tasks/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/side-nav.html", "comment": "shell: side-nav.html (paths adjusted for tasks/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/topbar.html", "comment": "shell: topbar.html (paths adjusted for tasks/ subdirectory)", "pathPrefix": "../" }
+    ],
+    "ariaCurrent": {
+      "attribute": "aria-current=\"page\"",
+      "targetNavItem": "任务与提醒",
+      "targetHref": "index.html",
+      "canonicalHref": "tasks.html",
+      "applyIn": ["mobile-nav", "side-nav"],
+      "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
+    },
+    "navPathAdjustments": [
+      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
+      { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
+      { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
+      { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
+      { "label": "任务与提醒", "canonical": "tasks.html", "adjusted": "index.html", "ariaCurrent": true },
+      { "label": "资料中心", "canonical": "documents.html", "adjusted": "../documents.html" },
+      { "label": "文书中心", "canonical": "forms.html", "adjusted": "../forms.html" },
+      { "label": "收费与财务", "canonical": "billing/index.html", "adjusted": "../billing/index.html" },
+      { "label": "报表", "canonical": "reports.html", "adjusted": "../reports.html" },
+      { "label": "设置", "canonical": "settings.html", "adjusted": "../settings.html" },
+      { "label": "客户门户", "canonical": "../src/index.html", "adjusted": "../../src/index.html" }
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/page-header.html",
+      "purpose": "页面标题、副标题、新建任务按钮",
+      "sourceAnchors": [
+        "display-font",
+        "btnCreateTask",
+        "data-action=open-create-modal"
+      ],
+      "sourceLines": "345-356",
+      "contractRefs": [],
+      "productionTarget": "features/task/ui/TaskListHeader"
+    },
+    {
+      "file": "sections/workbench-sidebar.html",
+      "purpose": "工作台视图入口：我的待办、今日到期、已逾期、提醒日志 + badge 计数",
+      "sourceAnchors": [
+        "workbenchSidebar",
+        "data-view-id=my-todo",
+        "data-view-id=today-due",
+        "data-view-id=overdue",
+        "data-view-id=reminder-log",
+        "data-view-count"
+      ],
+      "sourceLines": "360-389",
+      "contractRefs": [
+        "§5 工作台视图"
+      ],
+      "productionTarget": "features/task/ui/TaskWorkbenchSidebar"
+    },
+    {
+      "file": "sections/filters-toolbar.html",
+      "purpose": "完成状态/截止范围/责任人/Group 筛选 + 搜索 + 重置",
+      "sourceAnchors": [
+        "filtersToolbar",
+        "data-filter=status",
+        "data-filter=deadline",
+        "data-filter=owner",
+        "data-filter=group",
+        "taskSearchInput",
+        "data-action=reset-filters"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§4 列表页搜索与筛选"
+      ],
+      "productionTarget": "features/task/ui/TaskListFilters",
+      "gapNote": "现有原型无此区块，需全新构建"
+    },
+    {
+      "file": "sections/task-table.html",
+      "purpose": "任务表格（8 列 + checkbox 列）、批量操作栏",
+      "sourceAnchors": [
+        "taskTableCard",
+        "taskTableBody",
+        "taskEmptyState",
+        "bulkActionBar",
+        "selectedCount",
+        "selectAllTasks",
+        "bulkClearBtn",
+        "bulkAssignSelect",
+        "bulkAssignApplyBtn",
+        "bulkDeadlineInput",
+        "bulkDeadlineApplyBtn",
+        "bulkCompleteBtn",
+        "bulkCancelBtn",
+        "data-task-select",
+        "data-task-id"
+      ],
+      "sourceLines": "392-461",
+      "contractRefs": [
+        "§2 列表页必保留字段",
+        "§6 列表页批量动作",
+        "§3 默认排序与展示规则",
+        "§7 取消原因枚举"
+      ],
+      "productionTarget": "features/task/ui/TaskTable + TaskBulkActionBar",
+      "gapNote": "现有原型为 <ul> 列表，缺 4 列（Group/优先级/状态/来源）和批量操作栏，需重构为 <table>"
+    },
+    {
+      "file": "sections/task-detail-panel.html",
+      "purpose": "任务详情：名称、描述、关联案件、责任人、截止日、操作记录等 10 项",
+      "sourceAnchors": [
+        "taskDetailPanel",
+        "detailTaskName",
+        "detailDescription",
+        "detailCaseLink",
+        "detailOwner",
+        "detailDeadline",
+        "detailStatus",
+        "detailPriority",
+        "detailGroup",
+        "detailSource",
+        "detailAuditLog",
+        "closeDetailBtn",
+        "detailCompleteBtn",
+        "detailEditBtn",
+        "detailCancelBtn"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§9 任务详情面板",
+        "§11 状态机"
+      ],
+      "productionTarget": "features/task/ui/TaskDetailPanel",
+      "gapNote": "现有原型无此区块，需全新构建"
+    },
+    {
+      "file": "sections/reminder-log-panel.html",
+      "purpose": "提醒日志列表：发送时间、接收人、类型、状态、失败原因、关联任务",
+      "sourceAnchors": [
+        "reminderLogPanel",
+        "closeReminderLogBtn",
+        "reminderLogBody",
+        "data-navigate-task"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§10 提醒日志面板"
+      ],
+      "productionTarget": "features/task/ui/ReminderLogPanel",
+      "gapNote": "现有原型侧边栏有入口但无面板内容，需全新构建"
+    },
+    {
+      "file": "sections/create-edit-modal.html",
+      "purpose": "新建/编辑任务弹窗：8 字段表单 + 必填校验",
+      "sourceAnchors": [
+        "taskModal",
+        "modalTitle",
+        "closeModalBtn",
+        "cancelModalBtn",
+        "submitTaskBtn",
+        "taskFormFields",
+        "fieldTaskName",
+        "fieldCaseId",
+        "fieldGroup",
+        "fieldOwner",
+        "fieldPriority",
+        "fieldDeadline",
+        "fieldSource",
+        "fieldDescription"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§8 新建/编辑任务弹窗",
+        "§11 状态机"
+      ],
+      "productionTarget": "features/task/ui/CreateEditTaskModal",
+      "gapNote": "现有原型有「新建任务」按钮但无弹窗，需全新构建"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "浮动反馈层：① Toast 通知（任务 CRUD + 批量操作）② 取消原因确认弹窗（共用于单条取消和批量取消）",
+      "boundaryNote": "toast 与 cancel-reason-dialog 合并在同一文件，因两者均为脱离主内容流的浮动层；生产迁移时 Toast → shared/ui，CancelReasonDialog → features/task/ui",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc",
+        "cancelReasonDialog",
+        "cancelReasonSelect",
+        "cancelReasonNote",
+        "cancelReasonNoteWrap",
+        "cancelReasonConfirmBtn",
+        "cancelReasonBackBtn",
+        "cancelReasonCancelBtn"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§15 Toast 通知",
+        "§7 取消原因枚举"
+      ],
+      "productionTarget": "shared/ui/Toast + features/task/ui/CancelReasonDialog",
+      "gapNote": "现有原型无 toast 和取消原因弹窗，需新增"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/tasks-config.js",
+      "purpose": "集中声明状态/优先级/来源枚举、列定义、筛选选项、表单 schema、toast preset、工作台视图配置",
+      "exports": [
+        "TASK_STATUS_OPTIONS",
+        "TASK_PRIORITY_OPTIONS",
+        "TASK_SOURCE_OPTIONS",
+        "CANCEL_REASON_OPTIONS",
+        "REMINDER_TYPE_OPTIONS",
+        "GROUPS",
+        "OWNERS",
+        "GROUP_LABEL_MAP",
+        "STATUS_LABEL_MAP",
+        "PRIORITY_LABEL_MAP",
+        "SOURCE_LABEL_MAP",
+        "REMINDER_TYPE_LABEL_MAP",
+        "STATUS_TRANSITIONS",
+        "TABLE_COLUMNS",
+        "FILTERS",
+        "SEARCH_PLACEHOLDER",
+        "WORKBENCH_VIEWS",
+        "BULK_ACTIONS",
+        "FORM_FIELDS",
+        "CREATE_REQUIRED_IDS",
+        "DETAIL_FIELDS",
+        "REMINDER_LOG_COLUMNS",
+        "DEADLINE_TAG_CONFIG",
+        "TOAST",
+        "STATUS_BADGE_MAP",
+        "PRIORITY_BADGE_MAP",
+        "WORKBENCH_VIEW_STYLES"
+      ],
+      "consumers": [
+        "scripts/tasks-page.js",
+        "scripts/tasks-filters.js",
+        "scripts/tasks-bulk-actions.js",
+        "scripts/tasks-modal.js",
+        "scripts/tasks-reminder-log.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/task/Task.ts + taskConstants.ts"
+    },
+    {
+      "file": "data/tasks-demo-data.js",
+      "purpose": "示例任务列表、提醒日志条目、视图 badge 计数、详情面板操作记录",
+      "exports": [
+        "DEMO_TASKS",
+        "DEMO_REMINDER_LOGS",
+        "DEMO_VIEW_COUNTS",
+        "DEMO_TASK_DETAIL",
+        "DEMO_AUDIT_LOG"
+      ],
+      "consumers": [],
+      "consumersNote": "P0 阶段 demo 数据直接硬编码在 HTML sections 中，脚本不引用；动态渲染后将成为 scripts 的数据源",
+      "demoOnly": true,
+      "productionTarget": null
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/tasks-page.js",
+      "purpose": "页面初始化、工作台视图切换、#new hash → 打开弹窗、toast 编排",
+      "domHooks": [
+        "DOMContentLoaded",
+        "data-view-id",
+        "#new hash"
+      ],
+      "dependsOn": [
+        "data/tasks-config.js",
+        "scripts/tasks-filters.js",
+        "scripts/tasks-bulk-actions.js",
+        "scripts/tasks-modal.js",
+        "scripts/tasks-reminder-log.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/task/model/useTaskListViewModel"
+    },
+    {
+      "file": "scripts/tasks-filters.js",
+      "purpose": "4 筛选器联动、搜索、重置、工作台视图→预置筛选同步",
+      "domHooks": [
+        "select[data-filter]",
+        ".search-input",
+        "data-action=reset-filters"
+      ],
+      "dependsOn": [
+        "data/tasks-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/task/model/useTaskFilters"
+    },
+    {
+      "file": "scripts/tasks-bulk-actions.js",
+      "purpose": "全选/单选/indeterminate、批量指派/截止日/完成/取消",
+      "domHooks": [
+        "#bulkActionBar",
+        "#selectedCount",
+        "#selectAllTasks",
+        "#bulkClearBtn",
+        "#bulkAssignSelect",
+        "#bulkAssignApplyBtn",
+        "#bulkDeadlineInput",
+        "#bulkDeadlineApplyBtn",
+        "#bulkCompleteBtn",
+        "#bulkCancelBtn"
+      ],
+      "dependsOn": [
+        "data/tasks-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/task/model/useTaskBulkActions"
+    },
+    {
+      "file": "scripts/tasks-modal.js",
+      "purpose": "新建/编辑弹窗开关、8 字段表单、必填校验（任务名 + Group + 责任人 + 截止时间）",
+      "domHooks": [
+        "#taskModal",
+        "#closeModalBtn",
+        "#cancelModalBtn",
+        "#submitTaskBtn",
+        "input/select[data-field]"
+      ],
+      "dependsOn": [
+        "data/tasks-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/task/model/useCreateEditTaskModal"
+    },
+    {
+      "file": "scripts/tasks-reminder-log.js",
+      "purpose": "提醒日志面板切换、日志列表渲染、失败状态展示、关联任务链接",
+      "domHooks": [
+        "#reminderLogPanel",
+        "data-view-id=reminder-log"
+      ],
+      "dependsOn": [],
+      "demoOnly": true,
+      "productionTarget": "features/task/model/useReminderLog"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/task/Task.ts",
+      "packages/mobile/src/domain/task/TaskRepository.ts",
+      "packages/mobile/src/domain/task/taskConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/task/TaskApi.ts",
+      "packages/mobile/src/data/task/createTaskRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/task/model/useTaskListViewModel.ts",
+      "packages/mobile/src/features/task/model/useTaskFilters.ts",
+      "packages/mobile/src/features/task/model/useTaskBulkActions.ts",
+      "packages/mobile/src/features/task/model/useCreateEditTaskModal.ts",
+      "packages/mobile/src/features/task/model/useReminderLog.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/task/ui/TaskListScreen.tsx",
+      "packages/mobile/src/features/task/ui/TaskListHeader.tsx",
+      "packages/mobile/src/features/task/ui/TaskWorkbenchSidebar.tsx",
+      "packages/mobile/src/features/task/ui/TaskListFilters.tsx",
+      "packages/mobile/src/features/task/ui/TaskTable.tsx",
+      "packages/mobile/src/features/task/ui/TaskBulkActionBar.tsx",
+      "packages/mobile/src/features/task/ui/TaskDetailPanel.tsx",
+      "packages/mobile/src/features/task/ui/ReminderLogPanel.tsx",
+      "packages/mobile/src/features/task/ui/CreateEditTaskModal.tsx",
+      "packages/mobile/src/features/task/ui/CancelReasonDialog.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SideNav.tsx",
+      "packages/mobile/src/shared/ui/TopBar.tsx",
+      "packages/mobile/src/shared/ui/MobileNav.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "列表页 8 列完整（任务名称、所属案件、所属 Group、责任人、优先级、截止时间、完成状态、来源）",
+    "默认排序：逾期置顶→截止时间升序→无截止时间置底",
+    "逾期任务截止时间列显示「逾期 X 天」并标红",
+    "来源以轻量 tag 展示",
+    "搜索框 placeholder 包含「任务名称 / 案件编号 / 责任人」",
+    "4 个筛选器（完成状态/截止范围/责任人/所属 Group）+ 重置按钮存在",
+    "工作台侧边栏 4 个视图入口正常（我的待办、今日到期、已逾期、提醒日志）",
+    "视图切换联动筛选条件正常",
+    "视图 badge 计数显示正常",
+    "全选/单选/indeterminate/清除 正常",
+    "批量指派责任人 → toast",
+    "批量调整截止日 → toast",
+    "批量完成 → toast",
+    "批量取消（含原因枚举 5 项 + 备注）→ toast",
+    "「新建任务」按钮 → 打开弹窗",
+    "弹窗 8 个字段完整",
+    "创建按钮可用态逻辑：任务名称 + 所属 Group + 责任人 + 截止时间",
+    "#new hash → 自动打开弹窗",
+    "任务详情面板完整（描述、关联案件、责任人、截止日、操作记录等 10 项）",
+    "提醒日志面板完整（发送时间、接收人、提醒类型、状态、失败原因、关联任务）",
+    "逾期任务标红正常",
+    "状态 tag 色彩区分（todo/doing/done/canceled）",
+    "状态流转符合状态机规则（done/canceled 不可回退）",
+    "取消任务必须填写原因（5 项枚举 select + 备注 textarea，cancelReasonDialog 弹窗）",
+    "空状态占位预留",
+    "权限不足态占位预留（禁用/隐藏不可编辑动作）",
+    "并发修改态占位预留",
+    "Toast 7 种场景正常弹出",
+    "移动端导航开关正常",
+    "侧边栏「任务与提醒」项 aria-current=page 高亮",
+    "分页区域正常显示",
+    "导航返回规则：全局入口→保留筛选；案件 Tab→保留案件上下文",
+    "「本周到期」仅作为行内标签，未升级为独立视图/筛选（P0 不做项验证）",
+    "6 条示例数据覆盖全部 4 种状态（todo/doing/done/canceled）",
+    "批量操作栏仅在 selectedCount > 0 时可见",
+    "共享壳层正确引入（tokens.css / shell.css / components.css / shell HTML 片段）",
+    "关联案件链接可跳转到案件详情（路径为 ../case/detail.html）",
+    "提醒日志关联任务链接使用 data-navigate-task 属性"
+  ],
+  "knownLegacyLinks": [
+    {
+      "source": "packages/prototype/admin/admin-prototype.html",
+      "href": "tasks.html",
+      "note": "仪表盘导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/customers/index.html",
+      "href": "../tasks.html",
+      "note": "客户页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/*.html（其他未迁移页面）",
+      "href": "tasks.html",
+      "note": "同级导航链接，待全部页面迁移后统一更新"
+    }
+  ],
+  "notes": [
+    "tasks.html 作为迁移源保留，不在第一阶段删除。",
+    "现有原型缺失大量 P0 必需区块（筛选工具栏、批量操作栏、详情面板、提醒日志面板、弹窗、toast），拆分时需全新构建。",
+    "现有原型的 <ul> 任务列表需重构为 <table>，补齐 8 列。",
+    "「本周到期」tag 保留为行内语义标记，不升级为筛选视图（P0 不做）。",
+    "所有 demo-only 行为（硬编码数据、toast 示例、badge 计数）单独标注。",
+    "任务模块不引入草稿能力（与客户模块不同）。",
+    "任务模块比客户模块多出的独有概念：工作台侧边栏视图、任务详情面板、提醒日志面板、操作记录时间线。",
+    "P0-CONTRACT §11 状态机：done/canceled 不可回退；原型需在详情面板和弹窗中体现状态流转约束。",
+    "P0-CONTRACT §13 站内提醒与自动生成：最小触发集合（指派/今日到期/逾期）和去重策略在原型中为 demo-only 文案，生产需落实。",
+    "P0-CONTRACT §7 取消原因枚举（5 项）：原型中通过 cancelReasonDialog 弹窗实现 select + 备注 textarea；§6.2 批量权限約束：done/canceled 行 checkbox disabled。",
+    "demo-only 已知偏差：tasks-page.js 的 submitBtn click 始终使用 TOAST.create，编辑模式下也如此；生产需根据 mode 区分 create/update toast。",
+    "demo-only 已知偏差：批量操作完成后不自动清除 checkbox 选中态和操作栏；生产需在批量操作成功后刷新列表并清除选中。"
+  ]
+}

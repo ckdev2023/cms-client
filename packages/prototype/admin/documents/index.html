@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>资料中心 - Gyosei OS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../shared/styles/tokens.css" />
+    <link rel="stylesheet" href="../shared/styles/shell.css" />
+    <link rel="stylesheet" href="../shared/styles/components.css" />
+    <link rel="stylesheet" href="documents.css" />
+  </head>
+  <body class="antialiased">
+    <a href="#main" class="skip-link">跳到主要内容</a>
+
+    <!-- shell: mobile-nav.html (paths adjusted for documents/ subdirectory) -->
+    <div class="mobile-nav" aria-hidden="true">
+      <div class="mobile-nav-backdrop" data-nav-close></div>
+      <div class="mobile-nav-panel">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
+            <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="../dashboard/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-message/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="../case/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <!-- <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a> -->
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a> -->
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <div class="app-shell">
+      <!-- shell: side-nav.html (paths adjusted for documents/ subdirectory) -->
+      <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
+        <div class="side-nav-inner">
+          <div class="brand">
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
+            <span class="chip">事务所后台</span>
+          </div>
+          <nav aria-label="主导航">
+            <div class="nav-group-title">工作台</div>
+            <a class="nav-item" href="../dashboard/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path>
+              </svg>
+              仪表盘
+            </a>
+            <div class="nav-group-title">业务</div>
+            <a class="nav-item" href="../leads-message/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+              咨询与会话
+            </a>
+            <a class="nav-item" href="../customers/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              客户
+            </a>
+            <a class="nav-item" href="../case/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              案件
+            </a>
+            <a class="nav-item" href="../tasks/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+              任务与提醒
+            </a>
+            <div class="nav-group-title">内容</div>
+            <a class="nav-item" href="index.html" aria-current="page">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+              </svg>
+              资料中心
+            </a>
+            <div class="nav-group-title">财务</div>
+            <a class="nav-item" href="../billing/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path>
+              </svg>
+              收费与财务
+            </a>
+            <!-- <a class="nav-item" href="../reports.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
+              </svg>
+              报表
+            </a> -->
+            <div class="nav-group-title">系统</div>
+            <a class="nav-item" href="../settings/index.html">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              </svg>
+              设置
+            </a>
+            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
+              </svg>
+              客户门户
+            </a> -->
+          </nav>
+        </div>
+      </aside>
+
+      <div>
+        <!-- shell: topbar.html (paths adjusted for documents/ subdirectory) -->
+        <header class="topbar" aria-label="顶部工具栏">
+          <div class="topbar-inner">
+            <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              </svg>
+            </button>
+
+            <div class="search" role="search">
+              <svg class="w-[18px] h-[18px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              <input type="search" placeholder="搜索：客户 / 案件 / 资料 / 文书..." aria-label="全局搜索" />
+              <span class="hidden sm:inline-flex chip">⌘K</span>
+            </div>
+
+            <button class="btn-pill hidden sm:inline-flex" type="button" data-navigate="../leads-message/index.html">新建咨询</button>
+            <button class="btn-primary" type="button" data-navigate="../case/create.html">新建案件</button>
+
+            <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">
+              AD
+            </div>
+          </div>
+        </header>
+
+        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+          <!-- section: sections/page-header.html -->
+          <section class="page-hero mb-8" aria-labelledby="documentsPageTitle">
+            <div class="page-hero__content">
+              <div class="page-hero__eyebrow">
+                <span class="chip">全部案件资料总览</span>
+                <span class="page-hero__eyebrow-text">优先显示缺件、快到期和共用资料风险</span>
+              </div>
+              <div>
+                <h1 class="text-3xl display-font font-semibold" id="documentsPageTitle">资料中心</h1>
+                <p class="page-hero__desc text-sm text-[var(--muted)] mt-2">在这里统一查看各案件资料进度，集中处理登记资料、催办补件、审核和使用已存资料。</p>
+              </div>
+            </div>
+            <div class="page-hero__aside">
+              <div class="page-hero__metric">
+                <span class="page-hero__metric-label">当前列表</span>
+                <strong class="page-hero__metric-value">全部案件资料，优先显示待处理项目</strong>
+              </div>
+              <div class="flex space-x-3">
+                <button class="btn-primary flex items-center" id="btnRegisterDocument" data-action="open-register-modal">
+                  <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                  </svg>
+                  登记资料
+                </button>
+              </div>
+            </div>
+          </section>
+          <!-- /section: sections/page-header.html -->
+
+          <!-- section: sections/summary-cards.html -->
+          <div class="documents-summary-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+            <button class="apple-card summary-card summary-card--reviewing" id="summaryCardReviewing" data-action="filter-by-card" data-card-status="uploaded_reviewing" type="button">
+              <div class="summary-card__label"><span class="summary-card__dot"></span>待审核</div>
+              <div class="summary-card__value" id="reviewingCount">0</div>
+              <div class="summary-card__hint">客户或同事已提交，等待事务所确认是否通过。</div>
+            </button>
+            <button class="apple-card summary-card summary-card--missing" id="summaryCardMissing" data-action="filter-by-card" data-card-status="missing" type="button">
+              <div class="summary-card__label"><span class="summary-card__dot"></span>缺件</div>
+              <div class="summary-card__value" id="missingCount">0</div>
+              <div class="summary-card__hint">待提交或退回补正的资料，优先催办与重新登记。</div>
+            </button>
+            <button class="apple-card summary-card summary-card--expired" id="summaryCardExpired" data-action="filter-by-card" data-card-status="expired" type="button">
+              <div class="summary-card__label"><span class="summary-card__dot"></span>过期</div>
+              <div class="summary-card__value" id="expiredCount">0</div>
+              <div class="summary-card__hint">资料已超过有效期，建议尽快补最新版本。</div>
+            </button>
+            <button class="apple-card summary-card summary-card--risk" id="summaryCardSharedExpiry" data-action="filter-by-card" data-card-status="shared_expired" type="button">
+              <div class="summary-card__label"><span class="summary-card__dot"></span>共用资料到期影响</div>
+              <div class="summary-card__value" id="sharedExpiryCount">0</div>
+              <div class="summary-card__hint">同一份资料被多个案件使用时，点击查看哪些案件会受影响。</div>
+            </button>
+          </div>
+          <!-- /section: sections/summary-cards.html -->
+
+          <!-- section: sections/filters-toolbar.html -->
+          <div class="apple-card filter-panel">
+            <div class="filter-panel__header">
+              <div>
+                <div class="filter-panel__title">组合筛选</div>
+                <p class="filter-panel__desc">可按状态、案件、由谁提供和关键词筛选，快速找到最需要处理的资料。</p>
+              </div>
+              <div class="filter-panel__helper">默认优先显示待处理资料</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-3" id="filtersToolbar">
+              <select class="apple-input text-sm" data-filter="status" aria-label="状态筛选">
+                <option value="">全部状态</option>
+                <option value="not_sent">未発出</option>
+                <option value="waiting_upload">待提交</option>
+                <option value="uploaded_reviewing">已提交待审核</option>
+                <option value="approved">通过</option>
+                <option value="revision_required">退回补正</option>
+                <option value="expired">过期</option>
+                <option value="waived">无需提供</option>
+              </select>
+              <select class="apple-input text-sm" data-filter="case" aria-label="所属案件筛选">
+                <option value="">全部案件</option>
+              </select>
+              <select class="apple-input text-sm" data-filter="provider" aria-label="由谁提供筛选">
+                <option value="">全部提供人</option>
+                <option value="main_applicant">主申请人</option>
+                <option value="guarantor">扶養者/保証人</option>
+                <option value="employer">受入机関/企業担当</option>
+                <option value="office">事務所内部</option>
+              </select>
+              <div class="search flex-1 min-w-[180px]" role="search">
+                <svg class="w-[16px] h-[16px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="search" id="docSearchInput" placeholder="搜索：资料名称 / 案件编号 / 案件名称" aria-label="搜索资料" class="text-sm" />
+              </div>
+              <button class="btn-pill text-sm" type="button" data-action="reset-filters">重置</button>
+            </div>
+          </div>
+          <!-- /section: sections/filters-toolbar.html -->
+
+          <!-- section: sections/documents-table.html -->
+          <div class="apple-card table-shell overflow-hidden" id="docTableCard">
+            <div class="table-shell__header">
+              <div>
+                <div class="table-shell__eyebrow">资料明细</div>
+                <div class="table-shell__title-row">
+                  <h2 class="table-shell__title">全部案件资料清单</h2>
+                  <span class="table-shell__sort-note">优先显示待处理资料</span>
+                </div>
+              </div>
+              <div class="table-shell__count"><strong id="docTableCount">0</strong> 项</div>
+            </div>
+            <div
+              id="bulkActionBar"
+              class="hidden px-4 md:px-6 py-3 border-b border-[var(--border)] bg-[var(--surface-2)] flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+              role="region"
+              aria-label="批量操作"
+            >
+              <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--text)]">
+                已选择 <span id="selectedCount">0</span> 项
+                <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]" type="button" id="bulkClearBtn">
+                  清除
+                </button>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="btn-pill text-sm" id="bulkRemindBtn" type="button">批量催办</button>
+                <button class="btn-pill text-sm" id="bulkApproveBtn" type="button">批量审核通过</button>
+                <button class="btn-pill text-sm" id="bulkWaiveBtn" type="button">批量标记无需提供</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="apple-table documents-table w-full text-left border-collapse">
+                <thead>
+                  <tr>
+                    <th class="w-[44px] text-center">
+                      <label class="inline-flex items-center justify-center w-full">
+                        <input
+                          type="checkbox"
+                          id="selectAllDocs"
+                          class="accent-[var(--primary)] table-checkbox"
+                          aria-label="全选资料"
+                        />
+                      </label>
+                    </th>
+                    <th>资料名称</th>
+                    <th class="hidden md:table-cell">所属案件</th>
+                    <th class="hidden lg:table-cell" style="width: 120px;">由谁提供</th>
+                    <th style="width: 110px;">状态</th>
+                    <th class="hidden md:table-cell" style="width: 120px;">截止日</th>
+                    <th class="hidden lg:table-cell" style="width: 130px;">最近催办</th>
+                    <th class="hidden lg:table-cell" style="width: 200px;">归档位置</th>
+                  </tr>
+                </thead>
+                <tbody id="docTableBody">
+                  <!-- Rows populated by documents-page.js from DocumentsDemoData -->
+                </tbody>
+              </table>
+            </div>
+
+            <div id="docEmptyState" class="hidden py-16 text-center">
+              <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+              <p class="text-[15px] font-semibold text-[var(--muted)]">暂无资料数据</p>
+              <p class="text-[13px] text-[var(--muted-2)] mt-1">请先在案件中配置资料清单模板</p>
+            </div>
+
+            <div id="docFilterEmptyState" class="hidden py-16 text-center">
+              <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+              <p class="text-[15px] font-semibold text-[var(--muted)]">未找到匹配的资料</p>
+              <p class="text-[13px] text-[var(--muted-2)] mt-1">请调整筛选条件或关键词后重试</p>
+            </div>
+
+            <div id="docPagination" class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+              <div class="text-sm text-[var(--muted-2)]" id="docPaginationInfo">显示 1 - 6 条，共 6 条<!-- demo-only --></div>
+              <div class="flex space-x-2">
+                <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+                <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+              </div>
+            </div>
+          </div>
+          <!-- /section: sections/documents-table.html -->
+
+          <!-- section: sections/toast.html -->
+          <div
+            id="toast"
+            class="hidden fixed bottom-6 right-6 z-50 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-lg px-5 py-4 max-w-sm"
+            role="status"
+            aria-live="polite"
+          >
+            <div class="text-[14px] font-extrabold text-[var(--text)]" id="toastTitle"></div>
+            <div class="text-[13px] text-[var(--muted)] mt-1 font-semibold" id="toastDesc"></div>
+          </div>
+          <!-- /section: sections/toast.html -->
+        </main>
+      </div>
+    </div>
+
+    <!-- section: sections/register-document-modal.html -->
+    <div class="modal-backdrop" id="registerDocModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 520px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">登记资料（记录归档位置）</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-register-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 60vh;">
+          <div>
+            <label class="apple-label">关联案件 <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="registerCaseSelect">
+              <option value="" disabled selected>请选择案件</option>
+            </select>
+          </div>
+          <div>
+            <label class="apple-label">关联资料 <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="registerDocItemSelect" disabled>
+              <option value="" disabled selected>请先选择案件</option>
+            </select>
+            <p class="text-[11px] text-[var(--muted-2)] mt-1">这里只显示当前还需要处理的资料。</p>
+          </div>
+          <div>
+            <label class="apple-label">归档位置 <span class="text-red-500">*</span></label>
+            <input type="text" class="apple-input font-mono text-[13px]" id="registerRelativePath" placeholder="例如：A2026-001/main_applicant/passport/20260409_passport.pdf" />
+            <p class="text-[11px] text-[var(--muted-2)] mt-1" id="registerPathHint">填写这份资料在事务所电脑中的文件夹位置；通常从案件编号开始填写即可。</p>
+            <p class="text-[11px] text-red-500 mt-1 hidden" id="registerPathError">请填写正确的归档位置，不要以 / 或 ~ 开头，也不要包含 ..</p>
+          </div>
+          <div>
+            <label class="apple-label">资料说明</label>
+            <input type="text" class="apple-input" id="registerFileName" placeholder="例如：护照首页、在留卡正反面、2026-04 更新版课税证明" />
+            <p class="text-[11px] text-[var(--muted-2)] mt-1">用于事务所内部识别这份资料；如不填写，可从归档路径自动带出文件名。</p>
+          </div>
+          <div>
+            <label class="apple-label">版本号</label>
+            <input type="text" class="apple-input bg-[var(--surface-2)] cursor-not-allowed" id="registerVersion" value="v1（系统自动递增）" readonly />
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-register-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="registerConfirmBtn" disabled>登记</button>
+        </div>
+      </div>
+    </div>
+    <!-- /section: sections/register-document-modal.html -->
+
+    <!-- section: sections/review-actions-panel.html -->
+    <div class="modal-backdrop" id="approveModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 420px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">审核通过确认</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-approve-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-[var(--text)]" id="approveDocName">—</p>
+              <p class="text-[12px] text-[var(--muted-2)] mt-1">确认将这份资料标记为审核通过？通过后会计入完成率。</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-approve-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="approveConfirmBtn">确认通过</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-backdrop" id="rejectModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 480px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">退回补正</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-reject-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-[var(--text)]" id="rejectDocName">—</p>
+              <p class="text-[12px] text-[var(--muted-2)] mt-1">退回后这份资料会变为「退回补正」，请填写退回原因。</p>
+            </div>
+          </div>
+          <div>
+            <label class="apple-label">退回原因 <span class="text-red-500">*</span></label>
+            <textarea class="apple-input" id="rejectReasonText" rows="3" placeholder="请说明资料不符合要求的具体原因"></textarea>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-reject-modal">取消</button>
+          <button class="btn-primary px-5 bg-[var(--danger)] hover:bg-red-700" type="button" id="rejectConfirmBtn" disabled>确认退回</button>
+        </div>
+      </div>
+    </div>
+    <!-- /section: sections/review-actions-panel.html -->
+
+    <!-- section: sections/waive-modal.html -->
+    <div class="modal-backdrop" id="waiveModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 420px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]" id="waiveModalTitle">标记无需提供</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-waive-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6 space-y-4">
+          <p class="text-sm text-[var(--muted)]" id="waiveDocLabel">将这份资料标记为无需提供，不再计入完成率。</p>
+          <div>
+            <label class="apple-label">原因码 <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="waiveReasonSelect">
+              <option value="" disabled selected>请选择原因</option>
+              <option value="visa-type-exempt">无需提供（该签证类型免除）</option>
+              <option value="guarantor-exempt">保证人为配偶/直系亲属（免除）</option>
+              <option value="equivalent-exists">客户已在其他案件提供等价材料</option>
+              <option value="immigration-confirmed">入管局确认免除</option>
+              <option value="other">其他</option>
+            </select>
+          </div>
+          <div id="waiveNoteWrap" class="hidden">
+            <label class="apple-label">原因备注 <span class="text-red-500">*</span></label>
+            <textarea class="apple-input" id="waiveReasonNote" rows="2" placeholder="请填写具体原因"></textarea>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-waive-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="waiveConfirmBtn" disabled>确认标记</button>
+        </div>
+      </div>
+    </div>
+    <!-- /section: sections/waive-modal.html -->
+
+    <!-- section: sections/reference-version-modal.html -->
+    <div class="modal-backdrop" id="referenceVersionModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 560px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">使用已存资料</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-reference-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <p class="text-sm text-[var(--muted)] mb-4" id="referenceDocLabel">可直接使用其他案件里已经审核通过、且仍在有效期内的同类资料。</p>
+          <div class="space-y-3" id="referenceCandidateList">
+            <label class="block apple-card p-4 cursor-pointer hover:shadow-[var(--shadow-hover)] transition-shadow border-2 border-transparent has-[:checked]:border-[var(--primary)]">
+              <div class="flex items-start gap-3">
+                <input type="radio" name="referenceCandidate" value="ref-001" class="mt-1 accent-[var(--primary)]" />
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-[var(--text)]">課税証明書</span>
+                    <span class="tag tag-green text-[11px]">通过</span>
+                  </div>
+                  <div class="text-[12px] text-[var(--muted-2)] mt-1">来源案件：CAS-2026-0181 高度人才 (Michael T.)</div>
+                  <div class="flex items-center gap-4 text-[12px] text-[var(--muted-2)] mt-1">
+                    <span>版本：v1</span>
+                    <span>审核日期：2026-03-15</span>
+                    <span>有效期至：2027-03-31</span>
+                  </div>
+                </div>
+              </div>
+            </label>
+          </div>
+          <div class="hidden py-8 text-center" id="referenceCandidateEmpty">
+            <p class="text-sm text-[var(--muted)]">暂无可直接使用的已审核资料</p>
+            <p class="text-[12px] text-[var(--muted-2)] mt-1">需要有资料类型一致、提供人一致、且仍在有效期内的已审核资料。</p>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-reference-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="referenceConfirmBtn" disabled>确认使用</button>
+        </div>
+      </div>
+    </div>
+    <!-- /section: sections/reference-version-modal.html -->
+
+    <!-- section: sections/risk-log-panel.html -->
+    <div id="riskLogPanel" class="hidden fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="共用资料到期影响">
+      <div class="absolute inset-0 bg-black/30" data-action="close-risk-panel"></div>
+      <div class="relative bg-[var(--surface)] w-full max-w-lg shadow-lg border-l border-[var(--border)] flex flex-col h-full">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center flex-shrink-0">
+          <div>
+            <h3 class="text-[17px] font-semibold text-[var(--text)]">共用资料到期影响</h3>
+            <p class="text-[12px] text-[var(--muted-2)] mt-0.5">同一份资料被多个案件使用，且已过期或即将过期。</p>
+          </div>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-risk-panel">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-6 space-y-6" id="riskLogBody">
+          <div class="apple-card p-4 border-l-[3px] border-l-[var(--danger)]">
+            <div class="flex items-start gap-3">
+              <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-semibold text-[var(--text)]">課税証明書 — v1</p>
+                <p class="text-[12px] text-red-600 font-semibold mt-0.5">已过期（有效期至 2026-03-31）</p>
+                <div class="mt-3 space-y-1.5">
+                  <p class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wider">受影响案件</p>
+                  <div class="space-y-1">
+                    <a href="../case/detail.html" class="block text-[13px] text-[var(--primary)] hover:underline font-semibold">CAS-2026-0156 家族滞在 (李明)</a>
+                    <a href="../case/detail.html" class="block text-[13px] text-[var(--primary)] hover:underline font-semibold">CAS-2026-0204 就労签证 (陈某)</a>
+                  </div>
+                </div>
+                <div class="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+                  <p class="text-[12px] text-amber-800 font-semibold">
+                    <svg class="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    建议操作：请联系相关提供人补交最新版本，或先确认这份资料是否仍在有效期内。
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="hidden py-12 text-center" id="riskLogEmpty">
+            <svg class="w-12 h-12 mx-auto text-green-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p class="text-[15px] font-semibold text-[var(--muted)]">暂无共用资料到期影响</p>
+            <p class="text-[13px] text-[var(--muted-2)] mt-1">当前所有被多个案件共用的资料都还在有效期内</p>
+          </div>
+        </div>
+        <div class="px-6 py-4 border-t border-[var(--border)] flex-shrink-0">
+          <button class="btn-secondary w-full text-center" type="button" data-action="close-risk-panel">关闭</button>
+        </div>
+      </div>
+    </div>
+    <!-- /section: sections/risk-log-panel.html -->
+
+    <script src="data/documents-config.js"></script>
+    <script src="data/documents-demo-data.js"></script>
+    <script src="scripts/documents-page.js"></script>
+    <script src="scripts/documents-filters.js"></script>
+    <script src="scripts/documents-bulk-actions.js"></script>
+    <script src="scripts/documents-register-modal.js"></script>
+    <script src="scripts/documents-review.js"></script>
+    <script src="../shared/scripts/navigate.js"></script>
+    <script src="../shared/scripts/mobile-nav.js"></script>
+  </body>
+</html>

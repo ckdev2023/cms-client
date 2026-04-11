@@ -1,0 +1,52 @@
+<!--
+  section: toast.html
+  Floating toast notification for task CRUD and bulk actions.
+  P0 CONTRACT §15: 7 toast scenarios (create, complete, cancel, bulk×4).
+
+  Reuses the same toast pattern as customers module.
+  Gap: entirely new — legacy tasks.html had no toast.
+-->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+  <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+    <div class="text-[13px] font-extrabold text-[var(--text)]" id="toastTitle">已保存</div>
+    <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
+  </div>
+</div>
+
+<!--
+  Cancel reason confirmation dialog.
+  P0 CONTRACT §7: 5 cancel reasons (重复生成 / 案件终止 / 改由其他流程 / 录入错误 / 其他).
+  Used by both single-task cancel (detail panel) and bulk cancel (bulk action bar).
+  "其他" requires a note (备注).
+-->
+<div class="modal-backdrop" id="cancelReasonDialog">
+  <div class="apple-modal flex flex-col" style="max-width: 420px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">取消任务 — 请选择原因</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" id="cancelReasonBackBtn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="apple-label">取消原因 <span class="text-red-500">*</span></label>
+        <select class="apple-input appearance-none bg-white" id="cancelReasonSelect">
+          <option value="" disabled selected>请选择取消原因</option>
+          <option value="duplicate">重复生成</option>
+          <option value="case-terminated">案件终止/撤回</option>
+          <option value="other-process">改由其他流程处理</option>
+          <option value="input-error">录入错误</option>
+          <option value="other">其他（需备注）</option>
+        </select>
+      </div>
+      <div id="cancelReasonNoteWrap" class="hidden">
+        <label class="apple-label">备注 <span class="text-red-500">*</span></label>
+        <textarea class="apple-input" id="cancelReasonNote" rows="2" placeholder="请填写具体原因"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" id="cancelReasonCancelBtn" type="button">返回</button>
+      <button class="btn-primary px-5 bg-[var(--danger)] hover:bg-red-700" id="cancelReasonConfirmBtn" type="button" disabled>确认取消</button>
+    </div>
+  </div>
+</div>

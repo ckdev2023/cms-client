@@ -1,0 +1,67 @@
+<!-- section: sections/visibility-config-panel.html -->
+<div id="visibilityPanel">
+  <div class="flex justify-between items-end mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[var(--text)]">可见性配置</h2>
+      <p class="text-[13px] text-[var(--muted-2)] mt-0.5">管理跨组建案与协作案件的可见性策略。配置变更不回溯影响既有协作/归属关系。</p>
+    </div>
+  </div>
+
+  <div class="space-y-4">
+    <!-- Switch 1: Cross-group case creation -->
+    <div class="apple-card p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-[14px] font-bold text-[var(--text)]">是否允许跨组建案</p>
+          <p class="text-[13px] text-[var(--muted-2)] mt-1 leading-relaxed">
+            启用后，非管理员也可为非本组客户创建案件。跨组建案须留痕（操作人、时间、原因）。
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+          <input type="checkbox" id="toggleCrossGroupCase" class="sr-only peer" />
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+
+    <!-- Switch 2: Cross-group collaboration view -->
+    <div class="apple-card p-5 sm:p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <p class="text-[14px] font-bold text-[var(--text)]">是否允许负责人查看非本组协作案件</p>
+          <p class="text-[13px] text-[var(--muted-2)] mt-1 leading-relaxed">
+            启用后，被指定为协作者的负责人可查看非本组案件信息。
+          </p>
+        </div>
+        <label class="relative inline-flex items-center cursor-pointer flex-shrink-0 mt-0.5">
+          <input type="checkbox" id="toggleCrossGroupView" class="sr-only peer" />
+          <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Cross-module note -->
+  <div class="mt-4 p-3 rounded-xl border border-blue-100 bg-blue-50">
+    <div class="flex items-start gap-2">
+      <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <p class="text-[12px] text-blue-700 leading-relaxed">
+        此处仅控制配置开关。跨组建案/转组/线索转化改组时的原因采集与审计留痕属于业务流程域，不在此页面管理。
+      </p>
+    </div>
+  </div>
+
+  <!-- Save button -->
+  <div class="mt-6 flex justify-end">
+    <button
+      type="button"
+      class="btn-primary h-9 px-5 text-[13px]"
+      id="btnSaveVisibility"
+    >
+      保存可见性配置
+    </button>
+  </div>
+</div>
+<!-- /section: sections/visibility-config-panel.html -->

@@ -1,0 +1,36 @@
+<!--
+  section: page-header.html
+  Page hero: 页面标题 + 副标题 + eyebrow chip + 当前视角 metric + "登记资料"按钮。
+  Rendered inside <main> as the first section.
+
+  CSS:      documents.css (.page-hero 家族)
+  DOM hooks: btnRegisterDocument, data-action=open-register-modal
+  P0-CONTRACT: —
+  Production target: features/document/ui/DocumentListHeader
+-->
+<section class="page-hero mb-8" aria-labelledby="documentsPageTitle">
+  <div class="page-hero__content">
+    <div class="page-hero__eyebrow">
+      <span class="chip">全部案件资料总览</span>
+      <span class="page-hero__eyebrow-text">优先显示缺件、快到期和共用资料风险</span>
+    </div>
+    <div>
+      <h1 class="text-3xl display-font font-semibold" id="documentsPageTitle">资料中心</h1>
+      <p class="page-hero__desc text-sm text-[var(--muted)] mt-2">在这里统一查看各案件资料进度，集中处理登记资料、催办补件、审核和使用已存资料。</p>
+    </div>
+  </div>
+  <div class="page-hero__aside">
+    <div class="page-hero__metric">
+      <span class="page-hero__metric-label">当前列表</span>
+      <strong class="page-hero__metric-value">全部案件资料，优先显示待处理项目</strong>
+    </div>
+    <div class="flex space-x-3">
+      <button class="btn-primary flex items-center" id="btnRegisterDocument" data-action="open-register-modal">
+        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        登记资料
+      </button>
+    </div>
+  </div>
+</section>

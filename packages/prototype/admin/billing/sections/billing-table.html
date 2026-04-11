@@ -1,0 +1,188 @@
+<!--
+  section: billing-table.html
+  Case billing list with 8 data columns + checkbox column, plus bulk action bar.
+  P0-CONTRACT §2 (8 columns), §3 (default sort), §14 (bulk actions).
+
+  Columns: checkbox | 案件名称 | 客户 | 所属 Group | 应收(¥) | 已收(¥) | 未收(¥) | 下一收款节点 | 回款状态
+  Default sort: overdue first → outstanding desc → due date asc.
+  Rows carry data-billing-status / data-billing-group / data-billing-owner for client-side filtering.
+
+  4 demo rows cover all 4 status variants: overdue / partial / due / paid.
+-->
+<div class="apple-card overflow-hidden" id="billingTableCard" data-view="billing-list">
+  <!-- Bulk Action Bar -->
+  <div
+    id="bulkActionBar"
+    class="hidden px-4 md:px-6 py-3 border-b border-[var(--border)] bg-[var(--surface-2)] flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+    role="region"
+    aria-label="批量操作"
+  >
+    <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--text)]">
+      已选择 <span id="selectedCount">0</span> 条
+      <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]" type="button" id="bulkClearBtn">
+        清除
+      </button>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkCollectionBtn">
+        批量生成催款任务
+      </button>
+    </div>
+  </div>
+
+  <!-- Billing Table -->
+  <table class="apple-table w-full text-left border-collapse">
+    <thead>
+      <tr>
+        <th class="w-[44px] text-center">
+          <label class="inline-flex items-center justify-center w-full">
+            <input
+              type="checkbox"
+              id="selectAllBilling"
+              class="accent-[var(--primary)] table-checkbox"
+              aria-label="全选案件"
+            />
+          </label>
+        </th>
+        <th>案件名称</th>
+        <th class="hidden md:table-cell">客户</th>
+        <th class="hidden lg:table-cell w-[100px]">所属 Group</th>
+        <th class="w-[100px] text-right">应收(¥)</th>
+        <th class="w-[100px] text-right">已收(¥)</th>
+        <th class="w-[100px] text-right">未收(¥)</th>
+        <th class="hidden md:table-cell w-[160px]">下一收款节点</th>
+        <th class="w-[100px]">回款状态</th>
+      </tr>
+    </thead>
+    <tbody id="billingTableBody">
+      <!-- Row 1: 逾期 (overdue) — sort priority 1 (overdue first, outstanding=500,000) -->
+      <tr data-billing-id="bill-002" data-billing-select-row data-billing-status="overdue" data-billing-group="tokyo-1" data-billing-owner="admin" class="bg-[rgba(220,38,38,0.04)]">
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-billing-select value="bill-002" aria-label="选择 经营管理签证 新规" />
+        </td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">经营管理签证 新规</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0191</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--text)] font-semibold">Global Tech KK</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">企业</div>
+        </td>
+        <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
+        <td class="text-right font-medium">500,000</td>
+        <td class="text-right text-green-600">0</td>
+        <td class="text-right text-red-600 font-medium">500,000</td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[#991b1b] font-extrabold">首付款 (100%)</div>
+          <div class="text-xs text-[#991b1b] font-semibold">已逾期 5 天 (2026-04-04)</div>
+        </td>
+        <td>
+          <span class="tag tag-red">欠款</span>
+        </td>
+      </tr>
+
+      <!-- Row 2: 部分回款 (partial) — sort priority 2 (outstanding=175,000) -->
+      <!-- checkbox disabled per REGRESSION-GATE Gate 3.9: 非逾期行不可参与批量催款 -->
+      <tr data-billing-id="bill-001" data-billing-select-row data-billing-status="partial" data-billing-group="tokyo-1" data-billing-owner="suzuki">
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--primary)] table-checkbox opacity-60" data-billing-select value="bill-001" aria-label="选择 高度人才 (HSP) 申请" disabled />
+        </td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">高度人才 (HSP) 申请</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0181</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--text)] font-semibold">Michael T.</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">个人</div>
+        </td>
+        <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
+        <td class="text-right font-medium">350,000</td>
+        <td class="text-right text-green-600">175,000</td>
+        <td class="text-right text-orange-600">175,000</td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm">尾款 (50%)</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">申请获批后 7 天内</div>
+        </td>
+        <td>
+          <span class="tag tag-blue">部分回款</span>
+        </td>
+      </tr>
+
+      <!-- Row 3: 未回款 (due, not overdue) — sort priority 3 (outstanding=120,000) -->
+      <tr data-billing-id="bill-004" data-billing-select-row data-billing-status="due" data-billing-group="osaka" data-billing-owner="tanaka">
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--primary)] table-checkbox opacity-60" data-billing-select value="bill-004" aria-label="选择 就劳签证 变更" disabled />
+        </td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">就劳签证 变更</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0204</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--text)] font-semibold">Li M.</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">个人</div>
+        </td>
+        <td class="hidden lg:table-cell"><span class="chip">大阪組</span></td>
+        <td class="text-right font-medium">120,000</td>
+        <td class="text-right text-gray-400">0</td>
+        <td class="text-right text-orange-600">120,000</td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm">全款 (100%)</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">资料收集齐后 3 天内</div>
+        </td>
+        <td>
+          <span class="tag tag-orange">未回款</span>
+        </td>
+      </tr>
+
+      <!-- Row 4: 已结清 (paid) — sort priority 4 (outstanding=0), checkbox disabled per P0-CONTRACT §14.1 -->
+      <!-- Row 2 (partial) checkbox also disabled per REGRESSION-GATE Gate 3.9: non-overdue rows disabled -->
+      <tr data-billing-id="bill-003" data-billing-select-row data-billing-status="paid" data-billing-group="tokyo-2" data-billing-owner="suzuki">
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--primary)] table-checkbox opacity-60" data-billing-select value="bill-003" aria-label="选择 家族滞在签证 续签" disabled />
+        </td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">家族滞在签证 续签</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0156</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--text)] font-semibold">Sarah W.</div>
+          <div class="text-xs text-[var(--muted)] font-semibold">个人</div>
+        </td>
+        <td class="hidden lg:table-cell"><span class="chip">東京二組</span></td>
+        <td class="text-right font-medium">80,000</td>
+        <td class="text-right text-green-600">80,000</td>
+        <td class="text-right text-gray-400">0</td>
+        <td class="hidden md:table-cell">
+          <!-- P0-CONTRACT §12.5: 不存在未结清节点展示"无（已回款）" -->
+          <div class="text-sm text-gray-400 font-semibold">无（已回款）</div>
+        </td>
+        <td>
+          <span class="tag tag-green">已回款</span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Empty State (hidden when demo data is present) -->
+  <div id="billingEmptyState" class="hidden py-16 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2"></path></svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">暂无收费记录</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1">请先在案件中配置收费计划</p>
+  </div>
+
+  <!-- Filter-empty State (hidden by default; shown when filters yield no results) -->
+  <div id="billingFilterEmptyState" class="hidden py-16 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">未找到匹配的收费记录</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1">请调整筛选条件或关键词后重试</p>
+  </div>
+
+  <!-- Pagination -->
+  <div id="billingPagination" class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+    <div class="text-sm text-[var(--muted-2)]" id="billingPaginationInfo">显示 1 - 5 条，共 5 条<!-- demo-only --></div>
+    <div class="flex space-x-2">
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+    </div>
+  </div>
+</div>

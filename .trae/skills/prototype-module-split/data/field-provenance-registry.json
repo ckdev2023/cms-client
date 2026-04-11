@@ -1,0 +1,249 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": 1,
+  "description": "Field-level provenance requirements for split-pipeline artifacts. Defines which fields MUST come from source-code scanning (extracted), which MAY be AI-judged (inferred), and which require human input (human). Scripts use this registry to reject manifests where must-extract fields lack proper provenance or sourceInputs binding.",
+
+  "provenanceLevels": {
+    "extracted": "Value obtained by static scan, regex match, AST parse, or filesystem check against source files. MUST bind to sourceInputs with SHA-256 fingerprint. Anti-cheat scripts verify the symbol/selector/path actually exists in source.",
+    "inferred": "Value produced by AI judgment, semantic classification, or design decision. MUST include a reason field when the decision is non-obvious. Cannot be verified by source-scan alone.",
+    "derived": "Value computed deterministically from other manifest fields (e.g., dependencyEdges from function callsOutbound). Verification is cross-field consistency, not source scan.",
+    "human": "Value that requires explicit human input (e.g., review approval, test verdict, waiver reason). Cannot be auto-filled by AI or script."
+  },
+
+  "verificationMethods": {
+    "regex-scan": "Escaped regex match against combined source file content",
+    "file-exists": "fs.existsSync against workspace-root-resolved path",
+    "line-range": "Verify line number falls within source file line count",
+    "symbol-grep": "Word-boundary regex match (\\bsymbol\\b) in source",
+    "selector-grep": "Literal match of DOM selector string in source",
+    "cross-field": "Consistency check against other fields in same or related manifest",
+    "fingerprint": "SHA-256 comparison against actual file on disk",
+    "human-review": "Requires explicit human confirmation, no automated verification"
+  },
+
+  "artifacts": {
+    "audit-manifest": {
+      "description": "Pre-split global state audit. Most fields are source-extractable; grouping and classification are inferred.",
+      "fields": {
+        "moduleId":                             { "required": "extracted", "verification": "cross-field", "note": "Must match split-manifest.moduleId" },
+        "entryFile":                            { "required": "extracted", "verification": "file-exists" },
+        "sourceScript":                         { "required": "extracted", "verification": "file-exists" },
+        "sourceLineCount":                      { "required": "extracted", "verification": "line-range", "note": "wc -l of sourceScript" },
+
+        "externalGlobals[*].name":              { "required": "extracted", "verification": "symbol-grep" },
+        "externalGlobals[*].declaredIn":        { "required": "extracted", "verification": "file-exists" },
+        "externalGlobals[*].firstRefLine":      { "required": "extracted", "verification": "line-range" },
+        "externalGlobals[*].type":              { "required": "inferred",  "note": "AI interprets usage context to assign TS-style type" },
+        "externalGlobals[*].readSites":         { "required": "extracted", "verification": "symbol-grep" },
+        "externalGlobals[*].writeSites":        { "required": "extracted", "verification": "symbol-grep" },
+
+        "iifeConstants[*].name":                { "required": "extracted", "verification": "symbol-grep" },
+        "iifeConstants[*].line":                { "required": "extracted", "verification": "line-range" },
+        "iifeConstants[*].value":               { "required": "extracted", "verification": "regex-scan" },
+        "iifeConstants[*].purpose":             { "required": "inferred" },
+
+        "domReferences[*].variable":            { "required": "extracted", "verification": "symbol-grep" },
+        "domReferences[*].line":                { "required": "extracted", "verification": "line-range" },
+        "domReferences[*].selector":            { "required": "extracted", "verification": "selector-grep" },
+        "domReferences[*].consumers":           { "required": "extracted", "verification": "symbol-grep" },
+        "domReferences[*].group":               { "required": "inferred",  "note": "Semantic grouping based on selector/variable naming" },
+
+        "sessionStorage.keys[*].constant":      { "required": "extracted", "verification": "symbol-grep" },
+        "sessionStorage.keys[*].key":           { "required": "extracted", "verification": "regex-scan" },
+        "sessionStorage.keys[*].access":        { "required": "extracted", "verification": "regex-scan", "note": "Determined by scanning getItem/setItem/removeItem calls" },
+        "sessionStorage.keys[*].writers":       { "required": "extracted", "verification": "symbol-grep" },
+        "sessionStorage.keys[*].readers":       { "required": "extracted", "verification": "symbol-grep" },
+        "sessionStorage.urlParams[*].param":    { "required": "extracted", "verification": "regex-scan" },
+        "sessionStorage.urlParams[*].line":     { "required": "extracted", "verification": "line-range" },
+        "sessionStorage.urlParams[*].reader":   { "required": "extracted", "verification": "symbol-grep" },
+
+        "liveState.initFunction":               { "required": "extracted", "verification": "symbol-grep" },
+        "liveState.fields[*].field":            { "required": "extracted", "verification": "symbol-grep" },
+        "liveState.fields[*].type":             { "required": "inferred",  "note": "AI assigns TS-style type from usage" },
+        "liveState.fields[*].deepCloned":       { "required": "inferred",  "note": "AI judges from structuredClone/spread usage" },
+        "liveState.fields[*].purpose":          { "required": "inferred" },
+        "liveState.fields[*].mutators":         { "required": "extracted", "verification": "symbol-grep" },
+
+        "helperFunctions[*].name":              { "required": "extracted", "verification": "symbol-grep" },
+        "helperFunctions[*].line":              { "required": "extracted", "verification": "line-range" },
+        "helperFunctions[*].signature":         { "required": "extracted", "verification": "regex-scan", "note": "Parameter list from function declaration" },
+        "helperFunctions[*].category":          { "required": "inferred",  "note": "AI classifies function into domain category" },
+        "helperFunctions[*].callSiteCount":     { "required": "extracted", "verification": "regex-scan", "note": "Count of call-site matches in source" },
+
+        "eventListeners[*].event":              { "required": "extracted", "verification": "regex-scan" },
+        "eventListeners[*].line":               { "required": "extracted", "verification": "line-range" },
+        "eventListeners[*].selector":           { "required": "extracted", "verification": "selector-grep" },
+        "eventListeners[*].domain":             { "required": "inferred",  "note": "Business domain classification" },
+        "eventListeners[*].isDelegated":        { "required": "extracted", "verification": "regex-scan", "note": "Check if bound to document vs element" },
+
+        "initSequence[*].order":                { "required": "extracted", "verification": "line-range", "note": "Sequence order from DOMContentLoaded callback analysis" },
+        "initSequence[*].call":                 { "required": "extracted", "verification": "symbol-grep" },
+        "initSequence[*].description":          { "required": "inferred" },
+        "initSequence[*].dependsOn":            { "required": "inferred",  "note": "AI judges ordering dependencies; partially derivable from call graph" },
+
+        "affinityTags[*].tag":                  { "required": "inferred",  "note": "Semantic grouping label" },
+        "affinityTags[*].symbols":              { "required": "extracted", "verification": "symbol-grep", "note": "Every listed symbol must exist in source" },
+        "affinityTags[*].targetFile":           { "required": "inferred",  "note": "Suggested split target, design decision" },
+        "affinityTags[*].reason":               { "required": "inferred" }
+      }
+    },
+
+    "boundary-map": {
+      "description": "Symbol-to-file assignment and dependency graph. Function identities are extracted; assignments and design decisions are inferred.",
+      "fields": {
+        "moduleId":                             { "required": "extracted", "verification": "cross-field" },
+        "generatedFrom":                        { "required": "extracted", "verification": "file-exists", "note": "Path to the audit-manifest this was derived from" },
+
+        "targetFiles[*].file":                  { "required": "inferred",  "note": "Target file path is a design decision" },
+        "targetFiles[*].shorthand":             { "required": "inferred" },
+        "targetFiles[*].responsibility":        { "required": "inferred" },
+
+        "functions[*].name":                    { "required": "extracted", "verification": "symbol-grep" },
+        "functions[*].lines":                   { "required": "extracted", "verification": "line-range" },
+        "functions[*].signature":               { "required": "extracted", "verification": "regex-scan" },
+        "functions[*].targetFile":              { "required": "inferred",  "note": "Assignment decision, must reference declared targetFiles[*].shorthand" },
+        "functions[*].callsOutbound":           { "required": "extracted", "verification": "symbol-grep", "note": "Functions called by this function" },
+        "functions[*].calledByInbound":         { "required": "extracted", "verification": "symbol-grep", "note": "Functions that call this function" },
+        "functions[*].domain":                  { "required": "inferred",  "note": "Business domain classification" },
+        "functions[*].isNamespaceExport":       { "required": "inferred",  "note": "Design decision for cross-file access" },
+        "functions[*].isPure":                  { "required": "inferred",  "note": "AI judges side-effect freedom" },
+
+        "eventListeners[*].event":              { "required": "extracted", "verification": "regex-scan" },
+        "eventListeners[*].line":               { "required": "extracted", "verification": "line-range" },
+        "eventListeners[*].selector":           { "required": "extracted", "verification": "selector-grep" },
+        "eventListeners[*].targetFile":         { "required": "inferred",  "note": "Assignment decision" },
+        "eventListeners[*].calls":              { "required": "extracted", "verification": "symbol-grep" },
+
+        "dependencyEdges[*].from":              { "required": "derived",   "note": "Derived from functions[*].targetFile + callsOutbound" },
+        "dependencyEdges[*].to":                { "required": "derived",   "note": "Derived from functions[*].targetFile + callsOutbound" },
+        "dependencyEdges[*].functions":         { "required": "extracted", "verification": "symbol-grep" },
+
+        "circularDependencies[*].cycle":        { "required": "derived",   "note": "Detected from dependencyEdges graph" },
+        "circularDependencies[*].path":         { "required": "derived" },
+        "circularDependencies[*].mitigation":   { "required": "inferred",  "note": "Resolution strategy requires design judgment" },
+
+        "namespaceApi[*].file":                 { "required": "inferred",  "note": "Tied to targetFile assignment" },
+        "namespaceApi[*].symbols":              { "required": "derived",   "note": "Derived from functions where isNamespaceExport=true" },
+
+        "loadOrder":                            { "required": "inferred",  "note": "Must be topologically valid w.r.t. dependencyEdges; verified by cross-field check" },
+        "domainCoverage":                       { "required": "derived",   "note": "Computed from functions[*].domain × targetFile" },
+
+        "phase.reviewApproval.approved":        { "required": "human",     "verification": "human-review" },
+        "phase.reviewApproval.approvedBy":      { "required": "human",     "verification": "human-review" },
+        "phase.reviewApproval.disputedItems":   { "required": "human",     "verification": "human-review" }
+      }
+    },
+
+    "split-manifest": {
+      "description": "Post-split directory and file registry. File existence is extracted; purpose, mapping, and classification are inferred.",
+      "fields": {
+        "moduleId":                             { "required": "extracted", "verification": "cross-field" },
+        "moduleDir":                            { "required": "extracted", "verification": "file-exists" },
+        "entryFile":                            { "required": "extracted", "verification": "file-exists" },
+        "migrationSource":                      { "required": "extracted", "verification": "file-exists" },
+
+        "sections[*].file":                     { "required": "extracted", "verification": "file-exists" },
+        "sections[*].purpose":                  { "required": "inferred" },
+        "sections[*].sourceAnchors":            { "required": "extracted", "verification": "regex-scan", "note": "HTML id/class anchors that map to source entry page" },
+        "sections[*].contractRefs":             { "required": "inferred",  "note": "P0-CONTRACT section references" },
+        "sections[*].productionTarget":         { "required": "inferred",  "note": "Target production module/component" },
+
+        "dataFiles[*].file":                    { "required": "extracted", "verification": "file-exists" },
+        "dataFiles[*].purpose":                 { "required": "inferred" },
+        "dataFiles[*].exports":                 { "required": "extracted", "verification": "symbol-grep", "note": "Exported symbol names must exist in file" },
+        "dataFiles[*].consumers":               { "required": "extracted", "verification": "symbol-grep", "note": "Scripts that import/reference these exports" },
+        "dataFiles[*].demoOnly":                { "required": "inferred",  "note": "AI judges if content is demo-only" },
+        "dataFiles[*].productionTarget":        { "required": "inferred" },
+
+        "scripts[*].file":                      { "required": "extracted", "verification": "file-exists" },
+        "scripts[*].purpose":                   { "required": "inferred" },
+        "scripts[*].domHooks":                  { "required": "extracted", "verification": "selector-grep", "note": "DOM selectors used by this script" },
+        "scripts[*].dependsOn":                 { "required": "extracted", "verification": "cross-field", "note": "Must reference other declared script files" },
+        "scripts[*].namespace":                 { "required": "extracted", "verification": "regex-scan", "note": "window.* namespace mount point" },
+        "scripts[*].demoOnly":                  { "required": "inferred" },
+        "scripts[*].productionTarget":          { "required": "inferred" },
+
+        "sharedCandidates.styles":              { "required": "inferred",  "note": "Shared style extraction candidates" },
+        "sharedCandidates.shell":               { "required": "inferred",  "note": "Shared shell extraction candidates" },
+        "sharedCandidates.scripts":             { "required": "inferred",  "note": "Shared script extraction candidates" },
+
+        "productionMapping.domain":             { "required": "inferred",  "note": "All production mapping is design decision" },
+        "productionMapping.data":               { "required": "inferred" },
+        "productionMapping.model":              { "required": "inferred" },
+        "productionMapping.ui":                 { "required": "inferred" },
+        "productionMapping.shared":             { "required": "inferred" }
+      }
+    },
+
+    "regression-checklist": {
+      "description": "Closeout regression gates. Gate design is inferred from contracts; verdicts require human testing.",
+      "fields": {
+        "moduleId":                             { "required": "extracted", "verification": "cross-field" },
+        "generatedFrom":                        { "required": "extracted", "verification": "file-exists", "note": "Input docs (P0-CONTRACT, split-manifest, page specs)" },
+
+        "gates[*].id":                          { "required": "inferred",  "note": "Gate numbering scheme" },
+        "gates[*].scenario":                    { "required": "inferred",  "note": "Risk scenario description from contract analysis" },
+        "gates[*].passRule":                    { "required": "inferred" },
+        "gates[*].mustPassIds":                 { "required": "inferred" },
+
+        "gates[*].items[*].id":                 { "required": "inferred" },
+        "gates[*].items[*].description":        { "required": "inferred",  "note": "Acceptance criteria derived from P0-CONTRACT" },
+        "gates[*].items[*].tag":                { "required": "inferred" },
+        "gates[*].items[*].contractRef":        { "required": "extracted", "verification": "regex-scan", "note": "Must reference real P0-CONTRACT section heading" },
+        "gates[*].items[*].verdict":            { "required": "human",     "verification": "human-review" },
+        "gates[*].items[*].blockedBy":          { "required": "human",     "verification": "human-review" },
+        "gates[*].items[*].deferredTo":         { "required": "human",     "verification": "human-review" },
+        "gates[*].items[*].testedAt":           { "required": "human",     "verification": "human-review" },
+
+        "closeoutStatus.allPrototypePassed":    { "required": "derived",   "note": "Computed from gate item verdicts" },
+        "closeoutStatus.mustItemsResolved":     { "required": "derived" },
+        "closeoutStatus.deferredCount":         { "required": "derived" },
+        "closeoutStatus.blockedCount":          { "required": "derived" },
+        "closeoutStatus.guardrailPassed":       { "required": "human",     "verification": "human-review", "note": "npm run fix + guard result" }
+      }
+    }
+  },
+
+  "enforcementRules": [
+    {
+      "id": "E1",
+      "rule": "Any item with provenance field present and required='extracted' MUST have provenance='extracted'. If provenance='inferred', the validate script emits a blocking error.",
+      "enforcer": "validate-manifest.mjs"
+    },
+    {
+      "id": "E2",
+      "rule": "Any item with required='extracted' MUST have at least one matching entry in the artifact-level sourceInputs array with a non-empty sha256.",
+      "enforcer": "validate-manifest.mjs"
+    },
+    {
+      "id": "E3",
+      "rule": "Any item with provenance='inferred' SHOULD have a non-empty reason field. Warn if missing, do not block.",
+      "enforcer": "validate-manifest.mjs"
+    },
+    {
+      "id": "E4",
+      "rule": "sourceInputs[*].sha256 must match the actual file content on disk. Stale fingerprints are blocking errors.",
+      "enforcer": "anti-cheat-check.mjs"
+    },
+    {
+      "id": "E5",
+      "rule": "Symbols listed in must-extract fields (names, selectors, keys) must exist in the combined source content. Missing symbols are blocking errors.",
+      "enforcer": "anti-cheat-check.mjs"
+    },
+    {
+      "id": "E6",
+      "rule": "Files listed in must-extract file-exists fields must exist on disk. Phantom paths are blocking errors.",
+      "enforcer": "drift-check.mjs"
+    },
+    {
+      "id": "E7",
+      "rule": "Fields with required='human' MUST NOT be auto-populated by AI. Validate scripts reject non-null human fields when phase has not reached the required stage.",
+      "enforcer": "phase-gate.mjs"
+    },
+    {
+      "id": "E8",
+      "rule": "Fields with required='derived' must be consistent with their source fields. Cross-field checks detect inconsistencies.",
+      "enforcer": "anti-cheat-check.mjs"
+    }
+  ]
+}

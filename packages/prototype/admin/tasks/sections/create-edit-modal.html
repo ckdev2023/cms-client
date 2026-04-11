@@ -1,0 +1,108 @@
+<!--
+  section: create-edit-modal.html
+  "新建任务" / "编辑任务" modal with 8 form fields.
+  P0 CONTRACT §5: form fields, required validation, #new entry.
+
+  Required fields: 任务名称 + 所属 Group + 责任人 + 截止时间
+  Optional fields: 关联案件 (search-select) + 优先级 (default 中) + 任务描述 + 来源 (default 手动)
+
+  Gap: entirely new — legacy tasks.html had a "新建任务" button with no modal.
+  Rendered outside <main>, as a sibling to the shell wrapper's content area.
+-->
+<div class="modal-backdrop" id="taskModal">
+  <div class="apple-modal flex flex-col">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]" id="modalTitle">新建任务</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" id="closeModalBtn">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+      <div class="mb-5">
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold">
+          请填写任务信息。任务名称、所属 Group、责任人与截止时间为必填项。
+        </div>
+      </div>
+
+      <div id="taskFormFields" class="space-y-5">
+        <!-- Row 1: Task Name (full width) -->
+        <div>
+          <label class="apple-label">任务名称 <span class="text-red-500">*</span></label>
+          <input type="text" class="apple-input" id="fieldTaskName" data-field="taskName" placeholder="请输入任务名称" />
+        </div>
+
+        <!-- Row 2: Case + Group -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">关联案件</label>
+            <input type="text" class="apple-input" id="fieldCaseId" data-field="caseId" placeholder="搜索案件编号或名称" />
+          </div>
+          <div>
+            <label class="apple-label">所属 Group <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="fieldGroup" data-field="group">
+              <option value="" disabled selected>请选择 Group</option>
+              <option value="tokyo-1">東京一組</option>
+              <option value="tokyo-2">東京二組</option>
+              <option value="osaka">大阪組</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 3: Owner + Priority -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">责任人 <span class="text-red-500">*</span></label>
+            <select class="apple-input appearance-none bg-white" id="fieldOwner" data-field="owner">
+              <option value="" disabled selected>请选择责任人</option>
+              <option value="admin">Admin</option>
+              <option value="tom">Tom</option>
+              <option value="assistant-a">助理 A</option>
+            </select>
+          </div>
+          <div>
+            <label class="apple-label">优先级</label>
+            <select class="apple-input appearance-none bg-white" id="fieldPriority" data-field="priority">
+              <option value="high">高</option>
+              <option value="medium" selected>中</option>
+              <option value="low">低</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 4: Deadline + Source -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="apple-label">截止时间 <span class="text-red-500">*</span></label>
+            <input type="datetime-local" class="apple-input" id="fieldDeadline" data-field="deadline" />
+          </div>
+          <div>
+            <label class="apple-label">来源</label>
+            <select class="apple-input appearance-none bg-white" id="fieldSource" data-field="source">
+              <option value="manual" selected>手动</option>
+              <option value="template">模板</option>
+              <option value="reminder">催办</option>
+              <option value="validation-fail">校验失败</option>
+              <option value="correction">补正</option>
+              <option value="renewal">续签提醒</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 5: Description (full width) -->
+        <div>
+          <label class="apple-label">任务描述</label>
+          <textarea class="apple-input" id="fieldDescription" data-field="description" rows="3" placeholder="可选，填写任务详细说明"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" id="cancelModalBtn" type="button">取消</button>
+      <button class="btn-primary px-5" id="submitTaskBtn" type="button" disabled>创建任务</button>
+    </div>
+  </div>
+</div>

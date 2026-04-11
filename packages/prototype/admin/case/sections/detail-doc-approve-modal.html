@@ -1,0 +1,26 @@
+    <!-- section: sections/detail-doc-approve-modal.html (T12: approve confirmation) -->
+    <div class="modal-backdrop" id="docApproveModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 420px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">审核通过确认</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-doc-approve-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="flex items-start gap-3 mb-4">
+            <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div>
+              <p class="text-sm font-semibold text-[var(--text)]" id="docApproveDocName">—</p>
+              <p class="text-[12px] text-[var(--muted-2)] mt-1">确认将该资料项标记为审核通过？通过后计入完成率。</p>
+            </div>
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-doc-approve-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="docApproveConfirmBtn">确认通过</button>
+        </div>
+      </div>
+    </div>

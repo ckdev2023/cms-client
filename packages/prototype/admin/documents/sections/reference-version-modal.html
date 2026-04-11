@@ -1,0 +1,52 @@
+<!--
+  section: reference-version-modal.html
+  Reference existing approved version modal: candidate version list.
+  P0-CONTRACT §8.4: show reusable versions (item_code match + provider compatible + not expired + approved).
+
+  Each candidate shows: source case + doc item name + version + review date + expiry date.
+
+  DOM hooks: referenceVersionModal, referenceDocLabel, referenceCandidateList,
+             referenceCandidateEmpty, referenceConfirmBtn, data-action=close-reference-modal
+  Production target: features/document/ui/ReferenceVersionModal
+  Gap: entirely new — legacy prototype had no reference version UI.
+-->
+<div class="modal-backdrop" id="referenceVersionModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 560px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">使用已存资料</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-reference-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <p class="text-sm text-[var(--muted)] mb-4" id="referenceDocLabel">可直接使用其他案件里已经审核通过、且仍在有效期内的同类资料。</p>
+      <div class="space-y-3" id="referenceCandidateList">
+        <label class="block apple-card p-4 cursor-pointer hover:shadow-[var(--shadow-hover)] transition-shadow border-2 border-transparent has-[:checked]:border-[var(--primary)]">
+          <div class="flex items-start gap-3">
+            <input type="radio" name="referenceCandidate" value="ref-001" class="mt-1 accent-[var(--primary)]" />
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-semibold text-[var(--text)]">課税証明書</span>
+                <span class="tag tag-green text-[11px]">通过</span>
+              </div>
+              <div class="text-[12px] text-[var(--muted-2)] mt-1">来源案件：CAS-2026-0181 高度人才 (Michael T.)</div>
+              <div class="flex items-center gap-4 text-[12px] text-[var(--muted-2)] mt-1">
+                <span>版本：v1</span>
+                <span>审核日期：2026-03-15</span>
+                <span>有效期至：2027-03-31</span>
+              </div>
+            </div>
+          </div>
+        </label>
+      </div>
+      <div class="hidden py-8 text-center" id="referenceCandidateEmpty">
+        <p class="text-sm text-[var(--muted)]">暂无可直接使用的已审核资料</p>
+        <p class="text-[12px] text-[var(--muted-2)] mt-1">需要有资料类型一致、提供人一致、且仍在有效期内的已审核资料。</p>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-reference-modal">取消</button>
+      <button class="btn-primary px-5" type="button" id="referenceConfirmBtn" disabled>确认使用</button>
+    </div>
+  </div>
+</div>

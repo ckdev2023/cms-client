@@ -1,0 +1,144 @@
+<!--
+  section: payment-log-table.html
+  Payment log list with 8 columns. Hidden by default; shown via segmented view toggle.
+  P0-CONTRACT §10 (8 columns), §11 (voided / reversed status + traceability).
+
+  Columns: 回款金额 | 回款日期 | 关联案件 | 关联收费节点 | 凭证 | 记录状态 | 操作人 | 备注
+  Demo rows cover all 3 record statuses: valid / voided / reversed.
+  Voided/reversed rows use muted styling + strikethrough on amount.
+  Reversed rows show traceability link to the correcting record.
+-->
+<div class="apple-card overflow-hidden hidden" id="paymentLogTableCard" data-view="payment-log">
+  <table class="apple-table w-full text-left border-collapse">
+    <thead>
+      <tr>
+        <th class="w-[120px] text-right">回款金额(¥)</th>
+        <th class="w-[120px]">回款日期</th>
+        <th>关联案件</th>
+        <th class="hidden md:table-cell w-[140px]">关联收费节点</th>
+        <th class="hidden md:table-cell w-[80px] text-center">凭证</th>
+        <th class="w-[100px]">记录状态</th>
+        <th class="hidden lg:table-cell w-[100px]">操作人</th>
+        <th class="hidden lg:table-cell">备注</th>
+        <!-- 操作列：作废/冲正入口，P0-CONTRACT §11 + §19 -->
+        <th class="hidden md:table-cell w-[110px] text-right">操作</th>
+      </tr>
+    </thead>
+    <tbody id="paymentLogTableBody">
+      <!-- Row 1: valid — ¥175,000 HSP 着手金 -->
+      <tr data-payment-id="pay-001" data-record-status="valid">
+        <td class="text-right font-medium text-[var(--text)]">175,000</td>
+        <td class="text-sm text-[var(--text)] font-semibold">2026/04/01</td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">高度人才 (HSP) 申请</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0181</div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--text)] font-semibold">着手金 (50%)</td>
+        <td class="hidden md:table-cell text-center">
+          <span class="text-green-600 text-xs font-extrabold">有</span>
+        </td>
+        <td>
+          <span class="tag tag-green">有效</span>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--text)] font-semibold">Admin</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted)]">—</td>
+        <!-- 作废/冲正 操作入口 (P0-CONTRACT §11, §19) -->
+        <td class="hidden md:table-cell text-right">
+          <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[#991b1b] transition-colors" type="button"
+            data-action="void-payment" data-payment-id="pay-001" data-payment-amount="175,000">作废</button>
+          <span class="text-[var(--border)] mx-1">|</span>
+          <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[#92400e] transition-colors" type="button"
+            data-action="reverse-payment" data-payment-id="pay-001" data-payment-amount="175,000">冲正</button>
+        </td>
+      </tr>
+
+      <!-- Row 2: valid — ¥80,000 家族滞在 全款 -->
+      <tr data-payment-id="pay-002" data-record-status="valid">
+        <td class="text-right font-medium text-[var(--text)]">80,000</td>
+        <td class="text-sm text-[var(--text)] font-semibold">2026/03/25</td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--text)] hover:text-[var(--primary)] transition-colors">家族滞在签证 续签</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0156</div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--text)] font-semibold">全款 (100%)</td>
+        <td class="hidden md:table-cell text-center">
+          <span class="text-[var(--muted-2)] text-xs font-semibold">无</span>
+        </td>
+        <td>
+          <span class="tag tag-green">有效</span>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--text)] font-semibold">Suzuki</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted)]">—</td>
+        <!-- 作废/冲正 操作入口 (P0-CONTRACT §11, §19) -->
+        <td class="hidden md:table-cell text-right">
+          <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[#991b1b] transition-colors" type="button"
+            data-action="void-payment" data-payment-id="pay-002" data-payment-amount="80,000">作废</button>
+          <span class="text-[var(--border)] mx-1">|</span>
+          <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[#92400e] transition-colors" type="button"
+            data-action="reverse-payment" data-payment-id="pay-002" data-payment-amount="80,000">冲正</button>
+        </td>
+      </tr>
+
+      <!-- Row 3: voided — ¥30,000 HSP 着手金 (金额录入错误) -->
+      <tr data-payment-id="pay-003" data-record-status="voided" class="bg-[rgba(220,38,38,0.03)]">
+        <td class="text-right font-medium text-[var(--muted-2)] line-through">30,000</td>
+        <td class="text-sm text-[var(--muted-2)] font-semibold">2026/03/20</td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--muted-2)] hover:text-[var(--primary)] transition-colors">高度人才 (HSP) 申请</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0181</div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--muted-2)] font-semibold">着手金 (50%)</td>
+        <td class="hidden md:table-cell text-center">
+          <span class="text-[var(--muted-2)] text-xs font-semibold">无</span>
+        </td>
+        <td>
+          <span class="tag tag-red">已作废</span>
+          <div class="text-[11px] text-[var(--muted-2)] mt-1 font-semibold">Admin · 2026/03/21</div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted-2)] font-semibold">Admin</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted-2)]">金额录入错误，已作废</td>
+        <!-- 已作废/已冲正行：操作不可用 -->
+        <td class="hidden md:table-cell text-right text-[12px] text-[var(--muted-2)] font-semibold">—</td>
+      </tr>
+
+      <!-- Row 4: reversed — ¥80,000 家族滞在 全款 (重复入账，冲正 → pay-002) -->
+      <tr data-payment-id="pay-004" data-record-status="reversed" data-ref-payment="pay-002" class="bg-[rgba(245,158,11,0.04)]">
+        <td class="text-right font-medium text-[var(--muted-2)] line-through">80,000</td>
+        <td class="text-sm text-[var(--muted-2)] font-semibold">2026/03/18</td>
+        <td>
+          <a href="../case/detail.html" class="font-extrabold text-[var(--muted-2)] hover:text-[var(--primary)] transition-colors">家族滞在签证 续签</a>
+          <div class="text-xs text-[var(--muted-2)] mt-0.5 font-semibold">CAS-2026-0156</div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--muted-2)] font-semibold">全款 (100%)</td>
+        <td class="hidden md:table-cell text-center">
+          <span class="text-green-600 text-xs font-extrabold">有</span>
+        </td>
+        <td>
+          <span class="tag tag-orange">已冲正</span>
+          <div class="text-[11px] text-[var(--muted-2)] mt-1 font-semibold">Admin · 2026/03/24</div>
+          <div class="text-[11px] text-[var(--primary)] mt-0.5 font-semibold cursor-pointer hover:underline" data-ref-link="pay-002">→ 关联: pay-002</div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted-2)] font-semibold">Suzuki</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--muted-2)]">重复入账，已冲正 → pay-002</td>
+        <!-- 已作废/已冲正行：操作不可用 -->
+        <td class="hidden md:table-cell text-right text-[12px] text-[var(--muted-2)] font-semibold">—</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- Empty State -->
+  <div id="paymentLogEmptyState" class="hidden py-16 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"></path></svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">暂无回款流水</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1">登记回款后，流水记录将显示在此处</p>
+  </div>
+
+  <!-- Pagination -->
+  <div id="paymentLogPagination" class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+    <div class="text-sm text-[var(--muted-2)]" id="paymentLogPaginationInfo">显示 1 - 4 条，共 4 条<!-- demo-only --></div>
+    <div class="flex space-x-2">
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+    </div>
+  </div>
+</div>

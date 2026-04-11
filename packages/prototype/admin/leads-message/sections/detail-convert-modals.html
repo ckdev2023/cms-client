@@ -1,0 +1,99 @@
+<!--
+  section: detail-convert-modals
+  Two conversion modals (convert-to-customer / convert-to-case) + shared toast notification.
+  Modals triggered by: #btnConvertCustomer / #btnConvertCase (header) and
+  #btnConvertCustomerTab / #btnConvertCaseTab (conversion tab).
+  Confirm buttons: #confirmConvertCustomer / #confirmConvertCase.
+  Modal close: [data-modal-close="convertCustomerModal"] / [data-modal-close="convertCaseModal"].
+  Toast: #toast, #toastTitle, #toastDesc — controlled by leads-detail-page.js showToast().
+-->
+
+<!-- Modal: Convert to Customer -->
+<div class="modal-backdrop" id="convertCustomerModal">
+  <div class="apple-modal flex flex-col" style="max-width: 480px;">
+    <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+      <div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">转为客户</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">将此线索转为正式客户档案。Group 默认继承线索归属组。</div>
+      </div>
+      <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCustomerModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="apple-label">客户姓名</label>
+        <input type="text" class="apple-input bg-gray-50" id="modalCusName" readonly />
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="apple-label">电话</label>
+          <input type="text" class="apple-input bg-gray-50" id="modalCusPhone" readonly />
+        </div>
+        <div>
+          <label class="apple-label">邮箱</label>
+          <input type="text" class="apple-input bg-gray-50" id="modalCusEmail" readonly />
+        </div>
+      </div>
+      <div>
+        <label class="apple-label">归属 Group</label>
+        <input type="text" class="apple-input" id="modalCusGroup" />
+        <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认继承线索 Group（03 §2.2）。如需变更请说明原因。</div>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-modal-close="convertCustomerModal">取消</button>
+      <button class="btn-primary px-5" type="button" id="confirmConvertCustomer">确认转为客户</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Convert to Case -->
+<div class="modal-backdrop" id="convertCaseModal">
+  <div class="apple-modal flex flex-col" style="max-width: 480px;">
+    <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+      <div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">转为案件</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">为此线索创建案件。主申请人信息将从线索自动预填。</div>
+      </div>
+      <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCaseModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="apple-label">主申请人</label>
+        <input type="text" class="apple-input bg-gray-50" id="modalCaseApplicant" readonly />
+      </div>
+      <div>
+        <label class="apple-label">案件类型</label>
+        <input type="text" class="apple-input" id="modalCaseType" placeholder="选择签证/业务类型" />
+        <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">选择签证/业务类型</div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="apple-label">负责人</label>
+          <input type="text" class="apple-input" id="modalCaseOwner" />
+        </div>
+        <div>
+          <label class="apple-label">归属 Group</label>
+          <input type="text" class="apple-input" id="modalCaseGroup" />
+          <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认继承 Customer.group（03 §2.2）</div>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-modal-close="convertCaseModal">取消</button>
+      <button class="btn-primary px-5" type="button" id="confirmConvertCase">确认创建案件</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+  <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+    <div class="text-[13px] font-extrabold text-[var(--text)]" id="toastTitle">已保存</div>
+    <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
+  </div>
+</div>
+

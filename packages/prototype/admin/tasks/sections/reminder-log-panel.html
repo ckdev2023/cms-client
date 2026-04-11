@@ -1,0 +1,158 @@
+<!--
+  section: reminder-log-panel.html
+  Reminder log panel, shown when "提醒日志" view is selected in the workbench sidebar.
+  Replaces the task table area when active.
+
+  P0 CONTRACT §10: 6 columns — 发送时间 / 接收人 / 提醒类型 / 状态 / 失败原因 / 关联任务.
+  Gap: entirely new — legacy tasks.html sidebar had the entry but no panel content.
+
+  Default state: hidden. Shown via JS when data-view-id="reminder-log" is clicked.
+  Demo data sourced from tasks-demo-data.js (DEMO_REMINDER_LOGS).
+-->
+<div id="reminderLogPanel" class="hidden">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="text-lg font-semibold text-[var(--text)]">提醒日志</h2>
+    <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="closeReminderLogBtn" data-action="back-to-tasks">返回任务列表</button>
+  </div>
+
+  <div class="apple-card overflow-hidden">
+    <table class="apple-table w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th class="w-[160px]">发送时间</th>
+          <th class="w-[100px]">接收人</th>
+          <th class="w-[120px]">提醒类型</th>
+          <th class="w-[80px] text-center">状态</th>
+          <th class="hidden md:table-cell">失败原因</th>
+          <th>关联任务</th>
+        </tr>
+      </thead>
+      <tbody id="reminderLogBody">
+        <!-- Log 1: Sent successfully -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-04-08 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">补件截止</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-001">催促客户提交课税证明书</a>
+          </td>
+        </tr>
+
+        <!-- Log 2: Sent successfully -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-04-09 08:30</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">提交截止</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-002">草拟理由书 (HSP 申请)</a>
+          </td>
+        </tr>
+
+        <!-- Log 3: Failed (residence-expiry 30-day tier) -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-04-07 09:00</td>
+          <td class="text-sm">Tom</td>
+          <td><span class="chip text-[12px]">在留到期（30 天档）</span></td>
+          <td class="text-center"><span class="badge badge-danger">失败</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--danger)]">站内通知服务暂不可用</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-005">发送在留期限到期续签提醒</a>
+          </td>
+        </tr>
+
+        <!-- Log 4: Sent successfully -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-04-06 09:00</td>
+          <td class="text-sm">助理 A</td>
+          <td><span class="chip text-[12px]">催办</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-004">核对申请书类一式与附件清单</a>
+          </td>
+        </tr>
+
+        <!-- Log 5: Billing node -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-04-10 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">收费节点</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-007">催收高桥优经营管理案件逾期款项</a>
+          </td>
+        </tr>
+
+        <!-- Log 6: COE expiry 30-day (P0 §11.2, dedup: case_id+coe-expiry+30) -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-06-05 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">COE 有効期（30天档）</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-008">COE 有効期提醒（30天）王建国</a>
+          </td>
+        </tr>
+
+        <!-- Log 7: COE expiry 7-day (P0 §11.2, dedup: case_id+coe-expiry+7) -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-06-28 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">COE 有効期（7天档）</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-009">COE 有効期提醒（7天）王建国</a>
+          </td>
+        </tr>
+
+        <!-- Log 8-10: 在留到期三档提醒 (P0 §11.1, 固定 180/90/30, 不可配置) -->
+        <tr>
+          <td class="text-sm text-[var(--text)]">2026-10-08 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">在留到期（180天档）</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-010">在留到期提醒（180天）王建国</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="text-sm text-[var(--text)]">2027-01-06 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">在留到期（90天档）</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-011">在留到期提醒（90天）王建国</a>
+          </td>
+        </tr>
+        <tr>
+          <td class="text-sm text-[var(--text)]">2027-03-07 09:00</td>
+          <td class="text-sm">Admin</td>
+          <td><span class="chip text-[12px]">在留到期（30天档）</span></td>
+          <td class="text-center"><span class="badge badge-green">已发送</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">—</td>
+          <td>
+            <a href="#" class="link-apple text-sm" data-navigate-task="task-012">在留到期提醒（30天）王建国</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Log Pagination -->
+    <div class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+      <div class="text-sm text-[var(--muted-2)]">显示 1 - 10 条，共 10 条</div>
+      <div class="flex space-x-2">
+        <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+        <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+      </div>
+    </div>
+  </div>
+</div>

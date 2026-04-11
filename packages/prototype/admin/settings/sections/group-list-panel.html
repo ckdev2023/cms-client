@@ -1,0 +1,103 @@
+<!--
+  section: group-list-panel.html
+  Group management list: 5-column table, status filter, "新建 Group" button, empty state.
+
+  DOM hooks:
+    #groupListPanel        — outer wrapper (show/hide by scripts)
+    #groupStatusFilter     — <select> for status filtering (全部 / 启用 / 停用)
+    #btnCreateGroup        — primary "新建 Group" button
+    #groupTableBody        — <tbody> for dynamic row rendering
+    #groupEmptyState       — empty-state placeholder (shown when no Groups)
+    [data-group-row]       — each table row (carries data-group-id)
+
+  Contract ref: P0-CONTRACT §2 Group 管理列表, §7 状态与異常態
+  Production target: features/settings/ui/GroupListPanel
+-->
+<div id="groupListPanel">
+  <!-- List header: title + filter + action -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <h2 class="text-lg font-bold">Group 管理</h2>
+    <div class="flex items-center gap-3">
+      <select
+        id="groupStatusFilter"
+        class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[140px]"
+        aria-label="按状态筛选"
+      >
+        <option value="" selected>状态：全部</option>
+        <option value="active">启用</option>
+        <option value="disabled">停用</option>
+      </select>
+      <button
+        id="btnCreateGroup"
+        class="btn-primary h-9 px-4 text-[13px] whitespace-nowrap"
+        type="button"
+        data-action="create-group"
+      >
+        新建 Group
+      </button>
+    </div>
+  </div>
+
+  <!-- Table card -->
+  <div class="apple-card overflow-hidden">
+    <table class="apple-table w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th>Group 名称</th>
+          <th class="w-[100px]">状态</th>
+          <th class="hidden md:table-cell w-[140px]">创建时间</th>
+          <th class="hidden sm:table-cell w-[110px] text-center">活跃案件数</th>
+          <th class="hidden sm:table-cell w-[80px] text-center">成员数</th>
+        </tr>
+      </thead>
+      <tbody id="groupTableBody">
+        <!-- Row 1: 東京一組 (active, 12 cases, 4 members) -->
+        <tr data-group-row data-group-id="grp-001" class="cursor-pointer">
+          <td>
+            <div class="font-medium text-[var(--text)]">東京一組</div>
+          </td>
+          <td><span class="badge badge-green">启用</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">2024-01-15</td>
+          <td class="hidden sm:table-cell text-center text-sm">12</td>
+          <td class="hidden sm:table-cell text-center text-sm">4</td>
+        </tr>
+        <!-- Row 2: 東京二組 (active, 8 cases, 3 members) -->
+        <tr data-group-row data-group-id="grp-002" class="cursor-pointer">
+          <td>
+            <div class="font-medium text-[var(--text)]">東京二組</div>
+          </td>
+          <td><span class="badge badge-green">启用</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">2024-03-01</td>
+          <td class="hidden sm:table-cell text-center text-sm">8</td>
+          <td class="hidden sm:table-cell text-center text-sm">3</td>
+        </tr>
+        <!-- Row 3: 大阪組 (disabled, 0 cases, 2 members) -->
+        <tr data-group-row data-group-id="grp-003" class="cursor-pointer">
+          <td>
+            <div class="font-medium text-[var(--text)]">大阪組</div>
+          </td>
+          <td><span class="badge badge-gray">停用</span></td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted-2)]">2024-02-10</td>
+          <td class="hidden sm:table-cell text-center text-sm">0</td>
+          <td class="hidden sm:table-cell text-center text-sm">2</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Empty state (hidden when demo data present) -->
+    <div id="groupEmptyState" class="hidden py-16 text-center">
+      <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      <p class="text-[15px] font-semibold text-[var(--muted)]">尚未创建任何 Group</p>
+      <p class="text-[13px] text-[var(--muted-2)] mt-1 mb-4">创建第一个团队，开始管理归属与权限</p>
+      <button
+        class="btn-primary h-9 px-5 text-[13px]"
+        type="button"
+        data-action="create-group"
+      >
+        创建第一个 Group
+      </button>
+    </div>
+  </div>
+</div>

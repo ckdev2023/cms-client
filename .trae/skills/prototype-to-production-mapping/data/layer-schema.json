@@ -1,0 +1,144 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Production Layer Schema",
+  "description": "四层架构的标准目录结构，用于验证映射结果的路径合规性。",
+  "type": "object",
+  "properties": {
+    "domain": {
+      "description": "纯 TypeScript 层：类型、实体、接口、常量。不依赖 UI 框架。",
+      "type": "object",
+      "properties": {
+        "basePath": { "const": "domain/<module>/" },
+        "files": {
+          "type": "object",
+          "properties": {
+            "entity": {
+              "description": "实体与值类型",
+              "type": "object",
+              "properties": {
+                "pattern": { "const": "<Module>.ts" },
+                "exports": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "examples": ["<Module>Summary", "<Module>Detail", "Create<Module>Input"]
+                }
+              }
+            },
+            "repository": {
+              "description": "仓库接口（API 侧）",
+              "type": "object",
+              "properties": {
+                "pattern": { "const": "<Module>Repository.ts" },
+                "exports": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "examples": ["<Module>Repository", "<Module>ListParams", "<Module>ListResult"]
+                }
+              }
+            },
+            "constants": {
+              "description": "常量、列定义、筛选配置、表单 schema",
+              "type": "object",
+              "properties": {
+                "pattern": { "const": "<module>Constants.ts" },
+                "exports": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "examples": ["<MODULE>_TABLE_COLUMNS", "<MODULE>_FILTERS", "CREATE_<MODULE>_FORM_FIELDS"]
+                }
+              }
+            }
+          }
+        },
+        "rules": [
+          "纯 TypeScript，不依赖 React Native / 导航 / 网络实现",
+          "不依赖 shared/ui",
+          "不依赖 data 层"
+        ]
+      }
+    },
+    "data": {
+      "description": "实现 domain 接口。API 调用 + 存储实现。",
+      "type": "object",
+      "properties": {
+        "basePath": { "const": "data/<module>/" },
+        "files": {
+          "type": "object",
+          "properties": {
+            "api": {
+              "pattern": "<Module>Api.ts",
+              "exports": ["create<Module>Api(deps)"]
+            },
+            "repositoryImpl": {
+              "pattern": "create<Module>Repository.ts",
+              "exports": ["create<Module>Repository(deps)"]
+            }
+          }
+        },
+        "rules": [
+          "实现 domain 定义的接口",
+          "不依赖 shared/ui",
+          "不依赖 features 层"
+        ]
+      }
+    },
+    "features": {
+      "description": "业务功能层：model（ViewModel Hook）+ ui（页面组件）。",
+      "type": "object",
+      "properties": {
+        "basePath": { "const": "features/<module>/" },
+        "model": {
+          "description": "ViewModel Hook + 测试",
+          "type": "object",
+          "properties": {
+            "basePath": { "const": "features/<module>/model/" },
+            "filePattern": "use<Module><View>ViewModel.ts",
+            "testPattern": "use<Module><View>ViewModel.test.ts"
+          }
+        },
+        "ui": {
+          "description": "页面组件",
+          "type": "object",
+          "properties": {
+            "basePath": { "const": "features/<module>/ui/" },
+            "screenPattern": "<Module><View>Screen.tsx",
+            "componentPattern": "<Module><Component>.tsx"
+          }
+        },
+        "rules": [
+          "禁止直接依赖 data / infra（通过 app container + domain/shared 协作）",
+          "禁止直接依赖 tamagui / @tamagui/*（通过 shared/ui 封装）",
+          "feature 之间禁止直接互相依赖"
+        ]
+      }
+    },
+    "shared": {
+      "description": "跨 feature 复用的 UI 组件和 Hook。",
+      "type": "object",
+      "properties": {
+        "ui": {
+          "basePath": "shared/ui/",
+          "examples": ["Toast.tsx", "Pagination.tsx", "AppShell.tsx", "SideNav.tsx"]
+        },
+        "hooks": {
+          "basePath": "shared/hooks/",
+          "examples": ["useMobileNav.ts"]
+        }
+      },
+      "rules": [
+        "不包含任何业务概念（不出现模块名、业务术语）",
+        "domain / data 禁止依赖 shared/ui"
+      ]
+    },
+    "app": {
+      "description": "应用容器：DI 注册点。",
+      "type": "object",
+      "properties": {
+        "container": {
+          "path": "app/container/AppContainer.ts",
+          "description": "新模块需在此注册 repository 依赖"
+        }
+      }
+    }
+  }
+}

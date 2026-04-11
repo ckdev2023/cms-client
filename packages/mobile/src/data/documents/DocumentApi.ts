@@ -2,12 +2,20 @@ import type { HttpClient } from "@infra/http/HttpClient";
 import type {
   UserDocumentSummary,
   UserDocument,
+  DocumentRequirement,
+  DocumentFileVersion,
+  DocumentFileReviewStatus,
 } from "@domain/documents/UserDocument";
+import type { RegisterVersionInput } from "@domain/documents/DocumentRepository";
 
 type DocListResponse = { items: UserDocumentSummary[]; total: number };
+type RequirementListResponse = {
+  items: DocumentRequirement[];
+  total: number;
+};
+type VersionListResponse = { items: DocumentFileVersion[]; total: number };
 type DownloadUrlResponse = { url: string };
 
-/** 文档上传参数。 */
 type UploadBody = {
   fileName: string;
   docType?: string;
@@ -17,12 +25,12 @@ type UploadBody = {
   appUserId: string;
 };
 
-/**
- * 认证 Header 生成。
- *
- * @param getToken Token 获取函数
- * @returns Header 对象
- */
+type DocApiDeps = {
+  httpClient: HttpClient;
+  baseUrl: string;
+  getToken: () => Promise<string | null>;
+};
+
 async function authHeaders(
   getToken: () => Promise<string | null>,
 ): Promise<Record<string, string>> {
@@ -30,20 +38,63 @@ async function authHeaders(
   return t ? { Authorization: `Bearer ${t}` } : {};
 }
 
-/** API 依赖。 */
-type DocApiDeps = {
-  httpClient: HttpClient;
-  baseUrl: string;
-  getToken: () => Promise<string | null>;
-};
+async function fetchRequirements(
+  deps: DocApiDeps,
+  filters?: { caseId?: string },
+): Promise<DocumentRequirement[]> {
+  const h = await authHeaders(deps.getToken);
+  const qs = filters?.caseId ? `?caseId=${filters.caseId}` : "";
+  const res = await deps.httpClient.requestJson<RequirementListResponse>({
+    url: `${deps.baseUrl}/document-requirements${qs}`,
+    method: "GET",
+    headers: h,
+  });
+  return res.data.items;
+}
 
-/**
- * 上传文档。
- *
- * @param deps API 依赖
- * @param body 上传参数
- * @returns 上传的文档
- */
+async function fetchVersions(
+  deps: DocApiDeps,
+  requirementId: string,
+): Promise<DocumentFileVersion[]> {
+  const h = await authHeaders(deps.getToken);
+  const res = await deps.httpClient.requestJson<VersionListResponse>({
+    url: `${deps.baseUrl}/document-requirements/${requirementId}/versions`,
+    method: "GET",
+    headers: h,
+  });
+  return res.data.items;
+}
+
+async function postVersion(
+  deps: DocApiDeps,
+  input: RegisterVersionInput,
+): Promise<DocumentFileVersion> {
+  const h = await authHeaders(deps.getToken);
+  const res = await deps.httpClient.requestJson<DocumentFileVersion>({
+    url: `${deps.baseUrl}/document-requirements/${input.requirementId}/versions`,
+    method: "POST",
+    headers: h,
+    body: input,
+  });
+  return res.data;
+}
+
+async function patchReview(
+  deps: DocApiDeps,
+  versionId: string,
+  decision: DocumentFileReviewStatus,
+  comment?: string,
+): Promise<DocumentFileVersion> {
+  const h = await authHeaders(deps.getToken);
+  const res = await deps.httpClient.requestJson<DocumentFileVersion>({
+    url: `${deps.baseUrl}/document-file-versions/${versionId}/review`,
+    method: "POST",
+    headers: h,
+    body: { decision, comment },
+  });
+  return res.data;
+}
+
 async function uploadDoc(
   deps: DocApiDeps,
   body: UploadBody,
@@ -58,13 +109,6 @@ async function uploadDoc(
   return res.data;
 }
 
-/**
- * 获取签名下载 URL。
- *
- * @param deps API 依赖
- * @param docId 文档 ID
- * @returns 签名下载 URL
- */
 async function downloadUrl(deps: DocApiDeps, docId: string): Promise<string> {
   const h = await authHeaders(deps.getToken);
   const res = await deps.httpClient.requestJson<DownloadUrlResponse>({
@@ -76,23 +120,23 @@ async function downloadUrl(deps: DocApiDeps, docId: string): Promise<string> {
 }
 
 /**
- * Document API 层 — 调用 Server user-documents 端点。
+ * Document API 层 — P0 资料項端点 + legacy user-documents 端点。
  *
- * @param deps 依赖集合
- * @param deps.httpClient HTTP 客户端
- * @param deps.baseUrl API 基础 URL
- * @param deps.getToken Token 获取函数
+ * @param deps - API 依赖集合
  * @returns Document API 方法集
  */
 export function createDocumentApi(deps: DocApiDeps) {
   return {
-    /**
-     * 获取文档列表。
-     *
-     * @param filters 筛选条件
-     * @param filters.caseId 案件 ID
-     * @returns 文档列表
-     */
+    listRequirements: (filters?: { caseId?: string }) =>
+      fetchRequirements(deps, filters),
+    getRequirementVersions: (rid: string) => fetchVersions(deps, rid),
+    registerVersion: (input: RegisterVersionInput) => postVersion(deps, input),
+    reviewFileVersion: (
+      versionId: string,
+      decision: DocumentFileReviewStatus,
+      comment?: string,
+    ) => patchReview(deps, versionId, decision, comment),
+
     async listDocuments(filters?: {
       caseId?: string;
     }): Promise<UserDocumentSummary[]> {

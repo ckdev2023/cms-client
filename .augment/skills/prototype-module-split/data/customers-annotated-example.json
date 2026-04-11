@@ -1,0 +1,258 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "customers",
+  "moduleLabel": "客户",
+  "moduleDir": "packages/prototype/admin/customers",
+  "entryFile": "packages/prototype/admin/customers/index.html",
+  "referenceDocs": [
+    "packages/prototype/admin/customers/P0-CONTRACT.md",
+    "packages/prototype/admin/customers/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/customers/MIGRATION-MAPPING.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/客户.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/header.html",
+      "purpose": "页面标题、副标题、添加客户入口",
+      "sourceAnchors": [
+        "btnAddCustomer",
+        "display-font"
+      ],
+      "contractRefs": [],
+      "productionTarget": "features/customer/ui/CustomerListHeader"
+    },
+    {
+      "file": "sections/filters.html",
+      "purpose": "scope 切换、搜索、筛选、重置",
+      "sourceAnchors": [
+        "data-scope-btn",
+        "search-input"
+      ],
+      "contractRefs": [
+        "§2 列表页搜索与筛选"
+      ],
+      "productionTarget": "features/customer/ui/CustomerListFilters"
+    },
+    {
+      "file": "sections/table.html",
+      "purpose": "客户表格、批量操作栏、thead/tbody",
+      "sourceAnchors": [
+        "bulkActionBar",
+        "selectAllCustomers",
+        "data-customer-select"
+      ],
+      "contractRefs": [
+        "§1 列表页必保留字段",
+        "§3 列表页批量动作"
+      ],
+      "productionTarget": "features/customer/ui/CustomerTable + CustomerBulkActionBar"
+    },
+    {
+      "file": "sections/pagination.html",
+      "purpose": "分页信息与前后翻页控件",
+      "sourceAnchors": [
+        "pagination"
+      ],
+      "contractRefs": [],
+      "productionTarget": "shared/ui/Pagination"
+    },
+    {
+      "file": "sections/create-modal.html",
+      "purpose": "新建客户弹窗与去重提示",
+      "sourceAnchors": [
+        "addCustomerModal",
+        "dedupeHint",
+        "createCustomerBtn",
+        "saveDraftBtn"
+      ],
+      "contractRefs": [
+        "§4 新建客户弹窗"
+      ],
+      "productionTarget": "features/customer/ui/CreateCustomerModal"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "创建、草稿、批量动作反馈 toast",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "contractRefs": [
+        "§7 Toast 通知"
+      ],
+      "productionTarget": "shared/ui/Toast"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/customer-config.js",
+      "purpose": "集中声明列定义、筛选选项、表单 schema、toast preset、storage key",
+      "exports": [
+        "STORAGE_KEY",
+        "DRAFT_ROW_ID_PREFIX",
+        "GROUPS",
+        "OWNERS",
+        "GROUP_LABEL_MAP",
+        "SCOPE_OPTIONS",
+        "TABLE_COLUMNS",
+        "FILTERS",
+        "SEARCH_PLACEHOLDER",
+        "FORM_FIELDS",
+        "SERIALIZE_FIELDS",
+        "CREATE_REQUIRED_IDS",
+        "CREATE_CONTACT_IDS",
+        "DEDUPE_TRIGGER_IDS",
+        "BULK_ACTIONS",
+        "TOAST"
+      ],
+      "consumers": [
+        "scripts/customer-page.js",
+        "scripts/customer-modal.js",
+        "scripts/customer-drafts.js",
+        "scripts/customer-bulk-actions.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/customer/Customer.ts + customerConstants.ts"
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/customer-page.js",
+      "purpose": "页面初始化、toast、hash #new、草稿恢复入口",
+      "domHooks": [
+        "DOMContentLoaded",
+        "createCustomerBtn",
+        "saveDraftBtn",
+        "data-action=resume-draft"
+      ],
+      "dependsOn": [
+        "data/customer-config.js",
+        "scripts/customer-modal.js",
+        "scripts/customer-drafts.js",
+        "scripts/customer-bulk-actions.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/customer/model/useCustomerListViewModel"
+    },
+    {
+      "file": "scripts/customer-modal.js",
+      "purpose": "弹窗开关、必填校验、去重提示、序列化与回填",
+      "domHooks": [
+        "btnAddCustomer",
+        "closeModalBtn",
+        "cancelModalBtn",
+        "addCustomerModal",
+        "dedupeHint"
+      ],
+      "dependsOn": [
+        "data/customer-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/customer/model/useCreateCustomerModal"
+    },
+    {
+      "file": "scripts/customer-drafts.js",
+      "purpose": "草稿 localStorage CRUD 与草稿行渲染",
+      "domHooks": [
+        "table.apple-table tbody",
+        "data-action=resume-draft"
+      ],
+      "dependsOn": [
+        "data/customer-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/customer/model/useCustomerDrafts"
+    },
+    {
+      "file": "scripts/customer-bulk-actions.js",
+      "purpose": "全选/单选联动、批量负责人与批量调组",
+      "domHooks": [
+        "bulkActionBar",
+        "selectedCount",
+        "selectAllCustomers",
+        "bulkClearBtn",
+        "bulkAssignSelect",
+        "bulkAssignApplyBtn",
+        "bulkGroupSelect",
+        "bulkGroupApplyBtn"
+      ],
+      "dependsOn": [
+        "data/customer-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/customer/model/useCustomerBulkActions"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/customer/Customer.ts",
+      "packages/mobile/src/domain/customer/CustomerRepository.ts",
+      "packages/mobile/src/domain/customer/CustomerDraftRepository.ts",
+      "packages/mobile/src/domain/customer/customerConstants.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/customer/CustomerApi.ts",
+      "packages/mobile/src/data/customer/createCustomerRepository.ts",
+      "packages/mobile/src/data/customer/CustomerDraftStorage.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/customer/model/useCustomerListViewModel.ts",
+      "packages/mobile/src/features/customer/model/useCreateCustomerModal.ts",
+      "packages/mobile/src/features/customer/model/useCustomerDrafts.ts",
+      "packages/mobile/src/features/customer/model/useCustomerBulkActions.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/customer/ui/CustomerListScreen.tsx",
+      "packages/mobile/src/features/customer/ui/CustomerListHeader.tsx",
+      "packages/mobile/src/features/customer/ui/CustomerListFilters.tsx",
+      "packages/mobile/src/features/customer/ui/CustomerTable.tsx",
+      "packages/mobile/src/features/customer/ui/CustomerBulkActionBar.tsx",
+      "packages/mobile/src/features/customer/ui/CreateCustomerModal.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SideNav.tsx",
+      "packages/mobile/src/shared/ui/TopBar.tsx",
+      "packages/mobile/src/shared/ui/MobileNav.tsx",
+      "packages/mobile/src/shared/ui/Pagination.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "列表 7 列完整",
+    "搜索 placeholder 保留",
+    "scope 切换存在",
+    "筛选器和重置存在",
+    "全选/单选/indeterminate 正常",
+    "批量指派与批量调组保留",
+    "添加客户打开弹窗",
+    "创建按钮启用态逻辑保留",
+    "去重提示保留",
+    "草稿保存/恢复/移除保留",
+    "#new 自动打开弹窗",
+    "toast 场景完整",
+    "移动端导航正常"
+  ],
+  "notes": [
+    "localStorage、硬编码去重提示、静态示例数据均属于 demo-only 行为，需要与生产方案区分。",
+    "客户模块是通用拆分金样本，但其他模块应复用职责结构，不应机械复用 customer 命名。"
+  ]
+}

@@ -1,0 +1,215 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "regression-checklist.schema.json",
+  "title": "Regression Checklist",
+  "description": "回归 gate 的唯一权威清单。split-manifest 若需引用回归项，只保留 id/ref 不双写完整内容。由 regression 阶段产出，closeout 阶段只负责与其他工件对齐校验；内容基于 P0-CONTRACT 和页面规格推导。",
+
+  "$defs": {
+    "provenance": {
+      "type": "string",
+      "enum": ["extracted", "inferred"]
+    },
+    "sourceInput": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "scannedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string", "enum": ["blocking", "non-blocking"], "default": "non-blocking" },
+        "relatedFields": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "waiver": {
+      "type": "object",
+      "required": ["id", "description", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "reason": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "phaseRecord": {
+      "type": "object",
+      "properties": {
+        "completedAt": { "type": "string", "format": "date-time" },
+        "result": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "gateItem": {
+      "type": "object",
+      "required": ["id", "description", "tag", "contractRef"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^G\\d+\\.\\d+$",
+          "description": "验收项编号（如 G1.1, G3.2）"
+        },
+        "description": { "type": "string", "minLength": 1, "description": "可判定的具体验收条件" },
+        "tag": {
+          "type": "string",
+          "enum": ["prototype", "production-constraint", "cross-module"],
+          "description": "prototype=原型可验证, production-constraint=生产约束, cross-module=跨模块"
+        },
+        "contractRef": {
+          "type": "string",
+          "description": "P0-CONTRACT 章节引用（如 §6 #资料完成率）"
+        },
+        "verdict": {
+          "type": "string",
+          "enum": ["passed", "failed", "deferred", "blocked", "not-tested"],
+          "description": "验收结果"
+        },
+        "blockedBy": {
+          "type": "string",
+          "description": "当 verdict=blocked 时注明阻塞的模块名"
+        },
+        "deferredTo": {
+          "type": "string",
+          "description": "当 verdict=deferred 时注明 MIGRATION-MAPPING 中的对应说明位置"
+        },
+        "testedAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "gate": {
+      "type": "object",
+      "required": ["id", "scenario", "items", "passRule"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^G\\d+$",
+          "description": "Gate 编号（如 G1, G2）"
+        },
+        "scenario": { "type": "string", "minLength": 1, "description": "聚焦的风险场景一句话描述" },
+        "items": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/gateItem" },
+          "minItems": 1
+        },
+        "passRule": {
+          "type": "string",
+          "description": "通过标准：哪些项 must pass，哪些可 defer"
+        },
+        "mustPassIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "此 Gate 中必须通过的 item ID 列表"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "artifactVersion",
+    "moduleId",
+    "sourceInputs",
+    "gates",
+    "closeoutStatus"
+  ],
+  "properties": {
+    "artifactVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "generatedFrom": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "产出此清单的输入文档路径（P0-CONTRACT, split-manifest, 页面规格）"
+    },
+
+    "phase": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "type": "string",
+          "enum": ["init", "audit", "boundary", "review", "execute", "closeout"]
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "closeout": { "$ref": "#/$defs/phaseRecord" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceInputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceInput" },
+      "minItems": 1
+    },
+
+    "gates": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/gate" },
+      "minItems": 1,
+      "description": "场景化回归门槛，每个 Gate 聚焦一个风险场景"
+    },
+
+    "closeoutStatus": {
+      "type": "object",
+      "required": ["allPrototypePassed", "mustItemsResolved"],
+      "properties": {
+        "allPrototypePassed": {
+          "type": "boolean",
+          "description": "所有 tag=prototype 的 item 是否已通过"
+        },
+        "mustItemsResolved": {
+          "type": "boolean",
+          "description": "所有 mustPassIds 中的 item 是否已 passed 或有合法 waiver"
+        },
+        "deferredCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "标记为 deferred 的 item 数量"
+        },
+        "blockedCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "标记为 blocked 的 item 数量"
+        },
+        "guardrailPassed": {
+          "type": "boolean",
+          "description": "npm run fix + npm run guard 是否通过"
+        },
+        "closedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" }
+    },
+    "waivers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/waiver" }
+    }
+  },
+  "additionalProperties": false
+}

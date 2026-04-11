@@ -1,3 +1,12 @@
+export type {
+  BillingGateEffectMode,
+  BillingPlan,
+  BillingPlanStatus,
+  PaymentMethod,
+  PaymentRecord,
+  PaymentRecordStatus,
+} from "./billingEntities";
+
 type OrganizationId = string;
 type UserId = string;
 type CustomerId = string;
@@ -7,36 +16,30 @@ type CaseId = string;
 type CasePartyId = string;
 type DocumentItemId = string;
 type DocumentFileId = string;
-type BillingRecordId = string;
-type PaymentRecordId = string;
 type TimelineLogId = string;
 
 type OrganizationPlan = string;
 type OrganizationStatus = string;
-
 type UserStatus = string;
-
 type CustomerType = string;
-
 type CaseStatus = string;
-
 type DocumentItemStatus = string;
 type DocumentItemOwnerSide = string;
 
-type ReminderStatus = string;
-type ReminderEntityType = string;
-
-type BillingType = string;
-type BillingRecordStatus = string;
 /**
- * 发票开具/开票状态。
+ * P0 提醒目标类型枚举。
  */
-type BillingInvoiceStatus = string;
+export type ReminderTargetType =
+  | "case"
+  | "customer"
+  | "requirement"
+  | "deadline"
+  | "billing_plan";
 
 /**
- * 回款方式枚举。
+ * P0 提醒发送状态枚举。
  */
-export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "other";
+export type ReminderSendStatus = "pending" | "sent" | "failed" | "canceled";
 
 /**
  * Timeline 记录所指向的实体类型（核心对象）。
@@ -56,6 +59,7 @@ export type TimelineEntityType =
   | "task"
   | "generated_document"
   | "billing_record"
+  | "billing_plan"
   | "payment_record";
 
 /**
@@ -238,14 +242,24 @@ export type ContactPerson = {
 /**
  * Reminder 核心对象（提醒/到期通知）。
  */
+/**
+ * P0 Reminder 实体（§3.21）。
+ */
 export type Reminder = {
   id: string;
   orgId: OrganizationId;
-  entityType: ReminderEntityType;
-  entityId: string;
-  scheduledAt: string;
-  status: ReminderStatus;
-  payload: Record<string, unknown> | null;
+  caseId: string | null;
+  targetType: ReminderTargetType;
+  targetId: string;
+  remindAt: string;
+  recipientType: string;
+  recipientId: string | null;
+  channel: string;
+  dedupeKey: string | null;
+  sendStatus: ReminderSendStatus;
+  retryCount: number;
+  sentAt: string | null;
+  payloadSnapshot: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -289,40 +303,6 @@ export type CommunicationLog = {
   createdBy: UserId | null;
   followUpRequired: boolean;
   followUpDueAt: string | null;
-  createdAt: string;
-};
-
-/**
- * BillingRecord 核心对象（收费计划/收费条目）。
- */
-export type BillingRecord = {
-  id: BillingRecordId;
-  orgId: OrganizationId;
-  caseId: CaseId;
-  billingType: BillingType;
-  milestoneName: string | null;
-  amountDue: number;
-  dueDate: string | null;
-  status: BillingRecordStatus;
-  invoiceStatus: BillingInvoiceStatus;
-  remark: string | null;
-  createdAt: string;
-  updatedAt: string;
-};
-
-/**
- * PaymentRecord 核心对象（回款记录）。
- */
-export type PaymentRecord = {
-  id: PaymentRecordId;
-  orgId: OrganizationId;
-  billingRecordId: BillingRecordId;
-  caseId: CaseId;
-  amountReceived: number;
-  receivedAt: string;
-  paymentMethod: PaymentMethod | null;
-  receiptFileUrl: string | null;
-  recordedBy: UserId | null;
   createdAt: string;
 };
 

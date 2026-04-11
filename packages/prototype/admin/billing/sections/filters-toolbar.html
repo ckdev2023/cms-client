@@ -1,0 +1,71 @@
+<!--
+  section: filters-toolbar.html
+  Segmented control (2 views) + 3 filter selects (status / Group / owner) + search + reset.
+  P0-CONTRACT §4 (search + 3 filters), §5 (segmented: billing-list / payment-log only).
+
+  P1 leak removed: "发票管理" segmented tab (P0-CONTRACT §18 #1).
+-->
+<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4" id="filtersToolbar">
+  <!-- Left: Segmented Control -->
+  <div class="segmented-control" role="tablist" aria-label="列表视图切换">
+    <button class="active" role="tab" aria-selected="true" data-segment="billing-list">案件收费列表</button>
+    <button role="tab" aria-selected="false" data-segment="payment-log">回款流水记录</button>
+  </div>
+
+  <!-- Right: Filters + Search + Reset -->
+  <div class="flex flex-wrap items-center gap-2">
+    <!-- Search -->
+    <div class="relative">
+      <input
+        type="text"
+        id="billingSearchInput"
+        placeholder="搜索：案件名称 / 客户名称 / 案件编号"
+        class="pl-8 pr-4 py-2 rounded-xl border border-[var(--border)] text-[13px] font-semibold focus:outline-none focus:border-[rgba(3,105,161,0.35)] focus:ring-1 focus:ring-[rgba(3,105,161,0.25)] w-64 bg-[var(--surface)] text-[var(--text)]"
+        aria-label="搜索案件或客户"
+      />
+      <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    </div>
+    <!-- Filter: 回款状态 -->
+    <select
+      data-filter="status"
+      class="rounded-xl border border-[var(--border)] text-[13px] font-semibold px-3 py-2 focus:outline-none focus:border-[rgba(3,105,161,0.35)] bg-[var(--surface)] text-[var(--text)]"
+      aria-label="筛选回款状态"
+    >
+      <option value="">所有回款状态</option>
+      <option value="paid">已回款</option>
+      <option value="partial">部分回款</option>
+      <option value="due">未回款</option>
+      <option value="overdue">欠款</option>
+    </select>
+    <!-- Filter: Group -->
+    <select
+      data-filter="group"
+      class="rounded-xl border border-[var(--border)] text-[13px] font-semibold px-3 py-2 focus:outline-none focus:border-[rgba(3,105,161,0.35)] bg-[var(--surface)] text-[var(--text)]"
+      aria-label="筛选所属 Group"
+    >
+      <option value="">所有 Group</option>
+      <option value="tokyo-1">東京一組</option>
+      <option value="tokyo-2">東京二組</option>
+      <option value="osaka">大阪組</option>
+    </select>
+    <!-- Filter: 负责人 -->
+    <select
+      data-filter="owner"
+      class="rounded-xl border border-[var(--border)] text-[13px] font-semibold px-3 py-2 focus:outline-none focus:border-[rgba(3,105,161,0.35)] bg-[var(--surface)] text-[var(--text)]"
+      aria-label="筛选负责人"
+    >
+      <option value="">所有负责人</option>
+      <option value="admin">Admin</option>
+      <option value="suzuki">Suzuki</option>
+      <option value="tanaka">Tanaka</option>
+    </select>
+    <!-- Reset -->
+    <button
+      class="text-[13px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]"
+      type="button"
+      data-action="reset-filters"
+    >
+      重置
+    </button>
+  </div>
+</div>

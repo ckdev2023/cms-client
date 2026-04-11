@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "boundary-map.schema.json",
+  "title": "Boundary Map",
+  "description": "拆分前符号归属、依赖边和加载顺序的唯一权威清单。每个已审计符号都必须有归属或 waiver；依赖无环；加载顺序可拓扑排序。",
+
+  "$defs": {
+    "provenance": {
+      "type": "string",
+      "enum": ["extracted", "inferred"]
+    },
+    "sourceInput": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "scannedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string", "enum": ["blocking", "non-blocking"], "default": "non-blocking" },
+        "relatedFields": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "waiver": {
+      "type": "object",
+      "required": ["id", "description", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "reason": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "phaseRecord": {
+      "type": "object",
+      "properties": {
+        "completedAt": { "type": "string", "format": "date-time" },
+        "result": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "targetFile": {
+      "type": "object",
+      "required": ["file", "shorthand", "responsibility"],
+      "properties": {
+        "file": { "type": "string", "description": "目标脚本文件路径（如 scripts/case-detail-runtime.js）" },
+        "shorthand": { "type": "string", "description": "缩写（如 RT/TAB/REN/DOC/ACT/BOOT）" },
+        "responsibility": { "type": "string", "description": "职责一句话描述" }
+      },
+      "additionalProperties": false
+    },
+    "functionAssignment": {
+      "type": "object",
+      "required": ["name", "targetFile"],
+      "properties": {
+        "name": { "type": "string", "description": "函数/符号名" },
+        "lines": { "type": "string", "description": "原始文件行号范围（如 101-104）" },
+        "signature": { "type": "string", "description": "如 (id, val) → void" },
+        "targetFile": { "type": "string", "description": "归属的目标文件 shorthand" },
+        "callsOutbound": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "此函数调用的其他函数（含跨文件）"
+        },
+        "calledByInbound": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "调用此函数的其他函数（含跨文件）"
+        },
+        "domain": {
+          "type": "string",
+          "description": "业务领域（overview/info/documents/tasks/deadlines/validation/billing/log/stage-flow/mgmt）"
+        },
+        "isNamespaceExport": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否需要挂载到共享命名空间供跨文件访问"
+        },
+        "isPure": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否无副作用纯函数（单测候选）"
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "dependencyEdge": {
+      "type": "object",
+      "required": ["from", "to", "functions"],
+      "properties": {
+        "from": { "type": "string", "description": "源文件 shorthand" },
+        "to": { "type": "string", "description": "目标文件 shorthand" },
+        "functions": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "跨越此边的函数调用列表"
+        }
+      },
+      "additionalProperties": false
+    },
+    "circularDependency": {
+      "type": "object",
+      "required": ["cycle", "mitigation"],
+      "properties": {
+        "cycle": {
+          "type": "string",
+          "description": "环路径（如 REN ↔ ACT）"
+        },
+        "path": { "type": "string", "description": "详细调用路径" },
+        "mitigation": { "type": "string", "description": "解决策略" }
+      },
+      "additionalProperties": false
+    },
+    "namespaceExport": {
+      "type": "object",
+      "required": ["file", "symbols"],
+      "properties": {
+        "file": { "type": "string", "description": "文件 shorthand" },
+        "symbols": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1,
+          "description": "挂载到命名空间的符号列表"
+        }
+      },
+      "additionalProperties": false
+    },
+    "eventListenerAssignment": {
+      "type": "object",
+      "required": ["event", "selector", "targetFile"],
+      "properties": {
+        "event": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "selector": { "type": "string" },
+        "targetFile": { "type": "string", "description": "归属的目标文件 shorthand" },
+        "calls": { "type": "array", "items": { "type": "string" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "artifactVersion",
+    "moduleId",
+    "sourceInputs",
+    "targetFiles",
+    "functions",
+    "dependencyEdges",
+    "namespaceApi",
+    "loadOrder"
+  ],
+  "properties": {
+    "artifactVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "generatedFrom": {
+      "type": "string",
+      "description": "关联的 audit-manifest 文件路径，boundary-map 必须基于 audit-manifest 产出"
+    },
+
+    "phase": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "type": "string",
+          "enum": ["init", "audit", "boundary", "review", "execute", "closeout"]
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "init": { "$ref": "#/$defs/phaseRecord" },
+            "audit": { "$ref": "#/$defs/phaseRecord" },
+            "boundary": { "$ref": "#/$defs/phaseRecord" },
+            "review": { "$ref": "#/$defs/phaseRecord" }
+          },
+          "additionalProperties": false
+        },
+        "reviewApproval": {
+          "type": "object",
+          "description": "人工 review 确认记录，无此字段不允许进入 execute 阶段",
+          "required": ["approved"],
+          "properties": {
+            "approved": { "type": "boolean" },
+            "approvedBy": { "type": "string" },
+            "approvedAt": { "type": "string", "format": "date-time" },
+            "notes": { "type": "string" },
+            "disputedItems": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "review 中有争议的条目 ID"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceInputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceInput" },
+      "minItems": 1
+    },
+
+    "targetFiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/targetFile" },
+      "minItems": 1,
+      "description": "拆分目标文件定义"
+    },
+    "functions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/functionAssignment" },
+      "description": "函数/符号级归属分配"
+    },
+    "eventListeners": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/eventListenerAssignment" },
+      "description": "事件监听器归属分配"
+    },
+    "dependencyEdges": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dependencyEdge" },
+      "description": "文件间有向依赖边"
+    },
+    "circularDependencies": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/circularDependency" },
+      "description": "已知循环依赖及缓解策略"
+    },
+    "namespaceApi": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/namespaceExport" },
+      "description": "各文件挂载到共享命名空间的 API 列表"
+    },
+    "loadOrder": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "HTML script 加载顺序（shorthand 列表），必须可拓扑排序且无依赖违反"
+    },
+
+    "domainCoverage": {
+      "type": "object",
+      "description": "业务领域 → 函数 × 目标文件的覆盖矩阵（辅助验证完备性）",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" }
+    },
+    "waivers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/waiver" }
+    }
+  },
+  "additionalProperties": false
+}

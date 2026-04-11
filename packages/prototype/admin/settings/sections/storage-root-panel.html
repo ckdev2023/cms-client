@@ -1,0 +1,123 @@
+<!--
+  section: storage-root-panel.html
+  Local document root directory configuration panel.
+  Covers: root name, mount path (admin-only), path strategy explanation,
+  live preview of {root}/{relative_path}, last updated by / at, and save.
+
+  DOM hooks:
+    #storageRootPanel         — outer wrapper (shown/hidden by subnav)
+    #storageNotConfiguredHint — warning banner when root is not configured
+    #inputRootName            — input: root directory display name
+    #inputRootPath            — input: UNC path or mount point
+    #pathPreview              — live path preview output
+    #lastUpdatedBy            — last editor display
+    #lastUpdatedAt            — last update timestamp display
+    #btnSaveStorageRoot       — save button
+    #storageRootSaveStatus    — last-saved timestamp display
+
+  Contract ref: P0-CONTRACT §6 本地资料根目录配置
+  Production target: features/settings/ui/StorageRootPanel
+-->
+<div id="storageRootPanel">
+  <div class="flex justify-between items-end mb-6">
+    <div>
+      <h2 class="text-lg font-bold text-[var(--text)]">本地资料根目录</h2>
+      <p class="text-[13px] text-[var(--muted-2)] mt-0.5">配置事务所级本地资料服务器根目录，供案件资料路径拼接使用。</p>
+    </div>
+  </div>
+
+  <!-- Not-configured warning (hidden when demo data present) -->
+  <div id="storageNotConfiguredHint" class="hidden mb-4 p-4 rounded-xl border border-amber-200 bg-amber-50">
+    <div class="flex items-start gap-3">
+      <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      <div>
+        <p class="text-[13px] font-semibold text-amber-800">根目录尚未配置</p>
+        <p class="text-[12px] text-amber-700 mt-1 leading-relaxed">
+          配置根目录后，案件/资料中心的「登记资料（本地归档）」功能才可正常使用。未配置期间该入口将被禁用。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config form -->
+  <div class="apple-card p-5 sm:p-6">
+    <div class="space-y-5">
+      <!-- Root name -->
+      <div>
+        <label class="apple-label" for="inputRootName">根目录名称 <span class="text-red-500">*</span></label>
+        <input
+          type="text"
+          class="apple-input"
+          id="inputRootName"
+          placeholder="案件资料总盘"
+          value="案件資料総盤"
+          autocomplete="off"
+        />
+      </div>
+
+      <!-- Root path -->
+      <div>
+        <label class="apple-label" for="inputRootPath">根目录路径 / 挂载点 <span class="text-red-500">*</span></label>
+        <input
+          type="text"
+          class="apple-input font-mono text-[13px]"
+          id="inputRootPath"
+          placeholder="\\server\share 或 /mnt/docs"
+          value="\\fileserver\gyosei-docs"
+          autocomplete="off"
+        />
+        <p class="text-[11px] text-[var(--muted-2)] mt-1">仅管理员可见。请输入文件服务器的 UNC 路径或本地挂载点。</p>
+      </div>
+
+      <!-- Path strategy explanation -->
+      <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]">
+        <div class="flex items-start gap-2">
+          <svg class="w-4 h-4 text-[var(--muted)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <p class="text-[12px] font-semibold text-[var(--muted)] mb-0.5">路径策略</p>
+            <p class="text-[12px] text-[var(--muted-2)] leading-relaxed">
+              系统仅保存 <code class="px-1 py-0.5 rounded bg-gray-100 text-[11px] font-mono">relative_path</code>，禁止在业务对象中记录绝对路径。本地根目录在此处统一配置，业务模块自动拼接完整路径。
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Path preview -->
+      <div>
+        <p class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1.5">路径预览</p>
+        <div class="px-3 py-2 rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-2)] font-mono text-[13px] text-[var(--text)]" id="pathPreview">
+          \\fileserver\gyosei-docs/<span class="text-blue-600">{relative_path}</span>
+        </div>
+        <p class="text-[11px] text-[var(--muted-2)] mt-1">实际完整路径 = 根目录 + 资料的相对路径</p>
+      </div>
+
+      <!-- Last updated info -->
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-[var(--border)]">
+        <div>
+          <dt class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1">最后更新人</dt>
+          <dd class="text-[14px] font-medium text-[var(--text)]" id="lastUpdatedBy">Admin</dd>
+        </div>
+        <div>
+          <dt class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1">最后更新时间</dt>
+          <dd class="text-[14px] font-medium text-[var(--text)]" id="lastUpdatedAt">2025-03-20 14:30</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <!-- Save row -->
+  <div class="mt-6 flex items-center justify-between">
+    <p class="text-[12px] text-[var(--muted-2)]" id="storageRootSaveStatus"></p>
+    <button
+      type="button"
+      class="btn-primary h-9 px-5 text-[13px]"
+      id="btnSaveStorageRoot"
+    >
+      保存根目录配置
+    </button>
+  </div>
+</div>

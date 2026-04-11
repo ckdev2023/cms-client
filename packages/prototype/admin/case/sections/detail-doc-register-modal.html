@@ -1,0 +1,35 @@
+    <!-- section: sections/detail-doc-register-modal.html (T12: register with relative_path) -->
+    <div class="modal-backdrop" id="docRegisterModal" style="display: none;">
+      <div class="apple-modal flex flex-col" style="max-width: 520px;">
+        <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+          <h3 class="text-[17px] font-semibold text-[var(--text)]">登记资料（本地归档）</h3>
+          <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-doc-register-modal">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+          </button>
+        </div>
+        <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 60vh;">
+          <div>
+            <label class="apple-label">资料项</label>
+            <input type="text" class="apple-input bg-[var(--surface-2)] cursor-not-allowed" id="docRegisterItemName" readonly />
+          </div>
+          <div>
+            <label class="apple-label">本地归档路径 (relative_path) <span class="text-red-500">*</span></label>
+            <input type="text" class="apple-input font-mono text-[13px]" id="docRegisterPath" placeholder="CAS-2026-0142/main/passport/20260410_passport.pdf" />
+            <p class="text-[11px] text-[var(--muted-2)] mt-1" id="docRegisterPathHint">格式建议：{case_no}/{provider}/{doc_item_name}/{yyyymmdd}_{filename}</p>
+            <p class="text-[11px] text-red-500 mt-1 hidden" id="docRegisterPathError">请输入有效的相对路径（不含 .. 或绝对路径前缀）</p>
+          </div>
+          <div>
+            <label class="apple-label">文件名 / 描述</label>
+            <input type="text" class="apple-input" id="docRegisterFileName" placeholder="从路径自动推导，或手动输入" />
+          </div>
+          <div>
+            <label class="apple-label">版本号</label>
+            <input type="text" class="apple-input bg-[var(--surface-2)] cursor-not-allowed" id="docRegisterVersion" value="v1（系统自动递增）" readonly />
+          </div>
+        </div>
+        <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+          <button class="btn-secondary px-5" type="button" data-action="close-doc-register-modal">取消</button>
+          <button class="btn-primary px-5" type="button" id="docRegisterConfirmBtn" disabled>登记</button>
+        </div>
+      </div>
+    </div>

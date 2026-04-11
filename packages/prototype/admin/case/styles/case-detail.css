@@ -1,0 +1,520 @@
+/* case-detail.css — 案件详情页专属样式（从 detail.html 内联 <style> 提取） */
+
+.page-shell {
+  max-width: 1220px;
+}
+
+.page-title {
+  font-size: 34px;
+  line-height: 1.08;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+}
+
+.meta-text {
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 600;
+  color: var(--muted-2);
+}
+
+.section-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--text);
+}
+
+.section-kicker {
+  font-size: 12px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--primary);
+}
+
+/* --- Tab Bar --- */
+
+.detail-tabs {
+  border-bottom: 1px solid var(--border);
+  /* overflow-x must remain visible so the "更多" dropdown isn't clipped;
+     horizontal scroll is handled on the inner nav instead */
+  overflow: visible;
+  position: relative;
+}
+
+.detail-tabs::-webkit-scrollbar {
+  height: 0;
+  background: transparent;
+}
+
+.detail-tabs nav {
+  display: flex;
+  gap: 28px;
+  min-width: max-content;
+  padding: 0 2px;
+  align-items: center;
+  /* Keep overflow visible so the absolute-positioned "更多" dropdown is not clipped */
+  overflow: visible;
+}
+
+.detail-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #86868b;
+  white-space: nowrap;
+  transition: color 160ms ease, border-color 160ms ease;
+}
+
+.detail-tab:hover {
+  color: #1d1d1f;
+}
+
+.detail-tab.is-active {
+  color: #1d1d1f;
+  border-color: #1d1d1f;
+}
+
+.detail-tab svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.detail-tab .tab-counter {
+  background: #1d1d1f;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  line-height: 1.4;
+}
+
+/* --- "More" Dropdown --- */
+
+.more-tabs-wrapper {
+  position: relative;
+}
+
+.more-tabs-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 2px solid transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: #86868b;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 160ms ease, border-color 160ms ease;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+}
+
+.more-tabs-trigger:hover {
+  color: #1d1d1f;
+}
+
+.more-tabs-trigger.has-active-child {
+  color: #1d1d1f;
+  border-bottom-color: #1d1d1f;
+}
+
+.more-tabs-trigger svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.more-tabs-trigger .chevron-icon {
+  width: 12px;
+  height: 12px;
+  transition: transform 160ms ease;
+}
+
+.more-tabs-wrapper.is-open .chevron-icon {
+  transform: rotate(180deg);
+}
+
+.more-tabs-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
+  padding: 6px;
+  z-index: 200;
+}
+
+.more-tabs-wrapper.is-open .more-tabs-menu {
+  display: block;
+}
+
+.more-tabs-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #86868b;
+  text-decoration: none;
+  transition: background 120ms ease, color 120ms ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  text-align: left;
+}
+
+.more-tabs-menu-item:hover {
+  background: var(--surface-2);
+  color: #1d1d1f;
+}
+
+.more-tabs-menu-item.is-active {
+  background: rgba(14, 165, 233, 0.08);
+  color: #0284c7;
+  font-weight: 700;
+}
+
+.more-tabs-menu-item svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+/* --- Summary Cards (4-col) --- */
+
+.summary-grid-4 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 768px) {
+  .summary-grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .summary-grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.summary-stat {
+  position: relative;
+  overflow: hidden;
+  padding: 18px;
+}
+
+.summary-stat-corner {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 56px;
+  height: 56px;
+  border-bottom-left-radius: 100%;
+  opacity: 0.5;
+  transition: transform 200ms ease;
+}
+
+.summary-stat:hover .summary-stat-corner {
+  transform: scale(1.15);
+}
+
+.summary-stat-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #86868b;
+}
+
+.summary-stat-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1d1d1f;
+  margin-top: 6px;
+}
+
+.summary-stat-meta {
+  font-size: 12px;
+  font-weight: 600;
+  color: #86868b;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.summary-stat-meta svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+}
+
+/* --- Status Badge --- */
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.status-badge.badge-green {
+  border-color: rgba(22, 163, 74, 0.18);
+  background: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+.status-badge.badge-orange {
+  border-color: rgba(245, 158, 11, 0.2);
+  background: rgba(245, 158, 11, 0.16);
+  color: #92400e;
+}
+
+.status-badge.badge-red {
+  border-color: rgba(220, 38, 38, 0.18);
+  background: rgba(220, 38, 38, 0.1);
+  color: #991b1b;
+}
+
+.status-badge.badge-gray {
+  color: var(--muted);
+}
+
+/* --- Readonly Banner --- */
+
+.readonly-banner {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.readonly-banner svg {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+.readonly-banner.is-visible {
+  display: flex;
+}
+
+/* --- Tab Panels --- */
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.is-active {
+  display: block;
+}
+
+/* --- Progress Bar --- */
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0ea5e9, #0284c7);
+  transition: width 400ms ease;
+}
+
+/* --- Timeline --- */
+
+.timeline-dot {
+  position: absolute;
+  left: -5px;
+  top: 6px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 0 1px rgba(226, 232, 240, 0.9);
+}
+
+/* --- Doc Item --- */
+
+.doc-item {
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+  transition: background-color 160ms ease;
+}
+
+.doc-item:last-child {
+  border-bottom: none;
+}
+
+.doc-item:hover {
+  background-color: rgba(2, 6, 23, 0.01);
+}
+
+/* --- Provider Progress --- */
+
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.provider-row + .provider-row {
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.provider-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  min-width: 120px;
+}
+
+.provider-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.18);
+  overflow: hidden;
+}
+
+.provider-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+  transition: width 400ms ease;
+}
+
+.provider-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted-2);
+  min-width: 48px;
+  text-align: right;
+}
+
+/* --- Gate Chip --- */
+
+.gate-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.gate-chip-a {
+  background: rgba(220, 38, 38, 0.1);
+  color: #991b1b;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.gate-chip-b {
+  background: rgba(245, 158, 11, 0.1);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.gate-chip-c {
+  background: rgba(59, 130, 246, 0.1);
+  color: #1e40af;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+/* --- Waived / Expired Doc Row --- */
+
+.doc-item.is-waived {
+  opacity: 0.55;
+  background: rgba(241, 245, 249, 0.5);
+}
+
+.doc-item.is-expired .doc-item-date {
+  color: var(--danger);
+}
+
+.doc-item.is-expanded {
+  border-bottom-color: transparent;
+  background-color: rgba(2, 6, 23, 0.015);
+}
+
+.doc-detail-panel {
+  font-size: 13px;
+}
+
+.doc-detail-panel table th,
+.doc-detail-panel table td {
+  vertical-align: top;
+}
+
+.doc-expand-chevron {
+  transition: transform 200ms ease;
+}
+
+/* --- Risk Summary --- */
+
+.risk-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+}
+
+.risk-item + .risk-item {
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.risk-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+  margin-top: 5px;
+}
+
+/* --- Correction Package --- */
+
+.correction-card {
+  border-left: 3px solid var(--warning);
+}
+

@@ -1,0 +1,80 @@
+<!--
+  section: payment-modal.html
+  Payment registration modal — 5 fields: amount, date, billing plan node, receipt, note.
+  P0-CONTRACT §9: form fields, BillingPlan selector, amount validation, submit logic.
+
+  DOM hooks: #paymentModal, #paymentModalTitle, #closeModalBtn, #cancelModalBtn,
+             #submitPaymentBtn, #paymentFormFields,
+             #fieldAmount, #fieldDate, #fieldBillingPlanId, #fieldReceipt, #fieldNote,
+             #amountWarning, #planSelectWarning
+
+  demo-only: no backend call; toast feedback on submit.
+-->
+<div class="modal-backdrop" id="paymentModal">
+  <div class="apple-modal flex flex-col">
+    <!-- Modal Header -->
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]" id="paymentModalTitle">登记回款</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" id="closeModalBtn" aria-label="关闭">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+      <div class="mb-5">
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold">
+          请填写回款信息。金额与日期为必填项。
+        </div>
+      </div>
+
+      <div id="paymentFormFields" class="space-y-5">
+        <!-- Field 1: 金额 -->
+        <div>
+          <label class="apple-label">金额 (¥) <span class="text-red-500">*</span></label>
+          <input type="number" class="apple-input" id="fieldAmount" data-field="amount" min="1" placeholder="输入回款金额" />
+          <div id="amountWarning" class="hidden text-[12px] text-[#92400e] bg-[rgba(245,158,11,0.1)] rounded-lg px-3 py-2 mt-2 font-semibold">
+            金额超过该节点未收余额，建议拆分为多笔分别归集到节点
+          </div>
+        </div>
+
+        <!-- Field 2: 日期 -->
+        <div>
+          <label class="apple-label">日期 <span class="text-red-500">*</span></label>
+          <input type="date" class="apple-input" id="fieldDate" data-field="date" />
+        </div>
+
+        <!-- Field 3: 关联收费节点 -->
+        <div>
+          <label class="apple-label">关联收费节点</label>
+          <select class="apple-input appearance-none bg-white" id="fieldBillingPlanId" data-field="billingPlanId">
+            <option value="">请选择收费节点</option>
+          </select>
+          <div id="planSelectWarning" class="hidden text-[12px] text-[#991b1b] mt-1 font-semibold">
+            存在多个未结清节点，请先选择收款节点
+          </div>
+        </div>
+
+        <!-- Field 4: 付款凭证 -->
+        <div>
+          <label class="apple-label">付款凭证</label>
+          <input type="file" class="apple-input" id="fieldReceipt" data-field="receipt" accept="image/*,.pdf" />
+          <div class="text-[11px] text-[var(--muted-2)] mt-1 font-semibold">支持图片或 PDF，可后补</div>
+        </div>
+
+        <!-- Field 5: 备注 -->
+        <div>
+          <label class="apple-label">备注</label>
+          <textarea class="apple-input" id="fieldNote" data-field="note" rows="2" placeholder="可选：补充说明"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" id="cancelModalBtn" type="button">取消</button>
+      <button class="btn-primary px-5" id="submitPaymentBtn" type="button" disabled>登记回款</button>
+    </div>
+  </div>
+</div>
+

@@ -1,0 +1,36 @@
+<!--
+  section: summary-cards.html
+  4 summary cards (global dimension): 总应收 / 总已收 / 总未收 / 逾期欠款
+  P0-CONTRACT §6: cards use global aggregation, not "本月".
+
+  demo-only: all amounts are hardcoded from BillingDemoData.DEMO_SUMMARY.
+-->
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8" id="summaryCards">
+  <!-- Card 1: 总应收 -->
+  <div class="apple-card p-5" id="summaryCardTotalDue">
+    <div class="text-[13px] text-[var(--muted-2)] mb-1 font-semibold">总应收 (JPY)</div>
+    <div class="text-2xl font-extrabold text-[var(--text)]" data-summary="totalDue">¥ 1,650,000</div>
+    <div class="text-[12px] text-[var(--muted)] mt-2 font-semibold">所有案件应收金额之和<!-- demo-only --></div>
+  </div>
+  <!-- Card 2: 总已收 -->
+  <div class="apple-card p-5" id="summaryCardTotalReceived">
+    <div class="text-[13px] text-[var(--muted-2)] mb-1 font-semibold">总已收 (JPY)</div>
+    <div class="text-2xl font-extrabold text-[var(--text)]" data-summary="totalReceived">¥ 555,000</div>
+    <div class="text-[12px] text-[var(--muted)] mt-2 font-semibold">有效回款记录金额之和<!-- demo-only --></div>
+  </div>
+  <!-- Card 3: 总未收 -->
+  <div class="apple-card p-5" id="summaryCardTotalOutstanding">
+    <div class="text-[13px] text-[var(--muted-2)] mb-1 font-semibold">总未收 (JPY)</div>
+    <div class="text-2xl font-extrabold text-[var(--primary)]" data-summary="totalOutstanding">¥ 1,095,000</div>
+    <div class="text-[12px] text-[var(--muted)] mt-2 font-semibold">分布在 5 个案件中<!-- demo-only --></div>
+  </div>
+  <!-- Card 4: 逾期欠款 (red variant) -->
+  <div class="apple-card p-5 border-[rgba(220,38,38,0.18)] bg-[rgba(220,38,38,0.06)]" id="summaryCardOverdue">
+    <div class="text-[13px] text-[#991b1b] mb-1 font-semibold">逾期欠款 (JPY)</div>
+    <div class="text-2xl font-extrabold text-[#991b1b]" data-summary="overdueAmount">¥ 500,000</div>
+    <div class="text-[12px] text-[#991b1b] mt-2 font-semibold flex items-center" data-summary="overdueHint">
+      <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+      1 笔逾期款项，需催收<!-- demo-only -->
+    </div>
+  </div>
+</div>

@@ -48,11 +48,18 @@ function makeReminderRow(overrides: Record<string, unknown> = {}) {
   return {
     id: "rem-1",
     org_id: ORG_ID,
-    entity_type: "case",
-    entity_id: "case-1",
-    scheduled_at: "2026-03-01T00:00:00.000Z",
-    status: "pending",
-    payload: { note: "follow up" },
+    case_id: "case-1",
+    target_type: "case",
+    target_id: "case-1",
+    remind_at: "2026-03-01T00:00:00.000Z",
+    send_status: "pending",
+    recipient_type: "user",
+    recipient_id: null,
+    channel: "in_app",
+    dedupe_key: null,
+    retry_count: 0,
+    sent_at: null,
+    payload_snapshot: { note: "follow up" },
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -80,10 +87,7 @@ void test("processes due pending reminders: enqueues notification, updates statu
   const calls: SqlCall[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -100,13 +104,14 @@ void test("processes due pending reminders: enqueues notification, updates statu
   ).payload;
   assert.equal(notifPayload.orgId, ORG_ID);
   assert.equal(notifPayload.channel, "in_app");
-  assert.equal(notifPayload.entityType, "case");
-  assert.equal(notifPayload.entityId, "case-1");
+  assert.equal(notifPayload.targetType, "case");
+  assert.equal(notifPayload.targetId, "case-1");
 
   // 验证 status 更新
   const updateCall = calls.find(
     (c) =>
-      c.sql.includes("update reminders") && c.sql.includes("status = 'sent'"),
+      c.sql.includes("update reminders") &&
+      c.sql.includes("send_status = 'sent'"),
   );
   assert.ok(updateCall, "should update reminder status to sent");
   assert.equal(updateCall.params?.[0], "rem-1");
@@ -151,7 +156,7 @@ void test("skips reminders already marked as sent", async () => {
     calls.push({ sql: sql.trim(), params });
     if (sql.includes("from reminders")) {
       return Promise.resolve({
-        rows: [makeReminderRow({ status: "sent" })],
+        rows: [makeReminderRow({ send_status: "sent" })],
         rowCount: 1,
       });
     }
@@ -182,7 +187,7 @@ void test("skips reminders with cancelled status", async () => {
   const pool = makePool((sql) => {
     if (sql.includes("from reminders")) {
       return Promise.resolve({
-        rows: [makeReminderRow({ status: "cancelled" })],
+        rows: [makeReminderRow({ send_status: "cancelled" })],
         rowCount: 1,
       });
     }
@@ -201,15 +206,12 @@ void test("skips reminders with cancelled status", async () => {
 
 void test("processes multiple due reminders in single batch", async () => {
   const pool = makePool((sql) => {
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({
         rows: [
-          makeReminderRow({ id: "rem-1", entity_id: "case-1" }),
-          makeReminderRow({ id: "rem-2", entity_id: "case-2" }),
-          makeReminderRow({ id: "rem-3", entity_id: "case-3" }),
+          makeReminderRow({ id: "rem-1", target_id: "case-1" }),
+          makeReminderRow({ id: "rem-2", target_id: "case-2" }),
+          makeReminderRow({ id: "rem-3", target_id: "case-3" }),
         ],
         rowCount: 3,
       });
@@ -221,10 +223,10 @@ void test("processes multiple due reminders in single batch", async () => {
   await handleReminderJob(pool as unknown as Pool, queue, makeJob());
 
   assert.equal(enqueueCalls.length, 3, "should enqueue 3 notifications");
-  const entityIds = enqueueCalls.map(
-    (c) => (c.job as QueueJob<Record<string, unknown>>).payload.entityId,
+  const targetIds = enqueueCalls.map(
+    (c) => (c.job as QueueJob<Record<string, unknown>>).payload.targetId,
   );
-  assert.deepEqual(entityIds, ["case-1", "case-2", "case-3"]);
+  assert.deepEqual(targetIds, ["case-1", "case-2", "case-3"]);
 });
 
 /* ------------------------------------------------------------------ */
@@ -234,10 +236,7 @@ void test("processes multiple due reminders in single batch", async () => {
 void test("isolates errors: one reminder failure does not block others", async () => {
   let updateCount = 0;
   const pool = makePool((sql) => {
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({
         rows: [
           makeReminderRow({ id: "rem-1" }),
@@ -276,7 +275,7 @@ void test("isolates errors: one reminder failure does not block others", async (
 
   // rem-1 和 rem-3 成功，rem-2 失败
   assert.equal(enqueueCalls.length, 2, "2 of 3 should succeed");
-  assert.equal(updateCount, 2, "2 reminders should be updated");
+  assert.equal(updateCount, 3, "3 updates: 2 sent + 1 failed");
 });
 
 /* ------------------------------------------------------------------ */
@@ -336,12 +335,9 @@ void test("sets tenant org_id via set_config for RLS isolation", async () => {
 
 void test("notification job payload contains correct structure", async () => {
   const pool = makePool((sql) => {
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({
-        rows: [makeReminderRow({ payload: { note: "urgent" } })],
+        rows: [makeReminderRow({ payload_snapshot: { note: "urgent" } })],
         rowCount: 1,
       });
     }
@@ -375,12 +371,9 @@ void test("notification job payload contains correct structure", async () => {
 
 void test("handles reminder with null payload gracefully", async () => {
   const pool = makePool((sql) => {
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({
-        rows: [makeReminderRow({ payload: null })],
+        rows: [makeReminderRow({ payload_snapshot: null })],
         rowCount: 1,
       });
     }
@@ -400,14 +393,11 @@ void test("handles reminder with null payload gracefully", async () => {
 /*  Timeline payload 验证                                              */
 /* ------------------------------------------------------------------ */
 
-void test("timeline payload includes entityType, entityId, scheduledAt", async () => {
+void test("timeline payload includes targetType, targetId, remindAt", async () => {
   const calls: SqlCall[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -422,9 +412,9 @@ void test("timeline payload includes entityType, entityId, scheduledAt", async (
   assert.ok(timelineCall);
   const payloadJson = timelineCall.params?.[5] as string;
   const parsed = JSON.parse(payloadJson) as Record<string, unknown>;
-  assert.equal(parsed.entityType, "case");
-  assert.equal(parsed.entityId, "case-1");
-  assert.equal(parsed.scheduledAt, "2026-03-01T00:00:00.000Z");
+  assert.equal(parsed.targetType, "case");
+  assert.equal(parsed.targetId, "case-1");
+  assert.equal(parsed.remindAt, "2026-03-01T00:00:00.000Z");
 });
 
 /* ------------------------------------------------------------------ */
@@ -435,10 +425,7 @@ void test("update query includes status = 'pending' guard for idempotency", asyn
   const calls: SqlCall[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
-    if (
-      sql.includes("from reminders") &&
-      sql.includes("scheduled_at <= now()")
-    ) {
+    if (sql.includes("from reminders") && sql.includes("remind_at <= now()")) {
       return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -450,7 +437,7 @@ void test("update query includes status = 'pending' guard for idempotency", asyn
   const updateCall = calls.find((c) => c.sql.includes("update reminders"));
   assert.ok(updateCall);
   assert.ok(
-    updateCall.sql.includes("status = 'pending'"),
-    "update WHERE should include status = 'pending' for idempotency",
+    updateCall.sql.includes("send_status = 'pending'"),
+    "update WHERE should include send_status = 'pending' for idempotency",
   );
 });

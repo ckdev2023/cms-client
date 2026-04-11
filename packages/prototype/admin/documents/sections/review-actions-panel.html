@@ -1,0 +1,70 @@
+<!--
+  section: review-actions-panel.html
+  Approve confirmation modal + Reject modal with reason textarea.
+  P0-CONTRACT §8.2: approve confirmation, reject with required reason.
+
+  Two separate modals for clearer UX (approve = simple confirm, reject = reason required).
+
+  DOM hooks: approveModal, approveDocName, approveConfirmBtn, data-action=close-approve-modal
+             rejectModal, rejectDocName, rejectReasonText, rejectConfirmBtn, data-action=close-reject-modal
+  Production target: features/document/ui/ReviewActionsPanel
+  Gap: entirely new — legacy documents.html had no review actions.
+-->
+
+<!-- Approve confirmation -->
+<div class="modal-backdrop" id="approveModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 420px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">审核通过确认</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-approve-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-[var(--text)]" id="approveDocName">—</p>
+          <p class="text-[12px] text-[var(--muted-2)] mt-1">确认将这份资料标记为审核通过？通过后会计入完成率。</p>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-approve-modal">取消</button>
+      <button class="btn-primary px-5" type="button" id="approveConfirmBtn">确认通过</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reject with reason -->
+<div class="modal-backdrop" id="rejectModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 480px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">退回补正</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-reject-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="flex items-start gap-3">
+        <div class="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+          <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-[var(--text)]" id="rejectDocName">—</p>
+          <p class="text-[12px] text-[var(--muted-2)] mt-1">退回后这份资料会变为「退回补正」，请填写退回原因。</p>
+        </div>
+      </div>
+      <div>
+        <label class="apple-label">退回原因 <span class="text-red-500">*</span></label>
+        <textarea class="apple-input" id="rejectReasonText" rows="3" placeholder="请说明资料不符合要求的具体原因"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-reject-modal">取消</button>
+      <button class="btn-primary px-5 bg-[var(--danger)] hover:bg-red-700" type="button" id="rejectConfirmBtn" disabled>确认退回</button>
+    </div>
+  </div>
+</div>

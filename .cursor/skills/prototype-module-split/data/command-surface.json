@@ -1,0 +1,284 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "command-surface.json",
+  "title": "Command Surface — Prototype Split Pipeline",
+  "description": "Machine-readable definition of the 6 prototype-split phase commands. Each command specifies its phase, required inputs, mandatory script calls with exact arguments, outputs, and quantified stop conditions. Consumed by orchestrator skills and validation scripts.",
+
+  "surfaceVersion": 1,
+  "pipeline": ["init", "audit", "boundary", "review", "execute", "closeout"],
+
+  "scriptBase": ".cursor/skills/prototype-module-split/scripts",
+
+  "commands": {
+    "prototype-split-init": {
+      "phase": "init",
+      "purpose": "Create module skeleton: directories, blank manifest, template docs.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path", "description": "Target module path relative to workspace root" },
+        "--module-id": { "required": true, "type": "string", "pattern": "^[a-z][a-z0-9-]*$", "description": "kebab-case module identifier" },
+        "--module-label": { "required": true, "type": "string", "description": "Human-readable module name (e.g. 案件)" },
+        "--entry-file": { "required": false, "type": "path", "default": "{module-dir}/index.html", "description": "Entry HTML path" },
+        "--force": { "required": false, "type": "boolean", "default": false, "description": "Overwrite existing files" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "scaffold-split.mjs",
+          "args": "--module-dir {module-dir} --module-id {module-id} --module-label {module-label} [--entry-file {entry-file}] [--force]",
+          "failureAction": "abort",
+          "purpose": "Create directories and skeleton manifest"
+        },
+        {
+          "order": 2,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/split-manifest.json",
+          "failureAction": "abort",
+          "purpose": "Verify skeleton manifest is valid"
+        }
+      ],
+      "outputs": [
+        "{module-dir}/split-manifest.json",
+        "{module-dir}/P0-CONTRACT.md",
+        "{module-dir}/SPLIT-ARCHITECTURE.md",
+        "{module-dir}/MIGRATION-MAPPING.md",
+        "{module-dir}/sections/",
+        "{module-dir}/scripts/",
+        "{module-dir}/data/"
+      ],
+      "stopConditions": [
+        { "id": "SC-INIT-1", "check": "directories_exist", "target": ["sections/", "scripts/", "data/"], "quantifier": "all 3 directories exist on disk" },
+        { "id": "SC-INIT-2", "check": "validate_manifest", "target": "split-manifest.json", "quantifier": "zero schema validation errors" },
+        { "id": "SC-INIT-3", "check": "required_fields", "target": "split-manifest.json", "fields": ["moduleId", "moduleLabel", "moduleDir", "entryFile"], "quantifier": "all 4 fields non-empty" },
+        { "id": "SC-INIT-4", "check": "files_exist", "target": ["P0-CONTRACT.md", "SPLIT-ARCHITECTURE.md", "MIGRATION-MAPPING.md"], "quantifier": "all 3 template docs exist" },
+        { "id": "SC-INIT-5", "check": "no_ai_content", "target": "split-manifest.json", "quantifier": "sections/dataFiles/scripts arrays are empty (skeleton only)" }
+      ]
+    },
+
+    "prototype-split-audit": {
+      "phase": "audit",
+      "purpose": "Inventory all globals, DOM refs, state, helpers, events, and init order from the source script.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path" },
+        "--source-script": { "required": true, "type": "path", "description": "Monolithic source script to audit" },
+        "--suffix": { "required": false, "type": "string", "description": "Manifest suffix for sub-modules (e.g. detail)" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "phase-gate.mjs",
+          "args": "--module-dir {module-dir} --target-phase audit [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify init phase completed"
+        },
+        {
+          "order": 2,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/audit-manifest[-{suffix}].json --type audit-manifest --check-provenance",
+          "failureAction": "abort",
+          "purpose": "Validate audit-manifest schema and provenance"
+        },
+        {
+          "order": 3,
+          "script": "anti-cheat-check.mjs",
+          "args": "--module-dir {module-dir} [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify extracted symbols exist in source"
+        }
+      ],
+      "outputs": [
+        "{module-dir}/audit-manifest[-{suffix}].json"
+      ],
+      "stopConditions": [
+        { "id": "SC-AUDIT-1", "check": "phase_gate", "target": "audit", "quantifier": "phase-gate exit code 0" },
+        { "id": "SC-AUDIT-2", "check": "validate_manifest", "target": "audit-manifest", "quantifier": "zero schema errors AND zero provenance errors" },
+        { "id": "SC-AUDIT-3", "check": "sourceInputs_present", "quantifier": "≥1 sourceInput with non-empty sha256" },
+        { "id": "SC-AUDIT-4", "check": "anti_cheat", "quantifier": "all externalGlobals[].name and helperFunctions[].name found in source text" },
+        { "id": "SC-AUDIT-5", "check": "unknowns_complete", "quantifier": "zero orphan symbols — every audited symbol is in affinityTags or unknowns[]" },
+        { "id": "SC-AUDIT-6", "check": "affinity_coverage", "quantifier": "sum of affinityTags[*].symbols.length + unknowns[*].length ≥ helperFunctions.length" },
+        { "id": "SC-AUDIT-7", "check": "anti_cheat_pass", "quantifier": "anti-cheat-check exit code 0" }
+      ]
+    },
+
+    "prototype-split-boundary": {
+      "phase": "boundary",
+      "purpose": "Assign every audited symbol to a target file, define dependency edges and load order.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path" },
+        "--suffix": { "required": false, "type": "string" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "phase-gate.mjs",
+          "args": "--module-dir {module-dir} --target-phase boundary [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify audit phase completed"
+        },
+        {
+          "order": 2,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/boundary-map[-{suffix}].json --type boundary-map --check-provenance",
+          "failureAction": "abort",
+          "purpose": "Validate boundary-map schema and provenance"
+        },
+        {
+          "order": 3,
+          "script": "anti-cheat-check.mjs",
+          "args": "--module-dir {module-dir} [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Cross-check function names against source"
+        }
+      ],
+      "outputs": [
+        "{module-dir}/boundary-map[-{suffix}].json"
+      ],
+      "stopConditions": [
+        { "id": "SC-BND-1", "check": "phase_gate", "target": "boundary", "quantifier": "phase-gate exit code 0" },
+        { "id": "SC-BND-2", "check": "validate_manifest", "target": "boundary-map", "quantifier": "zero schema errors AND zero provenance errors" },
+        { "id": "SC-BND-3", "check": "symbol_coverage", "quantifier": "boundary-map.functions.length ≥ audit-manifest.helperFunctions.length (or delta accounted for in unknowns/waivers)" },
+        { "id": "SC-BND-4", "check": "no_unresolved_cycles", "quantifier": "circularDependencies[].length == 0 OR every cycle has non-empty mitigation" },
+        { "id": "SC-BND-5", "check": "topo_sort_valid", "quantifier": "loadOrder is a valid topological sort — no dependency edge from later to earlier" },
+        { "id": "SC-BND-6", "check": "loadOrder_coverage", "quantifier": "every loadOrder entry matches a targetFiles[].shorthand" },
+        { "id": "SC-BND-7", "check": "anti_cheat_pass", "quantifier": "anti-cheat-check exit code 0" },
+        { "id": "SC-BND-8", "check": "no_premature_approval", "quantifier": "phase.reviewApproval is absent (review is next phase)" }
+      ]
+    },
+
+    "prototype-split-review": {
+      "phase": "review",
+      "purpose": "Human review and approval of audit + boundary artifacts before file execution.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path" },
+        "--suffix": { "required": false, "type": "string" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "phase-gate.mjs",
+          "args": "--module-dir {module-dir} --target-phase review [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify boundary phase completed"
+        }
+      ],
+      "reviewWorkflow": [
+        "Present audit-manifest summary: count of globals, DOM refs, helpers, events, unknowns.",
+        "Present boundary-map summary: target file count, function count, cross-file edges, load order.",
+        "Highlight all unknowns[] and waivers[] from both manifests.",
+        "Highlight all inferred-provenance items that affect file boundaries (truth-source-registry.json reviewGatedFields).",
+        "Request explicit human confirmation for: target file structure, function assignments, unknowns triage, load order.",
+        "Record approval in boundary-map.phase.reviewApproval."
+      ],
+      "outputs": [
+        "{module-dir}/boundary-map[-{suffix}].json (updated with phase.reviewApproval)"
+      ],
+      "stopConditions": [
+        { "id": "SC-REV-1", "check": "phase_gate", "target": "review", "quantifier": "phase-gate exit code 0" },
+        { "id": "SC-REV-2", "check": "approval_recorded", "quantifier": "boundary-map.phase.reviewApproval.approved is explicitly true or false" },
+        { "id": "SC-REV-3", "check": "approver_identified", "quantifier": "approvedBy is non-empty string" },
+        { "id": "SC-REV-4", "check": "blocking_unknowns_resolved", "quantifier": "zero blocking unknowns without waiver in both audit-manifest and boundary-map" },
+        { "id": "SC-REV-5", "check": "rejection_blocks", "quantifier": "if approved == false, pipeline MUST NOT proceed to execute" }
+      ]
+    },
+
+    "prototype-split-execute": {
+      "phase": "execute",
+      "purpose": "Create the actual sections/, scripts/, data/ files and sync split-manifest.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path" },
+        "--suffix": { "required": false, "type": "string" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "phase-gate.mjs",
+          "args": "--module-dir {module-dir} --target-phase execute [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify review approval exists"
+        },
+        {
+          "order": 2,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/split-manifest[-{suffix}].json --check-provenance",
+          "failureAction": "abort",
+          "purpose": "Validate updated split-manifest"
+        },
+        {
+          "order": 3,
+          "script": "drift-check.mjs",
+          "args": "--manifest {module-dir}/split-manifest[-{suffix}].json",
+          "failureAction": "abort",
+          "purpose": "Check filesystem sync"
+        },
+        {
+          "order": 4,
+          "script": "anti-cheat-check.mjs",
+          "args": "--module-dir {module-dir} [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify source integrity"
+        }
+      ],
+      "outputs": [
+        "{module-dir}/sections/*.html",
+        "{module-dir}/scripts/*.js",
+        "{module-dir}/data/*.js",
+        "{module-dir}/split-manifest[-{suffix}].json (fully populated)",
+        "{module-dir}/P0-CONTRACT.md (finalized content)",
+        "{module-dir}/SPLIT-ARCHITECTURE.md (finalized content)",
+        "{module-dir}/MIGRATION-MAPPING.md (finalized content)"
+      ],
+      "stopConditions": [
+        { "id": "SC-EXEC-1", "check": "phase_gate", "target": "execute", "quantifier": "phase-gate exit code 0 (review approval is true)" },
+        { "id": "SC-EXEC-2", "check": "all_declared_exist", "quantifier": "100% of split-manifest sections/dataFiles/scripts files exist on disk" },
+        { "id": "SC-EXEC-3", "check": "no_undeclared_files", "quantifier": "zero files in sections/, scripts/, data/ directories that are not in manifest" },
+        { "id": "SC-EXEC-4", "check": "drift_check_pass", "quantifier": "drift-check exit code 0 (zero phantom, undeclared, stale, missing-ref issues)" },
+        { "id": "SC-EXEC-5", "check": "anti_cheat_pass", "quantifier": "anti-cheat-check exit code 0 (exports, domHooks exist in file content)" },
+        { "id": "SC-EXEC-6", "check": "fingerprints_current", "quantifier": "all sourceInputs[].sha256 match current file hashes" },
+        { "id": "SC-EXEC-7", "check": "no_new_blocking_unknowns", "quantifier": "zero new blocking unknowns introduced during execution" }
+      ]
+    },
+
+    "prototype-split-closeout": {
+      "phase": "closeout",
+      "purpose": "Align split-manifest references, synced page spec, and regression-checklist after regression is authored.",
+      "parameters": {
+        "--module-dir": { "required": true, "type": "path" },
+        "--suffix": { "required": false, "type": "string" }
+      },
+      "mandatoryScriptCalls": [
+        {
+          "order": 1,
+          "script": "phase-gate.mjs",
+          "args": "--module-dir {module-dir} --target-phase closeout [--suffix {suffix}]",
+          "failureAction": "abort",
+          "purpose": "Verify execute phase completed and closeout prerequisites exist"
+        },
+        {
+          "order": 2,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/split-manifest[-{suffix}].json --check-provenance",
+          "failureAction": "abort",
+          "purpose": "Validate split-manifest after closeout reference sync"
+        },
+        {
+          "order": 3,
+          "script": "validate-manifest.mjs",
+          "args": "--manifest {module-dir}/regression-checklist[-{suffix}].json --type regression-checklist --check-provenance",
+          "failureAction": "abort",
+          "purpose": "Validate machine-readable regression checklist"
+        }
+      ],
+      "outputs": [
+        "{module-dir}/split-manifest[-{suffix}].json (closeout-aligned)",
+        "{module-dir}/regression-checklist[-{suffix}].json (validated, not newly authored)",
+        "{module-dir}/docs/gyoseishoshi_saas_md/P0/06-页面规格/<page>.md (already synced upstream)"
+      ],
+      "stopConditions": [
+        { "id": "SC-CLOSE-1", "check": "phase_gate", "target": "closeout", "quantifier": "phase-gate exit code 0" },
+        { "id": "SC-CLOSE-2", "check": "validate_manifest", "target": "split-manifest", "quantifier": "zero schema/provenance errors after closeout sync" },
+        { "id": "SC-CLOSE-3", "check": "regression_manifest_valid", "target": "regression-checklist", "quantifier": "regression-checklist.json exists and validate-manifest exits 0" },
+        { "id": "SC-CLOSE-4", "check": "regression_refs_only", "target": "split-manifest.regressionChecklist", "quantifier": "all entries are id/ref strings; no full gate bodies duplicated in split-manifest" },
+        { "id": "SC-CLOSE-5", "check": "cross_artifact_alignment", "quantifier": "every split-manifest.regressionChecklist entry maps to a gate/ref in regression-checklist.json and the affected page spec has been synced upstream" }
+      ]
+    }
+  }
+}

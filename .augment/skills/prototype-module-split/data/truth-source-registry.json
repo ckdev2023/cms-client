@@ -1,0 +1,359 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "truth-source-registry.json",
+  "title": "Truth-Source Registry — Policy Layer",
+  "description": "Policy-level provenance metadata that complements field-provenance-registry.json. Defines provenance class semantics, per-schema mandatory-extracted paths, review-gated fields, anti-cheat principles, and enforcement script mapping. validate-manifest.mjs --check-provenance uses this for structural completeness checks; field-provenance-registry.json handles per-field provenance validation.",
+
+  "registryVersion": 1,
+  "canonicalFieldRegistry": "field-provenance-registry.json",
+
+  "provenanceClasses": {
+    "extracted": {
+      "label": "Source-extracted",
+      "description": "MUST come from static scanning, AST grep, or controlled file reads against sourceInputs. The value can be mechanically reproduced by re-running the same scan on the same source. Bound to sourceInputs fingerprints.",
+      "verificationMethod": "Re-scan source files listed in sourceInputs; compare result to manifest value.",
+      "antiCheatRule": "anti-cheat-check.mjs verifies that claimed symbols/selectors/keys exist in the source text."
+    },
+    "inferred": {
+      "label": "AI-inferred",
+      "description": "Populated by AI judgment or heuristic reasoning. The value cannot be mechanically derived from source alone. Must include a 'reason' field when non-obvious.",
+      "verificationMethod": "Human review during review phase; drift-check cannot auto-verify correctness but can detect staleness.",
+      "antiCheatRule": "No automated verification; flagged for mandatory human review."
+    },
+    "derived": {
+      "label": "Cross-artifact derived",
+      "description": "Computed from other manifests (e.g. boundary-map.loadOrder derived from dependency edges). Must record 'generatedFrom' with source artifact path.",
+      "verificationMethod": "Re-derive from source artifact and compare. phase-gate checks that prerequisite artifact exists.",
+      "antiCheatRule": "Cross-manifest consistency check in anti-cheat-check.mjs."
+    },
+    "human-approved": {
+      "label": "Human-approved",
+      "description": "Values that require explicit human confirmation. Cannot be auto-filled by AI. Must record approvedBy and approvedAt.",
+      "verificationMethod": "Presence of approval record with non-empty approvedBy.",
+      "antiCheatRule": "phase-gate.mjs blocks progression without approval."
+    }
+  },
+
+  "schemas": {
+    "audit-manifest": {
+      "topLevel": {
+        "moduleId": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Module directory name or scaffold-split.mjs --module-id argument",
+          "verifiable": true
+        },
+        "entryFile": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem path existence check",
+          "verifiable": true
+        },
+        "sourceScript": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem path existence check",
+          "verifiable": true
+        },
+        "sourceLineCount": {
+          "requiredProvenance": "extracted",
+          "truthSource": "wc -l on sourceScript file",
+          "verifiable": true
+        },
+        "sourceInputs": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem scan + SHA-256 hash",
+          "verifiable": true
+        }
+      },
+      "perRecord": {
+        "externalGlobals": {
+          "name": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for window.X or global const declarations" },
+          "declaredIn": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "file path where symbol is declared" },
+          "firstRefLine": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "line number from AST/grep" },
+          "type": { "requiredProvenance": "inferred", "verifiable": false, "note": "TypeScript-style type annotation inferred from usage patterns" },
+          "readSites": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for symbol read occurrences" },
+          "writeSites": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for symbol assignment occurrences" }
+        },
+        "iifeConstants": {
+          "name": { "requiredProvenance": "extracted", "verifiable": true },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "value": { "requiredProvenance": "extracted", "verifiable": true },
+          "purpose": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "domReferences": {
+          "variable": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for DOM variable declarations" },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "selector": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for querySelector/getElementById arguments" },
+          "consumers": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for variable usage across functions" },
+          "group": { "requiredProvenance": "inferred", "verifiable": false, "note": "Functional grouping is an AI judgment call" }
+        },
+        "sessionStorage": {
+          "key": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for sessionStorage.getItem/setItem string arguments" },
+          "constant": { "requiredProvenance": "extracted", "verifiable": true },
+          "access": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "check getItem vs setItem call sites" },
+          "writers": { "requiredProvenance": "extracted", "verifiable": true },
+          "readers": { "requiredProvenance": "extracted", "verifiable": true }
+        },
+        "urlParams": {
+          "param": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for URLSearchParams.get or query string parsing" },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "reader": { "requiredProvenance": "extracted", "verifiable": true }
+        },
+        "liveState": {
+          "field": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for state object property declarations" },
+          "type": { "requiredProvenance": "inferred", "verifiable": false, "note": "TypeScript-style type from usage analysis" },
+          "deepCloned": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for structuredClone/JSON.parse(JSON.stringify(…))" },
+          "purpose": { "requiredProvenance": "inferred", "verifiable": false },
+          "mutators": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for state field assignments" }
+        },
+        "helperFunctions": {
+          "name": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "function declaration scan" },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "signature": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "function parameter list extraction" },
+          "category": { "requiredProvenance": "inferred", "verifiable": false, "note": "Behavioral classification is an AI judgment" },
+          "callSiteCount": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "count grep hits for function name calls" }
+        },
+        "eventListeners": {
+          "event": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "grep for addEventListener first argument" },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "selector": { "requiredProvenance": "extracted", "verifiable": true },
+          "domain": { "requiredProvenance": "inferred", "verifiable": false, "note": "Business domain assignment is AI judgment" },
+          "isDelegated": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "check if listener is on document vs element" }
+        },
+        "initSequence": {
+          "order": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Source code execution order in DOMContentLoaded/IIFE" },
+          "call": { "requiredProvenance": "extracted", "verifiable": true },
+          "description": { "requiredProvenance": "inferred", "verifiable": false },
+          "dependsOn": { "requiredProvenance": "inferred", "verifiable": false, "note": "Dependency inference requires semantic analysis" }
+        },
+        "affinityTags": {
+          "tag": { "requiredProvenance": "inferred", "verifiable": false, "note": "Grouping label is an AI architectural decision" },
+          "symbols": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Each symbol must exist in source" },
+          "targetFile": { "requiredProvenance": "inferred", "verifiable": false, "note": "Target file assignment is AI judgment, verified in review" },
+          "reason": { "requiredProvenance": "inferred", "verifiable": false }
+        }
+      },
+      "extractedFieldsMinimumRatio": 0.6,
+      "mandatoryExtractedPaths": [
+        "$.sourceInputs",
+        "$.externalGlobals[*].name",
+        "$.domReferences[*].variable",
+        "$.domReferences[*].selector",
+        "$.helperFunctions[*].name",
+        "$.helperFunctions[*].signature",
+        "$.liveState.fields[*].field",
+        "$.eventListeners[*].event",
+        "$.eventListeners[*].selector",
+        "$.initSequence[*].call"
+      ]
+    },
+
+    "boundary-map": {
+      "topLevel": {
+        "moduleId": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Must match audit-manifest.moduleId",
+          "verifiable": true
+        },
+        "generatedFrom": {
+          "requiredProvenance": "derived",
+          "truthSource": "Path to audit-manifest that this boundary-map was derived from",
+          "verifiable": true
+        },
+        "sourceInputs": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Must be superset of audit-manifest.sourceInputs",
+          "verifiable": true
+        }
+      },
+      "perRecord": {
+        "targetFiles": {
+          "file": { "requiredProvenance": "inferred", "verifiable": false, "note": "Target file path is an architectural decision" },
+          "shorthand": { "requiredProvenance": "inferred", "verifiable": false },
+          "responsibility": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "functions": {
+          "name": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Must exist in source (anti-cheat verified)" },
+          "lines": { "requiredProvenance": "extracted", "verifiable": true },
+          "signature": { "requiredProvenance": "extracted", "verifiable": true },
+          "targetFile": { "requiredProvenance": "inferred", "verifiable": false, "note": "Assignment to target is AI decision, review-gated" },
+          "callsOutbound": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Static call graph from source" },
+          "calledByInbound": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Reverse call graph from source" },
+          "domain": { "requiredProvenance": "inferred", "verifiable": false },
+          "isNamespaceExport": { "requiredProvenance": "inferred", "verifiable": false, "note": "Export decision is architectural" },
+          "isPure": { "requiredProvenance": "inferred", "verifiable": false, "note": "Purity analysis is approximate" }
+        },
+        "eventListeners": {
+          "event": { "requiredProvenance": "extracted", "verifiable": true },
+          "line": { "requiredProvenance": "extracted", "verifiable": true },
+          "selector": { "requiredProvenance": "extracted", "verifiable": true },
+          "targetFile": { "requiredProvenance": "inferred", "verifiable": false },
+          "calls": { "requiredProvenance": "extracted", "verifiable": true }
+        },
+        "dependencyEdges": {
+          "from": { "requiredProvenance": "derived", "verifiable": true, "note": "Derived from function assignments" },
+          "to": { "requiredProvenance": "derived", "verifiable": true },
+          "functions": { "requiredProvenance": "extracted", "verifiable": true }
+        },
+        "circularDependencies": {
+          "cycle": { "requiredProvenance": "derived", "verifiable": true },
+          "path": { "requiredProvenance": "derived", "verifiable": true },
+          "mitigation": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "namespaceApi": {
+          "file": { "requiredProvenance": "derived", "verifiable": true },
+          "symbols": { "requiredProvenance": "inferred", "verifiable": false, "note": "Which symbols to export is architectural" }
+        },
+        "loadOrder": {
+          "_arrayItems": { "requiredProvenance": "derived", "verifiable": true, "note": "Must be topologically sortable from dependencyEdges" }
+        }
+      },
+      "reviewGatedFields": [
+        "$.functions[*].targetFile",
+        "$.functions[*].isNamespaceExport",
+        "$.targetFiles",
+        "$.namespaceApi[*].symbols",
+        "$.loadOrder"
+      ],
+      "mandatoryExtractedPaths": [
+        "$.sourceInputs",
+        "$.functions[*].name",
+        "$.functions[*].signature",
+        "$.functions[*].callsOutbound",
+        "$.functions[*].calledByInbound",
+        "$.eventListeners[*].event",
+        "$.eventListeners[*].selector"
+      ]
+    },
+
+    "split-manifest": {
+      "topLevel": {
+        "moduleId": {
+          "requiredProvenance": "extracted",
+          "truthSource": "scaffold-split.mjs --module-id or module directory name",
+          "verifiable": true
+        },
+        "moduleDir": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem path",
+          "verifiable": true
+        },
+        "entryFile": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem path existence",
+          "verifiable": true
+        },
+        "sourceInputs": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem scan + SHA-256",
+          "verifiable": true
+        }
+      },
+      "perRecord": {
+        "sections": {
+          "file": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "File must exist on disk" },
+          "purpose": { "requiredProvenance": "inferred", "verifiable": false },
+          "sourceAnchors": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "HTML id/class anchors must exist in entry file" },
+          "contractRefs": { "requiredProvenance": "inferred", "verifiable": false },
+          "productionTarget": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "dataFiles": {
+          "file": { "requiredProvenance": "extracted", "verifiable": true },
+          "purpose": { "requiredProvenance": "inferred", "verifiable": false },
+          "exports": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Symbol must exist in file content (anti-cheat verified)" },
+          "consumers": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Grep for import/usage of export symbols" },
+          "demoOnly": { "requiredProvenance": "inferred", "verifiable": false },
+          "productionTarget": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "scripts": {
+          "file": { "requiredProvenance": "extracted", "verifiable": true },
+          "purpose": { "requiredProvenance": "inferred", "verifiable": false },
+          "domHooks": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Selector must exist in script content (anti-cheat verified)" },
+          "dependsOn": { "requiredProvenance": "derived", "verifiable": true, "note": "From boundary-map dependency edges" },
+          "namespace": { "requiredProvenance": "extracted", "verifiable": true, "scanMethod": "Grep for window.X assignment" },
+          "demoOnly": { "requiredProvenance": "inferred", "verifiable": false },
+          "productionTarget": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "sharedCandidates": {
+          "styles": { "requiredProvenance": "inferred", "verifiable": false },
+          "shell": { "requiredProvenance": "inferred", "verifiable": false },
+          "scripts": { "requiredProvenance": "inferred", "verifiable": false }
+        },
+        "productionMapping": {
+          "domain": { "requiredProvenance": "inferred", "verifiable": false },
+          "data": { "requiredProvenance": "inferred", "verifiable": false },
+          "model": { "requiredProvenance": "inferred", "verifiable": false },
+          "ui": { "requiredProvenance": "inferred", "verifiable": false },
+          "shared": { "requiredProvenance": "inferred", "verifiable": false }
+        }
+      },
+      "mandatoryExtractedPaths": [
+        "$.sourceInputs",
+        "$.sections[*].file",
+        "$.dataFiles[*].file",
+        "$.dataFiles[*].exports",
+        "$.scripts[*].file",
+        "$.scripts[*].domHooks"
+      ]
+    },
+
+    "regression-checklist": {
+      "topLevel": {
+        "moduleId": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Must match split-manifest.moduleId",
+          "verifiable": true
+        },
+        "generatedFrom": {
+          "requiredProvenance": "derived",
+          "truthSource": "P0-CONTRACT, split-manifest, page spec paths",
+          "verifiable": true
+        },
+        "sourceInputs": {
+          "requiredProvenance": "extracted",
+          "truthSource": "Filesystem + SHA-256",
+          "verifiable": true
+        }
+      },
+      "perRecord": {
+        "gates": {
+          "id": { "requiredProvenance": "derived", "verifiable": true },
+          "scenario": { "requiredProvenance": "inferred", "verifiable": false },
+          "passRule": { "requiredProvenance": "inferred", "verifiable": false },
+          "mustPassIds": { "requiredProvenance": "inferred", "verifiable": false, "note": "Which items are must-pass is a risk judgment" }
+        },
+        "gateItems": {
+          "id": { "requiredProvenance": "derived", "verifiable": true },
+          "description": { "requiredProvenance": "inferred", "verifiable": false, "note": "Acceptance criteria phrasing is human/AI authored" },
+          "tag": { "requiredProvenance": "inferred", "verifiable": false },
+          "contractRef": { "requiredProvenance": "derived", "verifiable": true, "note": "Must reference an existing P0-CONTRACT section" },
+          "verdict": { "requiredProvenance": "human-approved", "verifiable": false, "note": "Test result must be recorded by human or test runner" }
+        }
+      },
+      "mandatoryExtractedPaths": [
+        "$.sourceInputs"
+      ],
+      "humanApprovalRequired": [
+        "$.gates[*].items[*].verdict",
+        "$.closeoutStatus.allPrototypePassed",
+        "$.closeoutStatus.mustItemsResolved"
+      ]
+    }
+  },
+
+  "antiCheatPrinciples": [
+    "Manifests that are self-consistent but collectively wrong are the primary threat.",
+    "extracted fields are verified by scanning the actual source files listed in sourceInputs, not by reading other manifests.",
+    "sourceInputs SHA-256 fingerprints detect source file changes after manifest creation (staleness).",
+    "Anti-cheat checks verify that claimed symbols, selectors, and keys actually exist in source text.",
+    "Cross-manifest consistency checks (moduleId, sourceInputs overlap) catch copy-paste fabrication.",
+    "inferred fields cannot be auto-verified; they are flagged for mandatory human review at the review phase.",
+    "derived fields must record their source artifact; re-derivation should produce the same result.",
+    "Fields that cannot be classified as extracted or inferred must go into unknowns[] or waivers[], never silently default."
+  ],
+
+  "enforcementScripts": {
+    "validate-manifest.mjs": "Schema-level validation; checks required keys, types, patterns, enums.",
+    "drift-check.mjs": "Compares manifest-declared files against filesystem; verifies sourceInputs SHA-256.",
+    "anti-cheat-check.mjs": "Verifies extracted claims against actual source code (symbols, selectors, exports).",
+    "phase-gate.mjs": "Blocks phase progression unless prerequisite artifacts and approval records exist."
+  }
+}

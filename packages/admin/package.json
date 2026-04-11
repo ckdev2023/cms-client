@@ -1,0 +1,48 @@
+{
+  "name": "@cms/admin",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
+    "typecheck": "vue-tsc --noEmit",
+    "check:deps": "depcruise src --config .dependency-cruiser.js",
+    "guard": "npm run check:deps && npm run typecheck && npm run lint && npm run test && npm run build",
+    "fix": "npm run format && npm run lint:fix"
+  },
+  "dependencies": {
+    "@arco-design/web-vue": "^2.57.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.32",
+    "vue-router": "^5.0.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.4",
+    "@types/node": "^24.12.2",
+    "@vitejs/plugin-vue": "^6.0.5",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.7.0",
+    "@vue/test-utils": "^2.4.6",
+    "@vue/tsconfig": "^0.9.1",
+    "dependency-cruiser": "^17.3.10",
+    "eslint": "^9.39.4",
+    "eslint-plugin-jsdoc": "^57.2.1",
+    "eslint-plugin-vue": "^10.8.0",
+    "jsdom": "^20.0.3",
+    "prettier": "^3.8.2",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.58.1",
+    "vite": "^8.0.4",
+    "vitest": "^4.1.4",
+    "vue-tsc": "^3.2.6"
+  }
+}

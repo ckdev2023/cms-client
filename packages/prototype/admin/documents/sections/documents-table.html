@@ -1,0 +1,94 @@
+<!--
+  section: documents-table.html
+  Cross-case document list table: table-shell header + 7 data columns + checkbox column.
+  Includes bulk action bar (催办/審核/waived), empty states (no data + no filter match),
+  and pagination stub.
+  P0-CONTRACT §2 fields, §3 sort rules, §10 bulk selection.
+
+  CSS:      documents.css (.table-shell 家族, .documents-table, .doc-* 家族)
+  DOM hooks: docTableCard, docTableBody, docEmptyState, docFilterEmptyState,
+             docTableCount, docPagination, docPaginationInfo,
+             bulkActionBar, selectedCount, selectAllDocs,
+             bulkClearBtn, bulkRemindBtn, bulkApproveBtn, bulkWaiveBtn,
+             data-doc-select, data-doc-id
+  Production target: features/document/ui/DocumentTable + DocumentBulkActionBar
+-->
+<div class="apple-card table-shell overflow-hidden" id="docTableCard">
+  <div class="table-shell__header">
+    <div>
+      <div class="table-shell__eyebrow">资料明细</div>
+      <div class="table-shell__title-row">
+        <h2 class="table-shell__title">跨案件资料列表</h2>
+        <span class="table-shell__sort-note">按状态优先级排序</span>
+      </div>
+    </div>
+    <div class="table-shell__count"><strong id="docTableCount">0</strong> 项</div>
+  </div>
+  <div
+    id="bulkActionBar"
+    class="hidden px-4 md:px-6 py-3 border-b border-[var(--border)] flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+    role="region"
+    aria-label="批量操作"
+  >
+    <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--text)]">
+      已选择 <span id="selectedCount">0</span> 项
+      <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]" type="button" id="bulkClearBtn">
+        清除
+      </button>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="btn-pill text-sm" id="bulkRemindBtn" type="button">批量催办</button>
+      <button class="btn-pill text-sm" id="bulkApproveBtn" type="button">批量审核通过</button>
+      <button class="btn-pill text-sm" id="bulkWaiveBtn" type="button">批量标记无需提供</button>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="apple-table documents-table w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th class="w-[44px] text-center">
+            <label class="inline-flex items-center justify-center w-full">
+              <input
+                type="checkbox"
+                id="selectAllDocs"
+                class="accent-[var(--primary)] table-checkbox"
+                aria-label="全选资料"
+              />
+            </label>
+          </th>
+          <th>资料名称</th>
+          <th class="hidden md:table-cell">所属案件</th>
+          <th class="hidden lg:table-cell" style="width: 120px;">由谁提供</th>
+          <th style="width: 110px;">状态</th>
+          <th class="hidden md:table-cell" style="width: 120px;">截止日</th>
+          <th class="hidden lg:table-cell" style="width: 130px;">最近催办</th>
+          <th class="hidden lg:table-cell" style="width: 200px;">归档位置</th>
+        </tr>
+      </thead>
+      <tbody id="docTableBody">
+        <!-- Rows populated by documents-page.js from DocumentsDemoData -->
+      </tbody>
+    </table>
+  </div>
+
+  <div id="docEmptyState" class="hidden py-16 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">暂无资料数据</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1">请先在案件中配置资料清单模板</p>
+  </div>
+
+  <div id="docFilterEmptyState" class="hidden py-16 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">未找到匹配的资料</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1">请调整筛选条件或关键词后重试</p>
+  </div>
+
+  <div id="docPagination" class="px-6 py-4 border-t border-[var(--border)] flex items-center justify-between">
+    <div class="text-sm text-[var(--muted-2)]" id="docPaginationInfo">显示 1 - 6 条，共 6 条<!-- demo-only --></div>
+    <div class="flex space-x-2">
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">上一页</button>
+      <button class="px-3 py-1 border border-[var(--border)] rounded text-sm text-gray-400 cursor-not-allowed">下一页</button>
+    </div>
+  </div>
+</div>

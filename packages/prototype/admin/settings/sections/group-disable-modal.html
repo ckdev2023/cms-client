@@ -1,0 +1,62 @@
+<!--
+  section: group-disable-modal.html
+  Confirmation modal for disabling a Group. Two variants:
+    1. Referenced Group: shows customer/case reference counts, warns that references are unaffected.
+    2. Unreferenced Group: simple confirmation without reference detail.
+
+  DOM hooks:
+    #groupDisableModal        — modal-backdrop container
+    #disableModalGroupName    — Group name display
+    #disableModalRefDetail    — reference count detail block (hidden if unreferenced)
+    #disableModalRefCount     — "已被 X 个客户 / Y 个案件引用" text
+    #disableModalSimpleMsg    — simple confirmation text (hidden if referenced)
+    #btnConfirmDisable        — destructive confirm button
+    data-action=close-disable-modal — close triggers
+
+  Contract ref: P0-CONTRACT §4.1 (停用规则), §7 状态与异常态
+  Production target: features/settings/ui/GroupDisableModal
+-->
+<div class="modal-backdrop" id="groupDisableModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 460px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">停用 Group</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-disable-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-sm text-[var(--text)]">
+        确定要停用 Group「<span class="font-semibold" id="disableModalGroupName"></span>」吗？
+      </p>
+
+      <!-- Variant A: referenced Group -->
+      <div id="disableModalRefDetail" class="hidden p-3 rounded-xl border border-amber-200 bg-amber-50">
+        <div class="flex items-start gap-2">
+          <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <div>
+            <p class="text-[13px] font-semibold text-amber-800" id="disableModalRefCount"></p>
+            <p class="text-[12px] text-amber-700 mt-1">停用后不可再选择该 Group，已关联对象不受影响。</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variant B: unreferenced Group -->
+      <p id="disableModalSimpleMsg" class="hidden text-[13px] text-[var(--muted)]">
+        停用后，新建客户或案件时将不可再选择该 Group。
+      </p>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-disable-modal">取消</button>
+      <button
+        class="px-5 py-2.5 rounded-[var(--radius)] text-[14px] font-black text-white transition-colors"
+        style="background-color: #ef4444;"
+        onmouseover="this.style.backgroundColor='#dc2626'"
+        onmouseout="this.style.backgroundColor='#ef4444'"
+        type="button"
+        id="btnConfirmDisable"
+      >确认停用</button>
+    </div>
+  </div>
+</div>

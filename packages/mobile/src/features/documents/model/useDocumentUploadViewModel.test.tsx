@@ -25,6 +25,37 @@ class NoopStorage implements KVStorage {
   async delete() {}
 }
 
+function baseStubs(): Pick<
+  DocumentRepository,
+  | "listRequirements"
+  | "getRequirementVersions"
+  | "registerVersion"
+  | "reviewFileVersion"
+  | "listMyDocuments"
+  | "getDownloadUrl"
+> {
+  return {
+    async listRequirements() {
+      return [];
+    },
+    async getRequirementVersions() {
+      return [];
+    },
+    async registerVersion() {
+      return {} as never;
+    },
+    async reviewFileVersion() {
+      return {} as never;
+    },
+    async listMyDocuments() {
+      return [];
+    },
+    async getDownloadUrl() {
+      return "";
+    },
+  };
+}
+
 function createTestContainer(
   documentRepository: DocumentRepository,
 ): AppContainer {
@@ -55,9 +86,7 @@ function makeWrapper(repo: DocumentRepository) {
 
 test("upload success", async () => {
   const repo: DocumentRepository = {
-    async listMyDocuments() {
-      return [];
-    },
+    ...baseStubs(),
     async uploadDocument() {
       return {
         id: "d1",
@@ -67,9 +96,6 @@ test("upload success", async () => {
         uploadedAt: "2026-04-01",
         fileKey: "k",
       };
-    },
-    async getDownloadUrl() {
-      return "";
     },
   };
 
@@ -92,14 +118,9 @@ test("upload success", async () => {
 
 test("upload error", async () => {
   const repo: DocumentRepository = {
-    async listMyDocuments() {
-      return [];
-    },
+    ...baseStubs(),
     async uploadDocument() {
       throw new AppError({ code: "SERVER", message: "upload failed" });
-    },
-    async getDownloadUrl() {
-      return "";
     },
   };
 

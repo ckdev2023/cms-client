@@ -1,0 +1,583 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "billing",
+  "moduleLabel": "收费与财务",
+  "moduleDir": "packages/prototype/admin/billing",
+  "entryFile": "packages/prototype/admin/billing/index.html",
+  "migrationSource": "packages/prototype/admin/billing.html",
+  "referenceDocs": [
+    "packages/prototype/admin/billing/P0-CONTRACT.md",
+    "packages/prototype/admin/billing/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/billing/MIGRATION-MAPPING.md",
+    "packages/prototype/admin/billing/INVENTORY.md",
+    "packages/prototype/admin/billing/REGRESSION-GATE.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md",
+    "design/gyosei-os-admin/DESIGN.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sharedReuse": {
+    "cssLinks": [
+      { "canonical": "packages/prototype/admin/shared/styles/tokens.css", "href": "../shared/styles/tokens.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/shell.css", "href": "../shared/styles/shell.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/components.css", "href": "../shared/styles/components.css" }
+    ],
+    "scriptLinks": [
+      { "canonical": "packages/prototype/admin/shared/scripts/mobile-nav.js", "src": "../shared/scripts/mobile-nav.js", "loadOrder": 1 },
+      { "canonical": "packages/prototype/admin/shared/scripts/navigate.js", "src": "../shared/scripts/navigate.js", "loadOrder": 2 }
+    ],
+    "shellFragments": [
+      { "canonical": "packages/prototype/admin/shared/shell/mobile-nav.html", "comment": "shell: mobile-nav.html (paths adjusted for billing/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/side-nav.html", "comment": "shell: side-nav.html (paths adjusted for billing/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/topbar.html", "comment": "shell: topbar.html (paths adjusted for billing/ subdirectory)", "pathPrefix": "../" }
+    ],
+    "ariaCurrent": {
+      "attribute": "aria-current=\"page\"",
+      "targetNavItem": "收费与财务",
+      "targetHref": "index.html",
+      "canonicalHref": "billing.html",
+      "applyIn": ["mobile-nav", "side-nav"],
+      "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
+    },
+    "navPathAdjustments": [
+      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
+      { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
+      { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
+      { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
+      { "label": "任务与提醒", "canonical": "tasks.html", "adjusted": "../tasks.html" },
+      { "label": "资料中心", "canonical": "documents.html", "adjusted": "../documents.html" },
+      { "label": "文书中心", "canonical": "forms.html", "adjusted": "../forms.html" },
+      { "label": "收费与财务", "canonical": "billing.html", "adjusted": "index.html", "ariaCurrent": true },
+      { "label": "报表", "canonical": "reports.html", "adjusted": "../reports.html" },
+      { "label": "设置", "canonical": "settings.html", "adjusted": "../settings.html" },
+      { "label": "客户门户", "canonical": "../src/index.html", "adjusted": "../../src/index.html" }
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/page-header.html",
+      "purpose": "页面标题、副标题、登记回款按钮",
+      "sourceAnchors": [
+        "display-font",
+        "btnRegisterPayment",
+        "data-action=open-payment-modal"
+      ],
+      "sourceLines": "585-603",
+      "contractRefs": [],
+      "productionTarget": "features/billing/ui/BillingListHeader"
+    },
+    {
+      "file": "sections/summary-cards.html",
+      "purpose": "总应收/总已收/总未收/逾期欠款 4 张摘要卡",
+      "sourceAnchors": [
+        "summaryCardTotalDue",
+        "summaryCardTotalReceived",
+        "summaryCardTotalOutstanding",
+        "summaryCardOverdue"
+      ],
+      "sourceLines": "605-633",
+      "contractRefs": [
+        "§7 摘要卡",
+        "§9.1 金额口径"
+      ],
+      "productionTarget": "features/billing/ui/BillingSummaryCards"
+    },
+    {
+      "file": "sections/filters-toolbar.html",
+      "purpose": "回款状态/Group/负责人筛选 + 搜索 + segmented control + 重置",
+      "sourceAnchors": [
+        "filtersToolbar",
+        "data-filter=status",
+        "data-filter=group",
+        "data-filter=owner",
+        "billingSearchInput",
+        "data-action=reset-filters",
+        "data-segment=billing-list",
+        "data-segment=payment-log"
+      ],
+      "sourceLines": "635-656",
+      "contractRefs": [
+        "§4 列表页搜索与筛选",
+        "§5 分段视图"
+      ],
+      "productionTarget": "features/billing/ui/BillingListFilters",
+      "gapNote": "现有原型仅有 1 个状态下拉和 1 个搜索框，缺 Group/负责人筛选、重置按钮。Segmented 第 3 段「发票管理」为 P1 泄漏需移除"
+    },
+    {
+      "file": "sections/billing-table.html",
+      "purpose": "案件收费列表（8 列 + checkbox 列）、批量催款操作栏",
+      "sourceAnchors": [
+        "billingTableCard",
+        "billingTableBody",
+        "billingEmptyState",
+        "bulkActionBar",
+        "selectedCount",
+        "selectAllBilling",
+        "bulkClearBtn",
+        "bulkCollectionBtn",
+        "data-billing-select",
+        "data-billing-id"
+      ],
+      "sourceLines": "658-774",
+      "contractRefs": [
+        "§2 列表页必保留字段",
+        "§3 默认排序与展示规则",
+        "§6 列表页批量动作"
+      ],
+      "productionTarget": "features/billing/ui/BillingTable + BillingBulkActionBar",
+      "gapNote": "现有原型有 4 行 demo 数据但缺 Group 列、批量操作栏、checkbox。状态枚举需对齐"
+    },
+    {
+      "file": "sections/payment-log-table.html",
+      "purpose": "回款流水列表（8 列：金额、日期、案件、关联节点、凭证、状态、操作人、备注）",
+      "sourceAnchors": [
+        "paymentLogTableCard",
+        "paymentLogTableBody",
+        "paymentLogEmptyState",
+        "paymentLogPagination",
+        "paymentLogPaginationInfo"
+      ],
+      "sourceLines": "569-679",
+      "contractRefs": [
+        "§10 回款流水列表",
+        "§11 回款更正"
+      ],
+      "productionTarget": "features/billing/ui/PaymentLogTable",
+      "gapNote": "已构建：4 条 demo 行覆盖 valid / voided / reversed 三种记录状态；冲正记录含 data-ref-link 追溯链路"
+    },
+    {
+      "file": "sections/billing-plan-panel.html",
+      "purpose": "案件收费计划节点列表 + 配置入口 + 空状态引导",
+      "sourceAnchors": [
+        "billingPlanPanel",
+        "billingPlanList",
+        "billingPlanEmptyState",
+        "btnConfigurePlan",
+        "btnEditPlan"
+      ],
+      "sourceLines": "683-929",
+      "contractRefs": [
+        "§7 收费计划"
+      ],
+      "productionTarget": "features/billing/ui/BillingPlanPanel",
+      "gapNote": "已构建：normal/empty/settled 三种面板状态；节点列表含 next-node 指示器；summary 行 4 格（总费用/已收/未收/下一节点）；row click 驱动展开；3 个 close 按钮；footer 含跳转案件详情链路和快捷动作"
+    },
+    {
+      "file": "sections/payment-modal.html",
+      "purpose": "登记回款弹窗（5 字段表单 + BillingPlan 归集选择器 + 金额校验提示）",
+      "sourceAnchors": [
+        "paymentModal",
+        "modalTitle",
+        "closeModalBtn",
+        "cancelModalBtn",
+        "submitPaymentBtn",
+        "paymentFormFields",
+        "fieldAmount",
+        "fieldDate",
+        "fieldBillingPlanId",
+        "fieldReceipt",
+        "fieldNote",
+        "amountWarning"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§10 回款登记弹窗",
+        "§11 回款更正"
+      ],
+      "productionTarget": "features/billing/ui/PaymentModal",
+      "gapNote": "已构建：modal-backdrop + apple-modal 弹窗；5 字段表单（金额、日期、关联节点 select、凭证 file、备注）；金额超限警告 amountWarning；多节点未选警告 planSelectWarning；submit 按钮可用态逻辑"
+    },
+    {
+      "file": "sections/risk-ack-panel.html",
+      "purpose": "欠款风险确认留痕展示（确认人、时间、原因、凭证摘要）+ 审计日志",
+      "sourceAnchors": [
+        "riskAckPanel",
+        "riskAckBy",
+        "riskAckAt",
+        "riskAckCase",
+        "riskAckAmount",
+        "riskAckReason",
+        "riskAckNote",
+        "riskAckAuditLog"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§13 欠款风险确认留痕"
+      ],
+      "productionTarget": "features/billing/ui/RiskAckPanel",
+      "gapNote": "已构建：4 格摘要（确认人、时间、案件、金额）+ 原因区 + 审计日志区；由 billing-risk-log.js 渲染 DEMO_RISK_ACK + DEMO_AUDIT_LOG"
+    },
+    {
+      "file": "sections/collection-result-toast.html",
+      "purpose": "浮动反馈层：Toast 通知（回款登记/作废/冲正/批量催款/风险确认）+ 三段式批量结果",
+      "boundaryNote": "toast 与批量结果反馈合并在同一文件；生产迁移时 Toast → shared/ui",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc",
+        "collectionResultPanel",
+        "collectionSuccessCount",
+        "collectionSkipCount",
+        "collectionFailCount",
+        "collectionSkipReasons"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§17 Toast 通知",
+        "§6.2 批量动作权限约束"
+      ],
+      "productionTarget": "shared/ui/Toast",
+      "gapNote": "现有原型无 toast 组件和三段式结果反馈，需新增"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/billing-config.js",
+      "purpose": "集中声明回款状态/节点状态/记录状态枚举、列定义、筛选选项、表单 schema、toast preset、排序配置、lookup maps、空状态文案、金额展示规则",
+      "exports": [
+        "BILLING_STATUS_OPTIONS",
+        "NODE_STATUS_OPTIONS",
+        "BILLING_PLAN_STATUS",
+        "PAYMENT_RECORD_STATUS",
+        "STATUS_LABEL_MAP",
+        "STATUS_BADGE_MAP",
+        "NODE_STATUS_TAG_MAP",
+        "NODE_STATUS_LABEL_MAP",
+        "RECORD_STATUS_TAG_MAP",
+        "RECORD_STATUS_LABEL_MAP",
+        "GROUPS",
+        "OWNERS",
+        "GROUP_LABEL_MAP",
+        "OWNER_LABEL_MAP",
+        "TABLE_COLUMNS",
+        "PAYMENT_LOG_COLUMNS",
+        "BILLING_PLAN_COLUMNS",
+        "FILTERS",
+        "SEARCH_PLACEHOLDER",
+        "SEGMENTS",
+        "SEGMENTED_VIEWS",
+        "BULK_ACTIONS",
+        "COLLECTION_SKIP_REASONS",
+        "PAYMENT_FORM_FIELDS",
+        "PAYMENT_REQUIRED_IDS",
+        "PLAN_FORM_FIELDS",
+        "PLAN_REQUIRED_IDS",
+        "RISK_ACK_FIELDS",
+        "SUMMARY_CARDS",
+        "AMOUNT_DISPLAY",
+        "DEFAULT_SORT",
+        "TOAST",
+        "EMPTY_STATES",
+        "GATE_EFFECT_MODES",
+        "P0_NOT_IN_SCOPE"
+      ],
+      "consumers": [
+        "scripts/billing-page.js",
+        "scripts/billing-filters.js",
+        "scripts/billing-bulk-actions.js",
+        "scripts/billing-payment-modal.js",
+        "scripts/billing-risk-log.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/billing/BillingPlan.ts + billingConstants.ts"
+    },
+    {
+      "file": "data/billing-demo-data.js",
+      "purpose": "示例案件收费行、回款流水、摘要卡数据、收费计划节点、风险确认示例、催款结果示例",
+      "exports": [
+        "DEMO_BILLING_ROWS",
+        "DEMO_PAYMENT_LOGS",
+        "DEMO_SUMMARY",
+        "DEMO_BILLING_PLAN",
+        "DEMO_BILLING_PLANS",
+        "DEMO_RISK_ACK",
+        "DEMO_RISK_RECORD",
+        "DEMO_COLLECTION_RESULT",
+        "DEMO_AUDIT_LOG"
+      ],
+      "consumers": [],
+      "consumersNote": "P0 阶段 demo 数据直接硬编码在 HTML sections 中，脚本不引用；动态渲染后将成为 scripts 的数据源",
+      "demoOnly": true,
+      "productionTarget": null
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/billing-page.js",
+      "purpose": "页面初始化、分段视图切换（案件收费列表 / 回款流水）、toast 编排",
+      "domHooks": [
+        "DOMContentLoaded",
+        "data-segment"
+      ],
+      "dependsOn": [
+        "data/billing-config.js",
+        "scripts/billing-filters.js",
+        "scripts/billing-bulk-actions.js",
+        "scripts/billing-payment-modal.js",
+        "scripts/billing-risk-log.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/billing/model/useBillingListViewModel"
+    },
+    {
+      "file": "scripts/billing-filters.js",
+      "purpose": "3 筛选器联动（回款状态/Group/负责人）、搜索、重置",
+      "domHooks": [
+        "select[data-filter]",
+        ".search-input",
+        "data-action=reset-filters"
+      ],
+      "dependsOn": [
+        "data/billing-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/billing/model/useBillingFilters"
+    },
+    {
+      "file": "scripts/billing-bulk-actions.js",
+      "purpose": "全选/单选/indeterminate（仅逾期行可选）、批量催款、三段式结果反馈",
+      "domHooks": [
+        "#bulkActionBar",
+        "#selectedCount",
+        "#selectAllBilling",
+        "#bulkClearBtn",
+        "#bulkCollectionBtn"
+      ],
+      "dependsOn": [
+        "data/billing-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/billing/model/useBillingBulkActions"
+    },
+    {
+      "file": "scripts/billing-payment-modal.js",
+      "purpose": "回款登记弹窗开关、5 字段表单、BillingPlan 归集选择器、金额校验提示、凭证上传",
+      "domHooks": [
+        "#paymentModal",
+        "#closeModalBtn",
+        "#cancelModalBtn",
+        "#submitPaymentBtn",
+        "input/select[data-field]",
+        "#amountWarning"
+      ],
+      "dependsOn": [
+        "data/billing-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/billing/model/usePaymentModal"
+    },
+    {
+      "file": "scripts/billing-risk-log.js",
+      "purpose": "欠款风险确认面板展示、审计留痕摘要渲染",
+      "domHooks": [
+        "#riskAckPanel"
+      ],
+      "dependsOn": [],
+      "demoOnly": true,
+      "productionTarget": "features/billing/model/useRiskAckLog"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/billing/BillingPlan.ts",
+      "packages/mobile/src/domain/billing/BillingRepository.ts",
+      "packages/mobile/src/domain/billing/billingConstants.ts"
+    ],
+    "crossDomainDependencies": [
+      {
+        "entity": "Case",
+        "file": "packages/mobile/src/domain/case/Case.ts",
+        "fields": ["billing_risk_acknowledged_by", "billing_risk_acknowledged_at", "billing_risk_ack_reason_code", "billing_risk_ack_reason_note"],
+        "accessPattern": "billing writes via acknowledgeRisk; case reads for display; gate-c reads for warning check"
+      },
+      {
+        "entity": "AuditLog",
+        "file": "packages/mobile/src/domain/audit/AuditLog.ts",
+        "actionTypes": ["billing_risk_acknowledged", "billing_payment_created", "billing_payment_voided", "billing_payment_reversed", "billing_collection_task_created"],
+        "accessPattern": "billing writes; audit/log reads for display"
+      }
+    ],
+    "data": [
+      "packages/mobile/src/data/billing/BillingApi.ts",
+      "packages/mobile/src/data/billing/createBillingRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/billing/model/useBillingListViewModel.ts",
+      "packages/mobile/src/features/billing/model/useBillingFilters.ts",
+      "packages/mobile/src/features/billing/model/useBillingBulkActions.ts",
+      "packages/mobile/src/features/billing/model/usePaymentModal.ts",
+      "packages/mobile/src/features/billing/model/useRiskAckLog.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/billing/ui/BillingListScreen.tsx",
+      "packages/mobile/src/features/billing/ui/BillingListHeader.tsx",
+      "packages/mobile/src/features/billing/ui/BillingSummaryCards.tsx",
+      "packages/mobile/src/features/billing/ui/BillingListFilters.tsx",
+      "packages/mobile/src/features/billing/ui/BillingTable.tsx",
+      "packages/mobile/src/features/billing/ui/BillingBulkActionBar.tsx",
+      "packages/mobile/src/features/billing/ui/PaymentLogTable.tsx",
+      "packages/mobile/src/features/billing/ui/BillingPlanPanel.tsx",
+      "packages/mobile/src/features/billing/ui/PaymentModal.tsx",
+      "packages/mobile/src/features/billing/ui/RiskAckPanel.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SideNav.tsx",
+      "packages/mobile/src/shared/ui/TopBar.tsx",
+      "packages/mobile/src/shared/ui/MobileNav.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "列表页 8 列完整（案件名称、客户名称、Group、应收金额、已收金额、未收金额、下一收款节点、回款状态）",
+    "默认排序：逾期置顶→未收金额降序→到期日升序",
+    "逾期行红色背景高亮 + 状态 tag-red",
+    "逾期案件下一收款节点列显示「逾期 X 天」",
+    "金额右对齐，已收绿色，逾期未收红色，非逾期未收橙色",
+    "4 张摘要卡完整（总应收/总已收/总未收/逾期欠款）",
+    "逾期欠款卡红色变体样式",
+    "摘要卡金额为全局维度（非本月维度）",
+    "搜索框 placeholder 包含「案件名称 / 案件编号 / 客户名称」",
+    "3 个筛选器（回款状态/Group/负责人）+ 重置按钮存在",
+    "Segmented control 两段（案件收费列表 / 回款流水记录），不含「发票管理」",
+    "视图切换正常",
+    "全选/单选/indeterminate/清除 正常（非逾期行 checkbox disabled）",
+    "批量操作栏仅在 selectedCount > 0 时显示",
+    "批量催款 → toast（含三段式结果反馈）",
+    "「登记回款」按钮 → 打开弹窗",
+    "弹窗 5 个字段完整（金额、日期、关联节点、凭证、备注）",
+    "关联 BillingPlan 选择器仅展示未结清节点",
+    "金额校验提示（超过节点未收时）",
+    "登记按钮可用态逻辑：金额 + 日期 + 关联节点条件",
+    "回款流水列表 8 列完整（日期、案件、客户、金额、关联节点、凭证、状态、操作人）",
+    "回款记录状态 tag 区分（valid / voided / reversed）",
+    "收费计划节点列表展示（名称、应收、到期日、状态）",
+    "空状态引导「配置收费计划」",
+    "风险确认面板展示（确认人、时间、原因、凭证摘要）",
+    "[生产约束] 风险确认写入 Case 4 字段 + AuditLog(billing_risk_acknowledged)",
+    "[生产约束] Gate-C 提交前检查未确认欠款 warning",
+    "回款状态枚举已对齐（overdue/paid/partial/due）",
+    "逾期行标红正常",
+    "已结清 tag-green 正常",
+    "空状态占位预留",
+    "不可编辑操作的禁用/隐藏态（助理只读）",
+    "Toast 6 种场景正常弹出",
+    "移动端导航开关正常",
+    "侧边栏「收费与财务」项 aria-current=page 高亮",
+    "共享壳层正确引入（tokens.css / shell.css / components.css / shell HTML 片段）",
+    "「导出报表」按钮已移除或标注 P1 禁用",
+    "「发票管理」segmented tab 已移除",
+    "至少 4 条示例数据覆盖全部 4 种回款状态（已结清/部分回款/未回款/逾期）",
+    "全局入口（左侧导航「收费与财务」）→ billing/index.html 跳转正常",
+    "仪表盘「待回款案件」卡片动作→收费列表页跳转正常",
+    "案件链接可跳转到案件详情（路径为 ../case/detail.html）",
+    "案件详情面包屑/后退→收费列表跳转路径正确",
+    "列表页「登记回款」弹窗打开/关闭后不发生页面跳转",
+    "列表页收费计划面板展开/关闭后不发生页面跳转",
+    "案件详情收费 Tab「登记回款」弹窗关闭后停留在案件详情收费 Tab",
+    "案件详情收费 Tab「上传凭证」完成后停留在收费 Tab",
+    "案件详情收费 Tab「创建催款任务」仅 toast 反馈，不跳转",
+    "风险确认面板操作后面板更新，不跳转页面",
+    "批量催款三段式结果在当前列表页展示，不跳转",
+    "分段视图切换仅切换可见性，不触发页面跳转",
+    "[生产约束] 收费列表→案件详情→返回：筛选条件保留（回款状态/Group/负责人/搜索词）",
+    "[生产约束] 收费列表→案件详情→返回：当前分段视图保留",
+    "[生产约束] 收费列表→案件详情→返回：滚动位置恢复",
+    "[Gate-1 空状态] 收费计划面板空状态展示引导文案+主按钮「配置收费计划」",
+    "[Gate-1 空状态] 登记回款弹窗 BillingPlan 选择器为空时保存按钮 disabled",
+    "[Gate-1 空状态] 回款流水视图无记录时展示空状态占位",
+    "[Gate-1 空状态] 摘要卡空数据时 4 张卡片金额显示 ¥0",
+    "[Gate-2 已结清] 已结清行展示 tag-green + 未收 ¥0 灰色",
+    "[Gate-2 已结清] 已结清行 checkbox disabled + opacity-60",
+    "[Gate-2 已结清] 收费计划面板展示「无（已结清）」",
+    "[Gate-2 已结清] 下一收款节点列展示「无（已结清）」",
+    "[Gate-2 已结清] 全选时已结清行自动跳过",
+    "[Gate-3 逾期] 逾期行 tag-red + 红色行背景 + 下一节点「逾期 X 天」",
+    "[Gate-3 逾期] 逾期行未收金额使用 text-red-600",
+    "[Gate-3 逾期] 默认排序逾期置顶 → 未收降序 → 到期日升序",
+    "[Gate-3 逾期] 摘要卡逾期欠款卡红色边框+背景变体",
+    "[Gate-3 逾期] 批量催款仅对逾期行可选",
+    "[Gate-3 逾期] [生产约束] 催款任务去重 case_id+billing_plan_id+overdue_cycle_start",
+    "[Gate-4 权限不足] 助理只读：关键动作按钮 disabled + tooltip",
+    "[Gate-4 权限不足] 主办人仅操作负责案件",
+    "[Gate-4 权限不足] 批量催款跳过无权限案件并展示原因",
+    "[Gate-4 权限不足] [生产约束] 已结清节点禁止修改应收金额与到期日",
+    "[Gate-5 并发修改] P0-CONTRACT §16 #6 明确记录为生产约束",
+    "[Gate-5 并发修改] billing-config.js COLLECTION_SKIP_REASONS 含 system-error",
+    "[Gate-5 并发修改] [生产约束] 回款登记/计划编辑/作废冲正提交时检测版本冲突",
+    "[Gate-6 返回规则] 全局入口→billing/index.html 跳转正常",
+    "[Gate-6 返回规则] 登记回款弹窗打开/关闭/保存不跳转页面",
+    "[Gate-6 返回规则] 收费计划面板展开/关闭不跳转页面",
+    "[Gate-6 返回规则] 分段视图切换仅切换可见性不跳转",
+    "[Gate-6 返回规则] 批量催款结果在当前页展示不跳转",
+    "[Gate-6 返回规则] 案件详情收费 Tab 内操作后停留在收费 Tab",
+    "[Gate-6 返回规则] [生产约束] 列表→案件详情→返回保留筛选+视图+滚动",
+    "[Gate-6 返回规则] [跨模块] 登记回款/上传凭证/创建催款任务文案跨入口一致"
+  ],
+  "knownLegacyLinks": [
+    {
+      "source": "packages/prototype/admin/shared/shell/side-nav.html",
+      "href": "billing.html",
+      "note": "规范片段导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/shared/shell/mobile-nav.html",
+      "href": "billing.html",
+      "note": "规范片段导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/admin-prototype.html",
+      "href": "billing.html",
+      "note": "仪表盘内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/dashboard/index.html",
+      "href": "billing.html",
+      "note": "仪表盘导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/customers/index.html",
+      "href": "../billing.html",
+      "note": "客户页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/tasks/index.html",
+      "href": "../billing.html",
+      "note": "任务页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/*.html（其他未迁移页面）",
+      "href": "billing.html",
+      "note": "同级导航链接，待全部页面迁移后统一更新"
+    }
+  ],
+  "notes": [
+    "billing.html 作为迁移源保留，不在第一阶段删除。",
+    "旧入口兼容策略：保留 billing.html，不更新 shared/shell 中的链接。新模块 billing/index.html 使用自身路径。",
+    "现有原型缺失大量 P0 必需区块（筛选工具栏 2 个筛选器、批量催款、回款流水、收费计划面板、登记回款弹窗、风险确认、toast），拆分时需全新构建。",
+    "P1 泄漏项：「导出报表」按钮和「发票管理」segmented tab 必须移除或禁用。",
+    "摘要卡「本月」维度改为全局维度，原「本月」标注为 demo-only。",
+    "状态枚举需四方对齐：billing.html / case-detail-config.js / P0 规格 / 数据模型，以 P0 规格 §5.2 + 数据模型 §3.20 为权威。",
+    "所有 demo-only 行为（硬编码数据、toast 示例、摘要卡金额）单独标注。",
+    "收费模块不引入草稿能力。",
+    "收费模块比任务模块多出的独有概念：摘要卡、收费计划面板、回款登记弹窗、回款更正、风险确认留痕、三段式批量结果反馈。",
+    "欠款风险确认必须同时在契约和迁移映射中对齐 Case 级留痕字段（billing_risk_acknowledged_at/by/reason_code/reason_note）与审计日志口径（action_type: billing_risk_acknowledged）。风险确认写入 Case 行 + AuditLog，Gate-C 提交前检查 billing_risk_acknowledged_at 是否为空。页面入口：财务主页面板（只读）、案件详情收费 Tab（确认操作）、Gate-C 提交检查（warning 提示）、仪表盘风险聚合（未确认案件）。",
+    "催款任务去重键：case_id + billing_plan_id + overdue_cycle_start（P0-CONTRACT §15.4）。",
+    ".tag 家族样式（.tag / .tag-green / .tag-blue / .tag-orange / .tag-red）在 billing.html 和 tasks.html 中重复定义，建议后续提升到 shared/styles/components.css，但本轮不新增 shared 文件。"
+  ]
+}

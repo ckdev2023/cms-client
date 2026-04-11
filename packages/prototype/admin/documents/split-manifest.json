@@ -1,0 +1,607 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "documents",
+  "moduleLabel": "资料中心",
+  "moduleDir": "packages/prototype/admin/documents",
+  "entryFile": "packages/prototype/admin/documents/index.html",
+  "migrationSource": "packages/prototype/admin/documents.html",
+  "referenceDocs": [
+    "packages/prototype/admin/documents/P0-CONTRACT.md",
+    "packages/prototype/admin/documents/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/documents/MIGRATION-MAPPING.md",
+    "packages/prototype/admin/documents/INVENTORY.md",
+    "packages/prototype/admin/documents/REGRESSION-GATE.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/资料中心.md",
+    "design/gyosei-os-admin/DESIGN.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sharedReuse": {
+    "cssLinks": [
+      { "canonical": "packages/prototype/admin/shared/styles/tokens.css", "href": "../shared/styles/tokens.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/shell.css", "href": "../shared/styles/shell.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/components.css", "href": "../shared/styles/components.css" }
+    ],
+    "scriptLinks": [
+      { "canonical": "packages/prototype/admin/shared/scripts/mobile-nav.js", "src": "../shared/scripts/mobile-nav.js", "loadOrder": 1 },
+      { "canonical": "packages/prototype/admin/shared/scripts/navigate.js", "src": "../shared/scripts/navigate.js", "loadOrder": 2 }
+    ],
+    "shellFragments": [
+      { "canonical": "packages/prototype/admin/shared/shell/mobile-nav.html", "comment": "shell: mobile-nav.html (paths adjusted for documents/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/side-nav.html", "comment": "shell: side-nav.html (paths adjusted for documents/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/topbar.html", "comment": "shell: topbar.html (paths adjusted for documents/ subdirectory)", "pathPrefix": "../" }
+    ],
+    "ariaCurrent": {
+      "attribute": "aria-current=\"page\"",
+      "targetNavItem": "资料中心",
+      "targetHref": "index.html",
+      "canonicalHref": "documents.html",
+      "applyIn": ["mobile-nav", "side-nav"],
+      "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
+    },
+    "navPathAdjustments": [
+      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
+      { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
+      { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
+      { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
+      { "label": "任务与提醒", "canonical": "tasks.html", "adjusted": "../tasks.html" },
+      { "label": "资料中心", "canonical": "documents.html", "adjusted": "index.html", "ariaCurrent": true },
+      { "label": "文书中心", "canonical": "forms.html", "adjusted": "../forms.html" },
+      { "label": "收费与财务", "canonical": "billing/index.html", "adjusted": "../billing/index.html" },
+      { "label": "报表", "canonical": "reports.html", "adjusted": "../reports.html" },
+      { "label": "设置", "canonical": "settings.html", "adjusted": "../settings.html" },
+      { "label": "客户门户", "canonical": "../src/index.html", "adjusted": "../../src/index.html" }
+    ]
+  },
+  "sections": [
+    {
+      "file": "sections/page-header.html",
+      "purpose": "页面标题「资料中心」、副标题、「登记资料」主按钮、「批量催办」次按钮",
+      "sourceAnchors": [
+        "display-font",
+        "btnRegisterDocument",
+        "data-action=open-register-modal"
+      ],
+      "sourceLines": "856-920",
+      "contractRefs": [],
+      "productionTarget": "features/document/ui/DocumentListHeader"
+    },
+    {
+      "file": "sections/summary-cards.html",
+      "purpose": "待审核/缺件/过期/共享版本过期风险 4 张摘要卡",
+      "sourceAnchors": [
+        "summaryCardReviewing",
+        "summaryCardMissing",
+        "summaryCardExpired",
+        "summaryCardSharedExpiry",
+        "reviewingCount",
+        "missingCount",
+        "expiredCount",
+        "sharedExpiryCount",
+        "data-action=filter-by-card",
+        "data-card-status"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§5 摘要卡"
+      ],
+      "productionTarget": "features/document/ui/DocumentSummaryCards",
+      "gapNote": "现有原型完全缺失摘要卡，需全新构建"
+    },
+    {
+      "file": "sections/filters-toolbar.html",
+      "purpose": "状态/所属案件/提供方 3 个筛选 select + 搜索框 + 重置按钮",
+      "sourceAnchors": [
+        "filtersToolbar",
+        "data-filter=status",
+        "data-filter=case",
+        "data-filter=provider",
+        "docSearchInput",
+        "data-action=reset-filters"
+      ],
+      "sourceLines": "921-955",
+      "contractRefs": [
+        "§4 列表页搜索与筛选"
+      ],
+      "productionTarget": "features/document/ui/DocumentListFilters",
+      "gapNote": "现有原型仅有案件类型下拉和搜索框（均无 JS 联动），缺状态/提供方筛选和重置按钮"
+    },
+    {
+      "file": "sections/documents-table.html",
+      "purpose": "跨案件资料列表（7 列 + checkbox 列）、批量操作栏（催办/审核/waived）",
+      "sourceAnchors": [
+        "docTableCard",
+        "docTableBody",
+        "docEmptyState",
+        "docFilterEmptyState",
+        "docPagination",
+        "docPaginationInfo",
+        "bulkActionBar",
+        "selectedCount",
+        "selectAllDocs",
+        "bulkClearBtn",
+        "bulkRemindBtn",
+        "bulkApproveBtn",
+        "bulkWaiveBtn",
+        "data-doc-select",
+        "data-doc-id"
+      ],
+      "sourceLines": "964-1128",
+      "contractRefs": [
+        "§2 跨案件列表页必保留字段",
+        "§3 默认排序与展示规则",
+        "§10 列表页批量选择机制"
+      ],
+      "productionTarget": "features/document/ui/DocumentTable + DocumentBulkActionBar",
+      "gapNote": "现有原型为 6 列表格，缺提供方/截止日/催办时间/relative_path 列；无 checkbox 和批量操作栏"
+    },
+    {
+      "file": "sections/register-document-modal.html",
+      "purpose": "登记资料（本地归档）弹窗：5 字段表单（关联案件、关联资料项、relative_path、文件名/描述、版本号自动）+ relative_path 校验",
+      "sourceAnchors": [
+        "registerDocModal",
+        "registerCaseSelect",
+        "registerDocItemSelect",
+        "registerRelativePath",
+        "registerFileName",
+        "registerVersion",
+        "registerConfirmBtn",
+        "registerPathHint",
+        "registerPathError",
+        "data-action=open-register-modal",
+        "data-action=close-register-modal"
+      ],
+      "sourceLines": "1180-1210",
+      "contractRefs": [
+        "§8.1 登记资料弹窗"
+      ],
+      "productionTarget": "features/document/ui/RegisterDocumentModal",
+      "gapNote": "现有原型有上传弹窗（拖拽上传），需替换为 relative_path 录入弹窗"
+    },
+    {
+      "file": "sections/review-actions-panel.html",
+      "purpose": "审核通过确认弹窗 + 退回补正弹窗（原因 textarea 必填）",
+      "sourceAnchors": [
+        "approveModal",
+        "approveDocName",
+        "approveConfirmBtn",
+        "rejectModal",
+        "rejectDocName",
+        "rejectReasonText",
+        "rejectConfirmBtn",
+        "data-action=close-approve-modal",
+        "data-action=close-reject-modal"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§8.2 审核/退回弹窗"
+      ],
+      "productionTarget": "features/document/ui/ReviewActionsPanel",
+      "gapNote": "现有原型完全缺失审核/退回弹窗，需全新构建"
+    },
+    {
+      "file": "sections/waive-modal.html",
+      "purpose": "标记无需提供弹窗：原因码 select（5 项）+ 原因备注 textarea（其他时必填）",
+      "sourceAnchors": [
+        "waiveModal",
+        "waiveModalTitle",
+        "waiveDocLabel",
+        "waiveReasonSelect",
+        "waiveNoteWrap",
+        "waiveReasonNote",
+        "waiveConfirmBtn",
+        "data-action=close-waive-modal"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§8.3 标记 waived 弹窗"
+      ],
+      "productionTarget": "features/document/ui/WaiveReasonModal",
+      "gapNote": "现有原型（案件详情）仅有简单 toast，需替换为原因码弹窗"
+    },
+    {
+      "file": "sections/reference-version-modal.html",
+      "purpose": "引用既有版本弹窗：候选版本列表（来源案件、资料项名、版本号、审核日期、有效期）",
+      "sourceAnchors": [
+        "referenceVersionModal",
+        "referenceDocLabel",
+        "referenceCandidateList",
+        "referenceCandidateEmpty",
+        "referenceConfirmBtn",
+        "data-action=close-reference-modal"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§8.4 引用既有版本交互"
+      ],
+      "productionTarget": "features/document/ui/ReferenceVersionModal",
+      "gapNote": "现有原型完全缺失引用版本弹窗，需全新构建"
+    },
+    {
+      "file": "sections/risk-log-panel.html",
+      "purpose": "共享版本过期风险说明面板：过期版本信息、引用案件列表、建议操作",
+      "sourceAnchors": [
+        "riskLogPanel",
+        "riskLogBody",
+        "riskLogEmpty",
+        "data-action=close-risk-panel"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§9 过期联动规则"
+      ],
+      "productionTarget": "features/document/ui/SharedExpiryRiskPanel",
+      "gapNote": "现有原型完全缺失风险面板，需全新构建"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "浮动反馈层：Toast 通知（审核/退回/催办/登记/waived/引用/批量/复制路径）",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§11 Toast 通知"
+      ],
+      "productionTarget": "shared/ui/Toast",
+      "gapNote": "现有原型无 toast 组件，需全新构建"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/documents-config.js",
+      "purpose": "集中声明资料项状态枚举、提供方枚举、waived 原因码、列定义、筛选配置、表单 schema、toast preset、relative_path 校验规则、P0 不做项",
+      "exports": [
+        "DOCUMENT_STATUS_OPTIONS",
+        "PROVIDER_OPTIONS",
+        "WAIVE_REASON_OPTIONS",
+        "STATUS_TRANSITIONS",
+        "TABLE_COLUMNS",
+        "FILTERS",
+        "SEARCH_PLACEHOLDER",
+        "BULK_ACTIONS",
+        "REGISTER_FORM_FIELDS",
+        "REGISTER_REQUIRED_IDS",
+        "RELATIVE_PATH_RULES",
+        "TOAST",
+        "P0_NOT_IN_SCOPE"
+      ],
+      "consumers": [
+        "scripts/documents-page.js",
+        "scripts/documents-filters.js",
+        "scripts/documents-bulk-actions.js",
+        "scripts/documents-register-modal.js",
+        "scripts/documents-review.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/document/DocumentItem.ts + documentConstants.ts"
+    },
+    {
+      "file": "data/documents-demo-data.js",
+      "purpose": "示例资料列表行、版本记录、审核记录、催办记录、引用候选版本、摘要卡数据",
+      "exports": [
+        "DEMO_DOCUMENT_ROWS",
+        "DEMO_SUMMARY",
+        "DEMO_REVIEW_RECORDS",
+        "DEMO_REMINDER_RECORDS",
+        "DEMO_REFERENCE_CANDIDATES"
+      ],
+      "consumers": [],
+      "consumersNote": "P0 阶段 demo 数据直接硬编码在 HTML sections 中，脚本不引用；动态渲染后将成为 scripts 的数据源",
+      "demoOnly": true,
+      "productionTarget": null
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/documents-page.js",
+      "purpose": "页面初始化、toast 编排、默认排序",
+      "domHooks": [
+        "DOMContentLoaded",
+        "#toast"
+      ],
+      "dependsOn": [
+        "data/documents-config.js",
+        "scripts/documents-filters.js",
+        "scripts/documents-bulk-actions.js",
+        "scripts/documents-register-modal.js",
+        "scripts/documents-review.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/document/model/useDocumentListViewModel"
+    },
+    {
+      "file": "scripts/documents-filters.js",
+      "purpose": "3 筛选器联动（状态/所属案件/提供方）、搜索 debounce、重置",
+      "domHooks": [
+        "select[data-filter]",
+        ".search-input",
+        "data-action=reset-filters"
+      ],
+      "dependsOn": [
+        "data/documents-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/document/model/useDocumentFilters"
+    },
+    {
+      "file": "scripts/documents-bulk-actions.js",
+      "purpose": "全选/单选/indeterminate（waived/approved 行不可选）、批量催办/审核/waived",
+      "domHooks": [
+        "#bulkActionBar",
+        "#selectedCount",
+        "#selectAllDocs",
+        "#bulkClearBtn",
+        "#bulkRemindBtn",
+        "#bulkApproveBtn",
+        "#bulkWaiveBtn"
+      ],
+      "dependsOn": [
+        "data/documents-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/document/model/useDocumentBulkActions"
+    },
+    {
+      "file": "scripts/documents-register-modal.js",
+      "purpose": "登记资料弹窗开关、5 字段表单、relative_path 校验（禁止 ../~/空白控制字符/前导 /）、复制反馈",
+      "domHooks": [
+        "#registerDocModal",
+        "#registerCaseSelect",
+        "#registerDocItemSelect",
+        "#registerRelativePath",
+        "#registerFileName",
+        "#registerConfirmBtn",
+        "#registerPathError",
+        "data-action=open-register-modal",
+        "data-action=close-register-modal"
+      ],
+      "dependsOn": [
+        "data/documents-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/document/model/useRegisterDocumentModal"
+    },
+    {
+      "file": "scripts/documents-review.js",
+      "purpose": "审核通过/退回补正操作、waive 弹窗、引用版本弹窗、催办操作",
+      "domHooks": [
+        "#approveModal",
+        "#approveConfirmBtn",
+        "#rejectModal",
+        "#rejectReasonText",
+        "#rejectConfirmBtn",
+        "#waiveModal",
+        "#waiveReasonSelect",
+        "#waiveNoteWrap",
+        "#waiveConfirmBtn",
+        "#referenceVersionModal",
+        "#referenceCandidateList",
+        "#referenceConfirmBtn",
+        "data-action=close-approve-modal",
+        "data-action=close-reject-modal",
+        "data-action=close-waive-modal",
+        "data-action=close-reference-modal"
+      ],
+      "dependsOn": [
+        "data/documents-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/document/model/useDocumentReview"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/document/DocumentItem.ts",
+      "packages/mobile/src/domain/document/DocumentRepository.ts",
+      "packages/mobile/src/domain/document/documentConstants.ts"
+    ],
+    "crossDomainDependencies": [
+      {
+        "entity": "Case",
+        "file": "packages/mobile/src/domain/case/Case.ts",
+        "fields": ["document_completion_rate"],
+        "accessPattern": "document writes via updateCompletionRate; case reads for display; gate reads for validation check"
+      },
+      {
+        "entity": "AuditLog",
+        "file": "packages/mobile/src/domain/audit/AuditLog.ts",
+        "actionTypes": ["document_approved", "document_rejected", "document_waived", "document_registered", "document_referenced", "document_reminded"],
+        "accessPattern": "document writes; audit/log reads for display"
+      }
+    ],
+    "data": [
+      "packages/mobile/src/data/document/DocumentApi.ts",
+      "packages/mobile/src/data/document/createDocumentRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/document/model/useDocumentListViewModel.ts",
+      "packages/mobile/src/features/document/model/useDocumentFilters.ts",
+      "packages/mobile/src/features/document/model/useDocumentBulkActions.ts",
+      "packages/mobile/src/features/document/model/useRegisterDocumentModal.ts",
+      "packages/mobile/src/features/document/model/useDocumentReview.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/document/ui/DocumentListScreen.tsx",
+      "packages/mobile/src/features/document/ui/DocumentListHeader.tsx",
+      "packages/mobile/src/features/document/ui/DocumentSummaryCards.tsx",
+      "packages/mobile/src/features/document/ui/DocumentListFilters.tsx",
+      "packages/mobile/src/features/document/ui/DocumentTable.tsx",
+      "packages/mobile/src/features/document/ui/DocumentBulkActionBar.tsx",
+      "packages/mobile/src/features/document/ui/RegisterDocumentModal.tsx",
+      "packages/mobile/src/features/document/ui/ReviewActionsPanel.tsx",
+      "packages/mobile/src/features/document/ui/WaiveReasonModal.tsx",
+      "packages/mobile/src/features/document/ui/ReferenceVersionModal.tsx",
+      "packages/mobile/src/features/document/ui/SharedExpiryRiskPanel.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SideNav.tsx",
+      "packages/mobile/src/shared/ui/TopBar.tsx",
+      "packages/mobile/src/shared/ui/MobileNav.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "列表页 7 列完整（资料项名称、所属案件、提供方、状态、截止日、最近催办时间、本地归档路径 relative_path）",
+    "默认排序：待审核置顶→退回/过期>缺件>待审核→截止日升序→无截止日置底",
+    "过期行 badge-red + 红色背景高亮 bg-[rgba(220,38,38,0.04)]",
+    "截止日列显示「已过期」或「还有 X 天」，过期时 badge-red 强调",
+    "relative_path 列使用 monospace + 一键复制按钮 → toast「已复制」",
+    "未登记时 relative_path 列显示「未登记」灰色占位",
+    "4 张摘要卡完整（待审核/缺件/过期/共享版本过期风险）",
+    "摘要卡计数 > 0 时展示左侧色条（待审核蓝/缺件橙/过期红/共享过期红）",
+    "搜索框 placeholder 包含「资料名称 / 案件编号 / 案件名称」",
+    "3 个筛选器（状态/所属案件/提供方）+ 重置按钮存在",
+    "重置按钮清空所有筛选条件",
+    "全选/单选/indeterminate/清除正常（waived/approved 行 checkbox disabled + opacity-60）",
+    "批量操作栏仅在 selectedCount > 0 时显示",
+    "批量催办 → toast",
+    "批量审核通过 → toast",
+    "批量标记 waived → 原因弹窗 → toast",
+    "审核通过弹窗确认 → toast + 状态 badge 更新",
+    "退回补正弹窗含原因 textarea（必填）→ toast + 状态 badge 更新",
+    "waived 弹窗原因码 select 5 项正确",
+    "waived「其他」时备注 textarea 必填",
+    "waived 确认后资料项灰化 + 删除线 + badge-gray",
+    "「登记资料」按钮 → 打开弹窗",
+    "登记弹窗 5 个字段完整（关联案件、关联资料项、relative_path、文件名/描述、版本号自动）",
+    "relative_path 校验正常（禁止 ..、~、绝对路径前缀）",
+    "relative_path 校验失败时输入框标红 + 提示",
+    "登记按钮可用态逻辑：关联案件 + 关联资料项 + relative_path 均已填写且校验通过",
+    "登记保存后 → toast",
+    "引用既有版本弹窗展示候选列表（来源案件、资料项名、版本号、审核日期、有效期）",
+    "引用确认后 → toast",
+    "共享版本过期联动：所有引用资料项转 expired",
+    "摘要卡 #4 聚合共享版本过期风险计数",
+    "风险说明面板展示过期版本信息和受影响案件列表",
+    "案件详情资料 Tab 按提供方分组展示正确",
+    "完成率进度条与计数正确（waived 不计分母）",
+    "每项展示名称、状态 badge、附件版本元信息、relative_path",
+    "附件版本列表可展开（历史保留）",
+    "引用来源标记正确（本资料项登记 / 引用自…）",
+    "多案件引用数展示正确",
+    "审核记录展示正确（结论、原因、操作人、时间）",
+    "催办记录时间线展示正确",
+    "案件详情行内操作：审核通过/退回补正/催办/标记 waived/登记资料/引用既有版本",
+    "空状态提示正常（暂无资料清单，请先确认案件模板）",
+    "Toast 11 种场景正常弹出（审核/退回/催办/登记/waived/引用/批量催办/批量审核/批量waived/复制路径/新增资料项）",
+    "移动端导航开关正常",
+    "侧边栏「资料中心」项 aria-current=page 高亮",
+    "共享壳层正确引入（tokens.css / shell.css / components.css / shell HTML 片段）",
+    "navigate.js + mobile-nav.js 正确引入",
+    "内容区案件链接路径正确（../case/detail.html）",
+    "Demo 数据覆盖全部 6 种状态（pending/uploaded_reviewing/approved/rejected/expired/waived）",
+    "[Gate-1 空状态] 案件详情无资料项时空状态占位 + 引导文案",
+    "[Gate-1 空状态] 完成率分母=0 时显示「无必需资料」",
+    "[Gate-1 空状态] 摘要卡空数据时 4 张卡片计数显示 0",
+    "[Gate-2 全部通过] 完成率 100% 绿色进度条",
+    "[Gate-2 全部通过] waived 行删除线 + 灰化 + badge-gray",
+    "[Gate-2 全部通过] approved/waived 行 checkbox disabled + opacity-60",
+    "[Gate-2 全部通过] 全选时 approved/waived 行自动跳过",
+    "[Gate-3 过期] 过期行 badge-red + 红色行背景",
+    "[Gate-3 过期] 截止日列过期时显示「已过期」badge-red",
+    "[Gate-3 过期] 默认排序中过期行按优先级正确排序",
+    "[Gate-3 过期] 摘要卡过期卡红色色条 + 红色数字",
+    "[Gate-4 共享版本过期] 联动所有引用资料项转 expired",
+    "[Gate-4 共享版本过期] 摘要卡 #4 聚合风险计数",
+    "[Gate-4 共享版本过期] 风险面板展示过期版本 + 受影响案件",
+    "[Gate-4 共享版本过期] 案件详情展示引用数和过期影响提示",
+    "[Gate-5 权限不足] 助理只读审核操作：审核/退回/waived 按钮 disabled + tooltip",
+    "[Gate-5 权限不足] 助理可执行：催办和登记资料操作",
+    "[Gate-6 返回规则] 全局入口→documents/index.html 跳转正常",
+    "[Gate-6 返回规则] 登记资料弹窗打开/关闭/保存不跳转页面",
+    "[Gate-6 返回规则] 审核/退回弹窗操作后不跳转",
+    "[Gate-6 返回规则] waived 弹窗操作后不跳转",
+    "[Gate-6 返回规则] 批量操作 toast 在当前页展示不跳转",
+    "[Gate-6 返回规则] 案件详情资料 Tab 内操作后停留在资料 Tab",
+    "[Gate-6 返回规则] [生产约束] 列表→案件详情→返回保留筛选+滚动",
+    "[Gate-6 返回规则] [跨模块] 审核/退回/催办/登记文案跨入口一致",
+    "[Gate-7 并发修改] P0-CONTRACT §12 #7 明确记录为生产约束",
+    "[Gate-7 并发修改] MIGRATION-MAPPING.md DocumentRepository 包含乐观锁说明",
+    "[Gate-7 并发修改] [生产约束] 审核/登记/waived 提交时检测版本冲突",
+    "无左侧 sidebar 文件树（P1 泄漏已移除）",
+    "无网格视图（P1 泄漏已移除）",
+    "无文件上传交互（已替换为登记资料弹窗）",
+    "无「案件模板生成」按钮（P1 泄漏已移除）",
+    "Segmented control 无「资料模板」段（P1 泄漏已移除）"
+  ],
+  "knownLegacyLinks": [
+    {
+      "source": "packages/prototype/admin/shared/shell/side-nav.html",
+      "href": "documents.html",
+      "note": "规范片段导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/shared/shell/mobile-nav.html",
+      "href": "documents.html",
+      "note": "规范片段导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/admin-prototype.html",
+      "href": "documents.html",
+      "note": "仪表盘内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/dashboard/index.html",
+      "href": "../documents.html",
+      "note": "仪表盘导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/customers/index.html",
+      "href": "../documents.html",
+      "note": "客户页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/tasks/index.html",
+      "href": "../documents.html",
+      "note": "任务页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/billing/index.html",
+      "href": "../documents.html",
+      "note": "收费页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/case/detail.html",
+      "href": "../documents.html",
+      "note": "案件详情资料 Tab 登记资料按钮 data-navigate，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/*.html（其他未迁移页面）",
+      "href": "documents.html",
+      "note": "同级导航链接，待全部页面迁移后统一更新"
+    }
+  ],
+  "notes": [
+    "documents.html 作为迁移源保留，不在第一阶段删除。",
+    "旧入口兼容策略：保留 documents.html，不更新 shared/shell 中的链接。新模块 documents/index.html 使用自身路径。",
+    "现有原型缺失大量 P0 必需区块（摘要卡、筛选工具栏 2 个筛选器、批量操作栏、审核/退回弹窗、waived 弹窗、登记资料弹窗、引用版本弹窗、风险面板、toast），拆分时需全新构建。",
+    "现有原型 6 列表格需重构为 7 列，移除「类型/完成率」列，新增提供方/截止日/催办时间/relative_path 列。",
+    "P1 泄漏项必须移除：「案件模板生成」按钮、「资料模板」segmented tab、文件上传弹窗、侧边栏文件树/星标/最近访问、网格视图。",
+    "状态枚举需三方对齐：documents.html / case-detail-config.js / P0 规格，以 P0 规格（pending/uploaded_reviewing/approved/rejected/expired/waived）为权威。",
+    "所有 demo-only 行为（硬编码数据、toast 示例、摘要卡计数）单独标注。",
+    "资料模块双入口策略：跨案件列表（documents/index.html）为次级入口，案件详情资料 Tab 为主入口。两者共享 documents-config.js 状态枚举。",
+    "案件详情资料 Tab 扩展（版本列表、审核记录、催办时间线、行内动作）与 documents/ 模块拆分是并行但独立的工作线。",
+    "relative_path 录入规则：仅相对路径，禁止 ..、前导 ~、空白控制字符、前导 /；建议格式 {case_no}/{provider}/{doc_item_name}/{yyyymmdd}_{filename}。",
+    "共享版本过期联动为 P0 强口径：当被多案引用的版本过期时，所有引用方资料项统一转 expired。",
+    "跨模块依赖：仪表盘缺件/待审核卡片、任务模块催办来源、案件详情 Tab 状态枚举一致性。"
+  ]
+}

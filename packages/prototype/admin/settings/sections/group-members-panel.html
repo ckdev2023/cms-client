@@ -1,0 +1,49 @@
+<!--
+  section: group-members-panel.html
+  Group members list panel — P0 read-only display only.
+  Shows member name, role (as chip), and join date.
+  No add/remove/edit member operations in P0.
+
+  DOM hooks:
+    #groupMembersPanel   — outer wrapper (visibility managed by parent detail panel)
+    #memberListBody      — table wrapper (hidden when no members)
+    #memberTableBody     — <tbody> for dynamic member rows
+    #memberEmptyState    — empty state placeholder (shown when no members)
+
+  Data source: demo data in settings-group-members.js (P0 only).
+  Production target: features/settings/ui/GroupMembersPanel
+  Contract ref: P0-CONTRACT §3.2 成员列表
+-->
+<div id="groupMembersPanel" class="mt-4">
+  <div class="apple-card p-5 sm:p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="text-[15px] font-bold text-[var(--text)]">成员列表</h3>
+      <span class="chip text-[11px]" title="P0 仅展示，不支持增删成员">只读</span>
+    </div>
+
+    <!-- Member table -->
+    <div id="memberListBody">
+      <table class="apple-table w-full text-left border-collapse">
+        <thead>
+          <tr>
+            <th>姓名</th>
+            <th class="w-[120px]">角色</th>
+            <th class="hidden sm:table-cell w-[140px]">加入时间</th>
+          </tr>
+        </thead>
+        <tbody id="memberTableBody">
+          <!-- Populated dynamically by settings-group-members.js -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Empty state -->
+    <div id="memberEmptyState" class="hidden py-10 text-center">
+      <svg class="w-10 h-10 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+      </svg>
+      <p class="text-[14px] font-semibold text-[var(--muted)]">暂无成员</p>
+      <p class="text-[12px] text-[var(--muted-2)] mt-1">该 Group 尚未分配成员</p>
+    </div>
+  </div>
+</div>

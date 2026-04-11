@@ -1,0 +1,71 @@
+<!--
+  section: collection-result-toast.html
+  Toast notification + three-stage bulk collection result panel.
+  P0-CONTRACT §15 (Toast), §14.3 (three-stage result feedback).
+
+  Toast: reusable floating notification for all billing actions.
+  Result panel: modal dialog showing success/skipped/failed counts + per-row detail + skip-reason legend.
+
+  demo-only: all feedback is static; no backend call.
+-->
+<!-- Toast -->
+<div
+  id="toast"
+  class="hidden fixed bottom-6 right-6 z-50 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-lg px-5 py-4 max-w-sm"
+  role="status"
+  aria-live="polite"
+>
+  <div class="text-[14px] font-extrabold text-[var(--text)]" id="toastTitle"></div>
+  <div class="text-[13px] text-[var(--muted)] mt-1 font-semibold" id="toastDesc"></div>
+</div>
+
+<!-- Three-stage bulk collection result panel -->
+<div
+  id="collectionResultPanel"
+  class="hidden fixed inset-0 z-50 flex items-center justify-center"
+  role="dialog"
+  aria-modal="true"
+  aria-label="批量催款结果"
+>
+  <div class="absolute inset-0 bg-black/30" data-action="close-collection-result"></div>
+  <div class="relative bg-[var(--surface)] rounded-2xl shadow-lg border border-[var(--border)] w-full max-w-md mx-4 p-6">
+    <h3 class="text-[16px] font-extrabold text-[var(--text)] mb-4">批量催款执行结果</h3>
+
+    <!-- Three-stage summary -->
+    <div class="grid grid-cols-3 gap-3 mb-5">
+      <div class="text-center p-3 rounded-xl bg-[rgba(22,163,74,0.08)]">
+        <div class="text-xl font-extrabold text-[#166534]" id="collectionSuccessCount">0</div>
+        <div class="text-[12px] font-semibold text-[#166534] mt-0.5">成功</div>
+      </div>
+      <div class="text-center p-3 rounded-xl bg-[rgba(245,158,11,0.1)]">
+        <div class="text-xl font-extrabold text-[#92400e]" id="collectionSkipCount">0</div>
+        <div class="text-[12px] font-semibold text-[#92400e] mt-0.5">跳过</div>
+      </div>
+      <div class="text-center p-3 rounded-xl bg-[rgba(220,38,38,0.08)]">
+        <div class="text-xl font-extrabold text-[#991b1b]" id="collectionFailCount">0</div>
+        <div class="text-[12px] font-semibold text-[#991b1b] mt-0.5">失败</div>
+      </div>
+    </div>
+
+    <!-- Detail list -->
+    <div id="collectionResultDetails" class="space-y-2 max-h-48 overflow-y-auto mb-5">
+      <!-- Populated by billing-bulk-actions.js -->
+    </div>
+
+    <!-- Skip reasons legend -->
+    <div id="collectionSkipReasons" class="hidden mb-5">
+      <div class="text-[12px] font-extrabold text-[var(--muted-2)] uppercase tracking-wider mb-2">跳过原因统计</div>
+      <div id="collectionSkipReasonList" class="space-y-1">
+        <!-- Populated by billing-bulk-actions.js -->
+      </div>
+    </div>
+
+    <button
+      class="btn-primary w-full text-center"
+      type="button"
+      data-action="close-collection-result"
+    >
+      确认
+    </button>
+  </div>
+</div>

@@ -1,0 +1,95 @@
+<!--
+  section: group-detail-meta.html
+  Group detail metadata panel: name (renameable), code (read-only), status badge,
+  plus action buttons (rename, disable). Shown when a Group row is selected in
+  the list; hidden by default.
+
+  DOM hooks:
+    #groupDetailPanel      — outer wrapper (show/hide by scripts)
+    #detailGroupName       — Group display name (heading)
+    #detailGroupNameField  — Group name in metadata grid
+    #detailGroupCode       — Group system code (text)
+    #detailGroupStatus     — status badge container
+    #btnDisableGroup       — disable button (hidden for already-disabled Groups)
+    [data-action="back-to-list"]     — returns to list view
+    [data-action="rename-group"]     — triggers rename modal (carries data attrs)
+    [data-action="disable-group"]    — triggers disable modal (carries data attrs)
+
+  Contract ref: P0-CONTRACT §3.1 元数据, §4 关键动作
+  Production target: features/settings/ui/GroupDetailMeta
+-->
+<div id="groupDetailPanel" class="hidden">
+  <!-- Back to list -->
+  <button
+    type="button"
+    class="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[var(--muted)] hover:text-[var(--text)] transition-colors mb-4"
+    data-action="back-to-list"
+  >
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+    </svg>
+    返回 Group 列表
+  </button>
+
+  <!-- Meta card -->
+  <div class="apple-card p-5 sm:p-6">
+    <!-- Header row: name + actions -->
+    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+      <div class="min-w-0">
+        <h2 class="text-xl font-bold text-[var(--text)] truncate" id="detailGroupName">東京一組</h2>
+        <p class="text-[13px] text-[var(--muted-2)] mt-0.5">Group 详情</p>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0" id="detailActions">
+        <button
+          type="button"
+          class="btn-secondary h-8 px-3 text-[12px] inline-flex items-center gap-1.5"
+          data-action="rename-group"
+          data-group-id=""
+          data-group-name=""
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          重命名
+        </button>
+        <button
+          type="button"
+          class="h-8 px-3 text-[12px] rounded-[var(--radius)] font-black text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 transition-colors inline-flex items-center gap-1.5"
+          data-action="disable-group"
+          data-group-id=""
+          data-group-name=""
+          data-related-customers="0"
+          data-related-cases="0"
+          id="btnDisableGroup"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+          </svg>
+          停用
+        </button>
+      </div>
+    </div>
+
+    <!-- Metadata grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <dt class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1">Group 名称</dt>
+        <dd class="text-[14px] font-semibold text-[var(--text)]" id="detailGroupNameField">東京一組</dd>
+      </div>
+      <div>
+        <dt class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1">Group 编号</dt>
+        <dd class="text-[14px] font-medium text-[var(--muted)] font-mono" id="detailGroupCode">grp-001</dd>
+      </div>
+      <div>
+        <dt class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1">状态</dt>
+        <dd id="detailGroupStatus">
+          <span class="badge badge-green">启用</span>
+        </dd>
+      </div>
+    </div>
+  </div>
+
+  <!-- section: sections/group-members-panel.html (implemented separately) -->
+
+  <!-- section: sections/group-stats-panel.html -->
+</div>

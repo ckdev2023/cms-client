@@ -1,0 +1,23 @@
+<!--
+  section: page-header.html
+  Page header: title + subtitle + admin-only permission note.
+  Rendered inside <main> as the first section.
+
+  DOM hooks: none (static display)
+  Contract ref: P0-CONTRACT §1 信息架构与导航
+  Production target: features/settings/ui/SettingsPageHeader
+-->
+<div class="flex justify-between items-end mb-8">
+  <div>
+    <h1 class="text-3xl display-font font-semibold">系统设置</h1>
+    <p class="text-sm text-[var(--muted)] mt-1">管理事务所级基础配置——Group 管理、可见性策略与本地资料根目录</p>
+  </div>
+  <div class="flex items-center">
+    <span class="chip text-[11px]" title="仅管理员可见可编辑">
+      <svg class="w-3.5 h-3.5 mr-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+      </svg>
+      仅管理员
+    </span>
+  </div>
+</div>

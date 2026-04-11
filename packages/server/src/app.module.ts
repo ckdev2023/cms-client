@@ -14,8 +14,8 @@ import {
   CasesService,
   TEMPLATES_RESOLVER,
 } from "./modules/core/cases/cases.service";
-import { BillingRecordsController } from "./modules/core/billing/billingRecords.controller";
-import { BillingRecordsService } from "./modules/core/billing/billingRecords.service";
+import { BillingPlansController } from "./modules/core/billing/billingPlans.controller";
+import { BillingPlansService } from "./modules/core/billing/billingPlans.service";
 import { PaymentRecordsController } from "./modules/core/billing/paymentRecords.controller";
 import { PaymentRecordsService } from "./modules/core/billing/paymentRecords.service";
 import { DocumentFilesController } from "./modules/core/document-files/documentFiles.controller";
@@ -83,7 +83,7 @@ import {
     ContactPersonsController,
     CustomersController,
     CasesController,
-    BillingRecordsController,
+    BillingPlansController,
     PaymentRecordsController,
     CasePartiesController,
     DocumentFilesController,
@@ -118,7 +118,7 @@ import {
     ContactPersonsService,
     CustomersService,
     CasesService,
-    BillingRecordsService,
+    BillingPlansService,
     PaymentRecordsService,
     CasePartiesService,
     DocumentFilesService,

@@ -1,0 +1,18 @@
+/* badge-green (not yet in shared/styles/components.css) */
+.badge-green {
+  background-color: rgba(22, 163, 74, 0.12);
+  color: #166534;
+}
+
+/* Settings sub-navigation item states */
+.settings-subnav-item {
+  color: var(--muted);
+}
+.settings-subnav-item:hover {
+  background: var(--surface-2);
+  color: var(--text);
+}
+.settings-subnav-item.is-active {
+  background: rgba(3, 105, 161, 0.08);
+  color: var(--text);
+}

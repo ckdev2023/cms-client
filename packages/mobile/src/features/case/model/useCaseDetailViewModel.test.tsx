@@ -4,6 +4,7 @@ import React from "react";
 import { AppContainerProvider } from "@app/container/AppContainerContext";
 import type { AppContainer } from "@app/container/AppContainer";
 import type { CaseRepository } from "@domain/case/CaseRepository";
+import type { CaseSummary, CaseDetail } from "@domain/case/Case";
 import type { HttpClient } from "@infra/http/HttpClient";
 import type { Logger } from "@infra/log/Logger";
 import type { KVStorage } from "@infra/storage/KVStorage";
@@ -23,6 +24,56 @@ class NoopStorage implements KVStorage {
   }
   async setString() {}
   async delete() {}
+}
+
+function stubSummary(overrides?: Partial<CaseSummary>): CaseSummary {
+  return {
+    id: "c1",
+    caseNo: "CASE-001",
+    caseName: null,
+    caseType: "家族滞在",
+    applicationType: "recognition",
+    stage: "S2",
+    priority: null,
+    riskLevel: null,
+    customerId: "cust1",
+    principalUserId: "user1",
+    resultOutcome: null,
+    nextDeadlineDueAt: "2026-05-01",
+    billingUnpaidAmountCached: null,
+    createdAt: "2026-04-01T00:00:00.000Z",
+    updatedAt: "2026-04-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function stubDetail(overrides?: Partial<CaseDetail>): CaseDetail {
+  return {
+    ...stubSummary(),
+    sourceLeadId: null,
+    groupId: "g1",
+    primaryAssistantUserId: null,
+    sourceChannel: null,
+    signedAt: null,
+    employerName: null,
+    closeReason: null,
+    archiveReason: null,
+    archivedAt: null,
+    nextAction: null,
+    nextActionDueAt: null,
+    hasBlockingIssueFlag: false,
+    documents: [
+      {
+        id: "d1",
+        name: "パスポート",
+        status: "waiting_upload",
+        requiredFlag: true,
+        providedByRole: null,
+      },
+    ],
+    timeline: [{ id: "t1", action: "created", createdAt: "2026-04-01" }],
+    ...overrides,
+  };
 }
 
 function createTestContainer(caseRepository: CaseRepository): AppContainer {
@@ -52,14 +103,7 @@ function makeWrapper(caseRepository: CaseRepository) {
 }
 
 test("load case detail success", async () => {
-  const detail = {
-    id: "c1",
-    caseTypeCode: "visa",
-    status: "in_progress",
-    dueAt: "2026-05-01",
-    documents: [{ id: "d1", name: "Passport", status: "pending" }],
-    timeline: [{ id: "t1", action: "created", createdAt: "2026-04-01" }],
-  };
+  const detail = stubDetail();
   const caseRepo: CaseRepository = {
     async listMyCases() {
       return [];

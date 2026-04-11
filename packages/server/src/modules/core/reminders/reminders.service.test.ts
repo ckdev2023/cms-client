@@ -19,11 +19,18 @@ function makeReminderRow(overrides: Record<string, unknown> = {}) {
   return {
     id: REMINDER_ID,
     org_id: ORG_ID,
-    entity_type: "case",
-    entity_id: "case-1",
-    scheduled_at: "2026-06-01T00:00:00.000Z",
-    status: "pending",
-    payload: { note: "follow up" },
+    case_id: "case-1",
+    target_type: "case",
+    target_id: "case-1",
+    remind_at: "2026-06-01T00:00:00.000Z",
+    recipient_type: "internal_user",
+    recipient_id: USER_ID,
+    channel: "in_app",
+    dedupe_key: "case-1:residence_expiry:180",
+    send_status: "pending",
+    retry_count: 0,
+    sent_at: null,
+    payload_snapshot: { note: "follow up" },
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -82,20 +89,45 @@ void test("RemindersService.create inserts row and writes timeline", async () =>
   const timeline = makeTimeline();
   const svc = createService(pool, timeline);
   const reminder = await svc.create(makeCtx(), {
-    entityType: "case",
-    entityId: "case-1",
-    scheduledAt: "2026-06-01T00:00:00.000Z",
-    payload: { note: "follow up" },
+    targetType: "case",
+    targetId: "case-1",
+    remindAt: "2026-06-01T00:00:00.000Z",
+    payloadSnapshot: { note: "follow up" },
   });
 
   assert.equal(reminder.id, REMINDER_ID);
-  assert.equal(reminder.status, "pending");
-  assert.equal(reminder.entityType, "case");
+  assert.equal(reminder.sendStatus, "pending");
+  assert.equal(reminder.targetType, "case");
+  assert.equal(reminder.dedupeKey, "case-1:residence_expiry:180");
   assert.equal(timeline.writes.length, 1);
   assert.deepEqual(
     (timeline.writes[0] as Record<string, unknown>).action,
     "reminder.created",
   );
+});
+
+// ── create dedupe: rejects if same dedupe_key already exists ──
+void test("RemindersService.create rejects if dedupe_key already exists", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("from reminders") && sql.includes("dedupe_key")) {
+      return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        targetType: "case",
+        targetId: "case-1",
+        remindAt: "2026-07-01T00:00:00.000Z",
+        dedupeKey: "case-1:residence_expiry:180",
+      }),
+    { name: "BadRequestException" },
+  );
+  assert.equal(timeline.writes.length, 0);
 });
 
 // ── get ──
@@ -132,7 +164,7 @@ void test("RemindersService.list returns items and total", async () => {
 });
 
 // ── list (with filters) ──
-void test("RemindersService.list applies status/entityType filters", async () => {
+void test("RemindersService.list applies sendStatus/targetType filters", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -143,12 +175,15 @@ void test("RemindersService.list applies status/entityType filters", async () =>
   });
 
   const svc = createService(pool, makeTimeline());
-  await svc.list(makeCtx("viewer"), { status: "pending", entityType: "case" });
+  await svc.list(makeCtx("viewer"), {
+    sendStatus: "pending",
+    targetType: "case",
+  });
 
   const countCall = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(countCall);
-  assert.ok(countCall.sql.includes("status = $"));
-  assert.ok(countCall.sql.includes("entity_type = $"));
+  assert.ok(countCall.sql.includes("send_status = $"));
+  assert.ok(countCall.sql.includes("target_type = $"));
 });
 
 // ── update ──
@@ -156,7 +191,7 @@ void test("RemindersService.update updates and writes timeline", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("update reminders")) {
       return Promise.resolve({
-        rows: [makeReminderRow({ scheduled_at: "2026-07-01T00:00:00.000Z" })],
+        rows: [makeReminderRow({ remind_at: "2026-07-01T00:00:00.000Z" })],
         rowCount: 1,
       });
     }
@@ -169,10 +204,10 @@ void test("RemindersService.update updates and writes timeline", async () => {
   const timeline = makeTimeline();
   const svc = createService(pool, timeline);
   const updated = await svc.update(makeCtx(), REMINDER_ID, {
-    scheduledAt: "2026-07-01T00:00:00.000Z",
+    remindAt: "2026-07-01T00:00:00.000Z",
   });
 
-  assert.equal(updated.scheduledAt, "2026-07-01T00:00:00.000Z");
+  assert.equal(updated.remindAt, "2026-07-01T00:00:00.000Z");
   assert.equal(timeline.writes.length, 1);
   assert.deepEqual(
     (timeline.writes[0] as Record<string, unknown>).action,
@@ -190,7 +225,7 @@ void test("RemindersService.update throws when not found", async () => {
   await assert.rejects(
     () =>
       svc.update(makeCtx(), "nonexistent", {
-        scheduledAt: "2026-07-01T00:00:00.000Z",
+        remindAt: "2026-07-01T00:00:00.000Z",
       }),
     { name: "NotFoundException" },
   );
@@ -201,7 +236,7 @@ void test("RemindersService.update throws when not pending", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("from reminders") && params?.[0] === REMINDER_ID) {
       return Promise.resolve({
-        rows: [makeReminderRow({ status: "sent" })],
+        rows: [makeReminderRow({ send_status: "sent" })],
         rowCount: 1,
       });
     }
@@ -212,7 +247,7 @@ void test("RemindersService.update throws when not pending", async () => {
   await assert.rejects(
     () =>
       svc.update(makeCtx(), REMINDER_ID, {
-        scheduledAt: "2026-07-01T00:00:00.000Z",
+        remindAt: "2026-07-01T00:00:00.000Z",
       }),
     {
       name: "BadRequestException",
@@ -221,8 +256,8 @@ void test("RemindersService.update throws when not pending", async () => {
   );
 });
 
-// ── cancel (delete is soft cancel) ──
-void test("RemindersService.cancel sets status to cancelled and writes timeline", async () => {
+// ── cancel (soft cancel) ──
+void test("RemindersService.cancel sets send_status to canceled and writes timeline", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -239,10 +274,9 @@ void test("RemindersService.cancel sets status to cancelled and writes timeline"
   const svc = createService(pool, timeline);
   await svc.cancel(makeCtx("manager"), REMINDER_ID);
 
-  // Verify it's a status update, not a physical delete
   const updateCall = calls.find((c) => c.sql.includes("update reminders"));
   assert.ok(updateCall);
-  assert.ok(updateCall.sql.includes("status = 'cancelled'"));
+  assert.ok(updateCall.sql.includes("send_status = 'canceled'"));
   assert.ok(!calls.some((c) => c.sql.includes("delete from")));
 
   assert.equal(timeline.writes.length, 1);
@@ -269,7 +303,7 @@ void test("RemindersService.cancel throws when not pending", async () => {
   const pool = makePool((sql, params) => {
     if (sql.includes("from reminders") && params?.[0] === REMINDER_ID) {
       return Promise.resolve({
-        rows: [makeReminderRow({ status: "cancelled" })],
+        rows: [makeReminderRow({ send_status: "canceled" })],
         rowCount: 1,
       });
     }
@@ -284,11 +318,11 @@ void test("RemindersService.cancel throws when not pending", async () => {
 });
 
 // ── due ──
-void test("RemindersService.due returns pending reminders past scheduled_at and enforces tenant isolation", async () => {
+void test("RemindersService.due returns pending reminders past remind_at and enforces tenant isolation", async () => {
   const calls: { sql: string }[] = [];
   const pool = makePool((sql) => {
     calls.push({ sql: sql.trim() });
-    if (sql.includes("scheduled_at <= now()")) {
+    if (sql.includes("remind_at <= now()")) {
       return Promise.resolve({
         rows: [makeReminderRow()],
         rowCount: 1,
@@ -303,8 +337,8 @@ void test("RemindersService.due returns pending reminders past scheduled_at and 
   assert.equal(dueReminders.length, 1);
   assert.equal(dueReminders[0]?.id, REMINDER_ID);
 
-  const dueCall = calls.find((c) => c.sql.includes("scheduled_at <= now()"));
+  const dueCall = calls.find((c) => c.sql.includes("remind_at <= now()"));
   assert.ok(dueCall);
-  assert.ok(dueCall.sql.includes("status = 'pending'"));
+  assert.ok(dueCall.sql.includes("send_status = 'pending'"));
   assert.ok(calls.some((c) => c.sql.includes("set_config('app.org_id'")));
 });

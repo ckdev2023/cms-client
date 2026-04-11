@@ -4,6 +4,7 @@ import React from "react";
 import { AppContainerProvider } from "@app/container/AppContainerContext";
 import type { AppContainer } from "@app/container/AppContainer";
 import type { CaseRepository } from "@domain/case/CaseRepository";
+import type { CaseSummary, CaseDetail } from "@domain/case/Case";
 import type { HttpClient } from "@infra/http/HttpClient";
 import type { Logger } from "@infra/log/Logger";
 import type { KVStorage } from "@infra/storage/KVStorage";
@@ -23,6 +24,48 @@ class NoopStorage implements KVStorage {
   }
   async setString() {}
   async delete() {}
+}
+
+function stubSummary(overrides?: Partial<CaseSummary>): CaseSummary {
+  return {
+    id: "c1",
+    caseNo: "CASE-001",
+    caseName: null,
+    caseType: "家族滞在",
+    applicationType: "recognition",
+    stage: "S1",
+    priority: null,
+    riskLevel: null,
+    customerId: "cust1",
+    principalUserId: "user1",
+    resultOutcome: null,
+    nextDeadlineDueAt: null,
+    billingUnpaidAmountCached: null,
+    createdAt: "2026-04-01T00:00:00.000Z",
+    updatedAt: "2026-04-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function stubDetail(overrides?: Partial<CaseDetail>): CaseDetail {
+  return {
+    ...stubSummary(),
+    sourceLeadId: null,
+    groupId: "g1",
+    primaryAssistantUserId: null,
+    sourceChannel: null,
+    signedAt: null,
+    employerName: null,
+    closeReason: null,
+    archiveReason: null,
+    archivedAt: null,
+    nextAction: null,
+    nextActionDueAt: null,
+    hasBlockingIssueFlag: false,
+    documents: [],
+    timeline: [],
+    ...overrides,
+  };
 }
 
 function createTestContainer(caseRepository: CaseRepository): AppContainer {
@@ -54,17 +97,10 @@ function makeWrapper(caseRepository: CaseRepository) {
 test("load cases success", async () => {
   const caseRepo: CaseRepository = {
     async listMyCases() {
-      return [{ id: "c1", caseTypeCode: "visa", status: "open", dueAt: null }];
+      return [stubSummary()];
     },
     async getCaseDetail() {
-      return {
-        id: "c1",
-        caseTypeCode: "visa",
-        status: "open",
-        dueAt: null,
-        documents: [],
-        timeline: [],
-      };
+      return stubDetail();
     },
   };
 
@@ -88,14 +124,7 @@ test("load cases error", async () => {
       throw new AppError({ code: "NETWORK", message: "fail" });
     },
     async getCaseDetail() {
-      return {
-        id: "c1",
-        caseTypeCode: "visa",
-        status: "open",
-        dueAt: null,
-        documents: [],
-        timeline: [],
-      };
+      return stubDetail();
     },
   };
 

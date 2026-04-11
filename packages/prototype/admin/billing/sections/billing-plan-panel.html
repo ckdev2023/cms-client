@@ -1,0 +1,266 @@
+<!--
+  Section: billing-plan-panel.html
+  Purpose: 案件收费计划节点列表 + 下一收款节点摘要 + 配置入口 + 空状态引导
+  Contract: P0-CONTRACT.md §7
+  Production target: features/billing/ui/BillingPlanPanel
+
+  DOM hooks: #billingPlanPanel, #billingPlanList, #billingPlanEmptyState,
+             #billingPlanCaseName, #billingPlanCaseNo, #billingPlanNextNode,
+             #billingPlanSummary, #btnConfigurePlan, #btnEditPlan, #btnClosePlan,
+             #billingPlanSettledState, #billingPlanSettledCaseNo, #billingPlanSettledCaseName,
+             #billingPlanSettledList, #billingPlanSettledTableBody,
+             #financialNoteContent, #billingPlanEmptyCaseName
+
+  Alignment:
+    - Node name / stage matches case detail billing tab "类型" column
+    - Status labels use BILLING_PLAN_STATUS from billing-config.js (due/partial/paid/overdue)
+    - Amount / due date fields align with case-detail-config.js billing.payments[] shape
+    - "下一收款节点" uses the same logic as billing table column 8 (§12.5)
+
+  demo-only: data is static from BillingDemoData.DEMO_BILLING_PLANS.
+-->
+
+<!-- Billing Plan Detail Panel — shown when a case row is clicked -->
+<div
+  id="billingPlanPanel"
+  class="apple-card overflow-hidden mt-6 hidden"
+  role="region"
+  aria-label="收费计划详情"
+>
+  <!-- Panel Header -->
+  <div class="px-4 md:px-6 py-4 border-b border-[var(--border)] flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <div>
+      <div class="flex items-center gap-2">
+        <h2 class="text-[15px] font-extrabold text-[var(--text)]">收费计划</h2>
+        <span class="chip text-[11px]" id="billingPlanCaseNo">CAS-2026-0181</span>
+      </div>
+      <div class="text-[13px] text-[var(--muted)] mt-0.5 font-semibold" id="billingPlanCaseName">高度人才 (HSP) 申请</div>
+    </div>
+    <div class="flex items-center gap-2">
+      <button
+        class="btn-secondary h-8 px-3 text-[13px]"
+        type="button"
+        id="btnEditPlan"
+        data-action="edit-billing-plan"
+      >编辑收费计划</button>
+      <button
+        class="icon-btn"
+        type="button"
+        id="btnClosePlan"
+        data-action="close-billing-plan"
+        aria-label="关闭收费计划面板"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Summary Row: Total / Received / Outstanding + Next Node -->
+  <div class="px-4 md:px-6 py-4 border-b border-[var(--border)] bg-[var(--surface-2)]" id="billingPlanSummary">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">总费用</div>
+        <div class="text-[16px] font-extrabold text-[var(--text)] mt-0.5" data-plan-summary="totalDue">¥ 350,000</div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--success)]">已收金额</div>
+        <div class="text-[16px] font-extrabold text-[var(--success)] mt-0.5" data-plan-summary="totalReceived">¥ 175,000</div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">未收金额</div>
+        <div class="text-[16px] font-extrabold text-[var(--primary)] mt-0.5" data-plan-summary="totalOutstanding">¥ 175,000</div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">下一收款节点</div>
+        <div class="text-[14px] font-extrabold text-[var(--text)] mt-0.5" id="billingPlanNextNode">尾款 (50%)</div>
+        <div class="text-[11px] text-[var(--muted)] font-semibold" id="billingPlanNextNodeDueDate">申请获批后 7 天内</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Node List Table -->
+  <div id="billingPlanList">
+    <table class="apple-table w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th>收费节点</th>
+          <th class="w-[120px] text-right">应收(¥)</th>
+          <th class="hidden md:table-cell w-[160px]">到期日</th>
+          <th class="w-[100px]">节点状态</th>
+        </tr>
+      </thead>
+      <tbody id="billingPlanTableBody">
+        <!-- Row 1: paid — 着手金 -->
+        <tr data-plan-node="node-001" data-plan-status="paid">
+          <td>
+            <div class="text-sm font-extrabold text-[var(--text)]">着手金 (50%)</div>
+          </td>
+          <td class="text-right font-medium">175,000</td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted)] font-semibold">2026/04/01</td>
+          <td>
+            <span class="tag tag-green">已回款</span>
+          </td>
+        </tr>
+        <!-- Row 2: due — 尾款 (next node indicator) -->
+        <tr data-plan-node="node-002" data-plan-status="due" class="bg-[rgba(3,105,161,0.04)]">
+          <td>
+            <div class="flex items-center gap-1.5">
+              <svg class="w-3.5 h-3.5 text-[var(--primary)] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+              </svg>
+              <div class="text-sm font-extrabold text-[var(--primary)]">尾款 (50%)</div>
+            </div>
+            <div class="text-[11px] text-[var(--primary)] font-semibold mt-0.5 ml-5">← 下一收款节点</div>
+          </td>
+          <td class="text-right font-medium">175,000</td>
+          <td class="hidden md:table-cell text-sm text-[var(--muted)] font-semibold">申请获批后 7 天内</td>
+          <td>
+            <span class="tag tag-orange">应收</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Panel Footer: link to case detail billing tab -->
+  <div class="px-4 md:px-6 py-3 border-t border-[var(--border)] flex items-center justify-between">
+    <div class="text-[12px] text-[var(--muted-2)] font-semibold">
+      查看完整收费信息请进入
+      <a href="../case/detail.html" class="text-[var(--primary)] hover:underline font-extrabold">案件详情 → 收费 Tab</a>
+    </div>
+    <div class="flex items-center gap-2">
+      <button class="text-[var(--primary)] text-[13px] font-extrabold hover:underline" type="button" data-action="register-payment-from-plan">登记回款</button>
+      <span class="text-[var(--border)]">|</span>
+      <button class="text-[var(--primary)] text-[13px] font-extrabold hover:underline" type="button" data-action="create-collection-from-plan">创建催款任务</button>
+    </div>
+  </div>
+
+  <!-- 财务备注（内部备注区域）— 规格 §3 核心区块 -->
+  <div class="px-4 md:px-6 py-4 border-t border-[var(--border)]">
+    <div class="flex items-center gap-2 mb-2">
+      <h3 class="text-[13px] font-extrabold text-[var(--text)]">财务备注</h3>
+      <span class="text-[11px] text-[var(--muted-2)] font-semibold bg-[var(--bg-secondary)] rounded px-1.5 py-0.5">内部备注 · 不对客户展示</span>
+    </div>
+    <!-- Demo: 只读区 + 编辑占位 -->
+    <div
+      id="financialNoteContent"
+      class="text-[13px] text-[var(--text)] font-semibold min-h-[40px] leading-relaxed bg-[var(--bg-secondary)] rounded-lg px-3 py-2 border border-[var(--border)] cursor-pointer hover:border-[var(--primary)] transition-colors"
+      title="点击编辑财务备注（演示）"
+      data-action="edit-financial-note"
+    >客户确认首付款于 4 月底前到账，已与负责人 Suzuki 确认。</div>
+    <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">最后编辑：Admin · 2026/04/08</div>
+  </div>
+</div>
+
+<!-- Billing Plan: Empty State (shown when a case has no billing plan) -->
+<div
+  id="billingPlanEmptyState"
+  class="apple-card overflow-hidden mt-6 hidden"
+  role="region"
+  aria-label="收费计划（空状态）"
+>
+  <div class="px-4 md:px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+    <div>
+      <h2 class="text-[15px] font-extrabold text-[var(--text)]">收费计划</h2>
+      <div class="text-[13px] text-[var(--muted)] mt-0.5 font-semibold" id="billingPlanEmptyCaseName"></div>
+    </div>
+    <button
+      class="icon-btn"
+      type="button"
+      data-action="close-billing-plan-empty"
+      aria-label="关闭收费计划面板"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+  <div class="py-12 text-center">
+    <svg class="w-12 h-12 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2v16z"></path>
+    </svg>
+    <p class="text-[15px] font-semibold text-[var(--muted)]">尚未配置收费计划</p>
+    <p class="text-[13px] text-[var(--muted-2)] mt-1 mb-4">请先为该案件配置收费节点与金额</p>
+    <button
+      class="btn-primary text-[13px] py-2 px-5"
+      type="button"
+      id="btnConfigurePlan"
+      data-action="configure-billing-plan"
+    >配置收费计划</button>
+  </div>
+</div>
+
+<!-- Billing Plan: All-Settled State (shown when all nodes are paid) -->
+<div
+  id="billingPlanSettledState"
+  class="apple-card overflow-hidden mt-6 hidden"
+  role="region"
+  aria-label="收费计划（已回款）"
+>
+  <div class="px-4 md:px-6 py-4 border-b border-[var(--border)] flex items-center justify-between">
+    <div>
+      <div class="flex items-center gap-2">
+        <h2 class="text-[15px] font-extrabold text-[var(--text)]">收费计划</h2>
+        <span class="chip text-[11px]" id="billingPlanSettledCaseNo"></span>
+      </div>
+      <div class="text-[13px] text-[var(--muted)] mt-0.5 font-semibold" id="billingPlanSettledCaseName"></div>
+    </div>
+    <button
+      class="icon-btn"
+      type="button"
+      data-action="close-billing-plan-settled"
+      aria-label="关闭收费计划面板"
+    >
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+      </svg>
+    </button>
+  </div>
+
+  <!-- Settled Summary -->
+  <div class="px-4 md:px-6 py-4 border-b border-[var(--border)] bg-[rgba(22,163,74,0.04)]">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">总费用</div>
+        <div class="text-[16px] font-extrabold text-[var(--text)] mt-0.5" data-settled-summary="totalDue"></div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--success)]">已收金额</div>
+        <div class="text-[16px] font-extrabold text-[var(--success)] mt-0.5" data-settled-summary="totalReceived"></div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">未收金额</div>
+        <div class="text-[16px] font-extrabold text-gray-400 mt-0.5" data-settled-summary="totalOutstanding">¥ 0</div>
+      </div>
+      <div>
+        <div class="text-[12px] font-semibold text-[var(--muted-2)]">下一收款节点</div>
+        <div class="text-[14px] font-extrabold text-gray-400 mt-0.5">无（已回款）</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settled Node List -->
+  <div id="billingPlanSettledList">
+    <table class="apple-table w-full text-left border-collapse">
+      <thead>
+        <tr>
+          <th>收费节点</th>
+          <th class="w-[120px] text-right">应收(¥)</th>
+          <th class="hidden md:table-cell w-[160px]">到期日</th>
+          <th class="w-[100px]">节点状态</th>
+        </tr>
+      </thead>
+      <tbody id="billingPlanSettledTableBody">
+      </tbody>
+    </table>
+  </div>
+
+  <div class="px-4 md:px-6 py-3 border-t border-[var(--border)]">
+    <div class="text-[12px] text-[var(--muted-2)] font-semibold">
+      查看完整收费信息请进入
+      <a href="../case/detail.html" class="text-[var(--primary)] hover:underline font-extrabold">案件详情 → 收费 Tab</a>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+<!--
+  section: filters-toolbar.html
+  3 filter selects (status / case / provider) + search + reset.
+  P0-CONTRACT §4: search + 3 filters + reset.
+
+  CSS:      documents.css (.filter-panel 家族)
+  DOM hooks: filtersToolbar, data-filter=status, data-filter=case, data-filter=provider,
+             docSearchInput, data-action=reset-filters
+  Production target: features/document/ui/DocumentListFilters
+-->
+<div class="apple-card filter-panel">
+  <div class="filter-panel__header">
+    <div>
+      <div class="filter-panel__title">组合筛选</div>
+      <p class="filter-panel__desc">可按状态、案件、由谁提供和关键词筛选，快速找到最需要处理的资料。</p>
+    </div>
+    <div class="filter-panel__helper">默认按状态优先级排序</div>
+  </div>
+  <div class="flex flex-wrap items-center gap-3" id="filtersToolbar">
+    <select class="apple-input text-sm" data-filter="status" aria-label="状态筛选">
+      <option value="">全部状态</option>
+      <option value="pending">未提出</option>
+      <option value="uploaded_reviewing">已提交待审核</option>
+      <option value="approved">通过</option>
+      <option value="rejected">退回</option>
+      <option value="expired">过期</option>
+      <option value="waived">无需提供</option>
+      <option value="waived">无需提供</option>
+    </select>
+    <select class="apple-input text-sm" data-filter="case" aria-label="所属案件筛选">
+      <option value="">全部案件</option>
+    </select>
+    <select class="apple-input text-sm" data-filter="provider" aria-label="由谁提供筛选">
+      <option value="">全部提供人</option>
+      <option value="main_applicant">主申请人</option>
+      <option value="guarantor">扶養者/保証人</option>
+      <option value="employer">受入机関/企業担当</option>
+      <option value="office">事務所内部</option>
+    </select>
+    <div class="search flex-1 min-w-[180px]" role="search">
+      <svg class="w-[16px] h-[16px] text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+      <input type="search" id="docSearchInput" placeholder="搜索：资料名称 / 案件编号 / 案件名称" aria-label="搜索资料" class="text-sm" />
+    </div>
+    <button class="btn-pill text-sm" type="button" data-action="reset-filters">重置</button>
+  </div>
+</div>

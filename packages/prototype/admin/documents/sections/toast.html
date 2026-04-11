@@ -1,0 +1,20 @@
+<!--
+  section: toast.html
+  Floating toast notification for document actions (approve/reject/remind/register/waive/reference/bulk/copy).
+  P0-CONTRACT §11: 11 toast scenarios.
+
+  Default state: hidden. Shown via JS showToast() and auto-hidden after timeout.
+
+  DOM hooks: toast, toastTitle, toastDesc
+  Production target: shared/ui/Toast
+  Gap: entirely new — legacy documents.html had no toast.
+-->
+<div
+  id="toast"
+  class="hidden fixed bottom-6 right-6 z-50 bg-[var(--surface)] border border-[var(--border)] rounded-2xl shadow-lg px-5 py-4 max-w-sm"
+  role="status"
+  aria-live="polite"
+>
+  <div class="text-[14px] font-extrabold text-[var(--text)]" id="toastTitle"></div>
+  <div class="text-[13px] text-[var(--muted)] mt-1 font-semibold" id="toastDesc"></div>
+</div>

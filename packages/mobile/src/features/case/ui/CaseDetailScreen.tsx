@@ -11,19 +11,24 @@ import {
   XStack,
   YStack,
 } from "@shared/ui";
+import type { CaseStage } from "@domain/case/Case";
 
 import { useCaseDetailViewModel } from "../model/useCaseDetailViewModel";
 
-const STATUS_PROGRESS: Record<string, number> = {
-  open: 20,
-  in_progress: 50,
-  review: 75,
-  completed: 100,
-  closed: 100,
+const STAGE_PROGRESS: Record<CaseStage, number> = {
+  S1: 10,
+  S2: 20,
+  S3: 35,
+  S4: 50,
+  S5: 65,
+  S6: 75,
+  S7: 85,
+  S8: 95,
+  S9: 100,
 };
 
 /**
- * 案件详情页面（UI 層）。
+ * 案件詳細ページ（UI 層）。
  *
  * @param props 组件参数
  * @param props.caseId 案件 ID
@@ -49,12 +54,12 @@ export function CaseDetailScreen(props: { caseId: string }) {
   }
 
   const { caseDetail } = state;
-  const progress = STATUS_PROGRESS[caseDetail.status] ?? 0;
+  const progress = STAGE_PROGRESS[caseDetail.stage] ?? 0;
 
   return (
     <Screen>
-      <TitleText>{caseDetail.caseTypeCode}</TitleText>
-      <BodyText>ステータス: {caseDetail.status}</BodyText>
+      <TitleText>{caseDetail.caseType}</TitleText>
+      <BodyText>ステージ: {caseDetail.stage}</BodyText>
 
       <YStack gap="$2">
         <Text>進捗</Text>
@@ -63,7 +68,9 @@ export function CaseDetailScreen(props: { caseId: string }) {
         </Progress>
       </YStack>
 
-      {caseDetail.dueAt && <BodyText>期限: {caseDetail.dueAt}</BodyText>}
+      {caseDetail.nextDeadlineDueAt && (
+        <BodyText>期限: {caseDetail.nextDeadlineDueAt}</BodyText>
+      )}
 
       <TitleText fontSize="$5">書類</TitleText>
       {caseDetail.documents.map((doc) => (

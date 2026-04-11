@@ -1,0 +1,342 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit-manifest.schema.json",
+  "title": "Audit Manifest",
+  "description": "拆分前全局状态审计的唯一权威清单。记录外部全局变量、DOM ref、session key、liveState、初始化序列和亲和标签。提取型字段绑定源码指纹，未分类项必须进入 unknowns/waivers。",
+
+  "$defs": {
+    "provenance": {
+      "type": "string",
+      "enum": ["extracted", "inferred"],
+      "description": "extracted = 静态扫描提取，绑定 sourceInputs 指纹；inferred = AI 判断补写"
+    },
+    "sourceInput": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "scannedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string", "enum": ["blocking", "non-blocking"], "default": "non-blocking" },
+        "relatedFields": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "waiver": {
+      "type": "object",
+      "required": ["id", "description", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "reason": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "phaseRecord": {
+      "type": "object",
+      "properties": {
+        "completedAt": { "type": "string", "format": "date-time" },
+        "result": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "externalGlobal": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": { "type": "string", "description": "全局变量名（如 DETAIL_TABS）" },
+        "declaredIn": { "type": "string", "description": "声明文件路径" },
+        "firstRefLine": { "type": "integer", "minimum": 1 },
+        "type": { "type": "string", "description": "TypeScript 风格类型描述" },
+        "readSites": { "type": "array", "items": { "type": "string" }, "description": "读取函数/位置" },
+        "writeSites": { "type": "array", "items": { "type": "string" }, "description": "写入函数/位置" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "iifeConstant": {
+      "type": "object",
+      "required": ["name", "purpose"],
+      "properties": {
+        "name": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "value": { "type": "string", "description": "常量值或简述" },
+        "purpose": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "domReference": {
+      "type": "object",
+      "required": ["variable", "selector"],
+      "properties": {
+        "variable": { "type": "string", "description": "代码中的变量名" },
+        "line": { "type": "integer", "minimum": 1 },
+        "selector": { "type": "string", "description": "DOM 选择器或 ID" },
+        "consumers": { "type": "array", "items": { "type": "string" }, "description": "跨函数消费者" },
+        "group": { "type": "string", "description": "功能分组（如 tab-navigation, risk-modal, header-actions）" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "sessionKey": {
+      "type": "object",
+      "required": ["key", "access"],
+      "properties": {
+        "constant": { "type": "string", "description": "引用此 key 的代码常量名" },
+        "key": { "type": "string", "description": "实际 sessionStorage key 字符串" },
+        "access": { "type": "string", "enum": ["read", "write", "read-write"] },
+        "writers": { "type": "array", "items": { "type": "string" } },
+        "readers": { "type": "array", "items": { "type": "string" } },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "urlParam": {
+      "type": "object",
+      "required": ["param", "reader"],
+      "properties": {
+        "param": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "reader": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "liveStateField": {
+      "type": "object",
+      "required": ["field", "type"],
+      "properties": {
+        "field": { "type": "string" },
+        "type": { "type": "string", "description": "TypeScript 风格类型" },
+        "deepCloned": { "type": "boolean", "default": false },
+        "purpose": { "type": "string" },
+        "mutators": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "修改此字段的函数名"
+        },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "helperFunction": {
+      "type": "object",
+      "required": ["name", "signature", "category"],
+      "properties": {
+        "name": { "type": "string" },
+        "line": { "type": "integer", "minimum": 1 },
+        "signature": { "type": "string", "description": "如 (id, val) → void" },
+        "category": {
+          "type": "string",
+          "enum": [
+            "dom-helper",
+            "css-helper",
+            "session-url",
+            "tab-management",
+            "toast",
+            "renderer",
+            "document-renderer",
+            "state-management",
+            "stage-action",
+            "utility"
+          ]
+        },
+        "callSiteCount": { "type": "integer", "minimum": 0 },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "eventListener": {
+      "type": "object",
+      "required": ["event", "selector", "domain"],
+      "properties": {
+        "event": { "type": "string", "description": "事件类型（click/change/hashchange）" },
+        "line": { "type": "integer", "minimum": 1 },
+        "selector": { "type": "string", "description": "代理选择器或目标 ID" },
+        "domain": { "type": "string", "description": "业务领域（如 tabs, risk-modal, documents）" },
+        "isDelegated": { "type": "boolean", "default": false, "description": "是否 document 级事件代理" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "initStep": {
+      "type": "object",
+      "required": ["order", "description"],
+      "properties": {
+        "order": { "type": "integer", "minimum": 1 },
+        "call": { "type": "string", "description": "调用的函数或表达式" },
+        "description": { "type": "string" },
+        "dependsOn": { "type": "array", "items": { "type": "integer" }, "description": "前置步骤序号" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "affinityTag": {
+      "type": "object",
+      "required": ["tag", "symbols"],
+      "properties": {
+        "tag": {
+          "type": "string",
+          "description": "亲和分组标签（如 runtime/tabs/renderers/documents/stage-actions/boot）"
+        },
+        "symbols": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "属于此分组的函数/变量/常量名"
+        },
+        "targetFile": {
+          "type": "string",
+          "description": "建议归属的目标脚本文件（如 scripts/case-detail-runtime.js）"
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "artifactVersion",
+    "moduleId",
+    "entryFile",
+    "sourceInputs",
+    "externalGlobals",
+    "domReferences",
+    "liveState",
+    "helperFunctions",
+    "initSequence",
+    "affinityTags"
+  ],
+  "properties": {
+    "artifactVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema 版本号"
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$"
+    },
+    "entryFile": { "type": "string" },
+    "sourceScript": {
+      "type": "string",
+      "description": "被审计的原始脚本文件路径"
+    },
+    "sourceLineCount": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "原始脚本行数，用于规模参考"
+    },
+
+    "phase": {
+      "type": "object",
+      "properties": {
+        "current": {
+          "type": "string",
+          "enum": ["init", "audit", "boundary", "review", "execute", "closeout"]
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "init": { "$ref": "#/$defs/phaseRecord" },
+            "audit": { "$ref": "#/$defs/phaseRecord" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceInputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceInput" },
+      "minItems": 1,
+      "description": "被扫描的源文件及指纹，extracted 字段的真相源"
+    },
+
+    "externalGlobals": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/externalGlobal" },
+      "description": "从 window 读取的外部配置全局变量"
+    },
+    "iifeConstants": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/iifeConstant" },
+      "description": "IIFE 作用域级常量"
+    },
+    "domReferences": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/domReference" },
+      "description": "IIFE 作用域级 DOM 缓存变量"
+    },
+    "sessionStorage": {
+      "type": "object",
+      "properties": {
+        "keys": { "type": "array", "items": { "$ref": "#/$defs/sessionKey" } },
+        "urlParams": { "type": "array", "items": { "$ref": "#/$defs/urlParam" } },
+        "helpers": { "type": "array", "items": { "$ref": "#/$defs/helperFunction" } }
+      },
+      "additionalProperties": false
+    },
+    "liveState": {
+      "type": "object",
+      "required": ["fields"],
+      "properties": {
+        "initFunction": { "type": "string", "description": "初始化函数名（如 initLiveState）" },
+        "fields": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/liveStateField" },
+          "minItems": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "helperFunctions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/helperFunction" },
+      "description": "按 category 分类的辅助函数清单"
+    },
+    "eventListeners": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/eventListener" },
+      "description": "document 级和元素级事件监听器"
+    },
+    "initSequence": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/initStep" },
+      "minItems": 1,
+      "description": "初始化执行顺序"
+    },
+    "affinityTags": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/affinityTag" },
+      "minItems": 1,
+      "description": "边界标注前的亲和分组预分类"
+    },
+
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" },
+      "description": "未分类项，禁止默认空值过关"
+    },
+    "waivers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/waiver" },
+      "description": "已显式确认的例外项"
+    }
+  },
+  "additionalProperties": false
+}

@@ -4,6 +4,7 @@ import React from "react";
 import { AppContainerProvider } from "@app/container/AppContainerContext";
 import type { AppContainer } from "@app/container/AppContainer";
 import type { DocumentRepository } from "@domain/documents/DocumentRepository";
+import type { DocumentRequirement } from "@domain/documents/UserDocument";
 import type { HttpClient } from "@infra/http/HttpClient";
 import type { Logger } from "@infra/log/Logger";
 import type { KVStorage } from "@infra/storage/KVStorage";
@@ -25,9 +26,59 @@ class NoopStorage implements KVStorage {
   async delete() {}
 }
 
-function createTestContainer(
-  documentRepository: DocumentRepository,
-): AppContainer {
+function stubRequirement(
+  overrides?: Partial<DocumentRequirement>,
+): DocumentRequirement {
+  return {
+    id: "req-1",
+    caseId: "case-1",
+    category: "客户資料",
+    itemName: "パスポート",
+    itemCode: "passport",
+    requiredFlag: true,
+    providedByRole: null,
+    assigneeUserId: null,
+    dueDate: null,
+    status: "waiting_upload",
+    clientVisibleFlag: true,
+    clientActionRequired: true,
+    latestVersionId: null,
+    reviewCommentLatest: null,
+    createdAt: "2026-04-01T00:00:00.000Z",
+    updatedAt: "2026-04-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function stubRepo(
+  requirements: DocumentRequirement[] = [],
+): DocumentRepository {
+  return {
+    async listRequirements() {
+      return requirements;
+    },
+    async getRequirementVersions() {
+      return [];
+    },
+    async registerVersion() {
+      return {} as never;
+    },
+    async listMyDocuments() {
+      return [];
+    },
+    async uploadDocument() {
+      return {} as never;
+    },
+    async getDownloadUrl() {
+      return "";
+    },
+    async reviewFileVersion() {
+      return {} as never;
+    },
+  };
+}
+
+function createTestContainer(repo: DocumentRepository): AppContainer {
   return {
     logger: new NoopLogger(),
     httpClient: {} as unknown as HttpClient,
@@ -38,7 +89,7 @@ function createTestContainer(
     authRepository: {} as never,
     caseRepository: {} as never,
     inboxRepository: {} as never,
-    documentRepository,
+    documentRepository: repo,
     profileRepository: {} as never,
   };
 }
@@ -53,33 +104,16 @@ function makeWrapper(repo: DocumentRepository) {
   };
 }
 
-test("load documents success", async () => {
-  const repo: DocumentRepository = {
-    async listMyDocuments() {
-      return [
-        {
-          id: "d1",
-          fileName: "passport.pdf",
-          docType: "passport",
-          status: "received",
-          uploadedAt: "2026-04-01",
-        },
-      ];
-    },
-    async uploadDocument() {
-      return {
-        id: "d2",
-        fileName: "f",
-        docType: "g",
-        status: "pending",
-        uploadedAt: "",
-        fileKey: "k",
-      };
-    },
-    async getDownloadUrl() {
-      return "https://example.com";
-    },
-  };
+test("load requirements success with completion rate", async () => {
+  const reqs = [
+    stubRequirement({ id: "r1", status: "approved", requiredFlag: true }),
+    stubRequirement({
+      id: "r2",
+      status: "waiting_upload",
+      requiredFlag: true,
+    }),
+  ];
+  const repo = stubRepo(reqs);
 
   const { result } = renderHook(() => useDocumentListViewModel(), {
     wrapper: makeWrapper(repo),
@@ -90,27 +124,16 @@ test("load documents success", async () => {
   });
 
   if (result.current.state.status === "success") {
-    expect(result.current.state.documents).toHaveLength(1);
+    expect(result.current.state.requirements).toHaveLength(2);
+    expect(result.current.state.completion.rate).toBe(0.5);
   }
 });
 
-test("load documents error", async () => {
+test("load requirements error", async () => {
   const repo: DocumentRepository = {
-    async listMyDocuments() {
+    ...stubRepo(),
+    async listRequirements() {
       throw new AppError({ code: "NETWORK", message: "fail" });
-    },
-    async uploadDocument() {
-      return {
-        id: "d2",
-        fileName: "f",
-        docType: "g",
-        status: "pending",
-        uploadedAt: "",
-        fileKey: "k",
-      };
-    },
-    async getDownloadUrl() {
-      return "";
     },
   };
 
@@ -124,5 +147,27 @@ test("load documents error", async () => {
 
   if (result.current.state.status === "error") {
     expect(result.current.state.error.code).toBe("NETWORK");
+  }
+});
+
+test("sorts by status priority (uploaded_reviewing first)", async () => {
+  const reqs = [
+    stubRequirement({ id: "r1", status: "approved" }),
+    stubRequirement({ id: "r2", status: "uploaded_reviewing" }),
+    stubRequirement({ id: "r3", status: "waiting_upload" }),
+  ];
+  const repo = stubRepo(reqs);
+
+  const { result } = renderHook(() => useDocumentListViewModel(), {
+    wrapper: makeWrapper(repo),
+  });
+
+  await waitFor(() => {
+    expect(result.current.state.status).toBe("success");
+  });
+
+  if (result.current.state.status === "success") {
+    expect(result.current.state.requirements[0]?.id).toBe("r2");
+    expect(result.current.state.requirements[2]?.id).toBe("r1");
   }
 });

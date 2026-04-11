@@ -5,13 +5,13 @@ import type { DocumentRepository } from "@domain/documents/DocumentRepository";
 import { createDocumentApi } from "./DocumentApi";
 
 /**
- * 创建 DocumentRepository 的数据层实现。
+ * DocumentRepository のデータ層実装を生成する。
  *
- * @param deps 依赖集合
- * @param deps.httpClient HTTP 客户端
- * @param deps.storage KV 存储
- * @param deps.baseUrl API 基础 URL
- * @returns DocumentRepository 实例
+ * @param deps - 依存オブジェクト
+ * @param deps.httpClient - HTTP クライアント
+ * @param deps.storage - KV ストレージ
+ * @param deps.baseUrl - API ベース URL
+ * @returns DocumentRepository 実装
  */
 export function createDocumentRepository(deps: {
   httpClient: HttpClient;
@@ -25,9 +25,10 @@ export function createDocumentRepository(deps: {
   });
 
   return {
-    async listMyDocuments(filters) {
-      return api.listDocuments(filters);
-    },
+    listRequirements: (filters) => api.listRequirements(filters),
+    getRequirementVersions: (id) => api.getRequirementVersions(id),
+    registerVersion: (input) => api.registerVersion(input),
+    listMyDocuments: (filters) => api.listDocuments(filters),
     async uploadDocument(file, metadata) {
       return api.uploadDocument({
         fileName: file.fileName,
@@ -38,8 +39,8 @@ export function createDocumentRepository(deps: {
         appUserId: "self",
       });
     },
-    async getDownloadUrl(docId) {
-      return api.getDownloadUrl(docId);
-    },
+    getDownloadUrl: (docId) => api.getDownloadUrl(docId),
+    reviewFileVersion: (versionId, decision, comment) =>
+      api.reviewFileVersion(versionId, decision, comment),
   };
 }

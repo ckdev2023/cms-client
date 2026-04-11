@@ -1,0 +1,60 @@
+<!--
+  section: register-document-modal.html
+  "登记资料（本地归档）" modal with 5 form fields.
+  P0-CONTRACT §8.1: form fields, relative_path validation, button enable logic.
+
+  Required fields: 关联案件 + 关联资料项 + relative_path
+  Optional fields: 文件名/描述 (auto-derived from path tail)
+  Auto fields: 版本号 (system auto-increment, readonly)
+
+  DOM hooks: registerDocModal, registerCaseSelect, registerDocItemSelect,
+             registerRelativePath, registerPathHint, registerPathError,
+             registerFileName, registerVersion, registerConfirmBtn,
+             data-action=close-register-modal
+  Production target: features/document/ui/RegisterDocumentModal
+  Gap: legacy had drag-drop upload modal; replaced with relative_path registration.
+-->
+<div class="modal-backdrop" id="registerDocModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 520px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]">登记资料（本地归档）</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-register-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4 overflow-y-auto" style="max-height: 60vh;">
+      <div>
+        <label class="apple-label">关联案件 <span class="text-red-500">*</span></label>
+        <select class="apple-input appearance-none bg-white" id="registerCaseSelect">
+          <option value="" disabled selected>请选择案件</option>
+        </select>
+      </div>
+      <div>
+        <label class="apple-label">关联资料 <span class="text-red-500">*</span></label>
+        <select class="apple-input appearance-none bg-white" id="registerDocItemSelect" disabled>
+          <option value="" disabled selected>请先选择案件</option>
+        </select>
+        <p class="text-[11px] text-[var(--muted-2)] mt-1">这里只显示当前还需要处理的资料。</p>
+      </div>
+      <div>
+        <label class="apple-label">归档位置 <span class="text-red-500">*</span></label>
+        <input type="text" class="apple-input font-mono text-[13px]" id="registerRelativePath" placeholder="例如：A2026-001/main_applicant/passport/20260409_passport.pdf" />
+        <p class="text-[11px] text-[var(--muted-2)] mt-1" id="registerPathHint">填写这份资料在事务所电脑中的文件夹位置；通常从案件编号开始填写即可。</p>
+        <p class="text-[11px] text-red-500 mt-1 hidden" id="registerPathError">请填写正确的归档位置，不要以 / 或 ~ 开头，也不要包含 ..</p>
+      </div>
+      <div>
+        <label class="apple-label">资料说明</label>
+        <input type="text" class="apple-input" id="registerFileName" placeholder="例如：护照首页、在留卡正反面、2026-04 更新版课税证明" />
+        <p class="text-[11px] text-[var(--muted-2)] mt-1">用于事务所内部识别这份资料；如不填写，可从归档路径自动带出文件名。</p>
+      </div>
+      <div>
+        <label class="apple-label">版本号</label>
+        <input type="text" class="apple-input bg-[var(--surface-2)] cursor-not-allowed" id="registerVersion" value="v1（系统自动递增）" readonly />
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-register-modal">取消</button>
+      <button class="btn-primary px-5" type="button" id="registerConfirmBtn" disabled>登记</button>
+    </div>
+  </div>
+</div>

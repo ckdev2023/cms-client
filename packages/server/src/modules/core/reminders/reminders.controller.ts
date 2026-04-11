@@ -22,20 +22,26 @@ type HttpRequest = {
 };
 
 type CreateReminderBody = {
-  entityType: unknown;
-  entityId: unknown;
-  scheduledAt: unknown;
-  payload?: unknown;
+  targetType: unknown;
+  targetId: unknown;
+  remindAt: unknown;
+  caseId?: unknown;
+  recipientType?: unknown;
+  recipientId?: unknown;
+  channel?: unknown;
+  dedupeKey?: unknown;
+  payloadSnapshot?: unknown;
 };
 
 type UpdateReminderBody = {
-  scheduledAt?: unknown;
-  payload?: unknown;
+  remindAt?: unknown;
+  payloadSnapshot?: unknown;
 };
 
 type ListRemindersQuery = {
-  status?: unknown;
-  entityType?: unknown;
+  sendStatus?: unknown;
+  targetType?: unknown;
+  caseId?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -66,16 +72,6 @@ function parseOptionalISODate(
   return parseISODate(value, field);
 }
 
-function parseEntityType(value: unknown): string {
-  const str = requireString(value, "entityType");
-  if (str !== "case" && str !== "document_item") {
-    throw new BadRequestException(
-      "Invalid entityType, must be 'case' or 'document_item'",
-    );
-  }
-  return str;
-}
-
 function parseOptionalString(
   value: unknown,
   field: string,
@@ -86,7 +82,7 @@ function parseOptionalString(
 
 function parsePage(value: unknown): number | undefined {
   if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
+  const n = Number(value);
   if (!Number.isFinite(n)) throw new BadRequestException("Invalid page");
   const i = Math.floor(n);
   if (i < 1) throw new BadRequestException("Invalid page");
@@ -95,7 +91,7 @@ function parsePage(value: unknown): number | undefined {
 
 function parseLimit(value: unknown): number | undefined {
   if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
+  const n = Number(value);
   if (!Number.isFinite(n)) throw new BadRequestException("Invalid limit");
   const i = Math.floor(n);
   if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
@@ -110,11 +106,11 @@ function parsePayload(
   if (typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
   }
-  throw new BadRequestException("Invalid payload");
+  throw new BadRequestException("Invalid payloadSnapshot");
 }
 
 /**
- * Reminders CRUD 接口。
+ * Reminders CRUD 接口（P0 对齐）。
  */
 @Controller("reminders")
 export class RemindersController {
@@ -140,10 +136,15 @@ export class RemindersController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.remindersService.create(ctx, {
-      entityType: parseEntityType(body.entityType),
-      entityId: requireString(body.entityId, "entityId"),
-      scheduledAt: parseISODate(body.scheduledAt, "scheduledAt"),
-      payload: parsePayload(body.payload) ?? null,
+      targetType: requireString(body.targetType, "targetType"),
+      targetId: requireString(body.targetId, "targetId"),
+      remindAt: parseISODate(body.remindAt, "remindAt"),
+      caseId: parseOptionalString(body.caseId, "caseId"),
+      recipientType: parseOptionalString(body.recipientType, "recipientType"),
+      recipientId: parseOptionalString(body.recipientId, "recipientId"),
+      channel: parseOptionalString(body.channel, "channel"),
+      dedupeKey: parseOptionalString(body.dedupeKey, "dedupeKey"),
+      payloadSnapshot: parsePayload(body.payloadSnapshot) ?? null,
     });
   }
 
@@ -160,8 +161,9 @@ export class RemindersController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.remindersService.list(ctx, {
-      status: parseOptionalString(query.status, "status"),
-      entityType: parseOptionalString(query.entityType, "entityType"),
+      sendStatus: parseOptionalString(query.sendStatus, "sendStatus"),
+      targetType: parseOptionalString(query.targetType, "targetType"),
+      caseId: parseOptionalString(query.caseId, "caseId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
@@ -216,13 +218,13 @@ export class RemindersController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.remindersService.update(ctx, id, {
-      scheduledAt: parseOptionalISODate(body.scheduledAt, "scheduledAt"),
-      payload: parsePayload(body.payload),
+      remindAt: parseOptionalISODate(body.remindAt, "remindAt"),
+      payloadSnapshot: parsePayload(body.payloadSnapshot),
     });
   }
 
   /**
-   * 取消提醒（软删除：status → cancelled）。
+   * 取消提醒（send_status → canceled）。
    * @param req HTTP 请求对象
    * @param id 提醒 ID
    * @returns 操作结果

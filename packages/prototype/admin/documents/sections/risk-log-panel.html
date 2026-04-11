@@ -1,0 +1,61 @@
+<!--
+  section: risk-log-panel.html
+  Shared version expiry risk slide-over panel.
+  P0-CONTRACT §9: expiry cascading rules, aggregated risk display.
+
+  Shows expired version info, affected case list, suggested actions.
+  Default state: hidden. Shown via JS when shared expiry card is clicked.
+  Rendered outside <main> as a slide-over dialog.
+
+  DOM hooks: riskLogPanel, riskLogBody, riskLogEmpty, data-action=close-risk-panel
+  Production target: features/document/ui/SharedExpiryRiskPanel
+  Gap: entirely new — legacy prototype had no risk panel.
+-->
+<div id="riskLogPanel" class="hidden fixed inset-0 z-50 flex justify-end" role="dialog" aria-modal="true" aria-label="共用资料到期影响">
+  <div class="absolute inset-0 bg-black/30" data-action="close-risk-panel"></div>
+  <div class="relative bg-[var(--surface)] w-full max-w-lg shadow-lg border-l border-[var(--border)] flex flex-col h-full">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center flex-shrink-0">
+      <div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">共用资料到期影响</h3>
+        <p class="text-[12px] text-[var(--muted-2)] mt-0.5">同一份资料被多个案件使用，且已过期或即将过期。</p>
+      </div>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-risk-panel">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-6 space-y-6" id="riskLogBody">
+      <div class="apple-card p-4 border-l-[3px] border-l-[var(--danger)]">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0 mt-0.5">
+            <svg class="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-[var(--text)]">課税証明書 — v1</p>
+            <p class="text-[12px] text-red-600 font-semibold mt-0.5">已过期（有效期至 2026-03-31）</p>
+            <div class="mt-3 space-y-1.5">
+              <p class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wider">受影响案件</p>
+              <div class="space-y-1">
+                <a href="../case/detail.html" class="block text-[13px] text-[var(--primary)] hover:underline font-semibold">CAS-2026-0156 家族滞在 (李明)</a>
+                <a href="../case/detail.html" class="block text-[13px] text-[var(--primary)] hover:underline font-semibold">CAS-2026-0204 就労签证 (陈某)</a>
+              </div>
+            </div>
+            <div class="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+              <p class="text-[12px] text-amber-800 font-semibold">
+                <svg class="w-3.5 h-3.5 inline-block mr-1 -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                建议操作：请联系相关提供人补交最新版本，或先确认这份资料是否仍在有效期内。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="hidden py-12 text-center" id="riskLogEmpty">
+        <svg class="w-12 h-12 mx-auto text-green-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <p class="text-[15px] font-semibold text-[var(--muted)]">暂无共用资料到期影响</p>
+        <p class="text-[13px] text-[var(--muted-2)] mt-1">当前所有被多个案件共用的资料都还在有效期内</p>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t border-[var(--border)] flex-shrink-0">
+      <button class="btn-secondary w-full text-center" type="button" data-action="close-risk-panel">关闭</button>
+    </div>
+  </div>
+</div>

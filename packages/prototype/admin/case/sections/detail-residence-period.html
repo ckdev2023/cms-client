@@ -1,0 +1,151 @@
+<!-- Content: Tab 在留期间 — 6字段录入、续签提醒任务配置（180/90/30天）、失败兜底提示 -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- 主栏 -->
+  <div class="lg:col-span-2 space-y-4">
+
+    <!-- 在留期间录入卡 -->
+    <div class="apple-card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-[var(--fg)]">在留期间录入</h3>
+        <span id="res-recorded-badge" class="badge badge-gray text-xs px-2 py-0.5 rounded-full">待录入</span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">入境日期 <span class="text-red-500">*</span></label>
+          <input id="res-entry-date" type="date"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">在留期间开始日 <span class="text-red-500">*</span></label>
+          <input id="res-start-date" type="date"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">在留期间到期日 <span class="text-red-500">*</span></label>
+          <input id="res-end-date" type="date"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]"
+            oninput="calcResidencePeriod()" />
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">在留期间（自动计算）</label>
+          <input id="res-period" type="text" readonly placeholder="填入开始/到期日后自动计算"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface-alt)] px-3 py-2 text-sm text-[var(--fg-muted)] cursor-default" />
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">在留卡番号 <span class="text-red-500">*</span></label>
+          <input id="res-zairyu-card" type="text" placeholder="例如：AB12345678"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">日本住所 <span class="text-red-500">*</span></label>
+          <input id="res-address" type="text" placeholder="例如：東京都新宿区西新宿 2-8-1"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+        </div>
+      </div>
+
+      <div class="mt-4">
+        <label class="block text-xs text-[var(--fg-muted)] mb-1">备注</label>
+        <input id="res-note" type="text" placeholder="其他说明（如：在留卡补发、住所变更等）"
+          class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+      </div>
+
+      <div class="mt-5 flex gap-2 justify-end">
+        <button type="button" class="btn btn-primary text-sm px-4 py-2"
+          onclick="alert('（示例）在留期间已保存，续签提醒任务已自动创建，可执行成功归档至 S9')">
+          保存并创建续签提醒
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /主栏 -->
+
+  <!-- 侧边栏：续签提醒任务配置 -->
+  <div class="space-y-4">
+
+    <!-- 续签提醒配置 -->
+    <div class="apple-card p-4">
+      <h4 class="text-sm font-semibold text-[var(--fg)] mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4 text-[var(--primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        续签提醒任务配置
+      </h4>
+      <p class="text-xs text-[var(--fg-muted)] mb-4">录入在留期间后，系统将自动在以下时间点创建提醒任务：</p>
+      <div id="renewal-reminders-list" class="space-y-3">
+        <!-- JS 动态渲染 -->
+        <div class="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--surface-alt)]">
+          <div>
+            <span class="font-medium text-[var(--fg)]">180 天前</span>
+            <p class="text-xs text-[var(--fg-muted)]">续签预警（6 个月前）</p>
+          </div>
+          <span id="reminder-180-status" class="badge badge-gray text-xs">待创建</span>
+        </div>
+        <div class="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--surface-alt)]">
+          <div>
+            <span class="font-medium text-[var(--fg)]">90 天前</span>
+            <p class="text-xs text-[var(--fg-muted)]">续签催办（3 个月前）</p>
+          </div>
+          <span id="reminder-90-status" class="badge badge-gray text-xs">待创建</span>
+        </div>
+        <div class="flex items-center justify-between text-sm p-2 rounded-lg bg-[var(--surface-alt)]">
+          <div>
+            <span class="font-medium text-[var(--fg)]">30 天前</span>
+            <p class="text-xs text-[var(--fg-muted)]">续签紧急提醒（1 个月前）</p>
+          </div>
+          <span id="reminder-30-status" class="badge badge-gray text-xs">待创建</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 兜底提示 -->
+    <div class="apple-card p-4 border border-orange-200 bg-orange-50">
+      <h4 class="text-sm font-semibold text-orange-700 mb-2 flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+        提醒任务失败兜底
+      </h4>
+      <ul class="text-xs text-orange-700 space-y-1 list-disc list-inside">
+        <li>若自动任务创建失败，系统将在次日重试并发送内部告警</li>
+        <li>可手动在「任务」Tab 中新增续签提醒任务</li>
+        <li>续签到期前若无任何活跃任务，系统将每周发送警告邮件</li>
+      </ul>
+    </div>
+
+    <!-- 在留期间预览 -->
+    <div class="apple-card p-4">
+      <h4 class="text-sm font-semibold text-[var(--fg)] mb-3">在留期间预览</h4>
+      <div id="res-preview" class="space-y-2 text-sm text-[var(--fg-muted)]">
+        <div class="flex justify-between"><span>入境日</span><span id="prev-entry" class="text-[var(--fg)]">—</span></div>
+        <div class="flex justify-between"><span>在留开始</span><span id="prev-start" class="text-[var(--fg)]">—</span></div>
+        <div class="flex justify-between"><span>在留到期</span><span id="prev-end" class="text-[var(--fg)] font-medium">—</span></div>
+        <div class="flex justify-between"><span>在留期间</span><span id="prev-period" class="text-[var(--fg)] font-semibold">—</span></div>
+        <div class="flex justify-between"><span>在留卡番号</span><span id="prev-card" class="text-[var(--fg)]">—</span></div>
+      </div>
+    </div>
+
+  </div><!-- /侧边栏 -->
+
+</div>
+
+<script>
+function calcResidencePeriod() {
+  var startEl = document.getElementById('res-start-date');
+  var endEl   = document.getElementById('res-end-date');
+  var outEl   = document.getElementById('res-period');
+  if (!startEl || !endEl || !outEl) return;
+  var start = new Date(startEl.value);
+  var end   = new Date(endEl.value);
+  if (isNaN(start) || isNaN(end) || end <= start) { outEl.value = '—'; return; }
+  var months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+  outEl.value = months >= 12 ? Math.round(months / 12) + '年' : months + '个月';
+  // update preview
+  var prevEnd = document.getElementById('prev-end');
+  var prevPeriod = document.getElementById('prev-period');
+  if (prevEnd)    prevEnd.textContent = endEl.value;
+  if (prevPeriod) prevPeriod.textContent = outEl.value;
+}
+</script>
+

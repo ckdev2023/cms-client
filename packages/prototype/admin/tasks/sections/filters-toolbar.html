@@ -1,0 +1,68 @@
+<!--
+  section: filters-toolbar.html
+  4 filter selects (status / deadline range / owner / group) + search + reset.
+  P0 CONTRACT §2: search + 4 filters + reset.
+
+  Gap: this section is entirely new — the legacy tasks.html had no filter toolbar.
+  Search placeholder: "搜索：任务名称 / 案件编号 / 责任人"
+  Filter options sourced from tasks-config.js (TASK_STATUS_OPTIONS, FILTERS, etc.)
+
+  Rendered above the task table in the right content column.
+-->
+<div class="flex flex-col gap-3 mb-6" id="filtersToolbar">
+  <div class="flex flex-wrap justify-between items-center gap-3">
+    <div class="flex flex-wrap items-center gap-2">
+      <select
+        class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]"
+        data-filter="status"
+      >
+        <option value="" selected>完成状态：全部</option>
+        <option value="todo">待处理</option>
+        <option value="doing">进行中</option>
+        <option value="done">已完成</option>
+        <option value="canceled">已取消</option>
+      </select>
+
+      <select
+        class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]"
+        data-filter="deadline"
+      >
+        <option value="" selected>截止范围：全部</option>
+        <option value="today">今日到期</option>
+        <option value="overdue">已逾期</option>
+      </select>
+
+      <select
+        class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]"
+        data-filter="owner"
+      >
+        <option value="" selected>责任人：全部</option>
+        <option value="admin">Admin</option>
+        <option value="tom">Tom</option>
+        <option value="assistant-a">助理 A</option>
+      </select>
+
+      <select
+        class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]"
+        data-filter="group"
+      >
+        <option value="" selected>所属 Group：全部</option>
+        <option value="tokyo-1">東京一組</option>
+        <option value="tokyo-2">東京二組</option>
+        <option value="osaka">大阪組</option>
+      </select>
+
+      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" data-action="reset-filters">重置</button>
+    </div>
+
+    <div class="relative">
+      <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+      <input
+        type="text"
+        placeholder="搜索：任务名称 / 案件编号 / 责任人"
+        class="search-input"
+        id="taskSearchInput"
+      />
+    </div>
+  </div>
+</div>

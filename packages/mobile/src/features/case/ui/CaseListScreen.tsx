@@ -15,10 +15,10 @@ import type { CaseSummary } from "@domain/case/Case";
 import { useCaseListViewModel } from "../model/useCaseListViewModel";
 
 /**
- * 案件列表页面（UI 层）。
+ * 案件列表页面（UI 層）。
  *
  * @param props 组件参数
- * @param props.onSelect 选中案件回调
+ * @param props.onSelect 選択案件回调
  * @returns React 元素
  */
 export function CaseListScreen(props: { onSelect?: (caseId: string) => void }) {
@@ -55,9 +55,11 @@ export function CaseListScreen(props: { onSelect?: (caseId: string) => void }) {
             pressStyle={{ opacity: 0.7 }}
             onPress={() => props.onSelect?.(item.id)}
           >
-            <Text fontWeight="600">{item.caseTypeCode}</Text>
-            <BodyText>ステータス: {item.status}</BodyText>
-            {item.dueAt && <BodyText>期限: {item.dueAt}</BodyText>}
+            <Text fontWeight="600">{item.caseType}</Text>
+            <BodyText>ステージ: {item.stage}</BodyText>
+            {item.nextDeadlineDueAt && (
+              <BodyText>期限: {item.nextDeadlineDueAt}</BodyText>
+            )}
           </YStack>
         )}
         ListEmptyComponent={

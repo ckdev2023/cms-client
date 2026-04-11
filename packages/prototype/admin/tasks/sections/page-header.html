@@ -1,0 +1,20 @@
+<!--
+  section: page-header.html
+  Page header: title + subtitle + "新建任务" primary CTA.
+  Rendered inside <main> as the first section.
+
+  Subtitle corrected from legacy "个人代办" to align with module goal:
+  "统一管理个人和团队的待办任务与到期提醒，驱动案件流转"
+-->
+<div class="flex justify-between items-end mb-8">
+  <div>
+    <h1 class="text-3xl display-font font-semibold">任务与提醒</h1>
+    <p class="text-sm text-[var(--muted)] mt-1">管理待办任务与到期提醒，驱动案件流转</p>
+  </div>
+  <div class="flex space-x-3">
+    <button class="btn-primary flex items-center" id="btnCreateTask" data-action="open-create-modal">
+      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+      新建任务
+    </button>
+  </div>
+</div>

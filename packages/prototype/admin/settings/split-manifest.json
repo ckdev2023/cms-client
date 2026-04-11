@@ -1,0 +1,697 @@
+{
+  "artifactVersion": 1,
+  "moduleId": "settings",
+  "moduleLabel": "系统设置",
+  "moduleDir": "packages/prototype/admin/settings",
+  "entryFile": "packages/prototype/admin/settings/index.html",
+  "migrationSource": "packages/prototype/admin/settings.html",
+  "referenceDocs": [
+    "packages/prototype/admin/settings/P0-CONTRACT.md",
+    "packages/prototype/admin/settings/SPLIT-ARCHITECTURE.md",
+    "packages/prototype/admin/settings/MIGRATION-MAPPING.md",
+    "packages/prototype/admin/settings/REGRESSION-GATE.md",
+    "packages/prototype/admin/settings/REGRESSION-GATE.md",
+    "packages/prototype/admin/settings/INVENTORY.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/系统设置.md",
+    "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+    "design/gyosei-os-admin/DESIGN.md"
+  ],
+  "sharedCandidates": {
+    "styles": [
+      "packages/prototype/admin/shared/styles/tokens.css",
+      "packages/prototype/admin/shared/styles/components.css",
+      "packages/prototype/admin/shared/styles/shell.css"
+    ],
+    "shell": [
+      "packages/prototype/admin/shared/shell/side-nav.html",
+      "packages/prototype/admin/shared/shell/topbar.html",
+      "packages/prototype/admin/shared/shell/mobile-nav.html"
+    ],
+    "scripts": [
+      "packages/prototype/admin/shared/scripts/mobile-nav.js",
+      "packages/prototype/admin/shared/scripts/navigate.js"
+    ]
+  },
+  "sharedReuse": {
+    "cssLinks": [
+      { "canonical": "packages/prototype/admin/shared/styles/tokens.css", "href": "../shared/styles/tokens.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/shell.css", "href": "../shared/styles/shell.css" },
+      { "canonical": "packages/prototype/admin/shared/styles/components.css", "href": "../shared/styles/components.css" }
+    ],
+    "scriptLinks": [
+      { "canonical": "packages/prototype/admin/shared/scripts/mobile-nav.js", "src": "../shared/scripts/mobile-nav.js", "loadOrder": 1 },
+      { "canonical": "packages/prototype/admin/shared/scripts/navigate.js", "src": "../shared/scripts/navigate.js", "loadOrder": 2 }
+    ],
+    "shellFragments": [
+      { "canonical": "packages/prototype/admin/shared/shell/mobile-nav.html", "comment": "shell: mobile-nav.html (paths adjusted for settings/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/side-nav.html", "comment": "shell: side-nav.html (paths adjusted for settings/ subdirectory)", "pathPrefix": "../" },
+      { "canonical": "packages/prototype/admin/shared/shell/topbar.html", "comment": "shell: topbar.html (paths adjusted for settings/ subdirectory)", "pathPrefix": "../" }
+    ],
+    "ariaCurrent": {
+      "attribute": "aria-current=\"page\"",
+      "targetNavItem": "系统设置",
+      "targetHref": "index.html",
+      "canonicalHref": "settings.html",
+      "applyIn": ["mobile-nav", "side-nav"],
+      "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
+    },
+    "navPathAdjustments": [
+      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
+      { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
+      { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
+      { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
+      { "label": "任务与提醒", "canonical": "tasks.html", "adjusted": "../tasks.html" },
+      { "label": "资料中心", "canonical": "documents/index.html", "adjusted": "../documents/index.html" },
+      { "label": "文书中心", "canonical": "forms.html", "adjusted": "../forms.html" },
+      { "label": "收费与财务", "canonical": "billing/index.html", "adjusted": "../billing/index.html" },
+      { "label": "报表", "canonical": "reports.html", "adjusted": "../reports.html" },
+      { "label": "系统设置", "canonical": "settings.html", "adjusted": "index.html", "ariaCurrent": true },
+      { "label": "客户门户", "canonical": "../src/index.html", "adjusted": "../../src/index.html" }
+    ],
+    "navLabelChange": {
+      "from": "设置",
+      "to": "系统设置",
+      "affectedFiles": [
+        "packages/prototype/admin/shared/shell/side-nav.html",
+        "packages/prototype/admin/shared/shell/mobile-nav.html"
+      ]
+    }
+  },
+  "sections": [
+    {
+      "file": "sections/page-header.html",
+      "purpose": "页面标题「系统设置」、副标题、主说明",
+      "sourceAnchors": [
+        "display-font",
+        "text-hero"
+      ],
+      "sourceLines": "347-351",
+      "contractRefs": [],
+      "productionTarget": "features/settings/ui/SettingsPageHeader",
+      "gapNote": "标题可复用，副标题需调整"
+    },
+    {
+      "file": "sections/settings-subnav.html",
+      "purpose": "左侧设置子导航，仅保留 P0 范围入口（Group 管理 / 可见性配置 / 本地资料根目录）",
+      "sourceAnchors": [
+        "settingsSubnav",
+        "data-subnav-id"
+      ],
+      "sourceLines": "353-375",
+      "contractRefs": [
+        "§1 子导航结构"
+      ],
+      "productionTarget": "features/settings/ui/SettingsSubNav",
+      "gapNote": "现有 5 项全部非 P0 范围，需完全替换为 3 个 P0 入口"
+    },
+    {
+      "file": "sections/group-list-panel.html",
+      "purpose": "Group 列表表格（5 列）、状态筛选、新建按钮、空状态",
+      "sourceAnchors": [
+        "groupListPanel",
+        "groupTableBody",
+        "groupEmptyState",
+        "groupStatusFilter",
+        "btnCreateGroup",
+        "data-action=create-group"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§2 Group 管理列表必保留字段",
+        "§4 关键动作",
+        "§7 状态与异常态"
+      ],
+      "productionTarget": "features/settings/ui/GroupListPanel",
+      "gapNote": "现有原型完全缺失，需全新构建"
+    },
+    {
+      "file": "sections/group-detail-meta.html",
+      "purpose": "Group 详情元数据：名称（可重命名）、编号、状态 + 停用/启用按钮",
+      "sourceAnchors": [
+        "groupDetailPanel",
+        "detailGroupName",
+        "detailGroupCode",
+        "detailGroupStatus",
+        "btnRenameGroup",
+        "btnDisableGroup",
+        "btnEnableGroup"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§3 Group 详情必保留信息",
+        "§4 关键动作"
+      ],
+      "productionTarget": "features/settings/ui/GroupDetailMeta",
+      "gapNote": "现有原型完全缺失，需全新构建"
+    },
+    {
+      "file": "sections/group-members-panel.html",
+      "purpose": "Group 成员列表（P0 只读展示）：姓名、角色",
+      "sourceAnchors": [
+        "groupMembersPanel",
+        "memberListBody",
+        "memberEmptyState"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§3 Group 详情 — 成员列表"
+      ],
+      "productionTarget": "features/settings/ui/GroupMembersPanel",
+      "gapNote": "现有原型完全缺失，需全新构建；P0 只读，不做成员编辑"
+    },
+    {
+      "file": "sections/group-stats-panel.html",
+      "purpose": "Group 关联统计：关联客户数、关联案件数",
+      "sourceAnchors": [
+        "groupStatsPanel",
+        "statCustomerCount",
+        "statCaseCount"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§3 Group 详情 — 关联统计"
+      ],
+      "productionTarget": "features/settings/ui/GroupStatsPanel",
+      "gapNote": "现有原型完全缺失，需全新构建"
+    },
+    {
+      "file": "sections/visibility-config-panel.html",
+      "purpose": "可见性基础配置：跨组建案开关 + 协作案件可见性开关 + 说明文案",
+      "sourceAnchors": [
+        "visibilityPanel",
+        "toggleCrossGroupCase",
+        "toggleCrossGroupView"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§5 可见性基础配置"
+      ],
+      "productionTarget": "features/settings/ui/VisibilityConfigPanel",
+      "gapNote": "现有原型完全缺失，需全新构建"
+    },
+    {
+      "file": "sections/storage-root-panel.html",
+      "purpose": "本地资料根目录配置：名称、路径/挂载点、策略说明、{root}/{relative_path} 预览、更新人/时间",
+      "sourceAnchors": [
+        "storageRootPanel",
+        "inputRootName",
+        "inputRootPath",
+        "pathPreview",
+        "lastUpdatedBy",
+        "lastUpdatedAt",
+        "btnSaveStorageRoot",
+        "storageNotConfiguredHint"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§6 本地资料根目录配置",
+        "§7 状态与异常态 — 根目录未配置"
+      ],
+      "productionTarget": "features/settings/ui/StorageRootPanel",
+      "gapNote": "现有原型完全缺失，需全新构建"
+    },
+    {
+      "file": "sections/toast.html",
+      "purpose": "浮动反馈层：Toast 通知（Group CRUD + 可见性 + 根目录）",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§10 Toast 通知"
+      ],
+      "productionTarget": "shared/ui/Toast",
+      "gapNote": "现有原型完全缺失，需新增"
+    },
+    {
+      "file": "sections/group-name-modal.html",
+      "purpose": "新建/重命名 Group 共用弹窗：名称输入 + 创建/保存按钮",
+      "sourceAnchors": [
+        "groupNameModal",
+        "groupNameModalTitle",
+        "groupNameInput",
+        "groupNameError",
+        "groupNameHint",
+        "btnConfirmGroupName"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§4.2 新建规则",
+        "§4.3 重命名规则"
+      ],
+      "productionTarget": "features/settings/ui/GroupNameModal",
+      "gapNote": "现有原型完全缺失，需新增"
+    },
+    {
+      "file": "sections/group-disable-modal.html",
+      "purpose": "停用 Group 确认弹窗：已引用 Group 说明、确认/取消按钮",
+      "sourceAnchors": [
+        "groupDisableModal",
+        "disableModalGroupName",
+        "disableModalRefDetail",
+        "disableModalRefCount",
+        "disableModalSimpleMsg",
+        "btnConfirmDisable"
+      ],
+      "sourceLines": null,
+      "contractRefs": [
+        "§4.1 停用规则"
+      ],
+      "productionTarget": "features/settings/ui/GroupDisableModal",
+      "gapNote": "现有原型完全缺失，需新增"
+    }
+  ],
+  "dataFiles": [
+    {
+      "file": "data/settings-config.js",
+      "purpose": "集中声明子导航项、Group 列表列定义、状态枚举、可见性配置项、根目录字段、角色矩阵、toast preset、权限与空状态文案、审计提示",
+      "exports": [
+        "SUBNAV_ITEMS",
+        "GROUP_STATUS_OPTIONS",
+        "STATUS_BADGE_MAP",
+        "GROUP_TABLE_COLUMNS",
+        "GROUP_DETAIL_FIELDS",
+        "MEMBER_TABLE_COLUMNS",
+        "ROLE_CHIP_STYLES",
+        "ROLE_MATRIX",
+        "VISIBILITY_SWITCHES",
+        "VISIBILITY_CROSS_MODULE_NOTE",
+        "STORAGE_ROOT_FIELDS",
+        "PATH_STRATEGY_TEXT",
+        "STORAGE_PREVIEW_TEMPLATE",
+        "TOAST",
+        "TOAST_DURATION_MS",
+        "GROUP_ACTIONS",
+        "PERMISSION_DENIED_TEXT",
+        "EMPTY_STATE",
+        "AUDIT_HINTS",
+        "PAGE_META"
+      ],
+      "windowKey": "SettingsConfig",
+      "consumers": [
+        "scripts/settings-page.js",
+        "scripts/settings-group-list.js",
+        "scripts/settings-group-detail.js",
+        "scripts/settings-group-actions.js",
+        "scripts/settings-group-members.js",
+        "scripts/settings-group-stats.js",
+        "scripts/settings-visibility.js",
+        "scripts/settings-storage-root.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "domain/settings/Group.ts + OrgSetting.ts + settingsConstants.ts"
+    },
+    {
+      "file": "data/settings-demo-data.js",
+      "purpose": "示例 Group 列表、成员列表、统计数据、OrgSetting 示例值（可见性 + 根目录）、审计日志占位",
+      "exports": [
+        "DEMO_GROUPS",
+        "DEMO_GROUP_MEMBERS",
+        "DEMO_GROUP_STATS",
+        "DEMO_ORG_SETTINGS",
+        "DEMO_AUDIT_LOG",
+        "findGroupById"
+      ],
+      "windowKey": "SettingsDemoData",
+      "consumers": [
+        "scripts/settings-group-list.js",
+        "scripts/settings-group-detail.js",
+        "scripts/settings-group-members.js",
+        "scripts/settings-group-stats.js",
+        "scripts/settings-visibility.js",
+        "scripts/settings-storage-root.js"
+      ],
+      "consumersNote": "所有 Group 脚本已统一从 window.SettingsDemoData 读取，不再有局部 demo 数据副本",
+      "demoOnly": true,
+      "productionTarget": null
+    }
+  ],
+  "scripts": [
+    {
+      "file": "scripts/settings-page.js",
+      "purpose": "页面初始化、子导航切换、默认激活 Group 管理面板、toast 编排",
+      "domHooks": [
+        "DOMContentLoaded",
+        "data-subnav-id",
+        "data-panel"
+      ],
+      "dependsOn": [
+        "data/settings-config.js",
+        "scripts/settings-group-list.js",
+        "scripts/settings-group-detail.js",
+        "scripts/settings-group-actions.js",
+        "scripts/settings-group-members.js",
+        "scripts/settings-group-stats.js",
+        "scripts/settings-visibility.js",
+        "scripts/settings-storage-root.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useSettingsViewModel"
+    },
+    {
+      "file": "scripts/settings-group-list.js",
+      "purpose": "Group 列表渲染、状态筛选、行选中态、空状态切换",
+      "domHooks": [
+        "#groupListPanel",
+        "#groupTableBody",
+        "#groupEmptyState",
+        "select#groupStatusFilter"
+      ],
+      "dependsOn": [
+        "data/settings-config.js",
+        "data/settings-demo-data.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useGroupListViewModel"
+    },
+    {
+      "file": "scripts/settings-group-detail.js",
+      "purpose": "详情面板切换、元数据刷新",
+      "domHooks": [
+        "#groupDetailPanel",
+        "#detailGroupName",
+        "#detailGroupCode",
+        "#detailGroupStatus"
+      ],
+      "dependsOn": [
+        "data/settings-config.js",
+        "data/settings-demo-data.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useGroupDetailViewModel"
+    },
+    {
+      "file": "scripts/settings-group-actions.js",
+      "purpose": "新建 Group 对话、重命名对话、停用确认（含已引用 Group 提示）",
+      "domHooks": [
+        "#groupDisableModal",
+        "#btnCreateGroup",
+        "#btnRenameGroup",
+        "#btnDisableGroup",
+        "#btnConfirmDisable"
+      ],
+      "dependsOn": [
+        "data/settings-config.js",
+        "data/settings-demo-data.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useGroupActions"
+    },
+    {
+      "file": "scripts/settings-group-members.js",
+      "purpose": "成员列表渲染（只读）、空态处理",
+      "domHooks": [
+        "#groupMembersPanel",
+        "#memberListBody",
+        "#memberEmptyState"
+      ],
+      "dependsOn": [
+        "data/settings-demo-data.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useGroupMembers"
+    },
+    {
+      "file": "scripts/settings-group-stats.js",
+      "purpose": "关联客户/案件统计渲染",
+      "domHooks": [
+        "#groupStatsPanel",
+        "#statCustomerCount",
+        "#statCaseCount"
+      ],
+      "dependsOn": [
+        "data/settings-demo-data.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useGroupStats"
+    },
+    {
+      "file": "scripts/settings-visibility.js",
+      "purpose": "可见性配置 2 个开关联动、保存示例",
+      "domHooks": [
+        "#visibilityPanel",
+        "#toggleCrossGroupCase",
+        "#toggleCrossGroupView"
+      ],
+      "dependsOn": [
+        "data/settings-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useVisibilityConfig"
+    },
+    {
+      "file": "scripts/settings-storage-root.js",
+      "purpose": "根目录表单交互、路径预览 {root}/{relative_path} 动态拼接、保存示例、未配置禁用态说明",
+      "domHooks": [
+        "#storageRootPanel",
+        "#inputRootName",
+        "#inputRootPath",
+        "#pathPreview",
+        "#btnSaveStorageRoot",
+        "#storageNotConfiguredHint"
+      ],
+      "dependsOn": [
+        "data/settings-config.js"
+      ],
+      "demoOnly": true,
+      "productionTarget": "features/settings/model/useStorageRootConfig"
+    }
+  ],
+  "productionMapping": {
+    "domain": [
+      "packages/mobile/src/domain/settings/Group.ts",
+      "packages/mobile/src/domain/settings/OrgSetting.ts",
+      "packages/mobile/src/domain/settings/GroupRepository.ts",
+      "packages/mobile/src/domain/settings/OrgSettingRepository.ts",
+      "packages/mobile/src/domain/settings/settingsConstants.ts",
+      "packages/mobile/src/domain/settings/UserGroupMembership.ts"
+    ],
+    "data": [
+      "packages/mobile/src/data/settings/GroupApi.ts",
+      "packages/mobile/src/data/settings/OrgSettingApi.ts",
+      "packages/mobile/src/data/settings/createGroupRepository.ts",
+      "packages/mobile/src/data/settings/createOrgSettingRepository.ts"
+    ],
+    "model": [
+      "packages/mobile/src/features/settings/model/useSettingsViewModel.ts",
+      "packages/mobile/src/features/settings/model/useGroupListViewModel.ts",
+      "packages/mobile/src/features/settings/model/useGroupDetailViewModel.ts",
+      "packages/mobile/src/features/settings/model/useGroupActions.ts",
+      "packages/mobile/src/features/settings/model/useGroupMembers.ts",
+      "packages/mobile/src/features/settings/model/useGroupStats.ts",
+      "packages/mobile/src/features/settings/model/useVisibilityConfig.ts",
+      "packages/mobile/src/features/settings/model/useStorageRootConfig.ts"
+    ],
+    "ui": [
+      "packages/mobile/src/features/settings/ui/SettingsScreen.tsx",
+      "packages/mobile/src/features/settings/ui/SettingsPageHeader.tsx",
+      "packages/mobile/src/features/settings/ui/SettingsSubNav.tsx",
+      "packages/mobile/src/features/settings/ui/GroupListPanel.tsx",
+      "packages/mobile/src/features/settings/ui/GroupDetailMeta.tsx",
+      "packages/mobile/src/features/settings/ui/GroupMembersPanel.tsx",
+      "packages/mobile/src/features/settings/ui/GroupStatsPanel.tsx",
+      "packages/mobile/src/features/settings/ui/GroupDisableModal.tsx",
+      "packages/mobile/src/features/settings/ui/VisibilityConfigPanel.tsx",
+      "packages/mobile/src/features/settings/ui/StorageRootPanel.tsx"
+    ],
+    "shared": [
+      "packages/mobile/src/shared/ui/AppShell.tsx",
+      "packages/mobile/src/shared/ui/SideNav.tsx",
+      "packages/mobile/src/shared/ui/TopBar.tsx",
+      "packages/mobile/src/shared/ui/MobileNav.tsx",
+      "packages/mobile/src/shared/ui/Toast.tsx",
+      "packages/mobile/src/shared/hooks/useMobileNav.ts"
+    ],
+    "readModel": [
+      "packages/mobile/src/data/settings/GroupStatsReadModel.ts"
+    ]
+  },
+  "regressionChecklist": [
+    "子导航仅含 3 个 P0 入口（Group 管理 / 可见性配置 / 本地资料根目录）",
+    "不存在旧原型的「个人资料」等 5 项子导航残留",
+    "Group 列表 5 列完整（名称、状态、创建时间、活跃案件数、成员数）",
+    "Group 列表状态筛选正常（启用 / 停用 / 全部）",
+    "空状态（无 Group）提示「创建第一个团队」正常",
+    "Group 详情元数据完整（名称、编号、状态）",
+    "Group 成员列表只读展示正常",
+    "Group 成员空态处理正常",
+    "Group 关联统计展示正常（客户数、案件数）",
+    "新建 Group → toast",
+    "停用 Group 确认弹窗正常弹出（含已引用 Group 说明）",
+    "停用 Group → toast",
+    "停用有引用的 Group 提示「已被引用的客户/案件不受影响」",
+    "已停用 Group 说明不出现在全局 Group 选择器",
+    "重命名 Group → toast",
+    "可见性配置 2 个开关正常切换",
+    "可见性配置每项附说明文案",
+    "修改可见性 → toast",
+    "本地资料根目录表单完整（名称、路径、策略说明、预览、更新人/时间）",
+    "路径策略说明正确展示：系统仅保存 relative_path",
+    "路径预览 {root}/{relative_path} 动态拼接正常",
+    "更新根目录 → toast",
+    "根目录未配置提示正常",
+    "根目录未配置跨模块影响说明存在",
+    "权限不足态占位预留（非管理员不可见）",
+    "角色矩阵在 data 配置中声明（管理员 / 主办人 / 助理 / 销售 / 财务）",
+    "Toast 5 种场景正常弹出",
+    "移动端导航开关正常",
+    "侧边栏「系统设置」项 aria-current=page 高亮",
+    "导航文案已从「设置」统一为「系统设置」（shared shell 层）",
+    "共享壳层正确引入（tokens.css / shell.css / components.css / shell HTML 片段）",
+    "非管理员角色矩阵声明（主办人 / 助理 / 销售 / 财务对系统设置不可见）",
+    "跨模块：根目录未配置 → 案件/资料中心「登记资料（本地归档）」入口禁用规则已记录（REGRESSION-GATE §3B/3C）",
+    "跨模块：跨组审计链边界声明完整（REGRESSION-GATE §6），settings 仅管理开关值",
+    "跨模块：停用 Group → 各业务模块下拉排除规则已记录（REGRESSION-GATE §2）",
+    "Group 脚本均从 window.SettingsDemoData 读取数据，无局部 demo 数据副本",
+    "Group 动作后列表/详情联动刷新正常（重命名/停用后列表自动更新）"
+  ],
+  "crossModuleDependencies": [
+    {
+      "taskId": "cross-group-audit-trail",
+      "title": "跨组建案/转组/线索转化改组的原因采集与审计留痕",
+      "ownerModules": ["case", "customer", "leads-message"],
+      "dependsOnSettings": ["OrgSetting.allowCrossGroupCaseCreateFlag", "OrgSetting.allowPrincipalViewCrossGroupCollabCaseFlag"],
+      "scope": "跨组动作触发时，弹窗采集变更原因，写入审计日志（操作人、时间、旧组、新组、原因），并在对应详情页操作日志 Tab 展示",
+      "notInSettingsScope": true,
+      "p0Required": true,
+      "notes": "settings 页只管理配置开关值；原因采集 UI、审计写入、审计展示均由业务流程模块自行实现"
+    },
+    {
+      "taskId": "storage-root-cross-module-gate",
+      "title": "根目录未配置 → 案件/资料中心「登记资料（本地归档）」入口禁用",
+      "ownerModules": ["case", "documents"],
+      "dependsOnSettings": ["OrgSetting.localFileRootPath"],
+      "scope": "案件资料 Tab 和资料中心页的本地归档登记按钮，需在根目录未配置时置灰并显示提示",
+      "notInSettingsScope": true,
+      "p0Required": true,
+      "notes": "settings 页提供配置入口和未配置警告；禁用逻辑由案件/资料中心模块自行实现"
+    },
+    {
+      "taskId": "disabled-group-selection-gate",
+      "title": "停用 Group 不出现在新建客户/案件的 Group 选择列表",
+      "ownerModules": ["case", "customer"],
+      "dependsOnSettings": ["Group.activeFlag"],
+      "scope": "新建/编辑客户或新建案件时，Group 选择下拉仅展示 activeFlag=true 的 Group",
+      "notInSettingsScope": true,
+      "p0Required": true,
+      "notes": "settings 负责 Group 停用操作；选择列表过滤由各模块自行实现"
+    }
+  ],
+  "knownLegacyLinks": [
+    {
+      "source": "packages/prototype/admin/shared/shell/side-nav.html",
+      "href": "settings.html",
+      "note": "共享导航链接，迁移完成后需更新为 settings/index.html"
+    },
+    {
+      "source": "packages/prototype/admin/shared/shell/mobile-nav.html",
+      "href": "settings.html",
+      "note": "共享移动端导航链接，迁移完成后需更新为 settings/index.html"
+    },
+    {
+      "source": "packages/prototype/admin/admin-prototype.html",
+      "href": "settings.html",
+      "note": "仪表盘内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/dashboard/index.html",
+      "href": "../settings.html",
+      "note": "仪表盘拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/customers/index.html",
+      "href": "../settings.html",
+      "note": "客户页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/customers/detail.html",
+      "href": "../settings.html",
+      "note": "客户详情页导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/cases-list.html",
+      "href": "settings.html",
+      "note": "案件列表内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/case/index.html",
+      "href": "../settings.html",
+      "note": "案件列表拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/case/detail.html",
+      "href": "../settings.html",
+      "note": "案件详情拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/case/create.html",
+      "href": "../settings.html",
+      "note": "案件创建拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/tasks.html",
+      "href": "settings.html",
+      "note": "任务页内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/tasks/index.html",
+      "href": "../settings.html",
+      "note": "任务页拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/documents.html",
+      "href": "settings.html",
+      "note": "资料中心内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/documents/index.html",
+      "href": "../settings.html",
+      "note": "资料中心拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/forms.html",
+      "href": "settings.html",
+      "note": "文书中心内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/billing/index.html",
+      "href": "../settings.html",
+      "note": "收费页拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/reports.html",
+      "href": "settings.html",
+      "note": "报表页内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/leads-messages.html",
+      "href": "settings.html",
+      "note": "咨询页内联导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/leads-message/index.html",
+      "href": "../settings.html",
+      "note": "咨询拆分版导航链接，本轮仅记录不修复"
+    },
+    {
+      "source": "packages/prototype/admin/leads-message/detail.html",
+      "href": "../settings.html",
+      "note": "咨询详情拆分版导航链接，本轮仅记录不修复"
+    }
+  ],
+  "notes": [
+    "settings.html 作为迁移源保留，不在第一阶段删除。",
+    "现有原型内容（个人资料表单）与 P0 规格完全不符，需全新构建全部业务区块。",
+    "旧原型可复用价值极低：仅页面标题「系统设置」和壳层结构（由 shared 接管）。",
+    "导航文案「设置」必须统一为「系统设置」，涉及 shared/shell/side-nav.html 和 mobile-nav.html。",
+    "Group 成员列表 P0 先做只读展示，不扩展为完整成员管理模块。若需成员维护另开新任务。",
+    "settings 页只承载所级配置，不替代跨组建案/转组/线索转化改组的原因采集与审计留痕。相关实现必须另立跨模块任务。",
+    "根目录未配置时的跨模块影响（案件/资料中心的「登记资料（本地归档）」入口禁用）需同步登记到相关模块的回归门槛。",
+    "production mapping 包含 Group 统计读模型（GroupStatsReadModel），用于 Group 关联客户/案件统计的高效查询。",
+    "production mapping 包含 UserGroupMembership 实体，用于 Group 成员列表的查询与展示。",
+    "所有 demo-only 行为（硬编码 Group 数据、toast 示例、成员列表、统计数字）单独标注。",
+    "REGRESSION-GATE.md 按 7 个 Gate 组织回归场景，其中 Gate 3B/3C（根目录跨模块影响）和 Gate 6（审计链边界）为跨模块契约门槛。"
+  ]
+}

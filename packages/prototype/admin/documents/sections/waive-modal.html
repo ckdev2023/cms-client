@@ -1,0 +1,43 @@
+<!--
+  section: waive-modal.html
+  Mark as waived modal: reason code select (5 options) + note textarea (required when "其他").
+  P0-CONTRACT §8.3: 5 waived reason codes, "其他" requires note.
+
+  DOM hooks: waiveModal, waiveModalTitle, waiveDocLabel,
+             waiveReasonSelect, waiveNoteWrap, waiveReasonNote,
+             waiveConfirmBtn, data-action=close-waive-modal
+  Production target: features/document/ui/WaiveReasonModal
+  Gap: legacy case detail had simple toast; replaced with reason code modal.
+-->
+<div class="modal-backdrop" id="waiveModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 420px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]" id="waiveModalTitle">标记无需提供</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-waive-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <p class="text-sm text-[var(--muted)]" id="waiveDocLabel">将这份资料标记为无需提供，不再计入完成率。</p>
+      <div>
+        <label class="apple-label">原因码 <span class="text-red-500">*</span></label>
+        <select class="apple-input appearance-none bg-white" id="waiveReasonSelect">
+          <option value="" disabled selected>请选择原因</option>
+          <option value="visa-type-exempt">无需提供（该签证类型免除）</option>
+          <option value="guarantor-exempt">保证人为配偶/直系亲属（免除）</option>
+          <option value="equivalent-exists">客户已在其他案件提供等价材料</option>
+          <option value="immigration-confirmed">入管局确认免除</option>
+          <option value="other">其他</option>
+        </select>
+      </div>
+      <div id="waiveNoteWrap" class="hidden">
+        <label class="apple-label">原因备注 <span class="text-red-500">*</span></label>
+        <textarea class="apple-input" id="waiveReasonNote" rows="2" placeholder="请填写具体原因"></textarea>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-waive-modal">取消</button>
+      <button class="btn-primary px-5" type="button" id="waiveConfirmBtn" disabled>确认标记</button>
+    </div>
+  </div>
+</div>

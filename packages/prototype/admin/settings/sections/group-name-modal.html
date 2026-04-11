@@ -1,0 +1,44 @@
+<!--
+  section: group-name-modal.html
+  Shared modal for "新建 Group" and "重命名 Group" — both only need a single name field.
+
+  DOM hooks:
+    #groupNameModal        — modal-backdrop container
+    #groupNameModalTitle   — <h3> heading (set by script: 新建 / 重命名)
+    #groupNameInput        — <input> for Group name
+    #groupNameError        — validation error hint
+    #btnConfirmGroupName   — primary confirm button (text set by script)
+    data-action=close-group-name-modal — close triggers
+
+  Contract ref: P0-CONTRACT §4.2 (新建规则), §4.3 (重命名规则)
+  Production target: features/settings/ui/GroupNameModal
+-->
+<div class="modal-backdrop" id="groupNameModal" style="display: none;">
+  <div class="apple-modal flex flex-col" style="max-width: 420px;">
+    <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center bg-white z-10 relative rounded-t-[14px]">
+      <h3 class="text-[17px] font-semibold text-[var(--text)]" id="groupNameModalTitle">新建 Group</h3>
+      <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" data-action="close-group-name-modal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="apple-label" for="groupNameInput">Group 名称 <span class="text-red-500">*</span></label>
+        <input
+          type="text"
+          class="apple-input"
+          id="groupNameInput"
+          placeholder="例如：東京三組"
+          maxlength="60"
+          autocomplete="off"
+        />
+        <p class="text-[12px] text-red-500 mt-1 hidden" id="groupNameError">请输入 Group 名称</p>
+      </div>
+      <p class="text-[12px] text-[var(--muted-2)]" id="groupNameHint">编号由系统自动生成，创建后状态为启用。</p>
+    </div>
+    <div class="px-6 py-4 bg-[var(--surface-2)] border-t border-[var(--border)] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-action="close-group-name-modal">取消</button>
+      <button class="btn-primary px-5" type="button" id="btnConfirmGroupName">创建</button>
+    </div>
+  </div>
+</div>

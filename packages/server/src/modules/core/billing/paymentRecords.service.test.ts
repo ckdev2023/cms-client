@@ -26,12 +26,11 @@ function makeBillingRecordRow(overrides: Record<string, unknown> = {}) {
     id: BILLING_RECORD_ID,
     org_id: ORG_ID,
     case_id: CASE_ID,
-    billing_type: "standard",
     milestone_name: null,
     amount_due: "1200.00",
     due_date: "2026-06-01",
-    status: "awaiting_payment",
-    invoice_status: "none",
+    status: "due",
+    gate_effect_mode: "warn",
     remark: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
@@ -48,7 +47,15 @@ function makePaymentRecordRow(overrides: Record<string, unknown> = {}) {
     amount_received: "300.00",
     received_at: "2026-02-01T00:00:00.000Z",
     payment_method: "bank_transfer",
-    receipt_file_url: "https://example.test/receipt.pdf",
+    record_status: "valid",
+    receipt_storage_type: null,
+    receipt_relative_path_or_key: null,
+    note: null,
+    void_reason_code: null,
+    void_reason_note: null,
+    voided_by: null,
+    voided_at: null,
+    reversed_from_payment_record_id: null,
     recorded_by: USER_ID,
     created_at: "2026-02-01T00:00:00.000Z",
     ...overrides,
@@ -69,14 +76,17 @@ function makePool(queryFn: PoolClientLike["query"]): Pool {
 }
 
 void test("mapPaymentRecordRow maps database row to PaymentRecord", () => {
-  const paymentRecord = mapPaymentRecordRow(makePaymentRecordRow());
+  const paymentRecord = mapPaymentRecordRow(
+    makePaymentRecordRow() as Parameters<typeof mapPaymentRecordRow>[0],
+  );
   assert.equal(paymentRecord.id, PAYMENT_RECORD_ID);
-  assert.equal(paymentRecord.billingRecordId, BILLING_RECORD_ID);
+  assert.equal(paymentRecord.billingPlanId, BILLING_RECORD_ID);
   assert.equal(paymentRecord.amountReceived, 300);
   assert.equal(paymentRecord.paymentMethod, "bank_transfer");
+  assert.equal(paymentRecord.recordStatus, "valid");
 });
 
-void test("PaymentRecordsService.create inserts row, writes timeline, and recalculates billing to partial_paid", async () => {
+void test("PaymentRecordsService.create inserts row, writes timeline, and recalculates billing to partial", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -94,7 +104,7 @@ void test("PaymentRecordsService.create inserts row, writes timeline, and recalc
     }
     if (sql.includes("update billing_records")) {
       return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "partial_paid" })],
+        rows: [makeBillingRecordRow({ status: "partial" })],
         rowCount: 1,
       });
     }
@@ -102,11 +112,10 @@ void test("PaymentRecordsService.create inserts row, writes timeline, and recalc
   });
 
   const created = await new PaymentRecordsService(pool).create(makeCtx(), {
-    billingRecordId: BILLING_RECORD_ID,
+    billingPlanId: BILLING_RECORD_ID,
     amountReceived: 300,
     receivedAt: "2026-02-01T00:00:00.000Z",
     paymentMethod: "bank_transfer",
-    receiptFileUrl: "https://example.test/receipt.pdf",
   });
 
   assert.equal(created.id, PAYMENT_RECORD_ID);
@@ -116,12 +125,12 @@ void test("PaymentRecordsService.create inserts row, writes timeline, and recalc
   assert.equal(timelineCalls.length, 2);
   assert.equal(timelineCalls[0]?.params?.[1], "payment_record");
   assert.equal(timelineCalls[0]?.params?.[3], "payment_record.created");
-  assert.equal(timelineCalls[1]?.params?.[1], "billing_record");
-  assert.equal(timelineCalls[1]?.params?.[3], "billing_record.transitioned");
+  assert.equal(timelineCalls[1]?.params?.[1], "billing_plan");
+  assert.equal(timelineCalls[1]?.params?.[3], "billing_plan.transitioned");
   const billingUpdateCall = calls.find((call) =>
     call.sql.includes("update billing_records"),
   );
-  assert.equal(billingUpdateCall?.params?.[1], "partial_paid");
+  assert.equal(billingUpdateCall?.params?.[1], "partial");
 });
 
 void test("PaymentRecordsService.create settles billing record when cumulative payments cover amountDue", async () => {
@@ -142,7 +151,7 @@ void test("PaymentRecordsService.create settles billing record when cumulative p
     }
     if (sql.includes("update billing_records")) {
       return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "settled" })],
+        rows: [makeBillingRecordRow({ status: "paid" })],
         rowCount: 1,
       });
     }
@@ -150,7 +159,7 @@ void test("PaymentRecordsService.create settles billing record when cumulative p
   });
 
   await new PaymentRecordsService(pool).create(makeCtx(), {
-    billingRecordId: BILLING_RECORD_ID,
+    billingPlanId: BILLING_RECORD_ID,
     amountReceived: 900,
     receivedAt: "2026-02-01T00:00:00.000Z",
   });
@@ -158,7 +167,7 @@ void test("PaymentRecordsService.create settles billing record when cumulative p
   const billingUpdateCall = calls.find((call) =>
     call.sql.includes("update billing_records"),
   );
-  assert.equal(billingUpdateCall?.params?.[1], "settled");
+  assert.equal(billingUpdateCall?.params?.[1], "paid");
 });
 
 void test("PaymentRecordsService.create rejects amountReceived <= 0", async () => {
@@ -167,7 +176,7 @@ void test("PaymentRecordsService.create rejects amountReceived <= 0", async () =
       new PaymentRecordsService(
         makePool(() => Promise.resolve({ rows: [], rowCount: 0 })),
       ).create(makeCtx(), {
-        billingRecordId: BILLING_RECORD_ID,
+        billingPlanId: BILLING_RECORD_ID,
         amountReceived: 0,
         receivedAt: "2026-02-01T00:00:00.000Z",
       }),
@@ -178,7 +187,7 @@ void test("PaymentRecordsService.create rejects amountReceived <= 0", async () =
   );
 });
 
-void test("PaymentRecordsService.create rejects cross-tenant billingRecordId", async () => {
+void test("PaymentRecordsService.create rejects cross-tenant billingPlanId", async () => {
   const pool = makePool((sql) => {
     if (sql.includes("from billing_records") && sql.includes("for update")) {
       return Promise.resolve({ rows: [], rowCount: 0 });
@@ -189,14 +198,13 @@ void test("PaymentRecordsService.create rejects cross-tenant billingRecordId", a
   await assert.rejects(
     () =>
       new PaymentRecordsService(pool).create(makeCtx(), {
-        billingRecordId: FOREIGN_BILLING_RECORD_ID,
+        billingPlanId: FOREIGN_BILLING_RECORD_ID,
         amountReceived: 100,
         receivedAt: "2026-02-01T00:00:00.000Z",
       }),
     {
       name: "BadRequestException",
-      message:
-        "Referenced billing_records record not found in current organization",
+      message: "Referenced billing plan not found in current organization",
     },
   );
 });
@@ -219,7 +227,7 @@ void test("PaymentRecordsService.get returns payment record or null", async () =
   assert.equal(await service.get(makeCtx("viewer"), "missing"), null);
 });
 
-void test("PaymentRecordsService.list returns items and total by billingRecordId", async () => {
+void test("PaymentRecordsService.list returns items and total by billingPlanId", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -233,7 +241,7 @@ void test("PaymentRecordsService.list returns items and total by billingRecordId
   });
 
   const result = await new PaymentRecordsService(pool).list(makeCtx("viewer"), {
-    billingRecordId: BILLING_RECORD_ID,
+    billingPlanId: BILLING_RECORD_ID,
     page: 1,
     limit: 10,
   });
@@ -246,7 +254,7 @@ void test("PaymentRecordsService.list returns items and total by billingRecordId
   assert.equal(orgCall?.params?.[0], ORG_ID);
 });
 
-void test("PaymentRecordsService.delete recalculates billing record to awaiting_payment when no payments remain", async () => {
+void test("PaymentRecordsService.void sets record_status to voided and recalculates billing to due", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -255,12 +263,15 @@ void test("PaymentRecordsService.delete recalculates billing record to awaiting_
     }
     if (sql.includes("from billing_records") && sql.includes("for update")) {
       return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "partial_paid" })],
+        rows: [makeBillingRecordRow({ status: "partial" })],
         rowCount: 1,
       });
     }
-    if (sql.includes("delete from payment_records")) {
-      return Promise.resolve({ rows: [], rowCount: 1 });
+    if (sql.includes("update payment_records")) {
+      return Promise.resolve({
+        rows: [makePaymentRecordRow({ record_status: "voided" })],
+        rowCount: 1,
+      });
     }
     if (sql.includes("sum(amount_received)")) {
       return Promise.resolve({
@@ -270,81 +281,42 @@ void test("PaymentRecordsService.delete recalculates billing record to awaiting_
     }
     if (sql.includes("update billing_records")) {
       return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "awaiting_payment" })],
+        rows: [makeBillingRecordRow({ status: "due" })],
         rowCount: 1,
       });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
 
-  await new PaymentRecordsService(pool).delete(
+  const voided = await new PaymentRecordsService(pool).void(
     makeCtx("manager"),
     PAYMENT_RECORD_ID,
+    { reasonCode: "customer_request" },
   );
 
+  assert.equal(voided.recordStatus, "voided");
   const billingUpdateCall = calls.find((call) =>
     call.sql.includes("update billing_records"),
   );
-  assert.equal(billingUpdateCall?.params?.[1], "awaiting_payment");
+  assert.equal(billingUpdateCall?.params?.[1], "due");
   const timelineCalls = calls.filter((call) =>
     call.sql.includes("insert into timeline_logs"),
   );
   assert.equal(timelineCalls.length, 2);
-  assert.equal(timelineCalls[0]?.params?.[1], "payment_record");
-  assert.equal(timelineCalls[0]?.params?.[3], "payment_record.deleted");
+  assert.equal(timelineCalls[0]?.params?.[3], "payment_record.voided");
 });
 
-void test("PaymentRecordsService.delete recalculates billing record to partial_paid when payments remain", async () => {
-  const calls: { sql: string; params?: unknown[] }[] = [];
-  const pool = makePool((sql, params) => {
-    calls.push({ sql: sql.trim(), params });
-    if (sql.includes("from payment_records") && sql.includes("for update")) {
-      return Promise.resolve({ rows: [makePaymentRecordRow()], rowCount: 1 });
-    }
-    if (sql.includes("from billing_records") && sql.includes("for update")) {
-      return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "settled" })],
-        rowCount: 1,
-      });
-    }
-    if (sql.includes("delete from payment_records")) {
-      return Promise.resolve({ rows: [], rowCount: 1 });
-    }
-    if (sql.includes("sum(amount_received)")) {
-      return Promise.resolve({
-        rows: [{ total_received: "200.00" }],
-        rowCount: 1,
-      });
-    }
-    if (sql.includes("update billing_records")) {
-      return Promise.resolve({
-        rows: [makeBillingRecordRow({ status: "partial_paid" })],
-        rowCount: 1,
-      });
-    }
-    return Promise.resolve({ rows: [], rowCount: 0 });
-  });
-
-  await new PaymentRecordsService(pool).delete(
-    makeCtx("manager"),
-    PAYMENT_RECORD_ID,
-  );
-
-  const billingUpdateCall = calls.find((call) =>
-    call.sql.includes("update billing_records"),
-  );
-  assert.equal(billingUpdateCall?.params?.[1], "partial_paid");
-});
-
-void test("PaymentRecordsService.delete rejects non-manager role", async () => {
+void test("PaymentRecordsService.void rejects non-manager role", async () => {
   await assert.rejects(
     () =>
       new PaymentRecordsService(
         makePool(() => Promise.resolve({ rows: [], rowCount: 0 })),
-      ).delete(makeCtx("staff"), PAYMENT_RECORD_ID),
+      ).void(makeCtx("staff"), PAYMENT_RECORD_ID, {
+        reasonCode: "duplicate",
+      }),
     {
       name: "ForbiddenException",
-      message: "Deleting payment record requires manager role",
+      message: "Voiding payment record requires manager role",
     },
   );
 });

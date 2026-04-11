@@ -1,0 +1,123 @@
+<!--
+  section: task-detail-panel.html
+  Task detail side panel, shown when a task row is clicked.
+  Displays 10 information items per P0 CONTRACT §6:
+    1. 任务名称 (title)
+    2. 任务描述 (body paragraph)
+    3. 关联案件 (case link)
+    4. 责任人 (avatar + name)
+    5. 截止日 (datetime + overdue tag)
+    6. 完成状态 (status badge)
+    7. 优先级 (priority badge)
+    8. 所属 Group (chip)
+    9. 来源 (text)
+   10. 操作记录 (audit log timeline)
+
+  Gap: entirely new — legacy tasks.html has no detail panel.
+  Rendered as a slide-over panel on the right side of the content area.
+  Default state: off-screen (translate-x-full). Shown via JS removing translate-x-full.
+-->
+<div id="taskDetailPanel" class="fixed inset-y-0 right-0 w-full max-w-md bg-white shadow-[-4px_0_24px_rgba(15,23,42,0.1)] z-50 flex flex-col transition-transform duration-200 translate-x-full" role="dialog" aria-label="任务详情">
+  <!-- Panel Header -->
+  <div class="px-6 py-4 border-b border-[var(--border)] flex justify-between items-center flex-shrink-0">
+    <h3 class="text-[17px] font-semibold text-[var(--text)]" id="detailTaskName">催促客户提交课税证明书</h3>
+    <button class="text-[var(--muted-2)] hover:text-[var(--text)] transition-colors p-1" type="button" id="closeDetailBtn" data-action="close-detail">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+  </div>
+
+  <!-- Panel Body -->
+  <div class="flex-1 overflow-y-auto p-6 space-y-5">
+    <!-- 2. Description -->
+    <div>
+      <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">任务描述</div>
+      <p class="text-sm text-[var(--muted)]" id="detailDescription">客户李明需要提交课税证明书用于家族滞在签证续签，已通过邮件和电话催促一次，尚未回复。</p>
+    </div>
+
+    <!-- Meta Grid -->
+    <div class="grid grid-cols-2 gap-4">
+      <!-- 3. Related Case -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">关联案件</div>
+        <a href="../case/detail.html" class="link-apple text-sm" id="detailCaseLink">CAS-2023-1090 家族滞在 (李明)</a>
+      </div>
+
+      <!-- 4. Owner -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">责任人</div>
+        <div class="flex items-center text-sm" id="detailOwner">
+          <div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>
+          Admin
+        </div>
+      </div>
+
+      <!-- 5. Deadline -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">截止日</div>
+        <div id="detailDeadline">
+          <div class="text-sm text-[var(--danger)] font-semibold">逾期 1 天</div>
+          <div class="text-[12px] text-[var(--muted-2)]">2026-04-08 18:00</div>
+        </div>
+      </div>
+
+      <!-- 6. Status -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">完成状态</div>
+        <span class="badge badge-gray" id="detailStatus">待处理</span>
+      </div>
+
+      <!-- 7. Priority -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">优先级</div>
+        <span class="badge badge-danger" id="detailPriority">高</span>
+      </div>
+
+      <!-- 8. Group -->
+      <div>
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">所属 Group</div>
+        <span class="chip" id="detailGroup">東京一組</span>
+      </div>
+
+      <!-- 9. Source -->
+      <div class="col-span-2">
+        <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">来源</div>
+        <span class="text-sm text-[var(--muted)]" id="detailSource">催办</span>
+      </div>
+    </div>
+
+    <!-- Detail Actions -->
+    <div class="flex gap-2 pt-2">
+      <button class="btn-primary h-9 px-4 text-[13px]" type="button" id="detailCompleteBtn" data-action="complete-task">标记完成</button>
+      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="detailEditBtn" data-action="edit-task">编辑</button>
+      <button class="btn-secondary h-9 px-4 text-[13px] text-[var(--danger)]" type="button" id="detailCancelBtn" data-action="cancel-task">取消任务</button>
+    </div>
+
+    <!-- 10. Audit Log Timeline -->
+    <div>
+      <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-3">操作记录</div>
+      <div class="space-y-3" id="detailAuditLog">
+        <div class="flex gap-3">
+          <div class="w-2 h-2 rounded-full bg-[var(--primary)] mt-1.5 flex-shrink-0"></div>
+          <div>
+            <div class="text-sm text-[var(--text)]">任务已创建</div>
+            <div class="text-[12px] text-[var(--muted-2)]">Admin · 2026-04-01 09:30</div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-2 h-2 rounded-full bg-[var(--primary)] mt-1.5 flex-shrink-0"></div>
+          <div>
+            <div class="text-sm text-[var(--text)]">责任人指派为 Admin</div>
+            <div class="text-[12px] text-[var(--muted-2)]">系统 · 2026-04-01 09:30</div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-2 h-2 rounded-full bg-[var(--warning)] mt-1.5 flex-shrink-0"></div>
+          <div>
+            <div class="text-sm text-[var(--text)]">截止日调整：04-05 → 04-08</div>
+            <div class="text-[12px] text-[var(--muted-2)]">Admin · 2026-04-04 14:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

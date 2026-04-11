@@ -1,0 +1,84 @@
+<!--
+  section: settings-subnav.html
+  Left settings sub-navigation (P0 scope: 3 items) + right content panel wrapper.
+  Default active: Group 管理.
+
+  DOM hooks: [data-subnav-id], [data-panel], .settings-subnav-item
+  Contract ref: P0-CONTRACT §1.3 子导航结构
+  Production target: features/settings/ui/SettingsSubNav
+
+  P0 子导航项：
+    1. group-management  — Group 管理（默认选中）
+    2. visibility-config — 可见性配置
+    3. storage-root      — 本地资料根目录
+-->
+<div class="flex flex-col md:flex-row gap-8">
+  <!-- Sub-navigation sidebar -->
+  <div class="w-full md:w-56 flex-shrink-0" id="settingsSubnav">
+    <nav class="apple-card p-3" aria-label="设置子导航">
+      <ul class="space-y-1">
+        <li>
+          <button
+            type="button"
+            class="settings-subnav-item is-active w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            data-subnav-id="group-management"
+          >
+            <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Group 管理
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            class="settings-subnav-item w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            data-subnav-id="visibility-config"
+          >
+            <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            可见性配置
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            class="settings-subnav-item w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+            data-subnav-id="storage-root"
+          >
+            <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+            </svg>
+            本地资料根目录
+          </button>
+        </li>
+      </ul>
+    </nav>
+  </div>
+
+  <!-- Content panels (toggled by sub-navigation) -->
+  <div class="flex-grow min-w-0">
+    <!-- panel: Group 管理 (default visible) -->
+    <div data-panel="group-management">
+      <!-- section: sections/group-list-panel.html (content in group-list-panel.html) -->
+
+      <!-- section: sections/group-detail-meta.html -->
+
+      <!-- section: sections/group-members-panel.html -->
+
+      <!-- section: sections/group-stats-panel.html -->
+    </div>
+
+    <!-- panel: 可见性配置 (hidden by default) -->
+    <div data-panel="visibility-config" class="hidden">
+      <!-- section: sections/visibility-config-panel.html -->
+    </div>
+
+    <!-- panel: 本地资料根目录 (hidden by default) -->
+    <div data-panel="storage-root" class="hidden">
+      <!-- section: sections/storage-root-panel.html -->
+    </div>
+  </div>
+</div>

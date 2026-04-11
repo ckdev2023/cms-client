@@ -1,0 +1,190 @@
+<!-- Content: Tab 入管结果 — 三路结果登记、补资料循环计数、COE 信息与支付门控 -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  <!-- 主栏 -->
+  <div class="lg:col-span-2 space-y-4">
+
+    <!-- 结果登记卡 -->
+    <div class="apple-card p-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-[var(--fg)]">入管审查结果</h3>
+        <!-- 动态状态徽章，由 JS 注入 id="imm-result-badge" -->
+        <span id="imm-result-badge" class="badge badge-gray text-xs px-2 py-0.5 rounded-full">未登记</span>
+      </div>
+
+      <!-- 入管结果按钮（P0: resultOutcome 只有 approved/rejected） -->
+      <div id="imm-result-btns" class="grid grid-cols-2 gap-3 mb-5">
+        <button id="btn-approved" type="button"
+          class="flex flex-col items-center gap-1 rounded-xl border-2 border-transparent bg-[var(--surface-alt)] hover:border-green-400 hover:bg-green-50 p-4 transition cursor-pointer"
+          data-outcome="approved">
+          <svg class="w-7 h-7 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium text-[var(--fg)]">COE 下签（许可）</span>
+          <span class="text-xs text-[var(--fg-muted)]">approved → S8</span>
+        </button>
+        <button id="btn-rejected" type="button"
+          class="flex flex-col items-center gap-1 rounded-xl border-2 border-transparent bg-[var(--surface-alt)] hover:border-red-400 hover:bg-red-50 p-4 transition cursor-pointer"
+          data-outcome="rejected">
+          <svg class="w-7 h-7 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm font-medium text-[var(--fg)]">入管拒签</span>
+          <span class="text-xs text-[var(--fg-muted)]">rejected → S8</span>
+        </button>
+      </div>
+      <!-- 补正通知（P0 §3.0F: 补正不是入管结果，是 S7 内通知事件） -->
+      <div class="mb-5 p-3 rounded-lg bg-orange-50 border border-orange-200">
+        <div class="flex items-center gap-2 mb-2">
+          <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <span class="text-sm font-semibold text-orange-700">入管要求补资料？</span>
+        </div>
+        <p class="text-xs text-orange-600 mb-2">补正不是入管结果，而是 S7 内的补正循环。阶段保持 S7，不回退至 S2–S6。</p>
+        <button id="btn-supplement-notice" type="button"
+          class="btn text-sm px-3 py-1.5 border border-orange-300 text-orange-700 bg-white hover:bg-orange-50 rounded-lg"
+          onclick="if(window.CaseDetailPage) window.CaseDetailPage._registerSupplementNoticeFromTab ? window.CaseDetailPage._registerSupplementNoticeFromTab() : null;">
+          登记补正通知（S7 内补正循环）
+        </button>
+      </div>
+
+      <!-- APPROVED 详情区 -->
+      <div id="imm-approved-fields" class="hidden space-y-4">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs text-[var(--fg-muted)] mb-1">COE 受理番号</label>
+            <input id="imm-coe-number" type="text" placeholder="KAN2026XXXXXXXX"
+              class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </div>
+          <div>
+            <label class="block text-xs text-[var(--fg-muted)] mb-1">下签日期</label>
+            <input id="imm-decided-at" type="date"
+              class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </div>
+          <div>
+            <label class="block text-xs text-[var(--fg-muted)] mb-1">COE 有效期至</label>
+            <input id="imm-coe-valid-until" type="date"
+              class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+          </div>
+          <div>
+            <label class="block text-xs text-[var(--fg-muted)] mb-1">许可在留期间</label>
+            <select id="imm-residence-period-granted"
+              class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
+              <option value="">请选择</option>
+              <option value="1年">1年</option>
+              <option value="3年">3年</option>
+              <option value="5年">5年</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">通知客户时间</label>
+          <input id="imm-notified-client-at" type="date"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+        </div>
+      </div>
+
+      <!-- 补正详情区（S7 内补正循环：supplementOpen=true，主阶段保持 S7，完成后 Gate-B→Gate-C→supplement 包） -->
+      <div id="imm-supplement-fields" class="hidden space-y-4">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-orange-50 border border-orange-200">
+          <svg class="w-5 h-5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+          <div class="text-sm">
+            <span class="font-medium text-orange-700">补资料次数：</span>
+            <span id="imm-supplement-count" class="font-bold text-orange-800">0</span>
+            <span class="text-orange-600"> 次（补正材料完成后重新提交，主阶段保持 S7）</span>
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">入管要求说明</label>
+          <textarea id="imm-supplement-reason" rows="3" placeholder="记录入管要求补充的具体材料内容..."
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"></textarea>
+        </div>
+        <button type="button" id="btn-supplement-submit"
+          class="btn btn-primary text-sm px-4 py-2"
+          onclick="if(window.CaseDetailPage && window.CaseDetailPage._submitSupplementFromTab) window.CaseDetailPage._submitSupplementFromTab();">
+          确认补资料 · 提交补正包
+        </button>
+      </div>
+
+      <!-- REJECTED 详情区 -->
+      <div id="imm-rejected-fields" class="hidden space-y-4">
+        <div class="flex items-center gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
+          <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm text-red-700 font-medium">入管拒签 — 案件将进入 S8 rejected，可执行失败归档至 S9</span>
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">拒签理由（记录存档）</label>
+          <textarea id="imm-reject-reason" rows="3" placeholder="记录入管局告知的拒签理由..."
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)] resize-none"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs text-[var(--fg-muted)] mb-1">退款状态</label>
+          <select id="imm-refund-status"
+            class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]">
+            <option value="na">无需退款（合同约定不退）</option>
+            <option value="partial">部分退款</option>
+            <option value="full">全额退款</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 通用备注 -->
+      <div class="mt-4">
+        <label class="block text-xs text-[var(--fg-muted)] mb-1">备注</label>
+        <input id="imm-note" type="text" placeholder="其他说明..."
+          class="w-full rounded-lg border border-[var(--border)] bg-[var(--surface)] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" />
+      </div>
+
+      <div class="mt-4 flex gap-2 justify-end">
+        <button type="button" class="btn btn-primary text-sm px-4 py-2" id="imm-save-btn"
+          onclick="if(window.CaseDetailPage && window.CaseDetailPage._saveImmigrationResultFromTab) window.CaseDetailPage._saveImmigrationResultFromTab(); else alert('（示例）入管结果已保存，状态已更新');">保存结果</button>
+      </div>
+    </div>
+
+  </div><!-- /主栏 -->
+
+  <!-- 侧边栏：支付门控 + 提示 -->
+  <div class="space-y-4">
+
+    <!-- COE 发送门控 -->
+    <div class="apple-card p-4">
+      <h4 class="text-sm font-semibold text-[var(--fg)] mb-3 flex items-center gap-2">
+        <svg class="w-4 h-4 text-[var(--warning)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+        </svg>
+        COE 发送门控
+      </h4>
+      <div id="imm-payment-gate" class="space-y-2">
+        <div class="flex items-center gap-2 text-sm" id="gate-deposit">
+          <span id="gate-deposit-icon" class="w-4 h-4 rounded-full bg-gray-200 inline-block flex-shrink-0"></span>
+          <span class="text-[var(--fg-muted)]">着手金已收取</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm" id="gate-final">
+          <span id="gate-final-icon" class="w-4 h-4 rounded-full bg-gray-200 inline-block flex-shrink-0"></span>
+          <span class="text-[var(--fg-muted)]">成功酬金（尾款）已收取</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm" id="gate-coe">
+          <span id="gate-coe-icon" class="w-4 h-4 rounded-full bg-gray-200 inline-block flex-shrink-0"></span>
+          <span class="text-[var(--fg-muted)]">COE 原本已发送客户</span>
+        </div>
+      </div>
+      <p class="text-xs text-[var(--warning)] mt-3">
+        ⚠️ 尾款未结清时需完成风险确认留痕后方可发送 COE（waiting_final_payment → coe_sent 门控）
+      </p>
+    </div>
+
+    <!-- 补资料历史 -->
+    <div class="apple-card p-4">
+      <h4 class="text-sm font-semibold text-[var(--fg)] mb-3">补资料历史</h4>
+      <div id="imm-supplement-history" class="text-sm text-[var(--fg-muted)]">（无补资料记录）</div>
+    </div>
+
+  </div><!-- /侧边栏 -->
+
+</div>
+

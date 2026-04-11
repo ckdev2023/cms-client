@@ -1,0 +1,232 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "split-manifest.schema.json",
+  "title": "Split Manifest",
+  "description": "拆分后目录、脚本、sharedCandidates、productionMapping 的唯一权威清单。由 init 阶段脚本创建骨架，execute 阶段填充，closeout 阶段终态校验。",
+
+  "$defs": {
+    "provenance": {
+      "type": "string",
+      "enum": ["extracted", "inferred"],
+      "description": "extracted = 来自源码静态扫描或受控提取，绑定 sourceInputs 指纹；inferred = AI 判断补写，附 reason"
+    },
+    "sourceInput": {
+      "type": "object",
+      "required": ["file"],
+      "properties": {
+        "file": { "type": "string", "description": "相对于仓库根的文件路径" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$", "description": "文件内容 SHA-256 指纹，用于 drift 检测" },
+        "scannedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["id", "description"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "impact": { "type": "string", "enum": ["blocking", "non-blocking"], "default": "non-blocking" },
+        "relatedFields": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "waiver": {
+      "type": "object",
+      "required": ["id", "description", "reason"],
+      "properties": {
+        "id": { "type": "string" },
+        "description": { "type": "string" },
+        "reason": { "type": "string" },
+        "approvedBy": { "type": "string" },
+        "approvedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "phaseRecord": {
+      "type": "object",
+      "properties": {
+        "completedAt": { "type": "string", "format": "date-time" },
+        "result": { "type": "string", "enum": ["passed", "failed", "skipped"] },
+        "notes": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "sectionRecord": {
+      "type": "object",
+      "required": ["file", "purpose", "sourceAnchors", "contractRefs", "productionTarget"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^sections/" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "sourceAnchors": { "type": "array", "items": { "type": "string" } },
+        "contractRefs": { "type": "array", "items": { "type": "string" } },
+        "productionTarget": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string", "description": "当 provenance=inferred 时说明推理依据" }
+      },
+      "additionalProperties": false
+    },
+    "dataFileRecord": {
+      "type": "object",
+      "required": ["file", "purpose", "exports", "consumers", "demoOnly", "productionTarget"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^data/" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "exports": { "type": "array", "items": { "type": "string" } },
+        "consumers": { "type": "array", "items": { "type": "string" } },
+        "demoOnly": { "type": "boolean" },
+        "productionTarget": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "scriptRecord": {
+      "type": "object",
+      "required": ["file", "purpose", "domHooks", "dependsOn", "demoOnly", "productionTarget"],
+      "properties": {
+        "file": { "type": "string", "pattern": "^scripts/" },
+        "shorthand": { "type": "string", "description": "缩写标识（如 RT/TAB/REN），用于 boundary-map 交叉引用" },
+        "purpose": { "type": "string", "minLength": 1 },
+        "domHooks": { "type": "array", "items": { "type": "string" } },
+        "dependsOn": { "type": "array", "items": { "type": "string" } },
+        "namespace": { "type": "string", "description": "全局命名空间挂载点（如 window.CaseDetailPage）" },
+        "demoOnly": { "type": "boolean" },
+        "productionTarget": { "type": "string" },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "reason": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+
+  "type": "object",
+  "required": [
+    "artifactVersion",
+    "moduleId",
+    "moduleLabel",
+    "moduleDir",
+    "entryFile",
+    "referenceDocs",
+    "sharedCandidates",
+    "sections",
+    "dataFiles",
+    "scripts",
+    "productionMapping",
+    "regressionChecklist",
+    "notes"
+  ],
+  "properties": {
+    "artifactVersion": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Schema 版本号，当前为 2（v1 = 无 phase/sourceInputs 的旧格式）"
+    },
+    "moduleId": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "模块唯一标识（kebab-case）"
+    },
+    "moduleLabel": { "type": "string", "minLength": 1 },
+    "moduleDir": {
+      "type": "string",
+      "description": "模块目录相对于仓库根的路径"
+    },
+    "entryFile": {
+      "type": "string",
+      "description": "入口 HTML 文件相对于仓库根的路径"
+    },
+    "migrationSource": {
+      "type": "string",
+      "description": "（可选）迁入前的原始文件路径，用于追溯"
+    },
+    "referenceDocs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "sharedCandidates": {
+      "type": "object",
+      "required": ["styles", "shell", "scripts"],
+      "properties": {
+        "styles": { "type": "array", "items": { "type": "string" } },
+        "shell": { "type": "array", "items": { "type": "string" } },
+        "scripts": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "sections": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sectionRecord" }
+    },
+    "dataFiles": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/dataFileRecord" }
+    },
+    "scripts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/scriptRecord" }
+    },
+    "productionMapping": {
+      "type": "object",
+      "required": ["domain", "data", "model", "ui", "shared"],
+      "properties": {
+        "domain": { "type": "array", "items": { "type": "string" } },
+        "data": { "type": "array", "items": { "type": "string" } },
+        "model": { "type": "array", "items": { "type": "string" } },
+        "ui": { "type": "array", "items": { "type": "string" } },
+        "shared": { "type": "array", "items": { "type": "string" } }
+      },
+      "additionalProperties": false
+    },
+    "regressionChecklist": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "简要回归项列表；完整回归 gate 在 regression-checklist.json 中，此处仅保留 id/ref 或摘要"
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+
+    "phase": {
+      "type": "object",
+      "description": "流水线阶段追踪",
+      "properties": {
+        "current": {
+          "type": "string",
+          "enum": ["init", "audit", "boundary", "review", "execute", "closeout"]
+        },
+        "history": {
+          "type": "object",
+          "properties": {
+            "init": { "$ref": "#/$defs/phaseRecord" },
+            "audit": { "$ref": "#/$defs/phaseRecord" },
+            "boundary": { "$ref": "#/$defs/phaseRecord" },
+            "review": { "$ref": "#/$defs/phaseRecord" },
+            "execute": { "$ref": "#/$defs/phaseRecord" },
+            "closeout": { "$ref": "#/$defs/phaseRecord" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "sourceInputs": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/sourceInput" },
+      "description": "产出此工件时扫描的源文件及其指纹"
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/unknown" },
+      "description": "无法从源码自动验证但影响后续执行的条目，禁止默认空值过关"
+    },
+    "waivers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/waiver" },
+      "description": "已被显式确认接受的例外项"
+    }
+  },
+  "additionalProperties": false
+}
