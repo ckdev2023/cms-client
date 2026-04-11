@@ -1,6 +1,8 @@
 <!--
   section: detail-readonly-banner
-  Lost-state readonly banner: surface-2 bg + lock icon + "该线索已标记为流失，仅供查阅".
-  Hidden by default; made visible via .is-visible by leads-detail-page.js when sample.banner === 'lost'.
-  Not closable.
+  Lost-state readonly banner.
 -->
+<div class="readonly-banner mb-4" id="readonlyBanner" role="status">
+  <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+  <span>该线索已标记为流失，仅供查阅。</span>
+</div>

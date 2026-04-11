@@ -42,6 +42,24 @@
           <label class="apple-label" for="newCaseCustomerNote">备注</label>
           <textarea class="apple-input min-h-[88px]" id="newCaseCustomerNote" placeholder="例如：与主申请人共用扶养者资料 / 仅做雇主联系人"></textarea>
         </div>
+        <div id="caseCustomerDuplicateBox" class="hidden rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-4 section-stack">
+          <div>
+            <div class="font-extrabold text-[14px] text-[var(--text)]">发现重复命中（仅提示，不自动复用）</div>
+            <div class="meta-text mt-1">若仍继续创建，必须填写原因并确认留痕。</div>
+          </div>
+          <div id="caseCustomerDuplicateMatches" class="section-stack"></div>
+          <div>
+            <label class="apple-label" for="caseCustomerDuplicateReason">继续创建原因</label>
+            <textarea class="apple-input min-h-[88px]" id="caseCustomerDuplicateReason" placeholder="例如：同名不同人 / 旧档案联系方式已失效"></textarea>
+          </div>
+          <label class="flex items-start gap-3">
+            <input id="caseCustomerDuplicateConfirm" type="checkbox" class="mt-1" />
+            <div>
+              <div class="font-semibold text-[13px] text-[var(--text)]">我已确认继续创建新客户并留痕</div>
+              <div class="meta-text mt-1">将记录命中对象、操作者、确认时间与原因（demo）。</div>
+            </div>
+          </label>
+        </div>
         <div class="text-[13px] font-semibold text-red-600" id="caseCustomerModalError"></div>
       </form>
     </div>

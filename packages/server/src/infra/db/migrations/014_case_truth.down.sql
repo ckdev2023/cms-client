@@ -1,13 +1,11 @@
 -- 014_case_truth rollback
 
-DROP INDEX IF EXISTS idx_case_stage_history_case;
-DROP TABLE IF EXISTS case_stage_history;
-
 DROP INDEX IF EXISTS idx_cases_billing_risk;
 DROP INDEX IF EXISTS idx_cases_result_outcome;
 
 ALTER TABLE cases DROP COLUMN IF EXISTS entry_confirmed_at;
 ALTER TABLE cases DROP COLUMN IF EXISTS overseas_visa_start_at;
+ALTER TABLE cases DROP COLUMN IF EXISTS billing_risk_ack_evidence_url;
 ALTER TABLE cases DROP COLUMN IF EXISTS billing_risk_ack_reason_note;
 ALTER TABLE cases DROP COLUMN IF EXISTS billing_risk_ack_reason_code;
 ALTER TABLE cases DROP COLUMN IF EXISTS billing_risk_acknowledged_at;

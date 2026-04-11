@@ -9,6 +9,9 @@
  *
  * External config consumed (read-only, from data/case-detail-config.js):
  *   BILLING_STATUS, CASE_ID_MAP, DETAIL_SAMPLES, DETAIL_STAGES, POST_APPROVAL_STAGES
+ *
+ * Document status compat bridge: sample data is P0-native; the bridge
+ * is a transition safety net for legacy sessionStorage / external callers.
  */
 
 (function () {
@@ -218,6 +221,9 @@
       ? JSON.parse(JSON.stringify(s.correctionPackage))
       : null;
 
+    // Defensive: normalise document statuses through compat bridge.
+    // Now a passthrough for P0-native samples; guards against legacy
+    // values in persisted sessionStorage snapshots or external overrides.
     var _norm = ns.normalizeDocStatus || function (v) { return v; };
     if (s.documents) {
       s.documents.forEach(function (group) {
@@ -465,13 +471,26 @@
   }
 
   /* ================================================================== */
-  /*  DOCUMENT STATUS NORMALIZATION (COMPAT BRIDGE)                      */
-  /*  Legacy sample data uses keys like done/idle/submitted/reviewed.    */
-  /*  This map aligns them with the unified P0 document status enum     */
-  /*  defined in documents-config.js (DOCUMENT_STATUS_OPTIONS).          */
+  /*  DOCUMENT STATUS NORMALIZATION (TRANSITION COMPAT BRIDGE)           */
+  /*                                                                     */
+  /*  As of proto-doc-status-config, all primary sample data in          */
+  /*  case-detail-config.js uses P0 authoritative enum values directly:  */
+  /*    not_sent | waiting_upload | uploaded_reviewing | approved |       */
+  /*    revision_required | waived | expired                             */
+  /*                                                                     */
+  /*  This bridge is retained ONLY as a safety net for:                  */
+  /*    - External/list-page code that may still emit legacy keys        */
+  /*    - SessionStorage snapshots persisted before the migration        */
+  /*  Legacy keys (done/idle/submitted/reviewed/rejected/pending/missing)*/
+  /*  MUST NOT be used in new code. Remove this bridge once all          */
+  /*  consumers are confirmed P0-native.                                 */
   /* ================================================================== */
 
+  var P0_DOC_STATUSES = ['not_sent', 'waiting_upload', 'uploaded_reviewing',
+    'approved', 'revision_required', 'expired', 'waived'];
+
   var COMPAT_STATUS_MAP = {
+    // --- legacy → P0 (transition only, do not add new legacy keys) ---
     done:       'approved',
     idle:       'not_sent',
     submitted:  'uploaded_reviewing',
@@ -479,6 +498,7 @@
     rejected:   'revision_required',
     pending:    'waiting_upload',
     missing:    'not_sent',
+    // --- P0 identity (passthrough) ---
     not_sent:           'not_sent',
     waiting_upload:     'waiting_upload',
     uploaded_reviewing: 'uploaded_reviewing',
@@ -499,8 +519,10 @@
   };
 
   /**
-   * Normalize a raw document status code through the compat layer.
-   * @param {string} raw - raw status from demo data
+   * Normalize a raw document status code through the transition compat layer.
+   * Primary sample data already uses P0 values (passthrough). Legacy keys
+   * from external sources are mapped; unknown keys fall through as-is.
+   * @param {string} raw - status code (P0 preferred, legacy tolerated)
    * @returns {string} P0 authoritative status code
    */
   function normalizeDocStatus(raw) {
@@ -509,8 +531,8 @@
   }
 
   /**
-   * Get unified label for a document status.
-   * @param {string} raw - raw or unified status code
+   * Get unified display label for a document status.
+   * @param {string} raw - P0 or legacy status code
    * @returns {string} display label
    */
   function docStatusLabel(raw) {
@@ -526,7 +548,8 @@
     var s = liveState;
     return !!(s && (s.isMgmtCase ||
       (s.caseType && s.caseType.indexOf('経営') >= 0) ||
-      (s.sampleKey && s.sampleKey.indexOf('management') === 0)));
+      (s.sampleKey && s.sampleKey.indexOf('management') === 0) ||
+      s.applicationFlowType === 'coe_overseas'));
   }
 
   /* ================================================================== */
@@ -562,4 +585,5 @@
   ns.normalizeDocStatus = normalizeDocStatus;
   ns.docStatusLabel = docStatusLabel;
   ns.COMPAT_STATUS_MAP = COMPAT_STATUS_MAP;
+  ns.P0_DOC_STATUSES = P0_DOC_STATUSES;
 })();

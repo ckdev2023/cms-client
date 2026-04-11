@@ -29,6 +29,10 @@ packages/prototype/admin/leads-message/
 ├── MIGRATION-MAPPING-DETAIL.md                ← 详情页迁移映射
 ├── split-manifest-detail.json                 ← 详情页 manifest
 ├── SPEC-GAP-MATRIX-DETAIL.md                  ← 详情页缺口矩阵
+├── shell/
+│   ├── mobile-nav.html                        ← 基于 shared shell 的本模块路径/当前页态适配
+│   ├── side-nav.html                          ← 基于 shared shell 的本模块路径/当前页态适配
+│   └── topbar-detail.html                     ← 详情页 topbar 片段（含“线索列表”返回入口）
 ├── sections/
 │   ├── header.html                            ← 列表页 header（已有架构定义）
 │   ├── filters.html                           ← 列表页筛选面板（已有架构定义）
@@ -39,10 +43,14 @@ packages/prototype/admin/leads-message/
 │   ├── detail-tabs.html                       ← 4-Tab 横向导航
 │   ├── detail-info.html                       ← Tab 1 基础信息（8 字段结构化展示）
 │   ├── detail-followups.html                  ← Tab 2 跟进记录（时间线 + 新增表单 + 一键转任务）
-│   ├── detail-conversion.html                 ← Tab 3 转化信息（去重面板 + 转客户/转案件 + 已转化卡片）
+│   ├── detail-conversion.html                 ← Tab 3 转化信息（去重面板 + 转化入口 + 已转化卡片）
+│   ├── detail-convert-modals.html             ← 转客户 / 转案件确认弹窗（demo-only）
+│   ├── detail-toast.html                      ← 详情页 Toast（跟进/转化/状态变更反馈）
 │   ├── detail-log.html                        ← Tab 4 日志（三分类筛选 + 变更时间线）
 │   ├── detail-readonly-banner.html            ← 已流失态只读横幅
 │   └── detail-warning-banner.html             ← 已签约未转化态 warning 横幅
+├── styles/
+│   └── detail.css                             ← 详情页专有样式
 ├── data/
 │   ├── leads-config.js                        ← 列表页配置（已有架构定义）
 │   └── leads-detail-config.js                 ← 详情页示例数据与样本配置
@@ -60,13 +68,13 @@ packages/prototype/admin/leads-message/
 
 职责：
 
-1. 引入 `shared/styles/*` 与 `shared/scripts/*`
-2. 保留详情页专有样式（Tab bar、Info field block、Timeline、Banner、Dedup panel、Conversion card、Channel chip、Log timeline、Conversion modal）
-3. 组装共享 shell（side-nav、topbar、mobile-nav）与详情页主体
-4. 在 `<main>` 中按 section 顺序组织：header → readonly-banner → warning-banner → tabs → tab-panels
-5. 通过 `<script src>` 依次挂载 `data/leads-detail-config.js` → `scripts/leads-detail-page.js` → 共享脚本
+1. 引入 `shared/styles/*`、`styles/detail.css` 与 `shared/scripts/*`
+2. 通过 `data-include-html` 组装本模块 `shell/*.html`
+3. 在 `<main>` 中按 section 顺序装配：header → readonly-banner → warning-banner → tabs → tab-panels
+4. 在 `<main>` 外继续装配 `detail-convert-modals.html` 与 `detail-toast.html`
+5. 通过 `<script src>` 依次挂载 `shared/scripts/html-fragment-loader.js` → `data/leads-detail-config.js` → `scripts/leads-detail-page.js` → 共享脚本
 
-> P0 阶段仍维持可直接打开运行的 HTML；`sections/detail-*.html` 标注结构边界，不通过构建工具动态 include。
+> P0 阶段仍维持可直接打开运行的 HTML，但入口页改为运行时片段装配：`html-fragment-loader.js` 负责注入 `shell/*.html` 与 `sections/detail-*.html`。
 
 ### 3.2 sections
 
@@ -77,6 +85,8 @@ packages/prototype/admin/leads-message/
 | `detail-info.html` | 8 字段结构化展示：线索编号、姓名、电话/邮箱、来源/介绍人、意向业务类型、归属 Group、负责人、备注；编辑入口（demo-only） | §4 |
 | `detail-followups.html` | 跟进时间线（渠道 chip + 摘要 + 结论 + 下一步 + 时间 + 一键转任务）+ 新增跟进记录表单 + 空态引导 | §5 |
 | `detail-conversion.html` | 去重匹配面板（电话/邮箱 → Lead/Customer 摘要 + 人工确认）+ 转客户/转案件操作入口 + 已转化 Customer/Case 卡片 + 跳转链接 | §6 |
+| `detail-convert-modals.html` | 转客户/转案件确认弹窗；保留 Group 继承、主申请人预填、确认/取消等 demo-only 结构 | §6 |
+| `detail-toast.html` | 详情页操作反馈 toast（跟进录入 / 一键转任务 / 转化 / 状态变更） | §12 |
 | `detail-log.html` | 三分类筛选（全部/状态变更/人员变更/Group 变更）+ 变更日志时间线（操作类型 chip + 变更前后值 + 操作人 + 时间） | §7 |
 | `detail-readonly-banner.html` | 已流失态：浅灰底 `--surface-2` + 锁图标 + "该线索已标记为流失，仅供查阅"；不可关闭 | §8 |
 | `detail-warning-banner.html` | 已签约未转化态：浅黄底 `rgba(245,158,11,0.1)` + 警告图标 + "请完成转化" + 行动按钮；不可关闭 | §8 |
@@ -173,7 +183,7 @@ DOM 钩子（关键 ID / data 属性）：
 - 跟进记录时间线与录入表单
 - 渠道 Chip 文案与颜色
 - 去重匹配面板
-- 转化操作弹窗
+- 转化操作入口与确认弹窗
 - 已转化卡片与跳转入口
 - 只读/Warning 横幅控制
 - 日志三分类切换
@@ -201,15 +211,15 @@ DOM 钩子（关键 ID / data 属性）：
 ### Step 2：搭建入口壳层
 
 1. 创建 `detail.html` 骨架
-2. 引入 shared 样式与导航，对齐 DESIGN.md token、topbar、侧边栏
-3. 在 `<main>` 中预留 header、readonly-banner、warning-banner、tabs、tab-panels 的结构位
+2. 引入 shared 样式、`styles/detail.css` 与片段加载器
+3. 在 `<main>` 中预留 header、readonly-banner、warning-banner、tabs、tab-panels 的 `data-include-html` 结构位
 4. 标注 `aria-current="page"` 指向"咨询线索"
 
 ### Step 3：拆分页面区块
 
 1. 将各 Tab 内容拆到对应 `sections/detail-*.html`
 2. 按规格补齐缺口（跟进时间线、去重面板、转化弹窗、日志时间线、空态引导）
-3. 新增 `detail-readonly-banner.html` 和 `detail-warning-banner.html`
+3. 新增 `detail-readonly-banner.html`、`detail-warning-banner.html`、`detail-convert-modals.html` 和 `detail-toast.html`
 4. 保持入口文件完整可运行
 
 ### Step 4：实现行为脚本
@@ -252,8 +262,8 @@ DOM 钩子（关键 ID / data 属性）：
     ┌────────▼───────┐  ┌───────▼────────┐  ┌───────▼──────────┐
     │ leads-detail-  │  │ sections/      │  │ (列表页已完成    │
     │ page.js        │  │ detail-*.html  │  │  index.html 的   │
-    │ (Tab/样本/     │  │ (结构边界)     │  │  行跳转入口)     │
-    │  跟进/转化/    │  │                │  │                  │
+    │ (Tab/样本/     │  │ + convert-     │  │  行跳转入口)     │
+    │  跟进/转化/    │  │ modals         │  │                  │
     │  日志/banner)  │  │                │  │                  │
     └────────┬───────┘  └───────┬────────┘  └────────┬─────────┘
              │                  │                     │

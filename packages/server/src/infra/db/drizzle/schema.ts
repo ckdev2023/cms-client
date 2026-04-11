@@ -150,7 +150,7 @@ export const companies = pgTable("companies", {
  * - 承载案件状态、优先级、风险等级以及关键时间字段
  *
  * 说明：
- * - 该定义对齐 `001_init.sql` 与 `009_core_entities.up.sql`
+ * - 该定义对齐 `001_init.sql`、`009_core_entities.up.sql` 与 `014_case_truth.up.sql`
  * - 业务流程上的阶段/门槛由上层服务与文档定义，不在 schema 中编码
  *
  * @returns cases 表的 Drizzle schema
@@ -191,6 +191,36 @@ export const cases = pgTable("cases", {
   resultDate: date("result_date", { mode: "string" }),
   residenceExpiryDate: date("residence_expiry_date", { mode: "string" }),
   archivedAt: timestamp("archived_at", { withTimezone: true, mode: "string" }),
+  resultOutcome: text("result_outcome"),
+  quotePrice: numeric("quote_price", { precision: 15, scale: 2 }),
+  depositPaidCached: boolean("deposit_paid_cached").notNull().default(false),
+  finalPaymentPaidCached: boolean("final_payment_paid_cached")
+    .notNull()
+    .default(false),
+  billingUnpaidAmountCached: numeric("billing_unpaid_amount_cached", {
+    precision: 15,
+    scale: 2,
+  })
+    .notNull()
+    .default("0"),
+  billingRiskAcknowledgedBy: uuid("billing_risk_acknowledged_by").references(
+    () => users.id,
+  ),
+  billingRiskAcknowledgedAt: timestamp("billing_risk_acknowledged_at", {
+    withTimezone: true,
+    mode: "string",
+  }),
+  billingRiskAckReasonCode: text("billing_risk_ack_reason_code"),
+  billingRiskAckReasonNote: text("billing_risk_ack_reason_note"),
+  billingRiskAckEvidenceUrl: text("billing_risk_ack_evidence_url"),
+  overseasVisaStartAt: timestamp("overseas_visa_start_at", {
+    withTimezone: true,
+    mode: "string",
+  }),
+  entryConfirmedAt: timestamp("entry_confirmed_at", {
+    withTimezone: true,
+    mode: "string",
+  }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
     .notNull()
     .defaultNow(),
@@ -239,6 +269,32 @@ export const communicationLogs = pgTable("communication_logs", {
 });
 
 /**
+ * `case_stage_history` 表定义。
+ *
+ * 用途：
+ * - 记录案件每次 S1–S9 阶段流转，用于审计与回溯
+ * - 由 015_case_stage_history migration 创建（含 RLS）
+ *
+ * @returns case_stage_history 表的 Drizzle schema
+ */
+export const caseStageHistory = pgTable("case_stage_history", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  orgId: uuid("org_id")
+    .notNull()
+    .references(() => organizations.id),
+  caseId: uuid("case_id")
+    .notNull()
+    .references(() => cases.id),
+  fromStage: text("from_stage").notNull(),
+  toStage: text("to_stage").notNull(),
+  reason: text("reason"),
+  changedBy: uuid("changed_by").references(() => users.id),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow(),
+});
+
+/**
  * `organizations` 的关联关系定义。
  *
  * 用途：
@@ -253,6 +309,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   companies: many(companies),
   cases: many(cases),
   communicationLogs: many(communicationLogs),
+  caseStageHistory: many(caseStageHistory),
 }));
 
 /**
@@ -272,7 +329,9 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   ownedCompanies: many(companies),
   ownedCases: many(cases, { relationName: "case_owner" }),
   assistedCases: many(cases, { relationName: "case_assistant" }),
+  billingRiskAckedCases: many(cases, { relationName: "case_billing_risk_ack" }),
   createdCommunicationLogs: many(communicationLogs),
+  changedStageHistory: many(caseStageHistory),
 }));
 
 /**
@@ -347,8 +406,37 @@ export const casesRelations = relations(cases, ({ one, many }) => ({
     fields: [cases.assistantUserId],
     references: [users.id],
   }),
+  billingRiskAcknowledger: one(users, {
+    relationName: "case_billing_risk_ack",
+    fields: [cases.billingRiskAcknowledgedBy],
+    references: [users.id],
+  }),
   communicationLogs: many(communicationLogs),
+  stageHistory: many(caseStageHistory),
 }));
+
+/**
+ * `case_stage_history` 的关联关系定义。
+ *
+ * @returns case_stage_history 相关 relations
+ */
+export const caseStageHistoryRelations = relations(
+  caseStageHistory,
+  ({ one }) => ({
+    organization: one(organizations, {
+      fields: [caseStageHistory.orgId],
+      references: [organizations.id],
+    }),
+    case: one(cases, {
+      fields: [caseStageHistory.caseId],
+      references: [cases.id],
+    }),
+    changedByUser: one(users, {
+      fields: [caseStageHistory.changedBy],
+      references: [users.id],
+    }),
+  }),
+);
 
 /**
  * `communication_logs` 的关联关系定义。

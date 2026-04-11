@@ -59,8 +59,8 @@ The INVENTORY.md for billing performed a line-by-line comparison between `billin
 <!-- L471-553: Desktop side nav — 82 lines, copied from admin-prototype.html -->
 <aside class="side-nav">
   <nav>
-    <a href="admin-prototype.html" class="nav-item">仪表盘</a>
-    <a href="customers.html" class="nav-item">客户</a>
+    <a href="dashboard/index.html" class="nav-item">仪表盘</a>
+    <a href="customers/index.html" class="nav-item">客户</a>
     <a href="billing.html" class="nav-item" aria-current="page">收费与财务</a>
     <!-- ... 10+ more items ... -->
   </nav>

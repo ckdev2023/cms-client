@@ -8,42 +8,17 @@
     <link rel="stylesheet" href="../shared/styles/tokens.css" />
     <link rel="stylesheet" href="../shared/styles/shell.css" />
     <link rel="stylesheet" href="../shared/styles/components.css" />
-    <style>
-      .lead-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 2px 10px;
-        border-radius: 9999px;
-        font-size: 12px;
-        font-weight: 700;
-        border: 1px solid;
-        white-space: nowrap;
-      }
-      .lead-badge-new { background: #fffbeb; color: #d97706; border-color: #fde68a; }
-      .lead-badge-following { background: #f0f9ff; color: #0284c7; border-color: #bae6fd; }
-      .lead-badge-pending_sign { background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe; }
-      .lead-badge-signed { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
-      .lead-badge-lost { background: #f9fafb; color: #9ca3af; border-color: #e5e7eb; }
-      .lead-badge-signed-warning { background: #fffbeb; color: #d97706; border-color: #fde68a; }
-
-      .lead-row-warning td { background-color: rgba(245, 158, 11, 0.06) !important; }
-      .lead-row-warning:hover td { background-color: rgba(245, 158, 11, 0.1) !important; }
-      .lead-row-dimmed td { opacity: 0.55; }
-
-      #leadsTableBody tr[data-lead-id] { cursor: pointer; }
-    </style>
+    <link rel="stylesheet" href="styles/list.css" />
   </head>
   <body class="antialiased">
     <a href="#main" class="skip-link">跳到主要内容</a>
 
-    <!-- shell: mobile-nav.html (paths adjusted for leads-message/ subdirectory) -->
     <div class="mobile-nav" aria-hidden="true">
       <div class="mobile-nav-backdrop" data-nav-close></div>
       <div class="mobile-nav-panel">
         <div class="side-nav-inner">
           <div class="brand">
-            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
             <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -52,7 +27,7 @@
           </div>
           <nav aria-label="主导航">
             <div class="nav-group-title">工作台</div>
-            <a class="nav-item" href="../admin-prototype.html">
+            <a class="nav-item" href="../dashboard/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
               仪表盘
             </a>
@@ -65,16 +40,16 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               客户
             </a>
-            <a class="nav-item" href="../cases-list.html">
+            <a class="nav-item" href="../case/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
               案件
             </a>
-            <a class="nav-item" href="../tasks.html">
+            <a class="nav-item" href="../tasks/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
             <div class="nav-group-title">内容</div>
-            <a class="nav-item" href="../documents.html">
+            <a class="nav-item" href="../documents/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
@@ -83,7 +58,7 @@
               文书中心
             </a>
             <div class="nav-group-title">财务</div>
-            <a class="nav-item" href="../billing.html">
+            <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
@@ -92,7 +67,7 @@
               报表
             </a>
             <div class="nav-group-title">系统</div>
-            <a class="nav-item" href="../settings.html">
+            <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
             </a>
@@ -106,16 +81,15 @@
     </div>
 
     <div class="app-shell">
-      <!-- shell: side-nav.html (paths adjusted for leads-message/ subdirectory) -->
       <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
         <div class="side-nav-inner">
           <div class="brand">
-            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
             <span class="chip">事务所后台</span>
           </div>
           <nav aria-label="主导航">
             <div class="nav-group-title">工作台</div>
-            <a class="nav-item" href="../admin-prototype.html">
+            <a class="nav-item" href="../dashboard/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
               仪表盘
             </a>
@@ -128,16 +102,16 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               客户
             </a>
-            <a class="nav-item" href="../cases-list.html">
+            <a class="nav-item" href="../case/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
               案件
             </a>
-            <a class="nav-item" href="../tasks.html">
+            <a class="nav-item" href="../tasks/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
             <div class="nav-group-title">内容</div>
-            <a class="nav-item" href="../documents.html">
+            <a class="nav-item" href="../documents/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
@@ -146,7 +120,7 @@
               文书中心
             </a>
             <div class="nav-group-title">财务</div>
-            <a class="nav-item" href="../billing.html">
+            <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
@@ -155,7 +129,7 @@
               报表
             </a>
             <div class="nav-group-title">系统</div>
-            <a class="nav-item" href="../settings.html">
+            <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
             </a>
@@ -168,7 +142,6 @@
       </aside>
 
       <div>
-        <!-- shell: topbar.html (paths adjusted for leads-message/ subdirectory) -->
         <header class="topbar" aria-label="顶部工具栏">
           <div class="topbar-inner">
             <button class="icon-btn lg:hidden" type="button" aria-label="打开导航" data-nav-open>
@@ -186,580 +159,17 @@
         </header>
 
         <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
-
-      <!-- section: sections/header.html -->
-      <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-8">
-        <div>
-          <h1 class="text-[34px] font-extrabold display-font leading-tight">咨询线索</h1>
-          <p class="text-sm text-[var(--muted-2)] mt-1 font-semibold">P0 聚焦线索录入、跟进与签约后转化闭环</p>
-        </div>
-        <div class="flex space-x-3">
-          <button class="btn-primary flex items-center" id="btnAddLead" type="button">
-            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-            新建线索
-          </button>
-        </div>
-      </div>
-      <!-- /section: sections/header.html -->
-
-      <!-- section: sections/filters.html -->
-      <div class="flex flex-col gap-3 mb-6">
-        <div class="flex flex-wrap justify-between items-center gap-3">
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="segmented-control" role="group" aria-label="数据范围">
-              <button class="segment-btn active" type="button" data-scope-btn="mine" aria-pressed="true">我的</button>
-              <button class="segment-btn" type="button" data-scope-btn="group" aria-pressed="false">本组</button>
-              <button class="segment-btn" type="button" data-scope-btn="all" aria-pressed="false">全所（管理员）</button>
-            </div>
-          </div>
-          <div class="relative">
-            <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-            <input type="text" id="leadSearch" placeholder="搜索：姓名 / 电话 / 邮箱 / 编号" class="search-input" />
-          </div>
-        </div>
-        <div class="flex flex-wrap items-center gap-2">
-          <select id="filterStatus" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[140px] leads-filter-select">
-            <option value="" selected>状态：全部</option>
-            <option value="new">新咨询</option>
-            <option value="following">跟进中</option>
-            <option value="pending_sign">待签约</option>
-            <option value="signed">已签约</option>
-            <option value="lost">已流失</option>
-          </select>
-          <select id="filterOwner" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[150px] leads-filter-select">
-            <option value="" selected>负责人：全部</option>
-            <option value="suzuki">Suzuki</option>
-            <option value="tanaka">Tanaka</option>
-            <option value="sato">Sato</option>
-          </select>
-          <select id="filterGroup" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[150px] leads-filter-select">
-            <option value="" selected>Group：全部</option>
-            <option value="tokyo-1">东京一组</option>
-            <option value="tokyo-2">东京二组</option>
-            <option value="osaka">大阪组</option>
-          </select>
-          <select id="filterBusinessType" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[150px] leads-filter-select">
-            <option value="" selected>业务类型：全部</option>
-            <option value="highly-skilled">高度人才</option>
-            <option value="work-visa">技人国</option>
-            <option value="family-stay">家族滞在</option>
-            <option value="business-manager">设立法人</option>
-            <option value="permanent">永住</option>
-            <option value="other">其他</option>
-          </select>
-          <div class="flex items-center gap-1">
-            <span class="text-[12px] font-semibold text-[var(--apple-text-tert)] whitespace-nowrap">跟进</span>
-            <input type="date" id="filterDateFrom" class="apple-input appearance-none bg-white h-9 py-0 px-2 text-[13px] font-semibold w-[130px]" />
-            <span class="text-[12px] text-[var(--apple-text-tert)]">—</span>
-            <input type="date" id="filterDateTo" class="apple-input appearance-none bg-white h-9 py-0 px-2 text-[13px] font-semibold w-[130px]" />
-          </div>
-          <button class="btn-secondary h-9 px-4 text-[13px]" type="button" data-action="reset-filters">重置</button>
-        </div>
-      </div>
-      <!-- /section: sections/filters.html -->
-
-      <!-- section: sections/table.html -->
-      <div class="apple-card overflow-hidden">
-
-        <!-- Bulk action toolbar (hidden until items selected) -->
-        <div
-          id="bulkActionBar"
-          class="hidden px-4 md:px-6 py-3 border-b border-[#f2f2f7] bg-[#fbfbfd] flex flex-col md:flex-row md:items-center md:justify-between gap-2"
-          role="region"
-          aria-label="批量操作"
-        >
-          <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--apple-text-main)]">
-            已选择 <span id="selectedCount">0</span> 条
-            <button class="text-[12px] font-extrabold text-[var(--apple-text-tert)] hover:text-[var(--apple-text-main)]" type="button" id="bulkClearBtn">清除</button>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <div class="flex items-center gap-2">
-              <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">指派负责人</span>
-              <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[140px]" id="bulkAssignSelect">
-                <option value="" selected>选择负责人</option>
-                <option value="suzuki">Suzuki</option>
-                <option value="tanaka">Tanaka</option>
-                <option value="sato">Sato</option>
-              </select>
-              <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkAssignApplyBtn">应用</button>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">跟进时间</span>
-              <input type="datetime-local" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[190px]" id="bulkFollowUpInput" />
-              <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkFollowUpApplyBtn">应用</button>
-            </div>
-            <div class="flex items-center gap-2">
-              <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">标记状态</span>
-              <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[120px]" id="bulkStatusSelect">
-                <option value="" selected>选择状态</option>
-                <option value="new">新咨询</option>
-                <option value="following">跟进中</option>
-                <option value="pending_sign">待签约</option>
-                <option value="signed">已签约</option>
-                <option value="lost">已流失</option>
-              </select>
-              <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkStatusApplyBtn">应用</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Data table: 11 columns per spec §2.1 -->
-        <div class="overflow-x-auto">
-        <table class="apple-table w-full text-left border-collapse" style="min-width: 960px;">
-          <thead>
-            <tr>
-              <th class="w-[44px] text-center">
-                <label class="inline-flex items-center justify-center w-full">
-                  <input type="checkbox" id="selectAllLeads" class="accent-[var(--apple-blue)] table-checkbox" aria-label="全选线索" />
-                </label>
-              </th>
-              <th class="w-[120px]">线索编号</th>
-              <th>联系人姓名</th>
-              <th class="hidden md:table-cell">电话 / 邮箱</th>
-              <th class="hidden md:table-cell w-[100px]">意向业务</th>
-              <th class="hidden lg:table-cell w-[80px]">来源</th>
-              <th class="w-[110px]">当前状态</th>
-              <th class="hidden md:table-cell w-[100px]">负责人</th>
-              <th class="hidden lg:table-cell w-[100px]">所属 Group</th>
-              <th class="hidden lg:table-cell">下一步动作</th>
-              <th class="hidden md:table-cell w-[90px]">下次跟进</th>
-              <th class="w-[100px]">最近更新</th>
-            </tr>
-          </thead>
-          <tbody id="leadsTableBody">
-
-            <!-- D.1 — 新咨询: Michael Thompson -->
-            <tr data-lead-id="LEAD-2026-0042" data-status="new" data-owner="suzuki" data-group="tokyo-1" data-business-type="work-visa">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0042" aria-label="选择 Michael Thompson" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0042</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">M</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">Michael Thompson</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">090-8765-4321</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">michael.t@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">技人国</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
-              <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>
-                  Suzuki
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话确认意向与签证类别</td>
-              <td class="hidden md:table-cell text-sm">04-10</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">今天 15:30</td>
-            </tr>
-
-            <!-- D.2 — 跟进中: 李华 -->
-            <tr data-lead-id="LEAD-2026-0035" data-status="following" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0035" aria-label="选择 李华" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0035</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">李华</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">080-2222-3333</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">li.hua@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">家族滞在</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">介绍</td>
-              <td><span class="lead-badge lead-badge-following">跟进中</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>
-                  Tanaka
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">邮件发送材料清单，确认扶养者信息</td>
-              <td class="hidden md:table-cell text-sm">04-12</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">昨天 11:20</td>
-            </tr>
-
-            <!-- D.3 — 待签约: 田中 太郎 -->
-            <tr data-lead-id="LEAD-2026-0028" data-status="pending_sign" data-owner="sato" data-group="osaka" data-business-type="business-manager">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0028" aria-label="选择 田中 太郎" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0028</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">田中 太郎</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">070-5555-6666</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">tanaka.t@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">设立法人</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">来访</td>
-              <td><span class="lead-badge lead-badge-pending_sign">待签约</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">Sa</div>
-                  Sato
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">大阪组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">面谈确认签约条件与费用</td>
-              <td class="hidden md:table-cell text-sm">04-11</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">04-06 17:00</td>
-            </tr>
-
-            <!-- D.4 — 已签约（已转化）: 王 明 -->
-            <tr data-lead-id="LEAD-2026-0015" data-status="signed" data-owner="suzuki" data-group="tokyo-2" data-business-type="work-visa">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0015" aria-label="选择 王 明" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0015</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">王</div>
-                  <div>
-                    <span class="font-semibold text-[var(--apple-text-main)]">王 明</span>
-                    <div class="text-[11px] text-emerald-600 font-semibold mt-0.5">→ CUS-2026-0195 · CAS-2026-0210</div>
-                  </div>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">080-7777-8888</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">wang.ming@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">技人国</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">介绍</td>
-              <td><span class="lead-badge lead-badge-signed">已签约</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>
-                  Suzuki
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京二组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">—</td>
-              <td class="hidden md:table-cell text-sm">—</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">04-02</td>
-            </tr>
-
-            <!-- D.5 — 已流失: 佐藤 美咲 (dimmed row) -->
-            <tr class="lead-row-dimmed" data-lead-id="LEAD-2026-0019" data-status="lost" data-owner="tanaka" data-group="tokyo-1" data-business-type="permanent">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0019" aria-label="选择 佐藤 美咲" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0019</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0">佐</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">佐藤 美咲</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">090-4444-1111</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">sato.misaki@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">永住</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话</td>
-              <td><span class="lead-badge lead-badge-lost">已流失</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>
-                  Tanaka
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">—</td>
-              <td class="hidden md:table-cell text-sm">—</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">03-28</td>
-            </tr>
-
-            <!-- D.6 — 已签约未转化: 陈 大伟 (warning row) -->
-            <tr class="lead-row-warning" data-lead-id="LEAD-2026-0022" data-status="signed" data-owner="suzuki" data-group="tokyo-1" data-business-type="family-stay">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0022" aria-label="选择 陈 大伟" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0022</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">陈</div>
-                  <div>
-                    <span class="font-semibold text-[var(--apple-text-main)]">陈 大伟</span>
-                    <div class="text-[11px] text-amber-600 font-semibold mt-0.5">⚠ 已签约未转化：请完成客户/案件创建</div>
-                  </div>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">080-9999-0000</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">chen.dw@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">家族滞在</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
-              <td><span class="lead-badge lead-badge-signed-warning">已签约</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>
-                  Suzuki
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-              <td class="hidden lg:table-cell text-sm text-amber-600 font-semibold">请尽快完成客户建档与案件创建</td>
-              <td class="hidden md:table-cell text-sm">04-09</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">04-05</td>
-            </tr>
-
-            <!-- D.7 — 新咨询 (去重: 电话匹配 Lead): 田中 花子 -->
-            <tr data-lead-id="LEAD-2026-0046" data-status="new" data-owner="sato" data-group="osaka" data-business-type="highly-skilled" data-dedup="phoneMatchLead">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0046" aria-label="选择 田中 花子" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0046</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">田中 花子</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px]">080-1234-5678</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">—</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">高度人才</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话</td>
-              <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">Sa</div>
-                  Sato
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">大阪组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">确认重复后联系本人</td>
-              <td class="hidden md:table-cell text-sm">04-14</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">今天 09:15</td>
-            </tr>
-
-            <!-- D.8 — 新咨询 (去重: 邮箱匹配 Customer): 李娜 -->
-            <tr data-lead-id="LEAD-2026-0047" data-status="new" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay" data-dedup="emailMatchCustomer">
-              <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0047" aria-label="选择 李娜（重复确认）" /></td>
-              <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0047</td>
-              <td>
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div>
-                  <span class="font-semibold text-[var(--apple-text-main)]">李娜（重复确认）</span>
-                </div>
-              </td>
-              <td class="hidden md:table-cell">
-                <div class="text-[13px] text-[var(--apple-text-tert)]">—</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)]">li.na@email.com</div>
-              </td>
-              <td class="hidden md:table-cell text-sm">家族滞在</td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
-              <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-              <td class="hidden md:table-cell">
-                <div class="flex items-center text-sm">
-                  <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>
-                  Tanaka
-                </div>
-              </td>
-              <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-              <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">与既有客户合并确认</td>
-              <td class="hidden md:table-cell text-sm">04-13</td>
-              <td class="text-sm text-[var(--apple-text-sec)]">今天 10:00</td>
-            </tr>
-
-          </tbody>
-        </table>
-        </div>
-
-        <!-- Empty state (hidden when data exists) -->
-        <div id="leadsEmptyState" class="hidden py-16 text-center">
-          <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
-          </svg>
-          <div class="text-[16px] font-extrabold text-[var(--apple-text-main)]">暂无咨询线索</div>
-          <div class="text-[13px] text-[var(--apple-text-tert)] font-semibold mt-1">录入第一个咨询，开始跟进与转化</div>
-          <button class="btn-primary mt-4" type="button" data-action="open-create-modal">新建线索</button>
-        </div>
-
-        <!-- Pagination -->
-        <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-          <div class="text-sm text-gray-500">显示 1 - 8 条，共 8 条</div>
-          <div class="flex space-x-2">
-            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" disabled>上一页</button>
-            <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" disabled>下一页</button>
-          </div>
-        </div>
-      </div>
-      <!-- /section: sections/table.html -->
-
+          <div data-include-html="sections/header.html"></div>
+          <div data-include-html="sections/filters.html"></div>
+          <div data-include-html="sections/table.html"></div>
         </main>
 
-    <!-- section: sections/create-modal.html -->
-    <div class="modal-backdrop" id="createLeadModal">
-      <div class="apple-modal flex flex-col">
-        <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
-          <div>
-            <h3 class="text-[17px] font-semibold text-[var(--apple-text-main)]">新建线索</h3>
-            <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5">先录入联系人与意向，后续可转客户/转案件</div>
-          </div>
-          <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-lead-modal-close>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-          </button>
-        </div>
-
-        <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
-          <div class="mb-5">
-            <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">
-              请填写联系人信息。电话/邮箱至少填一项（用于去重与后续跟进）。
-            </div>
-          </div>
-
-          <!-- Dedup hint panel (hidden by default) -->
-          <div id="dedupHint" class="hidden mb-5 p-3 rounded-xl border border-[#fde68a] bg-[#fffbeb]">
-            <div class="text-[13px] font-semibold text-[#92400e]" id="dedupHintTitle">检测到可能重复的记录</div>
-            <div class="text-[12px] text-[#92400e] mt-1" id="dedupHintMessage">该联系方式匹配到已有记录，请确认是否继续创建。</div>
-            <div id="dedupHintCards" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
-              <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
-                <div class="text-[13px] font-semibold text-[var(--apple-text-main)]" id="dedupMatchName">—</div>
-                <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5" id="dedupMatchMeta">—</div>
-              </div>
-            </div>
-            <div class="mt-3 flex gap-2">
-              <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupContinueBtn">继续创建</button>
-              <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupViewBtn">查看已有记录</button>
-            </div>
-          </div>
-
-          <form id="createLeadForm">
-            <div class="space-y-5">
-              <!-- 联系人姓名 (full) -->
-              <div>
-                <label class="apple-label" for="leadName">联系人姓名 <span class="text-red-500">*</span></label>
-                <input type="text" class="apple-input" id="leadName" placeholder="请输入姓名" autocomplete="name" />
-              </div>
-
-              <!-- 电话 + 邮箱 (half + half) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="apple-label" for="leadPhone">电话 <span class="text-red-500">*</span></label>
-                  <input type="tel" class="apple-input" id="leadPhone" placeholder="手机/座机" autocomplete="tel" />
-                  <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项</div>
-                </div>
-                <div>
-                  <label class="apple-label" for="leadEmail">邮箱</label>
-                  <input type="email" class="apple-input" id="leadEmail" placeholder="邮箱地址" autocomplete="email" />
-                </div>
-              </div>
-
-              <!-- 来源 + 介绍人 (half + half) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="apple-label" for="leadSource">来源</label>
-                  <select class="apple-input appearance-none bg-white" id="leadSource">
-                    <option value="" selected>请选择来源</option>
-                    <option value="web">Web</option>
-                    <option value="referral">介绍</option>
-                    <option value="walkin">来访</option>
-                    <option value="phone">电话</option>
-                    <option value="other">其他</option>
-                  </select>
-                </div>
-                <div id="referrerFieldWrap" class="hidden">
-                  <label class="apple-label" for="leadReferrer">介绍人</label>
-                  <input type="text" class="apple-input" id="leadReferrer" placeholder="介绍人名称" />
-                </div>
-              </div>
-
-              <!-- 意向业务类型 + 归属 Group (half + half) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="apple-label" for="leadBusinessType">意向业务类型</label>
-                  <select class="apple-input appearance-none bg-white" id="leadBusinessType">
-                    <option value="" selected>请选择业务类型</option>
-                    <option value="highly-skilled">高度人才</option>
-                    <option value="work-visa">技人国</option>
-                    <option value="family-stay">家族滞在</option>
-                    <option value="business-manager">设立法人</option>
-                    <option value="permanent">永住</option>
-                    <option value="other">其他</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="apple-label" for="leadGroup">归属 Group</label>
-                  <select class="apple-input appearance-none bg-white" id="leadGroup">
-                    <option value="" selected>请选择 Group</option>
-                    <option value="tokyo-1">东京一组</option>
-                    <option value="tokyo-2">东京二组</option>
-                    <option value="osaka">大阪组</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- 负责人 + 首选语言 (half + half) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="apple-label" for="leadOwner">负责人</label>
-                  <select class="apple-input appearance-none bg-white" id="leadOwner">
-                    <option value="" selected>请选择负责人</option>
-                    <option value="suzuki">Suzuki</option>
-                    <option value="tanaka">Tanaka</option>
-                    <option value="sato">Sato</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="apple-label" for="leadLanguage">首选语言</label>
-                  <select class="apple-input appearance-none bg-white" id="leadLanguage">
-                    <option value="" selected>请选择语言</option>
-                    <option value="ja">日本語</option>
-                    <option value="zh">中文</option>
-                    <option value="en">English</option>
-                    <option value="vi">Tiếng Việt</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- 下一步动作 (full) -->
-              <div>
-                <label class="apple-label" for="leadNextAction">下一步动作</label>
-                <input type="text" class="apple-input" id="leadNextAction" placeholder="例如：电话确认意向；索取在留卡影像；发送报价" />
-              </div>
-
-              <!-- 下次跟进时间 (half) -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label class="apple-label" for="leadNextFollowUp">下次跟进时间</label>
-                  <input type="datetime-local" class="apple-input" id="leadNextFollowUp" />
-                </div>
-              </div>
-
-              <!-- 备注 (full) -->
-              <div>
-                <label class="apple-label" for="leadNote">备注</label>
-                <textarea class="apple-input" id="leadNote" rows="3" placeholder="例如：紧急度、特殊情况、背景信息"></textarea>
-              </div>
-            </div>
-          </form>
-        </div>
-
-        <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
-          <button class="btn-secondary px-5" type="button" data-lead-modal-close>取消</button>
-          <button class="btn-primary px-5" type="button" id="createLeadBtn">创建线索</button>
-        </div>
+        <div data-include-html="sections/create-modal.html"></div>
+        <div data-include-html="sections/toast.html"></div>
       </div>
     </div>
-    <!-- /section: sections/create-modal.html -->
 
-    <!-- section: sections/toast.html -->
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
-      <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
-        <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]" id="toastTitle">已保存</div>
-        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
-      </div>
-    </div>
-    <!-- /section: sections/toast.html -->
-
-      </div><!-- /app-shell > div (right column) -->
-    </div><!-- /app-shell -->
-
+    <script src="../shared/scripts/html-fragment-loader.js"></script>
     <script src="data/leads-config.js"></script>
     <script src="scripts/leads-create-modal.js"></script>
     <script src="scripts/leads-page.js"></script>

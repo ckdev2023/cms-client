@@ -41,6 +41,8 @@ function stubSummary(overrides?: Partial<CaseSummary>): CaseSummary {
     resultOutcome: null,
     nextDeadlineDueAt: null,
     billingUnpaidAmountCached: null,
+    depositPaidCached: false,
+    finalPaymentPaidCached: false,
     createdAt: "2026-04-01T00:00:00.000Z",
     updatedAt: "2026-04-01T00:00:00.000Z",
     ...overrides,
@@ -55,6 +57,12 @@ function stubDetail(overrides?: Partial<CaseDetail>): CaseDetail {
     primaryAssistantUserId: null,
     sourceChannel: null,
     signedAt: null,
+    acceptedAt: null,
+    dueAt: null,
+    quotePrice: null,
+    submissionDate: null,
+    resultDate: null,
+    residenceExpiryDate: null,
     employerName: null,
     closeReason: null,
     archiveReason: null,
@@ -62,6 +70,14 @@ function stubDetail(overrides?: Partial<CaseDetail>): CaseDetail {
     nextAction: null,
     nextActionDueAt: null,
     hasBlockingIssueFlag: false,
+    postApprovalStage: null,
+    overseasVisaStartAt: null,
+    entryConfirmedAt: null,
+    billingRiskAcknowledgedBy: null,
+    billingRiskAcknowledgedAt: null,
+    billingRiskAckReasonCode: null,
+    billingRiskAckReasonNote: null,
+    billingRiskAckEvidenceUrl: null,
     documents: [],
     timeline: [],
     ...overrides,
@@ -115,6 +131,55 @@ test("load cases success", async () => {
   if (result.current.state.status === "success") {
     expect(result.current.state.cases).toHaveLength(1);
     expect(result.current.state.cases[0]?.id).toBe("c1");
+  }
+});
+
+test("exposes P0 stage and payment fields across multiple cases", async () => {
+  const caseRepo: CaseRepository = {
+    async listMyCases() {
+      return [
+        stubSummary({ id: "c1", stage: "S3", depositPaidCached: true }),
+        stubSummary({
+          id: "c2",
+          stage: "S7",
+          billingUnpaidAmountCached: 50000,
+          finalPaymentPaidCached: false,
+        }),
+        stubSummary({
+          id: "c3",
+          stage: "S9",
+          resultOutcome: "approved",
+          depositPaidCached: true,
+          finalPaymentPaidCached: true,
+        }),
+      ];
+    },
+    async getCaseDetail() {
+      return stubDetail();
+    },
+  };
+
+  const { result } = renderHook(() => useCaseListViewModel(), {
+    wrapper: makeWrapper(caseRepo),
+  });
+
+  await waitFor(() => {
+    expect(result.current.state.status).toBe("success");
+  });
+
+  if (result.current.state.status === "success") {
+    expect(result.current.state.cases).toHaveLength(3);
+
+    const [s3, s7, s9] = result.current.state.cases;
+    expect(s3?.stage).toBe("S3");
+    expect(s3?.depositPaidCached).toBe(true);
+
+    expect(s7?.stage).toBe("S7");
+    expect(s7?.billingUnpaidAmountCached).toBe(50000);
+
+    expect(s9?.stage).toBe("S9");
+    expect(s9?.resultOutcome).toBe("approved");
+    expect(s9?.finalPaymentPaidCached).toBe(true);
   }
 });
 

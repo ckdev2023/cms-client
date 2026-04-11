@@ -44,6 +44,8 @@ type CreateCaseBody = {
   submissionDate?: unknown;
   resultDate?: unknown;
   residenceExpiryDate?: unknown;
+  resultOutcome?: unknown;
+  quotePrice?: unknown;
 };
 
 type UpdateCaseBody = {
@@ -66,14 +68,29 @@ type UpdateCaseBody = {
   resultDate?: unknown;
   residenceExpiryDate?: unknown;
   archivedAt?: unknown;
+  resultOutcome?: unknown;
+  quotePrice?: unknown;
+  overseasVisaStartAt?: unknown;
+  entryConfirmedAt?: unknown;
 };
 
 type TransitionBody = {
   toStatus: unknown;
 };
 
+type BillingRiskAckBody = {
+  reasonCode: unknown;
+  reasonNote?: unknown;
+  evidenceUrl?: unknown;
+};
+
+type PostApprovalStageBody = {
+  stage: unknown;
+};
+
 type ListCasesQuery = {
   status?: unknown;
+  resultOutcome?: unknown;
   ownerUserId?: unknown;
   customerId?: unknown;
   priority?: unknown;
@@ -107,6 +124,17 @@ function parseOptionalNullableString(
   return requireString(value, field);
 }
 
+function parseOptionalNullableNumber(
+  value: unknown,
+  field: string,
+): number | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n)) throw new BadRequestException(`Invalid ${field}`);
+  return n;
+}
+
 function parseObject(value: unknown): Record<string, unknown> | undefined {
   if (value === undefined) return undefined;
   if (value && typeof value === "object" && !Array.isArray(value)) {
@@ -131,6 +159,63 @@ function parseLimit(value: unknown): number | undefined {
   const i = Math.floor(n);
   if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
   return i;
+}
+
+/**
+ * UpdateCaseBody → CaseUpdateInput 変換。
+ * @param body 更新請求体
+ * @returns CaseUpdateInput
+ */
+function parseUpdateCaseBody(body: UpdateCaseBody) {
+  return {
+    caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
+    ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
+    dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
+    metadata: parseObject(body.metadata),
+    caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
+    caseName: parseOptionalNullableString(body.caseName, "caseName"),
+    caseSubtype: parseOptionalNullableString(body.caseSubtype, "caseSubtype"),
+    applicationType: parseOptionalNullableString(
+      body.applicationType,
+      "applicationType",
+    ),
+    companyId: parseOptionalNullableString(body.companyId, "companyId"),
+    priority: parseOptionalString(body.priority, "priority"),
+    riskLevel: parseOptionalString(body.riskLevel, "riskLevel"),
+    assistantUserId: parseOptionalNullableString(
+      body.assistantUserId,
+      "assistantUserId",
+    ),
+    sourceChannel: parseOptionalNullableString(
+      body.sourceChannel,
+      "sourceChannel",
+    ),
+    signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
+    acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
+    submissionDate: parseOptionalNullableString(
+      body.submissionDate,
+      "submissionDate",
+    ),
+    resultDate: parseOptionalNullableString(body.resultDate, "resultDate"),
+    residenceExpiryDate: parseOptionalNullableString(
+      body.residenceExpiryDate,
+      "residenceExpiryDate",
+    ),
+    archivedAt: parseOptionalNullableString(body.archivedAt, "archivedAt"),
+    resultOutcome: parseOptionalNullableString(
+      body.resultOutcome,
+      "resultOutcome",
+    ),
+    quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
+    overseasVisaStartAt: parseOptionalNullableString(
+      body.overseasVisaStartAt,
+      "overseasVisaStartAt",
+    ),
+    entryConfirmedAt: parseOptionalNullableString(
+      body.entryConfirmedAt,
+      "entryConfirmedAt",
+    ),
+  };
 }
 
 /**
@@ -198,6 +283,11 @@ export class CasesController {
         body.residenceExpiryDate,
         "residenceExpiryDate",
       ),
+      resultOutcome: parseOptionalNullableString(
+        body.resultOutcome,
+        "resultOutcome",
+      ),
+      quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
     });
   }
 
@@ -215,6 +305,7 @@ export class CasesController {
 
     return this.casesService.list(ctx, {
       status: parseOptionalString(query.status, "status"),
+      resultOutcome: parseOptionalString(query.resultOutcome, "resultOutcome"),
       ownerUserId: parseOptionalString(query.ownerUserId, "ownerUserId"),
       customerId: parseOptionalString(query.customerId, "customerId"),
       priority: parseOptionalString(query.priority, "priority"),
@@ -261,42 +352,7 @@ export class CasesController {
 
     await this.assertCanEditCase(ctx, id);
 
-    return this.casesService.update(ctx, id, {
-      caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
-      ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
-      dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
-      metadata: parseObject(body.metadata),
-      caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
-      caseName: parseOptionalNullableString(body.caseName, "caseName"),
-      caseSubtype: parseOptionalNullableString(body.caseSubtype, "caseSubtype"),
-      applicationType: parseOptionalNullableString(
-        body.applicationType,
-        "applicationType",
-      ),
-      companyId: parseOptionalNullableString(body.companyId, "companyId"),
-      priority: parseOptionalString(body.priority, "priority"),
-      riskLevel: parseOptionalString(body.riskLevel, "riskLevel"),
-      assistantUserId: parseOptionalNullableString(
-        body.assistantUserId,
-        "assistantUserId",
-      ),
-      sourceChannel: parseOptionalNullableString(
-        body.sourceChannel,
-        "sourceChannel",
-      ),
-      signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
-      acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
-      submissionDate: parseOptionalNullableString(
-        body.submissionDate,
-        "submissionDate",
-      ),
-      resultDate: parseOptionalNullableString(body.resultDate, "resultDate"),
-      residenceExpiryDate: parseOptionalNullableString(
-        body.residenceExpiryDate,
-        "residenceExpiryDate",
-      ),
-      archivedAt: parseOptionalNullableString(body.archivedAt, "archivedAt"),
-    });
+    return this.casesService.update(ctx, id, parseUpdateCaseBody(body));
   }
 
   /**
@@ -318,6 +374,52 @@ export class CasesController {
 
     return this.casesService.transition(ctx, id, {
       toStatus: requireString(body.toStatus, "toStatus"),
+    });
+  }
+
+  /**
+   * 记录欠款风险确认。
+   * @param req HTTP 请求对象
+   * @param id 案件 ID
+   * @param body 确认请求体
+   * @returns 更新后的案件信息
+   */
+  @RequireRoles("staff")
+  @Post(":id/billing-risk-ack")
+  async acknowledgeBillingRisk(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: BillingRiskAckBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    return this.casesService.acknowledgeBillingRisk(ctx, id, {
+      reasonCode: requireString(body.reasonCode, "reasonCode"),
+      reasonNote: parseOptionalString(body.reasonNote, "reasonNote"),
+      evidenceUrl: parseOptionalString(body.evidenceUrl, "evidenceUrl"),
+    });
+  }
+
+  /**
+   * 更新下签后子阶段。
+   * @param req HTTP 请求对象
+   * @param id 案件 ID
+   * @param body 子阶段请求体
+   * @returns 更新后的案件信息
+   */
+  @RequireRoles("staff")
+  @Post(":id/post-approval-stage")
+  async updatePostApprovalStage(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: PostApprovalStageBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    return this.casesService.updatePostApprovalStage(ctx, id, {
+      stage: requireString(body.stage, "stage"),
     });
   }
 

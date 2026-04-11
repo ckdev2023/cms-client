@@ -129,6 +129,21 @@ export type CustomerDraftRepository = {
 };
 ```
 
+### 1.2A `REQ-P0-01` Customer 承接数据契约
+
+> 目标：冻结从 Lead 转客户时，Customer 侧必须接住的来源、去重决策与 Group 继承信息。
+
+| 主题 | 最小字段 / 约束 | 说明 |
+|------|----------------|------|
+| 来源线索 | `sourceLeadId` | 标识该 Customer 来自哪条 Lead 转化 |
+| Group 继承 | `group` 默认取 `Lead.group` | 若用户改组，则必须附带 `groupOverrideReason` |
+| 去重覆盖 | `duplicateDecision.matchedEntityType`、`duplicateDecision.matchedEntityId`、`duplicateDecision.continueReason`、`duplicateDecision.confirmedAt` | 命中重复但仍继续创建时必填 |
+| P0 默认策略 | `no_auto_merge` + `no_auto_reuse` | Customer 创建前只提示，不自动合并/复用 |
+| 创建后留痕 | Customer timeline / audit 必须能回链 `sourceLeadId` 与 duplicate override 信息 | 供后续 traceability 与审计使用 |
+
+- `createCustomer(input)` 的返回仍保持最小 `{ id }`，避免把原型优化扩展成不必要的接口变更。
+- 真正新增的是输入契约与留痕内容，而不是额外的页面流程。
+
 ### 1.3 常量与配置
 
 | 原型来源 (`customer-config.js`) | 生产文件 | 导出 | 说明 |

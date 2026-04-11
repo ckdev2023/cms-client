@@ -403,17 +403,25 @@
       return;
     }
 
+    var contextLabel = record.context === 'sendCoe'
+      ? '（COE 发送前确认）'
+      : '';
+    var evidenceHtml = record.evidence
+      ? '<span class="font-semibold text-[var(--primary)]">📎 ' + ns.esc(record.evidence) + '</span>'
+      : '<span class="text-[var(--muted-2)]">—</span>';
+
     contentEl.innerHTML = [
       '<div class="p-3 rounded-xl border border-amber-200 bg-amber-50/40">',
       '  <div class="flex items-center gap-2 mb-2">',
       '    <svg class="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>',
-      '    <span class="text-[13px] font-bold text-amber-700">欠款风险已确认（warn 模式 · 不阻断提交）</span>',
+      '    <span class="text-[13px] font-bold text-amber-700">欠款风险已确认' + ns.esc(contextLabel) + '（warn 模式 · 不阻断提交）</span>',
       '  </div>',
       '  <div class="text-[12px] text-[var(--muted)] space-y-1">',
-      '    <div>未结清金额：<span class="font-semibold">' + ns.esc(record.amount) + '</span></div>',
       '    <div>确认人：<span class="font-semibold">' + ns.esc(record.confirmedBy) + '</span></div>',
+      '    <div>确认原因：' + ns.esc(record.reason) + '</div>',
+      '    <div>凭证：' + evidenceHtml + '</div>',
       '    <div>确认时间：<span class="font-semibold">' + ns.esc(record.time) + '</span></div>',
-      '    <div>备注：' + ns.esc(record.reason) + '</div>',
+      '    <div>未结清金额：<span class="font-semibold">' + ns.esc(record.amount) + '</span></div>',
       '  </div>',
       '</div>',
       '<div class="mt-3">',

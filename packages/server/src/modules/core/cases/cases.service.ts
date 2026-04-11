@@ -14,21 +14,40 @@ import type { TenantDbTx } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
 
 /**
- * 默认 Case 状态流转矩阵（无 Template 时使用）。
- * archived 为终态，不允许继续流转。
+ * P0 案件阶段枚举（S1–S9）。
+ * 与 04-核心流程与状态流转.md §1.2 对齐。
+ */
+export const P0_CASE_STAGES = new Set([
+  "S1",
+  "S2",
+  "S3",
+  "S4",
+  "S5",
+  "S6",
+  "S7",
+  "S8",
+  "S9",
+]);
+
+/**
+ * P0 案件阶段流转矩阵（无 Template 时使用）。
+ *
+ * S9 为终态，不允许继续流转。
+ * 每个阶段都允许直接到 S9（异常结案）。
+ * 补正在 S7 内闭环，不回退主阶段。
+ *
+ * @see 04-核心流程与状态流转.md §1.2
  */
 export const DEFAULT_CASE_TRANSITIONS: Record<string, string[]> = {
-  new_inquiry: ["following_up", "archived"],
-  following_up: ["pending_signing", "archived"],
-  pending_signing: ["signed", "following_up", "archived"],
-  signed: ["pending_submission"],
-  pending_submission: ["submitted_reviewing"],
-  submitted_reviewing: ["pending_correction", "approved", "rejected"],
-  pending_correction: ["correction_in_progress"],
-  correction_in_progress: ["submitted_reviewing"],
-  approved: ["archived"],
-  rejected: ["following_up", "archived"],
-  archived: [],
+  S1: ["S2", "S9"],
+  S2: ["S3", "S9"],
+  S3: ["S2", "S4", "S9"],
+  S4: ["S3", "S5", "S9"],
+  S5: ["S3", "S4", "S6", "S9"],
+  S6: ["S5", "S7", "S9"],
+  S7: ["S8", "S9"],
+  S8: ["S9"],
+  S9: [],
 };
 
 /** TemplatesService 的最小接口，避免 core → templates 直接依赖。 */
@@ -77,9 +96,41 @@ export type CaseQueryRow = {
   result_date: unknown;
   residence_expiry_date: unknown;
   archived_at: unknown;
+  result_outcome: string | null;
+  quote_price: string | number | null;
+  deposit_paid_cached: boolean;
+  final_payment_paid_cached: boolean;
+  billing_unpaid_amount_cached: string | number;
+  billing_risk_acknowledged_by: string | null;
+  billing_risk_acknowledged_at: unknown;
+  billing_risk_ack_reason_code: string | null;
+  billing_risk_ack_reason_note: string | null;
+  billing_risk_ack_evidence_url: string | null;
+  overseas_visa_start_at: unknown;
+  entry_confirmed_at: unknown;
   created_at: unknown;
   updated_at: unknown;
 };
+
+/** P0 新增字段の DB 行 → エンティティ変換。 */
+function mapCaseP0Fields(row: CaseQueryRow) {
+  return {
+    resultOutcome: row.result_outcome ?? null,
+    quotePrice: row.quote_price !== null ? Number(row.quote_price) : null,
+    depositPaidCached: row.deposit_paid_cached,
+    finalPaymentPaidCached: row.final_payment_paid_cached,
+    billingUnpaidAmountCached: Number(row.billing_unpaid_amount_cached),
+    billingRiskAcknowledgedBy: row.billing_risk_acknowledged_by ?? null,
+    billingRiskAcknowledgedAt: toTimestampStringOrNull(
+      row.billing_risk_acknowledged_at,
+    ),
+    billingRiskAckReasonCode: row.billing_risk_ack_reason_code ?? null,
+    billingRiskAckReasonNote: row.billing_risk_ack_reason_note ?? null,
+    billingRiskAckEvidenceUrl: row.billing_risk_ack_evidence_url ?? null,
+    overseasVisaStartAt: toTimestampStringOrNull(row.overseas_visa_start_at),
+    entryConfirmedAt: toTimestampStringOrNull(row.entry_confirmed_at),
+  };
+}
 
 /**
  * 将数据库查询结果行映射为 Case 实体。
@@ -112,6 +163,7 @@ export function mapCaseRow(row: CaseQueryRow): Case {
     resultDate: toTimestampStringOrNull(row.result_date),
     residenceExpiryDate: toTimestampStringOrNull(row.residence_expiry_date),
     archivedAt: toTimestampStringOrNull(row.archived_at),
+    ...mapCaseP0Fields(row),
     createdAt: toTimestampString(row.created_at),
     updatedAt: toTimestampString(row.updated_at),
   };
@@ -142,6 +194,7 @@ export type CaseCreateInput = {
   caseName?: string | null;
   caseSubtype?: string | null;
   applicationType?: string | null;
+  /** @deprecated P0 不使用 Company 实体。 */
   companyId?: string | null;
   priority?: string;
   riskLevel?: string;
@@ -152,6 +205,8 @@ export type CaseCreateInput = {
   submissionDate?: string | null;
   resultDate?: string | null;
   residenceExpiryDate?: string | null;
+  resultOutcome?: string | null;
+  quotePrice?: number | null;
 };
 
 /** 更新案件请求参数。 */
@@ -164,6 +219,7 @@ export type CaseUpdateInput = {
   caseName?: string | null;
   caseSubtype?: string | null;
   applicationType?: string | null;
+  /** @deprecated P0 不使用 Company 实体。 */
   companyId?: string | null;
   priority?: string;
   riskLevel?: string;
@@ -175,11 +231,16 @@ export type CaseUpdateInput = {
   resultDate?: string | null;
   residenceExpiryDate?: string | null;
   archivedAt?: string | null;
+  resultOutcome?: string | null;
+  quotePrice?: number | null;
+  overseasVisaStartAt?: string | null;
+  entryConfirmedAt?: string | null;
 };
 
 /** 列表查询请求参数。 */
 export type CaseListInput = {
   status?: string;
+  resultOutcome?: string;
   ownerUserId?: string;
   customerId?: string;
   priority?: string;
@@ -194,9 +255,41 @@ export type CaseTransitionInput = {
   toStatus: string;
 };
 
-const CASE_COLS = `id, org_id, customer_id, case_type_code, status, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, created_at, updated_at`;
-const CASE_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
-const CASE_RISK_LEVELS = new Set(["low", "medium", "high"]);
+/** 欠款风险确认请求参数。 */
+export type CaseBillingRiskAckInput = {
+  reasonCode: string;
+  reasonNote?: string;
+  evidenceUrl?: string;
+};
+
+/**
+ * P0 下签后子阶段枚举。
+ *
+ * P0 存储策略：stage 值写入 `metadata.post_approval_stage`，
+ * 对应时间戳写入专用列（`overseas_visa_start_at` / `entry_confirmed_at`）。
+ * P1 启用 CaseWorkflowStep 后迁移为正式实体记录。
+ */
+export const POST_APPROVAL_STAGES = new Set([
+  "waiting_final_payment",
+  "coe_sent",
+  "overseas_visa_applying",
+  "entry_success",
+]);
+
+/** 下签后子阶段变更请求参数。 */
+export type PostApprovalStageInput = {
+  stage: string;
+};
+
+const CASE_COLS = `id, org_id, customer_id, case_type_code, status, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, created_at, updated_at`;
+const CASE_PRIORITIES = new Set(["low", "normal", "medium", "high", "urgent"]);
+const CASE_RISK_LEVELS = new Set(["none", "low", "medium", "high"]);
+export const CASE_RESULT_OUTCOMES = new Set([
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+]);
 
 /** 列表过滤条件构建器（提取以降低 list 方法复杂度）。 */
 function buildCaseListFilter(input: CaseListInput): {
@@ -209,6 +302,7 @@ function buildCaseListFilter(input: CaseListInput): {
   const params: unknown[] = [];
   const filters: [string, string | undefined][] = [
     ["status", input.status],
+    ["result_outcome", input.resultOutcome],
     ["owner_user_id", input.ownerUserId],
     ["customer_id", input.customerId],
     ["priority", input.priority],
@@ -273,6 +367,7 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
       input.applicationType,
       current.applicationType,
     ),
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     companyId: pickDefined(input.companyId, current.companyId),
     priority: input.priority ?? current.priority,
     riskLevel: input.riskLevel ?? current.riskLevel,
@@ -290,18 +385,36 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
       current.residenceExpiryDate,
     ),
     archivedAt: pickDefined(input.archivedAt, current.archivedAt),
+    resultOutcome: pickDefined(input.resultOutcome, current.resultOutcome),
+    quotePrice: pickDefined(input.quotePrice, current.quotePrice),
+    overseasVisaStartAt: pickDefined(
+      input.overseasVisaStartAt,
+      current.overseasVisaStartAt,
+    ),
+    entryConfirmedAt: pickDefined(
+      input.entryConfirmedAt,
+      current.entryConfirmedAt,
+    ),
   };
 }
 
 function validateCaseEnums(input: {
   priority?: string;
   riskLevel?: string;
+  resultOutcome?: string | null;
 }): void {
   if (input.priority !== undefined && !CASE_PRIORITIES.has(input.priority)) {
     throw new BadRequestException("Invalid priority");
   }
   if (input.riskLevel !== undefined && !CASE_RISK_LEVELS.has(input.riskLevel)) {
     throw new BadRequestException("Invalid riskLevel");
+  }
+  if (
+    input.resultOutcome !== null &&
+    input.resultOutcome !== undefined &&
+    !CASE_RESULT_OUTCOMES.has(input.resultOutcome)
+  ) {
+    throw new BadRequestException("Invalid resultOutcome");
   }
 }
 
@@ -315,6 +428,7 @@ function buildInsertCaseParams(
     input.caseName,
     input.caseSubtype,
     input.applicationType,
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     input.companyId,
   ].map((v) => v ?? null);
   const nullableTail = [
@@ -331,7 +445,7 @@ function buildInsertCaseParams(
     orgId,
     input.customerId,
     input.caseTypeCode,
-    input.status ?? "open",
+    input.status ?? "S1",
     input.ownerUserId,
     input.dueAt ?? null,
     JSON.stringify(input.metadata ?? {}),
@@ -339,6 +453,8 @@ function buildInsertCaseParams(
     input.priority ?? "normal",
     input.riskLevel ?? "low",
     ...nullableTail,
+    input.resultOutcome ?? null,
+    input.quotePrice ?? null,
   ];
 }
 
@@ -370,7 +486,9 @@ export class CasesService {
     return tenantDb.transaction(async (tx) => {
       await this.assertBelongsToOrg(tx, "customers", input.customerId);
       await this.assertBelongsToOrg(tx, "users", input.ownerUserId);
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
       if (input.companyId) {
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
         await this.assertBelongsToOrg(tx, "companies", input.companyId);
       }
       if (input.assistantUserId) {
@@ -510,6 +628,11 @@ export class CasesService {
         );
       }
       const updated = mapCaseRow(row);
+      await tx.query(
+        `insert into case_stage_history(org_id, case_id, from_stage, to_stage, changed_by)
+         values ($1, $2, $3, $4, $5)`,
+        [ctx.orgId, id, fromStatus, toStatus, ctx.userId],
+      );
       await writeTimelineInTx(tx, ctx, {
         entityType: "case",
         entityId: updated.id,
@@ -551,6 +674,125 @@ export class CasesService {
         action: "case.deleted",
         payload: { status: "deleted" },
       });
+    });
+  }
+
+  /**
+   * 记录欠款风险确认（写入 billing_risk_acknowledged_* 字段 + Timeline）。
+   * @param ctx 请求上下文
+   * @param id 案件 ID
+   * @param input 确认参数
+   * @returns 更新后的 Case
+   */
+  async acknowledgeBillingRisk(
+    ctx: RequestContext,
+    id: string,
+    input: CaseBillingRiskAckInput,
+  ): Promise<Case> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Case not found or deleted");
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      const result = await tx.query<CaseQueryRow>(
+        `update cases
+         set billing_risk_acknowledged_by = $2,
+             billing_risk_acknowledged_at = now(),
+             billing_risk_ack_reason_code = $3,
+             billing_risk_ack_reason_note = $4,
+             billing_risk_ack_evidence_url = $5,
+             updated_at = now()
+         where id = $1
+           and coalesce(metadata->>'_status', '') is distinct from 'deleted'
+         returning ${CASE_COLS}`,
+        [
+          id,
+          ctx.userId,
+          input.reasonCode,
+          input.reasonNote ?? null,
+          input.evidenceUrl ?? null,
+        ],
+      );
+      const row = result.rows.at(0);
+      if (!row)
+        throw new BadRequestException("Failed to acknowledge billing risk");
+      const updated = mapCaseRow(row);
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: "case.billing_risk_acknowledged",
+        payload: {
+          reasonCode: input.reasonCode,
+          reasonNote: input.reasonNote ?? null,
+          evidenceUrl: input.evidenceUrl ?? null,
+        },
+      });
+      return updated;
+    });
+  }
+
+  /**
+   * 更新下签后子阶段（P0 存 metadata.post_approval_stage + 自动打时间戳）。
+   *
+   * 存储策略：
+   * - stage 值 → `metadata.post_approval_stage`（P1 迁至 CaseWorkflowStep）
+   * - overseas_visa_applying → 首次写入时自动填 `overseas_visa_start_at`
+   * - entry_success → 首次写入时自动填 `entry_confirmed_at`
+   *
+   * @param ctx 请求上下文
+   * @param id 案件 ID
+   * @param input 子阶段参数
+   * @returns 更新后的 Case
+   */
+  async updatePostApprovalStage(
+    ctx: RequestContext,
+    id: string,
+    input: PostApprovalStageInput,
+  ): Promise<Case> {
+    if (!POST_APPROVAL_STAGES.has(input.stage)) {
+      throw new BadRequestException("Invalid post-approval stage");
+    }
+
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Case not found or deleted");
+
+    const previousStage =
+      (current.metadata.post_approval_stage as string | undefined) ?? null;
+    const nextMetadata = {
+      ...current.metadata,
+      post_approval_stage: input.stage,
+    };
+    const stampVisa =
+      input.stage === "overseas_visa_applying" && !current.overseasVisaStartAt;
+    const stampEntry =
+      input.stage === "entry_success" && !current.entryConfirmedAt;
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      const result = await tx.query<CaseQueryRow>(
+        `update cases
+         set metadata = $2::jsonb,
+             overseas_visa_start_at = case when $3::boolean then now()
+               else overseas_visa_start_at end,
+             entry_confirmed_at = case when $4::boolean then now()
+               else entry_confirmed_at end,
+             updated_at = now()
+         where id = $1
+           and coalesce(metadata->>'_status', '') is distinct from 'deleted'
+         returning ${CASE_COLS}`,
+        [id, JSON.stringify(nextMetadata), stampVisa, stampEntry],
+      );
+      const row = result.rows.at(0);
+      if (!row)
+        throw new BadRequestException("Failed to update post-approval stage");
+      const updated = mapCaseRow(row);
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: "case.post_approval_stage_changed",
+        payload: { from: previousStage, to: input.stage },
+      });
+      return updated;
     });
   }
 
@@ -624,8 +866,9 @@ export class CasesService {
     const result = await tx.query<CaseQueryRow>(
       `insert into cases (org_id, customer_id, case_type_code, status, owner_user_id, due_at, metadata,
         case_no, case_name, case_subtype, application_type, company_id, priority, risk_level,
-        assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date)
-       values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) returning ${CASE_COLS}`,
+        assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date,
+        result_outcome, quote_price)
+       values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning ${CASE_COLS}`,
       params,
     );
     const row = result.rows.at(0);
@@ -680,6 +923,8 @@ export class CasesService {
            risk_level = $12, assistant_user_id = $13, source_channel = $14,
            signed_at = $15, accepted_at = $16, submission_date = $17,
            result_date = $18, residence_expiry_date = $19, archived_at = $20,
+           result_outcome = $21, quote_price = $22,
+           overseas_visa_start_at = $23, entry_confirmed_at = $24,
            updated_at = now()
        where id = $1 and coalesce(metadata->>'_status', '') is distinct from 'deleted'
        returning ${CASE_COLS}`,
@@ -704,6 +949,10 @@ export class CasesService {
         f.resultDate,
         f.residenceExpiryDate,
         f.archivedAt,
+        f.resultOutcome,
+        f.quotePrice,
+        f.overseasVisaStartAt,
+        f.entryConfirmedAt,
       ],
     );
     const row = result.rows.at(0);

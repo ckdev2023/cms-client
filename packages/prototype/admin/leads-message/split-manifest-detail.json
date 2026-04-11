@@ -24,6 +24,7 @@
       "packages/prototype/admin/shared/shell/mobile-nav.html"
     ],
     "scripts": [
+      "packages/prototype/admin/shared/scripts/html-fragment-loader.js",
       "packages/prototype/admin/shared/scripts/mobile-nav.js",
       "packages/prototype/admin/shared/scripts/navigate.js"
     ]
@@ -90,20 +91,45 @@
     },
     {
       "file": "sections/detail-conversion.html",
-      "purpose": "去重匹配面板 + 转客户/转案件操作 + 已转化 Customer/Case 卡片 + 跳转入口",
+      "purpose": "去重匹配面板 + 转客户/转案件入口 + 已转化 Customer/Case 卡片 + 跳转入口",
       "sourceAnchors": [
         "tab-conversion",
         "conversionPanel",
         "dedupPanel",
-        "convertCustomerModal",
-        "convertCaseModal",
         "convertedCustomerCard",
         "convertedCaseCard"
       ],
       "contractRefs": [
         "§6 转化信息 Tab"
       ],
-      "productionTarget": "features/lead/ui/LeadConversionTab + DedupPanel + ConversionCard + ConversionModal"
+      "productionTarget": "features/lead/ui/LeadConversionTab + DedupPanel + ConversionCard"
+    },
+    {
+      "file": "sections/detail-convert-modals.html",
+      "purpose": "转客户/转案件确认弹窗（demo-only）",
+      "sourceAnchors": [
+        "convertCustomerModal",
+        "convertCaseModal",
+        "confirmConvertCustomer",
+        "confirmConvertCase"
+      ],
+      "contractRefs": [
+        "§6 转化信息 Tab"
+      ],
+      "productionTarget": "features/lead/ui/ConversionModal"
+    },
+    {
+      "file": "sections/detail-toast.html",
+      "purpose": "详情页操作反馈 toast",
+      "sourceAnchors": [
+        "toast",
+        "toastTitle",
+        "toastDesc"
+      ],
+      "contractRefs": [
+        "§12 Toast / 反馈"
+      ],
+      "productionTarget": "shared/ui/Toast"
     },
     {
       "file": "sections/detail-log.html",

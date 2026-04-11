@@ -3,18 +3,18 @@
 
   // P0 §3.5 + P0-CONTRACT §12.4: key 以数据模型 §3.20 为权威（due/partial/paid/overdue）
   var BILLING_STATUS_OPTIONS = [
-    { value: 'paid', label: '已回款', badge: 'tag-green' },
+    { value: 'paid', label: '已结清', badge: 'tag-green' },
     { value: 'partial', label: '部分回款', badge: 'tag-blue' },
     { value: 'due', label: '未回款', badge: 'tag-orange' },
-    { value: 'overdue', label: '欠款', badge: 'tag-red' },
+    { value: 'overdue', label: '逾期', badge: 'tag-red' },
   ];
 
   // P0 §3.5 收费节点状态（权威枚举）
   var NODE_STATUS_OPTIONS = [
     { value: 'due', label: '应收', badge: 'tag-orange' },
     { value: 'partial', label: '部分回款', badge: 'tag-blue' },
-    { value: 'paid', label: '已回款', badge: 'tag-green' },
-    { value: 'overdue', label: '欠款', badge: 'tag-red' },
+    { value: 'paid', label: '已结清', badge: 'tag-green' },
+    { value: 'overdue', label: '逾期', badge: 'tag-red' },
   ];
 
   var PAYMENT_RECORD_STATUS = [
@@ -113,7 +113,7 @@
   var COLLECTION_SKIP_REASONS = [
     { value: 'no-permission', label: '无权限' },
     { value: 'duplicate-task', label: '已存在未完成催款任务（同案同节点同逾期周期）' },
-    { value: 'not-overdue', label: '不满足欠款条件（节点已回款或到期日未到）' },
+    { value: 'not-overdue', label: '不满足逾期条件（节点已结清或到期日未到）' },
     { value: 'no-assignee', label: '无可用负责人（案件负责人缺失且 Group 未配置默认负责人）' },
     { value: 'system-error', label: '创建失败（系统错误/并发冲突）' },
   ];
@@ -187,7 +187,7 @@
       desc: '登记回款后，流水记录将显示在此处',
     },
     allSettled: {
-      nextNodeLabel: '无（已回款）',
+      nextNodeLabel: '无（已结清）',
     },
   };
 

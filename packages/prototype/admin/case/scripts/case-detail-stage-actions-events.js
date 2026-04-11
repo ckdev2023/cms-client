@@ -41,8 +41,13 @@
   if (coeRiskSubmitBtn && coeRiskModal) {
     coeRiskSubmitBtn.addEventListener('click', function () {
       var reasonEl = document.getElementById('coeRiskReason');
+      var personEl = document.getElementById('coeRiskPerson');
       if (!reasonEl || !reasonEl.value.trim()) {
         ns.showToast('⚠️ 请填写确认原因', '风险确认原因为必填项');
+        return;
+      }
+      if (!personEl || !personEl.value.trim()) {
+        ns.showToast('⚠️ 请填写确认人', '确认人为必填项');
         return;
       }
       coeRiskModal.classList.remove('show');
@@ -82,28 +87,51 @@
   var riskSubmitBtn = document.getElementById('riskConfirmSubmit');
   if (riskSubmitBtn && riskModal) {
     riskSubmitBtn.addEventListener('click', function () {
-      riskModal.classList.remove('show');
       var reasonEl = document.getElementById('riskConfirmReason');
-      var reason = (reasonEl && reasonEl.value.trim())
-        ? reasonEl.value.trim()
-        : '经确认，欠款风险可接受，同意继续提交';
+      var personEl = document.getElementById('riskConfirmPerson');
+      var evidenceEl = document.getElementById('riskConfirmEvidence');
+
+      var reason = (reasonEl && reasonEl.value.trim()) ? reasonEl.value.trim() : '';
+      var person = (personEl && personEl.value.trim()) ? personEl.value.trim() : '';
+      var evidence = (evidenceEl && evidenceEl.value.trim()) ? evidenceEl.value.trim() : '';
+
+      if (!reason) {
+        ns.showToast('⚠️ 请填写确认原因', '确认原因为必填项');
+        return;
+      }
+      if (!person) {
+        ns.showToast('⚠️ 请填写确认人', '确认人为必填项');
+        return;
+      }
+
+      riskModal.classList.remove('show');
+
+      var amount = ns.liveState.billing ? ns.liveState.billing.outstanding : '—';
+      var now = new Date().toLocaleString('zh-CN');
 
       ns.liveState.riskConfirmationRecord = {
-        confirmedBy: '当前操作人',
+        confirmedBy: person,
         reason: reason,
-        time: new Date().toLocaleString('zh-CN'),
-        amount: ns.liveState.billing ? ns.liveState.billing.outstanding : '—',
+        evidence: evidence || null,
+        time: now,
+        amount: amount,
       };
       ns.applyRiskConfirmationRecord(ns.liveState.riskConfirmationRecord);
+
+      if (reasonEl) reasonEl.value = '';
+      if (personEl) personEl.value = '';
+      if (evidenceEl) evidenceEl.value = '';
 
       ns.liveState.logEntries.unshift({
         type: 'review',
         avatar: 'U',
         avatarStyle: 'warning',
-        text: '风险确认通过：<b>欠款继续提交</b>',
+        text: '风险确认通过：<b>欠款继续提交</b> · 确认人：' + ns.esc(person) +
+          ' · 金额：' + ns.esc(amount) +
+          (evidence ? ' · 凭证：' + ns.esc(evidence) : ''),
         category: '审核日志',
         categoryChip: 'green',
-        objectType: '当前操作',
+        objectType: '确认人：' + person,
         time: '刚刚',
         dotColor: 'success',
         source_type: 'risk_confirmation',
@@ -111,7 +139,7 @@
       });
       ns.applyLogEntries(ns.liveState.logEntries);
       ns.syncToListStore();
-      ns.showToast('风险确认已留痕', '欠款继续提交已记录确认人与原因');
+      ns.showToast('风险确认已留痕', '确认人：' + person + ' · 金额：' + amount);
     });
   }
 

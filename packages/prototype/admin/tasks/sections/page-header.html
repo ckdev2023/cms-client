@@ -1,20 +1,24 @@
-<!--
-  section: page-header.html
-  Page header: title + subtitle + "新建任务" primary CTA.
-  Rendered inside <main> as the first section.
-
-  Subtitle corrected from legacy "个人代办" to align with module goal:
-  "统一管理个人和团队的待办任务与到期提醒，驱动案件流转"
--->
-<div class="flex justify-between items-end mb-8">
-  <div>
-    <h1 class="text-3xl display-font font-semibold">任务与提醒</h1>
-    <p class="text-sm text-[var(--muted)] mt-1">管理待办任务与到期提醒，驱动案件流转</p>
+<section class="page-hero" aria-labelledby="tasksPageTitle">
+  <div class="page-hero__content">
+    <div class="page-hero__eyebrow">
+      <span class="chip">任务工作台</span>
+      <span class="page-hero__eyebrow-text">优先聚焦我负责、今日到期与已逾期事项</span>
+    </div>
+    <div>
+      <h1 class="text-3xl display-font font-semibold" id="tasksPageTitle">任务与提醒</h1>
+      <p class="page-hero__desc text-sm text-[var(--muted)] mt-2">集中查看跨案件待办、时效风险与提醒记录，统一承接创建、分派、截止日调整与批量处理动作。</p>
+    </div>
   </div>
-  <div class="flex space-x-3">
-    <button class="btn-primary flex items-center" id="btnCreateTask" data-action="open-create-modal">
-      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-      新建任务
-    </button>
+  <div class="page-hero__aside">
+    <div class="page-hero__metric">
+      <span class="page-hero__metric-label">当前视角</span>
+      <strong class="page-hero__metric-value">个人待办 + 时效优先排序</strong>
+    </div>
+    <div class="flex space-x-3">
+      <button class="btn-primary flex items-center" id="btnCreateTask" data-action="open-create-modal">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        新建任务
+      </button>
+    </div>
   </div>
-</div>
+</section>

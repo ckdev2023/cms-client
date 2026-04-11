@@ -426,7 +426,7 @@
               仪表盘
             </a>
             <div class="nav-group-title">业务</div>
-            <a class="nav-item" href="../leads-messages.html">
+            <a class="nav-item" href="../leads-message/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               咨询与会话
             </a>
@@ -489,7 +489,7 @@
               仪表盘
             </a>
             <div class="nav-group-title">业务</div>
-            <a class="nav-item" href="../leads-messages.html">
+            <a class="nav-item" href="../leads-message/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               咨询与会话
             </a>
@@ -641,10 +641,6 @@
                 资料清单
                 <span class="tab-counter" id="docsNavCounter">8/16</span>
               </a>
-              <a href="#" class="detail-tab" data-tab="messages">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
-                沟通记录
-              </a>
               <a href="#" class="detail-tab" data-tab="forms">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                 文书
@@ -664,6 +660,10 @@
               <a href="#" class="detail-tab" data-tab="billing">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 收费
+              </a>
+              <a href="#" class="detail-tab" data-tab="messages">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                沟通记录
               </a>
               <a href="#" class="detail-tab" data-tab="log">
                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -784,7 +784,7 @@
                   <div class="relative border-l-2 border-[var(--border)] ml-3 space-y-6 pb-2">
                     <div class="relative pl-6">
                       <div class="timeline-dot bg-[var(--primary)]"></div>
-                      <div class="text-[14px] font-semibold text-[var(--text)]">收到客户上传：护照复印件</div>
+                      <div class="text-[14px] font-semibold text-[var(--text)]">收到客户资料登记：护照复印件</div>
                       <div class="text-[12px] text-[var(--muted-2)] mt-1">Suzuki · 今天 14:30</div>
                     </div>
                     <div class="relative pl-6">
@@ -993,18 +993,18 @@
               <!-- Documents Header -->
               <div class="px-6 py-5 border-b border-[var(--border)] flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-[#fbfbfd]">
                 <div class="flex-1">
-                  <h2 class="section-title">资料清单</h2>
+                  <h2 class="section-title">资料登记清单</h2>
                   <div class="flex items-center mt-2 gap-3">
                     <div class="flex-1 progress-track h-1.5">
                       <div class="progress-fill" id="docsProgressBar" style="width:50%"></div>
                     </div>
-                    <span class="text-[13px] text-[var(--muted-2)] font-semibold whitespace-nowrap" id="docsProgressLabel">8/16 项已收集（50%）</span>
+                    <span class="text-[13px] text-[var(--muted-2)] font-semibold whitespace-nowrap" id="docsProgressLabel">8/16 项已登记（50%）</span>
                   </div>
                 </div>
                 <div class="flex gap-2">
                   <button class="btn-primary text-[13px] py-1.5 px-3 flex items-center gap-1" type="button" data-navigate="../documents.html">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                    上传资料
+                    登记资料
                   </button>
                   <button class="btn-pill text-[13px] py-1.5 px-3 flex items-center gap-1" type="button">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -1042,7 +1042,7 @@
                   <svg class="w-4 h-4 text-[var(--warning)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path></svg>
                   <div class="min-w-0">
                     <div class="text-[14px] font-semibold text-[var(--text)] truncate">履歴書</div>
-                    <div class="text-[12px] text-[var(--muted-2)]">未上传 · 催办：2026/04/05</div>
+                    <div class="text-[12px] text-[var(--muted-2)]">待登记 · 催办：2026/04/05</div>
                   </div>
                 </div>
                 <span class="status-badge badge-orange text-[11px]">待提供</span>
@@ -1134,7 +1134,7 @@
                   <svg class="w-4 h-4 text-[var(--warning)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path></svg>
                   <div class="min-w-0">
                     <div class="text-[14px] font-semibold text-[var(--text)] truncate">在職証明書</div>
-                    <div class="text-[12px] text-[var(--muted-2)]">未上传 · 催办：2026/04/05</div>
+                    <div class="text-[12px] text-[var(--muted-2)]">待登记 · 催办：2026/04/05</div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -1147,7 +1147,7 @@
                   <svg class="w-4 h-4 text-[var(--warning)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path></svg>
                   <div class="min-w-0">
                     <div class="text-[14px] font-semibold text-[var(--text)] truncate">雇用契約書</div>
-                    <div class="text-[12px] text-[var(--muted-2)]">未上传 · 催办：2026/04/05</div>
+                    <div class="text-[12px] text-[var(--muted-2)]">待登记 · 催办：2026/04/05</div>
                   </div>
                 </div>
                 <div class="flex items-center gap-2">
@@ -1203,14 +1203,15 @@
             </div>
           </div>
 
-          <!-- Tab 4: 沟通记录 -->
+          <!-- Tab 9: 沟通记录 -->
           <!-- section: sections/detail-messages.html -->
           <div id="tab-messages" class="tab-panel">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div class="lg:col-span-2 space-y-4">
                 <!-- Composer -->
                 <div class="apple-card p-5">
-                  <textarea rows="3" placeholder="添加内部备注，或记录与客户的沟通内容..." class="apple-input resize-none mb-3"></textarea>
+                  <textarea rows="3" placeholder="记录内部备注、客户可见备注或电话/线下沟通内容..." class="apple-input resize-none mb-3"></textarea>
+                  <div class="meta-text mb-3">内部备注默认客户不可见；如需客户可见，需显式选择“客户可见备注”。</div>
                   <div class="flex justify-between items-center">
                     <div class="flex gap-1">
                       <button class="icon-btn w-8 h-8 !border-0" type="button" aria-label="附件"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg></button>
@@ -1219,6 +1220,7 @@
                     <div class="flex gap-3 items-center">
                       <select class="apple-input w-auto py-1.5 text-[13px]">
                         <option>内部备注</option>
+                        <option>客户可见备注</option>
                         <option>电话记录</option>
                         <option>线下会议</option>
                       </select>
@@ -1289,11 +1291,11 @@
                     </label>
                     <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
                       <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
-                      <span class="text-[13px] text-[var(--text)]">内部备注</span>
+                      <span class="text-[13px] text-[var(--text)]">内部记录</span>
                     </label>
                     <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
                       <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
-                      <span class="text-[13px] text-[var(--text)]">客户邮件</span>
+                      <span class="text-[13px] text-[var(--text)]">客户可见记录</span>
                     </label>
                     <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
                       <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
@@ -1920,10 +1922,48 @@
             <label class="apple-label" for="riskConfirmPerson">确认人</label>
             <input class="apple-input" id="riskConfirmPerson" type="text" placeholder="输入确认人姓名" />
           </div>
+          <div>
+            <label class="apple-label" for="riskConfirmEvidence">凭证</label>
+            <input class="apple-input" id="riskConfirmEvidence" type="text" placeholder="附件名称或说明（如：客户付款承诺书.pdf）" />
+            <div class="meta-text mt-1">支持上传截图、邮件、付款承诺书等佐证材料（原型仅录入说明）</div>
+          </div>
         </div>
         <div class="px-6 py-5 border-t border-[var(--border)] flex items-center justify-end gap-2">
           <button class="btn-secondary" type="button" data-close-risk-modal>取消</button>
           <button class="btn-primary" type="button" id="riskConfirmSubmit">确认并继续提交</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COE 发送前尾款未收风险确认弹窗 -->
+    <div class="modal-backdrop" id="coeRiskConfirmModal">
+      <div class="apple-modal max-w-[540px] border border-[var(--border)]">
+        <div class="px-6 py-5 border-b border-[var(--border)]">
+          <div class="font-extrabold text-[18px] text-[var(--text)]">COE 发送 · 尾款未收风险确认</div>
+          <div class="meta-text mt-1">尾款尚未到账，发送 COE 前需确认风险并留痕。</div>
+        </div>
+        <div class="px-6 py-6 section-stack">
+          <div class="p-3 rounded-lg bg-amber-50/50 border border-amber-200 text-[13px]">
+            <span class="font-bold text-amber-700">未结清金额：</span>
+            <span class="font-bold text-[var(--danger)]" id="coeRiskOutstandingAmount">—</span>
+          </div>
+          <div>
+            <label class="apple-label" for="coeRiskReason">确认原因 <span class="text-[var(--danger)]">*</span></label>
+            <textarea class="apple-input min-h-[88px]" id="coeRiskReason" placeholder="说明为何在尾款未收状态下发送 COE"></textarea>
+          </div>
+          <div>
+            <label class="apple-label" for="coeRiskPerson">确认人 <span class="text-[var(--danger)]">*</span></label>
+            <input class="apple-input" id="coeRiskPerson" type="text" placeholder="输入确认人姓名" />
+          </div>
+          <div>
+            <label class="apple-label" for="coeRiskEvidence">凭证</label>
+            <input class="apple-input" id="coeRiskEvidence" type="text" placeholder="附件名称或说明（如：客户付款承诺书.pdf）" />
+            <div class="meta-text mt-1">支持上传截图、邮件、付款承诺书等佐证材料（原型仅录入说明）</div>
+          </div>
+        </div>
+        <div class="px-6 py-5 border-t border-[var(--border)] flex items-center justify-end gap-2">
+          <button class="btn-secondary" type="button" data-close-coe-risk-modal>取消</button>
+          <button class="btn-primary" type="button" id="coeRiskConfirmSubmit">确认并发送 COE</button>
         </div>
       </div>
     </div>

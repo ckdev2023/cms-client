@@ -5,8 +5,14 @@
 (function () {
   'use strict';
 
-  var cfg = window.LeadsConfig;
-  if (!cfg) return;
+  var initialized = false;
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+
+    var cfg = window.LeadsConfig;
+    if (!cfg) return;
 
   var toast = document.getElementById('toast');
   var toastTitle = document.getElementById('toastTitle');
@@ -206,10 +212,17 @@
 
   /* ---- Topbar "新建线索" button ---- */
   var topbarAdd = document.getElementById('topbarAddLead');
-  if (topbarAdd) {
-    topbarAdd.addEventListener('click', function () {
-      var btn = document.getElementById('btnAddLead');
-      if (btn) btn.click();
-    });
+    if (topbarAdd) {
+      topbarAdd.addEventListener('click', function () {
+        var btn = document.getElementById('btnAddLead');
+        if (btn) btn.click();
+      });
+    }
+  }
+
+  document.addEventListener('prototype:fragments-ready', init);
+
+  if (window.__prototypeFragmentsReady || !document.querySelector('[data-include-html]')) {
+    init();
   }
 })();

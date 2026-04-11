@@ -329,7 +329,7 @@
               仪表盘
             </a>
             <div class="nav-group-title">业务</div>
-            <a class="nav-item" href="../leads-messages.html">
+            <a class="nav-item" href="../leads-message/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               咨询与会话
             </a>
@@ -391,7 +391,7 @@
               仪表盘
             </a>
             <div class="nav-group-title">业务</div>
-            <a class="nav-item" href="../leads-messages.html">
+            <a class="nav-item" href="../leads-message/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
               咨询与会话
             </a>
@@ -477,6 +477,29 @@
             </div>
           </section>
 
+          <section class="summary-box mb-8 hidden" id="sourceContextBar">
+            <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div class="section-stack">
+                <div>
+                  <div class="section-kicker">转化来源</div>
+                  <div class="section-title mt-2">沿用 Lead / Customer → Case 承接规则</div>
+                </div>
+                <div class="meta-text" id="sourceContextHint">若从 Lead / Customer 转案件进入，Step 2 会预填主申请人，Step 3 默认继承客户 Group。</div>
+                <div class="meta-text" id="sourceContextDedupHint">P0：命中重复客户时仅提示，不自动复用；继续创建需二次确认并留痕。</div>
+              </div>
+              <div class="summary-grid w-full md:max-w-[420px]">
+                <div class="summary-box">
+                  <div class="summary-label">来源 Lead</div>
+                  <div class="summary-value" id="sourceLeadValue">-</div>
+                </div>
+                <div class="summary-box">
+                  <div class="summary-label">预填 Customer</div>
+                  <div class="summary-value" id="sourceCustomerValue">-</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
           <!-- section: sections/create-stepper.html -->
           <section class="wizard-steps mb-8">
             <div class="wizard-step-item is-active" data-step-indicator>
@@ -507,7 +530,7 @@
               <div>
                 <div class="section-kicker">Step 1</div>
                 <div class="section-title mt-2">业务信息</div>
-                <div class="meta-text mt-2">选择模板、申请类型与归属 Group。</div>
+                <div class="meta-text mt-2">选择模板与申请类型；Group 将在 Step 2 锁定主申请人后于 Step 3 默认继承并确认。</div>
               </div>
 
               <div class="template-grid">
@@ -527,19 +550,9 @@
                 </button>
               </div>
 
-              <div class="field-grid two">
-                <div>
-                  <label class="apple-label" for="applicationTypeSelect">申请类型</label>
-                  <select class="apple-input" id="applicationTypeSelect"></select>
-                </div>
-                <div>
-                  <label class="apple-label" for="groupSelect">归属 Group</label>
-                  <select class="apple-input" id="groupSelect">
-                    <option value="tokyo-1">东京一组</option>
-                    <option value="tokyo-2">东京二组</option>
-                    <option value="osaka">大阪组</option>
-                  </select>
-                </div>
+              <div>
+                <label class="apple-label" for="applicationTypeSelect">申请类型</label>
+                <select class="apple-input" id="applicationTypeSelect"></select>
               </div>
 
               <div>
@@ -633,7 +646,22 @@
               <div>
                 <div class="section-kicker">Step 3</div>
                 <div class="section-title mt-2">分派与初始设置</div>
-                <div class="meta-text mt-2">设置负责人、期限和创建后的初始动作。</div>
+                <div class="meta-text mt-2">设置负责人、Group、期限和创建后的初始动作。</div>
+              </div>
+
+              <div class="summary-box">
+                <div class="summary-label">Group 承接规则</div>
+                <div class="summary-value" id="groupInheritanceValue">-</div>
+                <div class="meta-text mt-2" id="groupInheritanceHint">默认继承当前主申请人 / Customer 的 Group，若改组必须填写原因并留痕。</div>
+              </div>
+
+              <div>
+                <label class="apple-label" for="groupSelect">归属 Group</label>
+                <select class="apple-input" id="groupSelect">
+                  <option value="tokyo-1">东京一组</option>
+                  <option value="tokyo-2">东京二组</option>
+                  <option value="osaka">大阪组</option>
+                </select>
               </div>
 
               <div class="field-grid three">
@@ -694,9 +722,9 @@
 
               <div class="success-banner hidden" id="successBanner">
                 <div class="font-extrabold" id="successBannerTitle">案件已创建</div>
-                <div class="meta-text mt-2" id="successBannerDesc">已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。</div>
+                <div class="meta-text mt-2" id="successBannerDesc">已生成案件记录与资料登记清单草稿，可返回列表继续补录或分派任务。</div>
                 <div class="flex flex-wrap gap-2 mt-4">
-                  <button class="btn-primary" type="button" id="viewCaseDocumentsBtn">去上传资料</button>
+                  <button class="btn-primary" type="button" id="viewCaseDocumentsBtn">去登记资料</button>
                   <button class="btn-secondary" type="button" id="viewCaseDetailBtn">查看案件详情</button>
                   <button class="btn-secondary" type="button" id="viewCreatedCasesBtn">查看案件列表结果</button>
                 </div>
@@ -806,6 +834,17 @@
               <label class="apple-label" for="newCaseCustomerNote">备注</label>
               <textarea class="apple-input min-h-[88px]" id="newCaseCustomerNote" placeholder="例如：与主申请人共用扶养者资料 / 仅做雇主联系人"></textarea>
             </div>
+            <div id="caseCustomerDuplicateBox" class="hidden rounded-2xl border border-amber-200 bg-amber-50/70 px-4 py-4 section-stack">
+              <div>
+                <div class="font-extrabold text-[14px] text-[var(--text)]">发现重复命中（仅提示，不自动复用）</div>
+                <div class="meta-text mt-1">若仍继续创建，必须填写原因并确认留痕。</div>
+              </div>
+              <div id="caseCustomerDuplicateMatches" class="section-stack"></div>
+              <div>
+                <label class="apple-label" for="caseCustomerDuplicateReason">继续创建原因</label>
+                <textarea class="apple-input min-h-[88px]" id="caseCustomerDuplicateReason" placeholder="例如：同名不同人 / 旧档案联系方式已失效"></textarea>
+              </div>
+            </div>
             <div class="text-[13px] font-semibold text-red-600" id="caseCustomerModalError"></div>
           </form>
         </div>
@@ -825,6 +864,7 @@
     </div>
 
     <script src="data/case-create-config.js"></script>
+    <script src="scripts/case-create-helpers.js"></script>
     <script src="scripts/case-create-page.js"></script>
     <script src="scripts/case-create-modal.js"></script>
     <script src="../shared/scripts/navigate.js"></script>

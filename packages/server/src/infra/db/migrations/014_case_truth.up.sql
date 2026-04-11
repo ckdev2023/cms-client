@@ -22,6 +22,9 @@ ALTER TABLE cases ADD COLUMN IF NOT EXISTS billing_risk_acknowledged_at timestam
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS billing_risk_ack_reason_code text;
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS billing_risk_ack_reason_note text;
 
+-- 欠款风险确认凭证文件（P0-CONTRACT §13.3: 确认人/原因/凭证/时间/金额）
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS billing_risk_ack_evidence_url text;
+
 -- 下签后子阶段时间戳补齐
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS overseas_visa_start_at timestamptz;
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS entry_confirmed_at timestamptz;
@@ -36,19 +39,4 @@ CREATE INDEX IF NOT EXISTS idx_cases_billing_risk
   ON cases(org_id, billing_risk_acknowledged_at)
   WHERE billing_risk_acknowledged_at IS NULL;
 
--- ============================================================
--- 3. CaseStageHistory 表（P0 阶段流转日志）
--- ============================================================
-CREATE TABLE IF NOT EXISTS case_stage_history (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  org_id uuid NOT NULL REFERENCES organizations(id),
-  case_id uuid NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
-  from_stage text NOT NULL,
-  to_stage text NOT NULL,
-  reason text,
-  changed_by uuid REFERENCES users(id),
-  created_at timestamptz NOT NULL DEFAULT now()
-);
-
-CREATE INDEX IF NOT EXISTS idx_case_stage_history_case
-  ON case_stage_history(case_id, created_at);
+-- NOTE: case_stage_history 表由 015_case_stage_history.up.sql 创建（含 RLS）

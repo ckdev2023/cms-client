@@ -1,60 +1,22 @@
-<!--
-  section: workbench-sidebar.html
-  Workbench view shortcuts: 我的待办 / 今日到期 / 已逾期 / 提醒日志.
-  Each view is a preset filter shortcut; clicking sets the active view
-  and syncs filter state via tasks-filters.js.
-
-  P0 CONTRACT §3: 工作台视图 — 4 entries with badge counts.
-  Badge counts are demo-only hardcoded values from tasks-demo-data.js.
-
-  Rendered as the left column in a grid layout within <main>.
--->
-<div class="space-y-1" id="workbenchSidebar" role="navigation" aria-label="工作台视图">
-  <a
-    href="#"
-    class="flex items-center justify-between px-3 py-2 bg-white rounded-lg text-[var(--primary)] font-medium shadow-sm border border-[var(--border)]"
-    data-view-id="my-todo"
-    aria-current="true"
-  >
-    <div class="flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-      我的待办
-    </div>
-    <span class="bg-[rgba(3,105,161,0.1)] text-[var(--primary)] text-xs py-0.5 px-2 rounded-full font-bold" data-view-count="my-todo">10</span>
-  </a>
-
-  <a
-    href="#"
-    class="flex items-center justify-between px-3 py-2 text-[var(--muted)] hover:bg-white hover:rounded-lg transition-colors"
-    data-view-id="today-due"
-  >
-    <div class="flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-      今日到期
-    </div>
-    <span class="bg-[rgba(245,158,11,0.12)] text-[#b45309] text-xs py-0.5 px-2 rounded-full font-bold" data-view-count="today-due">2</span>
-  </a>
-
-  <a
-    href="#"
-    class="flex items-center justify-between px-3 py-2 text-[var(--muted)] hover:bg-white hover:rounded-lg transition-colors"
-    data-view-id="overdue"
-  >
-    <div class="flex items-center">
-      <svg class="w-5 h-5 mr-2 text-[var(--danger)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-      已逾期
-    </div>
-    <span class="bg-[rgba(220,38,38,0.08)] text-[#b91c1c] text-xs py-0.5 px-2 rounded-full font-bold" data-view-count="overdue">1</span>
-  </a>
-
-  <a
-    href="#"
-    class="flex items-center justify-between px-3 py-2 text-[var(--muted)] hover:bg-white hover:rounded-lg transition-colors mt-4"
-    data-view-id="reminder-log"
-  >
-    <div class="flex items-center">
-      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-      提醒日志
-    </div>
-  </a>
+<div class="tasks-summary-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4" id="workbenchSidebar" role="navigation" aria-label="工作台视图">
+  <button class="task-view-card task-view-card--my-todo is-active" type="button" data-view-id="my-todo" aria-current="true">
+    <div class="task-view-card__label"><span class="task-view-card__dot"></span>我的待办</div>
+    <div class="task-view-card__value" data-view-count="my-todo">10</div>
+    <div class="task-view-card__hint">聚焦当前责任人的待处理与进行中任务，适合作为默认执行入口。</div>
+  </button>
+  <button class="task-view-card task-view-card--today-due is-inactive" type="button" data-view-id="today-due" aria-current="false">
+    <div class="task-view-card__label"><span class="task-view-card__dot"></span>今日到期</div>
+    <div class="task-view-card__value" data-view-count="today-due">2</div>
+    <div class="task-view-card__hint">优先处理今日需要交付、提交或确认的任务，降低临期积压风险。</div>
+  </button>
+  <button class="task-view-card task-view-card--overdue is-inactive" type="button" data-view-id="overdue" aria-current="false">
+    <div class="task-view-card__label"><span class="task-view-card__dot"></span>已逾期</div>
+    <div class="task-view-card__value" data-view-count="overdue">1</div>
+    <div class="task-view-card__hint">快速定位已经超期但尚未关闭的任务，适合集中催办与升级处理。</div>
+  </button>
+  <button class="task-view-card task-view-card--reminder-log is-inactive" type="button" data-view-id="reminder-log" aria-current="false">
+    <div class="task-view-card__label"><span class="task-view-card__dot"></span>提醒日志</div>
+    <div class="task-view-card__value">4</div>
+    <div class="task-view-card__hint">查看提醒发送状态、失败原因与关联任务，方便回溯提醒动作。</div>
+  </button>
 </div>

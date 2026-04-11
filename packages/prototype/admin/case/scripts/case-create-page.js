@@ -3,6 +3,7 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     var config = window.CaseCreateConfig;
+    var helpers = window.CaseCreateHelpers || {};
     if (!config) return;
     var FAMILY_APPLICANT_ROLES = ['主申请人', '配偶', '子女'];
     var FAMILY_SUPPORTER_ROLES = ['扶养者', '保证人'];
@@ -19,10 +20,13 @@
       templateId: config.defaultState.templateId,
       applicationType: config.defaultState.applicationType,
       group: config.defaultState.group,
+      inheritedGroup: config.defaultState.group,
       owner: config.defaultState.owner,
       dueDate: config.defaultState.dueDate,
       amount: config.defaultState.amount,
       customerId: config.defaultState.customerId,
+      sourceLeadId: '',
+      sourceCustomerId: '',
       familyBulkMode: window.location.hash === '#family-bulk',
       familyBulkSeeded: false,
       primaryCustomer: null,
@@ -35,7 +39,14 @@
     var elements = {
       templateCards: Array.prototype.slice.call(document.querySelectorAll('[data-template-card]')),
       applicationTypeSelect: document.getElementById('applicationTypeSelect'),
+      sourceContextBar: document.getElementById('sourceContextBar'),
+      sourceLeadValue: document.getElementById('sourceLeadValue'),
+      sourceCustomerValue: document.getElementById('sourceCustomerValue'),
+      sourceContextHint: document.getElementById('sourceContextHint'),
+      sourceContextDedupHint: document.getElementById('sourceContextDedupHint'),
       groupSelect: document.getElementById('groupSelect'),
+      groupInheritanceValue: document.getElementById('groupInheritanceValue'),
+      groupInheritanceHint: document.getElementById('groupInheritanceHint'),
       ownerSelect: document.getElementById('ownerSelect'),
       dueDateInput: document.getElementById('dueDateInput'),
       amountInput: document.getElementById('amountInput'),
@@ -153,6 +164,73 @@
     function getOwnerLabel(value) {
       var match = config.owners.find(function (item) { return item.value === value; });
       return match ? match.label : value;
+    }
+
+    function parseCreateContext() {
+      if (typeof helpers.parseCreateContext === 'function') {
+        return helpers.parseCreateContext(window.location.search || '', config.customers || []);
+      }
+      var params = new window.URLSearchParams(window.location.search || '');
+      return {
+        sourceLeadId: params.get('sourceLeadId') || '',
+        customerId: params.get('customerId') || '',
+      };
+    }
+
+    function getCustomerById(customerId) {
+      return config.customers.find(function (item) { return item.id === customerId; }) || null;
+    }
+
+    function getInheritedGroupValue() {
+      var sourceCustomer = getCustomerById(state.sourceCustomerId || state.customerId);
+      if (typeof helpers.getInheritedGroup === 'function') {
+        return helpers.getInheritedGroup(config.defaultState.group, state.primaryCustomer || sourceCustomer);
+      }
+      if (state.primaryCustomer && state.primaryCustomer.group) return state.primaryCustomer.group;
+      if (sourceCustomer && sourceCustomer.group) return sourceCustomer.group;
+      return config.defaultState.group;
+    }
+
+    function syncInheritedGroup(force) {
+      var nextInheritedGroup = getInheritedGroupValue();
+      if (force || !state.group || state.group === state.inheritedGroup) {
+        state.group = nextInheritedGroup;
+      }
+      state.inheritedGroup = nextInheritedGroup;
+    }
+
+    function renderSourceContext() {
+      if (!elements.sourceContextBar) return;
+      var hasContext = !!(state.sourceLeadId || state.sourceCustomerId);
+      elements.sourceContextBar.classList.toggle('hidden', !hasContext);
+      if (!hasContext) return;
+
+      var sourceCustomer = getCustomerById(state.sourceCustomerId);
+      if (elements.sourceLeadValue) elements.sourceLeadValue.textContent = state.sourceLeadId || '—';
+      if (elements.sourceCustomerValue) {
+        elements.sourceCustomerValue.textContent = sourceCustomer
+          ? sourceCustomer.name + '（' + sourceCustomer.id + '）'
+          : (state.sourceCustomerId || '待创建');
+      }
+      if (elements.sourceContextHint) {
+        elements.sourceContextHint.textContent = state.sourceCustomerId
+          ? 'Step 2 已按转化链路预填主申请人，Step 3 默认继承该 Customer 的 Group。'
+          : '当前为从 Lead 进入的建案流程；如先创建 Customer，Step 3 将默认继承新客户 Group。';
+      }
+      if (elements.sourceContextDedupHint) {
+        elements.sourceContextDedupHint.textContent = 'P0：命中重复客户时仅提示，不自动复用；继续创建需填写原因、二次确认并留痕。';
+      }
+    }
+
+    function renderGroupInheritance() {
+      if (elements.groupInheritanceValue) {
+        elements.groupInheritanceValue.textContent = getGroupLabel(state.inheritedGroup);
+      }
+      if (elements.groupInheritanceHint) {
+        elements.groupInheritanceHint.textContent = state.group === state.inheritedGroup
+          ? '当前沿用主申请人 / Customer 的默认 Group，无需额外留痕。'
+          : '当前已改为非默认 Group；必须填写跨组建案原因并留痕。';
+      }
     }
 
     function showToast(title, desc) {
@@ -300,6 +378,7 @@
         state.primaryCustomer.kana + ' / ' + state.primaryCustomer.groupLabel + ' / ' + state.primaryCustomer.roleHint;
       elements.primaryCustomerContact.textContent =
         state.primaryCustomer.summary + ' · ' + state.primaryCustomer.contact;
+      syncInheritedGroup(false);
     }
 
     function renderAdditionalParties() {
@@ -511,7 +590,7 @@
             : '已生成批量建案草稿，可继续补充办理对象与资料。';
         } else {
           elements.successBannerTitle.textContent = '案件已创建';
-          elements.successBannerDesc.textContent = '已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。';
+          elements.successBannerDesc.textContent = '已生成案件记录与资料登记清单草稿，可返回列表继续补录或分派任务。';
         }
       }
 
@@ -623,7 +702,9 @@
       }
       if (stepIndex === 2) {
         if (!state.owner || !state.dueDate || !state.amount) return false;
-        if (state.group !== config.defaultState.group && !elements.crossGroupReason.value.trim()) return false;
+        if ((typeof helpers.shouldRequireCrossGroupReason === 'function'
+          ? helpers.shouldRequireCrossGroupReason(state.group, state.inheritedGroup)
+          : state.group !== state.inheritedGroup) && !elements.crossGroupReason.value.trim()) return false;
       }
       return true;
     }
@@ -664,6 +745,7 @@
     }
 
     function syncFormValues() {
+      syncInheritedGroup(false);
       elements.groupSelect.value = state.group;
       elements.ownerSelect.value = state.owner;
       elements.dueDateInput.value = state.dueDate;
@@ -677,7 +759,14 @@
       if (!elements.caseNameInput.dataset.manual) {
         elements.caseNameInput.value = buildCaseName();
       }
-      elements.crossGroupReasonRow.classList.toggle('hidden', state.group === config.defaultState.group);
+      elements.crossGroupReasonRow.classList.toggle(
+        'hidden',
+        !(typeof helpers.shouldRequireCrossGroupReason === 'function'
+          ? helpers.shouldRequireCrossGroupReason(state.group, state.inheritedGroup)
+          : state.group !== state.inheritedGroup)
+      );
+      renderSourceContext();
+      renderGroupInheritance();
     }
 
     function applyHashMode() {
@@ -696,6 +785,7 @@
       state.applicationType = elements.applicationTypeSelect.value || state.applicationType;
       state.customerId = elements.primaryCustomerSelect.value;
       state.primaryCustomer = config.customers.find(function (item) { return item.id === state.customerId; }) || state.primaryCustomer;
+      syncInheritedGroup(false);
 
       ensureFamilyBulkSeeded();
       syncFormValues();
@@ -724,7 +814,7 @@
           };
           config.customers.unshift(state.primaryCustomer);
           state.customerId = customer.id;
-          state.group = customer.group;
+          syncInheritedGroup(true);
           state.currentStep = Math.max(state.currentStep, 1);
         } else {
           state.additionalParties.push(customer);
@@ -768,6 +858,7 @@
     elements.primaryCustomerSelect.addEventListener('change', function () {
       state.customerId = elements.primaryCustomerSelect.value;
       state.primaryCustomer = config.customers.find(function (item) { return item.id === state.customerId; }) || null;
+      syncInheritedGroup(false);
       if (!elements.caseNameInput.dataset.manual) elements.caseNameInput.value = buildCaseName();
       refresh();
     });
@@ -830,8 +921,16 @@
       });
     }
 
+    var createContext = parseCreateContext();
+    if (createContext.sourceLeadId) state.sourceLeadId = createContext.sourceLeadId;
+    if (createContext.customerId) {
+      state.sourceCustomerId = createContext.customerId;
+      state.customerId = createContext.customerId;
+    }
+
     applyHashMode();
     state.primaryCustomer = config.customers.find(function (item) { return item.id === state.customerId; }) || config.customers[0];
+    syncInheritedGroup(true);
     syncFormValues();
     refresh();
   });

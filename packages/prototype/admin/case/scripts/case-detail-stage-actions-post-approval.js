@@ -188,6 +188,8 @@
     if (reasonEl) reasonEl.value = '';
     var personEl = document.getElementById('coeRiskPerson');
     if (personEl) personEl.value = '';
+    var evidenceEl = document.getElementById('coeRiskEvidence');
+    if (evidenceEl) evidenceEl.value = '';
     coeRiskModal.classList.add('show');
   }
 
@@ -195,18 +197,23 @@
     if (withRiskRecord) {
       var reasonEl = document.getElementById('coeRiskReason');
       var personEl = document.getElementById('coeRiskPerson');
+      var evidenceEl = document.getElementById('coeRiskEvidence');
       var reason = (reasonEl && reasonEl.value.trim())
         ? reasonEl.value.trim()
         : '经确认，尾款未收风险可接受，同意发送 COE';
       var confirmer = (personEl && personEl.value.trim())
         ? personEl.value.trim()
         : '当前操作人';
+      var evidence = (evidenceEl && evidenceEl.value.trim())
+        ? evidenceEl.value.trim()
+        : null;
       var outstanding = ns.liveState.billing ? ns.liveState.billing.outstanding : '—';
 
       ns.liveState.riskConfirmedForCoeSend = true;
       ns.liveState.riskConfirmationRecord = {
         confirmedBy: confirmer,
         reason: reason,
+        evidence: evidence,
         time: new Date().toLocaleString('zh-CN'),
         amount: outstanding,
         context: 'sendCoe',
@@ -216,6 +223,7 @@
         'review',
         '风险确认留痕（COE 发送）：尾款未收 <b>' + ns.esc(outstanding) +
           '</b> · 确认人：' + ns.esc(confirmer) +
+          (evidence ? ' · 凭证：' + ns.esc(evidence) : '') +
           ' · 原因：' + ns.esc(reason),
         'orange',
         'risk_confirmation',

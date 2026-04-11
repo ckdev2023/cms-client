@@ -55,12 +55,18 @@ packages/prototype/admin/
 │   ├── MIGRATION-MAPPING-DETAIL.md
 │   ├── split-manifest.json
 │   ├── split-manifest-detail.json
+│   ├── shell/
+│   │   ├── mobile-nav.html              ← 基于 shared shell 的本模块路径/当前页态适配
+│   │   ├── side-nav.html                ← 基于 shared shell 的本模块路径/当前页态适配
+│   │   └── topbar-list.html             ← 列表页 topbar 片段（含“新建线索”按钮）
 │   ├── sections/
 │   │   ├── header.html                  ← 页面标题 + 副标题 + "新建线索"主按钮
 │   │   ├── filters.html                 ← 状态/负责人/Group/业务类型/跟进时间范围/搜索/重置
 │   │   ├── table.html                   ← 11 列表格 + 批量选择 + 批量动作工具栏 + 空状态
 │   │   ├── create-modal.html            ← 新建线索弹窗 + 去重提示面板
 │   │   └── toast.html                   ← Toast 反馈区
+│   ├── styles/
+│   │   └── list.css                     ← 列表页专有样式
 │   ├── data/
 │   │   ├── leads-config.js              ← 列表页：状态枚举、列定义、筛选项、批量动作、表单 schema、去重样例、Toast preset
 │   │   └── leads-detail-config.js       ← 详情页：Tab 定义、时间线/转化/日志/横幅样例、样本切换配置
@@ -92,7 +98,7 @@ packages/prototype/admin/
 - `mobile-nav.html`
 - `topbar.html`
 
-统一壳层来源，线索页只负责标记"当前页高亮为咨询线索"（`aria-current="page"`）。
+统一壳层来源；`leads-message/shell/*.html` 只做基于 shared shell 的轻量派生，负责路径修正、当前页高亮和列表/详情 topbar 差异。
 
 #### `shared/scripts/*.js`
 
@@ -107,14 +113,13 @@ packages/prototype/admin/
 
 职责：
 
-1. 声明 `<!DOCTYPE html>`、`<head>`（meta、title、tailwindcss CDN、font import）
-2. 引入共享样式：`<link>` 到 `shared/styles/tokens.css`, `components.css`, `shell.css`
-3. 引入列表页专有样式（状态 Badge、筛选面板、批量动作栏、表格行高亮/淡化、去重面板、空状态）
-4. 组装 HTML 结构：`app-shell` > `side-nav` + `main`
-5. 在 `<main>` 内按顺序插入 `sections/*.html` 片段内容
-6. 在页尾引入脚本：`shared/scripts/mobile-nav.js` + `shared/scripts/navigate.js` + `data/leads-config.js` + `scripts/leads-page.js` + `scripts/leads-create-modal.js`
+1. 声明 `<!DOCTYPE html>`、`<head>`（meta、title、Tailwind CDN）
+2. 引入共享样式与列表页专有样式：`shared/styles/*.css` + `styles/list.css`
+3. 组装 `app-shell` 骨架，并通过 `data-include-html` 注入 `shell/*.html`
+4. 在 `<main>` 内按顺序通过 `data-include-html` 注入 `sections/*.html`
+5. 在页尾引入 `shared/scripts/html-fragment-loader.js`，再挂载页面脚本与共享脚本
 
-> **P0 阶段简化方案**：由于当前原型不使用构建工具，`sections/*.html` 作为"逻辑边界文件"存在——入口文件中用注释标记区块来源即可（如 `<!-- section: filters.html -->`）。脚本文件则通过 `<script src="...">` 引入。
+> P0 阶段仍保持“可直接双击打开”的原型形态，但入口页改为运行时片段装配：`html-fragment-loader.js` 在 `DOMContentLoaded` 后注入 `shell/*.html` 与 `sections/*.html`。
 
 #### `leads-message/sections/*.html` — 页面区块
 
@@ -161,13 +166,13 @@ packages/prototype/admin/
 | 规则 | 说明 |
 |------|------|
 | **共享层不含线索业务逻辑** | `shared/` 下的文件不出现"线索""跟进""去重""转化"等业务概念 |
-| **页面层不复制壳子** | `leads-message/index.html` 不再手写导航 HTML，引用 `shared/shell/` |
+| **页面层不复制壳子** | `leads-message/index.html` 不再内联导航 HTML，而是通过 `shell/*.html` 复用 shared shell 结构 |
 | **样式单一来源** | `.btn-primary`, `.chip`, `.apple-table` 等在 `shared/styles/` 定义一次；页面层只补充专有样式 |
 | **Token 单一来源** | `:root` CSS 变量在 `shared/styles/tokens.css` 定义一次；页面层不重新声明 |
 | **脚本按能力拆** | 每个 `.js` 文件对应一个独立能力（page-init / modal / detail-page） |
 | **配置集中声明** | 状态枚举、列定义、筛选项、表单 schema、去重样例、toast preset 在 `data/leads-config.js` 集中管理 |
 | **data-* 钩子优先** | 尽量用 `data-action="xxx"` 属性 + 事件代理，减少 `onclick` 内联处理器 |
-| **section 注释边界** | 入口 HTML 中用 `<!-- section: xxx.html -->` 注释标记区块起止 |
+| **section 运行时边界** | 入口 HTML 中使用 `data-include-html="sections/xxx.html"` 标记区块装配位 |
 
 ---
 
@@ -181,14 +186,14 @@ packages/prototype/admin/
 
 ### Step 2：搭建列表页入口
 
-1. 创建 `index.html`，引入 shared 样式与导航
-2. 在 `<main>` 中预留 5 个 section 结构位
+1. 创建 `index.html`，引入 shared 样式与片段加载器
+2. 在 `<main>` 中预留 5 个 `data-include-html` section 装配位
 3. 标注 `aria-current="page"` 指向"咨询线索"
 
 ### Step 3：拆分页面区块
 
 1. 将 `index.html` 的 `<main>` 中 5 个区块同步到 `sections/*.html`
-2. 入口文件中用注释标记 section 来源
+2. 入口文件中改为 `data-include-html` 占位装配
 3. 保持入口文件完整可运行
 
 ### Step 4：实现行为脚本
@@ -210,6 +215,8 @@ packages/prototype/admin/
                      ┌──────────────────────────┐
                      │  shared/styles/*.css      │
                      │  shared/shell/*.html      │
+                     │  shared/scripts/html-     │
+                     │  fragment-loader.js       │
                      │  shared/scripts/*.js      │
                      └───────────┬──────────────┘
                                  │ (引用)

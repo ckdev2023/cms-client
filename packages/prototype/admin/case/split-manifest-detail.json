@@ -7,10 +7,8 @@
   "migrationSource": "packages/prototype/admin/case-detail.html",
   "referenceDocs": [
     "packages/prototype/admin/case/P0-CONTRACT-DETAIL.md",
-    "packages/prototype/admin/case/SPLIT-ARCHITECTURE-DETAIL.md",
     "packages/prototype/admin/case/MIGRATION-MAPPING-DETAIL.md",
-    "packages/prototype/admin/case/SPEC-GAP-MATRIX-DETAIL.md",
-    "docs/gyoseishoshi_saas_md/06-页面规格/案件.md"
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md"
   ],
   "sharedCandidates": {
     "styles": [
@@ -279,7 +277,7 @@
   "notes": [
     "detail.html 是案件詳情的原型入口，從旧 case-detail.html 遷入並補齊規格缺口。",
     "所有校驗、提交包、風險確認、歸檔、回款登記都屬於 demo-only 行為，不代表真實落庫。",
-    "樣本切換提供 6 種場景（work/family/gate-failed/debt-submit/correction/archived），用於驗收不同業務狀態。",
+    "樣本切換提供 6 種場景（work/family/gate-fail/arrears/correction/archived），用於驗收不同業務狀態。",
     "本 manifest 與 split-manifest.json（列表/新建）並行，各管各的頁面範圍。"
   ]
 }

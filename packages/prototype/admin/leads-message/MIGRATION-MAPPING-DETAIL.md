@@ -46,6 +46,22 @@
 | 变更日志 | `domain/lead/LeadRepository.ts` | `getAuditLogs(leadId, category?)` | 支持三分类筛选 |
 | 编辑基础信息 | `domain/lead/LeadRepository.ts` | `updateLead(leadId, input)` | 更新字段 + 审计 |
 
+### 1.3 `REQ-P0-01` 转化冻结数据契约
+
+> 目标：把“去重命中仅提示、不自动复用；继续创建需确认并留痕”的口径，直接冻结到转化输入与审计落点中。
+
+| 主题 | 最小字段 / 约束 | 生产落点 |
+|------|----------------|---------|
+| 去重结果快照 | `matchType`（`lead` / `customer`）、`matchedEntityId`、`matchedGroup` | `DedupResult` |
+| 默认处置 | `strategy = warn_and_continue`；`systemAction = no_auto_reuse` | `LeadDedupService` / ViewModel derived state |
+| 继续创建确认 | `confirmedBy`、`confirmedAt`、`continueReason` | `ConvertToCustomerInput.dedupOverride` |
+| 转客户承接 | `sourceLeadId`、`group = lead.group`；如改组则 `groupOverrideReason` 必填 | `ConvertToCustomerInput` |
+| 转案件承接 | `sourceLeadId`、`customerId`、`primaryApplicantCustomerId = customerId`、`group = customer.group` | `ConvertToCaseInput` |
+| 留痕事件 | `lead.convert.customer`、`lead.convert.customer.duplicate_override`、`lead.convert.case` | `LeadAuditLogEntry` + timeline/audit infra |
+
+- `convertToCustomer()` 仅在人工确认后创建新 Customer，不自动合并、也不自动复用已有 Customer。
+- `convertToCase()` 的前置条件是：已确定本次转化使用的 `customerId`；若来自刚转化的 Customer，则直接承接该 ID。
+
 建议文件扩展：
 
 ```text
@@ -126,7 +142,9 @@ domain/lead/
 | `sections/detail-tabs.html` | `LeadDetailTabs` | `features/lead/ui/` | 4-Tab 导航 |
 | `sections/detail-info.html` | `LeadInfoTab` | `features/lead/ui/` | 基础信息 8 字段 + 编辑入口 |
 | `sections/detail-followups.html` | `LeadFollowupsTab` + `FollowupTimeline` + `FollowupForm` | `features/lead/ui/` | 跟进时间线 + 新增表单 + 一键转任务 |
-| `sections/detail-conversion.html` | `LeadConversionTab` + `DedupPanel` + `ConversionCard` + `ConversionModal` | `features/lead/ui/` | 去重面板 + 转化操作 + 已转化展示 |
+| `sections/detail-conversion.html` | `LeadConversionTab` + `DedupPanel` + `ConversionCard` | `features/lead/ui/` | 去重面板 + 转化入口 + 已转化展示 |
+| `sections/detail-convert-modals.html` | `ConversionModal` | `features/lead/ui/` | 转客户 / 转案件确认弹窗 |
+| `sections/detail-toast.html` | `Toast` | `shared/ui/` | 跟进/转化/状态变更反馈 |
 | `sections/detail-log.html` | `LeadLogTab` + `LogTimeline` | `features/lead/ui/` | 三分类筛选 + 变更时间线 |
 | `sections/detail-readonly-banner.html` | `ReadonlyBanner` | `shared/ui/`（可泛化） | 已流失态横幅 |
 | `sections/detail-warning-banner.html` | `WarningBanner` | `shared/ui/`（可泛化） | 已签约未转化态横幅 |

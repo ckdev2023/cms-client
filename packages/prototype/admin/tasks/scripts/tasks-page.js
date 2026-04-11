@@ -1,7 +1,12 @@
 (function () {
   'use strict';
 
-  document.addEventListener('DOMContentLoaded', function () {
+  var initialized = false;
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+
     var config = window.TasksConfig;
     var modal = window.TasksModal;
     var filters = window.TasksFilters;
@@ -506,5 +511,11 @@
     // Initial state
     modal.updateSubmitEnabled();
     bulk.updateBulkState();
-  });
+  }
+
+  document.addEventListener('prototype:fragments-ready', init);
+
+  if (window.__prototypeFragmentsReady || !document.querySelector('[data-include-html]')) {
+    init();
+  }
 })();

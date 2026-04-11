@@ -268,7 +268,7 @@ var BillingConfig = (function () {
   var BILLING_STATUS_OPTIONS = [
     { value: 'paid', label: '已结清', badge: 'tag-green' },
     { value: 'partial', label: '部分回款', badge: 'tag-blue' },
-    { value: 'unpaid', label: '未回款', badge: 'tag-orange' },
+    { value: 'due', label: '未回款', badge: 'tag-orange' },
     { value: 'overdue', label: '逾期', badge: 'tag-red' },
   ];
 
@@ -442,7 +442,7 @@ var BillingDemoData = (function () {
       amountDue: 120000,
       amountReceived: 0,
       amountOutstanding: 120000,
-      status: 'unpaid',
+      status: 'due',
       nextNode: { name: '全款 (100%)', dueDate: '資料收集齊後 3 天內' },
     },
   ];
@@ -589,7 +589,7 @@ var BillingDemoData = (function () {
 
 此映射不在 P0 拆分范围内执行，仅作为后续迁移的参考。
 
-**完整映射文档见 → [MIGRATION-MAPPING.md](./MIGRATION-MAPPING.md)**（待编写）
+**完整映射文档见 → [MIGRATION-MAPPING.md](./MIGRATION-MAPPING.md)**
 
 以下为速查摘要，遵循仓库 `domain → data → features/{model,ui} → shared/ui` 四层架构：
 

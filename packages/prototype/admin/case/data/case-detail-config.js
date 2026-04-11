@@ -20,13 +20,13 @@
 var DETAIL_TABS = [
   { key: 'overview',   label: '概览',       icon: 'chart-bar' },
   { key: 'info',       label: '基础信息',   icon: 'identification' },
-  { key: 'documents',  label: '資料清單',   icon: 'document-text' },
-  { key: 'messages',   label: '沟通记录',   icon: 'chat-alt-2' },
-  { key: 'forms',      label: '文書',       icon: 'document-duplicate' },
+  { key: 'documents',  label: '资料清单',   icon: 'document-text' },
+  { key: 'forms',      label: '文书',       icon: 'document-duplicate' },
   { key: 'tasks',      label: '任务',       icon: 'clipboard-check' },
   { key: 'deadlines',  label: '期限',       icon: 'clock' },
   { key: 'validation', label: '校验与提交', icon: 'shield-check' },
-  { key: 'billing',    label: '收費',       icon: 'currency-yen' },
+  { key: 'billing',    label: '收费',       icon: 'currency-yen' },
+  { key: 'messages',   label: '沟通记录',   icon: 'chat-alt-2' },
   { key: 'log',        label: '日志',       icon: 'document-report' },
 ];
 
@@ -54,6 +54,18 @@ var DETAIL_GATES = {
   A: { id: 'A', label: 'Gate-A', chip: 'gate-chip-a', severity: 'blocking',      desc: '硬性阻断（必须修复）' },
   B: { id: 'B', label: 'Gate-B', chip: 'gate-chip-b', severity: 'warning',       desc: '软性提示（风险建议）' },
   C: { id: 'C', label: 'Gate-C', chip: 'gate-chip-c', severity: 'informational', desc: '信息提示' },
+};
+
+/* ------------------------------------------------------------------ */
+/*  POST-APPROVAL SUB-STAGES (COE overseas flow)                       */
+/* ------------------------------------------------------------------ */
+
+var POST_APPROVAL_STAGES = {
+  waiting_final_payment:   { code: 'waiting_final_payment',   label: '等待尾款',       badge: 'badge-orange' },
+  coe_sent:                { code: 'coe_sent',                label: 'COE 已发送',     badge: 'badge-blue'   },
+  overseas_visa_applying:  { code: 'overseas_visa_applying',  label: '海外返签中',     badge: 'badge-blue'   },
+  entry_success:           { code: 'entry_success',           label: '入境成功',       badge: 'badge-green'  },
+  overseas_visa_rejected:  { code: 'overseas_visa_rejected',  label: '海外返签拒签',   badge: 'badge-red'    },
 };
 
 /* ------------------------------------------------------------------ */
@@ -241,28 +253,28 @@ var DETAIL_SAMPLES = {
 
     documents: [
       { group: '主申请人提供', count: '3/5', items: [
-        { name: '护照复印件', meta: 'passport_copy.pdf · v2 · 催办：—', status: 'submitted', statusLabel: '已提交' },
-        { name: '在留カード（表裏）', meta: 'residence_card.pdf · v1 · 催办：—', status: 'reviewed', statusLabel: '已审核' },
-        { name: '履歴書', meta: '未上传 · 催办：2026/04/05', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '纳税証明書', meta: '逾期未提供 · 催办：2026/04/03 · 截止已过', status: 'expired', statusLabel: '逾期' },
-        { name: '証件照（4×3cm）', meta: 'photo_4x3.jpg · v1 · 催办：—', status: 'submitted', statusLabel: '已提交' },
+        { name: '护照复印件', meta: 'passport_copy.pdf · v2 · 催办：—', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '在留カード（表裏）', meta: 'residence_card.pdf · v1 · 催办：—', status: 'approved', statusLabel: '通过' },
+        { name: '履歴書', meta: '未上传 · 催办：2026/04/05', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '纳税証明書', meta: '逾期未提供 · 催办：2026/04/03 · 截止已过', status: 'expired', statusLabel: '过期' },
+        { name: '証件照（4×3cm）', meta: 'photo_4x3.jpg · v1 · 催办：—', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
       ]},
       { group: '扶養者/保証人提供', count: '2/3', items: [
-        { name: '身元保証書', meta: 'guarantor_form.pdf · v1 · 催办：—', status: 'reviewed', statusLabel: '已审核' },
-        { name: '住民票', meta: 'resident_cert.pdf · v1 · 催办：—', status: 'submitted', statusLabel: '已提交' },
+        { name: '身元保証書', meta: 'guarantor_form.pdf · v1 · 催办：—', status: 'approved', statusLabel: '通过' },
+        { name: '住民票', meta: 'resident_cert.pdf · v1 · 催办：—', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
         { name: '課税証明書（保証人）', meta: '无需提供 · 原因：保証人为配偶，免除 · Suzuki · 2026/04/03', status: 'waived', statusLabel: '无需提供' },
       ]},
       { group: '雇主/所属機構提供', count: '2/5', items: [
-        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1 · 催办：—', status: 'reviewed', statusLabel: '已审核' },
-        { name: '決算書（直近 2 期）', meta: 'financial_stmt.pdf · v2 · 催办：2026/04/01', status: 'submitted', statusLabel: '已提交' },
-        { name: '在職証明書', meta: '未上传 · 催办：2026/04/05', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '雇用契約書', meta: '未上传 · 催办：2026/04/05', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '源泉徴収票', meta: 'withheld_tax.pdf · v1 退回 · 审核意见：年份不符，需提交 2025 年度', status: 'rejected', statusLabel: '已退回' },
+        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1 · 催办：—', status: 'approved', statusLabel: '通过' },
+        { name: '決算書（直近 2 期）', meta: 'financial_stmt.pdf · v2 · 催办：2026/04/01', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '在職証明書', meta: '未上传 · 催办：2026/04/05', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '雇用契約書', meta: '未上传 · 催办：2026/04/05', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '源泉徴収票', meta: 'withheld_tax.pdf · v1 退回 · 审核意见：年份不符，需提交 2025 年度', status: 'revision_required', statusLabel: '退回补正' },
       ]},
       { group: '事務所内部準備', count: '1/3', items: [
-        { name: '委任状', meta: 'poa.pdf · v1 · 催办：—', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: '起草中 · 催办：—', status: 'pending', statusLabel: '起草中' },
-        { name: '質問書', meta: '未開始 · 催办：—', status: 'idle', statusLabel: '未开始' },
+        { name: '委任状', meta: 'poa.pdf · v1 · 催办：—', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: '起草中 · 催办：—', status: 'waiting_upload', statusLabel: '待提交' },
+        { name: '質問書', meta: '未開始 · 催办：—', status: 'not_sent', statusLabel: '未発出' },
       ]},
     ],
 
@@ -284,7 +296,7 @@ var DETAIL_SAMPLES = {
     ],
   },
 
-  /* ====== D.2  家族签案件（认定） ====== */
+  /* ====== D.2  家族签案件（认定 · COE 海外） ====== */
   family: {
     id: 'CAS-2026-0156',
     title: '家族滞在（认定）- 陈 麗華',
@@ -308,6 +320,9 @@ var DETAIL_SAMPLES = {
 
     caseType: '家族滞在',
     applicationType: '认定（在留資格認定）',
+    applicationFlowType: 'coe_overseas',
+    postApprovalStage: null,
+    finalPaymentPaid: false,
     acceptedDate: '2026-04-03',
     targetDate: '2026-05-10',
 
@@ -381,30 +396,30 @@ var DETAIL_SAMPLES = {
 
     documents: [
       { group: '主申请人提供', count: '2/5', items: [
-        { name: '护照复印件', meta: '未上传 · 催办：—', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '在留資格認定証明書（如有）', meta: '未上传', status: 'idle', statusLabel: '未开始' },
-        { name: '証件照（4×3cm）', meta: 'photo.jpg · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '履歴書', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '出生证明（翻译件）', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
+        { name: '护照复印件', meta: '未上传 · 催办：—', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '在留資格認定証明書（如有）', meta: '未上传', status: 'not_sent', statusLabel: '未発出' },
+        { name: '証件照（4×3cm）', meta: 'photo.jpg · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '履歴書', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '出生证明（翻译件）', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
       ]},
       { group: '扶養者/保証人提供', count: '3/8', items: [
-        { name: '在留卡（表裏）', meta: 'zairyu_card.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '住民票', meta: 'resident_cert.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '纳税証明書', meta: '未上传 · 催办：2026/04/05', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '課税証明書', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '身元保証書', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '親族関係公証書', meta: '未上传 · 催办中', status: 'pending', statusLabel: '待提供' },
-        { name: '収入証明', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
-        { name: '戸籍謄本', meta: 'koseki.pdf · v1', status: 'submitted', statusLabel: '已提交' },
+        { name: '在留卡（表裏）', meta: 'zairyu_card.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '住民票', meta: 'resident_cert.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '纳税証明書', meta: '未上传 · 催办：2026/04/05', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '課税証明書', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '身元保証書', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '親族関係公証書', meta: '未上传 · 催办中', status: 'waiting_upload', statusLabel: '待提交' },
+        { name: '収入証明', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
+        { name: '戸籍謄本', meta: 'koseki.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
       ]},
       { group: '事務所内部準備', count: '1/7', items: [
-        { name: '委任状', meta: 'poa.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: '未開始', status: 'idle', statusLabel: '未开始' },
-        { name: '質問書', meta: '未開始', status: 'idle', statusLabel: '未开始' },
-        { name: '身分関係図', meta: '未開始', status: 'idle', statusLabel: '未开始' },
-        { name: '送金記録', meta: '未開始', status: 'idle', statusLabel: '未开始' },
-        { name: '写真一覧', meta: '未開始', status: 'idle', statusLabel: '未开始' },
-        { name: '翻訳証明', meta: '未開始', status: 'idle', statusLabel: '未开始' },
+        { name: '委任状', meta: 'poa.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
+        { name: '質問書', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
+        { name: '身分関係図', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
+        { name: '送金記録', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
+        { name: '写真一覧', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
+        { name: '翻訳証明', meta: '未開始', status: 'not_sent', statusLabel: '未発出' },
       ]},
     ],
 
@@ -445,6 +460,9 @@ var DETAIL_SAMPLES = {
 
     caseType: '特定技能',
     applicationType: '认定（在留資格認定）',
+    applicationFlowType: 'coe_overseas',
+    postApprovalStage: null,
+    finalPaymentPaid: false,
     acceptedDate: '2026-03-20',
     targetDate: '2026-04-18',
 
@@ -525,26 +543,26 @@ var DETAIL_SAMPLES = {
 
     documents: [
       { group: '主申请人提供', count: '4/5', items: [
-        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '証件照', meta: 'photo.jpg · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '履歴書', meta: 'cv.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '技能検定合格証明', meta: '未上传 · Gate-A 阻断项', status: 'expired', statusLabel: '阻断' },
+        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '証件照', meta: 'photo.jpg · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '履歴書', meta: 'cv.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '技能検定合格証明', meta: '未上传 · Gate-A 阻断项', status: 'waiting_upload', statusLabel: '待提交' },
       ]},
       { group: '雇主/所属機構提供', count: '5/7', items: [
-        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '決算書', meta: 'financial.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '特定技能雇用契約書', meta: 'contract.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '支援計画書', meta: 'support_plan.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '賃金台帳', meta: 'payroll.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '雇用条件書', meta: '未上传 · Gate-A 阻断项', status: 'expired', statusLabel: '阻断' },
-        { name: '質問書', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
+        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '決算書', meta: 'financial.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '特定技能雇用契約書', meta: 'contract.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '支援計画書', meta: 'support_plan.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '賃金台帳', meta: 'payroll.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '雇用条件書', meta: '未上传 · Gate-A 阻断项', status: 'waiting_upload', statusLabel: '待提交' },
+        { name: '質問書', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
       ]},
       { group: '事務所内部準備', count: '3/4', items: [
-        { name: '委任状', meta: 'poa.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: 'reason.docx · v1', status: 'done', statusLabel: '已完成' },
-        { name: '翻訳証明', meta: 'translation.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '送出機関証明', meta: '未上传', status: 'pending', statusLabel: '待提供', canWaive: true },
+        { name: '委任状', meta: 'poa.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: 'reason.docx · v1', status: 'approved', statusLabel: '通过' },
+        { name: '翻訳証明', meta: 'translation.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '送出機関証明', meta: '未上传', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
       ]},
     ],
 
@@ -664,32 +682,33 @@ var DETAIL_SAMPLES = {
     riskConfirmationRecord: {
       confirmedBy: 'Manager',
       reason: '客户承诺本周内付清尾款，因期限紧迫优先提交',
+      evidence: '客户付款承诺书.pdf',
       time: '2026/04/08 09:00',
       amount: '¥120,000',
     },
 
     documents: [
       { group: '主申请人提供', count: '5/5', items: [
-        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '証件照', meta: 'photo.jpg · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '履歴書', meta: 'cv.pdf · v2', status: 'reviewed', statusLabel: '已审核' },
-        { name: '卒業証明書', meta: 'degree.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
+        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '証件照', meta: 'photo.jpg · v1', status: 'approved', statusLabel: '通过' },
+        { name: '履歴書', meta: 'cv.pdf · v2', status: 'approved', statusLabel: '通过' },
+        { name: '卒業証明書', meta: 'degree.pdf · v1', status: 'approved', statusLabel: '通过' },
       ]},
       { group: '雇主/所属機構提供', count: '7/8', items: [
-        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '決算書（直近 3 期）', meta: 'financial.pdf · v3', status: 'reviewed', statusLabel: '已审核' },
-        { name: '事業計画書', meta: 'bizplan.pdf · v2', status: 'reviewed', statusLabel: '已审核' },
-        { name: '役員名簿', meta: 'directors.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '会社案内', meta: 'company_intro.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '納税証明書', meta: 'tax_cert.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '雇用保険関連', meta: 'insurance.pdf · v1', status: 'submitted', statusLabel: '已提交' },
-        { name: '源泉徴収票', meta: '未上传 · 催办中', status: 'pending', statusLabel: '待提供', canWaive: true },
+        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '決算書（直近 3 期）', meta: 'financial.pdf · v3', status: 'approved', statusLabel: '通过' },
+        { name: '事業計画書', meta: 'bizplan.pdf · v2', status: 'approved', statusLabel: '通过' },
+        { name: '役員名簿', meta: 'directors.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '会社案内', meta: 'company_intro.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '納税証明書', meta: 'tax_cert.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '雇用保険関連', meta: 'insurance.pdf · v1', status: 'uploaded_reviewing', statusLabel: '已提交待审核' },
+        { name: '源泉徴収票', meta: '未上传 · 催办中', status: 'waiting_upload', statusLabel: '待提交', canWaive: true },
       ]},
       { group: '事務所内部準備', count: '3/3', items: [
-        { name: '委任状', meta: 'poa.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: 'reason.docx · v2', status: 'done', statusLabel: '已完成' },
-        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'done', statusLabel: '已完成' },
+        { name: '委任状', meta: 'poa.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: 'reason.docx · v2', status: 'approved', statusLabel: '通过' },
+        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'approved', statusLabel: '通过' },
       ]},
     ],
 
@@ -822,26 +841,26 @@ var DETAIL_SAMPLES = {
 
     documents: [
       { group: '主申请人提供', count: '5/5', items: [
-        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '証件照', meta: 'photo.jpg · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '婚姻証明書', meta: 'marriage.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '履歴書', meta: 'cv.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
+        { name: '护照复印件', meta: 'passport.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '証件照', meta: 'photo.jpg · v1', status: 'approved', statusLabel: '通过' },
+        { name: '婚姻証明書', meta: 'marriage.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '履歴書', meta: 'cv.pdf · v1', status: 'approved', statusLabel: '通过' },
       ]},
       { group: '扶養者/保証人提供', count: '5/6', items: [
-        { name: '在留卡', meta: 'zairyu_spouse.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '住民票', meta: 'resident.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '戸籍謄本', meta: 'koseki.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '課税証明書', meta: 'tax_cert.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '納税証明書', meta: 'notax.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '源泉徴収票', meta: 'withheld_2024.pdf · v1 退回（补正项）· 需 2025 年度', status: 'rejected', statusLabel: '补正中' },
+        { name: '在留卡', meta: 'zairyu_spouse.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '住民票', meta: 'resident.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '戸籍謄本', meta: 'koseki.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '課税証明書', meta: 'tax_cert.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '納税証明書', meta: 'notax.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '源泉徴収票', meta: 'withheld_2024.pdf · v1 退回（补正项）· 需 2025 年度', status: 'revision_required', statusLabel: '退回补正' },
       ]},
       { group: '事務所内部準備', count: '4/5', items: [
-        { name: '委任状', meta: 'poa.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: 'reason.docx · v1', status: 'done', statusLabel: '已完成' },
-        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '身分関係図', meta: 'relation.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '补正说明书', meta: '起草中 · 随补正包一并提交', status: 'pending', statusLabel: '起草中' },
+        { name: '委任状', meta: 'poa.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: 'reason.docx · v1', status: 'approved', statusLabel: '通过' },
+        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '身分関係図', meta: 'relation.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '补正说明书', meta: '起草中 · 随补正包一并提交', status: 'waiting_upload', statusLabel: '待提交' },
       ]},
     ],
 
@@ -963,26 +982,26 @@ var DETAIL_SAMPLES = {
 
     documents: [
       { group: '主申请人提供', count: '5/5', items: [
-        { name: '护照复印件', meta: 'passport.pdf · v2', status: 'reviewed', statusLabel: '已审核' },
-        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '証件照', meta: 'photo.jpg · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '履歴書', meta: 'cv.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '卒業証明書', meta: 'degree.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
+        { name: '护照复印件', meta: 'passport.pdf · v2', status: 'approved', statusLabel: '通过' },
+        { name: '在留カード', meta: 'zairyu.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '証件照', meta: 'photo.jpg · v1', status: 'approved', statusLabel: '通过' },
+        { name: '履歴書', meta: 'cv.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '卒業証明書', meta: 'degree.pdf · v1', status: 'approved', statusLabel: '通过' },
       ]},
       { group: '雇主/所属機構提供', count: '5/5', items: [
-        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '決算書', meta: 'financial.pdf · v2', status: 'reviewed', statusLabel: '已审核' },
-        { name: '在職証明書', meta: 'employment.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '雇用契約書', meta: 'contract.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
-        { name: '源泉徴収票', meta: 'withheld.pdf · v1', status: 'reviewed', statusLabel: '已审核' },
+        { name: '法人登記簿謄本', meta: 'corp_registry.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '決算書', meta: 'financial.pdf · v2', status: 'approved', statusLabel: '通过' },
+        { name: '在職証明書', meta: 'employment.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '雇用契約書', meta: 'contract.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '源泉徴収票', meta: 'withheld.pdf · v1', status: 'approved', statusLabel: '通过' },
       ]},
       { group: '事務所内部準備', count: '6/6', items: [
-        { name: '委任状', meta: 'poa.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '申請理由書', meta: 'reason.docx · v2', status: 'done', statusLabel: '已完成' },
-        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '翻訳証明', meta: 'translation.pdf · v1', status: 'done', statusLabel: '已完成' },
-        { name: '提出用封筒', meta: '完了', status: 'done', statusLabel: '已完成' },
-        { name: '控え書類', meta: '完了', status: 'done', statusLabel: '已完成' },
+        { name: '委任状', meta: 'poa.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '申請理由書', meta: 'reason.docx · v2', status: 'approved', statusLabel: '通过' },
+        { name: '質問書', meta: 'questionnaire.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '翻訳証明', meta: 'translation.pdf · v1', status: 'approved', statusLabel: '通过' },
+        { name: '提出用封筒', meta: '完了', status: 'approved', statusLabel: '通过' },
+        { name: '控え書類', meta: '完了', status: 'approved', statusLabel: '通过' },
       ]},
     ],
 

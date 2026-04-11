@@ -24,6 +24,9 @@
   display: grid;
   grid-template-columns: 1fr;
 }
+.app-shell > div {
+  min-width: 0;
+}
 @media (min-width: 1024px) {
   .app-shell {
     grid-template-columns: 280px 1fr;
@@ -36,12 +39,21 @@
 }
 .side-nav-inner {
   height: 100vh;
+  max-height: 100vh;
   position: sticky;
   top: 0;
   display: flex;
   flex-direction: column;
   padding: 14px;
   gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+.side-nav-inner nav {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-bottom: 24px;
 }
 .brand {
   display: flex;
@@ -107,6 +119,28 @@
   display: flex;
   align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+.topbar-inner > * {
+  min-width: 0;
+}
+.topbar .search {
+  min-width: 0;
+}
+
+@media (max-width: 1023px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+  }
+
+  .topbar-inner .search {
+    order: 10;
+    flex: 1 1 100%;
+  }
+
+  .topbar-inner .btn-primary {
+    margin-left: auto;
+  }
 }
 
 .mobile-nav {

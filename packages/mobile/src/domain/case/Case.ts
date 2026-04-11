@@ -26,7 +26,7 @@ export type CaseResultOutcome =
 /**
  * P0 案件优先度。
  */
-export type CasePriority = "low" | "medium" | "high" | "urgent";
+export type CasePriority = "low" | "normal" | "medium" | "high" | "urgent";
 
 /**
  * P0 案件风险等级。
@@ -37,6 +37,19 @@ export type CaseRiskLevel = "none" | "low" | "medium" | "high";
  * P0 案件申请类型。
  */
 export type CaseApplicationType = "recognition" | "change" | "renewal";
+
+/**
+ * P0 下签后子阶段枚举。
+ *
+ * P0 存储策略：server 写入 metadata.post_approval_stage，
+ * 对应时间戳写入 overseasVisaStartAt / entryConfirmedAt。
+ * P1 迁移至 CaseWorkflowStep 正式实体。
+ */
+export type PostApprovalStage =
+  | "waiting_final_payment"
+  | "coe_sent"
+  | "overseas_visa_applying"
+  | "entry_success";
 
 /**
  * 案件摘要（列表用）。
@@ -69,6 +82,10 @@ export type CaseSummary = {
   nextDeadlineDueAt: string | null;
   /** 工作台：未结清金额（缓存）。 */
   billingUnpaidAmountCached: number | null;
+  /** 定金已付（缓存）。 */
+  depositPaidCached: boolean;
+  /** 尾款已付（缓存）。 */
+  finalPaymentPaidCached: boolean;
   /** 创建时间。 */
   createdAt: string;
   /** 更新时间。 */
@@ -117,6 +134,18 @@ export type CaseDetail = CaseSummary & {
   sourceChannel: string | null;
   /** 签约时间（可选）。 */
   signedAt: string | null;
+  /** 受理时间（可选）。 */
+  acceptedAt: string | null;
+  /** 到期日（可选）。 */
+  dueAt: string | null;
+  /** 报价金额（可选）。 */
+  quotePrice: number | null;
+  /** 提交日期（可选）。 */
+  submissionDate: string | null;
+  /** 结果日期（可选）。 */
+  resultDate: string | null;
+  /** 在留期限（可选）。 */
+  residenceExpiryDate: string | null;
   /** 雇主名称（工作类案件，可选）。 */
   employerName: string | null;
   /** 关闭原因。 */
@@ -131,6 +160,22 @@ export type CaseDetail = CaseSummary & {
   nextActionDueAt: string | null;
   /** 是否存在阻断问题。 */
   hasBlockingIssueFlag: boolean;
+  /** 下签后子阶段（P0 存于 metadata，P1 迁至 CaseWorkflowStep）。 */
+  postApprovalStage: PostApprovalStage | null;
+  /** 海外签证开始时间（overseas_visa_applying 首次进入时打戳）。 */
+  overseasVisaStartAt: string | null;
+  /** 入境确认时间（entry_success 时打戳）。 */
+  entryConfirmedAt: string | null;
+  /** 欠款风险确认人 ID（可选）。 */
+  billingRiskAcknowledgedBy: string | null;
+  /** 欠款风险确认时间（可选）。 */
+  billingRiskAcknowledgedAt: string | null;
+  /** 欠款风险确认原因码（可选）。 */
+  billingRiskAckReasonCode: string | null;
+  /** 欠款风险确认备注（可选）。 */
+  billingRiskAckReasonNote: string | null;
+  /** 欠款风险确认凭证 URL（可选）。 */
+  billingRiskAckEvidenceUrl: string | null;
   /** 关联资料项。 */
   documents: DocumentItemSummary[];
   /** 时间线。 */

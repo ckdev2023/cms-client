@@ -25,6 +25,8 @@ packages/prototype/admin/dashboard/
 ├── SPLIT-ARCHITECTURE.md
 ├── MIGRATION-MAPPING.md
 ├── split-manifest.json
+├── styles/
+│   └── dashboard.css
 ├── sections/
 │   ├── header.html
 │   ├── filters.html
@@ -45,8 +47,8 @@ packages/prototype/admin/dashboard/
 职责：
 
 1. 引入 `shared/styles/*` 与 `shared/scripts/*`
-2. 组装 `header / filters / summary-cards / worklists / visibility-notes / toast`
-3. 提供页面专有样式，如 summary card、work panel、skeleton、toast
+2. 引入 `styles/dashboard.css` 承载页面专有样式
+3. 组装 `header / filters / summary-cards / worklists / visibility-notes / toast`
 4. 通过 `<script src>` 引入 `data/dashboard-config.js` 和 `scripts/dashboard-page.js`
 
 ### 3.2 `sections/*.html`
@@ -60,7 +62,22 @@ packages/prototype/admin/dashboard/
 | `visibility-notes.html` | 权限、边界、demo-only 说明 | §5, §6, §7 |
 | `toast.html` | 示例反馈 toast | §4, §7 |
 
-### 3.3 `data/dashboard-config.js`
+### 3.3 `styles/dashboard.css`
+
+集中承载仪表盘页面专有样式：
+
+- hero header
+- 快捷动作区
+- 7 张 summary card
+- 6 个 work panel
+- 空状态、骨架屏、toast
+
+边界规则：
+
+- 只放仪表盘模块专有样式
+- 不回写 `shared/styles/*` 已存在的 token、shell、通用组件样式
+
+### 3.4 `data/dashboard-config.js`
 
 集中声明：
 
@@ -79,7 +96,7 @@ packages/prototype/admin/dashboard/
 - 不放 DOM 查询、事件绑定或页面编排
 - 所有示例数据明确属于 demo-only
 
-### 3.4 `scripts/dashboard-page.js`
+### 3.5 `scripts/dashboard-page.js`
 
 职责：
 

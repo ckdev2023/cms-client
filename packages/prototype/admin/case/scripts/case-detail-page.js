@@ -9,6 +9,8 @@
 (function () {
   'use strict';
 
+  var currentSample = null;
+
   /* ================================================================== */
   /*  TAB SWITCHING                                                      */
   /* ================================================================== */
@@ -122,6 +124,7 @@
   function applySample(key) {
     var s = DETAIL_SAMPLES[key];
     if (!s) return;
+    currentSample = s;
 
     setText('breadcrumbCaseId', s.id);
     setText('caseTitle', s.title);
@@ -350,7 +353,34 @@
     var docsBar = document.getElementById('docsProgressBar');
     var docsLabel = document.getElementById('docsProgressLabel');
     if (docsBar) docsBar.style.width = s.progressPercent + '%';
-    if (docsLabel) docsLabel.textContent = s.docsCounter + ' 项已收集（' + s.progressPercent + '%）';
+    if (docsLabel) docsLabel.textContent = s.docsCounter + ' 项已登记（' + s.progressPercent + '%）';
+  }
+
+  function normalizeDocStatusLabel(item) {
+    if (!item || !item.statusLabel) return '';
+    return item.statusLabel
+      .replace('已提交待审核', '已登记待审核')
+      .replace('待提交', '待登记');
+  }
+
+  function buildArchivePath(fileName) {
+    if (!fileName || !currentSample || !currentSample.id) return '';
+    return '案件/' + currentSample.id + '/资料/' + fileName;
+  }
+
+  function normalizeDocMeta(item) {
+    if (!item || !item.meta) return '';
+    var meta = item.meta.replace(/未上传/g, '待登记');
+    if (meta.indexOf('本地归档相对路径：') >= 0) return meta;
+
+    var fileName = '';
+    var token = meta.split(' · ')[0] || '';
+    if (/\.(pdf|jpg|jpeg|png|docx|xlsx)$/i.test(token)) fileName = token;
+
+    if (fileName) {
+      meta += ' · 本地归档相对路径：' + buildArchivePath(fileName);
+    }
+    return meta;
   }
 
   function docStatusIcon(status) {
@@ -390,6 +420,8 @@
         var nameCls = isWaived
           ? 'text-[14px] font-semibold text-[var(--muted)] truncate line-through'
           : 'text-[14px] font-semibold text-[var(--text)] truncate';
+        var metaText = normalizeDocMeta(item);
+        var statusLabel = normalizeDocStatusLabel(item);
         var metaCls = item.status === 'expired'
           ? 'text-[12px] text-[var(--danger)]'
           : 'text-[12px] text-[var(--muted-2)]';
@@ -405,11 +437,11 @@
           '    ' + docStatusIcon(item.status),
           '    <div class="min-w-0">',
           '      <div class="' + nameCls + '">' + esc(item.name) + '</div>',
-          '      <div class="' + metaCls + '">' + esc(item.meta) + '</div>',
+          '      <div class="' + metaCls + '">' + esc(metaText) + '</div>',
           '    </div>',
           '  </div>',
           '  <div class="flex items-center gap-2">',
-          '    <span class="status-badge ' + docBadgeClass(item.status) + ' text-[11px]">' + esc(item.statusLabel) + '</span>',
+          '    <span class="status-badge ' + docBadgeClass(item.status) + ' text-[11px]">' + esc(statusLabel) + '</span>',
           '    ' + actionHtml,
           '  </div>',
           '</div>',

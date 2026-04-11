@@ -306,3 +306,118 @@
   - 模板数量统一为 3 类（经营管理签正式纳入）
   回灌计划：
   - 所有改动已直接写入权威文档，无额外待回灌项
+
+- 时间：2026-04-11
+  问题：P0 如果不让 AI 直接“读 PRD 然后开干”，应如何按“结构化抽取 → 歧义消解 → 边界冻结 → 任务化执行 → 校验回写”优化？
+  结论（TL;DR）：P0 已升级为“需求编译流水线”最小闭环——raw 输入不可直接执行；执行前必须先形成 `requirements.ir / ambiguities / boundary`；`09 §7` 统一承担 `REQ-P0-*` 需求 ID 与 traceability 主表；没有 `out_of_scope` 不得冻结，没有 traceability 不算完成。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/P0/README.md（P0 需求编译流水线与治理规则 R-7 / R-8）
+  - docs/gyoseishoshi_saas_md/P0/09-结构化总索引与交叉映射.md（执行强门禁 + `REQ-P0-*` 需求 ID 矩阵）
+  - docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md（G-8 / G-9 / G-10 + 最小中间产物模板）
+  影响面：
+  - AI / 新成员读取路径：从“直接读 PRD”切换为“先编译、后执行”
+  - P0 执行门禁：高优先级歧义、越界实现、无证据完成将被显式拦截
+  - 回写机制：需求、任务、实现、测试之间形成统一编号和追踪入口
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/README.md
+    位置：核心治理规则 + P0 需求编译流水线（最小闭环）
+    Owner：产品/研发
+    状态：已回灌
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/09-结构化总索引与交叉映射.md
+    位置：§1.3 / §1.4 / §7
+    Owner：产品/研发
+    状态：已回灌
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md
+    位置：G-8 / G-9 / G-10、需求编译流水线、最小中间产物模板、固定检查表
+    Owner：产品/研发
+    状态：已回灌
+
+- 时间：2026-04-11
+  问题：如何把 `REQ-P0-01 咨询转化` 跑成第一条真实需求编译样例？
+  结论（TL;DR）：已完成 `REQ-P0-01` 的最小编译——目标、规则、边界、验收和待确认项已结构化；当前可进入任务设计，但若要进入真实实现，需先关闭“去重命中后如何处置”这一条 `P0` 级歧义。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/P0/09-结构化总索引与交叉映射.md §7（`REQ-P0-01`）
+  - docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md §2.1、§2.2、§2.3、§5.2
+  - docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md §2.1、§2.2、§2.6、§5、§10、§12
+  - docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md §4.1
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md、客户.md、案件.md
+  - docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md §3.0、§3.1、§3.2、§3.5
+  requirements.ir（最小样例）：
+
+  | id | type | statement | source | priority | status |
+  |---|---|---|---|---|---|
+  | `REQ-P0-01-IR-01` | `OBJECTIVE` | 已签约线索可转化为正式客户，并创建首个案件形成主链路入口。 | 02 §2.1-§2.3、09 §7 | P0 | frozen |
+  | `REQ-P0-01-IR-02` | `RULE` | 转化时必须提供去重提示；匹配优先级为电话/邮箱优先，其次姓名+生日（或证件号）；不得物理覆盖删除。 | 03 §2.6、06/咨询线索 §3-§5 | P0 | frozen |
+  | `REQ-P0-01-IR-03` | `RULE` | `Lead.group → Customer.group → Case.group` 默认继承；若转化或建案时改组，必须记录原因、操作人和时间。 | 03 §2.2、03 §12、06/咨询线索 §4、06/案件 §4 | P0 | frozen |
+  | `REQ-P0-01-IR-04` | `RULE` | 首个 `Case` 创建后进入 `S1`，并自动生成资料清单与初始任务。 | 04 §2、04 §4.1、06/案件 §4 | P0 | frozen |
+  | `REQ-P0-01-IR-05` | `CONSTRAINT` | 本次样例以“单 Lead → 单 Customer → 首个 Case”为最小执行单元，不把家族签批量建案当作首条试跑前置条件。 | 06/客户 §1、06/案件「附：家族签批量建案向导」 | P1 | frozen |
+  | `REQ-P0-01-IR-06` | `OUT_OF_SCOPE` | 不做客户合并、企业客户主数据、自动分配、漏斗报表、批量导入导出、客户门户。 | 06/咨询线索 §P0 明确不做、06/客户 §P0 明确不做、03 §14 | P0 | frozen |
+  | `REQ-P0-01-IR-07` | `OPEN_QUESTION` | 去重命中后，默认动作是“复用已有 Customer/Case”还是“允许继续新建但强提示”？ | 02 §5.2、03 §2.6、06/咨询线索 §5、06/客户 §5 | P0 | open |
+  | `REQ-P0-01-IR-08` | `OPEN_QUESTION` | 页面交互是否要求一步完成“转客户+转案件”，还是允许分步完成但必须最终可追踪到同一 Lead？ | 06/咨询线索 §4、04 §4.1 | P1 | open |
+
+  ambiguities（试跑暴露）：
+
+  | id | question | severity | owner | status | 说明 |
+  |---|---|---|---|---|---|
+  | `AMB-REQ-P0-01-01` | 去重命中已有 `Customer` 时，是否允许继续新建客户，还是必须复用已有客户并只创建首个/新增案件？ | P0 | 产品 | open | 该项直接影响转化主路径、数据重复和验收口径；未关闭前不建议进入真实实现 |
+  | `AMB-REQ-P0-01-02` | 转化入口是一键完成还是“先转客户、再转案件”的两步流？ | P1 | 产品/设计 | open | 不阻断本次编译，但会影响页面按钮设计、回填和测试场景 |
+
+  boundary（冻结边界）：
+
+  | 字段 | 内容 |
+  |---|---|
+  | `goal` | 建立 P0 最小咨询转化闭环：从 `Lead` 生成 `Customer` 与首个 `Case`，并保持 Group 归属、去重提示和留痕一致 |
+  | `in_scope` | 线索录入与签约状态推进；电话/邮箱优先去重提示；从线索创建个人客户；从线索或客户创建首个案件；`converted_customer_id / converted_case_id` 回填；`Case` 进入 `S1`；自动生成资料清单与初始任务；改组/跨组动作留痕 |
+  | `out_of_scope` | 客户物理合并；企业客户主数据；自动分配；销售漏斗分析；批量导入导出；客户门户；把家族签批量建案作为首条样例的必经路径 |
+  | `acceptance` | 能从 `Lead` 创建 `Customer` 与首个 `Case`；Group 继承正确；去重提示可见；`Case` 创建后处于 `S1` 且已有资料清单/初始任务；跨组改动有原因与审计留痕 |
+  | `frozen_on` | 2026-04-11 |
+  | `status` | partially_frozen（受 `AMB-REQ-P0-01-01` 影响，尚未具备真实实现开工条件） |
+
+  traceability（样例骨架）：
+
+  | requirement_id | task_id | code_ref | test_ref | status | 说明 |
+  |---|---|---|---|---|---|
+  | `REQ-P0-01` | `TASK-REQ-P0-01-01` | 待实现 | 待实现 | ready_for_planning | 线索 → 客户转化、去重提示、回填 `converted_customer_id` |
+  | `REQ-P0-01` | `TASK-REQ-P0-01-02` | 待实现 | 待实现 | ready_for_planning | 客户/线索 → 首个案件创建、`Case.group` 继承、`S1` 初始化 |
+  | `REQ-P0-01` | `TASK-REQ-P0-01-03` | 待实现 | 待实现 | blocked_by_ambiguity | 去重命中处置策略、是否复用已有 Customer/Case 的最终口径 |
+
+  影响面：
+  - 需求编译流水线已从“规则定义”进入“真实样例”阶段
+  - `REQ-P0-01` 已具备任务拆解基础，但当前被 1 条 `P0` 级歧义显式拦截，证明门禁开始生效
+  - 后续同类需求可沿用同一格式继续编译，避免回到“读完文档靠记忆执行”
+  下一步建议：
+  - 先关闭 `AMB-REQ-P0-01-01`（去重命中后处置口径）
+  - 关闭后，把 `TASK-REQ-P0-01-01/02` 进一步细化为页面、接口、测试三个执行子任务
+
+- 时间：2026-04-11
+  问题：P0 继续优化时，应该围绕什么目标收敛，才能真正帮助 AI 准确落地现有原型交互和数据设计？
+  结论（TL;DR）：后续 P0 优化不再继续扩写抽象治理文档，而是明确收敛到两类执行载体：`P0-CONTRACT*` 作为交互契约，`MIGRATION-MAPPING*` 作为数据契约。`requirements.ir / ambiguities / boundary` 仍保留，但在已有原型场景下优先嵌入这两类现成文档中。
+  关键依据：
+  - packages/prototype/admin/leads-message/P0-CONTRACT.md（咨询线索列表与新建交互基线）
+  - packages/prototype/admin/customers/P0-CONTRACT.md（客户列表/新建交互基线）
+  - packages/prototype/admin/case/P0-CONTRACT.md、P0-CONTRACT-DETAIL.md（案件新建/详情交互基线）
+  - packages/prototype/admin/leads-message/MIGRATION-MAPPING.md、customers/MIGRATION-MAPPING.md、case/MIGRATION-MAPPING.md（原型 → domain/data/model/ui 映射）
+  - docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md（实体与字段权威定义）
+  影响面：
+  - PRD 优化目标从“更完整的治理抽象”收敛为“更准确的交互契约 + 数据契约”
+  - AI 在已有原型页面上，必须继续把冻结需求回写为页面动作、状态、字段、反馈和数据落点，而不能停在抽象 requirement 层
+  - 后续工作重点将转向 `REQ-P0-01` 的跨页转化交互和字段映射冻结，而不是新增更多独立模板
+  下一步建议：
+  - 先关闭 `AMB-REQ-P0-01-01`，冻结去重命中后的默认处置策略
+  - 然后直接回写 `咨询线索 / 客户 / 案件` 三个原型页的 `P0-CONTRACT*` 与对应 `MIGRATION-MAPPING*`
+
+- 时间：2026-04-11
+  问题：如果最终目标是让 AI 基于优化后的 PRD，准确落地现有原型交互和数据设计，那么现在最该补的最小输入是什么？
+  结论（TL;DR）：最该补的不是新模板，而是“原型锚点层”。即每条主需求除了 `requirements.ir` 外，还必须明确绑定 `页面原型文件 + P0-CONTRACT* + MIGRATION-MAPPING* + 固定执行顺序`。这样 AI 的输入会从“抽象 PRD”收敛为“冻结需求 + 现有原型契约”。
+  已冻结样例（`REQ-P0-01`）：
+  - Lead 起点：`packages/prototype/admin/leads-message/detail.html` + `P0-CONTRACT-DETAIL.md` + `MIGRATION-MAPPING-DETAIL.md`
+  - Customer 承接：`packages/prototype/admin/customers/P0-CONTRACT.md` + `MIGRATION-MAPPING.md`
+  - Case 承接：`packages/prototype/admin/case/create.html` + `P0-CONTRACT.md` + `MIGRATION-MAPPING.md`
+  - 固定顺序：Lead 转化 Tab 去重提示 → 转客户 → 转首个案件 → 回填跳转入口
+  影响面：
+  - 后续优化目标从“补更多文档”收敛为“让 AI 能直接找到该改哪页、按什么顺序实现、字段落到哪里”
+  - `REQ-P0-01` 现在已具备原型级输入，不需要再靠人二次解释
+  - 后续每条需求只需要补同样的原型锚点，不需要继续扩模板
+  下一步建议：
+  - 只做 1 件事：关闭 `AMB-REQ-P0-01-01`
+  - 关闭后，把去重命中默认处置策略直接回写到上述 3 份原型契约文件中，不再新增新文档

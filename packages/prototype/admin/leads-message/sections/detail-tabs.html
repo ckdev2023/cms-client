@@ -1,6 +1,24 @@
 <!--
   section: detail-tabs
-  4-Tab horizontal nav: 基础信息 (info) / 跟进记录 (followups) / 転化信息 (conversion) / 日志 (log).
-  Active tab: border-bottom #1d1d1f; inactive: #86868b.
-  Each tab links to panel via data-tab attribute → tab-{id} panel.
+  4-Tab horizontal nav.
 -->
+<div class="detail-tabs mb-6" role="tablist" aria-label="线索详情 Tab">
+  <nav>
+    <button class="detail-tab is-active" type="button" role="tab" aria-selected="true" data-tab="info" id="tabBtn-info">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0"></path></svg>
+      基础信息
+    </button>
+    <button class="detail-tab" type="button" role="tab" aria-selected="false" data-tab="followups" id="tabBtn-followups">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+      跟进记录
+    </button>
+    <button class="detail-tab" type="button" role="tab" aria-selected="false" data-tab="conversion" id="tabBtn-conversion">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+      转化信息
+    </button>
+    <button class="detail-tab" type="button" role="tab" aria-selected="false" data-tab="log" id="tabBtn-log">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+      日志
+    </button>
+  </nav>
+</div>

@@ -1,7 +1,27 @@
 <!--
   section: detail-info
-  Tab 1 panel (tab-info): 8-field structured display in 2-col grid.
-  Fields: 线索编号, 姓名, 电话, 邮箱, 来源/介绍人, 意向业务类型, 归属 Group, 负责人, 备注.
-  Edit button (demo-only).
-  Populated from DETAIL_SAMPLES[key].info by leads-detail-page.js.
+  Tab 1 panel.
 -->
+<div class="tab-panel is-active" id="tab-info" role="tabpanel">
+  <div class="apple-card p-6">
+    <div class="flex items-center justify-between mb-5">
+      <h2 class="text-[16px] font-extrabold text-[var(--text)]">基础信息</h2>
+      <button class="btn-secondary px-3 py-1.5 text-[12px]" type="button" id="btnEditInfoTab">
+        <svg class="w-3.5 h-3.5 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+        编辑
+      </button>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5" id="infoFields">
+      <div><div class="info-label">线索编号</div><div class="info-value font-mono text-[13px]" id="infoId">LEAD-2026-0035</div></div>
+      <div><div class="info-label">姓名</div><div class="info-value" id="infoName">李华</div></div>
+      <div><div class="info-label">电话</div><div class="info-value" id="infoPhone">080-2222-3333</div></div>
+      <div><div class="info-label">邮箱</div><div class="info-value" id="infoEmail">li.hua@email.com</div></div>
+      <div><div class="info-label">来源</div><div class="info-value" id="infoSource">介绍</div></div>
+      <div><div class="info-label">介绍人</div><div class="info-value" id="infoReferrer">佐藤弁護士</div></div>
+      <div><div class="info-label">意向业务类型</div><div class="info-value" id="infoBusinessType">家族滞在</div></div>
+      <div><div class="info-label">归属 Group</div><div class="info-value" id="infoGroup"><span class="chip">东京一组</span></div></div>
+      <div><div class="info-label">负责人</div><div class="info-value flex items-center gap-1.5" id="infoOwner"><span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center font-bold">T</span>Tanaka</div></div>
+      <div class="sm:col-span-2"><div class="info-label">备注</div><div class="info-value text-[13px] leading-relaxed" id="infoNote">配偶在日永住者，希望尽快提交认定申请。首选语言中文。</div></div>
+    </div>
+  </div>
+</div>

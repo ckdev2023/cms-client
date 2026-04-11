@@ -1,9 +1,66 @@
 <!--
   section: detail-conversion
-  Tab 3 panel (tab-conversion): dedup match panel + convert-customer/convert-case actions + converted cards.
-  Dedup panel: phone/email match → Lead/Customer summary card + continue/view buttons.
-  Converted Customer card: .apple-card with name + ID + jump link.
-  Converted Case card: .apple-card with title + ID + type + jump link.
-  Conversion modals: standard .apple-modal for convert-to-customer and convert-to-case.
-  Populated from DETAIL_SAMPLES[key].conversion by leads-detail-page.js.
+  Tab 3 panel.
 -->
+<div class="tab-panel" id="tab-conversion" role="tabpanel">
+  <div class="space-y-6">
+    <div id="dedupPanel">
+      <div class="apple-card p-5" id="dedupNoMatch">
+        <div class="flex items-center gap-3 text-[13px] text-[var(--muted-2)] font-semibold">
+          <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          未检测到重复记录。此线索的电话/邮箱未匹配到已有线索或客户。
+        </div>
+      </div>
+
+      <div class="dedup-panel hidden" id="dedupHitPanel">
+        <div class="flex items-start gap-3 mb-3">
+          <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <div><div class="text-[13px] font-bold text-[#92400e]" id="dedupHitTitle">检测到可能重复的记录</div><div class="text-[12px] text-[#92400e] mt-1" id="dedupHitMessage">该联系方式匹配到已有记录。</div></div>
+        </div>
+        <div class="p-3 rounded-lg border border-[#fde68a] bg-white mb-3">
+          <div class="text-[13px] font-semibold text-[var(--text)]" id="dedupMatchName">—</div>
+          <div class="text-[12px] text-[var(--muted-2)] mt-0.5" id="dedupMatchMeta">—</div>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupContinueBtn">继续创建</button>
+          <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupViewBtn">查看已有记录</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="conversionActions">
+      <div class="apple-card p-5" id="convertCustomerCard">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="conversion-card-icon bg-emerald-100 text-emerald-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+          <div><div class="text-[14px] font-extrabold text-[var(--text)]">转为客户</div><div class="text-[12px] text-[var(--muted-2)] font-semibold">将线索转为正式客户档案</div></div>
+        </div>
+        <button class="btn-primary w-full text-[13px]" type="button" id="btnConvertCustomerTab">转为客户</button>
+      </div>
+      <div class="apple-card p-5" id="convertCaseCard">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="conversion-card-icon bg-sky-100 text-sky-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+          <div><div class="text-[14px] font-extrabold text-[var(--text)]">转为案件</div><div class="text-[12px] text-[var(--muted-2)] font-semibold">为此线索创建新案件</div></div>
+        </div>
+        <button class="btn-primary w-full text-[13px]" type="button" id="btnConvertCaseTab">转为案件</button>
+      </div>
+    </div>
+
+    <div id="convertedRecords" class="hidden space-y-4">
+      <h3 class="text-[14px] font-extrabold text-[var(--text)]">已转化记录</h3>
+      <div class="conversion-card hidden" id="convertedCustomerCard">
+        <div class="conversion-card-icon bg-emerald-100 text-emerald-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+        <div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-[var(--text)]" id="convertedCusName">—</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertedCusMeta">—</div></div>
+        <a href="../customers/index.html" class="btn-secondary px-3 py-1.5 text-[12px] flex-shrink-0" id="convertedCusLink">查看客户</a>
+      </div>
+      <div class="conversion-card hidden" id="convertedCaseCard">
+        <div class="conversion-card-icon bg-sky-100 text-sky-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+        <div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-[var(--text)]" id="convertedCaseName">—</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertedCaseMeta">—</div></div>
+        <a href="../case/detail.html" class="btn-secondary px-3 py-1.5 text-[12px] flex-shrink-0" id="convertedCaseLink">查看案件</a>
+      </div>
+      <div id="conversionHistory" class="hidden">
+        <h4 class="text-[13px] font-bold text-[var(--muted-2)] mb-2">转化历史</h4>
+        <div class="space-y-2" id="conversionHistoryList"></div>
+      </div>
+    </div>
+  </div>
+</div>

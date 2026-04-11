@@ -1,11 +1,10 @@
 <!--
   section: detail-convert-modals
-  Two conversion modals (convert-to-customer / convert-to-case) + shared toast notification.
+  Two conversion modals (convert-to-customer / convert-to-case).
   Modals triggered by: #btnConvertCustomer / #btnConvertCase (header) and
   #btnConvertCustomerTab / #btnConvertCaseTab (conversion tab).
   Confirm buttons: #confirmConvertCustomer / #confirmConvertCase.
   Modal close: [data-modal-close="convertCustomerModal"] / [data-modal-close="convertCaseModal"].
-  Toast: #toast, #toastTitle, #toastDesc — controlled by leads-detail-page.js showToast().
 -->
 
 <!-- Modal: Convert to Customer -->
@@ -89,11 +88,4 @@
   </div>
 </div>
 
-<!-- Toast -->
-<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
-  <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
-    <div class="text-[13px] font-extrabold text-[var(--text)]" id="toastTitle">已保存</div>
-    <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
-  </div>
-</div>
 

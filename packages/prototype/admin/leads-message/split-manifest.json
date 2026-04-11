@@ -24,6 +24,7 @@
       "packages/prototype/admin/shared/shell/mobile-nav.html"
     ],
     "scripts": [
+      "packages/prototype/admin/shared/scripts/html-fragment-loader.js",
       "packages/prototype/admin/shared/scripts/mobile-nav.js",
       "packages/prototype/admin/shared/scripts/navigate.js"
     ]

@@ -7,6 +7,7 @@
   "type": "commonjs",
   "private": true,
   "scripts": {
+    "ai:context7:preflight": "node ./scripts/ai/context7-preflight.mjs",
     "diagram:check": "for f in docs/架构/*.mmd; do echo \"[diagram:check] $f\"; npx -p @mermaid-js/mermaid-cli mmdc -i \"$f\" -o - > /dev/null; done",
     "mobile:start": "npm --workspace mobile run start",
     "mobile:ios": "npm --workspace mobile run ios",

@@ -109,6 +109,7 @@ export type Customer = {
 
 /**
  * Case 核心对象（案件实例，强制与 Customer 分离）。
+ * P0 字段定义对齐 07-数据模型设计 §3.5。
  */
 export type Case = {
   id: CaseId;
@@ -124,6 +125,7 @@ export type Case = {
   caseName: string | null;
   caseSubtype: string | null;
   applicationType: string | null;
+  /** @deprecated P0 不使用 Company 实体；雇主信息通过 employer_* 字段或 metadata 沉淀。 */
   companyId: CompanyId | null;
   priority: string;
   riskLevel: string;
@@ -135,6 +137,18 @@ export type Case = {
   resultDate: string | null;
   residenceExpiryDate: string | null;
   archivedAt: string | null;
+  resultOutcome: string | null;
+  quotePrice: number | null;
+  depositPaidCached: boolean;
+  finalPaymentPaidCached: boolean;
+  billingUnpaidAmountCached: number;
+  billingRiskAcknowledgedBy: UserId | null;
+  billingRiskAcknowledgedAt: string | null;
+  billingRiskAckReasonCode: string | null;
+  billingRiskAckReasonNote: string | null;
+  billingRiskAckEvidenceUrl: string | null;
+  overseasVisaStartAt: string | null;
+  entryConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };

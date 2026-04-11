@@ -2,26 +2,147 @@
   section: create-modal.html
   Full-field create-lead modal with dedup hint panel.
   P0-CONTRACT §5
-
-  Fields (12):
-    1.  联系人姓名      text        required
-    2.  电话            tel         conditional (phone/email at least one)
-    3.  邮箱            email       conditional
-    4.  来源            select      Web / 介绍 / 来访 / 电话 / 其他
-    5.  介绍人          text        shown when source = referral
-    6.  意向业务类型    select      高度人才 / 技人国 / 家族滞在 / 设立法人 / 永住 / 其他
-    7.  归属 Group      select      东京一组 / 东京二组 / 大阪组
-    8.  负责人          select      Suzuki / Tanaka / Sato
-    9.  首选语言        select      日本語 / 中文 / English / Tiếng Việt
-   10.  下一步动作      text
-   11.  下次跟进时间    datetime-local  (default: tomorrow 10:00)
-   12.  备注            textarea
-
-  Dedup hint panel:
-    - Yellow/orange background card
-    - Matched record summary (name, id, contact, group)
-    - "继续创建" + "查看已有记录" buttons
 -->
+<div class="modal-backdrop" id="createLeadModal">
+  <div class="apple-modal flex flex-col">
+    <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+      <div>
+        <h3 class="text-[17px] font-semibold text-[var(--apple-text-main)]">新建线索</h3>
+        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5">先录入联系人与意向，后续可转客户/转案件</div>
+      </div>
+      <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-lead-modal-close>
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
 
-<!-- See index.html for the full integrated HTML.
-     This file exists as a logical boundary reference per SPLIT-ARCHITECTURE.md §2. -->
+    <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
+      <div class="mb-5">
+        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">
+          请填写联系人信息。电话/邮箱至少填一项（用于去重与后续跟进）。
+        </div>
+      </div>
+
+      <div id="dedupHint" class="hidden mb-5 p-3 rounded-xl border border-[#fde68a] bg-[#fffbeb]">
+        <div class="text-[13px] font-semibold text-[#92400e]" id="dedupHintTitle">检测到可能重复的记录</div>
+        <div class="text-[12px] text-[#92400e] mt-1" id="dedupHintMessage">该联系方式匹配到已有记录，请确认是否继续创建。</div>
+        <div id="dedupHintCards" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
+            <div class="text-[13px] font-semibold text-[var(--apple-text-main)]" id="dedupMatchName">—</div>
+            <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5" id="dedupMatchMeta">—</div>
+          </div>
+        </div>
+        <div class="mt-3 flex gap-2">
+          <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupContinueBtn">继续创建</button>
+          <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupViewBtn">查看已有记录</button>
+        </div>
+      </div>
+
+      <form id="createLeadForm">
+        <div class="space-y-5">
+          <div>
+            <label class="apple-label" for="leadName">联系人姓名 <span class="text-red-500">*</span></label>
+            <input type="text" class="apple-input" id="leadName" placeholder="请输入姓名" autocomplete="name" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="apple-label" for="leadPhone">电话 <span class="text-red-500">*</span></label>
+              <input type="tel" class="apple-input" id="leadPhone" placeholder="手机/座机" autocomplete="tel" />
+              <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项</div>
+            </div>
+            <div>
+              <label class="apple-label" for="leadEmail">邮箱</label>
+              <input type="email" class="apple-input" id="leadEmail" placeholder="邮箱地址" autocomplete="email" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="apple-label" for="leadSource">来源</label>
+              <select class="apple-input appearance-none bg-white" id="leadSource">
+                <option value="" selected>请选择来源</option>
+                <option value="web">Web</option>
+                <option value="referral">介绍</option>
+                <option value="walkin">来访</option>
+                <option value="phone">电话</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div id="referrerFieldWrap" class="hidden">
+              <label class="apple-label" for="leadReferrer">介绍人</label>
+              <input type="text" class="apple-input" id="leadReferrer" placeholder="介绍人名称" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="apple-label" for="leadBusinessType">意向业务类型</label>
+              <select class="apple-input appearance-none bg-white" id="leadBusinessType">
+                <option value="" selected>请选择业务类型</option>
+                <option value="highly-skilled">高度人才</option>
+                <option value="work-visa">技人国</option>
+                <option value="family-stay">家族滞在</option>
+                <option value="business-manager">设立法人</option>
+                <option value="permanent">永住</option>
+                <option value="other">其他</option>
+              </select>
+            </div>
+            <div>
+              <label class="apple-label" for="leadGroup">归属 Group</label>
+              <select class="apple-input appearance-none bg-white" id="leadGroup">
+                <option value="" selected>请选择 Group</option>
+                <option value="tokyo-1">东京一组</option>
+                <option value="tokyo-2">东京二组</option>
+                <option value="osaka">大阪组</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="apple-label" for="leadOwner">负责人</label>
+              <select class="apple-input appearance-none bg-white" id="leadOwner">
+                <option value="" selected>请选择负责人</option>
+                <option value="suzuki">Suzuki</option>
+                <option value="tanaka">Tanaka</option>
+                <option value="sato">Sato</option>
+              </select>
+            </div>
+            <div>
+              <label class="apple-label" for="leadLanguage">首选语言</label>
+              <select class="apple-input appearance-none bg-white" id="leadLanguage">
+                <option value="" selected>请选择语言</option>
+                <option value="ja">日本語</option>
+                <option value="zh">中文</option>
+                <option value="en">English</option>
+                <option value="vi">Tiếng Việt</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label class="apple-label" for="leadNextAction">下一步动作</label>
+            <input type="text" class="apple-input" id="leadNextAction" placeholder="例如：电话确认意向；索取在留卡影像；发送报价" />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="apple-label" for="leadNextFollowUp">下次跟进时间</label>
+              <input type="datetime-local" class="apple-input" id="leadNextFollowUp" />
+            </div>
+          </div>
+
+          <div>
+            <label class="apple-label" for="leadNote">备注</label>
+            <textarea class="apple-input" id="leadNote" rows="3" placeholder="例如：紧急度、特殊情况、背景信息"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-lead-modal-close>取消</button>
+      <button class="btn-primary px-5" type="button" id="createLeadBtn">创建线索</button>
+    </div>
+  </div>
+</div>

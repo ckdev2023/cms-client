@@ -126,7 +126,7 @@ export type NodeStatus = "due" | "partial" | "paid" | "overdue";
 export type PaymentRecordStatus = "valid" | "voided" | "reversed";
 export type CollectionSkipReasonCode =
   | "no-permission"
-  | "existing-task"
+  | "duplicate-task"
   | "not-overdue"
   | "no-assignee"
   | "system-error";

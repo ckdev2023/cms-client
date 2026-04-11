@@ -5,8 +5,14 @@
 (function () {
   'use strict';
 
-  var cfg = window.LeadsConfig;
-  if (!cfg) return;
+  var initialized = false;
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+
+    var cfg = window.LeadsConfig;
+    if (!cfg) return;
 
   var modal = document.getElementById('createLeadModal');
   var form = document.getElementById('createLeadForm');
@@ -188,6 +194,13 @@
     });
   }
 
-  /* ---- Expose for external triggers ---- */
-  window.__leadsModal = { open: openModal, close: closeModal };
+    /* ---- Expose for external triggers ---- */
+    window.__leadsModal = { open: openModal, close: closeModal };
+  }
+
+  document.addEventListener('prototype:fragments-ready', init);
+
+  if (window.__prototypeFragmentsReady || !document.querySelector('[data-include-html]')) {
+    init();
+  }
 })();
