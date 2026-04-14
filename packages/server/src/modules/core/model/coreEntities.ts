@@ -163,6 +163,28 @@ export type Case = {
 };
 
 /**
+ * ResidencePeriod 核心对象（在留期间记录）。
+ */
+export type ResidencePeriod = {
+  id: string;
+  orgId: OrganizationId;
+  caseId: CaseId;
+  customerId: CustomerId;
+  visaType: string;
+  statusOfResidence: string;
+  periodYears: number | null;
+  periodLabel: string | null;
+  validFrom: string;
+  validUntil: string;
+  cardNumber: string | null;
+  isCurrent: boolean;
+  notes: string | null;
+  createdBy: UserId | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
  * DocumentItem 核心对象（案件下的结构化资料项）。
  */
 export type DocumentItem = {

@@ -24,8 +24,12 @@ import { DocumentItemsController } from "./modules/core/document-items/documentI
 import { DocumentItemsService } from "./modules/core/document-items/documentItems.service";
 import { RemindersController } from "./modules/core/reminders/reminders.controller";
 import { RemindersService } from "./modules/core/reminders/reminders.service";
+import { ResidencePeriodsController } from "./modules/core/residence-periods/residencePeriods.controller";
+import { ResidencePeriodsService } from "./modules/core/residence-periods/residencePeriods.service";
 import { CommunicationLogsController } from "./modules/core/communication-logs/communicationLogs.controller";
 import { CommunicationLogsService } from "./modules/core/communication-logs/communicationLogs.service";
+import { SubmissionPackagesController } from "./modules/core/submission-packages/submissionPackages.controller";
+import { SubmissionPackagesService } from "./modules/core/submission-packages/submissionPackages.service";
 import { TasksController } from "./modules/core/tasks/tasks.controller";
 import { TasksService } from "./modules/core/tasks/tasks.service";
 import { CompaniesController } from "./modules/core/companies/companies.controller";
@@ -89,6 +93,8 @@ import {
     DocumentFilesController,
     DocumentItemsController,
     RemindersController,
+    ResidencePeriodsController,
+    SubmissionPackagesController,
     TasksController,
     CommunicationLogsController,
     AppUsersController,
@@ -124,6 +130,8 @@ import {
     DocumentFilesService,
     DocumentItemsService,
     RemindersService,
+    ResidencePeriodsService,
+    SubmissionPackagesService,
     TasksService,
     CommunicationLogsService,
     AppUsersService,

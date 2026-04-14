@@ -1,0 +1,10 @@
+{
+  "status": "reviewed",
+  "blocking_issues": [],
+  "warnings": [
+    "index.html includes section HTML fragments via data-include-html; auto-parser captured top-level regions but section-internal structure was manually verified against P0-CONTRACT.md",
+    "documents.css contains document-specific classes (doc-row-*, summary-card--*, etc.) that must be decomposed into scoped styles per Vue component",
+    "demo data in documents-demo-data.js provides fixtures for all 6 status states; Vue fixtures.ts must replicate coverage",
+    "interaction_map interactions were manually derived from P0-CONTRACT §8 and split-manifest.json scripts, not from onclick attributes (prototype uses event delegation)"
+  ]
+}

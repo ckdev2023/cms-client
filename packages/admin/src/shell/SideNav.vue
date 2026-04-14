@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { navGroups, brandTitle, isExternalItem } from "./nav-config";
 import NavIcon from "./NavIcon.vue";
 
@@ -25,10 +25,29 @@ const emit = defineEmits<{
 const isMobile = computed(() => props.variant === "mobile");
 const { t } = useI18n();
 const router = useRouter();
+const route = useRoute();
 
-const activeNavKey = computed(() => {
-  const navKey = router.currentRoute.value.meta.navKey;
+/**
+ * 读取当前路由对应的导航 key。
+ *
+ * @returns 当前路由声明的导航 key；未声明时返回 `null`
+ */
+function resolveActiveNavKey(): string | null {
+  const navKey = route.meta.navKey;
   return typeof navKey === "string" ? navKey : null;
+}
+
+const activeNavKey = ref<string | null>(resolveActiveNavKey());
+
+const stopActiveNavSync = router.afterEach((to) => {
+  const navKey = to.meta.navKey;
+  activeNavKey.value = typeof navKey === "string" ? navKey : null;
+});
+
+onBeforeUnmount(() => {
+  if (typeof stopActiveNavSync === "function") {
+    stopActiveNavSync();
+  }
 });
 
 /**

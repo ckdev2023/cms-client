@@ -1,0 +1,22 @@
+{
+  "page_name": "case_list",
+  "regions": [
+    { "id": "shell-nav", "selector": ".side-nav, .mobile-nav, .topbar", "role": "navigation" },
+    { "id": "page-header", "selector": "#main > .flex.flex-col", "role": "header" },
+    { "id": "creation-flash-banner", "selector": "#creationFlashBanner", "role": "card_list" },
+    { "id": "summary-cards", "selector": ".grid.grid-cols-1", "role": "card_list" },
+    { "id": "filter-toolbar", "selector": ".toolbar-grid", "role": "filter" },
+    { "id": "search-input", "selector": "#searchInput", "role": "search" },
+    { "id": "view-switcher", "selector": ".segmented-control", "role": "filter" },
+    { "id": "case-table", "selector": ".apple-table", "role": "data_list" },
+    { "id": "table-meta", "selector": ".table-meta", "role": "data_list" },
+    { "id": "case-table-body", "selector": "#caseTableBody", "role": "data_list" }
+  ],
+  "repeat_patterns": [
+    { "selector": ".apple-card.summary-card", "count": 4, "suggest_component": "SummaryCard" },
+    { "selector": ".apple-input (filter selects)", "count": 6, "suggest_component": "FilterSelect" },
+    { "selector": "tr (case row)", "count": "N", "suggest_component": "CaseTableRow" },
+    { "selector": ".status-pill", "count": "N", "suggest_component": "StatusPill" },
+    { "selector": ".segment-btn", "count": 3, "suggest_component": "SegmentButton" }
+  ]
+}

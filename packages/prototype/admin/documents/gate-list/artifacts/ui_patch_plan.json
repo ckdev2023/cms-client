@@ -1,0 +1,41 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/documents/DocumentListView.vue",
+    "packages/admin/src/views/documents/types.ts",
+    "packages/admin/src/views/documents/fixtures.ts",
+    "packages/admin/src/views/documents/components/DocumentSummaryCards.vue",
+    "packages/admin/src/views/documents/components/DocumentFilters.vue",
+    "packages/admin/src/views/documents/components/DocumentTable.vue",
+    "packages/admin/src/views/documents/components/DocumentTableRow.vue",
+    "packages/admin/src/views/documents/components/DocumentBulkActionBar.vue",
+    "packages/admin/src/views/documents/components/RegisterDocumentModal.vue",
+    "packages/admin/src/views/documents/components/ReviewActionsPanel.vue",
+    "packages/admin/src/views/documents/components/WaiveReasonModal.vue",
+    "packages/admin/src/views/documents/components/ReferenceVersionModal.vue",
+    "packages/admin/src/views/documents/components/SharedExpiryRiskPanel.vue",
+    "packages/admin/src/views/documents/model/useDocumentListModel.ts",
+    "packages/admin/src/views/documents/model/useDocumentFilters.ts",
+    "packages/admin/src/views/documents/model/useDocumentSelection.ts",
+    "packages/admin/src/views/documents/model/useDocumentBulkActions.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/shell/SideNav.vue"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "filter_empty",
+    "error",
+    "ready"
+  ],
+  "notes": [
+    "target_framework is Vue 3 SFC (Composition API); not React",
+    "status enum keys must align with P0 contract §6: pending/uploaded_reviewing/approved/rejected/expired/waived",
+    "relative_path validation rules per P0 §8.1.2: no .., no ~, no leading /, no whitespace control chars",
+    "waived/approved rows must be checkbox-disabled per P0 §10",
+    "default sort: uploaded_reviewing first → rejected > expired > pending → deadline asc → null deadline last",
+    "completion rate: approved / (total - waived); denominator=0 → '無必需資料'"
+  ]
+}

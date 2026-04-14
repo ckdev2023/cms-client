@@ -8,6 +8,7 @@ import {
 import { Pool } from "pg";
 
 import type { Case } from "../model/coreEntities";
+import { checkFinalPaymentGuard } from "../billing/billingGuards";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import type { TenantDbTx } from "../tenancy/tenantDb";
@@ -823,6 +824,7 @@ export class CasesService {
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
+      await this.assertPostApprovalBillingGate(tx, current, input.stage);
       const result = await tx.query<CaseQueryRow>(
         `update cases
          set metadata = $2::jsonb,
@@ -849,6 +851,29 @@ export class CasesService {
       });
       return updated;
     });
+  }
+
+  private async assertPostApprovalBillingGate(
+    tx: TenantDbTx,
+    current: Case,
+    nextStage: string,
+  ): Promise<void> {
+    if (nextStage !== "coe_sent") return;
+
+    const guard = await checkFinalPaymentGuard(tx, current.id);
+    if (!guard || guard.settled) return;
+
+    if (guard.gateEffectMode === "block") {
+      throw new BadRequestException(
+        `Final payment is still unpaid (${String(guard.unpaid)}). Current billing gate blocks COE sending.`,
+      );
+    }
+
+    if (!current.billingRiskAcknowledgedAt) {
+      throw new BadRequestException(
+        `Final payment is still unpaid (${String(guard.unpaid)}). Please acknowledge billing risk before sending COE.`,
+      );
+    }
   }
 
   /** 预解析 document_checklist template。

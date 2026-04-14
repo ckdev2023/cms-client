@@ -1,0 +1,83 @@
+{
+  "page_component": "CreateCaseView",
+  "candidates": [
+    {
+      "name": "CreateCaseHeader",
+      "source_selector": "#main > .mb-8",
+      "repeatable": false,
+      "props_hint": ["title", "breadcrumb"]
+    },
+    {
+      "name": "SourceContextBar",
+      "source_selector": "#sourceContextBar",
+      "repeatable": false,
+      "props_hint": ["sourceType", "sourceName", "sourceId", "visible"]
+    },
+    {
+      "name": "WizardStepper",
+      "source_selector": ".wizard-steps",
+      "repeatable": false,
+      "props_hint": ["steps", "activeIndex", "completedIndexes"]
+    },
+    {
+      "name": "TemplateCard",
+      "source_selector": ".template-card",
+      "repeatable": true,
+      "props_hint": ["templateKey", "label", "description", "selected"]
+    },
+    {
+      "name": "BusinessFormStep",
+      "source_selector": "step1 .apple-card",
+      "repeatable": false,
+      "props_hint": ["template", "applicationType", "caseTitle"]
+    },
+    {
+      "name": "PartiesStep",
+      "source_selector": "step2 .apple-card",
+      "repeatable": false,
+      "props_hint": ["primaryApplicant", "relatedParties", "requirements"]
+    },
+    {
+      "name": "PrimaryCustomerCard",
+      "source_selector": "#primaryCustomerCard",
+      "repeatable": false,
+      "props_hint": ["customer", "mode"]
+    },
+    {
+      "name": "FamilyKeyPartyList",
+      "source_selector": "#familyKeyPartyList",
+      "repeatable": false,
+      "props_hint": ["parties"]
+    },
+    {
+      "name": "RequirementsList",
+      "source_selector": "#requirementsList",
+      "repeatable": false,
+      "props_hint": ["items", "templateKey"]
+    },
+    {
+      "name": "AssignmentStep",
+      "source_selector": "step3 .apple-card",
+      "repeatable": false,
+      "props_hint": ["group", "owner", "deadline", "contractAmount", "autoActions", "groupOverrideReason"]
+    },
+    {
+      "name": "SummaryStep",
+      "source_selector": "step4 .apple-card",
+      "repeatable": false,
+      "props_hint": ["summaryData", "checklist"]
+    },
+    {
+      "name": "FooterToolbar",
+      "source_selector": ".toolbar-footer",
+      "repeatable": false,
+      "props_hint": ["canGoBack", "canGoNext", "canSubmit", "currentStep"]
+    },
+    {
+      "name": "CustomerModal",
+      "source_selector": "#caseCustomerModal",
+      "repeatable": false,
+      "props_hint": ["mode", "visible", "duplicateHit", "formData", "errors"]
+    }
+  ]
+}

@@ -1,7 +1,11 @@
+/* eslint-disable max-lines */
+
 import { relations, sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   date,
+  index,
   integer,
   jsonb,
   numeric,
@@ -307,6 +311,204 @@ export const caseStageHistory = pgTable("case_stage_history", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * `residence_periods` 表定义。
+ *
+ * 用途：
+ * - 记录客户在案件内的在留资格、许可期间与当前有效卡信息
+ * - 为续签提醒、到期风险判断与结果页展示提供真值来源
+ *
+ * @returns residence_periods 表的 Drizzle schema
+ */
+export const residencePeriods = pgTable(
+  "residence_periods",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    customerId: uuid("customer_id")
+      .notNull()
+      .references(() => customers.id),
+    visaType: text("visa_type").notNull(),
+    statusOfResidence: text("status_of_residence").notNull(),
+    periodYears: integer("period_years"),
+    periodLabel: text("period_label"),
+    validFrom: date("valid_from", { mode: "string" }).notNull(),
+    validUntil: date("valid_until", { mode: "string" }).notNull(),
+    cardNumber: text("card_number"),
+    isCurrent: boolean("is_current").notNull().default(false),
+    notes: text("notes"),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_residence_periods_org").on(table.orgId),
+    index("idx_residence_periods_case").on(table.caseId),
+    index("idx_residence_periods_customer").on(table.customerId),
+    index("idx_residence_periods_created_by").on(table.createdBy),
+  ],
+);
+
+/**
+ * `document_assets` 表定义。
+ *
+ * 用途：
+ * - 表示可跨案件复用的逻辑资料资产
+ * - 作为 document_files 的 asset_id 真实来源
+ *
+ * @returns document_assets 表的 Drizzle schema
+ */
+export const documentAssets = pgTable(
+  "document_assets",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    materialCode: text("material_code").notNull(),
+    ownerSubjectType: text("owner_subject_type").notNull().default("customer"),
+    ownerCustomerId: uuid("owner_customer_id").references(() => customers.id),
+    ownerEmployerIdentityKey: text("owner_employer_identity_key"),
+    originCaseId: uuid("origin_case_id").references(() => cases.id),
+    sourceRequirementId: uuid("source_requirement_id"),
+    activeFlag: boolean("active_flag").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_document_assets_org_id").on(table.orgId),
+    index("idx_document_assets_owner_customer_id").on(table.ownerCustomerId),
+    index("idx_document_assets_origin_case_id").on(table.originCaseId),
+  ],
+);
+
+/**
+ * `document_requirement_file_refs` 表定义。
+ *
+ * 用途：
+ * - 记录资料项与文件版本的锁定引用关系
+ * - 区分直接登记与复用来源
+ *
+ * @returns document_requirement_file_refs 表的 Drizzle schema
+ */
+export const documentRequirementFileRefs = pgTable(
+  "document_requirement_file_refs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    requirementId: uuid("requirement_id")
+      .notNull()
+      .references(() => cases.id),
+    fileVersionId: uuid("file_version_id")
+      .notNull()
+      .references(() => documentAssets.id),
+    refMode: text("ref_mode").notNull().default("direct_register"),
+    linkedFromRequirementId: uuid("linked_from_requirement_id").references(
+      () => cases.id,
+    ),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_doc_req_file_refs_requirement").on(table.requirementId),
+    index("idx_doc_req_file_refs_file_version").on(table.fileVersionId),
+    index("idx_doc_req_file_refs_created_by").on(table.createdBy),
+  ],
+);
+
+/**
+ * `submission_packages` 表定义。
+ *
+ * 用途：
+ * - 表示一次正式提交/补正时刻的不可变包
+ * - 作为锁定资料与生成文书版本的聚合根
+ *
+ * @returns submission_packages 表的 Drizzle schema
+ */
+export const submissionPackages = pgTable(
+  "submission_packages",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    submissionNo: integer("submission_no").notNull(),
+    submissionKind: text("submission_kind").notNull().default("initial"),
+    submittedAt: timestamp("submitted_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .notNull()
+      .defaultNow(),
+    validationRunId: uuid("validation_run_id"),
+    reviewRecordId: uuid("review_record_id"),
+    authorityName: text("authority_name"),
+    acceptanceNo: text("acceptance_no"),
+    receiptStorageType: text("receipt_storage_type"),
+    receiptRelativePathOrKey: text("receipt_relative_path_or_key"),
+    relatedSubmissionId: uuid("related_submission_id").references(
+      (): AnyPgColumn => submissionPackages.id,
+    ),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_submission_packages_org_id").on(table.orgId),
+    index("idx_submission_packages_case_id").on(table.caseId),
+    index("idx_submission_packages_related_submission_id").on(
+      table.relatedSubmissionId,
+    ),
+    index("idx_submission_packages_created_by").on(table.createdBy),
+  ],
+);
+
+/**
+ * `submission_package_items` 表定义。
+ *
+ * 用途：
+ * - 记录提交包中被锁定的资料项、资料版本、文书版本或字段快照
+ * - 提供“提交时冻结”的最小事实来源
+ *
+ * @returns submission_package_items 表的 Drizzle schema
+ */
+export const submissionPackageItems = pgTable(
+  "submission_package_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    submissionPackageId: uuid("submission_package_id")
+      .notNull()
+      .references((): AnyPgColumn => submissionPackages.id),
+    itemType: text("item_type").notNull(),
+    refId: uuid("ref_id").notNull(),
+    snapshotPayload: jsonb("snapshot_payload").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_submission_package_items_pkg").on(table.submissionPackageId),
+  ],
+);
 
 /**
  * `organizations` 的关联关系定义。

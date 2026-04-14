@@ -1,5 +1,7 @@
 import customerDetail from "./customers/ja-JP";
 import billing from "./billing/ja-JP";
+import cases from "./cases/ja-JP";
+import documents from "./documents/ja-JP";
 import leads from "./leads/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
 
@@ -217,6 +219,8 @@ const jaJP = {
     detail: customerDetail,
   },
   billing,
+  cases,
+  documents,
   leads,
   dashboard: {
     hero: {

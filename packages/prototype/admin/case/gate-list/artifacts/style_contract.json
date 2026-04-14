@@ -1,0 +1,22 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "apple-card", "apple-input", "apple-table",
+    "summary-card", "summary-card--primary", "summary-card--warning", "summary-card--risk", "summary-card--neutral",
+    "summary-card__label", "summary-card__value", "summary-card__hint", "summary-card__dot",
+    "status-pill", "chip", "btn-primary", "btn-secondary", "btn-pill",
+    "toolbar-grid", "segmented-control", "segment-btn",
+    "table-meta", "table-checkbox",
+    "topbar", "side-nav", "search", "skip-link", "display-font"
+  ],
+  "mapping_rules": [
+    { "prototype": ".apple-card", "target": "shared card component or Tailwind card pattern" },
+    { "prototype": ".apple-input", "target": "shared form input component" },
+    { "prototype": ".apple-table", "target": "shared table component" },
+    { "prototype": ".summary-card", "target": "CaseSummaryCard local component" },
+    { "prototype": ".status-pill", "target": "shared StatusPill component" },
+    { "prototype": ".toolbar-grid", "target": "CaseFilterToolbar local layout" },
+    { "prototype": ".btn-primary / .btn-secondary / .btn-pill", "target": "shared button variants" }
+  ],
+  "tokens_to_resolve": ["spacing", "color", "typography", "radius", "shadow"]
+}

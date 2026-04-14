@@ -1,0 +1,107 @@
+{
+  "page_component": "CaseDetailView",
+  "candidates": [
+    {
+      "name": "CaseDetailHeader",
+      "source_selector": "sections/detail-header.html",
+      "repeatable": false,
+      "props_hint": ["caseTitle", "caseId", "stage", "owner", "jurisdiction", "sampleKey"]
+    },
+    {
+      "name": "ReadonlyBanner",
+      "source_selector": "sections/detail-readonly-banner.html",
+      "repeatable": false,
+      "props_hint": ["visible", "archivedAt"]
+    },
+    {
+      "name": "DetailTabNav",
+      "source_selector": "sections/detail-tabs.html",
+      "repeatable": false,
+      "props_hint": ["tabs", "activeTabId"]
+    },
+    {
+      "name": "OverviewTab",
+      "source_selector": "sections/detail-overview.html",
+      "repeatable": false,
+      "props_hint": ["summaryCards", "providerProgress", "blockingRisks", "timeline", "nextAction"]
+    },
+    {
+      "name": "InfoTab",
+      "source_selector": "sections/detail-info.html",
+      "repeatable": false,
+      "props_hint": ["caseType", "applicationType", "applicant", "relatedEntities", "riskTags"]
+    },
+    {
+      "name": "DocumentsTab",
+      "source_selector": "sections/detail-documents.html",
+      "repeatable": false,
+      "props_hint": ["providerGroups", "completionRate", "waivedItems", "expiredItems"]
+    },
+    {
+      "name": "FormsTab",
+      "source_selector": "sections/detail-forms.html",
+      "repeatable": false,
+      "props_hint": ["templates", "generatedForms", "versions", "exportEntry"]
+    },
+    {
+      "name": "TasksTab",
+      "source_selector": "sections/detail-tasks.html",
+      "repeatable": false,
+      "props_hint": ["tasks", "canAddTask"]
+    },
+    {
+      "name": "DeadlinesTab",
+      "source_selector": "sections/detail-deadlines.html",
+      "repeatable": false,
+      "props_hint": ["residenceExpiry", "supplementDeadline", "submissionAppointment", "resultEstimate"]
+    },
+    {
+      "name": "ValidationTab",
+      "source_selector": "sections/detail-validation.html",
+      "repeatable": false,
+      "props_hint": ["validationReport", "gateChips", "reviewRecords", "submissionPackages", "correctionPackages", "arrearRiskRecords"]
+    },
+    {
+      "name": "BillingTab",
+      "source_selector": "sections/detail-billing.html",
+      "repeatable": false,
+      "props_hint": ["totalAmount", "receivedAmount", "pendingAmount", "paymentNodes"]
+    },
+    {
+      "name": "MessagesTab",
+      "source_selector": "sections/detail-messages.html",
+      "repeatable": false,
+      "props_hint": ["messages", "typeFilter", "visibilityFilter", "composeArea"]
+    },
+    {
+      "name": "LogTab",
+      "source_selector": "sections/detail-log.html",
+      "repeatable": false,
+      "props_hint": ["logs", "categoryFilter"]
+    },
+    {
+      "name": "RiskConfirmationModal",
+      "source_selector": "sections/detail-risk-confirmation.html",
+      "repeatable": false,
+      "props_hint": ["visible", "confirmedBy", "reason", "evidence", "timestamp"]
+    },
+    {
+      "name": "OverviewSummaryCard",
+      "source_selector": ".summary-card (in overview)",
+      "repeatable": true,
+      "props_hint": ["label", "value", "sublabel", "variant"]
+    },
+    {
+      "name": "DocumentRow",
+      "source_selector": "document item in provider group",
+      "repeatable": true,
+      "props_hint": ["name", "status", "lastReminder", "versionCount", "localPath", "waived", "expired"]
+    },
+    {
+      "name": "BillingNodeRow",
+      "source_selector": "billing payment node row",
+      "repeatable": true,
+      "props_hint": ["nodeLabel", "amount", "dueDate", "status", "paymentDate"]
+    }
+  ]
+}

@@ -13,7 +13,7 @@ type ValidPaymentSumRow = {
 };
 
 /**
- * 从 billing_plans + payment_records(record_status='valid') 聚合，
+ * 从 billing_records + payment_records(record_status='valid') 聚合，
  * 同步案件缓存字段：deposit_paid_cached / final_payment_paid_cached / billing_unpaid_amount_cached。
  *
  * @param tx 事务连接
@@ -25,7 +25,7 @@ export async function syncBillingCacheForCase(
 ): Promise<void> {
   const billingResult = await tx.query<BillingSummaryRow>(
     `select amount_due, status, milestone_name, gate_effect_mode
-     from billing_plans where case_id = $1`,
+     from billing_records where case_id = $1`,
     [caseId],
   );
 
@@ -75,7 +75,7 @@ export async function checkFinalPaymentGuard(
 ): Promise<FinalPaymentGuardResult | null> {
   const result = await tx.query<BillingSummaryRow>(
     `select amount_due, status, milestone_name, gate_effect_mode
-     from billing_plans
+     from billing_records
      where case_id = $1 and (
        lower(milestone_name) like '%尾款%'
        or lower(milestone_name) like '%final%'
@@ -100,7 +100,7 @@ export async function checkFinalPaymentGuard(
   const payResult = await tx.query<ValidPaymentSumRow>(
     `select coalesce(sum(pr.amount_received), 0) as total_received
      from payment_records pr
-     join billing_plans br on br.id = pr.billing_plan_id
+     join billing_records br on br.id = pr.billing_record_id
      where br.case_id = $1 and pr.record_status = 'valid' and (
        lower(br.milestone_name) like '%尾款%'
        or lower(br.milestone_name) like '%final%'
@@ -110,13 +110,15 @@ export async function checkFinalPaymentGuard(
   );
 
   const received = Number(payResult.rows[0]?.total_received ?? 0);
-  const gateMode = result.rows.find((r) => r.gate_effect_mode === "warn")
-    ?.gate_effect_mode as BillingGateEffectMode | undefined;
+  const gateMode = result.rows.find((r) => r.gate_effect_mode === "block")
+    ?.gate_effect_mode
+    ? "block"
+    : "warn";
 
   return {
     settled: false,
     unpaid: Math.max(totalDue - received, 0),
-    gateEffectMode: gateMode ?? "warn",
+    gateEffectMode: gateMode as BillingGateEffectMode,
   };
 }
 

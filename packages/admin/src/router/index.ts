@@ -2,25 +2,11 @@ import { createRouter, createWebHashHistory } from "vue-router";
 
 const placeholderRoutes = [
   {
-    path: "/cases",
-    name: "cases",
-    navKey: "cases",
-    groupKey: "business",
-    titleKey: "shell.nav.items.cases",
-  },
-  {
     path: "/tasks",
     name: "tasks",
     navKey: "tasks",
     groupKey: "business",
     titleKey: "shell.nav.items.tasks",
-  },
-  {
-    path: "/documents",
-    name: "documents",
-    navKey: "documents",
-    groupKey: "content",
-    titleKey: "shell.nav.items.documents",
   },
   {
     path: "/settings",
@@ -91,6 +77,36 @@ export const router = createRouter({
       },
     },
     {
+      path: "/cases",
+      name: "cases",
+      component: () => import("../views/cases/CaseListView.vue"),
+      meta: {
+        navKey: "cases",
+        groupKey: "business",
+        titleKey: "shell.nav.items.cases",
+      },
+    },
+    {
+      path: "/cases/create",
+      name: "case-create",
+      component: () => import("../views/cases/CaseCreateView.vue"),
+      meta: {
+        navKey: "cases",
+        groupKey: "business",
+        titleKey: "shell.nav.items.cases",
+      },
+    },
+    {
+      path: "/cases/:id",
+      name: "case-detail",
+      component: () => import("../views/cases/CaseDetailView.vue"),
+      meta: {
+        navKey: "cases",
+        groupKey: "business",
+        titleKey: "shell.nav.items.cases",
+      },
+    },
+    {
       path: "/billing",
       name: "billing",
       component: () => import("../views/billing/BillingListView.vue"),
@@ -98,6 +114,16 @@ export const router = createRouter({
         navKey: "billing",
         groupKey: "finance",
         titleKey: "shell.nav.items.billing",
+      },
+    },
+    {
+      path: "/documents",
+      name: "documents",
+      component: () => import("../views/documents/DocumentListView.vue"),
+      meta: {
+        navKey: "documents",
+        groupKey: "content",
+        titleKey: "shell.nav.items.documents",
       },
     },
     ...placeholderRoutes.map((route) => ({

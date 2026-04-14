@@ -410,6 +410,8 @@ export class DocumentFilesService {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Document file not found");
 
+    await this.assertNotLockedInSubmissionPackage(ctx, id);
+
     await this.storage.remove(current.fileUrl);
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
@@ -430,5 +432,30 @@ export class DocumentFilesService {
         versionNo: current.versionNo,
       },
     });
+  }
+
+  private async assertNotLockedInSubmissionPackage(
+    ctx: RequestContext,
+    fileId: string,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<{ package_id: string }>(
+      `
+        select spi.submission_package_id as package_id
+        from submission_package_items spi
+        join submission_packages sp on sp.id = spi.submission_package_id
+        where sp.org_id = $1
+          and spi.item_type = 'document_file_version'
+          and spi.ref_id = $2
+        limit 1
+      `,
+      [ctx.orgId, fileId],
+    );
+
+    if ((result.rowCount ?? 0) > 0) {
+      throw new BadRequestException(
+        "Document file is locked in a submission package and cannot be deleted",
+      );
+    }
   }
 }

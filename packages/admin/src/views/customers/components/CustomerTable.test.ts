@@ -120,7 +120,7 @@ describe("CustomerTable", () => {
     const actionLinks = w.findAll(".customer-row__actions a");
     expect(caseLinks[0].attributes("href")).toBe("#/cases?customerId=c1");
     expect(actionLinks[1].attributes("href")).toBe(
-      "#/cases?customerId=c1&mode=single",
+      "#/cases/create?customerId=c1",
     );
   });
 });

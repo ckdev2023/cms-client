@@ -1,0 +1,20 @@
+{
+  "interactions": [
+    { "selector": "[data-tab]", "event": "click", "intent": "switch_tab" },
+    { "selector": "#caseSampleSelect", "event": "change", "intent": "switch_demo_sample" },
+    { "selector": "[data-action=advance-stage]", "event": "click", "intent": "advance_case_stage" },
+    { "selector": "[data-action=edit-case]", "event": "click", "intent": "open_edit_mode" },
+    { "selector": "[data-action=export-zip]", "event": "click", "intent": "export_case_zip" },
+    { "selector": "[data-action=archive-case]", "event": "click", "intent": "archive_case" },
+    { "selector": "[data-action=run-validation]", "event": "click", "intent": "run_gate_validation" },
+    { "selector": "[data-action=generate-package]", "event": "click", "intent": "generate_submission_package" },
+    { "selector": "[data-action=upload-receipt]", "event": "click", "intent": "upload_receipt" },
+    { "selector": "[data-action=confirm-risk]", "event": "click", "intent": "open_risk_confirmation" },
+    { "selector": "[data-action=register-payment]", "event": "click", "intent": "register_payment" },
+    { "selector": "[data-action=waive-document]", "event": "click", "intent": "mark_document_waived" },
+    { "selector": "#providerProgress [data-toggle]", "event": "click", "intent": "toggle_provider_progress" },
+    { "selector": "#logCategoryFilter", "event": "change", "intent": "filter_logs_by_category" },
+    { "selector": "#riskConfirmModal [data-action=close]", "event": "click", "intent": "close_risk_modal" },
+    { "selector": "#riskConfirmModal [data-action=confirm]", "event": "click", "intent": "confirm_risk_submit" }
+  ]
+}

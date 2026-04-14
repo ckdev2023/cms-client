@@ -1,0 +1,31 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/cases/CreateCaseView.vue",
+    "packages/admin/src/views/cases/components/CreateCaseHeader.vue",
+    "packages/admin/src/views/cases/components/SourceContextBar.vue",
+    "packages/admin/src/views/cases/components/WizardStepper.vue",
+    "packages/admin/src/views/cases/components/TemplateCard.vue",
+    "packages/admin/src/views/cases/components/BusinessFormStep.vue",
+    "packages/admin/src/views/cases/components/PartiesStep.vue",
+    "packages/admin/src/views/cases/components/AssignmentStep.vue",
+    "packages/admin/src/views/cases/components/SummaryStep.vue",
+    "packages/admin/src/views/cases/components/CustomerModal.vue",
+    "packages/admin/src/views/cases/components/FooterToolbar.vue",
+    "packages/admin/src/views/cases/model/useCreateCaseModel.ts",
+    "packages/admin/src/views/cases/model/useCasePartyPicker.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts"
+  ],
+  "states_required": ["loading", "empty", "error", "ready"],
+  "notes": [
+    "4-step wizard: business info → parties & documents → assignment & deadline → summary & submit",
+    "support sourceLeadId/customerId URL params for conversion context",
+    "template switch between family-stay and engineer-humanities; URL hash #family-bulk for batch mode",
+    "customer modal supports primary/related modes with duplicate detection + second confirmation",
+    "group inherits from primary applicant; cross-group requires reason (groupOverrideReason)",
+    "step validation gates per P0-CONTRACT §6",
+    "creation result shows banner + toast, no real persistence in first round"
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "apple-card", "apple-input", "apple-label",
+    "wizard-steps", "wizard-step-item", "wizard-step-index", "is-active",
+    "template-card", "template-card--selected",
+    "section-stack", "section-kicker", "section-title",
+    "summary-box", "summary-grid", "summary-label", "summary-value",
+    "field-grid", "field-grid.two",
+    "toolbar-footer", "toolbar-footer-inner",
+    "apple-modal", "meta-text",
+    "btn-primary", "btn-secondary", "btn-pill", "chip",
+    "topbar", "side-nav", "search", "skip-link"
+  ],
+  "mapping_rules": [
+    { "prototype": ".wizard-steps / .wizard-step-item", "target": "CreateCaseStepper local component" },
+    { "prototype": ".template-card", "target": "TemplateCard local component" },
+    { "prototype": ".section-stack / .section-kicker / .section-title", "target": "SectionStack shared layout or local" },
+    { "prototype": ".field-grid.two", "target": "2-col form grid layout" },
+    { "prototype": ".summary-box / .summary-grid", "target": "SummaryStep review layout" },
+    { "prototype": ".apple-modal", "target": "shared Modal component" },
+    { "prototype": ".toolbar-footer", "target": "CreateCaseFooter local component" }
+  ],
+  "tokens_to_resolve": ["spacing", "color", "typography", "radius", "shadow"]
+}

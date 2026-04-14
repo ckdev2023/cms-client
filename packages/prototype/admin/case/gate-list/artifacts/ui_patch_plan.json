@@ -1,0 +1,28 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/cases/CaseListView.vue",
+    "packages/admin/src/views/cases/components/CaseSummaryCards.vue",
+    "packages/admin/src/views/cases/components/CaseTable.vue",
+    "packages/admin/src/views/cases/components/CaseTableRow.vue",
+    "packages/admin/src/views/cases/components/CaseFilterToolbar.vue",
+    "packages/admin/src/views/cases/components/StatusPill.vue",
+    "packages/admin/src/views/cases/model/useCaseListModel.ts",
+    "packages/admin/src/views/cases/types.ts",
+    "packages/admin/src/views/cases/constants.ts",
+    "packages/admin/src/views/cases/fixtures.ts",
+    "packages/admin/src/views/cases/repository.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/views/customers/components/CustomerTableRow.vue"
+  ],
+  "states_required": ["loading", "empty", "error", "ready"],
+  "notes": [
+    "replace existing /cases placeholder route",
+    "support customerId query param for pre-filtered list from customer page",
+    "summary cards: active count, failed validations, due soon, unpaid total",
+    "filters: stage, owner, group, risk, validation status + free text search",
+    "creation flash banner shown when redirected after successful case creation"
+  ]
+}

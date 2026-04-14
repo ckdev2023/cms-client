@@ -35,6 +35,21 @@ async function makeRouter(initialPath = "/") {
         meta: { navKey: "customers" },
       },
       {
+        path: "/cases",
+        component: { template: "<div />" },
+        meta: { navKey: "cases" },
+      },
+      {
+        path: "/cases/create",
+        component: { template: "<div />" },
+        meta: { navKey: "cases" },
+      },
+      {
+        path: "/cases/:id",
+        component: { template: "<div />" },
+        meta: { navKey: "cases" },
+      },
+      {
         path: "/billing",
         component: { template: "<div />" },
         meta: { navKey: "billing" },
@@ -173,5 +188,83 @@ describe("SideNav", () => {
     const activeItem = w.find('a.nav-item--active[aria-current="page"]');
     expect(activeItem.exists()).toBe(true);
     expect(activeItem.text()).toContain("客户");
+  });
+
+  it("updates the active nav item after route navigation", async () => {
+    const router = await makeRouter("/customers/cust-001");
+    const w = mount(SideNav, {
+      global: {
+        plugins: [i18n, router],
+        stubs,
+      },
+    });
+
+    expect(w.find('a.nav-item--active[aria-current="page"]').text()).toContain(
+      "客户",
+    );
+
+    await router.push("/billing");
+    await router.isReady();
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("收费与财务");
+  });
+
+  it("marks cases nav item as active on /cases", async () => {
+    const w = await mountWithRouter("/cases", {
+      global: {
+        stubs: { NavIcon: stubs.NavIcon },
+      },
+    });
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("案件");
+  });
+
+  it("keeps cases nav item active on /cases/create", async () => {
+    const w = await mountWithRouter("/cases/create", {
+      global: {
+        stubs: { NavIcon: stubs.NavIcon },
+      },
+    });
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("案件");
+  });
+
+  it("keeps cases nav item active on /cases/:id detail", async () => {
+    const w = await mountWithRouter("/cases/case-001", {
+      global: {
+        stubs: { NavIcon: stubs.NavIcon },
+      },
+    });
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("案件");
+  });
+
+  it("navigates from cases to billing and updates active state", async () => {
+    const router = await makeRouter("/cases");
+    const w = mount(SideNav, {
+      global: {
+        plugins: [i18n, router],
+        stubs,
+      },
+    });
+
+    expect(w.find('a.nav-item--active[aria-current="page"]').text()).toContain(
+      "案件",
+    );
+
+    await router.push("/billing");
+    await router.isReady();
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("收费与财务");
   });
 });

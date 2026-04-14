@@ -1,5 +1,7 @@
 import customerDetail from "./customers/zh-CN";
 import billing from "./billing/zh-CN";
+import cases from "./cases/zh-CN";
+import documents from "./documents/zh-CN";
 import leads from "./leads/zh-CN";
 import dashboardWorkItems from "./work-items/zh-CN";
 
@@ -215,6 +217,8 @@ const zhCN = {
     detail: customerDetail,
   },
   billing,
+  cases,
+  documents,
   leads,
   dashboard: {
     hero: {

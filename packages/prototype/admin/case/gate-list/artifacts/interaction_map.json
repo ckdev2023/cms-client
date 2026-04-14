@@ -1,0 +1,17 @@
+{
+  "interactions": [
+    { "selector": "#filterStage", "event": "change", "intent": "filter_by_stage" },
+    { "selector": "#filterOwner", "event": "change", "intent": "filter_by_owner" },
+    { "selector": "#filterGroup", "event": "change", "intent": "filter_by_group" },
+    { "selector": "#filterRisk", "event": "change", "intent": "filter_by_risk" },
+    { "selector": "#filterValidation", "event": "change", "intent": "filter_by_validation" },
+    { "selector": "#resetFiltersBtn", "event": "click", "intent": "reset_all_filters" },
+    { "selector": "#searchInput", "event": "input", "intent": "search_cases" },
+    { "selector": ".segment-btn", "event": "click", "intent": "switch_view_mode" },
+    { "selector": "#selectAllCases", "event": "change", "intent": "toggle_select_all" },
+    { "selector": "tr .btn-secondary[data-navigate]", "event": "click", "intent": "open_case_detail" },
+    { "selector": ".btn-primary[data-navigate='create.html']", "event": "click", "intent": "navigate_to_create" },
+    { "selector": "#creationFlashFilterBtn", "event": "click", "intent": "filter_to_created_case" },
+    { "selector": "th (sortable)", "event": "click", "intent": "sort_column" }
+  ]
+}

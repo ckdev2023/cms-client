@@ -4,9 +4,12 @@
 export type BillingPlanStatus = "due" | "partial" | "paid" | "overdue";
 
 /**
- * 收费 Gate 效果模式（P0 仅 off/warn，不支持 block）。
+ * 收费 Gate 效果模式。
+ * - `off`: 不启用门禁
+ * - `warn`: 允许继续，但要求案件侧已有风险确认
+ * - `block`: 直接阻断流程推进
  */
-export type BillingGateEffectMode = "off" | "warn";
+export type BillingGateEffectMode = "off" | "warn" | "block";
 
 /** @deprecated 使用 BillingPlanStatus。 */
 export type BillingRecordStatus = BillingPlanStatus;

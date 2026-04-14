@@ -90,7 +90,7 @@ void test("BillingPlansService.create inserts row and writes timeline", async ()
     if (sql.includes("select id from cases")) {
       return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
     }
-    if (sql.includes("insert into billing_plans")) {
+    if (sql.includes("insert into billing_records")) {
       return Promise.resolve({ rows: [makeBillingPlanRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -133,6 +133,46 @@ void test("BillingPlansService.create rejects negative amountDue", async () => {
   );
 });
 
+void test("BillingPlansService.create accepts block gateEffectMode", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    if (sql.includes("insert into billing_records")) {
+      return Promise.resolve({
+        rows: [makeBillingPlanRow({ gate_effect_mode: "block" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const created = await svc(pool).create(makeCtx(), {
+    caseId: CASE_ID,
+    amountDue: 1200.5,
+    gateEffectMode: "block",
+  });
+
+  assert.equal(created.gateEffectMode, "block");
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into billing_records"),
+  );
+  assert.equal(insertCall?.params?.[5], "block");
+});
+
+void test("BillingPlansService.create rejects invalid gateEffectMode", async () => {
+  await assert.rejects(
+    () =>
+      svc(makePool(() => Promise.resolve({ rows: [], rowCount: 0 }))).create(
+        makeCtx(),
+        { caseId: CASE_ID, amountDue: 100, gateEffectMode: "invalid" as never },
+      ),
+    /Invalid gateEffectMode: invalid. Must be one of: off, warn, block/,
+  );
+});
+
 void test("BillingPlansService.create rejects cross-tenant caseId", async () => {
   const pool = makePool((sql) => {
     if (sql.includes("select id from cases")) {
@@ -154,7 +194,10 @@ void test("BillingPlansService.create rejects cross-tenant caseId", async () => 
 
 void test("BillingPlansService.get returns billing plan or null", async () => {
   const pool = makePool((sql, params) => {
-    if (sql.includes("from billing_plans") && params?.[0] === BILLING_PLAN_ID) {
+    if (
+      sql.includes("from billing_records") &&
+      params?.[0] === BILLING_PLAN_ID
+    ) {
       return Promise.resolve({ rows: [makeBillingPlanRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -174,7 +217,7 @@ void test("BillingPlansService.list returns items and total by caseId", async ()
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
     }
-    if (sql.includes("from billing_plans")) {
+    if (sql.includes("from billing_records")) {
       return Promise.resolve({ rows: [makeBillingPlanRow()], rowCount: 1 });
     }
     return Promise.resolve({ rows: [], rowCount: 0 });
@@ -194,10 +237,13 @@ void test("BillingPlansService.list returns items and total by caseId", async ()
 
 void test("BillingPlansService.update patches fields and writes timeline", async () => {
   const pool = makePool((sql, params) => {
-    if (sql.includes("from billing_plans") && params?.[0] === BILLING_PLAN_ID) {
+    if (
+      sql.includes("from billing_records") &&
+      params?.[0] === BILLING_PLAN_ID
+    ) {
       return Promise.resolve({ rows: [makeBillingPlanRow()], rowCount: 1 });
     }
-    if (sql.includes("update billing_plans")) {
+    if (sql.includes("update billing_records")) {
       return Promise.resolve({
         rows: [
           makeBillingPlanRow({ amount_due: "1500.00", remark: "updated" }),
@@ -224,7 +270,10 @@ void test("BillingPlansService.update patches fields and writes timeline", async
 
 void test("BillingPlansService.update rejects when status is paid", async () => {
   const pool = makePool((sql, params) => {
-    if (sql.includes("from billing_plans") && params?.[0] === BILLING_PLAN_ID) {
+    if (
+      sql.includes("from billing_records") &&
+      params?.[0] === BILLING_PLAN_ID
+    ) {
       return Promise.resolve({
         rows: [makeBillingPlanRow({ status: "paid" })],
         rowCount: 1,
@@ -256,7 +305,7 @@ for (const [from, to] of VALID_TRANSITIONS) {
   void test(`BillingPlansService.transition allows ${from} → ${to}`, async () => {
     const pool = makePool((sql, params) => {
       if (
-        sql.includes("from billing_plans") &&
+        sql.includes("from billing_records") &&
         params?.[0] === BILLING_PLAN_ID
       ) {
         return Promise.resolve({
@@ -264,7 +313,7 @@ for (const [from, to] of VALID_TRANSITIONS) {
           rowCount: 1,
         });
       }
-      if (sql.includes("update billing_plans")) {
+      if (sql.includes("update billing_records")) {
         return Promise.resolve({
           rows: [makeBillingPlanRow({ status: to })],
           rowCount: 1,
@@ -296,7 +345,7 @@ for (const [from, to] of INVALID_TRANSITIONS) {
   void test(`BillingPlansService.transition rejects ${from} → ${to}`, async () => {
     const pool = makePool((sql, params) => {
       if (
-        sql.includes("from billing_plans") &&
+        sql.includes("from billing_records") &&
         params?.[0] === BILLING_PLAN_ID
       ) {
         return Promise.resolve({

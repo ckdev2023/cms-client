@@ -1,0 +1,39 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "apple-card", "apple-input", "apple-label", "apple-modal", "apple-table",
+    "btn-pill", "btn-primary", "btn-secondary",
+    "chip", "tag", "tag-blue", "tag-green", "tag-orange", "tag-red", "tag-gray",
+    "display-font", "page-hero",
+    "tab-btn", "tab-btn--active",
+    "summary-card", "summary-card__label", "summary-card__value",
+    "provider-group", "provider-group__header", "provider-group__count",
+    "doc-item", "doc-item--waived", "doc-item--expired",
+    "deadline-item", "deadline-item--urgent", "deadline-item--warning", "deadline-item--safe",
+    "gate-chip", "gate-chip--a", "gate-chip--b", "gate-chip--c",
+    "validation-item", "validation-item--blocking",
+    "review-record", "submission-package", "correction-package",
+    "billing-stat-card", "billing-node-row",
+    "message-item", "message-compose", "visibility-badge",
+    "log-entry",
+    "readonly-banner",
+    "modal-backdrop", "risk-confirm-modal",
+    "mobile-nav", "mobile-nav-backdrop", "mobile-nav-panel",
+    "side-nav", "side-nav-inner", "nav-item", "nav-group-title", "topbar", "topbar-inner"
+  ],
+  "mapping_rules": [
+    { "prototype": "tag-blue", "design_system": "badge-blue / uploaded_reviewing" },
+    { "prototype": "tag-green", "design_system": "badge-green / approved" },
+    { "prototype": "tag-orange", "design_system": "badge-orange / pending" },
+    { "prototype": "tag-red", "design_system": "badge-red / rejected, expired" },
+    { "prototype": "tag-gray", "design_system": "badge-gray / waived" },
+    { "prototype": "gate-chip--a", "design_system": "gate A blocking (red)" },
+    { "prototype": "gate-chip--b", "design_system": "gate B warning (amber)" },
+    { "prototype": "gate-chip--c", "design_system": "gate C info (blue)" },
+    { "prototype": "deadline-item--urgent", "design_system": "red accent for ≤3 days" },
+    { "prototype": "deadline-item--warning", "design_system": "amber accent for ≤7 days" },
+    { "prototype": "doc-item--waived", "design_system": "opacity-60 + line-through + badge-gray" },
+    { "prototype": "doc-item--expired", "design_system": "red accent + badge-red" }
+  ],
+  "tokens_to_resolve": ["spacing", "color", "typography", "radius", "shadow"]
+}

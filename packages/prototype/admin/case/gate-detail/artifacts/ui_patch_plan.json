@@ -1,0 +1,27 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/cases/CaseDetailView.vue",
+    "packages/admin/src/views/cases/types-detail.ts",
+    "packages/admin/src/views/cases/fixtures-detail.ts",
+    "packages/admin/src/views/cases/model/useCaseDetailModel.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready",
+    "readonly_archived"
+  ],
+  "notes": [
+    "target_framework is Vue 3 SFC (Composition API); not React",
+    "detail.html uses data-include-html for section loading; auto-parser only captures shell; all 10 tab sections were manually reviewed against P0-CONTRACT-DETAIL",
+    "case-detail.css contains extensive tab-specific styles; must be decomposed into scoped styles per Vue tab component",
+    "6 sample datasets in case-detail-config.js drive the demo; Vue fixtures must replicate all 6 scenarios",
+    "documents tab within case-detail shares status enum with documents/ module; P0 contract §6.4 defines mapping",
+    "this plan covers only the case-detail page; case-list and case-create have separate gate workspaces"
+  ]
+}

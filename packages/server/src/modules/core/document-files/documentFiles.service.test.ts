@@ -263,6 +263,9 @@ void test("DocumentFilesService.remove deletes DB row, removes storage and write
     if (sql.includes("from document_files") && params?.[0] === FILE_ID) {
       return Promise.resolve({ rows: [makeFileRow()], rowCount: 1 });
     }
+    if (sql.includes("from submission_package_items spi")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
     if (sql.includes("delete from document_files")) {
       return Promise.resolve({ rows: [], rowCount: 1 });
     }
@@ -277,6 +280,25 @@ void test("DocumentFilesService.remove deletes DB row, removes storage and write
     (timeline.writes[0] as { action: string }).action,
     "document_file.deleted",
   );
+});
+
+void test("DocumentFilesService.remove rejects locked submission package file", async () => {
+  const { svc, storage, timeline } = createService((sql, params) => {
+    if (sql.includes("from document_files") && params?.[0] === FILE_ID) {
+      return Promise.resolve({ rows: [makeFileRow()], rowCount: 1 });
+    }
+    if (sql.includes("from submission_package_items spi")) {
+      return Promise.resolve({ rows: [{ package_id: "pkg-1" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await assert.rejects(
+    () => svc.remove(makeCtx("manager"), FILE_ID),
+    /locked in a submission package/,
+  );
+  assert.equal(storage.removeCalls.length, 0);
+  assert.equal(timeline.writes.length, 0);
 });
 
 void test("DocumentFilesService enforces tenant isolation through tenantDb", async () => {

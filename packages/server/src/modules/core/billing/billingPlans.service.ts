@@ -15,7 +15,7 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 
-/** Database row shape for billing_plans. */
+/** Database row shape for billing_records. */
 export type BillingPlanQueryRow = {
   id: string;
   org_id: string;
@@ -61,7 +61,7 @@ export type BillingPlanTransitionInput = {
   toStatus: BillingPlanStatus;
 };
 
-const BILLING_TABLE = "billing_plans";
+const BILLING_TABLE = "billing_records";
 const BILLING_PLAN_COLS = `id, org_id, case_id, milestone_name, amount_due, due_date, status, gate_effect_mode, remark, created_at, updated_at`;
 
 const VALID_STATUSES: ReadonlySet<string> = new Set<string>([
@@ -71,7 +71,11 @@ const VALID_STATUSES: ReadonlySet<string> = new Set<string>([
   "overdue",
 ]);
 
-const VALID_GATE_MODES: ReadonlySet<string> = new Set<string>(["off", "warn"]);
+const VALID_GATE_MODES: ReadonlySet<string> = new Set<string>([
+  "off",
+  "warn",
+  "block",
+]);
 
 const STATUS_TRANSITIONS: Partial<Record<string, string[]>> = {
   due: ["partial", "paid", "overdue"],
@@ -166,7 +170,7 @@ export class BillingPlansService {
     );
 
     const row = result.rows.at(0);
-    if (!row) throw new BadRequestException("Failed to create billing plan");
+    if (!row) throw new BadRequestException("Failed to create billing record");
     const created = mapBillingPlanRow(row);
 
     await this.timelineService.write(ctx, {

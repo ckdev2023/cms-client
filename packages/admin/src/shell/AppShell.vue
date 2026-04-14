@@ -66,6 +66,28 @@ function closeMobileNav(): void {
 }
 
 /**
+ * 路由切换后将页面与主内容区滚动回顶部。
+ */
+function scrollToTop(): void {
+  const scrollOptions: ScrollToOptions = {
+    top: 0,
+    left: 0,
+    behavior: "auto",
+  };
+
+  const canUseWindowScrollTo =
+    typeof window.scrollTo === "function" &&
+    (Reflect.has(window.scrollTo, "mock") ||
+      /\[native code\]/.test(String(window.scrollTo)));
+
+  if (canUseWindowScrollTo) {
+    window.scrollTo(scrollOptions);
+  }
+
+  mainContentRef.value?.scrollTo?.(scrollOptions);
+}
+
+/**
  * 根据当前路由同步主区域渲染的页面组件与渲染 key。
  *
  * @param path 当前路由的完整路径，用作强制刷新视图的稳定 key
@@ -83,7 +105,11 @@ const stopRouteSync = router.afterEach(async (to) => {
   syncRouteView(to.fullPath);
   closeMobileNav();
   await nextTick();
-  mainContentRef.value?.focus();
+  mainContentRef.value?.focus({ preventScroll: true });
+  scrollToTop();
+  window.requestAnimationFrame(() => {
+    scrollToTop();
+  });
 });
 
 watch(isMobileNavOpen, (open) => {

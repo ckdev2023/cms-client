@@ -1,0 +1,31 @@
+{
+  "page_name": "document_list",
+  "regions": [
+    { "id": "shell-nav", "selector": ".side-nav, .mobile-nav, .topbar", "role": "navigation" },
+    { "id": "page-hero", "selector": ".page-hero.mb-8", "role": "header" },
+    { "id": "summary-cards", "selector": ".documents-summary-grid", "role": "card_list" },
+    { "id": "filter-panel", "selector": ".apple-card.filter-panel", "role": "filter" },
+    { "id": "filters-toolbar", "selector": "#filtersToolbar", "role": "filter" },
+    { "id": "search-input", "selector": "#docSearchInput", "role": "search" },
+    { "id": "doc-table-card", "selector": "#docTableCard", "role": "data_list" },
+    { "id": "bulk-action-bar", "selector": "#bulkActionBar", "role": "data_list" },
+    { "id": "doc-table-body", "selector": "#docTableBody", "role": "data_list" },
+    { "id": "doc-empty-state", "selector": "#docEmptyState", "role": "empty_state" },
+    { "id": "doc-filter-empty-state", "selector": "#docFilterEmptyState", "role": "empty_state" },
+    { "id": "doc-pagination", "selector": "#docPagination", "role": "data_list" },
+    { "id": "register-doc-modal", "selector": "#registerDocModal", "role": "modal" },
+    { "id": "approve-modal", "selector": "#approveModal", "role": "modal" },
+    { "id": "reject-modal", "selector": "#rejectModal", "role": "modal" },
+    { "id": "waive-modal", "selector": "#waiveModal", "role": "modal" },
+    { "id": "reference-version-modal", "selector": "#referenceVersionModal", "role": "modal" },
+    { "id": "risk-log-panel", "selector": "#riskLogPanel", "role": "card_list" },
+    { "id": "toast", "selector": "#toast", "role": "card_list" }
+  ],
+  "repeat_patterns": [
+    { "selector": ".summary-card", "count": 4, "suggest_component": "SummaryCard" },
+    { "selector": ".apple-input[data-filter]", "count": 3, "suggest_component": "FilterSelect" },
+    { "selector": "tr[data-doc-id]", "count": "N", "suggest_component": "DocumentTableRow" },
+    { "selector": ".apple-modal", "count": 5, "suggest_component": "Modal" },
+    { "selector": ".btn-pill", "count": 5, "suggest_component": "PillButton" }
+  ]
+}

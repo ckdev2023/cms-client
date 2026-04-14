@@ -1,0 +1,8 @@
+{
+  "status": "reviewed",
+  "blocking_issues": [],
+  "warnings": [
+    "prototype uses inline <style> for status-pill; production should extract to shared component",
+    "case-page.js handles dynamic row rendering; Vue will own this via reactive table binding"
+  ]
+}

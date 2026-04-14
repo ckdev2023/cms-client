@@ -1,5 +1,7 @@
 import customerDetail from "./customers/en-US";
 import billing from "./billing/en-US";
+import cases from "./cases/en-US";
+import documents from "./documents/en-US";
 import leads from "./leads/en-US";
 import dashboardWorkItems from "./work-items/en-US";
 
@@ -215,6 +217,8 @@ const enUS = {
     detail: customerDetail,
   },
   billing,
+  cases,
+  documents,
   leads,
   dashboard: {
     hero: {

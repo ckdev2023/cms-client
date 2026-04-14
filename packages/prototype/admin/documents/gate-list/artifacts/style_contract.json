@@ -1,0 +1,37 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "apple-card", "apple-input", "apple-label", "apple-modal", "apple-table",
+    "btn-pill", "btn-primary", "btn-secondary",
+    "chip", "tag", "tag-blue", "tag-green", "tag-orange", "tag-red", "tag-gray",
+    "display-font", "page-hero", "page-hero__content", "page-hero__desc", "page-hero__aside",
+    "documents-summary-grid", "summary-card", "summary-card--reviewing", "summary-card--missing",
+    "summary-card--expired", "summary-card--risk", "summary-card__label", "summary-card__dot",
+    "summary-card__value", "summary-card__hint",
+    "filter-panel", "filter-panel__header", "filter-panel__title", "filter-panel__desc", "filter-panel__helper",
+    "documents-table", "table-shell", "table-shell__header", "table-shell__eyebrow",
+    "table-shell__title", "table-shell__title-row", "table-shell__sort-note", "table-shell__count",
+    "table-checkbox",
+    "doc-row-title-wrap", "doc-row-title", "doc-name-cell", "doc-row-meta",
+    "doc-row-badges", "doc-row-actions", "doc-row-guidance", "doc-row-guidance__item",
+    "doc-row-guidance__label", "doc-row-guidance__text", "doc-row-guidance__text--strong",
+    "doc-cell-primary", "doc-cell-secondary", "doc-cell-quiet", "doc-cell-stack",
+    "doc-deadline-warning", "doc-inline-link", "is-waived",
+    "modal-backdrop", "search", "icon-btn",
+    "mobile-nav", "mobile-nav-backdrop", "mobile-nav-panel",
+    "side-nav", "side-nav-inner", "nav-item", "nav-group-title", "topbar", "topbar-inner"
+  ],
+  "mapping_rules": [
+    { "prototype": "tag-blue", "design_system": "badge-blue / uploaded_reviewing" },
+    { "prototype": "tag-green", "design_system": "badge-green / approved" },
+    { "prototype": "tag-orange", "design_system": "badge-orange / pending" },
+    { "prototype": "tag-red", "design_system": "badge-red / rejected, expired" },
+    { "prototype": "tag-gray", "design_system": "badge-gray / waived" },
+    { "prototype": "summary-card--reviewing", "design_system": "border-l blue accent" },
+    { "prototype": "summary-card--missing", "design_system": "border-l orange accent" },
+    { "prototype": "summary-card--expired", "design_system": "border-l red accent" },
+    { "prototype": "summary-card--risk", "design_system": "border-l red + red border variant" },
+    { "prototype": "is-waived", "design_system": "opacity-60 + line-through + badge-gray" }
+  ],
+  "tokens_to_resolve": ["spacing", "color", "typography", "radius", "shadow"]
+}

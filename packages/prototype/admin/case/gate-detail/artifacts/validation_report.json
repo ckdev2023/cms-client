@@ -1,0 +1,10 @@
+{
+  "status": "reviewed",
+  "blocking_issues": [],
+  "warnings": [
+    "detail.html uses data-include-html for section loading; auto-parser only captured shell regions; all 10 tab sections were manually reviewed against P0-CONTRACT-DETAIL",
+    "case-detail.css contains extensive tab-specific styles; must be decomposed into scoped styles per Vue tab component",
+    "6 sample datasets in case-detail-config.js drive the demo; Vue fixtures must replicate all 6 scenarios",
+    "documents tab status enum must align with documents/ module P0 contract §6.4 mapping: idle→pending, submitted→uploaded_reviewing, reviewed/done→approved"
+  ]
+}

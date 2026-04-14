@@ -1,0 +1,26 @@
+{
+  "page_name": "case_create",
+  "regions": [
+    { "id": "shell-nav", "selector": ".side-nav, .mobile-nav, .topbar", "role": "navigation" },
+    { "id": "page-header", "selector": "#main > .mb-8 (breadcrumb + title + chips)", "role": "header" },
+    { "id": "source-context-bar", "selector": "#sourceContextBar", "role": "card_list" },
+    { "id": "stepper", "selector": ".wizard-steps", "role": "form" },
+    { "id": "step1-business-form", "selector": ".apple-card (template + type + title)", "role": "form" },
+    { "id": "step2-parties", "selector": ".apple-card (primary applicant + related parties + requirements)", "role": "form" },
+    { "id": "step3-assignment", "selector": ".apple-card (group + owner + deadline + amount + auto actions)", "role": "form" },
+    { "id": "step4-summary", "selector": ".apple-card (review summary + creation checklist)", "role": "form" },
+    { "id": "footer-toolbar", "selector": ".toolbar-footer", "role": "footer" },
+    { "id": "customer-modal", "selector": "#caseCustomerModal", "role": "modal" },
+    { "id": "customer-modal-form", "selector": "#caseCustomerModalForm", "role": "form" },
+    { "id": "customer-modal-error", "selector": "#caseCustomerModalError", "role": "error_state" }
+  ],
+  "repeat_patterns": [
+    { "selector": ".wizard-step-item", "count": 4, "suggest_component": "WizardStepItem" },
+    { "selector": ".template-card", "count": 2, "suggest_component": "TemplateCard" },
+    { "selector": ".summary-box", "count": 17, "suggest_component": "SummaryBox" },
+    { "selector": ".section-stack", "count": 17, "suggest_component": "SectionStack" },
+    { "selector": ".field-grid.two", "count": 4, "suggest_component": "FieldGrid" },
+    { "selector": ".apple-label + .apple-input", "count": 20, "suggest_component": "FormField" },
+    { "selector": ".summary-grid > .summary-label + .summary-value", "count": 11, "suggest_component": "SummaryRow" }
+  ]
+}

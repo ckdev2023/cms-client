@@ -1,0 +1,47 @@
+{
+  "page_component": "CaseListView",
+  "candidates": [
+    {
+      "name": "CaseSummaryCards",
+      "source_selector": ".grid.grid-cols-1 > .apple-card.summary-card",
+      "repeatable": true,
+      "props_hint": ["label", "value", "hint", "variant"]
+    },
+    {
+      "name": "CaseFilterToolbar",
+      "source_selector": ".toolbar-grid",
+      "repeatable": false,
+      "props_hint": ["stage", "owner", "group", "risk", "validation", "searchQuery"]
+    },
+    {
+      "name": "CaseTable",
+      "source_selector": ".apple-table",
+      "repeatable": false,
+      "props_hint": ["cases", "selectedIds", "sortKey", "sortDirection"]
+    },
+    {
+      "name": "CaseTableRow",
+      "source_selector": "#caseTableBody > tr",
+      "repeatable": true,
+      "props_hint": ["caseId", "title", "stage", "applicant", "type", "owner", "deadline", "billing", "validation"]
+    },
+    {
+      "name": "StatusPill",
+      "source_selector": ".status-pill",
+      "repeatable": true,
+      "props_hint": ["label", "variant"]
+    },
+    {
+      "name": "CreationFlashBanner",
+      "source_selector": "#creationFlashBanner",
+      "repeatable": false,
+      "props_hint": ["caseTitle", "caseId", "visible"]
+    },
+    {
+      "name": "ViewSwitcher",
+      "source_selector": ".segmented-control",
+      "repeatable": false,
+      "props_hint": ["activeView"]
+    }
+  ]
+}

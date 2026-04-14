@@ -1,0 +1,31 @@
+{
+  "interactions": [
+    { "selector": "[data-filter=status]", "event": "change", "intent": "filter_by_status" },
+    { "selector": "[data-filter=case]", "event": "change", "intent": "filter_by_case" },
+    { "selector": "[data-filter=provider]", "event": "change", "intent": "filter_by_provider" },
+    { "selector": "#docSearchInput", "event": "input", "intent": "search_documents" },
+    { "selector": "[data-action=reset-filters]", "event": "click", "intent": "reset_all_filters" },
+    { "selector": "[data-action=filter-by-card]", "event": "click", "intent": "filter_by_summary_card" },
+    { "selector": "#selectAllDocs", "event": "change", "intent": "toggle_select_all" },
+    { "selector": "[data-doc-select]", "event": "change", "intent": "toggle_row_select" },
+    { "selector": "#bulkClearBtn", "event": "click", "intent": "clear_selection" },
+    { "selector": "#bulkRemindBtn", "event": "click", "intent": "bulk_remind" },
+    { "selector": "#bulkApproveBtn", "event": "click", "intent": "bulk_approve" },
+    { "selector": "#bulkWaiveBtn", "event": "click", "intent": "bulk_waive_open_modal" },
+    { "selector": "[data-action=open-register-modal]", "event": "click", "intent": "open_register_modal" },
+    { "selector": "[data-action=close-register-modal]", "event": "click", "intent": "close_register_modal" },
+    { "selector": "#registerConfirmBtn", "event": "click", "intent": "submit_register" },
+    { "selector": "#registerRelativePath", "event": "input", "intent": "validate_relative_path" },
+    { "selector": "#approveConfirmBtn", "event": "click", "intent": "confirm_approve" },
+    { "selector": "[data-action=close-approve-modal]", "event": "click", "intent": "close_approve_modal" },
+    { "selector": "#rejectConfirmBtn", "event": "click", "intent": "confirm_reject" },
+    { "selector": "[data-action=close-reject-modal]", "event": "click", "intent": "close_reject_modal" },
+    { "selector": "#waiveConfirmBtn", "event": "click", "intent": "confirm_waive" },
+    { "selector": "[data-action=close-waive-modal]", "event": "click", "intent": "close_waive_modal" },
+    { "selector": "#waiveReasonSelect", "event": "change", "intent": "toggle_waive_note_required" },
+    { "selector": "#referenceConfirmBtn", "event": "click", "intent": "confirm_reference" },
+    { "selector": "[data-action=close-reference-modal]", "event": "click", "intent": "close_reference_modal" },
+    { "selector": "[data-action=close-risk-panel]", "event": "click", "intent": "close_risk_panel" },
+    { "selector": "[data-action=copy-path]", "event": "click", "intent": "copy_relative_path" }
+  ]
+}

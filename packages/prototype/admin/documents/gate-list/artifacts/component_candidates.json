@@ -1,0 +1,83 @@
+{
+  "page_component": "DocumentListView",
+  "candidates": [
+    {
+      "name": "DocumentListHeader",
+      "source_selector": "sections/page-header.html",
+      "repeatable": false,
+      "props_hint": ["title", "subtitle", "registerAction", "bulkRemindAction"]
+    },
+    {
+      "name": "DocumentSummaryCards",
+      "source_selector": "sections/summary-cards.html",
+      "repeatable": false,
+      "props_hint": ["reviewingCount", "missingCount", "expiredCount", "sharedExpiryCount"]
+    },
+    {
+      "name": "DocumentSummaryCard",
+      "source_selector": ".summary-card",
+      "repeatable": true,
+      "props_hint": ["label", "count", "hint", "variant", "filterAction"]
+    },
+    {
+      "name": "DocumentListFilters",
+      "source_selector": "sections/filters-toolbar.html",
+      "repeatable": false,
+      "props_hint": ["statusFilter", "caseFilter", "providerFilter", "searchQuery", "resetAction"]
+    },
+    {
+      "name": "DocumentTable",
+      "source_selector": "sections/documents-table.html",
+      "repeatable": false,
+      "props_hint": ["rows", "sortField", "sortOrder", "selectAll", "selectedIds"]
+    },
+    {
+      "name": "DocumentTableRow",
+      "source_selector": "tr[data-doc-id]",
+      "repeatable": true,
+      "props_hint": ["docName", "caseName", "provider", "status", "deadline", "lastReminder", "relativePath", "selected", "selectable"]
+    },
+    {
+      "name": "DocumentBulkActionBar",
+      "source_selector": "#bulkActionBar",
+      "repeatable": false,
+      "props_hint": ["selectedCount", "bulkRemindAction", "bulkApproveAction", "bulkWaiveAction", "clearAction"]
+    },
+    {
+      "name": "RegisterDocumentModal",
+      "source_selector": "sections/register-document-modal.html",
+      "repeatable": false,
+      "props_hint": ["caseSelect", "docItemSelect", "relativePath", "fileName", "versionAuto", "confirmAction"]
+    },
+    {
+      "name": "ReviewActionsPanel",
+      "source_selector": "sections/review-actions-panel.html",
+      "repeatable": false,
+      "props_hint": ["docName", "approveAction", "rejectAction", "rejectReason"]
+    },
+    {
+      "name": "WaiveReasonModal",
+      "source_selector": "sections/waive-modal.html",
+      "repeatable": false,
+      "props_hint": ["docLabel", "reasonCode", "reasonNote", "confirmAction"]
+    },
+    {
+      "name": "ReferenceVersionModal",
+      "source_selector": "sections/reference-version-modal.html",
+      "repeatable": false,
+      "props_hint": ["docLabel", "candidates", "selectedCandidate", "confirmAction"]
+    },
+    {
+      "name": "SharedExpiryRiskPanel",
+      "source_selector": "sections/risk-log-panel.html",
+      "repeatable": false,
+      "props_hint": ["riskItems", "affectedCases", "suggestedActions"]
+    },
+    {
+      "name": "DocumentPagination",
+      "source_selector": "#docPagination",
+      "repeatable": false,
+      "props_hint": ["currentPage", "totalPages", "pageSize", "totalCount"]
+    }
+  ]
+}

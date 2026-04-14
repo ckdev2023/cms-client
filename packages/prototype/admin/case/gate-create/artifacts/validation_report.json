@@ -1,0 +1,8 @@
+{
+  "status": "reviewed",
+  "blocking_issues": [],
+  "warnings": [
+    "case-create.css defines custom wizard/template/section/summary styles that must map to Vue scoped styles or shared classes",
+    "customer modal duplicate-hit confirmation state is controlled by JS view-model; must be replicated in Vue reactive model"
+  ]
+}

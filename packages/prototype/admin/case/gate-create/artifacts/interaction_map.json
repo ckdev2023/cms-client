@@ -1,0 +1,22 @@
+{
+  "interactions": [
+    { "selector": ".wizard-step-item", "event": "click", "intent": "navigate_to_step" },
+    { "selector": ".template-card", "event": "click", "intent": "select_template" },
+    { "selector": "#primaryModalBtn", "event": "click", "intent": "open_customer_modal_primary" },
+    { "selector": "#relatedModalBtn", "event": "click", "intent": "open_customer_modal_related" },
+    { "selector": "#caseCustomerModalSave", "event": "click", "intent": "save_quick_customer" },
+    { "selector": "#caseCustomerModal [data-close]", "event": "click", "intent": "close_customer_modal" },
+    { "selector": ".toolbar-footer .btn-secondary (back)", "event": "click", "intent": "go_previous_step" },
+    { "selector": ".toolbar-footer .btn-primary (next)", "event": "click", "intent": "go_next_step" },
+    { "selector": ".toolbar-footer .btn-primary (create)", "event": "click", "intent": "submit_create_case" },
+    { "selector": "select[applicationType]", "event": "change", "intent": "set_application_type" },
+    { "selector": "input[caseTitle]", "event": "input", "intent": "set_case_title" },
+    { "selector": "select[group]", "event": "change", "intent": "set_group" },
+    { "selector": "select[owner]", "event": "change", "intent": "set_owner" },
+    { "selector": "input[deadline]", "event": "change", "intent": "set_deadline" },
+    { "selector": "input[contractAmount]", "event": "input", "intent": "set_contract_amount" },
+    { "selector": "checkbox[autoChecklist]", "event": "change", "intent": "toggle_auto_checklist" },
+    { "selector": "checkbox[autoTasks]", "event": "change", "intent": "toggle_auto_tasks" },
+    { "selector": "duplicate-confirm-btn", "event": "click", "intent": "confirm_duplicate_continue" }
+  ]
+}

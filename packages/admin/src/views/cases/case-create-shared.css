@@ -1,0 +1,76 @@
+.cc__title {
+  margin: 0 0 16px;
+  font-size: 18px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+}
+
+.cc__subtitle {
+  margin: 20px 0 8px;
+  font-size: 15px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+}
+
+.cc__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.cc__fields--3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.cc__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cc__field--end {
+  align-self: end;
+}
+
+.cc__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-2);
+}
+
+.cc__input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-default);
+  font: inherit;
+  font-size: var(--font-size-base);
+  color: var(--color-text-1);
+  background: var(--color-bg-1);
+  transition: border-color var(--transition-normal);
+}
+
+.cc__input:focus {
+  outline: none;
+  border-color: var(--color-primary-6);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+.cc__input::placeholder {
+  color: var(--color-text-placeholder);
+}
+
+.cc__input--select {
+  appearance: none;
+  cursor: pointer;
+}
+
+.cc__hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+
+.cc__muted {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
+}

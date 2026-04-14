@@ -34,7 +34,7 @@ const casesSummary = computed(() =>
 const detailHref = computed(() => `#/customers/${props.customer.id}`);
 const casesHref = computed(() => `#/cases?customerId=${props.customer.id}`);
 const createCaseHref = computed(
-  () => `#/cases?customerId=${props.customer.id}&mode=single`,
+  () => `#/cases/create?customerId=${props.customer.id}`,
 );
 </script>
 

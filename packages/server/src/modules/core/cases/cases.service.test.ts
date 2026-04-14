@@ -1052,6 +1052,8 @@ void test("updatePostApprovalStage: writes metadata + timeline", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("from billing_records") && sql.includes("尾款"))
+      return ok();
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
@@ -1114,6 +1116,128 @@ void test("updatePostApprovalStage: stamps overseas_visa_start_at on first entry
   assert.equal(updateCall.params[2], "overseas_visa_applying");
   assert.equal(updateCall.params[3], true);
   assert.equal(updateCall.params[4], false);
+});
+
+void test("updatePostApprovalStage: blocks coe_sent when final payment gate is block", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      return ok([
+        {
+          amount_due: "250000",
+          status: "partial",
+          milestone_name: "尾款",
+          gate_effect_mode: "block",
+        },
+      ]);
+    }
+    if (
+      sql.includes("from payment_records pr") &&
+      sql.includes("billing_records br")
+    ) {
+      return ok([{ total_received: "100000" }]);
+    }
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S8" })]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).updatePostApprovalStage(makeCtx(), CASE_ID, {
+        stage: "coe_sent",
+      }),
+    /Current billing gate blocks COE sending/,
+  );
+});
+
+void test("updatePostApprovalStage: requires billing risk ack for warn gate", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      return ok([
+        {
+          amount_due: "250000",
+          status: "partial",
+          milestone_name: "尾款",
+          gate_effect_mode: "warn",
+        },
+      ]);
+    }
+    if (
+      sql.includes("from payment_records pr") &&
+      sql.includes("billing_records br")
+    ) {
+      return ok([{ total_received: "100000" }]);
+    }
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([
+        makeCaseRow({ status: "S8", billing_risk_acknowledged_at: null }),
+      ]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).updatePostApprovalStage(makeCtx(), CASE_ID, {
+        stage: "coe_sent",
+      }),
+    /Please acknowledge billing risk before sending COE/,
+  );
+});
+
+void test("updatePostApprovalStage: allows coe_sent for warn gate after billing risk ack", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      return ok([
+        {
+          amount_due: "250000",
+          status: "partial",
+          milestone_name: "尾款",
+          gate_effect_mode: "warn",
+        },
+      ]);
+    }
+    if (
+      sql.includes("from payment_records pr") &&
+      sql.includes("billing_records br")
+    ) {
+      return ok([{ total_received: "100000" }]);
+    }
+    if (sql.includes("update cases") && sql.includes("metadata")) {
+      return ok([
+        makeCaseRow({
+          post_approval_stage: "coe_sent",
+          metadata: { post_approval_stage: "coe_sent" },
+          billing_risk_acknowledged_at: "2026-04-10T00:00:00.000Z",
+        }),
+      ]);
+    }
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([
+        makeCaseRow({
+          status: "S8",
+          billing_risk_acknowledged_at: "2026-04-10T00:00:00.000Z",
+        }),
+      ]);
+    }
+    return ok();
+  });
+
+  const updated = await svc(pool, makeTemplates()).updatePostApprovalStage(
+    makeCtx(),
+    CASE_ID,
+    { stage: "coe_sent" },
+  );
+
+  assert.equal(updated.postApprovalStage, "coe_sent");
+  assert.equal(
+    calls.filter((call) => call.sql.includes("insert into timeline_logs"))
+      .length,
+    1,
+  );
 });
 
 void test("updatePostApprovalStage: rejects invalid stage", async () => {

@@ -1,0 +1,32 @@
+{
+  "page_name": "case_detail",
+  "regions": [
+    { "id": "shell-nav", "selector": ".side-nav, .mobile-nav, .topbar", "role": "navigation" },
+    { "id": "detail-header", "selector": "sections/detail-header.html", "role": "header" },
+    { "id": "readonly-banner", "selector": "sections/detail-readonly-banner.html", "role": "card_list" },
+    { "id": "tab-navigation", "selector": "sections/detail-tabs.html", "role": "navigation" },
+    { "id": "tab-overview", "selector": "sections/detail-overview.html", "role": "card_list" },
+    { "id": "tab-info", "selector": "sections/detail-info.html", "role": "form" },
+    { "id": "tab-documents", "selector": "sections/detail-documents.html", "role": "data_list" },
+    { "id": "tab-forms", "selector": "sections/detail-forms.html", "role": "data_list" },
+    { "id": "tab-tasks", "selector": "sections/detail-tasks.html", "role": "data_list" },
+    { "id": "tab-deadlines", "selector": "sections/detail-deadlines.html", "role": "data_list" },
+    { "id": "tab-validation", "selector": "sections/detail-validation.html", "role": "form" },
+    { "id": "tab-billing", "selector": "sections/detail-billing.html", "role": "data_list" },
+    { "id": "tab-messages", "selector": "sections/detail-messages.html", "role": "form" },
+    { "id": "tab-log", "selector": "sections/detail-log.html", "role": "data_list" },
+    { "id": "risk-confirmation-modal", "selector": "sections/detail-risk-confirmation.html", "role": "modal" },
+    { "id": "toast", "selector": "sections/toast.html", "role": "card_list" }
+  ],
+  "repeat_patterns": [
+    { "selector": ".tab-btn", "count": 10, "suggest_component": "TabButton" },
+    { "selector": ".summary-card (overview)", "count": 4, "suggest_component": "OverviewSummaryCard" },
+    { "selector": "document-row (per provider group)", "count": "N", "suggest_component": "DocumentRow" },
+    { "selector": "task-row", "count": "N", "suggest_component": "TaskRow" },
+    { "selector": "deadline-item", "count": 4, "suggest_component": "DeadlineItem" },
+    { "selector": "validation-item", "count": "N", "suggest_component": "ValidationItem" },
+    { "selector": "billing-node-row", "count": "N", "suggest_component": "BillingNodeRow" },
+    { "selector": "message-item", "count": "N", "suggest_component": "MessageItem" },
+    { "selector": "log-entry", "count": "N", "suggest_component": "LogEntry" }
+  ]
+}

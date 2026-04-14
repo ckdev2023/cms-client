@@ -54,6 +54,7 @@ defineEmits<{
       </div>
 
       <SearchField
+        class="customer-filters__search"
         :model-value="search ?? ''"
         :placeholder="t('customers.list.searchPlaceholder')"
         variant="inline"
@@ -161,6 +162,12 @@ defineEmits<{
   flex-wrap: wrap;
   align-items: center;
   gap: 12px;
+}
+
+.customer-filters__search {
+  flex: 1 1 420px;
+  min-width: min(420px, 100%);
+  max-width: 520px;
 }
 
 .customer-filters__selects {
