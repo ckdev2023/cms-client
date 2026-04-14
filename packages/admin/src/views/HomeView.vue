@@ -1,26 +1,69 @@
 <script setup lang="ts">
-import { useCounterStore } from "../store/counter";
+import { useI18n } from "vue-i18n";
+import PageHeader from "../shared/ui/PageHeader.vue";
+import Card from "../shared/ui/Card.vue";
+import Button from "../shared/ui/Button.vue";
+import Chip from "../shared/ui/Chip.vue";
+import SearchField from "../shared/ui/SearchField.vue";
 
-const counter = useCounterStore();
+/**
+ * 共享 UI 组件展示页，用于预览基础组件样式与组合效果。
+ */
+const { t } = useI18n();
 </script>
 
 <template>
-  <a-space direction="vertical" size="large" fill>
-    <a-card title="Admin 基建已就绪">
-      <a-space direction="vertical">
-        <a-typography-paragraph style="margin: 0">
-          Vue 3 + TypeScript + Vite + Vue Router + Pinia + Arco Design Vue
-        </a-typography-paragraph>
-        <a-typography-text type="secondary">
-          用于验证主题最小映射：主色、文本、边框、背景、圆角。
-        </a-typography-text>
-        <a-space>
-          <a-button type="primary" @click="counter.increment"
-            >Count: {{ counter.count }}</a-button
-          >
-          <a-tag>Double: {{ counter.doubled }}</a-tag>
-        </a-space>
-      </a-space>
-    </a-card>
-  </a-space>
+  <div class="foundation-view">
+    <PageHeader
+      :title="t('foundation.title')"
+      :subtitle="t('foundation.subtitle')"
+    />
+
+    <div class="foundation-grid">
+      <Card :title="t('foundation.button')">
+        <div class="showcase-row">
+          <Button variant="filled" tone="primary">
+            {{ t("foundation.buttons.primary") }}
+          </Button>
+          <Button variant="outlined">
+            {{ t("foundation.buttons.outlined") }}
+          </Button>
+          <Button variant="ghost">{{ t("foundation.buttons.ghost") }}</Button>
+        </div>
+      </Card>
+
+      <Card :title="t('foundation.chip')">
+        <div class="showcase-row">
+          <Chip>{{ t("foundation.chips.default") }}</Chip>
+          <Chip tone="primary">{{ t("foundation.chips.primary") }}</Chip>
+          <Chip tone="success" dot>{{ t("foundation.chips.success") }}</Chip>
+          <Chip tone="warning">{{ t("foundation.chips.warning") }}</Chip>
+          <Chip tone="danger">{{ t("foundation.chips.danger") }}</Chip>
+        </div>
+      </Card>
+
+      <Card :title="t('foundation.searchField')">
+        <SearchField :placeholder="t('foundation.searchPlaceholder')" />
+      </Card>
+    </div>
+  </div>
 </template>
+
+<style scoped>
+.foundation-view {
+  display: grid;
+  gap: 24px;
+}
+
+.foundation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.showcase-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+</style>

@@ -220,7 +220,7 @@
     "资料清单按模板切换",
     "跨组建案时显示原因输入",
     "创建成功 banner 与 toast 显示",
-    "customers/index.html 与 admin-prototype.html 新建案件入口改到新路径"
+    "customers/index.html 与 dashboard/index.html 新建案件入口改到新路径"
   ],
   "notes": [
     "create.html 是新增案件的原型入口，index.html 仍保留案件列表页。",

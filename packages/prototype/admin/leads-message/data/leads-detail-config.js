@@ -19,20 +19,21 @@
 var DETAIL_TABS = [
   { key: 'info',       label: '基础信息',   icon: 'identification' },
   { key: 'followups',  label: '跟进记录',   icon: 'chat-alt-2' },
-  { key: 'conversion', label: '转化信息',   icon: 'switch-horizontal' },
+  { key: 'conversion', label: '建档信息',   icon: 'switch-horizontal' },
   { key: 'log',        label: '日志',       icon: 'document-report' },
 ];
 
 /* ------------------------------------------------------------------ */
-/*  LEAD STATUS BADGE  (03 §3.6, shared enum)                          */
+/*  LEAD STATUS BADGE  (03 §3.6, shared enum — aligned with list)      */
 /* ------------------------------------------------------------------ */
 
 var DETAIL_STATUSES = {
-  new:          { label: '新咨询',   badge: 'badge-warning' },
-  following:    { label: '跟进中',   badge: 'badge-primary' },
-  pending_sign: { label: '待签约',   badge: 'badge-purple' },
-  signed:       { label: '已签约',   badge: 'badge-success' },
-  lost:         { label: '已流失',   badge: 'badge-gray' },
+  new:          { label: '新咨询',   badgeClass: 'lead-badge-new',          dotColor: 'warning',  textClass: 'text-amber-600' },
+  following:    { label: '跟进中',   badgeClass: 'lead-badge-following',     dotColor: 'primary',  textClass: 'text-sky-600' },
+  pending_sign: { label: '待签约',   badgeClass: 'lead-badge-pending_sign',  dotColor: 'purple',   textClass: 'text-violet-600' },
+  signed:       { label: '已签约',   badgeClass: 'lead-badge-signed',        dotColor: 'success',  textClass: 'text-emerald-600' },
+  converted_case: { label: '已创建案件', badgeClass: 'lead-badge-signed',    dotColor: 'success',  textClass: 'text-emerald-600' },
+  lost:         { label: '已流失',   badgeClass: 'lead-badge-lost',          dotColor: 'muted',    textClass: 'text-gray-400' },
 };
 
 /* ------------------------------------------------------------------ */
@@ -54,8 +55,28 @@ var LOG_CATEGORIES = [
   { key: 'all',     label: '全部' },
   { key: 'status',  label: '状态变更' },
   { key: 'owner',   label: '人员变更' },
-  { key: 'group',   label: 'Group 变更' },
+  { key: 'group',   label: '所属组变更' },
 ];
+
+/* ------------------------------------------------------------------ */
+/*  EDIT INFO OPTIONS                                                  */
+/* ------------------------------------------------------------------ */
+
+var DETAIL_EDIT_OPTIONS = {
+  sources: ['网站表单', '介绍', '来访', '电话', '其他'],
+  businessTypes: ['高度人才', '技人国', '家族滞在', '设立法人', '永住', '其他'],
+  languages: ['日语', '中文', '英语', '越南语'],
+  owners: [
+    { value: 'suzuki', label: '铃木', initials: '铃', avatarClass: 'bg-sky-100 text-sky-700' },
+    { value: 'tanaka', label: '田中', initials: '田', avatarClass: 'bg-emerald-100 text-emerald-700' },
+    { value: 'sato',   label: '佐藤', initials: '佐', avatarClass: 'bg-amber-100 text-amber-700' },
+  ],
+  groups: [
+    { value: 'tokyo-1', label: '东京一组' },
+    { value: 'tokyo-2', label: '东京二组' },
+    { value: 'osaka', label: '大阪组' },
+  ],
+};
 
 /* ------------------------------------------------------------------ */
 /*  TOAST TEMPLATES                                                    */
@@ -64,8 +85,9 @@ var LOG_CATEGORIES = [
 var DETAIL_TOASTS = {
   followUpAdded:      { title: '跟进已记录（示例）',     desc: '已添加一条 {channel} 跟进记录' },
   taskCreated:        { title: '已创建任务（示例）',     desc: '跟进结论已转为待办任务' },
-  convertCustomer:    { title: '客户已创建（示例）',     desc: '{name} 已转为正式客户，可在客户详情中查看' },
-  convertCase:        { title: '案件已创建（示例）',     desc: '{title} 已创建，可在案件详情中查看' },
+  convertCustomer:    { title: '已建立客户档案（示例）', desc: '{name} 的客户档案已建立，可在客户页面查看' },
+  convertCaseWithCustomer: { title: '已开始建档（示例）', desc: '已建立客户档案，并为 {title} 创建首个案件' },
+  convertCase:        { title: '已创建案件（示例）',     desc: '{title} 已创建，可在案件页面查看' },
   statusChanged:      { title: '状态已更新（示例）',     desc: '已从 {from} 更新为 {to}' },
   infoUpdated:        { title: '信息已更新（示例）',     desc: '基础信息已保存' },
   markedLost:         { title: '已标记流失（示例）',     desc: '该线索已标记为流失，保留历史记录' },
@@ -87,8 +109,8 @@ var BANNERS = {
     type: 'warning',
     bgClass: 'bg-[rgba(245,158,11,0.1)]',
     icon: 'exclamation',
-    text: '该线索已签约但尚未创建客户/案件，请完成转化。',
-    actionLabel: '立即转化',
+    text: '该咨询已签约，请尽快建立客户档案并创建案件。',
+    actionLabel: '立即开始建档',
   },
 };
 
@@ -102,8 +124,8 @@ var BANNERS = {
 var HEADER_BUTTONS = {
   normal:             { convertCustomer: 'enabled',       convertCase: 'enabled',   markLost: 'enabled',  editInfo: 'enabled',  changeStatus: 'enabled' },
   signedNotConverted: { convertCustomer: 'highlighted',   convertCase: 'highlighted', markLost: 'enabled', editInfo: 'enabled',  changeStatus: 'enabled' },
-  convertedCustomer:  { convertCustomer: 'view-customer', convertCase: 'enabled',   markLost: 'hidden',   editInfo: 'disabled', changeStatus: 'hidden' },
-  convertedCase:      { convertCustomer: 'view-customer', convertCase: 'view-case', markLost: 'hidden',   editInfo: 'disabled', changeStatus: 'hidden' },
+  convertedCustomer:  { convertCustomer: 'view-customer', convertCase: 'enabled',   markLost: 'hidden',   editInfo: 'enabled',  changeStatus: 'hidden' },
+  convertedCase:      { convertCustomer: 'view-customer', convertCase: 'view-case', markLost: 'hidden',   editInfo: 'enabled',  changeStatus: 'hidden' },
   lost:               { convertCustomer: 'disabled',      convertCase: 'disabled',  markLost: 'hidden',   editInfo: 'disabled', changeStatus: 'hidden' },
 };
 
@@ -129,8 +151,8 @@ var DETAIL_SAMPLES = {
     name: '李华',
     status: 'following',
     ownerId: 'tanaka',
-    ownerLabel: 'Tanaka',
-    ownerInitials: 'T',
+    ownerLabel: '田中',
+    ownerInitials: '田',
     ownerAvatarClass: 'bg-emerald-100 text-emerald-700',
     groupId: 'tokyo-1',
     groupLabel: '东京一组',
@@ -147,21 +169,12 @@ var DETAIL_SAMPLES = {
       referrer: '佐藤弁護士',
       businessType: '家族滞在',
       group: '东京一组',
-      owner: 'Tanaka',
+      owner: '田中',
+      language: '中文',
       note: '配偶在日永住者，希望尽快提交认定申请。首选语言中文。',
     },
 
     followups: [
-      {
-        channel: 'phone',
-        channelLabel: '电话',
-        summary: '致电确认意向与基本资料情况，客户表示配偶在日居住 5 年以上。',
-        conclusion: '意向明确，进入资料准备阶段',
-        nextAction: '邮件发送材料清单',
-        nextFollowUp: '2026-04-12',
-        time: '2026/04/08 14:30',
-        operator: 'Tanaka',
-      },
       {
         channel: 'email',
         channelLabel: '邮件',
@@ -170,7 +183,17 @@ var DETAIL_SAMPLES = {
         nextAction: '跟进材料上传情况',
         nextFollowUp: '2026-04-15',
         time: '2026/04/09 10:00',
-        operator: 'Tanaka',
+        operator: '田中',
+      },
+      {
+        channel: 'phone',
+        channelLabel: '电话',
+        summary: '致电确认意向与基本资料情况，客户表示配偶在日居住 5 年以上。',
+        conclusion: '意向明确，进入资料准备阶段',
+        nextAction: '邮件发送材料清单',
+        nextFollowUp: '2026-04-12',
+        time: '2026/04/08 14:30',
+        operator: '田中',
       },
       {
         channel: 'meeting',
@@ -180,7 +203,7 @@ var DETAIL_SAMPLES = {
         nextAction: '电话确认意向',
         nextFollowUp: '2026-04-08',
         time: '2026/04/05 15:00',
-        operator: 'Tanaka',
+        operator: '田中',
       },
     ],
 
@@ -192,10 +215,13 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'Tanaka', time: '2026/04/05 16:00', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/04/05 10:00', fromValue: 'Suzuki', toValue: 'Tanaka',   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'System', time: '2026/04/04 09:30', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/04/04 09:30', fromValue: '—',       toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '田中',   time: '2026/04/08 14:30', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/07 09:00', fromValue: '田中',   toValue: '铃木',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/06 14:00', fromValue: '铃木',   toValue: '田中',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/04/06 10:00', fromValue: '东京一组', toValue: '东京二组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '田中',   time: '2026/04/05 16:00', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/05 10:00', fromValue: '—',       toValue: '铃木',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/04/04 09:30', fromValue: '—',       toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
     ],
   },
 
@@ -205,8 +231,8 @@ var DETAIL_SAMPLES = {
     name: '佐藤 美咲',
     status: 'lost',
     ownerId: 'tanaka',
-    ownerLabel: 'Tanaka',
-    ownerInitials: 'T',
+    ownerLabel: '田中',
+    ownerInitials: '田',
     ownerAvatarClass: 'bg-emerald-100 text-emerald-700',
     groupId: 'tokyo-1',
     groupLabel: '东京一组',
@@ -223,7 +249,8 @@ var DETAIL_SAMPLES = {
       referrer: '',
       businessType: '永住',
       group: '东京一组',
-      owner: 'Tanaka',
+      owner: '田中',
+      language: '日语',
       note: '曾咨询永住申请。三次跟进未回复后标记为流失。',
     },
 
@@ -236,7 +263,7 @@ var DETAIL_SAMPLES = {
         nextAction: '',
         nextFollowUp: '',
         time: '2026/03/28 15:00',
-        operator: 'Tanaka',
+        operator: '田中',
       },
       {
         channel: 'phone',
@@ -246,7 +273,7 @@ var DETAIL_SAMPLES = {
         nextAction: '一周后再次致电',
         nextFollowUp: '2026-03-28',
         time: '2026/03/21 10:30',
-        operator: 'Tanaka',
+        operator: '田中',
       },
       {
         channel: 'phone',
@@ -256,7 +283,7 @@ var DETAIL_SAMPLES = {
         nextAction: '一周后再致电确认',
         nextFollowUp: '2026-03-21',
         time: '2026/03/14 14:00',
-        operator: 'Tanaka',
+        operator: '田中',
       },
     ],
 
@@ -268,11 +295,13 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'Tanaka', time: '2026/03/28 15:30', fromValue: '跟进中', toValue: '已流失',   chipClass: 'bg-gray-200 text-gray-600' },
-      { type: 'status', operator: 'Tanaka', time: '2026/03/14 14:30', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'status', operator: 'System', time: '2026/03/14 09:00', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/03/14 09:00', fromValue: '—',       toValue: 'Tanaka',   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/03/14 09:00', fromValue: '—',       toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '田中',   time: '2026/03/28 15:30', fromValue: '跟进中', toValue: '已流失',   chipClass: 'bg-gray-200 text-gray-600' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/21 09:00', fromValue: '铃木',   toValue: '田中',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/18 10:00', fromValue: '大阪组', toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '铃木',   time: '2026/03/14 14:30', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'status', operator: '系统',   time: '2026/03/14 09:00', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/14 09:00', fromValue: '—',       toValue: '铃木',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/14 09:00', fromValue: '—',       toValue: '大阪组',   chipClass: 'bg-violet-100 text-violet-700' },
     ],
   },
 
@@ -282,8 +311,8 @@ var DETAIL_SAMPLES = {
     name: '陈 大伟',
     status: 'signed',
     ownerId: 'suzuki',
-    ownerLabel: 'Suzuki',
-    ownerInitials: 'S',
+    ownerLabel: '铃木',
+    ownerInitials: '铃',
     ownerAvatarClass: 'bg-sky-100 text-sky-700',
     groupId: 'tokyo-1',
     groupLabel: '东京一组',
@@ -296,11 +325,12 @@ var DETAIL_SAMPLES = {
       name: '陈 大伟',
       phone: '080-9999-0000',
       email: 'chen.dw@email.com',
-      source: 'Web',
+      source: '网站表单',
       referrer: '',
       businessType: '家族滞在',
       group: '东京一组',
-      owner: 'Suzuki',
+      owner: '铃木',
+      language: '中文',
       note: '已确认签约意向，合同已签。待创建客户档案与案件。',
     },
 
@@ -313,7 +343,7 @@ var DETAIL_SAMPLES = {
         nextAction: '创建客户档案并建案',
         nextFollowUp: '2026-04-09',
         time: '2026/04/05 14:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
       {
         channel: 'phone',
@@ -323,7 +353,7 @@ var DETAIL_SAMPLES = {
         nextAction: '安排面谈',
         nextFollowUp: '2026-04-05',
         time: '2026/04/02 11:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
       {
         channel: 'email',
@@ -333,7 +363,7 @@ var DETAIL_SAMPLES = {
         nextAction: '三天后致电跟进',
         nextFollowUp: '2026-04-02',
         time: '2026/03/30 10:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
     ],
 
@@ -345,12 +375,14 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'Suzuki', time: '2026/04/05 15:00', fromValue: '待签约', toValue: '已签约',   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'Suzuki', time: '2026/04/02 11:30', fromValue: '跟进中', toValue: '待签约',   chipClass: 'bg-violet-100 text-violet-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/03/30 09:00', fromValue: 'Tanaka', toValue: 'Suzuki',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'status', operator: 'Tanaka', time: '2026/03/29 10:00', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/03/28 09:00', fromValue: '—',       toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
-      { type: 'status', operator: 'System', time: '2026/03/28 09:00', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'status', operator: '铃木',   time: '2026/04/05 15:00', fromValue: '待签约', toValue: '已签约',   chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'status', operator: '铃木',   time: '2026/04/02 11:30', fromValue: '跟进中', toValue: '待签约',   chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/30 09:00', fromValue: '田中',   toValue: '铃木',     chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/30 09:00', fromValue: '大阪组', toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '田中',   time: '2026/03/29 10:00', fromValue: '新咨询', toValue: '跟进中',   chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/28 09:00', fromValue: '—',       toValue: '田中',     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/28 09:00', fromValue: '—',       toValue: '大阪组',   chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/03/28 09:00', fromValue: '—',       toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
     ],
   },
 
@@ -360,8 +392,8 @@ var DETAIL_SAMPLES = {
     name: '王 明',
     status: 'signed',
     ownerId: 'suzuki',
-    ownerLabel: 'Suzuki',
-    ownerInitials: 'S',
+    ownerLabel: '铃木',
+    ownerInitials: '铃',
     ownerAvatarClass: 'bg-sky-100 text-sky-700',
     groupId: 'tokyo-2',
     groupLabel: '东京二组',
@@ -378,8 +410,9 @@ var DETAIL_SAMPLES = {
       referrer: '山田商事',
       businessType: '技人国',
       group: '东京二组',
-      owner: 'Suzuki',
-      note: '已转为正式客户。技人国更新申请，公司 BlueWave。',
+      owner: '铃木',
+      language: '中文',
+      note: '已建立客户档案。技人国更新申请，公司 BlueWave。',
     },
 
     followups: [
@@ -391,7 +424,7 @@ var DETAIL_SAMPLES = {
         nextAction: '创建技人国更新案件',
         nextFollowUp: '2026-04-03',
         time: '2026/04/01 14:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
       {
         channel: 'phone',
@@ -401,7 +434,7 @@ var DETAIL_SAMPLES = {
         nextAction: '安排面谈签约',
         nextFollowUp: '2026-04-01',
         time: '2026/03/28 11:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
       {
         channel: 'email',
@@ -411,7 +444,7 @@ var DETAIL_SAMPLES = {
         nextAction: '致电详谈',
         nextFollowUp: '2026-03-28',
         time: '2026/03/25 09:30',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
     ],
 
@@ -423,21 +456,21 @@ var DETAIL_SAMPLES = {
         group: '东京二组',
         link: '../customers/index.html',
         convertedAt: '2026/04/02',
-        convertedBy: 'Suzuki',
+        convertedBy: '铃木',
       },
       convertedCase: null,
       conversions: [
-        { type: 'customer', id: 'CUS-2026-0195', label: '王 明 → 客户建档', time: '2026/04/02', operator: 'Suzuki' },
+        { type: 'customer', id: 'CUS-2026-0195', label: '王 明 → 建立客户档案', time: '2026/04/02', operator: '铃木' },
       ],
     },
 
     log: [
-      { type: 'status', operator: 'System', time: '2026/04/02 10:00', fromValue: '已签约',   toValue: '已转客户（CUS-2026-0195）', chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'Suzuki', time: '2026/04/01 15:00', fromValue: '待签约',   toValue: '已签约',   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'Suzuki', time: '2026/03/28 11:30', fromValue: '跟进中',   toValue: '待签约',   chipClass: 'bg-violet-100 text-violet-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/03/25 09:00', fromValue: '—',         toValue: 'Suzuki',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/03/25 09:00', fromValue: '—',         toValue: '东京二组', chipClass: 'bg-violet-100 text-violet-700' },
-      { type: 'status', operator: 'System', time: '2026/03/25 09:00', fromValue: '—',         toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/02 10:00', fromValue: '已签约',   toValue: '已建客户档案（CUS-2026-0195）', chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'status', operator: '铃木',   time: '2026/04/01 15:00', fromValue: '待签约',   toValue: '已签约', chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'status', operator: '铃木',   time: '2026/03/28 11:30', fromValue: '跟进中',   toValue: '待签约', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/25 09:00', fromValue: '—',         toValue: '铃木',   chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/25 09:00', fromValue: '—',         toValue: '东京二组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/03/25 09:00', fromValue: '—',         toValue: '新咨询', chipClass: 'bg-amber-100 text-amber-700' },
     ],
   },
 
@@ -445,10 +478,10 @@ var DETAIL_SAMPLES = {
   'converted-case': {
     id: 'LEAD-2026-0015',
     name: '王 明',
-    status: 'signed',
+    status: 'converted_case',
     ownerId: 'suzuki',
-    ownerLabel: 'Suzuki',
-    ownerInitials: 'S',
+    ownerLabel: '铃木',
+    ownerInitials: '铃',
     ownerAvatarClass: 'bg-sky-100 text-sky-700',
     groupId: 'tokyo-2',
     groupLabel: '东京二组',
@@ -465,8 +498,9 @@ var DETAIL_SAMPLES = {
       referrer: '山田商事',
       businessType: '技人国',
       group: '东京二组',
-      owner: 'Suzuki',
-      note: '已转客户并建案。技人国更新，CAS-2026-0210 进行中。',
+      owner: '铃木',
+      language: '中文',
+      note: '已建立客户档案并创建案件。技人国更新，CAS-2026-0210 办理中。',
     },
 
     followups: [
@@ -478,7 +512,7 @@ var DETAIL_SAMPLES = {
         nextAction: '创建技人国更新案件',
         nextFollowUp: '2026-04-03',
         time: '2026/04/01 14:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
       {
         channel: 'phone',
@@ -488,7 +522,7 @@ var DETAIL_SAMPLES = {
         nextAction: '安排面谈签约',
         nextFollowUp: '2026-04-01',
         time: '2026/03/28 11:00',
-        operator: 'Suzuki',
+        operator: '铃木',
       },
     ],
 
@@ -500,7 +534,7 @@ var DETAIL_SAMPLES = {
         group: '东京二组',
         link: '../customers/index.html',
         convertedAt: '2026/04/02',
-        convertedBy: 'Suzuki',
+        convertedBy: '铃木',
       },
       convertedCase: {
         id: 'CAS-2026-0210',
@@ -509,21 +543,21 @@ var DETAIL_SAMPLES = {
         group: '东京二组',
         link: '../case/detail.html',
         convertedAt: '2026/04/03',
-        convertedBy: 'Suzuki',
+        convertedBy: '铃木',
       },
       conversions: [
-        { type: 'customer', id: 'CUS-2026-0195', label: '王 明 → 客户建档',          time: '2026/04/02', operator: 'Suzuki' },
-        { type: 'case',     id: 'CAS-2026-0210', label: '王 明 技人国更新 → 案件创建', time: '2026/04/03', operator: 'Suzuki' },
+        { type: 'customer', id: 'CUS-2026-0195', label: '王 明 → 建立客户档案',      time: '2026/04/02', operator: '铃木' },
+        { type: 'case',     id: 'CAS-2026-0210', label: '王 明 技人国更新 → 创建案件', time: '2026/04/03', operator: '铃木' },
       ],
     },
 
     log: [
-      { type: 'status', operator: 'System', time: '2026/04/03 10:00', fromValue: '已转客户', toValue: '已转案件（CAS-2026-0210）', chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'System', time: '2026/04/02 10:00', fromValue: '已签约',   toValue: '已转客户（CUS-2026-0195）', chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'status', operator: 'Suzuki', time: '2026/04/01 15:00', fromValue: '待签约',   toValue: '已签约',   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/03/25 09:00', fromValue: '—',         toValue: 'Suzuki',   chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/03/25 09:00', fromValue: '—',         toValue: '东京二组', chipClass: 'bg-violet-100 text-violet-700' },
-      { type: 'status', operator: 'System', time: '2026/03/25 09:00', fromValue: '—',         toValue: '新咨询',   chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/03 10:00', fromValue: '已建客户档案', toValue: '已创建案件（CAS-2026-0210）', chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/02 10:00', fromValue: '已签约',       toValue: '已建客户档案（CUS-2026-0195）', chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'status', operator: '铃木',   time: '2026/04/01 15:00', fromValue: '待签约',       toValue: '已签约', chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/03/25 09:00', fromValue: '—',             toValue: '铃木',   chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'group',  operator: '管理员', time: '2026/03/25 09:00', fromValue: '—',             toValue: '东京二组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/03/25 09:00', fromValue: '—',             toValue: '新咨询', chipClass: 'bg-amber-100 text-amber-700' },
     ],
   },
 
@@ -533,8 +567,8 @@ var DETAIL_SAMPLES = {
     name: '田中 花子',
     status: 'new',
     ownerId: 'sato',
-    ownerLabel: 'Sato',
-    ownerInitials: 'Sa',
+    ownerLabel: '佐藤',
+    ownerInitials: '佐',
     ownerAvatarClass: 'bg-amber-100 text-amber-700',
     groupId: 'osaka',
     groupLabel: '大阪组',
@@ -551,7 +585,8 @@ var DETAIL_SAMPLES = {
       referrer: '',
       businessType: '高度人才',
       group: '大阪组',
-      owner: 'Sato',
+      owner: '佐藤',
+      language: '日语',
       note: '电话号码与已有线索 LEAD-2026-0023 重复，经人工确认后继续创建。',
     },
 
@@ -564,7 +599,7 @@ var DETAIL_SAMPLES = {
         nextAction: '邮件发送高度人才评分表',
         nextFollowUp: '2026-04-14',
         time: '2026/04/09 09:15',
-        operator: 'Sato',
+        operator: '佐藤',
       },
     ],
 
@@ -590,9 +625,9 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'System', time: '2026/04/09 09:15', fromValue: '—',   toValue: '新咨询（去重确认后创建）', chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/04/09 09:15', fromValue: '—',   toValue: 'Sato',                     chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/04/09 09:15', fromValue: '—',   toValue: '大阪组',                   chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/09 09:15', fromValue: '—',   toValue: '新咨询（确认非重复后创建）', chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/09 09:15', fromValue: '—',   toValue: '佐藤',                     chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'group',  operator: '管理员', time: '2026/04/09 09:15', fromValue: '—',   toValue: '大阪组',                   chipClass: 'bg-violet-100 text-violet-700' },
     ],
   },
 
@@ -602,8 +637,8 @@ var DETAIL_SAMPLES = {
     name: '李娜（重复确认）',
     status: 'new',
     ownerId: 'tanaka',
-    ownerLabel: 'Tanaka',
-    ownerInitials: 'T',
+    ownerLabel: '田中',
+    ownerInitials: '田',
     ownerAvatarClass: 'bg-emerald-100 text-emerald-700',
     groupId: 'tokyo-1',
     groupLabel: '东京一组',
@@ -616,11 +651,12 @@ var DETAIL_SAMPLES = {
       name: '李娜（重复确认）',
       phone: '',
       email: 'li.na@email.com',
-      source: 'Web',
+      source: '网站表单',
       referrer: '',
       businessType: '家族滞在',
       group: '东京一组',
-      owner: 'Tanaka',
+      owner: '田中',
+      language: '中文',
       note: '邮箱与已有客户 CUS-2026-0181（李娜）重复，经人工确认后继续创建新线索用于新业务跟进。',
     },
 
@@ -628,12 +664,12 @@ var DETAIL_SAMPLES = {
       {
         channel: 'email',
         channelLabel: '邮件',
-        summary: '收到 Web 表单咨询：家族滞在更新相关问题。邮箱匹配到已有客户。',
+        summary: '收到网站表单咨询：家族滞在更新相关问题。邮箱匹配到已有客户档案。',
         conclusion: '确认为已有客户的新业务咨询',
         nextAction: '致电确认是否为同一人',
         nextFollowUp: '2026-04-13',
         time: '2026/04/09 10:00',
-        operator: 'Tanaka',
+        operator: '田中',
       },
     ],
 
@@ -658,9 +694,9 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'System', time: '2026/04/09 10:00', fromValue: '—',   toValue: '新咨询（去重确认后创建）', chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/04/09 10:00', fromValue: '—',   toValue: 'Tanaka',                   chipClass: 'bg-emerald-100 text-emerald-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/04/09 10:00', fromValue: '—',   toValue: '东京一组',                 chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/09 10:00', fromValue: '—',   toValue: '新咨询（确认非重复后创建）', chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/09 10:00', fromValue: '—',   toValue: '田中',                     chipClass: 'bg-emerald-100 text-emerald-700' },
+      { type: 'group',  operator: '管理员', time: '2026/04/09 10:00', fromValue: '—',   toValue: '东京一组',                 chipClass: 'bg-violet-100 text-violet-700' },
     ],
   },
 
@@ -670,8 +706,8 @@ var DETAIL_SAMPLES = {
     name: 'Michael Thompson',
     status: 'new',
     ownerId: 'suzuki',
-    ownerLabel: 'Suzuki',
-    ownerInitials: 'S',
+    ownerLabel: '铃木',
+    ownerInitials: '铃',
     ownerAvatarClass: 'bg-sky-100 text-sky-700',
     groupId: 'tokyo-1',
     groupLabel: '东京一组',
@@ -684,11 +720,12 @@ var DETAIL_SAMPLES = {
       name: 'Michael Thompson',
       phone: '090-8765-4321',
       email: 'michael.t@email.com',
-      source: 'Web',
+      source: '网站表单',
       referrer: '',
       businessType: '技人国',
       group: '东京一组',
-      owner: 'Suzuki',
+      owner: '铃木',
+      language: '英语',
       note: '刚录入的新线索，尚未开始跟进。',
     },
 
@@ -702,9 +739,9 @@ var DETAIL_SAMPLES = {
     },
 
     log: [
-      { type: 'status', operator: 'System', time: '2026/04/08 15:30', fromValue: '—', toValue: '新咨询', chipClass: 'bg-amber-100 text-amber-700' },
-      { type: 'owner',  operator: 'Admin',  time: '2026/04/08 15:30', fromValue: '—', toValue: 'Suzuki', chipClass: 'bg-sky-100 text-sky-700' },
-      { type: 'group',  operator: 'Admin',  time: '2026/04/08 15:30', fromValue: '—', toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
+      { type: 'status', operator: '系统',   time: '2026/04/08 15:30', fromValue: '—', toValue: '新咨询', chipClass: 'bg-amber-100 text-amber-700' },
+      { type: 'owner',  operator: '管理员', time: '2026/04/08 15:30', fromValue: '—', toValue: '铃木', chipClass: 'bg-sky-100 text-sky-700' },
+      { type: 'group',  operator: '管理员', time: '2026/04/08 15:30', fromValue: '—', toValue: '东京一组', chipClass: 'bg-violet-100 text-violet-700' },
     ],
   },
 };
@@ -715,25 +752,25 @@ var DETAIL_SAMPLES = {
 
 var CONVERSION_MODALS = {
   toCustomer: {
-    title: '转为客户',
-    subtitle: '将此线索转为正式客户档案。Group 默认继承线索归属组。',
+    title: '建立客户档案',
+    subtitle: '根据当前咨询建立客户档案，默认沿用当前所属组。',
     fields: [
       { key: 'name',  label: '客户姓名', prefillFrom: 'info.name',  readonly: true },
       { key: 'phone', label: '电话',     prefillFrom: 'info.phone', readonly: true },
       { key: 'email', label: '邮箱',     prefillFrom: 'info.email', readonly: true },
-      { key: 'group', label: '归属 Group', prefillFrom: 'groupLabel', readonly: false, hint: '默认继承线索 Group（03 §2.2）。如需变更请说明原因。' },
+      { key: 'group', label: '所属组', prefillFrom: 'groupLabel', readonly: false, hint: '默认沿用当前所属组，如需调整请说明原因。' },
     ],
-    confirmLabel: '确认转为客户',
+    confirmLabel: '确认建立客户档案',
     cancelLabel: '取消',
   },
   toCase: {
-    title: '转为案件',
-    subtitle: '为此线索创建案件。主申请人信息将从线索自动预填。',
+    title: '创建案件',
+    subtitle: '为当前咨询创建案件，主申请人信息将自动带入。',
     fields: [
       { key: 'applicant', label: '主申请人', prefillFrom: 'info.name',         readonly: true },
       { key: 'caseType',  label: '案件类型', prefillFrom: 'info.businessType', readonly: false, hint: '选择签证/业务类型' },
       { key: 'owner',     label: '负责人',   prefillFrom: 'ownerLabel',        readonly: false },
-      { key: 'group',     label: '归属 Group', prefillFrom: 'groupLabel',      readonly: false, hint: '默认继承 Customer.group（03 §2.2）' },
+      { key: 'group',     label: '所属组', prefillFrom: 'groupLabel',      readonly: false, hint: '默认沿用客户档案所属组' },
     ],
     confirmLabel: '确认创建案件',
     cancelLabel: '取消',
@@ -744,14 +781,18 @@ var CONVERSION_MODALS = {
 /*  EXPORT                                                             */
 /* ------------------------------------------------------------------ */
 
+var DEMO_NOTICE = '此为高仿真原型，数据为示例，操作不会持久化。';
+
 window.LeadsDetailConfig = {
   DETAIL_TABS: DETAIL_TABS,
   DETAIL_STATUSES: DETAIL_STATUSES,
   FOLLOWUP_CHANNELS: FOLLOWUP_CHANNELS,
   LOG_CATEGORIES: LOG_CATEGORIES,
+  DETAIL_EDIT_OPTIONS: DETAIL_EDIT_OPTIONS,
   DETAIL_TOASTS: DETAIL_TOASTS,
   BANNERS: BANNERS,
   HEADER_BUTTONS: HEADER_BUTTONS,
   DETAIL_SAMPLES: DETAIL_SAMPLES,
   CONVERSION_MODALS: CONVERSION_MODALS,
+  DEMO_NOTICE: DEMO_NOTICE,
 };

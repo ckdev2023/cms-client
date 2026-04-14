@@ -1,0 +1,78 @@
+{
+  "decision": "split",
+  "summary": "将当前 HomeView.vue 的 Foundation 展示内容迁移到 /foundation 路由，/ 首页路由改为加载新建的 DashboardView.vue",
+  "rationale": [
+    "HomeView.vue 当前承载的是 Foundation/设计系统展示页，不是业务仪表盘",
+    "首页 / 路由语义上应该是用户登录后的默认工作台（仪表盘），不应是开发参照页",
+    "Foundation showcase 在开发期仍有价值，但应放到独立路由，避免首页语义混乱",
+    "新建 DashboardView 而非改写 HomeView，减少 git diff 噪音，便于 review"
+  ],
+  "actions": [
+    {
+      "step": 1,
+      "action": "rename",
+      "from": "packages/admin/src/views/HomeView.vue",
+      "to": "packages/admin/src/views/FoundationView.vue",
+      "detail": "文件重命名，内容保持不变（仍为 Foundation 展示页）"
+    },
+    {
+      "step": 2,
+      "action": "create",
+      "path": "packages/admin/src/views/dashboard/DashboardView.vue",
+      "detail": "新建 dashboard 目录和主页面组件，按 section_mapping.json 分区组织布局"
+    },
+    {
+      "step": 3,
+      "action": "create",
+      "path": "packages/admin/src/views/dashboard/components/",
+      "detail": "新建 dashboard 局部组件目录，放置 SummaryCard / QuickActionCard / WorkPanel / WorkList / WorkItem / NoteCard"
+    },
+    {
+      "step": 4,
+      "action": "create",
+      "path": "packages/admin/src/views/dashboard/dashboard.mock.ts",
+      "detail": "dashboard 本地 mock 数据文件，驱动所有卡片和列表的静态展示"
+    },
+    {
+      "step": 5,
+      "action": "modify",
+      "path": "packages/admin/src/router/index.ts",
+      "detail": "路由变更：/ → DashboardView，新增 /foundation → FoundationView",
+      "before": {
+        "routes": [
+          { "path": "/", "component": "HomeView.vue" }
+        ]
+      },
+      "after": {
+        "routes": [
+          { "path": "/", "component": "dashboard/DashboardView.vue" },
+          { "path": "/foundation", "component": "FoundationView.vue" }
+        ]
+      }
+    }
+  ],
+  "responsibilities": {
+    "DashboardView": {
+      "role": "业务仪表盘（首页工作台）",
+      "route": "/",
+      "content": "hero 问候 + scope/window 切换 + 快捷动作 + 数据摘要 + 工作面板 + 权限说明",
+      "data": "dashboard.mock.ts（本轮），后续接真实 API"
+    },
+    "FoundationView": {
+      "role": "设计系统展示与开发参照",
+      "route": "/foundation",
+      "content": "当前 HomeView.vue 的全部 Foundation 展示内容，不做任何修改",
+      "data": "静态展示，无 API 需求"
+    }
+  },
+  "risks_and_mitigations": [
+    {
+      "risk": "重命名 HomeView 可能影响已有测试或引用",
+      "mitigation": "全局搜索 HomeView 引用，确认只有 router/index.ts 一处 import"
+    },
+    {
+      "risk": "Foundation 路由在生产环境不应暴露",
+      "mitigation": "可在后续通过环境变量或路由守卫控制，本轮不阻塞"
+    }
+  ]
+}

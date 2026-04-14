@@ -4,7 +4,60 @@
   var app = window.LeadsDetailPage;
   if (!app) return;
 
+  app.resolveConversionCopy = function (sample) {
+    var isSignedFlow = !!(sample && sample.buttons === 'signedNotConverted');
+
+    return {
+      warningText: isSignedFlow
+        ? '该咨询已签约，请直接开始建档并创建首个案件。'
+        : '该咨询已签约，请尽快建立客户档案并创建案件。',
+      warningActionLabel: '立即开始建档',
+      headerCustomerLabel: isSignedFlow ? '仅建客户档案' : '建立客户档案',
+      headerCaseLabel: isSignedFlow ? '签约并开始建档' : '创建案件',
+      customerCardTitle: isSignedFlow ? '仅建立客户档案' : '建立客户档案',
+      customerCardDesc: isSignedFlow ? '如暂时不建案，可先建立客户档案' : '根据当前咨询建立客户档案',
+      customerButtonLabel: isSignedFlow ? '仅建立客户档案' : '建立客户档案',
+      caseCardTitle: isSignedFlow ? '签约并开始建档' : '创建案件',
+      caseCardDesc: isSignedFlow ? '系统会先建立客户档案，再继续创建首个案件' : '为当前咨询创建案件',
+      caseButtonLabel: isSignedFlow ? '签约并开始建档' : '创建案件',
+      caseModalTitle: isSignedFlow ? '签约并开始建档' : '创建案件',
+      caseModalDesc: isSignedFlow
+        ? '会先建立客户档案，再为当前咨询创建首个案件。主申请人信息将自动带入。'
+        : '为当前咨询创建案件。主申请人信息将自动带入。',
+      caseModalConfirmLabel: isSignedFlow ? '确认并开始建档' : '确认创建案件',
+    };
+  };
+
+  app.applyConversionCopy = function (sample) {
+    var copy = app.resolveConversionCopy(sample);
+
+    app.setText('warningBannerText', copy.warningText);
+    app.setText('convertCustomerTitle', copy.customerCardTitle);
+    app.setText('convertCustomerDesc', copy.customerCardDesc);
+    app.setText('convertCaseTitle', copy.caseCardTitle);
+    app.setText('convertCaseDesc', copy.caseCardDesc);
+    app.setText('convertCaseModalTitle', copy.caseModalTitle);
+    app.setText('convertCaseModalDesc', copy.caseModalDesc);
+
+    if (app.dom.btnConvertCustomer) app.dom.btnConvertCustomer.textContent = copy.headerCustomerLabel;
+    if (app.dom.btnConvertCase) app.dom.btnConvertCase.textContent = copy.headerCaseLabel;
+
+    var warningButton = app.$('warningConvertBtn');
+    if (warningButton) warningButton.textContent = copy.warningActionLabel;
+
+    var customerButton = app.$('btnConvertCustomerTab');
+    if (customerButton) customerButton.textContent = copy.customerButtonLabel;
+
+    var caseButton = app.$('btnConvertCaseTab');
+    if (caseButton) caseButton.textContent = copy.caseButtonLabel;
+
+    var confirmCaseButton = app.$('confirmConvertCase');
+    if (confirmCaseButton) confirmCaseButton.textContent = copy.caseModalConfirmLabel;
+  };
+
   app.renderBanners = function (sample) {
+    app.applyConversionCopy(sample);
+
     if (app.dom.readonlyBanner) {
       app.dom.readonlyBanner.classList.toggle('is-visible', sample.banner === 'lost');
     }
@@ -16,9 +69,10 @@
   app.renderHeaderButtons = function (sample) {
     var cfg = app.getConfig();
     var matrix = cfg.HEADER_BUTTONS[sample.buttons] || cfg.HEADER_BUTTONS.normal;
+    var copy = app.resolveConversionCopy(sample);
 
-    app.applyBtnState(app.dom.btnConvertCustomer, matrix.convertCustomer, '转客户', '查看客户');
-    app.applyBtnState(app.dom.btnConvertCase, matrix.convertCase, '转案件', '查看案件');
+    app.applyBtnState(app.dom.btnConvertCustomer, matrix.convertCustomer, copy.headerCustomerLabel, '查看客户', 'btn-secondary');
+    app.applyBtnState(app.dom.btnConvertCase, matrix.convertCase, copy.headerCaseLabel, '查看案件', 'btn-primary');
 
     if (app.dom.btnMarkLost) {
       app.dom.btnMarkLost.style.display = matrix.markLost === 'hidden' ? 'none' : '';
@@ -29,6 +83,11 @@
     if (app.dom.btnEditInfo) {
       app.dom.btnEditInfo.disabled = matrix.editInfo === 'disabled';
       app.dom.btnEditInfo.style.opacity = matrix.editInfo === 'disabled' ? '0.4' : '';
+    }
+
+    if (app.dom.btnEditInfoTab) {
+      app.dom.btnEditInfoTab.disabled = matrix.editInfo === 'disabled';
+      app.dom.btnEditInfoTab.style.opacity = matrix.editInfo === 'disabled' ? '0.4' : '';
     }
 
     if (app.dom.btnChangeStatus) {
@@ -45,6 +104,7 @@
     app.setText('infoSource', info.source || '—');
     app.setText('infoReferrer', info.referrer || '—');
     app.setText('infoBusinessType', info.businessType || '—');
+    app.setText('infoLanguage', info.language || '—');
     app.setText('infoNote', info.note || '—');
 
     var infoGroup = app.$('infoGroup');
@@ -123,7 +183,7 @@
         '</div></div>' +
         (sample.readonly
           ? ''
-          : '<button class="btn-secondary px-2 py-1 text-[11px] flex-shrink-0 whitespace-nowrap" type="button" data-action="convert-task" title="一键转任务（demo-only）">' +
+          : '<button class="btn-secondary px-2 py-1 text-[11px] flex-shrink-0 whitespace-nowrap" type="button" data-action="convert-task" title="一键转任务（示例功能）">' +
             '<svg class="w-3 h-3 mr-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>转任务</button>') +
         '</div></div></div>';
     });
@@ -132,6 +192,8 @@
   };
 
   app.renderConversion = function (sample) {
+    app.applyConversionCopy(sample);
+
     var conversion = sample.conversion || {};
     var noMatch = app.$('dedupNoMatch');
     var hitPanel = app.$('dedupHitPanel');
@@ -156,7 +218,7 @@
 
         app.setText(
           'dedupHitTitle',
-          conversion.dedupResult.type === 'lead' ? '检测到重复线索（电话匹配）' : '检测到重复客户（邮箱匹配）'
+          conversion.dedupResult.type === 'lead' ? '发现重复咨询（按电话匹配）' : '发现重复客户档案（按邮箱匹配）'
         );
       }
     } else {
@@ -178,12 +240,13 @@
         app.setText('convertedCusName', conversion.convertedCustomer.name + ' (' + conversion.convertedCustomer.id + ')');
         app.setText(
           'convertedCusMeta',
-          '归属 ' +
+          '所属组 ' +
             conversion.convertedCustomer.group +
-            ' · 转化于 ' +
+            ' · 创建于 ' +
             conversion.convertedCustomer.convertedAt +
             ' · ' +
-            conversion.convertedCustomer.convertedBy
+            conversion.convertedCustomer.convertedBy +
+            (conversion.convertedCustomer.auditNote ? ' · ' + conversion.convertedCustomer.auditNote : '')
         );
       } else {
         customerCard.classList.add('hidden');
@@ -197,12 +260,13 @@
         app.setText(
           'convertedCaseMeta',
           conversion.convertedCase.type +
-            ' · 归属 ' +
+            ' · 所属组 ' +
             conversion.convertedCase.group +
-            ' · 转化于 ' +
+            ' · 创建于 ' +
             conversion.convertedCase.convertedAt +
             ' · ' +
-            conversion.convertedCase.convertedBy
+            conversion.convertedCase.convertedBy +
+            (conversion.convertedCase.auditNote ? ' · ' + conversion.convertedCase.auditNote : '')
         );
       } else {
         caseCard.classList.add('hidden');
@@ -220,10 +284,11 @@
             historyHtml +=
               '<div class="flex items-center gap-3 text-[13px] py-2 border-b border-[var(--border)] last:border-0">' +
               '<span class="chip text-[11px]">' +
-              (item.type === 'customer' ? '客户' : '案件') +
+              (item.type === 'customer' ? '客户档案' : '案件') +
               '</span>' +
               '<span class="font-semibold text-[var(--text)]">' +
               app.esc(item.label) +
+              (item.note ? '<span class="text-[12px] text-[var(--muted-2)]"> · ' + app.esc(item.note) + '</span>' : '') +
               '</span>' +
               '<span class="text-[var(--muted-2)] text-[12px] ml-auto">' +
               app.esc(item.time) +
@@ -240,8 +305,23 @@
     }
 
     var actionsEl = app.$('conversionActions');
+    var customerActionCard = app.$('convertCustomerCard');
+    var caseActionCard = app.$('convertCaseCard');
+
+    if (customerActionCard) {
+      customerActionCard.classList.toggle('hidden', !!sample.readonly || !!conversion.convertedCustomer);
+    }
+    if (caseActionCard) {
+      caseActionCard.classList.toggle('hidden', !!sample.readonly || !!conversion.convertedCase);
+    }
     if (actionsEl) {
-      actionsEl.classList.toggle('hidden', !!sample.readonly);
+      var bothConverted = !!conversion.convertedCustomer && !!conversion.convertedCase;
+      actionsEl.classList.toggle('hidden', !!sample.readonly || bothConverted);
+    }
+
+    var dedupSection = app.$('dedupPanel');
+    if (dedupSection) {
+      dedupSection.classList.toggle('hidden', !!hasConverted);
     }
   };
 
@@ -263,8 +343,8 @@
         '<div class="timeline-dot ' +
         dotClass +
         '"></div>' +
-        '<div class="flex flex-col gap-1">' +
-        '<div class="flex items-center gap-2 flex-wrap">' +
+        '<div class="apple-card p-4">' +
+        '<div class="flex items-center gap-2 flex-wrap mb-1">' +
         '<span class="log-type-chip ' +
         chipClass +
         '">' +
@@ -300,6 +380,9 @@
     if (!cfg || !sample) return;
 
     app.setCurrentSampleKey(key);
+    if (typeof app.syncLocationForSampleKey === 'function') {
+      app.syncLocationForSampleKey(key);
+    }
 
     var status = cfg.DETAIL_STATUSES[sample.status] || {};
 
@@ -308,7 +391,7 @@
     if (app.dom.detailLeadId) app.dom.detailLeadId.textContent = sample.id;
 
     if (app.dom.detailStatusBadge) {
-      app.dom.detailStatusBadge.className = 'lead-badge text-[13px] ' + (app.BADGE_CLASS_MAP[sample.status] || '');
+      app.dom.detailStatusBadge.className = 'lead-badge text-[13px] ' + (status.badgeClass || app.getStatusBadgeClass(sample.status));
       app.dom.detailStatusBadge.textContent = status.label || sample.status;
     }
 

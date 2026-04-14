@@ -1,0 +1,117 @@
+{
+  "page_component": "LeadListPage",
+  "candidates": [
+    {
+      "name": "LeadListHeader",
+      "source_selector": "sections/header.html",
+      "repeatable": false,
+      "props_hint": ["title", "subtitle", "onCreateClick"],
+      "production_target": "features/lead/ui/LeadListHeader",
+      "contract_ref": "P0-CONTRACT §1 #1"
+    },
+    {
+      "name": "LeadListFilters",
+      "source_selector": "sections/filters.html",
+      "repeatable": false,
+      "props_hint": ["scopeOptions", "statusOptions", "ownerOptions", "groupOptions", "businessTypeOptions", "onFilterChange", "onReset"],
+      "production_target": "features/lead/ui/LeadListFilters",
+      "contract_ref": "P0-CONTRACT §3"
+    },
+    {
+      "name": "ScopeSegmentControl",
+      "source_selector": ".segmented-control [data-scope-btn]",
+      "repeatable": false,
+      "props_hint": ["options", "activeValue", "onChange"],
+      "production_target": "shared/ui/SegmentedControl",
+      "contract_ref": "P0-CONTRACT §3"
+    },
+    {
+      "name": "LeadTable",
+      "source_selector": "table.apple-table",
+      "repeatable": false,
+      "props_hint": ["visibleColumns", "logicalFields", "data", "selectedIds", "onRowClick", "onSelectionChange"],
+      "production_target": "features/lead/ui/LeadTable",
+      "contract_ref": "P0-CONTRACT §2"
+    },
+    {
+      "name": "LeadTableRow",
+      "source_selector": "tr[data-lead-id]",
+      "repeatable": true,
+      "props_hint": ["lead", "isSelected", "onSelect", "onClick"],
+      "production_target": "features/lead/ui/LeadTable (inline)",
+      "contract_ref": "P0-CONTRACT §2, §8"
+    },
+    {
+      "name": "LeadStatusBadge",
+      "source_selector": ".lead-badge",
+      "repeatable": true,
+      "props_hint": ["status", "variant"],
+      "production_target": "shared/ui/StatusBadge or features/lead/ui/LeadStatusBadge",
+      "contract_ref": "P0-CONTRACT §2.2",
+      "variants": {
+        "new": "lead-badge-new (warning/orange)",
+        "following": "lead-badge-following (primary/blue)",
+        "pending_sign": "lead-badge-pending_sign (purple)",
+        "signed": "lead-badge-signed (success/green)",
+        "lost": "lead-badge-lost (gray)",
+        "signed-warning": "lead-badge-signed-warning (warning highlight)"
+      }
+    },
+    {
+      "name": "LeadBulkActionBar",
+      "source_selector": "#bulkActionBar",
+      "repeatable": false,
+      "props_hint": ["selectedCount", "onClear", "bulkActions"],
+      "production_target": "features/lead/ui/LeadBulkActionBar",
+      "contract_ref": "P0-CONTRACT §4"
+    },
+    {
+      "name": "LeadEmptyState",
+      "source_selector": "#leadsEmptyState",
+      "repeatable": false,
+      "props_hint": ["message", "ctaLabel", "onCtaClick"],
+      "production_target": "shared/ui/EmptyState",
+      "contract_ref": "P0-CONTRACT §9"
+    },
+    {
+      "name": "LeadPaginationBar",
+      "source_selector": "#leadsPaginationBar",
+      "repeatable": false,
+      "props_hint": ["visibleCount", "totalCount", "isFiltered"],
+      "production_target": "features/lead/ui/LeadPaginationBar or inline footer",
+      "contract_ref": "P0-CONTRACT §2"
+    },
+    {
+      "name": "CreateLeadModal",
+      "source_selector": "#createLeadModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "onClose", "onSubmit", "formFields", "dedupState", "onDedupContinue", "onViewExisting"],
+      "production_target": "features/lead/ui/CreateLeadModal",
+      "contract_ref": "P0-CONTRACT §5"
+    },
+    {
+      "name": "DedupHintPanel",
+      "source_selector": "#dedupHint",
+      "repeatable": false,
+      "props_hint": ["match", "matchType", "badgeLabel", "onContinue", "onViewExisting"],
+      "production_target": "features/lead/ui/DedupHintPanel",
+      "contract_ref": "P0-CONTRACT §5.3"
+    },
+    {
+      "name": "Toast",
+      "source_selector": "#toast",
+      "repeatable": false,
+      "props_hint": ["title", "description", "duration"],
+      "production_target": "shared/ui/Toast",
+      "contract_ref": "P0-CONTRACT §11"
+    },
+    {
+      "name": "OwnerAvatar",
+      "source_selector": ".w-5.h-5.rounded-full (in table rows)",
+      "repeatable": true,
+      "props_hint": ["initials", "colorClass", "name"],
+      "production_target": "shared/ui/Avatar",
+      "contract_ref": "P0-CONTRACT §2.1 #7"
+    }
+  ]
+}

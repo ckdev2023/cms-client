@@ -384,7 +384,7 @@ documents: [
 
 | 目标页面 | documents.html 中的 href | 最新正确路径 | 需修复？ |
 |----------|------------------------|-------------|---------|
-| 仪表盘 | `admin-prototype.html` | `admin-prototype.html` | ⚠️ 视情况 |
+| 仪表盘 | `dashboard/index.html` | `dashboard/index.html` | ⚠️ 视情况 |
 | 咨询与会话 | `leads-messages.html` | `leads-messages.html` | 无需 |
 | 客户 | `customers.html` | `customers/index.html` | **是** |
 | 案件 | `cases-list.html` | `cases-list.html` | 无需 |

@@ -1,0 +1,55 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/features/customers/list/CustomerListPage.vue",
+    "packages/admin/src/features/customers/list/CustomerListHeader.vue",
+    "packages/admin/src/features/customers/list/CustomerSummaryCards.vue",
+    "packages/admin/src/features/customers/list/CustomerScopeToggle.vue",
+    "packages/admin/src/features/customers/list/CustomerFilters.vue",
+    "packages/admin/src/features/customers/list/CustomerFilterSummary.vue",
+    "packages/admin/src/features/customers/list/CustomerBulkActionBar.vue",
+    "packages/admin/src/features/customers/list/CustomerTable.vue",
+    "packages/admin/src/features/customers/list/CustomerTableRow.vue",
+    "packages/admin/src/features/customers/list/CustomerEmptyState.vue",
+    "packages/admin/src/features/customers/list/CustomerPagination.vue",
+    "packages/admin/src/features/customers/list/CustomerCreateModal.vue",
+    "packages/admin/src/features/customers/list/CustomerDedupeHint.vue",
+    "packages/admin/src/features/customers/model/useCustomerList.ts",
+    "packages/admin/src/features/customers/model/useCustomerCreateForm.ts",
+    "packages/admin/src/features/customers/model/useCustomerDrafts.ts",
+    "packages/admin/src/features/customers/model/useCustomerBulkActions.ts",
+    "packages/admin/src/features/customers/fixtures/customer-list.fixtures.ts",
+    "packages/admin/src/features/customers/index.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready",
+    "filtered_empty",
+    "bulk_selection_active",
+    "modal_open",
+    "draft_rows_visible"
+  ],
+  "notes": [
+    "P0-CONTRACT §1: 8 columns must all be present — 客户/フリガナ/案件/最近联系/负责人/介绍人来源/所属分組/操作",
+    "P0-CONTRACT §2: 3 filters (分組/負責人/活躍案件) + segmented scope (我的/本組/全所) + reset",
+    "P0-CONTRACT §3: bulk assign owner + bulk change group; needs select+apply pattern; draft rows excluded from selection",
+    "P0-CONTRACT §4: 12 form fields in create modal; create-btn enabled only when 姓名+Group+(電話∨郵箱); dedupe hint on phone/email input",
+    "P0-CONTRACT §5: draft save to localStorage, draft row at top with continue btn, remove draft on create",
+    "P0-CONTRACT §7: 5 toast scenarios",
+    "P0-CONTRACT §4.4: #new hash auto-opens create modal",
+    "P0-CONTRACT §10: do NOT introduce any P0-excluded features"
+  ],
+  "p0_frozen_fields": {
+    "table_columns": ["客户", "フリガナ", "案件(累計·活躍)", "最近联系", "負責人", "介紹人/來源", "所属分組", "操作"],
+    "filters": ["所属分組", "負責人", "活躍案件(有/無/全部)"],
+    "create_modal_fields": ["識別名", "所属Group", "姓名(法定)", "假名(片假名)", "性別", "生年月日", "國籍", "電話", "郵箱", "來源/介紹人", "頭像", "備注"],
+    "create_btn_required": ["姓名(法定)", "所属Group", "電話∨郵箱"],
+    "scope_segments": ["我的", "本組", "全所(管理員)"],
+    "bulk_actions": ["批量指派負責人", "批量調整分組"]
+  }
+}

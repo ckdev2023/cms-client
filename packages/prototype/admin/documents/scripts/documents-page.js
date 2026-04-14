@@ -4,6 +4,10 @@ var DocumentsPage = (function () {
   var CFG, DATA;
   var _toastTimer;
 
+  function getConfig() {
+    return CFG || window.DocumentsConfig || {};
+  }
+
   function init() {
     CFG = window.DocumentsConfig;
     DATA = window.DocumentsDemoData;
@@ -103,8 +107,129 @@ var DocumentsPage = (function () {
     if (tableCount) tableCount.textContent = String(sorted.length);
   }
 
+  function getCaseTitle(caseNo, caseLabel) {
+    var label = caseLabel || '';
+    if (!label) return caseNo || '';
+    if (caseNo && label.indexOf(caseNo) === 0) {
+      var trimmed = label.slice(caseNo.length).trim();
+      return trimmed || caseNo;
+    }
+    return label;
+  }
+
+  function buildRowMeta(doc) {
+    var cfg = getConfig();
+    var providerLabel = (cfg.PROVIDER_LABEL_MAP && cfg.PROVIDER_LABEL_MAP[doc.provider]) || doc.provider;
+    var caseTitle = getCaseTitle(doc.caseNo, doc.caseLabel);
+    var metaBits = [];
+
+    if (doc.caseNo || caseTitle) {
+      metaBits.push((doc.caseNo ? doc.caseNo : '') + (caseTitle ? ' ' + caseTitle : ''));
+    }
+    if (providerLabel) {
+      metaBits.push(providerLabel);
+    }
+    if (doc.relativePath) {
+      metaBits.push('已登记');
+    }
+    if (doc.lastReminder) {
+      metaBits.push('最近催办 ' + doc.lastReminder);
+    }
+
+    return {
+      caseTitle: caseTitle,
+      providerLabel: providerLabel,
+      metaText: metaBits.join(' · '),
+    };
+  }
+
+  function resolveRowGuidance(doc, todayIso) {
+    var cfg = getConfig();
+    var normalizeDocStatus = cfg.normalizeDocStatus || function (raw) { return raw || 'not_sent'; };
+    var providerMap = cfg.PROVIDER_LABEL_MAP || {};
+    var nStatus = normalizeDocStatus(doc && doc.status);
+    var providerLabel = providerMap[doc && doc.provider] || (doc && doc.provider) || '相关提供人';
+    var today = todayIso || new Date().toISOString().split('T')[0];
+    var isOverdue = !!(doc && doc.deadline && doc.deadline < today);
+
+    if (nStatus === 'not_sent') {
+      if (doc && doc.provider === 'office') {
+        return {
+          blocker: '事务所内部文书还没开始登记。',
+          nextAction: '今天先起草初稿并登记首版文件路径。',
+        };
+      }
+      return {
+        blocker: '这份资料还没开始收。',
+        nextAction: '先发起资料请求，并明确告诉' + providerLabel + '需要提交什么。',
+      };
+    }
+
+    if (nStatus === 'waiting_upload') {
+      if (doc && doc.provider === 'office') {
+        return {
+          blocker: '事务所内部文书尚未完成。',
+          nextAction: '今天先补正文书内容并登记初版。',
+        };
+      }
+      return {
+        blocker: providerLabel + '还未提交最新版本。',
+        nextAction: isOverdue
+          ? '今天先催办并确认回传时间，避免案件继续卡住。'
+          : '先催办并确认预计提交日期。',
+      };
+    }
+
+    if (nStatus === 'uploaded_reviewing') {
+      return {
+        blocker: '资料已收到，但事务所还没确认能不能直接用。',
+        nextAction: '先审核内容和有效期；不符合就立即退回补正。',
+      };
+    }
+
+    if (nStatus === 'approved') {
+      return {
+        blocker: doc && doc.sharedVersionExpiry
+          ? '当前版本虽已通过，但共享版本风险需要一起关注。'
+          : '当前版本可直接使用。',
+        nextAction: doc && doc.sharedVersionExpiry
+          ? '留意共享版本有效期，必要时统一换新版本。'
+          : '提交前只需留意是否临近有效期。',
+      };
+    }
+
+    if (nStatus === 'revision_required') {
+      return {
+        blocker: doc && doc.rejectionReason
+          ? '已退回：' + doc.rejectionReason + '。'
+          : '这份资料已被退回补正。',
+        nextAction: doc && doc.provider === 'office'
+          ? '按退回原因修改文书后重新登记。'
+          : '今天先把退回原因发给' + providerLabel + '，并跟进重新提交时间。',
+      };
+    }
+
+    if (nStatus === 'expired') {
+      return {
+        blocker: doc && doc.sharedVersionExpiry
+          ? '当前版本已过期，而且会影响其他正在办的案件。'
+          : '当前版本已过期，不能继续直接使用。',
+        nextAction: doc && doc.provider === 'office'
+          ? '今天先补登记最新版本，再恢复案件推进。'
+          : '今天先联系' + providerLabel + '补最新版本，并同步受影响案件。',
+      };
+    }
+
+    return {
+      blocker: '本案已确认无需再收这项资料。',
+      nextAction: '保留免除依据，提交前无需重复催要。',
+    };
+  }
+
   function buildRow(doc) {
-    var nStatus = CFG.normalizeDocStatus(doc.status);
+    var cfg = getConfig();
+    var normalizeDocStatus = cfg.normalizeDocStatus || function (raw) { return raw || 'not_sent'; };
+    var nStatus = normalizeDocStatus(doc.status);
     var tr = document.createElement('tr');
     tr.setAttribute('data-doc-id', doc.id);
     tr.setAttribute('data-doc-status', nStatus);
@@ -113,10 +238,10 @@ var DocumentsPage = (function () {
     tr.className = 'doc-table-row';
     if (nStatus === 'expired') tr.style.background = 'rgba(220,38,38,0.04)';
 
-    var nonSelectable = CFG.NON_SELECTABLE_STATUSES.indexOf(nStatus) !== -1;
+    var nonSelectable = (cfg.NON_SELECTABLE_STATUSES || []).indexOf(nStatus) !== -1;
     var isWaived = nStatus === 'waived';
-    var statusLabel = CFG.STATUS_LABEL_MAP[nStatus] || nStatus;
-    var providerLabel = CFG.PROVIDER_LABEL_MAP[doc.provider] || doc.provider;
+    var statusLabel = cfg.STATUS_LABEL_MAP[nStatus] || nStatus;
+    var rowMeta = buildRowMeta(doc);
 
     var actions = getRowActions(doc);
     var actionsHtml = actions.map(function (a) {
@@ -137,17 +262,6 @@ var DocumentsPage = (function () {
         '共享过期</span>';
     }
 
-    var pathHtml = '<span class="doc-cell-quiet">未登记</span>';
-    if (doc.relativePath) {
-      pathHtml =
-        '<div class="doc-path">' +
-          '<span class="truncate doc-path__value" title="' + esc(doc.relativePath) + '">' + esc(doc.relativePath) + '</span>' +
-          '<button class="doc-path__copy flex-shrink-0" type="button" data-copy-path="' + esc(doc.relativePath) + '" title="复制路径">' +
-            '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>' +
-          '</button>' +
-        '</div>';
-    }
-
     var deadlineHtml = doc.deadline
       ? '<span class="doc-cell-primary">' + esc(doc.deadline) + '</span>'
       : '<span class="doc-cell-quiet">—</span>';
@@ -165,15 +279,12 @@ var DocumentsPage = (function () {
 
     var nameCls = isWaived ? 'doc-row-title is-waived' : 'doc-row-title';
     var cbExtraCls = nonSelectable ? ' opacity-60' : '';
-    var caseHtml =
-      '<div class="doc-cell-stack">' +
-        '<span class="doc-cell-primary">' + esc(doc.caseLabel) + '</span>' +
-        '<span class="doc-cell-secondary">' + esc(doc.caseNo) + '</span>' +
+    var guidance = resolveRowGuidance(doc);
+    var guidanceHtml =
+      '<div class="doc-row-guidance">' +
+        '<div class="doc-row-guidance__item"><span class="doc-row-guidance__label">当前卡点</span><span class="doc-row-guidance__text">' + esc(guidance.blocker) + '</span></div>' +
+        '<div class="doc-row-guidance__item"><span class="doc-row-guidance__label">下一步</span><span class="doc-row-guidance__text doc-row-guidance__text--strong">' + esc(guidance.nextAction) + '</span></div>' +
       '</div>';
-    var providerHtml = '<span class="doc-cell-primary">' + esc(providerLabel) + '</span>';
-    var reminderHtml = doc.lastReminder
-      ? '<span class="doc-cell-primary">' + esc(doc.lastReminder) + '</span>'
-      : '<span class="doc-cell-quiet">—</span>';
 
     tr.innerHTML =
       '<td class="text-center">' +
@@ -186,14 +297,12 @@ var DocumentsPage = (function () {
           '<div class="' + nameCls + '">' + esc(doc.docName) + '</div>' +
           (badges ? '<div class="doc-row-badges">' + badges + '</div>' : '') +
         '</div>' +
+        '<div class="doc-row-meta">' + esc(rowMeta.metaText) + '</div>' +
+        guidanceHtml +
         (actionsHtml ? '<div class="doc-row-actions">' + actionsHtml + '</div>' : '') +
       '</td>' +
-      '<td class="hidden md:table-cell">' + caseHtml + '</td>' +
-      '<td class="hidden lg:table-cell">' + providerHtml + '</td>' +
       '<td><span class="tag ' + statusTagCls(nStatus) + '">' + esc(statusLabel) + '</span></td>' +
-      '<td class="hidden md:table-cell">' + deadlineHtml + '</td>' +
-      '<td class="hidden lg:table-cell">' + reminderHtml + '</td>' +
-      '<td class="hidden lg:table-cell">' + pathHtml + '</td>';
+      '<td class="hidden md:table-cell">' + deadlineHtml + '</td>';
 
     return tr;
   }
@@ -211,7 +320,9 @@ var DocumentsPage = (function () {
   function statusTagCls(status) { return TAG_CLS[status] || ''; }
 
   function getRowActions(doc) {
-    var st = CFG.normalizeDocStatus(doc.status);
+    var cfg = getConfig();
+    var normalizeDocStatus = cfg.normalizeDocStatus || function (raw) { return raw || 'not_sent'; };
+    var st = normalizeDocStatus(doc.status);
     switch (st) {
       case 'not_sent':
         return [
@@ -521,7 +632,14 @@ var DocumentsPage = (function () {
     showToast: showToast,
     showToastPreset: showToastPreset,
     findDoc: findDoc,
+    getCaseTitle: getCaseTitle,
+    buildRowMeta: buildRowMeta,
+    resolveRowGuidance: resolveRowGuidance,
     setActiveSummaryCard: setActiveSummaryCard,
     refreshTable: refreshTable,
   };
 })();
+
+if (typeof window !== 'undefined') {
+  window.DocumentsPage = DocumentsPage;
+}

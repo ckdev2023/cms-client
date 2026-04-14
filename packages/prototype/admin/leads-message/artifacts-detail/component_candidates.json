@@ -1,0 +1,277 @@
+{
+  "page_component": "LeadDetailPage",
+  "candidates": [
+    {
+      "name": "LeadDetailHeader",
+      "source_selector": "#detailHeaderSection",
+      "repeatable": false,
+      "props_hint": ["lead", "status", "owner", "group", "onEdit", "onChangeStatus", "onConvertCase", "onConvertCustomer", "onMarkLost"],
+      "production_target": "features/lead/ui/LeadDetailHeader",
+      "contract_ref": "P0-CONTRACT-DETAIL §3"
+    },
+    {
+      "name": "LeadDetailBreadcrumb",
+      "source_selector": "#detailHeaderSection .link-apple",
+      "repeatable": false,
+      "props_hint": ["leadName", "backHref"],
+      "production_target": "shared/ui/Breadcrumb",
+      "contract_ref": "P0-CONTRACT-DETAIL §3"
+    },
+    {
+      "name": "LeadStatusBadge",
+      "source_selector": "#detailStatusBadge",
+      "repeatable": true,
+      "props_hint": ["status", "variant"],
+      "production_target": "shared/ui/StatusBadge or features/lead/ui/LeadStatusBadge",
+      "contract_ref": "P0-CONTRACT-DETAIL §3",
+      "variants": {
+        "new": "lead-badge-new (warning/orange)",
+        "following": "lead-badge-following (primary/blue)",
+        "pending_sign": "lead-badge-pending_sign (purple)",
+        "signed": "lead-badge-signed (success/green)",
+        "lost": "lead-badge-lost (gray)"
+      }
+    },
+    {
+      "name": "SampleSwitcher",
+      "source_selector": "#leadSampleSelect",
+      "repeatable": false,
+      "props_hint": ["options", "value", "onChange"],
+      "production_target": null,
+      "contract_ref": "P0-CONTRACT-DETAIL §1 #2, §9",
+      "notes": "demo-only; 8 scenarios"
+    },
+    {
+      "name": "LeadDetailTabs",
+      "source_selector": ".detail-tabs",
+      "repeatable": false,
+      "props_hint": ["tabs", "activeTab", "onTabChange"],
+      "production_target": "features/lead/ui/LeadDetailTabs",
+      "contract_ref": "P0-CONTRACT-DETAIL §2"
+    },
+    {
+      "name": "LeadInfoTab",
+      "source_selector": "#tab-info",
+      "repeatable": false,
+      "props_hint": ["fields", "isReadonly", "onEdit", "language"],
+      "production_target": "features/lead/ui/LeadInfoTab",
+      "contract_ref": "P0-CONTRACT-DETAIL §4"
+    },
+    {
+      "name": "InfoField",
+      "source_selector": ".info-label + .info-value",
+      "repeatable": true,
+      "props_hint": ["label", "value", "type"],
+      "production_target": "shared/ui/InfoField",
+      "contract_ref": "P0-CONTRACT-DETAIL §4.1, §4.2"
+    },
+    {
+      "name": "LeadFollowupsTab",
+      "source_selector": "#tab-followups",
+      "repeatable": false,
+      "props_hint": ["followups", "isReadonly", "onSubmit"],
+      "production_target": "features/lead/ui/LeadFollowupsTab",
+      "contract_ref": "P0-CONTRACT-DETAIL §5"
+    },
+    {
+      "name": "FollowupForm",
+      "source_selector": "#followupFormCard",
+      "repeatable": false,
+      "props_hint": ["onSubmit", "isReadonly"],
+      "production_target": "features/lead/ui/FollowupForm",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.2",
+      "fields": ["channel(select,required)", "summary(textarea,required)", "conclusion(text)", "nextAction(text)", "nextFollowUp(datetime-local)"]
+    },
+    {
+      "name": "FollowupTimeline",
+      "source_selector": "#followupTimelineList",
+      "repeatable": false,
+      "props_hint": ["items"],
+      "production_target": "features/lead/ui/FollowupTimeline",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.1"
+    },
+    {
+      "name": "FollowupTimelineItem",
+      "source_selector": ".timeline-item[data-fu-idx]",
+      "repeatable": true,
+      "props_hint": ["channel", "timestamp", "operator", "summary", "conclusion", "nextAction", "nextFollowUp", "onConvertTask"],
+      "production_target": "features/lead/ui/FollowupTimeline (inline)",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.1"
+    },
+    {
+      "name": "ChannelChip",
+      "source_selector": ".channel-chip",
+      "repeatable": true,
+      "props_hint": ["channel"],
+      "production_target": "shared/ui/ChannelChip",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.1",
+      "variants": {
+        "phone": "bg-sky-100 text-sky-700",
+        "email": "bg-emerald-100 text-emerald-700",
+        "meeting": "bg-violet-100 text-violet-700",
+        "im": "bg-amber-100 text-amber-700"
+      }
+    },
+    {
+      "name": "FollowupEmptyState",
+      "source_selector": "#followupEmptyState",
+      "repeatable": false,
+      "props_hint": ["message", "hint"],
+      "production_target": "shared/ui/EmptyState",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.3"
+    },
+    {
+      "name": "ConvertTaskButton",
+      "source_selector": "[data-action=convert-task]",
+      "repeatable": true,
+      "props_hint": ["followupId", "onClick"],
+      "production_target": "features/lead/ui/ConvertTaskButton",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.1",
+      "notes": "demo-only toast"
+    },
+    {
+      "name": "LeadConversionTab",
+      "source_selector": "#tab-conversion",
+      "repeatable": false,
+      "props_hint": ["dedupResult", "convertedRecords", "onConvertCase", "onConvertCustomer"],
+      "production_target": "features/lead/ui/LeadConversionTab",
+      "contract_ref": "P0-CONTRACT-DETAIL §6"
+    },
+    {
+      "name": "DedupPanel",
+      "source_selector": "#dedupPanel",
+      "repeatable": false,
+      "props_hint": ["match", "matchType", "onContinue", "onViewExisting", "confirmBeforeProceed"],
+      "production_target": "features/lead/ui/DedupPanel",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.1",
+      "states": ["no-match (#dedupNoMatch)", "hit-lead (.dedup-panel #dedupHitPanel)", "hit-customer (.dedup-panel #dedupHitPanel)"]
+    },
+    {
+      "name": "ConversionActionCard",
+      "source_selector": "#conversionActions .apple-card",
+      "repeatable": true,
+      "props_hint": ["title", "description", "icon", "onClick"],
+      "production_target": "features/lead/ui/ConversionCard",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2, §6.3",
+      "instances": ["convertCaseCard (签约并开始建档)", "convertCustomerCard (仅转为客户)"]
+    },
+    {
+      "name": "ConvertedRecordCard",
+      "source_selector": ".conversion-card",
+      "repeatable": true,
+      "props_hint": ["type", "name", "meta", "href"],
+      "production_target": "features/lead/ui/ConversionCard",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.4",
+      "instances": ["convertedCustomerCard", "convertedCaseCard"]
+    },
+    {
+      "name": "LeadLogTab",
+      "source_selector": "#tab-log",
+      "repeatable": false,
+      "props_hint": ["logs", "activeCategory", "onCategoryChange"],
+      "production_target": "features/lead/ui/LeadLogTab",
+      "contract_ref": "P0-CONTRACT-DETAIL §7"
+    },
+    {
+      "name": "LogCategoryFilter",
+      "source_selector": "#logCategoryFilter .segmented-control",
+      "repeatable": false,
+      "props_hint": ["categories", "activeValue", "onChange"],
+      "production_target": "shared/ui/SegmentedControl",
+      "contract_ref": "P0-CONTRACT-DETAIL §7.1"
+    },
+    {
+      "name": "LogTimelineItem",
+      "source_selector": ".timeline-item[data-log-type]",
+      "repeatable": true,
+      "props_hint": ["type", "timestamp", "operator", "oldValue", "newValue"],
+      "production_target": "features/lead/ui/LogTimeline (inline)",
+      "contract_ref": "P0-CONTRACT-DETAIL §7.2"
+    },
+    {
+      "name": "LogTypeChip",
+      "source_selector": ".log-type-chip",
+      "repeatable": true,
+      "props_hint": ["type"],
+      "production_target": "shared/ui/LogTypeChip",
+      "contract_ref": "P0-CONTRACT-DETAIL §7.2",
+      "variants": {
+        "status": "bg-sky-100 text-sky-700",
+        "owner": "bg-emerald-100 text-emerald-700",
+        "group": "bg-violet-100 text-violet-700"
+      }
+    },
+    {
+      "name": "ReadonlyBanner",
+      "source_selector": "#readonlyBanner",
+      "repeatable": false,
+      "props_hint": ["message"],
+      "production_target": "shared/ui/ReadonlyBanner",
+      "contract_ref": "P0-CONTRACT-DETAIL §8.1"
+    },
+    {
+      "name": "WarningBanner",
+      "source_selector": "#warningBanner",
+      "repeatable": false,
+      "props_hint": ["message", "actionLabel", "onAction"],
+      "production_target": "shared/ui/WarningBanner",
+      "contract_ref": "P0-CONTRACT-DETAIL §8.2"
+    },
+    {
+      "name": "ConvertCustomerModal",
+      "source_selector": "#convertCustomerModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "lead", "group", "groupReason", "onClose", "onConfirm"],
+      "production_target": "features/lead/ui/ConversionModal",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2"
+    },
+    {
+      "name": "ConvertCaseModal",
+      "source_selector": "#convertCaseModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "lead", "caseType", "owner", "group", "groupReason", "onClose", "onConfirm"],
+      "production_target": "features/lead/ui/ConversionModal",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.3"
+    },
+    {
+      "name": "DedupConfirmModal",
+      "source_selector": "#dedupConfirmModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "matchSummary", "onClose", "onConfirm"],
+      "production_target": "features/lead/ui/DedupConfirmModal or shared/ui/Modal composition",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.1"
+    },
+    {
+      "name": "ChangeStatusModal",
+      "source_selector": "#changeStatusModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "currentStatus", "nextStatus", "reason", "onClose", "onConfirm"],
+      "production_target": "features/lead/ui/ChangeStatusModal",
+      "contract_ref": "P0-CONTRACT-DETAIL §3.1, §8"
+    },
+    {
+      "name": "EditLeadInfoModal",
+      "source_selector": "#editInfoModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "leadDraft", "options", "groupReason", "onClose", "onConfirm"],
+      "production_target": "features/lead/ui/EditLeadInfoModal",
+      "contract_ref": "P0-CONTRACT-DETAIL §4, §7"
+    },
+    {
+      "name": "Toast",
+      "source_selector": "#toast",
+      "repeatable": false,
+      "props_hint": ["title", "description", "duration"],
+      "production_target": "shared/ui/Toast",
+      "contract_ref": "P0-CONTRACT-DETAIL §12"
+    },
+    {
+      "name": "OwnerAvatar",
+      "source_selector": "#detailOwnerAvatar",
+      "repeatable": true,
+      "props_hint": ["initials", "colorClass", "name"],
+      "production_target": "shared/ui/Avatar",
+      "contract_ref": "P0-CONTRACT-DETAIL §3"
+    }
+  ]
+}

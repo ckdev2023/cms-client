@@ -1,0 +1,66 @@
+{
+  "taskId": "T02",
+  "title": "billing admin 基础骨架与共享契约冻结",
+  "status": "completed",
+  "completedAt": "2026-04-13T00:00:00Z",
+  "guard": {
+    "checkDeps": "pass",
+    "typecheck": "pass",
+    "lint": "pass",
+    "jsdocLangCheck": "pass",
+    "test": "pass",
+    "build": "pass"
+  },
+  "filesCreated": [
+    "packages/admin/src/views/billing/types.ts",
+    "packages/admin/src/views/billing/fixtures.ts",
+    "packages/admin/src/views/billing/BillingListView.vue",
+    "packages/admin/src/views/billing/CONTRACT.md",
+    "packages/admin/src/views/billing/components/BillingSummaryCards.vue",
+    "packages/admin/src/views/billing/components/BillingFilters.vue",
+    "packages/admin/src/views/billing/components/BillingTable.vue",
+    "packages/admin/src/views/billing/components/BillingBulkActionBar.vue",
+    "packages/admin/src/views/billing/components/BillingPagination.vue",
+    "packages/admin/src/views/billing/components/PaymentLogTable.vue",
+    "packages/admin/src/views/billing/components/PaymentModal.vue",
+    "packages/admin/src/views/billing/components/BillingToast.vue",
+    "packages/admin/src/views/billing/model/useBillingFilters.ts",
+    "packages/admin/src/views/billing/model/useBillingSelection.ts",
+    "packages/admin/src/views/billing/model/useBillingToast.ts",
+    "packages/admin/src/views/billing/model/usePaymentModal.ts",
+    "packages/admin/src/views/billing/model/useRiskAckLog.ts"
+  ],
+  "filesModified": [],
+  "sharedHotpotsFrozen": [
+    "packages/admin/src/views/billing/types.ts",
+    "packages/admin/src/views/billing/fixtures.ts",
+    "packages/admin/src/views/billing/BillingListView.vue"
+  ],
+  "parallelTaskBoundaries": {
+    "T03": {
+      "canModify": [
+        "components/BillingSummaryCards.vue",
+        "components/BillingFilters.vue",
+        "model/useBillingFilters.ts"
+      ]
+    },
+    "T04": {
+      "canModify": [
+        "components/BillingTable.vue",
+        "components/BillingBulkActionBar.vue",
+        "components/BillingPagination.vue",
+        "model/useBillingSelection.ts"
+      ]
+    },
+    "T05": {
+      "canModify": [
+        "components/PaymentLogTable.vue",
+        "components/PaymentModal.vue",
+        "components/BillingToast.vue",
+        "model/usePaymentModal.ts",
+        "model/useBillingToast.ts",
+        "model/useRiskAckLog.ts"
+      ]
+    }
+  }
+}

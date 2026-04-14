@@ -1,14 +1,15 @@
 <!--
   section: create-modal.html
   Full-field create-lead modal with dedup hint panel.
+  Loaded into index.html via data-include-html fragment (outside <main>, overlay).
   P0-CONTRACT §5
 -->
-<div class="modal-backdrop" id="createLeadModal">
+<div data-section="create-modal" class="modal-backdrop" id="createLeadModal">
   <div class="apple-modal flex flex-col">
     <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
       <div>
-        <h3 class="text-[17px] font-semibold text-[var(--apple-text-main)]">新建线索</h3>
-        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-0.5">先录入联系人与意向，后续可转客户/转案件</div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">新建线索</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">先录入联系人与意向，后续可建立客户档案或创建案件</div>
       </div>
       <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-lead-modal-close>
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -17,7 +18,7 @@
 
     <div class="p-6 overflow-y-auto" style="max-height: calc(90vh - 130px);">
       <div class="mb-5">
-        <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold">
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold">
           请填写联系人信息。电话/邮箱至少填一项（用于去重与后续跟进）。
         </div>
       </div>
@@ -27,8 +28,11 @@
         <div class="text-[12px] text-[#92400e] mt-1" id="dedupHintMessage">该联系方式匹配到已有记录，请确认是否继续创建。</div>
         <div id="dedupHintCards" class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-2">
           <div class="p-2 rounded-lg border border-[#fde68a] bg-white">
-            <div class="text-[13px] font-semibold text-[var(--apple-text-main)]" id="dedupMatchName">—</div>
-            <div class="text-[12px] text-[var(--apple-text-tert)] mt-0.5" id="dedupMatchMeta">—</div>
+            <div class="flex items-center gap-2">
+              <div class="text-[13px] font-semibold text-[var(--text)]" id="dedupMatchName">—</div>
+              <span class="text-[11px] font-bold px-1.5 py-0.5 rounded-full" id="dedupMatchBadge"></span>
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-0.5" id="dedupMatchMeta">—</div>
           </div>
         </div>
         <div class="mt-3 flex gap-2">
@@ -41,14 +45,16 @@
         <div class="space-y-5">
           <div>
             <label class="apple-label" for="leadName">联系人姓名 <span class="text-red-500">*</span></label>
-            <input type="text" class="apple-input" id="leadName" placeholder="请输入姓名" autocomplete="name" />
+            <input type="text" class="apple-input" id="leadName" placeholder="请输入姓名" autocomplete="name" aria-required="true" />
+            <div class="field-error-msg hidden text-[12px] text-red-500 font-semibold mt-1" id="leadNameError">请填写联系人姓名</div>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="apple-label" for="leadPhone">电话 <span class="text-red-500">*</span></label>
+              <label class="apple-label" for="leadPhone">电话</label>
               <input type="tel" class="apple-input" id="leadPhone" placeholder="手机/座机" autocomplete="tel" />
-              <div class="text-[12px] text-[var(--apple-text-tert)] font-semibold mt-1">电话/邮箱至少填写一项</div>
+              <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-1" id="leadContactHint">电话/邮箱至少填写一项</div>
+              <div class="field-error-msg hidden text-[12px] text-red-500 font-semibold mt-1" id="leadContactError">请至少填写电话或邮箱</div>
             </div>
             <div>
               <label class="apple-label" for="leadEmail">邮箱</label>
@@ -61,7 +67,7 @@
               <label class="apple-label" for="leadSource">来源</label>
               <select class="apple-input appearance-none bg-white" id="leadSource">
                 <option value="" selected>请选择来源</option>
-                <option value="web">Web</option>
+                <option value="web">网站表单</option>
                 <option value="referral">介绍</option>
                 <option value="walkin">来访</option>
                 <option value="phone">电话</option>
@@ -88,9 +94,9 @@
               </select>
             </div>
             <div>
-              <label class="apple-label" for="leadGroup">归属 Group</label>
+              <label class="apple-label" for="leadGroup">所属组</label>
               <select class="apple-input appearance-none bg-white" id="leadGroup">
-                <option value="" selected>请选择 Group</option>
+                <option value="" selected>请选择所属组</option>
                 <option value="tokyo-1">东京一组</option>
                 <option value="tokyo-2">东京二组</option>
                 <option value="osaka">大阪组</option>
@@ -103,19 +109,19 @@
               <label class="apple-label" for="leadOwner">负责人</label>
               <select class="apple-input appearance-none bg-white" id="leadOwner">
                 <option value="" selected>请选择负责人</option>
-                <option value="suzuki">Suzuki</option>
-                <option value="tanaka">Tanaka</option>
-                <option value="sato">Sato</option>
+                <option value="suzuki">铃木</option>
+                <option value="tanaka">田中</option>
+                <option value="sato">佐藤</option>
               </select>
             </div>
             <div>
               <label class="apple-label" for="leadLanguage">首选语言</label>
               <select class="apple-input appearance-none bg-white" id="leadLanguage">
                 <option value="" selected>请选择语言</option>
-                <option value="ja">日本語</option>
+                <option value="ja">日语</option>
                 <option value="zh">中文</option>
-                <option value="en">English</option>
-                <option value="vi">Tiếng Việt</option>
+                <option value="en">英语</option>
+                <option value="vi">越南语</option>
               </select>
             </div>
           </div>

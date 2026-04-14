@@ -1,0 +1,347 @@
+{
+  "page_name": "leads_detail",
+  "source_entry": "packages/prototype/admin/leads-message/detail.html",
+  "contract_ref": "P0-CONTRACT-DETAIL.md §1–§17",
+  "regions": [
+    {
+      "id": "shell-side-nav",
+      "selector": "aside.side-nav",
+      "role": "navigation",
+      "source": "detail.html (inline, shared shell)",
+      "notes": "aria-current=page on 咨询线索; reuses shared/styles/shell.css"
+    },
+    {
+      "id": "shell-mobile-nav",
+      "selector": ".mobile-nav",
+      "role": "navigation",
+      "source": "detail.html (inline, shared shell)",
+      "notes": "drawer + backdrop; shared/scripts/mobile-nav.js"
+    },
+    {
+      "id": "shell-topbar",
+      "selector": "header.topbar",
+      "role": "header",
+      "source": "detail.html (inline)",
+      "notes": "sticky + blur; 线索列表 pill button + 新建案件 btn + global search"
+    },
+    {
+      "id": "detail-header",
+      "selector": "#detailHeaderSection",
+      "role": "header",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #1, §3",
+      "anchors": [
+        "breadcrumbName",
+        "detailTitle",
+        "detailStatusBadge",
+        "detailLeadId",
+        "detailOwner",
+        "detailOwnerAvatar",
+        "detailOwnerName",
+        "detailGroup",
+        "leadSampleSelect",
+        "detailActions",
+        "btnEditInfo",
+        "btnChangeStatus",
+        "btnConvertCase",
+        "btnConvertCustomer",
+        "btnMarkLost"
+      ],
+      "notes": "面包屑(咨询线索→姓名) + h1标题 + 状态badge + 负责人(头像缩写+姓名) + Group(chip) + 样本切换select + 5个操作按钮"
+    },
+    {
+      "id": "readonly-banner",
+      "selector": "#readonlyBanner",
+      "role": "section",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #8, §8.1",
+      "anchors": ["readonlyBanner"],
+      "notes": "已流失态显示; 浅灰底 --surface-2 + 锁图标 + 文案; 不可关闭; .is-visible 控制"
+    },
+    {
+      "id": "warning-banner",
+      "selector": "#warningBanner",
+      "role": "section",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #9, §8.2",
+      "anchors": ["warningBanner", "warningBannerText", "warningConvertBtn"],
+      "notes": "已签约未转化态显示; 浅黄底 rgba(245,158,11,0.1) + 警告图标 + 文案 + 行动按钮; .is-visible 控制"
+    },
+    {
+      "id": "detail-tabs",
+      "selector": ".detail-tabs",
+      "role": "navigation",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #3, §2",
+      "anchors": ["tabBtn-info", "tabBtn-followups", "tabBtn-conversion", "tabBtn-log"],
+      "notes": "4-Tab 横向导航: 基础信息/跟进记录/转化信息/日志; border-bottom active indicator + keyboard roving"
+    },
+    {
+      "id": "tab-info",
+      "selector": "#tab-info",
+      "role": "section",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #4, §4",
+      "anchors": [
+        "infoFields",
+        "infoId",
+        "infoName",
+        "infoPhone",
+        "infoEmail",
+        "infoSource",
+        "infoReferrer",
+        "infoBusinessType",
+        "infoGroup",
+        "infoOwner",
+        "infoLanguage",
+        "infoNote",
+        "btnEditInfoTab"
+      ],
+      "notes": "10 个结构化字段 + 备注；包含首选语言与 Group/负责人展示；支持进入编辑弹窗"
+    },
+    {
+      "id": "tab-followups",
+      "selector": "#tab-followups",
+      "role": "form",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #5, §5",
+      "anchors": [
+        "followupFormCard",
+        "followupForm",
+        "fuChannel",
+        "fuNextFollowUp",
+        "fuSummary",
+        "fuConclusion",
+        "fuNextAction",
+        "submitFollowup",
+        "followupTimeline",
+        "followupTimelineList",
+        "followupEmptyState"
+      ],
+      "notes": "新增表单(.apple-card) + 跟进时间线(渠道chip+摘要+结论+下一步+时间+一键转任务) + 空态引导"
+    },
+    {
+      "id": "tab-conversion",
+      "selector": "#tab-conversion",
+      "role": "section",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #6, §6",
+      "anchors": [
+        "dedupPanel",
+        "dedupNoMatch",
+        "dedupHitPanel",
+        "dedupHitTitle",
+        "dedupHitMessage",
+        "dedupMatchName",
+        "dedupMatchMeta",
+        "dedupContinueBtn",
+        "dedupViewBtn",
+        "conversionActions",
+        "convertCaseCard",
+        "convertCaseTitle",
+        "convertCaseDesc",
+        "btnConvertCaseTab",
+        "convertCustomerCard",
+        "convertCustomerTitle",
+        "convertCustomerDesc",
+        "btnConvertCustomerTab",
+        "convertedRecords",
+        "convertedCustomerCard",
+        "convertedCusName",
+        "convertedCusMeta",
+        "convertedCusLink",
+        "convertedCaseCard",
+        "convertedCaseName",
+        "convertedCaseMeta",
+        "convertedCaseLink",
+        "conversionHistory",
+        "conversionHistoryList"
+      ],
+      "notes": "去重匹配面板(无匹配/命中Lead/命中Customer) + 转客户/转案件操作卡片 + 已转化记录(Customer卡片+Case卡片+转化历史)"
+    },
+    {
+      "id": "tab-log",
+      "selector": "#tab-log",
+      "role": "filter",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §1 #7, §7",
+      "anchors": [
+        "logCategoryFilter",
+        "logTimelineList"
+      ],
+      "notes": "segmented control 三分类筛选(全部/状态变更/人员变更/Group变更) + 变更日志时间线；运行态会插入 info 类型日志"
+    },
+    {
+      "id": "convert-customer-modal",
+      "selector": "#convertCustomerModal",
+      "role": "modal",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §6.2",
+      "anchors": [
+        "convertCustomerModal",
+        "modalCusName",
+        "modalCusPhone",
+        "modalCusEmail",
+        "modalCusGroup",
+        "modalCusGroupReasonWrap",
+        "modalCusGroupReason",
+        "confirmConvertCustomer"
+      ],
+      "notes": "转客户确认弹窗: 预填姓名/电话/邮箱(readonly) + Group继承(可改) + 改组原因 + 确认/取消"
+    },
+    {
+      "id": "convert-case-modal",
+      "selector": "#convertCaseModal",
+      "role": "modal",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §6.3",
+      "anchors": [
+        "convertCaseModal",
+        "convertCaseModalTitle",
+        "convertCaseModalDesc",
+        "modalCaseApplicant",
+        "modalCaseType",
+        "modalCaseOwner",
+        "modalCaseGroup",
+        "modalCaseGroupReasonWrap",
+        "modalCaseGroupReason",
+        "confirmConvertCase"
+      ],
+      "notes": "转案件确认弹窗: 主申请人(readonly预填) + 案件类型 + 负责人 + Group继承 + 改组原因 + 确认/取消"
+    },
+    {
+      "id": "dedup-confirm-modal",
+      "selector": "#dedupConfirmModal",
+      "role": "modal",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §6.1",
+      "anchors": [
+        "dedupConfirmModal",
+        "dedupConfirmMessage",
+        "confirmDedupContinue"
+      ],
+      "notes": "去重命中后继续创建的二次确认弹窗；强调留痕"
+    },
+    {
+      "id": "change-status-modal",
+      "selector": "#changeStatusModal",
+      "role": "modal",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §3.1, §8",
+      "anchors": [
+        "changeStatusModal",
+        "statusNextValue",
+        "statusChangeReason",
+        "confirmStatusChange"
+      ],
+      "notes": "状态推进弹窗；目标状态 + 原因必填；提交后刷新 banner / 按钮矩阵 / 日志"
+    },
+    {
+      "id": "edit-info-modal",
+      "selector": "#editInfoModal",
+      "role": "modal",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §4, §7",
+      "anchors": [
+        "editInfoModal",
+        "editLeadName",
+        "editLeadLanguage",
+        "editLeadPhone",
+        "editLeadEmail",
+        "editLeadSource",
+        "editLeadReferrer",
+        "editLeadBusinessType",
+        "editLeadOwner",
+        "editLeadGroup",
+        "editLeadGroupReasonWrap",
+        "editLeadGroupReason",
+        "editLeadNote",
+        "confirmEditInfo"
+      ],
+      "notes": "基础信息编辑弹窗；支持修改来源/业务类型/负责人/所属组/语言/备注，并在改组时要求原因留痕"
+    },
+    {
+      "id": "toast-feedback",
+      "selector": "#toast",
+      "role": "footer",
+      "source": "detail.html (inline)",
+      "contract": "P0-CONTRACT-DETAIL §12",
+      "anchors": ["toast", "toastTitle", "toastDesc"],
+      "notes": "fixed bottom center; 8 presets: 跟进录入/转任务/转客户/签约建档/创建案件/状态变更/编辑信息/标记流失"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": ".detail-tab[data-tab]",
+      "count": 4,
+      "suggest_component": "DetailTab",
+      "notes": "4 Tab buttons: info/followups/conversion/log; .is-active + aria-selected"
+    },
+    {
+      "selector": ".tab-panel",
+      "count": 4,
+      "suggest_component": "TabPanel",
+      "notes": "4 panels matching tabs; .is-active controls visibility"
+    },
+    {
+      "selector": ".timeline-item[data-fu-idx]",
+      "count": 3,
+      "suggest_component": "FollowupTimelineItem",
+      "notes": "每条含渠道chip + 时间 + 操作人 + 摘要 + 结论 + 下一步 + 下次跟进 + 转任务按钮"
+    },
+    {
+      "selector": ".timeline-item[data-log-type]",
+      "count": 8,
+      "suggest_component": "LogTimelineItem",
+      "notes": "当前静态样本含 8 条日志；data-log-type=status|owner|group，运行态还会追加 info 日志"
+    },
+    {
+      "selector": ".channel-chip",
+      "count": 3,
+      "suggest_component": "ChannelChip",
+      "notes": "渠道标识胶囊: 电话(sky) / 邮件(emerald) / 面谈(violet) / IM(amber)"
+    },
+    {
+      "selector": ".log-type-chip",
+      "count": 8,
+      "suggest_component": "LogTypeChip",
+      "notes": "日志分类标识: 状态变更 / 人员变更 / Group变更；运行态可扩展 info 类型"
+    },
+    {
+      "selector": ".segment-btn[data-log-cat]",
+      "count": 4,
+      "suggest_component": "SegmentButton",
+      "notes": "日志分类筛选: all/status/owner/group; .active + aria-pressed"
+    },
+    {
+      "selector": ".conversion-card-icon",
+      "count": 4,
+      "suggest_component": "ConversionCardIcon",
+      "notes": "转化操作/记录卡片左侧图标: sky-100(案件) / emerald-100(客户)"
+    },
+    {
+      "selector": ".modal-backdrop .apple-modal",
+      "count": 5,
+      "suggest_component": "Modal",
+      "notes": "转客户 / 转案件 / 去重确认 / 状态调整 / 基础信息编辑 5 个弹窗；统一 header+body+footer + data-modal-close"
+    },
+    {
+      "selector": "[data-action=convert-task]",
+      "count": 3,
+      "suggest_component": "ConvertTaskButton",
+      "notes": "跟进记录右侧一键转任务按钮(demo-only)"
+    },
+    {
+      "selector": ".info-label + .info-value",
+      "count": 11,
+      "suggest_component": "InfoField",
+      "notes": "基础信息字段: label 12px/800 --muted-2 + value 14px/600 --text"
+    },
+    {
+      "selector": ".nav-item",
+      "count": 16,
+      "suggest_component": "NavItem",
+      "notes": "shared shell side-nav items (8 desktop + 8 mobile)"
+    }
+  ]
+}

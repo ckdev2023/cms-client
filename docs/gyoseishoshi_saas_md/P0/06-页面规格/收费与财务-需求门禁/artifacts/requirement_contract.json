@@ -1,0 +1,56 @@
+{
+  "feature_name": "P0 billing and finance module page specification",
+  "goal": "define the frozen P0 requirements for the billing and finance module so the firm can track receivables, payments, arrears risk, and collection follow-up at case level without expanding into broader finance operations",
+  "actors": [
+    "finance user",
+    "administrative scrivener / lead owner"
+  ],
+  "must_have": [
+    "billing list page with the specified case, customer, group, receivable, received, outstanding, next-node, and payment-status fields",
+    "default filters for payment status, group, and owner",
+    "case-level billing-plan section with stage-bound fee nodes, amount due, due date, and status",
+    "payment-record section with amount, date, voucher, and linked BillingPlan",
+    "internal finance notes area",
+    "payment registration and payment-voucher upload",
+    "collection-task creation for overdue unpaid cases",
+    "arrears-risk confirmation flow for continuing submission under unpaid status",
+    "role-based visibility and editing for administrator, finance, lead owner, and assistant"
+  ],
+  "out_of_scope": [
+    "invoice management",
+    "financial reports",
+    "auto-reconciliation",
+    "batch export of billing reports",
+    "customer-facing arrears reminders through portal or external channels",
+    "step-level billing hard blocking such as gate_trigger_step COE_SENT"
+  ],
+  "business_rules": [
+    "P0 does not treat arrears as a universal hard block for submission",
+    "billing nodes are bound to case stages and trigger internal reminders when reached",
+    "billing exceptions are exposed as risk signals rather than universal blocking",
+    "continuing submission under arrears requires risk confirmation with confirmer and reason and may include an optional voucher",
+    "payment recording updates outstanding amount and must remain traceable",
+    "collection support stays internal in P0 and does not include external customer reminder delivery",
+    "visibility and editability follow role, group, and responsible or collaborator access rules",
+    "finance-related export capability remains controlled and auditable rather than broadly open"
+  ],
+  "edge_cases": [
+    "empty state when no billing plan exists for a case",
+    "case fully paid and marked as settled",
+    "overdue unpaid node highlighted and triggering collection follow-up",
+    "submission attempted under arrears requiring explicit risk-confirmation trace before continuation",
+    "partial payment leaving a remaining outstanding balance"
+  ],
+  "acceptance_criteria": [
+    "the list page renders the required billing fields and filters",
+    "the module exposes billing-plan and payment-record sections with the specified fields",
+    "authorized users can register payments and upload vouchers linked to PaymentRecord",
+    "authorized users can create collection tasks for overdue billing nodes",
+    "arrears-risk confirmation records confirmer and reason before unpaid submission continues",
+    "overdue and settled states are visibly represented in the module",
+    "assistant access is read-only for visible collaborative finance data",
+    "P0 behavior remains limited to manual payment logging and internal risk handling without invoices, reports, auto-reconciliation, customer-facing reminders, or step-level hard billing blocks"
+  ],
+  "unknowns": [],
+  "blocked": false
+}

@@ -125,102 +125,6 @@
 .documents-summary-grid {
   margin-bottom: 28px;
 }
-.summary-card {
-  position: relative;
-  width: 100%;
-  min-height: 148px;
-  padding: 20px;
-  overflow: hidden;
-  text-align: left;
-  cursor: pointer;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
-    border-color 180ms ease;
-}
-.summary-card::after {
-  content: "";
-  position: absolute;
-  inset: auto -24px -24px auto;
-  width: 96px;
-  height: 96px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.5);
-  filter: blur(2px);
-}
-.summary-card:hover {
-  transform: translateY(-2px);
-}
-.summary-card.is-active {
-  border-color: rgba(3, 105, 161, 0.35);
-  box-shadow:
-    0 0 0 3px rgba(3, 105, 161, 0.08),
-    var(--shadow-hover);
-}
-.summary-card__label {
-  position: relative;
-  z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 12px;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted-2);
-}
-.summary-card__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 999px;
-  background: currentColor;
-  opacity: 0.9;
-}
-.summary-card__value {
-  position: relative;
-  z-index: 1;
-  margin-top: 18px;
-  font-size: 34px;
-  line-height: 1;
-  font-weight: 900;
-  letter-spacing: -0.03em;
-  color: var(--text);
-}
-.summary-card__hint {
-  position: relative;
-  z-index: 1;
-  margin-top: 14px;
-  font-size: 13px;
-  line-height: 1.6;
-  font-weight: 700;
-  color: var(--muted);
-}
-.summary-card--reviewing {
-  border-color: rgba(3, 105, 161, 0.14);
-  background: linear-gradient(180deg, rgba(14, 165, 233, 0.06), #ffffff 62%);
-}
-.summary-card--reviewing .summary-card__label { color: var(--primary); }
-.summary-card--missing {
-  border-color: rgba(245, 158, 11, 0.18);
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.08), #ffffff 62%);
-}
-.summary-card--missing .summary-card__label { color: #b45309; }
-.summary-card--expired,
-.summary-card--risk {
-  border-color: rgba(220, 38, 38, 0.18);
-}
-.summary-card--expired {
-  background: linear-gradient(180deg, rgba(220, 38, 38, 0.07), #ffffff 62%);
-}
-.summary-card--risk {
-  background: linear-gradient(180deg, rgba(220, 38, 38, 0.1), rgba(255, 255, 255, 0.98) 68%);
-}
-.summary-card--expired .summary-card__label,
-.summary-card--risk .summary-card__label,
-.summary-card--expired .summary-card__value,
-.summary-card--risk .summary-card__value {
-  color: #b91c1c;
-}
 
 /* ── Filter Panel ─────────────────────────────────────────── */
 .filter-panel {
@@ -341,28 +245,32 @@
   background: rgba(248, 250, 252, 0.96);
 }
 .documents-table td {
-  padding-top: 18px;
-  padding-bottom: 18px;
+  padding-top: 16px;
+  padding-bottom: 16px;
+  vertical-align: top;
 }
 .documents-table tr {
   transition: background-color 160ms ease;
 }
 .documents-table tr[data-doc-status="expired"] td {
-  background: rgba(220, 38, 38, 0.035);
+  background: rgba(220, 38, 38, 0.028);
 }
 .documents-table tr[data-doc-status="expired"]:hover td {
-  background: rgba(220, 38, 38, 0.055);
+  background: rgba(220, 38, 38, 0.042);
 }
-.doc-name-cell { min-width: 260px; }
+.doc-name-cell {
+  min-width: 360px;
+  width: auto;
+}
 .doc-row-title-wrap {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
 }
 .doc-row-title {
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.45;
   font-weight: 900;
   color: var(--text);
 }
@@ -370,29 +278,64 @@
   color: var(--muted);
   text-decoration: line-through;
 }
+.doc-row-meta {
+  margin-top: 5px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: var(--muted-2);
+}
 .doc-row-badges {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
 }
+.doc-row-guidance {
+  margin-top: 10px;
+  display: grid;
+  gap: 6px;
+}
+.doc-row-guidance__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.doc-row-guidance__label {
+  color: var(--muted-2);
+  font-weight: 800;
+}
+.doc-row-guidance__text {
+  color: var(--muted);
+  font-weight: 700;
+}
+.doc-row-guidance__text--strong {
+  color: var(--text);
+}
 .doc-row-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  margin-top: 10px;
+  gap: 8px;
+  margin-top: 12px;
 }
 .doc-inline-link {
-  padding: 0;
-  border: none;
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  background: rgba(248, 250, 252, 0.88);
   font-size: 12px;
-  font-weight: 900;
+  font-weight: 800;
   color: var(--primary);
 }
 .doc-inline-link:hover {
+  background: rgba(239, 246, 255, 0.96);
+  border-color: rgba(125, 211, 252, 0.65);
   color: var(--primary-hover);
-  text-decoration: underline;
 }
 .doc-cell-stack {
   display: flex;
@@ -402,7 +345,7 @@
 .doc-cell-primary {
   font-size: 13px;
   font-weight: 800;
-  color: var(--muted);
+  color: var(--text);
   line-height: 1.5;
 }
 .doc-cell-secondary {
@@ -420,40 +363,6 @@
   font-weight: 900;
   color: #b45309;
 }
-.doc-path {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  max-width: 200px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  background: rgba(241, 245, 249, 0.82);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-}
-.doc-path__value {
-  min-width: 0;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text);
-}
-.doc-path__copy {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted-2);
-}
-.doc-path__copy:hover {
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--primary);
-}
 #docPagination { background: rgba(248, 250, 252, 0.82); }
 
 /* ── Responsive ───────────────────────────────────────────── */
@@ -470,5 +379,12 @@
   .summary-card { min-height: 132px; }
   .filter-panel { padding: 16px; }
   .table-shell__header { padding: 16px; }
+  .doc-name-cell { min-width: 280px; }
+  .doc-row-actions {
+    gap: 6px;
+  }
+  .doc-inline-link {
+    padding: 0 8px;
+  }
 }
 

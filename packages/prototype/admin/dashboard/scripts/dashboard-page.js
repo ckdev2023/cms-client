@@ -8,7 +8,6 @@
   var state = {
     scope: config.defaultScope,
     windowDays: config.defaultWindow,
-    role: "principal",
   };
 
   var renderTimer = null;
@@ -17,34 +16,13 @@
   var cardNodes = [];
   var scopeButtons = [];
   var windowButtons = [];
-  var roleButtons = [];
   var scopeSummaryNode = null;
   var scopeVisibilityChipNode = null;
   var visibilityNotesNode = null;
   var toastNode = null;
   var toastTitleNode = null;
   var toastDescNode = null;
-  var heroGreetingNode = null;
-  var heroSubtitleNode = null;
   var listNodes = {};
-  var roleCopy = {
-    principal: {
-      titleSuffix: "主办人",
-      subtitle: "今天优先关注：待提交、风险、到期与欠款影响提交。",
-    },
-    assistant: {
-      titleSuffix: "助理",
-      subtitle: "今天优先关注：补件、回执上传、资料完整度与临期催办。",
-    },
-    sales: {
-      titleSuffix: "销售",
-      subtitle: "今天优先关注：新线索承接、客户转化与待签约推进。",
-    },
-    finance: {
-      titleSuffix: "财务",
-      subtitle: "今天优先关注：待回款、到账确认、凭证上传与欠款风险。",
-    },
-  };
 
   function escapeHtml(value) {
     return String(value)
@@ -147,12 +125,7 @@
       {
         key: "deadlines",
         node: listNodes.deadlines,
-        emptyMessage: "当前窗口内暂无临期案件，可切换到 30 天视图继续查看。",
-      },
-      {
-        key: "documents",
-        node: listNodes.documents,
-        emptyMessage: "当前视角暂无待补件案件，卡片仍保持可见。",
+        emptyMessage: "当前窗口内暂无逾期或临期案件，可切换到 30 天视图继续查看。",
       },
       {
         key: "submissions",
@@ -162,12 +135,7 @@
       {
         key: "risks",
         node: listNodes.risks,
-        emptyMessage: "当前视角暂无风险案件，继续关注临期和回款节点。",
-      },
-      {
-        key: "billing",
-        node: listNodes.billing,
-        emptyMessage: "暂无待回款案件，后续仍需保留收费节点巡检。",
+        emptyMessage: "当前视角暂无风险案件，继续关注期限与待提交节奏。",
       },
     ];
 
@@ -189,11 +157,8 @@
     }
 
     if (scopeVisibilityChipNode) {
-      var roleMeta = roleCopy[state.role];
       var scopeLabel = config.scopeLabels[state.scope] || "";
-      scopeVisibilityChipNode.textContent = roleMeta
-        ? roleMeta.titleSuffix + " · " + scopeLabel
-        : scopeLabel;
+      scopeVisibilityChipNode.textContent = scopeLabel;
     }
 
     if (visibilityNotesNode) {
@@ -203,21 +168,6 @@
           return "<div>" + escapeHtml(note) + "</div>";
         })
         .join("");
-    }
-  }
-
-  function renderRoleCopy() {
-    var copy = roleCopy[state.role];
-    if (!copy) {
-      return;
-    }
-
-    if (heroGreetingNode) {
-      heroGreetingNode.textContent = "早上好，Admin · " + copy.titleSuffix;
-    }
-
-    if (heroSubtitleNode) {
-      heroSubtitleNode.textContent = copy.subtitle;
     }
   }
 
@@ -232,7 +182,6 @@
   function renderToolbarState() {
     setButtonState(scopeButtons, state.scope, "data-scope-btn");
     setButtonState(windowButtons, state.windowDays, "data-window-btn");
-    setButtonState(roleButtons, state.role, "data-role-btn");
   }
 
   function showLoadingState() {
@@ -259,7 +208,6 @@
     renderCards();
     renderLists();
     renderScopeNotes();
-    renderRoleCopy();
     renderToolbarState();
   }
 
@@ -310,26 +258,18 @@
       });
     });
 
-    roleButtons.forEach(function (button) {
-      button.addEventListener("click", function () {
-        var nextRole = button.getAttribute("data-role-btn");
-        if (!nextRole || nextRole === state.role) {
-          return;
-        }
-
-        state.role = nextRole;
-        renderRoleCopy();
-        renderScopeNotes();
-        renderToolbarState();
-      });
-    });
   }
 
   function bindActions() {
     document.addEventListener("click", function (event) {
       var actionTrigger = event.target.closest("[data-action-id]");
       if (actionTrigger) {
-        showToast(actionTrigger.getAttribute("data-action-id"));
+        var actionId = actionTrigger.getAttribute("data-action-id");
+        if (actionId === "payment") {
+          window.location.href = "../billing/index.html";
+          return;
+        }
+        showToast(actionId);
         return;
       }
 
@@ -344,22 +284,17 @@
     cardNodes = Array.prototype.slice.call(document.querySelectorAll("[data-card-id]"));
     scopeButtons = Array.prototype.slice.call(document.querySelectorAll("[data-scope-btn]"));
     windowButtons = Array.prototype.slice.call(document.querySelectorAll("[data-window-btn]"));
-    roleButtons = Array.prototype.slice.call(document.querySelectorAll("[data-role-btn]"));
     scopeSummaryNode = document.getElementById("scopeSummary");
     scopeVisibilityChipNode = document.getElementById("scopeVisibilityChip");
     visibilityNotesNode = document.getElementById("visibilityNotes");
     toastNode = document.getElementById("toast");
     toastTitleNode = document.getElementById("toastTitle");
     toastDescNode = document.getElementById("toastDesc");
-    heroGreetingNode = document.getElementById("heroGreeting");
-    heroSubtitleNode = document.getElementById("heroSubtitle");
     listNodes = {
       todo: document.getElementById("todoList"),
       deadlines: document.getElementById("deadlineList"),
-      documents: document.getElementById("documentList"),
       submissions: document.getElementById("submissionList"),
       risks: document.getElementById("riskList"),
-      billing: document.getElementById("billingList"),
     };
   }
 

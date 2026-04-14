@@ -4,6 +4,24 @@
   var app = window.CustomerDetailPage;
   if (!app) return;
 
+  app.getCommVisibilityChipClass = function (visibility) {
+    return String(visibility) === 'customer'
+      ? 'chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]'
+      : 'chip';
+  };
+
+  app.getCommTypeChipClass = function (type) {
+    var value = String(type || '');
+    if (value === 'email') return 'chip bg-[rgba(99,102,241,0.08)] border-[rgba(99,102,241,0.18)] text-[rgb(79,70,229)]';
+    if (value === 'meeting') return 'chip bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.18)] text-[rgb(22,163,74)]';
+    if (value === 'phone') return 'chip bg-[rgba(249,115,22,0.08)] border-[rgba(249,115,22,0.18)] text-[rgb(234,88,12)]';
+    return 'chip bg-[rgba(15,23,42,0.04)] border-[rgba(15,23,42,0.08)] text-[var(--apple-text-main)]';
+  };
+
+  app.getCommDotClass = function (visibility) {
+    return String(visibility) === 'customer' ? 'bg-[var(--apple-blue)]' : 'bg-[var(--muted-2)]';
+  };
+
   app.renderComms = function () {
     var wrap = app.$('[data-customer-comms-list]');
     var empty = document.getElementById('customerCommsEmpty');
@@ -12,6 +30,24 @@
     wrap.innerHTML = '';
 
     var comms = app.state.store && Array.isArray(app.state.store.comms) ? app.state.store.comms : [];
+    app.setText('[data-comm-total]', String(comms.length));
+    app.setText(
+      '[data-comm-internal]',
+      String(
+        comms.filter(function (item) {
+          return String(item && item.visibility) === 'internal';
+        }).length
+      )
+    );
+    app.setText(
+      '[data-comm-customer]',
+      String(
+        comms.filter(function (item) {
+          return String(item && item.visibility) === 'customer';
+        }).length
+      )
+    );
+
     var filtered = comms.filter(function (item) {
       if (app.state.commFilter === 'internal') return String(item.visibility) === 'internal';
       if (app.state.commFilter === 'customer') return String(item.visibility) === 'customer';
@@ -22,9 +58,9 @@
     if (!filtered.length) return;
 
     var timeline = document.createElement('div');
-    timeline.className = 'relative pl-6 border border-[var(--border)] rounded-2xl p-5 md:p-6 bg-[var(--surface)]';
+    timeline.className = 'relative pl-4 md:pl-5 border border-[var(--border)] rounded-2xl p-4 md:p-5 bg-[var(--surface)]';
     var axis = document.createElement('div');
-    axis.className = 'absolute left-7 top-6 bottom-6 w-px bg-[var(--border)]';
+    axis.className = 'absolute left-[11px] md:left-[15px] top-5 bottom-5 w-px bg-[var(--border)]';
     timeline.appendChild(axis);
 
     filtered
@@ -32,24 +68,28 @@
       .sort(function (a, b) {
         return String(b.occurredAt || '').localeCompare(String(a.occurredAt || ''));
       })
-      .forEach(function (item) {
+      .forEach(function (item, index, list) {
         var row = document.createElement('div');
-        row.className = 'relative pl-6 py-4';
+        row.className = 'relative pl-7 md:pl-9' + (index < list.length - 1 ? ' pb-4 md:pb-5' : '');
 
         var dot = document.createElement('div');
-        dot.className = 'absolute left-4 top-6 w-3 h-3 rounded-full border border-[var(--border)] bg-white';
+        dot.className =
+          'absolute left-[2px] md:left-[6px] top-5 w-4 h-4 rounded-full border-4 border-white shadow-sm ' + app.getCommDotClass(item.visibility);
         row.appendChild(dot);
 
+        var card = document.createElement('div');
+        card.className = 'rounded-2xl border border-[var(--border)] bg-white px-4 py-4 md:px-5 shadow-[0_8px_24px_rgba(15,23,42,0.04)]';
+
         var header = document.createElement('div');
-        header.className = 'flex flex-wrap items-center justify-between gap-2';
+        header.className = 'flex flex-col gap-3 md:flex-row md:items-start md:justify-between';
 
         var left = document.createElement('div');
         left.className = 'min-w-0';
         var title = document.createElement('div');
-        title.className = 'text-[13px] font-extrabold text-[var(--apple-text-main)]';
+        title.className = 'text-[14px] font-extrabold text-[var(--apple-text-main)] leading-6';
         title.textContent = String(item.summary || '—');
         var meta = document.createElement('div');
-        meta.className = 'mt-1 text-[12px] text-[var(--apple-text-tert)] font-semibold';
+        meta.className = 'mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] text-[var(--apple-text-tert)] font-semibold';
         meta.textContent =
           app.formatDateTime(item.occurredAt) +
           ' · ' +
@@ -60,47 +100,46 @@
         left.appendChild(meta);
 
         var right = document.createElement('div');
-        right.className = 'flex items-center gap-2 shrink-0';
+        right.className = 'flex flex-wrap items-center gap-2 shrink-0';
         var typeChip = document.createElement('span');
-        typeChip.className = 'chip';
+        typeChip.className = app.getCommTypeChipClass(item.type);
         typeChip.textContent = app.getCommTypeLabel(item.type);
         var visibilityChip = document.createElement('span');
-        visibilityChip.className =
-          String(item.visibility) === 'customer'
-            ? 'chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]'
-            : 'chip';
+        visibilityChip.className = app.getCommVisibilityChipClass(item.visibility);
         visibilityChip.textContent = app.getVisibilityLabel(item.visibility);
         right.appendChild(typeChip);
         right.appendChild(visibilityChip);
 
         header.appendChild(left);
         header.appendChild(right);
-        row.appendChild(header);
+        card.appendChild(header);
 
         if (item.detail) {
           var detail = document.createElement('div');
-          detail.className = 'mt-2 text-[13px] text-[var(--muted)] font-semibold leading-relaxed';
+          detail.className = 'mt-3 text-[13px] text-[var(--muted)] font-semibold leading-6';
           detail.textContent = String(item.detail);
-          row.appendChild(detail);
+          card.appendChild(detail);
         }
+
+        var footer = document.createElement('div');
+        footer.className = 'mt-4 flex flex-col gap-3 md:flex-row md:items-end md:justify-between';
 
         if (item.nextAction) {
           var nextActionWrap = document.createElement('div');
-          nextActionWrap.className = 'mt-2 flex items-start gap-1.5';
+          nextActionWrap.className = 'flex-1 rounded-xl bg-[rgba(0,113,227,0.06)] border border-[rgba(0,113,227,0.12)] px-3 py-2.5';
           var nextActionLabel = document.createElement('span');
-          nextActionLabel.className =
-            'mt-0.5 text-[11px] font-extrabold text-[var(--apple-blue)] shrink-0 uppercase tracking-wide';
-          nextActionLabel.textContent = '→ 下一步';
+          nextActionLabel.className = 'block text-[11px] font-extrabold text-[var(--apple-blue)] uppercase tracking-wide';
+          nextActionLabel.textContent = '下一步';
           var nextActionText = document.createElement('span');
-          nextActionText.className = 'text-[13px] text-[var(--apple-blue)] font-semibold leading-relaxed';
+          nextActionText.className = 'mt-1 block text-[13px] text-[var(--apple-blue)] font-semibold leading-6';
           nextActionText.textContent = String(item.nextAction);
           nextActionWrap.appendChild(nextActionLabel);
           nextActionWrap.appendChild(nextActionText);
-          row.appendChild(nextActionWrap);
+          footer.appendChild(nextActionWrap);
         }
 
         var actions = document.createElement('div');
-        actions.className = 'mt-2 flex items-center justify-end gap-2';
+        actions.className = 'flex items-center justify-end gap-2 md:shrink-0';
 
         var editBtn = document.createElement('button');
         editBtn.type = 'button';
@@ -147,7 +186,9 @@
 
         actions.appendChild(editBtn);
         actions.appendChild(deleteBtn);
-        row.appendChild(actions);
+        footer.appendChild(actions);
+        card.appendChild(footer);
+        row.appendChild(card);
         timeline.appendChild(row);
       });
 

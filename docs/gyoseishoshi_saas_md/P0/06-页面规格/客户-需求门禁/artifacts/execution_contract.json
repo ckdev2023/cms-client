@@ -1,0 +1,33 @@
+{
+  "task_type": "documentation_requirement_gate",
+  "allowed_modules": [
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/客户.md",
+    "docs/gyoseishoshi_saas_md/P0/06-页面规格/客户-需求门禁/artifacts/",
+    "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+    "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md"
+  ],
+  "forbidden_modules": [
+    "packages/prototype/",
+    "src/",
+    "apps/",
+    "packages/"
+  ],
+  "required_outputs": [
+    "artifacts/requirement_summary.md",
+    "artifacts/requirement_gaps.md",
+    "artifacts/requirement_contract.json",
+    "artifacts/execution_contract.json",
+    "artifacts/acceptance_checklist.json"
+  ],
+  "non_goals": [
+    "prototype implementation",
+    "production code changes",
+    "rewriting authoritative customer, group, or dedupe rules outside the cited P0 documents",
+    "introducing P1 company-customer or ResidencePeriod scope into the P0 customer contract"
+  ],
+  "must_verify": [
+    "contract_check",
+    "requirement_gate",
+    "source_traceability"
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "taskId": "T07",
+  "title": "billing i18n 文案接入",
+  "status": "completed",
+  "completedAt": "2026-04-14T00:15:00+09:00",
+  "changedFiles": [
+    "packages/admin/src/i18n/messages/billing/zh-CN.ts",
+    "packages/admin/src/i18n/messages/billing/en-US.ts",
+    "packages/admin/src/i18n/messages/billing/ja-JP.ts",
+    "packages/admin/src/i18n/messages/zh-CN.ts",
+    "packages/admin/src/i18n/messages/en-US.ts",
+    "packages/admin/src/i18n/messages/ja-JP.ts",
+    "packages/admin/src/views/billing/BillingListView.vue",
+    "packages/admin/src/views/billing/components/BillingSummaryCards.vue",
+    "packages/admin/src/views/billing/components/BillingFilters.vue",
+    "packages/admin/src/views/billing/components/BillingTable.vue",
+    "packages/admin/src/views/billing/components/BillingBulkActionBar.vue",
+    "packages/admin/src/views/billing/components/PaymentModal.vue",
+    "packages/admin/src/views/billing/components/PaymentLogTable.vue",
+    "packages/admin/src/views/billing/components/BillingToast.vue",
+    "packages/admin/src/views/billing/components/BillingPagination.vue",
+    "packages/admin/src/views/billing/types.ts",
+    "packages/admin/src/views/billing/fixtures.ts"
+  ],
+  "verification": {
+    "depcruise": "pass — 0 violations",
+    "typecheck": "pass — vue-tsc --noEmit",
+    "lint": "pass — eslint + jsdoc:lang:check",
+    "test": "pass — 596 tests, 0 failures",
+    "build": "pass",
+    "guard": "pass — npm run guard exit 0"
+  },
+  "notes": [
+    "创建 billing/ 子目录三份语言文件（zh-CN / en-US / ja-JP），结构与 customers 子模块一致。",
+    "在三个 locale root 文件中新增 billing 命名空间导入和挂载，不影响其他命名空间。",
+    "将全部 9 个 billing 组件中的硬编码 UI 文案替换为 t() 调用，覆盖标题、按钮、表头、筛选器、状态标签、aria-label、toast、弹窗字段、分页等。",
+    "fixtures.ts 中 BILLING_SEGMENTS.label → labelKey、SUMMARY_CARD_DEFS.label → labelKey、BILLING_STATUS_OPTIONS.label 改为 i18n 键，types.ts 同步更新 BillingSummaryCardDef 接口。",
+    "Group/Owner 下拉选项保持 fixtures 原有 label（Group 名称本身为日文固有名词，Owner 为英文人名），不强制 i18n 化。"
+  ]
+}

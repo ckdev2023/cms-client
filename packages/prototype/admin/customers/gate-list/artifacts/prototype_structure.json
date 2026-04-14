@@ -1,0 +1,85 @@
+{
+  "page_name": "customer_list",
+  "regions": [
+    {
+      "id": "header",
+      "selector": "sections/header.html",
+      "role": "header",
+      "description": "页面标题 + 添加客户按钮 + 4 张摘要卡片（我的客户/本组客户/有活跃案件/无活跃案件）"
+    },
+    {
+      "id": "filters",
+      "selector": "sections/filters.html",
+      "role": "filter",
+      "description": "三段式数据范围切换（我的/本组/全所） + 搜索框 + 3 个筛选器（分组/负责人/活跃案件） + 重置按钮 + 筛选摘要"
+    },
+    {
+      "id": "bulk-action-bar",
+      "selector": "#bulkActionBar",
+      "role": "section",
+      "description": "批量操作栏：已选计数 + 清除 + 指派负责人(select+应用) + 调整分组(select+应用)；仅 selectedCount>0 时可见"
+    },
+    {
+      "id": "table",
+      "selector": "sections/table.html",
+      "role": "data_list",
+      "description": "客户表格：checkbox列 + 8 数据列（客户/フリガナ/案件/最近联系/负责人/介绍人来源/所属分组/操作） + 3 条示例行 + 空状态行"
+    },
+    {
+      "id": "pagination",
+      "selector": "sections/pagination.html",
+      "role": "footer",
+      "description": "分页：显示条数摘要 + 上一页/下一页按钮"
+    },
+    {
+      "id": "create-modal",
+      "selector": "sections/create-modal.html",
+      "role": "modal",
+      "description": "新建个人客户弹窗：12 字段表单 + 去重提示区 + 取消/保存草稿/创建客户按钮"
+    },
+    {
+      "id": "toast",
+      "selector": "sections/toast.html",
+      "role": "section",
+      "description": "浮动 toast 通知：5 种场景（创建客户/保存草稿/载入草稿/批量指派/批量调分组）"
+    },
+    {
+      "id": "shell-side-nav",
+      "selector": ".side-nav",
+      "role": "navigation",
+      "description": "侧边栏导航，客户项 aria-current=page 高亮"
+    },
+    {
+      "id": "shell-topbar",
+      "selector": ".topbar",
+      "role": "header",
+      "description": "顶部工具栏：全局搜索 + 新建咨询 + 新建案件 + 用户头像"
+    },
+    {
+      "id": "shell-mobile-nav",
+      "selector": ".mobile-nav",
+      "role": "navigation",
+      "description": "移动端导航抽屉"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": "[data-customer-row]",
+      "count": 4,
+      "suggest_component": "CustomerTableRow",
+      "description": "客户表格行：头像 + 识别名/编号/联系方式 + 案件 chip + フリガナ + 案件统计 + 最近联系 + 负责人 + 介绍人 + 分组 + 操作"
+    },
+    {
+      "selector": ".summary-card",
+      "count": 4,
+      "suggest_component": "SummaryCard",
+      "description": "统计摘要卡片（我的客户/本组客户/有活跃案件/无活跃案件）"
+    },
+    {
+      "selector": ".nav-item",
+      "count": 8,
+      "suggest_component": "NavItem",
+      "description": "导航项（shell 共享）"
+    }
+  ]
+}

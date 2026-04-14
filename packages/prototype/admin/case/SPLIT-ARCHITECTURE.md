@@ -131,7 +131,7 @@ packages/prototype/admin/case/
 2. 把页面结构拆到 `sections/`
 3. 抽出 `data/case-create-config.js`
 4. 把页面交互拆成 `case-create-page.js` 和 `case-create-modal.js`
-5. 回写 `index.html`、`customers/index.html`、`admin-prototype.html` 的新建入口
+5. 回写 `index.html`、`customers/index.html`、`dashboard/index.html` 的新建入口
 6. 更新 `P0-CONTRACT.md`、`MIGRATION-MAPPING.md`、`split-manifest.json`
 
 ## 6 Demo-only 说明

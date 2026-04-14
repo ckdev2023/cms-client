@@ -73,12 +73,6 @@
               </svg>
               收费与财务
             </a>
-            <!-- <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
-              </svg>
-              报表
-            </a> -->
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="index.html" aria-current="page">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,12 +81,6 @@
               </svg>
               系统设置
             </a>
-            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
-              </svg>
-              客户门户
-            </a> -->
           </nav>
         </div>
       </div>
@@ -153,12 +141,6 @@
               </svg>
               收费与财务
             </a>
-            <!-- <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
-              </svg>
-              报表
-            </a> -->
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="index.html" aria-current="page">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,12 +149,6 @@
               </svg>
               系统设置
             </a>
-            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
-              </svg>
-              客户门户
-            </a> -->
           </nav>
         </div>
       </aside>
@@ -204,81 +180,115 @@
           </div>
         </header>
 
-        <main id="main" class="pt-6 pb-20 px-4 md:px-8 max-w-7xl mx-auto w-full">
+        <main id="main" class="settings-page">
           <!-- section: sections/page-header.html -->
-          <div class="flex justify-between items-end mb-8">
-            <div>
-              <h1 class="text-3xl display-font font-semibold">系统设置</h1>
-              <p class="text-sm text-[var(--muted)] mt-1">管理事务所级基础配置——Group 管理、可见性策略与本地资料根目录</p>
+          <section class="settings-hero">
+            <div class="settings-hero__content">
+              <p class="settings-hero__eyebrow">Admin controls</p>
+              <div class="settings-hero__heading">
+                <div>
+                  <h1 class="settings-hero__title display-font">系统设置</h1>
+                  <p class="settings-hero__subtitle">管理事务所级基础配置，统一维护 Group 归属、协作可见性策略与本地资料根目录。</p>
+                </div>
+                <div class="settings-hero__badge-wrap">
+                  <span class="chip text-[11px]" title="仅管理员可见可编辑">
+                    <svg class="w-3.5 h-3.5 mr-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                    仅管理员
+                  </span>
+                </div>
+              </div>
             </div>
-            <div class="flex items-center">
-              <span class="chip text-[11px]" title="仅管理员可见可编辑">
-                <svg class="w-3.5 h-3.5 mr-1 opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                </svg>
-                仅管理员
-              </span>
-            </div>
-          </div>
+          </section>
           <!-- /section: sections/page-header.html -->
 
           <!-- section: sections/settings-subnav.html + content panels -->
-          <div class="flex flex-col md:flex-row gap-8">
+          <div class="settings-layout">
             <!-- Sub-navigation sidebar -->
-            <div class="w-full md:w-56 flex-shrink-0" id="settingsSubnav">
-              <nav class="apple-card p-3" aria-label="设置子导航">
-                <ul class="space-y-1">
+            <div class="settings-sidebar" id="settingsSubnav">
+              <div class="settings-sidebar__sticky">
+                <nav class="apple-card settings-subnav-card" aria-label="设置子导航">
+                  <div class="settings-subnav-card__intro">
+                    <p class="settings-subnav-card__eyebrow">设置分区</p>
+                    <p class="settings-subnav-card__hint">建议先维护团队与协作规则，再处理资料服务器根目录。</p>
+                  </div>
+                  <ul class="settings-subnav-list">
                   <li>
                     <button
                       type="button"
-                      class="settings-subnav-item is-active w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                      class="settings-subnav-item is-active"
                       data-subnav-id="group-management"
                     >
-                      <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                      </svg>
-                      Group 管理
+                      <span class="settings-subnav-item__icon" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                      </span>
+                      <span class="settings-subnav-item__copy">
+                        <span class="settings-subnav-item__title">Group 管理</span>
+                        <span class="settings-subnav-item__desc">团队归属、状态与成员查看</span>
+                      </span>
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      class="settings-subnav-item w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                      class="settings-subnav-item"
                       data-subnav-id="visibility-config"
                     >
-                      <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                      </svg>
-                      可见性配置
+                      <span class="settings-subnav-item__icon" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                      </span>
+                      <span class="settings-subnav-item__copy">
+                        <span class="settings-subnav-item__title">可见性配置</span>
+                        <span class="settings-subnav-item__desc">跨组协作与查看范围策略</span>
+                      </span>
                     </button>
                   </li>
                   <li>
                     <button
                       type="button"
-                      class="settings-subnav-item w-full text-left px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors"
+                      class="settings-subnav-item"
                       data-subnav-id="storage-root"
                     >
-                      <svg class="w-4 h-4 mr-2 inline-block opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
-                      </svg>
-                      本地资料根目录
+                      <span class="settings-subnav-item__icon" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                        </svg>
+                      </span>
+                      <span class="settings-subnav-item__copy">
+                        <span class="settings-subnav-item__title">本地资料根目录</span>
+                        <span class="settings-subnav-item__desc">资料服务器挂载点与路径拼接规则</span>
+                      </span>
                     </button>
                   </li>
-                </ul>
-              </nav>
+                  </ul>
+                </nav>
+                <aside class="apple-card settings-side-note" aria-label="管理提示">
+                  <p class="settings-side-note__title">管理提示</p>
+                  <p class="settings-side-note__text">设置页聚焦事务所级规则，影响范围较广。保存前建议确认是否需要同步通知主办人与管理员。</p>
+                </aside>
+              </div>
             </div>
 
             <!-- Content panels (toggled by sub-navigation) -->
-            <div class="flex-grow min-w-0">
+            <div class="settings-panels">
               <!-- panel: Group 管理 (default visible) -->
-              <div data-panel="group-management">
+              <div data-panel="group-management" class="settings-panel-shell">
                 <!-- section: sections/group-list-panel.html -->
                 <div id="groupListPanel">
                   <!-- List header: title + filter + action -->
-                  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <h2 class="text-lg font-bold">Group 管理</h2>
-                    <div class="flex items-center gap-3">
+                  <div class="settings-panel-header">
+                    <div>
+                      <p class="settings-panel-eyebrow">组织配置</p>
+                      <h2 class="settings-panel-title">Group 管理</h2>
+                      <p class="settings-panel-subtitle">维护事务所内的团队单元、状态和当前成员分布，便于后续客户与案件归属管理。</p>
+                    </div>
+                    <div class="settings-panel-actions">
                       <select
                         id="groupStatusFilter"
                         class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[140px]"
@@ -300,7 +310,7 @@
                   </div>
 
                   <!-- Table card -->
-                  <div class="apple-card overflow-hidden">
+                  <div class="apple-card settings-table-card overflow-hidden">
                     <table class="apple-table w-full text-left border-collapse">
                       <thead>
                         <tr>
@@ -365,7 +375,7 @@
                 <!-- /section: sections/group-list-panel.html -->
 
                 <!-- section: sections/group-detail-meta.html -->
-                <div id="groupDetailPanel" class="hidden">
+                <div id="groupDetailPanel" class="hidden settings-detail-shell">
                   <!-- Back to list -->
                   <button
                     type="button"
@@ -441,7 +451,7 @@
                     <div class="apple-card p-5 sm:p-6">
                       <div class="flex items-center justify-between mb-4">
                         <h3 class="text-[15px] font-bold text-[var(--text)]">成员列表</h3>
-                        <span class="chip text-[11px]" title="P0 仅展示，不支持增删成员">只读</span>
+                        <span class="chip text-[11px]" title="当前仅支持查看，不支持增删成员">只读</span>
                       </div>
 
                       <!-- Member table -->
@@ -495,19 +505,20 @@
               </div>
 
               <!-- panel: 可见性配置 (hidden by default) -->
-              <div data-panel="visibility-config" class="hidden">
+              <div data-panel="visibility-config" class="hidden settings-panel-shell">
                 <!-- section: sections/visibility-config-panel.html -->
                 <div id="visibilityPanel">
-                  <div class="flex justify-between items-end mb-6">
+                  <div class="settings-panel-header">
                     <div>
-                      <h2 class="text-lg font-bold text-[var(--text)]">可见性配置</h2>
-                      <p class="text-[13px] text-[var(--muted-2)] mt-0.5">管理跨组建案与协作案件的可见性策略。配置变更不回溯影响既有协作/归属关系。</p>
+                      <p class="settings-panel-eyebrow">协作策略</p>
+                      <h2 class="settings-panel-title">可见性配置</h2>
+                      <p class="settings-panel-subtitle">管理跨组建案与协作案件的可见性策略。配置变更不回溯影响既有协作或归属关系。</p>
                     </div>
                   </div>
 
-                  <div class="space-y-4">
+                  <div class="settings-policy-list">
                     <!-- Switch 1: Cross-group case creation -->
-                    <div class="apple-card p-5 sm:p-6">
+                    <div class="apple-card settings-policy-card p-5 sm:p-6">
                       <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
                           <p class="text-[14px] font-bold text-[var(--text)]">是否允许跨组建案</p>
@@ -523,7 +534,7 @@
                     </div>
 
                     <!-- Switch 2: Cross-group collaboration view -->
-                    <div class="apple-card p-5 sm:p-6">
+                    <div class="apple-card settings-policy-card p-5 sm:p-6">
                       <div class="flex items-start justify-between gap-4">
                         <div class="min-w-0">
                           <p class="text-[14px] font-bold text-[var(--text)]">是否允许负责人查看非本组协作案件</p>
@@ -540,7 +551,7 @@
                   </div>
 
                   <!-- Cross-module note -->
-                  <div class="mt-4 p-3 rounded-xl border border-blue-100 bg-blue-50">
+                  <div class="settings-inline-note mt-4 p-3 rounded-xl border border-blue-100 bg-blue-50">
                     <div class="flex items-start gap-2">
                       <svg class="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -552,7 +563,7 @@
                   </div>
 
                   <!-- Save row -->
-                  <div class="mt-6 flex items-center justify-between">
+                  <div class="settings-savebar mt-6 flex items-center justify-between">
                     <p class="text-[12px] text-[var(--muted-2)]" id="visibilitySaveStatus"></p>
                     <button
                       type="button"
@@ -567,18 +578,19 @@
               </div>
 
               <!-- panel: 本地资料根目录 (hidden by default) -->
-              <div data-panel="storage-root" class="hidden">
+              <div data-panel="storage-root" class="hidden settings-panel-shell">
                 <!-- section: sections/storage-root-panel.html -->
                 <div id="storageRootPanel">
-                  <div class="flex justify-between items-end mb-6">
+                  <div class="settings-panel-header">
                     <div>
-                      <h2 class="text-lg font-bold text-[var(--text)]">本地资料根目录</h2>
-                      <p class="text-[13px] text-[var(--muted-2)] mt-0.5">配置事务所级本地资料服务器根目录，供案件资料路径拼接使用。</p>
+                      <p class="settings-panel-eyebrow">资料底座</p>
+                      <h2 class="settings-panel-title">本地资料根目录</h2>
+                      <p class="settings-panel-subtitle">配置事务所级本地资料服务器根目录，供案件资料路径拼接与本地归档入口使用。</p>
                     </div>
                   </div>
 
                   <!-- Not-configured warning (hidden when demo data present) -->
-                  <div id="storageNotConfiguredHint" class="hidden mb-4 p-4 rounded-xl border border-amber-200 bg-amber-50">
+                  <div id="storageNotConfiguredHint" class="hidden mb-4 p-4 rounded-xl border border-amber-200 bg-amber-50 settings-warning-banner">
                     <div class="flex items-start gap-3">
                       <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -593,7 +605,7 @@
                   </div>
 
                   <!-- Config form -->
-                  <div class="apple-card p-5 sm:p-6">
+                  <div class="apple-card settings-form-card p-5 sm:p-6">
                     <div class="space-y-5">
                       <!-- Root name -->
                       <div>
@@ -623,7 +635,7 @@
                       </div>
 
                       <!-- Path strategy explanation -->
-                      <div class="p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]">
+                      <div class="settings-info-box p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-2)]">
                         <div class="flex items-start gap-2">
                           <svg class="w-4 h-4 text-[var(--muted)] flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -640,7 +652,7 @@
                       <!-- Path preview -->
                       <div>
                         <p class="text-[12px] font-semibold text-[var(--muted-2)] uppercase tracking-wide mb-1.5">路径预览</p>
-                        <div class="px-3 py-2 rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-2)] font-mono text-[13px] text-[var(--text)]" id="pathPreview">
+                        <div class="settings-preview-box px-3 py-2 rounded-lg border border-dashed border-[var(--border)] bg-[var(--surface-2)] font-mono text-[13px] text-[var(--text)]" id="pathPreview">
                           \\fileserver\gyosei-docs/<span class="text-blue-600">{relative_path}</span>
                         </div>
                         <p class="text-[11px] text-[var(--muted-2)] mt-1">实际完整路径 = 根目录 + 资料的相对路径</p>
@@ -661,7 +673,7 @@
                   </div>
 
                   <!-- Save row -->
-                  <div class="mt-6 flex items-center justify-between">
+                  <div class="settings-savebar mt-6 flex items-center justify-between">
                     <p class="text-[12px] text-[var(--muted-2)]" id="storageRootSaveStatus"></p>
                     <button
                       type="button"

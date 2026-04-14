@@ -1,0 +1,77 @@
+{
+  "page_component": "DashboardView",
+  "candidates": [
+    {
+      "name": "SegmentedControl",
+      "source_selector": ".segmented-control",
+      "repeatable": true,
+      "props_hint": ["options", "modelValue", "ariaLabel"],
+      "shared_ui_match": "shared/ui — 需新增或复用 SegmentedControl",
+      "note": "scope 切换与 window 切换各用一个实例"
+    },
+    {
+      "name": "QuickActionCard",
+      "source_selector": ".quick-action-card",
+      "repeatable": true,
+      "props_hint": ["title", "description", "icon", "tone", "navigateTo"],
+      "shared_ui_match": null,
+      "note": "dashboard 页面级局部组件，4 张快捷动作卡片"
+    },
+    {
+      "name": "SummaryCard",
+      "source_selector": ".apple-card.summary-card",
+      "repeatable": true,
+      "props_hint": ["cardId", "label", "value", "helper", "meta", "tone", "statusText", "statusVariant", "actionLabel", "actionId"],
+      "shared_ui_match": "可基于 shared/ui/Card.vue 扩展",
+      "note": "dashboard 页面级组件；带 orb 背景装饰、状态 pill、底部 meta + action"
+    },
+    {
+      "name": "StatusPill",
+      "source_selector": ".status-pill",
+      "repeatable": true,
+      "props_hint": ["label", "variant"],
+      "shared_ui_match": "shared/ui — 可复用 Chip 或新增 StatusPill",
+      "note": "变体：info / warn / danger / muted"
+    },
+    {
+      "name": "WorkPanel",
+      "source_selector": ".apple-card.work-panel",
+      "repeatable": true,
+      "props_hint": ["tag", "title", "subtitle", "actionLabel", "actionId", "featured"],
+      "shared_ui_match": null,
+      "note": "dashboard 页面级组件，featured 变体会 span 2 col"
+    },
+    {
+      "name": "WorkItem",
+      "source_selector": ".work-item",
+      "repeatable": true,
+      "props_hint": ["title", "meta", "desc", "status", "statusLabel", "action"],
+      "shared_ui_match": null,
+      "note": "JS 动态渲染行项目，带标题、meta 标签行、描述文案和 CTA 按钮"
+    },
+    {
+      "name": "WorkList",
+      "source_selector": ".work-list",
+      "repeatable": true,
+      "props_hint": ["items", "emptyMessage", "loading"],
+      "shared_ui_match": null,
+      "note": "列表容器，需处理 empty-state 和 skeleton 加载态"
+    },
+    {
+      "name": "NoteCard",
+      "source_selector": ".apple-card.note-card",
+      "repeatable": true,
+      "props_hint": ["label", "title", "items"],
+      "shared_ui_match": "可基于 shared/ui/Card.vue 扩展",
+      "note": "权限可见性说明和使用提示"
+    },
+    {
+      "name": "MiniButton",
+      "source_selector": ".mini-btn",
+      "repeatable": true,
+      "props_hint": ["label", "actionId"],
+      "shared_ui_match": "shared/ui/Button.vue — 需补 mini/pill 变体",
+      "note": "pill 形态小按钮，用于卡片/面板内联操作"
+    }
+  ]
+}

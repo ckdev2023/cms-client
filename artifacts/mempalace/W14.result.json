@@ -1,0 +1,29 @@
+{
+  "task_id": "W14",
+  "task_name": "eval-template",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/eval-report-template.md",
+  "summary_output": "artifacts/mempalace/W14.summary.md",
+  "checks": [
+    {
+      "name": "hit_rate_and_misleading_rate_recordable",
+      "status": "passed"
+    },
+    {
+      "name": "source_layer_and_backlink_quality_recordable",
+      "status": "passed"
+    },
+    {
+      "name": "go_no_go_summary_supported",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W14-eval-template.md",
+    "plan/mempalace/acceptance-queries.md",
+    "plan/mempalace/answer-protocol.md",
+    "plan/mempalace/source-priority.md"
+  ]
+}

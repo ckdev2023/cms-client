@@ -1,0 +1,32 @@
+{
+  "task_id": "W06",
+  "task_name": "room-taxonomy",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/taxonomy-spec.md",
+  "summary_output": "artifacts/mempalace/W06.summary.md",
+  "checks": [
+    {
+      "name": "core_rooms_defined",
+      "status": "passed"
+    },
+    {
+      "name": "room_names_do_not_overlap_with_wings",
+      "status": "passed"
+    },
+    {
+      "name": "cross_wing_tunnel_rules_defined",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/mempalace/taxonomy-spec.md",
+    "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+    "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+    "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md"
+  ]
+}

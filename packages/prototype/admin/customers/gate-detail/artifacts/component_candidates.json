@@ -1,0 +1,96 @@
+{
+  "page_component": "CustomerDetailPage",
+  "candidates": [
+    {
+      "name": "CustomerDetailHeader",
+      "source_selector": "sections/detail-content.html > .apple-card:first-child",
+      "repeatable": false,
+      "props_hint": ["customer", "onCreateCase", "onBatchCreateCase"],
+      "description": "面包屑 + 操作按钮 + 头像 + 标题 + 编号/分组/负责人/最近联系 chip"
+    },
+    {
+      "name": "CustomerCaseSummaryStrip",
+      "source_selector": "sections/detail-content.html > .apple-card:nth-child(2)",
+      "repeatable": false,
+      "props_hint": ["totalCases", "activeCases", "archivedCases", "latestCaseName", "lastCreatedDate"],
+      "description": "案件摘要条：4 指标 + 案件名 popover"
+    },
+    {
+      "name": "CustomerTabBar",
+      "source_selector": "[role='tablist']",
+      "repeatable": false,
+      "props_hint": ["activeTab", "onTabChange"],
+      "description": "5-tab 导航：基础信息/关联案件/关联人/沟通记录/操作日志"
+    },
+    {
+      "name": "CustomerBasicInfoPanel",
+      "source_selector": "#customerPanel-basic",
+      "repeatable": false,
+      "props_hint": ["customer", "isEditing", "onEdit", "onCancel", "onSave"],
+      "description": "基础信息 Tab：编辑切换 + 14 字段表单（识别名/法定名/フリガナ/国籍/性别/生日/电话/邮箱/分组/负责人/介绍人/头像/备注）"
+    },
+    {
+      "name": "CustomerBmvIntakeCard",
+      "source_selector": "#customerBmvIntakeCard",
+      "repeatable": false,
+      "props_hint": ["intakeStatus", "questionnaireStatus", "quoteStatus", "signStatus", "onSendQuestionnaire", "onGenerateQuote", "onConfirmSign", "onCreateCase"],
+      "description": "经营管理签签约前承接卡片（P1 scope，基础信息 Tab 顶部，签约前不可建案）"
+    },
+    {
+      "name": "CustomerCasesPanel",
+      "source_selector": "#customerPanel-cases",
+      "repeatable": false,
+      "props_hint": ["cases", "filterMode", "onFilterChange", "onCreateCase", "onBatchCreate"],
+      "description": "关联案件 Tab：全部/活跃/已归档 + 案件表格（编号/案件/类型/阶段/状态/更新时间/操作）"
+    },
+    {
+      "name": "CustomerContactsPanel",
+      "source_selector": "#customerPanel-contacts",
+      "repeatable": false,
+      "props_hint": ["relations", "searchQuery", "onSearch", "onAddRelation", "onBatchCreateCase"],
+      "description": "关联人 Tab：搜索 + 全选 + 表格 + 新增关联人 + 为关联人批量建案"
+    },
+    {
+      "name": "CustomerCommsPanel",
+      "source_selector": "#customerPanel-comms",
+      "repeatable": false,
+      "props_hint": ["comms", "filterMode", "totalCount", "internalCount", "customerVisibleCount", "onFilterChange", "onAddComm"],
+      "description": "沟通记录 Tab：统计 + 全部/内部/客户可见 + 时间线 + 记录沟通按钮 + 空状态"
+    },
+    {
+      "name": "CustomerLogsPanel",
+      "source_selector": "#customerPanel-log",
+      "repeatable": false,
+      "props_hint": ["logs", "filterType", "currentPage", "totalPages", "onFilterChange", "onPageChange"],
+      "description": "操作日志 Tab：全部/信息变更/关系变更/案件/沟通 + 日志表格 + 分页 + 空状态"
+    },
+    {
+      "name": "CustomerConfirmDialog",
+      "source_selector": "#customerConfirmDialog",
+      "repeatable": false,
+      "props_hint": ["open", "title", "description", "onCancel", "onConfirm"],
+      "description": "通用确认弹窗"
+    },
+    {
+      "name": "CustomerRelationDialog",
+      "source_selector": "#customerRelationDialog",
+      "repeatable": false,
+      "props_hint": ["open", "onClose", "onSave"],
+      "description": "新增关联人弹窗：7 字段（姓名/フリガナ/关系/标签/电话/邮箱/备注）"
+    },
+    {
+      "name": "CustomerCommDialog",
+      "source_selector": "#customerCommDialog",
+      "repeatable": false,
+      "props_hint": ["open", "onClose", "onSave"],
+      "description": "记录沟通弹窗：7 字段（渠道/时间/可见范围/记录人/摘要/详细记录/下一步动作）"
+    },
+    {
+      "name": "AppToast",
+      "source_selector": "#toast",
+      "repeatable": false,
+      "props_hint": ["title", "description", "visible"],
+      "description": "全局 toast 通知（共享组件）"
+    }
+  ]
+}

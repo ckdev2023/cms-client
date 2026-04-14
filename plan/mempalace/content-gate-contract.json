@@ -1,0 +1,297 @@
+{
+  "$schema_note": "MemPalace 索引前内容预检查契约 — 由 blocked_sources.md、data_classification.md、ingestion-manifest.md §4-§5 转换而来",
+  "contract_version": "v0.1.0",
+  "created": "2026-04-12",
+
+  "gate_policy": {
+    "default_verdict": "reject",
+    "execution_order": [
+      "path_exclude_rules",
+      "ext_allowlist_check",
+      "content_block_rules",
+      "classification_assignment"
+    ],
+    "fail_open": false,
+    "note": "预检查按固定顺序执行，任何阶段命中拒绝则立即终止，不继续后续检查"
+  },
+
+  "path_exclude_rules": {
+    "description": "路径级排除规则，在读取文件内容之前执行",
+    "rules": [
+      {
+        "rule_id": "exclude-outside-enabled-roots",
+        "stage": "pre_read",
+        "check": "path_not_in_roots",
+        "roots": [
+          "docs/gyoseishoshi_saas_md/P0/",
+          "docs/gyoseishoshi_saas_md/P1/",
+          "docs/事务所流程/",
+          "docs/gyoseishoshi_saas_md/_output/",
+          "docs/gyoseishoshi_saas_md/_raw/"
+        ],
+        "verdict": "reject",
+        "reason": "文件不在已冻结根目录内"
+      },
+      {
+        "rule_id": "exclude-binary-and-office",
+        "stage": "pre_read",
+        "check": "glob_match",
+        "patterns": [
+          "**/*.xlsx", "**/*.xls", "**/*.docx", "**/*.pdf",
+          "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.gif", "**/*.webp",
+          "**/*.zip", "**/*.7z", "**/*.tar", "**/*.gz"
+        ],
+        "verdict": "reject",
+        "reason": "未审阅二进制与 Office 附件一期默认禁止"
+      },
+      {
+        "rule_id": "exclude-dump-export-log",
+        "stage": "pre_read",
+        "check": "glob_match",
+        "patterns": [
+          "**/*.csv", "**/*.sql", "**/*.dump",
+          "**/*.bak", "**/*.log", "**/*.jsonl"
+        ],
+        "verdict": "reject",
+        "reason": "导出、备份、日志与批量文本导出不进入一期"
+      },
+      {
+        "rule_id": "exclude-directory-package-allow",
+        "stage": "pre_read",
+        "check": "ext_mismatch_with_source_entry",
+        "verdict": "reject",
+        "reason": "目录命中白名单但文件后缀未命中该条目 include_ext"
+      }
+    ]
+  },
+
+  "ext_allowlist_check": {
+    "description": "文件后缀白名单校验，确保只有 source_entry.include_ext 中的后缀可通过",
+    "stage": "pre_read",
+    "check": "file_ext_in_source_entry_include_ext",
+    "verdict_on_mismatch": "reject",
+    "reason": "文件后缀不在对应 source_entry 的 include_ext 白名单中"
+  },
+
+  "content_block_rules": {
+    "description": "内容级红线检查，在读取文件内容之后、写入索引之前执行",
+    "enforcement": "mandatory",
+    "note": "即使文件通过了路径白名单，仍必须执行内容级检查",
+    "rules": [
+      {
+        "rule_id": "block-real-identity",
+        "stage": "post_read",
+        "priority": 1,
+        "trigger_signals": [
+          "真实客户姓名或潜在客户姓名",
+          "公司名（非虚构示例）",
+          "具体地址",
+          "电话号码",
+          "电子邮箱",
+          "证件号码（护照号、在留卡号等）",
+          "案件编号（非模板占位符）"
+        ],
+        "classification": "C4-Hard-Block",
+        "verdict": "reject",
+        "action": "drop",
+        "log_required": true,
+        "reason": "可直接识别自然人或法人，且可与业务过程关联"
+      },
+      {
+        "rule_id": "block-formal-case-data",
+        "stage": "post_read",
+        "priority": 2,
+        "trigger_signals": [
+          "正式 Lead/Customer/Case 导出记录",
+          "案件状态流转记录",
+          "任务执行日志",
+          "提醒记录",
+          "上传资料目录清单"
+        ],
+        "classification": "C4-Hard-Block",
+        "verdict": "reject",
+        "action": "drop",
+        "log_required": true,
+        "reason": "属于正式运行数据，不是知识层权威定义"
+      },
+      {
+        "rule_id": "block-document-and-visa-material",
+        "stage": "post_read",
+        "priority": 3,
+        "trigger_signals": [
+          "护照信息或扫描件引用",
+          "在留卡信息",
+          "申请表原件内容",
+          "理由书原件内容",
+          "入管回执",
+          "签证结果文件",
+          "扫描件或截图引用"
+        ],
+        "classification": "C4-Hard-Block",
+        "verdict": "reject",
+        "action": "drop",
+        "log_required": true,
+        "reason": "高敏感个人与案件材料，常包含多重标识符"
+      },
+      {
+        "rule_id": "block-billing-and-payment",
+        "stage": "post_read",
+        "priority": 4,
+        "trigger_signals": [
+          "报价单",
+          "账单",
+          "发票",
+          "付款流水",
+          "银行信息",
+          "税务编号",
+          "尾款状态明细"
+        ],
+        "classification": "C4-Hard-Block",
+        "verdict": "reject",
+        "action": "drop",
+        "log_required": true,
+        "reason": "包含财务敏感信息与真实交易轨迹"
+      },
+      {
+        "rule_id": "block-chat-meeting-export",
+        "stage": "post_read",
+        "priority": 5,
+        "trigger_signals": [
+          "AI 对话导出",
+          "IM 聊天记录",
+          "邮件导出",
+          "会议录音转写",
+          "含真实客户或案件细节的对话"
+        ],
+        "classification": "C4-Hard-Block",
+        "verdict": "reject",
+        "action": "drop",
+        "log_required": true,
+        "reason": "原始语料噪声高且常混入未脱敏身份与决策上下文"
+      },
+      {
+        "rule_id": "candidate-desensitized-teaching-sample",
+        "stage": "post_read",
+        "priority": 6,
+        "trigger_signals": [
+          "已改写但仍来自真实业务经验的教学样本",
+          "从正式材料中提炼的规则摘要",
+          "聚合统计或模式总结",
+          "脱敏后的问答或复盘摘要"
+        ],
+        "classification": "C3-Desensitize-Candidate",
+        "verdict": "hold",
+        "action": "hold_for_future_review",
+        "log_required": true,
+        "reason": "含业务经验价值但需完全脱敏并经人工复核后才可能使用"
+      }
+    ]
+  },
+
+  "classification_assignment": {
+    "description": "通过所有排除和红线检查后，分配最终分类",
+    "stage": "post_read",
+    "decision_order": [
+      {
+        "step": 1,
+        "check": "file_in_allowed_sources_whitelist",
+        "on_false": { "verdict": "reject", "reason": "未命中 allowed_sources 白名单" }
+      },
+      {
+        "step": 2,
+        "check": "content_triggers_c4_hard_block",
+        "on_true": { "classification": "C4-Hard-Block", "verdict": "reject" }
+      },
+      {
+        "step": 3,
+        "check": "content_from_real_business_rewritten",
+        "on_true": { "classification": "C3-Desensitize-Candidate", "verdict": "hold" }
+      },
+      {
+        "step": 4,
+        "check": "source_entry_classification",
+        "note": "在白名单内且不含敏感数据时，采用 source_entry 中定义的分类（C1 或 C2）",
+        "on_match": { "verdict": "accept" }
+      }
+    ],
+    "default_escalation": {
+      "rule": "无法确定分类时，升级到 C3 或 C4",
+      "verdict": "reject",
+      "reason": "从宽采集是错误策略，不确定时必须升级"
+    }
+  },
+
+  "escalation_rules": [
+    {
+      "rule_id": "escalate-uncertain-sensitivity",
+      "condition": "不能确定是否含敏感字段",
+      "escalate_to": "C3-Desensitize-Candidate",
+      "minimum": "C4-Hard-Block",
+      "note": "从宽采集是错误策略"
+    },
+    {
+      "rule_id": "escalate-unverified-provenance",
+      "condition": "不能证明来源合法且经过复核",
+      "escalate_to": "C4-Hard-Block"
+    },
+    {
+      "rule_id": "escalate-unparsed-binary",
+      "condition": "二进制附件、Office 文档和导出文件若未先转换为受审文本",
+      "escalate_to": "C4-Hard-Block"
+    }
+  ],
+
+  "hard_prohibitions": [
+    "不允许因为「仅内部使用」而放行真实客户或正式案件数据",
+    "不允许因为「只抽取一部分字段」而放行数据库导出、Excel 导出或日志片段",
+    "不允许因为「文件在仓库里」而默认视为安全",
+    "不允许把 _raw、聊天导出、邮件摘录直接当作知识源",
+    "不允许将正式业务数据先写成 Markdown 再绕过本契约导入",
+    "blocked_content_rules 优先于 path_allowlist — 同时命中白名单目录与红线规则时以红线为准"
+  ],
+
+  "gate_output_schema": {
+    "description": "每个文件经过预检查后必须产出的结构化记录",
+    "fields": {
+      "file_path":      { "type": "string",  "description": "相对于仓库根的文件路径" },
+      "source_id":      { "type": "string",  "description": "匹配到的 manifest source_entry（未匹配则 null）" },
+      "document_id":    { "type": "string",  "description": "按 id-naming-rules.md 生成的 document_id（被拒绝时也应计算）" },
+      "verdict":        { "type": "enum",    "values": ["accept", "reject", "hold"], "description": "最终判定" },
+      "classification": { "type": "string",  "description": "最终分类标签" },
+      "triggered_rules": { "type": "array",  "items": "string", "description": "触发的 rule_id 列表" },
+      "stage_reached":  { "type": "enum",    "values": ["pre_read", "post_read", "classified"], "description": "检查执行到的最远阶段" },
+      "reason":         { "type": "string",  "description": "最终判定的可读原因" },
+      "timestamp":      { "type": "string",  "format": "ISO8601", "description": "检查执行时间" }
+    }
+  },
+
+  "c3_future_release_prerequisites": {
+    "description": "C3-Desensitize-Candidate 若要在后续试点中放行，必须满足以下全部条件",
+    "conditions": [
+      "内容已改写为不可回推真实客户或真实案件",
+      "直接标识符与可拼接线索均已删除或泛化",
+      "不附带原始截图、扫描件、表格、路径、编号或对照表",
+      "有人工复核记录，且复核人明确确认「不可逆、不可回推」",
+      "已获得后续任务单独放行；本契约不提供自动放行资格"
+    ]
+  },
+
+  "desensitization_principles": [
+    "删除全部直接标识符：姓名、公司名、证件号、联系方式、地址、账号、编号",
+    "删除或泛化可拼接标识符：精确日期、具体国家组合、具体金额、精确时间线、唯一事件描述、文件路径",
+    "不保留可逆映射：禁止保留原始对照表、盐值表、替换词典、可回推占位符",
+    "不保留原始附件：截图、扫描件、原表格、原文档必须重写为文本摘要，不得只做局部打码",
+    "必须人工复核：未经过人工确认的自动脱敏结果，一律视为未脱敏"
+  ],
+
+  "provenance": {
+    "derived_from": [
+      "plan/mempalace/blocked_sources.md",
+      "plan/mempalace/data_classification.md",
+      "plan/mempalace/allowed_sources.md",
+      "plan/mempalace/ingestion-manifest.md §4-§5",
+      "plan/mempalace/manifest.json"
+    ],
+    "companion_spec": "plan/mempalace/id-naming-rules.md"
+  }
+}

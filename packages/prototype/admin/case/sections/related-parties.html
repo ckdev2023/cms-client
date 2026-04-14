@@ -1,17 +1,17 @@
 <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
   <div>
     <div class="section-kicker">Step 2</div>
-    <div class="section-title mt-2">关联人与资料模板</div>
-    <div class="meta-text mt-2" id="relatedStepHint">先选择主申请人，再按案件类型补充关联人。</div>
+    <div class="section-title mt-2">确认主申请人与资料</div>
+    <div class="meta-text mt-2" id="relatedStepHint">先确认主申请人，再按案件类型补充关联人。</div>
   </div>
 
   <div class="field-grid two">
     <div>
-      <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">选择主申请人</label>
+      <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">确认主申请人</label>
       <select class="apple-input" id="primaryCustomerSelect"></select>
     </div>
     <div class="flex items-end gap-2">
-      <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
+      <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">补录主申请人</button>
       <button class="btn-pill" type="button" id="relatedModalBtn" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
       <button class="btn-pill hidden" type="button" id="supportingPartyBtn" data-open-customer-modal="related" data-default-role="保证人">追加保证人</button>
     </div>
@@ -25,16 +25,24 @@
   </div>
 
   <div class="section-stack">
-    <div>
-      <div class="section-title" id="additionalPartiesTitle">关联人</div>
-      <div class="meta-text mt-1" id="additionalPartiesHint">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
+    <div class="flex items-center justify-between gap-3">
+      <div>
+        <div class="section-title" id="additionalPartiesTitle">关联人</div>
+        <div class="meta-text mt-1" id="additionalPartiesHint">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
+      </div>
+      <button class="btn-pill" type="button" id="additionalPartyBtn" data-open-customer-modal="related" data-default-role="子女">添加办理对象</button>
     </div>
     <div id="additionalParties"></div>
   </div>
 
   <div class="summary-box" id="familyScenarioPanel">
-    <div class="section-title" id="familyScenarioTitle">家族签批量建案</div>
-    <div class="meta-text mt-2" id="familyScenarioSummary"></div>
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <div class="section-title" id="familyScenarioTitle">家族签批量建案</div>
+        <div class="meta-text mt-2" id="familyScenarioSummary"></div>
+      </div>
+      <button class="btn-secondary" type="button" data-action="enable-family-bulk">切换到批量模式</button>
+    </div>
     <div class="flex flex-wrap gap-2 mt-4" id="familyRoleChips"></div>
     <div class="summary-grid mt-4" id="familyDependents"></div>
   </div>
@@ -53,9 +61,32 @@
   </div>
 
   <div class="summary-box hidden" id="workScenarioPanel">
-    <div class="section-title">雇主信息沉淀</div>
-    <div class="meta-text mt-2">保存当前案件所需的雇主联系人与基础信息。</div>
+    <div class="section-title">雇主信息</div>
+    <div class="meta-text mt-2">先把公司、职位与联系人沉淀到案件字段，便于后续分派、催件与资料补齐。</div>
     <div class="flex flex-wrap gap-2 mt-4" id="workFieldList"></div>
+    <div class="field-grid two mt-4">
+      <div>
+        <label class="apple-label" for="workCompanyName">公司名称</label>
+        <input class="apple-input" id="workCompanyName" type="text" placeholder="例：株式会社 Future Link" />
+      </div>
+      <div>
+        <label class="apple-label" for="workPositionTitle">职位名称</label>
+        <input class="apple-input" id="workPositionTitle" type="text" placeholder="例：系统工程师" />
+      </div>
+      <div>
+        <label class="apple-label" for="workAnnualSalary">年薪</label>
+        <input class="apple-input" id="workAnnualSalary" type="text" placeholder="例：420 万日元" />
+      </div>
+      <div>
+        <label class="apple-label" for="workContactEmail">联系人邮箱</label>
+        <input class="apple-input" id="workContactEmail" type="email" placeholder="例：hr@future-link.jp" />
+      </div>
+      <div>
+        <label class="apple-label" for="workContactPhone">联系人电话</label>
+        <input class="apple-input" id="workContactPhone" type="tel" placeholder="例：03-1234-5678" />
+      </div>
+    </div>
+    <div class="meta-text mt-3" id="workScenarioStatus">建议至少先补公司名称、职位名称与联系人，便于事务所分派催件。</div>
   </div>
 
   <div class="section-stack">

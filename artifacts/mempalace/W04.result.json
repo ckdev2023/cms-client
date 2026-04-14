@@ -1,0 +1,32 @@
+{
+  "task_id": "W04",
+  "task_name": "ingestion-manifest",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/ingestion-manifest.md",
+  "summary_output": "artifacts/mempalace/W04.summary.md",
+  "checks": [
+    {
+      "name": "manifest_covers_p0_p1_office_process",
+      "status": "passed"
+    },
+    {
+      "name": "output_and_raw_weight_gap_defined",
+      "status": "passed"
+    },
+    {
+      "name": "exclude_rules_are_mechanically_convertible",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/allowed_sources.md",
+    "plan/mempalace/blocked_sources.md",
+    "plan/mempalace/data_classification.md",
+    "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md"
+  ]
+}

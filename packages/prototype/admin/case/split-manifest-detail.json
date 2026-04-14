@@ -269,7 +269,7 @@
     "風險確認彈窗可觸發",
     "樣本切換 6 種場景正常",
     "從案件列表可跳轉到新詳情頁",
-    "admin-prototype.html 入口指向新路徑",
+    "dashboard/index.html 入口指向新路徑",
     "舊 case-detail.html 不再作為主入口",
     "移動端導航正常",
     "側邊欄「案件」項 aria-current=page 高亮"

@@ -1,0 +1,196 @@
+{
+  "interactions": [
+    {
+      "selector": "a[href='index.html']",
+      "event": "click",
+      "intent": "navigate_back_to_list",
+      "description": "面包屑返回客户列表"
+    },
+    {
+      "selector": "#customerCreateCaseBtn",
+      "event": "click",
+      "intent": "create_case_for_customer",
+      "description": "开始办案（header 区域）"
+    },
+    {
+      "selector": "#customerBatchCreateBtn",
+      "event": "click",
+      "intent": "batch_create_cases",
+      "description": "批量开始办案（header 区域）"
+    },
+    {
+      "selector": "#customerTopbarCreateCaseBtn",
+      "event": "click",
+      "intent": "create_case_for_customer",
+      "description": "顶部工具栏开始办案"
+    },
+    {
+      "selector": "[data-case-more-toggle]",
+      "event": "click",
+      "intent": "toggle_case_popover",
+      "description": "展开/收起全部案件 popover"
+    },
+    {
+      "selector": "[data-case-more-close]",
+      "event": "click",
+      "intent": "close_case_popover",
+      "description": "关闭案件 popover"
+    },
+    {
+      "selector": "[data-customer-tab]",
+      "event": "click",
+      "intent": "switch_tab",
+      "description": "切换 Tab：basic/cases/contacts/comms/log"
+    },
+    {
+      "selector": "#customerEditToggleBtn",
+      "event": "click",
+      "intent": "toggle_edit_mode",
+      "description": "基础信息 Tab：切换编辑模式"
+    },
+    {
+      "selector": "#customerCancelBtn",
+      "event": "click",
+      "intent": "cancel_edit",
+      "description": "基础信息 Tab：取消编辑"
+    },
+    {
+      "selector": "#customerSaveBtn",
+      "event": "click",
+      "intent": "save_basic_info",
+      "description": "基础信息 Tab：保存编辑 → toast"
+    },
+    {
+      "selector": "#customerBmvSendBtn",
+      "event": "click",
+      "intent": "send_questionnaire",
+      "description": "经营管理签：发送问卷"
+    },
+    {
+      "selector": "#customerBmvQuoteBtn",
+      "event": "click",
+      "intent": "generate_quote",
+      "description": "经营管理签：问卷回收并生成报价"
+    },
+    {
+      "selector": "#customerBmvSignBtn",
+      "event": "click",
+      "intent": "confirm_sign",
+      "description": "经营管理签：确认签约"
+    },
+    {
+      "selector": "#customerBmvCreateCaseBtn",
+      "event": "click",
+      "intent": "bmv_create_case",
+      "description": "经营管理签：转正式案件（签约后才可用）"
+    },
+    {
+      "selector": "[data-case-filter]",
+      "event": "click",
+      "intent": "filter_cases_by_status",
+      "description": "关联案件 Tab：切换全部/活跃/已归档"
+    },
+    {
+      "selector": "[data-create-case]",
+      "event": "click",
+      "intent": "create_case_for_customer",
+      "description": "案件 Tab：开始办案"
+    },
+    {
+      "selector": "[data-batch-case]",
+      "event": "click",
+      "intent": "batch_create_cases",
+      "description": "案件 Tab：批量开始办案"
+    },
+    {
+      "selector": "#customerAddRelationBtn",
+      "event": "click",
+      "intent": "open_add_relation_dialog",
+      "description": "关联人 Tab：打开新增关联人弹窗"
+    },
+    {
+      "selector": "#customerRelationSearchInput",
+      "event": "input",
+      "intent": "search_relations",
+      "description": "关联人 Tab：搜索关联人"
+    },
+    {
+      "selector": "#customerSelectAllRelations",
+      "event": "change",
+      "intent": "toggle_select_all_relations",
+      "description": "关联人 Tab：全选关联人"
+    },
+    {
+      "selector": "#customerRelationsBatchCreateBtn",
+      "event": "click",
+      "intent": "batch_create_cases_for_relations",
+      "description": "关联人 Tab：为关联人批量建案（选中后启用）"
+    },
+    {
+      "selector": "#customerRelationSaveBtn",
+      "event": "click",
+      "intent": "save_relation",
+      "description": "新增关联人弹窗：保存"
+    },
+    {
+      "selector": "#customerRelationCancelBtn",
+      "event": "click",
+      "intent": "close_relation_dialog",
+      "description": "新增关联人弹窗：取消"
+    },
+    {
+      "selector": "[data-comm-filter]",
+      "event": "click",
+      "intent": "filter_comms_by_visibility",
+      "description": "沟通记录 Tab：全部/内部/客户可见"
+    },
+    {
+      "selector": "#customerAddCommBtn",
+      "event": "click",
+      "intent": "open_add_comm_dialog",
+      "description": "沟通记录 Tab：打开记录沟通弹窗"
+    },
+    {
+      "selector": "#customerCommSaveBtn",
+      "event": "click",
+      "intent": "save_comm",
+      "description": "记录沟通弹窗：保存"
+    },
+    {
+      "selector": "#customerCommCancelBtn",
+      "event": "click",
+      "intent": "close_comm_dialog",
+      "description": "记录沟通弹窗：取消"
+    },
+    {
+      "selector": "[data-log-filter]",
+      "event": "click",
+      "intent": "filter_logs_by_type",
+      "description": "操作日志 Tab：全部/信息变更/关系变更/案件/沟通"
+    },
+    {
+      "selector": "#customerLogPrevBtn",
+      "event": "click",
+      "intent": "log_prev_page",
+      "description": "操作日志 Tab：上一页"
+    },
+    {
+      "selector": "#customerLogNextBtn",
+      "event": "click",
+      "intent": "log_next_page",
+      "description": "操作日志 Tab：下一页"
+    },
+    {
+      "selector": "#customerConfirmOkBtn",
+      "event": "click",
+      "intent": "confirm_action",
+      "description": "确认弹窗：确认"
+    },
+    {
+      "selector": "#customerConfirmCancelBtn",
+      "event": "click",
+      "intent": "cancel_confirm",
+      "description": "确认弹窗：取消"
+    }
+  ]
+}

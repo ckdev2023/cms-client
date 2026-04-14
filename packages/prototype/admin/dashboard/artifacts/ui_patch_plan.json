@@ -1,0 +1,82 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    {
+      "path": "packages/admin/src/views/dashboard/DashboardView.vue",
+      "purpose": "仪表盘主页面组件，承载所有分区布局"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/SummaryCard.vue",
+      "purpose": "数据摘要卡片（带 orb 装饰、状态 pill、底部 action）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/QuickActionCard.vue",
+      "purpose": "快捷动作卡片（icon + title + description）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/WorkPanel.vue",
+      "purpose": "工作面板（tag + title + subtitle + action + slot for list）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/WorkItem.vue",
+      "purpose": "面板内行项目（title + meta + desc + status pill + action）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/WorkList.vue",
+      "purpose": "列表容器（items / empty-state / skeleton-loading）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/components/NoteCard.vue",
+      "purpose": "说明卡片（label + title + note items）"
+    },
+    {
+      "path": "packages/admin/src/views/dashboard/dashboard.mock.ts",
+      "purpose": "本地 mock 数据：metrics / lists / scopeSummary / visibilityNotes / toasts"
+    }
+  ],
+  "modify_files": [
+    {
+      "path": "packages/admin/src/router/index.ts",
+      "reason": "将 / 路由改为 DashboardView，Foundation 展示页移到 /foundation"
+    },
+    {
+      "path": "packages/admin/src/views/HomeView.vue",
+      "reason": "归档为 FoundationView 或保留做 /foundation 路由"
+    },
+    {
+      "path": "packages/admin/src/shared/ui/Button.vue",
+      "reason": "如需 mini/pill size 变体，扩展 Button props"
+    }
+  ],
+  "shared_ui_candidates": [
+    {
+      "path": "packages/admin/src/shared/ui/SegmentedControl.vue",
+      "reason": "scope/window 切换控件，未来多页面复用"
+    },
+    {
+      "path": "packages/admin/src/shared/ui/StatusPill.vue",
+      "reason": "状态标签 pill，info/warn/danger/muted 变体"
+    },
+    {
+      "path": "packages/admin/src/shared/ui/Toast.vue",
+      "reason": "全局 toast 通知组件"
+    }
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready"
+  ],
+  "notes": [
+    "shell 区域（side-nav / topbar / mobile-nav）已由 AppShell.vue 管理，dashboard 不需重复",
+    "summary-card 和 work-panel 各 4 个实例，通过 v-for 驱动",
+    "scope 切换和 window 切换需触发 skeleton → 延迟渲染的过渡效果",
+    "work-item 在原型中由 JS 动态渲染，Vue 中改为 v-for + WorkItem 组件",
+    "empty-state 和 skeleton-loading 是 work-list 的两个状态占位，不可省略",
+    "本轮只做 UI layout，所有数据来自 dashboard.mock.ts，不引入 store 或接口",
+    "页面级样式用 scoped style 或同目录 dashboard.css 管理",
+    "map repeated prototype blocks to reusable components",
+    "prefer design system components over raw classes"
+  ]
+}

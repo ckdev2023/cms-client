@@ -1,0 +1,123 @@
+{
+  "version": "2.0",
+  "source": {
+    "xlsx": "docs/事务所流程/在留資格別必要情報一覧Ver2.xlsx",
+    "markdown": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md"
+  },
+  "schema": {
+    "status_enum": ["required", "conditional", "not_listed"],
+    "note_rule": "单元格若含有 〇/△ 之外的附加文字，保留到 note",
+    "execution_rule": [
+      "required 默认必须收集",
+      "conditional 需先判断触发条件",
+      "not_listed 不等于绝对不需要"
+    ]
+  },
+  "documents": {
+    "passport_copy": { "source_rows": [4], "label_zh": "护照复印件", "label_ja": "パスポート写し" },
+    "photo_3x4": { "source_rows": [5], "label_zh": "证件照（3x4厘米）", "label_ja": "証明写真（3×4センチ）" },
+    "resume_cv": { "source_rows": [6], "label_zh": "经历书/履历书", "label_ja": "経歴書・履歴書" },
+    "graduation_certificate": { "source_rows": [7], "label_zh": "毕业证明（本国/日本，外国文件需翻译）", "label_ja": "大学等の卒業証明書" },
+    "degree_certificate": { "source_rows": [8], "label_zh": "学位证明（本国/日本，外国文件需翻译）", "label_ja": "学位の証明書" },
+    "transcript_certificate": { "source_rows": [9], "label_zh": "成绩证明（本国/日本，外国文件需翻译）", "label_ja": "大学等の成績証明書" },
+    "business_license": { "source_rows": [10], "label_zh": "营业许可证", "label_ja": "営業許可証" },
+    "qualification_certificate": { "source_rows": [11], "label_zh": "资格证明（日语能力、执照等）", "label_ja": "資格証明書" },
+    "employment_history_certificate": { "source_rows": [12], "label_zh": "在职/离职证明等工作经历证明", "label_ja": "在職証明書、退職証明書など" },
+    "capital_balance_certificate_30m": { "source_rows": [13], "label_zh": "资本金3000万日元以上余额证明", "label_ja": "資本金3000万円以上残高証明書" },
+    "deposit_image_30m": { "source_rows": [14], "label_zh": "3000万日元入账截图", "label_ja": "3000万円入金の画像" },
+    "cash_card_front_back": { "source_rows": [15], "label_zh": "银行卡正反面", "label_ja": "ｷｬｯｼｭｶｰﾄﾞ表裏面" },
+    "source_of_funds_certificate": { "source_rows": [16], "label_zh": "资本金来源证明/收入证明", "label_ja": "資本金出所証明書、収入証明" },
+    "current_address": { "source_rows": [17], "label_zh": "现住址信息", "label_ja": "現在の住所" },
+    "japan_entry_history": { "source_rows": [18], "label_zh": "来日履历", "label_ja": "来日履歴" },
+    "recent_entry_exit_date": { "source_rows": [19], "label_zh": "最近出入境日期", "label_ja": "直近の出入国日" },
+    "prior_coe_application_history": { "source_rows": [20], "label_zh": "在留资格认定申请记录", "label_ja": "在留資格認定の申請の有無" },
+    "prior_coe_rejection_history": { "source_rows": [21], "label_zh": "在留资格认定不许可记录", "label_ja": "在留資格認定の不許可の有無" },
+    "relatives_in_japan": { "source_rows": [22], "label_zh": "日本亲属情况", "label_ja": "在日親族の有無" },
+    "marriage_certificate_if_family_stay": { "source_rows": [23], "label_zh": "结婚证明（仅家族滞在时）", "label_ja": "結婚証明書（家族滞在の場合のみ）" },
+    "birth_certificate_if_family_stay": { "source_rows": [24], "label_zh": "出生证明（仅家族滞在时）", "label_ja": "出生証明書（家族滞在の場合のみ）" },
+    "residence_certificate": { "source_rows": [25], "label_zh": "住民票", "label_ja": "住民票" },
+    "seal_certificate": { "source_rows": [26], "label_zh": "印鉴证明（公证书）", "label_ja": "印鑑証明書（公証書）" },
+    "tax_and_tax_payment_certificate": { "source_rows": [27], "label_zh": "最近课税证明/纳税证明", "label_ja": "直近の課税証明書・納税証明書" },
+    "income_related_materials": { "source_rows": [28], "label_zh": "收入相关资料", "label_ja": "収入に関する資料" },
+    "mobile_phone_number": { "source_rows": [29], "label_zh": "手机号码", "label_ja": "携帯電話番号" },
+    "residence_application_online_receipt": { "source_rows": [30], "label_zh": "在留申请在线回执", "label_ja": "在留申請ｵﾝﾗｲﾝ控" },
+    "residence_card": { "source_rows": [31], "label_zh": "在留卡", "label_ja": "在留カード" },
+    "health_insurance_card": { "source_rows": [32], "label_zh": "健康保险证", "label_ja": "健康保険証" },
+    "additional_case_specific_documents": { "source_rows": [33, 55], "label_zh": "其他视个案需要的材料", "label_ja": "その他事案により必要な書類", "duplicate_in_source": true },
+    "company_name_and_business_purpose_plan": { "source_rows": [34], "label_zh": "公司名称及事业目的预定", "label_ja": "会社名と事業目的予定" },
+    "planned_office_property_materials": { "source_rows": [35], "label_zh": "事务所预定物件资料", "label_ja": "事務所予定物件資料" },
+    "office_setup_power_of_attorney": { "source_rows": [36], "label_zh": "事务所设置委任状（含受任人电话）", "label_ja": "事務所設置委任状" },
+    "office_lease_agreement": { "source_rows": [37], "label_zh": "事务所租赁合同", "label_ja": "事務所賃貸借契約書" },
+    "office_photos": { "source_rows": [38], "label_zh": "事务所照片", "label_ja": "事務所写真" },
+    "office_floor_plan": { "source_rows": [39], "label_zh": "事务所平面图（面积）", "label_ja": "事務所平面図（面積）" },
+    "company_registered_seal": { "source_rows": [40], "label_zh": "公司实印", "label_ja": "会社実印" },
+    "company_registry_certificate": { "source_rows": [41], "label_zh": "公司登本（履历事项全部证明书，3个月内）", "label_ja": "会社謄本（履歴事項全部証明書）３か月以内" },
+    "establishment_notifications": { "source_rows": [42], "label_zh": "各类设立申报（国税/府税/市税）", "label_ja": "各種設立届（国税府税市税）" },
+    "articles_of_incorporation": { "source_rows": [43], "label_zh": "定款", "label_ja": "定款" },
+    "latest_financial_statement_or_tax_return": { "source_rows": [44], "label_zh": "最近决算报告书或个人确定申告书", "label_ja": "直近の決算報告書又は個人の場合は確定申告書" },
+    "withholding_summary_table": { "source_rows": [45], "label_zh": "前一年工资所得源泉征收票等法定调书合计表", "label_ja": "前年分の給与所得の源泉徴収票等の源泉法定調書合計表" },
+    "employment_insurance_employer_number": { "source_rows": [46], "label_zh": "雇用保险适用事业者编号", "label_ja": "雇用保険適用事業者番号" },
+    "employee_list": { "source_rows": [47], "label_zh": "员工列表", "label_ja": "従業員リスト" },
+    "executive_compensation_minutes": { "source_rows": [48], "label_zh": "役员报酬股东会决议记录", "label_ja": "役員報酬株主総会議事録" },
+    "client_business_cards_or_contracts": { "source_rows": [49], "label_zh": "交易方名片或合同", "label_ja": "取引先の名刺や契約書" },
+    "employment_conditions_notice": { "source_rows": [50], "label_zh": "雇用条件通知书", "label_ja": "雇用条件通知書" },
+    "company_brochure": { "source_rows": [51], "label_zh": "公司介绍（如有）", "label_ja": "会社案内（あれば）" },
+    "transfer_order": { "source_rows": [52], "label_zh": "转勤命令", "label_ja": "転勤辞令" },
+    "assignment_or_transfer_agreement_copy": { "source_rows": [53], "label_zh": "转让/让渡合同复印件", "label_ja": "譲渡契約書コピー" },
+    "shareholder_register": { "source_rows": [54], "label_zh": "股东名簿", "label_ja": "株主名簿" }
+  },
+  "scenarios": {
+    "biz_mgmt_cert_4m": {
+      "display_name_zh": "经营管理签认定 4 个月",
+      "display_name_ja": "経営管理 / 認定4か月",
+      "required_document_keys": ["passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "business_license", "qualification_certificate", "employment_history_certificate", "capital_balance_certificate_30m", "source_of_funds_certificate", "current_address", "japan_entry_history", "recent_entry_exit_date", "prior_coe_application_history", "prior_coe_rejection_history", "relatives_in_japan", "company_name_and_business_purpose_plan", "planned_office_property_materials", "office_setup_power_of_attorney"],
+      "conditional_document_keys": ["marriage_certificate_if_family_stay", "birth_certificate_if_family_stay", "additional_case_specific_documents"],
+      "notes": []
+    },
+    "company_setup": {
+      "display_name_zh": "公司设立资料包",
+      "display_name_ja": "会社設立",
+      "required_document_keys": ["passport_copy", "deposit_image_30m", "cash_card_front_back", "seal_certificate", "residence_card", "company_name_and_business_purpose_plan", "company_registered_seal"],
+      "conditional_document_keys": ["additional_case_specific_documents"],
+      "notes": []
+    },
+    "biz_mgmt_cert_1y": {
+      "display_name_zh": "经营管理签认定 1 年",
+      "display_name_ja": "経営管理 / 認定1年",
+      "required_document_keys": ["passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "business_license", "qualification_certificate", "employment_history_certificate", "capital_balance_certificate_30m", "source_of_funds_certificate", "current_address", "japan_entry_history", "recent_entry_exit_date", "prior_coe_application_history", "prior_coe_rejection_history", "relatives_in_japan", "residence_certificate", "seal_certificate", "mobile_phone_number", "residence_card", "office_lease_agreement", "office_photos", "office_floor_plan", "company_registry_certificate", "establishment_notifications", "articles_of_incorporation", "executive_compensation_minutes", "client_business_cards_or_contracts"],
+      "conditional_document_keys": ["marriage_certificate_if_family_stay", "birth_certificate_if_family_stay", "additional_case_specific_documents"],
+      "notes": []
+    },
+    "biz_mgmt_renewal": {
+      "display_name_zh": "经营管理签续签",
+      "display_name_ja": "経営管理 / 期間更新",
+      "required_document_keys": ["passport_copy", "photo_3x4", "current_address", "relatives_in_japan", "residence_certificate", "tax_and_tax_payment_certificate", "mobile_phone_number", "residence_card", "company_registry_certificate", "withholding_summary_table", "employment_insurance_employer_number", "client_business_cards_or_contracts"],
+      "conditional_document_keys": ["additional_case_specific_documents"],
+      "notes": []
+    },
+    "eng_humanities_intl_cert": {
+      "display_name_zh": "技人国认定",
+      "display_name_ja": "技人国 / 認定",
+      "required_document_keys": ["passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "degree_certificate", "transcript_certificate", "qualification_certificate", "employment_history_certificate", "current_address", "japan_entry_history", "relatives_in_japan", "tax_and_tax_payment_certificate", "mobile_phone_number", "residence_card", "company_registry_certificate", "latest_financial_statement_or_tax_return", "withholding_summary_table", "employment_insurance_employer_number", "employee_list", "employment_conditions_notice", "company_brochure"],
+      "conditional_document_keys": ["marriage_certificate_if_family_stay", "birth_certificate_if_family_stay", "residence_application_online_receipt", "additional_case_specific_documents"],
+      "notes": []
+    },
+    "eng_humanities_intl_renewal": {
+      "display_name_zh": "技人国续签",
+      "display_name_ja": "技人国 / 期間更新",
+      "required_document_keys": ["passport_copy", "photo_3x4", "current_address", "relatives_in_japan", "residence_certificate", "tax_and_tax_payment_certificate", "mobile_phone_number", "residence_card", "health_insurance_card", "company_registry_certificate", "withholding_summary_table", "employment_insurance_employer_number", "employee_list"],
+      "conditional_document_keys": ["additional_case_specific_documents"],
+      "notes": []
+    },
+    "intra_company_transfer": {
+      "display_name_zh": "企业内转勤",
+      "display_name_ja": "企業内 / 転勤",
+      "required_document_keys": ["passport_copy", "photo_3x4", "resume_cv", "employment_history_certificate", "income_related_materials", "company_registry_certificate", "latest_financial_statement_or_tax_return", "withholding_summary_table", "transfer_order", "assignment_or_transfer_agreement_copy", "shareholder_register"],
+      "conditional_document_keys": ["additional_case_specific_documents"],
+      "notes": [
+        "latest_financial_statement_or_tax_return: 本国・日本",
+        "shareholder_register: 日本"
+      ]
+    }
+  }
+}

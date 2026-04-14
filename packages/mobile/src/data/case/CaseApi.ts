@@ -18,6 +18,7 @@ type ServerCaseResponse = {
   customerId: string;
   caseTypeCode: string;
   status: string;
+  stage?: string | null;
   ownerUserId: string;
   openedAt: string;
   dueAt: string | null;
@@ -47,11 +48,22 @@ type ServerCaseResponse = {
   billingRiskAckReasonCode: string | null;
   billingRiskAckReasonNote: string | null;
   billingRiskAckEvidenceUrl: string | null;
+  postApprovalStage?: string | null;
   overseasVisaStartAt: string | null;
   entryConfirmedAt: string | null;
   createdAt: string;
   updatedAt: string;
 };
+
+function mapPostApprovalStage(
+  raw: ServerCaseResponse,
+): PostApprovalStage | null {
+  if (raw.postApprovalStage && raw.postApprovalStage !== "none") {
+    return raw.postApprovalStage as PostApprovalStage;
+  }
+  const meta = raw.metadata ?? {};
+  return (meta.post_approval_stage as PostApprovalStage | undefined) ?? null;
+}
 
 type ServerCaseListResponse = { items: ServerCaseResponse[]; total: number };
 type DocItemListResponse = { items: DocumentItemSummary[]; total: number };
@@ -108,7 +120,6 @@ export function mapServerCaseToDetail(
   documents: DocumentItemSummary[],
   timeline: TimelineEntry[],
 ): CaseDetail {
-  const meta = raw.metadata ?? {};
   return {
     ...mapServerCaseToSummary(raw),
     sourceLeadId: null,
@@ -129,8 +140,7 @@ export function mapServerCaseToDetail(
     nextAction: null,
     nextActionDueAt: null,
     hasBlockingIssueFlag: false,
-    postApprovalStage:
-      (meta.post_approval_stage as PostApprovalStage | undefined) ?? null,
+    postApprovalStage: mapPostApprovalStage(raw),
     overseasVisaStartAt: raw.overseasVisaStartAt,
     entryConfirmedAt: raw.entryConfirmedAt,
     billingRiskAcknowledgedBy: raw.billingRiskAcknowledgedBy,

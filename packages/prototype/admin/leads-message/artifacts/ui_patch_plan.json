@@ -1,0 +1,50 @@
+{
+  "target_framework": "react-native (Tamagui via shared/ui)",
+  "source_prototype": "packages/prototype/admin/leads-message/index.html",
+  "contract_baseline": "P0-CONTRACT.md + SPEC-GAP-MATRIX.md + split-manifest.json",
+  "new_files": [
+    "packages/mobile/src/domain/lead/Lead.ts",
+    "packages/mobile/src/domain/lead/LeadRepository.ts",
+    "packages/mobile/src/domain/lead/LeadDedupService.ts",
+    "packages/mobile/src/domain/lead/leadConstants.ts",
+    "packages/mobile/src/data/lead/LeadApi.ts",
+    "packages/mobile/src/data/lead/createLeadRepository.ts",
+    "packages/mobile/src/features/lead/model/useLeadListViewModel.ts",
+    "packages/mobile/src/features/lead/model/useCreateLeadModal.ts",
+    "packages/mobile/src/features/lead/model/useLeadDedup.ts",
+    "packages/mobile/src/features/lead/ui/LeadListScreen.tsx",
+    "packages/mobile/src/features/lead/ui/LeadListHeader.tsx",
+    "packages/mobile/src/features/lead/ui/LeadListFilters.tsx",
+    "packages/mobile/src/features/lead/ui/LeadTable.tsx",
+    "packages/mobile/src/features/lead/ui/LeadBulkActionBar.tsx",
+    "packages/mobile/src/features/lead/ui/CreateLeadModal.tsx"
+  ],
+  "modify_files": [
+    "packages/mobile/src/shared/ui/AppShell.tsx",
+    "packages/mobile/src/shared/ui/Toast.tsx",
+    "packages/mobile/src/shared/ui/Modal.tsx",
+    "packages/mobile/src/shared/hooks/useMobileNav.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready"
+  ],
+  "state_details": {
+    "loading": "skeleton table while fetching leads",
+    "empty": "centered icon + 暂無咨詢線索 + 新建線索 CTA (P0-CONTRACT §9)",
+    "error": "generic error banner with retry",
+    "ready": "merged-column list table carrying 11 logical fields with 8+ demo rows + all filters/bulk/modal operational"
+  },
+  "notes": [
+    "prototype is demo-only: all data from static JS config, no real API",
+    "6 lead statuses: new/following/pending_sign/signed/lost + signed-warning variant",
+    "bulk actions are demo-only: toast feedback only, no persistence",
+    "dedup is frontend-static matching against 2 presets (phoneMatchLead, emailMatchCustomer)",
+    "row click navigates to detail.html?id=xxx&sample=yyy so detail page can preserve demo scenario",
+    "pagination footer is static but filtered result counts must stay in sync with visible rows",
+    "shared shell (side-nav, topbar, mobile-nav) reused from shared/styles + shared/scripts",
+    "do NOT modify shared styles/scripts in this task scope"
+  ]
+}

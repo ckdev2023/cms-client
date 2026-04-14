@@ -1,10 +1,56 @@
 (function () {
   'use strict';
 
+  var pageHelpers = typeof window !== 'undefined' ? (window.CaseCreateHelpers || {}) : {};
+
+  if (typeof window !== 'undefined') {
+    window.CaseCreatePageUtils = {
+      buildAdditionalPartiesViewModel: pageHelpers.buildAdditionalPartiesViewModel,
+      buildCaseListFlashPayload: pageHelpers.buildCaseListFlashPayload,
+      buildCaseCreateSummaryViewModel: pageHelpers.buildCaseCreateSummaryViewModel,
+      buildChecklistSummary: pageHelpers.buildChecklistSummary,
+      buildDynamicCopyViewModel: pageHelpers.buildDynamicCopyViewModel,
+      buildFamilyScenarioViewModel: pageHelpers.buildFamilyScenarioViewModel,
+      buildRequirementsViewModel: pageHelpers.buildRequirementsViewModel,
+      buildCreatedCaseRecord: pageHelpers.buildCreatedCaseRecord,
+      buildFamilyDraftParty: pageHelpers.buildFamilyDraftParty,
+      buildPrimaryCustomerViewModel: pageHelpers.buildPrimaryCustomerViewModel,
+      buildWorkScenarioViewModel: pageHelpers.buildWorkScenarioViewModel,
+      buildSubmitHint: pageHelpers.buildSubmitHint,
+      buildSuccessBannerCopy: pageHelpers.buildSuccessBannerCopy,
+      buildSummaryPartiesText: pageHelpers.buildSummaryPartiesText,
+      createEmptyWorkDetails: pageHelpers.createEmptyWorkDetails,
+      getFilledWorkFields: pageHelpers.getFilledWorkFields,
+      mergeCreatedDraftCases: pageHelpers.mergeCreatedDraftCases,
+      persistCreatedCaseArtifacts: pageHelpers.persistCreatedCaseArtifacts,
+      buildWorkScenarioStatus: pageHelpers.buildWorkScenarioStatus,
+      buildWorkSummary: pageHelpers.buildWorkSummary,
+      buildWorkMaterialSummary: pageHelpers.buildWorkMaterialSummary,
+      sanitizeWorkDetails: pageHelpers.sanitizeWorkDetails,
+    };
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var config = window.CaseCreateConfig;
     var helpers = window.CaseCreateHelpers || {};
-    if (!config) return;
+    var buildCaseTitle = helpers.buildCaseTitle;
+    var buildAdditionalPartiesViewModel = helpers.buildAdditionalPartiesViewModel;
+    var buildCaseCreateSummaryViewModel = helpers.buildCaseCreateSummaryViewModel;
+    var buildCreatedCaseDrafts = helpers.buildCreatedCaseDrafts;
+    var buildDynamicCopyViewModel = helpers.buildDynamicCopyViewModel;
+    var buildFamilyScenarioViewModel = helpers.buildFamilyScenarioViewModel;
+    var buildPrimaryCustomerViewModel = helpers.buildPrimaryCustomerViewModel;
+    var buildRequirementsViewModel = helpers.buildRequirementsViewModel;
+    var buildFamilyDraftParty = helpers.buildFamilyDraftParty;
+    var persistCreatedCaseArtifacts = helpers.persistCreatedCaseArtifacts;
+    var buildSubmitHint = helpers.buildSubmitHint;
+    var buildWorkScenarioViewModel = helpers.buildWorkScenarioViewModel;
+    var createEmptyWorkDetails = helpers.createEmptyWorkDetails;
+    var getOptionLabel = helpers.getOptionLabel;
+    if (!config || !buildCaseTitle || !buildAdditionalPartiesViewModel || !buildCaseCreateSummaryViewModel || !buildCreatedCaseDrafts
+      || !buildDynamicCopyViewModel || !buildFamilyScenarioViewModel || !buildPrimaryCustomerViewModel || !buildRequirementsViewModel
+      || !buildFamilyDraftParty || !persistCreatedCaseArtifacts || !buildSubmitHint || !buildWorkScenarioViewModel
+      || !createEmptyWorkDetails || !getOptionLabel) return;
     var FAMILY_APPLICANT_ROLES = ['主申请人', '配偶', '子女'];
     var FAMILY_SUPPORTER_ROLES = ['扶养者', '保证人'];
     var CASE_LIST_DRAFTS_KEY = 'prototype.caseListDrafts';
@@ -26,11 +72,15 @@
       amount: config.defaultState.amount,
       customerId: config.defaultState.customerId,
       sourceLeadId: '',
+      sourceLeadName: '',
       sourceCustomerId: '',
+      sourceCustomerName: '',
+      sourceCustomerGroupLabel: '',
       familyBulkMode: window.location.hash === '#family-bulk',
       familyBulkSeeded: false,
       primaryCustomer: null,
       additionalParties: [],
+      workDetails: createEmptyWorkDetails(),
     };
 
     var steps = Array.prototype.slice.call(document.querySelectorAll('[data-step-panel]'));
@@ -40,7 +90,11 @@
       templateCards: Array.prototype.slice.call(document.querySelectorAll('[data-template-card]')),
       applicationTypeSelect: document.getElementById('applicationTypeSelect'),
       sourceContextBar: document.getElementById('sourceContextBar'),
+      sourceContextTitle: document.getElementById('sourceContextTitle'),
+      sourceLeadCard: document.getElementById('sourceLeadCard'),
+      sourceLeadLabel: document.getElementById('sourceLeadLabel'),
       sourceLeadValue: document.getElementById('sourceLeadValue'),
+      sourceCustomerLabel: document.getElementById('sourceCustomerLabel'),
       sourceCustomerValue: document.getElementById('sourceCustomerValue'),
       sourceContextHint: document.getElementById('sourceContextHint'),
       sourceContextDedupHint: document.getElementById('sourceContextDedupHint'),
@@ -57,6 +111,7 @@
       primaryCustomerSelectLabel: document.getElementById('primaryCustomerSelectLabel'),
       primaryModalBtn: document.getElementById('primaryModalBtn'),
       relatedModalBtn: document.getElementById('relatedModalBtn'),
+      additionalPartyBtn: document.getElementById('additionalPartyBtn'),
       supportingPartyBtn: document.getElementById('supportingPartyBtn'),
       primaryCustomerCardLabel: document.getElementById('primaryCustomerCardLabel'),
       primaryCustomerSelect: document.getElementById('primaryCustomerSelect'),
@@ -89,6 +144,12 @@
       familyCreationPanel: document.getElementById('familyCreationPanel'),
       familyCreationSummary: document.getElementById('familyCreationSummary'),
       familyCreationTasks: document.getElementById('familyCreationTasks'),
+      workCompanyName: document.getElementById('workCompanyName'),
+      workPositionTitle: document.getElementById('workPositionTitle'),
+      workAnnualSalary: document.getElementById('workAnnualSalary'),
+      workContactEmail: document.getElementById('workContactEmail'),
+      workContactPhone: document.getElementById('workContactPhone'),
+      workScenarioStatus: document.getElementById('workScenarioStatus'),
       btnPrev: document.getElementById('btnPrevStep'),
       btnNext: document.getElementById('btnNextStep'),
       btnSubmit: document.getElementById('btnSubmitCase'),
@@ -108,6 +169,14 @@
       toastTitle: document.getElementById('toastTitle'),
       toastDesc: document.getElementById('toastDesc'),
     };
+
+    elements.workDetailInputs = [
+      elements.workCompanyName,
+      elements.workPositionTitle,
+      elements.workAnnualSalary,
+      elements.workContactEmail,
+      elements.workContactPhone,
+    ].filter(Boolean);
 
     function getTemplate() {
       return templatesById[state.templateId] || config.templates[0];
@@ -156,25 +225,26 @@
       return parties;
     }
 
+    function getWorkDetails() {
+      return Object.assign(createEmptyWorkDetails(), state.workDetails || {});
+    }
+
+    function readWorkDetailsFromForm() {
+      state.workDetails = {
+        companyName: elements.workCompanyName ? elements.workCompanyName.value : '',
+        positionTitle: elements.workPositionTitle ? elements.workPositionTitle.value : '',
+        annualSalary: elements.workAnnualSalary ? elements.workAnnualSalary.value : '',
+        contactEmail: elements.workContactEmail ? elements.workContactEmail.value : '',
+        contactPhone: elements.workContactPhone ? elements.workContactPhone.value : '',
+      };
+    }
+
     function getGroupLabel(value) {
-      var match = config.groups.find(function (item) { return item.value === value; });
-      return match ? match.label : value;
+      return getOptionLabel(config.groups, value);
     }
 
     function getOwnerLabel(value) {
-      var match = config.owners.find(function (item) { return item.value === value; });
-      return match ? match.label : value;
-    }
-
-    function parseCreateContext() {
-      if (typeof helpers.parseCreateContext === 'function') {
-        return helpers.parseCreateContext(window.location.search || '', config.customers || []);
-      }
-      var params = new window.URLSearchParams(window.location.search || '');
-      return {
-        sourceLeadId: params.get('sourceLeadId') || '',
-        customerId: params.get('customerId') || '',
-      };
+      return getOptionLabel(config.owners, value);
     }
 
     function getCustomerById(customerId) {
@@ -202,23 +272,31 @@
     function renderSourceContext() {
       if (!elements.sourceContextBar) return;
       var hasContext = !!(state.sourceLeadId || state.sourceCustomerId);
+      var hasLeadContext = !!state.sourceLeadId;
       elements.sourceContextBar.classList.toggle('hidden', !hasContext);
       if (!hasContext) return;
 
       var sourceCustomer = getCustomerById(state.sourceCustomerId);
-      if (elements.sourceLeadValue) elements.sourceLeadValue.textContent = state.sourceLeadId || '—';
+      if (elements.sourceLeadCard) {
+        elements.sourceLeadCard.classList.toggle('hidden', !hasLeadContext);
+      }
+      if (elements.sourceLeadLabel) {
+        elements.sourceLeadLabel.textContent = '来源咨询';
+      }
+      if (elements.sourceLeadValue) {
+        elements.sourceLeadValue.textContent = state.sourceLeadName
+          ? state.sourceLeadName + (state.sourceLeadId ? '（' + state.sourceLeadId + '）' : '')
+          : (state.sourceLeadId || '—');
+      }
+      if (elements.sourceCustomerLabel) {
+        elements.sourceCustomerLabel.textContent = state.sourceCustomerId ? '当前客户' : '待建客户';
+      }
       if (elements.sourceCustomerValue) {
         elements.sourceCustomerValue.textContent = sourceCustomer
           ? sourceCustomer.name + '（' + sourceCustomer.id + '）'
-          : (state.sourceCustomerId || '待创建');
-      }
-      if (elements.sourceContextHint) {
-        elements.sourceContextHint.textContent = state.sourceCustomerId
-          ? 'Step 2 已按转化链路预填主申请人，Step 3 默认继承该 Customer 的 Group。'
-          : '当前为从 Lead 进入的建案流程；如先创建 Customer，Step 3 将默认继承新客户 Group。';
-      }
-      if (elements.sourceContextDedupHint) {
-        elements.sourceContextDedupHint.textContent = 'P0：命中重复客户时仅提示，不自动复用；继续创建需填写原因、二次确认并留痕。';
+          : (state.sourceCustomerName
+            ? state.sourceCustomerName + (state.sourceCustomerId ? '（' + state.sourceCustomerId + '）' : '')
+            : (state.sourceCustomerId || '待创建'));
       }
     }
 
@@ -244,94 +322,81 @@
       }, 2600);
     }
 
-    function readSessionJson(key) {
-      try {
-        var raw = window.sessionStorage.getItem(key);
-        return raw ? JSON.parse(raw) : null;
-      } catch (error) {
-        return null;
-      }
-    }
-
-    function writeSessionJson(key, value) {
-      try {
-        window.sessionStorage.setItem(key, JSON.stringify(value));
-      } catch (error) {
-        return;
-      }
-    }
-
     function buildCaseName() {
-      var baseName = state.primaryCustomer ? state.primaryCustomer.name : '未选择客户';
-      if (isFamilyBulkScenario()) {
-        return baseName + ' - ' + getTemplate().label + state.applicationType + '批次';
-      }
-      return baseName + ' - ' + getTemplate().label + state.applicationType;
-    }
-
-    function buildFamilyDraftParty(item, index) {
-      return {
-        id: 'family-draft-' + index,
-        mode: 'related',
-        name: item.name,
-        role: item.role,
-        group: state.group,
-        groupLabel: getGroupLabel(state.group),
-        contact: item.contact || '待补充联系方式',
-        note: item.note || '',
-        relation: item.relation || '',
-        reuseDocs: item.reuseDocs || [],
-        staleDocWarning: item.staleDocWarning || '',
-        initials: item.name.replace(/\s+/g, '').slice(0, 2).toUpperCase() || '家',
-      };
+      return buildCaseTitle(
+        state.primaryCustomer ? state.primaryCustomer.name : '',
+        getTemplate().label,
+        state.applicationType,
+        isFamilyBulkScenario()
+      );
     }
 
     function ensureFamilyBulkSeeded() {
       if (!isFamilyBulkScenario() || state.familyBulkSeeded || state.additionalParties.length) return;
-      state.additionalParties = (getFamilyScenario().defaultDraftParties || []).map(buildFamilyDraftParty);
+      state.additionalParties = (getFamilyScenario().defaultDraftParties || []).map(function (item, index) {
+        return buildFamilyDraftParty(item, index, {
+          group: state.group,
+          groupLabel: getGroupLabel(state.group),
+        });
+      });
       state.familyBulkSeeded = true;
     }
 
     function renderDynamicCopy() {
-      var isFamilyBulk = isFamilyBulkScenario();
+      var copyViewModel = buildDynamicCopyViewModel({
+        isFamilyBulk: isFamilyBulkScenario(),
+        isWorkTemplate: getTemplate().id === 'work',
+        hasSourceLead: !!state.sourceLeadId,
+        hasSourceCustomer: !!state.sourceCustomerId,
+        sourceLeadName: state.sourceLeadName,
+        sourceCustomerName: state.sourceCustomerName || (state.primaryCustomer && state.primaryCustomer.name) || '',
+        sourceCustomerGroupLabel: state.sourceCustomerGroupLabel || (state.primaryCustomer && state.primaryCustomer.groupLabel) || '',
+      });
 
       if (elements.caseNameLabel) {
-        elements.caseNameLabel.textContent = isFamilyBulk ? '批量建案批次名称' : '案件标题';
+        elements.caseNameLabel.textContent = copyViewModel.caseNameLabel;
       }
       if (elements.caseNameHint) {
-        elements.caseNameHint.textContent = isFamilyBulk
-          ? '默认由“扶养者/保证人 + 模板 + 申请类型 + 批次”生成；每位办理对象仍会各自生成独立 Case。'
-          : '默认由“主申请人 + 模板 + 申请类型”生成，也支持手动改名。';
+        elements.caseNameHint.textContent = copyViewModel.caseNameHint;
       }
       if (elements.relatedStepHint) {
-        elements.relatedStepHint.textContent = isFamilyBulk
-          ? '先锁定扶养者 / 保证人，再为多个配偶 / 子女按每人一案批量创建。'
-          : '先选择主申请人，再按案件类型补充关联人。';
+        elements.relatedStepHint.textContent = copyViewModel.relatedStepHint;
       }
       if (elements.primaryCustomerSelectLabel) {
-        elements.primaryCustomerSelectLabel.textContent = isFamilyBulk ? '选择扶养者 / 保证人' : '选择主申请人';
+        elements.primaryCustomerSelectLabel.textContent = copyViewModel.primaryCustomerSelectLabel;
       }
       if (elements.primaryCustomerCardLabel) {
-        elements.primaryCustomerCardLabel.textContent = isFamilyBulk ? '关键关系人' : '主申请人';
+        elements.primaryCustomerCardLabel.textContent = copyViewModel.primaryCustomerCardLabel;
       }
       if (elements.primaryModalBtn) {
-        elements.primaryModalBtn.textContent = isFamilyBulk ? '新建扶养者 / 保证人' : '新建主申请人';
-        elements.primaryModalBtn.setAttribute('data-default-role', isFamilyBulk ? '扶养者' : '主申请人');
+        elements.primaryModalBtn.textContent = copyViewModel.primaryModalButtonText;
+        elements.primaryModalBtn.setAttribute('data-default-role', copyViewModel.primaryModalDefaultRole);
       }
       if (elements.relatedModalBtn) {
-        elements.relatedModalBtn.textContent = isFamilyBulk ? '添加办理对象' : '新增关联人';
-        elements.relatedModalBtn.setAttribute('data-default-role', '配偶');
+        elements.relatedModalBtn.textContent = copyViewModel.relatedModalButtonText;
+        elements.relatedModalBtn.setAttribute('data-default-role', copyViewModel.relatedModalDefaultRole);
+      }
+      if (elements.additionalPartyBtn) {
+        elements.additionalPartyBtn.textContent = copyViewModel.additionalPartyButtonText;
+        elements.additionalPartyBtn.setAttribute('data-default-role', copyViewModel.additionalPartyDefaultRole);
       }
       if (elements.supportingPartyBtn) {
-        elements.supportingPartyBtn.classList.toggle('hidden', !isFamilyBulk);
+        elements.supportingPartyBtn.classList.toggle('hidden', !copyViewModel.showSupportingPartyButton);
       }
       if (elements.additionalPartiesTitle) {
-        elements.additionalPartiesTitle.textContent = isFamilyBulk ? '办理对象（每人一案）' : '关联人';
+        elements.additionalPartiesTitle.textContent = copyViewModel.additionalPartiesTitle;
       }
       if (elements.additionalPartiesHint) {
-        elements.additionalPartiesHint.textContent = isFamilyBulk
-          ? '每位配偶 / 子女都会生成独立 Case，并自动继承 Group、来源与默认负责人。'
-          : '家族签可补充配偶/子女，工作类可补充雇主联系人。';
+        elements.additionalPartiesHint.textContent = copyViewModel.additionalPartiesHint;
+      }
+      if (elements.sourceContextTitle) {
+        elements.sourceContextTitle.textContent = copyViewModel.sourceContextTitle;
+      }
+      if (elements.sourceContextHint) {
+        elements.sourceContextHint.textContent = copyViewModel.sourceContextHint;
+      }
+      if (elements.sourceContextDedupHint) {
+        elements.sourceContextDedupHint.textContent = copyViewModel.sourceContextDedupHint;
       }
     }
 
@@ -356,29 +421,14 @@
         state.primaryCustomer = selected || null;
       }
 
-      if (!state.primaryCustomer) {
-        elements.primaryCustomerName.textContent = isFamilyBulkScenario() ? '未选择扶养者 / 保证人' : '未选择主申请人';
-        elements.primaryCustomerMeta.textContent = isFamilyBulkScenario()
-          ? '先锁定关键关系人，后续每个案件都会自动绑定到 CaseParty。'
-          : '请选择当前案件的主申请人。';
-        elements.primaryCustomerContact.textContent = '-';
-        return;
-      }
-
-      elements.primaryCustomerName.textContent = state.primaryCustomer.name;
-      if (isFamilyBulkScenario()) {
-        elements.primaryCustomerMeta.textContent =
-          (state.primaryCustomer.roleHint || '扶养者') + ' / ' + state.primaryCustomer.groupLabel + ' / 既有客户档案已复用';
-        elements.primaryCustomerContact.textContent =
-          state.primaryCustomer.summary + ' · ' + state.primaryCustomer.contact;
-        return;
-      }
-
-      elements.primaryCustomerMeta.textContent =
-        state.primaryCustomer.kana + ' / ' + state.primaryCustomer.groupLabel + ' / ' + state.primaryCustomer.roleHint;
-      elements.primaryCustomerContact.textContent =
-        state.primaryCustomer.summary + ' · ' + state.primaryCustomer.contact;
-      syncInheritedGroup(false);
+      var primaryCustomerViewModel = buildPrimaryCustomerViewModel({
+        primaryCustomer: state.primaryCustomer,
+        isFamilyBulk: isFamilyBulkScenario(),
+      });
+      elements.primaryCustomerName.textContent = primaryCustomerViewModel.name;
+      elements.primaryCustomerMeta.textContent = primaryCustomerViewModel.meta;
+      elements.primaryCustomerContact.textContent = primaryCustomerViewModel.contact;
+      if (primaryCustomerViewModel.shouldSyncInheritedGroup) syncInheritedGroup(false);
     }
 
     function renderAdditionalParties() {
@@ -387,75 +437,23 @@
         : state.additionalParties.map(function (item, index) {
           return Object.assign({ originalIndex: index }, item);
         });
-
-      if (!parties.length) {
-        elements.additionalParties.innerHTML =
-          '<div class="empty-state">' + (
-            isFamilyBulkScenario()
-              ? '当前还没有办理对象。请继续添加配偶 / 子女，系统会按每人一案生成 Case 草稿。'
-              : '当前还没有新增关联人。家族签可添加配偶/子女，工作类可补充雇主联系人。'
-          ) + '</div>';
-        return;
-      }
-
-      elements.additionalParties.innerHTML = parties.map(function (item) {
-        return [
-          '<div class="party-card">',
-          '<div class="party-avatar">' + item.initials + '</div>',
-          '<div class="party-copy">',
-          '<div class="party-title">' + item.name + ' <span class="chip">' + item.role + '</span></div>',
-          '<div class="meta-text">' + item.groupLabel + ' · ' + item.contact + '</div>',
-          (item.relation ? '<div class="meta-text">' + item.relation + '</div>' : ''),
-          (item.note ? '<div class="meta-text">' + item.note + '</div>' : ''),
-          (item.staleDocWarning ? '<div class="meta-text text-amber-700">' + item.staleDocWarning + '</div>' : ''),
-          '</div>',
-          '<button class="table-icon-btn" type="button" data-remove-party="' + item.originalIndex + '" aria-label="移除关联人">',
-          '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>',
-          '</button>',
-          '</div>',
-        ].join('');
-      }).join('');
+      var additionalPartiesViewModel = buildAdditionalPartiesViewModel({
+        parties: parties,
+        isFamilyBulk: isFamilyBulkScenario(),
+      });
+      elements.additionalParties.innerHTML = additionalPartiesViewModel.additionalPartiesHtml;
     }
 
     function renderRequirements() {
-      var template = getTemplate();
-      var total = 0;
-      var required = 0;
-      var applicantCount = getFamilyApplicants().length;
+      var requirements = buildRequirementsViewModel({
+        template: getTemplate(),
+        applicantCount: getFamilyApplicants().length,
+        isFamilyBulk: isFamilyBulkScenario(),
+      });
 
-      elements.requirementsMeta.textContent = template.requirementSummary + ' · ' + template.helper;
-
-      elements.requirementsList.innerHTML = template.sections.map(function (section) {
-        var items = (section.items || []).map(function (item) {
-          total += 1;
-          if (item.required) required += 1;
-          return [
-            '<label class="requirement-item">',
-            '<input type="checkbox" ' + (item.required ? 'checked' : '') + ' />',
-            '<div>',
-            '<div class="requirement-title">' + item.label + '</div>',
-            '<div class="meta-text">' + (item.required ? '必交' : '可选') + '</div>',
-            '</div>',
-            '</label>',
-          ].join('');
-        }).join('');
-
-        return [
-          '<div class="requirement-section">',
-          '<div class="requirement-section-title">' + section.title + '</div>',
-          '<div class="section-stack">' + items + '</div>',
-          '</div>',
-        ].join('');
-      }).join('');
-
-      if (isFamilyBulkScenario()) {
-        elements.requirementsProgress.textContent = applicantCount
-          ? '预计为 ' + applicantCount + ' 个办理对象分别生成资料清单；每案默认 ' + required + ' / ' + total + ' 个必交项，扶养者材料按共享附件版本引用。'
-          : '先添加办理对象后，系统会按每人一案生成资料清单，并自动复用扶养者 / 保证人材料。';
-        return;
-      }
-
-      elements.requirementsProgress.textContent = '默认生成 ' + required + ' / ' + total + ' 个必交资料项';
+      elements.requirementsMeta.textContent = requirements.requirementsMeta;
+      elements.requirementsList.innerHTML = requirements.requirementsListHtml;
+      elements.requirementsProgress.textContent = requirements.requirementsProgress;
     }
 
     function renderFamilyScenario() {
@@ -473,221 +471,128 @@
       elements.familyCreationPanel.classList.toggle('hidden', !isFamilyBulkScenario());
 
       if (isFamily) {
-        elements.familyScenarioTitle.textContent = state.familyBulkMode
-          ? (familyScenario.title || '家族签批量建案') + '（已开启）'
-          : (familyScenario.title || '家族签批量建案');
-        elements.familyScenarioSummary.textContent = state.familyBulkMode
-          ? '已切换到批量模式：先锁定关键关系人，再为多个办理对象按每人一案生成 Case。'
-          : (familyScenario.summary || '');
-        elements.familyRoleChips.innerHTML = (familyScenario.roles || []).map(function (role) {
-          return '<span class="chip">' + role + '</span>';
-        }).join('');
-        elements.familyDependents.innerHTML = [
-          '<div class="summary-box"><div class="summary-label">待创建案件</div><div class="summary-value">' + applicants.length + ' 个</div><div class="meta-text">每位办理对象独立成案</div></div>',
-          '<div class="summary-box"><div class="summary-label">CaseParty 关键关系人</div><div class="summary-value">' + supporters.length + ' 位</div><div class="meta-text">扶养者 / 保证人自动绑定</div></div>',
-          '<div class="summary-box"><div class="summary-label">资料复用</div><div class="summary-value">共享附件版本</div><div class="meta-text">跨案复用在留卡、纳税证明等材料</div></div>',
-          '<div class="summary-box"><div class="summary-label">补齐策略</div><div class="summary-value">先建档建案</div><div class="meta-text">缺失字段转为后续补齐任务</div></div>',
-        ].join('');
+        var familyScenarioViewModel = buildFamilyScenarioViewModel({
+          title: familyScenario.title,
+          summary: familyScenario.summary,
+          roles: familyScenario.roles,
+          gateChecks: familyScenario.gateChecks,
+          reuseNotes: familyScenario.reuseNotes,
+          applicants: applicants,
+          supporters: supporters,
+          familyBulkMode: state.familyBulkMode,
+          templateLabel: template.label,
+          applicationType: state.applicationType,
+          groupLabel: getGroupLabel(state.group),
+          ownerLabel: getOwnerLabel(state.owner),
+        });
+
+        elements.familyScenarioTitle.textContent = familyScenarioViewModel.familyScenarioTitle;
+        elements.familyScenarioSummary.textContent = familyScenarioViewModel.familyScenarioSummary;
+        elements.familyRoleChips.innerHTML = familyScenarioViewModel.familyRoleChipsHtml;
+        elements.familyDependents.innerHTML = familyScenarioViewModel.familyDependentsHtml;
         if (elements.enableFamilyBulkBtn) {
-          elements.enableFamilyBulkBtn.textContent = state.familyBulkMode ? '批量模式已开启' : '切换到批量模式';
+          elements.enableFamilyBulkBtn.textContent = familyScenarioViewModel.enableFamilyBulkButtonText;
           elements.enableFamilyBulkBtn.disabled = state.familyBulkMode;
           elements.enableFamilyBulkBtn.classList.toggle('opacity-60', state.familyBulkMode);
           elements.enableFamilyBulkBtn.classList.toggle('cursor-not-allowed', state.familyBulkMode);
         }
 
         if (isFamilyBulkScenario()) {
-          elements.familyKeyPartyList.innerHTML = supporters.length
-            ? supporters.map(function (item) {
-              var action = item.source === 'related'
-                ? '<button class="table-icon-btn" type="button" data-remove-party="' + item.originalIndex + '" aria-label="移除关联人"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>'
-                : '<span class="chip">已复用客户档案</span>';
-              return [
-                '<div class="party-card">',
-                '<div class="party-avatar">' + item.name.slice(0, 2) + '</div>',
-                '<div class="party-copy">',
-                '<div class="party-title">' + item.name + ' <span class="chip">' + item.role + '</span></div>',
-                '<div class="meta-text">' + item.groupLabel + ' · ' + item.contact + '</div>',
-                (item.note ? '<div class="meta-text">' + item.note + '</div>' : ''),
-                '</div>',
-                action,
-                '</div>',
-              ].join('');
-            }).join('')
-            : '<div class="empty-state">请先选择扶养者 / 保证人，系统会将其作为 CaseParty 关键关系人自动绑定到每个案件。</div>';
-
-          elements.familyGateNotes.innerHTML = (familyScenario.gateChecks || []).map(function (note) {
-            return '<div class="meta-text">• ' + note + '</div>';
-          }).join('');
-
-          elements.familyCaseMatrix.innerHTML = applicants.length
-            ? applicants.map(function (item) {
-              var sponsorNames = supporters.length
-                ? supporters.map(function (party) { return party.name + '（' + party.role + '）'; }).join(' / ')
-                : '待补充';
-              var reuseDocs = (item.reuseDocs || []).length ? item.reuseDocs.join('、') : '在留卡、纳税证明';
-              return [
-                '<div class="summary-box">',
-                '<div class="summary-label">Case 草稿</div>',
-                '<div class="summary-value">' + item.name + ' - ' + template.label + state.applicationType + '</div>',
-                '<div class="meta-text mt-2">CaseParty：主申请人 = ' + item.name + ' / 关键关系人 = ' + sponsorNames + '</div>',
-                '<div class="meta-text mt-2">资料复用：' + reuseDocs + '</div>',
-                (item.staleDocWarning ? '<div class="meta-text mt-2 text-amber-700">' + item.staleDocWarning + '</div>' : ''),
-                '</div>',
-              ].join('');
-            }).join('')
-            : '<div class="empty-state">添加办理对象后，这里会展示每个 Case 的创建预览、CaseParty 绑定与材料复用提示。</div>';
-
-          elements.familyCreationSummary.textContent = applicants.length
-            ? '提交后将一次创建 ' + applicants.length + ' 个 Case，并自动继承 ' + getGroupLabel(state.group) + ' / ' + getOwnerLabel(state.owner) + '。'
-            : '先添加办理对象后，系统会在此显示本次批量建案的实际创建数量。';
-          elements.familyCreationTasks.innerHTML = (familyScenario.reuseNotes || []).map(function (note) {
-            return '<div class="meta-text">• ' + note + '</div>';
-          }).join('');
+          elements.familyKeyPartyList.innerHTML = familyScenarioViewModel.familyKeyPartyListHtml;
+          elements.familyGateNotes.innerHTML = familyScenarioViewModel.familyGateNotesHtml;
+          elements.familyCaseMatrix.innerHTML = familyScenarioViewModel.familyCaseMatrixHtml;
+          elements.familyCreationSummary.textContent = familyScenarioViewModel.familyCreationSummary;
+          elements.familyCreationTasks.innerHTML = familyScenarioViewModel.familyCreationTasksHtml;
         }
       } else {
-        elements.workFieldList.innerHTML = (workScenario.fields || []).map(function (field) {
-          return '<span class="chip">' + field + '</span>';
-        }).join('');
+        var workScenarioViewModel = buildWorkScenarioViewModel({
+          fields: workScenario.fields,
+          workDetails: getWorkDetails(),
+        });
+        elements.workFieldList.innerHTML = workScenarioViewModel.workFieldListHtml;
+        if (elements.workScenarioStatus) {
+          elements.workScenarioStatus.textContent = workScenarioViewModel.workScenarioStatus;
+        }
       }
     }
 
     function renderSummary() {
       var applicants = getFamilyApplicants();
       var supporters = getFamilySupportingParties();
-      elements.summaryTemplate.textContent = getTemplate().label + ' / ' + state.applicationType;
-      elements.summaryCustomer.textContent = state.primaryCustomer
-        ? state.primaryCustomer.name + (isFamilyBulkScenario() ? '（关键关系人）' : '')
-        : '未选择';
-      elements.summaryParties.textContent = isFamilyBulkScenario()
-        ? (
-          applicants.length
-            ? '办理对象：' + applicants.map(function (item) { return item.name + '（' + item.role + '）'; }).join('，') + '；CaseParty：' + supporters.map(function (item) {
-              return item.name + '（' + item.role + '）';
-            }).join('，')
-            : '批量模式已开启，待补充办理对象'
-        )
-        : (
-          state.additionalParties.length
-            ? state.additionalParties.map(function (item) { return item.name + '（' + item.role + '）'; }).join('，')
-            : '无'
-        );
-      elements.summaryOwner.textContent = getOwnerLabel(state.owner) + ' / ' + getGroupLabel(state.group);
-      elements.summaryDueDate.textContent = state.dueDate || '未设置';
-      elements.summaryAmount.textContent = state.amount ? '¥' + Number(state.amount).toLocaleString() : '未设置';
-      elements.summaryChecklist.textContent = [
-        elements.createChecklist.checked ? '自动生成资料清单' : '不自动生成资料清单',
-        elements.createTasks.checked ? '创建跟进任务' : '不创建跟进任务',
-        isFamilyBulkScenario() ? '自动绑定 CaseParty 与补齐任务' : '',
-      ].filter(Boolean).join(' / ');
+      var summary = buildCaseCreateSummaryViewModel({
+        templateLabel: getTemplate().label,
+        applicationType: state.applicationType,
+        primaryCustomerName: state.primaryCustomer ? state.primaryCustomer.name : '',
+        applicants: applicants,
+        supporters: supporters,
+        additionalParties: state.additionalParties,
+        isFamilyBulk: isFamilyBulkScenario(),
+        isWorkTemplate: getTemplate().id === 'work',
+        workDetails: getWorkDetails(),
+        ownerLabel: getOwnerLabel(state.owner),
+        groupLabel: getGroupLabel(state.group),
+        dueDate: state.dueDate,
+        amount: state.amount,
+        createChecklist: elements.createChecklist.checked,
+        createTasks: elements.createTasks.checked,
+      });
+      elements.summaryTemplate.textContent = summary.summaryTemplate;
+      elements.summaryCustomer.textContent = summary.summaryCustomer;
+      elements.summaryParties.textContent = summary.summaryParties;
+      elements.summaryOwner.textContent = summary.summaryOwner;
+      elements.summaryDueDate.textContent = summary.summaryDueDate;
+      elements.summaryAmount.textContent = summary.summaryAmount;
+      elements.summaryChecklist.textContent = summary.summaryChecklist;
 
       if (elements.successBannerTitle && elements.successBannerDesc) {
-        if (isFamilyBulkScenario()) {
-          elements.successBannerTitle.textContent = applicants.length
-            ? '已创建 ' + applicants.length + ' 个家族案件草稿'
-            : '家族批量建案已创建';
-          elements.successBannerDesc.textContent = applicants.length
-            ? '已同步绑定 ' + supporters.length + ' 位关键关系人，资料清单与补齐任务已按每人一案生成。'
-            : '已生成批量建案草稿，可继续补充办理对象与资料。';
-        } else {
-          elements.successBannerTitle.textContent = '案件已创建';
-          elements.successBannerDesc.textContent = '已生成案件记录与资料登记清单草稿，可返回列表继续补录或分派任务。';
-        }
+        elements.successBannerTitle.textContent = summary.successBannerTitle;
+        elements.successBannerDesc.textContent = summary.successBannerDesc;
       }
 
       var viewDetailBtn = document.getElementById('viewCaseDetailBtn');
       if (viewDetailBtn) {
-        viewDetailBtn.textContent = isFamilyBulkScenario()
-          ? '查看首个案件详情'
-          : '查看案件详情';
+        viewDetailBtn.textContent = summary.viewDetailButtonText;
       }
 
       if (elements.viewCreatedCasesBtn) {
-        elements.viewCreatedCasesBtn.textContent = isFamilyBulkScenario() && applicants.length
-          ? '查看案件列表中的 ' + applicants.length + ' 个结果'
-          : '查看案件列表结果';
+        elements.viewCreatedCasesBtn.textContent = summary.viewCreatedCasesButtonText;
       }
-    }
-
-    function buildCreatedCaseRecord(item, index, options) {
-      var createdAt = options.createdAt;
-      var supporters = options.supporters || [];
-      var dueDate = state.dueDate || getTemplate().defaultDueDate;
-      var dueLabel = dueDate ? dueDate.slice(5) : '-';
-      var createdAtLabel = '刚刚创建';
-      var typeLabel = getTemplate().label + ' / ' + state.applicationType;
-      var supporterSummary = supporters.length
-        ? supporters.map(function (party) { return party.name + '（' + party.role + '）'; }).join('，')
-        : '待补充';
-
-      return {
-        id: 'CAS-DEMO-' + String(createdAt).slice(-6) + '-' + String(index + 1).padStart(2, '0'),
-        name: item.name + ' ' + getTemplate().label + state.applicationType,
-        type: typeLabel,
-        applicant: item.name,
-        groupId: state.group,
-        groupLabel: getGroupLabel(state.group),
-        stageId: 'S1',
-        stageLabel: 'S1 建档',
-        ownerId: state.owner,
-        completionPercent: 0,
-        completionLabel: '0 / 0 初始生成',
-        validationStatus: 'pending',
-        validationLabel: 'pending',
-        blockerCount: 0,
-        unpaidAmount: Number(state.amount || 0),
-        updatedAtLabel: createdAtLabel,
-        dueDate: dueDate,
-        dueDateLabel: dueLabel,
-        riskStatus: 'normal',
-        riskLabel: '正常',
-        visibleScopes: ['mine', 'group', 'all'],
-        batchLabel: isFamilyBulkScenario() ? '家族批量建案' : '新建案件',
-        casePartySummary: supporters.length ? 'CaseParty：' + supporterSummary : 'CaseParty 待补充',
-        materialSummary: isFamilyBulkScenario()
-          ? '资料清单已生成，扶养者 / 保证人材料按共享附件版本引用'
-          : '资料清单已生成，可继续补录关联人与材料',
-        isDraft: true,
-      };
     }
 
     function persistCreatedCases() {
       var createdAt = Date.now();
       var supporters = getFamilySupportingParties();
-      var draftCases = [];
-
-      if (isFamilyBulkScenario()) {
-        draftCases = getFamilyApplicants().map(function (item, index) {
-          return buildCreatedCaseRecord(item, index, {
-            createdAt: createdAt,
-            supporters: supporters,
-          });
-        });
-      } else if (state.primaryCustomer) {
-        draftCases = [buildCreatedCaseRecord({
-          name: state.primaryCustomer.name,
-        }, 0, {
-          createdAt: createdAt,
-          supporters: state.additionalParties.map(function (item) {
-            return { name: item.name, role: item.role };
-          }),
-        })];
-      }
+      var template = getTemplate();
+      var draftCases = buildCreatedCaseDrafts({
+        createdAt: createdAt,
+        familyApplicants: getFamilyApplicants(),
+        supporters: supporters,
+        primaryCustomer: state.primaryCustomer,
+        additionalParties: state.additionalParties,
+        dueDate: state.dueDate || template.defaultDueDate,
+        templateLabel: template.label,
+        applicationType: state.applicationType,
+        groupId: state.group,
+        groupLabel: getGroupLabel(state.group),
+        ownerId: state.owner,
+        amount: state.amount,
+        isFamilyBulk: isFamilyBulkScenario(),
+        isWorkTemplate: template.id === 'work',
+        workDetails: getWorkDetails(),
+      });
 
       if (!draftCases.length) return [];
 
-      var existingDrafts = readSessionJson(CASE_LIST_DRAFTS_KEY);
-      var mergedDrafts = Array.isArray(existingDrafts) ? draftCases.concat(existingDrafts) : draftCases;
-      writeSessionJson(CASE_LIST_DRAFTS_KEY, mergedDrafts);
-      writeSessionJson(CASE_LIST_FLASH_KEY, {
-        caseIds: draftCases.map(function (item) { return item.id; }),
-        count: draftCases.length,
-        templateLabel: getTemplate().label,
+      return persistCreatedCaseArtifacts({
+        storage: window.sessionStorage,
+        draftsKey: CASE_LIST_DRAFTS_KEY,
+        flashKey: CASE_LIST_FLASH_KEY,
+        draftCases: draftCases,
+        templateLabel: template.label,
         applicationType: state.applicationType,
         primaryName: state.primaryCustomer ? state.primaryCustomer.name : '',
         isFamilyBulk: isFamilyBulkScenario(),
       });
-
-      return draftCases;
     }
 
     function canProceed(stepIndex) {
@@ -715,19 +620,21 @@
       elements.btnSubmit.classList.toggle('hidden', state.currentStep !== steps.length - 1);
 
       if (!elements.btnNext.classList.contains('hidden')) {
-        var nextText = state.currentStep === 0 ? '下一步：关联人与资料模板' : '下一步：分派与复核';
+        var nextText = [
+          '下一步：确认主申请人与资料',
+          '下一步：确认承接与期限',
+          '下一步：复核并开始办案',
+        ][state.currentStep] || '下一步';
         elements.btnNext.textContent = nextText;
         elements.btnNext.disabled = !canProceed(state.currentStep);
       }
 
       elements.btnSubmit.disabled = !canProceed(2);
-      elements.submitHint.textContent = isFamilyBulkScenario()
-        ? (
-          getFamilyApplicants().length
-            ? '提交后会一次创建 ' + getFamilyApplicants().length + ' 个 Case，并同步生成 CaseParty、资料清单与补齐任务。'
-            : '当前为家族签批量模式，请先补充至少 1 位办理对象。'
-        )
-        : '创建后会自动生成资料清单与初始任务。';
+      elements.submitHint.textContent = buildSubmitHint({
+        applicantCount: getFamilyApplicants().length,
+        isFamilyBulk: isFamilyBulkScenario(),
+        isWorkTemplate: getTemplate().id === 'work',
+      });
     }
 
     function renderSteps() {
@@ -759,6 +666,11 @@
       if (!elements.caseNameInput.dataset.manual) {
         elements.caseNameInput.value = buildCaseName();
       }
+      if (elements.workCompanyName) elements.workCompanyName.value = getWorkDetails().companyName;
+      if (elements.workPositionTitle) elements.workPositionTitle.value = getWorkDetails().positionTitle;
+      if (elements.workAnnualSalary) elements.workAnnualSalary.value = getWorkDetails().annualSalary;
+      if (elements.workContactEmail) elements.workContactEmail.value = getWorkDetails().contactEmail;
+      if (elements.workContactPhone) elements.workContactPhone.value = getWorkDetails().contactPhone;
       elements.crossGroupReasonRow.classList.toggle(
         'hidden',
         !(typeof helpers.shouldRequireCrossGroupReason === 'function'
@@ -785,6 +697,7 @@
       state.applicationType = elements.applicationTypeSelect.value || state.applicationType;
       state.customerId = elements.primaryCustomerSelect.value;
       state.primaryCustomer = config.customers.find(function (item) { return item.id === state.customerId; }) || state.primaryCustomer;
+      readWorkDetailsFromForm();
       syncInheritedGroup(false);
 
       ensureFamilyBulkSeeded();
@@ -868,7 +781,7 @@
       refresh();
     });
 
-    [elements.groupSelect, elements.ownerSelect, elements.dueDateInput, elements.amountInput, elements.crossGroupReason, elements.createChecklist, elements.createTasks].forEach(function (element) {
+    [elements.groupSelect, elements.ownerSelect, elements.dueDateInput, elements.amountInput, elements.crossGroupReason, elements.createChecklist, elements.createTasks].concat(elements.workDetailInputs).forEach(function (element) {
       element.addEventListener('input', refresh);
       element.addEventListener('change', refresh);
     });
@@ -921,12 +834,17 @@
       });
     }
 
-    var createContext = parseCreateContext();
+    var createContext = helpers.parseCreateContext
+      ? helpers.parseCreateContext(window.location.search || '', config.customers || [])
+      : { sourceLeadId: '', customerId: '' };
     if (createContext.sourceLeadId) state.sourceLeadId = createContext.sourceLeadId;
+    if (createContext.sourceLeadName) state.sourceLeadName = createContext.sourceLeadName;
     if (createContext.customerId) {
       state.sourceCustomerId = createContext.customerId;
       state.customerId = createContext.customerId;
     }
+    if (createContext.customerName) state.sourceCustomerName = createContext.customerName;
+    if (createContext.customerGroupLabel) state.sourceCustomerGroupLabel = createContext.customerGroupLabel;
 
     applyHashMode();
     state.primaryCustomer = config.customers.find(function (item) { return item.id === state.customerId; }) || config.customers[0];

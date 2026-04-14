@@ -1,7 +1,7 @@
 /**
  * settings-group-members.js
  *
- * Renders the Group member list (read-only for P0).
+ * Renders the Group member list in read-only mode.
  * Called by settings-group-detail.js when a Group is selected.
  * Displays member name, role chip, and join date.
  * Handles the empty-state toggle when a Group has no members.

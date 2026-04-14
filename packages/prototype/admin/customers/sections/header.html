@@ -3,15 +3,63 @@
   Page header: title + subtitle + "添加客户" button.
   Rendered inside <main> as the first section.
 -->
-<div class="flex justify-between items-end mb-8">
-  <div>
-    <h1 class="text-3xl display-font font-semibold">客户</h1>
-    <p class="text-sm text-gray-500 mt-1">P0 聚焦个人客户建档、联系信息维护与建案入口</p>
+<div class="flex flex-col gap-5 mb-8">
+  <div class="flex justify-between items-end gap-4">
+    <div>
+      <h1 class="text-3xl display-font font-semibold">客户</h1>
+    </div>
+    <div class="flex space-x-3">
+      <button class="btn-primary flex items-center" id="btnAddCustomer">
+        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        添加客户
+      </button>
+    </div>
   </div>
-  <div class="flex space-x-3">
-    <button class="btn-primary flex items-center" id="btnAddCustomer">
-      <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-      添加客户
-    </button>
+
+  <div>
+    <div class="flex items-center justify-between gap-3 mb-3">
+      <div>
+        <div class="text-sm font-extrabold text-[var(--apple-text-main)]">客户工作概览</div>
+        <p class="text-[13px] font-semibold text-[var(--apple-text-tert)] mt-1">沿用资料中心的摘要卡片结构，让负责人快速判断手头客户和案件压力。</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <div class="apple-card summary-card summary-card--primary">
+        <div class="summary-card__label">
+          <span class="summary-card__dot"></span>
+          我的客户
+        </div>
+        <div class="summary-card__value" id="customerMineCount">0</div>
+        <div class="summary-card__hint">当前登录人员名下客户总数，适合先看自己今天要跟进的客户池。</div>
+      </div>
+
+      <div class="apple-card summary-card summary-card--info">
+        <div class="summary-card__label">
+          <span class="summary-card__dot"></span>
+          本组客户
+        </div>
+        <div class="summary-card__value" id="customerGroupCount">0</div>
+        <div class="summary-card__hint">本组全部客户规模，方便组长判断分配、协作和是否需要转派。</div>
+      </div>
+
+      <div class="apple-card summary-card summary-card--warning">
+        <div class="summary-card__label">
+          <span class="summary-card__dot"></span>
+          有活跃案件
+        </div>
+        <div class="summary-card__value" id="customerActiveCount">0</div>
+        <div class="summary-card__hint">已经在推进案件的客户数量，适合优先查看执行中客户的近期沟通与补件。</div>
+      </div>
+
+      <div class="apple-card summary-card summary-card--neutral">
+        <div class="summary-card__label">
+          <span class="summary-card__dot"></span>
+          无活跃案件
+        </div>
+        <div class="summary-card__value" id="customerNoActiveCount">0</div>
+        <div class="summary-card__hint">尚未建案或已办结客户数量，方便事务所集中回访、签约推进和再次转化。</div>
+      </div>
+    </div>
   </div>
 </div>

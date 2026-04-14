@@ -165,6 +165,7 @@ export const cases = pgTable("cases", {
     .references(() => customers.id),
   caseTypeCode: text("case_type_code").notNull(),
   status: text("status").notNull(),
+  stage: text("stage"),
   ownerUserId: uuid("owner_user_id")
     .notNull()
     .references(() => users.id),
@@ -180,6 +181,19 @@ export const cases = pgTable("cases", {
   caseName: text("case_name"),
   caseSubtype: text("case_subtype"),
   applicationType: text("application_type"),
+  applicationFlowType: text("application_flow_type")
+    .notNull()
+    .default("standard"),
+  visaPlan: text("visa_plan"),
+  postApprovalStage: text("post_approval_stage").notNull().default("none"),
+  coeIssuedAt: timestamp("coe_issued_at", {
+    withTimezone: true,
+    mode: "string",
+  }),
+  coeExpiryDate: date("coe_expiry_date", { mode: "string" }),
+  coeSentAt: timestamp("coe_sent_at", { withTimezone: true, mode: "string" }),
+  closeReason: text("close_reason"),
+  supplementCount: integer("supplement_count").notNull().default(0),
   companyId: uuid("company_id").references(() => companies.id),
   priority: text("priority").notNull().default("normal"),
   riskLevel: text("risk_level").notNull().default("low"),

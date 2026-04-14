@@ -29,7 +29,7 @@
     }, 2200);
   }
 
-  window.__leadsPage = { showToast: showToast };
+  window.__leadsPage = { showToast: showToast, updateBulkBar: null };
 
   /* ---- Hash #new → open create modal ---- */
   if (window.location.hash === '#new') {
@@ -60,7 +60,15 @@
   var searchInput = document.getElementById('leadSearch');
   var dateFrom = document.getElementById('filterDateFrom');
   var dateTo = document.getElementById('filterDateTo');
-  var paginationInfo = document.querySelector('.apple-card .px-6.py-4.border-t .text-sm.text-gray-500');
+  var paginationInfo = document.getElementById('leadsPaginationInfo');
+  var paginationBar = document.getElementById('leadsPaginationBar');
+  var tableWrapper = document.querySelector('[data-section="table"] .overflow-x-auto');
+  var emptyState = document.getElementById('leadsEmptyState');
+
+  function parseFollowUpDate(row) {
+    var raw = row.getAttribute('data-next-follow-up') || '';
+    return raw || null;
+  }
 
   function filterRows() {
     var rows = document.querySelectorAll('#leadsTableBody tr[data-lead-id]');
@@ -69,6 +77,8 @@
     var gv = filterGroup ? filterGroup.value : '';
     var bv = filterBiz ? filterBiz.value : '';
     var q  = searchInput ? searchInput.value.trim().toLowerCase() : '';
+    var df = dateFrom ? dateFrom.value : '';
+    var dt = dateTo ? dateTo.value : '';
     var visibleCount = 0;
 
     rows.forEach(function (row) {
@@ -81,6 +91,15 @@
         var text = row.textContent.toLowerCase();
         if (text.indexOf(q) === -1) show = false;
       }
+      if (show && (df || dt)) {
+        var rowDate = parseFollowUpDate(row);
+        if (rowDate) {
+          if (df && rowDate < df) show = false;
+          if (dt && rowDate > dt) show = false;
+        } else if (df || dt) {
+          show = false;
+        }
+      }
       row.style.display = show ? '' : 'none';
       if (show) visibleCount++;
     });
@@ -90,6 +109,14 @@
         ? '显示 1 - ' + rows.length + ' 条，共 ' + rows.length + ' 条'
         : '显示 ' + visibleCount + ' 条（已筛选），共 ' + rows.length + ' 条';
     }
+
+    var showEmpty = visibleCount === 0;
+    if (emptyState) emptyState.classList.toggle('hidden', !showEmpty);
+    if (tableWrapper) tableWrapper.classList.toggle('hidden', showEmpty);
+    if (paginationBar) paginationBar.classList.toggle('hidden', showEmpty);
+
+    clearStaleSelections();
+    updateBulkBar();
   }
 
   [filterStatus, filterOwner, filterGroup, filterBiz].forEach(function (sel) {
@@ -104,6 +131,9 @@
     });
   }
 
+  if (dateFrom) dateFrom.addEventListener('change', filterRows);
+  if (dateTo) dateTo.addEventListener('change', filterRows);
+
   /* ---- Filter reset ---- */
   var resetBtn = document.querySelector('[data-action="reset-filters"]');
   if (resetBtn) {
@@ -115,7 +145,8 @@
       if (dateFrom) dateFrom.value = '';
       if (dateTo) dateTo.value = '';
       filterRows();
-      showToast('已重置', '所有筛选条件已恢复默认');
+      var t = cfg.TOASTS.resetFilters;
+      showToast(t.title, t.desc);
     });
   }
 
@@ -127,7 +158,10 @@
       var row = e.target.closest('tr[data-lead-id]');
       if (!row) return;
       var id = row.getAttribute('data-lead-id');
-      window.location.href = 'detail.html?id=' + encodeURIComponent(id);
+      var sampleKey = row.getAttribute('data-sample-key');
+      var nextUrl = 'detail.html?id=' + encodeURIComponent(id);
+      if (sampleKey) nextUrl += '&sample=' + encodeURIComponent(sampleKey);
+      window.location.href = nextUrl;
     });
   }
 
@@ -144,6 +178,12 @@
     );
   }
 
+  function clearStaleSelections() {
+    document.querySelectorAll('[data-lead-select]').forEach(function (c) {
+      if (c.closest('tr').style.display === 'none') c.checked = false;
+    });
+  }
+
   function updateBulkBar() {
     var checks = visibleChecks();
     var checkedCount = 0;
@@ -157,6 +197,8 @@
       selectAll.indeterminate = checkedCount > 0 && checkedCount < checks.length;
     }
   }
+
+  if (window.__leadsPage) window.__leadsPage.updateBulkBar = updateBulkBar;
 
   if (selectAll) {
     selectAll.addEventListener('change', function () {
@@ -177,23 +219,33 @@
     });
   }
 
+  function clearAllSelections() {
+    document.querySelectorAll('[data-lead-select]').forEach(function (c) { c.checked = false; });
+    if (selectAll) { selectAll.checked = false; selectAll.indeterminate = false; }
+    updateBulkBar();
+  }
+
   /* ---- Bulk action apply buttons ---- */
-  function bulkApplyHandler(selectId, toastKey, labelFn) {
-    var btn = document.getElementById(selectId.replace('Select', 'ApplyBtn').replace('Input', 'ApplyBtn'));
+  function bulkApplyHandler(selectId, toastKey) {
+    var applyBtnId = selectId.replace('Select', 'ApplyBtn').replace('Input', 'ApplyBtn');
+    var btn = document.getElementById(applyBtnId);
     var control = document.getElementById(selectId);
     if (!btn || !control) return;
     btn.addEventListener('click', function () {
-      var count = selectedCount ? selectedCount.textContent : '0';
       var value = '';
       if (control.tagName === 'SELECT') {
+        if (!control.value) return;
         value = control.options[control.selectedIndex] ? control.options[control.selectedIndex].text : '';
       } else {
         value = control.value || '';
+        if (!value) return;
       }
+      var count = selectedCount ? selectedCount.textContent : '0';
       var preset = cfg.TOASTS[toastKey];
       if (preset) {
         showToast(preset.title, preset.desc.replace('{count}', count).replace('{value}', value));
       }
+      clearAllSelections();
     });
   }
 

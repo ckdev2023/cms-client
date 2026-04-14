@@ -28,6 +28,47 @@
     return cfg.DETAIL_SAMPLES[key || app.state.currentSampleKey] || null;
   };
 
+  app.findSampleKeyByLeadId = function (leadId) {
+    var cfg = app.getConfig();
+    if (!cfg || !cfg.DETAIL_SAMPLES || !leadId) return null;
+
+    return Object.keys(cfg.DETAIL_SAMPLES).find(function (key) {
+      var sample = cfg.DETAIL_SAMPLES[key];
+      return sample && sample.id === leadId;
+    }) || null;
+  };
+
+  app.resolveInitialSampleKey = function () {
+    var cfg = app.getConfig();
+    var fallbackKey = app.state.currentSampleKey;
+    if (!cfg || !cfg.DETAIL_SAMPLES) return fallbackKey;
+
+    var search = (window.location && window.location.search) || '';
+    var params = new URLSearchParams(search);
+    var sampleKey = params.get('sample');
+    if (sampleKey && cfg.DETAIL_SAMPLES[sampleKey]) {
+      return sampleKey;
+    }
+
+    var leadId = params.get('id');
+    return app.findSampleKeyByLeadId(leadId) || fallbackKey;
+  };
+
+  app.syncLocationForSampleKey = function (key) {
+    var sample = app.getSample(key);
+    if (!sample || !window.history || typeof window.history.replaceState !== 'function' || !window.location) {
+      return;
+    }
+
+    var params = new URLSearchParams(window.location.search || '');
+    params.set('sample', key);
+    params.set('id', sample.id);
+
+    var query = params.toString();
+    var nextUrl = window.location.pathname + (query ? '?' + query : '');
+    window.history.replaceState(null, '', nextUrl);
+  };
+
   app.setCurrentSampleKey = function (key) {
     app.state.currentSampleKey = key;
   };
@@ -47,6 +88,7 @@
       tabBtns: app.$$('[data-tab]'),
       tabPanels: app.$$('.tab-panel'),
       btnEditInfo: app.$('btnEditInfo'),
+      btnEditInfoTab: app.$('btnEditInfoTab'),
       btnChangeStatus: app.$('btnChangeStatus'),
       btnConvertCustomer: app.$('btnConvertCustomer'),
       btnConvertCase: app.$('btnConvertCase'),
@@ -61,12 +103,12 @@
     };
   };
 
-  app.BADGE_CLASS_MAP = {
-    new: 'lead-badge-new',
-    following: 'lead-badge-following',
-    pending_sign: 'lead-badge-pending_sign',
-    signed: 'lead-badge-signed',
-    lost: 'lead-badge-lost',
+  app.getStatusBadgeClass = function (statusKey) {
+    var cfg = app.getConfig();
+    if (cfg && cfg.DETAIL_STATUSES && cfg.DETAIL_STATUSES[statusKey]) {
+      return cfg.DETAIL_STATUSES[statusKey].badgeClass || '';
+    }
+    return '';
   };
 
   app.CHANNEL_DOT_COLOR = {
@@ -84,18 +126,21 @@
   };
 
   app.LOG_TYPE_LABEL = {
+    info: '基础信息修改',
     status: '状态变更',
     owner: '人员变更',
-    group: 'Group 变更',
+    group: '所属组变更',
   };
 
   app.LOG_TYPE_CHIP = {
+    info: 'bg-amber-100 text-amber-700',
     status: 'bg-sky-100 text-sky-700',
     owner: 'bg-emerald-100 text-emerald-700',
     group: 'bg-violet-100 text-violet-700',
   };
 
   app.LOG_DOT_COLOR = {
+    info: 'bg-amber-500',
     status: 'bg-sky-500',
     owner: 'bg-emerald-500',
     group: 'bg-violet-500',
@@ -109,7 +154,7 @@
     clearTimeout(app.showToast._timer);
     app.showToast._timer = setTimeout(function () {
       app.dom.toastEl.classList.add('hidden');
-    }, 2800);
+    }, 2200);
   };
 
   app.openModal = function (id) {
@@ -129,10 +174,12 @@
       var isActive = btn.getAttribute('data-tab') === key;
       btn.classList.toggle('is-active', isActive);
       btn.setAttribute('aria-selected', isActive ? 'true' : 'false');
+      btn.setAttribute('tabindex', isActive ? '0' : '-1');
     });
 
     app.dom.tabPanels.forEach(function (panel) {
-      panel.classList.toggle('is-active', panel.id === 'tab-' + key);
+      var isActive = panel.id === 'tab-' + key;
+      panel.classList.toggle('is-active', isActive);
     });
   };
 
@@ -149,7 +196,7 @@
     return div.innerHTML;
   };
 
-  app.applyBtnState = function (btn, state, defaultLabel, viewLabel) {
+  app.applyBtnState = function (btn, state, defaultLabel, viewLabel, defaultClass) {
     if (!btn) return;
 
     btn.style.display = state === 'hidden' ? 'none' : '';
@@ -159,13 +206,15 @@
 
     if (state === 'view-customer' || state === 'view-case') {
       btn.textContent = viewLabel;
-      btn.classList.remove('btn-primary');
+      btn.classList.remove('btn-primary', 'btn-highlight');
       btn.classList.add('btn-secondary');
       return;
     }
 
+    var cls = defaultClass || 'btn-primary';
+    var otherCls = cls === 'btn-primary' ? 'btn-secondary' : 'btn-primary';
     btn.textContent = defaultLabel;
-    btn.classList.remove('btn-secondary');
-    btn.classList.add('btn-primary');
+    btn.classList.remove(otherCls);
+    btn.classList.add(cls);
   };
 })();

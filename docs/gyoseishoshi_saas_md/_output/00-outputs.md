@@ -421,3 +421,39 @@
   下一步建议：
   - 只做 1 件事：关闭 `AMB-REQ-P0-01-01`
   - 关闭后，把去重命中默认处置策略直接回写到上述 3 份原型契约文件中，不再新增新文档
+
+- 时间：2026-04-11
+  问题：如何基于当前原型可点击页面，生成经管签人工走查测试脚本？
+  结论（TL;DR）：已生成原型可走版逐步测试脚本（`_output/03-原型可走版逐步测试脚本.md`），覆盖 18 个场景（含主成功路径 S1→S9 全阶段推进、Gate 阻断、欠款风险确认、补正循环、COE 风险确认、海外拒签、入管拒签、提醒失败兜底、已归档只读、线索流失态、签约未转化警告），每步细化到页面入口、点击元素、输入示例、预期 toast/badge/状态变化。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/01-经管签流程拆解与可测节点映射.md
+  - docs/gyoseishoshi_saas_md/_output/02-原型页面可点击动作映射.md
+  - packages/prototype/admin/case/data/case-detail-config.js（样本数据与阶段配置）
+  - packages/prototype/admin/case/scripts/case-detail-stage-actions*.js（阶段推进与 toast）
+  - packages/prototype/admin/leads-message/（线索模块原型）
+  - packages/prototype/admin/customers/（客户模块原型）
+  影响面：
+  - 人工走查：提供可逐步执行的测试手册
+  - 缺口识别：标明跨模块断点走法和原型 UI 缺口
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/03-原型可走版逐步测试脚本.md
+    位置：独立产出文件
+    Owner：QA/研发
+    状态：已产出
+
+- 时间：2026-04-12
+  问题：Foundation 骨架完成后，8 个原型模块（dashboard / customers / leads-message / case / tasks / billing / documents / settings）应按什么顺序迁移到 packages/admin？
+  结论（TL;DR）：推荐顺序 ① dashboard → ② customers → ③ leads → ④ case → ⑤ tasks → ⑥ billing → ⑦ documents → ⑧ settings（或 settings 作为平行轨道在 ②③ 阶段同步推进）。Dashboard 最轻量、最适合验证壳层；customers 定义标准 CRUD 列表范式；后续模块按交互复杂度和跨模块依赖递增排列。详见 `docs/gyoseishoshi_saas_md/_output/04-试点页面迁移顺序建议.md`。
+  关键依据：
+  - 8 个模块的 split-manifest.json（sections / scripts / dataFiles 数量对比）
+  - packages/admin/src/shell/ 及 shared/ui/ 当前 foundation 基线
+  - admin-shell-foundation 计划 Phase 5 §20
+  影响面：
+  - packages/admin 下新增 features/*/ui 组件
+  - packages/admin/src/router/index.ts 路由扩展
+  - shared/ui 需追加的通用组件（Table / Pagination / Modal / SegmentedControl / Toast / Stepper）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/04-试点页面迁移顺序建议.md
+    位置：独立产出文件
+    Owner：研发
+    状态：已产出

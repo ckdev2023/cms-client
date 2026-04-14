@@ -1,0 +1,33 @@
+{
+  "task_id": "W10",
+  "task_name": "mcp-client-setup",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/mcp-client-setup.md",
+  "summary_output": "artifacts/mempalace/W10.summary.md",
+  "checks": [
+    {
+      "name": "cursor_and_claude_covered",
+      "status": "passed"
+    },
+    {
+      "name": "minimal_setup_steps_defined",
+      "status": "passed"
+    },
+    {
+      "name": "readonly_validation_steps_defined",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W10-mcp-client-setup.md",
+    "plan/mempalace/mcp-readonly-scope.md",
+    "plan/mempalace/deployment-topology.md",
+    "plan/mempalace/environment-strategy.md",
+    "plan/mempalace/allowed_sources.md",
+    "plan/mempalace/blocked_sources.md",
+    "Cursor MCP public docs",
+    "Claude Code MCP public docs"
+  ]
+}

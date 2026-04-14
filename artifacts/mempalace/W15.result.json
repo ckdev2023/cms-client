@@ -1,0 +1,30 @@
+{
+  "task_id": "W15",
+  "task_name": "ops-runbook",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/runbook.md",
+  "summary_output": "artifacts/mempalace/W15.summary.md",
+  "checks": [
+    {
+      "name": "full_rebuild_flow_defined",
+      "status": "passed"
+    },
+    {
+      "name": "incremental_update_flow_defined",
+      "status": "passed"
+    },
+    {
+      "name": "backup_rollback_incident_flows_defined",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W15-ops-runbook.md",
+    "plan/mempalace/deployment-topology.md",
+    "plan/mempalace/environment-strategy.md",
+    "plan/mempalace/index-baseline-plan.md",
+    "plan/mempalace/source-priority.md"
+  ]
+}

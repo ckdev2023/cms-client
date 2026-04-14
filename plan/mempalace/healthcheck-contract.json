@@ -1,0 +1,192 @@
+{
+  "$schema_note": "MemPalace sidecar 启动/停止/健康检查契约 — 由 healthcheck-contract.md 转换而来",
+  "contract_version": "v1.0.0",
+  "frozen_at": "2026-04-12",
+  "target_release_id": "mempalace-0.1.0-py3.11.15",
+
+  "paths": {
+    "sidecar_root": "$HOME/.mempalace/cms-client",
+    "current_venv_python": "$SIDECAR_ROOT/runtime/current/.venv/bin/python",
+    "pid_file": "$SIDECAR_ROOT/runtime/current/sidecar.pid",
+    "service_log_dir": "$SIDECAR_ROOT/logs/service",
+    "chroma_data_dir": "$SIDECAR_ROOT/data/chroma"
+  },
+
+  "preconditions": [
+    {
+      "id": "P1",
+      "check": "runtime/current is valid symlink to runtime/releases/<release-id>/",
+      "fail_action": "exit 1"
+    },
+    {
+      "id": "P2",
+      "check": "release-manifest.json exists and status == active",
+      "fail_action": "exit 1"
+    },
+    {
+      "id": "P3",
+      "check": ".venv/bin/python exists and is executable",
+      "fail_action": "exit 1"
+    },
+    {
+      "id": "P4",
+      "check": "data/chroma/ directory exists",
+      "fail_action": "exit 1"
+    },
+    {
+      "id": "P5",
+      "check": "logs/service/ directory exists and is writable",
+      "fail_action": "exit 1"
+    }
+  ],
+
+  "entrypoints": {
+    "start": {
+      "command": "$SIDECAR_ROOT/runtime/current/.venv/bin/python -m mempalace start",
+      "timeout_seconds": 30,
+      "exit_codes": {
+        "0": "started successfully",
+        "1": "precondition failure or startup error"
+      },
+      "pid_file_behavior": "write on success",
+      "duplicate_protection": true,
+      "output_schema": {
+        "status": "started",
+        "pid": "integer",
+        "release_id": "string",
+        "chroma_path": "string",
+        "started_at": "ISO8601"
+      }
+    },
+
+    "stop": {
+      "command": "$SIDECAR_ROOT/runtime/current/.venv/bin/python -m mempalace stop",
+      "timeout_seconds": 10,
+      "signal_sequence": ["SIGTERM", "SIGKILL"],
+      "sigterm_grace_seconds": 10,
+      "exit_codes": {
+        "0": "stopped (or was not running)",
+        "1": "stop error"
+      },
+      "pid_file_behavior": "delete on success",
+      "idempotent": true,
+      "output_schema": {
+        "status": "stopped",
+        "pid": "integer|null",
+        "stopped_at": "ISO8601"
+      }
+    },
+
+    "healthcheck": {
+      "command": "$SIDECAR_ROOT/runtime/current/.venv/bin/python -m mempalace healthcheck",
+      "optional_args": ["--release-dir <path>"],
+      "timeout_seconds": 15,
+      "mode": "synchronous single-shot",
+      "side_effects": "none (read-only)",
+      "exit_codes": {
+        "0": "all checks passed",
+        "1": "one or more checks failed"
+      },
+      "output_schema": {
+        "healthy": "boolean",
+        "release_id": "string",
+        "checked_at": "ISO8601",
+        "checks": {
+          "C1_process_alive":        { "passed": "boolean", "error": "string|undefined" },
+          "C2_persistence_readable": { "passed": "boolean", "error": "string|undefined" },
+          "C3_collections_listable": { "passed": "boolean", "count": "integer|undefined", "error": "string|undefined" },
+          "C4_l1_query_hit":         { "passed": "boolean", "result_count": "integer|undefined", "skipped": "boolean|undefined", "reason": "string|undefined", "error": "string|undefined" },
+          "C5_release_consistency":  { "passed": "boolean", "release_id": "string|undefined", "error": "string|undefined" }
+        },
+        "elapsed_ms": "integer"
+      }
+    }
+  },
+
+  "health_checks": [
+    {
+      "id": "C1",
+      "key": "C1_process_alive",
+      "description": "sidecar 进程存活",
+      "method": "read sidecar.pid and verify process exists",
+      "pass_condition": "PID file exists and process is alive",
+      "skippable": false
+    },
+    {
+      "id": "C2",
+      "key": "C2_persistence_readable",
+      "description": "持久化目录可读",
+      "method": "open PersistentClient(path=data/chroma/)",
+      "pass_condition": "no exception thrown",
+      "skippable": false
+    },
+    {
+      "id": "C3",
+      "key": "C3_collections_listable",
+      "description": "集合可列举",
+      "method": "client.list_collections()",
+      "pass_condition": "returns a list (empty allowed on first init)",
+      "skippable": false
+    },
+    {
+      "id": "C4",
+      "key": "C4_l1_query_hit",
+      "description": "L1 权威查询可命中",
+      "method": "execute minimal query against existing collections",
+      "pass_condition": "at least one result if collections non-empty; skipped if collections empty",
+      "skippable": true,
+      "skip_reason": "no collections (first initialization)"
+    },
+    {
+      "id": "C5",
+      "key": "C5_release_consistency",
+      "description": "release 一致性",
+      "method": "compare release-manifest.json release_id with runtime/current target",
+      "pass_condition": "release_id matches and status is active",
+      "skippable": false
+    }
+  ],
+
+  "skip_vs_fail": {
+    "skipped": {
+      "meaning": "check precondition not yet met but not a fault (e.g. first init, empty collections)",
+      "passed_value": true,
+      "affects_healthy": false,
+      "requires_reason": true
+    },
+    "failed": {
+      "meaning": "check executed and did not pass",
+      "passed_value": false,
+      "affects_healthy": true
+    }
+  },
+
+  "fault_mapping": {
+    "start_precondition_fail": "R6-environment-gap",
+    "start_timeout_or_crash":  "R1-startup-failure",
+    "healthcheck_C2_fail":     "R2-data-corruption",
+    "healthcheck_C4_fail":     "R3-quality-gate-failure",
+    "healthcheck_C5_fail":     "R6-environment-gap"
+  },
+
+  "constraints": [
+    "entrypoints must be python -m mempalace subcommands, not standalone shell scripts",
+    "all entrypoints use sidecar .venv only, no system python or node_modules",
+    "healthcheck is read-only: no index writes, no collection creation, no data/ mutation",
+    "all stdout output is JSON for automation and log retention",
+    "entrypoints must not be wired into npm lifecycle, git hooks, or CI",
+    "PID file lives in runtime/current/sidecar.pid, not /tmp or /var/run"
+  ],
+
+  "provenance": {
+    "derived_from": [
+      "plan/mempalace/go-no-go-review.md §3.3",
+      "plan/mempalace/runbook.md §2, §5, §12",
+      "plan/mempalace/sidecar-layout.md §2, §3",
+      "plan/mempalace/release-strategy.md §6",
+      "plan/mempalace/environment-strategy.md §7.2",
+      "plan/mempalace/python-env.md §6"
+    ],
+    "companion_doc": "plan/mempalace/healthcheck-contract.md"
+  }
+}

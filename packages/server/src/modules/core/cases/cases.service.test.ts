@@ -23,6 +23,7 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     customer_id: "cust-1",
     case_type_code: "visa",
     status: "S1",
+    stage: null,
     owner_user_id: USER_ID,
     opened_at: "2026-01-01T00:00:00.000Z",
     due_at: null,
@@ -31,6 +32,14 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     case_name: null,
     case_subtype: null,
     application_type: null,
+    application_flow_type: "standard",
+    visa_plan: null,
+    post_approval_stage: "none",
+    coe_issued_at: null,
+    coe_expiry_date: null,
+    coe_sent_at: null,
+    close_reason: null,
+    supplement_count: 0,
     company_id: null,
     priority: "normal",
     risk_level: "low",
@@ -291,6 +300,8 @@ void test("get: returns case or null", async () => {
   const c = await s.get(makeCtx("viewer"), CASE_ID);
   assert.ok(c);
   assert.equal(c.id, CASE_ID);
+  assert.equal(c.stage, "S1");
+  assert.equal(c.postApprovalStage, null);
   assert.equal(await s.get(makeCtx("viewer"), "nonexistent"), null);
 });
 
@@ -888,6 +899,15 @@ void test("mapCaseRow: maps billing and post-approval fields", async () => {
     sql.includes("from cases") && p?.[0] === CASE_ID
       ? ok([
           makeCaseRow({
+            stage: "biz_step_15",
+            application_flow_type: "coe_overseas",
+            visa_plan: "2y",
+            post_approval_stage: "coe_sent",
+            coe_issued_at: "2026-03-20T00:00:00.000Z",
+            coe_expiry_date: "2026-06-20",
+            coe_sent_at: "2026-03-22T00:00:00.000Z",
+            close_reason: "client_withdrawn",
+            supplement_count: "2",
             result_outcome: "approved",
             quote_price: "500000.00",
             deposit_paid_cached: true,
@@ -905,6 +925,15 @@ void test("mapCaseRow: maps billing and post-approval fields", async () => {
   );
   const c = await svc(pool, makeTemplates()).get(makeCtx("viewer"), CASE_ID);
   assert.ok(c);
+  assert.equal(c.stage, "biz_step_15");
+  assert.equal(c.applicationFlowType, "coe_overseas");
+  assert.equal(c.visaPlan, "2y");
+  assert.equal(c.postApprovalStage, "coe_sent");
+  assert.equal(c.coeIssuedAt, "2026-03-20T00:00:00.000Z");
+  assert.equal(c.coeExpiryDate, "2026-06-20");
+  assert.equal(c.coeSentAt, "2026-03-22T00:00:00.000Z");
+  assert.equal(c.closeReason, "client_withdrawn");
+  assert.equal(c.supplementCount, 2);
   assert.equal(c.resultOutcome, "approved");
   assert.equal(c.quotePrice, 500000);
   assert.equal(c.depositPaidCached, true);
@@ -1026,6 +1055,7 @@ void test("updatePostApprovalStage: writes metadata + timeline", async () => {
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
+          post_approval_stage: "coe_sent",
           metadata: { post_approval_stage: "coe_sent" },
         }),
       ]);
@@ -1040,6 +1070,13 @@ void test("updatePostApprovalStage: writes metadata + timeline", async () => {
     { stage: "coe_sent" },
   );
   assert.deepEqual(c.metadata, { post_approval_stage: "coe_sent" });
+  assert.equal(c.postApprovalStage, "coe_sent");
+  const updateCall = calls.find(
+    (call) =>
+      call.sql.includes("update cases") && call.sql.includes("metadata"),
+  );
+  assert.ok(updateCall);
+  assert.equal(updateCall.params?.[2], "coe_sent");
   assert.equal(
     calls.filter((c) => c.sql.includes("insert into timeline_logs")).length,
     1,
@@ -1053,6 +1090,7 @@ void test("updatePostApprovalStage: stamps overseas_visa_start_at on first entry
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
+          post_approval_stage: "overseas_visa_applying",
           metadata: { post_approval_stage: "overseas_visa_applying" },
           overseas_visa_start_at: "2026-04-01T00:00:00.000Z",
         }),
@@ -1073,8 +1111,9 @@ void test("updatePostApprovalStage: stamps overseas_visa_start_at on first entry
   );
   assert.ok(updateCall);
   assert.ok(updateCall.params);
-  assert.equal(updateCall.params[2], true);
-  assert.equal(updateCall.params[3], false);
+  assert.equal(updateCall.params[2], "overseas_visa_applying");
+  assert.equal(updateCall.params[3], true);
+  assert.equal(updateCall.params[4], false);
 });
 
 void test("updatePostApprovalStage: rejects invalid stage", async () => {
@@ -1235,6 +1274,7 @@ void test("updatePostApprovalStage: entry_success stamps entry_confirmed_at", as
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
+          post_approval_stage: "entry_success",
           metadata: { post_approval_stage: "entry_success" },
           entry_confirmed_at: "2026-04-10T00:00:00.000Z",
         }),
@@ -1255,8 +1295,9 @@ void test("updatePostApprovalStage: entry_success stamps entry_confirmed_at", as
   );
   assert.ok(updateCall);
   assert.ok(updateCall.params);
-  assert.equal(updateCall.params[2], false);
-  assert.equal(updateCall.params[3], true);
+  assert.equal(updateCall.params[2], "entry_success");
+  assert.equal(updateCall.params[3], false);
+  assert.equal(updateCall.params[4], true);
 });
 
 void test("updatePostApprovalStage: waiting_final_payment accepted", async () => {
@@ -1264,6 +1305,7 @@ void test("updatePostApprovalStage: waiting_final_payment accepted", async () =>
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
+          post_approval_stage: "waiting_final_payment",
           metadata: { post_approval_stage: "waiting_final_payment" },
         }),
       ]);
@@ -1280,6 +1322,7 @@ void test("updatePostApprovalStage: waiting_final_payment accepted", async () =>
   assert.deepEqual(c.metadata, {
     post_approval_stage: "waiting_final_payment",
   });
+  assert.equal(c.postApprovalStage, "waiting_final_payment");
 });
 
 void test("updatePostApprovalStage: does not re-stamp overseas_visa_start_at if already set", async () => {
@@ -1289,6 +1332,7 @@ void test("updatePostApprovalStage: does not re-stamp overseas_visa_start_at if 
     if (sql.includes("update cases") && sql.includes("metadata"))
       return ok([
         makeCaseRow({
+          post_approval_stage: "overseas_visa_applying",
           metadata: { post_approval_stage: "overseas_visa_applying" },
           overseas_visa_start_at: "2026-03-01T00:00:00.000Z",
         }),
@@ -1310,7 +1354,25 @@ void test("updatePostApprovalStage: does not re-stamp overseas_visa_start_at if 
     (c) => c.sql.includes("update cases") && c.sql.includes("metadata"),
   );
   assert.ok(updateCall);
-  assert.equal(updateCall.params?.[2], false, "should not re-stamp visa start");
+  assert.equal(updateCall.params?.[3], false, "should not re-stamp visa start");
+});
+
+void test("mapCaseRow: falls back to metadata post_approval_stage when column is none", async () => {
+  const pool = makePool((sql, p) =>
+    sql.includes("from cases") && p?.[0] === CASE_ID
+      ? ok([
+          makeCaseRow({
+            post_approval_stage: "none",
+            metadata: { post_approval_stage: "coe_sent" },
+          }),
+        ])
+      : ok(),
+  );
+
+  const c = await svc(pool, makeTemplates()).get(makeCtx("viewer"), CASE_ID);
+  assert.ok(c);
+  assert.equal(c.postApprovalStage, "coe_sent");
+  assert.deepEqual(c.metadata, { post_approval_stage: "coe_sent" });
 });
 
 // ── Focused regression: mapCaseRow maps evidence URL ──

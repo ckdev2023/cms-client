@@ -1,0 +1,166 @@
+{
+  "interactions": [
+    {
+      "selector": "#btnRegisterPayment",
+      "event": "click",
+      "intent": "open_payment_modal",
+      "description": "打开登记回款弹窗"
+    },
+    {
+      "selector": "[data-segment]",
+      "event": "click",
+      "intent": "switch_segment_view",
+      "description": "切换分段视图（案件收费列表 / 回款流水记录）"
+    },
+    {
+      "selector": "#billingSearchInput",
+      "event": "input",
+      "intent": "search_billing",
+      "description": "搜索：案件名称 / 客户名称 / 案件编号"
+    },
+    {
+      "selector": "[data-filter='status']",
+      "event": "change",
+      "intent": "filter_by_status",
+      "description": "筛选回款状态（已结清/部分回款/未回款/逾期/全部）"
+    },
+    {
+      "selector": "[data-filter='group']",
+      "event": "change",
+      "intent": "filter_by_group",
+      "description": "筛选所属 Group"
+    },
+    {
+      "selector": "[data-filter='owner']",
+      "event": "change",
+      "intent": "filter_by_owner",
+      "description": "筛选负责人"
+    },
+    {
+      "selector": "[data-action='reset-filters']",
+      "event": "click",
+      "intent": "reset_all_filters",
+      "description": "重置所有筛选条件"
+    },
+    {
+      "selector": "#selectAllBilling",
+      "event": "change",
+      "intent": "toggle_select_all",
+      "description": "全选/取消全选案件行（支持 indeterminate）"
+    },
+    {
+      "selector": "[data-billing-select]",
+      "event": "change",
+      "intent": "toggle_select_row",
+      "description": "选中/取消选中单行（已结清行 disabled）"
+    },
+    {
+      "selector": "#bulkClearBtn",
+      "event": "click",
+      "intent": "clear_selection",
+      "description": "清除所有选中项"
+    },
+    {
+      "selector": "#bulkCollectionBtn",
+      "event": "click",
+      "intent": "batch_create_collection_tasks",
+      "description": "批量生成催款任务 → 三段式结果反馈"
+    },
+    {
+      "selector": "[data-billing-select-row]",
+      "event": "click",
+      "intent": "open_billing_plan_panel",
+      "description": "点击行打开该案件的收费计划面板"
+    },
+    {
+      "selector": "a[href*='case/detail']",
+      "event": "click",
+      "intent": "navigate_to_case_detail",
+      "description": "案件名称链接跳转到案件详情页"
+    },
+    {
+      "selector": "#submitPaymentBtn",
+      "event": "click",
+      "intent": "submit_payment",
+      "description": "提交登记回款表单"
+    },
+    {
+      "selector": "#closeModalBtn, #cancelModalBtn",
+      "event": "click",
+      "intent": "close_payment_modal",
+      "description": "关闭登记回款弹窗"
+    },
+    {
+      "selector": "#fieldAmount",
+      "event": "input",
+      "intent": "validate_amount",
+      "description": "金额输入 → 触发超限校验提示"
+    },
+    {
+      "selector": "#fieldBillingPlanId",
+      "event": "change",
+      "intent": "select_billing_plan_node",
+      "description": "选择关联收费节点（仅展示未结清节点）"
+    },
+    {
+      "selector": "[data-action='edit-billing-plan']",
+      "event": "click",
+      "intent": "edit_billing_plan",
+      "description": "编辑收费计划"
+    },
+    {
+      "selector": "[data-action='close-billing-plan']",
+      "event": "click",
+      "intent": "close_billing_plan_panel",
+      "description": "关闭收费计划面板"
+    },
+    {
+      "selector": "#btnConfigurePlan",
+      "event": "click",
+      "intent": "configure_billing_plan",
+      "description": "空状态下配置收费计划"
+    },
+    {
+      "selector": "[data-action='register-payment-from-plan']",
+      "event": "click",
+      "intent": "open_payment_modal_from_plan",
+      "description": "从收费计划面板内登记回款"
+    },
+    {
+      "selector": "[data-action='create-collection-from-plan']",
+      "event": "click",
+      "intent": "create_collection_from_plan",
+      "description": "从收费计划面板内创建催款任务"
+    },
+    {
+      "selector": "[data-action='void-payment']",
+      "event": "click",
+      "intent": "void_payment",
+      "description": "作废回款记录"
+    },
+    {
+      "selector": "[data-action='reverse-payment']",
+      "event": "click",
+      "intent": "reverse_payment",
+      "description": "冲正回款记录"
+    },
+    {
+      "selector": "[data-action='close-risk-ack']",
+      "event": "click",
+      "intent": "close_risk_ack_panel",
+      "description": "关闭风险确认面板"
+    },
+    {
+      "selector": "[data-action='close-collection-result']",
+      "event": "click",
+      "intent": "close_collection_result",
+      "description": "关闭批量催款结果面板"
+    },
+    {
+      "selector": "[data-action='edit-financial-note']",
+      "event": "click",
+      "intent": "edit_financial_note",
+      "description": "编辑财务备注（原型演示占位）"
+    }
+  ]
+}

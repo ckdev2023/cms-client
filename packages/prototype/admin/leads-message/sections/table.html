@@ -1,9 +1,10 @@
 <!--
   section: table.html
-  Bulk action toolbar + 11-column data table (8 demo rows) + empty state + pagination.
+  Bulk action toolbar + merged-column data table (8 demo rows) + empty state + pagination.
+  Loaded into index.html via data-include-html fragment.
   P0-CONTRACT §2, §4, §7, §8, §9
 -->
-<div class="apple-card overflow-hidden">
+<div data-section="table" class="apple-card overflow-hidden">
 
   <div
     id="bulkActionBar"
@@ -11,28 +12,28 @@
     role="region"
     aria-label="批量操作"
   >
-    <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--apple-text-main)]">
+    <div class="flex items-center gap-2 text-[13px] font-extrabold text-[var(--text)]">
       已选择 <span id="selectedCount">0</span> 条
-      <button class="text-[12px] font-extrabold text-[var(--apple-text-tert)] hover:text-[var(--apple-text-main)]" type="button" id="bulkClearBtn">清除</button>
+      <button class="text-[12px] font-extrabold text-[var(--muted-2)] hover:text-[var(--text)]" type="button" id="bulkClearBtn">清除</button>
     </div>
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex items-center gap-2">
-        <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">指派负责人</span>
+        <span class="text-[12px] font-extrabold text-[var(--muted-2)]">指派负责人</span>
         <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[140px]" id="bulkAssignSelect">
           <option value="" selected>选择负责人</option>
-          <option value="suzuki">Suzuki</option>
-          <option value="tanaka">Tanaka</option>
-          <option value="sato">Sato</option>
+          <option value="suzuki">铃木</option>
+          <option value="tanaka">田中</option>
+          <option value="sato">佐藤</option>
         </select>
         <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkAssignApplyBtn">应用</button>
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">跟进时间</span>
+        <span class="text-[12px] font-extrabold text-[var(--muted-2)]">跟进时间</span>
         <input type="datetime-local" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[190px]" id="bulkFollowUpInput" />
         <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkFollowUpApplyBtn">应用</button>
       </div>
       <div class="flex items-center gap-2">
-        <span class="text-[12px] font-extrabold text-[var(--apple-text-tert)]">标记状态</span>
+        <span class="text-[12px] font-extrabold text-[var(--muted-2)]">标记状态</span>
         <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[120px]" id="bulkStatusSelect">
           <option value="" selected>选择状态</option>
           <option value="new">新咨询</option>
@@ -47,7 +48,7 @@
   </div>
 
   <div class="overflow-x-auto">
-    <table class="apple-table w-full text-left border-collapse" style="min-width: 960px;">
+    <table class="apple-table w-full text-left border-collapse" style="min-width: 780px;">
       <thead>
         <tr>
           <th class="w-[44px] text-center">
@@ -55,131 +56,256 @@
               <input type="checkbox" id="selectAllLeads" class="accent-[var(--apple-blue)] table-checkbox" aria-label="全选线索" />
             </label>
           </th>
-          <th class="w-[120px]">线索编号</th>
-          <th>联系人姓名</th>
-          <th class="hidden md:table-cell">电话 / 邮箱</th>
-          <th class="hidden md:table-cell w-[100px]">意向业务</th>
-          <th class="hidden lg:table-cell w-[80px]">来源</th>
+          <th class="w-[240px]">咨询人</th>
+          <th>联系方式 / 咨询信息</th>
           <th class="w-[110px]">当前状态</th>
-          <th class="hidden md:table-cell w-[100px]">负责人</th>
-          <th class="hidden lg:table-cell w-[100px]">所属 Group</th>
-          <th class="hidden lg:table-cell">下一步动作</th>
-          <th class="hidden md:table-cell w-[90px]">下次跟进</th>
-          <th class="w-[100px]">最近更新</th>
+          <th class="w-[150px]">负责人 / 组</th>
+          <th class="w-[220px]">跟进安排</th>
+          <th class="w-[110px]">最近更新</th>
         </tr>
       </thead>
       <tbody id="leadsTableBody">
-        <tr data-lead-id="LEAD-2026-0042" data-status="new" data-owner="suzuki" data-group="tokyo-1" data-business-type="work-visa">
+        <tr data-lead-id="LEAD-2026-0042" data-sample-key="empty-followups" data-status="new" data-owner="suzuki" data-group="tokyo-1" data-business-type="work-visa" data-next-follow-up="2026-04-10">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0042" aria-label="选择 Michael Thompson" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0042</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">M</div><span class="font-semibold text-[var(--apple-text-main)]">Michael Thompson</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">090-8765-4321</div><div class="text-[12px] text-[var(--apple-text-tert)]">michael.t@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">技人国</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-sky-100 text-sky-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">M</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">Michael Thompson</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0042</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">090-8765-4321</div>
+            <div class="text-[12px] text-[var(--muted-2)]">michael.t@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">技人国 · 网站表单</div>
+          </td>
           <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>Suzuki</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话确认意向与签证类别</td>
-          <td class="hidden md:table-cell text-sm">04-10</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">今天 15:30</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">铃</div>
+              铃木
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京一组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">电话确认意向与签证类别</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-10</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">今天 15:30</td>
         </tr>
-        <tr data-lead-id="LEAD-2026-0035" data-status="following" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay">
+        <tr data-lead-id="LEAD-2026-0035" data-sample-key="following" data-status="following" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay" data-next-follow-up="2026-04-12">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0035" aria-label="选择 李华" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0035</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div><span class="font-semibold text-[var(--apple-text-main)]">李华</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">080-2222-3333</div><div class="text-[12px] text-[var(--apple-text-tert)]">li.hua@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">家族滞在</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">介绍</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">李华</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0035</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">080-2222-3333</div>
+            <div class="text-[12px] text-[var(--muted-2)]">li.hua@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">家族滞在 · 介绍</div>
+          </td>
           <td><span class="lead-badge lead-badge-following">跟进中</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>Tanaka</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">邮件发送材料清单，确认扶养者信息</td>
-          <td class="hidden md:table-cell text-sm">04-12</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">昨天 11:20</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">田</div>
+              田中
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京一组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">邮件发送材料清单，确认扶养者信息</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-12</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">昨天 11:20</td>
         </tr>
-        <tr data-lead-id="LEAD-2026-0028" data-status="pending_sign" data-owner="sato" data-group="osaka" data-business-type="business-manager">
+        <tr data-lead-id="LEAD-2026-0028" data-sample-key="following" data-status="pending_sign" data-owner="sato" data-group="osaka" data-business-type="business-manager" data-next-follow-up="2026-04-11">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0028" aria-label="选择 田中 太郎" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0028</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div><span class="font-semibold text-[var(--apple-text-main)]">田中 太郎</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">070-5555-6666</div><div class="text-[12px] text-[var(--apple-text-tert)]">tanaka.t@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">设立法人</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">来访</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">田中 太郎</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0028</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">070-5555-6666</div>
+            <div class="text-[12px] text-[var(--muted-2)]">tanaka.t@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">设立法人 · 来访</div>
+          </td>
           <td><span class="lead-badge lead-badge-pending_sign">待签约</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">Sa</div>Sato</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">大阪组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">面谈确认签约条件与费用</td>
-          <td class="hidden md:table-cell text-sm">04-11</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">04-06 17:00</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">佐</div>
+              佐藤
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">大阪组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">面谈确认签约条件与费用</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-11</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">04-06 17:00</td>
         </tr>
-        <tr data-lead-id="LEAD-2026-0015" data-status="signed" data-owner="suzuki" data-group="tokyo-2" data-business-type="work-visa">
+        <tr data-lead-id="LEAD-2026-0015" data-sample-key="converted-case" data-status="converted_case" data-owner="suzuki" data-group="tokyo-2" data-business-type="work-visa" data-next-follow-up="">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0015" aria-label="选择 王 明" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0015</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">王</div><div><span class="font-semibold text-[var(--apple-text-main)]">王 明</span><div class="text-[11px] text-emerald-600 font-semibold mt-0.5">→ CUS-2026-0195 · CAS-2026-0210</div></div></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">080-7777-8888</div><div class="text-[12px] text-[var(--apple-text-tert)]">wang.ming@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">技人国</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">介绍</td>
-          <td><span class="lead-badge lead-badge-signed">已签约</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>Suzuki</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京二组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">—</td>
-          <td class="hidden md:table-cell text-sm">—</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">04-02</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">王</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">王 明</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0015</div>
+                <div class="text-[11px] text-emerald-600 font-semibold mt-1">→ 已建客户档案 CUS-2026-0195 · 已创建案件 CAS-2026-0210</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">080-7777-8888</div>
+            <div class="text-[12px] text-[var(--muted-2)]">wang.ming@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">技人国 · 介绍</div>
+          </td>
+          <td><span class="lead-badge lead-badge-signed">已创建案件</span></td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">铃</div>
+              铃木
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京二组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">—</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：—</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">04-02</td>
         </tr>
-        <tr class="lead-row-dimmed" data-lead-id="LEAD-2026-0019" data-status="lost" data-owner="tanaka" data-group="tokyo-1" data-business-type="permanent">
+        <tr class="lead-row-dimmed" data-lead-id="LEAD-2026-0019" data-sample-key="lost" data-status="lost" data-owner="tanaka" data-group="tokyo-1" data-business-type="permanent" data-next-follow-up="">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0019" aria-label="选择 佐藤 美咲" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0019</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0">佐</div><span class="font-semibold text-[var(--apple-text-main)]">佐藤 美咲</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">090-4444-1111</div><div class="text-[12px] text-[var(--apple-text-tert)]">sato.misaki@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">永住</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-[11px] font-bold flex-shrink-0">佐</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">佐藤 美咲</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0019</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">090-4444-1111</div>
+            <div class="text-[12px] text-[var(--muted-2)]">sato.misaki@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">永住 · 电话</div>
+          </td>
           <td><span class="lead-badge lead-badge-lost">已流失</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>Tanaka</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">—</td>
-          <td class="hidden md:table-cell text-sm">—</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">03-28</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">田</div>
+              田中
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京一组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">—</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：—</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">03-28</td>
         </tr>
-        <tr class="lead-row-warning" data-lead-id="LEAD-2026-0022" data-status="signed" data-owner="suzuki" data-group="tokyo-1" data-business-type="family-stay">
+        <tr class="lead-row-warning" data-lead-id="LEAD-2026-0022" data-sample-key="signed" data-status="signed" data-owner="suzuki" data-group="tokyo-1" data-business-type="family-stay" data-next-follow-up="2026-04-09">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0022" aria-label="选择 陈 大伟" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0022</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">陈</div><div><span class="font-semibold text-[var(--apple-text-main)]">陈 大伟</span><div class="text-[11px] text-amber-600 font-semibold mt-0.5">⚠ 已签约未转化：请完成客户/案件创建</div></div></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">080-9999-0000</div><div class="text-[12px] text-[var(--apple-text-tert)]">chen.dw@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">家族滞在</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">陈</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">陈 大伟</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0022</div>
+                <div class="text-[11px] text-amber-600 font-semibold mt-1">⚠ 已签约，待建档：请完成客户建档和案件创建</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">080-9999-0000</div>
+            <div class="text-[12px] text-[var(--muted-2)]">chen.dw@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">家族滞在 · 网站表单</div>
+          </td>
           <td><span class="lead-badge lead-badge-signed-warning">已签约</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">S</div>Suzuki</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-          <td class="hidden lg:table-cell text-sm text-amber-600 font-semibold">请尽快完成客户建档与案件创建</td>
-          <td class="hidden md:table-cell text-sm">04-09</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">04-05</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-sky-100 text-sky-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">铃</div>
+              铃木
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京一组</div>
+          </td>
+          <td>
+            <div class="text-sm text-amber-600 font-semibold">请尽快建立客户档案并创建案件</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-09</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">04-05</td>
         </tr>
-        <tr data-lead-id="LEAD-2026-0046" data-status="new" data-owner="sato" data-group="osaka" data-business-type="highly-skilled" data-dedup="phoneMatchLead">
+        <tr data-lead-id="LEAD-2026-0046" data-sample-key="dedup-lead" data-status="new" data-owner="sato" data-group="osaka" data-business-type="highly-skilled" data-dedup="phoneMatchLead" data-next-follow-up="2026-04-14">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0046" aria-label="选择 田中 花子" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0046</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div><span class="font-semibold text-[var(--apple-text-main)]">田中 花子</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px]">080-1234-5678</div><div class="text-[12px] text-[var(--apple-text-tert)]">—</div></td>
-          <td class="hidden md:table-cell text-sm">高度人才</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">电话</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-rose-100 text-rose-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">田</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">田中 花子</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0046</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px]">080-1234-5678</div>
+            <div class="text-[12px] text-[var(--muted-2)]">—</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">高度人才 · 电话</div>
+          </td>
           <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">Sa</div>Sato</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">大阪组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">确认重复后联系本人</td>
-          <td class="hidden md:table-cell text-sm">04-14</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">今天 09:15</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-amber-100 text-amber-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">佐</div>
+              佐藤
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">大阪组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">确认重复后联系本人</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-14</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">今天 09:15</td>
         </tr>
-        <tr data-lead-id="LEAD-2026-0047" data-status="new" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay" data-dedup="emailMatchCustomer">
+        <tr data-lead-id="LEAD-2026-0047" data-sample-key="dedup-customer" data-status="new" data-owner="tanaka" data-group="tokyo-1" data-business-type="family-stay" data-dedup="emailMatchCustomer" data-next-follow-up="2026-04-13">
           <td class="text-center"><input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-lead-select value="LEAD-2026-0047" aria-label="选择 李娜（重复确认）" /></td>
-          <td class="text-[13px] text-[var(--apple-text-tert)] font-mono">LEAD-2026-0047</td>
-          <td><div class="flex items-center gap-2.5"><div class="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div><span class="font-semibold text-[var(--apple-text-main)]">李娜（重复确认）</span></div></td>
-          <td class="hidden md:table-cell"><div class="text-[13px] text-[var(--apple-text-tert)]">—</div><div class="text-[12px] text-[var(--apple-text-tert)]">li.na@email.com</div></td>
-          <td class="hidden md:table-cell text-sm">家族滞在</td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">Web</td>
+          <td>
+            <div class="flex items-start gap-2.5">
+              <div class="w-7 h-7 rounded-full bg-pink-100 text-pink-700 flex items-center justify-center text-[11px] font-bold flex-shrink-0">李</div>
+              <div>
+                <div class="font-semibold text-[var(--text)]">李娜（重复确认）</div>
+                <div class="text-[12px] text-[var(--muted-2)] font-mono mt-0.5">LEAD-2026-0047</div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <div class="text-[13px] text-[var(--muted-2)]">—</div>
+            <div class="text-[12px] text-[var(--muted-2)]">li.na@email.com</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">家族滞在 · 网站表单</div>
+          </td>
           <td><span class="lead-badge lead-badge-new">新咨询</span></td>
-          <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">T</div>Tanaka</div></td>
-          <td class="hidden lg:table-cell"><span class="chip">东京一组</span></td>
-          <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">与既有客户合并确认</td>
-          <td class="hidden md:table-cell text-sm">04-13</td>
-          <td class="text-sm text-[var(--apple-text-sec)]">今天 10:00</td>
+          <td>
+            <div class="flex items-center text-sm">
+              <div class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center mr-2 flex-shrink-0 font-bold">田</div>
+              田中
+            </div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">东京一组</div>
+          </td>
+          <td>
+            <div class="text-sm text-[var(--muted)]">与既有客户合并确认</div>
+            <div class="text-[12px] text-[var(--muted-2)] mt-1">下次跟进：04-13</div>
+          </td>
+          <td class="text-sm text-[var(--muted)]">今天 10:00</td>
         </tr>
       </tbody>
     </table>
@@ -189,13 +315,13 @@
     <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
     </svg>
-    <div class="text-[16px] font-extrabold text-[var(--apple-text-main)]">暂无咨询线索</div>
-    <div class="text-[13px] text-[var(--apple-text-tert)] font-semibold mt-1">录入第一个咨询，开始跟进与转化</div>
+    <div class="text-[16px] font-extrabold text-[var(--text)]">暂无咨询线索</div>
+    <div class="text-[13px] text-[var(--muted-2)] font-semibold mt-1">录入第一个咨询，开始跟进与转化</div>
     <button class="btn-primary mt-4" type="button" data-action="open-create-modal">新建线索</button>
   </div>
 
-  <div class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
-    <div class="text-sm text-gray-500">显示 1 - 8 条，共 8 条</div>
+  <div id="leadsPaginationBar" class="px-6 py-4 border-t border-gray-100 flex items-center justify-between">
+    <div class="text-sm text-gray-500" id="leadsPaginationInfo">显示 1 - 8 条，共 8 条</div>
     <div class="flex space-x-2">
       <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" disabled>上一页</button>
       <button class="px-3 py-1 border border-gray-200 rounded text-sm text-gray-400 cursor-not-allowed" disabled>下一页</button>

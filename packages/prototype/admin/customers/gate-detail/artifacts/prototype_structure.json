@@ -1,0 +1,121 @@
+{
+  "page_name": "customer_detail",
+  "regions": [
+    {
+      "id": "breadcrumb-and-actions",
+      "selector": "sections/detail-content.html > .apple-card:first-child",
+      "role": "header",
+      "description": "面包屑（客户 / 客户名）+ 批量开始办案 + 开始办案按钮 + 客户头像 + 标题 + 编号/分组/负责人/最近联系 chip 区"
+    },
+    {
+      "id": "case-summary-strip",
+      "selector": "sections/detail-content.html > .apple-card:nth-child(2)",
+      "role": "section",
+      "description": "案件摘要条：累计案件/活跃案件/归档数/案件名称（+N popover） + 最近建案"
+    },
+    {
+      "id": "case-name-popover",
+      "selector": "#caseNamePopover",
+      "role": "modal",
+      "description": "全部案件 popover 弹出层"
+    },
+    {
+      "id": "tab-bar",
+      "selector": "[role='tablist']",
+      "role": "navigation",
+      "description": "5 个 Tab：基础信息 / 关联案件 / 关联人 / 沟通记录 / 操作日志"
+    },
+    {
+      "id": "panel-basic",
+      "selector": "#customerPanel-basic",
+      "role": "form",
+      "description": "基础信息 Tab：编辑/取消/保存 + 经营管理签 intake card (P1) + 14 字段表单（只读↔编辑切换）"
+    },
+    {
+      "id": "panel-cases",
+      "selector": "#customerPanel-cases",
+      "role": "data_list",
+      "description": "关联案件 Tab：全部/活跃/已归档 segmented + 案件表格（编号/案件/类型/阶段/状态/更新时间/操作）"
+    },
+    {
+      "id": "panel-contacts",
+      "selector": "#customerPanel-contacts",
+      "role": "data_list",
+      "description": "关联人 Tab：搜索 + 全选 + 表格（关联人/关系/联系方式/标签/备注/操作） + 新增关联人 + 批量建案按钮"
+    },
+    {
+      "id": "panel-comms",
+      "selector": "#customerPanel-comms",
+      "role": "data_list",
+      "description": "沟通记录 Tab：全部/内部/客户可见 segmented + 统计chip + 记录沟通按钮 + 时间线列表 + 空状态"
+    },
+    {
+      "id": "panel-log",
+      "selector": "#customerPanel-log",
+      "role": "data_list",
+      "description": "操作日志 Tab：全部/信息变更/关系变更/案件/沟通 segmented + 日志表格 + 分页 + 空状态"
+    },
+    {
+      "id": "confirm-dialog",
+      "selector": "#customerConfirmDialog",
+      "role": "modal",
+      "description": "通用确认弹窗（标题/描述/取消/确认）"
+    },
+    {
+      "id": "relation-dialog",
+      "selector": "#customerRelationDialog",
+      "role": "modal",
+      "description": "新增关联人弹窗：姓名/フリガナ/关系/标签/电话/邮箱/备注 + 错误提示"
+    },
+    {
+      "id": "comm-dialog",
+      "selector": "#customerCommDialog",
+      "role": "modal",
+      "description": "记录沟通弹窗：渠道/时间/可见范围/记录人/摘要/详细记录/下一步动作 + 错误提示"
+    },
+    {
+      "id": "detail-toast",
+      "selector": "sections/detail-toast.html #toast",
+      "role": "section",
+      "description": "详情页 toast 通知"
+    },
+    {
+      "id": "shell-side-nav",
+      "selector": ".side-nav",
+      "role": "navigation",
+      "description": "侧边栏导航，客户项 aria-current=page 高亮"
+    },
+    {
+      "id": "shell-topbar",
+      "selector": ".topbar",
+      "role": "header",
+      "description": "顶部工具栏：全局搜索 + 新建咨询 + 开始办案按钮 + 用户头像"
+    },
+    {
+      "id": "shell-mobile-nav",
+      "selector": ".mobile-nav",
+      "role": "navigation",
+      "description": "移动端导航抽屉"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": "[data-customer-tab]",
+      "count": 5,
+      "suggest_component": "TabButton",
+      "description": "Tab 按钮：basic/cases/contacts/comms/log"
+    },
+    {
+      "selector": "[data-customer-panel]",
+      "count": 5,
+      "suggest_component": "TabPanel",
+      "description": "Tab 面板容器"
+    },
+    {
+      "selector": ".segment-btn",
+      "count": 12,
+      "suggest_component": "SegmentButton",
+      "description": "Segmented control 按钮（案件视图/沟通筛选/日志筛选）"
+    }
+  ]
+}

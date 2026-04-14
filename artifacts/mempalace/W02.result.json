@@ -1,0 +1,29 @@
+{
+  "task_id": "W02",
+  "task_name": "allowed-sources",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/allowed_sources.md",
+  "summary_output": "artifacts/mempalace/W02.summary.md",
+  "checks": [
+    {
+      "name": "p0_p1_flow_dirs_covered",
+      "status": "passed"
+    },
+    {
+      "name": "inclusion_reason_defined_per_directory",
+      "status": "passed"
+    },
+    {
+      "name": "refresh_frequency_defined_per_directory",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/mempalace/source-priority.md",
+    "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md"
+  ]
+}

@@ -1,18 +1,18 @@
 <div class="apple-card filter-panel" id="filtersToolbar">
   <div class="filter-panel__header">
     <div>
-      <div class="filter-panel__title">组合筛选</div>
-      <p class="filter-panel__desc">支持按完成状态、截止范围、责任人与所属组交叉筛选，快速聚焦最需要处理的任务批次。</p>
+      <div class="filter-panel__title">快速找出今天要收口的任务</div>
+      <p class="filter-panel__desc">支持按执行状态、截止范围、责任人与所属组交叉筛选，快速定位今天必须完成、需要催办或需要改稿的任务。</p>
     </div>
-    <div class="filter-panel__helper">默认聚焦个人待办</div>
+    <div class="filter-panel__helper">默认先看我负责、今天到期和已逾期的任务</div>
   </div>
   <div class="flex flex-col gap-3">
     <div class="flex flex-wrap justify-between items-center gap-3">
       <div class="flex flex-wrap items-center gap-2">
         <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" data-filter="status">
           <option value="" selected>完成状态：全部</option>
-          <option value="todo">待处理</option>
-          <option value="doing">进行中</option>
+          <option value="todo">待跟进</option>
+          <option value="doing">处理中</option>
           <option value="done">已完成</option>
           <option value="canceled">已取消</option>
         </select>

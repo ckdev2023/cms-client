@@ -1,0 +1,329 @@
+{
+  "meta": {
+    "source_prototype": "packages/prototype/admin/dashboard/index.html",
+    "target_page": "packages/admin/src/views/dashboard/DashboardView.vue",
+    "shell_container": "packages/admin/src/shell/AppShell.vue",
+    "notes": [
+      "AppShell 已管理 side-nav / topbar / mobile-nav，dashboard 不需重复",
+      "DashboardView 作为 AppShell <slot /> 的直接内容",
+      "所有分区按原型从上到下的视觉顺序排列"
+    ]
+  },
+  "sections": [
+    {
+      "id": "hero",
+      "prototype_region": "hero-shell",
+      "prototype_selector": ".hero-shell",
+      "vue_strategy": "inline_scoped",
+      "description": "问候语 hero 区：动态时段问候 + 今日引导文案",
+      "contains": [
+        {
+          "element": "h1#heroGreeting",
+          "vue_binding": "computed greetingText（基于当前时段）",
+          "mock": "早上好，Admin · 主办人"
+        },
+        {
+          "element": "p#heroSubtitle",
+          "vue_binding": "static text",
+          "mock": "今天先处理：今日待办、已逾期 / 即将到期、待提交与风险案件。"
+        }
+      ],
+      "shared_ui_reuse": [],
+      "new_components": [],
+      "notes": "hero 区域不使用 PageHeader 组件——原型 hero 风格（40px 粗标题 + muted 副标题）与 PageHeader 的 28px 标题 + breadcrumbs 布局不同，用 scoped 样式实现"
+    },
+    {
+      "id": "scope-toolbar",
+      "prototype_region": "scope-toolbar",
+      "prototype_selector": ".hero-toolbar",
+      "vue_strategy": "inline_scoped",
+      "description": "范围切换工具栏：我的/本组/全所 segmented + Group 下拉",
+      "contains": [
+        {
+          "element": ".segmented-control[aria-label='查看范围']",
+          "vue_component": "SegmentedControl",
+          "props": { "options": ["mine", "group", "all"], "modelValue": "scope", "ariaLabel": "查看范围" },
+          "source": "new_shared"
+        },
+        {
+          "element": ".filter-select",
+          "vue_component": "native <select>",
+          "props": { "modelValue": "groupFilter" },
+          "source": "inline_scoped",
+          "note": "原型仅占位，无真实数据绑定"
+        }
+      ],
+      "shared_ui_reuse": [],
+      "new_components": ["shared/ui/SegmentedControl.vue"],
+      "notes": "scope 切换会触发 skeleton → 重新渲染所有卡片和列表"
+    },
+    {
+      "id": "quick-actions",
+      "prototype_region": "quick-actions-card",
+      "prototype_selector": ".apple-card.quick-actions-card",
+      "vue_strategy": "local_component",
+      "description": "快捷动作区：4 张可点击卡片 + 头部标题/链接",
+      "contains": [
+        {
+          "element": ".quick-actions-head",
+          "vue_binding": "Card header slot: title + link",
+          "mock": { "title": "快捷动作", "subtitle": "优先把\"下一步动作\"做成可点、可追踪。", "link": { "label": "查看我的待办", "to": "/tasks" } }
+        },
+        {
+          "element": ".quick-actions-grid > .quick-action-card",
+          "vue_component": "QuickActionCard",
+          "count": 4,
+          "props": ["title", "description", "icon", "tone", "navigateTo"],
+          "source": "new_local",
+          "mock": [
+            { "title": "新建咨询线索", "description": "先承接咨询，再转客户/案件", "tone": "blue", "navigateTo": "/leads-message" },
+            { "title": "新建客户", "description": "快速录入个人客户基础信息", "tone": "indigo", "navigateTo": "/customers#new" },
+            { "title": "新建案件", "description": "按模板自动生成资料清单", "tone": "teal", "navigateTo": "/case/create" },
+            { "title": "去催办 / 到期", "description": "聚合缺件、补正与期限", "tone": "rose", "navigateTo": "/tasks" }
+          ]
+        }
+      ],
+      "shared_ui_reuse": ["Card.vue (外层容器)"],
+      "new_components": ["views/dashboard/components/QuickActionCard.vue"],
+      "notes": "quick-actions-grid 响应式：1col → 2col(md) → 4col(xl)"
+    },
+    {
+      "id": "toolbar-meta",
+      "prototype_region": "toolbar-meta",
+      "prototype_selector": ".toolbar-meta",
+      "vue_strategy": "inline_scoped",
+      "description": "时间窗口切换 + 范围说明文案 + 内联动作按钮",
+      "contains": [
+        {
+          "element": ".segmented-control[aria-label='时间范围']",
+          "vue_component": "SegmentedControl",
+          "props": { "options": [7, 30], "modelValue": "windowDays", "ariaLabel": "时间范围" },
+          "source": "reuse_shared",
+          "note": "复用与 scope-toolbar 相同的 SegmentedControl"
+        },
+        {
+          "element": "#scopeSummary",
+          "vue_binding": "computed scopeSummaryText（基于 scope）"
+        },
+        {
+          "element": ".toolbar-inline-actions > .mini-btn",
+          "vue_component": "Button",
+          "props": { "size": "sm", "pill": true },
+          "source": "reuse_shared",
+          "count": 4,
+          "note": "Button 已有 sm + pill 组合，可直接复用"
+        }
+      ],
+      "shared_ui_reuse": ["SegmentedControl.vue", "Button.vue (sm + pill)"],
+      "new_components": [],
+      "notes": "toolbar-meta 在逻辑上属于 quick-actions 区的下半部分，但视觉上独立一行"
+    },
+    {
+      "id": "summary-cards",
+      "prototype_region": "summary-grid",
+      "prototype_selector": ".summary-grid",
+      "vue_strategy": "local_component",
+      "description": "4 张数据摘要卡片：今日待办、逾期/即将到期、待提交、风险",
+      "contains": [
+        {
+          "element": ".apple-card.summary-card",
+          "vue_component": "SummaryCard",
+          "count": 4,
+          "props": ["cardId", "label", "value", "helper", "meta", "tone", "statusText", "statusVariant", "actionLabel", "actionId"],
+          "source": "new_local",
+          "instances": [
+            { "cardId": "todayTasks", "label": "今日待办", "tone": "info", "statusText": "核心动作", "statusVariant": "info" },
+            { "cardId": "upcomingCases", "label": "已逾期 / 即将到期", "tone": "warn", "statusText": "先处理期限", "statusVariant": "warn" },
+            { "cardId": "pendingSubmissions", "label": "待提交案件", "tone": "info", "statusText": "可继续提交", "statusVariant": "info" },
+            { "cardId": "riskCases", "label": "风险案件", "tone": "risk", "statusText": "优先处理", "statusVariant": "danger" }
+          ]
+        }
+      ],
+      "shared_ui_reuse": ["Chip.vue (StatusPill 可由 Chip 的变体替代)"],
+      "new_components": ["views/dashboard/components/SummaryCard.vue"],
+      "notes": "summary-grid 响应式：1col → 2col(md) → 4col(xl)；SummaryCard 内含 orb 装饰、StatusPill（可用 Chip dot 变体替代）、底部 meta + action"
+    },
+    {
+      "id": "work-panels",
+      "prototype_region": "panel-grid",
+      "prototype_selector": ".panel-grid",
+      "vue_strategy": "local_component",
+      "description": "4 个工作面板：今日待办(featured)、逾期/到期、待提交、风险",
+      "contains": [
+        {
+          "element": ".apple-card.work-panel",
+          "vue_component": "WorkPanel",
+          "count": 4,
+          "props": ["tag", "title", "subtitle", "actionLabel", "actionId", "featured"],
+          "source": "new_local",
+          "instances": [
+            { "tag": "Top Priority", "title": "今日待办", "featured": true, "listId": "todoList" },
+            { "tag": "Deadlines", "title": "已逾期 / 即将到期", "featured": false, "listId": "deadlineList" },
+            { "tag": "Submission", "title": "待提交案件", "featured": false, "listId": "submissionList" },
+            { "tag": "Risks", "title": "风险案件", "featured": false, "listId": "riskList" }
+          ]
+        },
+        {
+          "element": ".work-list",
+          "vue_component": "WorkList",
+          "props": ["items", "emptyMessage", "loading"],
+          "source": "new_local",
+          "note": "WorkPanel 的 default slot 内容"
+        },
+        {
+          "element": ".work-item",
+          "vue_component": "WorkItem",
+          "props": ["title", "meta", "desc", "status", "statusLabel", "action"],
+          "source": "new_local",
+          "note": "WorkList 内行项目，通过 v-for 渲染"
+        }
+      ],
+      "shared_ui_reuse": ["Card.vue (WorkPanel 外层)", "Button.vue (sm+pill, 面板头部 action)", "Chip.vue (WorkItem status pill)"],
+      "new_components": [
+        "views/dashboard/components/WorkPanel.vue",
+        "views/dashboard/components/WorkList.vue",
+        "views/dashboard/components/WorkItem.vue"
+      ],
+      "notes": "panel-grid 响应式：1col → 2col(≥1200px)；featured 面板 span 2col；WorkList 需处理 loading(skeleton) / empty / ready 三态"
+    },
+    {
+      "id": "visibility-notes",
+      "prototype_region": "note-grid",
+      "prototype_selector": ".note-grid",
+      "vue_strategy": "local_component",
+      "description": "权限与可见性说明 + 使用提示（2 张 note-card）",
+      "contains": [
+        {
+          "element": ".apple-card.note-card:first-child",
+          "vue_component": "NoteCard",
+          "props": { "label": "权限与可见性", "title": "当前视角说明" },
+          "source": "new_local",
+          "note": "items 随 scope 切换动态更新"
+        },
+        {
+          "element": ".apple-card.note-card:last-child",
+          "vue_component": "NoteCard",
+          "props": { "label": "补充说明", "title": "使用提示" },
+          "source": "new_local",
+          "note": "items 为静态文案"
+        }
+      ],
+      "shared_ui_reuse": ["Card.vue (外层容器)"],
+      "new_components": ["views/dashboard/components/NoteCard.vue"],
+      "notes": "note-grid 响应式：1col → 2col(≥960px)"
+    },
+    {
+      "id": "toast",
+      "prototype_region": "toast-shell",
+      "prototype_selector": ".toast-shell",
+      "vue_strategy": "defer_shared",
+      "description": "全局 Toast 通知，固定右下角",
+      "contains": [],
+      "shared_ui_reuse": [],
+      "new_components": [],
+      "notes": "Toast 属于全局 UI，应在 AppShell 或 app 级别管理。本轮 UI-only 实现中仅占位，不需要实际组件；后续迭代时创建 shared/ui/Toast.vue"
+    }
+  ],
+  "component_summary": {
+    "shared_ui_reuse": [
+      { "component": "Card.vue", "usage": "quick-actions 外壳 / WorkPanel 外壳 / NoteCard 外壳" },
+      { "component": "Button.vue", "usage": "toolbar-inline-actions (sm+pill) / WorkPanel header action / SummaryCard footer action" },
+      { "component": "Chip.vue", "usage": "StatusPill 角色（dot 变体映射 status-pill）/ WorkItem status" },
+      { "component": "SearchField.vue", "usage": "已在 TopBar 中使用，dashboard 不直接引用" },
+      { "component": "PageHeader.vue", "usage": "不直接复用——hero 区风格差异较大" }
+    ],
+    "shared_ui_new": [
+      {
+        "component": "shared/ui/SegmentedControl.vue",
+        "reason": "scope 切换与 window 切换各用一个实例，未来多页面可复用",
+        "props": ["options: Array<{value, label}>", "modelValue: string|number", "ariaLabel: string"],
+        "priority": "P0——dashboard 核心交互依赖"
+      }
+    ],
+    "local_components_new": [
+      {
+        "component": "views/dashboard/components/QuickActionCard.vue",
+        "props": ["title: string", "description: string", "icon: Component|string", "tone: 'blue'|'indigo'|'teal'|'rose'", "navigateTo: string"],
+        "slot": false
+      },
+      {
+        "component": "views/dashboard/components/SummaryCard.vue",
+        "props": ["cardId: string", "label: string", "value: string|number", "helper: string", "meta: string", "tone: 'info'|'warn'|'risk'", "statusText: string", "statusVariant: 'info'|'warn'|'danger'|'muted'", "actionLabel: string", "actionId: string"],
+        "slot": false
+      },
+      {
+        "component": "views/dashboard/components/WorkPanel.vue",
+        "props": ["tag: string", "title: string", "subtitle: string", "actionLabel: string", "actionId: string", "featured: boolean"],
+        "slot": true,
+        "slot_note": "default slot 放 WorkList"
+      },
+      {
+        "component": "views/dashboard/components/WorkList.vue",
+        "props": ["items: WorkItemData[]", "emptyMessage: string", "loading: boolean"],
+        "slot": false,
+        "states": ["loading → skeleton-block × 2", "empty → dashed empty-state", "ready → v-for WorkItem"]
+      },
+      {
+        "component": "views/dashboard/components/WorkItem.vue",
+        "props": ["title: string", "meta: string[]", "desc: string", "status: string", "statusLabel: string", "actionLabel: string"],
+        "slot": false
+      },
+      {
+        "component": "views/dashboard/components/NoteCard.vue",
+        "props": ["label: string", "title: string", "items: string[]"],
+        "slot": false
+      }
+    ],
+    "shared_ui_deferred": [
+      {
+        "component": "shared/ui/Toast.vue",
+        "reason": "全局 Toast 需要在 app 级别挂载，本轮 UI-only 不实现",
+        "priority": "P1"
+      },
+      {
+        "component": "shared/ui/StatusPill.vue",
+        "reason": "可直接用 Chip dot 变体替代，如需独立组件则在后续提取",
+        "priority": "deferred"
+      }
+    ]
+  },
+  "page_state_model": {
+    "reactive_state": {
+      "scope": { "type": "string", "default": "mine", "options": ["mine", "group", "all"] },
+      "windowDays": { "type": "number", "default": 7, "options": [7, 30] },
+      "groupFilter": { "type": "string", "default": "all", "note": "占位，本轮不绑定真实数据" },
+      "loading": { "type": "boolean", "default": false, "note": "scope/window 切换时触发 skeleton" }
+    },
+    "computed": [
+      "greetingText: 基于时段的问候语",
+      "scopeSummaryText: 基于 scope 的当前范围说明",
+      "visibilityNoteItems: 基于 scope 的权限说明列表",
+      "metrics: 基于 scope + windowDays 的 4 张 summary card 数据",
+      "workLists: 基于 scope 的 4 个 work panel 列表数据"
+    ],
+    "data_source": "views/dashboard/dashboard.mock.ts（从 dashboard-config.js 转译）"
+  },
+  "candidate_resolution": {
+    "MiniButton": "mapped → Button.vue (size='sm', pill=true)；现有 Button 已支持该组合，不需新增组件",
+    "StatusPill": "mapped → Chip.vue (dot=true, tone 映射)；Chip 已有 neutral/primary/success/warning/danger 五种 tone 且自带 dot 变体，足以覆盖 status-info/warn/danger/muted",
+    "sub_regions_containment": {
+      "todoList": "包含在 work-panels section → WorkPanel[tag='Top Priority'] → WorkList",
+      "deadlineList": "包含在 work-panels section → WorkPanel[tag='Deadlines'] → WorkList",
+      "submissionList": "包含在 work-panels section → WorkPanel[tag='Submission'] → WorkList",
+      "riskList": "包含在 work-panels section → WorkPanel[tag='Risks'] → WorkList",
+      "visibilityNotes": "包含在 visibility-notes section → NoteCard[label='权限与可见性'] → items"
+    }
+  },
+  "layout_grid": {
+    "page_max_width": "1440px",
+    "page_padding": "28px 20px 72px",
+    "section_gap": "24px (mt-6)",
+    "breakpoints": {
+      "sm": "640px",
+      "md": "768px — quick-actions-grid 2col, summary-grid 2col",
+      "lg": "1024px — hero-toolbar row, toolbar-meta 2col",
+      "xl": "1200px — panel-grid 2col",
+      "2xl": "1280px — quick-actions-grid 4col, summary-grid 4col"
+    }
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "apple-card",
+    "apple-input",
+    "apple-label",
+    "apple-modal",
+    "apple-table",
+    "billing-summary-card",
+    "billing-summary-card--due",
+    "billing-summary-card--outstanding",
+    "billing-summary-card--overdue",
+    "billing-summary-card--received",
+    "billing-summary-card__dot",
+    "billing-summary-card__hint",
+    "billing-summary-card__hint--alert",
+    "billing-summary-card__label",
+    "billing-summary-card__value",
+    "billing-summary-grid",
+    "btn-primary",
+    "btn-secondary",
+    "chip",
+    "display-font",
+    "icon-btn",
+    "modal-backdrop",
+    "segmented-control",
+    "skip-link",
+    "tag",
+    "tag-blue",
+    "tag-green",
+    "tag-orange",
+    "tag-red",
+    "table-checkbox"
+  ],
+  "mapping_rules": [
+    {
+      "source": ".apple-card",
+      "target": "shared/ui card component",
+      "note": "border-radius, shadow, overflow-hidden"
+    },
+    {
+      "source": ".apple-table",
+      "target": "shared/ui table component",
+      "note": "standard table with header styling"
+    },
+    {
+      "source": ".apple-modal",
+      "target": "shared/ui modal component",
+      "note": "centered overlay with backdrop"
+    },
+    {
+      "source": ".billing-summary-card",
+      "target": "BillingSummaryCard component",
+      "note": "4 color variants: --due, --received, --outstanding, --overdue"
+    },
+    {
+      "source": ".tag / .tag-*",
+      "target": "shared/ui tag/badge component",
+      "note": "4 status colors: green=已结清, blue=部分回款, orange=未回款, red=逾期"
+    },
+    {
+      "source": ".segmented-control",
+      "target": "shared/ui segmented control",
+      "note": "2-segment tab switcher"
+    },
+    {
+      "source": ".modal-backdrop",
+      "target": "shared/ui modal backdrop",
+      "note": "overlay with close-on-click"
+    }
+  ],
+  "tokens_to_resolve": ["spacing", "color", "typography", "radius", "shadow"]
+}

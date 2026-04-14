@@ -1,0 +1,208 @@
+{
+  "style_mode": "prototype_css",
+  "source_classes": [
+    "active",
+    "antialiased",
+    "apple-card",
+    "btn-secondary",
+    "chip",
+    "empty-state",
+    "filter-select",
+    "hero-shell",
+    "hero-subtitle",
+    "hero-title",
+    "hero-toolbar",
+    "hero-toolbar-row",
+    "icon-btn",
+    "link-apple",
+    "mini-btn",
+    "note-card",
+    "note-grid",
+    "note-list",
+    "page-wrap",
+    "panel-grid",
+    "panel-subtitle",
+    "panel-title",
+    "quick-action-card",
+    "quick-action-copy",
+    "quick-action-desc",
+    "quick-action-icon",
+    "quick-action-title",
+    "quick-actions-card",
+    "quick-actions-grid",
+    "quick-actions-head",
+    "scope-summary-note",
+    "search",
+    "segment-btn",
+    "segmented-control",
+    "skeleton-block",
+    "skeleton-line",
+    "status-danger",
+    "status-info",
+    "status-muted",
+    "status-pill",
+    "status-warn",
+    "summary-card",
+    "summary-card-body",
+    "summary-card-footer",
+    "summary-card-head",
+    "summary-card-helper",
+    "summary-card-label",
+    "summary-card-meta",
+    "summary-card-orb",
+    "summary-card-value",
+    "summary-grid",
+    "text-card-title",
+    "toast-card",
+    "toast-desc",
+    "toast-shell",
+    "toast-title",
+    "toolbar-inline-actions",
+    "toolbar-meta",
+    "topbar-link-btn",
+    "work-item",
+    "work-item-actions",
+    "work-item-desc",
+    "work-item-head",
+    "work-item-meta",
+    "work-item-title",
+    "work-list",
+    "work-panel",
+    "work-panel-action",
+    "work-panel-featured",
+    "work-panel-head",
+    "work-panel-intro",
+    "work-panel-tag"
+  ],
+  "mapping_rules": [
+    {
+      "prototype_class": "apple-card",
+      "target": "shared/ui/Card.vue",
+      "action": "reuse",
+      "note": "已有 Card 组件可直接复用"
+    },
+    {
+      "prototype_class": "btn-secondary",
+      "target": "shared/ui/Button.vue",
+      "action": "reuse",
+      "note": "已有 Button 组件 secondary 变体"
+    },
+    {
+      "prototype_class": "icon-btn",
+      "target": "shared/ui/Button.vue",
+      "action": "reuse",
+      "note": "icon-only 变体"
+    },
+    {
+      "prototype_class": "chip",
+      "target": "shared/ui/Chip.vue",
+      "action": "reuse",
+      "note": "已有 Chip 组件"
+    },
+    {
+      "prototype_class": "search",
+      "target": "shared/ui/SearchField.vue",
+      "action": "reuse",
+      "note": "已有 SearchField 组件"
+    },
+    {
+      "prototype_class": "segmented-control",
+      "target": "shared/ui/SegmentedControl.vue",
+      "action": "new_shared",
+      "note": "需新增共享组件，scope 和 window 切换共用"
+    },
+    {
+      "prototype_class": "status-pill",
+      "target": "shared/ui/StatusPill.vue",
+      "action": "new_shared",
+      "note": "pill 形态状态标签，4 种变体"
+    },
+    {
+      "prototype_class": "mini-btn",
+      "target": "shared/ui/Button.vue",
+      "action": "extend",
+      "note": "需为 Button 新增 mini/pill size 变体"
+    },
+    {
+      "prototype_class": "summary-card",
+      "target": "views/dashboard/components/SummaryCard.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件，带 orb 装饰和 data-tone"
+    },
+    {
+      "prototype_class": "quick-action-card",
+      "target": "views/dashboard/components/QuickActionCard.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件"
+    },
+    {
+      "prototype_class": "work-panel",
+      "target": "views/dashboard/components/WorkPanel.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件，含 featured 变体"
+    },
+    {
+      "prototype_class": "work-item",
+      "target": "views/dashboard/components/WorkItem.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件，行项目"
+    },
+    {
+      "prototype_class": "work-list",
+      "target": "views/dashboard/components/WorkList.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件，含空态和骨架屏"
+    },
+    {
+      "prototype_class": "note-card",
+      "target": "views/dashboard/components/NoteCard.vue",
+      "action": "new_local",
+      "note": "dashboard 局部组件"
+    },
+    {
+      "prototype_class": "toast-shell",
+      "target": "shared/ui/Toast.vue",
+      "action": "new_shared",
+      "note": "全局 toast 通知，未来跨页面复用"
+    },
+    {
+      "prototype_class": "hero-shell",
+      "target": "views/dashboard/DashboardView.vue",
+      "action": "inline_scoped",
+      "note": "页面 hero 区域样式，scoped 到 DashboardView"
+    },
+    {
+      "prototype_class": "filter-select",
+      "target": "views/dashboard/DashboardView.vue",
+      "action": "inline_scoped",
+      "note": "Group 下拉筛选，scoped 到 DashboardView"
+    }
+  ],
+  "tokens_to_resolve": [
+    {
+      "category": "color",
+      "prototype_values": ["--text", "--muted", "--muted-2", "--primary", "--bg", "--surface", "--border"],
+      "note": "tokens.css 已定义，需映射到 Vue 项目 CSS 变量"
+    },
+    {
+      "category": "spacing",
+      "prototype_values": ["28px page-wrap padding", "18px gap", "16px gap", "12px gap", "22px card padding"],
+      "note": "保持原型间距或映射到设计系统 spacing scale"
+    },
+    {
+      "category": "typography",
+      "prototype_values": ["40px hero-title", "18px card-title", "15px body", "13px helper/subtitle", "12px label/meta"],
+      "note": "Plus Jakarta Sans 字体栈"
+    },
+    {
+      "category": "radius",
+      "prototype_values": ["14px(--radius)", "20px(quick-action)", "18px(work-item)", "999px(pill)", "16px(skeleton)"],
+      "note": "统一到 --radius 或组件级覆盖"
+    },
+    {
+      "category": "shadow",
+      "prototype_values": ["--shadow", "--shadow-hover", "summary-card hover shadow", "work-item hover shadow"],
+      "note": "tokens.css 已定义 --shadow 和 --shadow-hover"
+    }
+  ]
+}

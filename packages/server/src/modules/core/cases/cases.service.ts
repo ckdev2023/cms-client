@@ -77,6 +77,7 @@ export type CaseQueryRow = {
   customer_id: string;
   case_type_code: string;
   status: string;
+  stage: string | null;
   owner_user_id: string;
   opened_at: unknown;
   due_at: unknown;
@@ -85,6 +86,14 @@ export type CaseQueryRow = {
   case_name: string | null;
   case_subtype: string | null;
   application_type: string | null;
+  application_flow_type: string | null;
+  visa_plan: string | null;
+  post_approval_stage: string | null;
+  coe_issued_at: unknown;
+  coe_expiry_date: unknown;
+  coe_sent_at: unknown;
+  close_reason: string | null;
+  supplement_count: number | string | null;
   company_id: string | null;
   priority: string;
   risk_level: string;
@@ -112,6 +121,41 @@ export type CaseQueryRow = {
   updated_at: unknown;
 };
 
+function resolvePostApprovalStage(
+  columnValue: string | null,
+  metadata: Record<string, unknown>,
+): string | null {
+  if (columnValue && columnValue !== "none") return columnValue;
+  const legacyValue = metadata.post_approval_stage;
+  return typeof legacyValue === "string" ? legacyValue : null;
+}
+
+function mapCaseExtendedFields(row: CaseQueryRow) {
+  const metadata = normalizeObject(row.metadata);
+  const postApprovalStage = resolvePostApprovalStage(
+    row.post_approval_stage,
+    metadata,
+  );
+
+  if (postApprovalStage && metadata.post_approval_stage === undefined) {
+    metadata.post_approval_stage = postApprovalStage;
+  }
+
+  return {
+    metadata,
+    stage: row.stage ?? row.status,
+    applicationFlowType: row.application_flow_type ?? null,
+    visaPlan: row.visa_plan ?? null,
+    postApprovalStage,
+    coeIssuedAt: toTimestampStringOrNull(row.coe_issued_at),
+    coeExpiryDate: toTimestampStringOrNull(row.coe_expiry_date),
+    coeSentAt: toTimestampStringOrNull(row.coe_sent_at),
+    closeReason: row.close_reason ?? null,
+    supplementCount:
+      row.supplement_count !== null ? Number(row.supplement_count) : 0,
+  };
+}
+
 /** P0 新增字段の DB 行 → エンティティ変換。 */
 function mapCaseP0Fields(row: CaseQueryRow) {
   return {
@@ -138,20 +182,30 @@ function mapCaseP0Fields(row: CaseQueryRow) {
  * @returns Case 实体
  */
 export function mapCaseRow(row: CaseQueryRow): Case {
+  const extendedFields = mapCaseExtendedFields(row);
   return {
     id: row.id,
     orgId: row.org_id,
     customerId: row.customer_id,
     caseTypeCode: row.case_type_code,
     status: row.status,
+    stage: extendedFields.stage,
     ownerUserId: row.owner_user_id,
     openedAt: toTimestampString(row.opened_at),
     dueAt: toTimestampStringOrNull(row.due_at),
-    metadata: normalizeObject(row.metadata),
+    metadata: extendedFields.metadata,
     caseNo: row.case_no ?? null,
     caseName: row.case_name ?? null,
     caseSubtype: row.case_subtype ?? null,
     applicationType: row.application_type ?? null,
+    applicationFlowType: extendedFields.applicationFlowType,
+    visaPlan: extendedFields.visaPlan,
+    postApprovalStage: extendedFields.postApprovalStage,
+    coeIssuedAt: extendedFields.coeIssuedAt,
+    coeExpiryDate: extendedFields.coeExpiryDate,
+    coeSentAt: extendedFields.coeSentAt,
+    closeReason: extendedFields.closeReason,
+    supplementCount: extendedFields.supplementCount,
     companyId: row.company_id ?? null,
     priority: row.priority,
     riskLevel: row.risk_level,
@@ -265,7 +319,8 @@ export type CaseBillingRiskAckInput = {
 /**
  * P0 下签后子阶段枚举。
  *
- * P0 存储策略：stage 值写入 `metadata.post_approval_stage`，
+ * P0 存储策略：stage 值写入正式列 `post_approval_stage`，
+ * 并兼容回写 `metadata.post_approval_stage`，
  * 对应时间戳写入专用列（`overseas_visa_start_at` / `entry_confirmed_at`）。
  * P1 启用 CaseWorkflowStep 后迁移为正式实体记录。
  */
@@ -281,7 +336,7 @@ export type PostApprovalStageInput = {
   stage: string;
 };
 
-const CASE_COLS = `id, org_id, customer_id, case_type_code, status, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, created_at, updated_at`;
+const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, created_at, updated_at`;
 const CASE_PRIORITIES = new Set(["low", "normal", "medium", "high", "urgent"]);
 const CASE_RISK_LEVELS = new Set(["none", "low", "medium", "high"]);
 export const CASE_RESULT_OUTCOMES = new Set([
@@ -732,10 +787,10 @@ export class CasesService {
   }
 
   /**
-   * 更新下签后子阶段（P0 存 metadata.post_approval_stage + 自动打时间戳）。
+   * 更新下签后子阶段（P0 存正式列 + metadata 兼容回写 + 自动打时间戳）。
    *
    * 存储策略：
-   * - stage 值 → `metadata.post_approval_stage`（P1 迁至 CaseWorkflowStep）
+   * - stage 值 → `post_approval_stage`，并同步 `metadata.post_approval_stage`
    * - overseas_visa_applying → 首次写入时自动填 `overseas_visa_start_at`
    * - entry_success → 首次写入时自动填 `entry_confirmed_at`
    *
@@ -756,8 +811,7 @@ export class CasesService {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Case not found or deleted");
 
-    const previousStage =
-      (current.metadata.post_approval_stage as string | undefined) ?? null;
+    const previousStage = current.postApprovalStage;
     const nextMetadata = {
       ...current.metadata,
       post_approval_stage: input.stage,
@@ -772,15 +826,16 @@ export class CasesService {
       const result = await tx.query<CaseQueryRow>(
         `update cases
          set metadata = $2::jsonb,
-             overseas_visa_start_at = case when $3::boolean then now()
+             post_approval_stage = $3,
+             overseas_visa_start_at = case when $4::boolean then now()
                else overseas_visa_start_at end,
-             entry_confirmed_at = case when $4::boolean then now()
+             entry_confirmed_at = case when $5::boolean then now()
                else entry_confirmed_at end,
              updated_at = now()
          where id = $1
            and coalesce(metadata->>'_status', '') is distinct from 'deleted'
          returning ${CASE_COLS}`,
-        [id, JSON.stringify(nextMetadata), stampVisa, stampEntry],
+        [id, JSON.stringify(nextMetadata), input.stage, stampVisa, stampEntry],
       );
       const row = result.rows.at(0);
       if (!row)

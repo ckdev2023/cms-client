@@ -1,0 +1,31 @@
+{
+  "status": "passed",
+  "contract_baseline": "P0-CONTRACT-DETAIL.md",
+  "manifest_baseline": "split-manifest-detail.json",
+  "validated_against": [
+    "P0-CONTRACT-DETAIL.md §1–§17",
+    "SPEC-GAP-MATRIX-DETAIL.md §1–§17",
+    "split-manifest-detail.json",
+    "data/leads-detail-config.js",
+    "scripts/leads-detail-actions.js",
+    "scripts/leads-detail-render.js"
+  ],
+  "blocking_issues": [],
+  "warnings": [
+    "Header「标记流失」当前仍为 toast-only 反馈，未直接切换到 lost 样本或弹出原因表单；如后续提升为真实流程需补状态确认链路"
+  ],
+  "regions_verified": 17,
+  "component_candidates_verified": 31,
+  "interactions_verified": 31,
+  "style_classes_verified": 56,
+  "sample_scenarios_verified": 8,
+  "regression_checklist_items": 42,
+  "review_notes": [
+    "9 个 P0 必保留区块全部在 detail.html 中存在，且新增的 dedup-confirm / change-status / edit-info 三个弹窗已纳入结构工件",
+    "4 个 Tab 全部有对应 DOM 面板且 ID 映射正确，键盘方向键 / Home / End 切换已在脚本中实现",
+    "Header 按钮状态矩阵(§3.1)由 scripts/leads-detail-render.js + scripts/leads-detail-actions.js 联合驱动",
+    "样本切换 8 种场景(§9)覆盖 following/lost/signed/converted-customer/converted-case/dedup-lead/dedup-customer/empty-followups",
+    "转客户/转案件弹窗均已支持 Group 继承 + 改组原因；编辑基础信息弹窗与状态调整弹窗会追加运行态日志",
+    "去重命中后的「继续创建」已补二次确认弹窗；toast 现有 8 种 preset 与当前脚本一致"
+  ]
+}

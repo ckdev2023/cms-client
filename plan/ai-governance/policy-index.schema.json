@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "policy-index.schema.json",
+  "title": "AI Coding Governance — Policy Index v0",
+  "description": "Machine-readable index of high-value coding-agent rules. Each entry traces back to a canonical source in the repository and can be consumed by judges, rubrics, and regression tasks.",
+  "type": "object",
+  "required": ["schema_version", "rules"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Relative path to this schema file; enables editor validation."
+    },
+    "schema_version": {
+      "const": 1,
+      "description": "Schema revision; bump when fields or enums change."
+    },
+    "rules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/rule" }
+    }
+  },
+  "$defs": {
+    "rule": {
+      "type": "object",
+      "required": [
+        "rule_id",
+        "title",
+        "source_file",
+        "source_anchor",
+        "stage",
+        "severity",
+        "applies_when",
+        "required_behavior",
+        "forbidden_behavior",
+        "auto_checkable",
+        "enforcement",
+        "evidence_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "rule_id": {
+          "type": "string",
+          "pattern": "^R[0-9]{2}$",
+          "description": "Stable identifier, e.g. R01."
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "One-line human-readable rule name."
+        },
+        "source_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-relative path to the canonical source file."
+        },
+        "source_anchor": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Section heading, line number, or prose anchor inside source_file that pins this rule."
+        },
+        "stage": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["requirement", "planning", "implementation", "delivery"]
+          },
+          "description": "SDLC stages where the rule applies."
+        },
+        "severity": {
+          "enum": ["blocker", "high", "medium"],
+          "description": "Impact level when violated."
+        },
+        "applies_when": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Trigger condition in plain language."
+        },
+        "required_behavior": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the agent MUST do."
+        },
+        "forbidden_behavior": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the agent MUST NOT do."
+        },
+        "auto_checkable": {
+          "enum": ["yes", "partial", "no"],
+          "description": "Whether an existing automated check covers this rule."
+        },
+        "enforcement": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["prompt", "script", "hook", "human_review", "ci"]
+          },
+          "description": "Mechanisms currently enforcing this rule."
+        },
+        "check_command": {
+          "type": ["string", "null"],
+          "description": "Shell command or script path that verifies compliance; null when not applicable."
+        },
+        "evidence_type": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What artifact a judge should inspect (e.g. 'git diff', 'transcript tool-call sequence', 'CI log')."
+        },
+        "notes": {
+          "type": ["string", "null"],
+          "description": "Optional remarks, caveats, or phase-2 improvement notes."
+        }
+      }
+    }
+  }
+}

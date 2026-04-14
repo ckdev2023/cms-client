@@ -1,6 +1,6 @@
 <!--
   Section: detail-deadlines.html
-  Purpose: 4 種期限項（在留到期/補件截止/提交預約/結果預計）
+  Purpose: 4 種期限項（在留到期/補件截止/提交預約/結果預計）+ 下签后在留期间 / 提醒摘要
   Contract: P0-CONTRACT-DETAIL.md §10
   Production target: features/case/ui/CaseDetailDeadlines
 
@@ -14,4 +14,68 @@
     - Each item color-coded by urgency: red (danger) / amber (warning) / blue (info) / gray (inactive)
     - Left color bar indicator per item
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-deadlines" class="tab-panel">
+  <div class="apple-card p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="section-title">关键期限</h2>
+      <button class="btn-pill text-[13px] py-1.5 px-3 flex items-center gap-1" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        添加期限
+      </button>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+      <div class="p-4 rounded-xl border border-[var(--border)] bg-[#fbfbfd]" id="residencePeriodSummary">
+        <div class="text-[13px] text-[var(--muted-2)]">当前样例尚未录入新在留有效期间</div>
+      </div>
+      <div class="p-4 rounded-xl border border-[var(--border)] bg-[#fbfbfd]" id="reminderScheduleSummary">
+        <div class="text-[13px] text-[var(--muted-2)]">当前样例尚未设置到期前提醒</div>
+      </div>
+    </div>
+    <div class="space-y-4">
+      <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[var(--border)] rounded-xl relative overflow-hidden hover:border-[var(--danger)]/30 transition-colors" id="deadline1">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--danger)]"></div>
+        <div class="pl-3">
+          <div class="text-[15px] font-bold text-[var(--text)]" id="deadline1Title">在留期限到期日（最终提交底线）</div>
+          <div class="text-[13px] text-[var(--muted)] mt-1" id="deadline1Desc">必须在此之前向入管局提交申请</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[18px] font-black text-[var(--danger)] tracking-tight" id="deadline1Date">2026/04/28</div>
+          <div class="text-[12px] font-bold text-[var(--danger)] mt-1 bg-red-50 px-2 py-0.5 rounded-md inline-block" id="deadline1Remaining">剩余 21 天</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[var(--border)] rounded-xl relative overflow-hidden hover:border-[var(--muted-2)]/30 transition-colors" id="deadline2">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--muted-2)]"></div>
+        <div class="pl-3">
+          <div class="text-[15px] font-bold text-[var(--text)]">补件截止日</div>
+          <div class="text-[13px] text-[var(--muted)] mt-1">入管局要求补充材料的截止期</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[18px] font-black text-[var(--muted)] tracking-tight">—</div>
+          <div class="text-[12px] font-bold text-[var(--muted-2)] mt-1 bg-[var(--surface-2)] px-2 py-0.5 rounded-md inline-block">暂无</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[var(--border)] rounded-xl relative overflow-hidden hover:border-[var(--warning)]/30 transition-colors" id="deadline3">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--warning)]"></div>
+        <div class="pl-3">
+          <div class="text-[15px] font-bold text-[var(--text)]">提交预约日</div>
+          <div class="text-[13px] text-[var(--muted)] mt-1">向入管局预约的窗口提交日期</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[18px] font-black text-[var(--text)] tracking-tight">2026/04/22</div>
+          <div class="text-[12px] font-bold text-[var(--warning)] mt-1 bg-amber-50 px-2 py-0.5 rounded-md inline-block">剩余 13 天</div>
+        </div>
+      </div>
+      <div class="flex items-center justify-between p-4 bg-[#fbfbfd] border border-[var(--border)] rounded-xl relative overflow-hidden hover:border-[var(--muted-2)]/30 transition-colors" id="deadline4">
+        <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-[var(--primary)]"></div>
+        <div class="pl-3">
+          <div class="text-[15px] font-bold text-[var(--text)]">结果预计日</div>
+          <div class="text-[13px] text-[var(--muted)] mt-1">入管局审查结果预计出示日</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[18px] font-black text-[var(--text)] tracking-tight">2026/06/15</div>
+          <div class="text-[12px] font-bold text-[var(--primary)] mt-1 bg-blue-50 px-2 py-0.5 rounded-md inline-block">约 67 天后</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

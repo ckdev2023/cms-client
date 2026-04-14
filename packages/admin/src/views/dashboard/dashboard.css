@@ -1,0 +1,72 @@
+/* 仪表盘子组件共享的 surface / control 样式。
+   每个 .vue 在 <style scoped> 内 @import 此文件，
+   由 Vue scoped 保证不会泄漏到其他页面。 */
+
+.surface-card {
+  border: 1px solid var(--color-border-1);
+  border-radius: 24px;
+  background: var(--color-bg-1);
+  box-shadow: var(--shadow-1);
+}
+
+.segmented-control {
+  display: inline-flex;
+  padding: 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-1);
+}
+
+.segment-btn {
+  border: 0;
+  background: transparent;
+  color: var(--color-text-2);
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.segment-btn.active {
+  background: var(--color-bg-1);
+  color: var(--color-text-1);
+  box-shadow: var(--shadow-subtle);
+}
+
+.mini-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  padding: 7px 12px;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-extrabold);
+  border: 1px solid var(--color-border-1);
+  background: var(--color-bg-2);
+  color: var(--color-text-1);
+  cursor: pointer;
+  transition: background-color var(--transition-normal);
+}
+
+.mini-btn:hover {
+  background: var(--color-bg-3);
+}
+
+.section-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--font-weight-black);
+  color: var(--color-text-1);
+}
+
+.section-subtitle {
+  margin: 8px 0 0;
+  color: var(--color-text-3);
+  line-height: 1.6;
+}

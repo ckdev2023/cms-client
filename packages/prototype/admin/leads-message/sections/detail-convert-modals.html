@@ -1,10 +1,14 @@
 <!--
   section: detail-convert-modals
-  Two conversion modals (convert-to-customer / convert-to-case).
+  Three conversion/dedup modals:
+    1. convert-to-customer (#convertCustomerModal)
+    2. convert-to-case (#convertCaseModal)
+    3. dedup continue confirmation (#dedupConfirmModal)
   Modals triggered by: #btnConvertCustomer / #btnConvertCase (header) and
   #btnConvertCustomerTab / #btnConvertCaseTab (conversion tab).
-  Confirm buttons: #confirmConvertCustomer / #confirmConvertCase.
-  Modal close: [data-modal-close="convertCustomerModal"] / [data-modal-close="convertCaseModal"].
+  Dedup confirm triggered by: #dedupContinueBtn → opens #dedupConfirmModal.
+  Confirm buttons: #confirmConvertCustomer / #confirmConvertCase / #confirmDedupContinue.
+  Modal close: [data-modal-close="..."].
 -->
 
 <!-- Modal: Convert to Customer -->
@@ -12,8 +16,8 @@
   <div class="apple-modal flex flex-col" style="max-width: 480px;">
     <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
       <div>
-        <h3 class="text-[17px] font-semibold text-[var(--text)]">转为客户</h3>
-        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">将此线索转为正式客户档案。Group 默认继承线索归属组。</div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">建立客户档案</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">根据当前咨询建立客户档案，默认沿用当前所属组。</div>
       </div>
       <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCustomerModal">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -35,14 +39,14 @@
         </div>
       </div>
       <div>
-        <label class="apple-label">归属 Group</label>
+        <label class="apple-label">所属组</label>
         <input type="text" class="apple-input" id="modalCusGroup" />
-        <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认继承线索 Group（03 §2.2）。如需变更请说明原因。</div>
+        <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认沿用当前所属组，如需调整请说明原因。</div>
       </div>
     </div>
     <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
       <button class="btn-secondary px-5" type="button" data-modal-close="convertCustomerModal">取消</button>
-      <button class="btn-primary px-5" type="button" id="confirmConvertCustomer">确认转为客户</button>
+      <button class="btn-primary px-5" type="button" id="confirmConvertCustomer">确认建立客户档案</button>
     </div>
   </div>
 </div>
@@ -52,8 +56,8 @@
   <div class="apple-modal flex flex-col" style="max-width: 480px;">
     <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
       <div>
-        <h3 class="text-[17px] font-semibold text-[var(--text)]">转为案件</h3>
-        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">为此线索创建案件。主申请人信息将从线索自动预填。</div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]" id="convertCaseModalTitle">签约并开始建档</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="convertCaseModalDesc">会先建立客户档案，再为当前咨询创建首个案件。主申请人信息将自动带入。</div>
       </div>
       <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCaseModal">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -75,17 +79,42 @@
           <input type="text" class="apple-input" id="modalCaseOwner" />
         </div>
         <div>
-          <label class="apple-label">归属 Group</label>
+          <label class="apple-label">所属组</label>
           <input type="text" class="apple-input" id="modalCaseGroup" />
-          <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认继承 Customer.group（03 §2.2）</div>
+          <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认沿用客户档案所属组</div>
         </div>
       </div>
     </div>
     <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
       <button class="btn-secondary px-5" type="button" data-modal-close="convertCaseModal">取消</button>
-      <button class="btn-primary px-5" type="button" id="confirmConvertCase">确认创建案件</button>
+      <button class="btn-primary px-5" type="button" id="confirmConvertCase">确认并开始建档</button>
     </div>
   </div>
 </div>
 
-
+<!-- Modal: Dedup Continue Confirmation (P0 §6.1) -->
+<div class="modal-backdrop" id="dedupConfirmModal">
+  <div class="apple-modal flex flex-col" style="max-width: 440px;">
+    <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+      <div>
+        <h3 class="text-[17px] font-semibold text-[var(--text)]">确认继续创建</h3>
+        <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">发现重复记录后仍继续创建，系统会保留操作痕迹。</div>
+      </div>
+      <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="dedupConfirmModal">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+      </button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="dedup-panel">
+        <div class="flex items-start gap-3">
+          <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          <div class="text-[13px] text-[#92400e] font-semibold" id="dedupConfirmMessage">系统检测到重复记录。确认继续创建后，命中对象、确认人、确认时间将被记录留痕。</div>
+        </div>
+      </div>
+    </div>
+    <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+      <button class="btn-secondary px-5" type="button" data-modal-close="dedupConfirmModal">取消</button>
+      <button class="btn-primary px-5" type="button" id="confirmDedupContinue">确认继续创建</button>
+    </div>
+  </div>
+</div>

@@ -1,19 +1,34 @@
 <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
   <div>
     <div class="section-kicker">Step 3</div>
-    <div class="section-title mt-2">分派与初始设置</div>
-    <div class="meta-text mt-2">确认继承后的 Group，并设置负责人、期限和创建后的初始动作。</div>
+    <div class="section-title mt-2">确认承接与初始设置</div>
+    <div class="meta-text mt-2">设置负责人、Group、期限和开始办案后的初始动作。</div>
+  </div>
+
+  <div class="summary-box">
+    <div class="summary-label">Group 承接规则</div>
+    <div class="summary-value" id="groupInheritanceValue">-</div>
+    <div class="meta-text mt-2" id="groupInheritanceHint">默认继承当前主申请人 / Customer 的 Group，若改组必须填写原因并留痕。</div>
+  </div>
+
+  <div>
+    <label class="apple-label" for="groupSelect">归属 Group</label>
+    <select class="apple-input" id="groupSelect">
+      <option value="tokyo-1">东京一组</option>
+      <option value="tokyo-2">东京二组</option>
+      <option value="osaka">大阪组</option>
+    </select>
   </div>
 
   <div class="field-grid three">
     <div>
-      <label class="apple-label" for="groupSelect">归属 Group</label>
-      <select class="apple-input" id="groupSelect"></select>
-      <div class="meta-text mt-2" id="groupInheritanceHint">默认继承主申请人所属 Group。</div>
-    </div>
-    <div>
       <label class="apple-label" for="ownerSelect">负责人</label>
-      <select class="apple-input" id="ownerSelect"></select>
+      <select class="apple-input" id="ownerSelect">
+        <option value="suzuki">Suzuki</option>
+        <option value="tanaka">Tanaka</option>
+        <option value="li">Li</option>
+        <option value="sato">Sato</option>
+      </select>
     </div>
     <div>
       <label class="apple-label" for="dueDateInput">预计提交期限</label>
@@ -21,30 +36,31 @@
     </div>
     <div>
       <label class="apple-label" for="amountInput">合同金额（JPY）</label>
-      <input class="apple-input" id="amountInput" type="number" />
+      <input class="apple-input" id="amountInput" type="number" min="0" step="1000" />
     </div>
   </div>
 
   <div class="hidden" id="crossGroupReasonRow">
     <label class="apple-label" for="crossGroupReason">跨组建案原因</label>
-    <textarea class="apple-input min-h-[96px]" id="crossGroupReason"></textarea>
+    <textarea class="apple-input min-h-[96px]" id="crossGroupReason" placeholder="选择非默认 Group 时，需填写原因并留痕。"></textarea>
   </div>
 
-  <label class="flex items-start gap-3">
-    <input id="createChecklist" type="checkbox" checked class="mt-1" />
-    <div>
-      <div class="font-extrabold text-[var(--text)] text-[14px]">自动生成资料清单</div>
-      <div class="meta-text mt-1">按模板创建主申请人/扶养者或雇主/事务所内部资料项。</div>
-    </div>
-  </label>
-
-  <label class="flex items-start gap-3">
-    <input id="createTasks" type="checkbox" checked class="mt-1" />
-    <div>
-      <div class="font-extrabold text-[var(--text)] text-[14px]">同步生成初始任务</div>
-      <div class="meta-text mt-1">创建后自动生成催办、补件或跟进任务占位。</div>
-    </div>
-  </label>
+  <div class="section-stack">
+    <label class="flex items-start gap-3">
+      <input id="createChecklist" type="checkbox" checked class="mt-1" />
+      <div>
+        <div class="font-extrabold text-[var(--text)] text-[14px]">自动生成资料清单</div>
+        <div class="meta-text mt-1">按模板创建主申请人/扶养者或雇主/事务所内部资料项。</div>
+      </div>
+    </label>
+    <label class="flex items-start gap-3">
+      <input id="createTasks" type="checkbox" checked class="mt-1" />
+      <div>
+        <div class="font-extrabold text-[var(--text)] text-[14px]">同步生成初始任务</div>
+        <div class="meta-text mt-1">创建后自动生成催办、补件或跟进任务占位。</div>
+      </div>
+    </label>
+  </div>
 
   <div class="summary-box hidden" id="familyCreationPanel">
     <div class="section-title">家族批量建案动作</div>
@@ -56,23 +72,49 @@
 <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
   <div>
     <div class="section-kicker">Step 4</div>
-    <div class="section-title mt-2">完成创建</div>
-    <div class="meta-text mt-2">确认关键信息后创建案件。</div>
+    <div class="section-title mt-2">确认并开始办案</div>
+    <div class="meta-text mt-2">复核关键信息后生成案件。</div>
   </div>
+
   <div class="success-banner hidden" id="successBanner">
     <div class="font-extrabold" id="successBannerTitle">案件已创建</div>
     <div class="meta-text mt-2" id="successBannerDesc">已生成案件记录与资料清单草稿，可返回列表继续补录或分派任务。</div>
+    <div class="flex flex-wrap gap-2 mt-4">
+      <button class="btn-primary" type="button" id="viewCaseDocumentsBtn">去登记资料</button>
+      <button class="btn-secondary" type="button" id="viewCaseDetailBtn">查看案件详情</button>
+      <button class="btn-secondary" type="button" id="viewCreatedCasesBtn">查看案件列表结果</button>
+    </div>
   </div>
+
   <div class="summary-grid">
-    <div class="summary-box"><div class="summary-label">模板 / 申请类型</div><div class="summary-value" id="summaryTemplate">-</div></div>
-    <div class="summary-box"><div class="summary-label">主申请人</div><div class="summary-value" id="summaryCustomer">-</div></div>
-    <div class="summary-box"><div class="summary-label">关联人 / 批量对象</div><div class="summary-value" id="summaryParties">-</div></div>
-    <div class="summary-box"><div class="summary-label">负责人 / Group</div><div class="summary-value" id="summaryOwner">-</div></div>
-    <div class="summary-box"><div class="summary-label">预计提交期限</div><div class="summary-value" id="summaryDueDate">-</div></div>
-    <div class="summary-box"><div class="summary-label">合同金额</div><div class="summary-value" id="summaryAmount">-</div></div>
+    <div class="summary-box">
+      <div class="summary-label">模板 / 申请类型</div>
+      <div class="summary-value" id="summaryTemplate">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">主申请人</div>
+      <div class="summary-value" id="summaryCustomer">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">关联人 / 批量对象</div>
+      <div class="summary-value" id="summaryParties">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">负责人 / Group</div>
+      <div class="summary-value" id="summaryOwner">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">预计提交期限</div>
+      <div class="summary-value" id="summaryDueDate">-</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">合同金额</div>
+      <div class="summary-value" id="summaryAmount">-</div>
+    </div>
   </div>
+
   <div class="summary-box">
-    <div class="summary-label">创建动作</div>
+    <div class="summary-label">开始办案后动作</div>
     <div class="summary-value" id="summaryChecklist">-</div>
   </div>
 </section>

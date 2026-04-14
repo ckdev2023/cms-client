@@ -12,7 +12,7 @@
 
 | 关注点 | 行数范围（约） | 问题 |
 |--------|-------------|------|
-| 设计 Token（CSS 变量） | 11-37 | 与 `admin-prototype.html` 重复定义 |
+| 设计 Token（CSS 变量） | 11-37 | 与 `dashboard/index.html` 重复定义 |
 | 公共组件样式 | 39-540 | `.btn-primary`, `.chip`, `.apple-card` 等在两页各写一份 |
 | App Shell + 导航 HTML | 545-717 | 侧边导航在两页各复制一份 |
 | 移动端导航 HTML | 545-633 | 仅客户页有，仪表盘缺失 |
@@ -58,7 +58,7 @@ packages/prototype/admin/
 │       ├── customer-drafts.js        ← 草稿 CRUD（localStorage）、草稿行渲染、"继续"恢复
 │       └── customer-bulk-actions.js  ← 全选/单选联动、批量操作栏、指派/调组 apply
 │
-├── admin-prototype.html              ← 仪表盘（同样引用 shared/）
+├── dashboard/index.html              ← 仪表盘（同样引用 shared/）
 └── ...其他页面
 ```
 
@@ -72,8 +72,8 @@ packages/prototype/admin/
 
 #### `shared/styles/tokens.css`
 - `:root` 下的 CSS 自定义属性：颜色、阴影、圆角、字体
-- 来源：合并 `admin-prototype.html` 和 `customers/index.html` 中的 `:root` 块
-- 以 `admin-prototype.html` 的变量名为基准（`--apple-blue`, `--bg`, `--surface`, `--border` 等）
+- 来源：合并 `dashboard/index.html` 和 `customers/index.html` 中的 `:root` 块
+- 以 `dashboard/index.html` 的变量名为基准（`--apple-blue`, `--bg`, `--surface`, `--border` 等）
 - 客户页中新增的别名（如 `--primary` → `--apple-blue`）保留为兼容映射
 
 #### `shared/styles/components.css`
@@ -225,7 +225,7 @@ export const CREATE_FORM_FIELDS = [
 ## 5. 拆分步骤（推荐执行顺序）
 
 ### Step 1：抽取共享样式
-1. 对比 `admin-prototype.html` 和 `customers/index.html` 的 `<style>` 块
+1. 对比 `dashboard/index.html` 和 `customers/index.html` 的 `<style>` 块
 2. 创建 `shared/styles/tokens.css`，合并 `:root` 变量
 3. 创建 `shared/styles/components.css`，合并公共组件样式
 4. 创建 `shared/styles/layout.css`，合并壳子布局样式

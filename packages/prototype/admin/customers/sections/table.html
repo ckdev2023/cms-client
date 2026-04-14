@@ -65,11 +65,19 @@
         <th class="hidden md:table-cell w-[100px]">负责人</th>
         <th class="hidden lg:table-cell w-[110px]">介绍人/来源</th>
         <th class="hidden lg:table-cell w-[100px]">所属分组</th>
-        <th class="text-right w-[60px]">操作</th>
+        <th class="text-right w-[92px]">操作</th>
       </tr>
     </thead>
     <tbody>
-      <tr>
+      <tr
+        data-customer-row
+        data-row-kind="customer"
+        data-customer-id="CUS-2026-0102"
+        data-customer-group="tokyo-1"
+        data-customer-owner="admin"
+        data-active-cases="1"
+        data-customer-search="张伟（就劳） 张伟 チョウ イ 090-1234-5678 zhang.w@email.com 客户推荐 东京一组"
+      >
         <td class="text-center">
           <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0102" aria-label="选择 张伟（就劳）" />
         </td>
@@ -78,10 +86,11 @@
             <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">张</div>
             <div>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <div class="font-medium text-[var(--apple-text-main)]">张伟（就劳）</div>
-                <div class="text-xs text-gray-500">CUS-2026-0102 · 中国</div>
+                <a href="detail.html?id=CUS-2026-0102" class="font-medium text-[var(--apple-text-main)] hover:text-[var(--apple-blue)] transition-colors" data-customer-display-name>张伟（就劳）</a>
+                <div class="text-xs text-gray-500" data-customer-meta>CUS-2026-0102 · 中国</div>
               </div>
-              <div class="text-xs text-gray-500 mt-0.5">090-1234-5678 · zhang.w@email.com</div>
+              <div class="hidden mt-1 flex flex-wrap items-center gap-2" data-customer-bmv-tags></div>
+              <div class="text-xs text-gray-500 mt-0.5" data-customer-contact>090-1234-5678 · zhang.w@email.com</div>
               <div class="mt-2 flex flex-wrap items-center gap-2">
                 <a href="../case/index.html" class="chip">技人国更新</a>
                 <div class="hidden flex-wrap items-center gap-2" data-case-tags-extra>
@@ -102,11 +111,11 @@
         </td>
         <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チョウ イ</td>
         <td class="text-center whitespace-nowrap">
-          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">累计 2 · 活跃 1</a>
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full" data-customer-cases-summary>累计 2 · 活跃 1</a>
         </td>
         <td class="hidden md:table-cell">
-          <div class="text-sm text-[var(--apple-text-main)]">2026-03-28</div>
-          <div class="text-[12px] text-gray-500 mt-0.5">WeChat</div>
+          <div class="text-sm text-[var(--apple-text-main)]" data-customer-last-contact-date>2026-03-28</div>
+          <div class="text-[12px] text-gray-500 mt-0.5" data-customer-last-contact-channel>WeChat</div>
         </td>
         <td class="hidden md:table-cell">
           <div class="flex items-center text-sm">
@@ -114,19 +123,30 @@
             Admin
           </div>
         </td>
-        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">客户推荐</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]" data-customer-referrer>客户推荐</td>
         <td class="hidden lg:table-cell">
-          <span class="chip">东京一组</span>
+          <span class="chip" data-customer-group-label>东京一组</span>
         </td>
         <td class="text-right whitespace-nowrap">
           <div class="table-actions">
-            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+            <a class="table-icon-btn row-quick-action inline-flex" title="打开客户详情" href="detail.html?id=CUS-2026-0102">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+            </a>
+            <button class="table-icon-btn row-quick-action" title="从该客户开始办案" type="button" data-action="quick-create-case" data-customer-id="CUS-2026-0102" data-mode="single">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             </button>
           </div>
         </td>
       </tr>
-      <tr>
+      <tr
+        data-customer-row
+        data-row-kind="customer"
+        data-customer-id="CUS-2026-0120"
+        data-customer-group="tokyo-2"
+        data-customer-owner="tom"
+        data-active-cases="2"
+        data-customer-search="陈丽 チン リ 080-2222-3333 chen.li@email.com 紹介（渡辺様） 东京二组"
+      >
         <td class="text-center">
           <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0120" aria-label="选择 陈丽" />
         </td>
@@ -135,10 +155,11 @@
             <div class="w-8 h-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">陈</div>
             <div>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <div class="font-medium text-[var(--apple-text-main)]">陈丽</div>
-                <div class="text-xs text-gray-500">CUS-2026-0120 · 中国</div>
+                <a href="detail.html?id=CUS-2026-0120" class="font-medium text-[var(--apple-text-main)] hover:text-[var(--apple-blue)] transition-colors" data-customer-display-name>陈丽</a>
+                <div class="text-xs text-gray-500" data-customer-meta>CUS-2026-0120 · 中国</div>
               </div>
-              <div class="text-xs text-gray-500 mt-0.5">080-2222-3333 · chen.li@email.com</div>
+              <div class="hidden mt-1 flex flex-wrap items-center gap-2" data-customer-bmv-tags></div>
+              <div class="text-xs text-gray-500 mt-0.5" data-customer-contact>080-2222-3333 · chen.li@email.com</div>
               <div class="mt-2 flex flex-wrap items-center gap-2">
                 <a href="../case/index.html" class="chip">家族滞在更新</a>
                 <div class="hidden flex-wrap items-center gap-2" data-case-tags-extra>
@@ -159,11 +180,11 @@
         </td>
         <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">チン リ</td>
         <td class="text-center whitespace-nowrap">
-          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full">累计 2 · 活跃 2</a>
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full" data-customer-cases-summary>累计 2 · 活跃 2</a>
         </td>
         <td class="hidden md:table-cell">
-          <div class="text-sm text-[var(--apple-text-main)]">2026-03-22</div>
-          <div class="text-[12px] text-gray-500 mt-0.5">电话沟通</div>
+          <div class="text-sm text-[var(--apple-text-main)]" data-customer-last-contact-date>2026-03-22</div>
+          <div class="text-[12px] text-gray-500 mt-0.5" data-customer-last-contact-channel>电话沟通</div>
         </td>
         <td class="hidden md:table-cell">
           <div class="flex items-center text-sm">
@@ -171,56 +192,149 @@
             Tom
           </div>
         </td>
-        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]">紹介（渡辺様）</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]" data-customer-referrer>紹介（渡辺様）</td>
         <td class="hidden lg:table-cell">
-          <span class="chip">东京二组</span>
+          <span class="chip" data-customer-group-label>东京二组</span>
         </td>
         <td class="text-right whitespace-nowrap">
           <div class="table-actions">
-            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+            <a class="table-icon-btn row-quick-action inline-flex" title="打开客户详情" href="detail.html?id=CUS-2026-0120">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+            </a>
+            <button class="table-icon-btn row-quick-action" title="从该客户开始办案" type="button" data-action="quick-create-case" data-customer-id="CUS-2026-0120" data-mode="single">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             </button>
           </div>
         </td>
       </tr>
-      <tr>
+      <tr
+        data-customer-row
+        data-row-kind="customer"
+        data-customer-id="CUS-2026-0128"
+        data-customer-group="tokyo-1"
+        data-customer-owner="tom"
+        data-active-cases="0"
+        data-customer-search="佐藤美咲 经营管理签 サトウ ミサキ 070-8888-1208 misaki.sato@example.jp"
+      >
         <td class="text-center">
-          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0128" aria-label="选择 Li Wei" />
+          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0128" aria-label="选择 佐藤美咲（经营管理签）" />
         </td>
         <td>
           <div class="flex items-center">
-            <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-medium mr-3 flex-shrink-0">L</div>
+            <div class="w-8 h-8 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">佐</div>
             <div>
               <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-                <div class="font-medium text-[var(--apple-text-main)]">Li Wei</div>
-                <div class="text-xs text-gray-500">CUS-2026-0128 · 中国</div>
+                <a href="detail.html?id=CUS-2026-0128" class="font-medium text-[var(--apple-text-main)] hover:text-[var(--apple-blue)] transition-colors" data-customer-display-name>佐藤美咲（经营管理签）</a>
+                <div class="text-xs text-gray-500" data-customer-meta>CUS-2026-0128 · 日本</div>
               </div>
-              <div class="text-xs text-gray-500 mt-0.5">未提供电话 · liwei.test@email.com</div>
-              <div class="mt-2 text-[12px] text-gray-400">暂无关联案件</div>
+              <div class="mt-1 flex flex-wrap items-center gap-2" data-customer-bmv-tags>
+                <span class="chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]">经营管理签</span>
+                <span class="chip">问卷准备中</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-0.5" data-customer-contact>070-8888-1208 · misaki.sato@example.jp</div>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[var(--apple-text-tert)] font-semibold">
+                <span>签约前承接中</span>
+                <span>·</span>
+                <span>待发送问卷</span>
+              </div>
             </div>
           </div>
         </td>
-        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">リ ウェイ</td>
+        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">サトウ ミサキ</td>
         <td class="text-center whitespace-nowrap">
-          <span class="text-sm text-gray-400">累计 0 · 活跃 0</span>
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full" data-customer-cases-summary>累计 0 · 活跃 0</a>
         </td>
         <td class="hidden md:table-cell">
-          <div class="text-sm text-[var(--apple-text-main)]">2026-03-18</div>
-          <div class="text-[12px] text-gray-500 mt-0.5">邮件回复</div>
+          <div class="text-sm text-[var(--apple-text-main)]" data-customer-last-contact-date>2026-04-09</div>
+          <div class="text-[12px] text-gray-500 mt-0.5" data-customer-last-contact-channel>邮件</div>
         </td>
         <td class="hidden md:table-cell">
-          <div class="flex items-center text-sm text-gray-400">暂无</div>
+          <div class="flex items-center text-sm">
+            <div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>
+            Tom
+          </div>
         </td>
-        <td class="hidden lg:table-cell text-sm text-gray-400">—</td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]" data-customer-referrer>广告投放（经营管理签）</td>
         <td class="hidden lg:table-cell">
-          <span class="chip">大阪组</span>
+          <span class="chip" data-customer-group-label>东京一组</span>
         </td>
         <td class="text-right whitespace-nowrap">
           <div class="table-actions">
-            <button class="table-icon-btn row-quick-action" title="为该客户建案" type="button" data-navigate="../case/create.html">
+            <a class="table-icon-btn row-quick-action inline-flex" title="打开客户详情" href="detail.html?id=CUS-2026-0128">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+            </a>
+            <button class="table-icon-btn row-quick-action opacity-40 cursor-not-allowed" title="经营管理签需先完成签约" type="button" data-action="quick-create-case" data-customer-id="CUS-2026-0128" data-mode="single" aria-disabled="true">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             </button>
           </div>
+        </td>
+      </tr>
+      <tr
+        data-customer-row
+        data-row-kind="customer"
+        data-customer-id="CUS-2026-0136"
+        data-customer-group="tokyo-1"
+        data-customer-owner="tom"
+        data-active-cases="0"
+        data-customer-search="王欣怡 经营管理签 オウ キンイ 080-5566-8899 xinyi.wang@example.com"
+      >
+        <td class="text-center">
+          <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox" data-customer-select value="CUS-2026-0136" aria-label="选择 王欣怡（经营管理签）" />
+        </td>
+        <td>
+          <div class="flex items-center">
+            <div class="w-8 h-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center font-medium mr-3 flex-shrink-0">王</div>
+            <div>
+              <div class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+                <a href="detail.html?id=CUS-2026-0136" class="font-medium text-[var(--apple-text-main)] hover:text-[var(--apple-blue)] transition-colors" data-customer-display-name>王欣怡（经营管理签）</a>
+                <div class="text-xs text-gray-500" data-customer-meta>CUS-2026-0136 · 中国</div>
+              </div>
+              <div class="mt-1 flex flex-wrap items-center gap-2" data-customer-bmv-tags>
+                <span class="chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]">经营管理签</span>
+                <span class="chip">待签约</span>
+              </div>
+              <div class="text-xs text-gray-500 mt-0.5" data-customer-contact>080-5566-8899 · xinyi.wang@example.com</div>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[12px] text-[var(--apple-text-tert)] font-semibold">
+                <span>报价已生成</span>
+                <span>·</span>
+                <span>待确认签约</span>
+              </div>
+            </div>
+          </div>
+        </td>
+        <td class="hidden md:table-cell text-sm text-[var(--apple-text-sec)]">オウ キンイ</td>
+        <td class="text-center whitespace-nowrap">
+          <a href="../cases-list.html" class="link-apple text-sm font-medium inline-flex justify-center w-full" data-customer-cases-summary>累计 0 · 活跃 0</a>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="text-sm text-[var(--apple-text-main)]" data-customer-last-contact-date>2026-04-11</div>
+          <div class="text-[12px] text-gray-500 mt-0.5" data-customer-last-contact-channel>LINE</div>
+        </td>
+        <td class="hidden md:table-cell">
+          <div class="flex items-center text-sm">
+            <div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>
+            Tom
+          </div>
+        </td>
+        <td class="hidden lg:table-cell text-sm text-[var(--apple-text-sec)]" data-customer-referrer>合作渠道（经营管理签）</td>
+        <td class="hidden lg:table-cell">
+          <span class="chip" data-customer-group-label>东京一组</span>
+        </td>
+        <td class="text-right whitespace-nowrap">
+          <div class="table-actions">
+            <a class="table-icon-btn row-quick-action inline-flex" title="打开客户详情" href="detail.html?id=CUS-2026-0136">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
+            </a>
+            <button class="table-icon-btn row-quick-action opacity-40 cursor-not-allowed" title="经营管理签需先完成签约" type="button" data-action="quick-create-case" data-customer-id="CUS-2026-0136" data-mode="single" aria-disabled="true">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            </button>
+          </div>
+        </td>
+      </tr>
+      <tr id="customerEmptyState" class="hidden">
+        <td colspan="9" class="px-6 py-10 text-center">
+          <div class="text-sm font-extrabold text-[var(--apple-text-main)]">当前筛选没有匹配客户</div>
+          <div class="text-[13px] text-[var(--apple-text-tert)] mt-1">可尝试切换数据范围，或重置搜索条件。</div>
         </td>
       </tr>
     </tbody>

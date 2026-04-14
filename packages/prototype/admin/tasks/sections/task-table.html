@@ -1,10 +1,10 @@
 <div class="apple-card table-shell overflow-hidden" id="taskTableCard">
   <div class="table-shell__header">
     <div>
-      <div class="table-shell__eyebrow">任务明细</div>
+      <div class="table-shell__eyebrow">任务执行清单</div>
       <div class="table-shell__title-row">
-        <h2 class="table-shell__title">跨案件任务列表</h2>
-        <span class="table-shell__sort-note">按截止时间与状态优先级排序</span>
+        <h2 class="table-shell__title">今天先处理这些任务</h2>
+        <span class="table-shell__sort-note">按已逾期、今天到期与执行状态优先</span>
       </div>
     </div>
     <div class="table-shell__count"><strong>6</strong> 条</div>
@@ -30,7 +30,7 @@
         <input type="date" class="apple-input h-9 py-0 px-3 text-[13px] font-semibold w-[160px]" id="bulkDeadlineInput" />
         <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkDeadlineApplyBtn">应用</button>
       </div>
-      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkCompleteBtn">批量完成</button>
+      <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="bulkCompleteBtn">批量收口</button>
       <button class="btn-secondary h-9 px-4 text-[13px] text-[var(--danger)]" type="button" id="bulkCancelBtn">批量取消</button>
     </div>
   </div>
@@ -65,8 +65,8 @@
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--danger)] font-semibold">逾期 1 天</div><div class="text-[12px] text-[var(--muted-2)]">2026-04-08 18:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">催办</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">资料催办</span></td>
         </tr>
         <tr data-task-id="task-002" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-002" aria-label="选择 草拟理由书 (HSP 申请)" /></td>
@@ -79,8 +79,8 @@
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[#b45309] font-semibold">今日到期</div><div class="text-[12px] text-[var(--muted-2)]">2026-04-09 18:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">手动</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">手动安排</span></td>
         </tr>
         <tr data-task-id="task-003" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-003" aria-label="选择 准备在留资格认定证明书申请材料" /></td>
@@ -88,13 +88,13 @@
             <div class="font-medium text-[var(--text)]">准备在留资格认定证明书申请材料</div>
             <div class="text-xs text-[var(--muted-2)] mt-0.5 md:hidden"><a href="../case/detail.html" class="link-apple">CAS-2023-1102</a></div>
           </td>
-          <td class="hidden md:table-cell"><a href="../case/detail.html" class="link-apple text-sm">CAS-2023-1102 经营管理签证 (王先生)</a></td>
+          <td class="hidden md:table-cell"><a href="../case/detail.html" class="link-apple text-sm">CAS-2023-1102 技术人文国际 (王先生)</a></td>
           <td class="hidden lg:table-cell"><span class="chip">東京二組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-green-100 text-green-600 text-xs flex items-center justify-center mr-2 flex-shrink-0">T</div>Tom</div></td>
           <td class="text-center"><span class="badge badge-blue">中</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-04-11 15:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">模板</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">模板生成</span></td>
         </tr>
         <tr data-task-id="task-004" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-004" aria-label="选择 核对申请书类一式与附件清单" /></td>
@@ -107,8 +107,8 @@
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">A</div>助理 A</div></td>
           <td class="text-center"><span class="badge badge-blue">中</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-04-14 18:00</div></td>
-          <td><span class="badge badge-blue">进行中</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">校验失败</span></td>
+          <td><span class="badge badge-blue">处理中</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">提交前修正</span></td>
         </tr>
         <tr data-task-id="task-005" data-task-select-row class="opacity-60">
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-005" aria-label="选择 发送在留期限到期续签提醒" disabled /></td>
@@ -122,7 +122,7 @@
           <td class="text-center"><span class="badge">低</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--muted-2)]">2026-04-07 18:00</div></td>
           <td><span class="badge badge-green">已完成</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">续签提醒</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">到期提醒</span></td>
         </tr>
         <tr data-task-id="task-006" data-task-select-row class="opacity-60">
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-006" aria-label="选择 联系入管确认受理编号" disabled /></td>
@@ -136,67 +136,67 @@
           <td class="text-center"><span class="badge">低</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--muted-2)]">2026-04-03 18:00</div></td>
           <td><span class="badge badge-gray">已取消</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">手动</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">手动安排</span></td>
         </tr>
         <tr data-task-id="task-007" data-task-select-row>
-          <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-007" aria-label="选择 催收高桥优经营管理案件逾期款项" /></td>
-          <td><div class="font-medium text-[var(--text)]">催收高桥优经营管理案件逾期款项</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0398 经营管理更新 (高桥优)</span></td>
+          <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-007" aria-label="选择 催收高桥优高度人才案件逾期款项" /></td>
+          <td><div class="font-medium text-[var(--text)]">催收高桥优高度人才案件逾期款项</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0398 高度人才更新 (高桥优)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-04-12 18:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">催款</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">收费跟进</span></td>
         </tr>
         <tr data-task-id="task-008" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-008" aria-label="选择 COE 有效期提醒（30天）" /></td>
-          <td><div class="font-medium text-[var(--text)]">COE 有効期提醒（30天）王建国 経営管理</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 经营管理签 新規 (王建国)</span></td>
+          <td><div class="font-medium text-[var(--text)]">COE 有効期提醒（30天）王建国 技人国</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 技术人文国际 新規 (王建国)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-06-05 09:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">续签提醒</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">到期提醒</span></td>
         </tr>
         <tr data-task-id="task-009" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-009" aria-label="选择 COE 有効期提醒（7天）" /></td>
-          <td><div class="font-medium text-[var(--text)]">COE 有効期提醒（7天）王建国 経営管理</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 经营管理签 新規 (王建国)</span></td>
+          <td><div class="font-medium text-[var(--text)]">COE 有効期提醒（7天）王建国 技人国</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 技术人文国际 新規 (王建国)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-06-28 09:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">续签提醒</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">到期提醒</span></td>
         </tr>
         <tr data-task-id="task-010" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-010" aria-label="选择 在留到期提醒（180天）" /></td>
-          <td><div class="font-medium text-[var(--text)]">在留到期提醒（180天）王建国 経営管理</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 经营管理签 新規 (王建国)</span></td>
+          <td><div class="font-medium text-[var(--text)]">在留到期提醒（180天）王建国 技人国</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 技术人文国际 新規 (王建国)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge">低</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2026-10-08 09:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">续签提醒</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">到期提醒</span></td>
         </tr>
         <tr data-task-id="task-011" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-011" aria-label="选择 在留到期提醒（90天）" /></td>
-          <td><div class="font-medium text-[var(--text)]">在留到期提醒（90天）王建国 経営管理</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 经营管理签 新規 (王建国)</span></td>
+          <td><div class="font-medium text-[var(--text)]">在留到期提醒（90天）王建国 技人国</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 技术人文国际 新規 (王建国)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-blue">中</span></td>
           <td class="hidden md:table-cell"><div class="text-sm text-[var(--text)]">2027-01-06 09:00</div></td>
-          <td><span class="badge badge-gray">待处理</span></td>
-          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">续签提醒</span></td>
+          <td><span class="badge badge-gray">待跟进</span></td>
+          <td class="hidden lg:table-cell"><span class="text-sm text-[var(--muted-2)]">到期提醒</span></td>
         </tr>
         <tr data-task-id="task-012" data-task-select-row>
           <td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-task-select value="task-012" aria-label="选择 在留到期提醒（30天）" /></td>
-          <td><div class="font-medium text-[var(--text)]">在留到期提醒（30天）王建国 経営管理</div></td>
-          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 经营管理签 新規 (王建国)</span></td>
+          <td><div class="font-medium text-[var(--text)]">在留到期提醒（30天）王建国 技人国</div></td>
+          <td class="hidden md:table-cell"><span class="text-sm text-[var(--muted-2)]">CAS-2026-0215 技术人文国际 新規 (王建国)</span></td>
           <td class="hidden lg:table-cell"><span class="chip">東京一組</span></td>
           <td class="hidden md:table-cell"><div class="flex items-center text-sm"><div class="w-5 h-5 rounded-full bg-gray-200 text-xs flex items-center justify-center mr-2 flex-shrink-0">AD</div>Admin</div></td>
           <td class="text-center"><span class="badge badge-danger">高</span></td>

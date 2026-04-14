@@ -64,9 +64,25 @@
     const referrer = escapeHtml(draft?.state?.quick?.referrer ?? draft?.state?.referrer ?? '—');
     const groupId = draft?.state?.quick?.group ?? draft?.state?.group ?? '';
     const groupLabel = escapeHtml(config.GROUP_LABEL_MAP[groupId] ?? '—');
+    const searchText = escapeHtml(
+      [name, contactPrimary, kana, referrer, groupLabel]
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim(),
+    );
 
     const tr = document.createElement('tr');
     tr.id = `${config.DRAFT_ROW_ID_PREFIX}${draft.id}`;
+    tr.setAttribute('data-customer-row', '');
+    tr.setAttribute('data-row-kind', 'draft');
+    tr.setAttribute('data-customer-id', draft.id);
+    tr.setAttribute('data-customer-group', String(groupId || ''));
+    tr.setAttribute('data-customer-owner', 'admin');
+    tr.setAttribute('data-active-cases', '0');
+    tr.setAttribute('data-customer-search', searchText);
+    tr.setAttribute('data-bmv-template', '');
+    tr.setAttribute('data-bmv-intake-status', '');
+    tr.setAttribute('data-can-create-case', 'false');
     tr.innerHTML = `
       <td class="text-center">
         <input type="checkbox" class="accent-[var(--apple-blue)] table-checkbox opacity-40" data-customer-select disabled aria-label="草稿不可批量操作" />

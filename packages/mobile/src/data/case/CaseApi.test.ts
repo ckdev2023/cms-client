@@ -7,6 +7,7 @@ function stubServerCase(overrides?: Record<string, unknown>) {
     customerId: "cust1",
     caseTypeCode: "家族滞在",
     status: "S3",
+    stage: "S3",
     ownerUserId: "user1",
     openedAt: "2026-04-01T00:00:00.000Z",
     dueAt: "2026-06-01",
@@ -36,6 +37,7 @@ function stubServerCase(overrides?: Record<string, unknown>) {
     billingRiskAckReasonCode: null,
     billingRiskAckReasonNote: null,
     billingRiskAckEvidenceUrl: null,
+    postApprovalStage: null,
     overseasVisaStartAt: null,
     entryConfirmedAt: null,
     createdAt: "2026-04-01T00:00:00.000Z",
@@ -122,6 +124,26 @@ describe("mapServerCaseToDetail", () => {
     });
     const detail = mapServerCaseToDetail(raw, [], []);
     expect(detail.postApprovalStage).toBe("coe_sent");
+  });
+
+  it("prefers formal postApprovalStage over metadata", () => {
+    const raw = stubServerCase({
+      postApprovalStage: "entry_success",
+      metadata: { post_approval_stage: "coe_sent" },
+    });
+    expect(mapServerCaseToDetail(raw, [], []).postApprovalStage).toBe(
+      "entry_success",
+    );
+  });
+
+  it("falls back to metadata when formal postApprovalStage is none", () => {
+    const raw = stubServerCase({
+      postApprovalStage: "none",
+      metadata: { post_approval_stage: "overseas_visa_applying" },
+    });
+    expect(mapServerCaseToDetail(raw, [], []).postApprovalStage).toBe(
+      "overseas_visa_applying",
+    );
   });
 
   it("defaults postApprovalStage to null when metadata is empty", () => {

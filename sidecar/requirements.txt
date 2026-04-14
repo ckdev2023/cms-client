@@ -1,0 +1,7 @@
+# MemPalace sidecar 直接依赖（仓库内开发参考副本）
+# 权威安装清单在 runtime/releases/<release-id>/requirements.txt
+# frozen_at: 2026-04-12
+
+chromadb==1.5.7
+mcp>=1.27.0
+mcp>=1.27.0,<2

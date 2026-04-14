@@ -4,7 +4,7 @@
       <div class="work-panel-intro">
         <span class="work-panel-tag">Top Priority</span>
         <h2 class="panel-title">今日待办</h2>
-        <p class="panel-subtitle">优先处理今天到期的催办、回执上传和补件确认。</p>
+        <p class="panel-subtitle">先处理今天必须完成的催办、回执上传、补件与收费确认。</p>
       </div>
       <button class="mini-btn work-panel-action" type="button" data-action-id="batchComplete">批量完成</button>
     </div>
@@ -15,24 +15,12 @@
     <div class="work-panel-head">
       <div class="work-panel-intro">
         <span class="work-panel-tag">Deadlines</span>
-        <h2 class="panel-title">即将到期案件</h2>
-        <p class="panel-subtitle">按时间范围查看需要尽快跟进的案件。</p>
+        <h2 class="panel-title">已逾期 / 即将到期</h2>
+        <p class="panel-subtitle">先清逾期，再看最近 7 / 30 天内需要安排的案件。</p>
       </div>
-      <button class="mini-btn work-panel-action" type="button" data-action-id="followup">创建跟进</button>
+      <button class="mini-btn work-panel-action" type="button" data-action-id="followup">查看临期案件</button>
     </div>
     <div class="work-list" id="deadlineList"></div>
-  </article>
-
-  <article class="apple-card work-panel">
-    <div class="work-panel-head">
-      <div class="work-panel-intro">
-        <span class="work-panel-tag">Documents</span>
-        <h2 class="panel-title">待补件案件</h2>
-        <p class="panel-subtitle">有缺件或退回补正时，直接跳转资料清单继续处理。</p>
-      </div>
-      <button class="mini-btn work-panel-action" type="button" data-action-id="documents">定位缺件</button>
-    </div>
-    <div class="work-list" id="documentList"></div>
   </article>
 
   <article class="apple-card work-panel">
@@ -52,22 +40,10 @@
       <div class="work-panel-intro">
         <span class="work-panel-tag">Risks</span>
         <h2 class="panel-title">风险案件</h2>
-        <p class="panel-subtitle">优先暴露硬阻断、补正临期和欠款风险。</p>
+        <p class="panel-subtitle">把会卡住推进的问题集中出来，修完再继续提交。</p>
       </div>
-      <button class="mini-btn work-panel-action" type="button" data-action-id="risk">批量指派责任人</button>
+      <button class="mini-btn work-panel-action" type="button" data-action-id="risk">去修复风险项</button>
     </div>
     <div class="work-list" id="riskList"></div>
-  </article>
-
-  <article class="apple-card work-panel">
-    <div class="work-panel-head">
-      <div class="work-panel-intro">
-        <span class="work-panel-tag">Billing</span>
-        <h2 class="panel-title">待回款案件</h2>
-        <p class="panel-subtitle">收费节点已到但未结清，支持登记回款和催款。</p>
-      </div>
-      <button class="mini-btn work-panel-action" type="button" data-action-id="payment">登记回款</button>
-    </div>
-    <div class="work-list" id="billingList"></div>
   </article>
 </section>

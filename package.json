@@ -21,14 +21,16 @@
     "mobile:test": "npm --workspace mobile run test",
     "mobile:guard": "npm --workspace mobile run guard",
     "mobile:fix": "npm --workspace mobile run fix",
+    "admin:guard": "npm --workspace @cms/admin run guard",
+    "admin:fix": "npm --workspace @cms/admin run fix",
     "server:dev": "npm --workspace server run dev",
     "server:build": "npm --workspace server run build",
     "server:typecheck": "npm --workspace server run typecheck",
     "server:test": "npm --workspace server run test",
     "server:db:migrate": "npm --workspace server run db:migrate",
     "server:guard": "npm --workspace server run guard",
-    "guard": "npm run mobile:guard && npm run server:guard",
-    "fix": "npm run mobile:fix && npm --workspace server run fix",
+    "guard": "npm run mobile:guard && npm run admin:guard && npm run server:guard",
+    "fix": "npm run mobile:fix && npm run admin:fix && npm --workspace server run fix",
     "prepare": "husky"
   },
   "devDependencies": {

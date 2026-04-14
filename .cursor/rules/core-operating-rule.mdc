@@ -1,0 +1,47 @@
+---
+description: Core operating rule for task routing, delivery gates, and knowledge grounding
+alwaysApply: true
+---
+
+# CMS Client Core Operating Rule
+
+- 先判断任务类型，再执行对应规则；不要凭印象跳过门禁。
+
+## Task Routing
+
+- 涉及行政书士 SaaS 的业务范围、流程、字段归属、状态机、页面规格、P0/P1 边界、经营管理签或在留资格资料要求时，先连接 MCP server `mempalace-readonly`。
+- 业务问答默认先调用 `prepare_grounded_answer(query)`；只有在需要自定义编排时，才改用 `route_query` + `ground_query`。
+- 若 MemPalace 返回 `status=blocked`，不得输出确定性的业务规则、实现口径或范围结论；必须明确说明缺少权威引用，并优先复用返回的 `suggested_reply`。
+- 若 MemPalace 返回 `status=grounded`，只能依据 `citation_bundles` 作答；回答结构固定为：`结论 / 依据 / 引用 / 缺失项`。
+- `get_document` 与 `get_citation_context` 只用于扩展已通过门禁的引用上下文，不得绕过门禁直接拼装业务结论。
+- 当任务依赖第三方库、框架 API、配置、迁移或测试 helper 时，写代码前先查询 Context7；优先采用当前版本的官方推荐路径。
+- 纯业务逻辑、仓库内部重构、纯文档整理，不强制使用 Context7。
+
+## Delivery Gates
+
+- 任何代码改动都必须通过 `npm run guard`。
+- 收尾顺序固定：先运行 `npm run fix`，再运行 `npm run guard`。
+- 新增或修改逻辑时，优先补测试，尤其是 `model`、`domain`、`data`。
+- 测试禁止真实网络请求；必须 mock `fetch` 或注入 stub。
+- 仅使用 `npm`，保持 `package-lock.json` 为唯一锁文件。
+- 不要引入新的依赖，除非确有必要；若引入，必须同步更新测试与相关 guardrail。
+- 不要引入或提交 secrets、tokens、keys、password-like material。
+
+## Architecture
+
+- 页面和组件中不要堆业务逻辑；业务逻辑放在 feature 的 `model` 层。
+- `domain` 只放纯 TypeScript：类型、实体、接口、领域逻辑；不得依赖 React Native、导航或具体网络/存储实现。
+- `data` 实现 `domain` 接口；`infra` 只提供通用能力，不能反向依赖业务 feature。
+- feature 不得直接依赖其他 feature；跨 feature 协作必须通过 `domain`、`shared` 或目标 feature 的 public API。
+- feature 不得直接导入 `data` 或 `infra`；通过 app container + `domain` / `shared` 抽象协作。
+- feature 不得直接导入 `tamagui` 或 `@tamagui/*`；必须通过 `shared/ui` 封装组件。
+- `domain` 和 `data` 不得依赖 `shared/ui`。
+
+## Authoring Rules
+
+- 使用 TypeScript-first，并保持严格类型。
+- 函数保持短小、职责单一；避免在单个方法里堆叠过多流程和业务判断。
+- 单个 TS/TSX 文件尽量控制在 500 行内，接近上限时拆分。
+- 非必要不要加注释；仅在用户明确要求或代码确实难懂时添加。
+- 当 AI 新增或更新 JSDoc 时，说明文字默认使用中文；技术标识符、类型、包名保留原文。
+- 不要为了满足 JSDoc 规则去改写非 JSDoc 注释，除非用户明确要求。

@@ -1,0 +1,33 @@
+{
+  "taskId": "T04",
+  "title": "billing 主表格与批量催款区实现",
+  "status": "completed",
+  "completedAt": "2026-04-13T23:22:00+09:00",
+  "changedFiles": [
+    "packages/admin/src/views/billing/components/BillingTable.vue",
+    "packages/admin/src/views/billing/components/BillingBulkActionBar.vue",
+    "packages/admin/src/views/billing/model/useBillingSelection.ts",
+    "packages/admin/src/views/billing/model/useBillingSelection.test.ts",
+    "packages/admin/src/views/billing/model/useBillingBulkActions.ts",
+    "packages/admin/src/views/billing/model/useBillingBulkActions.test.ts",
+    "packages/admin/src/views/billing/model/usePaymentModal.ts"
+  ],
+  "testResults": {
+    "useBillingSelection.test.ts": { "total": 14, "passed": 14, "failed": 0 },
+    "useBillingBulkActions.test.ts": { "total": 11, "passed": 11, "failed": 0 }
+  },
+  "guardrail": {
+    "typecheck": "pass",
+    "lint": "pass",
+    "jsdocLangCheck": "pass",
+    "depCruise": "pass",
+    "test": "pass",
+    "build": "pass"
+  },
+  "notes": [
+    "仅 overdue 行可被勾选参与批量催款，partial/due/paid 行 checkbox disabled",
+    "全选只选中 overdue 行，indeterminate 正确反映部分选中状态",
+    "批量催款返回三段式结果：success/skipped/failed，非逾期行标记 not-overdue",
+    "usePaymentModal.ts 做了最小化重构以通过 max-lines-per-function 门禁（预存问题）"
+  ]
+}

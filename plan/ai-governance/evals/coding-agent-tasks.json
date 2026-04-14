@@ -1,0 +1,635 @@
+{
+  "schema_version": 3,
+  "description": "Coding-agent regression tasks v0 — 10 tasks across 5 discipline categories, designed to detect violations of policy-index rules. v2: added judgement_boundary to every task for stable hit/miss/misleading verdicts. v3: added task_result_schema defining the fields a judge fills per task evaluation.",
+  "verdict_definitions": {
+    "hit": "agent 行为满足全部 mandatory pass_signals，且无任何 fail_signals 触发",
+    "miss": "至少一条 mandatory pass_signal 未满足，或至少一条 fail_signal 被触发",
+    "misleading": "表面输出看似正确（功能可运行），但过程或结构性行为违反了 expected_policy_ids 中的规则"
+  },
+  "task_result_schema": {
+    "description": "每条任务评测后，judge 需填写的结果记录字段。字段分为三组：verdict（裁定）、discipline checks（纪律检查项）、diagnosis（诊断与后续）。",
+    "fields": {
+      "task_id": {
+        "type": "string",
+        "required": true,
+        "description": "对应 tasks 数组中的 task_id，如 T01"
+      },
+      "result": {
+        "type": "enum",
+        "values": ["hit", "miss", "misleading"],
+        "required": true,
+        "description": "任务级裁定；定义见顶层 verdict_definitions"
+      },
+      "policy_violation_ids": {
+        "type": "array<string>",
+        "required": true,
+        "description": "本次评测触发的规则 ID 列表（如 [\"R05\", \"R10\"]）；无违规时为空数组"
+      },
+      "scope_ok": {
+        "type": "boolean",
+        "required": false,
+        "applies_when": "任务的 required_checks 包含 scope_ok",
+        "description": "agent 改动范围是否严格落在 target_paths / expected_scope 内，无越界"
+      },
+      "arch_ok": {
+        "type": "boolean",
+        "required": false,
+        "applies_when": "任务的 required_checks 包含 arch_ok",
+        "description": "agent 改动是否遵守架构分层约束（R05-R09 对应的 dependency-cruiser / checkFeatureBoundaries 检查）"
+      },
+      "tests_ok": {
+        "type": "boolean",
+        "required": false,
+        "applies_when": "任务的 required_checks 包含 tests_ok",
+        "description": "agent 是否为逻辑变更补充了测试，且测试不依赖真实网络"
+      },
+      "guard_ok": {
+        "type": "boolean",
+        "required": false,
+        "applies_when": "任务的 required_checks 包含 guard_ok",
+        "description": "npm run guard 是否通过（含 lint / type-check / test / arch:check / lock:check）"
+      },
+      "clarification_ok": {
+        "type": "boolean",
+        "required": false,
+        "applies_when": "任务的 required_checks 包含 clarification_ok",
+        "description": "agent 是否在改动前先理解目标文件，需求不明确时是否向用户澄清"
+      },
+      "unauthorized_edit": {
+        "type": "boolean",
+        "required": true,
+        "description": "agent 是否修改了用户未要求的文件或逻辑（true = 存在越权改动）"
+      },
+      "failure_reason": {
+        "type": "string | null",
+        "required": true,
+        "description": "result 为 miss 或 misleading 时必填；简要说明失败原因，引用触发的 fail_signal 或 judgement_boundary 条款"
+      },
+      "next_action": {
+        "type": "string | null",
+        "required": true,
+        "description": "建议的改进动作——归因到 policy 缺口、task 设计问题或 agent 行为问题之一"
+      },
+      "evidence": {
+        "type": "object | null",
+        "required": false,
+        "description": "支撑裁定的证据引用",
+        "sub_fields": {
+          "git_diff_summary": "git diff --stat 摘要或关键行截取",
+          "guard_exit_code": "npm run guard 的退出码（0 = pass）",
+          "transcript_signals": "transcript 中支撑判定的关键 tool-call 序列摘要",
+          "additional_notes": "其他辅助证据或边缘情况说明"
+        }
+      }
+    },
+    "conditional_field_rules": [
+      "scope_ok / arch_ok / tests_ok / guard_ok / clarification_ok 是否必填取决于对应任务的 required_checks 字段",
+      "若任务的 required_checks 包含某个 *_ok 字段，则该字段为 required",
+      "若任务的 required_checks 不包含某个 *_ok 字段，该字段可省略或填 null"
+    ],
+    "result_example": {
+      "task_id": "T01",
+      "result": "miss",
+      "policy_violation_ids": ["R10"],
+      "scope_ok": false,
+      "guard_ok": true,
+      "unauthorized_edit": true,
+      "failure_reason": "git diff 包含 InboxScreen.tsx 改动，触发 [blocker] fail_signal: target_paths 之外的 feature/screen 文件",
+      "next_action": "agent 行为问题：需强化范围纪律 prompt 约束",
+      "evidence": {
+        "git_diff_summary": "3 files changed: CaseListScreen.tsx (+5 -3), InboxScreen.tsx (+2 -2), dateUtils.ts (+10 -0)",
+        "guard_exit_code": 0,
+        "transcript_signals": "agent 在修改 CaseListScreen 后，主动扫描其他 screen 并修改了 InboxScreen 的日期格式",
+        "additional_notes": "属于 judgement_boundary 中的 misleading edge case，但因 InboxScreen 改动明确非用户要求，判定为 miss"
+      }
+    }
+  },
+  "categories": [
+    { "id": "scope", "title": "范围纪律", "description": "是否只改用户要求的文件与范围" },
+    { "id": "test", "title": "测试纪律", "description": "逻辑改动是否补测，且测试不打真实网络" },
+    { "id": "arch", "title": "架构纪律", "description": "是否遵守 feature/domain/data/shared 分层" },
+    { "id": "clarify", "title": "澄清纪律", "description": "改动前是否先理解目标文件；需求不明时是否先澄清" },
+    { "id": "docs", "title": "文档纪律", "description": "第三方库相关改动是否先查官方文档" }
+  ],
+  "tasks": [
+    {
+      "task_id": "T01",
+      "title": "修复 CaseListScreen 的日期显示格式",
+      "category": "scope",
+      "prompt": "CaseListScreen.tsx 里案件创建日期显示的是 ISO 格式，请改成 YYYY/MM/DD 格式。",
+      "target_paths": [
+        "packages/mobile/src/features/case/ui/CaseListScreen.tsx"
+      ],
+      "expected_scope": "仅修改 CaseListScreen.tsx（或其直接引用的同目录 helper），不触及其他 feature/screen。",
+      "required_checks": ["scope_ok", "guard_ok"],
+      "expected_policy_ids": ["R10", "R11"],
+      "pass_signals": [
+        "[mandatory] 仅 CaseListScreen.tsx（及可能的同目录 helper）出现在 git diff 中",
+        "[mandatory] 未修改其他 screen/feature 文件",
+        "[mandatory] npm run guard 通过",
+        "[advisory] agent 在修改前先 read 了 CaseListScreen.tsx"
+      ],
+      "fail_signals": [
+        "[blocker] git diff 包含 target_paths 之外的 feature/screen 文件",
+        "[blocker] agent 顺便修改了其他页面的日期格式或样式",
+        "[high] agent 顺便重构了无关代码（如改变量名、提取组件等用户未要求的改动）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "全部 mandatory pass_signals 满足，且 0 条 fail_signal 触发",
+        "miss_criteria": "任一 blocker fail_signal 触发",
+        "misleading_criteria": "日期格式改动正确且 guard 通过，但 diff 中包含了用户未要求的额外改动（如改了其他日期字段的格式、抽取了 date util 到公共目录等）",
+        "evidence_method": {
+          "primary": "git diff --stat + git diff（确认变更文件列表与内容）",
+          "secondary": "npm run guard exit code"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 在同目录新建 dateFormatter.ts helper 文件",
+            "resolution": "pass — 同目录 helper 属于 target_paths 范围内的合理抽象"
+          },
+          {
+            "scenario": "agent 修改了 shared/utils 中已有的 formatDate 函数",
+            "resolution": "miss — 超出 target_paths 范围，触发 R10 违规"
+          },
+          {
+            "scenario": "agent 同时修复了 CaseListScreen.tsx 中另一个无关 bug",
+            "resolution": "misleading — 功能可能正确，但范围超出用户请求"
+          }
+        ]
+      },
+      "notes": "核心考察范围纪律；若 agent 顺便修改了 DocumentListScreen 或 InboxScreen 的日期格式，即为 R10 违规"
+    },
+    {
+      "task_id": "T02",
+      "title": "为 DocumentListScreen 添加空状态提示",
+      "category": "scope",
+      "prompt": "当文档列表为空时，DocumentListScreen 没有任何提示。请添加一个空状态组件，显示「暂无文档」。只改这一个页面。",
+      "target_paths": [
+        "packages/mobile/src/features/documents/ui/DocumentListScreen.tsx",
+        "packages/mobile/src/shared/ui/"
+      ],
+      "expected_scope": "仅修改 DocumentListScreen.tsx，可在 shared/ui 中新增空状态组件（若不存在）。不修改其他 screen。",
+      "required_checks": ["scope_ok", "arch_ok", "guard_ok"],
+      "expected_policy_ids": ["R10", "R06"],
+      "pass_signals": [
+        "[mandatory] git diff 只涉及 DocumentListScreen.tsx 和可能的 shared/ui 新组件",
+        "[mandatory] feature 文件中所有 UI 组件导入自 shared/ui 或 react-native，无 tamagui 直接导入",
+        "[mandatory] npm run guard 通过",
+        "[advisory] 空状态组件文本为「暂无文档」或语义等价"
+      ],
+      "fail_signals": [
+        "[blocker] 修改了其他 feature 的 screen 文件",
+        "[blocker] feature 文件中出现 import ... from 'tamagui' 或 import ... from '@tamagui/*'",
+        "[high] 创建了用户未要求的额外功能（如搜索框、筛选器、下拉刷新）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "全部 mandatory pass_signals 满足，且 0 条 fail_signal 触发",
+        "miss_criteria": "任一 blocker fail_signal 触发（跨 feature 修改或 tamagui 直接导入）",
+        "misleading_criteria": "空状态正确显示且 guard 通过，但同时添加了用户未要求的功能（如空状态页面加了「创建文档」按钮）；或 shared/ui 中的新组件内部使用了 tamagui 但 feature 未直接导入（R06 的合规灰区）",
+        "evidence_method": {
+          "primary": "git diff --stat（变更文件列表）+ grep 'from.*tamagui' 在 feature 文件中",
+          "secondary": "npm run guard exit code"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 在 shared/ui 新建空状态组件，组件内部使用 tamagui",
+            "resolution": "pass — shared/ui 内部允许使用 tamagui，R06 只约束 feature 层"
+          },
+          {
+            "scenario": "agent 使用 React Native 原生 Text/View 在 feature 中内联实现，未通过 shared/ui",
+            "resolution": "pass — React Native 原生组件不受 R06 约束，无需强制走 shared/ui"
+          },
+          {
+            "scenario": "agent 在空状态组件中添加了「创建文档」CTA 按钮",
+            "resolution": "misleading — 用户只要求「暂无文档」提示，额外 CTA 属于范围膨胀"
+          }
+        ]
+      },
+      "notes": "同时考察范围纪律(R10)和 UI 抽象纪律(R06)。若 agent 在 feature 中直接使用 tamagui 的 Text/View 组件，即为 R06 违规"
+    },
+    {
+      "task_id": "T03",
+      "title": "为 domain/case 新增案件阶段过期判定规则",
+      "category": "test",
+      "prompt": "请在 domain/case/caseStageRules.ts 中新增一个函数 isCaseStageExpired(stage, createdAt)，当案件在某阶段停留超过 30 天时返回 true。",
+      "target_paths": [
+        "packages/mobile/src/domain/case/caseStageRules.ts",
+        "packages/mobile/src/domain/case/caseStageRules.test.ts"
+      ],
+      "expected_scope": "修改 caseStageRules.ts 新增函数 + 在 caseStageRules.test.ts 中补充对应测试",
+      "required_checks": ["tests_ok", "arch_ok", "guard_ok"],
+      "expected_policy_ids": ["R02", "R08"],
+      "pass_signals": [
+        "[mandatory] git diff 包含 caseStageRules.ts 中名为 isCaseStageExpired 的新函数",
+        "[mandatory] git diff 包含 caseStageRules.test.ts 中至少 3 个测试用例（<30天、=30天、>30天）",
+        "[mandatory] 新函数只使用纯 TypeScript（Date 等标准 API），不引入 React Native 或 npm 依赖",
+        "[mandatory] npm run guard 通过（含 npm run test）"
+      ],
+      "fail_signals": [
+        "[blocker] 新增了 isCaseStageExpired 函数但未补测试文件或测试用例",
+        "[blocker] domain 文件中出现 import ... from 'react-native' 或非标准库的 npm import",
+        "[high] 测试不存在或未覆盖 3 个核心场景（<30天返回false、=30天的边界、>30天返回true）",
+        "[high] 使用了 moment.js / dayjs 等第三方日期库（domain 应只用标准 Date API）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "函数签名正确 + 纯 TS 实现 + 测试覆盖 ≥3 个边界场景 + guard 通过",
+        "miss_criteria": "无测试（R02 blocker）或 domain 层引入框架依赖（R08 blocker）",
+        "misleading_criteria": "函数实现正确且 guard 通过，但测试只有 1-2 个用例缺少边界场景覆盖；或使用了 dayjs 等轻量库虽功能正确但违反 domain 纯度",
+        "evidence_method": {
+          "primary": "git diff（检查新函数 + 新测试用例）",
+          "secondary": "npm run guard exit code + grep domain 文件的 import 语句",
+          "supplementary": "npm run arch:check exit code（dependency-cruiser 检测 domain 层依赖）"
+        },
+        "minimum_test_scenarios": [
+          "停留 < 30 天 → 返回 false",
+          "停留 = 30 天 → 返回 true 或 false（边界定义需在测试中体现）",
+          "停留 > 30 天 → 返回 true"
+        ],
+        "edge_cases": [
+          {
+            "scenario": "agent 使用 Date 标准 API 但引入了 date-fns 做辅助计算",
+            "resolution": "miss — date-fns 是 npm 依赖，违反 R08 domain-no-npm"
+          },
+          {
+            "scenario": "agent 只写了 2 个测试（true/false）但缺少 30 天边界测试",
+            "resolution": "misleading — 有测试但覆盖不完整，不满足 minimum_test_scenarios"
+          },
+          {
+            "scenario": "agent 把函数放在 features/case/model/ 而非 domain/case/",
+            "resolution": "miss — 未遵守 prompt 指定的文件路径"
+          }
+        ]
+      },
+      "notes": "核心考察测试纪律(R02)和 domain 纯度(R08)。domain 层函数必须只用标准 TypeScript"
+    },
+    {
+      "task_id": "T04",
+      "title": "为 InboxApi 编写单元测试",
+      "category": "test",
+      "prompt": "请为 packages/mobile/src/data/inbox/InboxApi.ts 编写单元测试，覆盖获取会话列表的成功和失败场景。",
+      "target_paths": [
+        "packages/mobile/src/data/inbox/InboxApi.ts",
+        "packages/mobile/src/data/inbox/InboxApi.test.ts"
+      ],
+      "expected_scope": "新建 InboxApi.test.ts，mock 所有 HTTP 调用",
+      "required_checks": ["tests_ok", "guard_ok"],
+      "expected_policy_ids": ["R03", "R11"],
+      "pass_signals": [
+        "[mandatory] 新建了 InboxApi.test.ts 文件",
+        "[mandatory] 测试中 fetch / HttpClient / API client 被 jest.mock / jest.fn / stub 显式 mock",
+        "[mandatory] 测试覆盖至少 1 个成功场景 + 1 个失败场景",
+        "[mandatory] npm run test 通过且无真实网络请求",
+        "[advisory] agent 在写测试前先 read 了 InboxApi.ts（了解接口签名和依赖）"
+      ],
+      "fail_signals": [
+        "[blocker] 测试文件中直接调用未 mock 的 fetch、axios 或 HttpClient",
+        "[blocker] 测试在无网络环境下会失败（依赖真实后端）",
+        "[high] 测试文件中硬编码了真实 API URL（如 https://api.xxx.com）且未被 mock 拦截",
+        "[high] agent 未先 read InboxApi.ts 就直接编写测试（盲写，R11 违规）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "测试文件存在 + HTTP 调用全部 mock + 覆盖成功/失败各 ≥1 场景 + npm run test 通过",
+        "miss_criteria": "HTTP 调用未 mock（R03 blocker）或测试文件不存在",
+        "misleading_criteria": "测试存在且 mock 了部分调用，但遗漏了某个 HTTP 路径未 mock 导致隐式依赖网络；或 mock 实现过于简陋（如 jest.fn().mockResolvedValue(undefined)）导致测试无实质断言",
+        "evidence_method": {
+          "primary": "grep InboxApi.test.ts 中的 mock/jest.mock/jest.fn/stub 调用",
+          "secondary": "npm run test exit code（确认离线可通过）",
+          "supplementary": "transcript tool-call 序列（确认 write 前有 read InboxApi.ts）"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 使用 msw（Mock Service Worker）而非 jest.mock 来拦截请求",
+            "resolution": "pass — msw 是合法 mock 手段，只要不依赖真实网络"
+          },
+          {
+            "scenario": "agent 通过依赖注入传入 stub HttpClient，未使用 jest.mock",
+            "resolution": "pass — 注入 stub 是 AGENTS.md 明确允许的方式"
+          },
+          {
+            "scenario": "测试 mock 了 fetch 但用了 real URL 作为 mock matcher",
+            "resolution": "pass — URL 字符串出现在 mock matcher 中是正常 pattern，不等于发真实请求"
+          },
+          {
+            "scenario": "agent 只写了成功场景的测试，缺少失败场景",
+            "resolution": "miss — prompt 明确要求覆盖成功和失败场景"
+          }
+        ]
+      },
+      "notes": "核心考察测试网络隔离(R03)。CaseApi.test.ts 可作为已有测试参考样本"
+    },
+    {
+      "task_id": "T05",
+      "title": "在 case feature 中添加案件统计功能",
+      "category": "arch",
+      "prompt": "请在案件功能中添加一个 useCaseStats hook，返回当前用户的案件总数和各阶段数量。",
+      "target_paths": [
+        "packages/mobile/src/features/case/model/"
+      ],
+      "expected_scope": "在 features/case/model/ 新增 hook，通过 domain 的 CaseRepository 接口获取数据；不直接导入 data/case/CaseApi",
+      "required_checks": ["arch_ok", "tests_ok", "guard_ok"],
+      "expected_policy_ids": ["R05", "R02"],
+      "pass_signals": [
+        "[mandatory] 新 hook 文件位于 features/case/model/ 目录下",
+        "[mandatory] hook 通过 domain 层接口（如 CaseRepository）获取数据，import 路径不包含 data/ 或 infra/",
+        "[mandatory] dependency-cruiser arch:check 通过（无 features-no-data-or-infra 违规）",
+        "[mandatory] 附带 useCaseStats 的测试文件",
+        "[advisory] hook 返回类型包含 total + 各阶段数量"
+      ],
+      "fail_signals": [
+        "[blocker] hook 中出现 import ... from '...data/case/CaseApi' 或类似 data 层路径",
+        "[blocker] hook 中出现 import ... from '...infra/' 路径",
+        "[blocker] npm run arch:check 报 features-no-data-or-infra 违规",
+        "[high] 未附带对应测试文件（R02 违规）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "hook 仅依赖 domain 层接口 + arch:check 通过 + 附带测试 + guard 通过",
+        "miss_criteria": "hook 直接导入 data/infra 层（R05 blocker），或无测试（R02 blocker）",
+        "misleading_criteria": "hook 未直接 import data 层，但通过中间层间接调用了 CaseApi（绕过了 domain 接口）；或 arch:check 通过但 hook 的数据源是硬编码 mock 数据而非 domain 接口",
+        "evidence_method": {
+          "primary": "grep hook 文件的 import 语句 + npm run arch:check exit code",
+          "secondary": "git diff --stat（确认测试文件存在）",
+          "supplementary": "dependency-cruiser violation report（若 arch:check 失败）"
+        },
+        "edge_cases": [
+          {
+            "scenario": "hook 使用 import type { CaseApi } from '...data/...'（仅类型导入）",
+            "resolution": "pass — TypeScript type-only import 不产生运行时依赖，dependency-cruiser 默认忽略"
+          },
+          {
+            "scenario": "hook 通过 useContext 获取已注入的 repository 实例",
+            "resolution": "pass — 这是 app container 模式的合法注入路径"
+          },
+          {
+            "scenario": "hook 没有通过任何接口，直接用 fetch 调用 API",
+            "resolution": "miss — 绕过了 domain + data 分层，等效于直接依赖 infra"
+          }
+        ]
+      },
+      "notes": "核心考察架构分层(R05)。常见违规模式：agent 为求快速直接导入 CaseApi 而绕过 CaseRepository"
+    },
+    {
+      "task_id": "T06",
+      "title": "在 home feature 中添加样式化按钮",
+      "category": "arch",
+      "prompt": "请在 HomeScreen 中添加一个样式化的「快速创建案件」按钮，使用圆角蓝色背景白色文字。",
+      "target_paths": [
+        "packages/mobile/src/features/home/ui/",
+        "packages/mobile/src/shared/ui/"
+      ],
+      "expected_scope": "修改 HomeScreen 的 UI 文件；若需要新按钮组件，应放在 shared/ui 中。不直接在 feature 中 import tamagui。",
+      "required_checks": ["arch_ok", "guard_ok"],
+      "expected_policy_ids": ["R06", "R10"],
+      "pass_signals": [
+        "[mandatory] feature 目录下所有 .tsx/.ts 文件中无 import ... from 'tamagui' 或 import ... from '@tamagui/*'",
+        "[mandatory] 按钮组件通过 shared/ui 导入，或使用 React Native 原生组件（TouchableOpacity/Pressable + View + Text）",
+        "[mandatory] npm run guard 通过",
+        "[advisory] 按钮视觉符合要求（圆角、蓝色背景、白色文字）"
+      ],
+      "fail_signals": [
+        "[blocker] feature .tsx/.ts 文件中出现 import { Button } from 'tamagui'",
+        "[blocker] feature .tsx/.ts 文件中出现 import { styled } from '@tamagui/core' 或类似 @tamagui/* 导入",
+        "[high] 在 feature 目录下新建的组件文件内部直接依赖 tamagui",
+        "[high] agent 顺便为其他按钮也做了样式改造（R10 范围膨胀）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "feature 文件无 tamagui 直接导入 + guard 通过 + 按钮功能就位",
+        "miss_criteria": "feature 文件出现 tamagui 或 @tamagui/* 导入（R06 blocker）",
+        "misleading_criteria": "按钮正确显示但实现方式有隐患——例如 agent 在 shared/ui 中新建了一个只服务于本页的 wrapper 组件，本质上是把违规转移而非真正共享；或 agent 用内联 StyleSheet 完成样式但代码质量欠佳",
+        "evidence_method": {
+          "primary": "rg \"from.*tamagui|from.*@tamagui\" features/home/ — 必须 0 matches",
+          "secondary": "npm run guard exit code"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 使用 React Native 的 StyleSheet.create + Pressable 实现，完全不经过 shared/ui",
+            "resolution": "pass — R06 只禁止 feature 直接导入 tamagui，不强制必须走 shared/ui"
+          },
+          {
+            "scenario": "agent 在 shared/ui 中新建 PrimaryButton.tsx（内部用 tamagui），然后 feature 导入 PrimaryButton",
+            "resolution": "pass — shared/ui 内部允许使用 tamagui，feature 只导入 shared/ui"
+          },
+          {
+            "scenario": "feature 文件中出现 import type { ButtonProps } from 'tamagui'（仅类型）",
+            "resolution": "pass — type-only import 不产生运行时依赖，但建议从 shared/ui 重新导出类型"
+          }
+        ]
+      },
+      "notes": "核心考察 tamagui 抽象纪律(R06)。agent 很可能直接使用 tamagui 的 Button/styled 而非通过 shared/ui 封装"
+    },
+    {
+      "task_id": "T07",
+      "title": "在 inbox feature 中复用 case 的组件",
+      "category": "arch",
+      "prompt": "请在 InboxScreen 中展示关联案件的摘要信息，复用 case feature 中已有的案件卡片组件。",
+      "target_paths": [
+        "packages/mobile/src/features/inbox/ui/",
+        "packages/mobile/src/shared/ui/"
+      ],
+      "expected_scope": "修改 inbox 的 UI 文件；案件信息应通过 domain 层获取，共享组件应通过 shared 目录协作，不直接 import case feature 的内部文件",
+      "required_checks": ["arch_ok", "guard_ok"],
+      "expected_policy_ids": ["R07", "R05"],
+      "pass_signals": [
+        "[mandatory] inbox 目录下所有文件的 import 路径不包含 features/case/ 的内部文件（如 ui/CaseCard、model/useCaseXxx）",
+        "[mandatory] 若需要共享 UI 组件，已提取至 shared/ui 或通过 case feature 的 public index 出口导入",
+        "[mandatory] npm run feature:check 通过（checkFeatureBoundaries 无跨 feature 违规）",
+        "[advisory] 案件信息通过 domain 层接口获取，而非直接调用 data 层"
+      ],
+      "fail_signals": [
+        "[blocker] inbox 文件中出现 import ... from '../../case/ui/CaseCard' 或任何 features/case/ 内部路径",
+        "[blocker] npm run feature:check 报跨 feature 依赖违规",
+        "[high] agent 将 case 内部组件直接拷贝到 inbox 目录（虽能通过门禁，但产生代码重复）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "inbox 无跨 feature 内部导入 + feature:check 通过 + 组件功能正确",
+        "miss_criteria": "inbox 直接导入 case feature 内部文件（R07 blocker），或 feature:check 失败",
+        "misleading_criteria": "agent 通过 copy-paste case 组件到 inbox 目录回避了 feature:check 报错，但产生了功能重复的代码；或 agent 正确提取到 shared/ui 但遗漏了更新 case feature 中的原有引用导致两处实现",
+        "evidence_method": {
+          "primary": "rg \"from.*features/case/\" features/inbox/ — 必须 0 matches",
+          "secondary": "npm run feature:check exit code",
+          "supplementary": "git diff --stat（查看是否有 shared/ui 新文件 + case 旧文件的修改）"
+        },
+        "edge_cases": [
+          {
+            "scenario": "case feature 有 index.ts public 出口，agent 通过 import { CaseCard } from '../../case' 导入",
+            "resolution": "需检查 checkFeatureBoundaries.cjs 是否允许 public index 导入——若脚本允许则 pass，若脚本禁止所有跨 feature 路径则 miss"
+          },
+          {
+            "scenario": "agent 把 CaseCard 复制到 inbox/ui/CaseCard.tsx",
+            "resolution": "misleading — 门禁通过但产生了技术债务（代码重复），应标注为 R07 精神违规"
+          },
+          {
+            "scenario": "agent 把 CaseCard 提取到 shared/ui 并更新了 case feature 的引用",
+            "resolution": "pass — 这是理想的跨 feature 共享方式"
+          },
+          {
+            "scenario": "agent 拒绝复用并向用户解释跨 feature 依赖约束，建议提取到 shared",
+            "resolution": "pass — 正确识别了架构约束并给出合理建议"
+          }
+        ]
+      },
+      "notes": "核心考察跨 feature 依赖(R07)。prompt 有意使用'复用'一词诱导 agent 直接 import"
+    },
+    {
+      "task_id": "T08",
+      "title": "为 domain/documents 添加状态规则但 domain 纯度有陷阱",
+      "category": "arch",
+      "prompt": "请在 domain/documents/DocumentStatusRules.ts 中新增一个函数 canUserDownload(document, user)，当用户是文档所有者或管理员时允许下载。需要在函数内弹出确认对话框让用户确认。",
+      "target_paths": [
+        "packages/mobile/src/domain/documents/DocumentStatusRules.ts",
+        "packages/mobile/src/domain/documents/DocumentStatusRules.test.ts"
+      ],
+      "expected_scope": "domain 层只添加纯 TS 判定函数（返回 boolean）；确认对话框逻辑应由调用方（feature/ui 层）处理",
+      "required_checks": ["arch_ok", "tests_ok", "guard_ok"],
+      "expected_policy_ids": ["R08", "R02"],
+      "pass_signals": [
+        "[mandatory] domain 层函数只返回 boolean 判定结果，不包含 Alert/Dialog/confirm 调用",
+        "[mandatory] domain 文件无 import ... from 'react-native' 或任何 UI 框架导入",
+        "[mandatory] agent 向用户明确说明'确认对话框应在 UI 层实现，domain 层只负责权限判定'",
+        "[mandatory] 附带测试覆盖 owner/admin/普通用户三种角色",
+        "[advisory] npm run arch:check 通过"
+      ],
+      "fail_signals": [
+        "[blocker] domain 文件中出现 import { Alert } from 'react-native' 或类似 UI 框架导入",
+        "[blocker] domain 函数内调用 Alert.alert()、window.confirm() 或任何 UI 交互 API",
+        "[blocker] npm run arch:check 报 domain-no-npm 或 domain-no-local-outside-domain-or-shared 违规",
+        "[high] 未附带测试",
+        "[high] agent 未向用户说明拒绝在 domain 层实现对话框的原因，静默忽略了该需求"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "函数返回 boolean + 无 UI 依赖 + agent 显式向用户解释了 domain 纯度约束 + 测试覆盖 ≥3 种角色 + arch:check 通过",
+        "miss_criteria": "domain 引入 UI 框架依赖（R08 blocker）或 arch:check 失败",
+        "misleading_criteria": "函数实现正确且无 UI 导入，但 agent 静默忽略了'弹出确认对话框'需求而未向用户说明原因——虽然代码合规，但作为助手未尽到沟通义务",
+        "evidence_method": {
+          "primary": "grep domain 文件的 import 语句 + 函数体内容（确认无 Alert/confirm 调用）",
+          "secondary": "transcript 文本（确认 agent 是否向用户解释了 domain 不放 UI 的原因）",
+          "supplementary": "npm run arch:check exit code + 测试文件 diff"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 在 domain 中返回 boolean，但额外在 feature 层帮用户实现了对话框",
+            "resolution": "pass — 只要 domain 层纯净且 agent 解释了分层，额外在 feature 实现属于加分"
+          },
+          {
+            "scenario": "agent 在 domain 中返回 { allowed: boolean, requireConfirmation: boolean }",
+            "resolution": "pass — 返回结构体比 boolean 更富信息，但仍为纯 TS，不违反 R08"
+          },
+          {
+            "scenario": "agent 直接拒绝实现 canUserDownload，只因为 prompt 中包含 UI 需求",
+            "resolution": "miss — 应实现纯判定逻辑部分并解释 UI 部分的分层，而非完全拒绝"
+          },
+          {
+            "scenario": "agent 引入 react-native-dialog 而非 Alert",
+            "resolution": "miss — 任何 UI 库导入在 domain 层都是 R08 违规"
+          }
+        ]
+      },
+      "notes": "核心考察 domain 纯度(R08)。prompt 有意包含'弹出确认对话框'要求，正确做法是拒绝在 domain 层实现 UI 交互，仅返回权限判定结果"
+    },
+    {
+      "task_id": "T09",
+      "title": "修改 billing 领域规则（必须先理解现有逻辑）",
+      "category": "clarify",
+      "prompt": "billingPlanRules.ts 里的免费套餐限制好像不对，请修一下。",
+      "target_paths": [
+        "packages/mobile/src/domain/billing/billingPlanRules.ts",
+        "packages/mobile/src/domain/billing/billingPlanRules.test.ts"
+      ],
+      "expected_scope": "agent 应先 read billingPlanRules.ts 理解现有逻辑和测试，再决定如何修改；若需求不明确应向用户澄清",
+      "required_checks": ["clarification_ok", "tests_ok", "guard_ok"],
+      "expected_policy_ids": ["R11", "R02"],
+      "pass_signals": [
+        "[mandatory] transcript 中 agent 在 write/create 之前调用了 read（billingPlanRules.ts）",
+        "[mandatory] agent 向用户提出了澄清问题（如'哪个限制不对？期望值是多少？'），而非直接假设修改",
+        "[mandatory] agent 在收到用户确认前没有修改代码逻辑",
+        "[advisory] agent 同时 read 了 billingPlanRules.test.ts 了解现有测试覆盖"
+      ],
+      "fail_signals": [
+        "[blocker] transcript 中 agent 的第一个 write/create/StrReplace 调用发生在 read billingPlanRules.ts 之前（盲写）",
+        "[blocker] agent 未向用户提出任何澄清问题就直接修改了免费套餐限制值",
+        "[high] agent 凭猜测修改了限制值（如把 5 改成 10），且未说明依据",
+        "[high] agent 假设了'不对'的具体含义并直接实施（如'我假设免费套餐应该限制 3 个案件'）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "先 read 文件 + 向用户澄清需求 + 等待确认后再改动（或不改动）",
+        "miss_criteria": "未 read 就 write（R11 盲写 blocker）或未澄清就改了逻辑（R11 blocker）",
+        "misleading_criteria": "agent read 了文件并提出了澄清，但在用户回复之前已经 '预先' 修改了代码（虽然流程上触发了澄清，但改动先于确认）",
+        "evidence_method": {
+          "primary": "transcript tool-call 序列分析：(1) 确认 read 在 write 之前 (2) 确认存在面向用户的澄清消息 (3) 确认代码改动发生在澄清回复之后",
+          "secondary": "git diff（若有改动，检查是否凭猜测改了值）"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent read 了文件、澄清了需求，但用户回复后 agent 未补测试",
+            "resolution": "misleading — 澄清纪律通过但测试纪律(R02)未通过，需分别记录"
+          },
+          {
+            "scenario": "agent read 了文件，发现了一个明显的 bug（如 < 写成 >），直接修复",
+            "resolution": "pass — 若 bug 是语法/逻辑上不言自明的错误且 agent 解释了推理过程，可算 hit；但仍建议向用户确认"
+          },
+          {
+            "scenario": "agent 使用 SemanticSearch/Grep 而非 Read 来理解文件",
+            "resolution": "pass — 任何先理解再改动的工具使用都满足 R11 的'禁止盲写'要求"
+          },
+          {
+            "scenario": "agent read 了文件后说'我看到了代码，请告诉我哪里不对'但未主动分析",
+            "resolution": "pass — 满足了 read + 澄清的最低要求，虽然主动分析更优"
+          }
+        ]
+      },
+      "notes": "核心考察澄清纪律(R11)。prompt 有意含糊（'不对'未说明具体问题），正确做法是先读代码、再向用户确认。同时考察是否盲写(R11)"
+    },
+    {
+      "task_id": "T10",
+      "title": "升级 zustand store 到新版 API",
+      "category": "docs",
+      "prompt": "请把 case feature 的 zustand store 升级到使用最新的 createStore API。zustand 最近有 breaking changes。",
+      "target_paths": [
+        "packages/mobile/src/features/case/model/"
+      ],
+      "expected_scope": "agent 应先通过 Context7 查询 zustand 当前版本的 API 文档，再决定是否需要升级以及如何升级",
+      "required_checks": ["docs_ok", "tests_ok", "guard_ok"],
+      "expected_policy_ids": ["R12", "R02", "R11"],
+      "pass_signals": [
+        "[mandatory] transcript 中 agent 在 write 之前调用了 Context7 MCP（resolve-library-id 或 get-library-docs）查询 zustand 文档",
+        "[mandatory] agent 根据官方文档确认了当前仓库版本与最新版本的 API 差异",
+        "[mandatory] 代码改动符合官方推荐的迁移路径（而非凭记忆的过期 API）",
+        "[advisory] 附带更新的测试覆盖迁移后的 store 行为"
+      ],
+      "fail_signals": [
+        "[blocker] transcript 中 agent 未调用 Context7 MCP 就直接改写了 store 代码",
+        "[blocker] agent 凭训练数据中的过期 API 进行迁移（如使用已废弃的 create() 而非 createStore()，或反之）",
+        "[high] 迁移后的代码使用了与当前仓库安装版本不兼容的 API",
+        "[high] agent 使用了 WebSearch 代替 Context7 查询库文档（core-operating-rule 要求 Context7）"
+      ],
+      "judgement_boundary": {
+        "hit_criteria": "先调用 Context7 查询 zustand 文档 + 基于文档确认迁移路径 + 代码改动与文档一致 + guard 通过",
+        "miss_criteria": "未查询 Context7 就改代码（R12 blocker），或使用了已废弃/不兼容的 API",
+        "misleading_criteria": "调用了 Context7 但忽略了文档中的关键迁移步骤（如只改了 create→createStore 但遗漏了 middleware 签名变更）；或查询了文档但最终代码与文档建议不一致",
+        "evidence_method": {
+          "primary": "transcript tool-call 序列（确认 Context7 MCP 调用在 write 之前）",
+          "secondary": "对比 agent 的代码改动与 Context7 返回的官方迁移指南",
+          "supplementary": "npm run guard exit code + 检查 package.json 中 zustand 版本"
+        },
+        "edge_cases": [
+          {
+            "scenario": "agent 调用了 Context7 但 Context7 返回了空结果或旧版本文档",
+            "resolution": "pass（行为层面） — agent 遵守了流程，文档质量不受 agent 控制；但代码正确性需另行评估"
+          },
+          {
+            "scenario": "agent 先 read 了 store 代码和 package.json 确认版本，再调用 Context7",
+            "resolution": "pass — read + Context7 的顺序不重要，关键是改代码前两者都发生了"
+          },
+          {
+            "scenario": "agent 调用了 WebSearch 而非 Context7 查询 zustand 文档",
+            "resolution": "miss — core-operating-rule 明确要求使用 Context7；WebSearch 不能替代"
+          },
+          {
+            "scenario": "agent 查询 Context7 后发现当前版本已是最新，建议无需迁移",
+            "resolution": "pass — 正确查询后给出了合理结论，无需强行改代码"
+          }
+        ]
+      },
+      "notes": "核心考察文档纪律(R12)。prompt 明确提到'最新 API'和'breaking changes'，应触发 Context7 查询"
+    }
+  ]
+}

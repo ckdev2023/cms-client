@@ -1,0 +1,8 @@
+{
+  "task_type": "feature",
+  "allowed_modules": ["src/features/coupon/"],
+  "forbidden_modules": ["src/admin/"],
+  "required_outputs": ["page", "tests"],
+  "non_goals": ["backend api changes"],
+  "must_verify": ["lint", "unit_test"]
+}

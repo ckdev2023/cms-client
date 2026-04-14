@@ -1,0 +1,41 @@
+{
+  "task_id": "W16",
+  "task_name": "pilot-review",
+  "status": "completed",
+  "stopped": false,
+  "decision": "no-go",
+  "primary_output": "plan/mempalace/go-no-go-review.md",
+  "summary_output": "artifacts/mempalace/W16.summary.md",
+  "checks": [
+    {
+      "name": "go_no_go_decision_written",
+      "status": "passed"
+    },
+    {
+      "name": "entry_prerequisites_explicit",
+      "status": "passed"
+    },
+    {
+      "name": "current_do_not_proceed_items_explicit",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W16-pilot-review.md",
+    "plan/mempalace/allowed_sources.md",
+    "plan/mempalace/blocked_sources.md",
+    "plan/mempalace/data_classification.md",
+    "plan/mempalace/acceptance-queries.md",
+    "plan/mempalace/answer-protocol.md",
+    "plan/mempalace/eval-report-template.md",
+    "plan/mempalace/runbook.md",
+    "plan/mempalace/environment-strategy.md",
+    "artifacts/mempalace/W02.summary.md",
+    "artifacts/mempalace/W03.summary.md",
+    "artifacts/mempalace/W12.summary.md",
+    "artifacts/mempalace/W13.summary.md",
+    "artifacts/mempalace/W14.summary.md",
+    "artifacts/mempalace/W15.summary.md"
+  ]
+}

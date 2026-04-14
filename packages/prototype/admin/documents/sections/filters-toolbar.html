@@ -11,21 +11,21 @@
 <div class="apple-card filter-panel">
   <div class="filter-panel__header">
     <div>
-      <div class="filter-panel__title">组合筛选</div>
-      <p class="filter-panel__desc">可按状态、案件、由谁提供和关键词筛选，快速找到最需要处理的资料。</p>
+      <div class="filter-panel__title">快速找出今天要处理的资料</div>
+      <p class="filter-panel__desc">可按卡点状态、案件、由谁提供和关键词筛选，快速定位要催办、要审核或要换新版的资料。</p>
     </div>
-    <div class="filter-panel__helper">默认按状态优先级排序</div>
+    <div class="filter-panel__helper">默认按缺件、退回、过期风险优先排序</div>
   </div>
   <div class="flex flex-wrap items-center gap-3" id="filtersToolbar">
     <select class="apple-input text-sm" data-filter="status" aria-label="状态筛选">
       <option value="">全部状态</option>
-      <option value="pending">未提出</option>
-      <option value="uploaded_reviewing">已提交待审核</option>
-      <option value="approved">通过</option>
-      <option value="rejected">退回</option>
-      <option value="expired">过期</option>
-      <option value="waived">无需提供</option>
-      <option value="waived">无需提供</option>
+      <option value="not_sent">尚未开始</option>
+      <option value="waiting_upload">等待对方提交</option>
+      <option value="uploaded_reviewing">已收到待确认</option>
+      <option value="approved">可直接使用</option>
+      <option value="revision_required">退回待重交</option>
+      <option value="expired">版本已过期</option>
+      <option value="waived">本案无需提供</option>
     </select>
     <select class="apple-input text-sm" data-filter="case" aria-label="所属案件筛选">
       <option value="">全部案件</option>

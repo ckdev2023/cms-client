@@ -1,0 +1,340 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "manifest_version": "v0-draft",
+  "phase": "phase1_internal_knowledge_only",
+  "default_policy": "deny_by_default",
+
+  "enabled_scope": [
+    "docs/gyoseishoshi_saas_md/P0/",
+    "docs/gyoseishoshi_saas_md/P1/",
+    "docs/事务所流程/"
+  ],
+  "reserved_scope": [
+    "docs/gyoseishoshi_saas_md/_output/",
+    "docs/gyoseishoshi_saas_md/_raw/"
+  ],
+
+  "authority_layer_order": ["L1", "L2", "L3"],
+  "classification_priority": [
+    "C4-Hard-Block",
+    "C3-Desensitize-Candidate",
+    "C2-Scoped-Allow",
+    "C1-Direct-Allow"
+  ],
+
+  "conflict_resolution": {
+    "rule": "more_specific_path_first",
+    "tiebreakers": [
+      "enabled > disabled_reserved",
+      "higher_authority_layer_first"
+    ]
+  },
+
+  "global_exclude_rules": [
+    {
+      "rule_id": "exclude-outside-enabled-roots",
+      "match": "path_not_under_any_root",
+      "roots": [
+        "docs/gyoseishoshi_saas_md/P0/",
+        "docs/gyoseishoshi_saas_md/P1/",
+        "docs/事务所流程/",
+        "docs/gyoseishoshi_saas_md/_output/",
+        "docs/gyoseishoshi_saas_md/_raw/"
+      ],
+      "action": "drop",
+      "description": "一期只允许已冻结根目录进入候选集合"
+    },
+    {
+      "rule_id": "exclude-binary-and-office",
+      "match": "glob",
+      "patterns": [
+        "**/*.xlsx", "**/*.xls", "**/*.docx", "**/*.pdf",
+        "**/*.png", "**/*.jpg", "**/*.jpeg", "**/*.gif", "**/*.webp",
+        "**/*.zip", "**/*.7z", "**/*.tar", "**/*.gz"
+      ],
+      "action": "drop",
+      "description": "未审阅二进制与 Office 附件一期默认禁止"
+    },
+    {
+      "rule_id": "exclude-dump-export-log",
+      "match": "glob",
+      "patterns": [
+        "**/*.csv", "**/*.sql", "**/*.dump",
+        "**/*.bak", "**/*.log", "**/*.jsonl"
+      ],
+      "action": "drop",
+      "description": "导出、备份、日志与批量文本导出不进入一期"
+    },
+    {
+      "rule_id": "exclude-directory-package-allow",
+      "match": "ext_not_in_entry_include_ext",
+      "action": "drop",
+      "description": "禁止目录级整包放行：目录命中白名单但文件后缀未命中该条目 include_ext 时丢弃"
+    }
+  ],
+
+  "blocked_content_rules": [
+    {
+      "rule_id": "block-real-identity",
+      "triggers": [
+        "真实客户/潜在客户姓名",
+        "公司名",
+        "地址",
+        "电话",
+        "邮箱",
+        "证件号",
+        "案件编号等直接标识符"
+      ],
+      "classification": "C4-Hard-Block",
+      "action": "drop"
+    },
+    {
+      "rule_id": "block-formal-case-data",
+      "triggers": [
+        "正式 Lead/Customer/Case 导出",
+        "状态流转",
+        "任务记录",
+        "提醒记录",
+        "资料目录"
+      ],
+      "classification": "C4-Hard-Block",
+      "action": "drop"
+    },
+    {
+      "rule_id": "block-document-and-visa-material",
+      "triggers": [
+        "护照",
+        "在留卡",
+        "申请表",
+        "理由书",
+        "回执",
+        "签证结果等原始材料"
+      ],
+      "classification": "C4-Hard-Block",
+      "action": "drop"
+    },
+    {
+      "rule_id": "block-billing-and-payment",
+      "triggers": [
+        "报价单",
+        "账单",
+        "发票",
+        "付款流水",
+        "银行信息",
+        "税务编号"
+      ],
+      "classification": "C4-Hard-Block",
+      "action": "drop"
+    },
+    {
+      "rule_id": "block-chat-meeting-export",
+      "triggers": [
+        "聊天导出",
+        "邮件导出",
+        "会议转写（含真实客户或正式案件细节）"
+      ],
+      "classification": "C4-Hard-Block",
+      "action": "drop"
+    },
+    {
+      "rule_id": "candidate-desensitized-teaching-sample",
+      "triggers": [
+        "已改写但仍来自真实业务经验的教学样本",
+        "规则摘要",
+        "聚合统计",
+        "复盘摘要"
+      ],
+      "classification": "C3-Desensitize-Candidate",
+      "action": "hold_for_future_review"
+    }
+  ],
+
+  "source_entries": [
+    {
+      "source_id": "p0-core-md",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C1-Direct-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/P0/*.md",
+        "docs/gyoseishoshi_saas_md/P0/**/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [
+        "docs/gyoseishoshi_saas_md/P0/06-页面规格/*-需求门禁/artifacts/**",
+        "docs/gyoseishoshi_saas_md/P0/09-结构化总索引与交叉映射.md"
+      ],
+      "refresh_policy": "incremental_on_merge_plus_weekly_full",
+      "retrieval_weight": 1.00,
+      "usage_rule": "P0 权威正文，可直接作为最终结论来源"
+    },
+    {
+      "source_id": "p0-navigation-md",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C2-Scoped-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/P0/09-结构化总索引与交叉映射.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [],
+      "refresh_policy": "incremental_on_merge",
+      "retrieval_weight": 0.70,
+      "usage_rule": "仅做导航与回链，不单独升格为规则源"
+    },
+    {
+      "source_id": "p0-gate-artifacts",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C2-Scoped-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/P0/06-页面规格/*-需求门禁/artifacts/**"
+      ],
+      "include_ext": [".json", ".md", ".txt"],
+      "exclude_globs": [],
+      "refresh_policy": "incremental_on_regenerate",
+      "retrieval_weight": 0.75,
+      "usage_rule": "仅作为 P0 正文的结构化补充，不覆盖正文口径"
+    },
+    {
+      "source_id": "p1-core-md",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C1-Direct-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/P1/*.md",
+        "docs/gyoseishoshi_saas_md/P1/**/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [
+        "docs/gyoseishoshi_saas_md/P1/*需求门禁/artifacts/**"
+      ],
+      "refresh_policy": "incremental_on_merge_plus_weekly_full",
+      "retrieval_weight": 0.98,
+      "usage_rule": "只回答 P1 扩展问题，不可反向改写 P0 底座"
+    },
+    {
+      "source_id": "p1-gate-artifacts",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C2-Scoped-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/P1/*需求门禁/artifacts/**"
+      ],
+      "include_ext": [".json", ".md", ".txt"],
+      "exclude_globs": [],
+      "refresh_policy": "incremental_on_regenerate",
+      "retrieval_weight": 0.74,
+      "usage_rule": "仅作为 P1 正文的结构化补充"
+    },
+    {
+      "source_id": "office-process-md",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C1-Direct-Allow",
+      "include_globs": [
+        "docs/事务所流程/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [
+        "docs/事务所流程/*.scenarios/*.md"
+      ],
+      "refresh_policy": "incremental_on_merge_plus_biweekly_audit",
+      "retrieval_weight": 0.90,
+      "usage_rule": "仅作为场景流程与资料输入参考；与 P0/P1 冲突时降级"
+    },
+    {
+      "source_id": "office-process-scenarios",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C1-Direct-Allow",
+      "include_globs": [
+        "docs/事务所流程/*.scenarios/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [],
+      "refresh_policy": "incremental_on_change",
+      "retrieval_weight": 0.88,
+      "usage_rule": "适合直接检索和回链，但不单独定义产品实现边界"
+    },
+    {
+      "source_id": "office-process-config",
+      "phase1_mode": "enabled",
+      "authority_layer": "L1",
+      "classification": "C2-Scoped-Allow",
+      "include_globs": [
+        "docs/事务所流程/*.config.json",
+        "docs/事务所流程/*.config.yaml"
+      ],
+      "include_ext": [".json", ".yaml"],
+      "exclude_globs": [],
+      "refresh_policy": "incremental_on_change",
+      "retrieval_weight": 0.68,
+      "usage_rule": "只辅助解析与映射，不单独作为最终业务结论"
+    },
+    {
+      "source_id": "compiled-output-buffer",
+      "phase1_mode": "disabled_reserved",
+      "authority_layer": "L2",
+      "classification": "C2-Scoped-Allow",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/_output/**/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [],
+      "refresh_policy": "reserved_incremental_on_merge",
+      "retrieval_weight": 0.60,
+      "usage_rule": "一期默认不采；后续若启用，只可桥接或加速定位 L1，不得覆盖 L1"
+    },
+    {
+      "source_id": "raw-input-buffer",
+      "phase1_mode": "disabled_reserved",
+      "authority_layer": "L3",
+      "classification": "C3-Desensitize-Candidate",
+      "include_globs": [
+        "docs/gyoseishoshi_saas_md/_raw/**/*.md"
+      ],
+      "include_ext": [".md"],
+      "exclude_globs": [],
+      "refresh_policy": "reserved_manual_only",
+      "retrieval_weight": 0.20,
+      "usage_rule": "一期默认不采；后续若启用，也只能作为待编译线索，不能直接产出最终结论"
+    }
+  ],
+
+  "provenance": [
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/allowed_sources.md",
+    "plan/mempalace/blocked_sources.md",
+    "plan/mempalace/data_classification.md",
+    "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md"
+  ],
+
+  "_field_mapping": {
+    "_purpose": "说明 ingestion-manifest.md 各表格/节到 JSON 字段的映射关系，方便审阅和后续维护",
+    "manifest_version":       "§2 表格 → manifest_version",
+    "phase":                  "§2 表格 → phase",
+    "default_policy":         "§2 表格 → default_policy",
+    "enabled_scope":          "§2 表格 → enabled_scope（原逗号分隔拆为数组）",
+    "reserved_scope":         "§2 表格 → reserved_scope（原逗号分隔拆为数组）",
+    "authority_layer_order":  "§3 规则 3 → 固定来源层级 L1 > L2 > L3",
+    "classification_priority":"§3 规则 3 → 固定采集动作优先级 C4 > C3 > C2 > C1",
+    "conflict_resolution":    "§3 规则 5 → 同一文件多条目冲突解析规则",
+    "global_exclude_rules":   "§4 表格 → 每行一个 object，rule_id / match / patterns / action / description",
+    "blocked_content_rules":  "§5 表格 → 每行一个 object，rule_id / triggers / classification / action",
+    "source_entries":         "§6 表格 → 每行一个 object，10 个字段完整保留",
+    "source_entries[].source_id":         "§6 第 1 列",
+    "source_entries[].phase1_mode":       "§6 第 2 列（enabled | disabled_reserved）",
+    "source_entries[].authority_layer":   "§6 第 3 列（L1 | L2 | L3）",
+    "source_entries[].classification":    "§6 第 4 列（C1-Direct-Allow ～ C4-Hard-Block）",
+    "source_entries[].include_globs":     "§6 第 5 列（原逗号分隔拆为数组）",
+    "source_entries[].include_ext":       "§6 第 6 列（原逗号分隔拆为数组，统一带 '.' 前缀）",
+    "source_entries[].exclude_globs":     "§6 第 7 列（原逗号分隔拆为数组；'无' → 空数组）",
+    "source_entries[].refresh_policy":    "§6 第 8 列（自然语言归一为 snake_case 枚举）",
+    "source_entries[].retrieval_weight":  "§6 第 9 列（number, 0.00–1.00）",
+    "source_entries[].usage_rule":        "§6 第 10 列（中文使用规则原文保留）",
+    "provenance":             "§9 直接依据列表 → 数组"
+  }
+}

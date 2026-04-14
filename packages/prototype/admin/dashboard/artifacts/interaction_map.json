@@ -1,0 +1,76 @@
+{
+  "interactions": [
+    {
+      "selector": "[data-scope-btn]",
+      "event": "click",
+      "intent": "switch_scope",
+      "detail": "切换范围：mine / group / all，更新 state.scope 并触发 skeleton → 重渲染"
+    },
+    {
+      "selector": "[data-window-btn]",
+      "event": "click",
+      "intent": "switch_time_window",
+      "detail": "切换期限窗口：7 / 30 天，更新 state.windowDays 并重渲染"
+    },
+    {
+      "selector": ".filter-select",
+      "event": "change",
+      "intent": "filter_group",
+      "detail": "选择 Group 过滤（全部 Group / 东京一组 / 东京二组 / 大阪组）"
+    },
+    {
+      "selector": "[data-navigate]",
+      "event": "click",
+      "intent": "navigate",
+      "detail": "导航到目标页面（快捷动作卡片 + topbar 案件列表按钮）"
+    },
+    {
+      "selector": "[data-action-id='batchComplete']",
+      "event": "click",
+      "intent": "batch_complete",
+      "detail": "批量完成今日待办，显示确认 toast"
+    },
+    {
+      "selector": "[data-action-id='followup']",
+      "event": "click",
+      "intent": "create_followup",
+      "detail": "一键创建跟进任务 / 查看临期案件，显示 toast"
+    },
+    {
+      "selector": "[data-action-id='submit']",
+      "event": "click",
+      "intent": "enter_submission",
+      "detail": "进入校验与提交流程，显示 toast"
+    },
+    {
+      "selector": "[data-action-id='payment']",
+      "event": "click",
+      "intent": "register_payment",
+      "detail": "登记回款 / 上传凭证，显示 toast"
+    },
+    {
+      "selector": "[data-action-id='risk']",
+      "event": "click",
+      "intent": "focus_risk",
+      "detail": "聚焦风险案件修复项，显示 toast"
+    },
+    {
+      "selector": "[data-row-action]",
+      "event": "click",
+      "intent": "row_action",
+      "detail": "工作面板行项目操作按钮（查看案件/上传回执/创建催办等），显示 toast"
+    },
+    {
+      "selector": ".search input",
+      "event": "focus",
+      "intent": "global_search",
+      "detail": "全局搜索：客户 / 案件 / 资料 / 文书，原型仅占位"
+    },
+    {
+      "selector": "#heroGreeting",
+      "event": "load",
+      "intent": "dynamic_greeting",
+      "detail": "页面加载时根据时段动态设置问候语（早上好/下午好/晚上好）"
+    }
+  ]
+}

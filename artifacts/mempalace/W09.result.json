@@ -1,0 +1,32 @@
+{
+  "task_id": "W09",
+  "task_name": "mcp-readonly-scope",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/mcp-readonly-scope.md",
+  "summary_output": "artifacts/mempalace/W09.summary.md",
+  "checks": [
+    {
+      "name": "allowed_read_tools_defined",
+      "status": "passed"
+    },
+    {
+      "name": "prohibited_write_tools_defined",
+      "status": "passed"
+    },
+    {
+      "name": "generic_filesystem_read_blocked",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W09-mcp-readonly-scope.md",
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/allowed_sources.md",
+    "plan/mempalace/blocked_sources.md",
+    "plan/mempalace/deployment-topology.md",
+    "plan/tasks/MP-W08-environment-strategy.md",
+    "plan/tasks/MP-W10-mcp-client-setup.md"
+  ]
+}

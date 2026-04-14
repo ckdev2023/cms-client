@@ -1,7 +1,7 @@
 (function () {
   'use strict';
 
-  // P0 §3.5 + P0-CONTRACT §12.4: key 以数据模型 §3.20 为权威（due/partial/paid/overdue）
+  // §3.5 + 合同 §12.4: key 以数据模型 §3.20 为权威（due/partial/paid/overdue）
   var BILLING_STATUS_OPTIONS = [
     { value: 'paid', label: '已结清', badge: 'tag-green' },
     { value: 'partial', label: '部分回款', badge: 'tag-blue' },
@@ -9,7 +9,7 @@
     { value: 'overdue', label: '逾期', badge: 'tag-red' },
   ];
 
-  // P0 §3.5 收费节点状态（权威枚举）
+  // §3.5 收费节点状态（权威枚举）
   var NODE_STATUS_OPTIONS = [
     { value: 'due', label: '应收', badge: 'tag-orange' },
     { value: 'partial', label: '部分回款', badge: 'tag-blue' },
@@ -194,7 +194,7 @@
   var GATE_EFFECT_MODES = ['off', 'warn'];
 
   /**
-   * P0 收费事实来源声明（03 §6.3F 冻结口径）
+   * 收费事实来源声明（03 §6.3F 冻结口径）
    *
    * BillingPlan + PaymentRecord 是收费状态的唯一事实来源。
    * Case 上的 deposit_paid_cached / final_payment_paid_cached 仅为展示与守卫的布尔缓存，
@@ -256,7 +256,7 @@
     'financial-reports',
     'auto-reconciliation',
     'batch-export',
-    'client-portal-reminder',
+    'client-reminder-linkage',
     'gate-effect-block',
     'amount-range-filter',
     'reminder-days-customizable',

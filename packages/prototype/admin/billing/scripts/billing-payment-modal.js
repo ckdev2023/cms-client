@@ -47,6 +47,7 @@ var BillingPaymentModal = (function () {
       planSelect.addEventListener('change', function () {
         validateAmount();
         validatePlanSelection();
+        updateSubmitEnabled();
       });
     }
 
@@ -119,7 +120,7 @@ var BillingPaymentModal = (function () {
       opt.value = node.id;
       // P0-CONTRACT §9.2: 选择器每项须显示 节点名 | 到期日 | 应收金额 | 未收金额
       var amountDue = node.amount || 0;
-      // outstanding = amount for non-paid nodes (no partial tracking per node in P0 demo data)
+      // outstanding = amount for non-paid nodes (demo data does not track partial amounts per node)
       var amountOutstanding = amountDue;
       opt.textContent = plan.caseName + ' — ' + node.name +
         ' | 到期日: ' + (node.dueDate || '—') +
@@ -164,7 +165,12 @@ var BillingPaymentModal = (function () {
     if (!submitBtn) return;
     var hasAmount = amountInput && amountInput.value && parseInt(amountInput.value, 10) > 0;
     var hasDate = dateInput && dateInput.value;
-    submitBtn.disabled = !(hasAmount && hasDate);
+    var hasPlanSelection = true;
+    if (planSelect) {
+      var optionCount = planSelect.options.length - 1;
+      hasPlanSelection = optionCount <= 1 || !!planSelect.value;
+    }
+    submitBtn.disabled = !(hasAmount && hasDate && hasPlanSelection);
   }
 
   ns.init = init;

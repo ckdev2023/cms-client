@@ -1,0 +1,175 @@
+{
+  "interactions": [
+    {
+      "selector": "#btnAddCustomer",
+      "event": "click",
+      "intent": "open_create_modal",
+      "description": "打开新建客户弹窗"
+    },
+    {
+      "selector": "[data-scope-btn]",
+      "event": "click",
+      "intent": "switch_data_scope",
+      "description": "切换数据范围：mine/group/all"
+    },
+    {
+      "selector": "#customerSearchInput",
+      "event": "input",
+      "intent": "search_customers",
+      "description": "搜索客户名/フリガナ/电话/邮箱"
+    },
+    {
+      "selector": "#customerGroupFilter",
+      "event": "change",
+      "intent": "filter_by_group",
+      "description": "按所属分组筛选"
+    },
+    {
+      "selector": "#customerOwnerFilter",
+      "event": "change",
+      "intent": "filter_by_owner",
+      "description": "按负责人筛选"
+    },
+    {
+      "selector": "#customerActiveCasesFilter",
+      "event": "change",
+      "intent": "filter_by_active_cases",
+      "description": "按活跃案件筛选（有/无/全部）"
+    },
+    {
+      "selector": "[data-action='reset-filters']",
+      "event": "click",
+      "intent": "reset_all_filters",
+      "description": "重置所有筛选条件"
+    },
+    {
+      "selector": "#selectAllCustomers",
+      "event": "change",
+      "intent": "toggle_select_all",
+      "description": "全选/取消全选（支持 indeterminate）"
+    },
+    {
+      "selector": "[data-customer-select]",
+      "event": "change",
+      "intent": "toggle_select_row",
+      "description": "选中/取消选中单行（草稿行 checkbox 禁用）"
+    },
+    {
+      "selector": "#bulkClearBtn",
+      "event": "click",
+      "intent": "clear_selection",
+      "description": "清除所有选中"
+    },
+    {
+      "selector": "#bulkAssignApplyBtn",
+      "event": "click",
+      "intent": "bulk_assign_owner",
+      "description": "批量指派负责人 → toast；需先 select 负责人"
+    },
+    {
+      "selector": "#bulkGroupApplyBtn",
+      "event": "click",
+      "intent": "bulk_change_group",
+      "description": "批量调整分组 → toast（含需留痕文案）；需先 select 分组"
+    },
+    {
+      "selector": "[data-customer-display-name]",
+      "event": "click",
+      "intent": "navigate_to_detail",
+      "description": "点击客户名 → 跳转详情页 detail.html?id=xxx"
+    },
+    {
+      "selector": ".row-quick-action[title='打开客户详情']",
+      "event": "click",
+      "intent": "navigate_to_detail",
+      "description": "操作列：打开客户详情"
+    },
+    {
+      "selector": "[data-action='quick-create-case']",
+      "event": "click",
+      "intent": "quick_create_case",
+      "description": "操作列：从该客户开始办案"
+    },
+    {
+      "selector": "[data-case-tags-toggle]",
+      "event": "click",
+      "intent": "toggle_case_tags",
+      "description": "展开/收起更多案件 chip"
+    },
+    {
+      "selector": "#closeModalBtn",
+      "event": "click",
+      "intent": "close_modal",
+      "description": "关闭新建弹窗"
+    },
+    {
+      "selector": "#cancelModalBtn",
+      "event": "click",
+      "intent": "close_modal",
+      "description": "取消 → 关闭弹窗"
+    },
+    {
+      "selector": "#saveDraftBtn",
+      "event": "click",
+      "intent": "save_draft",
+      "description": "保存草稿到 localStorage → toast"
+    },
+    {
+      "selector": "#createCustomerBtn",
+      "event": "click",
+      "intent": "create_customer",
+      "description": "创建客户（启用条件：姓名+Group+电话∨邮箱） → toast → 移除对应草稿"
+    },
+    {
+      "selector": "#quickPhone",
+      "event": "input",
+      "intent": "trigger_dedupe_check",
+      "description": "电话输入触发去重提示显示"
+    },
+    {
+      "selector": "#quickEmail",
+      "event": "input",
+      "intent": "trigger_dedupe_check",
+      "description": "邮箱输入触发去重提示显示"
+    },
+    {
+      "selector": "hash:#new",
+      "event": "hashchange",
+      "intent": "auto_open_modal",
+      "description": "URL hash #new 自动打开新建弹窗"
+    },
+    {
+      "selector": "[data-row-kind='draft'] .continue-btn",
+      "event": "click",
+      "intent": "load_draft_into_modal",
+      "description": "草稿行「继续」按钮 → 载入草稿到弹窗 → toast"
+    }
+  ],
+  "toast_scenarios": [
+    {
+      "trigger": "create_customer",
+      "title": "客户已创建（示例）",
+      "desc": "已生成客户档案，可继续建案"
+    },
+    {
+      "trigger": "save_draft",
+      "title": "草稿已保存",
+      "desc": "可在客户列表中点击"继续"完成建档"
+    },
+    {
+      "trigger": "load_draft",
+      "title": "已载入草稿",
+      "desc": "继续完善后即可完成建档"
+    },
+    {
+      "trigger": "bulk_assign_owner",
+      "title": "批量指派（示例）",
+      "desc": "已选择 N 条，负责人：xxx"
+    },
+    {
+      "trigger": "bulk_change_group",
+      "title": "批量调整分组（示例）",
+      "desc": "已选择 N 条，分组：xxx（需留痕）"
+    }
+  ]
+}

@@ -10,6 +10,66 @@
     - Title changed from "賬單與收款" to "收費"
     - Button changed from "創建新賬單/生成賬單" to "登記回款"
     - Dates updated from 2023/2024 to 2026
-    - Invoice placeholder added (P1)
+    - Invoice area remains a non-interactive placeholder in current prototype scope
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-billing" class="tab-panel">
+  <div class="apple-card p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="section-title">收费</h2>
+      <button class="btn-primary text-[13px] py-1.5 px-4 flex items-center gap-1" type="button">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        登记回款
+      </button>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div class="bg-[var(--surface-2)] p-5 rounded-xl">
+        <div class="text-[13px] font-semibold text-[var(--muted)] mb-1">总费用</div>
+        <div class="text-[20px] font-black text-[var(--text)]" id="billingTotal">¥480,000</div>
+      </div>
+      <div class="bg-green-50/50 p-5 rounded-xl">
+        <div class="text-[13px] font-semibold text-[var(--success)] mb-1">已收金额</div>
+        <div class="text-[20px] font-black text-[var(--success)]" id="billingReceived">¥240,000</div>
+      </div>
+      <div class="bg-red-50/50 p-5 rounded-xl border border-[var(--danger)]/10">
+        <div class="text-[13px] font-semibold text-[var(--danger)] mb-1">未收金额</div>
+        <div class="text-[20px] font-black text-[var(--danger)]" id="billingOutstanding">¥240,000</div>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="apple-table w-full">
+        <thead>
+          <tr>
+            <th>日期</th>
+            <th>类型</th>
+            <th class="text-right">金额</th>
+            <th class="text-center">状态</th>
+            <th class="text-right">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="font-semibold text-[var(--text)]">2026/04/01</td>
+            <td>着手金</td>
+            <td class="text-right font-semibold text-[var(--text)]">¥240,000</td>
+            <td class="text-center"><span class="status-badge badge-green text-[11px]">已结清</span></td>
+            <td class="text-right"><button class="text-[var(--primary)] text-[13px] font-semibold hover:underline row-quick-action" type="button">查看收据</button></td>
+          </tr>
+          <tr>
+            <td class="font-semibold text-[var(--text)]">2026/06/30</td>
+            <td>成功酬金（尾款）</td>
+            <td class="text-right font-semibold text-[var(--text)]">¥240,000</td>
+            <td class="text-center"><span class="status-badge badge-orange text-[11px]">待收</span></td>
+            <td class="text-right"><button class="text-[var(--primary)] text-[13px] font-semibold hover:underline row-quick-action" type="button">登记回款</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="mt-6 pt-5 border-t border-[var(--border)]">
+      <h3 class="text-[13px] font-bold text-[var(--muted-2)] mb-3">发票信息</h3>
+      <div class="text-center py-4 text-[12px] text-[var(--muted-2)]">当前原型暂不展示发票详情。</div>
+    </div>
+  </div>
+</div>

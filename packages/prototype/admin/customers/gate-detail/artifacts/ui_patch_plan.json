@@ -1,0 +1,79 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/features/customers/detail/CustomerDetailPage.vue",
+    "packages/admin/src/features/customers/detail/CustomerDetailHeader.vue",
+    "packages/admin/src/features/customers/detail/CustomerCaseSummaryStrip.vue",
+    "packages/admin/src/features/customers/detail/CustomerTabBar.vue",
+    "packages/admin/src/features/customers/detail/CustomerBasicInfoPanel.vue",
+    "packages/admin/src/features/customers/detail/CustomerBmvIntakeCard.vue",
+    "packages/admin/src/features/customers/detail/CustomerCasesPanel.vue",
+    "packages/admin/src/features/customers/detail/CustomerContactsPanel.vue",
+    "packages/admin/src/features/customers/detail/CustomerCommsPanel.vue",
+    "packages/admin/src/features/customers/detail/CustomerLogsPanel.vue",
+    "packages/admin/src/features/customers/detail/CustomerConfirmDialog.vue",
+    "packages/admin/src/features/customers/detail/CustomerRelationDialog.vue",
+    "packages/admin/src/features/customers/detail/CustomerCommDialog.vue",
+    "packages/admin/src/features/customers/model/useCustomerDetail.ts",
+    "packages/admin/src/features/customers/model/useCustomerBasicInfo.ts",
+    "packages/admin/src/features/customers/model/useCustomerCases.ts",
+    "packages/admin/src/features/customers/model/useCustomerRelations.ts",
+    "packages/admin/src/features/customers/model/useCustomerComms.ts",
+    "packages/admin/src/features/customers/model/useCustomerLogs.ts",
+    "packages/admin/src/features/customers/fixtures/customer-detail.fixtures.ts"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/features/customers/index.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready",
+    "editing_basic_info",
+    "tab_switching",
+    "cases_filtered",
+    "comms_filtered",
+    "logs_filtered",
+    "relation_dialog_open",
+    "comm_dialog_open",
+    "confirm_dialog_open"
+  ],
+  "notes": [
+    "P0-CONTRACT §9: 5 tabs — 基础信息/関連案件/関連人/沟通记录/操作日志",
+    "基础信息 Tab: 14 fields with read-only↔edit toggle (识別名/法定名/フリガナ/国籍/性別/生日/電話/郵箱/分組/負責人/介紹人/頭像/備注 + 经营管理签 intake card for P1 scope customers)",
+    "関連案件 Tab: segmented filter (全部/活躍/已帰档) + table (編号/案件/類型/段階/状態/更新時間/操作) + 開始辦案 + 批量開始辦案",
+    "関連人 Tab: search + select-all + table (関連人/関係/連絡方式/標籤/備注/操作) + 新增関連人 dialog (7 fields) + 為関連人批量建案",
+    "沟通記録 Tab: segmented (全部/内部/客戶可見) + 統計 chip + timeline + 記録沟通 dialog (7 fields) + 空状態",
+    "操作日誌 Tab: segmented (全部/信息変更/関係変更/案件/沟通) + table + pagination + 空状態",
+    "detail page has confirm dialog for destructive actions",
+    "経営管理簽 intake card is P1 scope but structurally present in prototype — must preserve structure, mark as P1",
+    "P0-CONTRACT §10: do NOT introduce P0-excluded features"
+  ],
+  "p0_frozen_tabs": {
+    "basic": {
+      "fields": ["識別名", "法定名", "フリガナ", "國籍", "性別", "生日", "電話", "郵箱", "所属分組", "客戶負責人", "介紹人/來源", "頭像", "備注"],
+      "actions": ["編輯", "取消", "保存"]
+    },
+    "cases": {
+      "filters": ["全部", "活躍", "已歸檔"],
+      "table_columns": ["編號", "案件", "類型", "階段", "狀態", "更新時間", "操作"],
+      "actions": ["開始辦案", "批量開始辦案"]
+    },
+    "contacts": {
+      "table_columns": ["關聯人", "關係", "聯繫方式", "標籤", "備注", "操作"],
+      "dialog_fields": ["姓名", "フリガナ", "關係", "標籤", "電話", "郵箱", "備注"],
+      "actions": ["新增關聯人", "為關聯人批量建案"]
+    },
+    "comms": {
+      "filters": ["全部", "內部", "客戶可見"],
+      "dialog_fields": ["渠道", "時間", "可見範圍", "記錄人", "摘要", "詳細記錄", "下一步動作"],
+      "actions": ["記錄沟通"]
+    },
+    "log": {
+      "filters": ["全部", "信息變更", "關係變更", "案件", "沟通"],
+      "table_columns": ["時間", "類型", "內容", "操作人"]
+    }
+  }
+}

@@ -1,8 +1,8 @@
 <!--
   section: group-members-panel.html
-  Group members list panel — P0 read-only display only.
+  Group members list panel — read-only display.
   Shows member name, role (as chip), and join date.
-  No add/remove/edit member operations in P0.
+  No add/remove/edit member operations on this page.
 
   DOM hooks:
     #groupMembersPanel   — outer wrapper (visibility managed by parent detail panel)
@@ -10,7 +10,7 @@
     #memberTableBody     — <tbody> for dynamic member rows
     #memberEmptyState    — empty state placeholder (shown when no members)
 
-  Data source: demo data in settings-group-members.js (P0 only).
+  Data source: demo data in settings-group-members.js.
   Production target: features/settings/ui/GroupMembersPanel
   Contract ref: P0-CONTRACT §3.2 成员列表
 -->
@@ -18,7 +18,7 @@
   <div class="apple-card p-5 sm:p-6">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-[15px] font-bold text-[var(--text)]">成员列表</h3>
-      <span class="chip text-[11px]" title="P0 仅展示，不支持增删成员">只读</span>
+      <span class="chip text-[11px]" title="当前仅支持查看，不支持增删成员">只读</span>
     </div>
 
     <!-- Member table -->

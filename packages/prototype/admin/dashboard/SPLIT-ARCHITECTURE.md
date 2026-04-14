@@ -8,7 +8,7 @@
 
 ## 1 目标
 
-本次不是继续把仪表盘留在单一 `admin-prototype.html` 中，而是把 P0 仪表盘拆成可持续维护的原型模块：
+本次不是继续把仪表盘留在单一 `dashboard/index.html` 中，而是把 P0 仪表盘拆成可持续维护的原型模块：
 
 - `index.html` 作为可运行入口
 - `sections/` 显式标注页面区块边界

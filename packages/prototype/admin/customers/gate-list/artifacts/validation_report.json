@@ -1,0 +1,25 @@
+{
+  "status": "enriched",
+  "blocking_issues": [],
+  "warnings": [
+    "prototype uses data-include-html fragments; parser only extracted shell regions; all content regions manually enriched from section HTML files",
+    "prototype has 4 sample rows (3 customers + 1 empty state); production should support dynamic list",
+    "dedupe hint uses hardcoded candidate data; production must query actual duplicates"
+  ],
+  "p0_contract_crosscheck": {
+    "§1_table_8_columns": "frozen",
+    "§2_search_and_filters": "frozen",
+    "§2.3_scope_toggle": "frozen",
+    "§3_bulk_actions": "frozen",
+    "§3.1_selection_mechanism": "frozen",
+    "§4_create_modal_12_fields": "frozen",
+    "§4.2_dedupe_hint": "frozen",
+    "§4.3_button_states": "frozen",
+    "§4.4_hash_new_entry": "frozen",
+    "§5_draft_capability": "frozen",
+    "§6_empty_state": "placeholder_required",
+    "§7_toast_5_scenarios": "frozen",
+    "§8_permissions": "segmented_control_only_in_prototype",
+    "§10_p0_exclusions": "enforced"
+  }
+}

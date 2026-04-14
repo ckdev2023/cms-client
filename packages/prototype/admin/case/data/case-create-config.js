@@ -51,7 +51,7 @@
     {
       id: 'family',
       label: '家族滞在',
-      badge: 'P0 高频模板',
+      badge: '常用模板',
       applicationTypes: ['认定', '变更', '更新'],
       subtitle: '适合配偶/子女批量建案，自动展开扶养者/保证人资料。',
       helper: '支持 #family-bulk 直接进入批量模式。',
@@ -130,7 +130,7 @@
     {
       id: 'work',
       label: '技人国',
-      badge: 'P0 高频模板',
+      badge: '常用模板',
       applicationTypes: ['认定', '变更', '更新'],
       subtitle: '适合雇主/职位信息驱动的工作类新案。',
       helper: '自动生成雇主资料与文书准备区块。',
@@ -164,7 +164,7 @@
       ],
       workScenario: {
         title: '雇主信息沉淀',
-        summary: 'P0 不引入企业客户实体，先把公司与职位信息沉淀在案件字段中。',
+        summary: '当前原型先把公司与职位信息沉淀在案件字段中。',
         fields: ['公司名称', '职位名称', '年薪', '联系人邮箱', '联系人电话'],
       },
     },

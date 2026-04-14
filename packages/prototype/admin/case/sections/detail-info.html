@@ -11,6 +11,96 @@
 
   Spec gap fixes:
     - Application type separated from case type as independent field
-    - Risk tags added as empty state placeholder (P1)
+    - Risk tags added as empty-state placeholder for current prototype scope
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-info" class="tab-panel">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+      <div class="apple-card p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="section-title">案件属性</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label class="apple-label">案件编号</label>
+            <input type="text" value="CAS-2026-0142" disabled class="apple-input bg-[var(--surface-2)] text-[var(--muted-2)] cursor-not-allowed" id="infoCaseId">
+          </div>
+          <div>
+            <label class="apple-label">案件类型</label>
+            <select class="apple-input w-full appearance-none" id="infoCaseType">
+              <option>就労ビザ（技術・人文知識・国際業務）</option>
+              <option>家族滞在</option>
+              <option>経営・管理</option>
+              <option>特定技能</option>
+            </select>
+          </div>
+          <div>
+            <label class="apple-label">申请类型</label>
+            <select class="apple-input w-full appearance-none" id="infoApplicationType">
+              <option>更新（在留期間更新）</option>
+              <option>认定（在留資格認定）</option>
+              <option>变更（在留資格変更）</option>
+            </select>
+          </div>
+          <div>
+            <label class="apple-label">受理日期</label>
+            <input type="date" value="2026-04-01" class="apple-input" id="infoAcceptedDate">
+          </div>
+          <div>
+            <label class="apple-label">目标提交日期</label>
+            <input type="date" value="2026-04-20" class="apple-input" id="infoTargetDate">
+          </div>
+          <div>
+            <label class="apple-label">管辖机构</label>
+            <input type="text" value="东京入国管理局（品川）" class="apple-input" id="infoJurisdiction">
+          </div>
+        </div>
+        <div class="mt-6 pt-5 border-t border-[var(--border)] flex justify-end">
+          <button class="btn-primary" type="button">保存修改</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="apple-card p-6">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-[15px] font-bold text-[var(--text)]">关联主体</h2>
+          <button class="link-apple text-[13px] font-semibold flex items-center gap-1" type="button">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            添加
+          </button>
+        </div>
+        <div class="space-y-4" id="relatedParties">
+          <div class="p-3 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white flex items-center justify-center text-[11px] font-bold">KS</div>
+              <div>
+                <div class="text-[13px] font-bold text-[var(--text)]">金 秀明</div>
+                <div class="text-[11px] text-[var(--muted-2)]">主申请人</div>
+              </div>
+            </div>
+            <div class="text-[12px] text-[var(--muted)] pl-11">韩国籍 · 1990/03/15 · 在留カード 1234-5678-9012</div>
+          </div>
+          <div class="p-3 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">
+            <div class="flex items-center gap-3 mb-2">
+              <div class="w-8 h-8 rounded-full bg-[var(--surface-2)] text-[var(--text)] flex items-center justify-center text-[11px] font-bold">BW</div>
+              <div>
+                <div class="text-[13px] font-bold text-[var(--text)]">株式会社BlueWave</div>
+                <div class="text-[11px] text-[var(--muted-2)]">雇主（所属機構）</div>
+              </div>
+            </div>
+            <div class="text-[12px] text-[var(--muted)] pl-11">法人番号 1234567890123 · 東京都渋谷区</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="apple-card p-6">
+        <h2 class="text-[15px] font-bold text-[var(--text)] mb-4">风险标签</h2>
+        <div class="text-center py-6">
+          <div class="text-[13px] text-[var(--muted-2)] font-semibold">暂无风险标签</div>
+          <div class="text-[12px] text-[var(--muted-2)] mt-1">风险标签功能将在后续版本上线</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

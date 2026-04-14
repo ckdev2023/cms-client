@@ -1,0 +1,195 @@
+{
+  "page_name": "leads_list",
+  "source_entry": "packages/prototype/admin/leads-message/index.html",
+  "fragment_loader": "data-include-html",
+  "contract_ref": "P0-CONTRACT.md §1–§15",
+  "regions": [
+    {
+      "id": "shell-side-nav",
+      "selector": "aside.side-nav",
+      "role": "navigation",
+      "source": "index.html (inline, shared shell)",
+      "notes": "aria-current=page on 咨询线索; reuses shared/styles/shell.css"
+    },
+    {
+      "id": "shell-mobile-nav",
+      "selector": ".mobile-nav",
+      "role": "navigation",
+      "source": "index.html (inline, shared shell)",
+      "notes": "drawer + backdrop; shared/scripts/mobile-nav.js"
+    },
+    {
+      "id": "shell-topbar",
+      "selector": "header.topbar",
+      "role": "header",
+      "source": "index.html (inline)",
+      "notes": "sticky + blur; 新建线索 pill button (#topbarAddLead), 新建案件 btn, global search"
+    },
+    {
+      "id": "page-header",
+      "selector": "sections/header.html",
+      "role": "header",
+      "source": "sections/header.html",
+      "contract": "P0-CONTRACT §1 #1",
+      "anchors": ["btnAddLead"],
+      "notes": "h1 咨询线索 34px/800 + subtitle + 新建线索 btn-primary"
+    },
+    {
+      "id": "filter-panel",
+      "selector": "sections/filters.html",
+      "role": "filter",
+      "source": "sections/filters.html",
+      "contract": "P0-CONTRACT §3",
+      "anchors": [
+        "data-scope-btn",
+        "leadSearch",
+        "filterStatus",
+        "filterOwner",
+        "filterGroup",
+        "filterBusinessType",
+        "filterDateFrom",
+        "filterDateTo",
+        "data-action=reset-filters"
+      ],
+      "notes": "scope segmented control + 4 select filters + follow-up date range + search + reset"
+    },
+    {
+      "id": "bulk-action-bar",
+      "selector": "#bulkActionBar",
+      "role": "data_list",
+      "source": "sections/table.html",
+      "contract": "P0-CONTRACT §4",
+      "anchors": [
+        "selectedCount",
+        "bulkClearBtn",
+        "bulkAssignSelect",
+        "bulkAssignApplyBtn",
+        "bulkFollowUpInput",
+        "bulkFollowUpApplyBtn",
+        "bulkStatusSelect",
+        "bulkStatusApplyBtn"
+      ],
+      "notes": "hidden until selectedCount > 0; 3 bulk actions: assign/followUp/status"
+    },
+    {
+      "id": "data-table",
+      "selector": "table.apple-table",
+      "role": "data_list",
+      "source": "sections/table.html",
+      "contract": "P0-CONTRACT §2",
+      "anchors": ["selectAllLeads", "leadsTableBody", "data-lead-select"],
+      "notes": "6 visible columns aggregate 11 spec fields + checkbox column; 8 demo rows; row click → detail.html?id=...&sample=...; row highlight rules"
+    },
+    {
+      "id": "empty-state",
+      "selector": "#leadsEmptyState",
+      "role": "empty_state",
+      "source": "sections/table.html",
+      "contract": "P0-CONTRACT §9",
+      "anchors": ["leadsEmptyState", "data-action=open-create-modal"],
+      "notes": "hidden by default; icon + 暂无咨询线索 + 新建线索 CTA"
+    },
+    {
+      "id": "pagination-bar",
+      "selector": "#leadsPaginationBar",
+      "role": "footer",
+      "source": "sections/table.html",
+      "contract": "P0-CONTRACT §2, §9",
+      "anchors": ["leadsPaginationBar", "leadsPaginationInfo"],
+      "notes": "static prev/next buttons + filtered result count; hides when empty state is shown"
+    },
+    {
+      "id": "create-lead-modal",
+      "selector": "#createLeadModal",
+      "role": "modal",
+      "source": "sections/create-modal.html",
+      "contract": "P0-CONTRACT §5",
+      "anchors": [
+        "createLeadModal",
+        "createLeadForm",
+        "leadName",
+        "leadPhone",
+        "leadEmail",
+        "leadSource",
+        "leadReferrer",
+        "referrerFieldWrap",
+        "leadBusinessType",
+        "leadGroup",
+        "leadOwner",
+        "leadLanguage",
+        "leadNextAction",
+        "leadNextFollowUp",
+        "leadNote",
+        "createLeadBtn",
+        "data-lead-modal-close"
+      ],
+      "notes": "12 fields; referrer conditional on source=referral; nextFollowUp default tomorrow 10:00"
+    },
+    {
+      "id": "dedup-hint-panel",
+      "selector": "#dedupHint",
+      "role": "card_list",
+      "source": "sections/create-modal.html",
+      "contract": "P0-CONTRACT §5.3",
+      "anchors": [
+        "dedupHint",
+        "dedupHintTitle",
+        "dedupHintMessage",
+        "dedupHintCards",
+        "dedupMatchName",
+        "dedupMatchBadge",
+        "dedupMatchMeta",
+        "dedupContinueBtn",
+        "dedupViewBtn"
+      ],
+      "notes": "yellow/orange alert card; hidden until phone/email blur triggers match; supports lead/customer match badge variants"
+    },
+    {
+      "id": "toast-feedback",
+      "selector": "#toast",
+      "role": "footer",
+      "source": "sections/toast.html",
+      "contract": "P0-CONTRACT §11",
+      "anchors": ["toast", "toastTitle", "toastDesc"],
+      "notes": "fixed bottom center; 2.2s auto-dismiss; 9 presets in data/leads-config.js"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": "tr[data-lead-id]",
+      "count": 8,
+      "suggest_component": "LeadTableRow",
+      "notes": "each row exposes logical lead fields via merged cells plus data-status/data-owner/data-group/data-business-type/data-dedup/sample-key attributes"
+    },
+    {
+      "selector": ".lead-badge",
+      "count": 8,
+      "suggest_component": "LeadStatusBadge",
+      "notes": "6 variant classes: new/following/pending_sign/signed/lost/signed-warning"
+    },
+    {
+      "selector": ".leads-filter-select",
+      "count": 4,
+      "suggest_component": "FilterSelect",
+      "notes": "status/owner/group/businessType filter selects"
+    },
+    {
+      "selector": "[data-scope-btn]",
+      "count": 3,
+      "suggest_component": "ScopeSegmentButton",
+      "notes": "mine/group/all scope toggle"
+    },
+    {
+      "selector": ".apple-label + .apple-input",
+      "count": 12,
+      "suggest_component": "FormField",
+      "notes": "create-modal form fields; various types: text/tel/email/select/textarea/datetime-local"
+    },
+    {
+      "selector": ".nav-item",
+      "count": 16,
+      "suggest_component": "NavItem",
+      "notes": "shared shell side-nav items (8 desktop + 8 mobile)"
+    }
+  ]
+}

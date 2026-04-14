@@ -4,6 +4,26 @@
   var app = window.CustomerDetailPage;
   if (!app) return;
 
+  app.getLogTypeLabel = function (type) {
+    return String(type) === 'relation'
+      ? '关系变更'
+      : String(type) === 'case'
+        ? '案件'
+        : String(type) === 'comm'
+          ? '沟通'
+          : '信息变更';
+  };
+
+  app.getLogTypeChipClass = function (type) {
+    return String(type) === 'relation'
+      ? 'chip bg-[rgba(168,85,247,0.08)] border-[rgba(168,85,247,0.18)] text-[rgb(147,51,234)]'
+      : String(type) === 'case'
+        ? 'chip bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.18)] text-[rgb(22,163,74)]'
+        : String(type) === 'comm'
+          ? 'chip bg-[rgba(249,115,22,0.08)] border-[rgba(249,115,22,0.18)] text-[rgb(234,88,12)]'
+          : 'chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]';
+  };
+
   app.syncLogFilterUI = function () {
     app.$$('[data-log-filter]').forEach(function (button) {
       var isActive = button.getAttribute('data-log-filter') === app.state.logFilter;
@@ -31,6 +51,9 @@
     var tbody = app.$('[data-customer-log-body]');
     if (!tbody) return;
 
+    var tableWrap = document.getElementById('customerLogsTableWrap');
+    var empty = document.getElementById('customerLogsEmpty');
+
     tbody.innerHTML = '';
 
     var list = app
@@ -54,15 +77,13 @@
     app.setDisabled(nextBtn, app.state.logPage >= totalPages);
 
     if (!total) {
-      var emptyRow = document.createElement('tr');
-      var emptyCell = document.createElement('td');
-      emptyCell.colSpan = 4;
-      emptyCell.className = 'px-6 py-10 text-center text-[13px] text-[var(--muted-2)] font-semibold';
-      emptyCell.textContent = '暂无操作日志';
-      emptyRow.appendChild(emptyCell);
-      tbody.appendChild(emptyRow);
+      app.setVisible(tableWrap, false);
+      app.setVisible(empty, true);
       return;
     }
+
+    app.setVisible(tableWrap, true);
+    app.setVisible(empty, false);
 
     var start = (app.state.logPage - 1) * app.state.logPageSize;
     list.slice(start, start + app.state.logPageSize).forEach(function (item) {
@@ -76,19 +97,12 @@
       var typeCell = document.createElement('td');
       typeCell.className = 'px-4 py-3';
       var chip = document.createElement('span');
-      chip.className = 'chip';
-      chip.textContent =
-        String(item.type) === 'relation'
-          ? '关系变更'
-          : String(item.type) === 'case'
-            ? '案件'
-            : String(item.type) === 'comm'
-              ? '沟通'
-              : '信息变更';
+      chip.className = app.getLogTypeChipClass(item.type);
+      chip.textContent = app.getLogTypeLabel(item.type);
       typeCell.appendChild(chip);
 
       var messageCell = document.createElement('td');
-      messageCell.className = 'px-4 py-3 text-[var(--muted)] font-semibold';
+      messageCell.className = 'px-4 py-3 text-[var(--muted)] font-semibold leading-6';
       messageCell.textContent = String(item.message || '—');
 
       var actorCell = document.createElement('td');

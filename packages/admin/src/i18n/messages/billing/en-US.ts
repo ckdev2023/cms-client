@@ -1,0 +1,138 @@
+const billingEnUS = {
+  list: {
+    title: "Billing & Finance",
+    registerPayment: "Record payment",
+    summaryLabel: "Billing summary",
+    segments: {
+      billingList: "Case billing list",
+      paymentLog: "Payment log",
+    },
+    segmentAriaLabel: "List view switch",
+    searchPlaceholder: "Search: case name / customer / case no.",
+    filters: {
+      statusAll: "All payment statuses",
+      statusAriaLabel: "Filter payment status",
+      groupAll: "All groups",
+      groupAriaLabel: "Filter group",
+      ownerAll: "All owners",
+      ownerAriaLabel: "Filter owner",
+      reset: "Reset",
+      recordCount: "{count} records total",
+    },
+    summary: {
+      totalDue: "Total due (JPY)",
+      totalReceived: "Total received (JPY)",
+      totalOutstanding: "Total outstanding (JPY)",
+      overdueAmount: "Overdue (JPY)",
+    },
+    columns: {
+      selectAll: "Select all cases",
+      selectRow: "Select {name}",
+      caseName: "Case name",
+      client: "Customer",
+      group: "Group",
+      amountDue: "Due (¥)",
+      amountReceived: "Received (¥)",
+      amountOutstanding: "Outstanding (¥)",
+      nextNode: "Next billing node",
+      status: "Payment status",
+    },
+    status: {
+      overdue: "Overdue",
+      partial: "Partial",
+      due: "Unpaid",
+      paid: "Paid",
+    },
+    groups: {
+      "tokyo-1": "Tokyo Team 1",
+      "tokyo-2": "Tokyo Team 2",
+      osaka: "Osaka Team",
+    },
+    nodeEmpty: "— (settled)",
+    empty: {
+      title: "No billing records",
+      description: "Set up a billing plan in the case first.",
+    },
+    bulk: {
+      ariaLabel: "Bulk actions",
+      selected: "Selected",
+      count: "{count}",
+      unit: "items",
+      clear: "Clear",
+      collect: "Generate collection tasks",
+    },
+    pagination: {
+      summary: "Showing {start}–{end} of {total}",
+      prev: "Previous",
+      next: "Next",
+    },
+    toast: {
+      bulkCollect: {
+        title: "Collection tasks created",
+        description: "Succeeded {success}, skipped {skipped}, failed {failed}",
+      },
+      paymentRegistered: {
+        title: "Payment recorded",
+        description: "¥{amount} recorded",
+      },
+      voided: {
+        title: "Voided",
+        description: "Record {id} marked as voided",
+      },
+      reversed: {
+        title: "Reversed",
+        description: "Record {id} marked as reversed",
+      },
+    },
+  },
+  paymentLog: {
+    columns: {
+      amount: "Amount (¥)",
+      date: "Date",
+      caseName: "Case",
+      node: "Billing node",
+      receipt: "Receipt",
+      recordStatus: "Status",
+      operator: "Operator",
+      note: "Note",
+      actions: "Actions",
+    },
+    receiptYes: "Yes",
+    receiptNo: "No",
+    recordStatus: {
+      valid: "Valid",
+      voided: "Voided",
+      reversed: "Reversed",
+    },
+    actionVoid: "Void",
+    actionReverse: "Reverse",
+    empty: {
+      title: "No payment records",
+      description: "Payment records will appear here after recording.",
+    },
+  },
+  paymentModal: {
+    title: "Record payment",
+    closeAriaLabel: "Close",
+    hint: "Fill in payment details. Amount and date are required.",
+    fields: {
+      amount: "Amount (¥)",
+      amountPlaceholder: "Enter payment amount",
+      amountWarning:
+        "Amount exceeds the node's outstanding balance. Consider splitting into separate entries.",
+      date: "Date",
+      node: "Billing plan node",
+      nodePlaceholder: "Select a billing node",
+      nodeError: "Multiple outstanding nodes found. Please select one first.",
+      receipt: "Payment receipt",
+      receiptPlaceholder: "Receipt number or filename (optional)",
+      receiptHint: "Supports images or PDF. Can be added later.",
+      note: "Note",
+      notePlaceholder: "Optional: additional remarks",
+    },
+    cancel: "Cancel",
+    submit: "Record payment",
+  },
+} as const;
+
+export default billingEnUS;

@@ -1,0 +1,3227 @@
+{
+  "report_type": "acceptance_queries_first_run",
+  "run_at": "2026-04-12T07:07:06+00:00",
+  "manifest_version": "v0.1.0",
+  "total_indexed_sources": 10,
+  "summary": {
+    "total": 28,
+    "has_l1": 28,
+    "no_l1": 0,
+    "by_category": {
+      "来源追溯": {
+        "total": 8,
+        "has_l1": 8
+      },
+      "规则解释": {
+        "total": 12,
+        "has_l1": 12
+      },
+      "历史决策": {
+        "total": 8,
+        "has_l1": 8
+      }
+    }
+  },
+  "results": [
+    {
+      "query_id": "AQ-S01",
+      "category": "来源追溯",
+      "focus": "state-machine + 来源优先级",
+      "success_signal": "明确以 P0 为首要来源，指出 _output 只能桥接、不能覆盖",
+      "search_query": "P0 案件主阶段 S1-S9 唯一权威定义 来源优先级",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "7bb2f453cc0c7a02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.28051650524139404,
+          "snippet_preview": "### 4.6 归档与续签提醒\n\n- `S8` 出结果后确认后续动作 → 进入 `S9`\n- 归档前确认：资料归档完成、续签提醒是否需要、收费是否结清\n- 系统根据在留到期日在关键节点触发提醒（P0 以站内提醒为主）\n- P0 不做续签商机自动创建——后置到 P1"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.23864585161209106,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.20544618368148804,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "a9ea0b66b09b05a4",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.1811569333076477,
+          "snippet_preview": "### 4.2 P1-B：再补齐 Step 15–20\n\n优先完成：`M6 + M7 + M8 + M9`\n\n目标：跑通下签后收费、COE、海外返签、在留期间、续签提醒与结案收敛。\n\n---"
+        },
+        {
+          "chunk_id": "cf3870def762161f",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.17754453420639038,
+          "snippet_preview": "### 5.1 P1-A 完成标准\n\n- 经营管理签案件可创建并生成专属资料清单\n- 问卷与报价数据可结构化保存\n- 文书、校验、提交包、补正循环可跑通\n- 业务子步骤与 `S1–S9` 并行显示且不冲突"
+        },
+        {
+          "chunk_id": "1ffb6f3844d7dfda",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/05-信息架构与页面地图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.15910112857818604,
+          "snippet_preview": "### 4.1 全局搜索\n\n- 固定放在顶栏。\n- P0 最少支持：案件编号、客户名、电话、邮箱。\n- 搜索结果必须与详情页使用**同一套服务端权限判断**，不能因为“搜得到”就突破对象可见边界。\n- P0 不要求跨全库模糊搜索企业主数据；工作类雇主信息以案件字段辅助检索。"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.11137664318084717,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        },
+        {
+          "chunk_id": "e68381a8980b4e5a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.11108708381652832,
+          "snippet_preview": "### G-1：P0 是首版权威源\n\n`P0/` 只回答\"首个成交版本做什么、不做什么\"。研发、设计、QA 在首版开发期间以 P0/ 为执行依据。"
+        },
+        {
+          "chunk_id": "f72de4bf6b7a9e9b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.1049962043762207,
+          "snippet_preview": "## 3. P0 实体定义"
+        },
+        {
+          "chunk_id": "2a1396a7203ea6ae",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.10206300020217896,
+          "snippet_preview": "## 5. P0 验收标准\n\nP0 完成的判定标准——试点事务所和研发团队以此为验收依据："
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+      "top_hit_score": 0.28051650524139404
+    },
+    {
+      "query_id": "AQ-S02",
+      "category": "来源追溯",
+      "focus": "biz-mgmt 与 state-machine 分层",
+      "success_signal": "同时回链 P1 与 P0，说明 P1 扩展、P0 底座",
+      "search_query": "经营管理签 CaseWorkflowStep 来源位置 不能改写 S1-S9",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "d3f259521d74dc94",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.3197140097618103,
+          "snippet_preview": "### 双层状态模型（可扩展性核心原则）\n\n为保证 P1/P2 新签证类型（如经营管理签证）接入时不破坏任何 P0 现有逻辑，模型采用「双层状态」设计：\n\n| 层 | 字段 | 颗粒度 | 用途 |\n|---|---|---|---|\n| **管理层** | `Case.stage`（S1–S9） | 粗，通用，跨签证类型 | 报表、仪表盘、SLA、Gate 触发 |\n| **业务层** | `C"
+        },
+        {
+          "chunk_id": "249530aabcab6fe6",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.31362223625183105,
+          "snippet_preview": "### 双层状态模型（P1 可扩展性核心设计）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 将案件状态拆分为两层：管理层（Stage S1–S9，跨签证类型通用）与业务层（Step，CaseWorkflowStep，模板专属细粒度节点） |\n| 为何这样设计 | 避免不同签证类型的专属步骤（如 COE_SENT、VISA_APPLYING）污染通用主阶段枚举；新签证类型"
+        },
+        {
+          "chunk_id": "f383372b2f995e30",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2870384454727173,
+          "snippet_preview": "### 3.24 CaseWorkflowStep（业务子步骤记录，P1 预定义）\n\n> **P0 不启用**。P1 新增签证类型（如经营管理签证）时，随 CaseTemplate.workflow_steps_blueprint 同步启用。\n> 与 CaseStageHistory 的区别：CaseStageHistory 记录 S1–S9 管理层流转；CaseWorkflowStep 记录模板"
+        },
+        {
+          "chunk_id": "1badce4b6ab9f005",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2763791084289551,
+          "snippet_preview": "### 业务子步骤状态 — CaseWorkflowStep.status（P1）\n\n| 枚举值 | 说明 |\n|--------|------|\n| `active` | 当前正在进行 |\n| `completed` | 已完成并推进到下一步 |\n| `skipped` | 因条件不满足或人工跳过（需留痕） |\n\n---"
+        },
+        {
+          "chunk_id": "9bd0e28ff47243ea",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2754564881324768,
+          "snippet_preview": "### CaseWorkflowStep（业务子步骤记录，P1）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 记录特定签证模板专属的业务操作节点（如 UNDER_REVIEW / COE_SENT / VISA_APPLYING / ENTRY_SUCCESS）的进入、完成、跳过历史 |\n| 与 CaseStageHistory 区别 | CaseStageHistor"
+        },
+        {
+          "chunk_id": "e0a04d91edc95423",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.23000609874725342,
+          "snippet_preview": "### P0 必须理解的 7 个概念\n\n| 概念 | 一句话定义 | P0 补充 |\n|------|-----------|---------|\n| **Customer** | 个人客户主数据，一个客户可关联多个案件 | P0 以个人客户为主体，不引入企业客户 |\n| **Case** | 系统核心工作单元，一案一单 | P0 预置家族滞在与技人国两类模板 |\n| **Group** | 内部"
+        },
+        {
+          "chunk_id": "7b8bcdef1649e12f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.18280720710754395,
+          "snippet_preview": "### 0.4 P0 / P1 边界摘要\n\n- **P0 只使用管理层阶段 `S1–S9`**\n- **P1 才启用业务子步骤 `CaseWorkflowStep`**，如 `COE_SENT` / `VISA_APPLYING`\n- **P0 续签提醒以手动 Reminder 为主**；P1 才通过 `ResidencePeriod + reminder_schedule_blueprint` "
+        },
+        {
+          "chunk_id": "1b7c9ababc7e40a6",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.10791009664535522,
+          "snippet_preview": "### 2.1 字段\n\n- 案件编号\n- 案件名称\n- 案件类型\n- 主申请人\n- Group\n- 当前阶段（S1–S9）\n- 当前业务步骤（`current_workflow_step`，**P1 启用**；P0 仅显示阶段，此列隐藏或为空）\n- 负责人\n- 资料完成率\n- 最新校验状态（passed/failed/pending）与阻断数\n- 未收金额\n- 最近更新时间\n- 截止日\n- 风险状"
+        },
+        {
+          "chunk_id": "2622de6c17edb877",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "state-machine",
+          "score": 0.09353923797607422,
+          "snippet_preview": "### 1.2 P0 / P1 分层原则\n\n- **P0 保持管理层阶段**：`Case.stage = S1–S9`\n- **P1 承接业务细节**：通过 `CaseWorkflowStep` 表达经营管理签专属步骤\n- **P0 保持通用收费策略**：默认 `warn`\n- **P1 承接专属硬门禁**：如 `COE_SENT` 前尾款必须结清\n- **P0 保持手动提醒兜底**\n- **P1"
+        },
+        {
+          "chunk_id": "632bec6b200f3cde",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.08672451972961426,
+          "snippet_preview": "### 3.2 Gate-B：进入提交前校验（`S4 → S5`）\n\n- **触发点**：从 `S4 → S5`，或用户主动进入校验\n- **通过后动作**：生成校验报告（`ValidationRun`），作为复核与提交包的引用来源"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+      "top_hit_score": 0.3197140097618103
+    },
+    {
+      "query_id": "AQ-S03",
+      "category": "来源追溯",
+      "focus": "scenario-materials + 裁决顺序",
+      "success_signal": "先用事务所流程回答资料场景，再说明何时回链到 P1 落地位置",
+      "search_query": "经营管理签资料要求 事务所流程 P1 冲突 裁决顺序",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4007025957107544,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "2a1396a7203ea6ae",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3591744899749756,
+          "snippet_preview": "## 5. P0 验收标准\n\nP0 完成的判定标准——试点事务所和研发团队以此为验收依据："
+        },
+        {
+          "chunk_id": "27de6b8cea6b175b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.35082030296325684,
+          "snippet_preview": "## 3. P0 要解决的痛点\n\nP0 首版聚焦 3 个最痛的问题，这 3 个问题是小型签证事务所日常中损失最大、频次最高的："
+        },
+        {
+          "chunk_id": "4b63a24687c69bd0",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3361494541168213,
+          "snippet_preview": "### 7.3 P0 模板策略\n\n- 系统预置 2 类模板（家族滞在、工作签证/技人国）的材料字典与默认说明/样例。\n- 案件内允许手动追加资料项或标记无需提供（需留痕）。\n- P0 不支持事务所级模板自定义——模板覆盖能力后置到 P1。"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.31013429164886475,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "c9ce9a1e53b9a9e0",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.29853618144989014,
+          "snippet_preview": "## 1. P0 目标\n\nP0 的目标是让 **1 家小型签证事务所**在 **2-4 周内**用系统跑通案件主链路，不再依赖 Excel 主表管理案件。"
+        },
+        {
+          "chunk_id": "cf3870def762161f",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.26640069484710693,
+          "snippet_preview": "### 5.1 P1-A 完成标准\n\n- 经营管理签案件可创建并生成专属资料清单\n- 问卷与报价数据可结构化保存\n- 文书、校验、提交包、补正循环可跑通\n- 业务子步骤与 `S1–S9` 并行显示且不冲突"
+        },
+        {
+          "chunk_id": "e31b077710d85bdd",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.23786306381225586,
+          "snippet_preview": "### G-9：未确认项不得实现\n\n任何 `OPEN_QUESTION`、`P0 / P1` 级歧义、待确认假设都不得由 AI 以常识补齐。示例默认不是强约束，只有在冻结边界中显式升级后才可执行。"
+        },
+        {
+          "chunk_id": "419336235d20658f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.23190534114837646,
+          "snippet_preview": "### 2.2 默认筛选\n\n- 案件类型\n\n> P0 不做模板的批量启用/停用。模板管理入口仅对管理员开放。"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.2087264060974121,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+      "top_hit_score": 0.4007025957107544
+    },
+    {
+      "query_id": "AQ-S04",
+      "category": "来源追溯",
+      "focus": "_output 降级规则",
+      "success_signal": "明确回答以 P0 为准，并把 _output 作为桥接来源",
+      "search_query": "_output 状态机整理结论 P0 冻结规则 来源优先级",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "18f06f7623443c44",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.1920265555381775,
+          "snippet_preview": "# 00 开始这里（P0 首版）\n\n> 面向首版开发期间所有参与者的统一入口。\n> 本文档只覆盖 P0（首个可交付版本）的范围。完整产品规划见主目录 [00-开始这里](../00-开始这里.md)。"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.18401044607162476,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "e68381a8980b4e5a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.16214901208877563,
+          "snippet_preview": "### G-1：P0 是首版权威源\n\n`P0/` 只回答\"首个成交版本做什么、不做什么\"。研发、设计、QA 在首版开发期间以 P0/ 为执行依据。"
+        },
+        {
+          "chunk_id": "8bb38b0122c01e31",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-产品全景图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.12712830305099487,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 主链路从头到尾有哪些环节\n- 每个环节做什么、P0 做到什么程度\n- 三道门槛（Gate）在哪里触发\n\n---"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.10226917266845703,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "419336235d20658f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.08759951591491699,
+          "snippet_preview": "### 2.2 默认筛选\n\n- 案件类型\n\n> P0 不做模板的批量启用/停用。模板管理入口仅对管理员开放。"
+        },
+        {
+          "chunk_id": "d8c5ddec4afa7522",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.08140361309051514,
+          "snippet_preview": "## 2. P0 功能范围"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.05685567855834961,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.03853929042816162,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "7bb2f453cc0c7a02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.030880451202392578,
+          "snippet_preview": "### 4.6 归档与续签提醒\n\n- `S8` 出结果后确认后续动作 → 进入 `S9`\n- 归档前确认：资料归档完成、续签提醒是否需要、收费是否结清\n- 系统根据在留到期日在关键节点触发提醒（P0 以站内提醒为主）\n- P0 不做续签商机自动创建——后置到 P1"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+      "top_hit_score": 0.1920265555381775
+    },
+    {
+      "query_id": "AQ-S05",
+      "category": "来源追溯",
+      "focus": "正文与工件的主次关系",
+      "success_signal": "指出正文优先、工件只做结构化补充",
+      "search_query": "P0 门禁工件 P0 正文 同时命中 最终规则解释 主次关系",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "41e75f25089c9cd2",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.5612491965293884,
+          "snippet_preview": "### R-4：与主目录的同步规则\n\n- P0/ 中对规则的修正，应同步检查主目录对应文档是否需要更新。\n- 主目录中的 P0 范围变更，应同步反映到 P0/ 对应文档。\n- 同步动作记录在 [99-文档维护与版本记录](99-文档维护与版本记录.md) 中。"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4894658923149109,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.4498679041862488,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4438976049423218,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "9ea8cbb2092740a5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4121750593185425,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 首版服务谁、解决什么问题\n- 首版只跑哪条链路、只覆盖哪类案件\n- 什么算试点成功\n- 15 分钟内应该读完哪几篇 P0 文档\n- P0 文档和主目录文档的分工\n\n---"
+        },
+        {
+          "chunk_id": "fbdc0e7201b07906",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.39363598823547363,
+          "snippet_preview": "### R-5：文档必须重写而非复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "ca2547a8bb9afe26",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.39130866527557373,
+          "snippet_preview": "## 1. P0 版本策略冻结\n\nP0 采用 **\"宽链路、浅能力、强留痕\"** 策略：从咨询到回款的主链路模块全部保留，但每个模块只做最小闭环，不在首版追求配置化或门户化。"
+        },
+        {
+          "chunk_id": "aceb5defd3602ee9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-产品全景图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3639117479324341,
+          "snippet_preview": "## 这份文档适合谁看\n\n- 需要快速了解 P0 首版覆盖哪些环节的研发、设计、QA\n- 需要理解\"首版到底跑什么链路\"的试点客户或外部顾问"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.35873138904571533,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "fddeaf6798ee9628",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3544728755950928,
+          "snippet_preview": "### G-3：与主目录的同步规则\n\n| 场景 | 动作 |\n|------|------|\n| P0/ 中发现规则错误并修正 | 检查主目录对应文档是否需同步修正 |\n| 主目录中 P0 范围发生变更 | 同步反映到 P0/ 对应文档 |\n| P0/ 新增文档 | 在本文\"变更日志\"中记录，并检查主目录 README 是否需更新 |"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+      "top_hit_score": 0.5612491965293884
+    },
+    {
+      "query_id": "AQ-S06",
+      "category": "来源追溯",
+      "focus": "office-process + scenario-materials 归类",
+      "success_signal": "能回答 office-process/scenario-materials，并解释不是 P0 规则题",
+      "search_query": "经营管理签认定 1年 需要哪些资料 wing room 归类",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "8737cc02f9c34aba",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.3412814140319824,
+          "snippet_preview": "## 3. 经营管理签认定 1 年"
+        },
+        {
+          "chunk_id": "1b7ef968c8f65d18",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.277080774307251,
+          "snippet_preview": "### 执行重点\n\n- 重点检查资本证明链是否完整。\n- 重点确认来日履历与既往认定 / 不许可历史。\n- 事务所相关资料虽然不是正式租约，但不能缺前置准备证据。"
+        },
+        {
+          "chunk_id": "b1f0af8605e2a1e8",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-cert-4m.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.19417572021484375,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签认定 4 个月场景，重点在申请人背景、资本来源、来日履历与创业前置准备。"
+        },
+        {
+          "chunk_id": "b4c248c22c902cc6",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-cert-1y.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.18634778261184692,
+          "snippet_preview": "## 适用说明\n\n适用于公司实体已基本落地后的经营管理签认定 1 年场景，是经营管理相关场景中材料最完整的一类。"
+        },
+        {
+          "chunk_id": "d2da1cdbdfebd035",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.16763758659362793,
+          "snippet_preview": "### 收费计划（案件维度）\n\n- 收费节点列表（阶段绑定、应收金额、到期日、状态）"
+        },
+        {
+          "chunk_id": "ac9be5772154152d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.16214251518249512,
+          "snippet_preview": "### 风险案件\n\n- **行动入口**：一键定位阻断项、批量指派责任人"
+        },
+        {
+          "chunk_id": "f72de4bf6b7a9e9b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.16066426038742065,
+          "snippet_preview": "## 3. P0 实体定义"
+        },
+        {
+          "chunk_id": "a19e9bd1d34b5165",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.14176928997039795,
+          "snippet_preview": "### AI / 结构化读取入口\n\n如果你的目标不是“理解背景”，而是“稳定定位规则并开始执行”，请先读：\n\n1. [09-结构化总索引与交叉映射](09-结构化总索引与交叉映射.md)\n2. 再跳转到对应权威正文（02/03/04/05/06/07/08）\n\n这样可以避免把示例当强约束、把背景描述当实现规则、或漏掉 P0 明确排除项。\n\n---"
+        },
+        {
+          "chunk_id": "ab3356236f2aed51",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-cert-4m.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.14015960693359375,
+          "snippet_preview": "## 重点注意\n\n- 资本证明链必须可追溯。\n- 来日履历、既往认定和不许可历史不能漏。\n- 事务所相关材料属于前置准备证明，不应空缺。"
+        },
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.13878989219665527,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "scenario-materials",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+      "top_hit_score": 0.3412814140319824
+    },
+    {
+      "query_id": "AQ-S07",
+      "category": "来源追溯",
+      "focus": "通用 Gate 与专属 Gate 的裁决顺序",
+      "success_signal": "明确这是 P1 专属验收问题，但仍需回链 P0 通用 Gate 底座",
+      "search_query": "发 COE 前阻断 P1 还是 P0 通用 Gate 专属 Gate",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "3b75b90e51452fdf",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.5409656763076782,
+          "snippet_preview": "## 3. Gate 触发点与通过后动作\n\n> Gate 的硬性阻断/软性提示明细与重新校验触发条件见 [03 §4](03-业务规则与不变量.md#4-校验门槛gate规则)。"
+        },
+        {
+          "chunk_id": "88833e0dca33a385",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.46420711278915405,
+          "snippet_preview": "### 4.3 三道 Gate\n\nP0 冻结 3 个 Gate。每次 Gate 执行都沉淀为一条校验运行记录（ValidationRun）与报告。\n\n> Gate 的触发点与通过后动作详见 [04-核心流程](04-核心流程与状态流转.md) §1.4。"
+        },
+        {
+          "chunk_id": "8e2ffc62987c502d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.45446550846099854,
+          "snippet_preview": "### 3.3 Gate-C：提交（生成提交包前）\n\n- **触发点**：点击“正式提交”动作\n- **通过后动作**：生成提交包并锁定引用版本与关键字段快照；阶段进入 `S7`\n\n---"
+        },
+        {
+          "chunk_id": "8bb38b0122c01e31",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-产品全景图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.42695122957229614,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 主链路从头到尾有哪些环节\n- 每个环节做什么、P0 做到什么程度\n- 三道门槛（Gate）在哪里触发\n\n---"
+        },
+        {
+          "chunk_id": "ac802ec78b6fdd0c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.4137488603591919,
+          "snippet_preview": "#### Gate-B：进入提交前校验\n\n- **硬性阻断**：关键文书已定稿（`final`）；必交资料项齐备且通过；关键字段必填完成\n- **软性提示**：日期逻辑/有效期风险、材料时效建议、收费节点异常"
+        },
+        {
+          "chunk_id": "2c1c81b78acdc2f1",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.3136293888092041,
+          "snippet_preview": "### Gate（门槛校验）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 流程中的关键关卡，用于阻断关键错误。每次执行沉淀为 ValidationRun |\n| P0 枚举 | Gate-A（进入文书，S3→S4）、Gate-B（进入校验，S4→S5）、Gate-C（生成提交包前） |\n| P0 约束 | 预置规则，不可配置化 |\n| 权威来源 | [03 §4.3]("
+        },
+        {
+          "chunk_id": "573dc632ccd9ed02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.3075554370880127,
+          "snippet_preview": "## 4. 校验门槛（Gate）规则\n\n校验分为两层：硬性阻断（必须修复才可继续）和软性提示（风险提示但不阻断）。目的是避免过度阻断影响效率，也避免完全不阻断导致质量失控。"
+        },
+        {
+          "chunk_id": "632bec6b200f3cde",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2963581085205078,
+          "snippet_preview": "### 3.2 Gate-B：进入提交前校验（`S4 → S5`）\n\n- **触发点**：从 `S4 → S5`，或用户主动进入校验\n- **通过后动作**：生成校验报告（`ValidationRun`），作为复核与提交包的引用来源"
+        },
+        {
+          "chunk_id": "ca0ba07d035de7ed",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.27366209030151367,
+          "snippet_preview": "## P0 明确不做\n\n| 不做项 | 后置到 | 原因 |\n|--------|-------|------|\n| 发票管理（开票/发票状态） | P1 | 首版不做发票流 |\n| 财务报表 | P1 | 首版不需要复杂财务分析 |\n| 自动对账 | P1 | 首版手动登记回款 |\n| 批量导出收费报表 | P1 | 首版不做批量财务导出 |\n| 对客户欠款提醒（门户触达） | P1 | P0 "
+        },
+        {
+          "chunk_id": "e0faa9076f430b53",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.24813926219940186,
+          "snippet_preview": "### 4.3 文书生成与定稿\n\n1. **Gate-A 通过**后进入 `S4`\n2. 系统基于模板和案件变量生成文书初稿\n3. 助理整理，行政书士确认\n4. 定稿（文书状态 → `final`）\n5. 进入提交前校验"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+      "top_hit_score": 0.5409656763076782
+    },
+    {
+      "query_id": "AQ-S08",
+      "category": "来源追溯",
+      "focus": "_raw 只能作为线索",
+      "success_signal": "明确输出待编译/待确认，不能伪装成既定规则",
+      "search_query": "结论只在 _raw 找到 L1 没有冻结定义 系统怎样回答",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.26993584632873535,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        },
+        {
+          "chunk_id": "a19e9bd1d34b5165",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.24992668628692627,
+          "snippet_preview": "### AI / 结构化读取入口\n\n如果你的目标不是“理解背景”，而是“稳定定位规则并开始执行”，请先读：\n\n1. [09-结构化总索引与交叉映射](09-结构化总索引与交叉映射.md)\n2. 再跳转到对应权威正文（02/03/04/05/06/07/08）\n\n这样可以避免把示例当强约束、把背景描述当实现规则、或漏掉 P0 明确排除项。\n\n---"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.24264180660247803,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2283412218093872,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "1ffb6f3844d7dfda",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/05-信息架构与页面地图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.22744572162628174,
+          "snippet_preview": "### 4.1 全局搜索\n\n- 固定放在顶栏。\n- P0 最少支持：案件编号、客户名、电话、邮箱。\n- 搜索结果必须与详情页使用**同一套服务端权限判断**，不能因为“搜得到”就突破对象可见边界。\n- P0 不要求跨全库模糊搜索企业主数据；工作类雇主信息以案件字段辅助检索。"
+        },
+        {
+          "chunk_id": "f72de4bf6b7a9e9b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.226617693901062,
+          "snippet_preview": "## 3. P0 实体定义"
+        },
+        {
+          "chunk_id": "7bf53ecd1a11236d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.19047141075134277,
+          "snippet_preview": "### 4.7 收费流程\n\n1. 案件创建时设定费用总额与收费节点\n2. 到节点触发内部收款提醒\n3. 财务登记实收、上传凭证\n4. 标记回款/欠款状态\n\nP0 口径：\n\n- 收费异常以风险提示为主，不阻断提交\n- 欠款状态下继续提交需风险确认留痕\n- 工作台聚合暴露欠款风险案件\n\n---"
+        },
+        {
+          "chunk_id": "9b43937a33aef8c9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.18003308773040771,
+          "snippet_preview": "## 4. P0 枚举对齐\n\n> 所有枚举的业务规则定义见 [03-业务规则 §3](03-业务规则与不变量.md#3-状态机定义)。本节做集中映射，确保实现与规则一致。"
+        },
+        {
+          "chunk_id": "c2fe9a8d8344972b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.15539336204528809,
+          "snippet_preview": "### 3.2 缺件催办混乱\n\n不知道哪个客户还缺什么材料、催了几次、谁催的、客户回了没有。催办靠记忆和聊天记录翻找。\n\n**P0 解法**：每个案件有结构化的资料清单，催办留痕，缺件可追踪。"
+        },
+        {
+          "chunk_id": "e68381a8980b4e5a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.15002310276031494,
+          "snippet_preview": "### G-1：P0 是首版权威源\n\n`P0/` 只回答\"首个成交版本做什么、不做什么\"。研发、设计、QA 在首版开发期间以 P0/ 为执行依据。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+      "top_hit_score": 0.26993584632873535
+    },
+    {
+      "query_id": "AQ-R01",
+      "category": "规则解释",
+      "focus": "state-machine + submission-audit",
+      "success_signal": "明确提到补正属于已提交案件中的新循环，并指出要生成新的 SubmissionPackage",
+      "search_query": "补正流程 案件主阶段 保持 S7 不回退 未提交 SubmissionPackage",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "4e17f95b3fd2f216",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.3338748812675476,
+          "snippet_preview": "### 提交包状态 — SubmissionPackage（隐含状态）\n\n| 状态 | 说明 |\n|------|------|\n| 草稿（未锁定） | 正在准备中 |\n| 已生成（锁定） | 已锁定引用版本与关键字段快照 |\n| 已导出（留痕） | 已导出/下载，属敏感动作 |"
+        },
+        {
+          "chunk_id": "0d21265b8ef0a7c6",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.3116137981414795,
+          "snippet_preview": "### 3.7 校验结果状态\n\n| 状态 | 枚举值 | 说明 |\n|------|--------|------|\n| 待校验 | `pending` | — |\n| 校验不通过 | `failed` | 存在硬性阻断项 |\n| 校验通过 | `passed` | — |\n\n> \"已提交\"属于案件阶段（S7），不属于校验结果状态。\n\n---"
+        },
+        {
+          "chunk_id": "ca2547a8bb9afe26",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2880673408508301,
+          "snippet_preview": "## 1. P0 版本策略冻结\n\nP0 采用 **\"宽链路、浅能力、强留痕\"** 策略：从咨询到回款的主链路模块全部保留，但每个模块只做最小闭环，不在首版追求配置化或门户化。"
+        },
+        {
+          "chunk_id": "d20c9e59df2c2537",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2706478238105774,
+          "snippet_preview": "### 4.2 资料收集与审核\n\n1. 案件创建后，系统根据“签证类型 × 申请类型”匹配模板并生成资料清单\n2. 标记各资料项的提供方（主申请人 / 扶养者或保证人 / 事务所内部）\n3. 对客户发出资料请求（资料项进入 `waiting_upload`）\n4. 客户/内部提交资料，事务所完成扫描归档，并在系统**登记资料版本**\n5. 助理审核：通过 → `approved`；不通过 → `r"
+        },
+        {
+          "chunk_id": "a4249b831ae53995",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2691989541053772,
+          "snippet_preview": "### 首版不覆盖的案件类型\n\n永住、归化、特定技能、经营管理、公司设立、许可申报等——这些案件的模板、资料清单和文书在 P1/P2 逐步扩展。\n\n> 系统架构不阻止这些案件类型的手动创建（不选模板即可建案），但 P0 不预置模板、不保证流程完整。\n\n---"
+        },
+        {
+          "chunk_id": "811768476955bdcf",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.2537580728530884,
+          "snippet_preview": "### 4. 企业内转勤不能简单当成布尔矩阵\n\n- 该列含有 `〇本国・日本`、`〇日本` 这样的附注。\n- 这意味着后续如果要导入系统配置，至少要保留 `status + raw_note` 两字段，而不是只存 `required/optional`。"
+        },
+        {
+          "chunk_id": "f01ed90fd30068f3",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.24248361587524414,
+          "snippet_preview": "### 0.3 Gate 触发摘要\n\n| Gate | 触发点 | 通过后动作 |\n|---|---|---|\n| Gate-A | `S3 → S4` 或首次生成关键文书前 | 进入文书制作，生成/更新文书任务 |\n| Gate-B | `S4 → S5` 或主动进入校验 | 生成 `ValidationRun` 校验报告 |\n| Gate-C | 点击“正式提交” | 生成 `Submissi"
+        },
+        {
+          "chunk_id": "4243b5b842af9471",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.23747718334197998,
+          "snippet_preview": "### 7.4 资料项标记要求\n\n- 资料项必须标记提供方（主申请人 / 扶养者或保证人 / 事务所内部），支持按提供方展示与催办。\n- 多对象/多案件允许引用同一附件版本；引用指向具体版本，避免共享可变文件。\n\n---"
+        },
+        {
+          "chunk_id": "6852f3e5c0cd991d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.23480671644210815,
+          "snippet_preview": "### G-4：文档必须重写不可复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "0392e1e3423d6b10",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.23108869791030884,
+          "snippet_preview": "### 1.1 范围原则\n\n- **主链路广度保留，单模块深度控制**：从咨询到回款的链路必须完整，但每个模块只做最小闭环。\n- **能跑通优先于能配置化**：模板、规则、门户、自定义能力先做基础版。\n- **安全审计不后置**：与可见性、审计、留痕相关的基础能力必须有最小可用版本。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "scenario-materials",
+        "state-machine",
+        "submission-audit"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+      "top_hit_score": 0.3338748812675476
+    },
+    {
+      "query_id": "AQ-R02",
+      "category": "规则解释",
+      "focus": "workflow-gates",
+      "success_signal": "能给出三个 Gate 的触发点和通过后动作",
+      "search_query": "Gate-A Gate-B Gate-C 触发时点 通过后产生结果",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "3b75b90e51452fdf",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.5021867156028748,
+          "snippet_preview": "## 3. Gate 触发点与通过后动作\n\n> Gate 的硬性阻断/软性提示明细与重新校验触发条件见 [03 §4](03-业务规则与不变量.md#4-校验门槛gate规则)。"
+        },
+        {
+          "chunk_id": "8e2ffc62987c502d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.45397722721099854,
+          "snippet_preview": "### 3.3 Gate-C：提交（生成提交包前）\n\n- **触发点**：点击“正式提交”动作\n- **通过后动作**：生成提交包并锁定引用版本与关键字段快照；阶段进入 `S7`\n\n---"
+        },
+        {
+          "chunk_id": "88833e0dca33a385",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.32493865489959717,
+          "snippet_preview": "### 4.3 三道 Gate\n\nP0 冻结 3 个 Gate。每次 Gate 执行都沉淀为一条校验运行记录（ValidationRun）与报告。\n\n> Gate 的触发点与通过后动作详见 [04-核心流程](04-核心流程与状态流转.md) §1.4。"
+        },
+        {
+          "chunk_id": "ac802ec78b6fdd0c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.2984042763710022,
+          "snippet_preview": "#### Gate-B：进入提交前校验\n\n- **硬性阻断**：关键文书已定稿（`final`）；必交资料项齐备且通过；关键字段必填完成\n- **软性提示**：日期逻辑/有效期风险、材料时效建议、收费节点异常"
+        },
+        {
+          "chunk_id": "e0faa9076f430b53",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2838805913925171,
+          "snippet_preview": "### 4.3 文书生成与定稿\n\n1. **Gate-A 通过**后进入 `S4`\n2. 系统基于模板和案件变量生成文书初稿\n3. 助理整理，行政书士确认\n4. 定稿（文书状态 → `final`）\n5. 进入提交前校验"
+        },
+        {
+          "chunk_id": "573dc632ccd9ed02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.2268214225769043,
+          "snippet_preview": "## 4. 校验门槛（Gate）规则\n\n校验分为两层：硬性阻断（必须修复才可继续）和软性提示（风险提示但不阻断）。目的是避免过度阻断影响效率，也避免完全不阻断导致质量失控。"
+        },
+        {
+          "chunk_id": "5e86ec05a843d1cc",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.20456945896148682,
+          "snippet_preview": "#### Gate-C：提交（生成提交包前）\n\n- **硬性阻断**：最新一次校验结果为通过；如启用双人复核则复核通过；提交信息字段满足最小要求（提交日期/机关/回执等）\n- **软性提示**：欠款风险、非关键材料建议补充\n- **欠款特别规则**：若存在欠款风险且仍要提交，必须先完成风险确认留痕（确认人、原因，可选上传凭证）"
+        },
+        {
+          "chunk_id": "2c1c81b78acdc2f1",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.18967711925506592,
+          "snippet_preview": "### Gate（门槛校验）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 流程中的关键关卡，用于阻断关键错误。每次执行沉淀为 ValidationRun |\n| P0 枚举 | Gate-A（进入文书，S3→S4）、Gate-B（进入校验，S4→S5）、Gate-C（生成提交包前） |\n| P0 约束 | 预置规则，不可配置化 |\n| 权威来源 | [03 §4.3]("
+        },
+        {
+          "chunk_id": "632bec6b200f3cde",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.17512261867523193,
+          "snippet_preview": "### 3.2 Gate-B：进入提交前校验（`S4 → S5`）\n\n- **触发点**：从 `S4 → S5`，或用户主动进入校验\n- **通过后动作**：生成校验报告（`ValidationRun`），作为复核与提交包的引用来源"
+        },
+        {
+          "chunk_id": "cf3fa445b5a024b4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.17305171489715576,
+          "snippet_preview": "### 3.1 Gate-A：进入文书（`S3 → S4`）\n\n- **触发点**：从 `S3 → S4`，或首次生成关键文书前\n- **通过后动作**：生成/更新“文书制作”相关默认任务；案件概览显示“可进入文书”状态"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+      "top_hit_score": 0.5021867156028748
+    },
+    {
+      "query_id": "AQ-R03",
+      "category": "规则解释",
+      "focus": "P0 收费策略",
+      "success_signal": "明确引用 P0 的 warn 口径，并说明阻断不是首版统一规则",
+      "search_query": "P0 欠款 风险提示 不默认阻断提交 收费策略",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "03607b8ccfa99984",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.40356844663619995,
+          "snippet_preview": "### 4.2 软性提示（P0 最小集合）\n\n- 日期逻辑 / 有效期风险\n- 收费欠款风险\n- 建议补充材料\n- 附件版本过旧但未过期\n- 关键信息疑似未更新（地址/在留期限等）"
+        },
+        {
+          "chunk_id": "419336235d20658f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3968794345855713,
+          "snippet_preview": "### 2.2 默认筛选\n\n- 案件类型\n\n> P0 不做模板的批量启用/停用。模板管理入口仅对管理员开放。"
+        },
+        {
+          "chunk_id": "68d4abdab1a58a18",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.3960714340209961,
+          "snippet_preview": "### 硬性阻断 / 软性提示\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 校验结果的两个严重级别。**硬性阻断**：必须修复才可继续。**软性提示**：风险提示，不阻断流程 |\n| 权威来源 | [03 §4.1](03-业务规则与不变量.md#41-硬性阻断p0-最小集合)、[03 §4.2](03-业务规则与不变量.md#42-软性提示p0-最小集合) |"
+        },
+        {
+          "chunk_id": "27de6b8cea6b175b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.39212822914123535,
+          "snippet_preview": "## 3. P0 要解决的痛点\n\nP0 首版聚焦 3 个最痛的问题，这 3 个问题是小型签证事务所日常中损失最大、频次最高的："
+        },
+        {
+          "chunk_id": "89ca5bd77c3895da",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3902987241744995,
+          "snippet_preview": "### P0 不承诺的价值\n\n- **自动化**：P0 不做自动化流程引擎、条件触发器、智能分派\n- **门户化**：P0 不做客户门户，客户侧交互仍在线下完成\n- **高度配置化**：P0 模板和规则为预置版，不要求事务所自定义\n\n---"
+        },
+        {
+          "chunk_id": "2a1396a7203ea6ae",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3880501985549927,
+          "snippet_preview": "## 5. P0 验收标准\n\nP0 完成的判定标准——试点事务所和研发团队以此为验收依据："
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.38124167919158936,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.37104707956314087,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        },
+        {
+          "chunk_id": "e31b077710d85bdd",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.36356818675994873,
+          "snippet_preview": "### G-9：未确认项不得实现\n\n任何 `OPEN_QUESTION`、`P0 / P1` 级歧义、待确认假设都不得由 AI 以常识补齐。示例默认不是强约束，只有在冻结边界中显式升级后才可执行。"
+        },
+        {
+          "chunk_id": "c9ce9a1e53b9a9e0",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.35034042596817017,
+          "snippet_preview": "## 1. P0 目标\n\nP0 的目标是让 **1 家小型签证事务所**在 **2-4 周内**用系统跑通案件主链路，不再依赖 Excel 主表管理案件。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+      "top_hit_score": 0.40356844663619995
+    },
+    {
+      "query_id": "AQ-R04",
+      "category": "规则解释",
+      "focus": "P1 专属收费门禁",
+      "success_signal": "能指出 BillingPlan.gate_trigger_step=COE_SENT 和 gate_effect_mode=block",
+      "search_query": "经营管理签 COE_SENT 尾款未结清 硬阻断 BillingPlan gate_trigger_step",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "0dcbb8e6ec0e0966",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.7685104012489319,
+          "snippet_preview": "### M6 收费节点与 COE 守卫\n\n- 明确定义 `final_payment` 节点\n- 设置 `BillingPlan.gate_trigger_step=COE_SENT`\n- 设置 `gate_effect_mode=block`\n- 未结清尾款不得推进到 `COE_SENT`"
+        },
+        {
+          "chunk_id": "846530952123ac78",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.6272512078285217,
+          "snippet_preview": "#### BillingPlan\n\n- id\n- case_id\n- milestone_name（签约 / 提交前 / 结果后等）\n- amount_due / due_date（可选）\n- status（→ [03 §3.5](03-业务规则与不变量.md#35-收费状态)）\n- gate_effect_mode（none / warn / block；P0 默认 warn；此字段为节点级默认"
+        },
+        {
+          "chunk_id": "2db45d50562f6867",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.35862815380096436,
+          "snippet_preview": "### BillingPlan（收费计划/收费节点）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 与案件阶段绑定的收费节点，定义应收金额、到期日、状态与门槛效果模式 |\n| P0 状态 | due / partial / paid / overdue |\n| gate_effect_mode | off / warn（P0 默认）/ block |\n| 权威来源 | ["
+        },
+        {
+          "chunk_id": "c595261cb1346b56",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "field-ownership",
+          "score": 0.30262142419815063,
+          "snippet_preview": "## 0. 结构化速查（人 / AI 共用）\n\n| 维度 | 内容 |\n|---|---|\n| **目标文档** | `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` |\n| **P1 核心目标** | 在不污染 P0 `S1–S9` 的前提下，完整满足经营管理签 Step 1–20 |\n| **主要扩展点** | `CaseWorkflowStep`、`extra_"
+        },
+        {
+          "chunk_id": "ca0ba07d035de7ed",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2630922794342041,
+          "snippet_preview": "## P0 明确不做\n\n| 不做项 | 后置到 | 原因 |\n|--------|-------|------|\n| 发票管理（开票/发票状态） | P1 | 首版不做发票流 |\n| 财务报表 | P1 | 首版不需要复杂财务分析 |\n| 自动对账 | P1 | 首版手动登记回款 |\n| 批量导出收费报表 | P1 | 首版不做批量财务导出 |\n| 对客户欠款提醒（门户触达） | P1 | P0 "
+        },
+        {
+          "chunk_id": "6a4a0e9622eabf22",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.2420724630355835,
+          "snippet_preview": "#### Step 5：签约\n**行为**\n- 合同签署\n- 收取 deposit_amount（约50%）\n**状态变更**\n- CONSULTING → CONTRACTED"
+        },
+        {
+          "chunk_id": "cb3c21bcdc9134bb",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.22540521621704102,
+          "snippet_preview": "#### Step 16：发送COE\n**输出**\n- coe_pdf\n**状态**\n- WAITING_PAYMENT → COE_SENT"
+        },
+        {
+          "chunk_id": "baa9c45703a81660",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.21049439907073975,
+          "snippet_preview": "#### Step 6：发送资料清单\n**输入**\n- visa_plan\n**输出**\n- material_list_id\n**状态**\n- CONTRACTED → WAITING_MATERIAL"
+        },
+        {
+          "chunk_id": "7760a7d36ff63b1c",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.19347107410430908,
+          "snippet_preview": "#### Step 15：收取尾款\n**状态**\n- APPROVED → WAITING_PAYMENT"
+        },
+        {
+          "chunk_id": "29ac2ffb29069c86",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.19315099716186523,
+          "snippet_preview": "### 收费阻断模式 — CaseTemplate.billing_gate_mode\n\n| 枚举值 | 说明 |\n|--------|------|\n| `off` | 无阻断 |\n| `warn` | 提示模式（P0 默认） |\n| `block` | 硬阻断 |"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "field-ownership",
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+      "top_hit_score": 0.7685104012489319
+    },
+    {
+      "query_id": "AQ-R05",
+      "category": "规则解释",
+      "focus": "field-ownership",
+      "success_signal": "能给出 Lead / Case 的正确归属，并明确常见错挂项",
+      "search_query": "source_type visa_type quote_amount 属于哪个对象 Lead Case 字段归属",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "631b3ac5bd627224",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2194819450378418,
+          "snippet_preview": "### 3.1 Lead（咨询线索）\n\nP0 角色：承接签约前的早期信息与跟进，转化时生成 Customer 与 Case。\n\n- id\n- lead_no\n- name\n- phone / email\n- source_channel（来源/介绍人/渠道）\n- intended_case_type（意向业务类型）\n- group_id（归属团队，转化时默认继承至 Customer → Case）"
+        },
+        {
+          "chunk_id": "96ff65f6a7be9011",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.2159649133682251,
+          "snippet_preview": "### 3.13 CaseDeadline（期限）\n\nP0 角色：在留到期、补件截止、提交截止、预约日等统一建模，驱动提醒与工作台聚合。\n\n- id\n- case_id\n- deadline_type（`residence_expiry` / `supplement_due` / `submission_due` / `appointment_date` / `result_expected` /"
+        },
+        {
+          "chunk_id": "1e5c6f90eba943a7",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.20522010326385498,
+          "snippet_preview": "### 3.2 Case / Document 主链路扩展（M1–M5）\n\n- 扩展 `packages/server/src/modules/core/cases/*`\n  - 对外返回经管签模板字段、业务子步骤、补正计数、结果收敛信息\n  - 对齐 `013_business_manager_visa.up.sql` 已有字段：`stage`、`post_approval_stage`、`vi"
+        },
+        {
+          "chunk_id": "d95641f7cbf944c8",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.16836446523666382,
+          "snippet_preview": "#### Step 4：问卷回收 + 报价\n**输入**\n- 问卷数据\n**输出**\n- quote_price（客制化）\n- visa_plan（1年 / 4+1年）"
+        },
+        {
+          "chunk_id": "4f2656daffc4920b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.16650664806365967,
+          "snippet_preview": "### 对象关系图\n\n```\nLead ──转化──→ Customer ──建案──→ Case\n(咨询线索)     (个人客户)          (案件)\n                  │                  │\n          CustomerRelation    ┌──────┼──────┐\n          (关联人跳转)         │      "
+        },
+        {
+          "chunk_id": "7b8bcdef1649e12f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.13920962810516357,
+          "snippet_preview": "### 0.4 P0 / P1 边界摘要\n\n- **P0 只使用管理层阶段 `S1–S9`**\n- **P1 才启用业务子步骤 `CaseWorkflowStep`**，如 `COE_SENT` / `VISA_APPLYING`\n- **P0 续签提醒以手动 Reminder 为主**；P1 才通过 `ResidencePeriod + reminder_schedule_blueprint` "
+        },
+        {
+          "chunk_id": "9bd0e28ff47243ea",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.09311777353286743,
+          "snippet_preview": "### CaseWorkflowStep（业务子步骤记录，P1）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 记录特定签证模板专属的业务操作节点（如 UNDER_REVIEW / COE_SENT / VISA_APPLYING / ENTRY_SUCCESS）的进入、完成、跳过历史 |\n| 与 CaseStageHistory 区别 | CaseStageHistor"
+        },
+        {
+          "chunk_id": "ebf575a6df94c733",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.09053927659988403,
+          "snippet_preview": "#### Step 17：客户返签\n**状态**\n- COE_SENT → VISA_APPLYING"
+        },
+        {
+          "chunk_id": "baa9c45703a81660",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.08642315864562988,
+          "snippet_preview": "#### Step 6：发送资料清单\n**输入**\n- visa_plan\n**输出**\n- material_list_id\n**状态**\n- CONTRACTED → WAITING_MATERIAL"
+        },
+        {
+          "chunk_id": "6a4a0e9622eabf22",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.06891727447509766,
+          "snippet_preview": "#### Step 5：签约\n**行为**\n- 合同签署\n- 收取 deposit_amount（约50%）\n**状态变更**\n- CONSULTING → CONTRACTED"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "field-ownership",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+      "top_hit_score": 0.2194819450378418
+    },
+    {
+      "query_id": "AQ-R06",
+      "category": "规则解释",
+      "focus": "归属继承链与审计要求",
+      "success_signal": "明确默认继承 + 后续变更不回写历史案件 + 转组要留痕",
+      "search_query": "Case.group 案件归属快照 不跟随 Customer.group 实时变化",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "e93582c2bf124842",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.46370959281921387,
+          "snippet_preview": "### 4.1 咨询转案件\n\n1. 新建咨询线索，录入基础信息与归属 Group\n2. 跟进咨询，推进到待签约/已签约\n3. 签约后从线索创建正式案件：选择案件类型/签证类型、主申请人、负责人\n4. 系统自动生成资料清单和初始任务\n\n关键规则：\n\n- 线索转客户：电话/邮箱优先去重匹配，支持人工确认合并\n- 家族签/扶养类案件：必须同时绑定关键关系人（扶养者/保证人）作为 `CaseParty`\n"
+        },
+        {
+          "chunk_id": "499a5d521d625db4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.4452701210975647,
+          "snippet_preview": "### Case（案件）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 系统核心工作单元。一案一单，拥有独立的阶段、资料清单、任务、期限、收费与审计记录 |\n| P0 约束 | 预置家族滞在与技人国两类模板；Case.group 为归属快照，不因 Customer.group 变更而回写 |\n| 权威来源 | [03 §2.1](03-业务规则与不变量.md#21-p0-"
+        },
+        {
+          "chunk_id": "502725d1ba033fd9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.43505096435546875,
+          "snippet_preview": "### 2.2 归属继承链\n\n```\nLead.group → Customer.group → Case.group（默认继承）\n```\n\n- **Case.group 是案件归属快照**：Customer.group 的后续变更不回写覆盖历史案件。\n- 跨组建案/转组必须留痕（操作人、时间、原因），写入审计日志。\n- 线索转客户时默认继承 Lead.group；如转化时改组，必须记录原因、操作"
+        },
+        {
+          "chunk_id": "eead0843a37e11b7",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.41488224267959595,
+          "snippet_preview": "### 2.12 Group 与协作归属\n\n- Group 基础管理（创建/停用/重命名，入口在系统设置）\n- 归属继承链：Lead.group → Customer.group → Case.group\n- 跨组建案/转组留痕"
+        },
+        {
+          "chunk_id": "db25113d9e8d1c28",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.3914172649383545,
+          "snippet_preview": "### Customer（个人客户）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 个人客户主数据记录。一个 Customer 可关联多个 Case |\n| P0 约束 | 以个人客户为主体；雇主信息沉淀在案件字段，不引入企业客户实体 |\n| 易混辨析 | ≠ Company（P0 不引入）；≠ ClientUser（P0 无客户门户） |\n| 权威来源 | [03 §2"
+        },
+        {
+          "chunk_id": "09ad61e90788231a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.356709361076355,
+          "snippet_preview": "## 1. 典型任务\n\n- **录入新咨询**：登记联系人、来源、意向业务、归属 Group、下一步动作。\n- **持续跟进**：把线索从新咨询推进到跟进中 / 待签约。\n- **识别重复线索**：用电话/邮箱提示是否已存在客户或线索。\n- **签约后转化**：生成 Customer，并创建首个 Case。"
+        },
+        {
+          "chunk_id": "f20e68e2301eb72d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.3564990758895874,
+          "snippet_preview": "### Lead（咨询线索）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 签约/立案前的早期信息与跟进记录。转化时生成 Customer 与 Case |\n| P0 状态 | 新咨询 → 跟进中 → 待签约 → 已签约 → 已转案件；或 → 已流失 |\n| 归属 | Lead.group → 转化时默认继承至 Customer.group → Case.group |\n"
+        },
+        {
+          "chunk_id": "ce20f8f3d27dbfec",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.29953277111053467,
+          "snippet_preview": "### Tab 3：转化信息\n\n- 去重提示结果（匹配到的 Lead / Customer）\n- 转化目标：创建 Customer、创建 Case\n- 转化后回填 Customer / Case 跳转入口"
+        },
+        {
+          "chunk_id": "bf11eecf732b1d34",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2261134386062622,
+          "snippet_preview": "### 10.3 访问控制维度\n\n内部侧对象级访问控制至少同时考虑三个维度：**角色**、**Group**（归属团队）、**负责人/协作者**。"
+        },
+        {
+          "chunk_id": "468890a608649cdb",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.20917999744415283,
+          "snippet_preview": "### CaseParty（案件关联人）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 案件维度的关键关系人记录。角色包括主申请人、扶养者、保证人、配偶、子女、企业担当 |\n| 用途 | 门槛校验、文书变量填充、责任边界、提交包快照锁定 |\n| 易混辨析 | ≠ CustomerRelation（客户侧关联关系仅用于导航跳转，不作为门槛口径） |\n| 权威来源 | [03"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "field-ownership"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+      "top_hit_score": 0.46370959281921387
+    },
+    {
+      "query_id": "AQ-R07",
+      "category": "规则解释",
+      "focus": "资料模型不可变规则",
+      "success_signal": "能说明资料项是要求、附件是版本；新版本追加，不覆盖历史",
+      "search_query": "资料项 附件版本 两层 不覆盖上传 资料模型不可变",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.34769392013549805,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        },
+        {
+          "chunk_id": "cf4de306461fafb0",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.337691068649292,
+          "snippet_preview": "## 这份文档适合谁看\n\n- 首版开发期间的研发、设计、QA\n- 首次接触本项目的 AI 协作者\n- 需要理解\"首版到底做什么\"的试点客户或外部顾问"
+        },
+        {
+          "chunk_id": "e68381a8980b4e5a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3340120315551758,
+          "snippet_preview": "### G-1：P0 是首版权威源\n\n`P0/` 只回答\"首个成交版本做什么、不做什么\"。研发、设计、QA 在首版开发期间以 P0/ 为执行依据。"
+        },
+        {
+          "chunk_id": "9ea8cbb2092740a5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3329073190689087,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 首版服务谁、解决什么问题\n- 首版只跑哪条链路、只覆盖哪类案件\n- 什么算试点成功\n- 15 分钟内应该读完哪几篇 P0 文档\n- P0 文档和主目录文档的分工\n\n---"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.32159119844436646,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "619316d764d1990e",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.32015693187713623,
+          "snippet_preview": "### 执行重点\n\n- 必须证明集团内部调动关系，而不是普通招聘。\n- 日本侧和本国侧材料要能互相对应，不能只交单边证据。"
+        },
+        {
+          "chunk_id": "ca2547a8bb9afe26",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3137274384498596,
+          "snippet_preview": "## 1. P0 版本策略冻结\n\nP0 采用 **\"宽链路、浅能力、强留痕\"** 策略：从咨询到回款的主链路模块全部保留，但每个模块只做最小闭环，不在首版追求配置化或门户化。"
+        },
+        {
+          "chunk_id": "aceb5defd3602ee9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-产品全景图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2984998822212219,
+          "snippet_preview": "## 这份文档适合谁看\n\n- 需要快速了解 P0 首版覆盖哪些环节的研发、设计、QA\n- 需要理解\"首版到底跑什么链路\"的试点客户或外部顾问"
+        },
+        {
+          "chunk_id": "5719ce37a0d309f9",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.29643386602401733,
+          "snippet_preview": "### M3 资料清单与资料审核\n\n- 经管签资料项蓝图\n- 问卷类资料项与普通资料项统一参与完成率、审核、催办\n- 继续沿用本地归档路径登记与版本追加"
+        },
+        {
+          "chunk_id": "1b7ef968c8f65d18",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.28562724590301514,
+          "snippet_preview": "### 执行重点\n\n- 重点检查资本证明链是否完整。\n- 重点确认来日履历与既往认定 / 不许可历史。\n- 事务所相关资料虽然不是正式租约，但不能缺前置准备证据。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "scenario-materials"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+      "top_hit_score": 0.34769392013549805
+    },
+    {
+      "query_id": "AQ-R08",
+      "category": "规则解释",
+      "focus": "submission-audit",
+      "success_signal": "明确指出提交包锁定具体版本与字段快照，补正必须生成新包",
+      "search_query": "提交后 不能覆盖旧提交 新建提交包 SubmissionPackage 锁定 快照",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "4e17f95b3fd2f216",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.5119177103042603,
+          "snippet_preview": "### 提交包状态 — SubmissionPackage（隐含状态）\n\n| 状态 | 说明 |\n|------|------|\n| 草稿（未锁定） | 正在准备中 |\n| 已生成（锁定） | 已锁定引用版本与关键字段快照 |\n| 已导出（留痕） | 已导出/下载，属敏感动作 |"
+        },
+        {
+          "chunk_id": "9265711837ea1372",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3645218014717102,
+          "snippet_preview": "## 5. 服务端执行口径（AI / 开发实现必须遵守）\n\n- 用户在页面上点击“推进阶段”“执行校验”“生成提交包”时，服务端必须重新校验 Gate 条件\n- 即使页面缓存仍显示“可提交”，只要关键资料版本、关键字段或文书已变化，服务端也必须拒绝直接生成提交包并要求重新校验\n- 阶段只是协作视图，不得成为绕开 Gate 的替代通道\n- P0 不得通过伪造阶段值跳过 `ValidationRun`"
+        },
+        {
+          "chunk_id": "83e1faa672dd132b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.32421809434890747,
+          "snippet_preview": "### SubmissionPackage（提交包）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 一次对外提交的快照。锁定提交日期、受理机关、回执，以及引用的资料版本、文书版本、关键字段快照 |\n| 不可变性 | 提交后不允许覆盖式替换历史引用。补正通过\"新版本 + 新提交包\"完成 |\n| 权威来源 | [03 §2.4](03-业务规则与不变量.md#24-提交包锁定"
+        },
+        {
+          "chunk_id": "6d4ea55f88c188d1",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.2843915820121765,
+          "snippet_preview": "## 8. 文书规则\n\n- **变量字典**：每个变量需定义来源字段、缺失时策略（阻断/提示/留空）。\n- **版本不可变**：文书导出关联到具体版本，便于审计与提交包锁定。导出后的改动不影响已锁定版本。\n- **P0 文书流程**：草稿 → 定稿 → 导出。完整的初稿/审核版/定稿版本管理后置到 P1。\n- **进入校验最低门槛**：关键资料项 `approved` 且关键文书 `final`。"
+        },
+        {
+          "chunk_id": "7651f8ff0ef1fcaf",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.2600146532058716,
+          "snippet_preview": "### M4 文书、校验与提交包\n\n- 经管签专属文书模板\n- 继续复用 Gate-A / Gate-B / Gate-C\n- 继续复用 `ValidationRun` 与 `SubmissionPackage`\n- 补正循环继续通过新提交包承接"
+        },
+        {
+          "chunk_id": "ee768ed640d2e559",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.19835877418518066,
+          "snippet_preview": "### 文书详情\n\n- 当前状态（草稿 → 已定稿 → 已导出）\n- 变量填充预览（标记缺失变量）\n- 版本号"
+        },
+        {
+          "chunk_id": "d20c9e59df2c2537",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.17614901065826416,
+          "snippet_preview": "### 4.2 资料收集与审核\n\n1. 案件创建后，系统根据“签证类型 × 申请类型”匹配模板并生成资料清单\n2. 标记各资料项的提供方（主申请人 / 扶养者或保证人 / 事务所内部）\n3. 对客户发出资料请求（资料项进入 `waiting_upload`）\n4. 客户/内部提交资料，事务所完成扫描归档，并在系统**登记资料版本**\n5. 助理审核：通过 → `approved`；不通过 → `r"
+        },
+        {
+          "chunk_id": "d0b694114157529a",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.17611956596374512,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签期间更新场景，重点不在设立，而在持续经营与持续在留事实。"
+        },
+        {
+          "chunk_id": "be73aa3b12911a95",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.17598950862884521,
+          "snippet_preview": "### 4.4 重新校验触发条件\n\n以下变化发生后，必须重新生成 ValidationRun，避免提交引用与校验结果不一致：\n\n- 任一必交资料项新增了附件版本且被审核通过/退回补正\n- 任一关键关系人（CaseParty）新增/删除/角色变更\n- 任一关键字段发生变更（姓名、在留期限、住址、雇主信息等按模板定义）\n- 任一关键文书发生变更或重新定稿\n- 复核启用策略发生变化\n\n---"
+        },
+        {
+          "chunk_id": "9b43937a33aef8c9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.17239707708358765,
+          "snippet_preview": "## 4. P0 枚举对齐\n\n> 所有枚举的业务规则定义见 [03-业务规则 §3](03-业务规则与不变量.md#3-状态机定义)。本节做集中映射，确保实现与规则一致。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "field-ownership",
+        "scenario-materials",
+        "state-machine",
+        "submission-audit"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+      "top_hit_score": 0.5119177103042603
+    },
+    {
+      "query_id": "AQ-R09",
+      "category": "规则解释",
+      "focus": "资料项治理规则",
+      "success_signal": "同时解释完成率口径与审计口径",
+      "search_query": "waived 资料项 完成率分母剔除 记录原因 操作人",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "1d9d7d19abf137c5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4408597946166992,
+          "snippet_preview": "### 7.1 完成率口径\n\n- 默认口径：`完成率 = 已审核通过的必交资料项数 / 必交资料项总数`\n- **分母剔除**：标记为 `waived` 的资料项不计入总数，但必须记录原因、操作人与操作时间。\n- 支持按提供方输出子完成率（主申请人 / 扶养者或保证人 / 事务所内部）。"
+        },
+        {
+          "chunk_id": "efa2103f781c5faf",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.37233078479766846,
+          "snippet_preview": "### 7.2 waived 治理\n\n- **必填留痕**：原因（结构化原因码 + 自由文本补充）、操作人、操作时间。\n- **权限控制**：默认仅允许助理/主办人及以上角色执行。\n- **生命周期约束**：已被提交包引用并完成对外提交的资料项，不可删除或覆盖历史记录。"
+        },
+        {
+          "chunk_id": "0392e1e3423d6b10",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.3379940986633301,
+          "snippet_preview": "### 1.1 范围原则\n\n- **主链路广度保留，单模块深度控制**：从咨询到回款的链路必须完整，但每个模块只做最小闭环。\n- **能跑通优先于能配置化**：模板、规则、门户、自定义能力先做基础版。\n- **安全审计不后置**：与可见性、审计、留痕相关的基础能力必须有最小可用版本。"
+        },
+        {
+          "chunk_id": "18658331509ec6e9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3329092264175415,
+          "snippet_preview": "### waived（无需提供/不适用）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 资料项被豁免的状态。必须记录原因（原因码 + 文本）、操作人与时间。从完成率分母剔除 |\n| 权威来源 | [03 §7.2](03-业务规则与不变量.md#72-waived-治理) |\n\n---"
+        },
+        {
+          "chunk_id": "8f4af0c63741e7f4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/资料中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3000202178955078,
+          "snippet_preview": "### 2.3 批量动作\n\n- 批量发送催办\n- 批量标记审核通过\n- 批量标记 waived（需原因）"
+        },
+        {
+          "chunk_id": "a86c6eed85bc8254",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/05-信息架构与页面地图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.28525644540786743,
+          "snippet_preview": "### 4.4 沟通与资料的现实补位原则\n\n- P0 无客户门户，因此外部渠道收到的资料和沟通，允许由助理/主办人在系统内补录。\n- 补录不等于无规则：至少要记录来源渠道、时间、责任人、摘要或对应资料项。\n- 页面文案必须承认这一现实，避免把真实工作方式假装成“全部在线上完成”。\n\n---"
+        },
+        {
+          "chunk_id": "5e86ec05a843d1cc",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.26287323236465454,
+          "snippet_preview": "#### Gate-C：提交（生成提交包前）\n\n- **硬性阻断**：最新一次校验结果为通过；如启用双人复核则复核通过；提交信息字段满足最小要求（提交日期/机关/回执等）\n- **软性提示**：欠款风险、非关键材料建议补充\n- **欠款特别规则**：若存在欠款风险且仍要提交，必须先完成风险确认留痕（确认人、原因，可选上传凭证）"
+        },
+        {
+          "chunk_id": "bd4f8ca3f3092edf",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/任务与提醒.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2583097219467163,
+          "snippet_preview": "### 2.3 批量动作\n\n- 批量指派责任人\n- 批量调整截止日\n- 批量完成\n- 批量取消（需原因）"
+        },
+        {
+          "chunk_id": "0241efefd7d89c83",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2529332637786865,
+          "snippet_preview": "### 2.6 去重规则\n\n- 去重不做物理覆盖删除：保留原记录，建立归并关系，历史数据不断链。\n- 去重检查触发点：线索转客户、批量建档/建案时。\n- 匹配优先级：电话/邮箱优先，其次姓名+生日（或证件号）；支持人工确认合并。\n\n---"
+        },
+        {
+          "chunk_id": "c7e7be502b9541e4",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/03-经营管理签高仿真原型需求门禁/artifacts/requirement_contract.json",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "state-machine",
+          "score": 0.2459229826927185,
+          "snippet_preview": "{\n  \"feature_name\": \"经营管理签 P1 高仿真原型需求门禁\",\n  \"goal\": \"为后续高仿真原型冻结经营管理签 Step 1–20 的页面承载、业务边界与关键门禁，确保原型可演示完整主链路且不污染 P0 底座。\",\n  \"actors\": [\n    \"行政书士\",\n    \"助理/事务职\",\n    \"负责人\",\n    \"财务\",\n    \"客户（作为原型中的外部参与"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "state-machine",
+        "submission-audit",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+      "top_hit_score": 0.4408597946166992
+    },
+    {
+      "query_id": "AQ-R10",
+      "category": "规则解释",
+      "focus": "服务端重校验口径",
+      "success_signal": "明确提到关键资料/字段/文书变更后必须重新校验",
+      "search_query": "正式提交 服务端重新校验 不能只信页面当前状态",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3804025650024414,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        },
+        {
+          "chunk_id": "458c56e4b8c5a1f7",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.36378157138824463,
+          "snippet_preview": "### 0.1 P0 主链路\n\n`咨询录入 → 客户建档 → 案件创建 → 资料收集与审核 → 文书生成与定稿 → 提交前校验 → 正式提交 → 审理跟踪 / 补正 → 出结果 → 归档`"
+        },
+        {
+          "chunk_id": "c59d54c1d9a0e88b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3364063501358032,
+          "snippet_preview": "### G-7：先结构化抽取，再执行\n\n凡是 AI 或新成员要根据 P0 文档执行任务，必须先完成以下动作：\n\n1. 在 `09` 中定位任务类别\n2. 找到唯一权威正文\n3. 确认 P0 明确不做项\n4. 确认页面 / 流程 / 数据 / 术语的交叉约束"
+        },
+        {
+          "chunk_id": "a16fef00c883a106",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.32824212312698364,
+          "snippet_preview": "### 今日待办\n\n- **行动入口**：批量指派/批量完成、一键进入案件资料清单/补正任务"
+        },
+        {
+          "chunk_id": "ac802ec78b6fdd0c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.3224453330039978,
+          "snippet_preview": "#### Gate-B：进入提交前校验\n\n- **硬性阻断**：关键文书已定稿（`final`）；必交资料项齐备且通过；关键字段必填完成\n- **软性提示**：日期逻辑/有效期风险、材料时效建议、收费节点异常"
+        },
+        {
+          "chunk_id": "fbdc0e7201b07906",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3211376667022705,
+          "snippet_preview": "### R-5：文档必须重写而非复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "8e2ffc62987c502d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.3150970935821533,
+          "snippet_preview": "### 3.3 Gate-C：提交（生成提交包前）\n\n- **触发点**：点击“正式提交”动作\n- **通过后动作**：生成提交包并锁定引用版本与关键字段快照；阶段进入 `S7`\n\n---"
+        },
+        {
+          "chunk_id": "ee768ed640d2e559",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3128529191017151,
+          "snippet_preview": "### 文书详情\n\n- 当前状态（草稿 → 已定稿 → 已导出）\n- 变量填充预览（标记缺失变量）\n- 版本号"
+        },
+        {
+          "chunk_id": "6852f3e5c0cd991d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3082677125930786,
+          "snippet_preview": "### G-4：文档必须重写不可复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "9ea8cbb2092740a5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.30505645275115967,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 首版服务谁、解决什么问题\n- 首版只跑哪条链路、只覆盖哪类案件\n- 什么算试点成功\n- 15 分钟内应该读完哪几篇 P0 文档\n- P0 文档和主目录文档的分工\n\n---"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0"
+      ],
+      "rooms_seen": [
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+      "top_hit_score": 0.3804025650024414
+    },
+    {
+      "query_id": "AQ-R11",
+      "category": "规则解释",
+      "focus": "P0 范围与字段承载边界",
+      "success_signal": "能把 P0 建模策略和字段落点一起讲清楚",
+      "search_query": "P0 不引入 Company 实体 工作类案件 雇主信息 Case.employer_* 字段",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "db25113d9e8d1c28",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.3641972541809082,
+          "snippet_preview": "### Customer（个人客户）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 个人客户主数据记录。一个 Customer 可关联多个 Case |\n| P0 约束 | 以个人客户为主体；雇主信息沉淀在案件字段，不引入企业客户实体 |\n| 易混辨析 | ≠ Company（P0 不引入）；≠ ClientUser（P0 无客户门户） |\n| 权威来源 | [03 §2"
+        },
+        {
+          "chunk_id": "d79414c692b155a0",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2618829011917114,
+          "snippet_preview": "### P0 不优先服务\n\n- 大型法人事务所（10 人以上、多部门、复杂审批流）\n- 以公司设立、许可申报为主营的事务所（模板不在首版覆盖）\n- 需要企业客户批量案件管理的场景\n- 已有专业系统、需要迁移集成的事务所\n\n---"
+        },
+        {
+          "chunk_id": "5ed4bc469aced973",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/eng-humanities-intl-cert.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.23696506023406982,
+          "snippet_preview": "## 重点注意\n\n- 学历链、职历链和雇佣条件链必须同时完整。\n- 雇主公司主体材料不足时，整体说服力会明显下降。"
+        },
+        {
+          "chunk_id": "b9e7c2a1339b6a1e",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.23317444324493408,
+          "snippet_preview": "### 3.5 Case（案件）\n\n> 案件阶段定义见 [03 §3.1](03-业务规则与不变量.md#31-案件阶段)。归属继承链见 [03 §2.2](03-业务规则与不变量.md#22-归属继承链)。\n\nP0 角色：系统核心工作单元，承载从建档到归档的完整闭环。\n\n- id\n- case_no / case_name\n- source_lead_id（来源线索，可选）\n- case_typ"
+        },
+        {
+          "chunk_id": "e93582c2bf124842",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.22624802589416504,
+          "snippet_preview": "### 4.1 咨询转案件\n\n1. 新建咨询线索，录入基础信息与归属 Group\n2. 跟进咨询，推进到待签约/已签约\n3. 签约后从线索创建正式案件：选择案件类型/签证类型、主申请人、负责人\n4. 系统自动生成资料清单和初始任务\n\n关键规则：\n\n- 线索转客户：电话/邮箱优先去重匹配，支持人工确认合并\n- 家族签/扶养类案件：必须同时绑定关键关系人（扶养者/保证人）作为 `CaseParty`\n"
+        },
+        {
+          "chunk_id": "fa84b82b515394b8",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.22464525699615479,
+          "snippet_preview": "### 3.23 User / Role（内部用户与角色）\n\n> 角色权限见 [03 §10](03-业务规则与不变量.md#10-权限与可见性)。\n\nP0 角色枚举：\n\n| 角色 | 系统名 |\n|------|--------|\n| 管理员 | super_admin / office_manager |\n| 主办人 | lawyer_or_scrivener |\n| 助理 | assista"
+        },
+        {
+          "chunk_id": "604ef99da5eeb59b",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.19623470306396484,
+          "snippet_preview": "### `intra_company_transfer` - 企業内 / 転勤\n\n- 先收：护照、证件照、经历史/在职证明、收入资料、公司謄本、工资源泉资料。\n- 再补：`転勤辞令`、`譲渡契約書コピー`、`株主名簿`。\n- 特别注意：`直近の決算報告書...` 标注了 `本国・日本`，`株主名簿` 标注了 `日本`。\n- 高风险漏项：集团内部调动关系证明不足，或日本侧与本国侧资料不匹配。"
+        },
+        {
+          "chunk_id": "c856fbab610cab3b",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/company-setup.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.193678617477417,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签办理前的公司设立准备，不是完整签证申请包。"
+        },
+        {
+          "chunk_id": "499a5d521d625db4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.18990588188171387,
+          "snippet_preview": "### Case（案件）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 系统核心工作单元。一案一单，拥有独立的阶段、资料清单、任务、期限、收费与审计记录 |\n| P0 约束 | 预置家族滞在与技人国两类模板；Case.group 为归属快照，不因 Customer.group 变更而回写 |\n| 权威来源 | [03 §2.1](03-业务规则与不变量.md#21-p0-"
+        },
+        {
+          "chunk_id": "6297026bac303f90",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.18164706230163574,
+          "snippet_preview": "## P0 不涉及的概念\n\n以下概念在 P0 文档中不会主动使用。如需了解定义，请查阅主目录 [08-术语表](../08-术语表.md)：\n\n| 概念 | 原因 |\n|------|------|\n| Company（企业客户） | P0 不引入企业客户实体 |\n| ContactPerson（企业担当） | P0 不引入 |\n| ClientUser（客户门户用户） | P0 无客户门户 |\n"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "field-ownership",
+        "scenario-materials"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+      "top_hit_score": 0.3641972541809082
+    },
+    {
+      "query_id": "AQ-R12",
+      "category": "规则解释",
+      "focus": "biz-mgmt + P0/P1 边界",
+      "success_signal": "明确指出 P0 手动 Reminder 兜底、P1 才启用 ResidencePeriod + reminder_schedule_blueprint",
+      "search_query": "经营管理签 在留期间 续签提醒 P1 扩展 P0 默认链路 ResidencePeriod",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "0612fc5ff4db3cd9",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/客户.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.07567787170410156,
+          "snippet_preview": "## P0 明确不做\n\n| 不做项 | 后置到 | 原因 |\n|--------|-------|------|\n| 企业客户主数据 | P1 | P0 以个人客户为主；雇主信息沉淀在案件字段 |\n| 客户门户关联 | P1 | P0 无客户门户 |\n| 客户合并 | P1 | P0 仅做去重提示，不做物理合并 |\n| 客户级跨案件附件汇总 | P1 | P0 附件通过案件资料清单管理 |\n| 证"
+        },
+        {
+          "chunk_id": "94423055a0917861",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "field-ownership",
+          "score": 0.053086698055267334,
+          "snippet_preview": "### ResidencePeriod（在留期间历史，P1）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 客户每次成功取得在留资格后的完整期间记录，含在留期 start/end、产生来源案件 ID、是否已完成到期提醒批量生成 |\n| 与 Customer.residence_expiry_date 区别 | 该字段只存当前到期日（单值）；ResidencePeriod "
+        },
+        {
+          "chunk_id": "2622de6c17edb877",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "state-machine",
+          "score": 0.005729794502258301,
+          "snippet_preview": "### 1.2 P0 / P1 分层原则\n\n- **P0 保持管理层阶段**：`Case.stage = S1–S9`\n- **P1 承接业务细节**：通过 `CaseWorkflowStep` 表达经营管理签专属步骤\n- **P0 保持通用收费策略**：默认 `warn`\n- **P1 承接专属硬门禁**：如 `COE_SENT` 前尾款必须结清\n- **P0 保持手动提醒兜底**\n- **P1"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.0,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        },
+        {
+          "chunk_id": "7b8bcdef1649e12f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.0,
+          "snippet_preview": "### 0.4 P0 / P1 边界摘要\n\n- **P0 只使用管理层阶段 `S1–S9`**\n- **P1 才启用业务子步骤 `CaseWorkflowStep`**，如 `COE_SENT` / `VISA_APPLYING`\n- **P0 续签提醒以手动 Reminder 为主**；P1 才通过 `ResidencePeriod + reminder_schedule_blueprint` "
+        },
+        {
+          "chunk_id": "2e79aa7826d69b16",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.0,
+          "snippet_preview": "### 3.25 ResidencePeriod（在留期间历史记录，P1 预定义）\n\n> **P0 不启用**（当前在留期存于 Customer.residence_expiry_date）。P1 新增，支持多次续签的完整历史追溯与自动提醒批量生成。\n\nP1 角色：记录客户每次成功取得在留资格后的完整期间信息；写入时根据 CaseTemplate.reminder_schedule_bluepri"
+        },
+        {
+          "chunk_id": "fbe73ac42f7b20c8",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.0,
+          "snippet_preview": "### 5.2 P1-B 完成标准\n\n- 发 COE 前尾款未结清时被硬阻断\n- 海外返签成功 / 失败两条路径都能收敛\n- 入境成功后可录入 `ResidencePeriod`\n- 自动生成 180 / 90 / 30 天提醒\n- 提醒创建失败时不得进入成功结案\n\n---"
+        },
+        {
+          "chunk_id": "ac28cbafacad3066",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.0,
+          "snippet_preview": "# 01 经营管理签扩展范围与落地计划（P1）\n\n> 本文档只覆盖 P1 范围。\n> 目标是把 `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` 落为可执行的 P1 扩展方案；P0 底座定义仍以 `../P0/` 为准。\n\n| | |\n|---|---|\n| **本文回答什么问题** | 经营管理签全流程哪些能力必须下沉到 P1？按什么模块实施？先后顺序是什么？ |\n"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.0,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "39333f65523e5b54",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.0,
+          "snippet_preview": "### 材料字典\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 系统预置的资料项命名标准库，含默认说明/样例与时效建议。案件模板从材料字典引用标准项 |\n| P0 约束 | 预置 2 类模板的材料字典，不支持事务所级覆盖 |\n| 权威来源 | [03 §7.3](03-业务规则与不变量.md#73-p0-模板策略) |\n\n---"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "field-ownership",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/客户.md",
+      "top_hit_score": 0.07567787170410156
+    },
+    {
+      "query_id": "AQ-H01",
+      "category": "历史决策",
+      "focus": "_output 到 L1 的回灌链",
+      "success_signal": "同时给出 _output 条目和对应 P0/03、P0/04 权威落点",
+      "search_query": "P0 状态机口径已冻结 权威文档 编译产出 确认位置",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3993324041366577,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "29c90ff601894540",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.3987032175064087,
+          "snippet_preview": "## 6. 收敛结论\n\n经营管理签不是对 P0 的替代，而是建立在 P0 通用底座之上的**首个 P1 专属模板扩展**。\n\n执行上应保持以下口径：\n\n- **P0 负责主链路底座与通用对象**\n- **P1 负责经营管理签专属步骤、专属字段、专属收费门禁与在留期间链路**\n- **完整满足原流程文档，以本文作为 P1 规划入口，以 `P0/` 作为底座权威来源**"
+        },
+        {
+          "chunk_id": "9ea8cbb2092740a5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3761783838272095,
+          "snippet_preview": "## 阅读这篇后你会知道什么\n\n- P0 首版服务谁、解决什么问题\n- 首版只跑哪条链路、只覆盖哪类案件\n- 什么算试点成功\n- 15 分钟内应该读完哪几篇 P0 文档\n- P0 文档和主目录文档的分工\n\n---"
+        },
+        {
+          "chunk_id": "fbdc0e7201b07906",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.37043237686157227,
+          "snippet_preview": "### R-5：文档必须重写而非复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3549395203590393,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "97f2d0ba75c753ee",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3521685004234314,
+          "snippet_preview": "### 2.7 模板文书生成\n\n- 基础模板库（委任状、理由书、申请表等）\n- 变量填充\n- 导出 Word / PDF"
+        },
+        {
+          "chunk_id": "7bf53ecd1a11236d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.3426092863082886,
+          "snippet_preview": "### 4.7 收费流程\n\n1. 案件创建时设定费用总额与收费节点\n2. 到节点触发内部收款提醒\n3. 财务登记实收、上传凭证\n4. 标记回款/欠款状态\n\nP0 口径：\n\n- 收费异常以风险提示为主，不阻断提交\n- 欠款状态下继续提交需风险确认留痕\n- 工作台聚合暴露欠款风险案件\n\n---"
+        },
+        {
+          "chunk_id": "419336235d20658f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.340149462223053,
+          "snippet_preview": "### 2.2 默认筛选\n\n- 案件类型\n\n> P0 不做模板的批量启用/停用。模板管理入口仅对管理员开放。"
+        },
+        {
+          "chunk_id": "27de6b8cea6b175b",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.32958531379699707,
+          "snippet_preview": "## 3. P0 要解决的痛点\n\nP0 首版聚焦 3 个最痛的问题，这 3 个问题是小型签证事务所日常中损失最大、频次最高的："
+        },
+        {
+          "chunk_id": "6852f3e5c0cd991d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.31150102615356445,
+          "snippet_preview": "### G-4：文档必须重写不可复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+      "top_hit_score": 0.3993324041366577
+    },
+    {
+      "query_id": "AQ-H02",
+      "category": "历史决策",
+      "focus": "字段纠偏历史",
+      "success_signal": "至少说出 source_type、visa_type、收费缓存字段的纠偏结果和权威落点",
+      "search_query": "字段归属错挂 纠正 高风险字段 source_type visa_type 收费缓存",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "808bac2358e47052",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.27381014823913574,
+          "snippet_preview": "## P0 明确不做\n\n| 不做项 | 后置到 | 原因 |\n|--------|-------|------|\n| 高级报表（补正率/成功率/办结时长） | P2 | 首版不需要复杂统计 |\n| 客户门户联动 | P1 | P0 聚焦内部作业闭环 |\n| 高级校验规则配置化 | P1 | P0 用预置规则 |\n| 双人复核全局强制 | P1 | 模型预留，默认关闭 |\n| 批量导出案件报表 | "
+        },
+        {
+          "chunk_id": "7b8bcdef1649e12f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.19852560758590698,
+          "snippet_preview": "### 0.4 P0 / P1 边界摘要\n\n- **P0 只使用管理层阶段 `S1–S9`**\n- **P1 才启用业务子步骤 `CaseWorkflowStep`**，如 `COE_SENT` / `VISA_APPLYING`\n- **P0 续签提醒以手动 Reminder 为主**；P1 才通过 `ResidencePeriod + reminder_schedule_blueprint` "
+        },
+        {
+          "chunk_id": "ebf575a6df94c733",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.19530493021011353,
+          "snippet_preview": "#### Step 17：客户返签\n**状态**\n- COE_SENT → VISA_APPLYING"
+        },
+        {
+          "chunk_id": "b8359f065e2af204",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.17403388023376465,
+          "snippet_preview": "### M7 海外返签与结果\n\n- `COE_SENT → VISA_APPLYING`\n- 登记返签结果：`ENTRY_SUCCESS / VISA_REJECTED`\n- 海外拒签直接进入失败结案分支"
+        },
+        {
+          "chunk_id": "1e5c6f90eba943a7",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.1627887487411499,
+          "snippet_preview": "### 3.2 Case / Document 主链路扩展（M1–M5）\n\n- 扩展 `packages/server/src/modules/core/cases/*`\n  - 对外返回经管签模板字段、业务子步骤、补正计数、结果收敛信息\n  - 对齐 `013_business_manager_visa.up.sql` 已有字段：`stage`、`post_approval_stage`、`vi"
+        },
+        {
+          "chunk_id": "baa9c45703a81660",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "biz-mgmt",
+          "score": 0.15983104705810547,
+          "snippet_preview": "#### Step 6：发送资料清单\n**输入**\n- visa_plan\n**输出**\n- material_list_id\n**状态**\n- CONTRACTED → WAITING_MATERIAL"
+        },
+        {
+          "chunk_id": "9bd0e28ff47243ea",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.11057734489440918,
+          "snippet_preview": "### CaseWorkflowStep（业务子步骤记录，P1）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 记录特定签证模板专属的业务操作节点（如 UNDER_REVIEW / COE_SENT / VISA_APPLYING / ENTRY_SUCCESS）的进入、完成、跳过历史 |\n| 与 CaseStageHistory 区别 | CaseStageHistor"
+        },
+        {
+          "chunk_id": "418be142623f6a2c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.11029517650604248,
+          "snippet_preview": "### 首版覆盖的案件类型\n\n| 类型 | 预置模板 | 备注 |\n|------|---------|------|\n| 家族滞在（配偶/子女签证） | 有 | P0 首选高频案件 |\n| 工作签证——技术·人文知识·国际业务 | 有 | P0 首选高频案件 |"
+        },
+        {
+          "chunk_id": "604ef99da5eeb59b",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.10748863220214844,
+          "snippet_preview": "### `intra_company_transfer` - 企業内 / 転勤\n\n- 先收：护照、证件照、经历史/在职证明、收入资料、公司謄本、工资源泉资料。\n- 再补：`転勤辞令`、`譲渡契約書コピー`、`株主名簿`。\n- 特别注意：`直近の決算報告書...` 标注了 `本国・日本`，`株主名簿` 标注了 `日本`。\n- 高风险漏项：集团内部调动关系证明不足，或日本侧与本国侧资料不匹配。"
+        },
+        {
+          "chunk_id": "b9bf7154dc7c269c",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/03-经营管理签高仿真原型需求门禁/artifacts/requirement_contract.json",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "workflow-gates",
+          "score": 0.1040528416633606,
+          "snippet_preview": "交。\",\n    \"入管多轮补正后仍需保持同一案件上下文，并正确显示补正次数。\",\n    \"APPROVED 但尾款未结清时尝试发送 COE，需要显示阻断或风险说明，不得表现为正常成功。\",\n    \"VISA_APPLYING 后存在 VISA_REJECTED 分支，需直接收敛到失败结案。\",\n    \"已入境但缺少有效期间结束日时，不得创建续签提醒，也不得进入成功结案。\"\n  ],\n  \""
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "scenario-materials",
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md",
+      "top_hit_score": 0.27381014823913574
+    },
+    {
+      "query_id": "AQ-H03",
+      "category": "历史决策",
+      "focus": "文档编译与回灌能力",
+      "success_signal": "能指出 _output 结论与 P0/03、P0/07 的对应关系",
+      "search_query": "四层资料模型 SubmissionPackage 不可覆盖 分析结论 回灌 权威文档",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "4e17f95b3fd2f216",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.3130955696105957,
+          "snippet_preview": "### 提交包状态 — SubmissionPackage（隐含状态）\n\n| 状态 | 说明 |\n|------|------|\n| 草稿（未锁定） | 正在准备中 |\n| 已生成（锁定） | 已锁定引用版本与关键字段快照 |\n| 已导出（留痕） | 已导出/下载，属敏感动作 |"
+        },
+        {
+          "chunk_id": "5ca61be05a6d4d12",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.3122009038925171,
+          "snippet_preview": "# 投资经营签证流程系统设计输入文档"
+        },
+        {
+          "chunk_id": "9265711837ea1372",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2615559697151184,
+          "snippet_preview": "## 5. 服务端执行口径（AI / 开发实现必须遵守）\n\n- 用户在页面上点击“推进阶段”“执行校验”“生成提交包”时，服务端必须重新校验 Gate 条件\n- 即使页面缓存仍显示“可提交”，只要关键资料版本、关键字段或文书已变化，服务端也必须拒绝直接生成提交包并要求重新校验\n- 阶段只是协作视图，不得成为绕开 Gate 的替代通道\n- P0 不得通过伪造阶段值跳过 `ValidationRun`"
+        },
+        {
+          "chunk_id": "cd50c9cfcb0d09d4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2593827247619629,
+          "snippet_preview": "### 2.8 提交前校验与提交包\n\n- 提交前校验：硬性阻断项最小集合\n- 校验报告展示\n- 提交包：锁定资料版本/文书版本与校验结果，记录提交日期与回执\n- 复核能力：模型预留，默认不强制"
+        },
+        {
+          "chunk_id": "6852f3e5c0cd991d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.25575822591781616,
+          "snippet_preview": "### G-4：文档必须重写不可复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "7651f8ff0ef1fcaf",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.2531517744064331,
+          "snippet_preview": "### M4 文书、校验与提交包\n\n- 经管签专属文书模板\n- 继续复用 Gate-A / Gate-B / Gate-C\n- 继续复用 `ValidationRun` 与 `SubmissionPackage`\n- 补正循环继续通过新提交包承接"
+        },
+        {
+          "chunk_id": "ca2547a8bb9afe26",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.24638396501541138,
+          "snippet_preview": "## 1. P0 版本策略冻结\n\nP0 采用 **\"宽链路、浅能力、强留痕\"** 策略：从咨询到回款的主链路模块全部保留，但每个模块只做最小闭环，不在首版追求配置化或门户化。"
+        },
+        {
+          "chunk_id": "0392e1e3423d6b10",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.2149585485458374,
+          "snippet_preview": "### 1.1 范围原则\n\n- **主链路广度保留，单模块深度控制**：从咨询到回款的链路必须完整，但每个模块只做最小闭环。\n- **能跑通优先于能配置化**：模板、规则、门户、自定义能力先做基础版。\n- **安全审计不后置**：与可见性、审计、留痕相关的基础能力必须有最小可用版本。"
+        },
+        {
+          "chunk_id": "1039255fcf6054c4",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.21188557147979736,
+          "snippet_preview": "### 3.3 文书状态\n\n| 状态 | 枚举值 | 说明 |\n|------|--------|------|\n| 草稿 | `draft` | 模板生成或手动创建的初版 |\n| 已定稿 | `final` | 确认可用于提交包引用 |\n| 已导出 | `exported` | 已导出文件，属于敏感动作留痕 |\n\n> P0 简化文书流程为三态流转。完整的初稿/审核版/待修改流程后置到 P1。"
+        },
+        {
+          "chunk_id": "b38b4bb580ba21a2",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.2109769582748413,
+          "snippet_preview": "### G-6：一份权威源，两种阅读视图\n\nP0 不维护“两套相互独立的权威文档”。统一规则如下：\n\n- 各正文文档（00/01/02/03/04/05/06/07/08）是**权威源**\n- `09-结构化总索引与交叉映射.md` 是**结构化导航层**\n- 人先读正文，AI 可先读 `09` 再跳正文，但**不得**把 `09` 当成新的规则来源"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "submission-audit"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+      "top_hit_score": 0.3130955696105957
+    },
+    {
+      "query_id": "AQ-H04",
+      "category": "历史决策",
+      "focus": "L2 的角色边界",
+      "success_signal": "明确指出 _output 是可回灌结论层，稳定后应回灌到 L1",
+      "search_query": "_output 不能长期充当最终权威来源 规则 仓库明确写过",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "9b427db2ea543010",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/intra-company-transfer.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.3430386781692505,
+          "snippet_preview": "## 适用说明\n\n适用于集团或关联企业内部的人事调动场景，重点证明转勤关系，而不是普通招聘。"
+        },
+        {
+          "chunk_id": "5c882472b05a7a4e",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.2518640160560608,
+          "snippet_preview": "### 执行重点\n\n- 重点不再是设立，而是持续经营与持续在留。\n- 若只有存续证明、没有经营往来证明，容易形成材料断层。"
+        },
+        {
+          "chunk_id": "947e4166c20f530c",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.2512628436088562,
+          "snippet_preview": "### 推荐交付格式\n\n对每个案件，建议最终整理成这 4 组：\n\n- `基础必需材料`\n- `场景专属必需材料`\n- `条件触发材料`\n- `个案补充材料`"
+        },
+        {
+          "chunk_id": "d0b694114157529a",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.23893702030181885,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签期间更新场景，重点不在设立，而在持续经营与持续在留事实。"
+        },
+        {
+          "chunk_id": "ac802ec78b6fdd0c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "workflow-gates",
+          "score": 0.2338951826095581,
+          "snippet_preview": "#### Gate-B：进入提交前校验\n\n- **硬性阻断**：关键文书已定稿（`final`）；必交资料项齐备且通过；关键字段必填完成\n- **软性提示**：日期逻辑/有效期风险、材料时效建议、收费节点异常"
+        },
+        {
+          "chunk_id": "7bb2f453cc0c7a02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.2235926389694214,
+          "snippet_preview": "### 4.6 归档与续签提醒\n\n- `S8` 出结果后确认后续动作 → 进入 `S9`\n- 归档前确认：资料归档完成、续签提醒是否需要、收费是否结清\n- 系统根据在留到期日在关键节点触发提醒（P0 以站内提醒为主）\n- P0 不做续签商机自动创建——后置到 P1"
+        },
+        {
+          "chunk_id": "419336235d20658f",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.21632349491119385,
+          "snippet_preview": "### 2.2 默认筛选\n\n- 案件类型\n\n> P0 不做模板的批量启用/停用。模板管理入口仅对管理员开放。"
+        },
+        {
+          "chunk_id": "6852f3e5c0cd991d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.19550567865371704,
+          "snippet_preview": "### G-4：文档必须重写不可复制\n\n每篇 P0 文档都必须重写开头结论、目标对象、排除项和验收口径。禁止从主目录复制后仅做少量删减。"
+        },
+        {
+          "chunk_id": "e31b077710d85bdd",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.19549524784088135,
+          "snippet_preview": "### G-9：未确认项不得实现\n\n任何 `OPEN_QUESTION`、`P0 / P1` 级歧义、待确认假设都不得由 AI 以常识补齐。示例默认不是强约束，只有在冻结边界中显式升级后才可执行。"
+        },
+        {
+          "chunk_id": "5ca61be05a6d4d12",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.18628627061843872,
+          "snippet_preview": "# 投资经营签证流程系统设计输入文档"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "scenario-materials",
+        "state-machine",
+        "workflow-gates"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/intra-company-transfer.md",
+      "top_hit_score": 0.3430386781692505
+    },
+    {
+      "query_id": "AQ-H05",
+      "category": "历史决策",
+      "focus": "P1 历史规划收敛",
+      "success_signal": "能说明 Step 1-14 先跑主链路，Step 15-20 后补收费/在留期间/提醒",
+      "search_query": "经营管理签 P1-A P1-B 分两阶段实施 决策依据 Step 1-14 15-20",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "8f0222c8186a6108",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.287223219871521,
+          "snippet_preview": "### 4.1 P1-A：先跑通 Step 1–14\n\n优先完成：`M1 + M2 + M3 + M4 + M5(基础版)`\n\n目标：跑通经营管理签从咨询、签约、建案到提交、补正、结果登记的主链路。"
+        },
+        {
+          "chunk_id": "ac28cbafacad3066",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.24945271015167236,
+          "snippet_preview": "# 01 经营管理签扩展范围与落地计划（P1）\n\n> 本文档只覆盖 P1 范围。\n> 目标是把 `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` 落为可执行的 P1 扩展方案；P0 底座定义仍以 `../P0/` 为准。\n\n| | |\n|---|---|\n| **本文回答什么问题** | 经营管理签全流程哪些能力必须下沉到 P1？按什么模块实施？先后顺序是什么？ |\n"
+        },
+        {
+          "chunk_id": "a9ea0b66b09b05a4",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.2317519187927246,
+          "snippet_preview": "### 4.2 P1-B：再补齐 Step 15–20\n\n优先完成：`M6 + M7 + M8 + M9`\n\n目标：跑通下签后收费、COE、海外返签、在留期间、续签提醒与结案收敛。\n\n---"
+        },
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.1807156801223755,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "81378136ad653acf",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.1512354612350464,
+          "snippet_preview": "## 6. P0 明确不做（流程层）\n\n| 不做项 | 后置到 | 理由 |\n|--------|-------|------|\n| 双人复核全局强制 | P1 | 模型预留，默认关闭 |\n| 自动化流程引擎与条件触发器 | P2 | P0 流程推进由用户手动驱动 |\n| 客户门户交互流程 | P1 | P0 聚焦内部作业闭环 |\n| 续签商机自动创建 | P1 | P0 仅做到期提醒 |\n| 文"
+        },
+        {
+          "chunk_id": "cf3870def762161f",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.11402034759521484,
+          "snippet_preview": "### 5.1 P1-A 完成标准\n\n- 经营管理签案件可创建并生成专属资料清单\n- 问卷与报价数据可结构化保存\n- 文书、校验、提交包、补正循环可跑通\n- 业务子步骤与 `S1–S9` 并行显示且不冲突"
+        },
+        {
+          "chunk_id": "249530aabcab6fe6",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.11398816108703613,
+          "snippet_preview": "### 双层状态模型（P1 可扩展性核心设计）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 将案件状态拆分为两层：管理层（Stage S1–S9，跨签证类型通用）与业务层（Step，CaseWorkflowStep，模板专属细粒度节点） |\n| 为何这样设计 | 避免不同签证类型的专属步骤（如 COE_SENT、VISA_APPLYING）污染通用主阶段枚举；新签证类型"
+        },
+        {
+          "chunk_id": "9bd0e28ff47243ea",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.10941696166992188,
+          "snippet_preview": "### CaseWorkflowStep（业务子步骤记录，P1）\n\n| 项目 | 内容 |\n|------|------|\n| 定义 | 记录特定签证模板专属的业务操作节点（如 UNDER_REVIEW / COE_SENT / VISA_APPLYING / ENTRY_SUCCESS）的进入、完成、跳过历史 |\n| 与 CaseStageHistory 区别 | CaseStageHistor"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.09595668315887451,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "e0a04d91edc95423",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/08-术语表.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.09044623374938965,
+          "snippet_preview": "### P0 必须理解的 7 个概念\n\n| 概念 | 一句话定义 | P0 补充 |\n|------|-----------|---------|\n| **Customer** | 个人客户主数据，一个客户可关联多个案件 | P0 以个人客户为主体，不引入企业客户 |\n| **Case** | 系统核心工作单元，一案一单 | P0 预置家族滞在与技人国两类模板 |\n| **Group** | 内部"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+      "top_hit_score": 0.287223219871521
+    },
+    {
+      "query_id": "AQ-H06",
+      "category": "历史决策",
+      "focus": "历史冻结来源辨别",
+      "success_signal": "能区分最终权威落点与补充分析来源",
+      "search_query": "补正不是独立主状态 权威规则 流程剧本 后续分析 冻结来源",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "d0b694114157529a",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.4913797974586487,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签期间更新场景，重点不在设立，而在持续经营与持续在留事实。"
+        },
+        {
+          "chunk_id": "38a95e272f2c8ac7",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-产品全景图.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.49115753173828125,
+          "snippet_preview": "# 02 产品全景图（P0 首版）\n\n> 本文用一页串联 P0 首版的案件主链路，帮助读者快速建立端到端认知。\n> 完整的全量业务流程见主目录 [02-产品全景图](../02-产品全景图.md)。"
+        },
+        {
+          "chunk_id": "5c882472b05a7a4e",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.4588434100151062,
+          "snippet_preview": "### 执行重点\n\n- 重点不再是设立，而是持续经营与持续在留。\n- 若只有存续证明、没有经营往来证明，容易形成材料断层。"
+        },
+        {
+          "chunk_id": "c856fbab610cab3b",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/company-setup.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.4427248239517212,
+          "snippet_preview": "## 适用说明\n\n适用于经营管理签办理前的公司设立准备，不是完整签证申请包。"
+        },
+        {
+          "chunk_id": "619316d764d1990e",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.4015774726867676,
+          "snippet_preview": "### 执行重点\n\n- 必须证明集团内部调动关系，而不是普通招聘。\n- 日本侧和本国侧材料要能互相对应，不能只交单边证据。"
+        },
+        {
+          "chunk_id": "7c0005a3ff6a840f",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/company-setup.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.3896390199661255,
+          "snippet_preview": "## 重点注意\n\n- 入资凭证、银行卡截图和印章材料要一致。\n- 该包只解决公司设立前置问题，不能替代正式签证资料包。"
+        },
+        {
+          "chunk_id": "1b7ef968c8f65d18",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.3894253373146057,
+          "snippet_preview": "### 执行重点\n\n- 重点检查资本证明链是否完整。\n- 重点确认来日履历与既往认定 / 不许可历史。\n- 事务所相关资料虽然不是正式租约，但不能缺前置准备证据。"
+        },
+        {
+          "chunk_id": "a4249b831ae53995",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/01-产品定位与业务概述.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3724519610404968,
+          "snippet_preview": "### 首版不覆盖的案件类型\n\n永住、归化、特定技能、经营管理、公司设立、许可申报等——这些案件的模板、资料清单和文书在 P1/P2 逐步扩展。\n\n> 系统架构不阻止这些案件类型的手动创建（不选模板即可建案），但 P0 不预置模板、不保证流程完整。\n\n---"
+        },
+        {
+          "chunk_id": "a04e955972623021",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/intra-company-transfer.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.3707144856452942,
+          "snippet_preview": "## 重点注意\n\n- 日本侧与本国侧材料必须能互相对应。\n- 如果缺少集团关系或调令证据，容易被理解成普通雇佣。"
+        },
+        {
+          "chunk_id": "6a49c5a90b0000f2",
+          "source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-cert-1y.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "scenario-materials",
+          "score": 0.36686789989471436,
+          "snippet_preview": "## 重点注意\n\n- 需同时覆盖申请人背景、办公场地、公司主体、税务设立四条证据链。\n- 事务所实体材料和公司法定材料容易成为漏项。"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "scenario-materials"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md",
+      "top_hit_score": 0.4913797974586487
+    },
+    {
+      "query_id": "AQ-H07",
+      "category": "历史决策",
+      "focus": "P1 成功结案前置条件",
+      "success_signal": "明确指出来自 P1 扩展，不可误说成 P0 通用规则",
+      "search_query": "经营管理签 成功结案前 录入在留期间 生成续签提醒 口径来源",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "7086b3a9d87ce6c7",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.5190009474754333,
+          "snippet_preview": "### 案件内文书列表\n\n- 已生成文书列表（名称、状态、版本号、生成时间）\n- 每条文书可展开查看版本历史\n- 导出入口（Word/PDF）"
+        },
+        {
+          "chunk_id": "1d9d7d19abf137c5",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.49227994680404663,
+          "snippet_preview": "### 7.1 完成率口径\n\n- 默认口径：`完成率 = 已审核通过的必交资料项数 / 必交资料项总数`\n- **分母剔除**：标记为 `waived` 的资料项不计入总数，但必须记录原因、操作人与操作时间。\n- 支持按提供方输出子完成率（主申请人 / 扶养者或保证人 / 事务所内部）。"
+        },
+        {
+          "chunk_id": "ded9e45fb383de8c",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4334448575973511,
+          "snippet_preview": "### 待提交案件\n\n- **行动入口**：进入\"校验与提交\"Tab、生成提交包、上传回执/凭证"
+        },
+        {
+          "chunk_id": "d15ef44553d08696",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.4110443592071533,
+          "snippet_preview": "### 2.3 批量动作\n\n- 批量生成催款任务"
+        },
+        {
+          "chunk_id": "a16fef00c883a106",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.3844560384750366,
+          "snippet_preview": "### 今日待办\n\n- **行动入口**：批量指派/批量完成、一键进入案件资料清单/补正任务"
+        },
+        {
+          "chunk_id": "97f2d0ba75c753ee",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.36817675828933716,
+          "snippet_preview": "### 2.7 模板文书生成\n\n- 基础模板库（委任状、理由书、申请表等）\n- 变量填充\n- 导出 Word / PDF"
+        },
+        {
+          "chunk_id": "ee6f147b9bab9206",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.34012794494628906,
+          "snippet_preview": "### 入境成功后的在留期间管理"
+        },
+        {
+          "chunk_id": "37eaf74dfe2d9f96",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/04-页面规格-客户经营管理签签约前承接.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.33618855476379395,
+          "snippet_preview": "## 7. 通知与反馈\n\n| 触发场景 | 标题 | 描述 |\n|---|---|---|\n| 发送问卷 | 已更新（示例） | 已记录经营管理签问卷发送 |\n| 生成报价 | 已更新（示例） | 已生成经营管理签报价卡片 |\n| 确认签约 | 已更新（示例） | 已完成签约，可转正式案件 |\n| 签约前点击建案 | 无法建案 | 经营管理签需先完成签约 |"
+        },
+        {
+          "chunk_id": "d0832849b1c138eb",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/任务与提醒.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.31366968154907227,
+          "snippet_preview": "## 5. 状态与异常\n\n- **空状态（无任务）**：显示\"暂无待办\"引导\n- **逾期未完成**：列表标红逾期任务，仪表盘计入风险\n- **批量自动生成**：模板建案或补正通知后系统批量生成任务，需确保不重复\n- **提醒发送失败**：提醒日志中标记失败原因"
+        },
+        {
+          "chunk_id": "987011aa48d47871",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "submission-audit",
+          "score": 0.2886970043182373,
+          "snippet_preview": "### 2.11 审计日志\n\n- 关键操作记录：状态变更、上传/审核、提交包生成/导出、跨组变更、负责人交接、导出/下载/分享、欠款风险确认"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "submission-audit"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/06-页面规格/文书中心.md",
+      "top_hit_score": 0.5190009474754333
+    },
+    {
+      "query_id": "AQ-H08",
+      "category": "历史决策",
+      "focus": "索引基线与来源治理联动",
+      "success_signal": "能把来源优先级、批次放行和低层来源降级规则串起来说明",
+      "search_query": "首轮索引 先跑 L1 再考虑 _output _raw 顺序 治理理由",
+      "hit_count": 10,
+      "hits": [
+        {
+          "chunk_id": "9dbca5e63ff0383a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.1727808713912964,
+          "snippet_preview": "### R-3：P1/P2 需求不回灌\n\n后续发现的 P1/P2 需求不直接塞回 P0/，而是回主目录对应文档维护。P0/ 只做首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "e68381a8980b4e5a",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.12377351522445679,
+          "snippet_preview": "### G-1：P0 是首版权威源\n\n`P0/` 只回答\"首个成交版本做什么、不做什么\"。研发、设计、QA 在首版开发期间以 P0/ 为执行依据。"
+        },
+        {
+          "chunk_id": "ca2547a8bb9afe26",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.07971811294555664,
+          "snippet_preview": "## 1. P0 版本策略冻结\n\nP0 采用 **\"宽链路、浅能力、强留痕\"** 策略：从咨询到回款的主链路模块全部保留，但每个模块只做最小闭环，不在首版追求配置化或门户化。"
+        },
+        {
+          "chunk_id": "b74d768ff8066061",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.07695233821868896,
+          "snippet_preview": "### G-2：P1/P2 不回灌\n\n后续 P1/P2 需求不直接塞回 P0/，而是回主目录维护。P0/ 只接受首版口径的澄清与纠错。"
+        },
+        {
+          "chunk_id": "7bf53ecd1a11236d",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.07352298498153687,
+          "snippet_preview": "### 4.7 收费流程\n\n1. 案件创建时设定费用总额与收费节点\n2. 到节点触发内部收款提醒\n3. 财务登记实收、上传凭证\n4. 标记回款/欠款状态\n\nP0 口径：\n\n- 收费异常以风险提示为主，不阻断提交\n- 欠款状态下继续提交需风险确认留痕\n- 工作台聚合暴露欠款风险案件\n\n---"
+        },
+        {
+          "chunk_id": "5ca61be05a6d4d12",
+          "source_path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+          "source_layer": "L1",
+          "wing": "office-process",
+          "room": "",
+          "score": 0.06561261415481567,
+          "snippet_preview": "# 投资经营签证流程系统设计输入文档"
+        },
+        {
+          "chunk_id": "7fd32a4cda4abeab",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.06222879886627197,
+          "snippet_preview": "### R-1：P0 是首版权威源\n\n研发、设计、QA 在首版开发期间，以 P0/ 下的文档为唯一执行依据。如果某需求只在主目录中存在而 P0/ 中没有，则该需求**不属于首版范围**。"
+        },
+        {
+          "chunk_id": "7bb2f453cc0c7a02",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "state-machine",
+          "score": 0.05088907480239868,
+          "snippet_preview": "### 4.6 归档与续签提醒\n\n- `S8` 出结果后确认后续动作 → 进入 `S9`\n- 归档前确认：资料归档完成、续签提醒是否需要、收费是否结清\n- 系统根据在留到期日在关键节点触发提醒（P0 以站内提醒为主）\n- P0 不做续签商机自动创建——后置到 P1"
+        },
+        {
+          "chunk_id": "ac28cbafacad3066",
+          "source_path": "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p1",
+          "room": "biz-mgmt",
+          "score": 0.04265350103378296,
+          "snippet_preview": "# 01 经营管理签扩展范围与落地计划（P1）\n\n> 本文档只覆盖 P1 范围。\n> 目标是把 `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` 落为可执行的 P1 扩展方案；P0 底座定义仍以 `../P0/` 为准。\n\n| | |\n|---|---|\n| **本文回答什么问题** | 经营管理签全流程哪些能力必须下沉到 P1？按什么模块实施？先后顺序是什么？ |\n"
+        },
+        {
+          "chunk_id": "a19e9bd1d34b5165",
+          "source_path": "docs/gyoseishoshi_saas_md/P0/00-开始这里.md",
+          "source_layer": "L1",
+          "wing": "gyoseishoshi-p0",
+          "room": "",
+          "score": 0.040935397148132324,
+          "snippet_preview": "### AI / 结构化读取入口\n\n如果你的目标不是“理解背景”，而是“稳定定位规则并开始执行”，请先读：\n\n1. [09-结构化总索引与交叉映射](09-结构化总索引与交叉映射.md)\n2. 再跳转到对应权威正文（02/03/04/05/06/07/08）\n\n这样可以避免把示例当强约束、把背景描述当实现规则、或漏掉 P0 明确排除项。\n\n---"
+        }
+      ],
+      "layers_seen": [
+        "L1"
+      ],
+      "wings_seen": [
+        "gyoseishoshi-p0",
+        "gyoseishoshi-p1",
+        "office-process"
+      ],
+      "rooms_seen": [
+        "biz-mgmt",
+        "state-machine"
+      ],
+      "has_l1_hit": true,
+      "top_hit_source_path": "docs/gyoseishoshi_saas_md/P0/README.md",
+      "top_hit_score": 0.1727808713912964
+    }
+  ]
+}

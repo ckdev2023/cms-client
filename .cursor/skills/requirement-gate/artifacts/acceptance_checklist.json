@@ -1,0 +1,6 @@
+{
+  "checks": [
+    {"id": "AC-1", "desc": "render the coupon list after successful load"},
+    {"id": "AC-2", "desc": "render an empty state when no coupons exist"}
+  ]
+}

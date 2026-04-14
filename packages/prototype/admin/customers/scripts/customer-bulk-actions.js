@@ -11,9 +11,13 @@
     const bulkClearBtn = document.getElementById('bulkClearBtn');
     const customersTbody = document.querySelector('table.apple-table tbody');
 
+    const isRowVisible = (row) => {
+      return Boolean(row) && !row.hidden && !row.classList.contains('hidden');
+    };
+
     const getSelectableCustomerCheckboxes = () => {
       const boxes = Array.from(document.querySelectorAll('input[data-customer-select]'));
-      return boxes.filter((el) => !el.disabled);
+      return boxes.filter((el) => !el.disabled && isRowVisible(el.closest('tr')));
     };
 
     ns.updateBulkState = () => {

@@ -10,6 +10,110 @@
     - Composer with type select (内部備注/電話記錄/線下會議)
     - Message items with type chips and timestamps
     - Filter checkboxes (all/internal/email/phone)
-    - P1 placeholder: communication-to-task link
+    - Communication area keeps a non-interactive placeholder in current prototype scope
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-messages" class="tab-panel">
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-4">
+      <div class="apple-card p-5">
+        <textarea rows="3" placeholder="记录内部备注、客户可见备注或电话/线下沟通内容..." class="apple-input resize-none mb-3"></textarea>
+        <div class="meta-text mb-3">内部备注默认客户不可见；如需客户可见，需显式选择“客户可见备注”。</div>
+        <div class="flex justify-between items-center">
+          <div class="flex gap-1">
+            <button class="icon-btn w-8 h-8 !border-0" type="button" aria-label="附件"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg></button>
+            <button class="icon-btn w-8 h-8 !border-0" type="button" aria-label="提及"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"></path></svg></button>
+          </div>
+          <div class="flex gap-3 items-center">
+            <select class="apple-input w-auto py-1.5 text-[13px]">
+              <option>内部备注</option>
+              <option>客户可见备注</option>
+              <option>电话记录</option>
+              <option>线下会议</option>
+            </select>
+            <button class="btn-primary text-[13px] py-1.5 px-4" type="button" id="btnPublishMessageRecord">记录留痕</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="apple-card p-5 hover:bg-[#fbfbfd] transition-colors group">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold">SZ</div>
+            <span class="font-bold text-[14px] text-[var(--text)]">Suzuki</span>
+            <span class="chip text-[10px] py-0 px-1.5 bg-blue-50 text-[var(--primary)] border-blue-100">电话记录</span>
+          </div>
+          <span class="text-[12px] text-[var(--muted-2)] font-semibold">今天 14:00</span>
+        </div>
+        <p class="text-[14px] text-[var(--text)] ml-9 leading-relaxed">客户表示决算书由于会计师原因会有延迟，大概需要下周一才能提供。已在系统中备注。</p>
+        <div class="ml-9 mt-2 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button class="text-[12px] text-[var(--muted-2)] hover:text-[var(--primary)] font-semibold" type="button">回复</button>
+          <button class="text-[12px] text-[var(--muted-2)] hover:text-[var(--primary)] font-semibold" type="button">编辑</button>
+        </div>
+      </div>
+
+      <div class="apple-card p-5 hover:bg-[#fbfbfd] transition-colors group">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-[var(--surface-2)] text-[var(--text)] flex items-center justify-center text-[10px] font-bold">SYS</div>
+            <span class="font-bold text-[14px] text-[var(--text)]">System</span>
+            <span class="chip text-[10px] py-0 px-1.5">自动邮件</span>
+          </div>
+          <span class="text-[12px] text-[var(--muted-2)] font-semibold">昨天 09:00</span>
+        </div>
+        <p class="text-[14px] text-[var(--text)] ml-9 leading-relaxed">向客户发送了<span class="font-semibold bg-[var(--surface-2)] px-1 rounded">纳税证明書</span>的催办邮件。</p>
+        <div class="ml-9 mt-2">
+          <button class="text-[12px] text-[var(--primary)] hover:underline font-semibold flex items-center gap-1" type="button">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+            查看邮件内容
+          </button>
+        </div>
+      </div>
+
+      <div class="apple-card p-5 hover:bg-[#fbfbfd] transition-colors group">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-[var(--success)] text-white flex items-center justify-center text-[11px] font-bold">TN</div>
+            <span class="font-bold text-[14px] text-[var(--text)]">Tanaka</span>
+            <span class="chip text-[10px] py-0 px-1.5 bg-green-50 text-green-700 border-green-200">内部备注</span>
+          </div>
+          <span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 11:30</span>
+        </div>
+        <p class="text-[14px] text-[var(--text)] ml-9 leading-relaxed">护照复印件初审通过，已标记为「已审核」。在留卡信息核对一致。</p>
+      </div>
+    </div>
+
+    <div class="space-y-6">
+      <div class="apple-card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-[15px] font-bold text-[var(--text)]">过滤筛选</h2>
+          <button class="text-[12px] text-[var(--muted-2)] hover:text-[var(--text)]" type="button">重置</button>
+        </div>
+        <div class="space-y-2">
+          <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
+            <input type="checkbox" checked class="w-4 h-4 rounded border-[var(--border)]">
+            <span class="text-[13px] font-semibold text-[var(--text)]">所有记录</span>
+          </label>
+          <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
+            <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
+            <span class="text-[13px] text-[var(--text)]">内部记录</span>
+          </label>
+          <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
+            <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
+            <span class="text-[13px] text-[var(--text)]">客户可见记录</span>
+          </label>
+          <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--surface-2)] cursor-pointer -ml-2">
+            <input type="checkbox" class="w-4 h-4 rounded border-[var(--border)]">
+            <span class="text-[13px] text-[var(--text)]">电话记录</span>
+          </label>
+        </div>
+      </div>
+      <div class="apple-card p-6">
+        <h3 class="text-[13px] font-bold text-[var(--muted-2)] mb-3">关联任务</h3>
+        <div class="text-center py-4 text-[12px] text-[var(--muted-2)]">
+          <div>当前原型暂不支持从沟通直接转任务。</div>
+          <button class="btn-pill text-[12px] py-1.5 px-3 mt-3" type="button" data-target-tab="tasks">先去任务区新建</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

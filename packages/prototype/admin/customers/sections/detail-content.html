@@ -1,0 +1,491 @@
+<div class="flex flex-col gap-6">
+  <section class="apple-card p-4 md:p-6">
+    <div class="flex flex-col gap-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="text-[13px] font-semibold text-[var(--muted-2)] flex items-center gap-2">
+          <a href="index.html" class="link-apple inline-flex items-center gap-1">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            </svg>
+            客户
+          </a>
+          <span class="text-[var(--muted-2)]">/</span>
+          <span class="text-[var(--apple-text-main)] font-extrabold truncate" data-customer-breadcrumb>客户详情</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-pill" type="button" id="customerBatchCreateBtn">批量开始办案</button>
+          <button class="btn-primary" type="button" id="customerCreateCaseBtn">开始办案</button>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3 min-w-0">
+        <div class="w-12 h-12 rounded-full bg-[var(--surface-2)] text-[var(--primary)] flex items-center justify-center font-extrabold flex-shrink-0 border border-[var(--border)]" id="customerAvatar">
+          客
+        </div>
+        <div class="min-w-0 flex-1">
+          <h1 class="text-2xl md:text-3xl display-font font-semibold text-[var(--apple-text-main)] truncate" id="customerTitle">客户详情</h1>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-[13px] font-semibold">
+            <span class="chip">
+              编号 <span class="text-[var(--apple-text-main)] font-extrabold" data-customer-id>—</span>
+            </span>
+            <span class="chip">
+              分组 <span class="text-[var(--apple-text-main)] font-extrabold" data-customer-group-chip>—</span>
+            </span>
+            <span class="chip">
+              负责人 <span class="text-[var(--apple-text-main)] font-extrabold" data-customer-owner-chip>未指派</span>
+            </span>
+            <span class="chip">
+              最近联系 <span class="text-[var(--apple-text-main)] font-extrabold" data-customer-last-contact>—</span>
+            </span>
+          </div>
+
+          <div class="mt-2 text-[13px] text-[var(--muted)] font-semibold">
+            <span class="text-[var(--muted-2)]">归属：</span><span data-customer-group>—</span>
+            <span class="mx-2 text-[var(--muted-2)]">·</span>
+            <span class="text-[var(--muted-2)]">客户负责人：</span><span data-customer-owner>—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="apple-card p-4 md:p-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-0">
+      <div class="md:pr-6">
+        <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">累计案件</div>
+        <div class="mt-1 text-[24px] md:text-[28px] font-extrabold text-[var(--apple-text-main)] leading-none" data-cases-total>—</div>
+      </div>
+      <div class="md:px-6 md:border-l md:border-[var(--border)]">
+        <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">活跃案件</div>
+        <div class="mt-1 text-[24px] md:text-[28px] font-extrabold text-[var(--apple-text-main)] leading-none" data-cases-active>—</div>
+      </div>
+      <div class="md:px-6 md:border-l md:border-[var(--border)]">
+        <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">归档数</div>
+        <div class="mt-1 text-[24px] md:text-[28px] font-extrabold text-[var(--apple-text-main)] leading-none" data-cases-archived>—</div>
+      </div>
+      <div class="col-span-2 md:col-span-1 md:pl-6 md:border-l md:border-[var(--border)]">
+        <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">案件名称</div>
+        <div class="mt-2 flex items-start gap-2 min-w-0">
+          <button
+            type="button"
+            class="min-w-0 text-left text-[13px] font-extrabold text-[var(--apple-blue)] hover:underline leading-snug truncate transition-colors disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
+            data-case-summary-link
+          >
+            —
+          </button>
+          <button
+            type="button"
+            class="chip shrink-0 hover:bg-[var(--surface)] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            data-case-more-toggle
+            aria-expanded="false"
+            aria-controls="caseNamePopover"
+          >
+            +0
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between gap-3">
+      <div class="text-[13px] text-[var(--muted)] font-semibold">
+        <span class="text-[var(--muted-2)]">最近建案</span>
+        <span class="ml-2 text-[var(--apple-text-main)] font-extrabold" data-cases-last-created>—</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="hidden fixed inset-0 bg-black/30 z-40" data-case-more-backdrop></div>
+  <div id="caseNamePopover" class="hidden fixed z-50" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="caseNamePopoverTitle">
+    <div class="apple-card shadow-lg border border-[var(--border)] w-[min(420px,calc(100vw-2rem))] p-3">
+      <div class="flex items-center justify-between px-1">
+        <div class="text-[13px] font-extrabold text-[var(--apple-text-main)]" id="caseNamePopoverTitle" data-case-popover-title>全部案件</div>
+        <button class="icon-btn" type="button" aria-label="关闭" data-case-more-close>
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div class="mt-2 max-h-64 overflow-auto" data-case-list></div>
+    </div>
+  </div>
+
+  <div class="border-b border-[var(--border)]">
+    <div
+      class="flex flex-wrap gap-x-5 gap-y-0 min-w-0 px-1 md:flex-nowrap md:gap-8 md:overflow-x-auto"
+      role="tablist"
+      aria-label="客户详情 Tabs"
+    >
+      <button
+        class="py-3 text-[14px] font-extrabold border-b-2 border-[var(--apple-blue)] text-[var(--apple-text-main)] whitespace-nowrap shrink-0"
+        type="button"
+        role="tab"
+        aria-selected="true"
+        id="customerTab-basic"
+        aria-controls="customerPanel-basic"
+        data-customer-tab="basic"
+      >
+        基础信息
+      </button>
+      <button
+        class="py-3 text-[14px] font-extrabold border-b-2 border-transparent text-[var(--muted-2)] hover:text-[var(--apple-text-main)] whitespace-nowrap shrink-0"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        id="customerTab-cases"
+        aria-controls="customerPanel-cases"
+        data-customer-tab="cases"
+      >
+        关联案件
+      </button>
+      <button
+        class="py-3 text-[14px] font-extrabold border-b-2 border-transparent text-[var(--muted-2)] hover:text-[var(--apple-text-main)] whitespace-nowrap shrink-0"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        id="customerTab-contacts"
+        aria-controls="customerPanel-contacts"
+        data-customer-tab="contacts"
+      >
+        关联人
+      </button>
+      <button
+        class="py-3 text-[14px] font-extrabold border-b-2 border-transparent text-[var(--muted-2)] hover:text-[var(--apple-text-main)] whitespace-nowrap shrink-0"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        id="customerTab-comms"
+        aria-controls="customerPanel-comms"
+        data-customer-tab="comms"
+      >
+        沟通记录
+      </button>
+      <button
+        class="py-3 text-[14px] font-extrabold border-b-2 border-transparent text-[var(--muted-2)] hover:text-[var(--apple-text-main)] whitespace-nowrap shrink-0"
+        type="button"
+        role="tab"
+        aria-selected="false"
+        id="customerTab-log"
+        aria-controls="customerPanel-log"
+        data-customer-tab="log"
+      >
+        操作日志
+      </button>
+    </div>
+  </div>
+
+  <section class="pt-2" role="tabpanel" id="customerPanel-basic" aria-labelledby="customerTab-basic" data-customer-panel="basic">
+    <div class="apple-card p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3">
+        <div>
+          <div class="text-[16px] font-semibold text-[var(--apple-text-main)]">基础信息</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-pill" type="button" id="customerEditToggleBtn">编辑</button>
+          <button class="btn-secondary hidden" type="button" id="customerCancelBtn">取消</button>
+          <button class="btn-primary hidden" type="button" id="customerSaveBtn">保存</button>
+        </div>
+      </div>
+
+      <section class="hidden mt-5 rounded-[28px] border border-[rgba(0,113,227,0.14)] bg-[linear-gradient(135deg,rgba(0,113,227,0.06),rgba(255,255,255,0.96))] p-4 md:p-5" id="customerBmvIntakeCard" aria-label="经营管理签签约前承接卡片">
+        <div class="flex flex-col gap-4">
+          <div class="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
+            <div>
+              <div class="text-[11px] font-extrabold tracking-[0.18em] text-[var(--apple-blue)] uppercase">P1 Intake</div>
+              <div class="mt-1 text-[18px] font-semibold text-[var(--apple-text-main)]">经营管理签 · 签约前承接</div>
+              <p class="mt-1 text-[13px] text-[var(--muted)] font-semibold leading-6">最合理的落点是客户详情页基础信息顶部：此时还没有正式案件，适合先推进问卷、报价、签约，再转正式案件。</p>
+            </div>
+            <span class="chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)] self-start" id="customerBmvIntakeStatus">—</span>
+          </div>
+
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div class="rounded-2xl border border-[var(--border)] bg-white/90 px-4 py-3">
+              <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">问卷状态</div>
+              <div class="mt-2 text-[15px] font-extrabold text-[var(--apple-text-main)]" id="customerBmvQuestionnaireStatus">—</div>
+            </div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/90 px-4 py-3">
+              <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">报价状态</div>
+              <div class="mt-2 text-[15px] font-extrabold text-[var(--apple-text-main)]" id="customerBmvQuoteStatus">—</div>
+            </div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/90 px-4 py-3">
+              <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">签约状态</div>
+              <div class="mt-2 text-[15px] font-extrabold text-[var(--apple-text-main)]" id="customerBmvSignStatus">—</div>
+            </div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/90 px-4 py-3">
+              <div class="text-[11px] font-extrabold tracking-wide text-[var(--muted-2)]">问卷名称</div>
+              <div class="mt-2 text-[15px] font-extrabold text-[var(--apple-text-main)]" id="customerBmvQuestionnaireName">—</div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3 text-[13px] font-semibold text-[var(--muted)]">
+            <div class="rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3"><span class="text-[var(--muted-2)]">来源线索：</span><span id="customerBmvSourceLead">—</span></div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3"><span class="text-[var(--muted-2)]">签证计划：</span><span id="customerBmvVisaPlan">—</span></div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3"><span class="text-[var(--muted-2)]">报价金额：</span><span id="customerBmvQuoteAmount">—</span></div>
+            <div class="rounded-2xl border border-[var(--border)] bg-white/80 px-4 py-3"><span class="text-[var(--muted-2)]">下一步：</span><span id="customerBmvNextStep">—</span></div>
+          </div>
+
+          <div class="rounded-2xl border border-[var(--border)] bg-white/90 p-4">
+            <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_auto] gap-3 xl:items-start">
+              <div class="min-w-0">
+                <label class="apple-label" for="customerBmvChannelSelect">发送方式</label>
+                <select class="apple-input appearance-none" id="customerBmvChannelSelect">
+                  <option value="email">邮箱</option>
+                  <option value="line">LINE</option>
+                  <option value="wechat">微信</option>
+                </select>
+                <div class="mt-2 text-[12px] text-[var(--muted-2)] font-semibold leading-5" id="customerBmvRecipientHint">—</div>
+              </div>
+              <div class="flex flex-wrap items-center gap-3 xl:justify-end xl:self-start xl:pt-7">
+                <button class="btn-pill" type="button" id="customerBmvSendBtn">发送问卷</button>
+                <button class="btn-pill" type="button" id="customerBmvQuoteBtn">问卷回收并生成报价</button>
+                <button class="btn-secondary" type="button" id="customerBmvSignBtn">确认签约</button>
+              </div>
+            </div>
+            <div class="mt-3 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+              <div class="text-[12px] text-[var(--muted-2)] font-semibold" id="customerBmvGateHint">签约前不可建案</div>
+              <button class="btn-primary" type="button" data-create-case id="customerBmvCreateCaseBtn">转正式案件</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <form class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4" id="customerBasicForm">
+        <div>
+          <label class="apple-label" for="customerFieldDisplayName">识别名（对内显示）</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldDisplayName" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldLegalName">姓名（法定）</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldLegalName" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldKana">フリガナ</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldKana" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldNationality">国籍</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldNationality" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldGender">性别</label>
+          <select class="apple-input appearance-none bg-[var(--surface-2)]" id="customerFieldGender" disabled>
+            <option value="">—</option>
+            <option value="男">男</option>
+            <option value="女">女</option>
+          </select>
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldBirthDate">生日</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="date" id="customerFieldBirthDate" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldPhone">电话</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="tel" inputmode="tel" id="customerFieldPhone" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldEmail">邮箱</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="email" inputmode="email" id="customerFieldEmail" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldGroup">所属分组（Group）</label>
+          <select class="apple-input appearance-none bg-[var(--surface-2)]" id="customerFieldGroup" disabled></select>
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldOwner">客户负责人（Owner）</label>
+          <select class="apple-input appearance-none bg-[var(--surface-2)]" id="customerFieldOwner" disabled></select>
+        </div>
+        <div class="md:col-span-2">
+          <label class="apple-label" for="customerFieldReferrer">介绍人 / 来源</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldReferrer" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldAvatar">写真 / 头像</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="file" id="customerFieldAvatar" accept="image/*" disabled />
+        </div>
+        <div>
+          <label class="apple-label" for="customerFieldNote">备注</label>
+          <input class="apple-input bg-[var(--surface-2)]" type="text" id="customerFieldNote" disabled />
+        </div>
+      </form>
+
+      <div class="mt-3 text-[12px] text-[var(--apple-text-tert)] font-semibold hidden" id="customerSaveHint">已保存</div>
+    </div>
+  </section>
+
+  <section class="pt-2 hidden" role="tabpanel" id="customerPanel-cases" aria-labelledby="customerTab-cases" data-customer-panel="cases">
+    <div class="apple-card p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="text-[16px] font-semibold text-[var(--apple-text-main)]">关联案件</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-pill" type="button" data-batch-case>批量开始办案</button>
+          <button class="btn-primary" type="button" data-create-case>开始办案</button>
+        </div>
+      </div>
+      <div class="mt-3 flex items-center justify-between gap-3">
+        <div class="segmented-control" role="group" aria-label="案件视图切换">
+          <button class="segment-btn active" type="button" data-case-filter="all" aria-pressed="true">全部</button>
+          <button class="segment-btn" type="button" data-case-filter="active" aria-pressed="false">活跃</button>
+          <button class="segment-btn" type="button" data-case-filter="archived" aria-pressed="false">已归档</button>
+        </div>
+      </div>
+      <div class="mt-4 overflow-x-auto border border-[var(--border)] rounded-2xl">
+        <table class="min-w-full text-[13px]">
+          <thead class="bg-[var(--surface)] text-[var(--muted-2)] font-extrabold">
+            <tr>
+              <th class="px-4 py-3 text-left w-[140px]">编号</th>
+              <th class="px-4 py-3 text-left">案件</th>
+              <th class="px-4 py-3 text-left w-[160px] hidden md:table-cell">类型</th>
+              <th class="px-4 py-3 text-left w-[150px]">阶段</th>
+              <th class="px-4 py-3 text-left w-[100px]">状态</th>
+              <th class="px-4 py-3 text-left w-[120px] hidden lg:table-cell">更新时间</th>
+              <th class="px-4 py-3 text-left w-[90px]">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]" data-cases-table-body></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-2 hidden" role="tabpanel" id="customerPanel-contacts" aria-labelledby="customerTab-contacts" data-customer-panel="contacts">
+    <div class="apple-card p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="text-[16px] font-semibold text-[var(--apple-text-main)]">关联人</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-pill opacity-60 cursor-not-allowed" type="button" id="customerRelationsBatchCreateBtn" aria-disabled="true" disabled>为关联人批量开始办案</button>
+          <button class="btn-primary" type="button" id="customerAddRelationBtn">新增关联人</button>
+        </div>
+      </div>
+
+      <div class="mt-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div class="relative">
+          <svg class="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+          <input class="search-input" type="search" id="customerRelationSearchInput" placeholder="搜索：姓名 / 电话 / 邮箱 / 标签" aria-label="搜索关联人" />
+        </div>
+        <div class="text-[13px] text-[var(--muted)] font-semibold">
+          共 <span class="text-[var(--apple-text-main)] font-extrabold" data-relations-count>—</span> 位关系人
+        </div>
+      </div>
+
+      <div class="mt-4 overflow-x-auto border border-[var(--border)] rounded-2xl">
+        <table class="min-w-full text-[13px]">
+          <thead class="bg-[var(--surface)] text-[var(--muted-2)] font-extrabold">
+            <tr>
+              <th class="px-4 py-3 text-left w-[44px]">
+                <input class="table-checkbox" type="checkbox" aria-label="全选" id="customerSelectAllRelations" />
+              </th>
+              <th class="px-4 py-3 text-left">关联人</th>
+              <th class="px-4 py-3 text-left w-[120px]">关系</th>
+              <th class="px-4 py-3 text-left w-[180px] hidden md:table-cell">联系方式</th>
+              <th class="px-4 py-3 text-left w-[160px] hidden lg:table-cell">标签</th>
+              <th class="px-4 py-3 text-left w-[180px] hidden lg:table-cell">备注</th>
+              <th class="px-4 py-3 text-left w-[120px]">操作</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]" data-customer-relations-body></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-2 hidden" role="tabpanel" id="customerPanel-comms" aria-labelledby="customerTab-comms" data-customer-panel="comms">
+    <div class="apple-card p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="text-[16px] font-semibold text-[var(--apple-text-main)]">沟通记录</div>
+          <div class="mt-3 flex flex-wrap items-center gap-2 text-[12px] font-semibold text-[var(--apple-text-tert)]">
+            <span class="chip">共 <span data-comm-total>0</span> 条</span>
+            <span class="chip">内部 <span data-comm-internal>0</span></span>
+            <span class="chip bg-[rgba(0,113,227,0.08)] border-[rgba(0,113,227,0.18)] text-[var(--apple-blue)]">客户可见 <span data-comm-customer>0</span></span>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="segmented-control" role="group" aria-label="可见范围筛选">
+            <button class="segment-btn active" type="button" data-comm-filter="all" aria-pressed="true">全部</button>
+            <button class="segment-btn" type="button" data-comm-filter="internal" aria-pressed="false">内部</button>
+            <button class="segment-btn" type="button" data-comm-filter="customer" aria-pressed="false">客户可见</button>
+          </div>
+          <button class="btn-primary" type="button" id="customerAddCommBtn">记录沟通</button>
+        </div>
+      </div>
+
+      <div class="mt-4" data-customer-comms-list></div>
+
+      <div id="customerCommsEmpty" class="mt-4 border border-[var(--border)] rounded-2xl p-5 md:p-6 bg-[var(--surface)]">
+        <div class="relative pl-6">
+          <div class="absolute left-2 top-0 bottom-0 w-px bg-[var(--border)]"></div>
+          <div class="py-8 flex flex-col items-center text-center">
+            <div class="w-14 h-14 rounded-2xl bg-[#fbfbfd] border border-[var(--border)] flex items-center justify-center text-[var(--muted-2)]">
+              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+              </svg>
+            </div>
+            <div class="mt-4 text-[17px] font-semibold text-[var(--apple-text-main)]">暂无沟通记录</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="pt-2 hidden" role="tabpanel" id="customerPanel-log" aria-labelledby="customerTab-log" data-customer-panel="log">
+    <div class="apple-card p-4 md:p-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+        <div>
+          <div class="text-[16px] font-semibold text-[var(--apple-text-main)]">操作日志</div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="segmented-control" role="group" aria-label="日志类型筛选">
+            <button class="segment-btn active" type="button" data-log-filter="all" aria-pressed="true">全部</button>
+            <button class="segment-btn" type="button" data-log-filter="info" aria-pressed="false">信息变更</button>
+            <button class="segment-btn" type="button" data-log-filter="relation" aria-pressed="false">关系变更</button>
+            <button class="segment-btn" type="button" data-log-filter="case" aria-pressed="false">案件</button>
+            <button class="segment-btn" type="button" data-log-filter="comm" aria-pressed="false">沟通</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="customerLogsTableWrap" class="mt-4 overflow-x-auto border border-[var(--border)] rounded-2xl">
+        <table class="min-w-full text-[13px]">
+          <thead class="bg-[var(--surface)] text-[var(--muted-2)] font-extrabold">
+            <tr>
+              <th class="px-4 py-3 text-left w-[180px]">时间</th>
+              <th class="px-4 py-3 text-left w-[120px]">类型</th>
+              <th class="px-4 py-3 text-left">内容</th>
+              <th class="px-4 py-3 text-left w-[140px]">操作人</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]" data-customer-log-body></tbody>
+        </table>
+      </div>
+
+      <div id="customerLogsEmpty" class="hidden mt-4 border border-[var(--border)] rounded-2xl p-6 bg-[var(--surface)]">
+        <div class="flex flex-col items-center justify-center text-center py-8">
+          <div class="w-14 h-14 rounded-2xl bg-[#fbfbfd] border border-[var(--border)] flex items-center justify-center text-[var(--muted-2)]">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="w-6 h-6">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+            </svg>
+          </div>
+          <div class="mt-4 text-[17px] font-semibold text-[var(--apple-text-main)]">暂无操作日志</div>
+        </div>
+      </div>
+
+      <div class="mt-4 flex items-center justify-between gap-3">
+        <div class="text-[13px] text-[var(--muted)] font-semibold">
+          共 <span class="text-[var(--apple-text-main)] font-extrabold" data-log-total>—</span> 条
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-secondary px-4 py-2" type="button" id="customerLogPrevBtn">上一页</button>
+          <div class="text-[13px] text-[var(--muted)] font-semibold">
+            第 <span class="text-[var(--apple-text-main)] font-extrabold" data-log-page>—</span> / <span class="text-[var(--apple-text-main)] font-extrabold" data-log-pages>—</span> 页
+          </div>
+          <button class="btn-secondary px-4 py-2" type="button" id="customerLogNextBtn">下一页</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>

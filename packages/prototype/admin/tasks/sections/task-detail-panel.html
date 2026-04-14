@@ -63,7 +63,7 @@
       <!-- 6. Status -->
       <div>
         <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">完成状态</div>
-        <span class="badge badge-gray" id="detailStatus">待处理</span>
+        <span class="badge badge-gray" id="detailStatus">待跟进</span>
       </div>
 
       <!-- 7. Priority -->
@@ -81,13 +81,25 @@
       <!-- 9. Source -->
       <div class="col-span-2">
         <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide mb-1">来源</div>
-        <span class="text-sm text-[var(--muted)]" id="detailSource">催办</span>
+        <span class="text-sm text-[var(--muted)]" id="detailSource">资料催办</span>
+      </div>
+    </div>
+
+    <div class="rounded-2xl border border-[var(--border)] bg-[var(--surface-2)] p-4 space-y-3">
+      <div class="text-[12px] font-bold text-[var(--muted-2)] uppercase tracking-wide">执行提示</div>
+      <div>
+        <div class="text-[12px] text-[var(--muted-2)] mb-1">当前卡点</div>
+        <p class="text-sm text-[var(--text)]" id="detailBlocker">客户还没回传资料，所以这项任务还不能收口。</p>
+      </div>
+      <div>
+        <div class="text-[12px] text-[var(--muted-2)] mb-1">下一步</div>
+        <p class="text-sm font-semibold text-[var(--text)]" id="detailNextAction">今天先继续催办，并确认对方最晚什么时候提交。</p>
       </div>
     </div>
 
     <!-- Detail Actions -->
     <div class="flex gap-2 pt-2">
-      <button class="btn-primary h-9 px-4 text-[13px]" type="button" id="detailCompleteBtn" data-action="complete-task">标记完成</button>
+      <button class="btn-primary h-9 px-4 text-[13px]" type="button" id="detailCompleteBtn" data-action="complete-task">收口任务</button>
       <button class="btn-secondary h-9 px-4 text-[13px]" type="button" id="detailEditBtn" data-action="edit-task">编辑</button>
       <button class="btn-secondary h-9 px-4 text-[13px] text-[var(--danger)]" type="button" id="detailCancelBtn" data-action="cancel-task">取消任务</button>
     </div>

@@ -5,7 +5,7 @@
 本规范从原型页面抽取，作为“后台管理端（事务所后台）”的视觉与交互基线：
 
 - 原型目录：[/packages/prototype/admin](file:///Users/ck/workplace/cms-client/packages/prototype/admin)
-- 页面入口：[admin-prototype.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/admin-prototype.html)
+- 页面入口：[dashboard/index.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/dashboard/index.html)
 
 原型以 Tailwind CDN + 页面内联 CSS 为主，核心设计意图体现在 `:root` 设计 token、组件类（如 `.btn-primary/.apple-card/.nav-item`）与交互状态（hover/active/focus）上。
 
@@ -143,6 +143,40 @@
 - 白底 + 1px 边框 + 阴影为基础承载面
 - hover：加深阴影并轻微上移（用于列表卡、快捷动作、摘要模块）
 
+### 摘要卡（Summary Card）
+
+- 用途：列表页顶部“工作概览 / 风险概览 / 待办概览”一类的高频摘要信息，不用于长文说明或复杂表单容器。
+- 结构固定为三段：
+  1. `summary-card__label`：小标签 + 圆点，用于说明统计维度
+  2. `summary-card__value`：大数字或单行主指标
+  3. `summary-card__hint`：一句业务解释，帮助事务所人员快速理解“这个数字代表什么、接下来该做什么”
+- 尺寸与间距：
+  - 最小高度：`148px`
+  - 内边距：`20px`
+  - 圆角：继承全局 `--radius`
+  - 右下角允许使用柔光圆形装饰，营造 Apple-like 轻层次感
+- 文本层级：
+  - Label：`12px / 900 / uppercase / tracking 0.08em`
+  - Value：`34px / 900 / lh 1 / tracking -0.03em`
+  - Hint：`13px / 700 / lh 1.6`
+- 交互：
+  - 默认可作为静态摘要卡或可点击筛选卡
+  - hover：`translateY(-2px)` + `var(--shadow-hover)`
+  - active/selected：在 hover 基础上增加 `0 0 0 3px rgba(3, 105, 161, 0.08)` 强调当前筛选状态
+- 视觉要求：
+  - 基底仍是白底卡片，但允许顶部到下部的浅色渐变，强化信息类型识别
+  - 颜色只能做“轻状态提示”，不得喧宾夺主；正文和大数字仍以深色文字为主
+- 推荐语义变体：
+  - `summary-card--primary`：常规概览 / 我的 / 当前负责
+  - `summary-card--info`：团队 / 协作 / 范围信息
+  - `summary-card--warning`：待处理 / 临期待办 / 需要催办
+  - `summary-card--danger`：过期 / 风险 / 异常
+  - `summary-card--neutral`：存量 / 未开始 / 已归档 / 无活跃事项
+- 使用边界：
+  - 适合：客户页概览、资料中心风险摘要、任务页待办汇总、收费页应收风险概览
+  - 不适合：正文段落、表单录入区、需要多段复杂操作的容器
+- 实现要求：原型页面优先复用共享类 `summary-card` 家族，避免在单页中重复拼接大量内联 Tailwind 样式。
+
 ### 表格（Table）
 
 - 表头：小号、全大写、加字距，信息密度更高但易扫读
@@ -157,7 +191,7 @@
 
 ## 8. 页面清单（原型覆盖）
 
-- 仪表盘：[admin-prototype.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/admin-prototype.html)
+- 仪表盘：[dashboard/index.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/dashboard/index.html)
 - 咨询与会话：[leads-messages.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/leads-messages.html)
 - 客户：[customers.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/customers.html)
 - 案件列表：[cases-list.html](file:///Users/ck/workplace/cms-client/packages/prototype/admin/cases-list.html)

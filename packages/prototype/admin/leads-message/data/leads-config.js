@@ -3,9 +3,9 @@
  * Source of truth for index.html; scripts/leads-page.js reads this at runtime.
  *
  * Covers:
- *   - Lead status enum (6 states, 03 §3.6)
+ *   - Lead status enum (P0 + prototype converted state)
  *   - Groups / Owners
- *   - Table column definitions (11 columns, 咨询线索.md §2.1)
+ *   - Table column definitions (merged columns, 咨询线索.md §2.1)
  *   - Filter options (§2.2)
  *   - Batch action definitions (§2.3)
  *   - Create-lead form field schema (§4)
@@ -22,12 +22,15 @@
   /* ------------------------------------------------------------------ */
 
   var LEAD_STATUSES = [
-    { value: 'new',          label: '新咨询',       badge: 'badge-warning',  dotColor: 'warning',  textClass: 'text-amber-600' },
-    { value: 'following',    label: '跟进中',       badge: 'badge-primary',  dotColor: 'primary',  textClass: 'text-sky-600' },
-    { value: 'pending_sign', label: '待签约',       badge: 'badge-purple',   dotColor: 'purple',   textClass: 'text-violet-600' },
-    { value: 'signed',       label: '已签约',       badge: 'badge-success',  dotColor: 'success',  textClass: 'text-emerald-600' },
-    { value: 'lost',         label: '已流失',       badge: 'badge-gray',     dotColor: 'muted',    textClass: 'text-gray-400' },
+    { value: 'new',          label: '新咨询',       badgeClass: 'lead-badge-new',            dotColor: 'warning',  textClass: 'text-amber-600' },
+    { value: 'following',    label: '跟进中',       badgeClass: 'lead-badge-following',       dotColor: 'primary',  textClass: 'text-sky-600' },
+    { value: 'pending_sign', label: '待签约',       badgeClass: 'lead-badge-pending_sign',    dotColor: 'purple',   textClass: 'text-violet-600' },
+    { value: 'signed',       label: '已签约',       badgeClass: 'lead-badge-signed',          dotColor: 'success',  textClass: 'text-emerald-600' },
+    { value: 'converted_case', label: '已创建案件', badgeClass: 'lead-badge-signed',          dotColor: 'success',  textClass: 'text-emerald-600' },
+    { value: 'lost',         label: '已流失',       badgeClass: 'lead-badge-lost',            dotColor: 'muted',    textClass: 'text-gray-400' },
   ];
+
+  var SIGNED_WARNING_BADGE_CLASS = 'lead-badge-signed-warning';
 
   var LEAD_STATUS_MAP = {};
   LEAD_STATUSES.forEach(function (s) { LEAD_STATUS_MAP[s.value] = s; });
@@ -43,9 +46,9 @@
   ];
 
   var OWNERS = [
-    { value: 'suzuki', label: 'Suzuki', initials: 'S',  avatarClass: 'bg-sky-100 text-sky-700' },
-    { value: 'tanaka', label: 'Tanaka', initials: 'T',  avatarClass: 'bg-emerald-100 text-emerald-700' },
-    { value: 'sato',   label: 'Sato',   initials: 'Sa', avatarClass: 'bg-amber-100 text-amber-700' },
+    { value: 'suzuki', label: '铃木', initials: '铃', avatarClass: 'bg-sky-100 text-sky-700' },
+    { value: 'tanaka', label: '田中', initials: '田', avatarClass: 'bg-emerald-100 text-emerald-700' },
+    { value: 'sato',   label: '佐藤', initials: '佐', avatarClass: 'bg-amber-100 text-amber-700' },
   ];
 
   var GROUP_LABEL_MAP = {};
@@ -72,7 +75,7 @@
   /* ------------------------------------------------------------------ */
 
   var LEAD_SOURCES = [
-    { value: 'web',      label: 'Web' },
+    { value: 'web',      label: '网站表单' },
     { value: 'referral', label: '介绍' },
     { value: 'walkin',   label: '来访' },
     { value: 'phone',    label: '电话' },
@@ -84,27 +87,22 @@
   /* ------------------------------------------------------------------ */
 
   var LANGUAGES = [
-    { value: 'ja', label: '日本語' },
+    { value: 'ja', label: '日语' },
     { value: 'zh', label: '中文' },
-    { value: 'en', label: 'English' },
-    { value: 'vi', label: 'Tiếng Việt' },
+    { value: 'en', label: '英语' },
+    { value: 'vi', label: '越南语' },
   ];
 
   /* ------------------------------------------------------------------ */
-  /*  TABLE COLUMNS  (咨询线索.md §2.1, 11 columns)                      */
+  /*  TABLE COLUMNS  (咨询线索.md §2.1, merged display)                  */
   /* ------------------------------------------------------------------ */
 
   var TABLE_COLUMNS = [
-    { key: 'id',             label: '线索编号',       width: '120px' },
-    { key: 'name',           label: '联系人姓名' },
-    { key: 'contact',        label: '电话 / 邮箱',    responsive: 'md' },
-    { key: 'businessType',   label: '意向业务',       responsive: 'md', width: '100px' },
-    { key: 'source',         label: '来源',           responsive: 'lg', width: '100px' },
+    { key: 'lead',           label: '咨询人',         width: '240px' },
+    { key: 'contactMeta',    label: '联系方式 / 咨询信息' },
     { key: 'status',         label: '当前状态',       width: '110px' },
-    { key: 'owner',          label: '负责人',         responsive: 'md', width: '100px' },
-    { key: 'group',          label: '所属 Group',     responsive: 'lg', width: '100px' },
-    { key: 'nextAction',     label: '下一步动作',     responsive: 'lg' },
-    { key: 'nextFollowUp',   label: '下次跟进',       responsive: 'md', width: '110px' },
+    { key: 'assignment',     label: '负责人 / 组',    width: '150px' },
+    { key: 'followupPlan',   label: '跟进安排',       width: '220px' },
     { key: 'updatedAt',      label: '最近更新',       width: '110px' },
   ];
 
@@ -125,7 +123,7 @@
     },
     {
       key: 'group',
-      allLabel: 'Group：全部',
+      allLabel: '所属组：全部',
       options: GROUPS,
     },
     {
@@ -148,8 +146,7 @@
       applyBtnId: 'bulkAssignApplyBtn',
       optionsFrom: 'OWNERS',
       placeholderOption: '选择负责人',
-      toastTitle: '批量指派负责人（示例）',
-      toastDescTpl: '已选择 {count} 条，负责人：{value}',
+      toastKey: 'bulkAssign',
     },
     {
       key: 'followUpDate',
@@ -157,8 +154,7 @@
       controlType: 'datetime',
       controlId: 'bulkFollowUpInput',
       applyBtnId: 'bulkFollowUpApplyBtn',
-      toastTitle: '批量调整跟进时间（示例）',
-      toastDescTpl: '已选择 {count} 条，下次跟进：{value}',
+      toastKey: 'bulkFollowUp',
     },
     {
       key: 'status',
@@ -168,8 +164,7 @@
       applyBtnId: 'bulkStatusApplyBtn',
       optionsFrom: 'LEAD_STATUSES',
       placeholderOption: '选择状态',
-      toastTitle: '批量标记状态（示例）',
-      toastDescTpl: '已选择 {count} 条，状态已更新为：{value}',
+      toastKey: 'bulkStatus',
     },
   ];
 
@@ -184,7 +179,7 @@
     { id: 'leadSource',         key: 'source',         label: '来源',           type: 'select',         required: false,         optionsFrom: 'LEAD_SOURCES',           placeholderOption: '请选择来源', grid: 'half' },
     { id: 'leadReferrer',       key: 'referrer',       label: '介绍人',         type: 'text',           required: false,         placeholder: '介绍人名称',             grid: 'half', showWhen: { field: 'source', value: 'referral' } },
     { id: 'leadBusinessType',   key: 'businessType',   label: '意向业务类型',   type: 'select',         required: false,         optionsFrom: 'BUSINESS_TYPES',         placeholderOption: '请选择业务类型', grid: 'half' },
-    { id: 'leadGroup',          key: 'group',          label: '归属 Group',     type: 'select',         required: false,         optionsFrom: 'GROUPS',                 placeholderOption: '请选择 Group', grid: 'half' },
+    { id: 'leadGroup',          key: 'group',          label: '所属组',         type: 'select',         required: false,         optionsFrom: 'GROUPS',                 placeholderOption: '请选择所属组', grid: 'half' },
     { id: 'leadOwner',          key: 'owner',          label: '负责人',         type: 'select',         required: false,         optionsFrom: 'OWNERS',                 placeholderOption: '请选择负责人', grid: 'half' },
     { id: 'leadNextAction',     key: 'nextAction',     label: '下一步动作',     type: 'text',           required: false,         placeholder: '例如：电话确认意向',     grid: 'full' },
     { id: 'leadNextFollowUp',   key: 'nextFollowUp',   label: '下次跟进时间',   type: 'datetime-local', required: false,         grid: 'half' },
@@ -226,7 +221,7 @@
         group: '东京一组',
         summary: '已有客户档案，家族滞在更新',
       },
-      message: '该邮箱已存在于客户 CUS-2026-0181（李娜），请确认是否继续创建新线索。',
+      message: '该邮箱已存在于客户档案 CUS-2026-0181（李娜），请确认是否继续创建新咨询。',
     },
   };
 
@@ -235,15 +230,17 @@
   /* ------------------------------------------------------------------ */
 
   var TOASTS = {
-    leadCreated:       { title: '已创建',                      desc: '新线索已添加到列表' },
+    leadCreated:       { title: '已创建（示例）',               desc: '新线索已添加到列表' },
     contactMissing:    { title: '无法创建',                    desc: '请至少填写电话或邮箱' },
     nameMissing:       { title: '无法创建',                    desc: '请填写联系人姓名' },
     bulkAssign:        { title: '批量指派负责人（示例）',      desc: '已选择 {count} 条，负责人：{value}' },
     bulkFollowUp:      { title: '批量调整跟进时间（示例）',    desc: '已选择 {count} 条，下次跟进：{value}' },
     bulkStatus:        { title: '批量标记状态（示例）',        desc: '已选择 {count} 条，状态已更新为：{value}' },
     dedupHit:          { title: '检测到可能重复',              desc: '电话/邮箱匹配到已有记录，请确认' },
-    conversionSuccess: { title: '转化成功（示例）',            desc: '已创建客户/案件，可在详情页查看' },
-    detailUnavailable: { title: '详情页建设中',                desc: '详情页尚未就绪，请稍后再试' },
+    dedupViewRecord:   { title: '查看已有记录（示例）',        desc: '实际环境将跳转到对应详情页' },
+    resetFilters:      { title: '已重置',                      desc: '所有筛选条件已恢复默认' },
+    conversionSuccess: { title: '已完成建档（示例）',          desc: '已建立客户档案或创建案件，可在详情页查看' },
+    detailUnavailable: { title: '详情页（示例）',               desc: '跳转到详情页查看线索全貌' },
   };
 
   /* ------------------------------------------------------------------ */
@@ -273,7 +270,7 @@
       businessType: 'work-visa',
       businessTypeLabel: '技人国',
       source: 'web',
-      sourceLabel: 'Web',
+      sourceLabel: '网站表单',
       referrer: '',
       status: 'new',
       ownerId: 'suzuki',
@@ -339,7 +336,7 @@
       rowHighlight: null,
     },
 
-    /* D.4 — 已签约（正常转化完成） */
+    /* D.4 — 已转案件（正常转化完成） */
     {
       id: 'LEAD-2026-0015',
       name: '王 明',
@@ -350,7 +347,7 @@
       source: 'referral',
       sourceLabel: '介绍',
       referrer: '山田商事',
-      status: 'signed',
+      status: 'converted_case',
       ownerId: 'suzuki',
       groupId: 'tokyo-2',
       nextAction: '',
@@ -398,12 +395,12 @@
       businessType: 'family-stay',
       businessTypeLabel: '家族滞在',
       source: 'web',
-      sourceLabel: 'Web',
+      sourceLabel: '网站表单',
       referrer: '',
       status: 'signed',
       ownerId: 'suzuki',
       groupId: 'tokyo-1',
-      nextAction: '请尽快完成客户建档与案件创建',
+      nextAction: '请尽快建立客户档案并创建案件',
       nextFollowUp: '2026-04-09',
       nextFollowUpLabel: '04-09',
       updatedAt: '2026-04-05',
@@ -412,7 +409,7 @@
       convertedCaseId: null,
       dedupHint: null,
       rowHighlight: 'warning',
-      warningText: '已签约未转化：请完成客户/案件创建',
+      warningText: '已签约，待建档：请完成客户建档和案件创建',
     },
 
     /* D.7 — 新建时触发去重：电话匹配已有 Lead */
@@ -449,7 +446,7 @@
       businessType: 'family-stay',
       businessTypeLabel: '家族滞在',
       source: 'web',
-      sourceLabel: 'Web',
+      sourceLabel: '网站表单',
       referrer: '',
       status: 'new',
       ownerId: 'tanaka',
@@ -480,9 +477,12 @@
   /*  EXPORT                                                              */
   /* ------------------------------------------------------------------ */
 
+  var DEMO_NOTICE = '此为高仿真原型，数据为示例，操作不会持久化。';
+
   window.LeadsConfig = {
     LEAD_STATUSES: LEAD_STATUSES,
     LEAD_STATUS_MAP: LEAD_STATUS_MAP,
+    SIGNED_WARNING_BADGE_CLASS: SIGNED_WARNING_BADGE_CLASS,
 
     GROUPS: GROUPS,
     OWNERS: OWNERS,
@@ -510,5 +510,6 @@
     SCOPE_OPTIONS: SCOPE_OPTIONS,
 
     LEAD_SAMPLES: LEAD_SAMPLES,
+    DEMO_NOTICE: DEMO_NOTICE,
   };
 })();

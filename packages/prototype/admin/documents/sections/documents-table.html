@@ -1,6 +1,6 @@
 <!--
   section: documents-table.html
-  Cross-case document list table: table-shell header + 7 data columns + checkbox column.
+  Cross-case document list table: table-shell header + 3 data columns + checkbox column.
   Includes bulk action bar (催办/審核/waived), empty states (no data + no filter match),
   and pagination stub.
   P0-CONTRACT §2 fields, §3 sort rules, §10 bulk selection.
@@ -16,10 +16,10 @@
 <div class="apple-card table-shell overflow-hidden" id="docTableCard">
   <div class="table-shell__header">
     <div>
-      <div class="table-shell__eyebrow">资料明细</div>
+      <div class="table-shell__eyebrow">资料执行清单</div>
       <div class="table-shell__title-row">
-        <h2 class="table-shell__title">跨案件资料列表</h2>
-        <span class="table-shell__sort-note">按状态优先级排序</span>
+        <h2 class="table-shell__title">今天先处理这些资料</h2>
+        <span class="table-shell__sort-note">按缺件、退回待重交和过期风险优先</span>
       </div>
     </div>
     <div class="table-shell__count"><strong id="docTableCount">0</strong> 项</div>
@@ -58,12 +58,8 @@
             </label>
           </th>
           <th>资料名称</th>
-          <th class="hidden md:table-cell">所属案件</th>
-          <th class="hidden lg:table-cell" style="width: 120px;">由谁提供</th>
-          <th style="width: 110px;">状态</th>
-          <th class="hidden md:table-cell" style="width: 120px;">截止日</th>
-          <th class="hidden lg:table-cell" style="width: 130px;">最近催办</th>
-          <th class="hidden lg:table-cell" style="width: 200px;">归档位置</th>
+          <th style="width: 132px;">状态</th>
+          <th class="hidden md:table-cell" style="width: 132px;">截止日</th>
         </tr>
       </thead>
       <tbody id="docTableBody">

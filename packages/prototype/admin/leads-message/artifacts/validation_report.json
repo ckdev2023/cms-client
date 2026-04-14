@@ -1,0 +1,134 @@
+{
+  "status": "passed",
+  "validated_against": [
+    "P0-CONTRACT.md §1–§17",
+    "SPEC-GAP-MATRIX.md §1–§16",
+    "split-manifest.json",
+    "data/leads-config.js",
+    "scripts/leads-page.js",
+    "scripts/leads-create-modal.js"
+  ],
+  "blocking_issues": [],
+  "structure_check": {
+    "regions_count": 12,
+    "required_regions_present": [
+      "page-header (§1 #1)",
+      "filter-panel (§1 #2)",
+      "data-table (§1 #3)",
+      "bulk-action-bar (§1 #4)",
+      "create-lead-modal (§1 #5)",
+      "toast-feedback (§1 #6)"
+    ],
+    "all_6_required_blocks_present": true
+  },
+  "field_check": {
+    "table_columns": 11,
+    "visible_columns": 6,
+    "table_columns_match_spec": true,
+    "columns": [
+      "线索编号", "联系人姓名", "电话/邮箱", "意向业务", "来源",
+      "当前状态", "负责人", "所属Group", "下一步动作", "下次跟进", "最近更新"
+    ],
+    "note": "checkbox column is extra (not counted in spec 11); the current prototype visually merges the 11 spec fields into 6 visible table columns"
+  },
+  "status_coverage": {
+    "new": true,
+    "following": true,
+    "pending_sign": true,
+    "signed": true,
+    "lost": true,
+    "signed_warning_variant": true,
+    "all_6_statuses_covered": true
+  },
+  "filter_coverage": {
+    "status": true,
+    "owner": true,
+    "group": true,
+    "businessType": true,
+    "dateRange": true,
+    "search": true,
+    "reset": true,
+    "all_7_filter_dimensions_covered": true
+  },
+  "bulk_actions_coverage": {
+    "assign_owner": true,
+    "adjust_follow_up": true,
+    "mark_status": true,
+    "select_all_with_indeterminate": true,
+    "all_3_bulk_actions_covered": true
+  },
+  "modal_field_coverage": {
+    "fields_present": 12,
+    "fields": [
+      "leadName", "leadPhone", "leadEmail", "leadSource", "leadReferrer",
+      "leadBusinessType", "leadGroup", "leadOwner", "leadLanguage",
+      "leadNextAction", "leadNextFollowUp", "leadNote"
+    ],
+    "name_required_validation": true,
+    "phone_or_email_validation": true,
+    "referrer_conditional_display": true,
+    "dedup_hint_panel": true,
+    "all_12_fields_covered": true
+  },
+  "demo_data_coverage": {
+    "rows": 8,
+    "scenarios": [
+      "D.1 新咨询 (new)",
+      "D.2 跟进中 (following)",
+      "D.3 待签约 (pending_sign)",
+      "D.4 已签約 (signed, converted)",
+      "D.5 已流失 (lost, dimmed)",
+      "D.6 已签约未转化 (signed, warning highlight)",
+      "D.7 去重:电话匹配Lead (phoneMatchLead)",
+      "D.8 去重:邮箱匹配Customer (emailMatchCustomer)"
+    ],
+    "all_8_scenarios_covered": true
+  },
+  "interaction_check": {
+    "create_modal_open": true,
+    "create_modal_close_button": true,
+    "create_modal_close_backdrop": true,
+    "create_modal_close_escape": true,
+    "hash_new_auto_open": true,
+    "row_click_navigate": true,
+    "filter_change": true,
+    "date_range_filter": true,
+    "search_debounce": true,
+    "filter_reset": true,
+    "scope_toggle": true,
+    "select_all_toggle": true,
+    "row_checkbox_toggle": true,
+    "bulk_clear": true,
+    "bulk_assign_apply": true,
+    "bulk_followup_apply": true,
+    "bulk_status_apply": true,
+    "row_click_sample_preserved": true,
+    "dedup_check_on_blur": true,
+    "dedup_continue": true,
+    "dedup_view_existing": true,
+    "all_interactions_covered": true
+  },
+  "style_check": {
+    "row_warning_highlight": true,
+    "row_dimmed_opacity": true,
+    "badge_6_variants": true,
+    "shared_tokens_used": true,
+    "aria_current_page": true,
+    "skip_link": true,
+    "focus_visible": true,
+    "note": "styles/list.css defines module-specific classes; shared CSS provides design system"
+  },
+  "toast_coverage": {
+    "presets_count": 9,
+    "presets": [
+      "leadCreated", "contactMissing", "nameMissing",
+      "bulkAssign", "bulkFollowUp", "bulkStatus",
+      "dedupHit", "conversionSuccess", "detailUnavailable"
+    ],
+    "all_spec_toasts_covered": true
+  },
+  "warnings": [
+    "pagination is static (disabled prev/next); acceptable for demo-only prototype",
+    "scope segmented control is visual-only (no actual data scoping); acceptable for demo"
+  ]
+}

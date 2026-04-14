@@ -1,0 +1,117 @@
+{
+  "page_component": "BillingListPage",
+  "candidates": [
+    {
+      "name": "BillingListHeader",
+      "source_selector": "sections/page-header.html",
+      "repeatable": false,
+      "props_hint": ["title", "onRegisterPayment"],
+      "description": "页面标题 + 登记回款主按钮"
+    },
+    {
+      "name": "BillingSummaryCards",
+      "source_selector": "sections/summary-cards.html",
+      "repeatable": false,
+      "props_hint": ["totalDue", "totalReceived", "totalOutstanding", "overdueAmount"],
+      "description": "4 张统计摘要卡区域（全局维度）"
+    },
+    {
+      "name": "BillingSummaryCard",
+      "source_selector": ".billing-summary-card",
+      "repeatable": true,
+      "props_hint": ["label", "value", "hint", "variant"],
+      "description": "单张统计卡片，variant: due/received/outstanding/overdue"
+    },
+    {
+      "name": "BillingListFilters",
+      "source_selector": "sections/filters-toolbar.html",
+      "repeatable": false,
+      "props_hint": ["activeSegment", "filters", "search", "onSegmentChange", "onFilterChange", "onSearchChange", "onReset"],
+      "description": "segmented control + 搜索 + 3 筛选器 + 重置"
+    },
+    {
+      "name": "BillingTable",
+      "source_selector": "#billingTableCard",
+      "repeatable": false,
+      "props_hint": ["cases", "selectedIds", "onToggleSelect", "onToggleSelectAll", "onRowClick", "columns"],
+      "description": "案件收费表格：全选 checkbox + 8 列 + 空状态 + 筛选空状态 + 分页"
+    },
+    {
+      "name": "BillingTableRow",
+      "source_selector": "[data-billing-select-row]",
+      "repeatable": true,
+      "props_hint": ["billing", "selected", "disabled", "onSelect", "onRowClick"],
+      "description": "收费表格行：checkbox + 案件名称/编号 + 客户 + Group + 金额三列 + 下一收款节点 + 回款状态"
+    },
+    {
+      "name": "BillingBulkActionBar",
+      "source_selector": "#bulkActionBar",
+      "repeatable": false,
+      "props_hint": ["selectedCount", "onClear", "onCreateCollectionTasks", "isAllSelected", "isIndeterminate", "onToggleSelectAll"],
+      "description": "批量操作栏：已选计数 + 清除 + 批量生成催款任务"
+    },
+    {
+      "name": "PaymentLogTable",
+      "source_selector": "#paymentLogTableCard",
+      "repeatable": false,
+      "props_hint": ["logs", "columns", "onVoid", "onReverse"],
+      "description": "回款流水表格：8 列 + 操作列（作废/冲正）+ 空状态 + 分页"
+    },
+    {
+      "name": "PaymentLogRow",
+      "source_selector": "[data-payment-id]",
+      "repeatable": true,
+      "props_hint": ["payment", "onVoid", "onReverse"],
+      "description": "回款流水行：金额 + 日期 + 案件 + 节点 + 凭证 + 状态 tag + 操作人 + 备注 + 操作按钮"
+    },
+    {
+      "name": "BillingPlanPanel",
+      "source_selector": "#billingPlanPanel",
+      "repeatable": false,
+      "props_hint": ["nodes", "summary", "nextNode", "caseName", "caseNo", "onEditPlan", "onClose", "onRegisterPayment", "onCreateCollection"],
+      "description": "收费计划面板：汇总行 + 节点列表 + 下一收款节点 + 财务备注 + 编辑/关闭"
+    },
+    {
+      "name": "BillingPlanEmptyState",
+      "source_selector": "#billingPlanEmptyState",
+      "repeatable": false,
+      "props_hint": ["caseName", "onConfigurePlan"],
+      "description": "收费计划空状态：引导「配置收费计划」按钮"
+    },
+    {
+      "name": "BillingPlanSettledState",
+      "source_selector": "#billingPlanSettledState",
+      "repeatable": false,
+      "props_hint": ["caseName", "caseNo", "summary", "nodes"],
+      "description": "收费计划已结清状态：全绿摘要 + 节点列表"
+    },
+    {
+      "name": "PaymentModal",
+      "source_selector": "#paymentModal",
+      "repeatable": false,
+      "props_hint": ["isOpen", "mode", "formValues", "availableNodes", "amountWarning", "planSelectWarning", "onFieldChange", "onSubmit", "onClose"],
+      "description": "登记回款弹窗：5 字段表单 + 校验提示 + 取消/提交"
+    },
+    {
+      "name": "RiskAckPanel",
+      "source_selector": "#riskAckPanel",
+      "repeatable": false,
+      "props_hint": ["riskAck", "auditEntries", "hasUnacknowledgedRisk", "onConfirmRisk", "onClose"],
+      "description": "欠款风险确认面板：确认人/时间/案件/金额 + 原因 + 审计日志"
+    },
+    {
+      "name": "CollectionResultPanel",
+      "source_selector": "#collectionResultPanel",
+      "repeatable": false,
+      "props_hint": ["result", "onClose"],
+      "description": "批量催款三段式结果面板：成功/跳过/失败 + 明细 + 跳过原因统计"
+    },
+    {
+      "name": "AppToast",
+      "source_selector": "#toast",
+      "repeatable": false,
+      "props_hint": ["title", "description", "visible", "onDismiss"],
+      "description": "全局 toast 通知（shared 复用）"
+    }
+  ]
+}

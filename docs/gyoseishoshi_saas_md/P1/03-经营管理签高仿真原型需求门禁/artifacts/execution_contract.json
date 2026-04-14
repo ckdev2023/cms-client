@@ -1,0 +1,36 @@
+{
+  "task_type": "prototype_requirement_gate",
+  "allowed_modules": [
+    "docs/gyoseishoshi_saas_md/P1/03-经营管理签高仿真原型需求门禁/artifacts",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md",
+    "packages/prototype/admin/leads-message",
+    "packages/prototype/admin/customers",
+    "packages/prototype/admin/case"
+  ],
+  "forbidden_modules": [
+    "packages/server",
+    "packages/mobile",
+    "apps",
+    "package.json",
+    "package-lock.json"
+  ],
+  "required_outputs": [
+    "经营管理签高仿真原型的页面范围冻结",
+    "Step 1–20 对应的页面承载与关键交互门禁",
+    "成功/失败/补正三类演示路径脚本",
+    "原型可测清单与验收项"
+  ],
+  "non_goals": [
+    "不在本阶段实现真实后端接口、数据库或自动任务。",
+    "不在本阶段决定视觉设计 token 与品牌样式系统。",
+    "不在本阶段扩展非经营管理签签证类型。",
+    "不在本阶段把原型直接迁移为生产代码。"
+  ],
+  "must_verify": [
+    "requirement_contract.json 字段完整且 unknowns 为空。",
+    "acceptance_checklist.json 覆盖成功路径、失败路径、补正路径与关键门禁。",
+    "原型范围与 P1 文档一致，且未把经管签专属步骤回写为 P0 主状态。",
+    "原型阶段明确禁止真实网络请求与真实通知。"
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "status": "passed",
+  "blocking_issues": [],
+  "warnings": [
+    "automated parser found limited structure from index.html because sections are JS-mounted; all 10 regions and 16 component candidates enriched manually from section HTML files",
+    "interaction_map was empty from automated parse (no onclick/onchange in index.html); 27 interactions reconstructed from section data-action/data-filter/data-segment attributes and script behaviors",
+    "摘要卡金额为 demo 硬编码值，标注 demo-only；生产实现需替换为 API 聚合查询或 viewModel 派生"
+  ],
+  "p0_scope_freeze": {
+    "included": [
+      "案件收费列表（8 列 + checkbox + 默认排序）",
+      "摘要卡（4 张，全局维度）",
+      "筛选（回款状态 / Group / 负责人）+ 搜索 + 重置",
+      "分段视图（案件收费列表 / 回款流水记录）",
+      "回款流水列表（8 列 + 作废/冲正操作 + 3 种状态）",
+      "收费计划面板（节点列表 + 汇总 + 编辑 + 空状态 + 已结清状态）",
+      "登记回款弹窗（5 字段 + BillingPlan 归集 + 金额校验）",
+      "批量催款任务（全选/单选 + 三段式结果）",
+      "欠款风险确认面板（只读展示 + 审计日志）",
+      "Toast 通知（5 种场景）",
+      "空状态（无收费计划 / 筛选无结果）"
+    ],
+    "excluded_p1": [
+      "发票管理（开票/发票状态）— §18 #1",
+      "财务报表 — §18 #2",
+      "自动对账 — §18 #3",
+      "批量导出收费报表 — §18 #4",
+      "对客户欠款提醒（门户触达）— §18 #5",
+      "收费硬阻断模式 block — §18 #6",
+      "按金额范围筛选 — §18 #7"
+    ]
+  },
+  "cross_module_boundaries": {
+    "case_detail_billing_tab": "收费计划配置/编辑 + 风险确认操作入口 — 不在本页落地",
+    "gate_c_integration": "Gate-C 提交前欠款风险检查 — 不在本页落地",
+    "dashboard_entry": "仪表盘待回款入口联动 — T08 独立任务"
+  }
+}

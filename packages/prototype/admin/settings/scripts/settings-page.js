@@ -6,7 +6,7 @@
  * and the centralised toast display used by all settings scripts.
  *
  * DOM hooks:
- *   [data-subnav-id]  — sub-navigation buttons
+ *   #settingsSubnav [data-subnav-id] — sub-navigation buttons
  *   [data-panel]      — content panels toggled by subnav
  *   #toast, #toastTitle, #toastDesc — toast notification element
  *
@@ -62,7 +62,7 @@
   }
 
   function init() {
-    _subnavBtns = document.querySelectorAll('[data-subnav-id]');
+    _subnavBtns = document.querySelectorAll('#settingsSubnav [data-subnav-id]');
     _panels = document.querySelectorAll('[data-panel]');
     _toast = document.getElementById('toast');
     _toastTitle = document.getElementById('toastTitle');

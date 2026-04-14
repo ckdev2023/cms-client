@@ -42,8 +42,8 @@
 
 .detail-tabs {
   border-bottom: 1px solid var(--border);
-  /* overflow-x must remain visible so the "更多" dropdown isn't clipped;
-     horizontal scroll is handled on the inner nav instead */
+  /* Quick fix: keep all tabs directly visible by allowing the nav to wrap
+     onto multiple rows on narrow widths until the planned "更多" menu lands. */
   overflow: visible;
   position: relative;
 }
@@ -55,12 +55,12 @@
 
 .detail-tabs nav {
   display: flex;
-  gap: 28px;
-  min-width: max-content;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+  min-width: 0;
+  width: 100%;
   padding: 0 2px;
   align-items: center;
-  /* Keep overflow visible so the absolute-positioned "更多" dropdown is not clipped */
-  overflow: visible;
 }
 
 .detail-tab {
@@ -99,6 +99,16 @@
   padding: 1px 7px;
   border-radius: 999px;
   line-height: 1.4;
+}
+
+.detail-tab .tab-counter.is-warning {
+  background: rgba(245, 158, 11, 0.16);
+  color: #92400e;
+}
+
+.detail-tab .tab-counter.is-danger {
+  background: rgba(220, 38, 38, 0.1);
+  color: #991b1b;
 }
 
 /* --- "More" Dropdown --- */
@@ -516,5 +526,206 @@
 
 .correction-card {
   border-left: 3px solid var(--warning);
+}
+
+.package-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.package-card__title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  min-width: 0;
+}
+
+.package-card__title {
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.package-card__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  line-height: 1.15;
+}
+
+/* --- Validation Tab Compact Layout --- */
+
+.validation-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.validation-top-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+.validation-main-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.validation-overview-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.validation-overview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.7);
+}
+
+.validation-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.validation-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.validation-group__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.validation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.validation-item {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  background: #fbfbfd;
+}
+
+.validation-item-danger {
+  border-color: rgba(220, 38, 38, 0.18);
+  background: rgba(254, 242, 242, 0.5);
+}
+
+.validation-item-warning {
+  border-color: rgba(245, 158, 11, 0.18);
+  background: rgba(255, 251, 235, 0.55);
+}
+
+.validation-item-info {
+  border-color: rgba(59, 130, 246, 0.16);
+  background: rgba(239, 246, 255, 0.55);
+}
+
+.validation-item__row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.validation-item__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.validation-item__title {
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.validation-item__desc {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.validation-item__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  margin-top: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--muted-2);
+}
+
+.validation-note {
+  padding-top: 12px;
+  border-top: 1px solid rgba(226, 232, 240, 0.7);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted-2);
+}
+
+.post-approval-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.post-approval-chip {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  padding: 4px 10px;
+  font-size: 11px;
+  line-height: 1.15;
+  margin-top: 2px;
+}
+
+.validation-support-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 1024px) {
+  .validation-top-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .validation-support-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .validation-overview-head,
+  .post-approval-head,
+  .validation-item__row,
+  .package-card__head {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 

@@ -20,4 +20,83 @@
     - Each log item tagged with category chip
     - Log items include: object type + operation type + operator + time + change content
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-log" class="tab-panel">
+  <div class="apple-card p-6">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="section-title">日志</h2>
+      <div class="segmented-control" id="logCategoryFilter">
+        <button class="segment-btn active" type="button" data-log-category="all">全部</button>
+        <button class="segment-btn" type="button" data-log-category="operation">操作日志</button>
+        <button class="segment-btn" type="button" data-log-category="review">审核日志</button>
+        <button class="segment-btn" type="button" data-log-category="status">状态变更</button>
+      </div>
+    </div>
+
+    <div class="space-y-0 border-l-2 border-[var(--border)] ml-2">
+      <div class="relative pl-6 py-4 border-b border-[var(--border)] hover:bg-[#fbfbfd] transition-colors group" data-log-type="operation">
+        <div class="timeline-dot bg-[var(--primary)]"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[var(--surface-2)] text-[var(--text)] flex items-center justify-center text-[9px] font-bold">SYS</div>
+            <div>
+              <div class="text-[14px] text-[var(--text)]">更新了文件 <span class="font-bold text-[var(--primary)]">决算書2023.pdf</span> 的状态为：已提交待审核</div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="chip text-[10px] py-0 px-1.5">操作日志</span>
+                <span class="text-[11px] text-[var(--muted-2)]">对象：资料项</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">今天 10:45</div>
+        </div>
+      </div>
+      <div class="relative pl-6 py-4 border-b border-[var(--border)] hover:bg-[#fbfbfd] transition-colors group" data-log-type="review">
+        <div class="timeline-dot bg-[var(--success)]"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[var(--success)] text-white flex items-center justify-center text-[9px] font-bold">TN</div>
+            <div>
+              <div class="text-[14px] text-[var(--text)]">审核通过了文件 <span class="font-bold">法人登記簿謄本</span></div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="chip text-[10px] py-0 px-1.5 bg-green-50 text-green-700 border-green-200">审核日志</span>
+                <span class="text-[11px] text-[var(--muted-2)]">操作人：Tanaka · 结论：通过</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">今天 09:20</div>
+        </div>
+      </div>
+      <div class="relative pl-6 py-4 border-b border-[var(--border)] hover:bg-[#fbfbfd] transition-colors group" data-log-type="status">
+        <div class="timeline-dot bg-[var(--warning)]"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[9px] font-bold">SZ</div>
+            <div>
+              <div class="text-[14px] text-[var(--text)]">案件阶段变更：<span class="font-bold">S2 资料收集 → S5 校验准备</span></div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="chip text-[10px] py-0 px-1.5 bg-blue-50 text-[var(--primary)] border-blue-200">状态变更</span>
+                <span class="text-[11px] text-[var(--muted-2)]">操作人：Suzuki</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">2026/04/05 16:00</div>
+        </div>
+      </div>
+      <div class="relative pl-6 py-4 hover:bg-[#fbfbfd] transition-colors group" data-log-type="status">
+        <div class="timeline-dot bg-[var(--border)]"></div>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div class="flex items-center gap-3">
+            <div class="w-6 h-6 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[9px] font-bold">SZ</div>
+            <div>
+              <div class="text-[14px] text-[var(--text)]">案件创建：<span class="font-bold">S1 初始</span></div>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="chip text-[10px] py-0 px-1.5 bg-blue-50 text-[var(--primary)] border-blue-200">状态变更</span>
+                <span class="text-[11px] text-[var(--muted-2)]">操作人：Suzuki</span>
+              </div>
+            </div>
+          </div>
+          <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">2026/04/01 10:00</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

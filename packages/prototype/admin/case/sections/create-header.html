@@ -1,22 +1,38 @@
 <section class="mb-8">
-  <div class="meta-text mb-3"><a href="index.html" class="link-apple">案件</a> / 新增案件</div>
+  <div class="meta-text mb-3"><a href="index.html" class="link-apple">案件</a> / 开始办案</div>
   <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
     <div>
-      <h1 class="page-title">新增案件</h1>
-      <p class="meta-text mt-3">选择模板、关联客户并完成分派。</p>
+      <h1 class="page-title">开始办案</h1>
+      <p class="meta-text mt-3">确认业务类型、主申请人与承接设置后，即可生成案件。</p>
     </div>
     <div class="flex flex-wrap gap-2">
       <span class="chip">模板：家族滞在 / 技人国</span>
       <span class="chip">批量：家族签向导</span>
-      <span class="chip">结果：生成 Case + 资料清单</span>
+      <span class="chip">当前范围：标准模板</span>
+      <span class="chip">结果：生成案件 + 资料清单</span>
     </div>
   </div>
+</section>
 
-  <div id="caseSourceContext" class="summary-box mt-5 hidden">
-    <div class="summary-label">转化来源</div>
-    <div class="summary-value" id="caseSourceContextTitle">-</div>
-    <div class="meta-text mt-2" id="caseSourceLeadMeta">-</div>
-    <div class="meta-text mt-1" id="caseSourceCustomerMeta">-</div>
-    <div class="meta-text mt-2" id="caseSourceHint">-</div>
+<section class="summary-box mb-8 hidden" id="sourceContextBar">
+  <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+    <div class="section-stack">
+      <div>
+        <div class="section-kicker">办案来源</div>
+        <div class="section-title mt-2" id="sourceContextTitle">本次已带入来源客户与默认承接信息</div>
+      </div>
+      <div class="meta-text" id="sourceContextHint">从客户或咨询继续开始办案时，系统会自动带入主申请人与默认承接组。</div>
+      <div class="meta-text" id="sourceContextDedupHint">如命中疑似重复客户，系统只提示、不自动合并；继续创建时需填写原因并留痕。</div>
+    </div>
+    <div class="summary-grid w-full md:max-w-[420px]">
+      <div class="summary-box" id="sourceLeadCard">
+        <div class="summary-label" id="sourceLeadLabel">来源咨询</div>
+        <div class="summary-value" id="sourceLeadValue">-</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label" id="sourceCustomerLabel">当前客户</div>
+        <div class="summary-value" id="sourceCustomerValue">-</div>
+      </div>
+    </div>
   </div>
 </section>

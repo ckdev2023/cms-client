@@ -11,4 +11,70 @@
     - Add task inline button
     - New task button in header
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-tasks" class="tab-panel">
+  <div class="apple-card p-0 overflow-hidden">
+    <div class="px-6 py-5 border-b border-[var(--border)] flex justify-between items-center bg-[#fbfbfd]">
+      <h2 class="section-title">任务列表</h2>
+      <button class="link-apple text-[13px] font-semibold flex items-center gap-1 add-task-btn" type="button">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        新增任务
+      </button>
+    </div>
+    <div class="doc-item px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 flex-1">
+        <input type="checkbox" checked class="w-4 h-4 rounded-full border-[var(--border)] task-toggle">
+        <span class="text-[14px] text-[var(--muted)] line-through">发送资料收集清单给客户</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-[12px] font-semibold text-[var(--muted-2)] bg-[var(--surface-2)] px-2 py-1 rounded-md">04/01</span>
+        <div class="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold" title="Suzuki">SZ</div>
+      </div>
+    </div>
+    <div class="doc-item px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 flex-1">
+        <input type="checkbox" checked class="w-4 h-4 rounded-full border-[var(--border)] task-toggle">
+        <span class="text-[14px] text-[var(--muted)] line-through">初审护照复印件与在留卡</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-[12px] font-semibold text-[var(--muted-2)] bg-[var(--surface-2)] px-2 py-1 rounded-md">04/05</span>
+        <div class="w-7 h-7 rounded-full bg-[var(--success)] text-white flex items-center justify-center text-[11px] font-bold" title="Tanaka">TN</div>
+      </div>
+    </div>
+    <div class="doc-item px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 flex-1">
+        <input type="checkbox" class="w-4 h-4 rounded-full border-[var(--border)] task-toggle">
+        <span class="text-[14px] font-semibold text-[var(--text)]">起草申请理由书</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-[12px] font-semibold text-[var(--danger)] bg-red-50 px-2 py-1 rounded-md">04/20</span>
+        <div class="w-7 h-7 rounded-full bg-[var(--success)] text-white flex items-center justify-center text-[11px] font-bold" title="Tanaka">TN</div>
+      </div>
+    </div>
+    <div class="doc-item px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 flex-1">
+        <input type="checkbox" class="w-4 h-4 rounded-full border-[var(--border)] task-toggle">
+        <span class="text-[14px] font-semibold text-[var(--text)]">催办雇主材料（在職証明書 + 雇用契約書）</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-[12px] font-semibold text-[var(--warning)] bg-amber-50 px-2 py-1 rounded-md">04/12</span>
+        <div class="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold" title="Suzuki">SZ</div>
+      </div>
+    </div>
+    <div class="doc-item px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 flex-1">
+        <input type="checkbox" class="w-4 h-4 rounded-full border-[var(--border)] task-toggle">
+        <span class="text-[14px] font-semibold text-[var(--text)]">执行提交前 Gate 校验</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <span class="text-[12px] font-semibold text-[var(--muted-2)] bg-[var(--surface-2)] px-2 py-1 rounded-md">04/22</span>
+        <div class="w-7 h-7 rounded-full bg-[var(--primary)] text-white flex items-center justify-center text-[11px] font-bold" title="Suzuki">SZ</div>
+      </div>
+    </div>
+    <div class="px-6 py-4 border-t-0">
+      <button class="w-full text-left flex items-center gap-3 py-1 text-[var(--muted-2)] hover:text-[var(--text)] transition-colors add-task-btn" type="button">
+        <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <span class="text-[14px] font-semibold">添加新任务...</span>
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,55 @@
+{
+  "feature_name": "P0 task and reminder module page specification",
+  "goal": "define the frozen P0 requirements for the task and reminder module so internal users can manage pending work, due-date reminders, and system-generated follow-up tasks that support case progression",
+  "actors": [
+    "administrative scrivener / lead owner",
+    "assistant / office staff"
+  ],
+  "must_have": [
+    "task list page with the specified columns, default filters, and bulk actions",
+    "workbench views for my tasks, due today, and overdue tasks",
+    "task detail showing description, related case, assignee, due date, and operation record",
+    "reminder log showing internal notification send time, recipient, and status",
+    "task creation, assignment, completion, due-date adjustment, and cancellation actions",
+    "system auto-generation of tasks from template case creation and supplement notice flows",
+    "internal reminder behavior for key due dates and basic escalation to the responsible owner",
+    "permission behavior constrained by administrator, lead owner, and assistant roles"
+  ],
+  "out_of_scope": [
+    "custom reminder-rule configuration",
+    "external reminder channels such as email, IM, or SMS",
+    "advanced multi-level escalation chains",
+    "this-week due view",
+    "advanced workbench or kanban views"
+  ],
+  "business_rules": [
+    "P0 uses internal notifications as the primary reminder channel and does not depend on external delivery",
+    "tasks support the states todo, doing, done, and canceled",
+    "canceling a task requires a reason and must leave an audit record",
+    "overdue unfinished tasks are highlighted and surfaced as risk signals",
+    "system-generated tasks after template case creation or supplement notice must avoid duplicate generation",
+    "key reminder categories are residence expiry, supplement due date, submission due date, and billing milestone",
+    "basic escalation is limited to client non-response triggering a reminder to the responsible owner",
+    "all reminder touchpoints must leave traces",
+    "task visibility and editability follow role, group, and case-context constraints"
+  ],
+  "edge_cases": [
+    "empty task state with no pending work guidance",
+    "overdue unfinished tasks requiring visible risk highlighting",
+    "duplicate prevention for automatically generated task batches",
+    "reminder delivery failure with recorded failure reason",
+    "batch cancel flow requiring reasons"
+  ],
+  "acceptance_criteria": [
+    "the list page renders the required task fields, filters, and bulk actions",
+    "the module exposes workbench views for my tasks, due today, and overdue tasks",
+    "task detail renders description, related case link, assignee, due date, and operation record",
+    "reminder log records internal notification send time, recipient, and status",
+    "authorized users can create, assign, complete, adjust due date, and cancel tasks according to the permission model",
+    "auto-generated tasks are created from template case creation and supplement notice flows without unwanted duplicates",
+    "overdue tasks and reminder failures are visibly represented in the module",
+    "P0 behavior remains limited to internal reminders and excludes configurable rules and external channels"
+  ],
+  "unknowns": [],
+  "blocked": false
+}

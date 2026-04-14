@@ -15,28 +15,32 @@
 
     <div class="relative">
       <svg class="w-4 h-4 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-      <input type="text" placeholder="搜索：客户名 / フリガナ / 电话 / 邮箱" class="search-input" />
+      <input id="customerSearchInput" type="text" placeholder="搜索：客户名 / フリガナ / 电话 / 邮箱" class="search-input" />
     </div>
   </div>
 
   <div class="flex flex-wrap items-center gap-2">
-    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
-      <option selected>所属分组：全部</option>
-      <option>东京一组</option>
-      <option>东京二组</option>
-      <option>大阪组</option>
+    <select id="customerGroupFilter" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option value="" selected>所属分组：全部</option>
+      <option value="tokyo-1">东京一组</option>
+      <option value="tokyo-2">东京二组</option>
+      <option value="osaka">大阪组</option>
     </select>
-    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
-      <option selected>负责人：全部</option>
-      <option>Admin</option>
-      <option>Tom</option>
-      <option>助理 A</option>
+    <select id="customerOwnerFilter" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option value="" selected>负责人：全部</option>
+      <option value="admin">Admin</option>
+      <option value="tom">Tom</option>
+      <option value="assistant-a">助理 A</option>
     </select>
-    <select class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
-      <option selected>活跃案件：全部</option>
-      <option>有活跃案件</option>
-      <option>无活跃案件</option>
+    <select id="customerActiveCasesFilter" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[160px]">
+      <option value="" selected>活跃案件：全部</option>
+      <option value="has">有活跃案件</option>
+      <option value="none">无活跃案件</option>
     </select>
     <button class="btn-secondary h-9 px-4 text-[13px]" type="button" data-action="reset-filters">重置</button>
+  </div>
+
+  <div class="apple-card px-4 py-4">
+    <p class="text-[12px] text-[var(--apple-text-tert)] font-semibold" id="customerFilterSummary">当前查看：我的客户 · 2 位</p>
   </div>
 </div>

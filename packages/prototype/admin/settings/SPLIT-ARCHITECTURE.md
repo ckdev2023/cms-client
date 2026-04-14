@@ -115,7 +115,7 @@ packages/prototype/admin/
 |--------|---------|------|
 | `shared/shell/side-nav.html` | `settings.html` | 需更新为 `settings/index.html`（配合文案改为「系统设置」） |
 | `shared/shell/mobile-nav.html` | `settings.html` | 需同步更新 |
-| `admin-prototype.html` | `settings.html` | 旧页面内联导航 |
+| `dashboard/index.html` | `settings.html` | 旧页面内联导航 |
 | `customers/index.html` | `../settings.html` | 子目录导航 |
 | `tasks/index.html` | `../settings.html` | 子目录导航 |
 | `billing/index.html` | `../settings.html` | 子目录导航 |
@@ -164,7 +164,7 @@ packages/prototype/admin/
 
 | 导航项 | 规范路径（admin 根级） | 调整后路径（settings/ 子目录） |
 |--------|----------------------|--------------------------|
-| 仪表盘 | `admin-prototype.html` | `../admin-prototype.html` |
+| 仪表盘 | `dashboard/index.html` | `../dashboard/index.html` |
 | 咨询与会话 | `leads-messages.html` | `../leads-messages.html` |
 | 客户 | `customers/index.html` | `../customers/index.html` |
 | 案件 | `cases-list.html` | `../cases-list.html` |

@@ -17,26 +17,37 @@
         <div class="field-grid two">
           <div>
             <label class="apple-label" for="newCaseCustomerName">姓名</label>
-            <input class="apple-input" id="newCaseCustomerName" type="text" />
+            <input class="apple-input" id="newCaseCustomerName" type="text" placeholder="输入姓名" />
           </div>
           <div>
             <label class="apple-label" for="newCaseCustomerRole">角色</label>
-            <select class="apple-input" id="newCaseCustomerRole"></select>
+            <select class="apple-input" id="newCaseCustomerRole">
+              <option value="主申请人">主申请人</option>
+              <option value="配偶">配偶</option>
+              <option value="子女">子女</option>
+              <option value="扶养者">扶养者</option>
+              <option value="保证人">保证人</option>
+              <option value="雇主联系人">雇主联系人</option>
+            </select>
           </div>
         </div>
         <div class="field-grid two">
           <div>
             <label class="apple-label" for="newCaseCustomerGroup">所属 Group</label>
-            <select class="apple-input" id="newCaseCustomerGroup"></select>
+            <select class="apple-input" id="newCaseCustomerGroup">
+              <option value="tokyo-1">东京一组</option>
+              <option value="tokyo-2">东京二组</option>
+              <option value="osaka">大阪组</option>
+            </select>
           </div>
           <div>
             <label class="apple-label" for="newCaseCustomerPhone">电话</label>
-            <input class="apple-input" id="newCaseCustomerPhone" type="tel" />
+            <input class="apple-input" id="newCaseCustomerPhone" type="tel" placeholder="输入电话" />
           </div>
         </div>
         <div>
           <label class="apple-label" for="newCaseCustomerEmail">邮箱</label>
-          <input class="apple-input" id="newCaseCustomerEmail" type="email" />
+          <input class="apple-input" id="newCaseCustomerEmail" type="email" placeholder="输入邮箱" />
         </div>
         <div>
           <label class="apple-label" for="newCaseCustomerNote">备注</label>
@@ -52,13 +63,6 @@
             <label class="apple-label" for="caseCustomerDuplicateReason">继续创建原因</label>
             <textarea class="apple-input min-h-[88px]" id="caseCustomerDuplicateReason" placeholder="例如：同名不同人 / 旧档案联系方式已失效"></textarea>
           </div>
-          <label class="flex items-start gap-3">
-            <input id="caseCustomerDuplicateConfirm" type="checkbox" class="mt-1" />
-            <div>
-              <div class="font-semibold text-[13px] text-[var(--text)]">我已确认继续创建新客户并留痕</div>
-              <div class="meta-text mt-1">将记录命中对象、操作者、确认时间与原因（demo）。</div>
-            </div>
-          </label>
         </div>
         <div class="text-[13px] font-semibold text-red-600" id="caseCustomerModalError"></div>
       </form>

@@ -1,0 +1,8 @@
+{
+  "status": "parsed",
+  "blocking_issues": [],
+  "warnings": [
+    "interaction_map 中 global_search 和 dynamic_greeting 在本轮 UI-only 实现中仅占位",
+    "filter-select (Group 下拉) 原型无真实数据绑定，需在后续迭代补充"
+  ]
+}

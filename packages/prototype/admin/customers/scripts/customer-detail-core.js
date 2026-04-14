@@ -3,6 +3,8 @@
 
   var app = (window.CustomerDetailPage = window.CustomerDetailPage || {});
 
+  app.DETAIL_STORE_VERSION = 2;
+
   app.state = {
     activeTab: 'basic',
     caseFilter: 'all',
@@ -345,6 +347,52 @@
     }
   };
 
+  app.resolveStoredCollection = function (storedList, seedList, storedVersion) {
+    if (!Array.isArray(storedList)) return app.clone(seedList) || [];
+    if (storedList.length) return storedList;
+    if ((Number(storedVersion) || 0) >= app.DETAIL_STORE_VERSION) return storedList;
+    return Array.isArray(seedList) && seedList.length ? app.clone(seedList) || [] : storedList;
+  };
+
+  app.resolveStoredLogs = function (storedList, seedList) {
+    if (!Array.isArray(storedList)) return app.clone(seedList) || [];
+    if (storedList.length) return storedList;
+    return Array.isArray(seedList) && seedList.length ? app.clone(seedList) || [] : storedList;
+  };
+
+  app.getDefaultLogAt = function (customer) {
+    var value = String(
+      (customer && (customer.updatedAt || customer.createdAt)) ||
+        (customer && customer.lastContact && customer.lastContact.date) ||
+        ''
+    ).trim();
+
+    if (!value) return new Date().toISOString().slice(0, 16);
+    return value.indexOf('T') >= 0 ? value.slice(0, 16) : value + 'T09:00';
+  };
+
+  app.buildDefaultLogs = function (customer) {
+    if (!customer || typeof customer !== 'object') return [];
+
+    var customerName = String(customer.displayName || customer.legalName || customer.id || '客户').trim() || '客户';
+    var customerId = String(customer.id || customerName).replace(/[^a-zA-Z0-9_-]/g, '');
+
+    return [
+      {
+        id: 'LOG-INIT-' + customerId,
+        type: 'info',
+        actor: app.getOwnerLabel(customer.owner),
+        at: app.getDefaultLogAt(customer),
+        message: '初始化客户档案：' + customerName,
+      },
+    ];
+  };
+
+  app.ensureLogs = function (logs, customer) {
+    if (Array.isArray(logs) && logs.length) return logs;
+    return app.buildDefaultLogs(customer);
+  };
+
   app.loadStore = function (customerId) {
     var base = customerId ? app.findCustomerById(customerId) : null;
     var detail = app.getDetailConfig();
@@ -369,6 +417,7 @@
     var storedAll = app.readAllStored();
     var stored = storedAll && storedAll[customerId] ? storedAll[customerId] : null;
     var store = {
+      __version: app.DETAIL_STORE_VERSION,
       customer: seedCustomer,
       cases: seedCases,
       relations: seedRelations,
@@ -377,12 +426,17 @@
     };
 
     if (stored && typeof stored === 'object') {
-      if (stored.customer && typeof stored.customer === 'object') store.customer = stored.customer;
+      var storedVersion = Number(stored.__version) || 0;
+      if (stored.customer && typeof stored.customer === 'object') {
+        store.customer = Object.assign({}, store.customer || {}, stored.customer);
+      }
       if (Array.isArray(stored.cases)) store.cases = stored.cases;
       if (Array.isArray(stored.relations)) store.relations = stored.relations;
-      if (Array.isArray(stored.comms)) store.comms = stored.comms;
-      if (Array.isArray(stored.logs)) store.logs = stored.logs;
+      store.comms = app.resolveStoredCollection(stored.comms, seedComms, storedVersion);
+      store.logs = app.resolveStoredLogs(stored.logs, seedLogs);
     }
+
+    store.logs = app.ensureLogs(store.logs, store.customer);
 
     return store;
   };
@@ -390,6 +444,7 @@
   app.persistStore = function () {
     if (!app.state.customerId || !app.state.store) return;
     var storedAll = app.readAllStored();
+    app.state.store.__version = app.DETAIL_STORE_VERSION;
     storedAll[app.state.customerId] = app.state.store;
     app.writeAllStored(storedAll);
   };

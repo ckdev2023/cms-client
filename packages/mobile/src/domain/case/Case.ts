@@ -41,7 +41,8 @@ export type CaseApplicationType = "recognition" | "change" | "renewal";
 /**
  * P0 下签后子阶段枚举。
  *
- * P0 存储策略：server 写入 metadata.post_approval_stage，
+ * P0 存储策略：server 优先返回正式列 `postApprovalStage`，
+ * 并兼容旧数据里的 metadata.post_approval_stage，
  * 对应时间戳写入 overseasVisaStartAt / entryConfirmedAt。
  * P1 迁移至 CaseWorkflowStep 正式实体。
  */
@@ -160,7 +161,7 @@ export type CaseDetail = CaseSummary & {
   nextActionDueAt: string | null;
   /** 是否存在阻断问题。 */
   hasBlockingIssueFlag: boolean;
-  /** 下签后子阶段（P0 存于 metadata，P1 迁至 CaseWorkflowStep）。 */
+  /** 下签后子阶段（P0 正式列优先，兼容 metadata 回退；P1 迁至 CaseWorkflowStep）。 */
   postApprovalStage: PostApprovalStage | null;
   /** 海外签证开始时间（overseas_visa_applying 首次进入时打戳）。 */
   overseasVisaStartAt: string | null;

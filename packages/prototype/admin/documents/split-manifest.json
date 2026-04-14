@@ -54,7 +54,7 @@
       "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
     },
     "navPathAdjustments": [
-      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
+      { "label": "仪表盘", "canonical": "dashboard/index.html", "adjusted": "../dashboard/index.html" },
       { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
       { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
       { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
@@ -555,7 +555,7 @@
       "note": "规范片段导航链接，本轮仅记录不修复"
     },
     {
-      "source": "packages/prototype/admin/admin-prototype.html",
+      "source": "packages/prototype/admin/dashboard/index.html",
       "href": "documents.html",
       "note": "仪表盘内联导航链接，本轮仅记录不修复"
     },

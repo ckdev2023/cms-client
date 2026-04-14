@@ -1,0 +1,31 @@
+{
+  "task_id": "W07",
+  "task_name": "deployment-topology",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/deployment-topology.md",
+  "summary_output": "artifacts/mempalace/W07.summary.md",
+  "checks": [
+    {
+      "name": "sidecar_isolation_defined",
+      "status": "passed"
+    },
+    {
+      "name": "runtime_data_logs_backups_defined",
+      "status": "passed"
+    },
+    {
+      "name": "main_system_not_blocked_by_sidecar_failure",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W07-deployment-topology.md",
+    "plan/tasks/MP-W02-allowed-sources.md",
+    "plan/tasks/MP-W03-blocked-sources.md",
+    "plan/tasks/MP-W08-environment-strategy.md",
+    "plan/tasks/MP-W15-ops-runbook.md",
+    "plan/mempalace/source-priority.md"
+  ]
+}

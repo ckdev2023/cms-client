@@ -1,0 +1,60 @@
+{
+  "feature_name": "P0 customer module page specification",
+  "goal": "define the frozen P0 requirements for the customer module list, detail, search, relation management, and case-entry actions so personal customer master data can support intake and case operations without expanding into P1 customer scope",
+  "actors": [
+    "administrative scrivener / lead owner",
+    "assistant / office staff",
+    "sales / front desk"
+  ],
+  "must_have": [
+    "customer list page with the specified columns, default filters, and bulk actions",
+    "customer detail page with overview plus 5 tabs covering basic info, related cases, relations, communications, and logs",
+    "personal-customer creation from manual entry or lead conversion",
+    "search by name, furigana, phone, and email",
+    "customer information maintenance including contact info, group, and notes",
+    "related-case counts, summaries, and navigation entry points",
+    "one-click case creation and family-scenario batch case creation from customer detail",
+    "CustomerRelation creation and related-person batch case creation entry",
+    "group adjustment with traceability and no historical case backfill",
+    "permission behavior constrained by role, group, and owner/collaborator visibility"
+  ],
+  "out_of_scope": [
+    "company customer master data",
+    "customer portal linkage",
+    "customer merge execution",
+    "customer-level cross-case attachment summary",
+    "dedicated identity-document ledger tab",
+    "billing-record tab on customer detail",
+    "batch customer export",
+    "ResidencePeriod history tab"
+  ],
+  "business_rules": [
+    "P0 treats personal customers as the primary customer entity and does not introduce company customer master data",
+    "Lead.group to Customer.group to Case.group inheritance applies, and later customer group changes do not overwrite historical cases",
+    "duplicate prompts during creation are based on phone and email matching",
+    "related cases are surfaced as an overview and navigation surface rather than a substitute for case execution",
+    "customer communication records preserve visible_scope separation between internal and client-visible notes",
+    "customer detail does not duplicate case-owned attachments, certificate ledgers, or billing data in P0",
+    "family-scenario batch case creation is launched from customer detail and reuses the related-person context",
+    "group adjustment requires audit trace"
+  ],
+  "edge_cases": [
+    "empty customer list with guided create or lead-conversion entry",
+    "duplicate-customer prompt during creation when phone or email matches an existing record",
+    "customer with all related cases archived and therefore no active-case flag",
+    "customer with multiple related cases requiring +N expansion in the overview",
+    "group adjustment that must preserve historical case ownership snapshots"
+  ],
+  "acceptance_criteria": [
+    "the list page renders the required customer fields, filters, and bulk actions",
+    "the detail page renders the overview block and the required 5 tabs with their defined data and actions",
+    "creating a personal customer creates a Customer and, for lead conversion, inherits Lead.group",
+    "search supports name, furigana, phone, and email lookup",
+    "related cases expose counts, activity split, name summary, and case navigation",
+    "one-click case creation and family batch creation launch from the customer page with the customer pre-bound",
+    "CustomerRelation records can be created and used for related-person batch case creation entry",
+    "visibility and edit permissions match the administrator, lead, assistant, and sales/front-desk matrix"
+  ],
+  "unknowns": [],
+  "blocked": false
+}

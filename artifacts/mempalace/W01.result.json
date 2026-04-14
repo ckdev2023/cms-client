@@ -1,0 +1,30 @@
+{
+  "task_id": "W01",
+  "task_name": "source-priority",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/source-priority.md",
+  "summary_output": "artifacts/mempalace/W01.summary.md",
+  "checks": [
+    {
+      "name": "three_level_priority_defined",
+      "status": "passed"
+    },
+    {
+      "name": "conflict_resolution_order_defined",
+      "status": "passed"
+    },
+    {
+      "name": "raw_not_authoritative",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "docs/gyoseishoshi_saas_md/P0/99-文档维护与版本记录.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/gyoseishoshi_saas_md/_output/00-outputs.md",
+    "docs/gyoseishoshi_saas_md/_raw/00-inbox.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md"
+  ]
+}

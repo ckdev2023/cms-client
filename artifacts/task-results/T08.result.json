@@ -1,0 +1,28 @@
+{
+  "taskId": "T08",
+  "title": "dashboard 到 billing 的入口联动",
+  "status": "completed",
+  "completedAt": "2026-04-14T00:30:00+09:00",
+  "changedFiles": [
+    "packages/admin/src/views/dashboard/workPanelData.ts",
+    "packages/admin/src/views/dashboard/WorkPanelSection.vue",
+    "packages/admin/src/views/dashboard/QuickActionsPanel.vue",
+    "packages/admin/src/views/dashboard/WorkPanelSection.test.ts",
+    "packages/admin/src/views/dashboard/QuickActionsPanel.test.ts"
+  ],
+  "verification": {
+    "depcruise": "pass — 0 violations",
+    "typecheck": "pass — vue-tsc --noEmit",
+    "lint": "pass — eslint + jsdoc:lang:check",
+    "test": "pass — 596 tests, 0 failures",
+    "build": "pass",
+    "guard": "pass — npm run guard exit 0"
+  },
+  "notes": [
+    "WorkItemDef 新增可选 route 字段，billingReceipt 工作项设置 route: /billing。",
+    "WorkPanelSection.vue 引入 useRouter，点击带 route 的工作项动作按钮时导航到对应路径。",
+    "QuickActionsPanel.vue 的 inlineActions 从字符串数组改为对象数组，addReceipt 入口设置 route: /billing。",
+    "两个组件的测试补充了 vue-router mock（createMemoryHistory），全部 29 条 dashboard 测试通过。",
+    "未修改 router、i18n、dashboard 卡片结构或其他非 dashboard 模块。"
+  ]
+}

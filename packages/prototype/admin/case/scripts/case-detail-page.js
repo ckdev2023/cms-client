@@ -1,156 +1,171 @@
 /**
- * Case Detail — page behaviour (tab switching, sample switching, readonly control,
- * per-tab rendering, risk confirmation modal, stage advance, and validation logic).
+ * Case Detail — page orchestration.
  *
- * Reads DETAIL_TABS, DETAIL_SAMPLES, DETAIL_TOASTS, DETAIL_STAGES, BILLING_STATUS
- * from data/case-detail-config.js.
+ * Depends on:
+ * - scripts/case-detail-runtime.js
+ * - scripts/case-detail-renderers.js
+ * - scripts/case-detail-documents.js
  */
-
 (function () {
   'use strict';
 
-  var currentSample = null;
+  var ns = window.CaseDetailPage = window.CaseDetailPage || {};
+  var initialized = false;
 
-  /* ================================================================== */
-  /*  TAB SWITCHING                                                      */
-  /* ================================================================== */
+  function resolveBlockingAction(item) {
+    var tab = item && item.actionTab ? item.actionTab : 'documents';
+    var defaultLabel = tab === 'tasks' ? '去任务区跟进' : '去资料区补件';
 
+    return {
+      label: item && item.actionLabel ? item.actionLabel : defaultLabel,
+      tab: tab,
+    };
+  }
+
+  function resolveTaskNavBadge(tasks) {
+    var pendingCount = Array.isArray(tasks)
+      ? tasks.filter(function (task) {
+        return task && !task.done;
+      }).length
+      : 0;
+
+    if (!pendingCount) return null;
+
+    return {
+      label: '待办' + pendingCount,
+      tone: 'warning',
+    };
+  }
+
+  function resolveValidationNavBadge(validation) {
+    var blockingCount = validation && Array.isArray(validation.blocking) ? validation.blocking.length : 0;
+    var warningCount = validation && Array.isArray(validation.warnings) ? validation.warnings.length : 0;
+
+    if (blockingCount) {
+      return {
+        label: '卡点' + blockingCount,
+        tone: 'danger',
+      };
+    }
+
+    if (warningCount) {
+      return {
+        label: '提醒' + warningCount,
+        tone: 'warning',
+      };
+    }
+
+    return null;
+  }
+
+  function applyNavBadge(id, badge) {
+    var el = document.getElementById(id);
+    if (!el) return;
+
+    el.classList.remove('is-warning', 'is-danger');
+
+    if (!badge) {
+      el.hidden = true;
+      el.textContent = '';
+      return;
+    }
+
+    el.hidden = false;
+    el.textContent = badge.label;
+    if (badge.tone) {
+      el.classList.add('is-' + badge.tone);
+    }
+  }
+
+  function resolveRequestedSampleKey(search, fallbackKey) {
+    var params = new URLSearchParams(search || '');
+    var requestedKey = params.get('sample');
+    return requestedKey && DETAIL_SAMPLES[requestedKey] ? requestedKey : fallbackKey;
+  }
+
+  function syncSampleQuery(key) {
+    if (!window.history || !window.history.replaceState) return;
+    var url = new URL(window.location.href);
+    url.searchParams.set('sample', key);
+    window.history.replaceState({}, '', url.toString());
+  }
+
+  function resolveReadonlyState(sample) {
+    var isArchivedStage = !!(sample && sample.stageCode === 'S9');
+    return {
+      archived: isArchivedStage,
+      readonly: isArchivedStage || !!(sample && sample.readonly),
+    };
+  }
+
+  function init() {
+    if (initialized) return;
+    initialized = true;
+
+  var sampleSelect = document.getElementById('caseSampleSelect');
   var tabs = Array.from(document.querySelectorAll('[data-tab]'));
   var panels = {};
   var ACTIVE_TAB_CLS = 'is-active';
+  var riskModal = document.getElementById('riskConfirmModal');
+  var providerToggle = document.getElementById('providerToggle');
+  var providerBody = document.getElementById('providerProgressBody');
+  var providerChevron = document.getElementById('providerChevron');
 
-  DETAIL_TABS.forEach(function (t) {
-    panels[t.key] = document.getElementById('tab-' + t.key);
+  DETAIL_TABS.forEach(function (tab) {
+    panels[tab.key] = document.getElementById('tab-' + tab.key);
   });
 
   function setActiveTab(key) {
-    tabs.forEach(function (a) {
-      var isActive = a.getAttribute('data-tab') === key;
-      a.classList.toggle(ACTIVE_TAB_CLS, isActive);
+    tabs.forEach(function (link) {
+      link.classList.toggle(ACTIVE_TAB_CLS, link.getAttribute('data-tab') === key);
     });
-    Object.keys(panels).forEach(function (k) {
-      if (panels[k]) {
-        panels[k].classList.toggle(ACTIVE_TAB_CLS, k === key);
+
+    Object.keys(panels).forEach(function (panelKey) {
+      if (panels[panelKey]) {
+        panels[panelKey].classList.toggle(ACTIVE_TAB_CLS, panelKey === key);
       }
     });
   }
 
   function resolveHashTab() {
     var raw = window.location.hash ? window.location.hash.slice(1) : '';
-    if (!raw) return null;
-    if (!panels[raw]) return null;
+    if (!raw || !panels[raw]) return null;
     return raw;
   }
 
-  tabs.forEach(function (a) {
-    a.addEventListener('click', function (e) {
-      e.preventDefault();
-      var key = a.getAttribute('data-tab');
-      if (!key) return;
-      setActiveTab(key);
-      window.location.hash = key;
-    });
-  });
-
-  window.addEventListener('hashchange', function () {
-    var key = resolveHashTab();
-    if (key) setActiveTab(key);
-  });
-
-  /* ================================================================== */
-  /*  HELPERS                                                            */
-  /* ================================================================== */
-
-  function setText(id, value) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = value != null ? value : '';
-  }
-
-  function setHtml(id, html) {
-    var el = document.getElementById(id);
-    if (el) el.innerHTML = html != null ? html : '';
-  }
-
-  function esc(str) {
-    var d = document.createElement('div');
-    d.textContent = str || '';
-    return d.innerHTML;
-  }
-
-  function avatarBg(style) {
-    if (style === 'gradient') return 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)]';
-    if (style === 'success') return 'bg-[var(--success)]';
-    if (style === 'warning') return 'bg-[var(--warning)]';
-    if (style === 'danger') return 'bg-[var(--danger)]';
-    return 'bg-[var(--surface-2)] text-[var(--text)]';
-  }
-
-  function avatarTextColor(style) {
-    return style === 'surface' ? '' : 'text-white';
-  }
-
-  function severityColor(severity) {
-    if (severity === 'danger') return 'var(--danger)';
-    if (severity === 'warning') return 'var(--warning)';
-    if (severity === 'primary') return 'var(--primary)';
-    return 'var(--muted-2)';
-  }
-
-  function severityBgClass(severity) {
-    if (severity === 'danger') return 'bg-red-50';
-    if (severity === 'warning') return 'bg-amber-50';
-    if (severity === 'primary') return 'bg-blue-50';
-    return 'bg-[var(--surface-2)]';
-  }
-
-  function chipClass(color) {
-    if (color === 'green') return 'bg-green-50 text-green-700 border-green-200';
-    if (color === 'red') return 'bg-red-50 text-red-700 border-red-200';
-    if (color === 'blue') return 'bg-blue-50 text-[var(--primary)] border-blue-200';
-    return '';
-  }
-
-  function billingBadge(status) {
-    var b = BILLING_STATUS[status];
-    return b ? b.badge : '';
-  }
-
-  /* ================================================================== */
-  /*  SAMPLE SWITCHING — header + overview summary cards                 */
-  /* ================================================================== */
-
-  var sampleSelect = document.getElementById('caseSampleSelect');
-
   function applySample(key) {
-    var s = DETAIL_SAMPLES[key];
-    if (!s) return;
-    currentSample = s;
+    var sample = DETAIL_SAMPLES[key];
+    if (!sample) return;
 
-    setText('breadcrumbCaseId', s.id);
-    setText('caseTitle', s.title);
-    setText('caseStatusText', s.stage);
-    setText('caseClientName', s.client);
-    setText('caseOwnerName', s.owner);
-    setText('caseAgencyName', s.agency);
-    setText('overviewStageText', s.stage);
-    setText('overviewStageMeta', s.stageMeta);
-    setText('overviewDeadlineDate', s.deadline);
-    setText('overviewDeadlineMeta', s.deadlineMeta);
-    setText('overviewProgressPercent', s.progressPercent + '%');
-    setText('overviewProgressCount', s.progressCount);
-    setText('overviewBillingAmount', s.billingAmount);
-    setText('overviewBillingMeta', s.billingMeta);
-    setText('docsNavCounter', s.docsCounter);
+    ns.currentSample = sample;
+
+    ns.setText('breadcrumbCaseId', sample.id);
+    ns.setText('caseTitle', sample.title);
+    ns.setText('caseStatusText', sample.stage);
+    ns.setText('caseClientName', sample.client);
+    ns.setText('caseOwnerName', sample.owner);
+    ns.setText('caseAgencyName', sample.agency);
+    ns.setText('overviewStageText', sample.stage);
+    ns.setText('overviewStageMeta', ns.resolveOverviewStageMeta ? ns.resolveOverviewStageMeta(sample) : sample.stageMeta);
+    ns.setText('overviewDeadlineDate', sample.deadline);
+    ns.setText('overviewDeadlineMeta', sample.deadlineMeta);
+    ns.setText('overviewProgressPercent', sample.progressPercent + '%');
+    ns.setText('overviewProgressCount', sample.progressCount);
+    ns.setText('overviewBillingAmount', sample.billingAmount);
+    ns.setText('overviewBillingMeta', sample.billingMeta);
+    ns.setText('docsNavCounter', sample.docsCounter);
+    applyNavBadge('tasksNavCounter', resolveTaskNavBadge(sample.tasks));
+    applyNavBadge('validationNavCounter', resolveValidationNavBadge(sample.validation));
 
     var badge = document.getElementById('caseStatusBadge');
-    if (badge) badge.className = 'status-badge text-[13px] ' + s.statusBadge;
+    if (badge) badge.className = 'status-badge text-[13px] ' + sample.statusBadge;
 
-    var bar = document.getElementById('overviewProgressBar');
-    if (bar) bar.style.width = s.progressPercent + '%';
+    var progressBar = document.getElementById('overviewProgressBar');
+    if (progressBar) progressBar.style.width = sample.progressPercent + '%';
 
     var deadlineVal = document.getElementById('overviewDeadlineDate');
     var deadlineMeta = document.getElementById('overviewDeadlineMeta');
-    if (s.deadlineDanger) {
+    if (sample.deadlineDanger) {
       if (deadlineVal) deadlineVal.classList.add('text-[var(--danger)]');
       if (deadlineMeta) deadlineMeta.classList.add('text-[var(--danger)]');
     } else {
@@ -158,469 +173,125 @@
       if (deadlineMeta) deadlineMeta.classList.remove('text-[var(--danger)]');
     }
 
-    applyProviderProgress(s.providerProgress);
-    applyRiskSummary(s.risk);
-    applyOverviewHints(s);
-    applyTimeline(s.timeline);
-    applyTeam(s.team);
-    applyInfoFields(s);
-    applyRelatedParties(s.relatedParties);
-    applyDocsProgress(s);
-    applyDocumentItems(s.documents);
-    applyTasks(s.tasks);
-    applyDeadlines(s.deadlines);
-    applyValidation(s);
-    applyBillingSummary(s.billing);
-    applyBillingTable(s.billing);
-    applyLogEntries(s.logEntries);
-    applyRiskConfirmationRecord(s.riskConfirmationRecord);
-    applyReadonly(s.readonly);
+    ns.applyProviderProgress(sample.providerProgress);
+    ns.applyRiskSummary(sample.risk);
+    ns.applyOverviewHints(sample);
+    ns.applyTimeline(sample.timeline);
+    ns.applyTeam(sample.team);
+    ns.applyInfoFields(sample);
+    ns.applyRelatedParties(sample.relatedParties);
+    ns.applyDocsProgress(sample);
+    ns.applyDocumentItems(sample.documents);
+    if (ns.applyForms) ns.applyForms(sample.forms);
+    ns.applyTasks(sample.tasks);
+    ns.applyDeadlines(sample.deadlines);
+    if (ns.applyResidencePeriod) ns.applyResidencePeriod(sample.residencePeriod);
+    if (ns.applyReminderSchedule) ns.applyReminderSchedule(sample.reminderSchedule);
+    applyValidation(sample);
+    applyBillingSummary(sample.billing);
+    applyBillingTable(sample.billing);
+    applyLogEntries(sample.logEntries);
+    applyRiskConfirmationRecord(sample.riskConfirmationRecord);
+    applyReadonly(resolveReadonlyState(sample));
   }
 
-  /* ================================================================== */
-  /*  OVERVIEW — Provider Progress                                       */
-  /* ================================================================== */
+  function applyValidation(sample) {
+    var validation = sample.validation;
+    if (!validation) return;
 
-  function applyProviderProgress(providers) {
-    if (!providers) return;
-    var rows = document.querySelectorAll('.provider-row');
-    providers.forEach(function (p, i) {
-      if (!rows[i]) return;
-      var pct = p.total > 0 ? Math.round((p.done / p.total) * 100) : 0;
-      var fill = rows[i].querySelector('.provider-bar-fill');
-      var count = rows[i].querySelector('.provider-count');
-      if (fill) fill.style.width = pct + '%';
-      if (count) count.textContent = p.done + '/' + p.total;
-    });
-  }
-
-  /* ================================================================== */
-  /*  OVERVIEW — Risk Summary                                            */
-  /* ================================================================== */
-
-  function applyRiskSummary(risk) {
-    if (!risk) return;
-    setText('riskBlockingCount', risk.blockingCount);
-    setText('riskArrearsStatus', risk.arrearsStatus);
-    setText('riskDeadlineAlert', risk.deadlineAlert);
-    setText('riskLastValidation', risk.lastValidation);
-    setText('riskReviewStatus', risk.reviewStatus);
-  }
-
-  /* ================================================================== */
-  /*  OVERVIEW — Hints (next action + validation hint)                   */
-  /* ================================================================== */
-
-  function applyOverviewHints(s) {
-    setText('overviewNextActionText', s.nextAction || '');
-    setText('overviewValidationHint', s.validationHint || '');
-  }
-
-  /* ================================================================== */
-  /*  OVERVIEW — Timeline                                                */
-  /* ================================================================== */
-
-  function applyTimeline(timeline) {
-    var container = document.querySelector('#tab-overview .border-l-2.border-\\[var\\(--border\\)\\]');
-    if (!container || !timeline) return;
-
-    container.innerHTML = timeline.map(function (item, idx) {
-      var dotColor = item.color === 'primary' ? 'var(--primary)'
-        : item.color === 'warning' ? 'var(--warning)'
-        : item.color === 'success' ? 'var(--success)'
-        : item.color === 'danger' ? 'var(--danger)'
-        : 'var(--border)';
-      var textCls = idx === timeline.length - 1 ? 'text-[var(--muted)]' : 'text-[var(--text)]';
-      return [
-        '<div class="relative pl-6' + (idx < timeline.length - 1 ? ' pb-6' : '') + '">',
-        '  <div class="timeline-dot" style="background:' + dotColor + '"></div>',
-        '  <div class="text-[14px] font-semibold ' + textCls + '">' + esc(item.text) + '</div>',
-        '  <div class="text-[12px] text-[var(--muted-2)] mt-1">' + esc(item.meta) + '</div>',
-        '</div>',
-      ].join('');
-    }).join('');
-  }
-
-  /* ================================================================== */
-  /*  OVERVIEW — Team                                                    */
-  /* ================================================================== */
-
-  function applyTeam(team) {
-    var container = document.querySelector('#tab-overview .apple-card:has(.text-\\[15px\\].font-bold)');
-    if (!container) {
-      var teamCards = document.querySelectorAll('#tab-overview .apple-card');
-      for (var i = 0; i < teamCards.length; i++) {
-        var heading = teamCards[i].querySelector('h3');
-        if (heading && heading.textContent.trim() === '案件团队') {
-          container = teamCards[i];
-          break;
-        }
-      }
-    }
-    if (!container || !team) return;
-
-    var listEl = container.querySelector('.space-y-3');
-    if (!listEl) return;
-
-    listEl.innerHTML = team.map(function (m) {
-      var roleChip = m.role
-        ? ' <span class="chip text-[10px] py-0 px-1.5">' + esc(m.role) + '</span>'
-        : '';
-      return [
-        '<div class="flex items-center justify-between p-2 -mx-2 rounded-xl hover:bg-[var(--surface-2)] transition-colors">',
-        '  <div class="flex items-center gap-3">',
-        '    <div class="w-9 h-9 rounded-full bg-gradient-to-br ' + (m.gradient || 'from-[var(--primary)] to-[var(--primary-hover)]') + ' text-white flex items-center justify-center text-[13px] font-bold">' + esc(m.initials) + '</div>',
-        '    <div>',
-        '      <div class="text-[13px] font-bold text-[var(--text)] flex items-center gap-2">' + esc(m.name) + roleChip + '</div>',
-        '      <div class="text-[12px] text-[var(--muted-2)]">' + esc(m.subtitle) + '</div>',
-        '    </div>',
-        '  </div>',
-        '</div>',
-      ].join('');
-    }).join('');
-  }
-
-  /* ================================================================== */
-  /*  INFO TAB — Form Fields                                             */
-  /* ================================================================== */
-
-  function applyInfoFields(s) {
-    var infoCaseId = document.getElementById('infoCaseId');
-    if (infoCaseId) infoCaseId.value = s.id;
-
-    var infoCaseType = document.getElementById('infoCaseType');
-    if (infoCaseType) {
-      for (var i = 0; i < infoCaseType.options.length; i++) {
-        if (infoCaseType.options[i].text === s.caseType) {
-          infoCaseType.selectedIndex = i;
-          break;
-        }
-      }
-    }
-
-    var infoApplicationType = document.getElementById('infoApplicationType');
-    if (infoApplicationType) {
-      for (var j = 0; j < infoApplicationType.options.length; j++) {
-        if (infoApplicationType.options[j].text === s.applicationType) {
-          infoApplicationType.selectedIndex = j;
-          break;
-        }
-      }
-    }
-
-    var infoAcceptedDate = document.getElementById('infoAcceptedDate');
-    if (infoAcceptedDate) infoAcceptedDate.value = s.acceptedDate || '';
-
-    var infoTargetDate = document.getElementById('infoTargetDate');
-    if (infoTargetDate) infoTargetDate.value = s.targetDate || '';
-
-    var infoJurisdiction = document.getElementById('infoJurisdiction');
-    if (infoJurisdiction) infoJurisdiction.value = s.agency || '';
-  }
-
-  /* ================================================================== */
-  /*  INFO TAB — Related Parties                                         */
-  /* ================================================================== */
-
-  function applyRelatedParties(parties) {
-    var container = document.getElementById('relatedParties');
-    if (!container || !parties) return;
-
-    container.innerHTML = parties.map(function (p) {
-      var bgCls = p.avatarStyle === 'gradient'
-        ? 'bg-gradient-to-br from-[var(--primary)] to-[var(--primary-hover)] text-white'
-        : 'bg-[var(--surface-2)] text-[var(--text)]';
-      return [
-        '<div class="p-3 rounded-xl border border-[var(--border)] hover:border-[var(--primary)]/30 transition-colors">',
-        '  <div class="flex items-center gap-3 mb-2">',
-        '    <div class="w-8 h-8 rounded-full ' + bgCls + ' flex items-center justify-center text-[11px] font-bold">' + esc(p.initials) + '</div>',
-        '    <div>',
-        '      <div class="text-[13px] font-bold text-[var(--text)]">' + esc(p.name) + '</div>',
-        '      <div class="text-[11px] text-[var(--muted-2)]">' + esc(p.role) + '</div>',
-        '    </div>',
-        '  </div>',
-        '  <div class="text-[12px] text-[var(--muted)] pl-11">' + esc(p.detail) + '</div>',
-        '</div>',
-      ].join('');
-    }).join('');
-  }
-
-  /* ================================================================== */
-  /*  DOCUMENTS TAB — Progress + Item Rendering                          */
-  /* ================================================================== */
-
-  function applyDocsProgress(s) {
-    var docsBar = document.getElementById('docsProgressBar');
-    var docsLabel = document.getElementById('docsProgressLabel');
-    if (docsBar) docsBar.style.width = s.progressPercent + '%';
-    if (docsLabel) docsLabel.textContent = s.docsCounter + ' 项已登记（' + s.progressPercent + '%）';
-  }
-
-  function normalizeDocStatusLabel(item) {
-    if (!item || !item.statusLabel) return '';
-    return item.statusLabel
-      .replace('已提交待审核', '已登记待审核')
-      .replace('待提交', '待登记');
-  }
-
-  function buildArchivePath(fileName) {
-    if (!fileName || !currentSample || !currentSample.id) return '';
-    return '案件/' + currentSample.id + '/资料/' + fileName;
-  }
-
-  function normalizeDocMeta(item) {
-    if (!item || !item.meta) return '';
-    var meta = item.meta.replace(/未上传/g, '待登记');
-    if (meta.indexOf('本地归档相对路径：') >= 0) return meta;
-
-    var fileName = '';
-    var token = meta.split(' · ')[0] || '';
-    if (/\.(pdf|jpg|jpeg|png|docx|xlsx)$/i.test(token)) fileName = token;
-
-    if (fileName) {
-      meta += ' · 本地归档相对路径：' + buildArchivePath(fileName);
-    }
-    return meta;
-  }
-
-  function docStatusIcon(status) {
-    if (status === 'reviewed' || status === 'submitted' || status === 'done')
-      return '<svg class="w-4 h-4 text-[var(--success)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4"></path></svg>';
-    if (status === 'expired' || status === 'rejected')
-      return '<svg class="w-4 h-4 text-[var(--danger)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-    if (status === 'waived')
-      return '<svg class="w-4 h-4 text-[var(--muted-2)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>';
-    if (status === 'pending')
-      return '<svg class="w-4 h-4 text-[var(--warning)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path></svg>';
-    return '<svg class="w-4 h-4 text-[var(--muted-2)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01"></path></svg>';
-  }
-
-  function docBadgeClass(status) {
-    if (status === 'reviewed' || status === 'submitted' || status === 'done') return 'badge-green';
-    if (status === 'expired' || status === 'rejected') return 'badge-red';
-    if (status === 'waived') return 'badge-gray';
-    if (status === 'pending') return 'badge-orange';
-    return '';
-  }
-
-  function applyDocumentItems(docs) {
-    var container = document.getElementById('documentsByProvider');
-    if (!container || !docs) return;
-
-    var headerHtml = container.querySelector('.px-6.py-5.border-b');
-    var headerFragment = headerHtml ? headerHtml.outerHTML : '';
-
-    var groupsHtml = docs.map(function (group, gi) {
-      var borderTop = gi > 0 ? ' border-t border-[var(--border)]' : '';
-      var itemsHtml = group.items.map(function (item, ii) {
-        var isLast = ii === group.items.length - 1 && gi === docs.length - 1;
-        var borderB = isLast ? ' border-b-0' : '';
-        var isWaived = item.status === 'waived';
-        var waivedCls = isWaived ? ' is-waived' : '';
-        var nameCls = isWaived
-          ? 'text-[14px] font-semibold text-[var(--muted)] truncate line-through'
-          : 'text-[14px] font-semibold text-[var(--text)] truncate';
-        var metaText = normalizeDocMeta(item);
-        var statusLabel = normalizeDocStatusLabel(item);
-        var metaCls = item.status === 'expired'
-          ? 'text-[12px] text-[var(--danger)]'
-          : 'text-[12px] text-[var(--muted-2)]';
-
-        var actionHtml = '';
-        if (item.canWaive) {
-          actionHtml = '<button class="text-[11px] text-[var(--muted-2)] hover:text-[var(--text)] font-semibold underline waive-btn" type="button" data-waive-item="' + esc(item.name) + '">标记无需提供</button>';
-        }
-
-        return [
-          '<div class="doc-item px-6 py-3 flex items-center justify-between' + borderB + waivedCls + '">',
-          '  <div class="flex items-center gap-3 flex-1 min-w-0">',
-          '    ' + docStatusIcon(item.status),
-          '    <div class="min-w-0">',
-          '      <div class="' + nameCls + '">' + esc(item.name) + '</div>',
-          '      <div class="' + metaCls + '">' + esc(metaText) + '</div>',
-          '    </div>',
-          '  </div>',
-          '  <div class="flex items-center gap-2">',
-          '    <span class="status-badge ' + docBadgeClass(item.status) + ' text-[11px]">' + esc(statusLabel) + '</span>',
-          '    ' + actionHtml,
-          '  </div>',
-          '</div>',
-        ].join('');
-      }).join('');
-
-      return [
-        '<div class="px-6 pt-5 pb-2' + borderTop + '">',
-        '  <div class="section-kicker">' + esc(group.group) + '（' + esc(group.count) + ' 完成）</div>',
-        '</div>',
-        itemsHtml,
-      ].join('');
-    }).join('');
-
-    container.innerHTML = headerFragment + groupsHtml;
-  }
-
-  /* ================================================================== */
-  /*  TASKS TAB — Item Rendering                                         */
-  /* ================================================================== */
-
-  function taskAvatarColor(color) {
-    if (color === 'success') return 'bg-[var(--success)] text-white';
-    if (color === 'warning') return 'bg-[var(--warning)] text-white';
-    if (color === 'danger') return 'bg-[var(--danger)] text-white';
-    return 'bg-[var(--primary)] text-white';
-  }
-
-  function taskDueBadge(due, dueColor) {
-    var cls = 'text-[12px] font-semibold px-2 py-1 rounded-md ';
-    if (dueColor === 'danger') cls += 'text-[var(--danger)] bg-red-50';
-    else if (dueColor === 'warning') cls += 'text-[var(--warning)] bg-amber-50';
-    else cls += 'text-[var(--muted-2)] bg-[var(--surface-2)]';
-    return '<span class="' + cls + '">' + esc(due) + '</span>';
-  }
-
-  function applyTasks(tasks) {
-    var panel = document.getElementById('tab-tasks');
-    if (!panel || !tasks) return;
-
-    var card = panel.querySelector('.apple-card');
-    if (!card) return;
-
-    var header = card.querySelector('.px-6.py-5.border-b');
-    var headerHtml = header ? header.outerHTML : '';
-
-    var itemsHtml = tasks.map(function (t) {
-      var textCls = t.done
-        ? 'text-[14px] text-[var(--muted)] line-through'
-        : 'text-[14px] font-semibold text-[var(--text)]';
-      var checked = t.done ? ' checked' : '';
-      return [
-        '<div class="doc-item px-6 py-4 flex items-center justify-between">',
-        '  <div class="flex items-center gap-3 flex-1">',
-        '    <input type="checkbox" class="w-4 h-4 rounded-full border-[var(--border)] task-toggle"' + checked + '>',
-        '    <span class="' + textCls + '">' + esc(t.label) + '</span>',
-        '  </div>',
-        '  <div class="flex items-center gap-4">',
-        '    ' + taskDueBadge(t.due, t.dueColor),
-        '    <div class="w-7 h-7 rounded-full ' + taskAvatarColor(t.color) + ' flex items-center justify-center text-[11px] font-bold">' + esc(t.assignee) + '</div>',
-        '  </div>',
-        '</div>',
-      ].join('');
-    }).join('');
-
-    var addHtml = [
-      '<div class="px-6 py-4 border-t-0">',
-      '  <button class="w-full text-left flex items-center gap-3 py-1 text-[var(--muted-2)] hover:text-[var(--text)] transition-colors add-task-btn" type="button">',
-      '    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>',
-      '    <span class="text-[14px] font-semibold">添加新任务...</span>',
-      '  </button>',
-      '</div>',
-    ].join('');
-
-    card.innerHTML = headerHtml + itemsHtml + addHtml;
-  }
-
-  /* ================================================================== */
-  /*  DEADLINES TAB                                                      */
-  /* ================================================================== */
-
-  function applyDeadlines(deadlines) {
-    if (!deadlines) return;
-
-    deadlines.forEach(function (dl) {
-      var el = document.getElementById('deadline' + dl.id);
-      if (!el) return;
-
-      var sev = dl.severity;
-      var borderColor = severityColor(sev);
-
-      var stripe = el.querySelector('.absolute.left-0');
-      if (stripe) stripe.style.background = borderColor;
-
-      var titleEl = el.querySelector('[id$="Title"]') || el.querySelector('.text-\\[15px\\]');
-      var descEl = el.querySelector('[id$="Desc"]') || el.querySelectorAll('.text-\\[13px\\]')[0];
-      var dateEl = el.querySelector('[id$="Date"]') || el.querySelector('.text-\\[18px\\]');
-      var remainEl = el.querySelector('[id$="Remaining"]') || el.querySelector('.text-\\[12px\\].font-bold');
-
-      if (!titleEl) titleEl = document.getElementById('deadline' + dl.id + 'Title');
-      if (!descEl) descEl = document.getElementById('deadline' + dl.id + 'Desc');
-      if (!dateEl) dateEl = document.getElementById('deadline' + dl.id + 'Date');
-      if (!remainEl) remainEl = document.getElementById('deadline' + dl.id + 'Remaining');
-
-      if (titleEl) titleEl.textContent = dl.title;
-      if (descEl) descEl.textContent = dl.desc;
-
-      if (dateEl) {
-        dateEl.textContent = dl.date;
-        dateEl.style.color = severityColor(sev);
-      }
-      if (remainEl) {
-        remainEl.textContent = dl.remaining;
-        remainEl.style.color = severityColor(sev);
-        remainEl.className = 'text-[12px] font-bold mt-1 px-2 py-0.5 rounded-md inline-block ' + severityBgClass(sev);
-      }
-    });
-  }
-
-  /* ================================================================== */
-  /*  VALIDATION TAB — Gate items                                        */
-  /* ================================================================== */
-
-  function applyValidation(s) {
-    var val = s.validation;
-    if (!val) return;
-
-    setText('lastValidationTime', val.lastTime || '');
+    ns.setText('lastValidationTime', validation.lastTime || '');
 
     var blockingList = document.getElementById('validationBlockingList');
     if (blockingList) {
-      blockingList.innerHTML = val.blocking.length
-        ? val.blocking.map(function (item) {
+      blockingList.innerHTML = validation.blocking.length
+        ? validation.blocking.map(function (item) {
+          var action = resolveBlockingAction(item);
+
           return [
-            '<div class="p-4 rounded-xl border border-[var(--danger)]/20 bg-red-50/30">',
-            '  <div class="flex items-start justify-between gap-3">',
-            '    <div class="flex items-start gap-3">',
-            '      <svg class="w-5 h-5 text-[var(--danger)] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>',
-            '      <div>',
-            '        <div class="text-[14px] font-bold text-[var(--text)]">' + esc(item.title) + '</div>',
-            '        <div class="text-[12px] text-[var(--muted)] mt-1">修复建议：' + esc(item.fix) + '</div>',
-            '        <div class="text-[12px] text-[var(--muted-2)] mt-1">责任人：' + esc(item.assignee) + ' · 截止：' + esc(item.deadline) + '</div>',
-            '      </div>',
+            '<div class="validation-item validation-item-danger">',
+            '  <div class="validation-item__row">',
+            '    <div class="validation-item__main">',
+            '      <div class="validation-item__title">' + ns.esc(item.title) + '</div>',
+            '      <div class="validation-item__desc">修复建议：' + ns.esc(item.fix) + '</div>',
             '    </div>',
-            '    <button class="btn-pill text-[11px] py-1 px-2 shrink-0" type="button">修复</button>',
+            '    <button class="btn-pill text-[11px] py-1 px-2 shrink-0" type="button" data-target-tab="' + ns.esc(action.tab) + '">' + ns.esc(action.label) + '</button>',
             '  </div>',
+            '  <div class="validation-item__meta"><span>责任人：' + ns.esc(item.assignee) + '</span><span>截止：' + ns.esc(item.deadline) + '</span></div>',
             '</div>',
           ].join('');
         }).join('')
-        : '<div class="text-[13px] text-[var(--muted-2)] font-semibold py-2">无硬性阻断项</div>';
+        : '<div class="text-[13px] text-[var(--muted-2)] font-semibold py-2">当前没有必须先处理的问题</div>';
     }
 
     var warningList = document.getElementById('validationWarningList');
     if (warningList) {
-      warningList.innerHTML = val.warnings.length
-        ? val.warnings.map(function (item) {
+      warningList.innerHTML = validation.warnings.length
+        ? validation.warnings.map(function (item) {
           return [
-            '<div class="p-4 rounded-xl border border-[var(--warning)]/20 bg-amber-50/30">',
-            '  <div class="flex items-start gap-3">',
-            '    <svg class="w-5 h-5 text-[var(--warning)] shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01"></path></svg>',
-            '    <div>',
-            '      <div class="text-[14px] font-bold text-[var(--text)]">' + esc(item.title) + '</div>',
-            '      <div class="text-[12px] text-[var(--muted)] mt-1">建议：' + esc(item.note) + '</div>',
-            '    </div>',
-            '  </div>',
+            '<div class="validation-item validation-item-warning">',
+            '  <div class="validation-item__title">' + ns.esc(item.title) + '</div>',
+            '  <div class="validation-item__desc">建议：' + ns.esc(item.note) + '</div>',
             '</div>',
           ].join('');
         }).join('')
-        : '<div class="text-[13px] text-[var(--muted-2)] font-semibold py-2">无软性提示</div>';
+        : '<div class="text-[13px] text-[var(--muted-2)] font-semibold py-2">当前没有需要补强的提醒</div>';
     }
 
-    applySubmissionPackages(s.submissionPackages);
-    applyCorrectionPackage(s.correctionPackage);
-    applyDoubleReview(s.doubleReview);
+    var infoList = document.getElementById('validationInfoList');
+    if (infoList) {
+      infoList.innerHTML = validation.info && validation.info.length
+        ? validation.info.map(function (item) {
+          return [
+            '<div class="validation-item validation-item-info">',
+            '  <div class="validation-item__title">' + ns.esc(item.title) + '</div>',
+            '  <div class="validation-item__desc">' + ns.esc(item.note) + '</div>',
+            '</div>',
+          ].join('');
+        }).join('')
+        : '<div class="text-[13px] text-[var(--muted-2)] font-semibold py-2">当前没有补充说明</div>';
+    }
+
+    applySubmissionPackages(sample.submissionPackages);
+    applyPostApprovalFlow(sample.postApprovalFlow);
+    applyCorrectionPackage(sample.correctionPackage);
+    applyDoubleReview(sample.doubleReview);
   }
 
-  /* ================================================================== */
-  /*  VALIDATION TAB — Submission Packages                               */
-  /* ================================================================== */
+  function applyPostApprovalFlow(flow) {
+    var container = document.getElementById('postApprovalFlowCard');
+    if (!container) return;
+
+    if (!flow) {
+      container.innerHTML = [
+        '<div class="section-kicker mb-2 !text-[var(--primary)]">下签后处理</div>',
+        '<div class="post-approval-head">',
+        '  <h2 class="section-title">COE / 海外贴签 / 返签结果</h2>',
+        '  <span class="chip post-approval-chip bg-blue-50 text-[var(--primary)] border-blue-200">当前案件未到该阶段</span>',
+        '</div>',
+        '<div class="text-[13px] text-[var(--muted-2)]">当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE 发送、海外贴签和返签结果。切换到经营管理签后半段样例后可查看完整流程。</div>',
+      ].join('');
+      return;
+    }
+
+    var badgeCls = ns.badgeToneClass ? ns.badgeToneClass(flow.tone || 'primary') : 'bg-blue-50 text-[var(--primary)] border-blue-200';
+    var rows = (flow.rows || []).map(function (row) {
+      return '<div class="flex items-start justify-between gap-4 py-2 border-b border-[var(--border)] last:border-b-0"><div class="text-[12px] text-[var(--muted-2)] shrink-0">' + ns.esc(row.label) + '</div><div class="text-[13px] font-semibold text-[var(--text)] text-right">' + ns.esc(row.value) + '</div></div>';
+    }).join('');
+    var actions = (flow.actions || []).map(function (action) {
+      return '<button class="btn-pill text-[12px] py-1 px-3" type="button">' + ns.esc(action.label) + '</button>';
+    }).join('');
+
+    container.innerHTML = [
+      '<div class="section-kicker mb-2 !text-[var(--primary)]">下签后处理</div>',
+      '<div class="post-approval-head">',
+      '  <h2 class="section-title">COE / 海外贴签 / 返签结果</h2>',
+      '  <span class="chip post-approval-chip ' + badgeCls + '">' + ns.esc(flow.statusLabel) + '</span>',
+      '</div>',
+      '<div class="rounded-xl border border-[var(--border)] bg-[#fbfbfd] px-4">' + rows + '</div>',
+      '  <div class="text-[12px] text-[var(--muted)] mt-3">' + ns.esc(flow.note || '') + '</div>',
+      (actions ? '  <div class="flex flex-wrap gap-2 mt-3">' + actions + '</div>' : ''),
+    ].join('');
+  }
 
   function applySubmissionPackages(packages) {
     var container = document.getElementById('submissionPackages');
@@ -632,19 +303,20 @@
     }
 
     container.innerHTML = packages.map(function (pkg) {
-      var lockChip = pkg.locked ? '<span class="chip text-[10px] py-0 px-1.5">🔒 已锁定</span>' : '';
+      var lockChip = pkg.locked ? '<span class="chip package-card__chip">🔒 已锁定</span>' : '';
+
       return [
-        '<div class="p-4 rounded-xl border border-[var(--border)] bg-[#fbfbfd]">',
-        '  <div class="flex items-center justify-between mb-2">',
-        '    <div class="flex items-center gap-2">',
-        '      <span class="text-[14px] font-bold text-[var(--text)]">' + esc(pkg.id) + '</span>',
-        '      <span class="chip text-[10px] py-0 px-1.5 bg-green-50 text-green-700 border-green-200">' + esc(pkg.status) + '</span>',
+        '<div class="p-3 rounded-xl border border-[var(--border)] bg-[#fbfbfd]">',
+        '  <div class="package-card__head mb-1.5">',
+        '    <div class="package-card__title-row">',
+        '      <span class="package-card__title">' + ns.esc(pkg.id) + '</span>',
+        '      <span class="chip package-card__chip bg-green-50 text-green-700 border-green-200">' + ns.esc(pkg.status) + '</span>',
         '      ' + lockChip,
         '    </div>',
-        '    <span class="text-[12px] text-[var(--muted-2)] font-semibold">' + esc(pkg.date) + '</span>',
+        '    <span class="text-[12px] text-[var(--muted-2)] font-semibold">' + ns.esc(pkg.date) + '</span>',
         '  </div>',
-        '  <div class="text-[12px] text-[var(--muted)]">' + esc(pkg.summary) + '</div>',
-        '  <div class="flex gap-2 mt-2">',
+        '  <div class="text-[12px] text-[var(--muted)]">' + ns.esc(pkg.summary) + '</div>',
+        '  <div class="flex flex-wrap gap-2 mt-2">',
         '    <button class="text-[12px] text-[var(--primary)] hover:underline font-semibold" type="button">查看内容</button>',
         '    <button class="text-[12px] text-[var(--primary)] hover:underline font-semibold" type="button">上传回执</button>',
         '  </div>',
@@ -653,15 +325,11 @@
     }).join('');
   }
 
-  /* ================================================================== */
-  /*  VALIDATION TAB — Correction Package                                */
-  /* ================================================================== */
-
-  function applyCorrectionPackage(corr) {
+  function applyCorrectionPackage(correction) {
     var container = document.getElementById('correctionPackage');
     if (!container) return;
 
-    if (!corr) {
+    if (!correction) {
       container.style.display = 'none';
       return;
     }
@@ -669,29 +337,25 @@
     container.style.display = '';
     container.innerHTML = [
       '<div class="section-kicker mb-2 !text-[var(--warning)]">补正包</div>',
-      '<h2 class="section-title mb-4">补正通知关联</h2>',
-      '<div class="p-4 rounded-xl border border-[var(--warning)]/20 bg-amber-50/30 mb-3">',
-      '  <div class="flex items-center justify-between mb-2">',
-      '    <div class="flex items-center gap-2">',
-      '      <span class="text-[14px] font-bold text-[var(--text)]">' + esc(corr.id) + '</span>',
-      '      <span class="chip text-[10px] py-0 px-1.5 bg-amber-50 text-amber-700 border-amber-200">' + esc(corr.status) + '</span>',
+      '<h2 class="section-title mb-3">补正通知关联</h2>',
+      '<div class="p-3 rounded-xl border border-[var(--warning)]/20 bg-amber-50/30 mb-2">',
+      '  <div class="package-card__head mb-1.5">',
+      '    <div class="package-card__title-row">',
+      '      <span class="package-card__title">' + ns.esc(correction.id) + '</span>',
+      '      <span class="chip package-card__chip bg-amber-50 text-amber-700 border-amber-200">' + ns.esc(correction.status) + '</span>',
       '    </div>',
-      '    <span class="text-[12px] text-[var(--muted-2)] font-semibold">通知日：' + esc(corr.noticeDate) + '</span>',
+      '    <span class="text-[12px] text-[var(--muted-2)] font-semibold">通知日：' + ns.esc(correction.noticeDate) + '</span>',
       '  </div>',
-      '  <div class="text-[12px] text-[var(--muted)] mb-2">关联原提交包：' + esc(corr.relatedSub) + ' · 补正截止：' + esc(corr.corrDeadline) + '</div>',
-      '  <div class="text-[12px] text-[var(--muted)]">补正项：' + esc(corr.items) + '</div>',
+      '  <div class="text-[12px] text-[var(--muted)] mb-2">关联原提交包：' + ns.esc(correction.relatedSub) + ' · 补正截止：' + ns.esc(correction.corrDeadline) + '</div>',
+      '  <div class="text-[12px] text-[var(--muted)]">补正项：' + ns.esc(correction.items) + '</div>',
       '  <div class="flex gap-2 mt-3">',
       '    <button class="btn-pill text-[12px] py-1 px-3" type="button">与原提交包对比</button>',
       '    <button class="text-[12px] text-[var(--primary)] hover:underline font-semibold" type="button">查看补正通知</button>',
       '  </div>',
       '</div>',
-      '<div class="text-[12px] text-[var(--muted-2)]">' + esc(corr.note) + '</div>',
+      '<div class="text-[12px] text-[var(--muted-2)]">' + ns.esc(correction.note) + '</div>',
     ].join('');
   }
-
-  /* ================================================================== */
-  /*  VALIDATION TAB — Double Review                                     */
-  /* ================================================================== */
 
   function applyDoubleReview(reviews) {
     var container = document.getElementById('doubleReview');
@@ -702,30 +366,24 @@
       return;
     }
 
-    container.innerHTML = reviews.map(function (r) {
-      var verdictChip = r.verdictBadge === 'badge-green'
+    container.innerHTML = reviews.map(function (review) {
+      var verdictChip = review.verdictBadge === 'badge-green'
         ? 'bg-green-50 text-green-700 border-green-200'
         : 'bg-red-50 text-red-700 border-red-200';
-      var rejectBlock = r.rejectReason
-        ? [
-          '<div class="mt-2 p-2 rounded-lg bg-red-50/50 border border-[var(--danger)]/10">',
-          '  <div class="text-[11px] font-bold text-[var(--danger)] mb-1">驳回原因</div>',
-          '  <div class="text-[12px] text-[var(--text)]">' + esc(r.rejectReason) + '</div>',
-          '</div>',
-        ].join('')
+      var rejectBlock = review.rejectReason
+        ? '<div class="mt-2 p-2 rounded-lg bg-red-50/50 border border-[var(--danger)]/10"><div class="text-[11px] font-bold text-[var(--danger)] mb-1">驳回原因</div><div class="text-[12px] text-[var(--text)]">' + ns.esc(review.rejectReason) + '</div></div>'
         : '';
-      var commentLine = r.comment
-        ? '<div class="text-[12px] text-[var(--muted)]">' + esc(r.time) + ' · ' + esc(r.comment) + '</div>'
-        : '<div class="text-[12px] text-[var(--muted)]">' + esc(r.time) + '</div>';
-
-      var avatarColor = r.verdictBadge === 'badge-green' ? 'var(--success)' : 'var(--danger)';
+      var commentLine = review.comment
+        ? '<div class="text-[12px] text-[var(--muted)]">' + ns.esc(review.time) + ' · ' + ns.esc(review.comment) + '</div>'
+        : '<div class="text-[12px] text-[var(--muted)]">' + ns.esc(review.time) + '</div>';
+      var avatarColor = review.verdictBadge === 'badge-green' ? 'var(--success)' : 'var(--danger)';
 
       return [
         '<div class="p-3 rounded-xl border border-[var(--border)]">',
-        '  <div class="flex items-center gap-2 mb-2">',
-        '    <div class="w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] font-bold" style="background:' + avatarColor + '">' + esc(r.initials) + '</div>',
-        '    <span class="text-[13px] font-bold text-[var(--text)]">' + esc(r.name) + '</span>',
-        '    <span class="chip text-[10px] py-0 px-1.5 ' + verdictChip + '">' + esc(r.verdict) + '</span>',
+        '  <div class="flex items-center gap-2 mb-1.5 flex-wrap">',
+        '    <div class="w-6 h-6 rounded-full text-white flex items-center justify-center text-[10px] font-bold" style="background:' + avatarColor + '">' + ns.esc(review.initials) + '</div>',
+        '    <span class="text-[13px] font-bold text-[var(--text)]">' + ns.esc(review.name) + '</span>',
+        '    <span class="chip text-[10px] py-0 px-1.5 ' + verdictChip + '">' + ns.esc(review.verdict) + '</span>',
         '  </div>',
         '  ' + commentLine,
         '  ' + rejectBlock,
@@ -734,9 +392,14 @@
     }).join('');
   }
 
-  /* ================================================================== */
-  /*  VALIDATION TAB — Risk Confirmation Record                          */
-  /* ================================================================== */
+  function rebindRiskTrigger() {
+    var btn = document.getElementById('triggerRiskConfirm');
+    if (!btn || !riskModal) return;
+
+    btn.onclick = function () {
+      riskModal.classList.add('show');
+    };
+  }
 
   function applyRiskConfirmationRecord(record) {
     var container = document.getElementById('riskConfirmation');
@@ -745,8 +408,8 @@
     if (!record) {
       container.innerHTML = [
         '<h2 class="text-[15px] font-bold text-[var(--text)] mb-4">欠款风险确认记录</h2>',
-        '<div class="text-center py-4">',
-        '  <div class="text-[13px] text-[var(--muted-2)] font-semibold mb-3">当前无欠款风险确认</div>',
+        '<div class="text-center py-2">',
+        '  <div class="text-[13px] text-[var(--muted-2)] font-semibold mb-2">当前无欠款风险确认</div>',
         '  <button class="btn-pill text-[12px] py-1.5 px-3" type="button" id="triggerRiskConfirm">模拟欠款确认</button>',
         '</div>',
       ].join('');
@@ -762,28 +425,22 @@
       '    <span class="text-[14px] font-bold text-[var(--text)]">已确认（欠款继续提交）</span>',
       '  </div>',
       '  <div class="text-[12px] text-[var(--muted)] space-y-1">',
-      '    <div>确认人：' + esc(record.confirmedBy) + '</div>',
-      '    <div>确认时间：' + esc(record.time) + '</div>',
-      '    <div>欠款金额：' + esc(record.amount) + '</div>',
-      '    <div>确认原因：' + esc(record.reason) + '</div>',
+      '    <div>确认人：' + ns.esc(record.confirmedBy) + '</div>',
+      '    <div>确认时间：' + ns.esc(record.time) + '</div>',
+      '    <div>欠款金额：' + ns.esc(record.amount) + '</div>',
+      '    <div>确认原因：' + ns.esc(record.reason) + '</div>',
       '  </div>',
       '</div>',
-      '<div class="mt-3">',
-      '  <button class="btn-pill text-[12px] py-1.5 px-3" type="button" id="triggerRiskConfirm">再次模拟欠款确认</button>',
-      '</div>',
+      '<div class="mt-3"><button class="btn-pill text-[12px] py-1.5 px-3" type="button" id="triggerRiskConfirm">再次模拟欠款确认</button></div>',
     ].join('');
     rebindRiskTrigger();
   }
 
-  /* ================================================================== */
-  /*  BILLING TAB — Summary + Payment Table                              */
-  /* ================================================================== */
-
   function applyBillingSummary(billing) {
     if (!billing) return;
-    setText('billingTotal', billing.total);
-    setText('billingReceived', billing.received);
-    setText('billingOutstanding', billing.outstanding);
+    ns.setText('billingTotal', billing.total);
+    ns.setText('billingReceived', billing.received);
+    ns.setText('billingOutstanding', billing.outstanding);
   }
 
   function applyBillingTable(billing) {
@@ -792,67 +449,86 @@
     var tbody = document.querySelector('#tab-billing tbody');
     if (!tbody) return;
 
-    tbody.innerHTML = billing.payments.map(function (p) {
-      var badgeCls = billingBadge(p.status);
-      var actionLabel = p.status === 'paid' ? '查看收据' : '登记回款';
+    tbody.innerHTML = billing.payments.map(function (payment) {
+      var badgeCls = ns.billingBadge(payment.status);
+      var actionLabel = payment.status === 'paid' ? '查看收据' : '登记回款';
+
       return [
         '<tr>',
-        '  <td class="font-semibold text-[var(--text)]">' + esc(p.date) + '</td>',
-        '  <td>' + esc(p.type) + '</td>',
-        '  <td class="text-right font-semibold text-[var(--text)]">' + esc(p.amount) + '</td>',
-        '  <td class="text-center"><span class="status-badge ' + badgeCls + ' text-[11px]">' + esc(p.statusLabel) + '</span></td>',
+        '  <td class="font-semibold text-[var(--text)]">' + ns.esc(payment.date) + '</td>',
+        '  <td>' + ns.esc(payment.type) + '</td>',
+        '  <td class="text-right font-semibold text-[var(--text)]">' + ns.esc(payment.amount) + '</td>',
+        '  <td class="text-center"><span class="status-badge ' + badgeCls + ' text-[11px]">' + ns.esc(payment.statusLabel) + '</span></td>',
         '  <td class="text-right"><button class="text-[var(--primary)] text-[13px] font-semibold hover:underline row-quick-action" type="button">' + actionLabel + '</button></td>',
         '</tr>',
       ].join('');
     }).join('');
   }
 
-  /* ================================================================== */
-  /*  LOG TAB — Entries                                                  */
-  /* ================================================================== */
-
   function formatObjectType(entry) {
     if (!entry.objectType) return '';
-    if (/^操作人/.test(entry.objectType)) return esc(entry.objectType);
-    return '对象：' + esc(entry.objectType);
+    if (/^操作人/.test(entry.objectType)) return ns.esc(entry.objectType);
+    return '对象：' + ns.esc(entry.objectType);
+  }
+
+  function resetLogFilter() {
+    var filterBtns = document.querySelectorAll('[data-log-category]');
+    filterBtns.forEach(function (btn) {
+      btn.classList.remove('active');
+    });
+
+    var allBtn = document.querySelector('[data-log-category="all"]');
+    if (allBtn) allBtn.classList.add('active');
+
+    var items = document.querySelectorAll('[data-log-type]');
+    items.forEach(function (item) {
+      item.style.display = '';
+    });
   }
 
   function applyLogEntries(entries) {
     var container = document.querySelector('#tab-log .border-l-2');
     if (!container || !entries) return;
 
-    container.innerHTML = entries.map(function (entry, idx) {
-      var dotColor = entry.dotColor === 'primary' ? 'var(--primary)'
-        : entry.dotColor === 'success' ? 'var(--success)'
-        : entry.dotColor === 'warning' ? 'var(--warning)'
-        : entry.dotColor === 'danger' ? 'var(--danger)'
-        : 'var(--border)';
+    container.innerHTML = entries.map(function (entry, index) {
+      var dotColor = entry.dotColor === 'primary'
+        ? 'var(--primary)'
+        : entry.dotColor === 'success'
+          ? 'var(--success)'
+          : entry.dotColor === 'warning'
+            ? 'var(--warning)'
+            : entry.dotColor === 'danger'
+              ? 'var(--danger)'
+              : 'var(--border)';
 
-      var avatarBgColor = entry.avatarStyle === 'primary' ? 'bg-[var(--primary)] text-white'
-        : entry.avatarStyle === 'success' ? 'bg-[var(--success)] text-white'
-        : entry.avatarStyle === 'warning' ? 'bg-[var(--warning)] text-white'
-        : entry.avatarStyle === 'danger' ? 'bg-[var(--danger)] text-white'
-        : 'bg-[var(--surface-2)] text-[var(--text)]';
+      var avatarBgColor = entry.avatarStyle === 'primary'
+        ? 'bg-[var(--primary)] text-white'
+        : entry.avatarStyle === 'success'
+          ? 'bg-[var(--success)] text-white'
+          : entry.avatarStyle === 'warning'
+            ? 'bg-[var(--warning)] text-white'
+            : entry.avatarStyle === 'danger'
+              ? 'bg-[var(--danger)] text-white'
+              : 'bg-[var(--surface-2)] text-[var(--text)]';
 
-      var categoryChipCls = chipClass(entry.categoryChip);
-      var isLast = idx === entries.length - 1;
-      var borderCls = isLast ? '' : ' border-b border-[var(--border)]';
+      var categoryChipCls = ns.chipClass(entry.categoryChip);
+      var borderCls = index === entries.length - 1 ? '' : ' border-b border-[var(--border)]';
 
       return [
-        '<div class="relative pl-6 py-4' + borderCls + ' hover:bg-[#fbfbfd] transition-colors group" data-log-type="' + esc(entry.type) + '">',
+        '<div class="relative pl-6 py-4' + borderCls + ' hover:bg-[#fbfbfd] transition-colors group" data-log-type="' + ns.esc(entry.type) + '">',
         '  <div class="timeline-dot" style="background:' + dotColor + '"></div>',
         '  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">',
         '    <div class="flex items-center gap-3">',
-        '      <div class="w-6 h-6 rounded-full ' + avatarBgColor + ' flex items-center justify-center text-[9px] font-bold">' + esc(entry.avatar) + '</div>',
+        '      <div class="w-6 h-6 rounded-full ' + avatarBgColor + ' flex items-center justify-center text-[9px] font-bold">' + ns.esc(entry.avatar) + '</div>',
         '      <div>',
         '        <div class="text-[14px] text-[var(--text)]">' + entry.text + '</div>',
         '        <div class="flex items-center gap-2 mt-1">',
-        '          <span class="chip text-[10px] py-0 px-1.5 ' + categoryChipCls + '">' + esc(entry.category) + '</span>',
+        '          <span class="chip text-[10px] py-0 px-1.5 ' + categoryChipCls + '">' + ns.esc(entry.category) + '</span>',
         '          <span class="text-[11px] text-[var(--muted-2)]">' + formatObjectType(entry) + '</span>',
         '        </div>',
         '      </div>',
         '    </div>',
-        '    <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">' + esc(entry.time) + '</div>',
+        '    <div class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">' + ns.esc(entry.time) + '</div>',
         '  </div>',
         '</div>',
       ].join('');
@@ -861,48 +537,15 @@
     resetLogFilter();
   }
 
-  /* ================================================================== */
-  /*  LOG TAB — Category Filter                                          */
-  /* ================================================================== */
-
-  function resetLogFilter() {
-    var filterBtns = document.querySelectorAll('[data-log-category]');
-    filterBtns.forEach(function (btn) { btn.classList.remove('active'); });
-    var allBtn = document.querySelector('[data-log-category="all"]');
-    if (allBtn) allBtn.classList.add('active');
-
-    var items = document.querySelectorAll('[data-log-type]');
-    items.forEach(function (item) { item.style.display = ''; });
-  }
-
-  var logFilterBtns = document.querySelectorAll('[data-log-category]');
-
-  logFilterBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      logFilterBtns.forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-      var category = btn.getAttribute('data-log-category');
-      var logItems = document.querySelectorAll('[data-log-type]');
-      logItems.forEach(function (item) {
-        if (category === 'all') {
-          item.style.display = '';
-        } else {
-          item.style.display = item.getAttribute('data-log-type') === category ? '' : 'none';
-        }
-      });
-    });
-  });
-
-  /* ================================================================== */
-  /*  READONLY CONTROL                                                   */
-  /* ================================================================== */
-
-  function applyReadonly(isReadonly) {
+  function applyReadonly(state) {
+    var readonlyState = state && typeof state === 'object'
+      ? state
+      : { archived: !!state, readonly: !!state };
+    var isReadonly = !!readonlyState.readonly;
     var banner = document.getElementById('readonlyBanner');
-    if (banner) banner.classList.toggle('is-visible', isReadonly);
+    if (banner) banner.classList.toggle('is-visible', !!readonlyState.archived);
 
-    var actionBtnIds = ['btnEditInfo', 'btnAdvanceStage', 'btnExportZip'];
-    actionBtnIds.forEach(function (id) {
+    ['btnEditInfo', 'btnAdvanceStage', 'btnExportZip'].forEach(function (id) {
       var btn = document.getElementById(id);
       if (!btn) return;
       btn.disabled = isReadonly;
@@ -910,64 +553,39 @@
       btn.style.pointerEvents = isReadonly ? 'none' : '';
     });
 
-    var allInputs = document.querySelectorAll('#tab-info input, #tab-info select, #tab-info textarea');
-    allInputs.forEach(function (input) {
+    var inputs = document.querySelectorAll('#tab-info input, #tab-info select, #tab-info textarea');
+    inputs.forEach(function (input) {
       input.disabled = isReadonly;
-      if (isReadonly) {
-        input.classList.add('cursor-not-allowed', 'opacity-60');
-      } else {
-        input.classList.remove('cursor-not-allowed', 'opacity-60');
-      }
+      input.classList.toggle('cursor-not-allowed', isReadonly);
+      input.classList.toggle('opacity-60', isReadonly);
     });
 
-    var allButtons = document.querySelectorAll(
+    var buttons = document.querySelectorAll(
       '#tab-info button, #tab-documents button, #tab-messages button, ' +
       '#tab-forms button, #tab-tasks button, #tab-tasks input, ' +
       '#tab-deadlines button, #tab-validation button, #tab-billing button'
     );
-    allButtons.forEach(function (btn) {
-      if (isReadonly) {
-        btn.disabled = true;
-        btn.style.opacity = '0.4';
-        btn.style.pointerEvents = 'none';
-      } else {
-        btn.disabled = false;
-        btn.style.opacity = '';
-        btn.style.pointerEvents = '';
-      }
+    buttons.forEach(function (btn) {
+      btn.disabled = isReadonly;
+      btn.style.opacity = isReadonly ? '0.4' : '';
+      btn.style.pointerEvents = isReadonly ? 'none' : '';
     });
   }
 
-  /* ================================================================== */
-  /*  RISK CONFIRMATION MODAL                                            */
-  /* ================================================================== */
-
-  var riskModal = document.getElementById('riskConfirmModal');
-
-  document.addEventListener('click', function (e) {
-    if (e.target.closest('[data-close-risk-modal]')) {
-      if (riskModal) riskModal.classList.remove('show');
-    }
+  tabs.forEach(function (link) {
+    link.addEventListener('click', function (e) {
+      e.preventDefault();
+      var key = link.getAttribute('data-tab');
+      if (!key) return;
+      setActiveTab(key);
+      window.location.hash = key;
+    });
   });
 
-  function rebindRiskTrigger() {
-    var btn = document.getElementById('triggerRiskConfirm');
-    if (btn && riskModal) {
-      btn.addEventListener('click', function () {
-        riskModal.classList.add('show');
-      });
-    }
-  }
-
-  rebindRiskTrigger();
-
-  /* ================================================================== */
-  /*  PROVIDER PROGRESS TOGGLE                                           */
-  /* ================================================================== */
-
-  var providerToggle = document.getElementById('providerToggle');
-  var providerBody = document.getElementById('providerProgressBody');
-  var providerChevron = document.getElementById('providerChevron');
+  window.addEventListener('hashchange', function () {
+    var key = resolveHashTab();
+    if (key) setActiveTab(key);
+  });
 
   if (providerToggle && providerBody) {
     providerToggle.addEventListener('click', function () {
@@ -979,176 +597,157 @@
     });
   }
 
-  /* ================================================================== */
-  /*  OPEN VALIDATION TAB FROM OVERVIEW                                  */
-  /* ================================================================== */
-
-  var openValBtn = document.getElementById('openValidationTab');
-  if (openValBtn) {
-    openValBtn.addEventListener('click', function () {
-      setActiveTab('validation');
-    });
-  }
-
-  var viewFullLogBtn = document.querySelector('#tab-overview [type="button"]');
   document.addEventListener('click', function (e) {
-    var btn = e.target.closest('button');
-    if (btn && btn.textContent.trim() === '查看完整日志 →') {
-      setActiveTab('log');
+    if (e.target.closest('[data-close-risk-modal]') && riskModal) {
+      riskModal.classList.remove('show');
+      return;
     }
-  });
 
-  /* ================================================================== */
-  /*  TOAST HELPER                                                       */
-  /* ================================================================== */
+    var button = e.target.closest('button');
+    if (!button) return;
 
-  function showToast(title, desc) {
-    var toastEl = document.getElementById('toast');
-    var toastTitle = document.getElementById('toastTitle');
-    var toastDesc = document.getElementById('toastDesc');
-    if (!toastEl) return;
-    if (toastTitle) toastTitle.textContent = title;
-    if (toastDesc) toastDesc.textContent = desc;
-    toastEl.classList.remove('hidden');
-    window.clearTimeout(showToast._timer);
-    showToast._timer = setTimeout(function () { toastEl.classList.add('hidden'); }, 3000);
-  }
+    var text = button.textContent.trim();
 
-  /* ================================================================== */
-  /*  ACTION BUTTONS                                                     */
-  /* ================================================================== */
+    if (button.id === 'btnExportZip') {
+      ns.showToast(DETAIL_TOASTS.exportZip.title, DETAIL_TOASTS.exportZip.desc);
+      return;
+    }
 
-  var exportBtn = document.getElementById('btnExportZip');
-  if (exportBtn) {
-    exportBtn.addEventListener('click', function () {
-      var t = DETAIL_TOASTS.exportZip;
-      showToast(t.title, t.desc);
-    });
-  }
-
-  var advanceBtn = document.getElementById('btnAdvanceStage');
-  if (advanceBtn) {
-    advanceBtn.addEventListener('click', function () {
-      var currentKey = sampleSelect ? sampleSelect.value : 'work';
-      var s = DETAIL_SAMPLES[currentKey];
-      if (!s) return;
-      var stage = DETAIL_STAGES[s.stageCode];
+    if (button.id === 'btnAdvanceStage') {
+      var sample = sampleSelect ? DETAIL_SAMPLES[sampleSelect.value] : DETAIL_SAMPLES.work;
+      var stage = sample ? DETAIL_STAGES[sample.stageCode] : null;
       var nextCode = stage ? 'S' + (parseInt(stage.code.replace('S', ''), 10) + 1) : '';
       var nextStage = DETAIL_STAGES[nextCode];
-      var t = DETAIL_TOASTS.stageAdvanced;
-      var title = t.title;
-      var desc = t.desc
-        .replace('{from}', stage ? stage.code + ' ' + stage.label : s.stageCode)
-        .replace('{to}', nextStage ? nextStage.code + ' ' + nextStage.label : '下一阶段');
-      showToast(title, desc);
-    });
-  }
+      ns.showToast(
+        DETAIL_TOASTS.stageAdvanced.title,
+        DETAIL_TOASTS.stageAdvanced.desc
+          .replace('{from}', stage ? stage.label : '当前阶段')
+          .replace('{to}', nextStage ? nextStage.label : '下一阶段')
+      );
+      return;
+    }
 
-  var editBtn = document.getElementById('btnEditInfo');
-  if (editBtn) {
-    editBtn.addEventListener('click', function () {
+    if (button.id === 'btnEditInfo') {
       setActiveTab('info');
-    });
-  }
+      return;
+    }
 
-  var riskSubmitBtn = document.getElementById('riskConfirmSubmit');
-  if (riskSubmitBtn && riskModal) {
-    riskSubmitBtn.addEventListener('click', function () {
-      riskModal.classList.remove('show');
-      var t = DETAIL_TOASTS.riskConfirmed;
-      showToast(t.title, t.desc);
-    });
-  }
+    if (button.id === 'riskConfirmSubmit') {
+      if (riskModal) riskModal.classList.remove('show');
+      ns.showToast(DETAIL_TOASTS.riskConfirmed.title, DETAIL_TOASTS.riskConfirmed.desc);
+      return;
+    }
 
-  /* ================================================================== */
-  /*  WAIVED ITEM MARKING                                                */
-  /* ================================================================== */
-
-  document.addEventListener('click', function (e) {
     var waiveBtn = e.target.closest('[data-waive-item]');
-    if (!waiveBtn) return;
-    var itemName = waiveBtn.getAttribute('data-waive-item');
-    var t = DETAIL_TOASTS.waived;
-    showToast(t.title, t.desc.replace('{item}', itemName));
-    var row = waiveBtn.closest('.doc-item');
-    if (row) {
-      row.classList.add('is-waived');
-      var nameEl = row.querySelector('.min-w-0 > div:first-child');
-      if (nameEl) {
-        nameEl.classList.add('line-through');
-        nameEl.style.color = 'var(--muted)';
+    if (waiveBtn) {
+      var itemName = waiveBtn.getAttribute('data-waive-item');
+      ns.showToast(DETAIL_TOASTS.waived.title, DETAIL_TOASTS.waived.desc.replace('{item}', itemName));
+
+      var row = waiveBtn.closest('.doc-item');
+      if (row) {
+        row.classList.add('is-waived');
+        var nameEl = row.querySelector('.min-w-0 > div:first-child');
+        if (nameEl) {
+          nameEl.classList.add('line-through');
+          nameEl.style.color = 'var(--muted)';
+        }
+        var badge = row.querySelector('.status-badge');
+        if (badge) {
+          badge.className = 'status-badge badge-gray text-[11px]';
+          badge.textContent = '无需提供';
+        }
+        waiveBtn.remove();
       }
-      var badge = row.querySelector('.status-badge');
-      if (badge) {
-        badge.className = 'status-badge badge-gray text-[11px]';
-        badge.textContent = '无需提供';
-      }
-      waiveBtn.remove();
+      return;
+    }
+
+    var targetTab = button.getAttribute('data-target-tab');
+    if (targetTab && panels[targetTab]) {
+      setActiveTab(targetTab);
+      window.location.hash = targetTab;
+      return;
+    }
+
+    if (text === '查看完整日志 →') {
+      setActiveTab('log');
+      return;
+    }
+
+    if (text === '生成文書' || text === '生成') {
+      ns.showToast('文書生成（示例）', '已将模板数据填入，可在"已生成文書"查看');
+      return;
+    }
+    if (button.id === 'btnPublishMessageRecord' || text === '记录留痕') {
+      ns.showToast('记录已写入时间线（示例）', '沟通记录已添加到时间线');
+      return;
+    }
+    if (text === '手动添加') {
+      ns.showToast('添加资料项（示例）', '已添加新的资料项到清单');
+      return;
+    }
+    if (button.classList.contains('add-task-btn') || text === '新增任务') {
+      ns.showToast('新增任务（示例）', '已创建新的跟进任务');
     }
   });
-
-  /* ================================================================== */
-  /*  TASK TOGGLE                                                        */
-  /* ================================================================== */
 
   document.addEventListener('change', function (e) {
     var toggle = e.target.closest('.task-toggle');
     if (!toggle) return;
+
     var label = toggle.parentElement.querySelector('span');
     if (!label) return;
-    if (toggle.checked) {
-      label.classList.add('line-through', 'text-[var(--muted)]');
-      label.classList.remove('font-semibold', 'text-[var(--text)]');
-    } else {
-      label.classList.remove('line-through', 'text-[var(--muted)]');
-      label.classList.add('font-semibold', 'text-[var(--text)]');
-    }
+
+    label.classList.toggle('line-through', toggle.checked);
+    label.classList.toggle('text-[var(--muted)]', toggle.checked);
+    label.classList.toggle('font-semibold', !toggle.checked);
+    label.classList.toggle('text-[var(--text)]', !toggle.checked);
   });
 
-  /* ================================================================== */
-  /*  PROTOTYPE FEEDBACK — forms / messages / tasks add buttons           */
-  /* ================================================================== */
+  document.querySelectorAll('[data-log-category]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('[data-log-category]').forEach(function (item) {
+        item.classList.remove('active');
+      });
+      btn.classList.add('active');
 
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest('button');
-    if (!btn) return;
-    var text = btn.textContent.trim();
-
-    if (text === '生成文書' || text === '生成') {
-      showToast('文書生成（示例）', '已将模板数据填入，可在"已生成文書"查看');
-      return;
-    }
-    if (text === '发布记录') {
-      showToast('记录已发布（示例）', '沟通记录已添加到时间线');
-      return;
-    }
-    if (text === '手动添加') {
-      showToast('添加资料项（示例）', '已添加新的资料项到清单');
-      return;
-    }
-    if (btn.classList.contains('add-task-btn') || text === '新增任务') {
-      showToast('新增任务（示例）', '已创建新的跟进任务');
-      return;
-    }
+      var category = btn.getAttribute('data-log-category');
+      document.querySelectorAll('[data-log-type]').forEach(function (logItem) {
+        logItem.style.display = category === 'all' || logItem.getAttribute('data-log-type') === category ? '' : 'none';
+      });
+    });
   });
 
-  /* ================================================================== */
-  /*  SAMPLE SELECT EVENT                                                */
-  /* ================================================================== */
+  rebindRiskTrigger();
 
   if (sampleSelect) {
     sampleSelect.addEventListener('change', function () {
       applySample(sampleSelect.value);
+      syncSampleQuery(sampleSelect.value);
       setActiveTab('overview');
     });
   }
 
-  /* ================================================================== */
-  /*  INIT                                                               */
-  /* ================================================================== */
+  var initialSampleKey = resolveRequestedSampleKey(window.location.search, sampleSelect ? sampleSelect.value : 'work');
+  if (sampleSelect) sampleSelect.value = initialSampleKey;
+  applySample(initialSampleKey);
+  syncSampleQuery(initialSampleKey);
+  setActiveTab(resolveHashTab() || 'overview');
 
-  var initialSample = sampleSelect ? sampleSelect.value : 'work';
-  applySample(initialSample);
-  var initialTab = resolveHashTab() || 'overview';
-  setActiveTab(initialTab);
+  ns.setActiveTab = setActiveTab;
+  ns.resolveHashTab = resolveHashTab;
+  ns.applySample = applySample;
+
+  }
+
+  ns.resolveBlockingAction = resolveBlockingAction;
+  ns.resolveTaskNavBadge = resolveTaskNavBadge;
+  ns.resolveValidationNavBadge = resolveValidationNavBadge;
+  ns.resolveRequestedSampleKey = resolveRequestedSampleKey;
+  ns.resolveReadonlyState = resolveReadonlyState;
+
+  document.addEventListener('prototype:fragments-ready', init);
+
+  if (window.__prototypeFragmentsReady || !document.querySelector('[data-include-html]')) {
+    init();
+  }
 })();

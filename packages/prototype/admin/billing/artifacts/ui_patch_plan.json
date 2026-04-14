@@ -1,0 +1,50 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/billing/BillingListView.vue",
+    "packages/admin/src/views/billing/types.ts",
+    "packages/admin/src/views/billing/fixtures.ts",
+    "packages/admin/src/views/billing/model/useBillingListViewModel.ts",
+    "packages/admin/src/views/billing/model/useBillingFilters.ts",
+    "packages/admin/src/views/billing/model/useBillingBulkActions.ts",
+    "packages/admin/src/views/billing/model/usePaymentModal.ts",
+    "packages/admin/src/views/billing/model/useRiskAckLog.ts",
+    "packages/admin/src/views/billing/components/BillingListHeader.vue",
+    "packages/admin/src/views/billing/components/BillingSummaryCards.vue",
+    "packages/admin/src/views/billing/components/BillingListFilters.vue",
+    "packages/admin/src/views/billing/components/BillingTable.vue",
+    "packages/admin/src/views/billing/components/BillingBulkActionBar.vue",
+    "packages/admin/src/views/billing/components/PaymentLogTable.vue",
+    "packages/admin/src/views/billing/components/BillingPlanPanel.vue",
+    "packages/admin/src/views/billing/components/PaymentModal.vue",
+    "packages/admin/src/views/billing/components/RiskAckPanel.vue",
+    "packages/admin/src/views/billing/components/CollectionResultPanel.vue"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/i18n/messages/zh-CN.ts",
+    "packages/admin/src/i18n/messages/en-US.ts",
+    "packages/admin/src/i18n/messages/ja-JP.ts",
+    "packages/admin/src/views/dashboard/workPanelData.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready",
+    "filter_empty",
+    "all_settled"
+  ],
+  "notes": [
+    "target_framework is vue (admin package), not react",
+    "data strategy: fixtures-first — use local fixtures + composables, no real API",
+    "billing-summary-card needs 4 color variants mapped to design tokens",
+    "segmented control limited to 2 tabs: billing-list / payment-log (no invoice tab — P1)",
+    "bulk action bar only visible when selectedCount > 0",
+    "payment modal BillingPlan selector: only show unsettled nodes",
+    "risk-ack-panel is read-only on billing list page; write operations on case detail tab",
+    "collection-result-panel: three-stage feedback (success / skipped / failed)",
+    "checkbox disabled + opacity-60 for non-overdue rows in bulk selection",
+    "default sort: overdue first → outstanding desc → due date asc"
+  ]
+}

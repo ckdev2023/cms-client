@@ -1,0 +1,58 @@
+{
+  "feature_name": "P0 case module page specification",
+  "goal": "define the frozen P0 requirements for the case module list, detail, lifecycle actions, and permission model so a single case can be managed end to end with gate-based control and auditability",
+  "actors": [
+    "administrative scrivener / lead owner",
+    "assistant / office staff",
+    "finance user"
+  ],
+  "must_have": [
+    "case list page with the specified columns, default filters, and bulk actions",
+    "case detail page with 10 tabs covering overview, basics, documents, forms, tasks, deadlines, validation/submission, billing, communications, and logs",
+    "case creation that generates a case record, a template-driven document checklist, and enters stage S1",
+    "family-case batch creation that creates one case per main applicant and binds required case parties",
+    "gate-driven actions for stage advancement, validation, submission-package generation, receipt upload, archive, and payment registration",
+    "document handling based on local archive registration with relative path and version metadata",
+    "submission-package locking with correction-package linkage and immutable historical references",
+    "permission behavior constrained by role, group, and owner/collaborator visibility"
+  ],
+  "out_of_scope": [
+    "advanced reports such as correction rate, success rate, and completion duration",
+    "customer portal linkage",
+    "advanced validation rule configuration",
+    "globally mandatory dual review",
+    "batch export of case reports",
+    "P1 workflow-step operation views",
+    "case-specific extra_fields"
+  ],
+  "business_rules": [
+    "P0 uses only management stages S1-S9 and does not enable CaseWorkflowStep UI",
+    "Gate-A, Gate-B, and Gate-C are authoritative and must align with the referenced rule and process documents",
+    "approved required documents count toward completion, and waived items are removed from the denominator",
+    "document upload wording in P0 means registering a local-server document version, not storing SaaS file binaries",
+    "submission packages lock referenced document versions, form versions, and key field snapshots and cannot be overwritten after submission",
+    "arrears status is warning-mode by default and requires explicit risk confirmation trace before continuing submission",
+    "after S9, all fields except logs are read-only",
+    "cross-group case creation requires a reason and audit trail"
+  ],
+  "edge_cases": [
+    "empty case list with guided create entry",
+    "gate validation failure with visible blockers and repair entry points",
+    "overdue document items triggering reminders and overdue highlighting",
+    "correction notice creating correction tasks and a linked correction submission package",
+    "submission while arrears risk exists only after risk confirmation is recorded",
+    "archived case read-only behavior"
+  ],
+  "acceptance_criteria": [
+    "the list page renders the required case fields, filters, and bulk actions",
+    "the detail page exposes the required 10 tabs and their defined fields/actions",
+    "creating a case creates a Case, generates the checklist, and enters S1",
+    "family batch creation creates one case per main applicant and binds required CaseParty relations",
+    "validation and stage progression produce ValidationRun and SubmissionPackage records in line with Gate-A/B/C",
+    "document registration stores local archive path and version metadata rather than SaaS file binaries",
+    "billing views expose total, receivable, received, outstanding, and payment records",
+    "visibility and edit permissions match the administrator, lead, assistant, and finance matrix"
+  ],
+  "unknowns": [],
+  "blocked": false
+}

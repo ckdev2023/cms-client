@@ -3,309 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>新增案件 - Gyosei OS</title>
+    <title>开始办案 - Gyosei OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../shared/styles/tokens.css" />
     <link rel="stylesheet" href="../shared/styles/shell.css" />
     <link rel="stylesheet" href="../shared/styles/components.css" />
-    <style>
-      .page-shell {
-        max-width: 1220px;
-      }
-
-      .page-title {
-        font-size: 34px;
-        line-height: 1.08;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-      }
-
-      .meta-text {
-        font-size: 13px;
-        line-height: 1.6;
-        font-weight: 600;
-        color: var(--muted-2);
-      }
-
-      .section-stack {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-      }
-
-      .section-title {
-        font-size: 18px;
-        font-weight: 900;
-        color: var(--text);
-      }
-
-      .section-kicker {
-        font-size: 12px;
-        font-weight: 900;
-        text-transform: uppercase;
-        letter-spacing: 0.08em;
-        color: var(--primary);
-      }
-
-      .field-grid {
-        display: grid;
-        gap: 18px;
-      }
-
-      @media (min-width: 768px) {
-        .field-grid.two {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-
-        .field-grid.three {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
-        }
-      }
-
-      .template-grid {
-        display: grid;
-        gap: 16px;
-      }
-
-      @media (min-width: 768px) {
-        .template-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      .template-card {
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 20px;
-        background: var(--surface);
-        transition:
-          border-color 160ms ease,
-          box-shadow 160ms ease,
-          transform 160ms ease;
-      }
-
-      .template-card:hover {
-        transform: translateY(-1px);
-        box-shadow: var(--shadow);
-      }
-
-      .template-card.is-active {
-        border-color: rgba(3, 105, 161, 0.28);
-        box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.12);
-        background: linear-gradient(180deg, rgba(240, 249, 255, 0.68), #fff);
-      }
-
-      .wizard-steps {
-        display: grid;
-        gap: 14px;
-      }
-
-      @media (min-width: 768px) {
-        .wizard-steps {
-          grid-template-columns: repeat(4, minmax(0, 1fr));
-        }
-      }
-
-      .wizard-step-item {
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        min-height: 120px;
-        padding: 16px 18px;
-        background: var(--surface);
-      }
-
-      .wizard-step-item.is-active {
-        border-color: rgba(3, 105, 161, 0.28);
-        background: rgba(239, 246, 255, 0.72);
-      }
-
-      .wizard-step-item.is-complete {
-        border-color: rgba(22, 163, 74, 0.18);
-        background: rgba(240, 253, 244, 0.8);
-      }
-
-      .wizard-step-index {
-        width: 28px;
-        height: 28px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 900;
-        background: rgba(15, 23, 42, 0.06);
-        color: var(--text);
-      }
-
-      .wizard-step-item.is-active .wizard-step-index {
-        background: var(--primary);
-        color: #fff;
-      }
-
-      .party-card {
-        display: grid;
-        grid-template-columns: auto 1fr auto;
-        gap: 14px;
-        align-items: start;
-        border: 1px solid var(--border);
-        border-radius: 16px;
-        padding: 14px;
-        background: #fff;
-      }
-
-      .party-avatar {
-        width: 38px;
-        height: 38px;
-        border-radius: 999px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        background: rgba(3, 105, 161, 0.12);
-        color: var(--primary);
-        font-weight: 900;
-      }
-
-      .party-title {
-        color: var(--text);
-        font-size: 14px;
-        font-weight: 800;
-      }
-
-      .empty-state {
-        border: 1px dashed rgba(148, 163, 184, 0.5);
-        border-radius: 16px;
-        padding: 20px;
-        background: rgba(248, 250, 252, 0.72);
-        color: var(--muted-2);
-        font-size: 14px;
-        font-weight: 600;
-      }
-
-      .requirement-section {
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px;
-        background: #fff;
-      }
-
-      .requirement-section-title {
-        font-size: 14px;
-        font-weight: 800;
-        color: var(--text);
-        margin-bottom: 12px;
-      }
-
-      .requirement-item {
-        display: grid;
-        grid-template-columns: auto 1fr;
-        gap: 10px;
-        align-items: start;
-      }
-
-      .requirement-title {
-        font-size: 14px;
-        font-weight: 700;
-        color: var(--text);
-      }
-
-      .summary-grid {
-        display: grid;
-        gap: 16px;
-      }
-
-      @media (min-width: 768px) {
-        .summary-grid {
-          grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-      }
-
-      .summary-box {
-        border: 1px solid var(--border);
-        border-radius: 18px;
-        padding: 18px;
-        background: #fff;
-      }
-
-      .summary-label {
-        font-size: 12px;
-        font-weight: 800;
-        color: var(--muted-2);
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-      }
-
-      .summary-value {
-        margin-top: 8px;
-        font-size: 18px;
-        line-height: 1.35;
-        font-weight: 900;
-        color: var(--text);
-      }
-
-      .toolbar-footer {
-        position: sticky;
-        bottom: 0;
-        z-index: 20;
-        padding: 14px 0 calc(12px + env(safe-area-inset-bottom, 0px));
-        margin-top: 8px;
-      }
-
-      .toolbar-footer-inner {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        border: 1px solid rgba(226, 232, 240, 0.92);
-        border-radius: 22px;
-        background: rgba(255, 255, 255, 0.94);
-        backdrop-filter: blur(14px);
-        box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
-        padding: 14px;
-      }
-
-      .toolbar-hint {
-        max-width: 620px;
-      }
-
-      .toolbar-actions {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .toolbar-actions > button {
-        min-height: 44px;
-      }
-
-      @media (max-width: 767px) {
-        .toolbar-actions > button {
-          width: 100%;
-          justify-content: center;
-        }
-      }
-
-      @media (min-width: 768px) {
-        .toolbar-footer-inner {
-          flex-direction: row;
-          align-items: center;
-          justify-content: space-between;
-          gap: 16px;
-          padding: 16px 18px;
-        }
-
-        .toolbar-actions {
-          justify-content: flex-end;
-          flex-shrink: 0;
-        }
-      }
-
-      .success-banner {
-        border: 1px solid rgba(22, 163, 74, 0.2);
-        background: rgba(240, 253, 244, 0.92);
-        color: #166534;
-        border-radius: 18px;
-        padding: 16px 18px;
-      }
-    </style>
+    <link rel="stylesheet" href="styles/case-create.css" />
   </head>
   <body class="antialiased">
     <a href="#main" class="skip-link">跳到主要内容</a>
@@ -315,7 +18,7 @@
       <div class="mobile-nav-panel">
         <div class="side-nav-inner">
           <div class="brand">
-            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
             <button class="icon-btn" type="button" aria-label="关闭导航" data-nav-close>
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -324,7 +27,7 @@
           </div>
           <nav aria-label="主导航">
             <div class="nav-group-title">工作台</div>
-            <a class="nav-item" href="../admin-prototype.html">
+            <a class="nav-item" href="../dashboard/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
               仪表盘
             </a>
@@ -341,36 +44,24 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
               案件
             </a>
-            <a class="nav-item" href="../tasks.html">
+            <a class="nav-item" href="../tasks/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
             <div class="nav-group-title">内容</div>
-            <a class="nav-item" href="../documents.html">
+            <a class="nav-item" href="../documents/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
-            <a class="nav-item" href="../forms.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              文书中心
-            </a>
             <div class="nav-group-title">财务</div>
-            <a class="nav-item" href="../billing.html">
+            <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
-            <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
-              报表
-            </a>
             <div class="nav-group-title">系统</div>
-            <a class="nav-item" href="../settings.html">
+            <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
-            </a>
-            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
-              客户门户
             </a>
           </nav>
         </div>
@@ -381,12 +72,12 @@
       <aside class="side-nav hidden lg:block" aria-label="侧边栏导航">
         <div class="side-nav-inner">
           <div class="brand">
-            <a href="../admin-prototype.html" class="brand-title">Gyosei OS</a>
+            <a href="../dashboard/index.html" class="brand-title">Gyosei OS</a>
             <span class="chip">事务所后台</span>
           </div>
           <nav aria-label="主导航">
             <div class="nav-group-title">工作台</div>
-            <a class="nav-item" href="../admin-prototype.html">
+            <a class="nav-item" href="../dashboard/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h7V3H3v7zm0 11h7v-9H3v9zm11 0h7V14h-7v7zm0-18v9h7V3h-7z"></path></svg>
               仪表盘
             </a>
@@ -403,36 +94,24 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
               案件
             </a>
-            <a class="nav-item" href="../tasks.html">
+            <a class="nav-item" href="../tasks/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
               任务与提醒
             </a>
             <div class="nav-group-title">内容</div>
-            <a class="nav-item" href="../documents.html">
+            <a class="nav-item" href="../documents/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
-            <a class="nav-item" href="../forms.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              文书中心
-            </a>
             <div class="nav-group-title">财务</div>
-            <a class="nav-item" href="../billing.html">
+            <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
-            <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
-              报表
-            </a>
             <div class="nav-group-title">系统</div>
-            <a class="nav-item" href="../settings.html">
+            <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
-            </a>
-            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
-              客户门户
             </a>
           </nav>
         </div>
@@ -463,16 +142,17 @@
         <main id="main" class="pt-6 pb-28 md:pb-24 px-4 md:px-8 page-shell mx-auto w-full">
           <!-- section: sections/create-header.html -->
           <section class="mb-8">
-            <div class="meta-text mb-3"><a href="index.html" class="link-apple">案件</a> / 新增案件</div>
+          <div class="meta-text mb-3"><a href="index.html" class="link-apple">案件</a> / 开始办案</div>
             <div class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h1 class="page-title">新增案件</h1>
-                <p class="meta-text mt-3">选择模板、关联客户并完成分派。</p>
+              <h1 class="page-title">开始办案</h1>
+              <p class="meta-text mt-3">确认业务类型、主申请人与承接设置后，即可生成案件。</p>
               </div>
               <div class="flex flex-wrap gap-2">
                 <span class="chip">模板：家族滞在 / 技人国</span>
                 <span class="chip">批量：家族签向导</span>
-                <span class="chip">结果：生成 Case + 资料清单</span>
+                <span class="chip">当前范围：标准模板</span>
+              <span class="chip">结果：生成案件 + 资料清单</span>
               </div>
             </div>
           </section>
@@ -481,19 +161,19 @@
             <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div class="section-stack">
                 <div>
-                  <div class="section-kicker">转化来源</div>
-                  <div class="section-title mt-2">沿用 Lead / Customer → Case 承接规则</div>
+                  <div class="section-kicker">办案来源</div>
+                  <div class="section-title mt-2" id="sourceContextTitle">本次已带入来源客户与默认承接信息</div>
                 </div>
-                <div class="meta-text" id="sourceContextHint">若从 Lead / Customer 转案件进入，Step 2 会预填主申请人，Step 3 默认继承客户 Group。</div>
-                <div class="meta-text" id="sourceContextDedupHint">P0：命中重复客户时仅提示，不自动复用；继续创建需二次确认并留痕。</div>
+                <div class="meta-text" id="sourceContextHint">从客户或咨询继续开始办案时，系统会自动带入主申请人与默认承接组。</div>
+                <div class="meta-text" id="sourceContextDedupHint">如命中疑似重复客户，系统只提示、不自动合并；继续创建时需填写原因并留痕。</div>
               </div>
               <div class="summary-grid w-full md:max-w-[420px]">
-                <div class="summary-box">
-                  <div class="summary-label">来源 Lead</div>
+                <div class="summary-box" id="sourceLeadCard">
+                  <div class="summary-label" id="sourceLeadLabel">来源咨询</div>
                   <div class="summary-value" id="sourceLeadValue">-</div>
                 </div>
                 <div class="summary-box">
-                  <div class="summary-label">预填 Customer</div>
+                  <div class="summary-label" id="sourceCustomerLabel">当前客户</div>
                   <div class="summary-value" id="sourceCustomerValue">-</div>
                 </div>
               </div>
@@ -529,26 +209,27 @@
             <section class="apple-card p-6 md:p-8 section-stack" data-step-panel>
               <div>
                 <div class="section-kicker">Step 1</div>
-                <div class="section-title mt-2">业务信息</div>
-                <div class="meta-text mt-2">选择模板与申请类型；Group 将在 Step 2 锁定主申请人后于 Step 3 默认继承并确认。</div>
+                  <div class="section-title mt-2">确认业务类型</div>
+                  <div class="meta-text mt-2">先选模板与申请类型；锁定主申请人后，Group 会在下一步自动继承到承接设置。</div>
               </div>
 
               <div class="template-grid">
                 <button class="template-card text-left is-active" type="button" data-template-card="family">
                   <div class="flex items-center justify-between gap-3">
                     <div class="text-[16px] font-extrabold text-[var(--text)]">家族滞在</div>
-                    <span class="chip">家族签</span>
+                    <span class="chip">常用模板</span>
                   </div>
                   <div class="meta-text mt-2">适合配偶/子女批量建案，自动展开扶养者/保证人资料。</div>
                 </button>
                 <button class="template-card text-left" type="button" data-template-card="work">
                   <div class="flex items-center justify-between gap-3">
                     <div class="text-[16px] font-extrabold text-[var(--text)]">技人国</div>
-                    <span class="chip">工作类</span>
+                    <span class="chip">常用模板</span>
                   </div>
                   <div class="meta-text mt-2">适合雇主/职位信息驱动的工作类建案，自动带出雇主资料区块。</div>
                 </button>
               </div>
+              <div class="meta-text">当前向导先覆盖常用模板；如需补充更细的企业案件字段，可在开始办案后到案件详情继续完善。</div>
 
               <div>
                 <label class="apple-label" for="applicationTypeSelect">申请类型</label>
@@ -566,17 +247,17 @@
             <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
               <div>
                 <div class="section-kicker">Step 2</div>
-                <div class="section-title mt-2">关联人与资料模板</div>
-                <div class="meta-text mt-2" id="relatedStepHint">先选择主申请人，再按案件类型补充关联人。</div>
+                  <div class="section-title mt-2">确认主申请人与资料</div>
+                  <div class="meta-text mt-2" id="relatedStepHint">先确认主申请人，再按案件类型补充关联人。</div>
               </div>
 
               <div class="field-grid two">
                 <div>
-                  <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">选择主申请人</label>
+                    <label class="apple-label" for="primaryCustomerSelect" id="primaryCustomerSelectLabel">确认主申请人</label>
                   <select class="apple-input" id="primaryCustomerSelect"></select>
                 </div>
                 <div class="flex items-end gap-2">
-                  <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">新建主申请人</button>
+                    <button class="btn-secondary" type="button" id="primaryModalBtn" data-open-customer-modal="primary" data-default-role="主申请人">补录主申请人</button>
                   <button class="btn-pill" type="button" id="relatedModalBtn" data-open-customer-modal="related" data-default-role="配偶">新增关联人</button>
                   <button class="btn-pill hidden" type="button" id="supportingPartyBtn" data-open-customer-modal="related" data-default-role="保证人">追加保证人</button>
                 </div>
@@ -595,7 +276,7 @@
                     <div class="section-title" id="additionalPartiesTitle">关联人</div>
                     <div class="meta-text mt-1" id="additionalPartiesHint">家族签可补充配偶/子女，工作类可补充雇主联系人。</div>
                   </div>
-                  <button class="btn-pill" type="button" data-open-customer-modal="related" data-default-role="子女">添加办理对象</button>
+                  <button class="btn-pill" type="button" id="additionalPartyBtn" data-open-customer-modal="related" data-default-role="子女">添加办理对象</button>
                 </div>
                 <div id="additionalParties"></div>
               </div>
@@ -626,9 +307,32 @@
               </div>
 
               <div class="summary-box hidden" id="workScenarioPanel">
-                <div class="section-title">雇主信息沉淀</div>
-                <div class="meta-text mt-2">保存当前案件所需的雇主联系人与基础信息。</div>
+                <div class="section-title">雇主信息</div>
+                <div class="meta-text mt-2">先把公司、职位与联系人沉淀到案件字段，便于后续分派、催件与资料补齐。</div>
                 <div class="flex flex-wrap gap-2 mt-4" id="workFieldList"></div>
+                <div class="field-grid two mt-4">
+                  <div>
+                    <label class="apple-label" for="workCompanyName">公司名称</label>
+                    <input class="apple-input" id="workCompanyName" type="text" placeholder="例：株式会社 Future Link" />
+                  </div>
+                  <div>
+                    <label class="apple-label" for="workPositionTitle">职位名称</label>
+                    <input class="apple-input" id="workPositionTitle" type="text" placeholder="例：系统工程师" />
+                  </div>
+                  <div>
+                    <label class="apple-label" for="workAnnualSalary">年薪</label>
+                    <input class="apple-input" id="workAnnualSalary" type="text" placeholder="例：420 万日元" />
+                  </div>
+                  <div>
+                    <label class="apple-label" for="workContactEmail">联系人邮箱</label>
+                    <input class="apple-input" id="workContactEmail" type="email" placeholder="例：hr@future-link.jp" />
+                  </div>
+                  <div>
+                    <label class="apple-label" for="workContactPhone">联系人电话</label>
+                    <input class="apple-input" id="workContactPhone" type="tel" placeholder="例：03-1234-5678" />
+                  </div>
+                </div>
+                <div class="meta-text mt-3" id="workScenarioStatus">建议至少先补公司名称、职位名称与联系人，便于事务所分派催件。</div>
               </div>
 
               <div class="section-stack">
@@ -645,8 +349,8 @@
             <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
               <div>
                 <div class="section-kicker">Step 3</div>
-                <div class="section-title mt-2">分派与初始设置</div>
-                <div class="meta-text mt-2">设置负责人、Group、期限和创建后的初始动作。</div>
+                  <div class="section-title mt-2">确认承接与初始设置</div>
+                  <div class="meta-text mt-2">设置负责人、Group、期限和开始办案后的初始动作。</div>
               </div>
 
               <div class="summary-box">
@@ -716,8 +420,8 @@
             <section class="apple-card p-6 md:p-8 section-stack hidden" data-step-panel>
               <div>
                 <div class="section-kicker">Step 4</div>
-                <div class="section-title mt-2">完成创建</div>
-                <div class="meta-text mt-2">确认关键信息后创建案件。</div>
+                  <div class="section-title mt-2">确认并开始办案</div>
+                  <div class="meta-text mt-2">复核关键信息后生成案件。</div>
               </div>
 
               <div class="success-banner hidden" id="successBanner">
@@ -758,7 +462,7 @@
               </div>
 
               <div class="summary-box">
-                <div class="summary-label">创建动作</div>
+                <div class="summary-label">开始办案后动作</div>
                 <div class="summary-value" id="summaryChecklist">-</div>
               </div>
             </section>
@@ -767,9 +471,9 @@
               <div class="toolbar-footer-inner">
                 <div class="meta-text toolbar-hint" id="submitHint">创建后会自动生成资料清单与初始任务。</div>
                 <div class="toolbar-actions">
-                  <button class="btn-secondary hidden" type="button" id="btnPrevStep">上一步</button>
-                  <button class="btn-primary" type="button" id="btnNextStep">下一步：关联人与资料模板</button>
-                  <button class="btn-primary hidden" type="button" id="btnSubmitCase">创建案件</button>
+                  <button class="btn-secondary hidden" type="button" id="btnPrevStep">返回上一步</button>
+                  <button class="btn-primary" type="button" id="btnNextStep">下一步：确认主申请人与资料</button>
+                  <button class="btn-primary hidden" type="button" id="btnSubmitCase">开始办案并生成案件</button>
                 </div>
               </div>
             </div>
@@ -865,6 +569,7 @@
 
     <script src="data/case-create-config.js"></script>
     <script src="scripts/case-create-helpers.js"></script>
+    <script src="scripts/case-create-view-models.js"></script>
     <script src="scripts/case-create-page.js"></script>
     <script src="scripts/case-create-modal.js"></script>
     <script src="../shared/scripts/navigate.js"></script>

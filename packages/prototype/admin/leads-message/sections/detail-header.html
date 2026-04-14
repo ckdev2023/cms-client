@@ -22,7 +22,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
           <span id="detailOwner" class="flex items-center gap-1.5">
             <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center font-bold" id="detailOwnerAvatar">T</span>
-            <span id="detailOwnerName">Tanaka</span>
+            <span id="detailOwnerName">田中</span>
           </span>
         </span>
         <span class="text-[var(--border)]">|</span>
@@ -35,20 +35,20 @@
 
     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
       <select id="leadSampleSelect" class="apple-input w-auto appearance-none px-4 py-2 text-[13px] font-semibold">
-        <option value="following">S.1 正常跟进态</option>
-        <option value="lost">S.2 已流失态</option>
-        <option value="signed">S.3 已签约未转化</option>
-        <option value="converted-customer">S.4 已转客户</option>
-        <option value="converted-case">S.5 已转案件</option>
-        <option value="dedup-lead">S.6 去重: Lead</option>
-        <option value="dedup-customer">S.7 去重: Customer</option>
-        <option value="empty-followups">S.8 空跟进</option>
+        <option value="following">正常跟进</option>
+        <option value="lost">已流失</option>
+        <option value="signed">已签约，待建档</option>
+        <option value="converted-customer">已建客户档案</option>
+        <option value="converted-case">已创建案件</option>
+        <option value="dedup-lead">发现重复咨询（电话）</option>
+        <option value="dedup-customer">发现重复客户（邮箱）</option>
+        <option value="empty-followups">暂无跟进记录</option>
       </select>
       <div class="flex items-center gap-2 flex-wrap" id="detailActions">
         <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnEditInfo">编辑信息</button>
         <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnChangeStatus">调整状态</button>
-        <button class="btn-primary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCustomer">转客户</button>
-        <button class="btn-primary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCase">转案件</button>
+        <button class="btn-primary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCase">签约并开始建档</button>
+        <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCustomer">仅转客户</button>
         <button class="btn-secondary px-3 py-1.5 text-[13px] text-red-600 border-red-200 hover:bg-red-50" type="button" id="btnMarkLost">标记流失</button>
       </div>
     </div>

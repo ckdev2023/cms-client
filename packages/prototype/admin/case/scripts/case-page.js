@@ -1,6 +1,42 @@
 (function () {
   'use strict';
 
+  function formatValidationLabel(status) {
+    if (status === 'passed') return '已通过';
+    if (status === 'failed') return '需先处理';
+    return '待检查';
+  }
+
+  function formatValidationMeta(status, blockerCount) {
+    if (status === 'failed') {
+      return blockerCount > 0 ? blockerCount + ' 项待处理' : '请先进入详情处理';
+    }
+    if (status === 'passed') return '可安排提交';
+    return blockerCount > 0 ? blockerCount + ' 项待确认' : '建议先做提交前复核';
+  }
+
+  function resolveCaseDetailHref(item) {
+    if (!item || !item.sampleKey) return 'detail.html';
+    return 'detail.html?sample=' + encodeURIComponent(item.sampleKey);
+  }
+
+  function formatCaseListTitle(item) {
+    if (!item) return '未命名案件';
+    var applicant = item.applicant ? String(item.applicant).trim() : '';
+    var type = item.type ? String(item.type).trim() : '';
+    if (applicant && type) return applicant + ' · ' + type;
+    return applicant || type || item.name || '未命名案件';
+  }
+
+  if (typeof window !== 'undefined') {
+    window.CaseListPageUtils = {
+      formatValidationLabel: formatValidationLabel,
+      formatValidationMeta: formatValidationMeta,
+      resolveCaseDetailHref: resolveCaseDetailHref,
+      formatCaseListTitle: formatCaseListTitle,
+    };
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     var store = window.CaseListData || { owners: {}, cases: [] };
     var CASE_LIST_DRAFTS_KEY = 'prototype.caseListDrafts';
@@ -168,10 +204,10 @@
     function renderRows(filteredCases) {
       if (!filteredCases.length) {
         elements.tbody.innerHTML =
-          '<tr><td colspan="14">' +
+          '<tr><td colspan="9">' +
           '<div class="px-6 py-14 text-center">' +
           '<div class="text-lg font-extrabold text-[var(--text)]">暂无符合条件的案件</div>' +
-          '<div class="text-sm text-[var(--muted-2)] mt-2">可以调整筛选条件，或从“新建案件 / 家族签批量建案”入口继续。</div>' +
+          '<div class="text-sm text-[var(--muted-2)] mt-2">可以先放宽筛选条件，或从“开始办案 / 家族签批量开始办案”继续处理。</div>' +
           '</div></td></tr>';
         elements.paginationSummary.textContent = '显示 0 条';
         return;
@@ -181,44 +217,37 @@
         var owner = owners[item.ownerId] || { name: '未指派', initial: '?', avatarClass: 'bg-slate-100 text-slate-600' };
         var checked = state.selectedIds.has(item.id) ? 'checked' : '';
         var dueClass = item.riskStatus === 'critical' ? 'text-red-600' : item.riskStatus === 'attention' ? 'text-amber-600' : 'text-[var(--text)]';
-        var metaBits = [item.id];
+        var caseTitle = formatCaseListTitle(item);
+        var detailHref = resolveCaseDetailHref(item);
+        var metaBits = [item.id, '负责人 ' + owner.name, '承接组 ' + item.groupLabel];
         if (item.batchLabel) metaBits.push(item.batchLabel);
-        if (item.isDraft) metaBits.push('本次新建');
+        if (item.isDraft) metaBits.push('本次开始办理');
 
         return [
           '<tr>',
           '<td class="text-center"><input type="checkbox" class="accent-[var(--primary)] table-checkbox" data-case-select value="' + item.id + '" aria-label="选择 ' + item.name + '" ' + checked + ' /></td>',
           '<td>',
-          '<div class="font-semibold text-[var(--text)]">' + item.name + '</div>',
+          '<a href="' + detailHref + '" class="block rounded-xl p-1 -m-1 hover:bg-slate-50 transition-colors" aria-label="进入 ' + caseTitle + ' 详情">',
+          '<div class="font-semibold text-[var(--text)]">' + caseTitle + '</div>',
           '<div class="table-meta mt-1">' + metaBits.join(' · ') + '</div>',
           (item.casePartySummary ? '<div class="table-meta mt-1">' + item.casePartySummary + '</div>' : ''),
-          (item.materialSummary ? '<div class="table-meta mt-1">' + item.materialSummary + '</div>' : ''),
+          '</a>',
           '</td>',
-          '<td><div class="font-semibold text-[var(--text)]">' + item.type + '</div></td>',
-          '<td><div class="font-semibold text-[var(--text)]">' + item.applicant + '</div></td>',
-          '<td><span class="chip">' + item.groupLabel + '</span></td>',
           '<td><span class="status-pill ' + stageClass(item.stageId) + '">' + item.stageLabel + '</span></td>',
           '<td>',
-          '<div class="flex items-center gap-2">',
-          '<div class="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-extrabold ' + owner.avatarClass + '">' + owner.initial + '</div>',
-          '<span class="font-semibold text-[var(--text)]">' + owner.name + '</span>',
+          '<div class="flex items-center gap-2 flex-wrap">',
+          '<span class="status-pill ' + validationClass(item.validationStatus) + '">' + formatValidationLabel(item.validationStatus) + '</span>',
+          '<span class="table-meta">' + formatValidationMeta(item.validationStatus, item.blockerCount) + '</span>',
           '</div>',
           '</td>',
+          '<td><span class="status-pill ' + riskClass(item.riskStatus) + '">' + item.riskLabel + '</span></td>',
+          '<td><div class="font-semibold ' + dueClass + '">' + item.dueDateLabel + '</div><div class="table-meta mt-1">' + item.dueDate + '</div></td>',
           '<td>',
           '<div class="text-[13px] font-semibold text-[var(--text)] mb-2">' + item.completionLabel + '</div>',
           '<div class="progress-track"><div class="progress-fill" style="width:' + item.completionPercent + '%"></div></div>',
           '</td>',
-          '<td>',
-          '<div class="flex items-center gap-2 flex-wrap">',
-          '<span class="status-pill ' + validationClass(item.validationStatus) + '">' + item.validationLabel + '</span>',
-          '<span class="table-meta">阻断 ' + item.blockerCount + '</span>',
-          '</div>',
-          '</td>',
           '<td class="text-right"><div class="font-semibold text-[var(--text)]">' + formatCurrency(item.unpaidAmount) + '</div></td>',
           '<td><div class="font-semibold text-[var(--text)]">' + item.updatedAtLabel + '</div></td>',
-          '<td><div class="font-semibold ' + dueClass + '">' + item.dueDateLabel + '</div><div class="table-meta mt-1">' + item.dueDate + '</div></td>',
-          '<td><span class="status-pill ' + riskClass(item.riskStatus) + '">' + item.riskLabel + '</span></td>',
-          '<td class="text-right"><div class="table-actions"><button class="table-icon-btn" type="button" data-navigate="detail.html" title="查看详情"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12H9m12 0A9 9 0 113 12a9 9 0 0118 0z"></path></svg></button></div></td>',
           '</tr>',
         ].join('');
       }).join('');
@@ -395,11 +424,11 @@
     if (state.latestFlash && elements.creationFlashBanner) {
       elements.creationFlashBanner.classList.remove('hidden');
       elements.creationFlashTitle.textContent = state.latestFlash.isFamilyBulk
-        ? '家族批量建案已进入列表'
-        : '新建案件已进入列表';
+        ? '家族批量办案结果已进入列表'
+        : '案件已进入列表';
       elements.creationFlashDesc.textContent = state.latestFlash.isFamilyBulk
-        ? '刚刚为 ' + state.latestFlash.primaryName + ' 创建了 ' + state.latestFlash.count + ' 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。'
-        : '刚刚创建了 1 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。';
+        ? '刚刚已为 ' + state.latestFlash.primaryName + ' 开始办理 ' + state.latestFlash.count + ' 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。'
+        : '刚刚已开始办理 1 个“' + state.latestFlash.templateLabel + ' / ' + state.latestFlash.applicationType + '”案件，可继续补录资料与分派任务。';
       showToast(elements.creationFlashTitle.textContent, elements.creationFlashDesc.textContent);
     }
 

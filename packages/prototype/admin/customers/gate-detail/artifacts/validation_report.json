@@ -1,0 +1,25 @@
+{
+  "status": "enriched",
+  "blocking_issues": [],
+  "warnings": [
+    "prototype uses data-include-html fragments; parser only extracted shell regions; all content regions manually enriched from section HTML files",
+    "detail page uses fixture data in scripts; production must bind to real API",
+    "経営管理簽 intake card (#customerBmvIntakeCard) is P1 scope — structure preserved but implementation deferred",
+    "関連人 batch create button starts as disabled (aria-disabled=true) — requires selection to enable"
+  ],
+  "p0_contract_crosscheck": {
+    "§9_tab_basic_info": "frozen",
+    "§9_tab_cases": "frozen",
+    "§9_tab_contacts": "frozen",
+    "§9_tab_comms": "frozen",
+    "§9_tab_log": "frozen",
+    "§9_actions_edit_customer": "frozen",
+    "§9_actions_create_case": "frozen",
+    "§9_actions_batch_create_case": "frozen",
+    "§9_actions_add_relation": "frozen",
+    "§9_actions_batch_create_for_relations": "frozen",
+    "§9_actions_record_comm": "frozen",
+    "§10_p0_exclusions": "enforced",
+    "bmv_intake_card": "p1_deferred_but_structure_preserved"
+  }
+}

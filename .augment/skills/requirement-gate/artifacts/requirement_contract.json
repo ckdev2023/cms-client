@@ -1,0 +1,12 @@
+{
+  "feature_name": "coupon list page",
+  "goal": "let signed-in users view available coupons",
+  "actors": ["signed-in user"],
+  "must_have": ["show coupon title", "show expiry date", "show empty state"],
+  "out_of_scope": ["coupon creation", "coupon redemption"],
+  "business_rules": ["unauthenticated users cannot access the page"],
+  "edge_cases": ["empty response", "network error"],
+  "acceptance_criteria": ["list renders after successful load", "empty state renders when no coupons exist"],
+  "unknowns": [],
+  "blocked": false
+}

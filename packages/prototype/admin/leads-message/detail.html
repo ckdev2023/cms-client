@@ -3,11 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>线索详情 - Gyosei OS</title>
+    <title>咨询线索详情 - Gyosei OS</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="../shared/styles/tokens.css" />
     <link rel="stylesheet" href="../shared/styles/shell.css" />
     <link rel="stylesheet" href="../shared/styles/components.css" />
+    <link rel="stylesheet" href="styles/leads-shared.css" />
     <link rel="stylesheet" href="styles/detail.css" />
   </head>
   <body class="antialiased">
@@ -53,27 +54,15 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
-            <a class="nav-item" href="../forms.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              文书中心
-            </a>
             <div class="nav-group-title">财务</div>
             <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
-            <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
-              报表
-            </a>
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
-            </a>
-            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
-              客户门户
             </a>
           </nav>
         </div>
@@ -115,27 +104,15 @@
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>
               资料中心
             </a>
-            <a class="nav-item" href="../forms.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-              文书中心
-            </a>
             <div class="nav-group-title">财务</div>
             <a class="nav-item" href="../billing/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m10-6h2a2 2 0 012 2v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-2m10-4H9m8 0a2 2 0 00-2-2H9a2 2 0 00-2 2m10 0V9"></path></svg>
               收费与财务
             </a>
-            <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path></svg>
-              报表
-            </a>
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0a1.724 1.724 0 002.573 1.066c.815-.47 1.87.585 1.4 1.4a1.724 1.724 0 001.065 2.573c.921.3.921 1.603 0 1.902a1.724 1.724 0 00-1.066 2.573c.47.815-.585 1.87-1.4 1.4a1.724 1.724 0 00-2.573 1.065c-.3.921-1.603.921-1.902 0a1.724 1.724 0 00-2.573-1.066c-.815.47-1.87-.585-1.4-1.4a1.724 1.724 0 00-1.065-2.573c-.921-.3-.921-1.603 0-1.902a1.724 1.724 0 001.066-2.573c-.47-.815.585-1.87 1.4-1.4a1.724 1.724 0 002.573-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
               设置
-            </a>
-            <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path></svg>
-              客户门户
             </a>
           </nav>
         </div>
@@ -154,30 +131,515 @@
             </div>
             <button class="btn-pill hidden sm:inline-flex" type="button" data-navigate="index.html">线索列表</button>
             <button class="btn-primary" type="button" data-navigate="../case/create.html">新建案件</button>
-            <div class="w-9 h-9 rounded-full bg-[var(--surface)] border border-[var(--border)] flex items-center justify-center text-[13px] font-extrabold text-[var(--text)]">AD</div>
+            <div class="topbar-avatar">AD</div>
           </div>
         </header>
 
         <main id="main" class="pt-6 pb-20 px-4 md:px-8 page-shell mx-auto w-full">
-          <div data-include-html="sections/detail-header.html"></div>
-          <div data-include-html="sections/detail-readonly-banner.html"></div>
-          <div data-include-html="sections/detail-warning-banner.html"></div>
-          <div data-include-html="sections/detail-tabs.html"></div>
+          <section class="mb-6" id="detailHeaderSection">
+            <div class="text-[13px] font-semibold text-[var(--muted-2)] mb-3 flex items-center gap-2">
+              <a href="index.html" class="link-apple">咨询线索</a>
+              <svg class="w-3 h-3 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+              <span class="font-semibold text-[var(--text)]" id="breadcrumbName">李华</span>
+            </div>
+
+            <div class="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <h1 class="text-[32px] font-extrabold leading-tight tracking-[-0.03em] flex items-center flex-wrap gap-3">
+                  <span id="detailTitle">李华</span>
+                  <span id="detailStatusBadge" class="lead-badge lead-badge-following text-[13px]">跟进中</span>
+                </h1>
+                <p class="text-[13px] font-semibold text-[var(--muted-2)] mt-2 flex items-center flex-wrap gap-4">
+                  <span class="font-mono text-[12px]" id="detailLeadId">LEAD-2026-0035</span>
+                  <span class="text-[var(--border)]">|</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span id="detailOwner" class="flex items-center gap-1.5">
+                      <span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center font-bold" id="detailOwnerAvatar">T</span>
+                      <span id="detailOwnerName">田中</span>
+                    </span>
+                  </span>
+                  <span class="text-[var(--border)]">|</span>
+                  <span class="flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <span class="chip" id="detailGroup">东京一组</span>
+                  </span>
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-shrink-0">
+                <select id="leadSampleSelect" class="apple-input w-auto appearance-none px-4 py-2 text-[13px] font-semibold">
+                  <option value="following">正常跟进</option>
+                  <option value="lost">已流失</option>
+                  <option value="signed">已签约，待建档</option>
+                  <option value="converted-customer">已建客户档案</option>
+                  <option value="converted-case">已创建案件</option>
+                  <option value="dedup-lead">发现重复咨询（电话）</option>
+                  <option value="dedup-customer">发现重复客户（邮箱）</option>
+                  <option value="empty-followups">暂无跟进记录</option>
+                </select>
+                <div class="flex items-center gap-2 flex-wrap" id="detailActions">
+                  <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnEditInfo">编辑信息</button>
+                  <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnChangeStatus">调整状态</button>
+                  <button class="btn-primary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCase">签约并开始建档</button>
+                  <button class="btn-secondary px-3 py-1.5 text-[13px]" type="button" id="btnConvertCustomer">仅建客户档案</button>
+                  <button class="btn-secondary px-3 py-1.5 text-[13px] text-red-600 border-red-200 hover:bg-red-50" type="button" id="btnMarkLost">标记流失</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <div class="readonly-banner mb-4" id="readonlyBanner" role="status">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            <span>该线索已标记为流失，仅供查阅。</span>
+          </div>
+
+          <div class="warning-banner mb-4" id="warningBanner" role="status">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <span class="flex-1" id="warningBannerText">该线索已签约，下一步请直接开始建档并创建首个案件。</span>
+            <button class="btn-primary px-3 py-1 text-[12px]" type="button" id="warningConvertBtn">签约并开始建档</button>
+          </div>
+
+          <div class="detail-tabs mb-6" role="tablist" aria-label="线索详情 Tab">
+            <nav>
+              <button class="detail-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="tab-info" tabindex="0" data-tab="info" id="tabBtn-info">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0"></path></svg>
+                基础信息
+              </button>
+              <button class="detail-tab" type="button" role="tab" aria-selected="false" aria-controls="tab-followups" tabindex="-1" data-tab="followups" id="tabBtn-followups">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                跟进记录
+              </button>
+              <button class="detail-tab" type="button" role="tab" aria-selected="false" aria-controls="tab-conversion" tabindex="-1" data-tab="conversion" id="tabBtn-conversion">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                转化信息
+              </button>
+              <button class="detail-tab" type="button" role="tab" aria-selected="false" aria-controls="tab-log" tabindex="-1" data-tab="log" id="tabBtn-log">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                日志
+              </button>
+            </nav>
+          </div>
 
           <div id="tabPanels">
-            <div data-include-html="sections/detail-info.html"></div>
-            <div data-include-html="sections/detail-followups.html"></div>
-            <div data-include-html="sections/detail-conversion.html"></div>
-            <div data-include-html="sections/detail-log.html"></div>
+            <div class="tab-panel is-active" id="tab-info" role="tabpanel" aria-labelledby="tabBtn-info">
+              <div class="apple-card p-6">
+                <div class="flex items-center justify-between mb-5">
+                  <h2 class="text-[16px] font-extrabold text-[var(--text)]">基础信息</h2>
+                  <button class="btn-secondary px-3 py-1.5 text-[12px]" type="button" id="btnEditInfoTab">
+                    <svg class="w-3.5 h-3.5 mr-1 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    编辑
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5" id="infoFields">
+                  <div><div class="info-label">线索编号</div><div class="info-value font-mono text-[13px]" id="infoId">LEAD-2026-0035</div></div>
+                  <div><div class="info-label">姓名</div><div class="info-value" id="infoName">李华</div></div>
+                  <div><div class="info-label">电话</div><div class="info-value" id="infoPhone">080-2222-3333</div></div>
+                  <div><div class="info-label">邮箱</div><div class="info-value" id="infoEmail">li.hua@email.com</div></div>
+                  <div><div class="info-label">来源</div><div class="info-value" id="infoSource">介绍</div></div>
+                  <div><div class="info-label">介绍人</div><div class="info-value" id="infoReferrer">佐藤弁護士</div></div>
+                  <div><div class="info-label">意向业务类型</div><div class="info-value" id="infoBusinessType">家族滞在</div></div>
+                  <div><div class="info-label">所属组</div><div class="info-value" id="infoGroup"><span class="chip">东京一组</span></div></div>
+                  <div><div class="info-label">负责人</div><div class="info-value flex items-center gap-1.5" id="infoOwner"><span class="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 text-[10px] flex items-center justify-center font-bold">田</span>田中</div></div>
+                  <div><div class="info-label">首选语言</div><div class="info-value" id="infoLanguage">中文</div></div>
+                  <div class="sm:col-span-2"><div class="info-label">备注</div><div class="info-value text-[13px] leading-relaxed" id="infoNote">配偶在日永住者，希望尽快提交认定申请。首选语言中文。</div></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="tab-followups" role="tabpanel" aria-labelledby="tabBtn-followups">
+              <div class="apple-card p-5 mb-6" id="followupFormCard">
+                <h3 class="text-[14px] font-extrabold text-[var(--text)] mb-4">新增跟进记录</h3>
+                <form id="followupForm" class="space-y-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="apple-label" for="fuChannel">渠道 <span class="text-red-500">*</span></label>
+                      <select class="apple-input appearance-none bg-white" id="fuChannel">
+                        <option value="" selected disabled>选择渠道</option>
+                        <option value="phone">电话</option>
+                        <option value="email">邮件</option>
+                        <option value="meeting">面谈</option>
+                        <option value="im">IM</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label class="apple-label" for="fuNextFollowUp">下次跟进时间</label>
+                      <input type="datetime-local" class="apple-input" id="fuNextFollowUp" />
+                    </div>
+                  </div>
+                  <div>
+                    <label class="apple-label" for="fuSummary">跟进摘要 <span class="text-red-500">*</span></label>
+                    <textarea class="apple-input" id="fuSummary" rows="2" placeholder="描述本次跟进内容…"></textarea>
+                  </div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><label class="apple-label" for="fuConclusion">结论</label><input type="text" class="apple-input" id="fuConclusion" placeholder="跟进结论" /></div>
+                    <div><label class="apple-label" for="fuNextAction">下一步动作</label><input type="text" class="apple-input" id="fuNextAction" placeholder="下一步计划" /></div>
+                  </div>
+                  <div class="flex justify-end"><button class="btn-primary px-4 py-1.5 text-[13px]" type="button" id="submitFollowup">录入跟进</button></div>
+                </form>
+              </div>
+
+              <div id="followupTimeline">
+                <div id="followupEmptyState" class="hidden py-12 text-center">
+                  <svg class="w-14 h-14 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
+                  <div class="text-[15px] font-extrabold text-[var(--text)]">暂无跟进记录</div>
+                  <div class="text-[13px] text-[var(--muted-2)] font-semibold mt-1">录入第一条跟进记录，开始客户沟通追踪</div>
+                </div>
+
+                <div class="timeline" id="followupTimelineList">
+                  <div class="timeline-item" data-fu-idx="0">
+                    <div class="timeline-dot bg-emerald-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-start justify-between gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="channel-chip bg-emerald-100 text-emerald-700">邮件</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/09 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold leading-relaxed">发送家族滞在认定材料清单（主申请人 + 扶养者），附件含示例模板。</div><div class="mt-2 text-[12px] text-[var(--muted-2)] space-y-0.5"><div><span class="font-bold">结论：</span>客户确认收到，预计本周内开始准备</div><div><span class="font-bold">下一步：</span>跟进材料上传情况</div><div><span class="font-bold">下次跟进：</span>2026-04-15</div></div></div><button class="btn-secondary px-2 py-1 text-[11px] flex-shrink-0 whitespace-nowrap" type="button" data-action="convert-task" title="一键转任务（示例功能）"><svg class="w-3 h-3 mr-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>转任务</button></div></div>
+                  </div>
+                  <div class="timeline-item" data-fu-idx="1">
+                    <div class="timeline-dot bg-sky-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-start justify-between gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="channel-chip bg-sky-100 text-sky-700">电话</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/08 14:30</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold leading-relaxed">致电确认意向与基本资料情况，客户表示配偶在日居住 5 年以上。</div><div class="mt-2 text-[12px] text-[var(--muted-2)] space-y-0.5"><div><span class="font-bold">结论：</span>意向明确，进入资料准备阶段</div><div><span class="font-bold">下一步：</span>邮件发送材料清单</div><div><span class="font-bold">下次跟进：</span>2026-04-12</div></div></div><button class="btn-secondary px-2 py-1 text-[11px] flex-shrink-0 whitespace-nowrap" type="button" data-action="convert-task" title="一键转任务（示例功能）"><svg class="w-3 h-3 mr-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>转任务</button></div></div>
+                  </div>
+                  <div class="timeline-item" data-fu-idx="2">
+                    <div class="timeline-dot bg-violet-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-start justify-between gap-3"><div class="flex-1"><div class="flex items-center gap-2 mb-2"><span class="channel-chip bg-violet-100 text-violet-700">面谈</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 15:00</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold leading-relaxed">初次面谈，了解家庭构成、扶养者在日状况、签约意向。</div><div class="mt-2 text-[12px] text-[var(--muted-2)] space-y-0.5"><div><span class="font-bold">结论：</span>基本信息确认，建议配偶准备纳税/课税证明</div><div><span class="font-bold">下一步：</span>电话确认意向</div><div><span class="font-bold">下次跟进：</span>2026-04-08</div></div></div><button class="btn-secondary px-2 py-1 text-[11px] flex-shrink-0 whitespace-nowrap" type="button" data-action="convert-task" title="一键转任务（示例功能）"><svg class="w-3 h-3 mr-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>转任务</button></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="tab-conversion" role="tabpanel" aria-labelledby="tabBtn-conversion">
+              <div class="space-y-6">
+                <div id="dedupPanel">
+                  <div class="apple-card p-5" id="dedupNoMatch">
+                    <div class="flex items-center gap-3 text-[13px] text-[var(--muted-2)] font-semibold">
+                      <svg class="w-5 h-5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      未检测到重复记录。此线索的电话/邮箱未匹配到已有线索或客户。
+                    </div>
+                  </div>
+
+                  <div class="dedup-panel hidden" id="dedupHitPanel">
+                    <div class="flex items-start gap-3 mb-3">
+                      <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                      <div><div class="text-[13px] font-bold text-[#92400e]" id="dedupHitTitle">检测到可能重复的记录</div><div class="text-[12px] text-[#92400e] mt-1" id="dedupHitMessage">该联系方式匹配到已有记录。</div></div>
+                    </div>
+                    <div class="p-3 rounded-lg border border-[#fde68a] bg-white mb-3">
+                      <div class="text-[13px] font-semibold text-[var(--text)]" id="dedupMatchName">—</div>
+                      <div class="text-[12px] text-[var(--muted-2)] mt-0.5" id="dedupMatchMeta">—</div>
+                    </div>
+                    <div class="flex gap-2">
+                      <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupContinueBtn">继续创建</button>
+                      <button class="btn-secondary h-8 px-3 text-[12px]" type="button" id="dedupViewBtn">查看已有记录</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="conversionActions">
+                  <div class="apple-card p-5" id="convertCaseCard">
+                    <div class="flex items-center gap-3 mb-3">
+                      <div class="conversion-card-icon bg-sky-100 text-sky-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                      <div><div class="text-[14px] font-extrabold text-[var(--text)]" id="convertCaseTitle">签约并开始建档</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertCaseDesc">系统会先创建客户档案，再继续创建首个案件</div></div>
+                    </div>
+                    <button class="btn-primary w-full text-[13px]" type="button" id="btnConvertCaseTab">签约并开始建档</button>
+                  </div>
+                  <div class="apple-card p-5" id="convertCustomerCard">
+                    <div class="flex items-center gap-3 mb-3">
+                      <div class="conversion-card-icon bg-emerald-100 text-emerald-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                      <div><div class="text-[14px] font-extrabold text-[var(--text)]" id="convertCustomerTitle">仅建立客户档案</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertCustomerDesc">如暂时不建案，可先建立客户档案</div></div>
+                    </div>
+                    <button class="btn-secondary w-full text-[13px]" type="button" id="btnConvertCustomerTab">仅建立客户档案</button>
+                  </div>
+                </div>
+
+                <div id="convertedRecords" class="hidden space-y-4">
+                  <h3 class="text-[14px] font-extrabold text-[var(--text)]">已生成记录</h3>
+                  <div class="conversion-card hidden" id="convertedCustomerCard">
+                    <div class="conversion-card-icon bg-emerald-100 text-emerald-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></div>
+                    <div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-[var(--text)]" id="convertedCusName">—</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertedCusMeta">—</div></div>
+                    <a href="../customers/index.html" class="btn-secondary px-3 py-1.5 text-[12px] flex-shrink-0" id="convertedCusLink">查看客户</a>
+                  </div>
+                  <div class="conversion-card hidden" id="convertedCaseCard">
+                    <div class="conversion-card-icon bg-sky-100 text-sky-700"><svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg></div>
+                    <div class="flex-1 min-w-0"><div class="text-[14px] font-bold text-[var(--text)]" id="convertedCaseName">—</div><div class="text-[12px] text-[var(--muted-2)] font-semibold" id="convertedCaseMeta">—</div></div>
+                    <a href="../case/detail.html" class="btn-secondary px-3 py-1.5 text-[12px] flex-shrink-0" id="convertedCaseLink">查看案件</a>
+                  </div>
+                  <div id="conversionHistory" class="hidden">
+                    <h4 class="text-[13px] font-bold text-[var(--muted-2)] mb-2">建档记录</h4>
+                    <div class="space-y-2" id="conversionHistoryList"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-panel" id="tab-log" role="tabpanel" aria-labelledby="tabBtn-log">
+              <div class="apple-card p-5">
+                <div class="flex items-center gap-2 mb-5" id="logCategoryFilter">
+                  <div class="segmented-control" role="group" aria-label="日志分类">
+                    <button class="segment-btn active" type="button" data-log-cat="all" aria-pressed="true">全部</button>
+                    <button class="segment-btn" type="button" data-log-cat="status" aria-pressed="false">状态变更</button>
+                    <button class="segment-btn" type="button" data-log-cat="owner" aria-pressed="false">人员变更</button>
+                    <button class="segment-btn" type="button" data-log-cat="group" aria-pressed="false">所属组变更</button>
+                  </div>
+                </div>
+
+                <div class="timeline" id="logTimelineList">
+                  <div class="timeline-item" data-log-type="status">
+                    <div class="timeline-dot bg-violet-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/08 14:30</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">跟进中</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>待签约</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="owner">
+                    <div class="timeline-dot bg-emerald-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/07 09:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">田中</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>铃木</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="owner">
+                    <div class="timeline-dot bg-emerald-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/06 14:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">铃木</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>田中</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="group">
+                    <div class="timeline-dot bg-violet-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">所属组变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/06 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">东京一组</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>东京二组</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="status">
+                    <div class="timeline-dot bg-sky-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-sky-100 text-sky-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 16:00</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">新咨询</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>跟进中</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="owner">
+                    <div class="timeline-dot bg-emerald-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>铃木</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="status">
+                    <div class="timeline-dot bg-amber-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-amber-100 text-amber-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· 系统</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>新咨询</span></div></div>
+                  </div>
+                  <div class="timeline-item" data-log-type="group">
+                    <div class="timeline-dot bg-violet-500"></div>
+                    <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">所属组变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>东京一组</span></div></div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </main>
 
-        <div data-include-html="sections/detail-convert-modals.html"></div>
-        <div data-include-html="sections/detail-toast.html"></div>
+        <div class="modal-backdrop" id="convertCustomerModal">
+          <div class="apple-modal flex flex-col" style="max-width: 480px;">
+            <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+              <div>
+                <h3 class="text-[17px] font-semibold text-[var(--text)]">建立客户档案</h3>
+                <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">根据当前咨询建立客户档案，默认沿用当前所属组。</div>
+              </div>
+              <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCustomerModal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div>
+                <label class="apple-label">客户姓名</label>
+                <input type="text" class="apple-input bg-gray-50" id="modalCusName" readonly />
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">电话</label>
+                  <input type="text" class="apple-input bg-gray-50" id="modalCusPhone" readonly />
+                </div>
+                <div>
+                  <label class="apple-label">邮箱</label>
+                  <input type="text" class="apple-input bg-gray-50" id="modalCusEmail" readonly />
+                </div>
+              </div>
+              <div>
+                <label class="apple-label">所属组</label>
+                <input type="text" class="apple-input" id="modalCusGroup" />
+                <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认沿用当前所属组，如需调整请说明原因。</div>
+              </div>
+              <div class="hidden" id="modalCusGroupReasonWrap">
+                <label class="apple-label">改组原因 <span class="text-red-500">*</span></label>
+                <textarea class="apple-input" id="modalCusGroupReason" rows="2" placeholder="例如：签约后改由东京二组承接，便于后续材料协调"></textarea>
+                <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">仅在建立客户档案时调整所属组才需要填写，原因会写入建档记录与日志。</div>
+              </div>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+              <button class="btn-secondary px-5" type="button" data-modal-close="convertCustomerModal">取消</button>
+              <button class="btn-primary px-5" type="button" id="confirmConvertCustomer">确认建立客户档案</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="convertCaseModal">
+          <div class="apple-modal flex flex-col" style="max-width: 480px;">
+            <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+              <div>
+                <h3 class="text-[17px] font-semibold text-[var(--text)]" id="convertCaseModalTitle">签约并开始建档</h3>
+                <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="convertCaseModalDesc">会先建立客户档案，再为当前咨询创建首个案件。主申请人信息将自动带入。</div>
+              </div>
+              <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="convertCaseModal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div>
+                <label class="apple-label">主申请人</label>
+                <input type="text" class="apple-input bg-gray-50" id="modalCaseApplicant" readonly />
+              </div>
+              <div>
+                <label class="apple-label">案件类型</label>
+                <input type="text" class="apple-input" id="modalCaseType" placeholder="选择签证/业务类型" />
+                <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">选择签证/业务类型</div>
+              </div>
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label">负责人</label>
+                  <input type="text" class="apple-input" id="modalCaseOwner" />
+                </div>
+                <div>
+                  <label class="apple-label">所属组</label>
+                  <input type="text" class="apple-input" id="modalCaseGroup" />
+                  <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">默认沿用客户档案所属组</div>
+                </div>
+              </div>
+              <div class="hidden" id="modalCaseGroupReasonWrap">
+                <label class="apple-label">改组原因 <span class="text-red-500">*</span></label>
+                <textarea class="apple-input" id="modalCaseGroupReason" rows="2" placeholder="例如：案件交由大阪组主办，需统一归属与后续协作"></textarea>
+                <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">仅在建档时调整所属组才需要填写，原因会写入建档记录与日志。</div>
+              </div>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+              <button class="btn-secondary px-5" type="button" data-modal-close="convertCaseModal">取消</button>
+              <button class="btn-primary px-5" type="button" id="confirmConvertCase">确认并开始建档</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="dedupConfirmModal">
+          <div class="apple-modal flex flex-col" style="max-width: 440px;">
+            <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+              <div>
+                <h3 class="text-[17px] font-semibold text-[var(--text)]">确认继续创建</h3>
+                <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">发现重复记录后仍继续创建，系统会保留操作痕迹。</div>
+              </div>
+              <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="dedupConfirmModal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="dedup-panel">
+                <div class="flex items-start gap-3">
+                  <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  <div class="text-[13px] text-[#92400e] font-semibold" id="dedupConfirmMessage">系统检测到重复记录。确认继续创建后，命中对象、确认人、确认时间将被记录留痕。</div>
+                </div>
+              </div>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+              <button class="btn-secondary px-5" type="button" data-modal-close="dedupConfirmModal">取消</button>
+              <button class="btn-primary px-5" type="button" id="confirmDedupContinue">确认继续创建</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="changeStatusModal">
+          <div class="apple-modal flex flex-col" style="max-width: 460px;">
+            <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+              <div>
+                <h3 class="text-[17px] font-semibold text-[var(--text)]">调整状态</h3>
+                <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">推进线索状态时同步记录原因与时间。</div>
+              </div>
+              <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="changeStatusModal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div>
+                <label class="apple-label" for="statusNextValue">目标状态</label>
+                <select class="apple-input appearance-none bg-white" id="statusNextValue">
+                  <option value="following">跟进中</option>
+                  <option value="pending_sign">待签约</option>
+                  <option value="signed">已签约</option>
+                  <option value="lost">已流失</option>
+                </select>
+              </div>
+              <div>
+                <label class="apple-label" for="statusChangeReason">状态原因 / 说明 <span class="text-red-500">*</span></label>
+                <textarea class="apple-input" id="statusChangeReason" rows="3" placeholder="例如：面谈完成，已确认报价，进入待签约"></textarea>
+              </div>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+              <button class="btn-secondary px-5" type="button" data-modal-close="changeStatusModal">取消</button>
+              <button class="btn-primary px-5" type="button" id="confirmStatusChange">确认调整</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-backdrop" id="editInfoModal">
+          <div class="apple-modal flex flex-col" style="max-width: 760px;">
+            <div class="px-6 py-4 border-b border-[#f2f2f7] flex justify-between items-center bg-white z-10 relative">
+              <div>
+                <h3 class="text-[17px] font-semibold text-[var(--text)]">编辑基础信息</h3>
+                <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5">保存后会同步更新详情展示与日志；如调整所属组，需填写改组原因。</div>
+              </div>
+              <button class="text-gray-400 hover:text-gray-700 transition-colors p-1" type="button" data-modal-close="editInfoModal">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+              </button>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label class="apple-label" for="editLeadName">姓名 <span class="text-red-500">*</span></label>
+                  <input type="text" class="apple-input" id="editLeadName" placeholder="请输入姓名" />
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadLanguage">首选语言</label>
+                  <select class="apple-input appearance-none bg-white" id="editLeadLanguage"></select>
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadPhone">电话</label>
+                  <input type="text" class="apple-input" id="editLeadPhone" placeholder="手机/座机" />
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadEmail">邮箱</label>
+                  <input type="email" class="apple-input" id="editLeadEmail" placeholder="邮箱地址" />
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadSource">来源</label>
+                  <select class="apple-input appearance-none bg-white" id="editLeadSource"></select>
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadReferrer">介绍人</label>
+                  <input type="text" class="apple-input" id="editLeadReferrer" placeholder="介绍人名称" />
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadBusinessType">意向业务类型</label>
+                  <select class="apple-input appearance-none bg-white" id="editLeadBusinessType"></select>
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadOwner">负责人</label>
+                  <select class="apple-input appearance-none bg-white" id="editLeadOwner"></select>
+                </div>
+                <div>
+                  <label class="apple-label" for="editLeadGroup">所属组</label>
+                  <select class="apple-input appearance-none bg-white" id="editLeadGroup"></select>
+                </div>
+              </div>
+              <div class="hidden" id="editLeadGroupReasonWrap">
+                <label class="apple-label" for="editLeadGroupReason">改组原因 <span class="text-red-500">*</span></label>
+                <textarea class="apple-input" id="editLeadGroupReason" rows="2" placeholder="例如：线索改由东京二组继续承接，便于后续面谈与材料跟进"></textarea>
+                <div class="text-[11px] text-[var(--muted-2)] font-semibold mt-1">仅在编辑基础信息时调整所属组才需要填写，原因会写入日志。</div>
+              </div>
+              <div>
+                <label class="apple-label" for="editLeadNote">备注</label>
+                <textarea class="apple-input" id="editLeadNote" rows="4" placeholder="补充沟通偏好、案件背景或内部备注"></textarea>
+              </div>
+            </div>
+            <div class="px-6 py-4 bg-[#fbfbfd] border-t border-[#f2f2f7] flex justify-end space-x-3 rounded-b-[14px]">
+              <button class="btn-secondary px-5" type="button" data-modal-close="editInfoModal">取消</button>
+              <button class="btn-primary px-5" type="button" id="confirmEditInfo">保存修改</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 hidden z-[999]">
+          <div class="px-4 py-3 rounded-2xl border border-[var(--border)] bg-white shadow-[var(--shadow)]">
+            <div class="text-[13px] font-extrabold text-[var(--text)]" id="toastTitle">已保存</div>
+            <div class="text-[12px] text-[var(--muted-2)] font-semibold mt-0.5" id="toastDesc">操作已完成</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <script src="../shared/scripts/html-fragment-loader.js"></script>
     <script src="data/leads-detail-config.js"></script>
     <script src="scripts/leads-detail-core.js"></script>
     <script src="scripts/leads-detail-render.js"></script>

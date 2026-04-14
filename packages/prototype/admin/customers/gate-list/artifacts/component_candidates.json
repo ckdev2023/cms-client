@@ -1,0 +1,110 @@
+{
+  "page_component": "CustomerListPage",
+  "candidates": [
+    {
+      "name": "CustomerListHeader",
+      "source_selector": "sections/header.html",
+      "repeatable": false,
+      "props_hint": ["title", "onAddCustomer"],
+      "description": "页面标题 + 添加客户按钮"
+    },
+    {
+      "name": "CustomerSummaryCards",
+      "source_selector": "sections/header.html .grid",
+      "repeatable": false,
+      "props_hint": ["mineCount", "groupCount", "activeCount", "noActiveCount"],
+      "description": "4 张摘要卡片区域"
+    },
+    {
+      "name": "SummaryCard",
+      "source_selector": ".summary-card",
+      "repeatable": true,
+      "props_hint": ["label", "value", "hint", "variant"],
+      "description": "单张统计卡片，variant: primary/info/warning/neutral"
+    },
+    {
+      "name": "CustomerScopeToggle",
+      "source_selector": ".segmented-control[aria-label='数据范围']",
+      "repeatable": false,
+      "props_hint": ["activeScope", "onScopeChange"],
+      "description": "三段式数据范围切换：我的/本组/全所（管理员）"
+    },
+    {
+      "name": "CustomerSearchInput",
+      "source_selector": "#customerSearchInput",
+      "repeatable": false,
+      "props_hint": ["value", "onSearch"],
+      "description": "搜索框：客户名/フリガナ/电话/邮箱"
+    },
+    {
+      "name": "CustomerFilters",
+      "source_selector": "sections/filters.html .flex-wrap:nth-child(2)",
+      "repeatable": false,
+      "props_hint": ["groupFilter", "ownerFilter", "activeCasesFilter", "onReset"],
+      "description": "3 个筛选 select + 重置按钮"
+    },
+    {
+      "name": "CustomerFilterSummary",
+      "source_selector": "#customerFilterSummary",
+      "repeatable": false,
+      "props_hint": ["text"],
+      "description": "筛选摘要：当前查看范围 + 客户计数"
+    },
+    {
+      "name": "CustomerBulkActionBar",
+      "source_selector": "#bulkActionBar",
+      "repeatable": false,
+      "props_hint": ["selectedCount", "onClear", "onAssign", "onChangeGroup"],
+      "description": "批量操作栏：计数 + 清除 + 指派负责人 + 调整分组"
+    },
+    {
+      "name": "CustomerTable",
+      "source_selector": ".apple-table",
+      "repeatable": false,
+      "props_hint": ["customers", "selectedIds", "onSelectAll", "onSelectRow"],
+      "description": "客户表格：全选 checkbox + 8 列 + 操作列"
+    },
+    {
+      "name": "CustomerTableRow",
+      "source_selector": "[data-customer-row]",
+      "repeatable": true,
+      "props_hint": ["customer", "selected", "isDraft", "onSelect", "onOpenDetail", "onQuickCreateCase"],
+      "description": "客户行：头像 + 识别名/编号/联系方式/案件chip + フリガナ + 案件统计 + 最近联系 + 负责人 + 介绍人 + 分组 + 操作（查看详情/开始办案）"
+    },
+    {
+      "name": "CustomerEmptyState",
+      "source_selector": "#customerEmptyState",
+      "repeatable": false,
+      "props_hint": [],
+      "description": "空筛选结果提示"
+    },
+    {
+      "name": "CustomerPagination",
+      "source_selector": "sections/pagination.html",
+      "repeatable": false,
+      "props_hint": ["currentPage", "totalItems", "pageSize", "onPrev", "onNext"],
+      "description": "分页区域"
+    },
+    {
+      "name": "CustomerCreateModal",
+      "source_selector": "#addCustomerModal",
+      "repeatable": false,
+      "props_hint": ["open", "draftData", "onClose", "onSaveDraft", "onCreate"],
+      "description": "新建客户弹窗：12 字段 + 去重提示 + 3 按钮"
+    },
+    {
+      "name": "CustomerDedupeHint",
+      "source_selector": "#dedupeHint",
+      "repeatable": false,
+      "props_hint": ["candidates", "visible"],
+      "description": "去重提示卡片区，电话/邮箱有值时显示"
+    },
+    {
+      "name": "AppToast",
+      "source_selector": "#toast",
+      "repeatable": false,
+      "props_hint": ["title", "description", "visible"],
+      "description": "全局 toast 通知"
+    }
+  ]
+}

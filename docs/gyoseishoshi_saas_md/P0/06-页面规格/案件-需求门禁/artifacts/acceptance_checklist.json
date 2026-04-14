@@ -1,0 +1,36 @@
+{
+  "checks": [
+    {
+      "id": "AC-1",
+      "desc": "case list page includes the specified columns, default filters, and bulk actions"
+    },
+    {
+      "id": "AC-2",
+      "desc": "case detail page exposes the required 10 tabs with the defined data and actions"
+    },
+    {
+      "id": "AC-3",
+      "desc": "creating a case generates a case record, a template-driven document checklist, and stage S1"
+    },
+    {
+      "id": "AC-4",
+      "desc": "family batch creation creates one case per main applicant and binds required case-party relations"
+    },
+    {
+      "id": "AC-5",
+      "desc": "Gate-A/B/C aligned validation and submission flows generate ValidationRun and SubmissionPackage records with correct locking behavior"
+    },
+    {
+      "id": "AC-6",
+      "desc": "document handling uses local archive registration with relative path and version metadata instead of SaaS binary storage"
+    },
+    {
+      "id": "AC-7",
+      "desc": "billing tab exposes total, receivable, received, outstanding, and payment-record information"
+    },
+    {
+      "id": "AC-8",
+      "desc": "visibility and editability follow the administrator, lead, assistant, and finance permission matrix"
+    }
+  ]
+}

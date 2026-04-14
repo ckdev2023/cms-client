@@ -219,7 +219,7 @@
 
 | 目标页面 | settings.html 中的 href | shared 中的 href | 需修复？ |
 |----------|------------------------|-----------------|---------|
-| 仪表盘 | `admin-prototype.html` | `admin-prototype.html` | 无需（视 dashboard 迁移情况） |
+| 仪表盘 | `dashboard/index.html` | `dashboard/index.html` | 无需（视 dashboard 迁移情况） |
 | 咨询与会话 | `leads-messages.html` | `leads-messages.html` | 无需 |
 | 客户 | `customers.html` | `customers/index.html` | **是** |
 | 案件 | `cases-list.html` | `cases-list.html` | 无需 |
@@ -256,7 +256,7 @@ settings.html 内容区**无任何出站内容链接**（子导航均为 `href="
 
 | 来源页面 | 链接路径 |
 |----------|---------|
-| `admin-prototype.html` | `settings.html`（内联导航） |
+| `dashboard/index.html` | `settings.html`（内联导航） |
 | `dashboard/index.html` | 通过 shared shell（已覆盖） |
 | `leads-messages.html` | `settings.html`（内联导航） |
 | `leads-message/index.html` | 通过 shared shell（已覆盖） |
@@ -278,7 +278,7 @@ settings.html 内容区**无任何出站内容链接**（子导航均为 `href="
 | `billing/index.html` | 通过 shared shell（已覆盖） |
 | `reports.html` | `settings.html`（内联导航） |
 
-> **迁移影响**：已迁移到 shared shell 的页面只需更新 `shared/shell/side-nav.html` 和 `shared/shell/mobile-nav.html` 即可。仍在使用内联导航的旧页面（`admin-prototype.html`、`leads-messages.html`、`cases-list.html`、`case-detail.html`、`case-create.html`、`tasks.html`、`documents.html`、`forms.html`、`billing.html`、`reports.html`）需要逐个更新。本轮仅记录，不立即修复旧页面中的链接。
+> **迁移影响**：已迁移到 shared shell 的页面只需更新 `shared/shell/side-nav.html` 和 `shared/shell/mobile-nav.html` 即可。仍在使用内联导航的旧页面（`dashboard/index.html`、`leads-messages.html`、`cases-list.html`、`case-detail.html`、`case-create.html`、`tasks.html`、`documents.html`、`forms.html`、`billing.html`、`reports.html`）需要逐个更新。本轮仅记录，不立即修复旧页面中的链接。
 
 ---
 

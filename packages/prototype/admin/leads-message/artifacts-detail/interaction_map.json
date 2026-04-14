@@ -1,0 +1,237 @@
+{
+  "interactions": [
+    {
+      "selector": ".detail-tab[data-tab]",
+      "event": "click",
+      "intent": "switch_tab",
+      "handler": "scripts/leads-detail-actions.js → app.activateTab(tabId)",
+      "contract_ref": "P0-CONTRACT-DETAIL §2",
+      "targets": ["info", "followups", "conversion", "log"]
+    },
+    {
+      "selector": ".detail-tab[data-tab]",
+      "event": "keydown (ArrowLeft/ArrowRight/Home/End)",
+      "intent": "switch_tab_with_keyboard",
+      "handler": "scripts/leads-detail-actions.js → roving tab focus + app.activateTab(tabId)",
+      "contract_ref": "P0-CONTRACT-DETAIL §2"
+    },
+    {
+      "selector": "#leadSampleSelect",
+      "event": "change",
+      "intent": "switch_demo_sample",
+      "handler": "scripts/leads-detail-actions.js → app.renderSample(key)",
+      "contract_ref": "P0-CONTRACT-DETAIL §9",
+      "notes": "demo-only; 8 scenarios: following/lost/signed/converted-customer/converted-case/dedup-lead/dedup-customer/empty-followups"
+    },
+    {
+      "selector": "#btnEditInfo",
+      "event": "click",
+      "intent": "open_edit_info_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillEditInfoModal() → app.openModal('editInfoModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §3.1, §4"
+    },
+    {
+      "selector": "#btnEditInfoTab",
+      "event": "click",
+      "intent": "open_edit_info_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillEditInfoModal() → app.openModal('editInfoModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §4"
+    },
+    {
+      "selector": "#btnChangeStatus",
+      "event": "click",
+      "intent": "open_change_status_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillStatusChangeModal() → app.openModal('changeStatusModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §3.1, §8"
+    },
+    {
+      "selector": "#btnConvertCase",
+      "event": "click",
+      "intent": "open_convert_case_modal_or_view_case",
+      "handler": "scripts/leads-detail-actions.js → branch by HEADER_BUTTONS; prefillConvertCaseModal() or navigate ../case/detail.html",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.3"
+    },
+    {
+      "selector": "#btnConvertCustomer",
+      "event": "click",
+      "intent": "open_convert_customer_modal_or_view_customer",
+      "handler": "scripts/leads-detail-actions.js → branch by HEADER_BUTTONS; prefillConvertCustomerModal() or navigate ../customers/index.html",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2"
+    },
+    {
+      "selector": "#btnConvertCaseTab",
+      "event": "click",
+      "intent": "open_convert_case_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillConvertCaseModal() → app.openModal('convertCaseModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.3"
+    },
+    {
+      "selector": "#btnConvertCustomerTab",
+      "event": "click",
+      "intent": "open_convert_customer_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillConvertCustomerModal() → app.openModal('convertCustomerModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2"
+    },
+    {
+      "selector": "#warningConvertBtn",
+      "event": "click",
+      "intent": "open_convert_case_modal",
+      "handler": "scripts/leads-detail-actions.js → prefillConvertCaseModal() → app.openModal('convertCaseModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §8.2"
+    },
+    {
+      "selector": "#btnMarkLost",
+      "event": "click",
+      "intent": "mark_lead_lost_demo_feedback",
+      "handler": "scripts/leads-detail-actions.js → showToast(markedLost)",
+      "contract_ref": "P0-CONTRACT-DETAIL §3.1",
+      "notes": "current prototype only shows feedback toast; it does not directly switch sample or open a reason modal"
+    },
+    {
+      "selector": "#submitFollowup",
+      "event": "click",
+      "intent": "submit_followup_record",
+      "handler": "scripts/leads-detail-actions.js → validate(channel+summary required) → prepend timeline item → toast",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.2",
+      "validations": ["channel required", "summary required"]
+    },
+    {
+      "selector": "[data-action=convert-task]",
+      "event": "click",
+      "intent": "convert_followup_to_task",
+      "handler": "scripts/leads-detail-actions.js → toast 已创建任务（示例）",
+      "contract_ref": "P0-CONTRACT-DETAIL §5.1, §15",
+      "notes": "demo-only"
+    },
+    {
+      "selector": "#modalCusGroup",
+      "event": "input",
+      "intent": "toggle_customer_group_reason",
+      "handler": "scripts/leads-detail-actions.js → toggleReasonWrap('modalCusGroup', 'modalCusGroupReasonWrap', 'modalCusGroupReason')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2"
+    },
+    {
+      "selector": "#modalCaseGroup",
+      "event": "input",
+      "intent": "toggle_case_group_reason",
+      "handler": "scripts/leads-detail-actions.js → toggleReasonWrap('modalCaseGroup', 'modalCaseGroupReasonWrap', 'modalCaseGroupReason')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.3"
+    },
+    {
+      "selector": "#editLeadGroup",
+      "event": "input",
+      "intent": "toggle_edit_group_reason",
+      "handler": "scripts/leads-detail-actions.js → toggleReasonWrap('editLeadGroup', 'editLeadGroupReasonWrap', 'editLeadGroupReason')",
+      "contract_ref": "P0-CONTRACT-DETAIL §4, §7"
+    },
+    {
+      "selector": "#confirmEditInfo",
+      "event": "click",
+      "intent": "save_edited_info",
+      "handler": "scripts/leads-detail-actions.js → applyInfoEdit() → update sample/info/log → close modal → renderSample() → toast",
+      "contract_ref": "P0-CONTRACT-DETAIL §4, §7",
+      "validations": ["name required", "group change requires reason"]
+    },
+    {
+      "selector": "#confirmConvertCustomer",
+      "event": "click",
+      "intent": "confirm_convert_customer",
+      "handler": "scripts/leads-detail-actions.js → collectConversionFormState('customer') → buildConversionSample('customer') → close modal → transitionAfterConversion('converted-customer')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.2",
+      "validations": ["group change requires reason"]
+    },
+    {
+      "selector": "#confirmConvertCase",
+      "event": "click",
+      "intent": "confirm_convert_case",
+      "handler": "scripts/leads-detail-actions.js → collectConversionFormState('case') → buildConversionSample('case') → close modal → transitionAfterConversion('converted-case')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.3",
+      "validations": ["case type required", "group change requires reason"]
+    },
+    {
+      "selector": "#confirmStatusChange",
+      "event": "click",
+      "intent": "confirm_status_change",
+      "handler": "scripts/leads-detail-actions.js → applyStatusChange() → update status/banner/buttons/log → close modal → renderSample() → toast",
+      "contract_ref": "P0-CONTRACT-DETAIL §3.1, §8",
+      "validations": ["reason required"]
+    },
+    {
+      "selector": "#dedupContinueBtn",
+      "event": "click",
+      "intent": "open_dedup_confirm_modal",
+      "handler": "scripts/leads-detail-actions.js → set dedupConfirmMessage from current match → app.openModal('dedupConfirmModal')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.1"
+    },
+    {
+      "selector": "#confirmDedupContinue",
+      "event": "click",
+      "intent": "confirm_dedup_continue",
+      "handler": "scripts/leads-detail-actions.js → app.closeModal('dedupConfirmModal') → showToast('已确认继续创建（示例）')",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.1"
+    },
+    {
+      "selector": "#dedupViewBtn",
+      "event": "click",
+      "intent": "view_existing_record",
+      "handler": "scripts/leads-detail-actions.js → toast demo-only",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.1"
+    },
+    {
+      "selector": "[data-modal-close]",
+      "event": "click",
+      "intent": "close_named_modal",
+      "handler": "scripts/leads-detail-actions.js → app.closeModal(data-modal-close)"
+    },
+    {
+      "selector": ".modal-backdrop",
+      "event": "click",
+      "intent": "close_modal_on_backdrop",
+      "handler": "scripts/leads-detail-actions.js → if event.target === backdrop then remove .show"
+    },
+    {
+      "selector": "document",
+      "event": "keydown (Escape)",
+      "intent": "close_modal",
+      "handler": "scripts/leads-detail-actions.js → close any open modal"
+    },
+    {
+      "selector": ".segment-btn[data-log-cat]",
+      "event": "click",
+      "intent": "filter_log_category",
+      "handler": "scripts/leads-detail-actions.js → filter .timeline-item by data-log-type; toggle .active + aria-pressed",
+      "contract_ref": "P0-CONTRACT-DETAIL §7.1",
+      "targets": ["all", "status", "owner", "group"]
+    },
+    {
+      "selector": ".link-apple (breadcrumb)",
+      "event": "click",
+      "intent": "navigate_back_to_list",
+      "handler": "href=index.html",
+      "contract_ref": "P0-CONTRACT-DETAIL §3"
+    },
+    {
+      "selector": ".btn-pill[data-navigate]",
+      "event": "click",
+      "intent": "navigate_to_list",
+      "handler": "shared/scripts/navigate.js → data-navigate=index.html",
+      "contract_ref": "shell navigation"
+    },
+    {
+      "selector": "#convertedCusLink",
+      "event": "click",
+      "intent": "navigate_to_customer",
+      "handler": "href=../customers/index.html",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.4",
+      "notes": "demo link to customer module"
+    },
+    {
+      "selector": "#convertedCaseLink",
+      "event": "click",
+      "intent": "navigate_to_case",
+      "handler": "href=../case/detail.html",
+      "contract_ref": "P0-CONTRACT-DETAIL §6.4",
+      "notes": "demo link to case module"
+    }
+  ]
+}

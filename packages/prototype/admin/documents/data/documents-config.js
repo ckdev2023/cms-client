@@ -2,20 +2,20 @@
   'use strict';
 
   /**
-   * P0 authoritative document status enum (7 values per P0/03 §3.2).
+   * Authoritative document status enum (7 values per 03 §3.2).
    *
    * Legacy codes (`done`, `idle`, `submitted`, `reviewed`, `missing`,
    * `pending`, `rejected`) are still present in older data and must pass
    * through COMPAT_STATUS_MAP before consumption.
    */
   var DOCUMENT_STATUS_OPTIONS = [
-    { value: 'not_sent',            label: '未発出',       badge: 'badge-gray'   },
-    { value: 'waiting_upload',      label: '待提交',       badge: 'badge-orange' },
-    { value: 'uploaded_reviewing',  label: '已提交待审核', badge: 'badge-blue'   },
-    { value: 'approved',            label: '通过',         badge: 'badge-green'  },
-    { value: 'revision_required',   label: '退回补正',     badge: 'badge-red'    },
-    { value: 'expired',             label: '过期',         badge: 'badge-red'    },
-    { value: 'waived',              label: '无需提供',     badge: 'badge-gray'   },
+    { value: 'not_sent',            label: '尚未开始',       badge: 'badge-gray'   },
+    { value: 'waiting_upload',      label: '等待对方提交',   badge: 'badge-orange' },
+    { value: 'uploaded_reviewing',  label: '已收到待确认',   badge: 'badge-blue'   },
+    { value: 'approved',            label: '可直接使用',     badge: 'badge-green'  },
+    { value: 'revision_required',   label: '退回待重交',     badge: 'badge-red'    },
+    { value: 'expired',             label: '版本已过期',     badge: 'badge-red'    },
+    { value: 'waived',              label: '本案无需提供',   badge: 'badge-gray'   },
   ];
 
   var PROVIDER_OPTIONS = [
@@ -139,9 +139,9 @@
   };
 
   /**
-   * Maps legacy document statuses to P0 authoritative keys (P0/03 §3.2).
+   * Maps legacy document statuses to current authoritative keys (03 §3.2).
    *
-   * Legacy → P0:
+   * Legacy → current:
    *   done     → approved            (office internal item completed)
    *   idle     → not_sent            (not started, no request sent)
    *   submitted→ uploaded_reviewing   (uploaded, pending review)
@@ -172,8 +172,8 @@
   /**
    * Normalize a raw document status code through the compat layer.
    *
-   * @param {string} raw - raw status from demo data (may be legacy or P0)
-   * @returns {string} P0 authoritative status code
+   * @param {string} raw - raw status from demo data (may be legacy or current)
+   * @returns {string} current authoritative status code
    */
   function normalizeDocStatus(raw) {
     if (!raw) return 'not_sent';

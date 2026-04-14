@@ -1,0 +1,31 @@
+{
+  "task_id": "W11",
+  "task_name": "index-baseline",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/index-baseline-plan.md",
+  "summary_output": "artifacts/mempalace/W11.summary.md",
+  "checks": [
+    {
+      "name": "authority_batches_before_output_and_raw",
+      "status": "passed"
+    },
+    {
+      "name": "retry_rules_defined_per_batch",
+      "status": "passed"
+    },
+    {
+      "name": "baseline_stats_defined",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W11-index-baseline.md",
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/ingestion-manifest.md",
+    "plan/mempalace/taxonomy-spec.md",
+    "plan/mempalace/environment-strategy.md",
+    "plan/mempalace/deployment-topology.md"
+  ]
+}

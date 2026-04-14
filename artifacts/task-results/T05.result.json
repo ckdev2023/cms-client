@@ -1,0 +1,37 @@
+{
+  "taskId": "T05",
+  "title": "billing 回款流水与登记回款弹窗实现",
+  "status": "completed",
+  "completedAt": "2026-04-13T23:22:00Z",
+  "guard": {
+    "checkDeps": "pass",
+    "typecheck": "pass",
+    "lint": "pass",
+    "jsdocLangCheck": "pass",
+    "test": "pass",
+    "build": "pass"
+  },
+  "filesCreated": [
+    "packages/admin/src/views/billing/model/usePaymentModal.test.ts"
+  ],
+  "filesModified": [
+    "packages/admin/src/views/billing/components/PaymentLogTable.vue",
+    "packages/admin/src/views/billing/components/PaymentModal.vue",
+    "packages/admin/src/views/billing/components/BillingToast.vue",
+    "packages/admin/src/views/billing/model/usePaymentModal.ts"
+  ],
+  "testsAdded": 22,
+  "testsPassed": 22,
+  "acceptanceCriteria": {
+    "paymentLogTable8Columns": true,
+    "statusDistinctionValidVoidedReversed": true,
+    "voidedReversedMutedStrikethrough": true,
+    "modalFiveFields": true,
+    "multiNodeBlocksSubmit": true,
+    "amountExceedsWarning": true,
+    "defaultNodeAutoSelect": true,
+    "canSubmitValidation": true,
+    "modalModelTested": true,
+    "toastDrivenByProps": true
+  }
+}

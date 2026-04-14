@@ -1,0 +1,115 @@
+{
+  "page_name": "billing_list",
+  "regions": [
+    {
+      "id": "page-header",
+      "selector": "sections/page-header.html",
+      "role": "header",
+      "description": "页面标题「收费与财务」+ 副标题 + 登记回款主按钮"
+    },
+    {
+      "id": "summary-cards",
+      "selector": "sections/summary-cards.html",
+      "role": "card_list",
+      "description": "4 张统计摘要卡（全局维度）：总应收 / 总已收 / 总未收 / 逾期欠款。金额硬编码 demo 值"
+    },
+    {
+      "id": "filters-toolbar",
+      "selector": "sections/filters-toolbar.html",
+      "role": "filter",
+      "description": "segmented control（案件收费列表 / 回款流水记录）+ 搜索框 + 3 筛选器（回款状态/Group/负责人）+ 重置按钮"
+    },
+    {
+      "id": "billing-table",
+      "selector": "sections/billing-table.html",
+      "role": "data_list",
+      "description": "案件收费表格：checkbox 列 + 8 数据列（案件名称/客户/Group/应收/已收/未收/下一收款节点/回款状态）+ 5 条 demo 行覆盖 4 种状态 + 空状态 + 筛选空状态 + 分页"
+    },
+    {
+      "id": "bulk-action-bar",
+      "selector": "#bulkActionBar",
+      "role": "section",
+      "description": "批量操作栏：已选计数 + 清除按钮 + 批量生成催款任务按钮；仅 selectedCount>0 时可见"
+    },
+    {
+      "id": "payment-log-table",
+      "selector": "sections/payment-log-table.html",
+      "role": "data_list",
+      "description": "回款流水表格：8 列（金额/日期/关联案件/关联节点/凭证/记录状态/操作人/备注）+ 操作列（作废/冲正）+ 4 条 demo 行覆盖 3 种状态（valid/voided/reversed）+ 空状态 + 分页"
+    },
+    {
+      "id": "billing-plan-panel",
+      "selector": "sections/billing-plan-panel.html",
+      "role": "section",
+      "description": "收费计划面板：案件维度节点列表 + 下一收款节点摘要 + 汇总行 + 编辑/关闭按钮 + 财务备注 + 空状态引导「配置收费计划」+ 已结清状态"
+    },
+    {
+      "id": "risk-ack-panel",
+      "selector": "sections/risk-ack-panel.html",
+      "role": "section",
+      "description": "欠款风险确认留痕面板：确认人/确认时间/关联案件/欠款金额 + 原因/备注 + 审计日志区域"
+    },
+    {
+      "id": "payment-modal",
+      "selector": "sections/payment-modal.html",
+      "role": "modal",
+      "description": "登记回款弹窗：5 字段表单（金额*/日期*/关联收费节点/凭证/备注）+ 金额超限提示 + 节点未选提示 + 取消/登记回款按钮"
+    },
+    {
+      "id": "collection-result-toast",
+      "selector": "sections/collection-result-toast.html",
+      "role": "section",
+      "description": "Toast 浮动通知 + 三段式批量催款结果面板（成功/跳过/失败计数 + 明细列表 + 跳过原因统计）"
+    },
+    {
+      "id": "shell-side-nav",
+      "selector": ".side-nav",
+      "role": "navigation",
+      "description": "侧边栏导航，「收费与财务」项 aria-current=page 高亮"
+    },
+    {
+      "id": "shell-topbar",
+      "selector": ".topbar",
+      "role": "header",
+      "description": "顶部工具栏：全局搜索 + 新建咨询 + 新建案件 + 用户头像"
+    },
+    {
+      "id": "shell-mobile-nav",
+      "selector": ".mobile-nav",
+      "role": "navigation",
+      "description": "移动端导航抽屉"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": "[data-billing-select-row]",
+      "count": 5,
+      "suggest_component": "BillingTableRow",
+      "description": "案件收费表格行：checkbox + 案件名称/编号 + 客户/类型 + Group chip + 应收/已收/未收金额 + 下一收款节点 + 回款状态 tag"
+    },
+    {
+      "selector": "[data-payment-id]",
+      "count": 4,
+      "suggest_component": "PaymentLogRow",
+      "description": "回款流水行：金额 + 日期 + 关联案件 + 关联节点 + 凭证 + 记录状态 tag + 操作人 + 备注 + 操作（作废/冲正）"
+    },
+    {
+      "selector": ".billing-summary-card",
+      "count": 4,
+      "suggest_component": "BillingSummaryCard",
+      "description": "统计摘要卡片（总应收/总已收/总未收/逾期欠款），各有颜色变体"
+    },
+    {
+      "selector": "[data-plan-node]",
+      "count": 2,
+      "suggest_component": "BillingPlanNodeRow",
+      "description": "收费计划节点行：节点名称 + 应收金额 + 到期日 + 节点状态 tag"
+    },
+    {
+      "selector": ".nav-item",
+      "count": 16,
+      "suggest_component": "NavItem",
+      "description": "导航项（shell 共享）"
+    }
+  ]
+}

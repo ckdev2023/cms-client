@@ -1,0 +1,71 @@
+{
+  "target_framework": "react-native",
+  "source_entry": "packages/prototype/admin/leads-message/detail.html",
+  "contract_ref": "P0-CONTRACT-DETAIL.md + split-manifest-detail.json",
+  "new_files": [
+    "packages/mobile/src/features/lead/ui/LeadDetailScreen.tsx",
+    "packages/mobile/src/features/lead/ui/LeadDetailHeader.tsx",
+    "packages/mobile/src/features/lead/ui/LeadDetailTabs.tsx",
+    "packages/mobile/src/features/lead/ui/LeadInfoTab.tsx",
+    "packages/mobile/src/features/lead/ui/LeadFollowupsTab.tsx",
+    "packages/mobile/src/features/lead/ui/FollowupTimeline.tsx",
+    "packages/mobile/src/features/lead/ui/FollowupForm.tsx",
+    "packages/mobile/src/features/lead/ui/LeadConversionTab.tsx",
+    "packages/mobile/src/features/lead/ui/DedupPanel.tsx",
+    "packages/mobile/src/features/lead/ui/ConversionCard.tsx",
+    "packages/mobile/src/features/lead/ui/ConversionModal.tsx",
+    "packages/mobile/src/features/lead/ui/LeadLogTab.tsx",
+    "packages/mobile/src/features/lead/ui/LogTimeline.tsx",
+    "packages/mobile/src/features/lead/model/useLeadDetailViewModel.ts",
+    "packages/mobile/src/features/lead/model/useLeadFollowups.ts",
+    "packages/mobile/src/features/lead/model/useLeadConversion.ts",
+    "packages/mobile/src/features/lead/model/useLeadLog.ts",
+    "packages/mobile/src/domain/lead/FollowUp.ts",
+    "packages/mobile/src/domain/lead/LeadConversion.ts",
+    "packages/mobile/src/domain/lead/LeadAuditLog.ts",
+    "packages/mobile/src/domain/lead/LeadDedupService.ts",
+    "packages/mobile/src/domain/lead/LeadStatusMachine.ts"
+  ],
+  "modify_files": [
+    "packages/mobile/src/domain/lead/Lead.ts",
+    "packages/mobile/src/domain/lead/LeadRepository.ts",
+    "packages/mobile/src/domain/lead/leadConstants.ts",
+    "packages/mobile/src/data/lead/LeadApi.ts",
+    "packages/mobile/src/data/lead/createLeadRepository.ts",
+    "packages/mobile/src/shared/ui/Toast.tsx",
+    "packages/mobile/src/shared/ui/Modal.tsx"
+  ],
+  "shared_new_files": [
+    "packages/mobile/src/shared/ui/ReadonlyBanner.tsx",
+    "packages/mobile/src/shared/ui/WarningBanner.tsx",
+    "packages/mobile/src/shared/ui/InfoField.tsx",
+    "packages/mobile/src/shared/ui/Timeline.tsx",
+    "packages/mobile/src/shared/ui/ChannelChip.tsx",
+    "packages/mobile/src/shared/ui/LogTypeChip.tsx"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready",
+    "readonly",
+    "warning",
+    "editing",
+    "status_transition",
+    "dedup_confirm"
+  ],
+  "notes": [
+    "detail page has 4 tabs: info/followups/conversion/log — each is an independent component",
+    "8 demo sample scenarios drive header buttons, banners, tab content visibility",
+    "readonly state (lost) applies pointer-events:none + opacity globally",
+    "warning state (signed) shows yellow banner + highlights conversion buttons",
+    "followup timeline items are repeatable — map to FlatList/FlashList in RN",
+    "5 modal workflows: convert-customer / convert-case / dedup-confirm / change-status / edit-info",
+    "conversion and edit flows both require audit-style reason capture when Group is changed",
+    "edit info and status transition both prepend runtime logs, so view-model state must own log mutation",
+    "dedup panel has 3 states: no-match / hit-lead / hit-customer",
+    "conversion tab shows action cards (pre-conversion) OR converted record cards (post-conversion)",
+    "log category filter uses segmented control — reuse shared SegmentedControl",
+    "prefer design system components (shared/ui) over raw styles"
+  ]
+}

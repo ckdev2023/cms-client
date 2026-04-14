@@ -56,7 +56,7 @@ The INVENTORY.md for billing performed a line-by-line comparison between `billin
 ### Before (billing.html — inline navigation)
 
 ```html
-<!-- L471-553: Desktop side nav — 82 lines, copied from admin-prototype.html -->
+<!-- L471-553: Desktop side nav — 82 lines, copied from dashboard/index.html -->
 <aside class="side-nav">
   <nav>
     <a href="dashboard/index.html" class="nav-item">仪表盘</a>
@@ -84,7 +84,7 @@ When a module moves from `admin/billing.html` to `admin/billing/index.html`:
 
 | Target | Root-level path | Subdirectory path |
 |--------|----------------|-------------------|
-| Dashboard | `admin-prototype.html` | `../admin-prototype.html` |
+| Dashboard | `dashboard/index.html` | `../dashboard/index.html` |
 | Customers | `customers/index.html` | `../customers/index.html` |
 | Self | `billing.html` | `index.html` |
 

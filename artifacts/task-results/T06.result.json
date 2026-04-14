@@ -1,0 +1,24 @@
+{
+  "taskId": "T06",
+  "title": "billing 页面总装与路由替换",
+  "status": "completed",
+  "completedAt": "2026-04-13T23:28:00+09:00",
+  "changedFiles": [
+    "packages/admin/src/views/billing/BillingListView.vue",
+    "packages/admin/src/router/index.ts"
+  ],
+  "verification": {
+    "depcruise": "pass — 139 modules, 212 dependencies, 0 violations",
+    "typecheck": "pass — vue-tsc --noEmit",
+    "lint": "pass — eslint + jsdoc:lang:check",
+    "test": "pass — 46 suites, 538 tests",
+    "build": "pass — vue-tsc -b && vite build",
+    "guard": "pass — npm run guard exit 0"
+  },
+  "notes": [
+    "BillingListView.vue 从 T02 骨架升级为完整总装层：引入 useBillingFilters / useBillingSelection / useBillingBulkActions / useBillingToast 四个 composable，连接 fixtures 数据，完成摘要卡、筛选区、分段切换、主表格、批量催款、回款流水、弹窗、toast 的 props 与事件串联。",
+    "router/index.ts 将 /billing 从 placeholderRoutes（SectionPlaceholderView）移出，新增显式路由条目指向 BillingListView.vue，meta: { navKey: 'billing', groupKey: 'finance' }。",
+    "根视图只做编排，不包含业务逻辑；复杂逻辑全部委托给已有 model hooks。",
+    "未修改 types.ts / fixtures.ts / locale 文件 / dashboard 入口。"
+  ]
+}

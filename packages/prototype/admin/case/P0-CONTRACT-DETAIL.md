@@ -401,5 +401,5 @@
 
 - [ ] 从案件列表"查看详情"可跳转到新详情页
 - [ ] 从案件新建"创建成功"可跳转到新详情页
-- [ ] `admin-prototype.html` 入口指向新路径
+- [ ] `dashboard/index.html` 入口指向新路径
 - [ ] 旧 `case-detail.html` 不再作为主入口

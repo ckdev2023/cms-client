@@ -9,26 +9,42 @@
         <button class="segment-btn active" type="button" data-log-cat="all" aria-pressed="true">全部</button>
         <button class="segment-btn" type="button" data-log-cat="status" aria-pressed="false">状态变更</button>
         <button class="segment-btn" type="button" data-log-cat="owner" aria-pressed="false">人员变更</button>
-        <button class="segment-btn" type="button" data-log-cat="group" aria-pressed="false">Group 变更</button>
+        <button class="segment-btn" type="button" data-log-cat="group" aria-pressed="false">所属组变更</button>
       </div>
     </div>
 
     <div class="timeline" id="logTimelineList">
       <div class="timeline-item" data-log-type="status">
-        <div class="timeline-dot bg-sky-500"></div>
-        <div class="flex flex-col gap-1"><div class="flex items-center gap-2 flex-wrap"><span class="log-type-chip bg-sky-100 text-sky-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 16:00</span><span class="text-[12px] text-[var(--muted-2)]">· Tanaka</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">新咨询</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>跟进中</span></div></div>
+        <div class="timeline-dot bg-violet-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/08 14:30</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">跟进中</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>待签约</span></div></div>
       </div>
       <div class="timeline-item" data-log-type="owner">
         <div class="timeline-dot bg-emerald-500"></div>
-        <div class="flex flex-col gap-1"><div class="flex items-center gap-2 flex-wrap"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· Admin</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">Suzuki</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>Tanaka</span></div></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/07 09:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">田中</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>铃木</span></div></div>
       </div>
-      <div class="timeline-item" data-log-type="status">
-        <div class="timeline-dot bg-amber-500"></div>
-        <div class="flex flex-col gap-1"><div class="flex items-center gap-2 flex-wrap"><span class="log-type-chip bg-amber-100 text-amber-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· System</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>新咨询</span></div></div>
+      <div class="timeline-item" data-log-type="owner">
+        <div class="timeline-dot bg-emerald-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/06 14:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">铃木</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>田中</span></div></div>
       </div>
       <div class="timeline-item" data-log-type="group">
         <div class="timeline-dot bg-violet-500"></div>
-        <div class="flex flex-col gap-1"><div class="flex items-center gap-2 flex-wrap"><span class="log-type-chip bg-violet-100 text-violet-700">Group 变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· Admin</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>东京一组</span></div></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">所属组变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/06 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">东京一组</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>东京二组</span></div></div>
+      </div>
+      <div class="timeline-item" data-log-type="status">
+        <div class="timeline-dot bg-sky-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-sky-100 text-sky-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 16:00</span><span class="text-[12px] text-[var(--muted-2)]">· 田中</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">新咨询</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>跟进中</span></div></div>
+      </div>
+      <div class="timeline-item" data-log-type="owner">
+        <div class="timeline-dot bg-emerald-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-emerald-100 text-emerald-700">人员变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/05 10:00</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>铃木</span></div></div>
+      </div>
+      <div class="timeline-item" data-log-type="status">
+        <div class="timeline-dot bg-amber-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-amber-100 text-amber-700">状态变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· 系统</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>新咨询</span></div></div>
+      </div>
+      <div class="timeline-item" data-log-type="group">
+        <div class="timeline-dot bg-violet-500"></div>
+        <div class="apple-card p-4"><div class="flex items-center gap-2 flex-wrap mb-1"><span class="log-type-chip bg-violet-100 text-violet-700">所属组变更</span><span class="text-[12px] text-[var(--muted-2)] font-semibold">2026/04/04 09:30</span><span class="text-[12px] text-[var(--muted-2)]">· 管理员</span></div><div class="text-[13px] text-[var(--text)] font-semibold"><span class="text-[var(--muted-2)]">—</span><svg class="w-3 h-3 inline mx-1 text-[var(--muted-2)]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg><span>东京一组</span></div></div>
       </div>
     </div>
   </div>

@@ -250,7 +250,7 @@ li.task-item
 
 | 目标页面 | tasks.html 中的 href | 最新正确路径 | 需修复？ |
 |----------|---------------------|-------------|---------|
-| 仪表盘 | `admin-prototype.html` | `admin-prototype.html`（或 `dashboard/index.html`） | ⚠️ 视情况 |
+| 仪表盘 | `dashboard/index.html` | `dashboard/index.html`（或 `dashboard/index.html`） | ⚠️ 视情况 |
 | 咨询与会话 | `leads-messages.html` | `leads-messages.html`（或 `leads-message/index.html`） | ⚠️ 视情况 |
 | 客户 | `customers.html` | `customers/index.html` | **是** |
 | 案件 | `cases-list.html` | `cases-list.html`（或 `case/index.html`） | ⚠️ 视情况 |
@@ -284,7 +284,7 @@ li.task-item
 |----------|---------|
 | `shared/shell/side-nav.html` | `tasks.html` |
 | `shared/shell/mobile-nav.html` | `tasks.html` |
-| `admin-prototype.html` | `tasks.html`（内联导航） |
+| `dashboard/index.html` | `tasks.html`（内联导航） |
 | `dashboard/index.html` | `tasks.html`（内联导航） |
 | `cases-list.html` | `tasks.html`（内联导航） |
 | `case-detail.html` | `tasks.html`（内联导航） |

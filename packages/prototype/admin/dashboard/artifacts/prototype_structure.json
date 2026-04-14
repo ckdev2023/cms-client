@@ -1,0 +1,139 @@
+{
+  "page_name": "dashboard",
+  "regions": [
+    {
+      "id": "hero-shell",
+      "selector": ".hero-shell",
+      "role": "header",
+      "description": "问候语 + 今日引导文案"
+    },
+    {
+      "id": "scope-toolbar",
+      "selector": ".hero-toolbar",
+      "role": "filter",
+      "description": "我的/本组/全所 范围切换 + Group 下拉筛选"
+    },
+    {
+      "id": "quick-actions-card",
+      "selector": ".apple-card.quick-actions-card",
+      "role": "card_list",
+      "description": "快捷动作区：新建咨询、新建客户、新建案件、去催办"
+    },
+    {
+      "id": "toolbar-meta",
+      "selector": ".toolbar-meta",
+      "role": "filter",
+      "description": "时间窗口切换(7/30天) + 范围说明 + 内联动作按钮"
+    },
+    {
+      "id": "summary-grid",
+      "selector": ".summary-grid",
+      "role": "card_list",
+      "description": "4 张数据摘要卡片：今日待办、已逾期/即将到期、待提交案件、风险案件"
+    },
+    {
+      "id": "panel-grid",
+      "selector": ".panel-grid",
+      "role": "data_list",
+      "description": "4 个工作面板：今日待办、已逾期/即将到期、待提交案件、风险案件"
+    },
+    {
+      "id": "todoList",
+      "selector": "#todoList",
+      "role": "data_list",
+      "description": "今日待办列表（JS 动态渲染 work-item）"
+    },
+    {
+      "id": "deadlineList",
+      "selector": "#deadlineList",
+      "role": "data_list",
+      "description": "已逾期/即将到期列表（按 windowDays 筛选）"
+    },
+    {
+      "id": "submissionList",
+      "selector": "#submissionList",
+      "role": "data_list",
+      "description": "待提交案件列表"
+    },
+    {
+      "id": "riskList",
+      "selector": "#riskList",
+      "role": "data_list",
+      "description": "风险案件列表"
+    },
+    {
+      "id": "note-grid",
+      "selector": ".note-grid",
+      "role": "card_list",
+      "description": "权限与可见性说明 + 使用提示（2 列 note-card）"
+    },
+    {
+      "id": "visibilityNotes",
+      "selector": "#visibilityNotes",
+      "role": "data_list",
+      "description": "随 scope 切换动态更新的权限说明"
+    },
+    {
+      "id": "toast-shell",
+      "selector": ".toast-shell",
+      "role": "section",
+      "description": "全局 Toast 通知（固定右下角）"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": ".segmented-control",
+      "count": 2,
+      "suggest_component": "SegmentedControl",
+      "context": "scope 切换 (我的/本组/全所) + 时间窗口切换 (7天/30天)"
+    },
+    {
+      "selector": ".quick-action-card",
+      "count": 4,
+      "suggest_component": "QuickActionCard",
+      "context": "新建咨询线索、新建客户、新建案件、去催办/到期"
+    },
+    {
+      "selector": ".apple-card.summary-card",
+      "count": 4,
+      "suggest_component": "SummaryCard",
+      "context": "今日待办(info)、逾期/即将到期(warn)、待提交(info)、风险(risk)"
+    },
+    {
+      "selector": ".status-pill",
+      "count": 4,
+      "suggest_component": "StatusPill",
+      "context": "摘要卡片右上角状态标签，4 种变体：info/warn/danger/muted"
+    },
+    {
+      "selector": ".mini-btn",
+      "count": 12,
+      "suggest_component": "MiniButton",
+      "context": "卡片/面板内联动作按钮，触发 toast 或导航"
+    },
+    {
+      "selector": ".apple-card.work-panel",
+      "count": 4,
+      "suggest_component": "WorkPanel",
+      "context": "4 个工作面板（今日待办 featured + 3 个普通面板）"
+    },
+    {
+      "selector": ".work-item",
+      "count": "dynamic",
+      "suggest_component": "WorkItem",
+      "context": "JS 动态渲染的案件/任务行项目，含标题、meta 标签、描述、操作按钮"
+    },
+    {
+      "selector": ".work-list",
+      "count": 4,
+      "suggest_component": "WorkList",
+      "context": "工作面板内的列表容器，含空态和骨架屏"
+    },
+    {
+      "selector": ".apple-card.note-card",
+      "count": 2,
+      "suggest_component": "NoteCard",
+      "context": "权限与可见性 + 使用提示"
+    }
+  ]
+}

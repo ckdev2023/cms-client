@@ -107,7 +107,7 @@ packages/prototype/admin/
 |--------|---------|------|
 | `shared/shell/side-nav.html` | `billing.html` | 共享导航片段 |
 | `shared/shell/mobile-nav.html` | `billing.html` | 共享移动端导航 |
-| `admin-prototype.html` | `billing.html` | 仪表盘导航 + 内容区"进入财务"链接 |
+| `dashboard/index.html` | `billing.html` | 仪表盘导航 + 内容区"进入财务"链接 |
 | `dashboard/index.html` | `../billing.html` | 子目录导航 |
 | `customers/index.html` | `../billing.html` | 子目录导航 |
 | `customers/detail.html` | `../billing.html` | 子目录导航 |
@@ -157,7 +157,7 @@ packages/prototype/admin/
 
 | 导航项 | 规范路径（admin 根级） | 调整后路径（billing/ 子目录） |
 |--------|----------------------|--------------------------|
-| 仪表盘 | `admin-prototype.html` | `../admin-prototype.html` |
+| 仪表盘 | `dashboard/index.html` | `../dashboard/index.html` |
 | 咨询与会话 | `leads-messages.html` | `../leads-messages.html` |
 | 客户 | `customers/index.html` | `../customers/index.html` |
 | 案件 | `cases-list.html` | `../cases-list.html` |

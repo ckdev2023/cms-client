@@ -1,0 +1,95 @@
+{
+  "style_mode": "prototype_css",
+  "css_files": [
+    "packages/prototype/admin/shared/styles/tokens.css",
+    "packages/prototype/admin/shared/styles/shell.css",
+    "packages/prototype/admin/shared/styles/components.css",
+    "packages/prototype/admin/leads-message/styles/list.css"
+  ],
+  "module_specific_classes": [
+    "lead-badge",
+    "lead-badge-new",
+    "lead-badge-following",
+    "lead-badge-pending_sign",
+    "lead-badge-signed",
+    "lead-badge-lost",
+    "lead-badge-signed-warning",
+    "lead-row-warning",
+    "lead-row-dimmed",
+    "leads-filter-select",
+    "search-input"
+  ],
+  "shared_design_system_classes": [
+    "apple-card",
+    "apple-input",
+    "apple-label",
+    "apple-modal",
+    "apple-table",
+    "btn-primary",
+    "btn-secondary",
+    "btn-pill",
+    "chip",
+    "icon-btn",
+    "modal-backdrop",
+    "segmented-control",
+    "segment-btn",
+    "skip-link",
+    "search",
+    "topbar",
+    "topbar-inner",
+    "side-nav",
+    "side-nav-inner",
+    "nav-item",
+    "nav-group-title",
+    "brand",
+    "brand-title",
+    "mobile-nav",
+    "mobile-nav-backdrop",
+    "mobile-nav-panel",
+    "app-shell",
+    "display-font",
+    "table-checkbox"
+  ],
+  "mapping_rules": [
+    { "from": ".lead-badge", "to": "StatusBadge component", "rule": "6 variants keyed by lead status enum" },
+    { "from": ".lead-row-warning td", "to": "table row conditional style", "rule": "rgba(245,158,11,0.06) bg for signed-not-converted" },
+    { "from": ".lead-row-dimmed td", "to": "table row conditional style", "rule": "opacity 0.55 for lost leads" },
+    { "from": ".leads-filter-select", "to": "FilterSelect component", "rule": "apple-input + compact h-9 + fixed width" },
+    { "from": ".segmented-control .segment-btn", "to": "SegmentedControl component", "rule": "mine/group/all scope toggle" },
+    { "from": ".apple-table thead th", "to": "table header", "rule": "uppercase/tracking/12px/900 per DESIGN.md" },
+    { "from": "#leadsTableBody tr[data-lead-id]", "to": "table row", "rule": "cursor pointer; hover --surface-2" }
+  ],
+  "tokens_to_resolve": [
+    {
+      "category": "color",
+      "tokens": [
+        "--bg", "--surface", "--surface-2", "--border",
+        "--text", "--muted", "--muted-2",
+        "--primary", "--primary-hover",
+        "--success", "--warning", "--danger",
+        "--shadow", "--radius"
+      ]
+    },
+    {
+      "category": "typography",
+      "tokens": [
+        "Plus Jakarta Sans font-family",
+        "-0.01em letter-spacing",
+        "display-font (34px/800)",
+        "nav-group-title (11px/900/uppercase/tracking 0.08em)"
+      ]
+    },
+    {
+      "category": "spacing",
+      "tokens": ["gap-2", "gap-3", "gap-4", "p-6", "px-4", "py-3"]
+    },
+    {
+      "category": "radius",
+      "tokens": ["14px (cards/modal)", "999px (pills/badges)", "10px (inputs)", "12px (icon-btn)"]
+    },
+    {
+      "category": "shadow",
+      "tokens": ["--shadow (card shadow)"]
+    }
+  ]
+}

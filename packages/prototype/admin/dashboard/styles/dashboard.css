@@ -68,47 +68,6 @@
   outline: none;
 }
 
-.role-switch {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-
-.role-switch-label {
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--muted-2);
-  font-weight: 800;
-}
-
-.role-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 34px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid rgba(226, 232, 240, 0.92);
-  background: rgba(255, 255, 255, 0.88);
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.2;
-  font-weight: 800;
-  transition:
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    color 160ms ease,
-    background-color 160ms ease;
-}
-
-.role-btn.active {
-  color: #0f172a;
-  border-color: rgba(14, 165, 233, 0.28);
-  background: rgba(255, 255, 255, 0.96);
-  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.12);
-}
-
 /* ── Quick actions ───────────────────────────────────── */
 .text-card-title {
   font-size: 18px;
@@ -244,6 +203,20 @@
   font-size: 13px;
   line-height: 1.7;
   color: var(--muted);
+}
+
+.topbar-link-btn {
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.topbar-link-btn:hover {
+  background: rgba(248, 250, 252, 1);
 }
 
 /* ── Summary cards ───────────────────────────────────── */

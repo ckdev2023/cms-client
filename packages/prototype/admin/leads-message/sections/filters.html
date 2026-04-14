@@ -2,9 +2,10 @@
   section: filters.html
   Scope segmented control + search + select filters (status, owner, group, businessType)
   + date range (follow-up time) + reset button.
+  Loaded into index.html via data-include-html fragment.
   P0-CONTRACT §3
 -->
-<div class="flex flex-col gap-3 mb-6">
+<div data-section="filters" class="flex flex-col gap-3 mb-6">
   <div class="flex flex-wrap justify-between items-center gap-3">
     <div class="flex flex-wrap items-center gap-3">
       <div class="segmented-control" role="group" aria-label="数据范围">
@@ -25,16 +26,17 @@
       <option value="following">跟进中</option>
       <option value="pending_sign">待签约</option>
       <option value="signed">已签约</option>
+      <option value="converted_case">已创建案件</option>
       <option value="lost">已流失</option>
     </select>
     <select id="filterOwner" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[150px] leads-filter-select">
       <option value="" selected>负责人：全部</option>
-      <option value="suzuki">Suzuki</option>
-      <option value="tanaka">Tanaka</option>
-      <option value="sato">Sato</option>
+      <option value="suzuki">铃木</option>
+      <option value="tanaka">田中</option>
+      <option value="sato">佐藤</option>
     </select>
     <select id="filterGroup" class="apple-input appearance-none bg-white h-9 py-0 px-3 text-[13px] font-semibold w-[150px] leads-filter-select">
-      <option value="" selected>Group：全部</option>
+      <option value="" selected>所属组：全部</option>
       <option value="tokyo-1">东京一组</option>
       <option value="tokyo-2">东京二组</option>
       <option value="osaka">大阪组</option>
@@ -49,9 +51,9 @@
       <option value="other">其他</option>
     </select>
     <div class="flex items-center gap-1">
-      <span class="text-[12px] font-semibold text-[var(--apple-text-tert)] whitespace-nowrap">跟进</span>
+      <span class="text-[12px] font-semibold text-[var(--muted-2)] whitespace-nowrap">跟进</span>
       <input type="date" id="filterDateFrom" class="apple-input appearance-none bg-white h-9 py-0 px-2 text-[13px] font-semibold w-[130px]" />
-      <span class="text-[12px] text-[var(--apple-text-tert)]">—</span>
+      <span class="text-[12px] text-[var(--muted-2)]">—</span>
       <input type="date" id="filterDateTo" class="apple-input appearance-none bg-white h-9 py-0 px-2 text-[13px] font-semibold w-[130px]" />
     </div>
     <button class="btn-secondary h-9 px-4 text-[13px]" type="button" data-action="reset-filters">重置</button>

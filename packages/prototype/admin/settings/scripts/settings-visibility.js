@@ -1,9 +1,9 @@
 /**
  * settings-visibility.js
  *
- * Manages the two P0 visibility toggle switches and the save action.
+ * Manages the two visibility toggle switches and the save action.
  * Only handles cross-group case creation and cross-group collaboration
- * viewing — no advanced permission configuration in P0.
+ * viewing — no advanced permission configuration on this page.
  *
  * DOM hooks:
  *   #toggleCrossGroupCase  — checkbox: allow cross-group case creation

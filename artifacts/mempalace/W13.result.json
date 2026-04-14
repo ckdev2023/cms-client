@@ -1,0 +1,30 @@
+{
+  "task_id": "W13",
+  "task_name": "answer-protocol",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/answer-protocol.md",
+  "summary_output": "artifacts/mempalace/W13.summary.md",
+  "checks": [
+    {
+      "name": "source_hierarchy_display_required",
+      "status": "passed"
+    },
+    {
+      "name": "authoritative_backlink_required",
+      "status": "passed"
+    },
+    {
+      "name": "raw_only_as_supplementary_evidence",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W13-answer-protocol.md",
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/acceptance-queries.md",
+    "docs/gyoseishoshi_saas_md/_output/00-outputs.md",
+    "docs/gyoseishoshi_saas_md/_raw/00-inbox.md"
+  ]
+}

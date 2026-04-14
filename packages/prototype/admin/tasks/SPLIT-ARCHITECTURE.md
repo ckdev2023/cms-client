@@ -12,7 +12,7 @@
 
 | 关注点 | 行数范围（约） | 问题 |
 |--------|-------------|------|
-| 设计 Token（CSS 变量） | 11-33 | 与 `admin-prototype.html`、`customers/index.html` 重复定义 |
+| 设计 Token（CSS 变量） | 11-33 | 与 `dashboard/index.html`、`customers/index.html` 重复定义 |
 | 公共组件样式 | 35-139 | `.btn-primary`, `.chip`, `.apple-card`, `.segmented-control` 等内联复制 |
 | App Shell + 导航 HTML | 142-317 | 移动端 + 桌面端导航各写一份，与其他页面重复 |
 | 顶部栏 HTML | 319-341 | 与其他页面重复 |
@@ -101,7 +101,7 @@ packages/prototype/admin/
 
 | 引用方 | 引用路径 | 备注 |
 |--------|---------|------|
-| `admin-prototype.html` | `tasks.html` | 仪表盘导航 |
+| `dashboard/index.html` | `tasks.html` | 仪表盘导航 |
 | `customers/index.html` | `../tasks.html` | 客户页导航 |
 | 其他未迁移的 `.html` 页面 | `tasks.html` | 同级导航 |
 
@@ -145,7 +145,7 @@ packages/prototype/admin/
 
 | 导航项 | 规范路径（admin 根级） | 调整后路径（tasks/ 子目录） |
 |--------|----------------------|--------------------------|
-| 仪表盘 | `admin-prototype.html` | `../admin-prototype.html` |
+| 仪表盘 | `dashboard/index.html` | `../dashboard/index.html` |
 | 咨询与会话 | `leads-messages.html` | `../leads-messages.html` |
 | 客户 | `customers/index.html` | `../customers/index.html` |
 | 案件 | `cases-list.html` | `../cases-list.html` |

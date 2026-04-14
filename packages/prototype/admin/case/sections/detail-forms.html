@@ -11,4 +11,51 @@
     - Export button per document
     - Version history link per document
 -->
-<!-- Content is inlined in detail.html. This file documents the structural boundary. -->
+<div id="tab-forms" class="tab-panel">
+  <div class="apple-card p-0 overflow-hidden">
+    <div class="px-6 py-5 border-b border-[var(--border)] flex justify-between items-center bg-[#fbfbfd]">
+      <h2 class="section-title">文書管理</h2>
+      <button class="btn-primary text-[13px] py-1.5 px-4 flex items-center gap-1.5" type="button">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        生成文書
+      </button>
+    </div>
+    <div class="px-6 pt-5 pb-2">
+      <div class="section-kicker">可用模板</div>
+    </div>
+    <div id="formsTemplateList">
+      <div class="doc-item px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-[var(--primary)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          <div>
+            <div class="text-[14px] font-semibold text-[var(--text)]">在留資格変更・更新許可申請書</div>
+            <div class="text-[12px] text-[var(--muted-2)]">入管局指定様式 · PDF/Excel</div>
+          </div>
+        </div>
+        <button class="btn-pill text-[12px] py-1 px-3" type="button">生成</button>
+      </div>
+    </div>
+
+    <div class="px-6 pt-5 pb-2 border-t border-[var(--border)]">
+      <div class="section-kicker">已生成文書</div>
+    </div>
+    <div id="formsGeneratedList">
+      <div class="doc-item px-6 py-3 flex items-center justify-between border-b-0">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-[var(--success)] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          <div>
+            <div class="text-[14px] font-semibold text-[var(--text)]">在留資格変更・更新許可申請書_CAS-2026-0142.pdf</div>
+            <div class="text-[12px] text-[var(--muted-2)]">v2 · 生成于 2026/04/06 14:20 · Suzuki</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-pill text-[12px] py-1 px-3 flex items-center gap-1" type="button">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            导出
+          </button>
+          <button class="text-[12px] text-[var(--primary)] hover:underline font-semibold" type="button">版本历史</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

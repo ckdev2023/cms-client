@@ -1,0 +1,33 @@
+{
+  "task_id": "W05",
+  "task_name": "wing-taxonomy",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/taxonomy-spec.md",
+  "summary_output": "artifacts/mempalace/W05.summary.md",
+  "checks": [
+    {
+      "name": "core_wings_defined",
+      "status": "passed"
+    },
+    {
+      "name": "prototype_and_rules_boundaries_clear",
+      "status": "passed"
+    },
+    {
+      "name": "no_duplicate_source_assignment",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/mempalace/source-priority.md",
+    "docs/gyoseishoshi_saas_md/P0/",
+    "docs/gyoseishoshi_saas_md/P1/",
+    "docs/事务所流程/",
+    "packages/prototype/admin/",
+    "AGENTS.md",
+    ".cursor/rules/project-standards.mdc",
+    ".cursor/rules/context7-usage.mdc"
+  ]
+}

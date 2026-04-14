@@ -2,8 +2,8 @@
   'use strict';
 
   var TASK_STATUS_OPTIONS = [
-    { value: 'todo', label: '待处理' },
-    { value: 'doing', label: '进行中' },
+    { value: 'todo', label: '待跟进' },
+    { value: 'doing', label: '处理中' },
     { value: 'done', label: '已完成' },
     { value: 'canceled', label: '已取消' },
   ];
@@ -15,13 +15,13 @@
   ];
 
   var TASK_SOURCE_OPTIONS = [
-    { value: 'manual', label: '手动' },
-    { value: 'template', label: '模板' },
-    { value: 'reminder', label: '催办' },
-    { value: 'billing', label: '催款' },
-    { value: 'validation-fail', label: '校验失败' },
-    { value: 'correction', label: '补正' },
-    { value: 'renewal', label: '续签提醒' },
+    { value: 'manual', label: '手动安排' },
+    { value: 'template', label: '模板生成' },
+    { value: 'reminder', label: '资料催办' },
+    { value: 'billing', label: '收费跟进' },
+    { value: 'validation-fail', label: '提交前修正' },
+    { value: 'correction', label: '补正处理' },
+    { value: 'renewal', label: '到期提醒' },
   ];
 
   var CANCEL_REASON_OPTIONS = [
@@ -42,9 +42,9 @@
   ];
 
   /**
-   * P0 提醒天数冻结声明（03 §6.3F #6-#10, §11.1, §11.2）
+   * 提醒天数冻结声明（03 §6.3F #6-#10, §11.1, §11.2）
    *
-   * 在留到期：固定 180 / 90 / 30 天，不支持事务所自定义（配置化后置 P1）
+   * 在留到期：固定 180 / 90 / 30 天，不支持事务所自定义（高级配置后置）
    * COE 有效期：固定 30 / 7 天
    *
    * 去重口径（03 §5.3）：同一 case_id + reminder_type + days_before，
@@ -103,7 +103,7 @@
     canceled: [],
   };
 
-  // P0 §5.3 + §6.3F-10: 提醒/任务去重口径
+  // §5.3 + §6.3F-10: 提醒/任务去重口径
   var REMINDER_DEDUPE_RULE = {
     residence_expiry: 'case_id + reminder_type + days_before',
     coe_expiry: 'case_id + reminder_type + days_before',
@@ -200,7 +200,7 @@
       },
       {
         key: 'complete',
-        label: '批量完成',
+        label: '批量收口',
         type: 'button',
         btnId: 'bulkCompleteBtn',
       },
@@ -251,16 +251,16 @@
     DEADLINE_TAG_CONFIG: [
       { id: 'overdue', label: '逾期', badgeClass: 'badge-danger', condition: 'deadline < today && status in [todo, doing]' },
       { id: 'today', label: '今日到期', badgeClass: 'badge-warning', condition: 'deadline == today && status in [todo, doing]' },
-      { id: 'week', label: '本周到期', badgeClass: 'badge-blue', condition: 'deadline <= endOfWeek && status in [todo, doing]', note: 'P0 行内标签仅，非视图入口' },
+      { id: 'week', label: '本周到期', badgeClass: 'badge-blue', condition: 'deadline <= endOfWeek && status in [todo, doing]', note: '行内标签说明，非视图入口' },
     ],
 
     TOAST: {
       create:        { title: '任务已创建（示例）', desc: '已创建任务并关联案件' },
-      complete:      { title: '任务已完成（示例）', desc: '任务已标记为完成' },
+      complete:      { title: '任务已收口（示例）', desc: '任务已标记为完成' },
       cancel:        { title: '任务已取消（示例）', desc: '任务已取消，原因已记录' },
       bulkAssign:    { title: '批量指派（示例）', desc: '已选择 {count} 条，责任人：{value}' },
       bulkDeadline:  { title: '批量调整截止日（示例）', desc: '已选择 {count} 条，新截止日：{value}' },
-      bulkComplete:  { title: '批量完成（示例）', desc: '已将 {count} 条任务标记为完成' },
+      bulkComplete:  { title: '批量收口（示例）', desc: '已将 {count} 条任务标记为完成' },
       bulkCancel:    { title: '批量取消（示例）', desc: '已将 {count} 条任务取消' },
     },
 

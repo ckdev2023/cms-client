@@ -1,0 +1,36 @@
+{
+  "checks": [
+    {
+      "id": "AC-1",
+      "desc": "billing list page includes the specified case, customer, group, receivable, received, outstanding, next-node, and payment-status fields"
+    },
+    {
+      "id": "AC-2",
+      "desc": "default filters for payment status, group, and owner are available"
+    },
+    {
+      "id": "AC-3",
+      "desc": "the module exposes billing-plan and payment-record sections with the specified fields"
+    },
+    {
+      "id": "AC-4",
+      "desc": "authorized users can register payments and upload vouchers linked to PaymentRecord"
+    },
+    {
+      "id": "AC-5",
+      "desc": "authorized users can create collection tasks for overdue billing nodes"
+    },
+    {
+      "id": "AC-6",
+      "desc": "arrears-risk confirmation records confirmer and reason before unpaid submission continues"
+    },
+    {
+      "id": "AC-7",
+      "desc": "overdue and settled states are visibly represented in the module"
+    },
+    {
+      "id": "AC-8",
+      "desc": "P0 behavior remains limited to manual payment logging and internal risk handling without invoices, reports, auto-reconciliation, customer-facing reminders, or step-level hard billing blocks"
+    }
+  ]
+}

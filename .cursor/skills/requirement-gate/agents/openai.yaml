@@ -1,0 +1,4 @@
+interface:
+  display_name: Requirement Gate
+  short_description: Turn PRDs into gated execution contracts
+  category: productivity

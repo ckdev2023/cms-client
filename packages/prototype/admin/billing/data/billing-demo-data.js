@@ -4,7 +4,7 @@
   var DEMO_BILLING_ROWS = [
     {
       id: 'bill-002',
-      caseName: '经营管理签证 新规',
+      caseName: '技术人文国际 新规',
       caseNo: 'CAS-2026-0191',
       client: { name: 'Global Tech KK', type: '企业' },
       group: 'tokyo-1',
@@ -56,7 +56,7 @@
     },
     {
       id: 'bill-005',
-      caseName: '经营管理签 新規 (COE)',
+      caseName: '技术人文国际 新規 (COE)',
       caseNo: 'CAS-2026-0215',
       client: { name: '王建国', type: '个人' },
       group: 'tokyo-1',
@@ -132,7 +132,7 @@
       id: 'pay-005',
       date: '2026/03/15',
       caseNo: 'CAS-2026-0215',
-      caseName: '经营管理签 新規 (COE)',
+      caseName: '技术人文国际 新規 (COE)',
       amount: 300000,
       node: '着手金 (签约时)',
       receipt: true,
@@ -175,7 +175,7 @@
     'bill-002': {
       billingId: 'bill-002',
       caseNo: 'CAS-2026-0191',
-      caseName: '经营管理签证 新规',
+      caseName: '技术人文国际 新规',
       totalDue: 500000,
       totalReceived: 0,
       totalOutstanding: 500000,
@@ -209,7 +209,7 @@
       nextNode: { name: '全款 (100%)', dueDate: '资料收集齐后 3 天内' },
     },
     /**
-     * 经营管理签 COE 案件 — 演示 BillingPlan 驱动的尾款守卫场景
+     * 技术人文国际 COE 案件 — 演示 BillingPlan 驱动的尾款守卫场景
      *
      * 事实来源：BillingPlan 节点 status（此处 node-007 status=due 表示尾款未结清）
      * 缓存字段：Case.deposit_paid_cached=true, Case.final_payment_paid_cached=false
@@ -218,7 +218,7 @@
     'bill-005': {
       billingId: 'bill-005',
       caseNo: 'CAS-2026-0215',
-      caseName: '经营管理签 新規 (COE)',
+      caseName: '技术人文国际 新規 (COE)',
       totalDue: 600000,
       totalReceived: 300000,
       totalOutstanding: 300000,
@@ -248,7 +248,7 @@
   /**
    * COE 尾款守卫风险确认演示（03 §6.3F #4, §15.2）
    *
-   * 场景：经营管理签 COE 已下发，进入 waiting_final_payment，
+   * 场景：技术人文国际 COE 已下发，进入 waiting_final_payment，
    * 事务所决定先发送 COE 再补收尾款 → warn 模式 → 风险确认留痕
    */
   var DEMO_COE_GUARD_RISK = {
@@ -259,7 +259,7 @@
     receipt: true,
     amount: 300000,
     caseNo: 'CAS-2026-0215',
-    caseName: '经营管理签 新規 (COE)',
+    caseName: '技术人文国际 新規 (COE)',
     guardAction: 'coe_sent',
     postApprovalStage: 'waiting_final_payment',
   };
@@ -309,14 +309,14 @@
       timestamp: '2026/04/09 08:00',
       action: 'collection-created',
       actor: 'Admin',
-      detail: '催款任务 TSK-0099 已创建，案件 CAS-2026-0191 经营管理签证 新规',
+      detail: '催款任务 TSK-0099 已创建，案件 CAS-2026-0191 技术人文国际 新规',
     },
     // P0-CONTRACT §7.4: 收费计划创建/编辑事件
     {
       timestamp: '2026/03/10 11:00',
       action: 'plan-created',
       actor: 'Admin',
-      detail: '创建收费计划：CAS-2026-0191 经营管理签证 新规，节点数 1，总金额 ¥500,000',
+      detail: '创建收费计划：CAS-2026-0191 技术人文国际 新规，节点数 1，总金额 ¥500,000',
     },
     {
       timestamp: '2026/03/15 14:20',
@@ -328,7 +328,7 @@
       timestamp: '2026/04/05 16:00',
       action: 'plan-created',
       actor: 'Admin',
-      detail: '创建收费计划：CAS-2026-0215 经营管理签 新規 (COE)，节点数 2（着手金 + 尾款），总金额 ¥600,000',
+      detail: '创建收费计划：CAS-2026-0215 技术人文国际 新規 (COE)，节点数 2（着手金 + 尾款），总金额 ¥600,000',
     },
     {
       timestamp: '2026/04/05 16:05',
@@ -340,7 +340,7 @@
       timestamp: '2026/04/10 10:30',
       action: 'risk-acknowledged',
       actor: 'Admin',
-      detail: 'COE 尾款守卫风险确认：CAS-2026-0215 经营管理签 新規 (COE)，尾款 ¥300,000 未结清，确认先行发送 COE（warn 模式）',
+      detail: 'COE 尾款守卫风险确认：CAS-2026-0215 技术人文国际 新規 (COE)，尾款 ¥300,000 未结清，确认先行发送 COE（warn 模式）',
     },
   ];
 

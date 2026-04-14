@@ -1,0 +1,182 @@
+{
+  "interactions": [
+    {
+      "selector": "#btnAddLead",
+      "event": "click",
+      "intent": "open_create_modal",
+      "handler": "scripts/leads-create-modal.js → openModal()",
+      "contract_ref": "P0-CONTRACT §6.1"
+    },
+    {
+      "selector": "#topbarAddLead",
+      "event": "click",
+      "intent": "open_create_modal",
+      "handler": "scripts/leads-page.js → delegates to btnAddLead.click()",
+      "contract_ref": "P0-CONTRACT §6.1"
+    },
+    {
+      "selector": "[data-action=open-create-modal]",
+      "event": "click",
+      "intent": "open_create_modal",
+      "handler": "scripts/leads-page.js → delegates to btnAddLead.click()",
+      "contract_ref": "P0-CONTRACT §9 (empty state CTA)"
+    },
+    {
+      "selector": "window.location.hash === '#new'",
+      "event": "load",
+      "intent": "open_create_modal_on_hash",
+      "handler": "scripts/leads-page.js → btnAddLead.click() after 100ms",
+      "contract_ref": "P0-CONTRACT §6.1"
+    },
+    {
+      "selector": "[data-lead-modal-close]",
+      "event": "click",
+      "intent": "close_create_modal",
+      "handler": "scripts/leads-create-modal.js → closeModal()"
+    },
+    {
+      "selector": "#createLeadModal (backdrop)",
+      "event": "click",
+      "intent": "close_create_modal",
+      "handler": "scripts/leads-create-modal.js → closeModal() on backdrop click"
+    },
+    {
+      "selector": "document",
+      "event": "keydown (Escape)",
+      "intent": "close_create_modal",
+      "handler": "scripts/leads-create-modal.js → closeModal()"
+    },
+    {
+      "selector": "#createLeadBtn",
+      "event": "click",
+      "intent": "submit_create_lead",
+      "handler": "scripts/leads-create-modal.js → validate → dedup check → toast → close",
+      "contract_ref": "P0-CONTRACT §5.2",
+      "validations": [
+        "name required → TOASTS.nameMissing",
+        "phone OR email required → TOASTS.contactMissing",
+        "dedup check before create → TOASTS.dedupHit"
+      ]
+    },
+    {
+      "selector": "#leadSource",
+      "event": "change",
+      "intent": "toggle_referrer_field",
+      "handler": "scripts/leads-create-modal.js → show/hide #referrerFieldWrap",
+      "contract_ref": "P0-CONTRACT §5.1 #5"
+    },
+    {
+      "selector": "#leadPhone",
+      "event": "blur",
+      "intent": "check_dedup",
+      "handler": "scripts/leads-create-modal.js → checkDedup()",
+      "contract_ref": "P0-CONTRACT §5.3"
+    },
+    {
+      "selector": "#leadEmail",
+      "event": "blur",
+      "intent": "check_dedup",
+      "handler": "scripts/leads-create-modal.js → checkDedup()",
+      "contract_ref": "P0-CONTRACT §5.3"
+    },
+    {
+      "selector": "#dedupContinueBtn",
+      "event": "click",
+      "intent": "confirm_dedup_continue",
+      "handler": "scripts/leads-create-modal.js → dedupConfirmed=true, hide panel",
+      "contract_ref": "P0-CONTRACT §5.3"
+    },
+    {
+      "selector": "#dedupViewBtn",
+      "event": "click",
+      "intent": "view_existing_record",
+      "handler": "scripts/leads-create-modal.js → toast demo-only",
+      "contract_ref": "P0-CONTRACT §5.3"
+    },
+    {
+      "selector": "[data-scope-btn]",
+      "event": "click",
+      "intent": "switch_data_scope",
+      "handler": "scripts/leads-page.js → toggle active class + aria-pressed",
+      "contract_ref": "demo-only scope control"
+    },
+    {
+      "selector": "#filterStatus, #filterOwner, #filterGroup, #filterBusinessType",
+      "event": "change",
+      "intent": "filter_table_rows",
+      "handler": "scripts/leads-page.js → filterRows()",
+      "contract_ref": "P0-CONTRACT §3"
+    },
+    {
+      "selector": "#filterDateFrom, #filterDateTo",
+      "event": "change",
+      "intent": "filter_table_rows_by_follow_up_date",
+      "handler": "scripts/leads-page.js → filterRows()",
+      "contract_ref": "P0-CONTRACT §3"
+    },
+    {
+      "selector": "#leadSearch",
+      "event": "input",
+      "intent": "search_table_rows",
+      "handler": "scripts/leads-page.js → filterRows() with 200ms debounce",
+      "contract_ref": "P0-CONTRACT §3.2"
+    },
+    {
+      "selector": "[data-action=reset-filters]",
+      "event": "click",
+      "intent": "reset_all_filters",
+      "handler": "scripts/leads-page.js → reset selects, search, dates + filterRows() + toast",
+      "contract_ref": "P0-CONTRACT §3.1 #7"
+    },
+    {
+      "selector": "#leadsTableBody tr[data-lead-id]",
+      "event": "click",
+      "intent": "navigate_to_detail",
+      "handler": "scripts/leads-page.js → window.location.href = detail.html?id=xxx&sample=yyy",
+      "contract_ref": "P0-CONTRACT §6.2",
+      "excludes": "input[type=checkbox] clicks"
+    },
+    {
+      "selector": "#selectAllLeads",
+      "event": "change",
+      "intent": "toggle_select_all",
+      "handler": "scripts/leads-page.js → check/uncheck all visible rows + updateBulkBar()",
+      "contract_ref": "P0-CONTRACT §4.1"
+    },
+    {
+      "selector": "[data-lead-select]",
+      "event": "change",
+      "intent": "toggle_row_selection",
+      "handler": "scripts/leads-page.js → updateBulkBar()",
+      "contract_ref": "P0-CONTRACT §4.1"
+    },
+    {
+      "selector": "#bulkClearBtn",
+      "event": "click",
+      "intent": "clear_selection",
+      "handler": "scripts/leads-page.js → uncheck all + updateBulkBar()",
+      "contract_ref": "P0-CONTRACT §4.1"
+    },
+    {
+      "selector": "#bulkAssignApplyBtn",
+      "event": "click",
+      "intent": "bulk_assign_owner",
+      "handler": "scripts/leads-page.js → bulkApplyHandler → toast",
+      "contract_ref": "P0-CONTRACT §4.2 #1"
+    },
+    {
+      "selector": "#bulkFollowUpApplyBtn",
+      "event": "click",
+      "intent": "bulk_adjust_follow_up",
+      "handler": "scripts/leads-page.js → bulkApplyHandler → toast",
+      "contract_ref": "P0-CONTRACT §4.2 #2"
+    },
+    {
+      "selector": "#bulkStatusApplyBtn",
+      "event": "click",
+      "intent": "bulk_mark_status",
+      "handler": "scripts/leads-page.js → bulkApplyHandler → toast",
+      "contract_ref": "P0-CONTRACT §4.2 #3"
+    }
+  ]
+}

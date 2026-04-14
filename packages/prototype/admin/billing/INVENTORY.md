@@ -340,7 +340,7 @@
 
 | 目标页面 | billing.html 中的 href | 最新正确路径 | 需修复？ |
 |----------|----------------------|-------------|---------|
-| 仪表盘 | `admin-prototype.html` | `dashboard/index.html` | ⚠️ 视情况 |
+| 仪表盘 | `dashboard/index.html` | `dashboard/index.html` | ⚠️ 视情况 |
 | 咨询与会话 | `leads-messages.html` | `leads-message/index.html` | ⚠️ 视情况 |
 | 客户 | `customers.html` | `customers/index.html` | **是** |
 | 案件 | `cases-list.html` | `case/index.html` | **是** |
@@ -374,7 +374,7 @@
 |----------|---------|
 | `shared/shell/side-nav.html` | `billing.html` |
 | `shared/shell/mobile-nav.html` | `billing.html` |
-| `admin-prototype.html` | `billing.html`（内联导航） |
+| `dashboard/index.html` | `billing.html`（内联导航） |
 | `dashboard/index.html` | `billing.html`（内联导航） |
 | `cases-list.html` | `billing.html`（内联导航） |
 | `case/index.html` | `billing.html`（内联导航） |
@@ -594,7 +594,7 @@ shared shell 页面 ──→ billing/index.html ──→ 模块化内容（直
 | 入口 | 所在文件 | 当前路径 | 备注 |
 |------|---------|---------|------|
 | 仪表盘「待回款案件」卡片 | `dashboard/index.html` | `../billing.html`（内联链接） | 文案"登记回款"/"查看详情"需与财务页主按钮对齐 |
-| 仪表盘「进入财务」 | `admin-prototype.html` L842 | `billing.html` | 工作台网格入口 |
+| 仪表盘「进入财务」 | `dashboard/index.html` L842 | `billing.html` | 工作台网格入口 |
 | 案件详情「收费」Tab | `case/detail.html` | Tab 内联，不跳转财务列表 | Tab 内的"登记回款""上传凭证""创建催款任务"文案需与财务页一致 |
 | 任务列表催款任务 | `tasks/index.html` | 无直链（P0 催款任务尚未实现） | 未来催款任务行应可跳转到财务页对应案件收费 |
 
@@ -606,7 +606,7 @@ shared shell 页面 ──→ billing/index.html ──→ 模块化内容（直
 
 | 来源页面 | 链接路径 | Phase 1 | Phase 2 |
 |----------|---------|---------|---------|
-| `admin-prototype.html`（导航 ×2 + 内容 ×1） | `billing.html` | 直达原始内容 | 重定向到 `billing/index.html` |
+| `dashboard/index.html`（导航 ×2 + 内容 ×1） | `billing.html` | 直达原始内容 | 重定向到 `billing/index.html` |
 | `tasks.html` | `billing.html` | 直达 | 重定向 |
 | `leads-messages.html` | `billing.html` | 直达 | 重定向 |
 | `cases-list.html` | `billing.html` | 直达 | 重定向 |
@@ -626,7 +626,7 @@ shared shell 页面 ──→ billing/index.html ──→ 模块化内容（直
 
 | 来源 | 链接路径 | 说明 |
 |------|---------|------|
-| `admin-prototype.html` L842 | `billing.html` | "进入财务" 卡片链接 |
+| `dashboard/index.html` L842 | `billing.html` | "进入财务" 卡片链接 |
 | `src/pages/admin/_parts/admin-prototype/WorkbenchGrid.html` | `billing.html` | 组件模板内 |
 | `src/pages/admin/_parts/dashboard/QuickActions.html` | `billing.html` | 快捷操作卡片 |
 | `src/components/Admin/SideNav.html` | `billing.html` | 组件模板导航 |
@@ -638,7 +638,7 @@ shared shell 页面 ──→ billing/index.html ──→ 模块化内容（直
 
 | 导航项 | 规范路径（admin 根级） | 调整后路径（billing/ 子目录） |
 |--------|----------------------|--------------------------|
-| 仪表盘 | `admin-prototype.html` | `../admin-prototype.html` |
+| 仪表盘 | `dashboard/index.html` | `../dashboard/index.html` |
 | 咨询与会话 | `leads-messages.html` | `../leads-messages.html` |
 | 客户 | `customers/index.html` | `../customers/index.html` |
 | 案件 | `cases-list.html` | `../cases-list.html` |
@@ -687,8 +687,8 @@ shared shell 页面 ──→ billing/index.html ──→ 模块化内容（直
 |---|--------|---------|
 | 1 | 直接访问 `billing.html` | 即时跳转到 `billing/index.html`，无闪白 |
 | 2 | 直接访问 `billing/index.html` | 显示模块化财务页面，无重定向 |
-| 3 | 从 `admin-prototype.html` 导航栏点击"收费与财务" | 到达 `billing/index.html`（经 `billing.html` 重定向） |
-| 4 | 从 `admin-prototype.html` 内容区"进入财务"点击 | 到达 `billing/index.html`（经 `billing.html` 重定向） |
+| 3 | 从 `dashboard/index.html` 导航栏点击"收费与财务" | 到达 `billing/index.html`（经 `billing.html` 重定向） |
+| 4 | 从 `dashboard/index.html` 内容区"进入财务"点击 | 到达 `billing/index.html`（经 `billing.html` 重定向） |
 | 5 | 从 `dashboard/index.html` 导航栏点击"收费与财务" | 到达 `billing/index.html`（经 `../billing.html` 重定向） |
 | 6 | 从 `customers/index.html` 导航栏点击"收费与财务" | 到达 `billing/index.html`（经 `../billing.html` 重定向） |
 | 7 | 从 `case/detail.html` 导航栏点击"收费与财务" | 到达 `billing/index.html`（经 `../billing.html` 重定向） |

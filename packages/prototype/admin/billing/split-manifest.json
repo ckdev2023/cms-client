@@ -54,17 +54,14 @@
       "cssRule": ".nav-item[aria-current=\"page\"] { background: rgba(3,105,161,0.1); color: var(--text); }"
     },
     "navPathAdjustments": [
-      { "label": "仪表盘", "canonical": "admin-prototype.html", "adjusted": "../admin-prototype.html" },
-      { "label": "咨询与会话", "canonical": "leads-messages.html", "adjusted": "../leads-messages.html" },
+      { "label": "仪表盘", "canonical": "dashboard/index.html", "adjusted": "../dashboard/index.html" },
+      { "label": "咨询与会话", "canonical": "leads-message/index.html", "adjusted": "../leads-message/index.html" },
       { "label": "客户", "canonical": "customers/index.html", "adjusted": "../customers/index.html" },
-      { "label": "案件", "canonical": "cases-list.html", "adjusted": "../cases-list.html" },
-      { "label": "任务与提醒", "canonical": "tasks.html", "adjusted": "../tasks.html" },
-      { "label": "资料中心", "canonical": "documents.html", "adjusted": "../documents.html" },
-      { "label": "文书中心", "canonical": "forms.html", "adjusted": "../forms.html" },
-      { "label": "收费与财务", "canonical": "billing.html", "adjusted": "index.html", "ariaCurrent": true },
-      { "label": "报表", "canonical": "reports.html", "adjusted": "../reports.html" },
-      { "label": "设置", "canonical": "settings.html", "adjusted": "../settings.html" },
-      { "label": "客户门户", "canonical": "../src/index.html", "adjusted": "../../src/index.html" }
+      { "label": "案件", "canonical": "case/index.html", "adjusted": "../case/index.html" },
+      { "label": "任务与提醒", "canonical": "tasks/index.html", "adjusted": "../tasks/index.html" },
+      { "label": "资料中心", "canonical": "documents/index.html", "adjusted": "../documents/index.html" },
+      { "label": "收费与财务", "canonical": "billing/index.html", "adjusted": "index.html", "ariaCurrent": true },
+      { "label": "设置", "canonical": "settings/index.html", "adjusted": "../settings/index.html" }
     ]
   },
   "sections": [
@@ -541,7 +538,7 @@
       "note": "规范片段导航链接，本轮仅记录不修复"
     },
     {
-      "source": "packages/prototype/admin/admin-prototype.html",
+      "source": "packages/prototype/admin/dashboard/index.html",
       "href": "billing.html",
       "note": "仪表盘内联导航链接，本轮仅记录不修复"
     },

@@ -1,0 +1,3 @@
+interface:
+  display_name: "HTML Prototype Gate"
+  short_description: "Parse html/css prototypes into structured frontend contracts with hard validation gates."

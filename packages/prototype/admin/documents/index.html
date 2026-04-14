@@ -73,12 +73,6 @@
               </svg>
               收费与财务
             </a>
-            <!-- <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
-              </svg>
-              报表
-            </a> -->
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,12 +81,6 @@
               </svg>
               设置
             </a>
-            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
-              </svg>
-              客户门户
-            </a> -->
           </nav>
         </div>
       </div>
@@ -153,12 +141,6 @@
               </svg>
               收费与财务
             </a>
-            <!-- <a class="nav-item" href="../reports.html">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6m-4 0h4m-9 0h2m10 0h2m-7 4h4a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2h4"></path>
-              </svg>
-              报表
-            </a> -->
             <div class="nav-group-title">系统</div>
             <a class="nav-item" href="../settings/index.html">
               <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,12 +149,6 @@
               </svg>
               设置
             </a>
-            <!-- <a class="nav-item" href="../../src/index.html" target="_blank" rel="noreferrer">
-              <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8L13 15m-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h10a2 2 0 012 2v6"></path>
-              </svg>
-              客户门户
-            </a> -->
           </nav>
         </div>
       </aside>
@@ -209,18 +185,18 @@
           <section class="page-hero mb-8" aria-labelledby="documentsPageTitle">
             <div class="page-hero__content">
               <div class="page-hero__eyebrow">
-                <span class="chip">全部案件资料总览</span>
-                <span class="page-hero__eyebrow-text">优先显示缺件、快到期和共用资料风险</span>
+                <span class="chip">资料执行看板</span>
+                <span class="page-hero__eyebrow-text">先处理缺件、退回补正、快到期和一处过期影响多案的资料</span>
               </div>
               <div>
                 <h1 class="text-3xl display-font font-semibold" id="documentsPageTitle">资料中心</h1>
-                <p class="page-hero__desc text-sm text-[var(--muted)] mt-2">在这里统一查看各案件资料进度，集中处理登记资料、催办补件、审核和使用已存资料。</p>
+                <p class="page-hero__desc text-sm text-[var(--muted)] mt-2">在这里统一查看各案件资料进度，优先找出今天卡住案件推进的资料，并直接进入催办、审核和登记动作。</p>
               </div>
             </div>
             <div class="page-hero__aside">
               <div class="page-hero__metric">
-                <span class="page-hero__metric-label">当前列表</span>
-                <strong class="page-hero__metric-value">全部案件资料，优先显示待处理项目</strong>
+                <span class="page-hero__metric-label">当前视角</span>
+                <strong class="page-hero__metric-value">今天先看缺件、退回待重交与过期风险</strong>
               </div>
               <div class="flex space-x-3">
                 <button class="btn-primary flex items-center" id="btnRegisterDocument" data-action="open-register-modal">
@@ -237,24 +213,24 @@
           <!-- section: sections/summary-cards.html -->
           <div class="documents-summary-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
             <button class="apple-card summary-card summary-card--reviewing" id="summaryCardReviewing" data-action="filter-by-card" data-card-status="uploaded_reviewing" type="button">
-              <div class="summary-card__label"><span class="summary-card__dot"></span>待审核</div>
+              <div class="summary-card__label"><span class="summary-card__dot"></span>待事务所确认</div>
               <div class="summary-card__value" id="reviewingCount">0</div>
-              <div class="summary-card__hint">客户或同事已提交，等待事务所确认是否通过。</div>
+              <div class="summary-card__hint">资料已收到，但还没确认能不能直接用于提交。</div>
             </button>
             <button class="apple-card summary-card summary-card--missing" id="summaryCardMissing" data-action="filter-by-card" data-card-status="missing" type="button">
-              <div class="summary-card__label"><span class="summary-card__dot"></span>缺件</div>
+              <div class="summary-card__label"><span class="summary-card__dot"></span>今天要催的资料</div>
               <div class="summary-card__value" id="missingCount">0</div>
-              <div class="summary-card__hint">待提交或退回补正的资料，优先催办与重新登记。</div>
+              <div class="summary-card__hint">包含尚未开始、等待对方提交和退回待重交，适合集中催办。</div>
             </button>
             <button class="apple-card summary-card summary-card--expired" id="summaryCardExpired" data-action="filter-by-card" data-card-status="expired" type="button">
-              <div class="summary-card__label"><span class="summary-card__dot"></span>过期</div>
+              <div class="summary-card__label"><span class="summary-card__dot"></span>已过期版本</div>
               <div class="summary-card__value" id="expiredCount">0</div>
-              <div class="summary-card__hint">资料已超过有效期，建议尽快补最新版本。</div>
+              <div class="summary-card__hint">当前版本不能继续直接使用，建议今天先补最新版本。</div>
             </button>
             <button class="apple-card summary-card summary-card--risk" id="summaryCardSharedExpiry" data-action="filter-by-card" data-card-status="shared_expired" type="button">
-              <div class="summary-card__label"><span class="summary-card__dot"></span>共用资料到期影响</div>
+              <div class="summary-card__label"><span class="summary-card__dot"></span>一处过期影响多案</div>
               <div class="summary-card__value" id="sharedExpiryCount">0</div>
-              <div class="summary-card__hint">同一份资料被多个案件使用时，点击查看哪些案件会受影响。</div>
+              <div class="summary-card__hint">同一份资料被多案引用时，先处理这一处就能一起解卡多个案件。</div>
             </button>
           </div>
           <!-- /section: sections/summary-cards.html -->
@@ -263,21 +239,21 @@
           <div class="apple-card filter-panel">
             <div class="filter-panel__header">
               <div>
-                <div class="filter-panel__title">组合筛选</div>
-                <p class="filter-panel__desc">可按状态、案件、由谁提供和关键词筛选，快速找到最需要处理的资料。</p>
+                <div class="filter-panel__title">快速找出今天要处理的资料</div>
+                <p class="filter-panel__desc">可按卡点状态、案件、由谁提供和关键词筛选，快速定位要催办、要审核或要换新版的资料。</p>
               </div>
-              <div class="filter-panel__helper">默认优先显示待处理资料</div>
+              <div class="filter-panel__helper">默认按缺件、退回、过期风险优先排序</div>
             </div>
             <div class="flex flex-wrap items-center gap-3" id="filtersToolbar">
               <select class="apple-input text-sm" data-filter="status" aria-label="状态筛选">
                 <option value="">全部状态</option>
-                <option value="not_sent">未発出</option>
-                <option value="waiting_upload">待提交</option>
-                <option value="uploaded_reviewing">已提交待审核</option>
-                <option value="approved">通过</option>
-                <option value="revision_required">退回补正</option>
-                <option value="expired">过期</option>
-                <option value="waived">无需提供</option>
+                <option value="not_sent">尚未开始</option>
+                <option value="waiting_upload">等待对方提交</option>
+                <option value="uploaded_reviewing">已收到待确认</option>
+                <option value="approved">可直接使用</option>
+                <option value="revision_required">退回待重交</option>
+                <option value="expired">版本已过期</option>
+                <option value="waived">本案无需提供</option>
               </select>
               <select class="apple-input text-sm" data-filter="case" aria-label="所属案件筛选">
                 <option value="">全部案件</option>
@@ -304,10 +280,10 @@
           <div class="apple-card table-shell overflow-hidden" id="docTableCard">
             <div class="table-shell__header">
               <div>
-                <div class="table-shell__eyebrow">资料明细</div>
+                <div class="table-shell__eyebrow">资料执行清单</div>
                 <div class="table-shell__title-row">
-                  <h2 class="table-shell__title">全部案件资料清单</h2>
-                  <span class="table-shell__sort-note">优先显示待处理资料</span>
+                  <h2 class="table-shell__title">今天先处理这些资料</h2>
+                  <span class="table-shell__sort-note">按缺件、退回待重交和过期风险优先</span>
                 </div>
               </div>
               <div class="table-shell__count"><strong id="docTableCount">0</strong> 项</div>
@@ -326,7 +302,7 @@
               </div>
               <div class="flex items-center gap-2">
                 <button class="btn-pill text-sm" id="bulkRemindBtn" type="button">批量催办</button>
-                <button class="btn-pill text-sm" id="bulkApproveBtn" type="button">批量审核通过</button>
+                <button class="btn-pill text-sm" id="bulkApproveBtn" type="button">批量确认可用</button>
                 <button class="btn-pill text-sm" id="bulkWaiveBtn" type="button">批量标记无需提供</button>
               </div>
             </div>
@@ -346,12 +322,8 @@
                       </label>
                     </th>
                     <th>资料名称</th>
-                    <th class="hidden md:table-cell">所属案件</th>
-                    <th class="hidden lg:table-cell" style="width: 120px;">由谁提供</th>
-                    <th style="width: 110px;">状态</th>
-                    <th class="hidden md:table-cell" style="width: 120px;">截止日</th>
-                    <th class="hidden lg:table-cell" style="width: 130px;">最近催办</th>
-                    <th class="hidden lg:table-cell" style="width: 200px;">归档位置</th>
+                    <th style="width: 132px;">状态</th>
+                    <th class="hidden md:table-cell" style="width: 132px;">截止日</th>
                   </tr>
                 </thead>
                 <tbody id="docTableBody">

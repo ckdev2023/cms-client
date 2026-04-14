@@ -1,0 +1,48 @@
+{
+  "checks": [
+    {
+      "id": "AC-001",
+      "desc": "可从咨询入口创建经营管理签线索，并录入 location、source_type、referrer_name 等基础信息。"
+    },
+    {
+      "id": "AC-002",
+      "desc": "可演示发送《2025M_C经管签信息表》、回收问卷，并形成 quote_price 与 visa_plan。"
+    },
+    {
+      "id": "AC-003",
+      "desc": "签约后可转化为案件并生成经营管理签资料清单，且签约前不应呈现建案成功态。"
+    },
+    {
+      "id": "AC-004",
+      "desc": "案件详情可并行展示 P0 管理阶段与经营管理签业务子步骤，不混淆为同一状态枚举。"
+    },
+    {
+      "id": "AC-005",
+      "desc": "可演示资料提交、审核退回、文书制作、Gate 校验、提交入管全过程。"
+    },
+    {
+      "id": "AC-006",
+      "desc": "可演示 NEED_SUPPLEMENT → SUPPLEMENT_PROCESSING → UNDER_REVIEW 的补正循环，并显示 supplement_count。"
+    },
+    {
+      "id": "AC-007",
+      "desc": "可演示 APPROVED 后收尾款与发送 COE 的门禁，尾款未结清时发送 COE 被阻断。"
+    },
+    {
+      "id": "AC-008",
+      "desc": "可演示 COE_SENT → VISA_APPLYING → ENTRY_SUCCESS 与 COE_SENT → VISA_APPLYING → VISA_REJECTED 两条返签路径。"
+    },
+    {
+      "id": "AC-009",
+      "desc": "ENTRY_SUCCESS 后可录入 residence_status、period_start、period_end、residence_years、entry_date、card_number。"
+    },
+    {
+      "id": "AC-010",
+      "desc": "录入在留期间后可自动展示 180/90/30 天提醒任务；提醒创建失败时不得进入 CLOSED_SUCCESS。"
+    },
+    {
+      "id": "AC-011",
+      "desc": "全流程只使用 mock 或本地状态，不触发真实网络请求或真实通知。"
+    }
+  ]
+}

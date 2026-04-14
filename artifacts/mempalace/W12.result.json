@@ -1,0 +1,36 @@
+{
+  "task_id": "W12",
+  "task_name": "acceptance-queries",
+  "status": "completed",
+  "stopped": false,
+  "primary_output": "plan/mempalace/acceptance-queries.md",
+  "summary_output": "artifacts/mempalace/W12.summary.md",
+  "checks": [
+    {
+      "name": "at_least_twenty_queries_defined",
+      "status": "passed"
+    },
+    {
+      "name": "required_topics_covered",
+      "status": "passed"
+    },
+    {
+      "name": "each_query_has_clear_success_signal",
+      "status": "passed"
+    }
+  ],
+  "conflicts": [],
+  "sources": [
+    "plan/tasks/MP-W12-acceptance-queries.md",
+    "plan/mempalace/source-priority.md",
+    "plan/mempalace/ingestion-manifest.md",
+    "plan/mempalace/taxonomy-spec.md",
+    "docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md",
+    "docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md",
+    "docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md",
+    "docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md",
+    "docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md",
+    "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/README.md",
+    "docs/gyoseishoshi_saas_md/_output/00-outputs.md"
+  ]
+}

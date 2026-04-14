@@ -117,6 +117,7 @@ export type Case = {
   customerId: CustomerId;
   caseTypeCode: string;
   status: CaseStatus;
+  stage: string | null;
   ownerUserId: UserId;
   openedAt: string;
   dueAt: string | null;
@@ -125,6 +126,14 @@ export type Case = {
   caseName: string | null;
   caseSubtype: string | null;
   applicationType: string | null;
+  applicationFlowType: string | null;
+  visaPlan: string | null;
+  postApprovalStage: string | null;
+  coeIssuedAt: string | null;
+  coeExpiryDate: string | null;
+  coeSentAt: string | null;
+  closeReason: string | null;
+  supplementCount: number;
   /** @deprecated P0 不使用 Company 实体；雇主信息通过 employer_* 字段或 metadata 沉淀。 */
   companyId: CompanyId | null;
   priority: string;

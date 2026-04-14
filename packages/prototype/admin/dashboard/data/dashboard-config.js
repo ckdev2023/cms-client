@@ -5,10 +5,7 @@
     cards: [
       "todayTasks",
       "upcomingCases",
-      "pendingDocuments",
       "pendingSubmissions",
-      "inReview",
-      "pendingBilling",
       "riskCases",
     ],
     scopeLabels: {
@@ -17,24 +14,24 @@
       all: "全所视角",
     },
     scopeSummary: {
-      mine: "当前显示我负责或参与的案件与任务，卡片和列表会一起更新。",
-      group: "当前显示本组的案件与任务，方便一起安排优先级。",
-      all: "当前显示全所范围，适合查看整体进度与风险分布。",
+      mine: "当前显示我负责或参与的案件与任务，优先聚焦今天先要处理的 4 类工作。",
+      group: "当前显示本组的案件与任务，方便一起安排今日优先级与期限压力。",
+      all: "当前显示全所范围，适合快速查看待办、期限、待提交与风险分布。",
     },
     visibilityNotes: {
       mine: [
         "主办人 / 助理默认进入“我的”，聚焦自己负责或协作案件。",
-        "今日待办、待补件、风险案件与待回款列表会同步收敛到个人范围。",
-        "适合先处理今天必须完成的动作，再继续跟进临期案件。",
+        "首页固定聚焦今日待办、已逾期 / 即将到期、待提交与风险案件。",
+        "适合先处理今天必须完成的动作，再继续跟进临期和卡点案件。",
       ],
       group: [
-        "本组视角适用于主办人、助理查看团队待办、临期案件和补件压力。",
-        "适合批量创建跟进任务、分派责任人、推进提交前复核。",
+        "本组视角适用于主办人、助理查看团队待办、期限压力与提交节奏。",
+        "适合批量创建跟进任务、分派责任人、推进提交前复核与卡点修复。",
         "切换视角时卡片计数与列表同步刷新，保留固定卡片布局。",
       ],
       all: [
-        "全所视角仅管理员可见，用于观察全所待办、待提交、风险和回款风险。",
-        "适合组长或管理员快速查看整体进度、风险和回款情况。",
+        "全所视角仅管理员可见，用于观察全所待办、期限、待提交和风险压力。",
+        "适合组长或管理员快速查看整体进度与需要先处理的问题。",
         "如需更深入处理，可进入案件列表继续筛选和跟进。",
       ],
     },
@@ -44,48 +41,48 @@
         upcomingCases: {
           valueByWindow: { 7: "3", 30: "6" },
           helperByWindow: {
-            7: "最近 7 天内有 3 个关键期限需要优先跟进。",
+            7: "含 1 个已逾期、2 个最近 7 天内到期案件，需要先排期。",
             30: "切到最近 30 天后，会多看到 3 个需要提前安排的案件。",
           },
-          meta: "按截止日统计"
+          meta: "按期限窗口统计"
         },
         pendingDocuments: { value: "2", helper: "1 个退回补正，1 个资料项缺件。", meta: "缺件或补正中" },
         pendingSubmissions: { value: "2", helper: "资料和校验已通过，可继续复核与提交。", meta: "等待提交" },
         inReview: { value: "4", helper: "等待入管结果与回执，重点关注补正临期。", meta: "提交后跟进" },
         pendingBilling: { value: "1", helper: "有 1 笔已到收费节点但仍未结清。", meta: "待确认到账" },
-        riskCases: { value: "2", helper: "1 个阻断项，1 个欠款风险。", meta: "阻断、逾期或欠款" },
+        riskCases: { value: "2", helper: "1 个必须先修复的问题，1 个欠款风险。", meta: "卡点待修复" },
       },
       group: {
         todayTasks: { value: "14", helper: "本组今日需处理 14 项任务，含催办、补件、回执上传。", meta: "今日需要处理" },
         upcomingCases: {
           valueByWindow: { 7: "8", 30: "12" },
           helperByWindow: {
-            7: "本组最近 7 天内已有 8 个案件需要排期。",
+            7: "本组最近 7 天内已有 8 个案件需要排期，其中 2 个已经逾期。",
             30: "切到最近 30 天后可提前看到更多排期压力。",
           },
-          meta: "按截止日统计"
+          meta: "按期限窗口统计"
         },
         pendingDocuments: { value: "5", helper: "3 个缺件、2 个补正中。", meta: "缺件或补正中" },
         pendingSubmissions: { value: "5", helper: "待提交案件较集中，适合统一复核。", meta: "等待提交" },
         inReview: { value: "9", helper: "审理中案件较多，需持续跟进入管回执。", meta: "提交后跟进" },
         pendingBilling: { value: "3", helper: "有 3 个收费节点已到，建议与财务同步。", meta: "待确认到账" },
-        riskCases: { value: "4", helper: "阻断项与欠款风险同时存在，需尽快指派责任人。", meta: "阻断、逾期或欠款" },
+        riskCases: { value: "4", helper: "缺件、补正临期与欠款风险同时存在，需尽快指派责任人。", meta: "卡点待修复" },
       },
       all: {
         todayTasks: { value: "41", helper: "全所今日待办量较高，需重点关注风险与回款。", meta: "今日需要处理" },
         upcomingCases: {
           valueByWindow: { 7: "19", 30: "30" },
           helperByWindow: {
-            7: "全所最近 7 天内已有 19 个案件临期。",
+            7: "全所最近 7 天内已有 19 个案件临期，其中 4 个已经逾期。",
             30: "切到最近 30 天后，会继续放大排期与跟进压力。",
           },
-          meta: "按截止日统计"
+          meta: "按期限窗口统计"
         },
         pendingDocuments: { value: "12", helper: "待补件案件分散在多个组，需要统一跟催。", meta: "缺件或补正中" },
         pendingSubmissions: { value: "10", helper: "可安排统一复核节奏，避免临近截止时集中处理。", meta: "等待提交" },
         inReview: { value: "21", helper: "审理中案件覆盖多个模板，需集中追踪回执。", meta: "提交后跟进" },
         pendingBilling: { value: "7", helper: "回款风险集中在 3 个高金额案件。", meta: "待确认到账" },
-        riskCases: { value: "9", helper: "阻断、补正临期与欠款风险叠加。", meta: "阻断、逾期或欠款" },
+        riskCases: { value: "9", helper: "阻断、补正临期、缺件与欠款风险叠加。", meta: "卡点待修复" },
       },
     },
     lists: {
@@ -183,7 +180,7 @@
         ],
         risks: [
           {
-            title: "高桥优经营管理更新",
+            title: "高桥优高度人才更新",
             meta: ["CASE-2398", "欠款风险", "未收金额：JPY 180,000"],
             desc: "收费节点已到但仍未结清，需登记催款并暂停非必要推进。",
             status: "status-danger",
@@ -201,7 +198,7 @@
         ],
         billing: [
           {
-            title: "高桥优经营管理更新",
+            title: "高桥优高度人才更新",
             meta: ["CASE-2398", "应回款：JPY 180,000", "到期：4/09"],
             desc: "优先登记回款；如仍未到账，创建催款任务并通知财务。",
             status: "status-warn",

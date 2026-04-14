@@ -10,23 +10,23 @@
 -->
 <div class="documents-summary-grid grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
   <button class="apple-card summary-card summary-card--reviewing" id="summaryCardReviewing" data-action="filter-by-card" data-card-status="uploaded_reviewing" type="button">
-    <div class="summary-card__label"><span class="summary-card__dot"></span>待审核</div>
+    <div class="summary-card__label"><span class="summary-card__dot"></span>待事务所确认</div>
     <div class="summary-card__value" id="reviewingCount">0</div>
-    <div class="summary-card__hint">客户或同事已提交，等待事务所确认是否通过。</div>
+    <div class="summary-card__hint">资料已收到，但还没确认能不能直接用于提交。</div>
   </button>
   <button class="apple-card summary-card summary-card--missing" id="summaryCardMissing" data-action="filter-by-card" data-card-status="missing" type="button">
-    <div class="summary-card__label"><span class="summary-card__dot"></span>缺件</div>
+    <div class="summary-card__label"><span class="summary-card__dot"></span>今天要催的资料</div>
     <div class="summary-card__value" id="missingCount">0</div>
-    <div class="summary-card__hint">待提交或退回补正的资料，优先催办与重新登记。</div>
+    <div class="summary-card__hint">包含尚未开始、等待对方提交和退回待重交，适合集中催办。</div>
   </button>
   <button class="apple-card summary-card summary-card--expired" id="summaryCardExpired" data-action="filter-by-card" data-card-status="expired" type="button">
-    <div class="summary-card__label"><span class="summary-card__dot"></span>过期</div>
+    <div class="summary-card__label"><span class="summary-card__dot"></span>已过期版本</div>
     <div class="summary-card__value" id="expiredCount">0</div>
-    <div class="summary-card__hint">资料已超过有效期，建议尽快补最新版本。</div>
+    <div class="summary-card__hint">当前版本不能继续直接使用，建议今天先补最新版本。</div>
   </button>
   <button class="apple-card summary-card summary-card--risk" id="summaryCardSharedExpiry" data-action="filter-by-card" data-card-status="shared_expired" type="button">
-    <div class="summary-card__label"><span class="summary-card__dot"></span>共用资料到期影响</div>
+    <div class="summary-card__label"><span class="summary-card__dot"></span>一处过期影响多案</div>
     <div class="summary-card__value" id="sharedExpiryCount">0</div>
-    <div class="summary-card__hint">被多案引用的过期版本，点击查看受影响案件范围。</div>
+    <div class="summary-card__hint">同一份资料被多案引用时，先处理这一处就能一起解卡多个案件。</div>
   </button>
 </div>
