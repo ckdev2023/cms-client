@@ -74,6 +74,7 @@ function chipTone(item: DocumentItem): ChipTone {
 const props = defineProps<{
   item: DocumentItem;
   readonly: boolean;
+  storageRootConfigured?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -222,14 +223,23 @@ function toggle() {
       >
         {{ t("documents.actions.remind") }}
       </Button>
-      <Button
+      <span
         v-if="acts.canRegister"
-        size="sm"
-        variant="ghost"
-        @click.stop="emit('register', item)"
+        :title="
+          props.storageRootConfigured === false
+            ? t('documents.storageGate.buttonTooltip')
+            : undefined
+        "
       >
-        {{ t("documents.actions.register") }}
-      </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          :disabled="props.storageRootConfigured === false"
+          @click.stop="emit('register', item)"
+        >
+          {{ t("documents.actions.register") }}
+        </Button>
+      </span>
       <Button
         v-if="acts.canReference"
         size="sm"

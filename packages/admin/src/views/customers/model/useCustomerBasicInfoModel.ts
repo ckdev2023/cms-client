@@ -1,6 +1,11 @@
 import { ref, computed, type Ref, type ComputedRef } from "vue";
 import type { CustomerDetail, SelectOption } from "../types";
-import { GROUP_OPTIONS, OWNER_OPTIONS } from "../fixtures";
+import { OWNER_OPTIONS } from "../fixtures";
+import {
+  getActiveGroupOptions,
+  isGroupDisabled,
+  resolveGroupLabel,
+} from "../../../shared/model/useGroupOptions";
 
 /**
  * 基础信息 Tab 表单字段快照，与 CustomerDetail 字段对齐但仅包含可编辑部分。
@@ -105,7 +110,14 @@ export function useCustomerBasicInfoModel(
     return snapshotFromCustomer(c);
   });
 
-  const groupOptions: Ref<readonly SelectOption[]> = ref(GROUP_OPTIONS);
+  const groupOptions = computed<readonly SelectOption[]>(() => {
+    const active = getActiveGroupOptions();
+    const c = customer.value;
+    if (c && isGroupDisabled(c.group)) {
+      return [...active, { value: c.group, label: resolveGroupLabel(c.group) }];
+    }
+    return active;
+  });
   const ownerOptions: Ref<readonly SelectOption[]> = ref(OWNER_OPTIONS);
 
   function startEditing(): void {

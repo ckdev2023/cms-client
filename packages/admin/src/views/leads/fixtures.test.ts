@@ -69,12 +69,13 @@ describe("leads/fixtures", () => {
   });
 
   describe("option arrays", () => {
-    it("GROUP_OPTIONS has at least 3 options", () => {
-      expect(GROUP_OPTIONS.length).toBeGreaterThanOrEqual(3);
+    it("GROUP_OPTIONS contains only active groups", () => {
+      expect(GROUP_OPTIONS.length).toBeGreaterThanOrEqual(2);
       for (const opt of GROUP_OPTIONS) {
         expect(opt.value).toBeTruthy();
         expect(opt.label).toBeTruthy();
       }
+      expect(GROUP_OPTIONS.find((o) => o.value === "osaka")).toBeUndefined();
     });
 
     it("OWNER_OPTIONS has at least 3 options with initials", () => {

@@ -3,6 +3,7 @@ import billing from "./billing/ja-JP";
 import cases from "./cases/ja-JP";
 import documents from "./documents/ja-JP";
 import leads from "./leads/ja-JP";
+import settings from "./settings/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
 
 const jaJP = {
@@ -35,8 +36,13 @@ const jaJP = {
         tasks: "タスク・リマインド",
         documents: "資料センター",
         billing: "請求・財務",
-        settings: "設定",
+        settings: "システム設定",
       },
+    },
+  },
+  shared: {
+    group: {
+      disabledSuffix: "（停止）",
     },
   },
   foundation: {
@@ -67,6 +73,32 @@ const jaJP = {
     description:
       "{section} のサイドバー遷移を有効に保ち、正式モジュール実装まで未一致ルート警告を出さないためのプレースホルダーです。",
     pathLabel: "現在のパス",
+  },
+  auth: {
+    login: {
+      metaTitle: "ログイン",
+      badge: "Admin Sign In",
+      title: "Gyosei OS にログイン",
+      subtitle:
+        "管理画面アカウントでワークスペース、顧客、案件、資料センターへ進みます。",
+      helperTitle: "ログイン後に続けられる作業",
+      helperItems: {
+        workspace: "今日のタスク、期限超過、リスク案件をまとめて確認",
+        customers: "顧客・相談・案件の継続フォロー",
+        documents: "資料センターと請求関連ページの確認",
+      },
+      formTitle: "管理画面ログイン",
+      formDescription:
+        "メールアドレスとパスワードを入力して admin アプリへ進んでください。",
+      emailLabel: "メールアドレス",
+      emailPlaceholder: "name@firm.jp",
+      passwordLabel: "パスワード",
+      passwordPlaceholder: "パスワードを入力",
+      submit: "ログイン",
+      validation: "メールアドレスとパスワードを入力してください",
+      demoHint:
+        "現在はフロントエンド用のログイン試作です。任意のメールアドレスとパスワードで入れます。",
+    },
   },
   customers: {
     list: {
@@ -222,6 +254,7 @@ const jaJP = {
   cases,
   documents,
   leads,
+  settings,
   dashboard: {
     hero: {
       kicker: "Dashboard",

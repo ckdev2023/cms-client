@@ -9,7 +9,8 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { LeadSummary, LeadStatus } from "../types";
-import { OWNER_OPTIONS, GROUP_OPTIONS } from "../fixtures";
+import { OWNER_OPTIONS } from "../fixtures";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 线索表格行：咨询人信息、状态、负责人、跟进安排、最近更新。 */
 const { t } = useI18n();
@@ -41,8 +42,10 @@ const ownerInitials = computed(
     OWNER_OPTIONS.find((o) => o.value === props.lead.ownerId)?.initials ?? "?",
 );
 
-const groupLabel = computed(
-  () => GROUP_OPTIONS.find((g) => g.value === props.lead.groupId)?.label ?? "—",
+const groupLabel = computed(() =>
+  props.lead.groupId
+    ? resolveGroupLabel(props.lead.groupId, t("shared.group.disabledSuffix"))
+    : "—",
 );
 </script>
 

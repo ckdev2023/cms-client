@@ -1,6 +1,6 @@
 import { computed, reactive, ref, type ComputedRef, type Ref } from "vue";
 import type { CaseCreateCustomerOption } from "../types";
-import { CASE_GROUP_OPTIONS } from "../constants";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -224,13 +224,12 @@ function buildCustomerFromForm(
   form: QuickCreateCustomerForm,
   getId: () => string,
 ): CaseCreateCustomerOption {
-  const groupOption = CASE_GROUP_OPTIONS.find((g) => g.value === form.groupId);
   return {
     id: getId(),
     name: form.name.trim(),
     kana: "",
     group: form.groupId,
-    groupLabel: groupOption?.label ?? form.groupId,
+    groupLabel: resolveGroupLabel(form.groupId),
     roleHint: form.role.trim(),
     summary: form.note.trim(),
     contact: [form.phone.trim(), form.email.trim()].filter(Boolean).join(" / "),

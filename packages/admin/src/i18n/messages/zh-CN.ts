@@ -3,6 +3,7 @@ import billing from "./billing/zh-CN";
 import cases from "./cases/zh-CN";
 import documents from "./documents/zh-CN";
 import leads from "./leads/zh-CN";
+import settings from "./settings/zh-CN";
 import dashboardWorkItems from "./work-items/zh-CN";
 
 const zhCN = {
@@ -35,8 +36,13 @@ const zhCN = {
         tasks: "任务与提醒",
         documents: "资料中心",
         billing: "收费与财务",
-        settings: "设置",
+        settings: "系统设置",
       },
+    },
+  },
+  shared: {
+    group: {
+      disabledSuffix: "（已停用）",
     },
   },
   foundation: {
@@ -66,6 +72,29 @@ const zhCN = {
     description:
       "当前已为 {section} 注册可访问路由，侧边栏跳转不会再触发未匹配告警；正式模块落地后可直接在此页替换具体实现。",
     pathLabel: "当前路径",
+  },
+  auth: {
+    login: {
+      metaTitle: "登录",
+      badge: "Admin Sign In",
+      title: "登录到 Gyosei OS",
+      subtitle: "使用后台账号进入工作台、客户、案件与资料中心。",
+      helperTitle: "登录后可继续处理",
+      helperItems: {
+        workspace: "今日待办、逾期和风险案件的统一看板",
+        customers: "客户、咨询和案件的持续跟进入口",
+        documents: "资料中心与收费相关页面",
+      },
+      formTitle: "后台登录",
+      formDescription: "请输入邮箱和密码继续进入 admin 端。",
+      emailLabel: "邮箱",
+      emailPlaceholder: "name@firm.jp",
+      passwordLabel: "密码",
+      passwordPlaceholder: "请输入密码",
+      submit: "登录",
+      validation: "请输入邮箱和密码",
+      demoHint: "当前为前端登录原型，输入任意邮箱和密码即可进入后台。",
+    },
   },
   customers: {
     list: {
@@ -220,6 +249,7 @@ const zhCN = {
   cases,
   documents,
   leads,
+  settings,
   dashboard: {
     hero: {
       kicker: "Dashboard",

@@ -19,6 +19,7 @@ import type {
   LogCategoryDef,
   MessageTypeKey,
 } from "./types";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 export type { CaseListFiltersState } from "./types";
 
 // ─── Stages ─────────────────────────────────────────────────────
@@ -265,11 +266,8 @@ export const CASE_OWNER_OPTIONS: readonly CaseOwnerOption[] = [
   },
 ] as const;
 
-export const CASE_GROUP_OPTIONS: readonly CaseGroupOption[] = [
-  { value: "tokyo-1", label: "东京一组" },
-  { value: "tokyo-2", label: "东京二组" },
-  { value: "osaka", label: "大阪组" },
-] as const;
+export const CASE_GROUP_OPTIONS: readonly CaseGroupOption[] =
+  getActiveGroupOptions();
 
 // ─── Default Filters ────────────────────────────────────────────
 

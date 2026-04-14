@@ -1,12 +1,14 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadDetail, HeaderButtonStates, LeadStatus } from "../types";
 import { getLeadStatusLabel } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 线索详情页头部：面包屑返回、头像、线索名称、状态 badge、属性 chip 与操作按钮区。 */
-defineProps<{
+const props = defineProps<{
   lead: LeadDetail;
   avatarInitials: string;
   buttonStates: HeaderButtonStates;
@@ -22,10 +24,14 @@ defineEmits<{
 
 const { t } = useI18n();
 
+const groupDisplay = computed(() =>
+  resolveGroupLabel(props.lead.groupLabel, t("shared.group.disabledSuffix")),
+);
+
 /**
  * 根据线索状态返回 Chip 色调。
  *
- * @param status 线索状态值
+ * @param status - 线索状态值
  * @returns Chip 色调
  */
 function statusTone(
@@ -177,7 +183,7 @@ function statusTone(
           </Chip>
           <Chip size="sm">
             {{ t("leads.detail.header.group") }}
-            <strong>{{ lead.groupLabel }}</strong>
+            <strong>{{ groupDisplay }}</strong>
           </Chip>
         </div>
       </div>

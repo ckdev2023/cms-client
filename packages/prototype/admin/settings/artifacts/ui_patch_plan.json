@@ -1,0 +1,43 @@
+{
+  "target_framework": "vue",
+  "new_files": [
+    "packages/admin/src/views/settings/SettingsView.vue",
+    "packages/admin/src/views/settings/types.ts",
+    "packages/admin/src/views/settings/fixtures.ts",
+    "packages/admin/src/views/settings/model/useSettingsPage.ts",
+    "packages/admin/src/views/settings/model/useGroupList.ts",
+    "packages/admin/src/views/settings/model/useGroupDetail.ts",
+    "packages/admin/src/views/settings/model/useGroupActions.ts",
+    "packages/admin/src/views/settings/model/useVisibilityConfig.ts",
+    "packages/admin/src/views/settings/model/useStorageRoot.ts",
+    "packages/admin/src/views/settings/components/SettingsSubNav.vue",
+    "packages/admin/src/views/settings/components/GroupListPanel.vue",
+    "packages/admin/src/views/settings/components/GroupDetailMeta.vue",
+    "packages/admin/src/views/settings/components/GroupMembersPanel.vue",
+    "packages/admin/src/views/settings/components/GroupStatsPanel.vue",
+    "packages/admin/src/views/settings/components/GroupNameModal.vue",
+    "packages/admin/src/views/settings/components/GroupDisableModal.vue",
+    "packages/admin/src/views/settings/components/VisibilityConfigPanel.vue",
+    "packages/admin/src/views/settings/components/StorageRootPanel.vue"
+  ],
+  "modify_files": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/shell/nav-config.ts",
+    "packages/admin/src/i18n/messages/en-US.ts",
+    "packages/admin/src/i18n/messages/zh-CN.ts",
+    "packages/admin/src/i18n/messages/ja-JP.ts",
+    "packages/admin/src/auth/model/adminSession.ts"
+  ],
+  "states_required": [
+    "loading",
+    "empty",
+    "error",
+    "ready"
+  ],
+  "notes": [
+    "map repeated prototype blocks to reusable components",
+    "prefer design system components over raw classes",
+    "use Vue composables (model/) instead of React hooks",
+    "fixtures first — no real server API in this phase"
+  ]
+}

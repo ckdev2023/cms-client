@@ -60,6 +60,12 @@ const documentsJaJP = {
       toastWaive: "{count} 件を不要としてマークしました",
     },
   },
+  storageGate: {
+    title: "ローカル保管ルートが未設定です",
+    description:
+      "ローカル保管先のルートディレクトリがまだ設定されていません。管理者に「システム設定」での設定を依頼してから、資料を登録してください。",
+    buttonTooltip: "先に「システム設定」でローカル保管ルートを設定してください",
+  },
   register: {
     dialogLabel: "資料登録ダイアログ",
     title: "資料を登録（ローカル保管）",

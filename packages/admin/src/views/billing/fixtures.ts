@@ -16,6 +16,7 @@ import type {
   SelectOption,
   StatusOption,
 } from "./types";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 
 // ---------------------------------------------------------------------------
 // 状态选项（枚举 + 样式映射）
@@ -45,11 +46,7 @@ export const PAYMENT_RECORD_STATUS_OPTIONS: StatusOption[] = [
 // Group / Owner 选项
 // ---------------------------------------------------------------------------
 
-export const GROUP_OPTIONS: SelectOption[] = [
-  { value: "tokyo-1", label: "東京一組" },
-  { value: "tokyo-2", label: "東京二組" },
-  { value: "osaka", label: "大阪組" },
-];
+export const GROUP_OPTIONS: SelectOption[] = getActiveGroupOptions();
 
 export const OWNER_OPTIONS: (SelectOption & {
   /**

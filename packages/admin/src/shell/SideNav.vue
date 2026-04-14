@@ -2,7 +2,8 @@
 import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { navGroups, brandTitle, isExternalItem } from "./nav-config";
+import { useAdminSession } from "../auth/model/adminSession";
+import { brandTitle, isExternalItem, getVisibleNavGroups } from "./nav-config";
 import NavIcon from "./NavIcon.vue";
 
 /**
@@ -26,6 +27,8 @@ const isMobile = computed(() => props.variant === "mobile");
 const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
+const { isAdmin } = useAdminSession();
+const visibleNavGroups = computed(() => getVisibleNavGroups(isAdmin.value));
 
 /**
  * 读取当前路由对应的导航 key。
@@ -86,7 +89,7 @@ function isActiveNavItem(itemKey: string): boolean {
       </div>
 
       <nav :aria-label="t('shell.nav.mainLabel')">
-        <template v-for="group in navGroups" :key="group.key">
+        <template v-for="group in visibleNavGroups" :key="group.key">
           <div class="nav-group-title">
             {{ t(`shell.nav.groups.${group.key}`) }}
           </div>

@@ -3,6 +3,7 @@ import billing from "./billing/en-US";
 import cases from "./cases/en-US";
 import documents from "./documents/en-US";
 import leads from "./leads/en-US";
+import settings from "./settings/en-US";
 import dashboardWorkItems from "./work-items/en-US";
 
 const enUS = {
@@ -35,8 +36,13 @@ const enUS = {
         tasks: "Tasks & reminders",
         documents: "Document center",
         billing: "Billing & finance",
-        settings: "Settings",
+        settings: "System Settings",
       },
+    },
+  },
+  shared: {
+    group: {
+      disabledSuffix: " (Disabled)",
     },
   },
   foundation: {
@@ -67,6 +73,33 @@ const enUS = {
     description:
       "This placeholder keeps sidebar navigation valid for {section} and removes unmatched route warnings until the full module is implemented here.",
     pathLabel: "Current path",
+  },
+  auth: {
+    login: {
+      metaTitle: "Sign in",
+      badge: "Admin Sign In",
+      title: "Sign in to Gyosei OS",
+      subtitle:
+        "Use your admin account to continue to the workspace, customers, cases, and document center.",
+      helperTitle: "After signing in you can continue with",
+      helperItems: {
+        workspace:
+          "A single dashboard for today's tasks, overdue items, and risks",
+        customers: "Ongoing follow-up for customers, leads, and cases",
+        documents: "Document center and billing-related pages",
+      },
+      formTitle: "Admin login",
+      formDescription:
+        "Enter your email and password to continue to the admin app.",
+      emailLabel: "Email",
+      emailPlaceholder: "name@firm.jp",
+      passwordLabel: "Password",
+      passwordPlaceholder: "Enter your password",
+      submit: "Sign in",
+      validation: "Enter both email and password",
+      demoHint:
+        "This is a frontend login prototype for now. Any email and password will let you in.",
+    },
   },
   customers: {
     list: {
@@ -220,6 +253,7 @@ const enUS = {
   cases,
   documents,
   leads,
+  settings,
   dashboard: {
     hero: {
       kicker: "Dashboard",

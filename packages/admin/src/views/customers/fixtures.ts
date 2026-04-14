@@ -9,6 +9,7 @@ import type {
   SelectOption,
   SummaryCardData,
 } from "./types";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 
 export const SAMPLE_CUSTOMERS: CustomerSummary[] = [
   {
@@ -89,11 +90,7 @@ export const CURRENT_VIEWER: CustomerViewerContext = {
   group: "東京一組",
 };
 
-export const GROUP_OPTIONS: SelectOption[] = [
-  { value: "tokyo-1", label: "東京一組" },
-  { value: "tokyo-2", label: "東京二組" },
-  { value: "osaka", label: "大阪組" },
-];
+export const GROUP_OPTIONS: SelectOption[] = getActiveGroupOptions();
 
 export const OWNER_OPTIONS: SelectOption[] = [
   { value: "yamada-s", label: "山田翔太" },

@@ -1,11 +1,13 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CustomerDetail } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 客户详情页头部：面包屑返回、头像、客户名称、属性 chip 与操作按钮区。 */
-defineProps<{
+const props = defineProps<{
   customer: CustomerDetail;
   avatarInitials: string;
 }>();
@@ -16,6 +18,10 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const groupDisplay = computed(() =>
+  resolveGroupLabel(props.customer.group, t("shared.group.disabledSuffix")),
+);
 </script>
 
 <template>
@@ -72,7 +78,7 @@ const { t } = useI18n();
           </Chip>
           <Chip size="sm">
             {{ t("customers.detail.header.group") }}
-            <strong>{{ customer.group }}</strong>
+            <strong>{{ groupDisplay }}</strong>
           </Chip>
           <Chip size="sm">
             {{ t("customers.detail.header.owner") }}

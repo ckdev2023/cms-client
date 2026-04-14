@@ -295,6 +295,41 @@ describe("useRegisterDocumentModel — canSubmit", () => {
   });
 });
 
+// ─── Storage root gate ──────────────────────────────────────────
+
+describe("useRegisterDocumentModel — storage root gate", () => {
+  it("openModal is blocked when storage root is not configured", () => {
+    const onSubmit =
+      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const model = useRegisterDocumentModel({
+      allItems: () => ITEMS,
+      onSubmit,
+      isStorageRootConfigured: () => false,
+    });
+    model.openModal();
+    expect(model.open.value).toBe(false);
+  });
+
+  it("openModal works when storage root is configured", () => {
+    const onSubmit =
+      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const model = useRegisterDocumentModel({
+      allItems: () => ITEMS,
+      onSubmit,
+      isStorageRootConfigured: () => true,
+    });
+    model.openModal();
+    expect(model.open.value).toBe(true);
+  });
+
+  it("storageRootConfigured defaults to true when dep not provided", () => {
+    const { model } = create();
+    expect(model.storageRootConfigured.value).toBe(true);
+    model.openModal();
+    expect(model.open.value).toBe(true);
+  });
+});
+
 // ─── submit ─────────────────────────────────────────────────────
 
 describe("useRegisterDocumentModel — submit", () => {

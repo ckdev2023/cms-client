@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useOrgSettings } from "../../shared/model/useOrgSettings";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import DocumentSummaryCards from "./components/DocumentSummaryCards.vue";
@@ -31,6 +32,7 @@ import type { BulkActionType } from "./model/useDocumentBulkActions";
 
 /** 资料中心列表页：展示资料汇总统计、筛选与分页表格。 */
 const { t } = useI18n();
+const { isStorageRootConfigured } = useOrgSettings();
 
 const { status, caseId, provider, search, resetFilters, applyFilters } =
   useDocumentFilters();
@@ -100,6 +102,7 @@ const register = useRegisterDocumentModel({
     const name = form.fileName || form.relativePath.split("/").pop() || "";
     window.alert(t("documents.register.toastDesc", { fileName: name }));
   },
+  isStorageRootConfigured: () => isStorageRootConfigured.value,
 });
 
 const review = useDocumentReviewModel();
@@ -227,24 +230,67 @@ void handleRowReference;
       ]"
     >
       <template #actions>
-        <Button variant="filled" tone="primary" @click="register.openModal()">
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
+        <div
+          class="document-list-view__register-wrap"
+          :title="
+            isStorageRootConfigured
+              ? undefined
+              : t('documents.storageGate.buttonTooltip')
+          "
+        >
+          <Button
+            variant="filled"
+            tone="primary"
+            :disabled="!isStorageRootConfigured"
+            @click="register.openModal()"
           >
-            <path d="M12 4v16m8-8H4" />
-          </svg>
-          {{ t("documents.list.registerDocument") }}
-        </Button>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 4v16m8-8H4" />
+            </svg>
+            {{ t("documents.list.registerDocument") }}
+          </Button>
+        </div>
       </template>
     </PageHeader>
+
+    <div
+      v-if="!isStorageRootConfigured"
+      class="document-list-view__storage-gate"
+      role="alert"
+    >
+      <svg
+        class="document-list-view__gate-icon"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <div>
+        <p class="document-list-view__gate-title">
+          {{ t("documents.storageGate.title") }}
+        </p>
+        <p class="document-list-view__gate-desc">
+          {{ t("documents.storageGate.description") }}
+        </p>
+      </div>
+    </div>
 
     <DocumentSummaryCards :cards="summaryCards" />
 
@@ -365,6 +411,42 @@ void handleRowReference;
 .document-list-view {
   display: grid;
   gap: 24px;
+}
+
+.document-list-view__register-wrap {
+  display: inline-flex;
+}
+
+.document-list-view__storage-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-warning-border, #fde68a);
+  background: var(--color-warning-bg, #fffbeb);
+}
+
+.document-list-view__gate-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-warning-icon, #d97706);
+}
+
+.document-list-view__gate-title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-title, #92400e);
+}
+
+.document-list-view__gate-desc {
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-warning-text, #b45309);
+  line-height: 1.5;
 }
 
 .document-list-view__table-card {

@@ -208,7 +208,7 @@ describe("useCreateCaseModel", () => {
       expect(m.draft.group).toBe("tokyo-2");
     });
     it("provides inheritance label", () => {
-      expect(createModel().groupInheritanceLabel.value).toBe("东京一组");
+      expect(createModel().groupInheritanceLabel.value).toBe("東京一組");
     });
   });
 

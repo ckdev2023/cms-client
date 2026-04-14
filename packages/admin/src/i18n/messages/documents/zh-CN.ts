@@ -57,6 +57,12 @@ const documentsZhCN = {
       toastWaive: "已标记 {count} 项为无需提供",
     },
   },
+  storageGate: {
+    title: "本地资料根目录未配置",
+    description:
+      "尚未设置本地归档根目录。请联系管理员先在「系统设置」中完成配置，之后才能登记资料。",
+    buttonTooltip: "请先在「系统设置」中配置本地资料根目录",
+  },
   register: {
     dialogLabel: "登记资料对话框",
     title: "登记资料（本地归档）",

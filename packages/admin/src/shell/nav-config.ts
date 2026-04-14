@@ -20,6 +20,7 @@ interface NavItemBase {
   key: string;
   label: string;
   icon?: NavIconName;
+  adminOnly?: boolean;
 }
 
 /** 通过 `RouterLink` 渲染的站内路由项。 */
@@ -79,6 +80,23 @@ export function allNavItems(): NavItem[] {
 }
 
 /**
+ * 按管理员权限过滤导航分组，移除非管理员不可见的项并丢弃空分组。
+ *
+ * @param isAdmin 当前用户是否为管理员
+ * @returns 过滤后的导航分组列表
+ */
+export function getVisibleNavGroups(isAdmin: boolean): NavGroup[] {
+  if (isAdmin) return navGroups;
+
+  return navGroups
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => !item.adminOnly),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+/**
  * 根据唯一键查找导航项。
  *
  * @param key 需要查找的导航项键值
@@ -130,7 +148,13 @@ export const navGroups: NavGroup[] = [
     key: "system",
     title: "系统",
     items: [
-      { key: "settings", label: "设置", to: "/settings", icon: "settings" },
+      {
+        key: "settings",
+        label: "系统设置",
+        to: "/settings",
+        icon: "settings",
+        adminOnly: true,
+      },
     ],
   },
 ];

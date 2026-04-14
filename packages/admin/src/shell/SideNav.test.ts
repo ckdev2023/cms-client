@@ -1,9 +1,15 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../i18n";
+import { adminSessionController } from "../auth/model/adminSession";
 import SideNav from "./SideNav.vue";
-import { navGroups, brandTitle, brandChip } from "./nav-config";
+import {
+  navGroups,
+  brandTitle,
+  brandChip,
+  getVisibleNavGroups,
+} from "./nav-config";
 
 const routerLinkStub = {
   props: ["to"],
@@ -54,6 +60,11 @@ async function makeRouter(initialPath = "/") {
         component: { template: "<div />" },
         meta: { navKey: "billing" },
       },
+      {
+        path: "/settings",
+        component: { template: "<div />" },
+        meta: { navKey: "settings" },
+      },
     ],
   });
   await router.push(initialPath);
@@ -81,7 +92,16 @@ async function mountWithRouter(
 
 describe("SideNav", () => {
   beforeEach(() => {
+    adminSessionController.reset();
+    adminSessionController.login(
+      { email: "admin@test.com", password: "pw" },
+      null,
+    );
     setAppLocale("zh-CN");
+  });
+
+  afterEach(() => {
+    adminSessionController.reset();
   });
 
   it("renders an aside with aria-label", async () => {
@@ -266,5 +286,67 @@ describe("SideNav", () => {
     const activeItem = w.find('a.nav-item--active[aria-current="page"]');
     expect(activeItem.exists()).toBe(true);
     expect(activeItem.text()).toContain("收费与财务");
+  });
+
+  it("shows settings nav item with correct label for admin users", async () => {
+    const w = await mountWithRouter();
+    const items = w.findAll(".nav-item");
+    const settingsItem = items.find((el) => el.text().includes("系统设置"));
+    expect(settingsItem?.exists()).toBe(true);
+  });
+
+  it("marks settings nav item as active on /settings", async () => {
+    const w = await mountWithRouter("/settings", {
+      global: {
+        stubs: { NavIcon: stubs.NavIcon },
+      },
+    });
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("系统设置");
+  });
+
+  it("navigates from settings to dashboard and updates active state", async () => {
+    const router = await makeRouter("/settings");
+    const w = mount(SideNav, {
+      global: {
+        plugins: [i18n, router],
+        stubs,
+      },
+    });
+
+    expect(w.find('a.nav-item--active[aria-current="page"]').text()).toContain(
+      "系统设置",
+    );
+
+    await router.push("/");
+    await router.isReady();
+
+    const activeItem = w.find('a.nav-item--active[aria-current="page"]');
+    expect(activeItem.exists()).toBe(true);
+    expect(activeItem.text()).toContain("仪表盘");
+  });
+
+  it("hides adminOnly nav items for non-admin users", async () => {
+    adminSessionController.reset();
+    const w = await mountWithRouter();
+    const items = w.findAll(".nav-item");
+    const nonAdminGroups = getVisibleNavGroups(false);
+    const expectedCount = nonAdminGroups.reduce(
+      (n, g) => n + g.items.length,
+      0,
+    );
+    expect(items).toHaveLength(expectedCount);
+
+    const itemTexts = items.map((el) => el.text());
+    expect(itemTexts).not.toContain("系统设置");
+  });
+
+  it("hides the system group heading for non-admin users", async () => {
+    adminSessionController.reset();
+    const w = await mountWithRouter();
+    const titles = w.findAll(".nav-group-title").map((el) => el.text());
+    expect(titles).not.toContain("系统");
   });
 });

@@ -6,6 +6,7 @@ import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import LeadConvertedRecords from "./LeadConvertedRecords.vue";
 import type { LeadConversionInfo, HeaderButtonStates } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 转化信息 Tab：去重面板、转化操作卡片与已生成记录。 */
 const props = defineProps<{
@@ -94,7 +95,13 @@ const showActionCards = computed(
             </p>
             <p class="dedup-hit__match-meta">
               {{ (conversion.dedupResult!.matchedRecord as any).id }} ·
-              {{ (conversion.dedupResult!.matchedRecord as any).group }} ·
+              {{
+                resolveGroupLabel(
+                  (conversion.dedupResult!.matchedRecord as any).group,
+                  t("shared.group.disabledSuffix"),
+                )
+              }}
+              ·
               {{ (conversion.dedupResult!.matchedRecord as any).statusLabel }}
             </p>
           </template>
@@ -104,7 +111,13 @@ const showActionCards = computed(
             </p>
             <p class="dedup-hit__match-meta">
               {{ (conversion.dedupResult!.matchedRecord as any).id }} ·
-              {{ (conversion.dedupResult!.matchedRecord as any).group }} ·
+              {{
+                resolveGroupLabel(
+                  (conversion.dedupResult!.matchedRecord as any).group,
+                  t("shared.group.disabledSuffix"),
+                )
+              }}
+              ·
               {{ (conversion.dedupResult!.matchedRecord as any).summary }}
             </p>
           </template>

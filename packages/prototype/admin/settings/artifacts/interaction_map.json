@@ -1,0 +1,84 @@
+{
+  "interactions": [
+    {
+      "selector": ".settings-subnav-item[data-subnav-id]",
+      "event": "click",
+      "intent": "switch_panel"
+    },
+    {
+      "selector": "#groupStatusFilter",
+      "event": "change",
+      "intent": "filter_group_list"
+    },
+    {
+      "selector": "[data-action='create-group']",
+      "event": "click",
+      "intent": "open_create_group_modal"
+    },
+    {
+      "selector": "[data-group-row]",
+      "event": "click",
+      "intent": "open_group_detail"
+    },
+    {
+      "selector": "[data-action='back-to-list']",
+      "event": "click",
+      "intent": "back_to_group_list"
+    },
+    {
+      "selector": "[data-action='rename-group']",
+      "event": "click",
+      "intent": "open_rename_group_modal"
+    },
+    {
+      "selector": "[data-action='disable-group']",
+      "event": "click",
+      "intent": "open_disable_group_modal"
+    },
+    {
+      "selector": "#btnConfirmGroupName",
+      "event": "click",
+      "intent": "confirm_create_or_rename_group"
+    },
+    {
+      "selector": "[data-action='close-group-name-modal']",
+      "event": "click",
+      "intent": "close_group_name_modal"
+    },
+    {
+      "selector": "#btnConfirmDisable",
+      "event": "click",
+      "intent": "confirm_disable_group"
+    },
+    {
+      "selector": "[data-action='close-disable-modal']",
+      "event": "click",
+      "intent": "close_disable_modal"
+    },
+    {
+      "selector": "#toggleCrossGroupCase",
+      "event": "change",
+      "intent": "toggle_cross_group_case"
+    },
+    {
+      "selector": "#toggleCrossGroupView",
+      "event": "change",
+      "intent": "toggle_cross_group_view"
+    },
+    {
+      "selector": "#btnSaveVisibility",
+      "event": "click",
+      "intent": "save_visibility_config"
+    },
+    {
+      "selector": "#inputRootPath",
+      "event": "input",
+      "intent": "update_path_preview"
+    },
+    {
+      "selector": "#btnSaveStorageRoot",
+      "event": "click",
+      "intent": "save_storage_root"
+    }
+  ]
+}

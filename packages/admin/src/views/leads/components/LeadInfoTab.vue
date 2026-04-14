@@ -1,15 +1,23 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import type { LeadBasicInfo } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 基础信息 Tab：以只读模式展示线索的 11 个基础字段。 */
-defineProps<{
+const props = defineProps<{
   info: LeadBasicInfo;
   readonly: boolean;
 }>();
 
 const { t } = useI18n();
+
+const groupDisplay = computed(() =>
+  props.info.group
+    ? resolveGroupLabel(props.info.group, t("shared.group.disabledSuffix"))
+    : "—",
+);
 </script>
 
 <template>
@@ -68,7 +76,7 @@ const { t } = useI18n();
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.group") }}
           </dt>
-          <dd class="info-tab__value">{{ info.group || "—" }}</dd>
+          <dd class="info-tab__value">{{ groupDisplay }}</dd>
         </div>
         <div class="info-tab__field">
           <dt class="info-tab__label">

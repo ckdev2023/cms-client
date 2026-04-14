@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import { useOrgSettings } from "../../../shared/model/useOrgSettings";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseDocumentRow from "./CaseDocumentRow.vue";
@@ -11,6 +13,9 @@ import {
 } from "../model/caseDocumentStats";
 
 /** 文書管理 Tab：按提供者分组展示进度与文書清单，含空状态与动态完成率。 */
+const { t } = useI18n();
+const { isStorageRootConfigured } = useOrgSettings();
+
 const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -32,6 +37,35 @@ const groupStats = computed(() =>
 
 <template>
   <div class="docs-tab">
+    <div
+      v-if="!isStorageRootConfigured"
+      class="docs-tab__storage-gate"
+      role="alert"
+    >
+      <svg
+        class="docs-tab__gate-icon"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+      <div>
+        <p class="docs-tab__gate-title">
+          {{ t("documents.storageGate.title") }}
+        </p>
+        <p class="docs-tab__gate-desc">
+          {{ t("documents.storageGate.description") }}
+        </p>
+      </div>
+    </div>
+
     <!-- Empty state -->
     <Card v-if="isEmpty" padding="md">
       <div class="docs-tab__empty">
@@ -56,7 +90,21 @@ const groupStats = computed(() =>
           该案件尚未添加任何资料需求。请通过"登记资料"或"手动添加"开始建立资料清单。
         </span>
         <div v-if="!readonly" class="docs-tab__empty-actions">
-          <Button variant="filled" tone="primary" size="sm">登记资料</Button>
+          <span
+            :title="
+              isStorageRootConfigured
+                ? undefined
+                : t('documents.storageGate.buttonTooltip')
+            "
+          >
+            <Button
+              variant="filled"
+              tone="primary"
+              size="sm"
+              :disabled="!isStorageRootConfigured"
+              >登记资料</Button
+            >
+          </span>
           <Button size="sm">手动添加</Button>
         </div>
       </div>
@@ -110,24 +158,38 @@ const groupStats = computed(() =>
               </div>
             </div>
             <div v-if="!readonly" class="docs-tab__header-actions">
-              <Button variant="filled" tone="primary" size="sm">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
+              <span
+                class="docs-tab__register-wrap"
+                :title="
+                  isStorageRootConfigured
+                    ? undefined
+                    : t('documents.storageGate.buttonTooltip')
+                "
+              >
+                <Button
+                  variant="filled"
+                  tone="primary"
+                  size="sm"
+                  :disabled="!isStorageRootConfigured"
                 >
-                  <path
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                登记资料
-              </Button>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                    />
+                  </svg>
+                  登记资料
+                </Button>
+              </span>
               <Button size="sm">
                 <svg
                   width="14"
@@ -173,6 +235,7 @@ const groupStats = computed(() =>
             :key="ii"
             :item="item"
             :readonly="readonly"
+            :storage-root-configured="isStorageRootConfigured"
           />
           <div v-if="group.items.length === 0" class="docs-tab__group-empty">
             该分组暂无资料项
@@ -189,7 +252,37 @@ const groupStats = computed(() =>
   gap: 20px;
 }
 
-/* ── Empty state ───────────────────────────────────────── */
+.docs-tab__storage-gate {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-warning-border, #fde68a);
+  background: var(--color-warning-bg, #fffbeb);
+}
+.docs-tab__gate-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--color-warning-icon, #d97706);
+}
+.docs-tab__gate-title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-title, #92400e);
+}
+.docs-tab__gate-desc {
+  margin: 4px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-warning-text, #b45309);
+  line-height: 1.5;
+}
+.docs-tab__register-wrap {
+  display: inline-flex;
+}
 
 .docs-tab__empty {
   display: flex;
@@ -224,8 +317,6 @@ const groupStats = computed(() =>
   gap: 8px;
   margin-top: 12px;
 }
-
-/* ── Provider progress ─────────────────────────────────── */
 
 .docs-tab__progress-header {
   display: flex;
@@ -292,8 +383,6 @@ const groupStats = computed(() =>
   text-align: right;
 }
 
-/* ── Card header ───────────────────────────────────────── */
-
 .docs-tab__card-header {
   display: flex;
   flex-wrap: wrap;
@@ -345,8 +434,6 @@ const groupStats = computed(() =>
   gap: 8px;
   flex-shrink: 0;
 }
-
-/* ── Group ─────────────────────────────────────────────── */
 
 .docs-tab__group + .docs-tab__group {
   border-top: 1px solid var(--color-border-1);

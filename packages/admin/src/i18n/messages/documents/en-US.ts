@@ -60,6 +60,12 @@ const documentsEnUS = {
       toastWaive: "Marked {count} items as waived",
     },
   },
+  storageGate: {
+    title: "Storage root not configured",
+    description:
+      "The local archive root directory has not been set up yet. Please ask an administrator to configure it in System Settings before registering documents.",
+    buttonTooltip: "Configure the storage root in System Settings first",
+  },
   register: {
     dialogLabel: "Register document dialog",
     title: "Register document (local archive)",

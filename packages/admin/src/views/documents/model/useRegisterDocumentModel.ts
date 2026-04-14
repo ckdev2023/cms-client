@@ -64,6 +64,10 @@ export interface RegisterDocumentDeps {
    *
    */
   onSubmit: (form: RegisterDocumentForm, version: number) => void;
+  /**
+   *
+   */
+  isStorageRootConfigured?: () => boolean;
 }
 
 const NON_REGISTERABLE = new Set(["approved", "waived"]);
@@ -174,10 +178,15 @@ export function useRegisterDocumentModel(deps: RegisterDocumentDeps) {
   const form = ref<RegisterDocumentForm>(emptyForm());
   const fileNameManuallyEdited = ref(false);
 
+  const storageRootConfigured = computed(
+    () => deps.isStorageRootConfigured?.() ?? true,
+  );
+
   const derived = setupComputeds(deps, form);
   setupWatchers(form, fileNameManuallyEdited);
 
   function openModal(prefilledCaseId?: string, prefilledDocId?: string) {
+    if (!storageRootConfigured.value) return;
     form.value = emptyForm();
     fileNameManuallyEdited.value = false;
     if (prefilledCaseId) {
@@ -206,6 +215,7 @@ export function useRegisterDocumentModel(deps: RegisterDocumentDeps) {
     open,
     form,
     fileNameManuallyEdited,
+    storageRootConfigured,
     ...derived,
     openModal,
     closeModal,

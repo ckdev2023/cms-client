@@ -300,7 +300,7 @@ describe("useCasePartyPicker", () => {
       expect(result!.customer.id).toBe(FIXED_ID);
       expect(result!.customer.name).toBe("New Person");
       expect(result!.customer.group).toBe("tokyo-1");
-      expect(result!.customer.groupLabel).toBe("东京一组");
+      expect(result!.customer.groupLabel).toBe("東京一組");
       expect(result!.mode).toBe("primary");
       expect(result!.isNewlyCreated).toBe(true);
       expect(result!.duplicateConfirmation).toBeNull();

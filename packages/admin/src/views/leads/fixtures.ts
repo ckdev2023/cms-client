@@ -4,16 +4,13 @@ import type {
   OwnerOption,
   SelectOption,
 } from "./types";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 
 /* ------------------------------------------------------------------ */
 /*  参照选项                                                           */
 /* ------------------------------------------------------------------ */
 
-export const GROUP_OPTIONS: SelectOption[] = [
-  { value: "tokyo-1", label: "东京一组" },
-  { value: "tokyo-2", label: "东京二组" },
-  { value: "osaka", label: "大阪组" },
-];
+export const GROUP_OPTIONS: SelectOption[] = getActiveGroupOptions();
 
 export const OWNER_OPTIONS: OwnerOption[] = [
   {

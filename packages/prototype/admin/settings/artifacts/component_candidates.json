@@ -1,0 +1,1113 @@
+{
+  "page_component": "Index",
+  "candidates": [
+    {
+      "name": "SideNavInner",
+      "source_selector": ".side-nav-inner",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Brand",
+      "source_selector": ".brand",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BrandTitle",
+      "source_selector": ".brand-title",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "IconBtn",
+      "source_selector": ".icon-btn",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "NavGroupTitle",
+      "source_selector": ".nav-group-title",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "NavItem",
+      "source_selector": ".nav-item",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Hidden",
+      "source_selector": ".hidden",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Chip",
+      "source_selector": ".chip",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextVarMuted",
+      "source_selector": ".text-[var(--muted-2)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SmInlineFlex",
+      "source_selector": ".sm:inline-flex",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "BtnPrimary",
+      "source_selector": ".btn-primary",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-9",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "RoundedFull",
+      "source_selector": ".rounded-full",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Border",
+      "source_selector": ".border",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "BorderVarBorder",
+      "source_selector": ".border-[var(--border)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Flex",
+      "source_selector": ".flex",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "ItemsCenter",
+      "source_selector": ".items-center",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[13px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "FontExtrabold",
+      "source_selector": ".font-extrabold",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextVarText",
+      "source_selector": ".text-[var(--text)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[11px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "W",
+      "source_selector": ".w-3.5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-3.5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AppleCard",
+      "source_selector": ".apple-card",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsSubnavItem",
+      "source_selector": ".settings-subnav-item",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsSubnavItemIcon",
+      "source_selector": ".settings-subnav-item__icon",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "W",
+      "source_selector": ".w-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsSubnavItemCopy",
+      "source_selector": ".settings-subnav-item__copy",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsSubnavItemTitle",
+      "source_selector": ".settings-subnav-item__title",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SettingsSubnavItemDesc",
+      "source_selector": ".settings-subnav-item__desc",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SettingsPanelShell",
+      "source_selector": ".settings-panel-shell",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsPanelHeader",
+      "source_selector": ".settings-panel-header",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsPanelEyebrow",
+      "source_selector": ".settings-panel-eyebrow",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SettingsPanelTitle",
+      "source_selector": ".settings-panel-title",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SettingsPanelSubtitle",
+      "source_selector": ".settings-panel-subtitle",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "AppleInput",
+      "source_selector": ".apple-input",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BgWhite",
+      "source_selector": ".bg-white",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Px",
+      "source_selector": ".px-3",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "FontSemibold",
+      "source_selector": ".font-semibold",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "W",
+      "source_selector": ".w-[140px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Px",
+      "source_selector": ".px-4",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "AppleTable",
+      "source_selector": ".apple-table",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "WFull",
+      "source_selector": ".w-full",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "TextLeft",
+      "source_selector": ".text-left",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BorderCollapse",
+      "source_selector": ".border-collapse",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "MdTableCell",
+      "source_selector": ".md:table-cell",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SmTableCell",
+      "source_selector": ".sm:table-cell",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextCenter",
+      "source_selector": ".text-center",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "CursorPointer",
+      "source_selector": ".cursor-pointer",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "FontMedium",
+      "source_selector": ".font-medium",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Badge",
+      "source_selector": ".badge",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "BadgeGreen",
+      "source_selector": ".badge-green",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextSm",
+      "source_selector": ".text-sm",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "MxAuto",
+      "source_selector": ".mx-auto",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "TextGray",
+      "source_selector": ".text-gray-300",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Mb",
+      "source_selector": ".mb-4",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[15px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextVarMuted",
+      "source_selector": ".text-[var(--muted)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Mt",
+      "source_selector": ".mt-1",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Px",
+      "source_selector": ".px-5",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "InlineFlex",
+      "source_selector": ".inline-flex",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Gap",
+      "source_selector": ".gap-1.5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "HoverTextVarText",
+      "source_selector": ".hover:text-[var(--text)]",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "TransitionColors",
+      "source_selector": ".transition-colors",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "P",
+      "source_selector": ".p-5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SmP",
+      "source_selector": ".sm:p-6",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "FlexCol",
+      "source_selector": ".flex-col",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Gap",
+      "source_selector": ".gap-3",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "MinW",
+      "source_selector": ".min-w-0",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "FontBold",
+      "source_selector": ".font-bold",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Mt",
+      "source_selector": ".mt-0.5",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Gap",
+      "source_selector": ".gap-2",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "FlexShrink",
+      "source_selector": ".flex-shrink-0",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BtnSecondary",
+      "source_selector": ".btn-secondary",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-8",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[12px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "RoundedVarRadius",
+      "source_selector": ".rounded-[var(--radius)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "FontBlack",
+      "source_selector": ".font-black",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Grid",
+      "source_selector": ".grid",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "GridCols",
+      "source_selector": ".grid-cols-1",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Gap",
+      "source_selector": ".gap-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Uppercase",
+      "source_selector": ".uppercase",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TrackingWide",
+      "source_selector": ".tracking-wide",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Mb",
+      "source_selector": ".mb-1",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[14px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "FontMono",
+      "source_selector": ".font-mono",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Mt",
+      "source_selector": ".mt-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "JustifyBetween",
+      "source_selector": ".justify-between",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "RoundedXl",
+      "source_selector": ".rounded-xl",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BgVarSurface",
+      "source_selector": ".bg-[var(--surface-2)]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "P",
+      "source_selector": ".p-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-2xl",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "SettingsPolicyCard",
+      "source_selector": ".settings-policy-card",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "ItemsStart",
+      "source_selector": ".items-start",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "LeadingRelaxed",
+      "source_selector": ".leading-relaxed",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "Relative",
+      "source_selector": ".relative",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SrOnly",
+      "source_selector": ".sr-only",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Peer",
+      "source_selector": ".peer",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "W",
+      "source_selector": ".w-11",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-6",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BgGray",
+      "source_selector": ".bg-gray-200",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerFocusOutlineNone",
+      "source_selector": ".peer-focus:outline-none",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerFocusRing",
+      "source_selector": ".peer-focus:ring-2",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerFocusRingBlue",
+      "source_selector": ".peer-focus:ring-blue-300",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerCheckedAfterTranslateXFull",
+      "source_selector": ".peer-checked:after:translate-x-full",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerCheckedAfterBorderWhite",
+      "source_selector": ".peer-checked:after:border-white",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterContent",
+      "source_selector": ".after:content-['']",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterAbsolute",
+      "source_selector": ".after:absolute",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterTop",
+      "source_selector": ".after:top-[2px]",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterLeft",
+      "source_selector": ".after:left-[2px]",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterBgWhite",
+      "source_selector": ".after:bg-white",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterBorderGray",
+      "source_selector": ".after:border-gray-300",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterBorder",
+      "source_selector": ".after:border",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterRoundedFull",
+      "source_selector": ".after:rounded-full",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterH",
+      "source_selector": ".after:h-5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterW",
+      "source_selector": ".after:w-5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AfterTransitionAll",
+      "source_selector": ".after:transition-all",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "PeerCheckedBgBlue",
+      "source_selector": ".peer-checked:bg-blue-600",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "P",
+      "source_selector": ".p-3",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SettingsSavebar",
+      "source_selector": ".settings-savebar",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Mt",
+      "source_selector": ".mt-6",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BorderAmber",
+      "source_selector": ".border-amber-200",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BgAmber",
+      "source_selector": ".bg-amber-50",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "W",
+      "source_selector": ".w-5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "H",
+      "source_selector": ".h-5",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "TextAmber",
+      "source_selector": ".text-amber-600",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "TextAmber",
+      "source_selector": ".text-amber-800",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextAmber",
+      "source_selector": ".text-amber-700",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "AppleLabel",
+      "source_selector": ".apple-label",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "TextRed",
+      "source_selector": ".text-red-500",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "BorderT",
+      "source_selector": ".border-t",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "ModalBackdrop",
+      "source_selector": ".modal-backdrop",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "AppleModal",
+      "source_selector": ".apple-modal",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Px",
+      "source_selector": ".px-6",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Py",
+      "source_selector": ".py-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "BorderB",
+      "source_selector": ".border-b",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Z",
+      "source_selector": ".z-10",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "RoundedT",
+      "source_selector": ".rounded-t-[14px]",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "Text",
+      "source_selector": ".text-[17px]",
+      "repeatable": true,
+      "props_hint": [
+        "title",
+        "subtitle",
+        "status"
+      ]
+    },
+    {
+      "name": "P",
+      "source_selector": ".p-1",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "P",
+      "source_selector": ".p-6",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SpaceY",
+      "source_selector": ".space-y-4",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "JustifyEnd",
+      "source_selector": ".justify-end",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "SpaceX",
+      "source_selector": ".space-x-3",
+      "repeatable": true,
+      "props_hint": []
+    },
+    {
+      "name": "RoundedB",
+      "source_selector": ".rounded-b-[14px]",
+      "repeatable": true,
+      "props_hint": []
+    }
+  ]
+}

@@ -1,0 +1,147 @@
+{
+  "page_name": "settings",
+  "regions": [
+    {
+      "id": "settings-hero",
+      "selector": ".settings-hero",
+      "role": "header"
+    },
+    {
+      "id": "settingsSubnav",
+      "selector": "#settingsSubnav",
+      "role": "navigation"
+    },
+    {
+      "id": "groupListPanel",
+      "selector": "#groupListPanel",
+      "role": "data_list"
+    },
+    {
+      "id": "groupStatusFilter",
+      "selector": "#groupStatusFilter",
+      "role": "filter"
+    },
+    {
+      "id": "groupTableBody",
+      "selector": "#groupTableBody",
+      "role": "data_list"
+    },
+    {
+      "id": "groupEmptyState",
+      "selector": "#groupEmptyState",
+      "role": "empty_state"
+    },
+    {
+      "id": "groupDetailPanel",
+      "selector": "#groupDetailPanel",
+      "role": "card_list"
+    },
+    {
+      "id": "groupMembersPanel",
+      "selector": "#groupMembersPanel",
+      "role": "data_list"
+    },
+    {
+      "id": "memberEmptyState",
+      "selector": "#memberEmptyState",
+      "role": "empty_state"
+    },
+    {
+      "id": "groupStatsPanel",
+      "selector": "#groupStatsPanel",
+      "role": "card_list"
+    },
+    {
+      "id": "visibilityPanel",
+      "selector": "#visibilityPanel",
+      "role": "form"
+    },
+    {
+      "id": "storageRootPanel",
+      "selector": "#storageRootPanel",
+      "role": "form"
+    },
+    {
+      "id": "storageNotConfiguredHint",
+      "selector": "#storageNotConfiguredHint",
+      "role": "empty_state"
+    },
+    {
+      "id": "groupNameModal",
+      "selector": "#groupNameModal",
+      "role": "modal"
+    },
+    {
+      "id": "groupDisableModal",
+      "selector": "#groupDisableModal",
+      "role": "modal"
+    },
+    {
+      "id": "toast",
+      "selector": "#toast",
+      "role": "footer"
+    }
+  ],
+  "repeat_patterns": [
+    {
+      "selector": ".settings-subnav-item",
+      "count": 3,
+      "suggest_component": "SettingsSubnavItem"
+    },
+    {
+      "selector": ".settings-panel-shell",
+      "count": 3,
+      "suggest_component": "SettingsPanelShell"
+    },
+    {
+      "selector": ".settings-panel-header",
+      "count": 3,
+      "suggest_component": "SettingsPanelHeader"
+    },
+    {
+      "selector": ".settings-policy-card",
+      "count": 2,
+      "suggest_component": "SettingsPolicyCard"
+    },
+    {
+      "selector": ".settings-savebar",
+      "count": 2,
+      "suggest_component": "SettingsSavebar"
+    },
+    {
+      "selector": ".apple-card",
+      "count": 9,
+      "suggest_component": "AppleCard"
+    },
+    {
+      "selector": ".apple-modal",
+      "count": 2,
+      "suggest_component": "AppleModal"
+    },
+    {
+      "selector": ".modal-backdrop",
+      "count": 2,
+      "suggest_component": "ModalBackdrop"
+    },
+    {
+      "selector": ".apple-table",
+      "count": 2,
+      "suggest_component": "AppleTable"
+    },
+    {
+      "selector": ".apple-input",
+      "count": 4,
+      "suggest_component": "AppleInput"
+    },
+    {
+      "selector": ".apple-label",
+      "count": 3,
+      "suggest_component": "AppleLabel"
+    },
+    {
+      "selector": ".badge",
+      "count": 4,
+      "suggest_component": "Badge"
+    }
+  ]
+}

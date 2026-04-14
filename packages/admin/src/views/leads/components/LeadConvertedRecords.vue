@@ -5,6 +5,7 @@ import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadConversionInfo } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 已生成转化记录：展示已转客户/案件卡片及建档记录时间线。 */
 const props = defineProps<{
@@ -50,7 +51,13 @@ const hasConvertedCase = computed(
           </p>
           <p class="converted-record__meta">
             {{ conversion.convertedCustomer!.id }} ·
-            {{ conversion.convertedCustomer!.group }} ·
+            {{
+              resolveGroupLabel(
+                conversion.convertedCustomer!.group,
+                t("shared.group.disabledSuffix"),
+              )
+            }}
+            ·
             {{ conversion.convertedCustomer!.convertedAt }}
           </p>
         </div>

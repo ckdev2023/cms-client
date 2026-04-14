@@ -6,6 +6,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CustomerSummary } from "../types";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 客户表格行：头像、识别名、案件统计、操作按钮；支持草稿行禁用选择。 */
 const { t } = useI18n();
@@ -29,6 +30,10 @@ const casesSummary = computed(() =>
     total: props.customer.totalCases,
     active: props.customer.activeCases,
   }),
+);
+
+const groupDisplay = computed(() =>
+  resolveGroupLabel(props.customer.group, t("shared.group.disabledSuffix")),
 );
 
 const detailHref = computed(() => `#/customers/${props.customer.id}`);
@@ -121,7 +126,7 @@ const createCaseHref = computed(
     </td>
 
     <td class="customer-row__hide-lg">
-      <Chip size="sm">{{ customer.group }}</Chip>
+      <Chip size="sm">{{ groupDisplay }}</Chip>
     </td>
 
     <td class="customer-row__actions-cell">
