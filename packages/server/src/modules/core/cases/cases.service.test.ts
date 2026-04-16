@@ -95,7 +95,12 @@ function makePool(qf: QueryFn) {
 function makeTemplates(r?: unknown) {
   return {
     service: {
-      resolve: () => Promise.resolve(r ?? { mode: "legacy", used: false }),
+      resolve: (_ctx: unknown, input: { kind: string }) =>
+        Promise.resolve(
+          typeof r === "function"
+            ? (r as (input: { kind: string }) => unknown)(input)
+            : (r ?? { mode: "legacy", used: false }),
+        ),
     },
   };
 }
@@ -407,6 +412,18 @@ function transitionPool(returnStatus: string, fromStatus = "S1") {
       return ok([makeCaseRow({ status: returnStatus })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: fromStatus })]);
+    if (sql.includes("from case_parties")) {
+      return ok([{ id: "cp-1" }]);
+    }
+    if (
+      sql.includes("from document_items") &&
+      sql.includes("required_flag = true")
+    ) {
+      return ok([]);
+    }
+    if (sql.includes("from validation_runs")) {
+      return ok([{ id: "vr-1", result_status: "passed" }]);
+    }
     return ok();
   });
 }
@@ -672,6 +689,135 @@ void test("transition: no template falls back to default", async () => {
     { toStatus: "S3" },
   );
   assert.equal(r.status, "S3");
+});
+
+void test("transition: S3→S4 requires primary case party", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S3" })]);
+    }
+    if (sql.includes("from case_parties")) {
+      return ok([]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S4",
+      }),
+    /requires a primary case party/,
+  );
+});
+
+void test("transition: S4→S5 requires required documents to be approved or waived", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S4" })]);
+    }
+    if (sql.includes("from case_parties")) {
+      return ok([{ id: "cp-1" }]);
+    }
+    if (
+      sql.includes("from document_items") &&
+      sql.includes("required_flag = true")
+    ) {
+      return ok([{ id: "di-1" }]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S5",
+      }),
+    /requires all required document items to be approved or waived/,
+  );
+});
+
+void test("transition: S4→S5 requires a validation run", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S4" })]);
+    }
+    if (
+      sql.includes("from document_items") &&
+      sql.includes("required_flag = true")
+    ) {
+      return ok([]);
+    }
+    if (sql.includes("from validation_runs")) {
+      return ok([]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S5",
+      }),
+    /requires a validation run/,
+  );
+});
+
+void test("transition: S5→S6 requires latest passed validation run instead of Gate-B", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S5" })]);
+    }
+    if (sql.includes("from validation_runs")) {
+      return ok([{ id: "vr-1", result_status: "failed" }]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S6",
+      }),
+    /latest validation run to be passed/,
+  );
+  assert.ok(calls.some((sql) => sql.includes("from validation_runs")));
+  assert.ok(!calls.some((sql) => sql.includes("from generated_documents")));
+});
+
+void test("transition: S5→S6 requires approved review when review_required_flag is enabled", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S5" })]);
+    }
+    if (sql.includes("from validation_runs")) {
+      return ok([{ id: "vr-1", result_status: "passed" }]);
+    }
+    if (sql.includes("from review_records")) {
+      return ok([{ id: "rr-1", decision: "rejected" }]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(
+        pool,
+        makeTemplates((input: { kind: string }) =>
+          input.kind === "case_type"
+            ? {
+                mode: "template",
+                used: true,
+                version: 1,
+                config: { review_required_flag: true },
+              }
+            : { mode: "legacy", used: false },
+        ),
+      ).transition(makeCtx(), CASE_ID, { toStatus: "S6" }),
+    /approved latest review record/,
+  );
 });
 
 void test("transition: template used=false falls back to default", async () => {
@@ -1608,6 +1754,18 @@ void test("transition: full chain S1→S2→S3→S4→S5→S6→S7→S8→S9", a
         return ok([makeCaseRow({ status: to })]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([makeCaseRow({ status: from })]);
+      if (sql.includes("from case_parties")) {
+        return ok([{ id: "cp-1" }]);
+      }
+      if (
+        sql.includes("from document_items") &&
+        sql.includes("required_flag = true")
+      ) {
+        return ok([]);
+      }
+      if (sql.includes("from validation_runs")) {
+        return ok([{ id: "vr-1", result_status: "passed" }]);
+      }
       return ok();
     });
     const c = await svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {

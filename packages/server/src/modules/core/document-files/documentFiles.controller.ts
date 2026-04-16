@@ -28,6 +28,8 @@ type UploadBody = {
   fileName?: unknown;
   data?: unknown;
   contentType?: unknown;
+  storageType?: unknown;
+  relativePath?: unknown;
   expiryDate?: unknown;
 };
 
@@ -127,6 +129,11 @@ function parseContentType(value: unknown): string {
   return contentType;
 }
 
+function parseOptionalContentType(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  return parseContentType(value);
+}
+
 function parseOptionalDateOnly(
   value: unknown,
   field: string,
@@ -159,7 +166,7 @@ function sanitizeFileName(raw: string): string {
 function toDocumentFileResponse(file: DocumentFile): DocumentFileResponse {
   return {
     ...file,
-    fileKey: file.fileUrl,
+    fileKey: file.fileUrl ?? file.relativePath ?? "",
   };
 }
 
@@ -189,13 +196,15 @@ export class DocumentFilesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
-    const data = parseBase64Data(body.data);
-
     const created = await this.documentFilesService.upload(ctx, {
       requirementId: parseUuid(body.requirementId, "requirementId"),
       fileName: sanitizeFileName(requireString(body.fileName, "fileName")),
-      data,
-      contentType: parseContentType(body.contentType),
+      data: body.data === undefined ? undefined : parseBase64Data(body.data),
+      contentType: parseOptionalContentType(body.contentType),
+      storageType:
+        typeof body.storageType === "string" ? body.storageType : undefined,
+      relativePath:
+        typeof body.relativePath === "string" ? body.relativePath : undefined,
       expiryDate: parseOptionalDateOnly(body.expiryDate, "expiryDate"),
     });
     return toDocumentFileResponse(created);

@@ -921,6 +921,7 @@ export class CasesService {
           `Transition from '${from}' to '${to}' is not allowed`,
         );
       }
+      await this.validateTransitionGate(ctx, c, from, to);
       return;
     }
 
@@ -931,6 +932,166 @@ export class CasesService {
         `Transition from '${from}' to '${to}' is not allowed`,
       );
     }
+
+    await this.validateTransitionGate(ctx, c, from, to);
+  }
+
+  private async validateTransitionGate(
+    ctx: RequestContext,
+    c: Case,
+    from: string,
+    to: string,
+  ): Promise<void> {
+    if (from === "S3" && to === "S4") {
+      await this.validateReadyForDocumentPreparation(ctx, c);
+      return;
+    }
+
+    if (from === "S4" && to === "S5") {
+      await this.validateReadyForInternalReview(ctx, c);
+      return;
+    }
+
+    if (from === "S5" && to === "S6") {
+      await this.validateReadyForSubmission(ctx, c);
+    }
+  }
+
+  private async validateReadyForDocumentPreparation(
+    ctx: RequestContext,
+    c: Case,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const primaryPartyResult = await tenantDb.query<{ id: string }>(
+      `
+        select id
+        from case_parties
+        where org_id = $1
+          and case_id = $2
+          and is_primary = true
+        limit 1
+      `,
+      [ctx.orgId, c.id],
+    );
+
+    if (!primaryPartyResult.rows.at(0)) {
+      throw new BadRequestException(
+        "S3→S4 requires a primary case party before moving to S4",
+      );
+    }
+  }
+
+  private async validateReadyForInternalReview(
+    ctx: RequestContext,
+    c: Case,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const incompleteRequiredItemResult = await tenantDb.query<{ id: string }>(
+      `
+        select id
+        from document_items
+        where org_id = $1
+          and case_id = $2
+          and status != 'deleted'
+          and required_flag = true
+          and status not in ('approved', 'waived')
+        limit 1
+      `,
+      [ctx.orgId, c.id],
+    );
+
+    if (incompleteRequiredItemResult.rows.at(0)) {
+      throw new BadRequestException(
+        "S4→S5 requires all required document items to be approved or waived",
+      );
+    }
+
+    const validationRunResult = await tenantDb.query<{ id: string }>(
+      `
+        select id
+        from validation_runs
+        where org_id = $1 and case_id = $2
+        order by executed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [ctx.orgId, c.id],
+    );
+
+    if (!validationRunResult.rows.at(0)) {
+      throw new BadRequestException(
+        "S4→S5 requires a validation run before moving to S5",
+      );
+    }
+  }
+
+  private async validateReadyForSubmission(
+    ctx: RequestContext,
+    c: Case,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const validationRunResult = await tenantDb.query<{
+      id: string;
+      result_status: string;
+    }>(
+      `
+        select id, result_status
+        from validation_runs
+        where org_id = $1 and case_id = $2
+        order by executed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [ctx.orgId, c.id],
+    );
+    const latestValidationRun = validationRunResult.rows.at(0);
+    if (!latestValidationRun) {
+      throw new BadRequestException(
+        "S5→S6 requires a validation run before moving to S6",
+      );
+    }
+    if (latestValidationRun.result_status !== "passed") {
+      throw new BadRequestException(
+        "S5→S6 requires the latest validation run to be passed",
+      );
+    }
+
+    if (!(await this.isReviewRequired(ctx, c))) {
+      return;
+    }
+
+    const reviewResult = await tenantDb.query<{ id: string; decision: string }>(
+      `
+        select id, decision
+        from review_records
+        where org_id = $1
+          and case_id = $2
+          and validation_run_id = $3
+        order by reviewed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [ctx.orgId, c.id, latestValidationRun.id],
+    );
+    const latestReviewRecord = reviewResult.rows.at(0);
+    if (latestReviewRecord?.decision !== "approved") {
+      throw new BadRequestException(
+        "S5→S6 requires an approved latest review record when review_required_flag is enabled",
+      );
+    }
+  }
+
+  private async isReviewRequired(
+    ctx: RequestContext,
+    c: Case,
+  ): Promise<boolean> {
+    const resolved = await this.templatesResolver.resolve(ctx, {
+      kind: "case_type",
+      key: c.caseTypeCode,
+      entityId: c.id,
+    });
+    return (
+      resolved.mode === "template" &&
+      resolved.used &&
+      resolved.config.review_required_flag === true
+    );
   }
 
   /** 插入 Case 主表行。

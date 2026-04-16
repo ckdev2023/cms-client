@@ -12,6 +12,11 @@ import type {
   SubmissionPackage,
   SubmissionPackageItem,
 } from "../model/documentEntities";
+import {
+  CasesService,
+  TEMPLATES_RESOLVER,
+  type TemplatesResolver,
+} from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -53,6 +58,17 @@ type SubmissionPackageItemQueryRow = {
   ref_id: string;
   snapshot_payload: unknown;
   created_at: unknown;
+};
+
+type ValidationRunQueryRow = {
+  id: string;
+  result_status: string;
+};
+
+type ReviewRecordQueryRow = {
+  id: string;
+  validation_run_id: string;
+  decision: string;
 };
 
 type SubmissionPackageDetail = SubmissionPackage & {
@@ -196,6 +212,24 @@ function requireValidItems(items: SubmissionPackageCreateItemInput[]): void {
   }
 }
 
+function requireSubmissionMinimumFields(
+  input: SubmissionPackageCreateInput,
+): void {
+  if (!input.submittedAt) {
+    throw new BadRequestException(
+      "submittedAt is required for submission package",
+    );
+  }
+  if (
+    typeof input.authorityName !== "string" ||
+    input.authorityName.trim().length === 0
+  ) {
+    throw new BadRequestException(
+      "authorityName is required for submission package",
+    );
+  }
+}
+
 /**
  *
  */
@@ -205,10 +239,15 @@ export class SubmissionPackagesService {
    *
    * @param pool
    * @param timelineService
+   * @param casesService
+   * @param templatesResolver
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(TimelineService) private readonly timelineService: TimelineService,
+    @Inject(CasesService) private readonly casesService: CasesService,
+    @Inject(TEMPLATES_RESOLVER)
+    private readonly templatesResolver: TemplatesResolver,
   ) {}
 
   /**
@@ -223,6 +262,7 @@ export class SubmissionPackagesService {
     const submissionKind = input.submissionKind ?? "initial";
     requireValidSubmissionKind(submissionKind);
     requireValidItems(input.items);
+    requireSubmissionMinimumFields(input);
 
     if (submissionKind === "supplement" && !input.relatedSubmissionId) {
       throw new BadRequestException(
@@ -235,6 +275,22 @@ export class SubmissionPackagesService {
       );
     }
 
+    const currentCase = await this.casesService.get(ctx, input.caseId);
+    if (!currentCase) {
+      throw new NotFoundException("Case not found");
+    }
+    if (currentCase.status !== "S6" && currentCase.status !== "S7") {
+      throw new BadRequestException(
+        "Submission package can only be created when case is in S6 or S7",
+      );
+    }
+
+    const reviewRequired = await this.isReviewRequired(
+      ctx,
+      currentCase.caseTypeCode,
+      currentCase.id,
+    );
+
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const created = await tenantDb.transaction(async (tx) => {
       await this.assertCaseExists(tx, ctx.orgId, input.caseId);
@@ -246,6 +302,14 @@ export class SubmissionPackagesService {
           input.relatedSubmissionId,
         );
       }
+      const gateContext = await this.resolveSubmissionGateContext(
+        tx,
+        ctx.orgId,
+        input.caseId,
+        input.validationRunId ?? null,
+        input.reviewRecordId ?? null,
+        reviewRequired,
+      );
 
       const submissionNo = await this.getNextSubmissionNo(
         tx,
@@ -268,8 +332,8 @@ export class SubmissionPackagesService {
           submissionNo,
           submissionKind,
           input.submittedAt ?? null,
-          input.validationRunId ?? null,
-          input.reviewRecordId ?? null,
+          gateContext.validationRunId,
+          gateContext.reviewRecordId,
           input.authorityName ?? null,
           input.acceptanceNo ?? null,
           input.receiptStorageType ?? null,
@@ -330,7 +394,26 @@ export class SubmissionPackagesService {
       },
     });
 
+    if (currentCase.status === "S6") {
+      await this.transitionCaseToSubmitted(ctx, created.caseId);
+    }
+
     return created;
+  }
+
+  private async transitionCaseToSubmitted(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    try {
+      await this.casesService.transition(ctx, caseId, { toStatus: "S7" });
+    } catch (error) {
+      const reloadedCase = await this.casesService.get(ctx, caseId);
+      if (reloadedCase?.status === "S7") {
+        return;
+      }
+      throw error;
+    }
   }
 
   /**
@@ -467,6 +550,139 @@ export class SubmissionPackagesService {
       [orgId, caseId],
     );
     return Number(result.rows.at(0)?.next_submission_no ?? "1");
+  }
+
+  private async resolveSubmissionGateContext(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    validationRunId: string | null,
+    reviewRecordId: string | null,
+    reviewRequired: boolean,
+  ): Promise<{ validationRunId: string; reviewRecordId: string | null }> {
+    const validationRunResult = await tx.query<ValidationRunQueryRow>(
+      `
+        select id, result_status
+        from validation_runs
+        where org_id = $1 and case_id = $2
+        order by executed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [orgId, caseId],
+    );
+    const latestValidationRun = validationRunResult.rows.at(0);
+    if (!latestValidationRun) {
+      throw new BadRequestException(
+        "Gate-C requires a latest validation run before creating a submission package",
+      );
+    }
+    if (latestValidationRun.result_status !== "passed") {
+      throw new BadRequestException(
+        "Gate-C requires the latest validation run to be passed",
+      );
+    }
+    if (validationRunId && validationRunId !== latestValidationRun.id) {
+      throw new BadRequestException(
+        "Submission package must reference the latest passed validation run",
+      );
+    }
+
+    if (!reviewRequired && !reviewRecordId) {
+      return { validationRunId: latestValidationRun.id, reviewRecordId: null };
+    }
+
+    if (!reviewRequired && reviewRecordId) {
+      const specifiedReviewRecord = await this.getReviewRecordById(
+        tx,
+        orgId,
+        caseId,
+        reviewRecordId,
+      );
+      if (specifiedReviewRecord.validation_run_id !== latestValidationRun.id) {
+        throw new BadRequestException(
+          "reviewRecordId must belong to the latest passed validation run",
+        );
+      }
+      if (specifiedReviewRecord.decision !== "approved") {
+        throw new BadRequestException(
+          "reviewRecordId must reference an approved review record",
+        );
+      }
+      return {
+        validationRunId: latestValidationRun.id,
+        reviewRecordId: specifiedReviewRecord.id,
+      };
+    }
+
+    const latestReviewRecordResult = await tx.query<ReviewRecordQueryRow>(
+      `
+        select id, validation_run_id, decision
+        from review_records
+        where org_id = $1
+          and case_id = $2
+          and validation_run_id = $3
+        order by reviewed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [orgId, caseId, latestValidationRun.id],
+    );
+    const latestReviewRecord = latestReviewRecordResult.rows.at(0);
+    if (latestReviewRecord?.decision !== "approved") {
+      throw new BadRequestException(
+        "Gate-C requires the latest review record to be approved when review_required_flag is enabled",
+      );
+    }
+    if (reviewRecordId && reviewRecordId !== latestReviewRecord.id) {
+      throw new BadRequestException(
+        "Submission package must reference the latest approved review record",
+      );
+    }
+
+    return {
+      validationRunId: latestValidationRun.id,
+      reviewRecordId: latestReviewRecord.id,
+    };
+  }
+
+  private async getReviewRecordById(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    reviewRecordId: string,
+  ): Promise<ReviewRecordQueryRow> {
+    const result = await tx.query<ReviewRecordQueryRow>(
+      `
+        select id, validation_run_id, decision
+        from review_records
+        where id = $1 and org_id = $2 and case_id = $3
+        limit 1
+      `,
+      [reviewRecordId, orgId, caseId],
+    );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException(
+        "reviewRecordId does not belong to current case",
+      );
+    }
+    return row;
+  }
+
+  private async isReviewRequired(
+    ctx: RequestContext,
+    caseTypeCode: string,
+    caseId: string,
+  ): Promise<boolean> {
+    const resolved = await this.templatesResolver.resolve(ctx, {
+      kind: "case_type",
+      key: caseTypeCode,
+      entityId: caseId,
+    });
+    return (
+      resolved.mode === "template" &&
+      resolved.used &&
+      resolved.config.review_required_flag === true
+    );
   }
 
   private async buildSnapshotPayload(

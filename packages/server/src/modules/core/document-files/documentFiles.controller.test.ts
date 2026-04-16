@@ -22,6 +22,8 @@ const mockFile: DocumentFile = {
   versionNo: 1,
   uploadedBy: USER_ID,
   uploadedAt: "2026-01-01T00:00:00.000Z",
+  storageType: "local_server",
+  relativePath: null,
   reviewStatus: "pending",
   reviewBy: null,
   reviewAt: null,
@@ -119,6 +121,40 @@ void test("DocumentFilesController upload validates context and input", async ()
   assert.equal(uploadInput.contentType, "application/pdf");
   assert.equal(uploadInput.expiryDate, "2026-12-31");
   assert.equal((uploadInput.data as Buffer).toString(), "hello");
+});
+
+void test("DocumentFilesController upload supports local paper archive registration", async () => {
+  let uploadInput: Record<string, unknown> | undefined;
+  const service = {
+    upload: (_ctx: unknown, input: Record<string, unknown>) => {
+      uploadInput = input;
+      return Promise.resolve({
+        ...mockFile,
+        fileUrl: null,
+        fileType: null,
+        fileSize: null,
+        relativePath: "paper-archive/2026/box-01/passport.pdf",
+      });
+    },
+  } as unknown as DocumentFilesService;
+  const controller = new DocumentFilesController(service);
+
+  const res = await controller.upload(req as never, {
+    requirementId: REQUIREMENT_ID,
+    fileName: "passport.pdf",
+    storageType: "local_server",
+    relativePath: "paper-archive/2026/box-01/passport.pdf",
+  });
+
+  assert.ok(uploadInput);
+  assert.equal(uploadInput.storageType, "local_server");
+  assert.equal(
+    uploadInput.relativePath,
+    "paper-archive/2026/box-01/passport.pdf",
+  );
+  assert.equal(uploadInput.data, undefined);
+  assert.equal(uploadInput.contentType, undefined);
+  assert.equal(res.fileKey, "paper-archive/2026/box-01/passport.pdf");
 });
 
 void test("DocumentFilesController list parses query and validates requirementId", async () => {

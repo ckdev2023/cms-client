@@ -26,12 +26,16 @@ import { RemindersController } from "./modules/core/reminders/reminders.controll
 import { RemindersService } from "./modules/core/reminders/reminders.service";
 import { ResidencePeriodsController } from "./modules/core/residence-periods/residencePeriods.controller";
 import { ResidencePeriodsService } from "./modules/core/residence-periods/residencePeriods.service";
+import { ReviewRecordsController } from "./modules/core/review-records/reviewRecords.controller";
+import { ReviewRecordsService } from "./modules/core/review-records/reviewRecords.service";
 import { CommunicationLogsController } from "./modules/core/communication-logs/communicationLogs.controller";
 import { CommunicationLogsService } from "./modules/core/communication-logs/communicationLogs.service";
 import { SubmissionPackagesController } from "./modules/core/submission-packages/submissionPackages.controller";
 import { SubmissionPackagesService } from "./modules/core/submission-packages/submissionPackages.service";
 import { TasksController } from "./modules/core/tasks/tasks.controller";
 import { TasksService } from "./modules/core/tasks/tasks.service";
+import { ValidationRunsController } from "./modules/core/validation-runs/validationRuns.controller";
+import { ValidationRunsService } from "./modules/core/validation-runs/validationRuns.service";
 import { CompaniesController } from "./modules/core/companies/companies.controller";
 import { CompaniesService } from "./modules/core/companies/companies.service";
 import { ContactPersonsController } from "./modules/core/contact-persons/contactPersons.controller";
@@ -94,6 +98,8 @@ import {
     DocumentItemsController,
     RemindersController,
     ResidencePeriodsController,
+    ValidationRunsController,
+    ReviewRecordsController,
     SubmissionPackagesController,
     TasksController,
     CommunicationLogsController,
@@ -131,6 +137,8 @@ import {
     DocumentItemsService,
     RemindersService,
     ResidencePeriodsService,
+    ValidationRunsService,
+    ReviewRecordsService,
     SubmissionPackagesService,
     TasksService,
     CommunicationLogsService,

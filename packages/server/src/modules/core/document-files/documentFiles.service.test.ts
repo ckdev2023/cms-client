@@ -36,6 +36,8 @@ function makeFileRow(overrides: Record<string, unknown> = {}) {
     version_no: 1,
     uploaded_by: USER_ID,
     uploaded_at: "2026-01-01T00:00:00.000Z",
+    storage_type: "local_server",
+    relative_path: null,
     review_status: "pending",
     review_by: null,
     review_at: null,
@@ -129,6 +131,7 @@ void test("DocumentFilesService.upload uploads, auto-increments version and writ
   });
 
   assert.equal(result.versionNo, 3);
+  assert.equal(result.storageType, "local_server");
   assert.equal(storage.uploadCalls.length, 1);
   assert.ok(
     storage.uploadCalls[0]?.key.includes(`document-files/${REQUIREMENT_ID}/`),
@@ -141,7 +144,82 @@ void test("DocumentFilesService.upload uploads, auto-increments version and writ
   const insertCall = calls.find((call) =>
     call.sql.includes("insert into document_files"),
   );
-  assert.equal(insertCall?.params?.[6], 3);
+  assert.ok(insertCall);
+  assert.ok(insertCall.params);
+  assert.equal(insertCall.params[6], 3);
+  assert.equal(insertCall.params[8], "local_server");
+  assert.equal(insertCall.params[9], null);
+});
+
+void test("DocumentFilesService.upload supports local paper archive registration", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const { svc, timeline, storage } = createService((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("from document_items") && sql.includes("for update")) {
+      return Promise.resolve({ rows: [{ id: REQUIREMENT_ID }], rowCount: 1 });
+    }
+    if (
+      sql.includes("select coalesce(max(version_no), 0) + 1 as next_version")
+    ) {
+      return Promise.resolve({ rows: [{ next_version: "2" }], rowCount: 1 });
+    }
+    if (sql.includes("insert into document_files")) {
+      return Promise.resolve({
+        rows: [
+          makeFileRow({
+            version_no: 2,
+            file_url: null,
+            file_type: null,
+            file_size: null,
+            relative_path: "paper-archive/2026/box-01/passport.pdf",
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const result = await svc.upload(makeCtx(), {
+    requirementId: REQUIREMENT_ID,
+    fileName: "passport.pdf",
+    storageType: "local_server",
+    relativePath: "paper-archive/2026/box-01/passport.pdf",
+  });
+
+  assert.equal(result.fileUrl, null);
+  assert.equal(result.storageType, "local_server");
+  assert.equal(result.relativePath, "paper-archive/2026/box-01/passport.pdf");
+  assert.equal(storage.uploadCalls.length, 0);
+  assert.equal(storage.removeCalls.length, 0);
+  assert.equal(timeline.writes.length, 1);
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into document_files"),
+  );
+  assert.ok(insertCall);
+  assert.ok(insertCall.params);
+  assert.equal(insertCall.params[3], null);
+  assert.equal(insertCall.params[8], "local_server");
+  assert.equal(insertCall.params[9], "paper-archive/2026/box-01/passport.pdf");
+});
+
+void test("DocumentFilesService.upload rejects unsafe local paper archive path", async () => {
+  const { svc, storage } = createService(() =>
+    Promise.resolve({ rows: [], rowCount: 0 }),
+  );
+
+  await assert.rejects(
+    () =>
+      svc.upload(makeCtx(), {
+        requirementId: REQUIREMENT_ID,
+        fileName: "passport.pdf",
+        storageType: "local_server",
+        relativePath: "../escape/passport.pdf",
+      }),
+    /relativePath must not escape the archive root/,
+  );
+
+  assert.equal(storage.uploadCalls.length, 0);
 });
 
 void test("DocumentFilesService.upload removes uploaded file when DB insert flow fails", async () => {
@@ -299,6 +377,34 @@ void test("DocumentFilesService.remove rejects locked submission package file", 
   );
   assert.equal(storage.removeCalls.length, 0);
   assert.equal(timeline.writes.length, 0);
+});
+
+void test("DocumentFilesService.remove skips storage deletion for local paper archive", async () => {
+  const { svc, storage, timeline } = createService((sql, params) => {
+    if (sql.includes("from document_files") && params?.[0] === FILE_ID) {
+      return Promise.resolve({
+        rows: [
+          makeFileRow({
+            file_url: null,
+            relative_path: "paper-archive/2026/box-01/passport.pdf",
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from submission_package_items spi")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (sql.includes("delete from document_files")) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc.remove(makeCtx("manager"), FILE_ID);
+
+  assert.equal(storage.removeCalls.length, 0);
+  assert.equal(timeline.writes.length, 1);
 });
 
 void test("DocumentFilesService enforces tenant isolation through tenantDb", async () => {

@@ -28,6 +28,7 @@ function makeItemRow(overrides: Record<string, unknown> = {}) {
     checklist_item_code: "passport",
     name: "Passport Copy",
     status: "pending",
+    required_flag: false,
     requested_at: null,
     received_at: null,
     reviewed_at: null,

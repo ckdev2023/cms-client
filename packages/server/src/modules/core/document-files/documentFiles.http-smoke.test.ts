@@ -30,6 +30,8 @@ const mockFile: DocumentFile = {
   versionNo: 1,
   uploadedBy: USER_ID,
   uploadedAt: "2026-01-01T00:00:00.000Z",
+  storageType: "local_server",
+  relativePath: null,
   reviewStatus: "pending",
   reviewBy: null,
   reviewAt: null,

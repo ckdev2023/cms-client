@@ -14,30 +14,22 @@ import {
 } from "../../../infra/storage/storageAdapter";
 import type { DocumentFile } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
-import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
+import {
+  createTenantDb,
+  type TenantDb,
+  type TenantDbTx,
+} from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
-
-/**
- * 数据库查询返回的 document_files 行类型。
- */
-export type DocumentFileQueryRow = {
-  id: string;
-  org_id: string;
-  requirement_id: string;
-  file_name: string;
-  file_url: string;
-  file_type: unknown;
-  file_size: unknown;
-  version_no: unknown;
-  uploaded_by: string | null;
-  uploaded_at: unknown;
-  review_status: string;
-  review_by: string | null;
-  review_at: unknown;
-  expiry_date: unknown;
-  hash_value: unknown;
-  created_at: unknown;
-};
+import {
+  buildStorageKey,
+  DOC_FILE_COLS,
+  LOCAL_STORAGE_TYPE,
+  mapDecisionToReviewStatus,
+  mapDocumentFileRow,
+  normalizeRelativePath,
+  type DocumentFileQueryRow,
+  toNumberOrNull,
+} from "./documentFiles.shared";
 
 /**
  * DocumentFile 上传参数。
@@ -45,8 +37,10 @@ export type DocumentFileQueryRow = {
 export type DocumentFileUploadInput = {
   requirementId: string;
   fileName: string;
-  data: Buffer;
-  contentType: string;
+  data?: Buffer;
+  contentType?: string;
+  storageType?: string;
+  relativePath?: string | null;
   expiryDate?: string | null;
 };
 
@@ -65,75 +59,6 @@ export type DocumentFileListInput = {
 export type DocumentFileReviewInput = {
   decision: "approve" | "reject";
 };
-
-const DOC_FILE_COLS = `id, org_id, requirement_id, file_name, file_url, file_type, file_size, version_no, uploaded_by, uploaded_at, review_status, review_by, review_at, expiry_date, hash_value, created_at`;
-
-function toTimestampStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  return null;
-}
-
-function toTimestampString(value: unknown): string {
-  return toTimestampStringOrNull(value) ?? "";
-}
-
-function toDateStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
-  return null;
-}
-
-function toNullableString(value: unknown): string | null {
-  return typeof value === "string" ? value : null;
-}
-
-function toNumberOrNull(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.length > 0) {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : null;
-  }
-  return null;
-}
-
-function buildStorageKey(requirementId: string, fileName: string): string {
-  const sanitized = fileName.replace(/[/\\]/g, "_");
-  return `document-files/${requirementId}/${String(Date.now())}_${sanitized}`;
-}
-
-function mapDecisionToReviewStatus(decision: "approve" | "reject"): string {
-  return decision === "approve" ? "approved" : "rejected";
-}
-
-/**
- * 将数据库行映射为 DocumentFile 实体。
- * @param row 数据库查询结果行
- * @returns DocumentFile 实体
- */
-export function mapDocumentFileRow(row: DocumentFileQueryRow): DocumentFile {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    requirementId: row.requirement_id,
-    fileName: row.file_name,
-    fileUrl: row.file_url,
-    fileType: toNullableString(row.file_type),
-    fileSize: toNumberOrNull(row.file_size),
-    versionNo: toNumberOrNull(row.version_no) ?? 0,
-    uploadedBy: row.uploaded_by,
-    uploadedAt: toTimestampString(row.uploaded_at),
-    reviewStatus: row.review_status,
-    reviewBy: row.review_by,
-    reviewAt: toTimestampStringOrNull(row.review_at),
-    expiryDate: toDateStringOrNull(row.expiry_date),
-    hashValue: toNullableString(row.hash_value),
-    createdAt: toTimestampString(row.created_at),
-  };
-}
 
 /**
  * DocumentFile 服务，提供上传、查询、审核与删除能力。
@@ -190,8 +115,8 @@ export class DocumentFilesService {
     tx: TenantDbTx,
     ctx: RequestContext,
     input: DocumentFileUploadInput,
-    fileUrl: string,
-    hashValue: string,
+    fileUrl: string | null,
+    hashValue: string | null,
     versionNo: number,
   ): Promise<DocumentFile> {
     const insertResult = await tx.query<DocumentFileQueryRow>(
@@ -205,10 +130,12 @@ export class DocumentFilesService {
           file_size,
           version_no,
           uploaded_by,
+          storage_type,
+          relative_path,
           expiry_date,
           hash_value
         )
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
         returning ${DOC_FILE_COLS}
       `,
       [
@@ -216,10 +143,12 @@ export class DocumentFilesService {
         input.requirementId,
         input.fileName,
         fileUrl,
-        input.contentType,
-        input.data.length,
+        input.contentType ?? null,
+        input.data?.length ?? null,
         versionNo,
         ctx.userId,
+        input.storageType ?? LOCAL_STORAGE_TYPE,
+        input.relativePath ?? null,
         input.expiryDate ?? null,
         hashValue,
       ],
@@ -246,7 +175,8 @@ export class DocumentFilesService {
     });
   }
 
-  private async deleteUploadedObject(fileUrl: string): Promise<void> {
+  private async deleteUploadedObject(fileUrl: string | null): Promise<void> {
+    if (!fileUrl) return;
     await this.storage.remove(fileUrl).catch(() => undefined);
   }
 
@@ -261,6 +191,65 @@ export class DocumentFilesService {
     input: DocumentFileUploadInput,
   ): Promise<DocumentFile> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    if (input.storageType && input.storageType !== LOCAL_STORAGE_TYPE) {
+      throw new BadRequestException(
+        `Unsupported storageType: ${input.storageType}`,
+      );
+    }
+
+    const isLocalArchiveRegistration = input.relativePath !== undefined;
+    if (isLocalArchiveRegistration) {
+      return this.registerLocalArchive(ctx, tenantDb, input);
+    }
+
+    return this.uploadBinaryFile(ctx, tenantDb, input);
+  }
+
+  private async registerLocalArchive(
+    ctx: RequestContext,
+    tenantDb: TenantDb,
+    input: DocumentFileUploadInput,
+  ): Promise<DocumentFile> {
+    if (input.data || input.contentType) {
+      throw new BadRequestException(
+        "local_server registration does not accept binary upload fields",
+      );
+    }
+    const localInput: DocumentFileUploadInput = {
+      ...input,
+      storageType: LOCAL_STORAGE_TYPE,
+      relativePath: normalizeRelativePath(input.relativePath ?? ""),
+    };
+
+    const created = await tenantDb.transaction(async (tx) => {
+      await this.assertRequirementExists(tx, input.requirementId);
+      const versionNo = await this.getNextVersionNo(tx, input.requirementId);
+      return this.insertDocumentFile(
+        tx,
+        ctx,
+        localInput,
+        null,
+        null,
+        versionNo,
+      );
+    });
+
+    await this.writeUploadedTimeline(ctx, created);
+    return created;
+  }
+
+  private async uploadBinaryFile(
+    ctx: RequestContext,
+    tenantDb: TenantDb,
+    input: DocumentFileUploadInput,
+  ): Promise<DocumentFile> {
+    if (!input.data) {
+      throw new BadRequestException("data is required");
+    }
+    if (!input.contentType) {
+      throw new BadRequestException("contentType is required");
+    }
+
     const fileUrl = buildStorageKey(input.requirementId, input.fileName);
     const hashValue = crypto
       .createHash("sha256")
@@ -269,9 +258,8 @@ export class DocumentFilesService {
 
     await this.storage.upload(fileUrl, input.data, input.contentType);
 
-    let created: DocumentFile;
     try {
-      created = await tenantDb.transaction(async (tx) => {
+      const created = await tenantDb.transaction(async (tx) => {
         await this.assertRequirementExists(tx, input.requirementId);
         const versionNo = await this.getNextVersionNo(tx, input.requirementId);
         return this.insertDocumentFile(
@@ -283,14 +271,12 @@ export class DocumentFilesService {
           versionNo,
         );
       });
+      await this.writeUploadedTimeline(ctx, created);
+      return created;
     } catch (error) {
       await this.deleteUploadedObject(fileUrl);
       throw error;
     }
-
-    await this.writeUploadedTimeline(ctx, created);
-
-    return created;
   }
 
   /**
@@ -412,7 +398,9 @@ export class DocumentFilesService {
 
     await this.assertNotLockedInSubmissionPackage(ctx, id);
 
-    await this.storage.remove(current.fileUrl);
+    if (current.fileUrl) {
+      await this.storage.remove(current.fileUrl);
+    }
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query(

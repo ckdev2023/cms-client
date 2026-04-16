@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import assert from "node:assert/strict";
 import test from "node:test";
 import type { Pool } from "pg";
@@ -17,6 +18,8 @@ const ITEM_ID = "00000000-0000-4000-8000-000000000030";
 const REQUIREMENT_ID = "00000000-0000-4000-8000-000000000040";
 const FILE_ID = "00000000-0000-4000-8000-000000000041";
 const GENERATED_DOC_ID = "00000000-0000-4000-8000-000000000042";
+const VALIDATION_RUN_ID = "00000000-0000-4000-8000-000000000043";
+const REVIEW_RECORD_ID = "00000000-0000-4000-8000-000000000044";
 
 type QueryResult = { rows: unknown[]; rowCount?: number };
 type QueryFn = (sql: string, params?: unknown[]) => Promise<QueryResult>;
@@ -81,13 +84,55 @@ function makeTimeline() {
   };
 }
 
-function createService(queryFn: QueryFn) {
+function makeCasesService(status = "S7") {
+  const transitions: unknown[] = [];
+  return {
+    service: {
+      get: () =>
+        Promise.resolve({
+          id: CASE_ID,
+          status,
+          caseTypeCode: "visa",
+        }),
+      transition: (_ctx: unknown, caseId: string, input: unknown) => {
+        transitions.push({ caseId, input });
+        return Promise.resolve({ id: caseId, status: "S7" });
+      },
+    },
+    transitions,
+  };
+}
+
+function makeTemplatesResolver(reviewRequired = false) {
+  return {
+    resolve: () =>
+      Promise.resolve(
+        reviewRequired
+          ? {
+              mode: "template" as const,
+              used: true,
+              version: 1,
+              config: { review_required_flag: true },
+            }
+          : { mode: "legacy" as const, used: false },
+      ),
+  };
+}
+
+function createService(
+  queryFn: QueryFn,
+  caseStatus = "S7",
+  reviewRequired = false,
+) {
   const timeline = makeTimeline();
+  const cases = makeCasesService(caseStatus);
   const svc = new SubmissionPackagesService(
     makePool(queryFn),
     timeline.service as never,
+    cases.service as never,
+    makeTemplatesResolver(reviewRequired) as never,
   );
-  return { svc, timeline };
+  return { svc, timeline, cases };
 }
 
 void test("mapSubmissionPackageRow maps row to entity", () => {
@@ -110,6 +155,12 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc, timeline } = createService((sql, params) => {
     calls.push({ sql, params });
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("select id from cases")) {
       return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
     }
@@ -121,7 +172,9 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
     }
     if (sql.includes("insert into submission_packages")) {
       return Promise.resolve({
-        rows: [makeSubmissionPackageRow()],
+        rows: [
+          makeSubmissionPackageRow({ validation_run_id: params?.[5] ?? null }),
+        ],
         rowCount: 1,
       });
     }
@@ -177,6 +230,8 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
 
   const created = await svc.create(makeCtx(), {
     caseId: CASE_ID,
+    authorityName: "Tokyo Immigration",
+    submittedAt: "2026-04-01T10:00:00.000Z",
     items: [
       { itemType: "document_requirement", refId: REQUIREMENT_ID },
       { itemType: "document_file_version", refId: FILE_ID },
@@ -186,12 +241,69 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
 
   assert.equal(created.submissionNo, 1);
   assert.equal(created.items.length, 3);
+  assert.equal(created.validationRunId, VALIDATION_RUN_ID);
   assert.equal(timeline.writes.length, 1);
   assert.ok(
     calls.some((call) =>
       call.sql.includes("insert into submission_package_items"),
     ),
   );
+});
+
+void test("SubmissionPackagesService.create advances case to S7 when current status is S6", async () => {
+  const { svc, cases } = createService((sql) => {
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    if (sql.includes("coalesce(max(submission_no), 0) + 1")) {
+      return Promise.resolve({
+        rows: [{ next_submission_no: "1" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_packages")) {
+      return Promise.resolve({
+        rows: [makeSubmissionPackageRow()],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items")) {
+      return Promise.resolve({
+        rows: [
+          {
+            id: REQUIREMENT_ID,
+            checklist_item_code: "passport",
+            name: "Passport",
+          },
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_package_items")) {
+      return Promise.resolve({
+        rows: [makeSubmissionPackageItemRow()],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }, "S6");
+
+  await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    authorityName: "Tokyo Immigration",
+    submittedAt: "2026-04-01T10:00:00.000Z",
+    items: [{ itemType: "document_requirement", refId: REQUIREMENT_ID }],
+  });
+
+  assert.deepEqual(cases.transitions, [
+    { caseId: CASE_ID, input: { toStatus: "S7" } },
+  ]);
 });
 
 void test("SubmissionPackagesService.create rejects supplement without relatedSubmissionId", async () => {
@@ -203,6 +315,8 @@ void test("SubmissionPackagesService.create rejects supplement without relatedSu
       svc.create(makeCtx(), {
         caseId: CASE_ID,
         submissionKind: "supplement",
+        authorityName: "Tokyo Immigration",
+        submittedAt: "2026-04-01T10:00:00.000Z",
         items: [
           {
             itemType: "field_snapshot",
@@ -213,6 +327,209 @@ void test("SubmissionPackagesService.create rejects supplement without relatedSu
       }),
     /relatedSubmissionId is required/,
   );
+});
+
+void test("SubmissionPackagesService.create rejects missing authorityName", async () => {
+  const { svc } = createService(() =>
+    Promise.resolve({ rows: [], rowCount: 0 }),
+  );
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        submittedAt: "2026-04-01T10:00:00.000Z",
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: REQUIREMENT_ID,
+            snapshotPayload: { stage: "S6" },
+          },
+        ],
+      }),
+    /authorityName is required/,
+  );
+});
+
+void test("SubmissionPackagesService.create rejects missing submittedAt", async () => {
+  const { svc } = createService(() =>
+    Promise.resolve({ rows: [], rowCount: 0 }),
+  );
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        authorityName: "Tokyo Immigration",
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: REQUIREMENT_ID,
+            snapshotPayload: { stage: "S6" },
+          },
+        ],
+      }),
+    /submittedAt is required/,
+  );
+});
+
+void test("SubmissionPackagesService.create rejects case before S6", async () => {
+  const { svc } = createService(
+    () => Promise.resolve({ rows: [], rowCount: 0 }),
+    "S5",
+  );
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        authorityName: "Tokyo Immigration",
+        submittedAt: "2026-04-01T10:00:00.000Z",
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: REQUIREMENT_ID,
+            snapshotPayload: { stage: "S5" },
+          },
+        ],
+      }),
+    /case is in S6 or S7/,
+  );
+});
+
+void test("SubmissionPackagesService.create rejects when latest validation run is not passed", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "failed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }, "S6");
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        authorityName: "Tokyo Immigration",
+        submittedAt: "2026-04-01T10:00:00.000Z",
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: REQUIREMENT_ID,
+            snapshotPayload: { stage: "S6" },
+          },
+        ],
+      }),
+    /latest validation run to be passed/,
+  );
+});
+
+void test("SubmissionPackagesService.create rejects stale validationRunId", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }, "S6");
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        validationRunId: "stale-validation-run",
+        authorityName: "Tokyo Immigration",
+        submittedAt: "2026-04-01T10:00:00.000Z",
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: REQUIREMENT_ID,
+            snapshotPayload: { stage: "S6" },
+          },
+        ],
+      }),
+    /latest passed validation run/,
+  );
+});
+
+void test("SubmissionPackagesService.create auto-links latest approved review when review_required_flag is enabled", async () => {
+  const { svc } = createService(
+    (sql, params) => {
+      if (sql.includes("from validation_runs")) {
+        return Promise.resolve({
+          rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("from review_records")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: REVIEW_RECORD_ID,
+              validation_run_id: VALIDATION_RUN_ID,
+              decision: "approved",
+            },
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("select id from cases")) {
+        return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+      }
+      if (sql.includes("coalesce(max(submission_no), 0) + 1")) {
+        return Promise.resolve({
+          rows: [{ next_submission_no: "1" }],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("insert into submission_packages")) {
+        return Promise.resolve({
+          rows: [
+            makeSubmissionPackageRow({
+              validation_run_id: params?.[5] ?? null,
+              review_record_id: params?.[6] ?? null,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("insert into submission_package_items")) {
+        return Promise.resolve({
+          rows: [makeSubmissionPackageItemRow()],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    },
+    "S6",
+    true,
+  );
+
+  const created = await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    authorityName: "Tokyo Immigration",
+    submittedAt: "2026-04-01T10:00:00.000Z",
+    items: [
+      {
+        itemType: "field_snapshot",
+        refId: REQUIREMENT_ID,
+        snapshotPayload: { stage: "S6" },
+      },
+    ],
+  });
+
+  assert.equal(created.validationRunId, VALIDATION_RUN_ID);
+  assert.equal(created.reviewRecordId, REVIEW_RECORD_ID);
 });
 
 void test("SubmissionPackagesService.get returns package with items", async () => {

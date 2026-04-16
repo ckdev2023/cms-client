@@ -3,6 +3,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   type AnyPgColumn,
+  bigint,
   boolean,
   date,
   index,
@@ -144,6 +145,44 @@ export const companies = pgTable("companies", {
     .notNull()
     .defaultNow(),
 });
+
+/**
+ * `contact_persons` 表定义。
+ *
+ * 用途：
+ * - 表示企业或客户下的联系人档案
+ * - 作为 `case_parties.contact_person_id` 的真实来源
+ *
+ * @returns contact_persons 表的 Drizzle schema
+ */
+export const contactPersons = pgTable(
+  "contact_persons",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    companyId: uuid("company_id").references(() => companies.id),
+    customerId: uuid("customer_id").references(() => customers.id),
+    name: text("name").notNull(),
+    roleTitle: text("role_title"),
+    relationType: text("relation_type"),
+    phone: text("phone"),
+    email: text("email"),
+    preferredLanguage: text("preferred_language").notNull().default("ja"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_contact_persons_org_id").on(table.orgId),
+    index("idx_contact_persons_company_id").on(table.companyId),
+    index("idx_contact_persons_customer_id").on(table.customerId),
+  ],
+);
 
 /**
  * `cases` 表定义。
@@ -313,6 +352,124 @@ export const caseStageHistory = pgTable("case_stage_history", {
 });
 
 /**
+ * `case_parties` 表定义。
+ *
+ * 用途：
+ * - 表示案件参与方（主申请人、家属、企业联系人等）
+ * - 为 Gate-A 的主申请人校验提供真值
+ *
+ * @returns case_parties 表的 Drizzle schema
+ */
+export const caseParties = pgTable(
+  "case_parties",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    partyType: text("party_type").notNull(),
+    customerId: uuid("customer_id").references(() => customers.id),
+    contactPersonId: uuid("contact_person_id").references(
+      () => contactPersons.id,
+    ),
+    relationToCase: text("relation_to_case"),
+    isPrimary: boolean("is_primary").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_case_parties_org_id").on(table.orgId),
+    index("idx_case_parties_case_id").on(table.caseId),
+    index("idx_case_parties_customer_id").on(table.customerId),
+    index("idx_case_parties_contact_person_id").on(table.contactPersonId),
+  ],
+);
+
+/**
+ * `document_items` 表定义。
+ *
+ * 用途：
+ * - 表示案件资料清单项
+ * - 为 Gate-A / Gate-B 的资料完备校验提供真值
+ *
+ * @returns document_items 表的 Drizzle schema
+ */
+export const documentItems = pgTable(
+  "document_items",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    checklistItemCode: text("checklist_item_code").notNull(),
+    name: text("name").notNull(),
+    status: text("status").notNull().default("pending"),
+    requestedAt: timestamp("requested_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    receivedAt: timestamp("received_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    reviewedAt: timestamp("reviewed_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    dueAt: timestamp("due_at", { withTimezone: true, mode: "string" }),
+    ownerSide: text("owner_side").notNull().default("customer"),
+    lastFollowUpAt: timestamp("last_follow_up_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    note: text("note"),
+    category: text("category"),
+    providedByRole: text("provided_by_role"),
+    requiredFlag: boolean("required_flag").notNull().default(true),
+    assigneeUserId: uuid("assignee_user_id").references(() => users.id),
+    clientVisibleFlag: boolean("client_visible_flag").notNull().default(false),
+    clientActionRequired: boolean("client_action_required")
+      .notNull()
+      .default(false),
+    latestVersionId: uuid("latest_version_id"),
+    reviewCommentLatest: text("review_comment_latest"),
+    waiveReasonLatest: text("waive_reason_latest"),
+    waiveReasonCodeLatest: text("waive_reason_code_latest"),
+    waivedByUserIdLatest: uuid("waived_by_user_id_latest").references(
+      () => users.id,
+    ),
+    waivedAtLatest: timestamp("waived_at_latest", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_document_items_org_id").on(table.orgId),
+    index("idx_document_items_case_id").on(table.caseId),
+    index("idx_document_items_assignee_user_id").on(table.assigneeUserId),
+    index("idx_document_items_waived_by_user_id_latest").on(
+      table.waivedByUserIdLatest,
+    ),
+  ],
+);
+
+/**
  * `residence_periods` 表定义。
  *
  * 用途：
@@ -397,6 +554,109 @@ export const documentAssets = pgTable(
 );
 
 /**
+ * `document_files` 表定义。
+ *
+ * 用途：
+ * - 表示资料项下的具体文件版本
+ * - 与 submission package 的锁定引用一一对应
+ *
+ * @returns document_files 表的 Drizzle schema
+ */
+export const documentFiles = pgTable(
+  "document_files",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    requirementId: uuid("requirement_id")
+      .notNull()
+      .references(() => documentItems.id),
+    fileName: text("file_name").notNull(),
+    fileUrl: text("file_url"),
+    fileType: text("file_type"),
+    fileSize: bigint("file_size", { mode: "number" }),
+    versionNo: integer("version_no").notNull().default(1),
+    uploadedBy: uuid("uploaded_by").references(() => users.id),
+    uploadedAt: timestamp("uploaded_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    reviewStatus: text("review_status").notNull().default("pending"),
+    reviewBy: uuid("review_by").references(() => users.id),
+    reviewAt: timestamp("review_at", { withTimezone: true, mode: "string" }),
+    expiryDate: date("expiry_date", { mode: "string" }),
+    hashValue: text("hash_value"),
+    assetId: uuid("asset_id").references(() => documentAssets.id),
+    storageType: text("storage_type").notNull().default("local_server"),
+    relativePath: text("relative_path"),
+    capturedByType: text("captured_by_type").notNull().default("internal_user"),
+    capturedById: uuid("captured_by_id"),
+    capturedAt: timestamp("captured_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+    visibleScope: text("visible_scope").notNull().default("internal_only"),
+    reviewComment: text("review_comment"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_document_files_org_id").on(table.orgId),
+    index("idx_document_files_requirement_id").on(table.requirementId),
+    index("idx_document_files_uploaded_by").on(table.uploadedBy),
+    index("idx_document_files_review_by").on(table.reviewBy),
+    index("idx_document_files_asset_id").on(table.assetId),
+  ],
+);
+
+/**
+ * `generated_documents` 表定义。
+ *
+ * 用途：
+ * - 表示案件中生成的申请文书版本
+ * - 为 Gate-B 与 submission package 提供文书真值
+ *
+ * @returns generated_documents 表的 Drizzle schema
+ */
+export const generatedDocuments = pgTable(
+  "generated_documents",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    templateId: uuid("template_id"),
+    title: text("title").notNull(),
+    versionNo: integer("version_no").notNull().default(1),
+    outputFormat: text("output_format").notNull().default("pdf"),
+    fileUrl: text("file_url"),
+    status: text("status").notNull().default("draft"),
+    generatedBy: uuid("generated_by").references(() => users.id),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    generatedAt: timestamp("generated_at", {
+      withTimezone: true,
+      mode: "string",
+    })
+      .notNull()
+      .defaultNow(),
+    approvedAt: timestamp("approved_at", {
+      withTimezone: true,
+      mode: "string",
+    }),
+  },
+  (table) => [
+    index("idx_generated_documents_org_id").on(table.orgId),
+    index("idx_generated_documents_case_id").on(table.caseId),
+    index("idx_generated_documents_generated_by").on(table.generatedBy),
+    index("idx_generated_documents_approved_by").on(table.approvedBy),
+  ],
+);
+
+/**
  * `document_requirement_file_refs` 表定义。
  *
  * 用途：
@@ -411,13 +671,13 @@ export const documentRequirementFileRefs = pgTable(
     id: uuid("id").defaultRandom().primaryKey(),
     requirementId: uuid("requirement_id")
       .notNull()
-      .references(() => cases.id),
+      .references(() => documentItems.id),
     fileVersionId: uuid("file_version_id")
       .notNull()
-      .references(() => documentAssets.id),
+      .references(() => documentFiles.id),
     refMode: text("ref_mode").notNull().default("direct_register"),
     linkedFromRequirementId: uuid("linked_from_requirement_id").references(
-      () => cases.id,
+      () => documentItems.id,
     ),
     createdBy: uuid("created_by").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
@@ -427,7 +687,79 @@ export const documentRequirementFileRefs = pgTable(
   (table) => [
     index("idx_doc_req_file_refs_requirement").on(table.requirementId),
     index("idx_doc_req_file_refs_file_version").on(table.fileVersionId),
+    index("idx_doc_req_file_refs_linked_from_requirement").on(
+      table.linkedFromRequirementId,
+    ),
     index("idx_doc_req_file_refs_created_by").on(table.createdBy),
+  ],
+);
+
+export const validationRuns = pgTable(
+  "validation_runs",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    rulesetRef: jsonb("ruleset_ref").$type<Record<string, unknown>>(),
+    resultStatus: text("result_status").notNull().default("pending"),
+    blockingCount: integer("blocking_count").notNull().default(0),
+    warningCount: integer("warning_count").notNull().default(0),
+    reportPayload: jsonb("report_payload")
+      .$type<Record<string, unknown>>()
+      .notNull(),
+    executedBy: uuid("executed_by").references(() => users.id),
+    executedAt: timestamp("executed_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_validation_runs_org_id").on(table.orgId),
+    index("idx_validation_runs_case_id").on(table.caseId),
+    index("idx_validation_runs_executed_by").on(table.executedBy),
+  ],
+);
+
+export const reviewRecords = pgTable(
+  "review_records",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    caseId: uuid("case_id")
+      .notNull()
+      .references(() => cases.id),
+    validationRunId: uuid("validation_run_id")
+      .notNull()
+      .references(() => validationRuns.id),
+    decision: text("decision").notNull(),
+    comment: text("comment"),
+    reviewerUserId: uuid("reviewer_user_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_review_records_org_id").on(table.orgId),
+    index("idx_review_records_case_id").on(table.caseId),
+    index("idx_review_records_validation_run_id").on(table.validationRunId),
+    index("idx_review_records_reviewer_user_id").on(table.reviewerUserId),
   ],
 );
 
@@ -458,8 +790,12 @@ export const submissionPackages = pgTable(
     })
       .notNull()
       .defaultNow(),
-    validationRunId: uuid("validation_run_id"),
-    reviewRecordId: uuid("review_record_id"),
+    validationRunId: uuid("validation_run_id").references(
+      (): AnyPgColumn => validationRuns.id,
+    ),
+    reviewRecordId: uuid("review_record_id").references(
+      (): AnyPgColumn => reviewRecords.id,
+    ),
     authorityName: text("authority_name"),
     acceptanceNo: text("acceptance_no"),
     receiptStorageType: text("receipt_storage_type"),
@@ -475,6 +811,10 @@ export const submissionPackages = pgTable(
   (table) => [
     index("idx_submission_packages_org_id").on(table.orgId),
     index("idx_submission_packages_case_id").on(table.caseId),
+    index("idx_submission_packages_validation_run_id").on(
+      table.validationRunId,
+    ),
+    index("idx_submission_packages_review_record_id").on(table.reviewRecordId),
     index("idx_submission_packages_related_submission_id").on(
       table.relatedSubmissionId,
     ),

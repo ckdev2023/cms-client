@@ -21,6 +21,7 @@ export type DocumentItemQueryRow = {
   checklist_item_code: string;
   name: string;
   status: string;
+  required_flag: boolean;
   requested_at: unknown;
   received_at: unknown;
   reviewed_at: unknown;
@@ -58,6 +59,7 @@ export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
     checklistItemCode: row.checklist_item_code,
     name: row.name,
     status: row.status,
+    requiredFlag: row.required_flag,
     requestedAt: toTimestampStringOrNull(row.requested_at),
     receivedAt: toTimestampStringOrNull(row.received_at),
     reviewedAt: toTimestampStringOrNull(row.reviewed_at),
@@ -131,7 +133,7 @@ export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> = {
   expired: ["waiting_upload"],
 };
 
-const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, created_at, updated_at`;
+const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, created_at, updated_at`;
 
 /**
  * DocumentItem 服务，提供 CRUD、状态变更、催办与软删除能力。

@@ -38,6 +38,46 @@ export type DocumentRequirementFileRef = {
 };
 
 /**
+ * P0 ValidationRun（校验执行记录）。
+ */
+export type ValidationRun = {
+  id: string;
+  orgId: string;
+  caseId: string;
+  /** 执行规则集引用。 */
+  rulesetRef: Record<string, unknown> | null;
+  /** 执行结果：pending / failed / passed。 */
+  resultStatus: string;
+  /** 阻断项数量。 */
+  blockingCount: number;
+  /** 警告项数量。 */
+  warningCount: number;
+  /** 校验报告载荷。 */
+  reportPayload: Record<string, unknown>;
+  executedBy: string | null;
+  executedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
+ * P0 ReviewRecord（人工复核记录）。
+ */
+export type ReviewRecord = {
+  id: string;
+  orgId: string;
+  caseId: string;
+  validationRunId: string;
+  /** 复核决定：approved / rejected。 */
+  decision: string;
+  comment: string | null;
+  reviewerUserId: string | null;
+  reviewedAt: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
  * P0 SubmissionPackage（提交包 — 不可变快照）。
  */
 export type SubmissionPackage = {

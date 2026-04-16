@@ -194,6 +194,7 @@ export type DocumentItem = {
   checklistItemCode: string;
   name: string;
   status: DocumentItemStatus;
+  requiredFlag: boolean;
   requestedAt: string | null;
   receivedAt: string | null;
   reviewedAt: string | null;
@@ -213,12 +214,14 @@ export type DocumentFile = {
   orgId: OrganizationId;
   requirementId: DocumentItemId;
   fileName: string;
-  fileUrl: string;
+  fileUrl: string | null;
   fileType: string | null;
   fileSize: number | null;
   versionNo: number;
   uploadedBy: UserId | null;
   uploadedAt: string;
+  storageType: string;
+  relativePath: string | null;
   reviewStatus: string;
   reviewBy: UserId | null;
   reviewAt: string | null;
