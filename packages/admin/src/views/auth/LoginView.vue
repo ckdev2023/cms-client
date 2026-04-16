@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
-import { loginAdmin } from "../../auth/model/adminSession";
+import {
+  AdminLoginRequestError,
+  loginAdmin,
+} from "../../auth/model/adminSession";
 import Button from "../../shared/ui/Button.vue";
 import { useLoginForm } from "./model/useLoginForm";
 
@@ -15,12 +17,14 @@ const router = useRouter();
 const {
   fields,
   canSubmit,
+  isSubmitting,
   submitError,
   clearSubmitError,
   setSubmitError,
+  startSubmitting,
+  finishSubmitting,
   resolveRedirectTarget,
 } = useLoginForm();
-const isSubmitting = ref(false);
 
 async function handleSubmit() {
   clearSubmitError();
@@ -30,17 +34,27 @@ async function handleSubmit() {
     return;
   }
 
-  isSubmitting.value = true;
+  startSubmitting();
 
   try {
-    loginAdmin({
+    await loginAdmin({
       email: fields.email,
       password: fields.password,
     });
 
     await router.push(resolveRedirectTarget(route.query.redirect));
+  } catch (error) {
+    if (
+      error instanceof AdminLoginRequestError &&
+      error.code === "UNAUTHORIZED"
+    ) {
+      setSubmitError(t("auth.login.invalidCredentials"));
+      return;
+    }
+
+    setSubmitError(t("auth.login.requestFailed"));
   } finally {
-    isSubmitting.value = false;
+    finishSubmitting();
   }
 }
 </script>

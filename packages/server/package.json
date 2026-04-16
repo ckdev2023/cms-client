@@ -15,6 +15,7 @@
     "typecheck": "tsc --noEmit",
     "test": "node --import tsx --test",
     "db:migrate": "tsx src/infra/db/runMigrations.ts migrate",
+    "db:init-local-admin": "tsx src/scripts/initLocalAdmin.ts",
     "db:rollback": "tsx src/infra/db/runMigrations.ts rollback",
     "db:migrations:check": "tsx src/infra/db/runMigrations.ts check",
     "db:drizzle:check": "node --import tsx scripts/checkDrizzleSetup.mjs",

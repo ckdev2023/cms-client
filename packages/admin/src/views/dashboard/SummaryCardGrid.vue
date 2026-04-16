@@ -1,53 +1,44 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-
-type Scope = "mine" | "group" | "all";
-type TimeWindow = 7 | 30;
+import type { DashboardSummaryData } from "./model/dashboardTypes";
 
 /**
  * 仪表盘摘要卡片区，根据当前视角和时间窗口展示核心统计。
  */
 const props = defineProps<{
-  scope: Scope;
-  timeWindow: TimeWindow;
+  summary: DashboardSummaryData["summary"] | null;
 }>();
 
 const { t } = useI18n();
+const numberFormatter = new Intl.NumberFormat();
+
+type SummaryCardKey = keyof DashboardSummaryData["summary"];
 
 interface SummaryCardDef {
-  id: string;
+  id: SummaryCardKey;
   tone: "info" | "warn" | "risk";
   statusTone: "info" | "warn" | "danger";
-  values: Record<Scope, string | Record<TimeWindow, string>>;
 }
 const cards: SummaryCardDef[] = [
   {
     id: "todayTasks",
     tone: "info",
     statusTone: "info",
-    values: { mine: "6", group: "14", all: "41" },
   },
   {
     id: "upcomingCases",
     tone: "warn",
     statusTone: "warn",
-    values: {
-      mine: { 7: "3", 30: "6" },
-      group: { 7: "8", 30: "12" },
-      all: { 7: "19", 30: "30" },
-    },
   },
   {
     id: "pendingSubmissions",
     tone: "info",
     statusTone: "info",
-    values: { mine: "2", group: "5", all: "10" },
   },
   {
     id: "riskCases",
     tone: "risk",
     statusTone: "danger",
-    values: { mine: "2", group: "4", all: "9" },
   },
 ];
 
@@ -58,9 +49,8 @@ const cards: SummaryCardDef[] = [
  * @returns 卡片应展示的数值文本
  */
 function cardValue(card: SummaryCardDef): string {
-  const v = card.values[props.scope];
-  if (typeof v === "string") return v;
-  return v[props.timeWindow];
+  const value = props.summary?.[card.id];
+  return typeof value === "number" ? numberFormatter.format(value) : "—";
 }
 </script>
 

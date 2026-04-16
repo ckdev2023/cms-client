@@ -5,7 +5,7 @@ import { useRouter } from "vue-router";
 /**
  * 仪表盘快捷操作面板，提供常用入口与时间窗口切换工具。
  */
-defineProps<{
+const props = defineProps<{
   timeWindow: 7 | 30;
   scopeSummary: string;
 }>();
@@ -126,22 +126,31 @@ function navigateTo(route?: string): void {
             {{ t("dashboard.quickActions.timeRange") }}
           </div>
           <div
-            class="segmented-control"
+            class="segmented-control segmented-control--sliding"
             role="tablist"
             :aria-label="t('dashboard.quickActions.timeRange')"
+            :style="{
+              '--segment-count': '2',
+              '--segment-index': String(
+                ([7, 30] as const).indexOf(props.timeWindow),
+              ),
+            }"
           >
+            <span class="segmented-control__thumb" aria-hidden="true"></span>
             <button
               v-for="w in [7, 30] as const"
               :key="w"
-              :class="['segment-btn', { active: timeWindow === w }]"
+              :class="['segment-btn', { active: props.timeWindow === w }]"
               type="button"
+              role="tab"
+              :aria-selected="props.timeWindow === w"
               @click="emit('update:timeWindow', w)"
             >
               {{ t("dashboard.quickActions.dayUnit", { count: w }) }}
             </button>
           </div>
         </div>
-        <p class="scope-summary-note">{{ scopeSummary }}</p>
+        <p class="scope-summary-note">{{ props.scopeSummary }}</p>
       </div>
       <div class="toolbar-inline-actions">
         <button

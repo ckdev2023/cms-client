@@ -1,25 +1,61 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import {
+  getAdminAccessToken,
+  useAdminSession,
+} from "../auth/model/adminSession";
+import { createDashboardRepository } from "./dashboard/model/DashboardRepository";
+import { useDashboardModel } from "./dashboard/model/useDashboardModel";
 import QuickActionsPanel from "./dashboard/QuickActionsPanel.vue";
 import SummaryCardGrid from "./dashboard/SummaryCardGrid.vue";
 import WorkPanelSection from "./dashboard/WorkPanelSection.vue";
-
-type Scope = "mine" | "group" | "all";
-type GroupFilter = "all" | "tokyo1" | "tokyo2" | "osaka";
-type TimeWindow = 7 | 30;
 
 /**
  * 仪表盘首页，聚合快捷动作、摘要卡片与工作面板。
  */
 const { t } = useI18n();
-const scope = ref<Scope>("mine");
-const selectedGroup = ref<GroupFilter>("all");
-const timeWindow = ref<TimeWindow>(7);
-const scopeOptions = ["mine", "group", "all"] as const;
-const groupOptions = ["all", "tokyo1", "tokyo2", "osaka"] as const;
+const { currentUser } = useAdminSession();
+const dashboard = useDashboardModel({
+  repository: createDashboardRepository({
+    getToken: getAdminAccessToken,
+  }),
+});
+const {
+  scope,
+  selectedGroup,
+  timeWindow,
+  scopeOptions,
+  groupOptions,
+  summary,
+  panels,
+  loading,
+  errorCode,
+  hasData,
+  isGroupFilterDisabled,
+  groupFilterHintKey,
+  scopeSummaryKey,
+  retry,
+} = dashboard;
 
-const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
+const heroName = computed(() => currentUser.value?.name ?? "Admin");
+const feedbackMessage = computed(() => {
+  if (loading.value) {
+    return t(
+      hasData.value ? "dashboard.state.refreshing" : "dashboard.state.loading",
+    );
+  }
+
+  if (errorCode.value === "unauthorized") {
+    return t("dashboard.state.unauthorized");
+  }
+
+  if (errorCode.value === "requestFailed") {
+    return t("dashboard.state.requestFailed");
+  }
+
+  return "";
+});
 </script>
 
 <template>
@@ -31,7 +67,7 @@ const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
         <h1 class="hero-title">
           {{
             t("dashboard.hero.title", {
-              name: "Admin",
+              name: heroName,
               role: t("dashboard.hero.role"),
             })
           }}
@@ -41,15 +77,22 @@ const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
       <div class="hero-toolbar">
         <div class="hero-toolbar-row">
           <div
-            class="segmented-control"
+            class="segmented-control segmented-control--sliding"
             role="tablist"
             :aria-label="t('dashboard.filters.scopeLabel')"
+            :style="{
+              '--segment-count': String(scopeOptions.length),
+              '--segment-index': String(scopeOptions.indexOf(scope)),
+            }"
           >
+            <span class="segmented-control__thumb" aria-hidden="true"></span>
             <button
               v-for="s in scopeOptions"
               :key="s"
               :class="['segment-btn', { active: scope === s }]"
               type="button"
+              role="tab"
+              :aria-selected="scope === s"
               @click="scope = s"
             >
               {{ t(`dashboard.scope.${s}`) }}
@@ -60,27 +103,43 @@ const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
             class="filter-select"
             name="groupFilter"
             :aria-label="t('dashboard.filters.groupLabel')"
+            :disabled="isGroupFilterDisabled"
           >
             <option v-for="group in groupOptions" :key="group" :value="group">
               {{ t(`dashboard.filters.groups.${group}`) }}
             </option>
           </select>
         </div>
+        <p v-if="scope === 'group'" class="filter-hint">
+          {{ t(groupFilterHintKey) }}
+        </p>
       </div>
     </section>
 
     <!-- 快捷动作 + 工具栏元信息 -->
     <QuickActionsPanel
       :time-window="timeWindow"
-      :scope-summary="scopeSummary"
+      :scope-summary="t(scopeSummaryKey)"
       @update:time-window="timeWindow = $event"
     />
 
+    <div
+      v-if="feedbackMessage"
+      class="dashboard-feedback"
+      :data-tone="errorCode ? 'danger' : 'info'"
+      :aria-live="errorCode ? 'assertive' : 'polite'"
+    >
+      <span>{{ feedbackMessage }}</span>
+      <button v-if="errorCode" class="mini-btn" type="button" @click="retry()">
+        {{ t("dashboard.state.retry") }}
+      </button>
+    </div>
+
     <!-- Summary Cards -->
-    <SummaryCardGrid :scope="scope" :time-window="timeWindow" />
+    <SummaryCardGrid :summary="summary" />
 
     <!-- Work Panels -->
-    <WorkPanelSection :scope="scope" :time-window="timeWindow" />
+    <WorkPanelSection :panels="panels" />
   </div>
 </template>
 
@@ -145,7 +204,7 @@ const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
 
 .filter-select {
   min-width: 160px;
-  padding: 10px 14px;
+  padding: 10px 36px 10px 14px;
   border-radius: var(--radius-full);
   border: 1px solid var(--color-border-1);
   background: var(--color-bg-1);
@@ -153,6 +212,32 @@ const scopeSummary = computed(() => t(`dashboard.scopeSummary.${scope.value}`));
   font: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
+}
+
+.filter-hint {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: 1.6;
+  color: var(--color-text-3);
+}
+
+.dashboard-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--color-border-1);
+  border-radius: 18px;
+  background: var(--color-bg-1);
+  color: var(--color-text-2);
+}
+
+.dashboard-feedback[data-tone="danger"] {
+  border-color: rgba(220, 38, 38, 0.16);
+  background: rgba(254, 242, 242, 0.9);
+  color: #991b1b;
 }
 
 /* ── Responsive ────────────────────────────────────── */

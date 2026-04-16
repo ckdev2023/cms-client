@@ -11,7 +11,7 @@ import type { Case } from "../model/coreEntities";
 import { checkFinalPaymentGuard } from "../billing/billingGuards";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
-import type { TenantDbTx } from "../tenancy/tenantDb";
+import type { TenantDb, TenantDbTx } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
 
 /**
@@ -189,7 +189,7 @@ export function mapCaseRow(row: CaseQueryRow): Case {
     orgId: row.org_id,
     customerId: row.customer_id,
     caseTypeCode: row.case_type_code,
-    status: row.status,
+    status: extendedFields.stage,
     stage: extendedFields.stage,
     ownerUserId: row.owner_user_id,
     openedAt: toTimestampString(row.opened_at),
@@ -242,6 +242,7 @@ export type CaseCreateInput = {
   customerId: string;
   caseTypeCode: string;
   ownerUserId: string;
+  stage?: string;
   status?: string;
   dueAt?: string | null;
   metadata?: Record<string, unknown>;
@@ -294,6 +295,7 @@ export type CaseUpdateInput = {
 
 /** 列表查询请求参数。 */
 export type CaseListInput = {
+  stage?: string;
   status?: string;
   resultOutcome?: string;
   ownerUserId?: string;
@@ -307,7 +309,8 @@ export type CaseListInput = {
 
 /** 状态变更请求参数。 */
 export type CaseTransitionInput = {
-  toStatus: string;
+  toStage?: string;
+  toStatus?: string;
 };
 
 /** 欠款风险确认请求参数。 */
@@ -356,8 +359,9 @@ function buildCaseListFilter(input: CaseListInput): {
     "coalesce(metadata->>'_status', '') is distinct from 'deleted'",
   ];
   const params: unknown[] = [];
+  const requestedStage = resolveRequestedCaseStage(input);
   const filters: [string, string | undefined][] = [
-    ["status", input.status],
+    ["coalesce(stage, status)", requestedStage],
     ["result_outcome", input.resultOutcome],
     ["owner_user_id", input.ownerUserId],
     ["customer_id", input.customerId],
@@ -455,10 +459,13 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
 }
 
 function validateCaseEnums(input: {
+  stage?: string;
+  status?: string;
   priority?: string;
   riskLevel?: string;
   resultOutcome?: string | null;
 }): void {
+  resolveRequestedCaseStage(input);
   if (input.priority !== undefined && !CASE_PRIORITIES.has(input.priority)) {
     throw new BadRequestException("Invalid priority");
   }
@@ -474,11 +481,55 @@ function validateCaseEnums(input: {
   }
 }
 
+function resolveRequestedCaseStage(input: {
+  stage?: string;
+  status?: string;
+}): string | undefined {
+  if (
+    input.stage !== undefined &&
+    input.status !== undefined &&
+    input.stage !== input.status
+  ) {
+    throw new BadRequestException("stage and status must match");
+  }
+
+  const requestedStage = input.stage ?? input.status;
+  if (requestedStage === undefined) return undefined;
+  if (!P0_CASE_STAGES.has(requestedStage)) {
+    throw new BadRequestException(
+      `Invalid ${input.stage !== undefined ? "stage" : "status"}`,
+    );
+  }
+  return requestedStage;
+}
+
+function resolveRequestedTransitionStage(input: CaseTransitionInput): string {
+  if (
+    input.toStage !== undefined &&
+    input.toStatus !== undefined &&
+    input.toStage !== input.toStatus
+  ) {
+    throw new BadRequestException("toStage and toStatus must match");
+  }
+
+  const requestedStage = input.toStage ?? input.toStatus;
+  if (!requestedStage) {
+    throw new BadRequestException("Invalid toStage");
+  }
+  if (!P0_CASE_STAGES.has(requestedStage)) {
+    throw new BadRequestException(
+      `Invalid ${input.toStage !== undefined ? "toStage" : "toStatus"}`,
+    );
+  }
+  return requestedStage;
+}
+
 /** 将 CaseCreateInput 展平为 insert 参数数组。 */
 function buildInsertCaseParams(
   orgId: string,
   input: CaseCreateInput,
 ): unknown[] {
+  const workflowStage = resolveRequestedCaseStage(input) ?? "S1";
   const nullableFields = [
     input.caseNo,
     input.caseName,
@@ -501,7 +552,8 @@ function buildInsertCaseParams(
     orgId,
     input.customerId,
     input.caseTypeCode,
-    input.status ?? "S1",
+    workflowStage,
+    workflowStage,
     input.ownerUserId,
     input.dueAt ?? null,
     JSON.stringify(input.metadata ?? {}),
@@ -557,7 +609,11 @@ export class CasesService {
         entityType: "case",
         entityId: created.id,
         action: "case.created",
-        payload: { caseTypeCode: created.caseTypeCode, status: created.status },
+        payload: {
+          caseTypeCode: created.caseTypeCode,
+          stage: created.stage,
+          status: created.status,
+        },
       });
       return created;
     });
@@ -664,36 +720,36 @@ export class CasesService {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Case not found or deleted");
 
-    const fromStatus = current.status;
-    const toStatus = input.toStatus;
-    await this.validateTransition(ctx, current, fromStatus, toStatus);
+    const fromStage = current.stage ?? current.status;
+    const toStage = resolveRequestedTransitionStage(input);
+    await this.validateTransition(ctx, current, fromStage, toStage);
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
       const result = await tx.query<CaseQueryRow>(
-        `update cases set status = $2, updated_at = now()
-         where id = $1 and status = $3
+        `update cases set stage = $2, status = $2, updated_at = now()
+         where id = $1 and coalesce(stage, status) = $3
            and coalesce(metadata->>'_status','') is distinct from 'deleted'
          returning ${CASE_COLS}`,
-        [id, toStatus, fromStatus],
+        [id, toStage, fromStage],
       );
       const row = result.rows.at(0);
       if (!row) {
         throw new BadRequestException(
-          `Transition conflict: case status has already changed from '${fromStatus}'`,
+          `Transition conflict: case stage has already changed from '${fromStage}'`,
         );
       }
       const updated = mapCaseRow(row);
       await tx.query(
         `insert into case_stage_history(org_id, case_id, from_stage, to_stage, changed_by)
          values ($1, $2, $3, $4, $5)`,
-        [ctx.orgId, id, fromStatus, toStatus, ctx.userId],
+        [ctx.orgId, id, fromStage, toStage, ctx.userId],
       );
       await writeTimelineInTx(tx, ctx, {
         entityType: "case",
         entityId: updated.id,
         action: "case.transitioned",
-        payload: { from: fromStatus, to: toStatus },
+        payload: { from: fromStage, to: toStage },
       });
       return updated;
     });
@@ -951,10 +1007,6 @@ export class CasesService {
       await this.validateReadyForInternalReview(ctx, c);
       return;
     }
-
-    if (from === "S5" && to === "S6") {
-      await this.validateReadyForSubmission(ctx, c);
-    }
   }
 
   private async validateReadyForDocumentPreparation(
@@ -1006,29 +1058,44 @@ export class CasesService {
       );
     }
 
-    const validationRunResult = await tenantDb.query<{ id: string }>(
-      `
-        select id
-        from validation_runs
-        where org_id = $1 and case_id = $2
-        order by executed_at desc nulls last, created_at desc, id desc
-        limit 1
-      `,
-      [ctx.orgId, c.id],
+    const latestValidationRun = await this.getLatestValidationRun(
+      tenantDb,
+      ctx.orgId,
+      c.id,
     );
-
-    if (!validationRunResult.rows.at(0)) {
+    if (!latestValidationRun) {
       throw new BadRequestException(
         "S4→S5 requires a validation run before moving to S5",
       );
     }
+    if (latestValidationRun.result_status !== "passed") {
+      throw new BadRequestException(
+        "S4→S5 requires the latest validation run to be passed",
+      );
+    }
+
+    if (!(await this.isReviewRequired(ctx, c))) {
+      return;
+    }
+
+    const latestReviewRecord = await this.getLatestReviewRecord(
+      tenantDb,
+      ctx.orgId,
+      c.id,
+      latestValidationRun.id,
+    );
+    if (latestReviewRecord?.decision !== "approved") {
+      throw new BadRequestException(
+        "S4→S5 requires an approved latest review record when review_required_flag is enabled",
+      );
+    }
   }
 
-  private async validateReadyForSubmission(
-    ctx: RequestContext,
-    c: Case,
-  ): Promise<void> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+  private async getLatestValidationRun(
+    tenantDb: TenantDb,
+    orgId: string,
+    caseId: string,
+  ): Promise<{ id: string; result_status: string } | undefined> {
     const validationRunResult = await tenantDb.query<{
       id: string;
       result_status: string;
@@ -1040,24 +1107,18 @@ export class CasesService {
         order by executed_at desc nulls last, created_at desc, id desc
         limit 1
       `,
-      [ctx.orgId, c.id],
+      [orgId, caseId],
     );
-    const latestValidationRun = validationRunResult.rows.at(0);
-    if (!latestValidationRun) {
-      throw new BadRequestException(
-        "S5→S6 requires a validation run before moving to S6",
-      );
-    }
-    if (latestValidationRun.result_status !== "passed") {
-      throw new BadRequestException(
-        "S5→S6 requires the latest validation run to be passed",
-      );
-    }
 
-    if (!(await this.isReviewRequired(ctx, c))) {
-      return;
-    }
+    return validationRunResult.rows.at(0);
+  }
 
+  private async getLatestReviewRecord(
+    tenantDb: TenantDb,
+    orgId: string,
+    caseId: string,
+    validationRunId: string,
+  ): Promise<{ id: string; decision: string } | undefined> {
     const reviewResult = await tenantDb.query<{ id: string; decision: string }>(
       `
         select id, decision
@@ -1068,14 +1129,10 @@ export class CasesService {
         order by reviewed_at desc nulls last, created_at desc, id desc
         limit 1
       `,
-      [ctx.orgId, c.id, latestValidationRun.id],
+      [orgId, caseId, validationRunId],
     );
-    const latestReviewRecord = reviewResult.rows.at(0);
-    if (latestReviewRecord?.decision !== "approved") {
-      throw new BadRequestException(
-        "S5→S6 requires an approved latest review record when review_required_flag is enabled",
-      );
-    }
+
+    return reviewResult.rows.at(0);
   }
 
   private async isReviewRequired(
@@ -1105,11 +1162,11 @@ export class CasesService {
   ): Promise<Case> {
     const params = buildInsertCaseParams(ctx.orgId, input);
     const result = await tx.query<CaseQueryRow>(
-      `insert into cases (org_id, customer_id, case_type_code, status, owner_user_id, due_at, metadata,
+      `insert into cases (org_id, customer_id, case_type_code, status, stage, owner_user_id, due_at, metadata,
         case_no, case_name, case_subtype, application_type, company_id, priority, risk_level,
         assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date,
         result_outcome, quote_price)
-       values ($1,$2,$3,$4,$5,$6,$7::jsonb,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) returning ${CASE_COLS}`,
+       values ($1,$2,$3,$4,$5,$6,$7,$8::jsonb,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24) returning ${CASE_COLS}`,
       params,
     );
     const row = result.rows.at(0);

@@ -28,9 +28,37 @@ declare module "http" {
 }
 
 type AuthConfig = {
-  jwtSecret?: string;
+  jwtSecret: string;
   allowInsecureHeaders: boolean;
 };
+
+const REQUEST_AUTH_JWT_EXPIRY_SECONDS = 60 * 60 * 12;
+
+/**
+ * 读取请求鉴权 JWT 密钥。
+ *
+ * - 生产环境必须显式提供 `AUTH_JWT_SECRET`
+ * - 开发/测试环境允许回退到不安全默认值，便于本地联调
+ *
+ * @returns JWT 密钥
+ */
+export function readRequestAuthJwtSecret(): string {
+  const secret = process.env.AUTH_JWT_SECRET;
+  if (!secret || secret.length === 0) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "AUTH_JWT_SECRET is required in production — refusing to start with insecure default",
+      );
+    }
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[SECURITY] AUTH_JWT_SECRET not set — using insecure default. Do NOT use in production.",
+    );
+    return "dev-secret-change-me";
+  }
+
+  return secret;
+}
 
 /**
  * 从请求头解析 RequestContext。
@@ -65,16 +93,10 @@ let _cachedAuthConfig: AuthConfig | null = null;
 export function readAuthConfigFromEnv(): AuthConfig {
   if (_cachedAuthConfig) return _cachedAuthConfig;
 
-  const jwtSecretRaw = process.env.AUTH_JWT_SECRET;
-  const jwtSecret =
-    jwtSecretRaw && jwtSecretRaw.length > 0 ? jwtSecretRaw : undefined;
+  const jwtSecret = readRequestAuthJwtSecret();
 
   // P8: 生产环境要求 JWT 密钥至少 32 字符（256 bit）
-  if (
-    process.env.NODE_ENV === "production" &&
-    jwtSecret !== undefined &&
-    jwtSecret.length < 32
-  ) {
+  if (process.env.NODE_ENV === "production" && jwtSecret.length < 32) {
     throw new Error(
       "AUTH_JWT_SECRET must be at least 32 characters in production",
     );
@@ -124,7 +146,6 @@ export function parseVerifiedRequestAuthInputFromHeaders(
   if (authHeader) {
     const token = parseBearerToken(authHeader);
     if (!token) return null;
-    if (!config.jwtSecret) return null;
     return verifyHs256Jwt(token, config.jwtSecret);
   }
 
@@ -161,6 +182,38 @@ function verifyHs256Jwt(
   if (!payload) return null;
 
   return extractAuthInputFromPayload(payload);
+}
+
+/**
+ * 签发请求鉴权 JWT。
+ *
+ * payload 中只写入请求鉴权所需的 `orgId` / `userId`，角色仍以后端 DB 为准。
+ *
+ * @param input 请求鉴权输入
+ * @param secret JWT 密钥
+ * @returns JWT token
+ */
+export function signRequestAuthToken(
+  input: RequestAuthInput,
+  secret: string,
+): string {
+  const header = { alg: "HS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    orgId: input.orgId,
+    userId: input.userId,
+    iat: now,
+    exp: now + REQUEST_AUTH_JWT_EXPIRY_SECONDS,
+  };
+
+  const headerB64 = toBase64Url(JSON.stringify(header));
+  const payloadB64 = toBase64Url(JSON.stringify(payload));
+  const sigB64 = crypto
+    .createHmac("sha256", secret)
+    .update(`${headerB64}.${payloadB64}`)
+    .digest("base64url");
+
+  return `${headerB64}.${payloadB64}.${sigB64}`;
 }
 
 function parseJwtParts(token: string): {
@@ -247,4 +300,8 @@ function timingSafeEqualString(a: string, b: string): boolean {
   } catch {
     return false;
   }
+}
+
+function toBase64Url(value: string): string {
+  return Buffer.from(value).toString("base64url");
 }

@@ -92,13 +92,14 @@ const enUS = {
       formDescription:
         "Enter your email and password to continue to the admin app.",
       emailLabel: "Email",
-      emailPlaceholder: "name@firm.jp",
+      emailPlaceholder: "name{'@'}firm.jp",
       passwordLabel: "Password",
       passwordPlaceholder: "Enter your password",
       submit: "Sign in",
       validation: "Enter both email and password",
-      demoHint:
-        "This is a frontend login prototype for now. Any email and password will let you in.",
+      invalidCredentials: "Incorrect email or password.",
+      requestFailed: "Sign-in failed. Please try again shortly.",
+      demoHint: "Use an active admin account to sign in.",
     },
   },
   customers: {
@@ -265,6 +266,8 @@ const enUS = {
     filters: {
       scopeLabel: "View scope",
       groupLabel: "Group filter",
+      groupPending:
+        "Group-level filtering is not connected yet, so the dashboard still shows firm-wide aggregates.",
       groups: {
         all: "All groups",
         tokyo1: "Tokyo Team 1",
@@ -281,7 +284,17 @@ const enUS = {
       mine: "Showing the cases and tasks I own or participate in. Cards and lists update together.",
       group:
         "Showing the team's cases and tasks so we can plan today's priorities and deadline pressure together.",
+      groupFallback:
+        "The team scope is connected, but backend group-level data is not split yet, so firm-wide aggregates are shown for now.",
       all: "Showing the whole firm so you can quickly scan todos, deadlines, pending submissions, and risks.",
+    },
+    state: {
+      loading: "Loading dashboard data…",
+      refreshing: "Refreshing dashboard data…",
+      unauthorized:
+        "Your current session cannot access the dashboard. Please sign in again and retry.",
+      requestFailed: "Dashboard data failed to load. Please try again later.",
+      retry: "Retry",
     },
     quickActions: {
       title: "Quick actions",

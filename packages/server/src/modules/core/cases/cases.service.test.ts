@@ -17,13 +17,13 @@ function makeCtx(
 }
 
 function makeCaseRow(overrides: Record<string, unknown> = {}) {
-  return {
+  const row = {
     id: CASE_ID,
     org_id: ORG_ID,
     customer_id: "cust-1",
     case_type_code: "visa",
     status: "S1",
-    stage: null,
+    stage: "S1",
     owner_user_id: USER_ID,
     opened_at: "2026-01-01T00:00:00.000Z",
     due_at: null,
@@ -67,6 +67,15 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
   };
+
+  if (typeof overrides.status === "string" && overrides.stage === undefined) {
+    row.stage = overrides.status;
+  }
+  if (typeof overrides.stage === "string" && overrides.status === undefined) {
+    row.status = overrides.stage;
+  }
+
+  return row;
 }
 
 type QueryFn = (
@@ -142,10 +151,43 @@ void test("create: inserts row + timeline, no template", async () => {
   const c = await svc(pool, makeTemplates()).create(makeCtx(), CREATE_INPUT);
   assert.equal(c.id, CASE_ID);
   assert.equal(c.status, "S1");
+  assert.equal(c.stage, "S1");
   assert.equal(
     calls.filter((c) => c.sql.includes("insert into timeline_logs")).length,
     1,
   );
+});
+
+void test("create: stage input mirrors stage and status columns", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    ) {
+      return ok([{ id: params?.[0] }]);
+    }
+    if (sql.includes("insert into cases")) {
+      return ok([makeCaseRow({ stage: params?.[4], status: params?.[3] })]);
+    }
+    return ok();
+  });
+
+  const created = await svc(pool, makeTemplates()).create(makeCtx(), {
+    ...CREATE_INPUT,
+    stage: "S2",
+  });
+
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into cases"),
+  );
+  assert.ok(insertCall);
+  const insertParams = insertCall.params ?? [];
+  assert.equal(insertParams[3], "S2");
+  assert.equal(insertParams[4], "S2");
+  assert.equal(created.status, "S2");
+  assert.equal(created.stage, "S2");
 });
 
 void test("create: generates case_no from org prefix and month", async () => {
@@ -171,7 +213,7 @@ void test("create: generates case_no from org prefix and month", async () => {
       return ok([{ count: "12" }]);
     }
     if (sql.includes("insert into cases")) {
-      return ok([makeCaseRow({ case_no: params?.[7] })]);
+      return ok([makeCaseRow({ case_no: params?.[8] })]);
     }
     return ok();
   });
@@ -184,7 +226,7 @@ void test("create: generates case_no from org prefix and month", async () => {
   const insertCall = calls.find((call) =>
     call.sql.includes("insert into cases"),
   );
-  assert.equal(insertCall?.params?.[7], `TOKYO-${yyyymm}-0013`);
+  assert.equal(insertCall?.params?.[8], `TOKYO-${yyyymm}-0013`);
 });
 
 // ── create (with template → generates document_items) ──
@@ -329,13 +371,13 @@ void test("list: applies filters", async () => {
       : ok([makeCaseRow()]);
   });
   await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
-    status: "open",
+    stage: "S3",
     ownerUserId: USER_ID,
     customerId: "cust-1",
   });
   const cq = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(cq);
-  assert.ok(cq.sql.includes("status = $"));
+  assert.ok(cq.sql.includes("coalesce(stage, status) = $"));
   assert.ok(cq.sql.includes("owner_user_id = $"));
 });
 
@@ -408,7 +450,7 @@ void test("update: throws when not found", async () => {
 // ── transition helpers ──
 function transitionPool(returnStatus: string, fromStatus = "S1") {
   return makePool((sql, p) => {
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: returnStatus })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: fromStatus })]);
@@ -439,27 +481,28 @@ void test("transition: default fallback transition + timeline", async () => {
   const calls: { sql: string }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim() });
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S2" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S1" })]);
     return ok();
   });
   const r = await svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
-    toStatus: "S2",
+    toStage: "S2",
   });
   assert.equal(r.status, "S2");
+  assert.equal(r.stage, "S2");
   assert.equal(
     calls.filter((c) => c.sql.includes("insert into timeline_logs")).length,
     1,
   );
 });
 
-void test("transition: optimistic lock params [id, toStatus, fromStatus]", async () => {
+void test("transition: optimistic lock params [id, toStage, fromStage]", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S2" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S1" })]);
@@ -469,7 +512,7 @@ void test("transition: optimistic lock params [id, toStatus, fromStatus]", async
     toStatus: "S2",
   });
   const u = calls.find(
-    (c) => c.sql.includes("update cases") && c.sql.includes("status = $"),
+    (c) => c.sql.includes("update cases") && c.sql.includes("stage = $2"),
   );
   assert.ok(u);
   assert.ok(u.params);
@@ -480,7 +523,7 @@ void test("transition: optimistic lock params [id, toStatus, fromStatus]", async
 
 void test("transition: concurrent conflict rejected", async () => {
   const pool = makePool((sql, p) => {
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S1" })]);
@@ -737,8 +780,10 @@ void test("transition: S4→S5 requires required documents to be approved or wai
   );
 });
 
-void test("transition: S4→S5 requires a validation run", async () => {
+void test("transition: S4→S5 requires an existing validation run", async () => {
+  const calls: string[] = [];
   const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
       return ok([makeCaseRow({ status: "S4" })]);
     }
@@ -746,9 +791,6 @@ void test("transition: S4→S5 requires a validation run", async () => {
       sql.includes("from document_items") &&
       sql.includes("required_flag = true")
     ) {
-      return ok([]);
-    }
-    if (sql.includes("from validation_runs")) {
       return ok([]);
     }
     return ok();
@@ -759,16 +801,18 @@ void test("transition: S4→S5 requires a validation run", async () => {
       svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
         toStatus: "S5",
       }),
-    /requires a validation run/,
+    /requires a validation run before moving to S5/,
   );
+
+  assert.ok(calls.some((sql) => sql.includes("from validation_runs")));
 });
 
-void test("transition: S5→S6 requires latest passed validation run instead of Gate-B", async () => {
+void test("transition: S4→S5 requires latest passed validation run", async () => {
   const calls: string[] = [];
   const pool = makePool((sql, p) => {
     calls.push(sql.trim());
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
-      return ok([makeCaseRow({ status: "S5" })]);
+      return ok([makeCaseRow({ status: "S4" })]);
     }
     if (sql.includes("from validation_runs")) {
       return ok([{ id: "vr-1", result_status: "failed" }]);
@@ -779,7 +823,7 @@ void test("transition: S5→S6 requires latest passed validation run instead of 
   await assert.rejects(
     () =>
       svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
-        toStatus: "S6",
+        toStatus: "S5",
       }),
     /latest validation run to be passed/,
   );
@@ -787,10 +831,10 @@ void test("transition: S5→S6 requires latest passed validation run instead of 
   assert.ok(!calls.some((sql) => sql.includes("from generated_documents")));
 });
 
-void test("transition: S5→S6 requires approved review when review_required_flag is enabled", async () => {
+void test("transition: S4→S5 requires approved review when review_required_flag is enabled", async () => {
   const pool = makePool((sql, p) => {
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
-      return ok([makeCaseRow({ status: "S5" })]);
+      return ok([makeCaseRow({ status: "S4" })]);
     }
     if (sql.includes("from validation_runs")) {
       return ok([{ id: "vr-1", result_status: "passed" }]);
@@ -815,9 +859,41 @@ void test("transition: S5→S6 requires approved review when review_required_fla
               }
             : { mode: "legacy", used: false },
         ),
-      ).transition(makeCtx(), CASE_ID, { toStatus: "S6" }),
+      ).transition(makeCtx(), CASE_ID, { toStatus: "S5" }),
     /approved latest review record/,
   );
+});
+
+void test("transition: S5→S6 no longer rechecks validation or review gates", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
+    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
+      return ok([makeCaseRow({ status: "S5" })]);
+    }
+    if (sql.includes("update cases") && sql.includes("stage = $2")) {
+      return ok([makeCaseRow({ status: "S6" })]);
+    }
+    return ok();
+  });
+
+  const transitioned = await svc(
+    pool,
+    makeTemplates((input: { kind: string }) =>
+      input.kind === "case_type"
+        ? {
+            mode: "template",
+            used: true,
+            version: 1,
+            config: { review_required_flag: true },
+          }
+        : { mode: "legacy", used: false },
+    ),
+  ).transition(makeCtx(), CASE_ID, { toStatus: "S6" });
+
+  assert.equal(transitioned.stage, "S6");
+  assert.ok(!calls.some((sql) => sql.includes("from validation_runs")));
+  assert.ok(!calls.some((sql) => sql.includes("from review_records")));
 });
 
 void test("transition: template used=false falls back to default", async () => {
@@ -1423,7 +1499,7 @@ void test("transition: writes case_stage_history row", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S2" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S1" })]);
@@ -1448,7 +1524,7 @@ void test("transition: S7→S9 writes stage history for terminal transition", as
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S9" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S7" })]);
@@ -1750,7 +1826,7 @@ void test("transition: full chain S1→S2→S3→S4→S5→S6→S7→S8→S9", a
     const from = chain[i];
     const to = chain[i + 1];
     const pool = makePool((sql, p) => {
-      if (sql.includes("update cases") && sql.includes("status = $"))
+      if (sql.includes("update cases") && sql.includes("stage = $2"))
         return ok([makeCaseRow({ status: to })]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([makeCaseRow({ status: from })]);
@@ -1815,7 +1891,7 @@ void test("transition: S8→S9 result archival path", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
-    if (sql.includes("update cases") && sql.includes("status = $"))
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S9", result_outcome: "approved" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S8", result_outcome: "approved" })]);

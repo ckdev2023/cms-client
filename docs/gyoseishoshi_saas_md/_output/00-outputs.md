@@ -457,3 +457,35 @@
     位置：独立产出文件
     Owner：研发
     状态：已产出
+
+- 时间：2026-04-16
+  问题：当前 `packages/server` 中案件相关实现是否满足 `P0/P1`，并应如何形成可复用的分析归档？
+  结论（TL;DR）：已整理独立分析文档 `docs/gyoseishoshi_saas_md/_output/05-server端案件相关P0-P1差距分析.md`。结论是：当前 server 端还不能判断为满足 P0，也不能判断为满足 P1；问题集中在 `Gate-B / Gate-C` 闭环、`status/stage` 真相源、资料审核闭环、仪表盘口径、权限边界，以及 P1 正式模型尚未落地。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+  - docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/仪表盘.md
+  - docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md
+  - docs/gyoseishoshi_saas_md/P0/08-术语表.md
+  - docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md
+  - docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md
+  - plan/server-p0-p1-remediation-plan.md
+  影响面：
+  - `packages/server/src/modules/core/cases`
+  - `packages/server/src/modules/core/dashboard`
+  - `packages/server/src/modules/core/validation-runs`
+  - `packages/server/src/modules/core/review-records`
+  - `packages/server/src/modules/core/submission-packages`
+  - `packages/server/src/modules/core/document-items`
+  - `packages/server/src/modules/core/document-files`
+  - `packages/server/src/modules/core/residence-periods`
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/05-server端案件相关P0-P1差距分析.md
+    位置：独立产出文件
+    Owner：研发
+    状态：已产出
+  - 目标文档：plan/server-p0-p1-remediation-plan.md
+    位置：后续整改排序与验收矩阵
+    Owner：研发
+    状态：待回灌

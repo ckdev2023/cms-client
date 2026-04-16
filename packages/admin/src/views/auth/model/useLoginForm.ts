@@ -28,9 +28,13 @@ const BLANK_FIELDS: LoginFormFields = {
 export function useLoginForm() {
   const fields = reactive<LoginFormFields>({ ...BLANK_FIELDS });
   const submitError = ref("");
+  const isSubmitting = ref(false);
 
   const canSubmit = computed(
-    () => fields.email.trim() !== "" && fields.password.trim() !== "",
+    () =>
+      !isSubmitting.value &&
+      fields.email.trim() !== "" &&
+      fields.password.trim() !== "",
   );
 
   function clearSubmitError(): void {
@@ -41,8 +45,17 @@ export function useLoginForm() {
     submitError.value = message;
   }
 
+  function startSubmitting(): void {
+    isSubmitting.value = true;
+  }
+
+  function finishSubmitting(): void {
+    isSubmitting.value = false;
+  }
+
   function resetForm(): void {
     Object.assign(fields, { ...BLANK_FIELDS });
+    finishSubmitting();
     clearSubmitError();
   }
 
@@ -53,9 +66,12 @@ export function useLoginForm() {
   return {
     fields,
     canSubmit,
+    isSubmitting,
     submitError,
     clearSubmitError,
     setSubmitError,
+    startSubmitting,
+    finishSubmitting,
     resetForm,
     resolveRedirectTarget,
   };

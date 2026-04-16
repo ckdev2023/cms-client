@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import AppShell from "./AppShell.vue";
@@ -61,14 +61,6 @@ async function mountShell(options: Parameters<typeof mount>[1] = {}) {
 }
 
 describe("AppShell", () => {
-  beforeEach(() => {
-    vi.spyOn(window, "scrollTo").mockImplementation(() => {});
-  });
-
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it("renders the app-shell root element", async () => {
     const { wrapper: w } = await mountShell();
     expect(w.find(".app-shell").exists()).toBe(true);
@@ -179,6 +171,7 @@ describe("AppShell", () => {
     });
     const scrollToSpy = vi.mocked(window.scrollTo);
     try {
+      scrollToSpy.mockClear();
       const { router } = await mountShell();
 
       await router.push("/leads");
@@ -190,7 +183,6 @@ describe("AppShell", () => {
         behavior: "auto",
       });
     } finally {
-      scrollToSpy.mockRestore();
       if (userAgentDescriptor) {
         Object.defineProperty(
           window.navigator,

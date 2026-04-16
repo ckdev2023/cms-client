@@ -279,7 +279,8 @@ export class SubmissionPackagesService {
     if (!currentCase) {
       throw new NotFoundException("Case not found");
     }
-    if (currentCase.status !== "S6" && currentCase.status !== "S7") {
+    const currentCaseStage = currentCase.stage ?? currentCase.status;
+    if (currentCaseStage !== "S6" && currentCaseStage !== "S7") {
       throw new BadRequestException(
         "Submission package can only be created when case is in S6 or S7",
       );
@@ -394,7 +395,7 @@ export class SubmissionPackagesService {
       },
     });
 
-    if (currentCase.status === "S6") {
+    if (currentCaseStage === "S6") {
       await this.transitionCaseToSubmitted(ctx, created.caseId);
     }
 
@@ -406,10 +407,10 @@ export class SubmissionPackagesService {
     caseId: string,
   ): Promise<void> {
     try {
-      await this.casesService.transition(ctx, caseId, { toStatus: "S7" });
+      await this.casesService.transition(ctx, caseId, { toStage: "S7" });
     } catch (error) {
       const reloadedCase = await this.casesService.get(ctx, caseId);
-      if (reloadedCase?.status === "S7") {
+      if ((reloadedCase?.stage ?? reloadedCase?.status) === "S7") {
         return;
       }
       throw error;

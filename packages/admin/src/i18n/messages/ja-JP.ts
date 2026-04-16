@@ -91,13 +91,15 @@ const jaJP = {
       formDescription:
         "メールアドレスとパスワードを入力して admin アプリへ進んでください。",
       emailLabel: "メールアドレス",
-      emailPlaceholder: "name@firm.jp",
+      emailPlaceholder: "name{'@'}firm.jp",
       passwordLabel: "パスワード",
       passwordPlaceholder: "パスワードを入力",
       submit: "ログイン",
       validation: "メールアドレスとパスワードを入力してください",
-      demoHint:
-        "現在はフロントエンド用のログイン試作です。任意のメールアドレスとパスワードで入れます。",
+      invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
+      requestFailed:
+        "ログインに失敗しました。しばらくしてから再試行してください。",
+      demoHint: "有効な管理画面アカウントでログインしてください。",
     },
   },
   customers: {
@@ -266,6 +268,8 @@ const jaJP = {
     filters: {
       scopeLabel: "表示範囲",
       groupLabel: "グループ絞り込み",
+      groupPending:
+        "グループ別の絞り込みはまだバックエンド未接続のため、現在は事務所全体の集計を表示します。",
       groups: {
         all: "全グループ",
         tokyo1: "東京一組",
@@ -282,7 +286,18 @@ const jaJP = {
       mine: "自分が担当または関与している案件とタスクを表示します。カードと一覧が同時に更新されます。",
       group:
         "所属組の案件とタスクを表示します。今日の優先順位と期限圧力を一緒に調整できます。",
+      groupFallback:
+        "所属組ビューは接続済みですが、バックエンドの組別集計は未分割のため、当面は事務所全体の集計を表示します。",
       all: "事務所全体を表示します。対応事項、期限、提出待ち、リスク分布を素早く確認できます。",
+    },
+    state: {
+      loading: "ダッシュボードデータを読み込み中です…",
+      refreshing: "ダッシュボードデータを更新中です…",
+      unauthorized:
+        "現在のログイン状態ではダッシュボードにアクセスできません。再ログインしてからお試しください。",
+      requestFailed:
+        "ダッシュボードデータの読み込みに失敗しました。しばらくしてから再試行してください。",
+      retry: "再読み込み",
     },
     quickActions: {
       title: "クイックアクション",

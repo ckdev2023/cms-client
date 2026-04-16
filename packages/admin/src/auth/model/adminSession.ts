@@ -1,4 +1,16 @@
 import { computed, ref } from "vue";
+import {
+  requestAdminLogin,
+  type AdminLoginPayload,
+  type AdminLoginResponse,
+} from "./adminLoginApi";
+
+export { AdminLoginRequestError } from "./adminLoginApi";
+export type {
+  AdminLoginPayload,
+  AdminLoginResponse,
+  AdminLoginResponseUser,
+} from "./adminLoginApi";
 
 export const ADMIN_SESSION_STORAGE_KEY = "gyosei_os_admin_session_v1";
 
@@ -49,6 +61,10 @@ export interface AdminSession {
   /**
    *
    */
+  token: string;
+  /**
+   *
+   */
   user: AdminUser;
   /**
    *
@@ -59,15 +75,19 @@ export interface AdminSession {
 /**
  *
  */
-export interface AdminLoginPayload {
+export interface LoginAdminDeps {
   /**
    *
    */
-  email: string;
+  request?: typeof fetch;
   /**
    *
    */
-  password: string;
+  storage?: AdminSessionStorageLike | null;
+  /**
+   *
+   */
+  controller?: ReturnType<typeof createAdminSessionController>;
 }
 
 /**
@@ -80,13 +100,20 @@ export interface CreateAdminSessionControllerDeps {
   now?: () => number;
 }
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 function capitalizeSegment(value: string): string {
   const [first = "", ...rest] = value;
   return first ? `${first.toUpperCase()}${rest.join("").toLowerCase()}` : "";
 }
 
-function buildUserProfile(email: string): AdminUser {
-  const normalizedEmail = email.trim().toLowerCase();
+function deriveUserProfileFromEmail(email: string): {
+  name: string;
+  initials: string;
+} {
+  const normalizedEmail = normalizeEmail(email);
   const localPart = normalizedEmail.split("@")[0] ?? "";
   const segments = localPart.split(/[._-]+/).filter(Boolean);
   const name =
@@ -99,12 +126,51 @@ function buildUserProfile(email: string): AdminUser {
       .join("")
       .slice(0, 2) || "AD";
 
+  return { name, initials };
+}
+
+function buildInitials(name: string, fallbackInitials: string): string {
+  const trimmed = name.trim();
+  if (trimmed.length === 0) return fallbackInitials;
+
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (
+      words
+        .map((segment) => segment[0]?.toUpperCase() ?? "")
+        .join("")
+        .slice(0, 2) || fallbackInitials
+    );
+  }
+
+  return trimmed.slice(0, 2).toUpperCase() || fallbackInitials;
+}
+
+function buildUserProfile(
+  email: string,
+  role = "管理员",
+  name?: string,
+): AdminUser {
+  const normalizedEmail = normalizeEmail(email);
+  const derived = deriveUserProfileFromEmail(normalizedEmail);
+  const resolvedName = name?.trim() || derived.name;
+
   return {
-    name,
+    name: resolvedName,
     email: normalizedEmail,
-    role: "管理员",
-    initials,
+    role,
+    initials: buildInitials(resolvedName, derived.initials),
   };
+}
+
+function isPrivilegedAdminRole(role: string | undefined): boolean {
+  return (
+    role === "owner" ||
+    role === "manager" ||
+    role === "admin" ||
+    role === "管理員" ||
+    role === "管理员"
+  );
 }
 
 function isAdminUser(value: unknown): value is AdminUser {
@@ -124,8 +190,36 @@ function isAdminSession(value: unknown): value is AdminSession {
 
   const candidate = value as Record<string, unknown>;
   return (
-    typeof candidate.loggedInAt === "number" && isAdminUser(candidate.user)
+    typeof candidate.token === "string" &&
+    typeof candidate.loggedInAt === "number" &&
+    isAdminUser(candidate.user)
   );
+}
+
+function createSessionFromLoginResponse(
+  result: AdminLoginResponse,
+  now: () => number,
+): AdminSession {
+  return {
+    token: result.token,
+    user: buildUserProfile(
+      result.user.email,
+      result.user.role,
+      result.user.name,
+    ),
+    loggedInAt: now(),
+  };
+}
+
+function createDemoSession(
+  payload: AdminLoginPayload,
+  now: () => number,
+): AdminSession {
+  return {
+    token: `demo-token:${normalizeEmail(payload.email)}`,
+    user: buildUserProfile(payload.email),
+    loggedInAt: now(),
+  };
 }
 
 function readSession(
@@ -182,56 +276,55 @@ export function createAdminSessionController(
   const sessionState = ref<AdminSession | null>(null);
   let hydrated = false;
 
-  function hydrate(
+  const persistSession = (
+    session: AdminSession,
     storage: AdminSessionStorageLike | null | undefined,
-  ): AdminSession | null {
-    if (!hydrated) {
-      sessionState.value = readSession(storage);
-      hydrated = true;
-    }
-
-    return sessionState.value;
-  }
-
-  function login(
-    payload: AdminLoginPayload,
-    storage: AdminSessionStorageLike | null | undefined,
-  ): AdminSession {
-    const session: AdminSession = {
-      user: buildUserProfile(payload.email),
-      loggedInAt: now(),
-    };
-
+  ): AdminSession => {
     sessionState.value = session;
     hydrated = true;
     writeSession(storage, session);
     return session;
-  }
-
-  function logout(storage: AdminSessionStorageLike | null | undefined): void {
-    sessionState.value = null;
-    hydrated = true;
-    clearSession(storage);
-  }
-
-  function reset(): void {
-    sessionState.value = null;
-    hydrated = false;
-  }
+  };
 
   return {
     session: computed(() => sessionState.value),
     currentUser: computed(() => sessionState.value?.user ?? null),
     isAuthenticated: computed(() => sessionState.value !== null),
-    isAdmin: computed(
-      () =>
-        sessionState.value?.user?.role === "管理員" ||
-        sessionState.value?.user?.role === "管理员",
+    isAdmin: computed(() =>
+      isPrivilegedAdminRole(sessionState.value?.user?.role),
     ),
-    hydrate,
-    login,
-    logout,
-    reset,
+    hydrate(storage: AdminSessionStorageLike | null | undefined) {
+      if (!hydrated) {
+        sessionState.value = readSession(storage);
+        hydrated = true;
+      }
+
+      return sessionState.value;
+    },
+    login(
+      payload: AdminLoginPayload,
+      storage: AdminSessionStorageLike | null | undefined,
+    ) {
+      return persistSession(createDemoSession(payload, now), storage);
+    },
+    loginFromResponse(
+      result: AdminLoginResponse,
+      storage: AdminSessionStorageLike | null | undefined,
+    ) {
+      return persistSession(
+        createSessionFromLoginResponse(result, now),
+        storage,
+      );
+    },
+    logout(storage: AdminSessionStorageLike | null | undefined) {
+      sessionState.value = null;
+      hydrated = true;
+      clearSession(storage);
+    },
+    reset() {
+      sessionState.value = null;
+      hydrated = false;
+    },
   };
 }
 
@@ -258,6 +351,16 @@ export function useAdminSession() {
 }
 
 /**
+ * 获取当前后台访问令牌。
+ *
+ * @returns 当前登录态 JWT；未登录时返回 `null`
+ */
+export function getAdminAccessToken(): string | null {
+  adminSessionController.hydrate(getBrowserSessionStorage());
+  return adminSessionController.session.value?.token ?? null;
+}
+
+/**
  * 判断当前后台是否已登录。
  *
  * @returns 是否存在有效登录态
@@ -281,10 +384,19 @@ export function isAdminRole(): boolean {
  * 以邮箱和密码创建后台登录态，并写入本地存储。
  *
  * @param payload 登录表单载荷
+ * @param deps 可注入依赖，如请求函数、存储实现与控制器
  * @returns 新创建的后台会话
  */
-export function loginAdmin(payload: AdminLoginPayload): AdminSession {
-  return adminSessionController.login(payload, getBrowserSessionStorage());
+export async function loginAdmin(
+  payload: AdminLoginPayload,
+  deps: LoginAdminDeps = {},
+): Promise<AdminSession> {
+  const request = deps.request ?? globalThis.fetch;
+  const storage = deps.storage ?? getBrowserSessionStorage();
+  const controller = deps.controller ?? adminSessionController;
+
+  const result = await requestAdminLogin(payload, request);
+  return controller.loginFromResponse(result, storage);
 }
 
 /**

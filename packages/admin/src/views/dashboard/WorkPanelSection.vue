@@ -3,24 +3,15 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import {
-  panels,
-  workListData,
+  panels as panelDefinitions,
   type PanelDef,
   type PanelListKey,
-  type WorkItemDef,
 } from "./workPanelData";
+import type {
+  DashboardSummaryData,
+  DashboardWorkItem,
+} from "./model/dashboardTypes";
 
-type Scope = "mine" | "group" | "all";
-type TimeWindow = 7 | 30;
-type ResolvedWorkItem = {
-  title: string;
-  meta: string[];
-  desc: string;
-  status: WorkItemDef["status"];
-  statusLabel: string;
-  action: string;
-  route?: string;
-};
 type ResolvedPanel = {
   id: PanelDef["id"];
   listKey: PanelListKey;
@@ -30,68 +21,37 @@ type ResolvedPanel = {
   subtitle: string;
   action: string;
   emptyMessage: string;
-  items: ResolvedWorkItem[];
+  items: DashboardWorkItem[];
 };
 
 /**
  * 仪表盘工作面板区，按当前视角整理待办、期限与风险列表。
  */
 const props = defineProps<{
-  scope: Scope;
-  timeWindow: TimeWindow;
+  panels: DashboardSummaryData["panels"] | null;
 }>();
 const { t } = useI18n();
 const router = useRouter();
-/**
- * 返回指定面板在当前筛选条件下应展示的案件列表。
- *
- * @param panel 当前工作面板定义
- * @returns 面板对应的可见工作项列表
- */
-function panelItems(panel: PanelDef): WorkItemDef[] {
-  const scopeData = workListData[props.scope] ?? {};
-  const items = scopeData[panel.listKey] ?? [];
-  if (panel.listKey !== "deadlines") return items;
-  return items.filter((i) => (i.daysLeft ?? 0) <= props.timeWindow);
-}
 
 /**
- * 将工作项定义解析为当前语言下可直接渲染的文案对象。
+ * 跳转到工作项对应的页面路由。
  *
- * @param scope 当前筛选范围
- * @param listKey 当前面板对应的数据分组
- * @param item 原始工作项定义
- * @returns 已完成国际化解析的工作项
+ * @param route 目标路由地址。
  */
-function resolveWorkItem(
-  scope: Scope,
-  listKey: PanelListKey,
-  item: WorkItemDef,
-): ResolvedWorkItem {
-  const prefix = `dashboard.workItems.${scope}.${listKey}.${item.id}`;
-
-  return {
-    title: t(`${prefix}.title`),
-    meta: item.metaKeys.map((metaKey) => t(`${prefix}.meta.${metaKey}`)),
-    desc: t(`${prefix}.desc`),
-    status: item.status,
-    statusLabel: t(`${prefix}.statusLabel`),
-    action: t(`${prefix}.action`),
-    route: item.route,
-  };
+function navigateTo(route?: string): void {
+  if (!route) return;
+  void router.push(route);
 }
 
 const resolvedPanels = computed<ResolvedPanel[]>(() =>
-  panels.map((panel) => ({
+  panelDefinitions.map((panel) => ({
     ...panel,
     tag: t(`dashboard.panels.${panel.id}.tag`),
     title: t(`dashboard.panels.${panel.id}.title`),
     subtitle: t(`dashboard.panels.${panel.id}.subtitle`),
     action: t(`dashboard.panels.${panel.id}.action`),
     emptyMessage: t(`dashboard.panels.${panel.id}.emptyMessage`),
-    items: panelItems(panel).map((item) =>
-      resolveWorkItem(props.scope, panel.listKey, item),
-    ),
+    items: props.panels?.[panel.listKey] ?? [],
   })),
 );
 </script>
@@ -117,11 +77,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
         </div>
 
         <div v-if="panel.items.length" class="work-list">
-          <article
-            v-for="item in panel.items"
-            :key="item.title"
-            class="work-item"
-          >
+          <article v-for="item in panel.items" :key="item.id" class="work-item">
             <div class="work-item-head">
               <div>
                 <h3 class="work-item-title">{{ item.title }}</h3>
@@ -138,7 +94,9 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
               <button
                 class="mini-btn"
                 type="button"
-                @click="item.route && router.push(item.route)"
+                :disabled="!item.route || undefined"
+                :aria-disabled="!item.route"
+                @click="navigateTo(item.route)"
               >
                 {{ item.action }}
               </button>

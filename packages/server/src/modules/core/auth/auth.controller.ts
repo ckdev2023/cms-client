@@ -1,7 +1,22 @@
-import { Controller, Get, Req, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Inject,
+  Post,
+  Req,
+  UnauthorizedException,
+} from "@nestjs/common";
 
 import { Public, RequireRoles } from "./auth.decorators";
+import { AuthService } from "./auth.service";
 import type { RequestContext } from "../tenancy/requestContext";
+
+type LoginBody = {
+  email?: unknown;
+  password?: unknown;
+};
 
 type HttpRequest = {
   requestContext?: RequestContext;
@@ -13,6 +28,16 @@ type HttpRequest = {
 @Controller("auth")
 export class AuthController {
   /**
+   * 创建认证控制器实例。
+   *
+   * @param authService 认证服务
+   */
+  constructor(
+    @Inject(AuthService)
+    private readonly authService: AuthService,
+  ) {}
+
+  /**
    * 公开接口：用于验证服务运行。
    *
    * @returns ok
@@ -21,6 +46,21 @@ export class AuthController {
   @Get("public")
   getPublic() {
     return { ok: true };
+  }
+
+  /**
+   * 后台邮箱密码登录。
+   *
+   * @param body 请求体
+   * @returns JWT 与当前用户信息
+   */
+  @Public()
+  @Post("login")
+  async login(@Body() body: LoginBody) {
+    return this.authService.login({
+      email: requireString(body.email, "email"),
+      password: requireString(body.password, "password"),
+    });
   }
 
   /**
@@ -48,4 +88,11 @@ export class AuthController {
   getManagerOnly() {
     return { ok: true };
   }
+}
+
+function requireString(value: unknown, field: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new BadRequestException(`Invalid ${field}`);
+  }
+  return value;
 }

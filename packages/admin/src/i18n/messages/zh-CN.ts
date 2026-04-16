@@ -88,12 +88,14 @@ const zhCN = {
       formTitle: "后台登录",
       formDescription: "请输入邮箱和密码继续进入 admin 端。",
       emailLabel: "邮箱",
-      emailPlaceholder: "name@firm.jp",
+      emailPlaceholder: "name{'@'}firm.jp",
       passwordLabel: "密码",
       passwordPlaceholder: "请输入密码",
       submit: "登录",
       validation: "请输入邮箱和密码",
-      demoHint: "当前为前端登录原型，输入任意邮箱和密码即可进入后台。",
+      invalidCredentials: "邮箱或密码错误，请重新输入。",
+      requestFailed: "登录请求失败，请稍后重试。",
+      demoHint: "请使用已开通的后台账号登录。",
     },
   },
   customers: {
@@ -260,6 +262,7 @@ const zhCN = {
     filters: {
       scopeLabel: "查看范围",
       groupLabel: "组过滤",
+      groupPending: "组筛选尚未接入后端，当前仍展示全所聚合数据。",
       groups: {
         all: "全部 Group",
         tokyo1: "东京一组",
@@ -275,7 +278,16 @@ const zhCN = {
     scopeSummary: {
       mine: "当前显示我负责或参与的案件与任务，卡片和列表会一起更新。",
       group: "当前显示本组的案件与任务，方便一起安排今日优先级与期限压力。",
+      groupFallback:
+        "本组视角已接线，但当前后端暂未细分组数据，因此先展示全所聚合结果。",
       all: "当前显示全所范围，适合快速查看待办、期限、待提交与风险分布。",
+    },
+    state: {
+      loading: "正在加载仪表盘数据…",
+      refreshing: "正在刷新仪表盘数据…",
+      unauthorized: "当前登录态无法访问仪表盘，请重新登录后重试。",
+      requestFailed: "仪表盘数据加载失败，请稍后重试。",
+      retry: "重新加载",
     },
     quickActions: {
       title: "快捷动作",

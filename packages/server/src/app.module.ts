@@ -5,6 +5,7 @@ import { Pool } from "pg";
 import { HealthController } from "./health/health.controller";
 import { AuthController } from "./modules/core/auth/auth.controller";
 import { AuthGuard } from "./modules/core/auth/auth.guard";
+import { AuthService } from "./modules/core/auth/auth.service";
 import { PermissionsService } from "./modules/core/auth/permissions.service";
 import { RequestContextInterceptor } from "./modules/core/auth/requestContext.interceptor";
 import { JobsController } from "./modules/core/jobs/jobs.controller";
@@ -40,6 +41,8 @@ import { CompaniesController } from "./modules/core/companies/companies.controll
 import { CompaniesService } from "./modules/core/companies/companies.service";
 import { ContactPersonsController } from "./modules/core/contact-persons/contactPersons.controller";
 import { ContactPersonsService } from "./modules/core/contact-persons/contactPersons.service";
+import { DashboardController } from "./modules/core/dashboard/dashboard.controller";
+import { DashboardService } from "./modules/core/dashboard/dashboard.service";
 import { CasePartiesController } from "./modules/core/case-parties/caseParties.controller";
 import { CasePartiesService } from "./modules/core/case-parties/caseParties.service";
 import { CustomersController } from "./modules/core/customers/customers.controller";
@@ -89,6 +92,7 @@ import {
     JobsController,
     CompaniesController,
     ContactPersonsController,
+    DashboardController,
     CustomersController,
     CasesController,
     BillingPlansController,
@@ -113,6 +117,7 @@ import {
   ],
   providers: [
     Reflector,
+    AuthService,
     PermissionsService,
     {
       provide: Pool,
@@ -128,6 +133,7 @@ import {
     FeatureFlagsService,
     CompaniesService,
     ContactPersonsService,
+    DashboardService,
     CustomersService,
     CasesService,
     BillingPlansService,

@@ -27,6 +27,7 @@ type CreateCaseBody = {
   customerId: unknown;
   caseTypeCode: unknown;
   ownerUserId: unknown;
+  stage?: unknown;
   status?: unknown;
   dueAt?: unknown;
   metadata?: unknown;
@@ -75,7 +76,8 @@ type UpdateCaseBody = {
 };
 
 type TransitionBody = {
-  toStatus: unknown;
+  toStage?: unknown;
+  toStatus?: unknown;
 };
 
 type BillingRiskAckBody = {
@@ -89,6 +91,7 @@ type PostApprovalStageBody = {
 };
 
 type ListCasesQuery = {
+  stage?: unknown;
   status?: unknown;
   resultOutcome?: unknown;
   ownerUserId?: unknown;
@@ -251,6 +254,7 @@ export class CasesController {
       customerId: requireString(body.customerId, "customerId"),
       caseTypeCode: requireString(body.caseTypeCode, "caseTypeCode"),
       ownerUserId: requireString(body.ownerUserId, "ownerUserId"),
+      stage: parseOptionalString(body.stage, "stage"),
       status: parseOptionalString(body.status, "status"),
       dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
       metadata: parseObject(body.metadata),
@@ -304,6 +308,7 @@ export class CasesController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.casesService.list(ctx, {
+      stage: parseOptionalString(query.stage, "stage"),
       status: parseOptionalString(query.status, "status"),
       resultOutcome: parseOptionalString(query.resultOutcome, "resultOutcome"),
       ownerUserId: parseOptionalString(query.ownerUserId, "ownerUserId"),
@@ -373,7 +378,8 @@ export class CasesController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.casesService.transition(ctx, id, {
-      toStatus: requireString(body.toStatus, "toStatus"),
+      toStage: parseOptionalString(body.toStage, "toStage"),
+      toStatus: parseOptionalString(body.toStatus, "toStatus"),
     });
   }
 

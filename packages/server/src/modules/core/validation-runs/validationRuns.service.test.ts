@@ -74,7 +74,12 @@ function makeCases() {
   return {
     service: {
       get: () =>
-        Promise.resolve({ id: CASE_ID, status: "S5", caseTypeCode: "visa" }),
+        Promise.resolve({
+          id: CASE_ID,
+          stage: "S5",
+          status: "S5",
+          caseTypeCode: "visa",
+        }),
     },
   };
 }

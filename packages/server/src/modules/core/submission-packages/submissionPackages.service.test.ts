@@ -84,19 +84,20 @@ function makeTimeline() {
   };
 }
 
-function makeCasesService(status = "S7") {
+function makeCasesService(stage = "S7") {
   const transitions: unknown[] = [];
   return {
     service: {
       get: () =>
         Promise.resolve({
           id: CASE_ID,
-          status,
+          stage,
+          status: stage,
           caseTypeCode: "visa",
         }),
       transition: (_ctx: unknown, caseId: string, input: unknown) => {
         transitions.push({ caseId, input });
-        return Promise.resolve({ id: caseId, status: "S7" });
+        return Promise.resolve({ id: caseId, stage: "S7", status: "S7" });
       },
     },
     transitions,
@@ -302,7 +303,7 @@ void test("SubmissionPackagesService.create advances case to S7 when current sta
   });
 
   assert.deepEqual(cases.transitions, [
-    { caseId: CASE_ID, input: { toStatus: "S7" } },
+    { caseId: CASE_ID, input: { toStage: "S7" } },
   ]);
 });
 

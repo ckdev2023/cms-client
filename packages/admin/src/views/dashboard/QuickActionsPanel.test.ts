@@ -40,20 +40,26 @@ describe("QuickActionsPanel", () => {
 
   it("renders the time-window segmented control", () => {
     const w = mountPanel();
-    const segmentBtns = w
-      .findAll('[role="tablist"]')
-      .at(-1)
-      ?.findAll(".segment-btn");
+    const segmentedControl = w.findAll('[role="tablist"]').at(-1);
+    const segmentBtns = segmentedControl?.findAll(".segment-btn");
+    expect(segmentedControl?.classes()).toContain("segmented-control--sliding");
+    expect(segmentedControl?.find(".segmented-control__thumb").exists()).toBe(
+      true,
+    );
     expect(segmentBtns).toHaveLength(2);
   });
 
   it("highlights the active timeWindow segment", () => {
     const w7 = mountPanel(7);
-    const firstBtn = w7
+    const segmentBtns = w7
       .findAll('[role="tablist"]')
       .at(-1)
-      ?.findAll(".segment-btn")[0];
+      ?.findAll(".segment-btn");
+    const firstBtn = segmentBtns?.[0];
+    const secondBtn = segmentBtns?.[1];
     expect(firstBtn?.classes()).toContain("active");
+    expect(firstBtn?.attributes("aria-selected")).toBe("true");
+    expect(secondBtn?.attributes("aria-selected")).toBe("false");
   });
 
   it("emits update:timeWindow when segment is clicked", async () => {

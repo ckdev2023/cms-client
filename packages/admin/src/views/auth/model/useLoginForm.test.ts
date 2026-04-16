@@ -3,11 +3,12 @@ import { useLoginForm } from "./useLoginForm";
 
 describe("useLoginForm", () => {
   it("starts with empty fields and disabled submit state", () => {
-    const { fields, canSubmit, submitError } = useLoginForm();
+    const { fields, canSubmit, isSubmitting, submitError } = useLoginForm();
 
     expect(fields.email).toBe("");
     expect(fields.password).toBe("");
     expect(canSubmit.value).toBe(false);
+    expect(isSubmitting.value).toBe(false);
     expect(submitError.value).toBe("");
   });
 
@@ -39,6 +40,29 @@ describe("useLoginForm", () => {
     expect(submitError.value).toBe("");
   });
 
+  it("disables submit while a request is in flight", () => {
+    const {
+      fields,
+      canSubmit,
+      isSubmitting,
+      startSubmitting,
+      finishSubmitting,
+    } = useLoginForm();
+
+    fields.email = "admin@example.com";
+    fields.password = "secret";
+
+    expect(canSubmit.value).toBe(true);
+
+    startSubmitting();
+    expect(isSubmitting.value).toBe(true);
+    expect(canSubmit.value).toBe(false);
+
+    finishSubmitting();
+    expect(isSubmitting.value).toBe(false);
+    expect(canSubmit.value).toBe(true);
+  });
+
   it("normalizes redirect targets to internal routes only", () => {
     const { resolveRedirectTarget } = useLoginForm();
 
@@ -49,16 +73,25 @@ describe("useLoginForm", () => {
   });
 
   it("resetForm clears the fields and errors", () => {
-    const { fields, submitError, setSubmitError, resetForm } = useLoginForm();
+    const {
+      fields,
+      isSubmitting,
+      submitError,
+      setSubmitError,
+      startSubmitting,
+      resetForm,
+    } = useLoginForm();
 
     fields.email = "admin@example.com";
     fields.password = "secret";
     setSubmitError("bad");
+    startSubmitting();
 
     resetForm();
 
     expect(fields.email).toBe("");
     expect(fields.password).toBe("");
+    expect(isSubmitting.value).toBe(false);
     expect(submitError.value).toBe("");
   });
 });

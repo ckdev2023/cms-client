@@ -11,10 +11,31 @@
 
 .segmented-control {
   display: inline-flex;
+  position: relative;
   padding: 4px;
   border-radius: var(--radius-full);
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
+}
+
+.segmented-control--sliding {
+  isolation: isolate;
+}
+
+.segmented-control__thumb {
+  position: absolute;
+  top: 4px;
+  bottom: 4px;
+  left: 4px;
+  width: calc((100% - 8px) / var(--segment-count, 1));
+  border-radius: var(--radius-full);
+  background: var(--color-primary-6);
+  box-shadow: var(--shadow-primary-btn);
+  transform: translateX(calc(100% * var(--segment-index, 0)));
+  transition:
+    transform var(--transition-spring),
+    width var(--transition-spring);
+  pointer-events: none;
 }
 
 .segment-btn {
@@ -32,10 +53,17 @@
     color var(--transition-normal);
 }
 
+.segmented-control--sliding .segment-btn {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  text-align: center;
+}
+
 .segment-btn.active {
-  background: var(--color-bg-1);
-  color: var(--color-text-1);
-  box-shadow: var(--shadow-subtle);
+  background: transparent;
+  color: var(--color-bg-1);
+  box-shadow: none;
 }
 
 .mini-btn {

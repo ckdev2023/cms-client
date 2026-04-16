@@ -68,6 +68,7 @@ export const users = pgTable("users", {
     .references(() => organizations.id),
   name: text("name").notNull(),
   email: text("email").notNull(),
+  passwordHash: text("password_hash"),
   role: text("role").notNull(),
   status: text("status").notNull().default("active"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })

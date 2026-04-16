@@ -91,7 +91,12 @@ export class ValidationRunsService {
       ctx,
       input.caseId,
     );
-    return this.insertValidationRun(ctx, input, currentCase.status, evaluation);
+    return this.insertValidationRun(
+      ctx,
+      input,
+      currentCase.stage ?? currentCase.status,
+      evaluation,
+    );
   }
 
   /**
