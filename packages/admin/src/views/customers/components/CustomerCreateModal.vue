@@ -1,22 +1,31 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
+import Button from "../../../shared/ui/Button.vue";
+import type { CustomerCreateFormFields, SelectOption } from "../types";
+import type { CustomerDuplicateCandidate } from "../model/CustomerAdapter";
+import type { CustomerCreateFormErrorCode } from "../model/useCustomerCreateForm";
+
 /**
  * 新建客户弹窗：12 字段表单 + 去重提示 + 创建/草稿按钮。
  */
-import { useI18n } from "vue-i18n";
-import Button from "../../../shared/ui/Button.vue";
-import { GROUP_OPTIONS } from "../fixtures";
-import type { CustomerCreateFormFields, CustomerSummary } from "../types";
 
-/** 新建客户弹窗：12 字段表单 + 去重提示 + 草稿/创建按钮。 */
 const { t } = useI18n();
 
-defineProps<{
+type CustomerCreateModalProps = {
   open?: boolean;
   fields?: CustomerCreateFormFields;
   canCreate?: boolean;
   showDedupe?: boolean;
-  dedupeMatches?: CustomerSummary[];
-}>();
+  dedupeMatches?: CustomerDuplicateCandidate[];
+  groupOptions?: SelectOption[];
+  checkingDuplicates?: boolean;
+  dedupeErrorCode?: CustomerCreateFormErrorCode | null;
+  submitting?: boolean;
+  submitErrorCode?: CustomerCreateFormErrorCode | null;
+};
+
+const props = defineProps<CustomerCreateModalProps>();
 
 defineEmits<{
   close: [];
@@ -25,21 +34,34 @@ defineEmits<{
   "update:field": [name: keyof CustomerCreateFormFields, value: string];
 }>();
 
-/**
- * 从输入事件中提取当前值。
- *
- * @param e - 输入事件对象
- * @returns 当前输入值
- */
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
+
+/**
+ * 根据错误码解析当前状态提示文案。
+ * @param code 当前错误码。
+ * @returns 对应的本地化提示文案。
+ */
+function resolveStateMessage(code?: CustomerCreateFormErrorCode | null) {
+  return code ? t(`customers.list.createModal.state.${code}`) : "";
+}
+
+const dedupeStateMessage = computed(() => {
+  return props.checkingDuplicates
+    ? t("customers.list.createModal.state.checkingDuplicates")
+    : resolveStateMessage(props.dedupeErrorCode);
+});
+
+const submitStateMessage = computed(() =>
+  resolveStateMessage(props.submitErrorCode),
+);
 </script>
 
 <template>
   <Teleport to="body">
     <div
-      v-if="open"
+      v-if="props.open"
       class="customer-modal-backdrop"
-      @click.self="$emit('close')"
+      @click.self="!props.submitting && $emit('close')"
     >
       <div
         class="customer-modal"
@@ -53,6 +75,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <button
             class="customer-modal__close"
             type="button"
+            :disabled="props.submitting"
             @click="$emit('close')"
           >
             <svg
@@ -75,7 +98,11 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             {{ t("customers.list.createModal.description") }}
           </p>
 
-          <div v-if="showDedupe" class="customer-modal__dedupe">
+          <div v-if="dedupeStateMessage" class="customer-modal__state">
+            {{ dedupeStateMessage }}
+          </div>
+
+          <div v-if="props.showDedupe" class="customer-modal__dedupe">
             <div class="customer-modal__dedupe-title">
               {{ t("customers.list.createModal.dedupe.title") }}
             </div>
@@ -83,11 +110,11 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("customers.list.createModal.dedupe.description") }}
             </div>
             <ul
-              v-if="dedupeMatches && dedupeMatches.length"
+              v-if="props.dedupeMatches && props.dedupeMatches.length"
               class="customer-modal__dedupe-list"
             >
               <li
-                v-for="match in dedupeMatches"
+                v-for="match in props.dedupeMatches"
                 :key="match.id"
                 class="customer-modal__dedupe-item"
               >
@@ -108,7 +135,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="text"
                   class="customer-modal__input"
-                  :value="fields?.displayName"
+                  :value="props.fields?.displayName"
                   :placeholder="
                     t(
                       'customers.list.createModal.fields.displayNamePlaceholder',
@@ -126,7 +153,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 </label>
                 <select
                   class="customer-modal__input customer-modal__select"
-                  :value="fields?.group"
+                  :value="props.fields?.group"
                   @change="
                     $emit(
                       'update:field',
@@ -141,7 +168,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                     }}
                   </option>
                   <option
-                    v-for="opt in GROUP_OPTIONS"
+                    v-for="opt in props.groupOptions ?? []"
                     :key="opt.value"
                     :value="opt.value"
                   >
@@ -160,7 +187,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="text"
                   class="customer-modal__input"
-                  :value="fields?.legalName"
+                  :value="props.fields?.legalName"
                   :placeholder="
                     t('customers.list.createModal.fields.legalNamePlaceholder')
                   "
@@ -176,7 +203,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="text"
                   class="customer-modal__input"
-                  :value="fields?.kana"
+                  :value="props.fields?.kana"
                   :placeholder="
                     t('customers.list.createModal.fields.kanaPlaceholder')
                   "
@@ -192,7 +219,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 </label>
                 <select
                   class="customer-modal__input customer-modal__select"
-                  :value="fields?.gender"
+                  :value="props.fields?.gender"
                   @change="
                     $emit(
                       'update:field',
@@ -219,7 +246,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="date"
                   class="customer-modal__input"
-                  :value="fields?.birthDate"
+                  :value="props.fields?.birthDate"
                   @input="
                     $emit('update:field', 'birthDate', inputValue($event))
                   "
@@ -234,7 +261,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               <input
                 type="text"
                 class="customer-modal__input"
-                :value="fields?.nationality"
+                :value="props.fields?.nationality"
                 :placeholder="
                   t('customers.list.createModal.fields.nationalityPlaceholder')
                 "
@@ -253,7 +280,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="tel"
                   class="customer-modal__input"
-                  :value="fields?.phone"
+                  :value="props.fields?.phone"
                   :placeholder="
                     t('customers.list.createModal.fields.phonePlaceholder')
                   "
@@ -270,7 +297,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="email"
                   class="customer-modal__input"
-                  :value="fields?.email"
+                  :value="props.fields?.email"
                   :placeholder="
                     t('customers.list.createModal.fields.emailPlaceholder')
                   "
@@ -286,7 +313,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               <input
                 type="text"
                 class="customer-modal__input"
-                :value="fields?.referrer"
+                :value="props.fields?.referrer"
                 :placeholder="
                   t('customers.list.createModal.fields.referrerPlaceholder')
                 "
@@ -308,7 +335,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 <input
                   type="text"
                   class="customer-modal__input"
-                  :value="fields?.note"
+                  :value="props.fields?.note"
                   :placeholder="
                     t('customers.list.createModal.fields.notePlaceholder')
                   "
@@ -320,16 +347,28 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
         </div>
 
         <div class="customer-modal__footer">
-          <Button variant="outlined" @click="$emit('close')">
+          <div v-if="submitStateMessage" class="customer-modal__state">
+            {{ submitStateMessage }}
+          </div>
+          <Button
+            variant="outlined"
+            :disabled="props.submitting"
+            @click="$emit('close')"
+          >
             {{ t("customers.list.createModal.cancel") }}
           </Button>
-          <Button variant="outlined" @click="$emit('saveDraft')">
+          <Button
+            variant="outlined"
+            :disabled="props.submitting"
+            @click="$emit('saveDraft')"
+          >
             {{ t("customers.list.createModal.saveDraft") }}
           </Button>
           <Button
             variant="filled"
             tone="primary"
-            :disabled="!canCreate"
+            :disabled="!props.canCreate"
+            :loading="props.submitting"
             @click="$emit('create')"
           >
             {{ t("customers.list.createModal.create") }}
@@ -340,158 +379,4 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
   </Teleport>
 </template>
 
-<style scoped>
-.customer-modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: var(--color-bg-modal-scrim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.customer-modal {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 640px;
-  max-height: 90vh;
-  background: var(--color-bg-1);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-modal);
-  overflow: hidden;
-}
-
-.customer-modal__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 24px;
-  border-bottom: 1px solid var(--color-border-table-row);
-}
-
-.customer-modal__title {
-  margin: 0;
-  font-size: 17px;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-1);
-}
-
-.customer-modal__close {
-  border: none;
-  background: none;
-  padding: 4px;
-  color: var(--color-text-3);
-  cursor: pointer;
-  border-radius: var(--radius-md);
-  transition: color var(--transition-normal);
-}
-
-.customer-modal__close:hover {
-  color: var(--color-text-1);
-}
-.customer-modal__body {
-  flex: 1 1 auto;
-  overflow-y: auto;
-  padding: 24px;
-}
-
-.customer-modal__desc {
-  margin: 0 0 20px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.customer-modal__dedupe {
-  padding: 12px;
-  border-radius: var(--radius-lg);
-  border: 1px solid #fde68a;
-  background: #fffbeb;
-  margin-bottom: 20px;
-  color: #92400e;
-  font-size: var(--font-size-sm);
-}
-
-.customer-modal__dedupe-title {
-  font-size: 13px;
-  font-weight: var(--font-weight-semibold);
-}
-
-.customer-modal__dedupe-desc {
-  margin-top: 4px;
-}
-
-.customer-modal__dedupe-list {
-  margin: 8px 0 0;
-  padding: 0 0 0 16px;
-}
-
-.customer-modal__fields {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-.customer-modal__row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.customer-modal__field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.customer-modal__label {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-2);
-}
-.customer-modal__required {
-  color: #dc2626;
-}
-.customer-modal__input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
-  font: inherit;
-  font-size: var(--font-size-base);
-  color: var(--color-text-1);
-  background: var(--color-bg-1);
-  transition: border-color var(--transition-normal);
-}
-
-.customer-modal__input:focus {
-  outline: none;
-  border-color: var(--color-primary-6);
-  box-shadow: 0 0 0 2px var(--color-primary-light);
-}
-.customer-modal__input::placeholder {
-  color: var(--color-text-placeholder);
-}
-.customer-modal__select {
-  appearance: none;
-  cursor: pointer;
-}
-
-.customer-modal__hint {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.customer-modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--color-border-table-row);
-  background: var(--color-bg-elevated);
-}
-</style>
+<style scoped src="./CustomerCreateModal.css"></style>

@@ -15,6 +15,12 @@ const customerDetail = {
   actions: {
     createCase: "案件を開始",
     batchCreateCase: "一括案件作成",
+    createCaseGate: {
+      blockedTitle: "案件作成はまだ開始できません",
+      needsSign: "経営管理ビザの顧客は、契約完了後に案件作成が可能になります。",
+      intakeNotReady:
+        "契約は記録済みですが、取込状態がまだ案件作成可能になっていません。更新して再度お試しください。",
+    },
   },
   header: {
     number: "番号",
@@ -55,6 +61,96 @@ const customerDetail = {
       note: "備考",
     },
   },
+  bmvIntake: {
+    ariaLabel: "経営管理ビザ承接カード",
+    eyebrow: "P1 取込",
+    title: "経営管理ビザ承接",
+    nextStep: "次の対応",
+    gateHint: "起案ゲート",
+    note: "補足メモ",
+    steps: {
+      questionnaire: "問診票",
+      quote: "見積",
+      sign: "契約",
+    },
+    timeline: {
+      questionnaireSentAt: "問診票送付",
+      questionnaireReturnedAt: "問診票回収",
+      quoteGeneratedAt: "見積作成",
+      quoteConfirmedAt: "見積確認",
+      signedAt: "契約締結",
+    },
+    stage: {
+      not_started: "未着手",
+      questionnaire_pending: "問診票対応待ち",
+      quote_pending: "見積作成待ち",
+      sign_pending: "契約待ち",
+      ready_for_case_creation: "起案可能",
+    },
+    questionnaireStatus: {
+      not_started: "未送付",
+      sent: "送付済み",
+      returned: "回収済み",
+    },
+    quoteStatus: {
+      not_started: "未作成",
+      generated: "作成済み",
+      confirmed: "確認済み",
+    },
+    signStatus: {
+      not_started: "未着手",
+      pending: "契約待ち",
+      signed: "契約済み",
+    },
+    nextStepValue: {
+      not_started: "問診票を送付して承接を開始する",
+      questionnaire_pending_sent: "顧客からの問診票返送を待つ",
+      quote_pending: "見積を作成して契約案内を進める",
+      sign_pending: "顧客と契約日程を確定する",
+      ready_for_case_creation: "正式案件を起案し、資料一覧を生成する",
+    },
+    gateHintValue: {
+      locked: "契約完了までは起案できません",
+      ready: "契約完了済みのため正式起案が可能です",
+    },
+    actions: {
+      questionnaire: "問診票を送付",
+      quote: "見積を生成",
+      sign: "契約完了を記録",
+    },
+    actionHint: {
+      questionnaire: {
+        ready: "顧客に問診票を送付して承接を開始します",
+        alreadySent: "問診票はすでに送付済みです",
+        stageCompleted: "問診票工程は完了済みのため再送できません",
+        signed: "契約済みの顧客です",
+      },
+      quote: {
+        ready: "見積を生成して契約案内フェーズへ進めます",
+        needsQuestionnaire: "先に問診票を送付してください",
+        stageCompleted: "見積工程は完了済みのため再生成できません",
+        signed: "契約済みの顧客です",
+      },
+      sign: {
+        ready: "契約完了を記録すると正式起案が解放されます",
+        needsQuote: "先に見積を生成してください",
+        signed: "契約はすでに完了しています",
+      },
+    },
+    actionState: {
+      questionnaireSuccess:
+        "問診票の送付に成功し、最新の顧客詳細へ更新しました",
+      quoteSuccess: "見積の生成に成功し、最新の顧客詳細へ更新しました",
+      signSuccess: "契約完了の記録に成功し、最新の顧客詳細へ更新しました",
+      unauthorized: "この経営管理ビザ承接フローを更新する権限がありません",
+      validationError:
+        "この操作は現在実行できません。可能な範囲で最新詳細を再読込しました",
+      requestFailed:
+        "経営管理ビザ承接フローの更新に失敗しました。しばらくしてから再試行してください。",
+      refreshFailed:
+        "操作自体は完了しましたが、最新の顧客詳細を再読込できませんでした",
+    },
+  },
   casesTab: {
     title: "関連案件",
     create: "案件を開始",
@@ -75,6 +171,9 @@ const customerDetail = {
     statusArchived: "アーカイブ",
     open: "開く",
     openCase: "案件を開く：{name}",
+    loading: "関連案件を読み込み中…",
+    requestFailed: "関連案件の読み込みに失敗しました",
+    retry: "再試行",
     emptyAll: "関連案件はありません",
     emptyActive: "活動中の案件はありません",
     emptyArchived: "アーカイブ済み案件はありません",
@@ -83,6 +182,10 @@ const customerDetail = {
     title: "関連者",
     add: "関連者を追加",
     batchCreate: "関連者から一括案件作成",
+    loading: "関連者を読み込み中…",
+    requestFailed:
+      "関連者の読み込みに失敗しました。しばらくしてから再試行してください。",
+    retry: "再試行",
     searchPlaceholder: "検索：名前 / 電話 / メール / タグ",
     searchLabel: "関連者を検索",
     count: "全 {count} 名",
@@ -100,6 +203,22 @@ const customerDetail = {
       "まずキーパーソンを追加してください。後から選択して一括案件作成が可能です。",
     emptySearch: "該当する関連者が見つかりません",
     emptySearchHint: "キーワードを変更するか、新しい関連者を追加してください。",
+    form: {
+      createTitle: "関連者を追加",
+      editTitle: "関連者を編集",
+      nameLabel: "氏名",
+      namePlaceholder: "氏名を入力",
+      relationTypeLabel: "関係種別",
+      roleTitleLabel: "役割 / 役職",
+      roleTitlePlaceholder: "例：顧問 / 父 / 後見人",
+      phoneLabel: "電話番号",
+      emailLabel: "メールアドレス",
+      cancel: "キャンセル",
+      create: "作成",
+      save: "保存",
+      validationNameRequired: "氏名を入力してください。",
+      requestFailed: "保存に失敗しました。しばらくしてから再試行してください。",
+    },
   },
   commsTab: {
     title: "コミュニケーション",

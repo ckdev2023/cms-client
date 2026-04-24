@@ -1,4 +1,4 @@
-import { ref, computed, type Ref, type ComputedRef } from "vue";
+import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { CustomerDetail, SelectOption } from "../types";
 import { OWNER_OPTIONS } from "../fixtures";
 import {
@@ -6,6 +6,44 @@ import {
   isGroupDisabled,
   resolveGroupLabel,
 } from "../../../shared/model/useGroupOptions";
+import {
+  CustomerRepositoryError,
+  type CustomerRepository,
+} from "./CustomerRepository";
+
+/**
+ * 基础信息编辑可识别的错误码。
+ */
+export type CustomerBasicInfoModelErrorCode =
+  | "unauthorized"
+  | "validationError"
+  | "requestFailed";
+
+function mapBasicInfoError(error: unknown): CustomerBasicInfoModelErrorCode {
+  if (!(error instanceof CustomerRepositoryError)) {
+    return "requestFailed";
+  }
+
+  if (error.code === "UNAUTHORIZED") return "unauthorized";
+  if (error.code === "VALIDATION_ERROR") return "validationError";
+  return "requestFailed";
+}
+
+function resolveOwnerIdByLabel(
+  ownerLabel: string,
+  ownerOptions: readonly SelectOption[],
+): string | undefined {
+  const matched = ownerOptions.find(
+    (option) => option.label === ownerLabel.trim(),
+  );
+  return matched?.value;
+}
+
+type UseCustomerBasicInfoModelInput = {
+  customer: ComputedRef<CustomerDetail | null>;
+  repository: Pick<CustomerRepository, "updateCustomerBasicInfo">;
+  refreshCustomer?: () => Promise<void>;
+};
 
 /**
  * 基础信息 Tab 表单字段快照，与 CustomerDetail 字段对齐但仅包含可编辑部分。
@@ -91,52 +129,165 @@ export function snapshotFromCustomer(
   };
 }
 
+function useCommittedSnapshot(customer: ComputedRef<CustomerDetail | null>) {
+  const committedSnapshot = ref<BasicInfoFormSnapshot | null>(null);
+
+  watch(
+    customer,
+    (nextCustomer) => {
+      committedSnapshot.value = nextCustomer
+        ? snapshotFromCustomer(nextCustomer)
+        : null;
+    },
+    { immediate: true },
+  );
+
+  return {
+    committedSnapshot,
+    currentSnapshot: computed(() => committedSnapshot.value),
+  };
+}
+
+function useBasicInfoOptions(
+  currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>,
+) {
+  const groupOptions = computed<readonly SelectOption[]>(() => {
+    const active = getActiveGroupOptions();
+    const currentGroup = currentSnapshot.value?.group ?? "";
+    if (currentGroup && isGroupDisabled(currentGroup)) {
+      return [
+        ...active,
+        { value: currentGroup, label: resolveGroupLabel(currentGroup) },
+      ];
+    }
+    return active;
+  });
+
+  return {
+    groupOptions,
+    ownerOptions: ref<readonly SelectOption[]>(OWNER_OPTIONS),
+  };
+}
+
+function createBasicInfoPayload(
+  snapshot: BasicInfoFormSnapshot,
+  ownerOptions: readonly SelectOption[],
+) {
+  return {
+    displayName: snapshot.displayName,
+    legalName: snapshot.legalName,
+    furigana: snapshot.furigana,
+    nationality: snapshot.nationality,
+    gender: snapshot.gender,
+    birthDate: snapshot.birthDate,
+    phone: snapshot.phone,
+    email: snapshot.email,
+    group: snapshot.group,
+    ownerId: resolveOwnerIdByLabel(snapshot.owner, ownerOptions),
+    referralSource: snapshot.referralSource,
+    avatar: snapshot.avatar,
+    note: snapshot.note,
+  };
+}
+
+async function refreshCustomerSafely(
+  refreshCustomer?: () => Promise<void>,
+): Promise<void> {
+  if (!refreshCustomer) return;
+  await refreshCustomer().catch(() => undefined);
+}
+
+function useBasicInfoActions(
+  input: UseCustomerBasicInfoModelInput,
+  state: {
+    isEditing: Ref<boolean>;
+    showSavedHint: Ref<boolean>;
+    formSnapshot: Ref<BasicInfoFormSnapshot | null>;
+    committedSnapshot: Ref<BasicInfoFormSnapshot | null>;
+    saving: Ref<boolean>;
+    errorCode: Ref<CustomerBasicInfoModelErrorCode | null>;
+    currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>;
+  },
+  ownerOptions: Readonly<Ref<readonly SelectOption[]>>,
+) {
+  function startEditing(): void {
+    if (!state.currentSnapshot.value) return;
+    state.formSnapshot.value = { ...state.currentSnapshot.value };
+    state.showSavedHint.value = false;
+    state.errorCode.value = null;
+    state.isEditing.value = true;
+  }
+
+  function cancelEditing(): void {
+    state.isEditing.value = false;
+    state.formSnapshot.value = null;
+    state.errorCode.value = null;
+  }
+
+  async function save(): Promise<boolean> {
+    const snapshot = state.formSnapshot.value;
+    const customer = input.customer.value;
+    if (!snapshot || !customer || state.saving.value) return false;
+
+    state.saving.value = true;
+    state.errorCode.value = null;
+
+    try {
+      await input.repository.updateCustomerBasicInfo(
+        customer.id,
+        createBasicInfoPayload(snapshot, ownerOptions.value),
+      );
+      state.committedSnapshot.value = { ...snapshot };
+      state.isEditing.value = false;
+      state.showSavedHint.value = true;
+      state.formSnapshot.value = null;
+      await refreshCustomerSafely(input.refreshCustomer);
+      return true;
+    } catch (error) {
+      state.errorCode.value = mapBasicInfoError(error);
+      return false;
+    } finally {
+      state.saving.value = false;
+    }
+  }
+
+  return { startEditing, cancelEditing, save };
+}
+
 /**
  * 基础信息 Tab 的编辑状态模型：管理编辑/只读模式、表单快照、保存提示。
  *
- * @param customer 响应式的客户详情（可能为 null）
+ * @param input - Hook 依赖集合
+ * @param input.customer - 响应式的客户详情（可能为 `null`）
+ * @param input.repository - 更新基础信息所需仓储
+ * @param input.refreshCustomer - 保存成功后的可选刷新函数
  * @returns 编辑状态、快照、选项列表与操作方法
  */
 export function useCustomerBasicInfoModel(
-  customer: ComputedRef<CustomerDetail | null>,
+  input: UseCustomerBasicInfoModelInput,
 ) {
   const isEditing = ref(false);
   const showSavedHint = ref(false);
   const formSnapshot = ref<BasicInfoFormSnapshot | null>(null);
-
-  const currentSnapshot = computed<BasicInfoFormSnapshot | null>(() => {
-    const c = customer.value;
-    if (!c) return null;
-    return snapshotFromCustomer(c);
-  });
-
-  const groupOptions = computed<readonly SelectOption[]>(() => {
-    const active = getActiveGroupOptions();
-    const c = customer.value;
-    if (c && isGroupDisabled(c.group)) {
-      return [...active, { value: c.group, label: resolveGroupLabel(c.group) }];
-    }
-    return active;
-  });
-  const ownerOptions: Ref<readonly SelectOption[]> = ref(OWNER_OPTIONS);
-
-  function startEditing(): void {
-    if (!customer.value) return;
-    formSnapshot.value = snapshotFromCustomer(customer.value);
-    showSavedHint.value = false;
-    isEditing.value = true;
-  }
-
-  function cancelEditing(): void {
-    isEditing.value = false;
-    formSnapshot.value = null;
-  }
-
-  function save(): void {
-    isEditing.value = false;
-    showSavedHint.value = true;
-    formSnapshot.value = null;
-  }
+  const saving = ref(false);
+  const errorCode = ref<CustomerBasicInfoModelErrorCode | null>(null);
+  const { committedSnapshot, currentSnapshot } = useCommittedSnapshot(
+    input.customer,
+  );
+  const { groupOptions, ownerOptions } = useBasicInfoOptions(currentSnapshot);
+  const { startEditing, cancelEditing, save } = useBasicInfoActions(
+    input,
+    {
+      isEditing,
+      showSavedHint,
+      formSnapshot,
+      committedSnapshot,
+      saving,
+      errorCode,
+      currentSnapshot,
+    },
+    ownerOptions,
+  );
 
   return {
     isEditing,
@@ -145,6 +296,8 @@ export function useCustomerBasicInfoModel(
     currentSnapshot,
     groupOptions,
     ownerOptions,
+    saving: computed(() => saving.value),
+    errorCode: computed(() => errorCode.value),
     startEditing,
     cancelEditing,
     save,

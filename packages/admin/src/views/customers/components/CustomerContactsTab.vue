@@ -1,32 +1,90 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
 import { getRelationTypeLabel } from "../types";
+import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerContactsModel } from "../model/useCustomerContactsModel";
-
+import CustomerRelationModal from "./CustomerRelationModal.vue";
 /** 关联人 Tab：展示关联人表格，支持搜索、多选与批量操作占位。 */
-const props = defineProps<{
-  customerId: string;
-}>();
-
+const props = withDefaults(
+  defineProps<{
+    customerId: string;
+    repository: Pick<
+      CustomerRepository,
+      "createRelation" | "listRelations" | "updateRelation"
+    >;
+    batchCreateCaseDisabled?: boolean;
+    batchCreateCaseHint?: string | null;
+  }>(),
+  {
+    batchCreateCaseDisabled: false,
+    batchCreateCaseHint: null,
+  },
+);
 const { t } = useI18n();
-
+const router = useRouter();
 const customerIdRef = computed(() => props.customerId);
 const {
   searchQuery,
   filteredRelations,
+  selectedRelations,
   isAllSelected,
   isIndeterminate,
   hasSelection,
+  loading,
+  errorCode,
+  isModalOpen,
+  relationForm,
+  isEditing,
+  canSubmit,
+  saving,
+  saveErrorCode,
   toggleSelectAll,
   toggleSelect,
   selectedIds,
   setSearch,
-} = useCustomerContactsModel(customerIdRef);
+  openCreateModal,
+  openEditModal,
+  closeModal,
+  updateFormField,
+  submitModal,
+  retry,
+} = useCustomerContactsModel({
+  customerId: customerIdRef,
+  repository: props.repository,
+});
+/** 跳转到家族批量建案，并把当前选中的关联人上下文序列化到 query。 */
+function handleBatchCreate(): void {
+  const nextCustomerId = props.customerId.trim();
+  if (!nextCustomerId || !selectedRelations.value.length) return;
+  void router.push({
+    name: "case-create",
+    hash: "#family-bulk",
+    query: {
+      customerId: nextCustomerId,
+      relationIds: selectedRelations.value
+        .map((relation) => relation.id)
+        .join(","),
+      selectedRelations: JSON.stringify(
+        selectedRelations.value.map((relation) => ({
+          id: relation.id,
+          name: relation.name,
+          relationType: relation.relationType,
+          roleTitle: relation.tags[0] || undefined,
+          phone: relation.phone || undefined,
+          email: relation.email || undefined,
+          tags: relation.tags,
+          note: relation.note || undefined,
+        })),
+      ),
+    },
+  });
+}
 </script>
 
 <template>
@@ -37,15 +95,27 @@ const {
           {{ t("customers.detail.contactsTab.title") }}
         </h3>
         <div class="contacts-tab__actions">
-          <Button size="sm" pill :disabled="!hasSelection">
+          <Button
+            size="sm"
+            pill
+            :disabled="batchCreateCaseDisabled || !hasSelection"
+            @click="handleBatchCreate"
+          >
             {{ t("customers.detail.contactsTab.batchCreate") }}
           </Button>
-          <Button variant="filled" tone="primary" size="sm" disabled>
+          <Button
+            variant="filled"
+            tone="primary"
+            size="sm"
+            @click="openCreateModal"
+          >
             {{ t("customers.detail.contactsTab.add") }}
           </Button>
         </div>
+        <p v-if="batchCreateCaseHint" class="contacts-tab__actions-hint">
+          {{ batchCreateCaseHint }}
+        </p>
       </div>
-
       <div class="contacts-tab__toolbar">
         <SearchField
           variant="inline"
@@ -62,9 +132,21 @@ const {
           }}
         </span>
       </div>
-
       <div class="contacts-tab__table-wrap">
-        <table v-if="filteredRelations.length" class="contacts-tab__table">
+        <div v-if="loading" class="contacts-tab__state">
+          <p class="contacts-tab__state-text">
+            {{ t("customers.detail.contactsTab.loading") }}
+          </p>
+        </div>
+        <div v-else-if="errorCode" class="contacts-tab__state">
+          <p class="contacts-tab__state-text">
+            {{ t("customers.detail.contactsTab.requestFailed") }}
+          </p>
+          <Button size="sm" pill @click="retry">
+            {{ t("customers.detail.contactsTab.retry") }}
+          </Button>
+        </div>
+        <table v-else-if="filteredRelations.length" class="contacts-tab__table">
           <thead>
             <tr>
               <th class="contacts-tab__th contacts-tab__th--check">
@@ -146,8 +228,8 @@ const {
                 <Button
                   size="sm"
                   pill
-                  disabled
                   :aria-label="t('customers.detail.contactsTab.edit')"
+                  @click="openEditModal(r)"
                 >
                   {{ t("customers.detail.contactsTab.edit") }}
                 </Button>
@@ -155,7 +237,6 @@ const {
             </tr>
           </tbody>
         </table>
-
         <div v-else class="contacts-tab__empty">
           <div class="contacts-tab__empty-icon" aria-hidden="true">
             <svg
@@ -189,6 +270,17 @@ const {
           </p>
         </div>
       </div>
+      <CustomerRelationModal
+        :open="isModalOpen"
+        :form="relationForm"
+        :is-editing="isEditing"
+        :can-submit="canSubmit"
+        :saving="saving"
+        :error-code="saveErrorCode"
+        @close="closeModal"
+        @submit="submitModal"
+        @update:field="updateFormField"
+      />
     </div>
   </Card>
 </template>
@@ -197,7 +289,6 @@ const {
 .contacts-tab {
   display: flex;
   flex-direction: column;
-  gap: 0;
 }
 
 .contacts-tab__header {
@@ -219,7 +310,15 @@ const {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+}
+
+.contacts-tab__actions-hint {
+  margin: 0;
+  width: 100%;
+  text-align: right;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
 }
 
 .contacts-tab__toolbar {
@@ -236,7 +335,6 @@ const {
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
 .contacts-tab__table-wrap {
@@ -244,6 +342,20 @@ const {
   overflow-x: auto;
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-xl);
+}
+
+.contacts-tab__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+}
+
+.contacts-tab__state-text {
+  margin: 0;
+  color: var(--color-text-3);
+  font-weight: var(--font-weight-semibold);
 }
 
 .contacts-tab__table {

@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
+import {
+  ADMIN_SESSION_STORAGE_KEY,
+  adminSessionController,
+} from "../auth/model/adminSession";
 import { i18n, setAppLocale } from "../i18n";
 import TopBar from "./TopBar.vue";
 
@@ -13,6 +17,7 @@ function makeRouter() {
     history: createMemoryHistory(),
     routes: [
       { path: "/", component: { template: "<div />" } },
+      { path: "/login", name: "login", component: { template: "<div />" } },
       { path: "/leads", component: { template: "<div />" } },
     ],
   });
@@ -21,6 +26,8 @@ function makeRouter() {
 describe("TopBar", () => {
   beforeEach(() => {
     setAppLocale("zh-CN");
+    adminSessionController.reset();
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
   });
 
   it("renders a header with role=banner", () => {
@@ -99,9 +106,10 @@ describe("TopBar", () => {
       global: { plugins: [i18n, makeRouter()], stubs },
     });
     const buttons = w.findAll(".topbar-action");
-    expect(buttons).toHaveLength(2);
+    expect(buttons).toHaveLength(3);
     expect(buttons[0]?.text()).toBe("新建咨询");
     expect(buttons[1]?.text()).toBe("新建案件");
+    expect(buttons[2]?.text()).toBe("退出登录");
   });
 
   it("renders locale selector when no actions slot is provided", () => {
@@ -129,6 +137,7 @@ describe("TopBar", () => {
       "ナビゲーションを開く",
     );
     expect(w.findAll(".topbar-action")[0]?.text()).toBe("相談を新規作成");
+    expect(w.findAll(".topbar-action")[2]?.text()).toBe("ログアウト");
   });
 
   it("emits toggleMenu when the menu trigger is clicked", async () => {
@@ -160,5 +169,36 @@ describe("TopBar", () => {
     const createCaseBtn = w.findAll(".topbar-action")[1]!;
     expect((createCaseBtn.element as HTMLButtonElement).disabled).toBe(true);
     expect(createCaseBtn.attributes("aria-disabled")).toBe("true");
+  });
+
+  it("logs out and routes to /login when logout is clicked", async () => {
+    window.localStorage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: "jwt-token",
+        user: {
+          name: "Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "AD",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    const router = makeRouter();
+    await router.push("/");
+    await router.isReady();
+    const w = mount(TopBar, {
+      global: { plugins: [i18n, router], stubs },
+    });
+
+    const logoutBtn = w.findAll(".topbar-action")[2]!;
+    await logoutBtn.trigger("click");
+    await flushPromises();
+
+    expect(router.currentRoute.value.path).toBe("/login");
+    expect(router.currentRoute.value.query).toEqual({ reason: "loggedOut" });
+    expect(window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
   });
 });

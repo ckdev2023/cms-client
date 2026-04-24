@@ -10,6 +10,22 @@ import type { DocumentItem } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import {
+  DOCUMENT_ITEM_ALLOWED_TRANSITIONS,
+  type DocumentCompletionRate,
+  type DocumentItemCreateInput,
+  type DocumentItemListInput,
+  type DocumentItemTransitionInput,
+  type DocumentItemUpdateInput,
+} from "../documents.types";
+
+export type {
+  DocumentCompletionRate,
+  DocumentItemCreateInput,
+  DocumentItemListInput,
+  DocumentItemTransitionInput,
+  DocumentItemUpdateInput,
+} from "../documents.types";
 
 /**
  * 数据库查询返回的 document_item 行类型。
@@ -72,49 +88,10 @@ export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
   };
 }
 
-/** 创建资料项请求参数。 */
-export type DocumentItemCreateInput = {
-  caseId: string;
-  checklistItemCode: string;
-  name: string;
-  ownerSide?: string;
-  dueAt?: string | null;
-  note?: string | null;
-};
-
-/** 更新资料项请求参数。 */
-export type DocumentItemUpdateInput = {
-  name?: string;
-  ownerSide?: string;
-  dueAt?: string | null;
-  note?: string | null;
-};
-
-/** 列表查询请求参数。 */
-export type DocumentItemListInput = {
-  caseId?: string;
-  status?: string;
-  page?: number;
-  limit?: number;
-};
-
-/** 状态变更请求参数。 */
-export type DocumentItemTransitionInput = {
-  toStatus: string;
-};
-
-/** 案件资料完成率汇总结果。 */
-export type DocumentCompletionRate = {
-  caseId: string;
-  total: number;
-  completed: number;
-  approved: number;
-  waived: number;
-  completionRate: number;
-};
-
 /**
- * 合法的状态流转映射（7 状态）。
+ * 合法的状态流转映射。
+ *
+ * 引用 documents.types.ts 冻结契约。
  *
  * 旧状态迁移方案（数据库 status 列为 text，无约束，旧值仍可存在）：
  *   - requested → 对应新状态 waiting_upload
@@ -123,15 +100,8 @@ export type DocumentCompletionRate = {
  *   - rejected  → 对应新状态 revision_required
  * 已有旧状态数据需通过数据迁移脚本批量更新。
  */
-export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> = {
-  pending: ["waiting_upload", "waived"],
-  waiting_upload: ["uploaded_reviewing", "waived"],
-  uploaded_reviewing: ["approved", "revision_required"],
-  revision_required: ["waiting_upload"],
-  approved: ["expired"],
-  waived: ["pending"],
-  expired: ["waiting_upload"],
-};
+export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> =
+  DOCUMENT_ITEM_ALLOWED_TRANSITIONS as Partial<Record<string, string[]>>;
 
 const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, created_at, updated_at`;
 

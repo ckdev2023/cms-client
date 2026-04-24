@@ -2,7 +2,10 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../i18n";
-import { adminSessionController } from "../auth/model/adminSession";
+import {
+  ADMIN_SESSION_STORAGE_KEY,
+  adminSessionController,
+} from "../auth/model/adminSession";
 import SideNav from "./SideNav.vue";
 import {
   navGroups,
@@ -92,15 +95,17 @@ async function mountWithRouter(
 
 describe("SideNav", () => {
   beforeEach(() => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
     adminSessionController.login(
       { email: "admin@test.com", password: "pw" },
-      null,
+      window.localStorage,
     );
     setAppLocale("zh-CN");
   });
 
   afterEach(() => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
   });
 
@@ -329,6 +334,7 @@ describe("SideNav", () => {
   });
 
   it("hides adminOnly nav items for non-admin users", async () => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
     const w = await mountWithRouter();
     const items = w.findAll(".nav-item");
@@ -344,6 +350,7 @@ describe("SideNav", () => {
   });
 
   it("hides the system group heading for non-admin users", async () => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
     const w = await mountWithRouter();
     const titles = w.findAll(".nav-group-title").map((el) => el.text());

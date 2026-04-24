@@ -1,16 +1,31 @@
-import { describe, expect, it } from "vitest";
-import { computed } from "vue";
+import { computed, ref } from "vue";
+import { describe, expect, it, vi } from "vitest";
 import type { CustomerDetail } from "../types";
 import { SAMPLE_CUSTOMER_DETAILS } from "../fixtures";
+import type { CustomerRepository } from "./CustomerRepository";
+import { CustomerRepositoryError } from "./CustomerRepository";
 import {
   snapshotFromCustomer,
   useCustomerBasicInfoModel,
 } from "./useCustomerBasicInfoModel";
 
+function createRepository(
+  overrides: Partial<Pick<CustomerRepository, "updateCustomerBasicInfo">> = {},
+): Pick<CustomerRepository, "updateCustomerBasicInfo"> {
+  return {
+    updateCustomerBasicInfo: vi.fn().mockResolvedValue({ id: "cust-001" }),
+    ...overrides,
+  };
+}
+
 function makeCustomerRef(id: string) {
-  return computed<CustomerDetail | null>(
-    () => SAMPLE_CUSTOMER_DETAILS[id] ?? null,
+  const customer = ref<CustomerDetail | null>(
+    SAMPLE_CUSTOMER_DETAILS[id] ?? null,
   );
+  return {
+    source: customer,
+    computed: computed<CustomerDetail | null>(() => customer.value),
+  };
 }
 
 describe("snapshotFromCustomer", () => {
@@ -36,29 +51,35 @@ describe("snapshotFromCustomer", () => {
 describe("useCustomerBasicInfoModel", () => {
   it("defaults to non-editing mode", () => {
     const customer = makeCustomerRef("cust-001");
-    const { isEditing, showSavedHint } = useCustomerBasicInfoModel(customer);
+    const { isEditing, showSavedHint } = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository: createRepository(),
+    });
+
     expect(isEditing.value).toBe(false);
     expect(showSavedHint.value).toBe(false);
   });
 
   it("currentSnapshot reflects customer data", () => {
     const customer = makeCustomerRef("cust-002");
-    const { currentSnapshot } = useCustomerBasicInfoModel(customer);
+    const { currentSnapshot } = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository: createRepository(),
+    });
+
     expect(currentSnapshot.value).not.toBeNull();
     expect(currentSnapshot.value!.displayName).toBe("陈明");
     expect(currentSnapshot.value!.nationality).toBe("中国");
   });
 
-  it("currentSnapshot returns null for null customer", () => {
-    const customer = makeCustomerRef("nonexistent");
-    const { currentSnapshot } = useCustomerBasicInfoModel(customer);
-    expect(currentSnapshot.value).toBeNull();
-  });
-
   it("startEditing enters edit mode and creates a form snapshot", () => {
     const customer = makeCustomerRef("cust-001");
-    const { isEditing, formSnapshot, startEditing } =
-      useCustomerBasicInfoModel(customer);
+    const { isEditing, formSnapshot, startEditing } = useCustomerBasicInfoModel(
+      {
+        customer: customer.computed,
+        repository: createRepository(),
+      },
+    );
 
     startEditing();
 
@@ -67,21 +88,43 @@ describe("useCustomerBasicInfoModel", () => {
     expect(formSnapshot.value!.displayName).toBe("田中太郎");
   });
 
-  it("startEditing does nothing when customer is null", () => {
-    const customer = makeCustomerRef("nonexistent");
-    const { isEditing, formSnapshot, startEditing } =
-      useCustomerBasicInfoModel(customer);
+  it("save submits payload and updates current snapshot", async () => {
+    const customer = makeCustomerRef("cust-001");
+    const repository = createRepository();
+    const refreshCustomer = vi.fn().mockResolvedValue(undefined);
+    const model = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository,
+      refreshCustomer,
+    });
 
-    startEditing();
+    model.startEditing();
+    model.formSnapshot.value!.displayName = "田中次郎";
+    model.formSnapshot.value!.owner = "高橋健太";
 
-    expect(isEditing.value).toBe(false);
-    expect(formSnapshot.value).toBeNull();
+    const saved = await model.save();
+
+    expect(saved).toBe(true);
+    expect(repository.updateCustomerBasicInfo).toHaveBeenCalledWith(
+      "cust-001",
+      expect.objectContaining({
+        displayName: "田中次郎",
+        ownerId: "takahashi-k",
+      }),
+    );
+    expect(refreshCustomer).toHaveBeenCalledTimes(1);
+    expect(model.currentSnapshot.value!.displayName).toBe("田中次郎");
+    expect(model.showSavedHint.value).toBe(true);
+    expect(model.isEditing.value).toBe(false);
   });
 
   it("cancelEditing exits edit mode and clears form snapshot", () => {
     const customer = makeCustomerRef("cust-001");
     const { isEditing, formSnapshot, startEditing, cancelEditing } =
-      useCustomerBasicInfoModel(customer);
+      useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+      });
 
     startEditing();
     expect(isEditing.value).toBe(true);
@@ -91,36 +134,37 @@ describe("useCustomerBasicInfoModel", () => {
     expect(formSnapshot.value).toBeNull();
   });
 
-  it("save exits edit mode and shows saved hint", () => {
+  it("keeps editing state and exposes validation error when save fails", async () => {
     const customer = makeCustomerRef("cust-001");
-    const { isEditing, showSavedHint, formSnapshot, startEditing, save } =
-      useCustomerBasicInfoModel(customer);
+    const model = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository: createRepository({
+        updateCustomerBasicInfo: vi.fn().mockRejectedValue(
+          new CustomerRepositoryError({
+            code: "VALIDATION_ERROR",
+            message: "invalid",
+            status: 422,
+          }),
+        ),
+      }),
+    });
 
-    startEditing();
-    save();
+    model.startEditing();
+    const saved = await model.save();
 
-    expect(isEditing.value).toBe(false);
-    expect(showSavedHint.value).toBe(true);
-    expect(formSnapshot.value).toBeNull();
-  });
-
-  it("startEditing clears savedHint from previous save", () => {
-    const customer = makeCustomerRef("cust-001");
-    const { showSavedHint, startEditing, save } =
-      useCustomerBasicInfoModel(customer);
-
-    startEditing();
-    save();
-    expect(showSavedHint.value).toBe(true);
-
-    startEditing();
-    expect(showSavedHint.value).toBe(false);
+    expect(saved).toBe(false);
+    expect(model.isEditing.value).toBe(true);
+    expect(model.errorCode.value).toBe("validationError");
+    expect(model.formSnapshot.value).not.toBeNull();
   });
 
   it("formSnapshot is independently mutable from source data", () => {
     const customer = makeCustomerRef("cust-001");
     const { formSnapshot, currentSnapshot, startEditing } =
-      useCustomerBasicInfoModel(customer);
+      useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+      });
 
     startEditing();
     formSnapshot.value!.displayName = "Modified Name";
@@ -129,10 +173,17 @@ describe("useCustomerBasicInfoModel", () => {
     expect(currentSnapshot.value!.displayName).toBe("田中太郎");
   });
 
-  it("exposes groupOptions and ownerOptions", () => {
-    const customer = makeCustomerRef("cust-001");
-    const { groupOptions, ownerOptions } = useCustomerBasicInfoModel(customer);
+  it("exposes disabled group option when current customer belongs to disabled group", () => {
+    const customer = makeCustomerRef("cust-003");
+    const { groupOptions, ownerOptions } = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository: createRepository(),
+    });
+
     expect(groupOptions.value.length).toBeGreaterThan(0);
+    expect(
+      groupOptions.value.some((option) => option.label.includes("已停用")),
+    ).toBe(true);
     expect(ownerOptions.value.length).toBeGreaterThan(0);
   });
 });

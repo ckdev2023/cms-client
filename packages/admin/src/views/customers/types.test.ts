@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   DETAIL_TABS,
+  resolveBmvIntakeStatus,
   type CustomerDetail,
   type DetailTab,
   type SummaryCardData,
@@ -54,6 +55,7 @@ describe("customers/types", () => {
       owner: { initials: "T", name: "Tester" },
       referralSource: "",
       group: "G1",
+      bmvProfile: null,
       nationality: "JP",
       gender: "男",
       birthDate: "2000-01-01",
@@ -66,5 +68,36 @@ describe("customers/types", () => {
     expect(detail.nationality).toBe("JP");
     expect(detail.archivedCases).toBe(0);
     expect(detail.caseNames).toHaveLength(1);
+  });
+
+  it("resolveBmvIntakeStatus follows questionnaire → quote → sign gate order", () => {
+    expect(
+      resolveBmvIntakeStatus({
+        questionnaireStatus: "sent",
+        quoteStatus: "not_started",
+        signStatus: "not_started",
+      }),
+    ).toBe("questionnaire_pending");
+    expect(
+      resolveBmvIntakeStatus({
+        questionnaireStatus: "returned",
+        quoteStatus: "generated",
+        signStatus: "pending",
+      }),
+    ).toBe("sign_pending");
+    expect(
+      resolveBmvIntakeStatus({
+        questionnaireStatus: "returned",
+        quoteStatus: "confirmed",
+        signStatus: "pending",
+      }),
+    ).toBe("sign_pending");
+    expect(
+      resolveBmvIntakeStatus({
+        questionnaireStatus: "returned",
+        quoteStatus: "confirmed",
+        signStatus: "signed",
+      }),
+    ).toBe("ready_for_case_creation");
   });
 });

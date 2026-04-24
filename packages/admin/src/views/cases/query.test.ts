@@ -1,12 +1,23 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: Vue Router LocationQuery ↔ list/create URL state only,
+//   plus frozen contract assertions for the query key set.
+// Does NOT test: HTTP URLSearchParams (→ CaseAdapterReaders.test),
+//   request bodies (→ CaseAdapterWriteBuilders.test), or repository
+//   orchestration.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, expect, it } from "vitest";
 import type { LocationQuery } from "vue-router";
 import {
   buildCaseListQuery,
   parseCaseCreateQuery,
   parseCaseListQuery,
+  CASE_LIST_QUERY_PARAM_KEYS,
+  _ASSERT_QUERY_FROZEN_KEYS,
   type CaseListQueryParams,
 } from "./query";
 import { DEFAULT_CASE_LIST_FILTERS } from "./constants";
+import { CASE_LIST_PARAM_KEYS } from "./model/CaseAdapterTypes";
 
 // ─── parseCaseListQuery ─────────────────────────────────────────
 
@@ -181,6 +192,37 @@ describe("parseCaseCreateQuery", () => {
     expect(result.customerId).toBe("cust-001");
   });
 
+  it("extracts relationIds and selectedRelations", () => {
+    const result = parseCaseCreateQuery(
+      {
+        relationIds: "rel-001, rel-002",
+        selectedRelations: JSON.stringify([
+          {
+            id: "rel-001",
+            name: "田中花子",
+            relationType: "spouse",
+            tags: ["紧急联系人"],
+          },
+        ]),
+      },
+      "",
+    );
+
+    expect(result.relationIds).toEqual(["rel-001", "rel-002"]);
+    expect(result.selectedRelations).toEqual([
+      {
+        id: "rel-001",
+        name: "田中花子",
+        relationType: "spouse",
+        roleTitle: undefined,
+        phone: undefined,
+        email: undefined,
+        tags: ["紧急联系人"],
+        note: undefined,
+      },
+    ]);
+  });
+
   it("detects family bulk mode from hash", () => {
     const result = parseCaseCreateQuery({}, "#family-bulk");
     expect(result.familyBulkMode).toBe(true);
@@ -195,5 +237,88 @@ describe("parseCaseCreateQuery", () => {
     expect(
       parseCaseCreateQuery({ sourceLeadId: "" }, "").sourceLeadId,
     ).toBeUndefined();
+  });
+
+  it("ignores invalid selectedRelations payload", () => {
+    const result = parseCaseCreateQuery(
+      {
+        relationIds: " rel-001 , rel-001 ",
+        selectedRelations: "{bad-json}",
+      },
+      "",
+    );
+
+    expect(result.relationIds).toEqual(["rel-001"]);
+    expect(result.selectedRelations).toBeUndefined();
+  });
+});
+
+// ─── Contract Freeze (p0-fe-002b-01) ────────────────────────────
+// These tests lock the query.ts ↔ CaseAdapterTypes key-set boundary.
+// Breaking these means a coordinated update is needed.
+
+describe("contract freeze — CaseListQueryParams key set", () => {
+  it("compile-time assertion passes (key sets match)", () => {
+    expect(_ASSERT_QUERY_FROZEN_KEYS).toBe(true);
+  });
+
+  it("CASE_LIST_QUERY_PARAM_KEYS enumerates exactly 8 keys", () => {
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(8);
+    expect([...CASE_LIST_QUERY_PARAM_KEYS].sort()).toEqual([
+      "customerId",
+      "group",
+      "owner",
+      "risk",
+      "scope",
+      "search",
+      "stage",
+      "validation",
+    ]);
+  });
+
+  it("CaseListQueryParams keys are a superset of CaseListParams filter keys", () => {
+    const queryKeys = new Set(CASE_LIST_QUERY_PARAM_KEYS);
+    const httpFilterKeys = CASE_LIST_PARAM_KEYS.filter(
+      (k) => k !== "page" && k !== "limit",
+    );
+    for (const key of httpFilterKeys) {
+      expect(queryKeys.has(key)).toBe(true);
+    }
+  });
+
+  it("validation is in query params but NOT in HTTP params", () => {
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toContain("validation");
+    expect(CASE_LIST_PARAM_KEYS).not.toContain("validation");
+  });
+
+  it("page and limit are in HTTP params but NOT in query params", () => {
+    expect(CASE_LIST_PARAM_KEYS).toContain("page");
+    expect(CASE_LIST_PARAM_KEYS).toContain("limit");
+    expect(CASE_LIST_QUERY_PARAM_KEYS).not.toContain("page");
+    expect(CASE_LIST_QUERY_PARAM_KEYS).not.toContain("limit");
+  });
+
+  it("parseCaseListQuery returns all query param keys", () => {
+    const result = parseCaseListQuery({});
+    const returnedKeys = Object.keys(result).sort();
+    expect(returnedKeys).toEqual([...CASE_LIST_QUERY_PARAM_KEYS].sort());
+  });
+
+  it("buildCaseListQuery accepts all query param keys", () => {
+    const input: CaseListQueryParams = {
+      scope: "all",
+      search: "test",
+      stage: "S1",
+      owner: "u",
+      group: "g",
+      risk: "critical",
+      validation: "passed",
+      customerId: "c",
+    };
+    const result = buildCaseListQuery(input);
+    expect(typeof result).toBe("object");
+    for (const key of CASE_LIST_QUERY_PARAM_KEYS) {
+      expect(key in input).toBe(true);
+    }
   });
 });

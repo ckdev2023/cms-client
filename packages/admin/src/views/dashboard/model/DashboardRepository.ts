@@ -48,6 +48,10 @@ interface DashboardRepositoryFactoryInput {
   apiPath?: string;
 }
 
+function getDefaultRequest(): typeof fetch {
+  return (...args) => globalThis.fetch(...args);
+}
+
 /**
  * 表示仪表盘摘要仓储层抛出的标准化异常。
  */
@@ -377,7 +381,7 @@ function validateDashboardSummary(
 export function createDashboardRepository(
   input: DashboardRepositoryFactoryInput = {},
 ): DashboardRepository {
-  const request = input.request ?? globalThis.fetch;
+  const request = input.request ?? getDefaultRequest();
   const getToken = input.getToken ?? (() => null);
   const apiPath = input.apiPath ?? "/api/dashboard/summary";
 

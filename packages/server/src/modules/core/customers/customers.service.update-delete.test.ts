@@ -2,8 +2,25 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
+import { PermissionsService } from "../auth/permissions.service";
 import { CustomersService } from "./customers.service";
 import type { RequestContext } from "../tenancy/requestContext";
+
+function createCustomersService(
+  pool: Pool,
+  timelineService: { write?: (...args: unknown[]) => Promise<void> } = {
+    write: () => Promise.resolve(),
+  },
+): CustomersService {
+  return new CustomersService(
+    pool,
+    {
+      canAccessCustomer: () => true,
+      canEditCustomer: () => true,
+    } as unknown as PermissionsService,
+    timelineService as never,
+  );
+}
 
 void test("CustomersService.update updates fields and writes timeline", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
@@ -15,7 +32,7 @@ void test("CustomersService.update updates fields and writes timeline", async ()
         return Promise.resolve({ rows: [{ exists: false }] });
       }
       if (
-        sql.includes("where id = $1") &&
+        sql.includes("id = $1") &&
         params?.[0] === "c1" &&
         !sql.includes("update customers")
       ) {
@@ -63,9 +80,9 @@ void test("CustomersService.update updates fields and writes timeline", async ()
     },
   };
 
-  const service = new CustomersService(
+  const service = createCustomersService(
     pool as unknown as Pool,
-    timelineService as never,
+    timelineService,
   );
 
   const ctx: RequestContext = {
@@ -105,7 +122,7 @@ void test("CustomersService.update updates fields and writes timeline", async ()
 void test("CustomersService.update throws NotFoundException and BadRequestException", async () => {
   const client = {
     query: (sql: string, params?: unknown[]) => {
-      if (sql.includes("where id = $1") && sql.includes("limit 1")) {
+      if (sql.includes("id = $1") && sql.includes("limit 1")) {
         if (params?.[0] === "c2") {
           // Mock get: not found for id c2
           return Promise.resolve({ rows: [] });
@@ -133,7 +150,7 @@ void test("CustomersService.update throws NotFoundException and BadRequestExcept
   };
 
   const pool = { connect: () => Promise.resolve(client) };
-  const service = new CustomersService(pool as unknown as Pool, {} as never);
+  const service = createCustomersService(pool as unknown as Pool);
 
   const ctx: RequestContext = {
     orgId: "00000000-0000-4000-8000-000000000000",
@@ -176,7 +193,7 @@ void test("CustomersService.softDelete sets status=deleted and writes timeline",
         return Promise.resolve({ rows: [{ exists: false }] });
       }
       if (
-        sql.includes("where id = $1") &&
+        sql.includes("id = $1") &&
         params?.[0] === "c1" &&
         !sql.includes("update customers")
       ) {
@@ -225,9 +242,9 @@ void test("CustomersService.softDelete sets status=deleted and writes timeline",
     },
   };
 
-  const service = new CustomersService(
+  const service = createCustomersService(
     pool as unknown as Pool,
-    timelineService as never,
+    timelineService,
   );
 
   const ctx: RequestContext = {
@@ -264,7 +281,7 @@ void test("CustomersService.softDelete throws if cases exist", async () => {
         return Promise.resolve({ rows: [{ exists: true }] });
       }
       if (
-        sql.includes("where id = $1") &&
+        sql.includes("id = $1") &&
         params?.[0] === "c1" &&
         !sql.includes("update customers")
       ) {
@@ -289,7 +306,7 @@ void test("CustomersService.softDelete throws if cases exist", async () => {
 
   const pool = { connect: () => Promise.resolve(client) };
 
-  const service = new CustomersService(pool as unknown as Pool, {} as never);
+  const service = createCustomersService(pool as unknown as Pool);
 
   const ctx: RequestContext = {
     orgId: "00000000-0000-4000-8000-000000000000",
@@ -312,7 +329,7 @@ void test("CustomersService.softDelete throws if cases exist", async () => {
 void test("CustomersService.softDelete throws NotFoundException and BadRequestException", async () => {
   const client = {
     query: (sql: string, params?: unknown[]) => {
-      if (sql.includes("where id = $1") && sql.includes("limit 1")) {
+      if (sql.includes("id = $1") && sql.includes("limit 1")) {
         if (params?.[0] === "c2") {
           // Mock get: not found for id c2
           return Promise.resolve({ rows: [] });
@@ -343,7 +360,7 @@ void test("CustomersService.softDelete throws NotFoundException and BadRequestEx
   };
 
   const pool = { connect: () => Promise.resolve(client) };
-  const service = new CustomersService(pool as unknown as Pool, {} as never);
+  const service = createCustomersService(pool as unknown as Pool);
 
   const ctx: RequestContext = {
     orgId: "00000000-0000-4000-8000-000000000000",

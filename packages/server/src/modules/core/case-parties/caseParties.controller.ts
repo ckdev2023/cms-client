@@ -3,8 +3,10 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -13,7 +15,11 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
+import { CASE_WRITE_ERROR_CODES } from "../cases/cases.types";
+
 import { RequireRoles } from "../auth/auth.decorators";
+import { PermissionsService } from "../auth/permissions.service";
+import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CasePartiesService } from "./caseParties.service";
 
@@ -80,16 +86,31 @@ function parseLimit(value: unknown): number | undefined {
 
 /**
  * CaseParties CRUD 接口。
+ *
+ * 所有端点均要求父案件存在，并通过 PermissionsService 执行资源级鉴权。
+ * GET 列表强制要求 caseId，禁止裸列表查询。
  */
 @Controller("case-parties")
 export class CasePartiesController {
   /**
+   *
+   * @param casePartiesService
+   * @param casesService
+   * @param permissionsService
+   */
+  /**
    * 构造函数。
-   * @param casePartiesService 案件关联人服务实例
+   * @param casePartiesService 案件关联人服务
+   * @param casesService 案件服务（查找父案件用于资源级鉴权）
+   * @param permissionsService 权限服务
    */
   constructor(
     @Inject(CasePartiesService)
     private readonly casePartiesService: CasePartiesService,
+    @Inject(CasesService)
+    private readonly casesService: CasesService,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   /**
@@ -104,8 +125,11 @@ export class CasePartiesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId = requireString(body.caseId, "caseId");
+    await this.assertCanEditParentCase(ctx, caseId);
+
     return this.casePartiesService.create(ctx, {
-      caseId: requireString(body.caseId, "caseId"),
+      caseId,
       partyType: requireString(body.partyType, "partyType"),
       customerId: parseOptionalNullableString(body.customerId, "customerId"),
       contactPersonId: parseOptionalNullableString(
@@ -121,7 +145,7 @@ export class CasePartiesController {
   }
 
   /**
-   * 按 caseId 列表查询关联人。
+   * 按 caseId 列表查询关联人（caseId 必填）。
    * @param req HTTP 请求对象
    * @param query 查询参数
    * @returns 关联人列表
@@ -132,8 +156,11 @@ export class CasePartiesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId = requireString(query.caseId, "caseId");
+    await this.assertCanViewParentCase(ctx, caseId);
+
     return this.casePartiesService.list(ctx, {
-      caseId: typeof query.caseId === "string" ? query.caseId : undefined,
+      caseId,
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
@@ -155,6 +182,10 @@ export class CasePartiesController {
   ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const party = await this.casePartiesService.get(ctx, id);
+    if (!party) throw new NotFoundException("Case party not found");
+    await this.assertCanEditParentCase(ctx, party.caseId);
 
     return this.casePartiesService.update(ctx, id, {
       partyType:
@@ -186,7 +217,61 @@ export class CasePartiesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const party = await this.casePartiesService.get(ctx, id);
+    if (!party) throw new NotFoundException("Case party not found");
+    await this.assertCanEditParentCase(ctx, party.caseId);
+
     await this.casePartiesService.hardDelete(ctx, id);
     return { ok: true };
+  }
+
+  private async assertCanViewParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) throw new NotFoundException("Parent case not found");
+
+    if (
+      !this.permissionsService.canViewCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to view this case's parties",
+      );
+    }
+  }
+
+  private async assertCanEditParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) throw new NotFoundException("Parent case not found");
+
+    const stage = caseEntity.stage ?? caseEntity.status;
+    if (stage === "S9") {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.S9_READONLY +
+          ": Parent case is archived (S9) and read-only",
+      );
+    }
+
+    if (
+      !this.permissionsService.canEditCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to edit this case's parties",
+      );
+    }
   }
 }

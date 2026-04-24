@@ -17,6 +17,7 @@ import CaseValidationTab from "./components/CaseValidationTab.vue";
 import CaseBillingTab from "./components/CaseBillingTab.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
+import { parseCaseDetailQuery, buildCustomerDetailHref } from "./query";
 import { CASE_SAMPLE_KEYS, BADGE_TONE_MAP, SAMPLE_LABELS } from "./constants";
 import type { CaseSampleKey } from "./types";
 
@@ -25,8 +26,7 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const caseId = computed(() => route.params.id as string);
-const initialTab =
-  typeof route.query.tab === "string" ? route.query.tab : undefined;
+const detailQuery = parseCaseDetailQuery(route.query);
 const {
   activeTab,
   tabs,
@@ -40,7 +40,7 @@ const {
   getSampleCaseId,
   openRiskModal,
   closeRiskModal,
-} = useCaseDetailModel(caseId, { initialTab });
+} = useCaseDetailModel(caseId, { initialTab: detailQuery.tab });
 
 /**
  * 将 statusBadge 映射为 Chip 色调。
@@ -100,7 +100,10 @@ function onSampleChange(event: Event) {
                   d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
                 />
               </svg>
-              <a href="#/customers" class="case-detail-view__meta-link">
+              <a
+                :href="buildCustomerDetailHref(detail.customerId)"
+                class="case-detail-view__meta-link"
+              >
                 {{ detail.client }}
               </a>
             </span>

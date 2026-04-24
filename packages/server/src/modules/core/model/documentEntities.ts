@@ -109,6 +109,26 @@ export type SubmissionPackage = {
 };
 
 /**
+ * P0 GeneratedDocument（生成文书 — 文書 tab 消费）。
+ */
+export type GeneratedDocument = {
+  id: string;
+  orgId: string;
+  caseId: string;
+  templateId: string | null;
+  title: string;
+  versionNo: number;
+  outputFormat: string;
+  fileUrl: string | null;
+  /** draft → final → exported。 */
+  status: string;
+  generatedBy: string | null;
+  approvedBy: string | null;
+  generatedAt: string;
+  approvedAt: string | null;
+};
+
+/**
  * P0 SubmissionPackageItem（提交包锁定引用）。
  */
 export type SubmissionPackageItem = {

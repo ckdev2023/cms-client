@@ -5,6 +5,7 @@ import {
   createAdminSessionController,
   type AdminSessionStorageLike,
   getAdminAccessToken,
+  isAdminAuthenticated,
   loginAdmin,
 } from "./adminSession";
 
@@ -25,6 +26,14 @@ function createStorage(
       data.delete(key);
     },
   };
+}
+
+function createJwtToken(expSeconds: number): string {
+  const toBase64Url = (value: string) =>
+    btoa(value).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+  const header = toBase64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
+  const payload = toBase64Url(JSON.stringify({ exp: expSeconds }));
+  return `${header}.${payload}.signature`;
 }
 
 describe("createAdminSessionController", () => {
@@ -108,6 +117,56 @@ describe("createAdminSessionController", () => {
     expect(JSON.parse(storage.getItem(ADMIN_SESSION_STORAGE_KEY)!)).toEqual(
       session,
     );
+  });
+
+  it("clears an expired JWT session during hydrate", () => {
+    const nowMs = 5_000;
+    const controller = createAdminSessionController({ now: () => nowMs });
+    const storage = createStorage({
+      [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
+        token: createJwtToken(4),
+        user: {
+          name: "Expired User",
+          email: "expired@example.com",
+          role: "manager",
+          initials: "EU",
+        },
+        loggedInAt: 1234,
+      }),
+    });
+
+    controller.hydrate(storage);
+
+    expect(controller.isAuthenticated.value).toBe(false);
+    expect(controller.session.value).toBeNull();
+    expect(storage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it("re-reads browser storage when a session appears after initial hydrate", () => {
+    const controller = createAdminSessionController();
+    const storage = createStorage();
+
+    controller.hydrate(storage);
+    expect(controller.isAuthenticated.value).toBe(false);
+
+    storage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: "jwt-fresh-token",
+        user: {
+          name: "Local Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "LA",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    controller.hydrate(storage);
+
+    expect(controller.isAuthenticated.value).toBe(true);
+    expect(controller.session.value?.token).toBe("jwt-fresh-token");
   });
 
   it("logout clears the in-memory and persisted session", () => {
@@ -281,6 +340,34 @@ describe("createAdminSessionController", () => {
     expect(storage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
   });
 
+  it("expires an in-memory JWT session when accessed after exp", () => {
+    let nowMs = 1_000;
+    const controller = createAdminSessionController({ now: () => nowMs });
+    const storage = createStorage();
+
+    controller.loginFromResponse(
+      {
+        token: createJwtToken(2),
+        user: {
+          id: "user-1",
+          orgId: "org-1",
+          name: "Admin User",
+          email: "admin@example.com",
+          role: "manager",
+        },
+      },
+      storage,
+    );
+
+    expect(controller.isAuthenticated.value).toBe(true);
+
+    nowMs = 3_000;
+    controller.hydrate(storage);
+
+    expect(controller.isAuthenticated.value).toBe(false);
+    expect(storage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
+  });
+
   it("getAdminAccessToken returns the persisted token in browser-like mode", () => {
     adminSessionController.reset();
     window.localStorage.setItem(
@@ -301,6 +388,89 @@ describe("createAdminSessionController", () => {
       expect(getAdminAccessToken()).toBe("jwt-browser");
     } finally {
       window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+      adminSessionController.reset();
+    }
+  });
+
+  it("getAdminAccessToken re-syncs when browser storage changes after hydrate", () => {
+    adminSessionController.reset();
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+
+    expect(getAdminAccessToken()).toBeNull();
+
+    window.localStorage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: "jwt-after-hydrate",
+        user: {
+          name: "Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "AD",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    try {
+      expect(getAdminAccessToken()).toBe("jwt-after-hydrate");
+      expect(isAdminAuthenticated()).toBe(true);
+    } finally {
+      window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+      adminSessionController.reset();
+    }
+  });
+
+  it("getAdminAccessToken returns null and clears expired persisted sessions", () => {
+    adminSessionController.reset();
+    window.localStorage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: createJwtToken(1),
+        user: {
+          name: "Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "AD",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(2_000);
+
+    try {
+      expect(getAdminAccessToken()).toBeNull();
+      expect(window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
+    } finally {
+      nowSpy.mockRestore();
+      adminSessionController.reset();
+    }
+  });
+
+  it("isAdminAuthenticated returns false when the persisted JWT is expired", () => {
+    adminSessionController.reset();
+    window.localStorage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: createJwtToken(1),
+        user: {
+          name: "Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "AD",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(2_000);
+
+    try {
+      expect(isAdminAuthenticated()).toBe(false);
+      expect(window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
+    } finally {
+      nowSpy.mockRestore();
       adminSessionController.reset();
     }
   });

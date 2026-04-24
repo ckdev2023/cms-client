@@ -955,6 +955,19 @@ export interface CaseDetail {
   /**
    *
    */
+  customerId: string;
+  /**
+   *
+   */
+  groupId: string;
+  /**
+   *
+   */
+  groupName: string;
+
+  /**
+   *
+   */
   caseType: string;
   /**
    *

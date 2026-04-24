@@ -1,3 +1,9 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: constant definitions and label-resolver helpers.
+// Does NOT test: adapters, builders, repository, composables, or
+//   fixture data invariants.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, expect, it } from "vitest";
 import {
   BADGE_TONE_MAP,

@@ -16,6 +16,7 @@ defineProps<{
   selectedIds?: Set<string>;
   allSelected?: boolean;
   indeterminate?: boolean;
+  showEmptyState?: boolean;
 }>();
 
 defineEmits<{
@@ -116,7 +117,10 @@ defineEmits<{
         "
       />
       <CustomerEmptyState
-        v-if="customers.length === 0 && (drafts ?? []).length === 0"
+        v-if="
+          showEmptyState ??
+          (customers.length === 0 && (drafts ?? []).length === 0)
+        "
       />
     </tbody>
   </table>

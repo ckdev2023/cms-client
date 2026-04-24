@@ -14,44 +14,53 @@ import CustomerTable from "./components/CustomerTable.vue";
 import CustomerPagination from "./components/CustomerPagination.vue";
 import CustomerCreateModal from "./components/CustomerCreateModal.vue";
 import CustomerToast from "./components/CustomerToast.vue";
-import {
-  CURRENT_VIEWER,
-  SAMPLE_CUSTOMERS,
-  GROUP_OPTIONS,
-  OWNER_OPTIONS,
-} from "./fixtures";
+import { CURRENT_VIEWER, GROUP_OPTIONS, OWNER_OPTIONS } from "./fixtures";
 import type { CustomerCreateFormFields, SummaryCardData } from "./types";
-import { useCustomerFilters } from "./model/useCustomerFilters";
-import { useCustomerSelection } from "./model/useCustomerSelection";
 import { useCustomerCreateForm } from "./model/useCustomerCreateForm";
 import { useCustomerToast } from "./model/useCustomerToast";
 import { useCustomerDrafts } from "./model/useCustomerDrafts";
 import { deriveCustomerSummaryStats } from "./model/useCustomerFilters";
+import { useCustomerListModel } from "./model/useCustomerListModel";
+import { createCustomerRepository } from "./model/CustomerRepository";
 
 /** 客户列表页组合层，装配筛选、表格、批量操作、弹窗、toast、草稿等子模块。 */
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
+const repository = createCustomerRepository();
+const listModel = useCustomerListModel({ repository });
 const {
-  scope,
-  search,
-  groupFilter,
-  ownerFilter,
-  activeCasesFilter,
+  filters,
+  filteredCustomers,
+  selectedIds,
+  selectedCount,
+  isAllSelected,
+  isIndeterminate,
+  bulkLoading,
+  page,
+  totalPages,
+  total,
+  setScope,
+  setSearch,
+  setGroup,
+  setOwner,
+  setActiveCases,
   resetFilters,
-  applyFilters,
-} = useCustomerFilters({
-  groupOptions: GROUP_OPTIONS,
-  ownerOptions: OWNER_OPTIONS,
-});
-
-const filteredCustomers = computed(() =>
-  applyFilters(SAMPLE_CUSTOMERS, CURRENT_VIEWER),
-);
+  setPage,
+  retry,
+  toggleSelectAll,
+  toggleSelectRow,
+  clearSelection,
+  bulkAssignOwner,
+  bulkChangeGroup,
+} = listModel;
 
 const summaryCards = computed<SummaryCardData[]>(() => {
-  const stats = deriveCustomerSummaryStats(SAMPLE_CUSTOMERS, CURRENT_VIEWER);
+  const stats = deriveCustomerSummaryStats(
+    filteredCustomers.value,
+    CURRENT_VIEWER,
+  );
   return [
     { key: "mine", variant: "primary", value: stats.mine },
     { key: "group", variant: "info", value: stats.group },
@@ -60,18 +69,15 @@ const summaryCards = computed<SummaryCardData[]>(() => {
   ];
 });
 
-const {
-  selectedIds,
-  selectedCount,
-  toggleAll,
-  toggleRow,
-  clearSelection,
-  isAllSelected,
-  isIndeterminate,
-} = useCustomerSelection();
+const paginationStart = computed(() => {
+  if (listModel.total.value === 0) return 0;
+  return (page.value - 1) * listModel.pageSize + 1;
+});
 
-const allSelected = computed(() => isAllSelected(filteredCustomers.value));
-const indeterminate = computed(() => isIndeterminate(filteredCustomers.value));
+const paginationEnd = computed(() => {
+  if (total.value === 0) return 0;
+  return Math.min(page.value * listModel.pageSize, total.value);
+});
 
 /**
  * 全选/取消全选当前筛选结果。
@@ -79,7 +85,7 @@ const indeterminate = computed(() => isIndeterminate(filteredCustomers.value));
  * @param checked - 是否选中
  */
 function handleSelectAll(checked: boolean) {
-  toggleAll(filteredCustomers.value, checked);
+  toggleSelectAll(checked);
 }
 
 const toast = useCustomerToast();
@@ -95,17 +101,22 @@ const activeDraftId = ref<string | null>(null);
  *
  * @param ownerId - 负责人选项值
  */
-function handleAssignOwner(ownerId: string) {
+async function handleAssignOwner(ownerId: string) {
+  const count = selectedCount.value;
+  if (count === 0) return;
+
   const label =
     OWNER_OPTIONS.find((o) => o.value === ownerId)?.label ?? ownerId;
+  const updated = await bulkAssignOwner(ownerId);
+  if (updated === 0) return;
+
   toast.show({
     title: t("customers.list.toast.bulkAssign.title"),
     description: t("customers.list.toast.bulkAssign.description", {
-      count: selectedCount.value,
+      count,
       owner: label,
     }),
   });
-  clearSelection();
 }
 
 /**
@@ -113,17 +124,22 @@ function handleAssignOwner(ownerId: string) {
  *
  * @param groupId - 分组选项值
  */
-function handleChangeGroup(groupId: string) {
+async function handleChangeGroup(groupId: string) {
+  const count = selectedCount.value;
+  if (count === 0) return;
+
   const label =
     GROUP_OPTIONS.find((g) => g.value === groupId)?.label ?? groupId;
+  const updated = await bulkChangeGroup(groupId);
+  if (updated === 0) return;
+
   toast.show({
     title: t("customers.list.toast.bulkGroup.title"),
     description: t("customers.list.toast.bulkGroup.description", {
-      count: selectedCount.value,
+      count,
       group: label,
     }),
   });
-  clearSelection();
 }
 
 const modalOpen = ref(false);
@@ -133,8 +149,13 @@ const {
   canCreate,
   showDedupe,
   dedupeMatches,
+  checkingDuplicates,
+  dedupeErrorCode,
+  submitting,
+  submitErrorCode,
+  createCustomer,
   resetForm,
-} = useCustomerCreateForm({ existingCustomers: () => SAMPLE_CUSTOMERS });
+} = useCustomerCreateForm({ repository });
 
 /** 打开新建客户弹窗。 */
 function openModal() {
@@ -186,10 +207,15 @@ function closeModal() {
 }
 
 /** 创建客户：若来自草稿则移除草稿，关闭弹窗并弹 toast。 */
-function handleCreate() {
+async function handleCreate() {
+  const created = await createCustomer();
+  if (!created) return;
+
   if (activeDraftId.value) {
     removeDraft(activeDraftId.value);
   }
+
+  await retry();
   closeModal();
   toast.show({
     title: t("customers.list.toast.customerCreated.title"),
@@ -288,23 +314,26 @@ watch(
     <CustomerSummaryCards :cards="summaryCards" />
 
     <CustomerFilters
-      :scope="scope"
-      :search="search"
-      :group-filter="groupFilter"
-      :owner-filter="ownerFilter"
-      :active-cases-filter="activeCasesFilter"
+      :scope="filters.scope"
+      :search="filters.search"
+      :group-filter="filters.group"
+      :owner-filter="filters.owner"
+      :active-cases-filter="filters.activeCases"
       :filtered-count="filteredCustomers.length"
-      @update:scope="scope = $event"
-      @update:search="search = $event"
-      @update:group-filter="groupFilter = $event"
-      @update:owner-filter="ownerFilter = $event"
-      @update:active-cases-filter="activeCasesFilter = $event"
-      @reset-filters="resetFilters"
+      @update:scope="setScope($event)"
+      @update:search="setSearch($event)"
+      @update:group-filter="setGroup($event)"
+      @update:owner-filter="setOwner($event)"
+      @update:active-cases-filter="setActiveCases($event)"
+      @reset-filters="resetFilters()"
     />
 
     <div class="customer-list-view__table-card">
       <CustomerBulkActionBar
         :selected-count="selectedCount"
+        :loading="bulkLoading"
+        :owner-options="OWNER_OPTIONS"
+        :group-options="GROUP_OPTIONS"
         @clear="clearSelection"
         @assign-owner="handleAssignOwner"
         @change-group="handleChangeGroup"
@@ -313,17 +342,21 @@ watch(
         :customers="filteredCustomers"
         :drafts="drafts"
         :selected-ids="selectedIds"
-        :all-selected="allSelected"
-        :indeterminate="indeterminate"
+        :all-selected="isAllSelected"
+        :indeterminate="isIndeterminate"
         @select-all="handleSelectAll"
-        @select-row="toggleRow"
+        @select-row="toggleSelectRow"
         @resume-draft="handleResumeDraft"
         @remove-draft="handleRemoveDraft"
       />
       <CustomerPagination
-        :start="1"
-        :end="filteredCustomers.length"
-        :total="filteredCustomers.length"
+        :page="page"
+        :total-pages="totalPages"
+        :start="paginationStart"
+        :end="paginationEnd"
+        :total="total"
+        @prev="setPage(page - 1)"
+        @next="setPage(page + 1)"
       />
     </div>
 
@@ -333,6 +366,11 @@ watch(
       :can-create="canCreate"
       :show-dedupe="showDedupe"
       :dedupe-matches="dedupeMatches"
+      :group-options="GROUP_OPTIONS"
+      :checking-duplicates="checkingDuplicates"
+      :dedupe-error-code="dedupeErrorCode"
+      :submitting="submitting"
+      :submit-error-code="submitErrorCode"
       @close="closeModal"
       @save-draft="handleSaveDraft"
       @create="handleCreate"

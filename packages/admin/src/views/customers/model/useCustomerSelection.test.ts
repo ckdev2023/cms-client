@@ -18,6 +18,7 @@ function customer(id: string): CustomerSummary {
     owner: { initials: "", name: "" },
     referralSource: "",
     group: "",
+    bmvProfile: null,
   };
 }
 

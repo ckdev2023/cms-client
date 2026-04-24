@@ -1,3 +1,11 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: mock CaseRepository behaviour (createMockCaseRepository),
+//   matchesCaseFilters predicate, and getStageInfo helper.
+// Does NOT test: fixture data shape (→ fixtures.test.ts),
+//   real HTTP repository (→ model/CaseRepository.test.ts),
+//   adapters, or composable logic.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, it, expect } from "vitest";
 import {
   createMockCaseRepository,

@@ -14,6 +14,7 @@ type CompanyId = string;
 type ContactPersonId = string;
 type CaseId = string;
 type CasePartyId = string;
+type GroupId = string;
 type DocumentItemId = string;
 type DocumentFileId = string;
 type TimelineLogId = string;
@@ -108,6 +109,35 @@ export type Customer = {
 };
 
 /**
+ * Group 核心对象（业务分组，P0 §3.0）。
+ */
+export type Group = {
+  id: GroupId;
+  orgId: OrganizationId;
+  groupNo: string | null;
+  name: string;
+  description: string | null;
+  activeFlag: boolean;
+  createdBy: UserId | null;
+  createdAt: string;
+  updatedBy: UserId | null;
+  updatedAt: string;
+};
+
+/**
+ * UserGroupMembership 核心对象（用户-组归属，P0 §3.0A）。
+ */
+export type UserGroupMembership = {
+  id: string;
+  userId: UserId;
+  groupId: GroupId;
+  isPrimaryGroup: boolean;
+  activeFlag: boolean;
+  joinedAt: string;
+  leftAt: string | null;
+};
+
+/**
  * Case 核心对象（案件实例，强制与 Customer 分离）。
  * P0 字段定义对齐 07-数据模型设计 §3.5。
  */
@@ -118,6 +148,7 @@ export type Case = {
   caseTypeCode: string;
   status: CaseStatus;
   stage: string | null;
+  groupId: string | null;
   ownerUserId: UserId;
   openedAt: string;
   dueAt: string | null;

@@ -1,3 +1,10 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: create-case wizard composable (useCreateCaseModel) — steps,
+//   validation, title/group logic, family bulk, related parties.
+// Does NOT test: adapters, builders, real repository, or other
+//   composables.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, expect, it } from "vitest";
 import {
   buildCaseTitle,
@@ -94,6 +101,15 @@ describe("useCreateCaseModel", () => {
           sourceLeadId: "LEAD-001",
           customerId: "cust-001",
           familyBulkMode: false,
+        },
+      });
+      expect(m.hasSourceContext.value).toBe(true);
+    });
+    it("treats selected relations as source context", () => {
+      const m = createModel({
+        sourceContext: {
+          familyBulkMode: false,
+          relationIds: ["rel-001"],
         },
       });
       expect(m.hasSourceContext.value).toBe(true);
@@ -322,6 +338,50 @@ describe("useCreateCaseModel", () => {
       const m = createModel({ sourceContext: { familyBulkMode: true } });
       expect(m.additionalParties.value.length).toBe(
         FAMILY_SCENARIO.defaultDraftParties.length,
+      );
+    });
+    it("prefers selected relations when seeding family bulk parties", () => {
+      const m = createModel({
+        sourceContext: {
+          customerId: "cust-001",
+          familyBulkMode: true,
+          relationIds: ["rel-001", "rel-002"],
+          selectedRelations: [
+            {
+              id: "rel-001",
+              name: "田中花子",
+              relationType: "spouse",
+              phone: "090-1111-2222",
+            },
+            {
+              id: "rel-002",
+              name: "田中顾问",
+              relationType: "agent",
+              tags: ["顾问"],
+              email: "advisor@example.com",
+            },
+          ],
+        },
+      });
+
+      expect(m.additionalParties.value).toHaveLength(2);
+      expect(m.additionalParties.value[0]).toMatchObject({
+        name: "田中花子",
+        role: "配偶",
+        contact: "090-1111-2222",
+        relation: "配偶",
+      });
+      expect(m.additionalParties.value[1]).toMatchObject({
+        name: "田中顾问",
+        role: "保证人",
+        contact: "advisor@example.com",
+        relation: "顾问",
+      });
+      expect(m.familyApplicants.value.map((party) => party.name)).toEqual([
+        "田中花子",
+      ]);
+      expect(m.familySupporters.value.map((party) => party.name)).toContain(
+        "田中顾问",
       );
     });
     it("enables via action", () => {

@@ -3,7 +3,16 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Pool } from "pg";
 
-import { CasesService } from "./cases.service";
+import {
+  CasesService,
+  mapCaseRow,
+  mapCaseListSummaryRow,
+  mapDetailCountsRow,
+  mapLatestValidationRow,
+  mapLatestSubmissionRow,
+  mapLatestReviewRow,
+  mapDocProgressByProviderRows,
+} from "./cases.service";
 import { type RequestContext } from "../tenancy/requestContext";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -24,6 +33,7 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     case_type_code: "visa",
     status: "S1",
     stage: "S1",
+    group_id: null,
     owner_user_id: USER_ID,
     opened_at: "2026-01-01T00:00:00.000Z",
     due_at: null,
@@ -131,6 +141,8 @@ function stdQ(): QueryFn {
       sql.includes("select id from companies")
     )
       return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
     if (sql.includes("insert into cases")) return ok([makeCaseRow()]);
     return ok();
   };
@@ -168,6 +180,8 @@ void test("create: stage input mirrors stage and status columns", async () => {
     ) {
       return ok([{ id: params?.[0] }]);
     }
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
     if (sql.includes("insert into cases")) {
       return ok([makeCaseRow({ stage: params?.[4], status: params?.[3] })]);
     }
@@ -213,8 +227,10 @@ void test("create: generates case_no from org prefix and month", async () => {
       return ok([{ count: "12" }]);
     }
     if (sql.includes("insert into cases")) {
-      return ok([makeCaseRow({ case_no: params?.[8] })]);
+      return ok([makeCaseRow({ case_no: params?.[9] })]);
     }
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
     return ok();
   });
 
@@ -226,7 +242,7 @@ void test("create: generates case_no from org prefix and month", async () => {
   const insertCall = calls.find((call) =>
     call.sql.includes("insert into cases"),
   );
-  assert.equal(insertCall?.params?.[8], `TOKYO-${yyyymm}-0013`);
+  assert.equal(insertCall?.params?.[9], `TOKYO-${yyyymm}-0013`);
 });
 
 // ── create (with template → generates document_items) ──
@@ -262,6 +278,8 @@ void test("create: throws on insert failure", async () => {
       sql.includes("select id from users")
     )
       return ok([{ id: p?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
     return ok();
   });
   await assert.rejects(
@@ -432,7 +450,7 @@ void test("update: ignores incoming caseNo", async () => {
 
   assert.equal(updated.caseNo, currentCaseNo);
   const updateCall = calls.find((call) => call.sql.includes("update cases"));
-  assert.equal(updateCall?.params?.[5], currentCaseNo);
+  assert.equal(updateCall?.params?.[6], currentCaseNo);
 });
 
 void test("update: throws when not found", async () => {
@@ -459,12 +477,22 @@ function transitionPool(returnStatus: string, fromStatus = "S1") {
     }
     if (
       sql.includes("from document_items") &&
-      sql.includes("required_flag = true")
+      sql.includes("required_flag = true") &&
+      !sql.includes("updated_at >")
     ) {
       return ok([]);
     }
     if (sql.includes("from validation_runs")) {
-      return ok([{ id: "vr-1", result_status: "passed" }]);
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    }
+    if (sql.includes("as stale")) {
+      return ok([{ stale: false }]);
     }
     return ok();
   });
@@ -672,7 +700,7 @@ for (const [from, to] of ILLEGAL_PAIRS) {
   });
 }
 
-// S9 is terminal — cannot transition to anything
+// S9 is terminal — cannot transition to anything (S9 write guard fires first)
 void test("transition: S9 is terminal state", async () => {
   const pool = makePool((sql, p) =>
     sql.includes("from cases") && p?.[0] === CASE_ID
@@ -686,7 +714,7 @@ void test("transition: S9 is terminal state", async () => {
       }),
     (e) => {
       assert.ok(e instanceof Error);
-      assert.ok(e.message.includes("not allowed"));
+      assert.ok(e.message.includes("not allowed") || e.message.includes("S9"));
       return true;
     },
   );
@@ -780,68 +808,116 @@ void test("transition: S4→S5 requires required documents to be approved or wai
   );
 });
 
-void test("transition: S4→S5 requires an existing validation run", async () => {
+void test("transition: S4→S5 no longer checks validation run or review (moved to S5→S6)", async () => {
   const calls: string[] = [];
   const pool = makePool((sql, p) => {
     calls.push(sql.trim());
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S5" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
       return ok([makeCaseRow({ status: "S4" })]);
     }
     if (
       sql.includes("from document_items") &&
-      sql.includes("required_flag = true")
+      sql.includes("required_flag = true") &&
+      !sql.includes("updated_at >")
     ) {
       return ok([]);
     }
     return ok();
   });
 
-  await assert.rejects(
-    () =>
-      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
-        toStatus: "S5",
-      }),
-    /requires a validation run before moving to S5/,
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S5" },
   );
-
-  assert.ok(calls.some((sql) => sql.includes("from validation_runs")));
+  assert.equal(result.stage, "S5");
+  assert.ok(!calls.some((sql) => sql.includes("from validation_runs")));
+  assert.ok(!calls.some((sql) => sql.includes("from review_records")));
 });
 
-void test("transition: S4→S5 requires latest passed validation run", async () => {
-  const calls: string[] = [];
+void test("transition: S5→S6 requires a passed validation run", async () => {
   const pool = makePool((sql, p) => {
-    calls.push(sql.trim());
-    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
-      return ok([makeCaseRow({ status: "S4" })]);
-    }
-    if (sql.includes("from validation_runs")) {
-      return ok([{ id: "vr-1", result_status: "failed" }]);
-    }
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs")) return ok([]);
     return ok();
   });
 
   await assert.rejects(
     () =>
       svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
-        toStatus: "S5",
+        toStatus: "S6",
+      }),
+    /S5→S6 requires a passed validation run/,
+  );
+});
+
+void test("transition: S5→S6 rejects failed validation run", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "failed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S6",
       }),
     /latest validation run to be passed/,
   );
-  assert.ok(calls.some((sql) => sql.includes("from validation_runs")));
-  assert.ok(!calls.some((sql) => sql.includes("from generated_documents")));
 });
 
-void test("transition: S4→S5 requires approved review when review_required_flag is enabled", async () => {
+void test("transition: S5→S6 rejects stale validation run", async () => {
   const pool = makePool((sql, p) => {
-    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
-      return ok([makeCaseRow({ status: "S4" })]);
-    }
-    if (sql.includes("from validation_runs")) {
-      return ok([{ id: "vr-1", result_status: "passed" }]);
-    }
-    if (sql.includes("from review_records")) {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: true }]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S6",
+      }),
+    /stale/,
+  );
+});
+
+void test("transition: S5→S6 requires approved review when review_required_flag is enabled", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (sql.includes("from review_records"))
       return ok([{ id: "rr-1", decision: "rejected" }]);
-    }
     return ok();
   });
 
@@ -859,21 +935,28 @@ void test("transition: S4→S5 requires approved review when review_required_fla
               }
             : { mode: "legacy", used: false },
         ),
-      ).transition(makeCtx(), CASE_ID, { toStatus: "S5" }),
-    /approved latest review record/,
+      ).transition(makeCtx(), CASE_ID, { toStatus: "S6" }),
+    /approved review record/,
   );
 });
 
-void test("transition: S5→S6 no longer rechecks validation or review gates", async () => {
-  const calls: string[] = [];
+void test("transition: S5→S6 passes with valid VR and approved review", async () => {
   const pool = makePool((sql, p) => {
-    calls.push(sql.trim());
-    if (sql.includes("from cases") && p?.[0] === CASE_ID) {
-      return ok([makeCaseRow({ status: "S5" })]);
-    }
-    if (sql.includes("update cases") && sql.includes("stage = $2")) {
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
       return ok([makeCaseRow({ status: "S6" })]);
-    }
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (sql.includes("from review_records"))
+      return ok([{ id: "rr-1", decision: "approved" }]);
     return ok();
   });
 
@@ -892,8 +975,159 @@ void test("transition: S5→S6 no longer rechecks validation or review gates", a
   ).transition(makeCtx(), CASE_ID, { toStatus: "S6" });
 
   assert.equal(transitioned.stage, "S6");
-  assert.ok(!calls.some((sql) => sql.includes("from validation_runs")));
-  assert.ok(!calls.some((sql) => sql.includes("from review_records")));
+});
+
+// ── Gate-C (S6→S7) ──
+
+void test("transition: S6→S7 requires a passed validation run", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from validation_runs")) return ok([]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S7",
+      }),
+    /S6→S7 requires a passed validation run/,
+  );
+});
+
+void test("transition: S6→S7 rejects stale validation run", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: true }]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S7",
+      }),
+    /stale/,
+  );
+});
+
+void test("transition: S6→S7 requires approved review when review_required_flag is enabled", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (sql.includes("from review_records"))
+      return ok([{ id: "rr-1", decision: "rejected" }]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(
+        pool,
+        makeTemplates((input: { kind: string }) =>
+          input.kind === "case_type"
+            ? {
+                mode: "template",
+                used: true,
+                version: 1,
+                config: { review_required_flag: true },
+              }
+            : { mode: "legacy", used: false },
+        ),
+      ).transition(makeCtx(), CASE_ID, { toStatus: "S7" }),
+    /approved review record/,
+  );
+});
+
+void test("transition: S6→S7 requires billing risk ack when unpaid", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "50000",
+          billing_risk_acknowledged_at: null,
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S7",
+      }),
+    /billing risk acknowledgment/,
+  );
+});
+
+void test("transition: S6→S7 passes when unpaid but billing risk acknowledged", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S7" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "50000",
+          billing_risk_acknowledged_at: "2026-04-20T00:00:00.000Z",
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    return ok();
+  });
+
+  const transitioned = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S7" },
+  );
+  assert.equal(transitioned.stage, "S7");
+});
+
+void test("transition: S6→S7 passes when no unpaid balance", async () => {
+  const r = await svc(transitionPool("S7", "S6"), makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S7" },
+  );
+  assert.equal(r.status, "S7");
 });
 
 void test("transition: template used=false falls back to default", async () => {
@@ -1835,12 +2069,22 @@ void test("transition: full chain S1→S2→S3→S4→S5→S6→S7→S8→S9", a
       }
       if (
         sql.includes("from document_items") &&
-        sql.includes("required_flag = true")
+        sql.includes("required_flag = true") &&
+        !sql.includes("updated_at >")
       ) {
         return ok([]);
       }
       if (sql.includes("from validation_runs")) {
-        return ok([{ id: "vr-1", result_status: "passed" }]);
+        return ok([
+          {
+            id: "vr-1",
+            result_status: "passed",
+            executed_at: "2026-04-20T00:00:00.000Z",
+          },
+        ]);
+      }
+      if (sql.includes("as stale")) {
+        return ok([{ stale: false }]);
       }
       return ok();
     });
@@ -1957,4 +2201,1342 @@ void test("transition: every non-terminal stage allows direct S9", async () => {
     ).transition(makeCtx(), CASE_ID, { toStatus: "S9" });
     assert.equal(r.status, "S9", `${stage} → S9 should succeed`);
   }
+});
+
+// ── Group: CASE_COLS includes group_id ──
+
+void test("mapCaseRow: maps group_id to groupId", () => {
+  const row = makeCaseRow({ group_id: "grp-1" });
+  const c = mapCaseRow(row as never);
+  assert.equal(c.groupId, "grp-1");
+});
+
+void test("mapCaseRow: null group_id maps to null groupId", () => {
+  const row = makeCaseRow({ group_id: null });
+  const c = mapCaseRow(row as never);
+  assert.equal(c.groupId, null);
+});
+
+void test("mapCaseRow: missing group_id maps to null groupId", () => {
+  const row = makeCaseRow();
+  const c = mapCaseRow(row as never);
+  assert.equal(c.groupId, null);
+});
+
+// ── Group: create inherits group from customer ──
+
+void test("create: resolves groupId from customer base_profile", async () => {
+  const GROUP_ID = "grp-resolved";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([{ group_id: GROUP_ID }]);
+    if (sql.includes("insert into cases"))
+      return ok([makeCaseRow({ group_id: GROUP_ID })]);
+    return ok();
+  });
+
+  const c = await svc(pool, makeTemplates()).create(makeCtx(), CREATE_INPUT);
+  assert.equal(c.groupId, GROUP_ID);
+
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into cases"),
+  );
+  assert.ok(insertCall);
+  assert.equal(insertCall.params?.[5], GROUP_ID);
+});
+
+void test("create: explicit groupId overrides customer inheritance", async () => {
+  const EXPLICIT_GROUP = "grp-explicit";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([{ group_id: EXPLICIT_GROUP }]);
+    if (sql.includes("insert into cases"))
+      return ok([makeCaseRow({ group_id: EXPLICIT_GROUP })]);
+    return ok();
+  });
+
+  const c = await svc(pool, makeTemplates()).create(makeCtx(), {
+    ...CREATE_INPUT,
+    groupId: EXPLICIT_GROUP,
+  });
+  assert.equal(c.groupId, EXPLICIT_GROUP);
+
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into cases"),
+  );
+  assert.ok(insertCall);
+  assert.equal(insertCall.params?.[5], EXPLICIT_GROUP);
+});
+
+void test("create: null groupId when customer has no group", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
+    if (sql.includes("insert into cases")) return ok([makeCaseRow()]);
+    return ok();
+  });
+
+  const c = await svc(pool, makeTemplates()).create(makeCtx(), CREATE_INPUT);
+  assert.equal(c.groupId, null);
+
+  const insertCall = calls.find((call) =>
+    call.sql.includes("insert into cases"),
+  );
+  assert.ok(insertCall);
+  assert.equal(insertCall.params?.[5], null);
+});
+
+// ── Group: list filter ──
+
+void test("list: applies groupId filter", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql) => {
+    calls.push({ sql: sql.trim() });
+    return sql.includes("count(*)")
+      ? ok([{ count: "1" }])
+      : ok([makeCaseRow()]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
+    groupId: "grp-filter",
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(cq.sql.includes("group_id = $"));
+});
+
+// ── list: visibility filter ──
+
+void test("list: admin visibility adds no extra WHERE conditions", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql) => {
+    calls.push({ sql: sql.trim() });
+    return sql.includes("count(*)") ? ok([{ count: "0" }]) : ok([]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("manager"), {
+    visibility: { userId: USER_ID, roleTier: "admin", groupId: "grp-1" },
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(!cq.sql.includes("owner_user_id = $"));
+  assert.ok(!cq.sql.includes("assistant_user_id = $"));
+});
+
+void test("list: staff visibility filters by group OR participant", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    return sql.includes("count(*)") ? ok([{ count: "0" }]) : ok([]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("staff"), {
+    visibility: { userId: USER_ID, roleTier: "staff", groupId: "grp-1" },
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(cq.sql.includes("group_id = $"));
+  assert.ok(cq.sql.includes("owner_user_id = $"));
+  assert.ok(cq.sql.includes("assistant_user_id = $"));
+  assert.ok(cq.params?.includes("grp-1"));
+  assert.ok(cq.params?.includes(USER_ID));
+});
+
+void test("list: staff visibility without groupId filters by participant only", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql) => {
+    calls.push({ sql: sql.trim() });
+    return sql.includes("count(*)") ? ok([{ count: "0" }]) : ok([]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("staff"), {
+    visibility: { userId: USER_ID, roleTier: "staff" },
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(!cq.sql.includes("group_id = $"));
+  assert.ok(cq.sql.includes("owner_user_id = $"));
+  assert.ok(cq.sql.includes("assistant_user_id = $"));
+});
+
+void test("list: viewer visibility filters by participant only", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql) => {
+    calls.push({ sql: sql.trim() });
+    return sql.includes("count(*)") ? ok([{ count: "0" }]) : ok([]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
+    visibility: { userId: USER_ID, roleTier: "viewer" },
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(!cq.sql.includes("group_id = $"));
+  assert.ok(cq.sql.includes("owner_user_id = $"));
+  assert.ok(cq.sql.includes("assistant_user_id = $"));
+});
+
+// ============================================================================
+// §p0-sv-006: 补充测试 — 权限失败 / Gate 失败 / 成功流转 / 欠款风险确认
+// ============================================================================
+
+// ── Gate-A success: S3→S4 passes when primary party exists ──
+
+void test("transition: S3→S4 succeeds when primary party present", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim() });
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S4" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S3" })]);
+    if (sql.includes("from case_parties") && sql.includes("is_primary"))
+      return ok([{ id: "cp-primary" }]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S4" },
+  );
+  assert.equal(result.stage, "S4");
+  assert.ok(calls.some((c) => c.sql.includes("from case_parties")));
+});
+
+// ── Gate-A via template: template state_flow still runs gate check ──
+
+void test("transition: S3→S4 via template still checks Gate-A", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S3" })]);
+    if (sql.includes("from case_parties") && sql.includes("is_primary"))
+      return ok([]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, SF_TPL([{ from: "S3", to: "S4" }])).transition(
+        makeCtx(),
+        CASE_ID,
+        { toStatus: "S4" },
+      ),
+    /requires a primary case party/,
+  );
+});
+
+// ── Gate-B success: S4→S5 succeeds when all required docs approved ──
+
+void test("transition: S4→S5 succeeds when all required docs approved", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim() });
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S4" })]);
+    if (
+      sql.includes("from document_items") &&
+      sql.includes("required_flag = true") &&
+      !sql.includes("updated_at >")
+    )
+      return ok([]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S5" },
+  );
+  assert.equal(result.stage, "S5");
+  assert.ok(calls.some((c) => c.sql.includes("from document_items")));
+});
+
+// ── Gate-C combined: VR failed check runs before billing check ──
+
+void test("transition: S6→S7 VR check fails before billing check is reached", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "100000",
+          billing_risk_acknowledged_at: null,
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "failed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S7",
+      }),
+    /latest validation run to be passed/,
+  );
+});
+
+// ── Gate-C combined: review required + approved + unpaid + ack'd → success ──
+
+void test("transition: S6→S7 succeeds with review required + approved + unpaid ack'd", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S7" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "80000",
+          billing_risk_acknowledged_at: "2026-04-18T00:00:00.000Z",
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (sql.includes("from review_records"))
+      return ok([{ id: "rr-1", decision: "approved" }]);
+    return ok();
+  });
+
+  const result = await svc(
+    pool,
+    makeTemplates((input: { kind: string }) =>
+      input.kind === "case_type"
+        ? {
+            mode: "template",
+            used: true,
+            version: 1,
+            config: { review_required_flag: true },
+          }
+        : { mode: "legacy", used: false },
+    ),
+  ).transition(makeCtx(), CASE_ID, { toStatus: "S7" });
+
+  assert.equal(result.stage, "S7");
+});
+
+// ── Gate-C combined: review required + rejected review + unpaid → review fails first ──
+
+void test("transition: S6→S7 review rejection fails before billing check", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "100000",
+          billing_risk_acknowledged_at: null,
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (sql.includes("from review_records"))
+      return ok([{ id: "rr-1", decision: "rejected" }]);
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(
+        pool,
+        makeTemplates((input: { kind: string }) =>
+          input.kind === "case_type"
+            ? {
+                mode: "template",
+                used: true,
+                version: 1,
+                config: { review_required_flag: true },
+              }
+            : { mode: "legacy", used: false },
+        ),
+      ).transition(makeCtx(), CASE_ID, { toStatus: "S7" }),
+    /approved review record/,
+  );
+});
+
+// ── Transition input validation: toStage + toStatus mismatch ──
+
+void test("transition: rejects when toStage and toStatus mismatch", async () => {
+  const pool = makePool((sql, p) =>
+    sql.includes("from cases") && p?.[0] === CASE_ID
+      ? ok([makeCaseRow({ status: "S1" })])
+      : ok(),
+  );
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStage: "S2",
+        toStatus: "S3",
+      }),
+    /toStage and toStatus must match/,
+  );
+});
+
+void test("transition: accepts when toStage and toStatus match", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S2" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S1" })]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStage: "S2", toStatus: "S2" },
+  );
+  assert.equal(result.stage, "S2");
+});
+
+void test("transition: rejects invalid toStage value", async () => {
+  const pool = makePool((sql, p) =>
+    sql.includes("from cases") && p?.[0] === CASE_ID
+      ? ok([makeCaseRow({ status: "S1" })])
+      : ok(),
+  );
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStage: "INVALID",
+      }),
+    /Invalid toStage/,
+  );
+});
+
+void test("transition: rejects when neither toStage nor toStatus provided", async () => {
+  const pool = makePool((sql, p) =>
+    sql.includes("from cases") && p?.[0] === CASE_ID
+      ? ok([makeCaseRow({ status: "S1" })])
+      : ok(),
+  );
+
+  await assert.rejects(
+    () => svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {}),
+    /Invalid toStage/,
+  );
+});
+
+// ── Emergency close: all stages → S9 skip Gate checks ──
+
+void test("transition: S3→S9 emergency close skips Gate-A", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S9" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S3" })]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S9" },
+  );
+  assert.equal(result.stage, "S9");
+  assert.ok(!calls.some((sql) => sql.includes("from case_parties")));
+});
+
+void test("transition: S6→S9 emergency close skips Gate-C and billing check", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S9" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "100000",
+          billing_risk_acknowledged_at: null,
+        }),
+      ]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S9" },
+  );
+  assert.equal(result.stage, "S9");
+  assert.ok(!calls.some((sql) => sql.includes("from validation_runs")));
+});
+
+// ── S5→S6 success: VR passed + non-stale + no review required ──
+
+void test("transition: S5→S6 succeeds with VR passed and non-stale (review not required)", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push(sql.trim());
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S5" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S6" },
+  );
+  assert.equal(result.stage, "S6");
+  assert.ok(calls.some((s) => s.includes("from validation_runs")));
+  assert.ok(calls.some((s) => s.includes("as stale")));
+  assert.ok(!calls.some((s) => s.includes("from review_records")));
+});
+
+// ── Workflow integration: ack billing risk then transition S6→S7 ──
+
+void test("workflow: acknowledgeBillingRisk then S6→S7 succeeds", async () => {
+  const ackPool = makePool((sql, p) => {
+    if (sql.includes("update cases") && sql.includes("billing_risk"))
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_risk_acknowledged_by: USER_ID,
+          billing_risk_acknowledged_at: "2026-04-20T00:00:00.000Z",
+          billing_risk_ack_reason_code: "client_request",
+          billing_unpaid_amount_cached: "80000",
+        }),
+      ]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "80000",
+          billing_risk_acknowledged_at: null,
+        }),
+      ]);
+    return ok();
+  });
+
+  const ackedCase = await svc(ackPool, makeTemplates()).acknowledgeBillingRisk(
+    makeCtx(),
+    CASE_ID,
+    { reasonCode: "client_request" },
+  );
+  assert.equal(ackedCase.billingRiskAckReasonCode, "client_request");
+  assert.ok(ackedCase.billingRiskAcknowledgedAt);
+
+  const transitionPool2 = makePool((sql, p) => {
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S7" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([
+        makeCaseRow({
+          status: "S6",
+          billing_unpaid_amount_cached: "80000",
+          billing_risk_acknowledged_at: "2026-04-20T00:00:00.000Z",
+        }),
+      ]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    return ok();
+  });
+
+  const transitioned = await svc(transitionPool2, makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S7" },
+  );
+  assert.equal(transitioned.stage, "S7");
+});
+
+// ── Billing risk ack: timeline records all provided fields ──
+
+void test("acknowledgeBillingRisk: timeline captures all input fields", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("update cases") && sql.includes("billing_risk"))
+      return ok([
+        makeCaseRow({
+          billing_risk_acknowledged_by: USER_ID,
+          billing_risk_acknowledged_at: "2026-04-20T00:00:00.000Z",
+          billing_risk_ack_reason_code: "manager_override",
+          billing_risk_ack_reason_note: "VP approved",
+          billing_risk_ack_evidence_url: "https://example.com/doc.pdf",
+        }),
+      ]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow()]);
+    return ok();
+  });
+
+  await svc(pool, makeTemplates()).acknowledgeBillingRisk(makeCtx(), CASE_ID, {
+    reasonCode: "manager_override",
+    reasonNote: "VP approved",
+    evidenceUrl: "https://example.com/doc.pdf",
+  });
+
+  const timelineCall = calls.find((c) =>
+    c.sql.includes("insert into timeline_logs"),
+  );
+  assert.ok(timelineCall);
+  const payload = JSON.parse(timelineCall.params?.[5] as string) as Record<
+    string,
+    unknown
+  >;
+  assert.equal(payload.reasonCode, "manager_override");
+  assert.equal(payload.reasonNote, "VP approved");
+  assert.equal(payload.evidenceUrl, "https://example.com/doc.pdf");
+});
+
+// ── Billing risk ack: optional fields default to null ──
+
+void test("acknowledgeBillingRisk: optional fields absent → null in SQL", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("update cases") && sql.includes("billing_risk"))
+      return ok([
+        makeCaseRow({
+          billing_risk_acknowledged_by: USER_ID,
+          billing_risk_acknowledged_at: "2026-04-20T00:00:00.000Z",
+          billing_risk_ack_reason_code: "fast_track",
+        }),
+      ]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow()]);
+    return ok();
+  });
+
+  await svc(pool, makeTemplates()).acknowledgeBillingRisk(makeCtx(), CASE_ID, {
+    reasonCode: "fast_track",
+  });
+
+  const updateCall = calls.find(
+    (c) => c.sql.includes("update cases") && c.sql.includes("billing_risk"),
+  );
+  assert.ok(updateCall);
+  assert.ok(updateCall.params);
+  assert.equal(updateCall.params[3], null);
+  assert.equal(updateCall.params[4], null);
+});
+
+// ── Stage history: every gate-guarded transition records history ──
+
+void test("transition: S3→S4 records stage history", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S4" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S3" })]);
+    if (sql.includes("from case_parties") && sql.includes("is_primary"))
+      return ok([{ id: "cp-1" }]);
+    return ok();
+  });
+
+  await svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+    toStatus: "S4",
+  });
+
+  const history = calls.find((c) =>
+    c.sql.includes("insert into case_stage_history"),
+  );
+  assert.ok(history);
+  assert.ok(history.params);
+  assert.equal(history.params[2], "S3");
+  assert.equal(history.params[3], "S4");
+});
+
+void test("transition: S6→S7 records stage history after gate passes", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, p) => {
+    calls.push({ sql: sql.trim(), params: p });
+    if (sql.includes("update cases") && sql.includes("stage = $2"))
+      return ok([makeCaseRow({ status: "S7" })]);
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    return ok();
+  });
+
+  await svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+    toStatus: "S7",
+  });
+
+  const history = calls.find((c) =>
+    c.sql.includes("insert into case_stage_history"),
+  );
+  assert.ok(history);
+  assert.ok(history.params);
+  assert.equal(history.params[2], "S6");
+  assert.equal(history.params[3], "S7");
+});
+
+// ── read model contract: mapCaseListSummaryRow ──
+
+void test("mapCaseListSummaryRow maps joined names onto Case", () => {
+  const row = {
+    ...makeCaseRow({ case_name: "Test Case" }),
+    customer_name: "Alice",
+    group_name: "Tokyo Group",
+    owner_display_name: "Suzuki",
+    assistant_display_name: "Tanaka",
+  };
+  const dto = mapCaseListSummaryRow(row as never);
+  assert.equal(dto.id, CASE_ID);
+  assert.equal(dto.customerName, "Alice");
+  assert.equal(dto.groupName, "Tokyo Group");
+  assert.equal(dto.ownerDisplayName, "Suzuki");
+  assert.equal(dto.assistantDisplayName, "Tanaka");
+  assert.equal(dto.caseName, "Test Case");
+  assert.equal(dto.stage, "S1");
+});
+
+void test("mapCaseListSummaryRow handles null joined names", () => {
+  const row = {
+    ...makeCaseRow(),
+    customer_name: null,
+    group_name: null,
+    owner_display_name: null,
+    assistant_display_name: null,
+  };
+  const dto = mapCaseListSummaryRow(row as never);
+  assert.equal(dto.customerName, "");
+  assert.equal(dto.groupName, null);
+  assert.equal(dto.ownerDisplayName, "");
+  assert.equal(dto.assistantDisplayName, null);
+});
+
+// ── read model contract: mapDetailCountsRow ──
+
+void test("mapDetailCountsRow maps string counts to numbers", () => {
+  const counts = mapDetailCountsRow({
+    document_items_total: "16",
+    document_items_done: "10",
+    case_parties: "3",
+    tasks: "5",
+    tasks_pending: "2",
+    communication_logs: "8",
+    submission_packages: "1",
+    generated_documents: "4",
+    validation_runs: "2",
+    review_records: "1",
+    billing_records: "3",
+    payment_records: "2",
+  });
+  assert.equal(counts.documentItemsTotal, 16);
+  assert.equal(counts.documentItemsDone, 10);
+  assert.equal(counts.caseParties, 3);
+  assert.equal(counts.tasks, 5);
+  assert.equal(counts.tasksPending, 2);
+  assert.equal(counts.communicationLogs, 8);
+  assert.equal(counts.submissionPackages, 1);
+  assert.equal(counts.generatedDocuments, 4);
+  assert.equal(counts.validationRuns, 2);
+  assert.equal(counts.reviewRecords, 1);
+  assert.equal(counts.billingRecords, 3);
+  assert.equal(counts.paymentRecords, 2);
+});
+
+void test("mapDetailCountsRow returns zeros for undefined row", () => {
+  const counts = mapDetailCountsRow(undefined);
+  assert.equal(counts.documentItemsTotal, 0);
+  assert.equal(counts.documentItemsDone, 0);
+  assert.equal(counts.caseParties, 0);
+  assert.equal(counts.tasks, 0);
+  assert.equal(counts.tasksPending, 0);
+  assert.equal(counts.communicationLogs, 0);
+  assert.equal(counts.submissionPackages, 0);
+  assert.equal(counts.generatedDocuments, 0);
+  assert.equal(counts.validationRuns, 0);
+  assert.equal(counts.reviewRecords, 0);
+  assert.equal(counts.billingRecords, 0);
+  assert.equal(counts.paymentRecords, 0);
+});
+
+// ── read model contract: mapLatestValidationRow ──
+
+void test("mapLatestValidationRow maps validation run summary", () => {
+  const result = mapLatestValidationRow({
+    id: "vr-1",
+    result_status: "failed",
+    executed_at: "2026-04-20T10:00:00.000Z",
+    blocking_count: 2,
+    warning_count: 3,
+  });
+  assert.ok(result);
+  assert.equal(result.id, "vr-1");
+  assert.equal(result.status, "failed");
+  assert.equal(result.executedAt, "2026-04-20T10:00:00.000Z");
+  assert.equal(result.blockingCount, 2);
+  assert.equal(result.warningCount, 3);
+});
+
+void test("mapLatestValidationRow returns null for undefined row", () => {
+  assert.equal(mapLatestValidationRow(undefined), null);
+});
+
+void test("mapLatestValidationRow handles string counts", () => {
+  const result = mapLatestValidationRow({
+    id: "vr-2",
+    result_status: "passed",
+    executed_at: "2026-04-21T10:00:00.000Z",
+    blocking_count: "0",
+    warning_count: "1",
+  });
+  assert.ok(result);
+  assert.equal(result.blockingCount, 0);
+  assert.equal(result.warningCount, 1);
+});
+
+// ── read model contract: mapLatestSubmissionRow ──
+
+void test("mapLatestSubmissionRow maps submission package summary", () => {
+  const result = mapLatestSubmissionRow({
+    id: "sp-1",
+    submission_no: 2,
+    submission_kind: "supplement",
+    submitted_at: "2026-04-20T10:00:00.000Z",
+    related_submission_id: "sp-0",
+  });
+  assert.ok(result);
+  assert.equal(result.id, "sp-1");
+  assert.equal(result.submissionNo, 2);
+  assert.equal(result.submissionKind, "supplement");
+  assert.equal(result.submittedAt, "2026-04-20T10:00:00.000Z");
+  assert.equal(result.relatedSubmissionId, "sp-0");
+});
+
+void test("mapLatestSubmissionRow returns null for undefined", () => {
+  assert.equal(mapLatestSubmissionRow(undefined), null);
+});
+
+void test("mapLatestSubmissionRow handles string submission_no", () => {
+  const result = mapLatestSubmissionRow({
+    id: "sp-2",
+    submission_no: "3",
+    submission_kind: "initial",
+    submitted_at: "2026-04-21T10:00:00.000Z",
+    related_submission_id: null,
+  });
+  assert.ok(result);
+  assert.equal(result.submissionNo, 3);
+  assert.equal(result.relatedSubmissionId, null);
+});
+
+// ── read model contract: mapLatestReviewRow ──
+
+void test("mapLatestReviewRow maps review record summary", () => {
+  const result = mapLatestReviewRow({
+    id: "rr-1",
+    decision: "approved",
+    reviewed_at: "2026-04-20T14:00:00.000Z",
+    reviewer_user_id: "user-5",
+    reviewer_display_name: "Reviewer A",
+  });
+  assert.ok(result);
+  assert.equal(result.id, "rr-1");
+  assert.equal(result.decision, "approved");
+  assert.equal(result.reviewedAt, "2026-04-20T14:00:00.000Z");
+  assert.equal(result.reviewerUserId, "user-5");
+  assert.equal(result.reviewerDisplayName, "Reviewer A");
+});
+
+void test("mapLatestReviewRow returns null for undefined", () => {
+  assert.equal(mapLatestReviewRow(undefined), null);
+});
+
+void test("mapLatestReviewRow handles null reviewer fields", () => {
+  const result = mapLatestReviewRow({
+    id: "rr-2",
+    decision: "rejected",
+    reviewed_at: "2026-04-21T14:00:00.000Z",
+    reviewer_user_id: null,
+    reviewer_display_name: null,
+  });
+  assert.ok(result);
+  assert.equal(result.reviewerUserId, null);
+  assert.equal(result.reviewerDisplayName, null);
+});
+
+// ── read model contract: mapDocProgressByProviderRows ──
+
+void test("mapDocProgressByProviderRows maps provider progress", () => {
+  const result = mapDocProgressByProviderRows([
+    { provider_role: "applicant", total: "5", done: "3" },
+    { provider_role: "supporter", total: "3", done: "2" },
+    { provider_role: "internal", total: "2", done: "1" },
+  ]);
+  assert.equal(result.length, 3);
+  assert.equal(result[0]?.providerRole, "applicant");
+  assert.equal(result[0]?.total, 5);
+  assert.equal(result[0]?.done, 3);
+  assert.equal(result[2]?.providerRole, "internal");
+});
+
+void test("mapDocProgressByProviderRows returns empty for empty input", () => {
+  assert.deepEqual(mapDocProgressByProviderRows([]), []);
+});
+
+// ── read model contract: listSummary ──
+
+void test("listSummary returns CaseListResultDto with joined names", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Alice",
+    group_name: "Tokyo-1",
+    owner_display_name: "Suzuki",
+    assistant_display_name: null,
+  };
+  const pool = makePool((sql) => {
+    if (sql.includes("count(*)")) return ok([{ count: "1" }]);
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).listSummary(makeCtx());
+  assert.equal(result.total, 1);
+  assert.equal(result.page, 1);
+  assert.equal(result.limit, 50);
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0]?.customerName, "Alice");
+  assert.equal(result.items[0]?.groupName, "Tokyo-1");
+  assert.equal(result.items[0]?.ownerDisplayName, "Suzuki");
+  assert.equal(result.items[0]?.assistantDisplayName, null);
+});
+
+void test("listSummary respects page and limit", async () => {
+  let capturedParams: unknown[] | undefined;
+  const pool = makePool((sql, params) => {
+    if (sql.includes("count(*)")) return ok([{ count: "100" }]);
+    if (sql.includes("customer_name")) {
+      capturedParams = params;
+      return ok([]);
+    }
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).listSummary(makeCtx(), {
+    page: 3,
+    limit: 10,
+  });
+  assert.equal(result.total, 100);
+  assert.equal(result.page, 3);
+  assert.equal(result.limit, 10);
+  assert.ok(capturedParams);
+  assert.equal(capturedParams[capturedParams.length - 2], 10);
+  assert.equal(capturedParams[capturedParams.length - 1], 20);
+});
+
+// ── read model contract: getDetailAggregate ──
+
+void test("getDetailAggregate returns null for missing case", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("customer_name")) return ok([]);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    "missing-id",
+  );
+  assert.equal(result, null);
+});
+
+void test("getDetailAggregate returns full aggregate DTO", async () => {
+  const summaryRow = {
+    ...makeCaseRow({
+      quote_price: "150000",
+      billing_unpaid_amount_cached: "50000",
+    }),
+    customer_name: "Bob",
+    group_name: "Osaka Group",
+    owner_display_name: "Tanaka",
+    assistant_display_name: "Li",
+  };
+  const countsRow = {
+    document_items_total: "16",
+    document_items_done: "10",
+    case_parties: "3",
+    tasks: "5",
+    tasks_pending: "2",
+    communication_logs: "8",
+    submission_packages: "1",
+    generated_documents: "4",
+    validation_runs: "2",
+    review_records: "1",
+    billing_records: "3",
+    payment_records: "2",
+  };
+  const validationRow = {
+    id: "vr-1",
+    result_status: "passed",
+    executed_at: "2026-04-20T10:00:00.000Z",
+    blocking_count: 0,
+    warning_count: 1,
+  };
+  const submissionRow = {
+    id: "sp-1",
+    submission_no: 1,
+    submission_kind: "initial",
+    submitted_at: "2026-04-19T10:00:00.000Z",
+    related_submission_id: null,
+  };
+  const reviewRow = {
+    id: "rr-1",
+    decision: "approved",
+    reviewed_at: "2026-04-20T14:00:00.000Z",
+    reviewer_user_id: "user-5",
+    reviewer_display_name: "Reviewer A",
+  };
+  const docProgressRows = [
+    { provider_role: "applicant", total: "10", done: "6" },
+    { provider_role: "internal", total: "6", done: "4" },
+  ];
+
+  const pool = makePool((sql) => {
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("result_status") && sql.includes("validation_runs"))
+      return ok([validationRow]);
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([submissionRow]);
+    if (sql.includes("review_records") && sql.includes("decision"))
+      return ok([reviewRow]);
+    if (sql.includes("provided_by_role") && sql.includes("group by"))
+      return ok(docProgressRows);
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.case.id, CASE_ID);
+  assert.equal(result.deepLink.customerName, "Bob");
+  assert.equal(result.deepLink.groupName, "Osaka Group");
+  assert.equal(result.deepLink.ownerDisplayName, "Tanaka");
+  assert.equal(result.deepLink.assistantDisplayName, "Li");
+  assert.equal(result.deepLink.customerId, result.case.customerId);
+  assert.equal(result.counts.documentItemsTotal, 16);
+  assert.equal(result.counts.documentItemsDone, 10);
+  assert.equal(result.counts.caseParties, 3);
+  assert.equal(result.counts.tasksPending, 2);
+  assert.equal(result.counts.generatedDocuments, 4);
+  assert.equal(result.counts.billingRecords, 3);
+  assert.ok(result.latestValidation);
+  assert.equal(result.latestValidation.status, "passed");
+  assert.equal(result.latestValidation.warningCount, 1);
+  assert.ok(result.latestSubmission);
+  assert.equal(result.latestSubmission.submissionKind, "initial");
+  assert.ok(result.latestReview);
+  assert.equal(result.latestReview.decision, "approved");
+  assert.equal(result.documentProgressByProvider.length, 2);
+  assert.equal(result.documentProgressByProvider[0]?.providerRole, "applicant");
+  assert.equal(result.billing.quotePrice, 150000);
+  assert.equal(result.billing.unpaidAmount, 50000);
+  assert.equal(result.billing.billingRiskAcknowledged, false);
+});
+
+void test("getDetailAggregate handles no validation/submission/review", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Charlie",
+    group_name: null,
+    owner_display_name: "Admin",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "0",
+    document_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+
+  const pool = makePool((sql) => {
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.latestValidation, null);
+  assert.equal(result.latestSubmission, null);
+  assert.equal(result.latestReview, null);
+  assert.deepEqual(result.documentProgressByProvider, []);
+  assert.equal(result.counts.documentItemsTotal, 0);
+  assert.equal(result.deepLink.customerName, "Charlie");
+  assert.equal(result.deepLink.groupName, null);
+});
+
+// ---------------------------------------------------------------------------
+// §p0-sv-008: S9 write guard — service level
+// ---------------------------------------------------------------------------
+
+void test("update rejects when case is S9 (archived)", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ stage: "S9", status: "S9" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () => service.update(makeCtx(), CASE_ID, { caseName: "test" }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("CASE_S9_READONLY"));
+      return true;
+    },
+  );
+});
+
+void test("transition rejects when case is S9 (archived)", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ stage: "S9", status: "S9" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () => service.transition(makeCtx(), CASE_ID, { toStage: "S8" }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("CASE_S9_READONLY"));
+      return true;
+    },
+  );
+});
+
+void test("acknowledgeBillingRisk rejects when case is S9 (archived)", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ stage: "S9", status: "S9" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () =>
+      service.acknowledgeBillingRisk(makeCtx(), CASE_ID, {
+        reasonCode: "test",
+      }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("CASE_S9_READONLY"));
+      return true;
+    },
+  );
+});
+
+void test("updatePostApprovalStage rejects when case is S9 (archived)", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ stage: "S9", status: "S9" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () =>
+      service.updatePostApprovalStage(makeCtx(), CASE_ID, {
+        stage: "coe_sent",
+      }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("CASE_S9_READONLY"));
+      return true;
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
+// §p0-sv-008: group transfer — requires reason
+// ---------------------------------------------------------------------------
+
+void test("update rejects group change without groupTransferReason", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ group_id: "old-group" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () =>
+      service.update(makeCtx(), CASE_ID, {
+        groupId: "new-group",
+      }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("GROUP_TRANSFER_REASON_REQUIRED"));
+      return true;
+    },
+  );
+});
+
+void test("update accepts group change with groupTransferReason", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql) => {
+    calls.push(sql.trim().substring(0, 40));
+    if (sql.includes("select") && sql.includes("from cases"))
+      return ok([makeCaseRow({ group_id: "old-group" })]);
+    if (sql.includes("update cases"))
+      return ok([makeCaseRow({ group_id: "new-group" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  const result = await service.update(makeCtx(), CASE_ID, {
+    groupId: "new-group",
+    groupTransferReason: "client reassigned",
+  });
+  assert.ok(result);
+  const groupTransferTimeline = calls.filter((c) =>
+    c.includes("insert into timeline"),
+  );
+  assert.ok(groupTransferTimeline.length >= 2);
+});
+
+// ---------------------------------------------------------------------------
+// §p0-sv-008: cross-group create — requires reason
+// ---------------------------------------------------------------------------
+
+void test("create rejects cross-group without crossGroupReason", async () => {
+  const pool = makePool((sql, params) => {
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([{ group_id: "customer-group" }]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  await assert.rejects(
+    () =>
+      service.create(makeCtx(), {
+        ...CREATE_INPUT,
+        groupId: "different-group",
+      }),
+    (e: unknown) => {
+      assert.ok(e instanceof Error);
+      assert.ok(e.message.includes("CROSS_GROUP_REASON_REQUIRED"));
+      return true;
+    },
+  );
+});
+
+void test("create with cross-group and reason writes audit timeline", async () => {
+  const calls: { sql: string }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim() });
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([{ group_id: "customer-group" }]);
+    if (sql.includes("select settings from organizations"))
+      return ok([{ settings: {} }]);
+    if (sql.includes("select count(*)")) return ok([{ count: "0" }]);
+    if (sql.includes("insert into cases"))
+      return ok([makeCaseRow({ group_id: "different-group" })]);
+    return ok();
+  });
+
+  const service = svc(pool, makeTemplates());
+  const result = await service.create(makeCtx(), {
+    ...CREATE_INPUT,
+    groupId: "different-group",
+    crossGroupReason: "special arrangement",
+  });
+  assert.ok(result);
+  const timelineCalls = calls.filter((c) =>
+    c.sql.includes("insert into timeline"),
+  );
+  assert.ok(
+    timelineCalls.length >= 2,
+    "should have both case.created and case.cross_group_created timelines",
+  );
 });

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRouter } from "vue-router";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
@@ -8,18 +9,24 @@ import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
 import type { CaseFilter, CustomerCase } from "../types";
+import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
 
 /** 关联案件 Tab：按全部/活跃/归档筛选案件列表，保留办案入口占位。 */
 const props = defineProps<{
   customerId: string;
+  repository: Pick<CustomerRepository, "listRelatedCases">;
 }>();
 
 const { t } = useI18n();
+const router = useRouter();
 
 const customerIdRef = computed(() => props.customerId);
-const { caseFilter, filteredCases, setCaseFilter } =
-  useCustomerCasesModel(customerIdRef);
+const { caseFilter, filteredCases, loading, errorCode, setCaseFilter, retry } =
+  useCustomerCasesModel({
+    customerId: customerIdRef,
+    repository: props.repository,
+  });
 
 const segmentOptions = computed<SegmentOption<CaseFilter>[]>(() => [
   { value: "all", label: t("customers.detail.casesTab.filterAll") },
@@ -47,6 +54,15 @@ function statusLabel(c: CustomerCase) {
   return c.status === "active"
     ? t("customers.detail.casesTab.statusActive")
     : t("customers.detail.casesTab.statusArchived");
+}
+
+/**
+ * 跳转到案件详情页。
+ *
+ * @param id 案件 ID
+ */
+function openCase(id: string) {
+  void router.push({ name: "case-detail", params: { id } });
 }
 </script>
 
@@ -77,7 +93,22 @@ function statusLabel(c: CustomerCase) {
       </div>
 
       <div class="cases-tab__table-wrap">
-        <table v-if="filteredCases.length" class="cases-tab__table">
+        <div v-if="loading" class="cases-tab__state">
+          <p class="cases-tab__state-text">
+            {{ t("customers.detail.casesTab.loading") }}
+          </p>
+        </div>
+
+        <div v-else-if="errorCode" class="cases-tab__state">
+          <p class="cases-tab__state-text">
+            {{ t("customers.detail.casesTab.requestFailed") }}
+          </p>
+          <Button size="sm" pill @click="retry">
+            {{ t("customers.detail.casesTab.retry") }}
+          </Button>
+        </div>
+
+        <table v-else-if="filteredCases.length" class="cases-tab__table">
           <thead>
             <tr>
               <th class="cases-tab__th cases-tab__th--id">
@@ -113,6 +144,7 @@ function statusLabel(c: CustomerCase) {
                   :aria-label="
                     t('customers.detail.casesTab.openCase', { name: c.name })
                   "
+                  @click="openCase(c.id)"
                 >
                   {{ c.name }}
                 </button>
@@ -138,10 +170,10 @@ function statusLabel(c: CustomerCase) {
                 <Button
                   size="sm"
                   pill
-                  disabled
                   :aria-label="
                     t('customers.detail.casesTab.openCase', { name: c.name })
                   "
+                  @click="openCase(c.id)"
                 >
                   {{ t("customers.detail.casesTab.open") }}
                 </Button>
@@ -310,7 +342,16 @@ function statusLabel(c: CustomerCase) {
   text-align: center;
 }
 
-.cases-tab__empty-text {
+.cases-tab__state {
+  padding: 32px 24px;
+  text-align: center;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+}
+
+.cases-tab__empty-text,
+.cases-tab__state-text {
   margin: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-3);

@@ -109,3 +109,37 @@ void test("AuthGuard accepts requestAuthInput and attaches verified requestConte
   assert.equal(ok, true);
   assert.deepEqual(req.requestContext, { orgId, userId, role: "staff" });
 });
+
+void test("AuthGuard keeps groupId in requestContext when provided", async () => {
+  const orgId = "00000000-0000-4000-8000-000000000000";
+  const userId = "00000000-0000-4000-8000-000000000001";
+
+  const reflector = new FakeReflector({
+    [IS_PUBLIC_KEY]: false,
+    [REQUIRED_ROLES_KEY]: ["viewer"],
+  });
+  const pool = createPoolStub({ id: userId, role: "staff", status: "active" });
+  const guard = new AuthGuard(reflector as never, pool);
+
+  const req: {
+    requestAuthInput?: { orgId: string; userId: string; groupId?: string };
+    requestContext?: {
+      orgId: string;
+      userId: string;
+      role: "owner" | "manager" | "staff" | "viewer";
+      groupId?: string;
+    };
+  } = {
+    requestAuthInput: { orgId, userId, groupId: "tokyo" },
+  };
+  const ctx = createExecutionContext(req);
+
+  const ok = await guard.canActivate(ctx);
+  assert.equal(ok, true);
+  assert.deepEqual(req.requestContext, {
+    orgId,
+    userId,
+    role: "staff",
+    groupId: "tokyo",
+  });
+});

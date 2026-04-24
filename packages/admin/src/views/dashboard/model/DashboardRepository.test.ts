@@ -13,6 +13,46 @@ function jsonResponse(body: unknown, init: ResponseInit = {}): Response {
 }
 
 describe("createDashboardRepository", () => {
+  it("uses a browser-safe default fetch wrapper", async () => {
+    const originalFetch = globalThis.fetch;
+    const fetchSpy = vi.fn(function (this: typeof globalThis) {
+      if (this !== globalThis) {
+        throw new TypeError("Illegal invocation");
+      }
+
+      return Promise.resolve(
+        jsonResponse({
+          scope: "mine",
+          timeWindow: 7,
+          summary: {
+            todayTasks: 0,
+            upcomingCases: 0,
+            pendingSubmissions: 0,
+            riskCases: 0,
+          },
+          panels: {
+            todo: [],
+            deadlines: [],
+            submissions: [],
+            risks: [],
+          },
+        }),
+      );
+    });
+
+    globalThis.fetch = fetchSpy as typeof fetch;
+
+    try {
+      const repo = createDashboardRepository({ getToken: () => "token-123" });
+      const result = await repo.getSummary({ scope: "mine", timeWindow: 7 });
+
+      expect(result.summary.todayTasks).toBe(0);
+      expect(fetchSpy).toHaveBeenCalledOnce();
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("requests dashboard summary with query params and bearer token", async () => {
     const request = vi.fn().mockResolvedValue(
       jsonResponse({

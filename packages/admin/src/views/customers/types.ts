@@ -1,3 +1,5 @@
+import type { CustomerBmvProfile } from "./types-bmv";
+
 /**
  *
  */
@@ -124,6 +126,10 @@ export interface CustomerSummary {
    *
    */
   group: string;
+  /**
+   * P1 经营管理签承接档案；P0 统一先以 nullable 契约冻结。
+   */
+  bmvProfile: CustomerBmvProfile | null;
 }
 
 /**
@@ -342,6 +348,32 @@ export interface CustomerRelation {
   note: string;
 }
 
+/**
+ * 关联人新增/编辑表单字段。
+ */
+export interface CustomerRelationFormFields {
+  /**
+   * 姓名。
+   */
+  name: string;
+  /**
+   * 关系类型。
+   */
+  relationType: RelationType;
+  /**
+   * 角色/标签。
+   */
+  roleTitle: string;
+  /**
+   * 电话。
+   */
+  phone: string;
+  /**
+   * 邮箱。
+   */
+  email: string;
+}
+
 export const RELATION_TYPE_OPTIONS: readonly {
   /**
    *
@@ -371,6 +403,13 @@ export function getRelationTypeLabel(type: RelationType | string): string {
 }
 
 export type {
+  BmvIntakeStatus,
+  BmvQuestionnaireStatus,
+  BmvQuoteStatus,
+  BmvSignStatus,
+  CustomerBmvProfile,
+} from "./types-bmv";
+export type {
   CommChannel,
   CommVisibility,
   CommFilter,
@@ -379,6 +418,7 @@ export type {
   LogFilter,
   CustomerLog,
 } from "./types-comms-logs";
+export { resolveBmvIntakeStatus } from "./types-bmv";
 export {
   COMM_CHANNEL_OPTIONS,
   getCommChannelLabel,

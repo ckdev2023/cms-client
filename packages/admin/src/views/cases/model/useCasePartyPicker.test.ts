@@ -1,3 +1,10 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: party picker composable (useCasePartyPicker) — open/close,
+//   validation, duplicate detection, save flow.
+// Does NOT test: adapters, builders, real repository, or other
+//   composables.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, expect, it } from "vitest";
 import {
   detectDuplicates,

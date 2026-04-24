@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { i18n, setAppLocale } from "../../../i18n";
 import CustomerTable from "./CustomerTable.vue";
+import CustomerEmptyState from "./CustomerEmptyState.vue";
 import type { CustomerSummary } from "../types";
 
 const ROWS: CustomerSummary[] = [
@@ -20,6 +21,7 @@ const ROWS: CustomerSummary[] = [
     owner: { initials: "YS", name: "山田翔太" },
     referralSource: "紹介",
     group: "東京一組",
+    bmvProfile: null,
   },
   {
     id: "c2",
@@ -36,6 +38,7 @@ const ROWS: CustomerSummary[] = [
     owner: { initials: "TK", name: "高橋健太" },
     referralSource: "",
     group: "大阪組",
+    bmvProfile: null,
   },
 ];
 
@@ -75,8 +78,8 @@ describe("CustomerTable", () => {
   });
 
   it("renders empty state when no customers", () => {
-    const w = factory({ customers: [] });
-    expect(w.find(".customer-empty-state").exists()).toBe(true);
+    const w = factory({ customers: [], drafts: [], showEmptyState: true });
+    expect(w.findComponent(CustomerEmptyState).exists()).toBe(true);
   });
 
   it("header checkbox reflects allSelected prop", () => {

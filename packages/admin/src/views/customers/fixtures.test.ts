@@ -81,6 +81,7 @@ describe("customers/fixtures", () => {
       expect(c.totalCases).toBe(0);
       expect(c.caseNames).toHaveLength(0);
       expect(c.lastCaseCreatedDate).toBeNull();
+      expect(c.bmvProfile?.intakeStatus).toBe("sign_pending");
     });
   });
 });

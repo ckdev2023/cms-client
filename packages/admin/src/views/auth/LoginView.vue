@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import {
@@ -25,6 +26,14 @@ const {
   finishSubmitting,
   resolveRedirectTarget,
 } = useLoginForm();
+
+const sessionNotice = computed(() => {
+  return route.query.reason === "expired"
+    ? t("auth.login.sessionExpiredNotice")
+    : route.query.reason === "loggedOut"
+      ? t("auth.login.loggedOutNotice")
+      : "";
+});
 
 async function handleSubmit() {
   clearSubmitError();
@@ -90,6 +99,9 @@ async function handleSubmit() {
       </div>
 
       <form class="login-form" @submit.prevent="handleSubmit">
+        <p v-if="sessionNotice" class="login-form__notice" role="status">
+          {{ sessionNotice }}
+        </p>
         <label class="login-field">
           <span class="login-field__label">{{
             t("auth.login.emailLabel")
@@ -303,6 +315,17 @@ async function handleSubmit() {
   color: var(--color-danger);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
+}
+
+.login-form__notice {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-lg);
+  background: rgb(59 130 246 / 10%);
+  color: var(--color-primary-7);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1.6;
 }
 
 .login-form__submit {

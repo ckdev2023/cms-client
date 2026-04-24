@@ -4,7 +4,7 @@
  */
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { GROUP_OPTIONS, OWNER_OPTIONS } from "../fixtures";
+import type { SelectOption } from "../types";
 
 /**
  * 批量操作栏：显示已选计数、清除、指派负责人与调整分组。
@@ -13,6 +13,9 @@ const { t } = useI18n();
 
 defineProps<{
   selectedCount?: number;
+  loading?: boolean;
+  ownerOptions?: SelectOption[];
+  groupOptions?: SelectOption[];
 }>();
 
 const emit = defineEmits<{
@@ -55,6 +58,7 @@ function applyGroup() {
       <button
         class="customer-bulk-bar__clear"
         type="button"
+        :disabled="loading"
         @click="$emit('clear')"
       >
         {{ t("customers.list.bulk.clear") }}
@@ -66,10 +70,14 @@ function applyGroup() {
         <span class="customer-bulk-bar__action-label">
           {{ t("customers.list.bulk.assignOwner") }}
         </span>
-        <select v-model="ownerValue" class="customer-bulk-bar__select">
+        <select
+          v-model="ownerValue"
+          class="customer-bulk-bar__select"
+          :disabled="loading"
+        >
           <option value="">{{ t("customers.list.bulk.selectOwner") }}</option>
           <option
-            v-for="opt in OWNER_OPTIONS"
+            v-for="opt in ownerOptions ?? []"
             :key="opt.value"
             :value="opt.value"
           >
@@ -79,7 +87,7 @@ function applyGroup() {
         <button
           class="customer-bulk-bar__apply"
           type="button"
-          :disabled="!ownerValue || undefined"
+          :disabled="loading || !ownerValue || undefined"
           @click="applyOwner"
         >
           {{ t("customers.list.bulk.apply") }}
@@ -90,10 +98,14 @@ function applyGroup() {
         <span class="customer-bulk-bar__action-label">
           {{ t("customers.list.bulk.changeGroup") }}
         </span>
-        <select v-model="groupValue" class="customer-bulk-bar__select">
+        <select
+          v-model="groupValue"
+          class="customer-bulk-bar__select"
+          :disabled="loading"
+        >
           <option value="">{{ t("customers.list.bulk.selectGroup") }}</option>
           <option
-            v-for="opt in GROUP_OPTIONS"
+            v-for="opt in groupOptions ?? []"
             :key="opt.value"
             :value="opt.value"
           >
@@ -103,7 +115,7 @@ function applyGroup() {
         <button
           class="customer-bulk-bar__apply"
           type="button"
-          :disabled="!groupValue || undefined"
+          :disabled="loading || !groupValue || undefined"
           @click="applyGroup"
         >
           {{ t("customers.list.bulk.apply") }}
@@ -150,6 +162,11 @@ function applyGroup() {
   color: var(--color-text-3);
   cursor: pointer;
   padding: 0;
+}
+
+.customer-bulk-bar__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .customer-bulk-bar__clear:hover {

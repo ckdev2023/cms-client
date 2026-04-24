@@ -2,6 +2,8 @@ import { BadRequestException } from "@nestjs/common";
 
 import type { DocumentFile } from "../model/coreEntities";
 
+export { LOCAL_STORAGE_TYPE } from "../documents.types";
+
 /** 数据库查询返回的 document_files 行类型。 */
 export type DocumentFileQueryRow = {
   id: string;
@@ -26,8 +28,6 @@ export type DocumentFileQueryRow = {
 
 export const DOC_FILE_COLS =
   "id, org_id, requirement_id, file_name, file_url, file_type, file_size, version_no, uploaded_by, uploaded_at, storage_type, relative_path, review_status, review_by, review_at, expiry_date, hash_value, created_at";
-
-export const LOCAL_STORAGE_TYPE = "local_server";
 
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;

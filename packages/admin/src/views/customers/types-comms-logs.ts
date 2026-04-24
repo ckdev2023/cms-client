@@ -1,7 +1,13 @@
 /**
  * 沟通渠道类型。
  */
-export type CommChannel = "wechat" | "phone" | "email" | "meeting" | "line";
+export type CommChannel =
+  | "wechat"
+  | "phone"
+  | "email"
+  | "meeting"
+  | "line"
+  | "other";
 
 /**
  * 沟通记录可见性范围。
@@ -66,6 +72,7 @@ export const COMM_CHANNEL_OPTIONS: readonly {
   { value: "email", label: "邮件" },
   { value: "meeting", label: "面谈" },
   { value: "line", label: "LINE" },
+  { value: "other", label: "其他" },
 ] as const;
 
 /**

@@ -1,4 +1,4 @@
-import { computed, reactive, ref } from "vue";
+import { computed, reactive, ref, watch } from "vue";
 import type {
   CustomerActiveCasesFilter,
   CustomerFiltersState,
@@ -6,9 +6,22 @@ import type {
   CustomerOwnerFilter,
   CustomerScope,
   CustomerSummary,
-  SelectOption,
 } from "../types";
-import { GROUP_OPTIONS, OWNER_OPTIONS } from "../fixtures";
+import {
+  CustomerRepositoryError,
+  type CustomerRepository,
+} from "./CustomerRepository";
+import { useCustomerSelection } from "./useCustomerSelection";
+
+type ListRepository = Pick<
+  CustomerRepository,
+  "listCustomers" | "bulkAssignOwner" | "bulkChangeGroup"
+>;
+
+type UseCustomerListModelInput = {
+  repository: ListRepository;
+  pageSize?: number;
+};
 
 const DEFAULT_FILTERS: CustomerFiltersState = {
   scope: "mine",
@@ -18,147 +31,322 @@ const DEFAULT_FILTERS: CustomerFiltersState = {
   activeCases: "",
 };
 
-function resolveOptionLabel(
-  options: readonly SelectOption[],
-  value: string,
-): string | undefined {
-  return options.find((o) => o.value === value)?.label;
+const DEFAULT_PAGE_SIZE = 20;
+
+type CustomerListModelErrorCode = "unauthorized" | "requestFailed";
+
+function mapCustomerListError(error: unknown): CustomerListModelErrorCode {
+  return error instanceof CustomerRepositoryError &&
+    error.code === "UNAUTHORIZED"
+    ? "unauthorized"
+    : "requestFailed";
 }
 
-function matchesSearch(c: CustomerSummary, query: string): boolean {
-  const q = query.toLowerCase();
-  return [c.displayName, c.furigana, c.phone, c.email]
-    .join(" ")
-    .toLowerCase()
-    .includes(q);
+function keepOnlyVisibleSelections(
+  customers: CustomerSummary[],
+  selectedIds: Set<string>,
+): Set<string> {
+  const visibleIds = new Set(customers.map((customer) => customer.id));
+  return new Set(
+    [...selectedIds].filter((customerId) => visibleIds.has(customerId)),
+  );
 }
 
-function matchesGroup(c: CustomerSummary, filterValue: string): boolean {
-  if (!filterValue) return true;
-  const label = resolveOptionLabel(GROUP_OPTIONS, filterValue);
-  return !!label && c.group === label;
-}
-
-function matchesOwner(c: CustomerSummary, filterValue: string): boolean {
-  if (!filterValue) return true;
-  const label = resolveOptionLabel(OWNER_OPTIONS, filterValue);
-  return !!label && c.owner.name === label;
-}
-
-function matchesActiveCases(c: CustomerSummary, value: string): boolean {
-  if (value === "yes") return c.activeCases > 0;
-  if (value === "no") return c.activeCases === 0;
-  return true;
-}
-
-/**
- * 判断单条客户是否满足当前筛选条件。
- *
- * @param customer - 待判断的客户记录
- * @param filters - 当前筛选状态
- * @returns 是否通过所有筛选
- */
-export function matchesFilters(
-  customer: CustomerSummary,
-  filters: CustomerFiltersState,
-): boolean {
-  if (filters.search && !matchesSearch(customer, filters.search)) return false;
-  if (!matchesGroup(customer, filters.group)) return false;
-  if (!matchesOwner(customer, filters.owner)) return false;
-  return matchesActiveCases(customer, filters.activeCases);
-}
-
-function createFilterSetters(filters: CustomerFiltersState) {
+function createListState() {
   return {
-    setScope(scope: CustomerScope) {
-      filters.scope = scope;
-    },
-    setSearch(value: string) {
-      filters.search = value;
-    },
-    setGroup(value: CustomerGroupFilter) {
-      filters.group = value;
-    },
-    setOwner(value: CustomerOwnerFilter) {
-      filters.owner = value;
-    },
-    setActiveCases(value: CustomerActiveCasesFilter) {
-      filters.activeCases = value;
-    },
+    filters: reactive<CustomerFiltersState>({ ...DEFAULT_FILTERS }),
+    customers: ref<CustomerSummary[]>([]),
+    total: ref(0),
+    page: ref(1),
+    loading: ref(false),
+    errorCode: ref<CustomerListModelErrorCode | null>(null),
+    bulkLoading: ref(false),
+    bulkErrorCode: ref<CustomerListModelErrorCode | null>(null),
   };
 }
 
-function createSelectionActions(
-  filters: CustomerFiltersState,
-  filteredCustomers: { value: CustomerSummary[] },
-  selectedIds: { value: Set<string> },
+function createDerivedState(
+  customers: Readonly<{ value: CustomerSummary[] }>,
+  total: Readonly<{ value: number }>,
+  loading: Readonly<{ value: boolean }>,
+  errorCode: Readonly<{ value: CustomerListModelErrorCode | null }>,
+  selection: ReturnType<typeof useCustomerSelection>,
+  pageSize: number,
 ) {
-  function clearSelection() {
-    selectedIds.value = new Set();
+  const filteredCustomers = computed(() => customers.value);
+  const totalPages = computed(() =>
+    total.value > 0 ? Math.ceil(total.value / pageSize) : 1,
+  );
+  return {
+    filteredCustomers,
+    totalPages,
+    hasData: computed(() => customers.value.length > 0),
+    isEmpty: computed(
+      () =>
+        !loading.value &&
+        errorCode.value === null &&
+        customers.value.length === 0,
+    ),
+    isAllSelected: computed(() => selection.isAllSelected(customers.value)),
+    isIndeterminate: computed(() => selection.isIndeterminate(customers.value)),
+  };
+}
+
+function createFilterActions(input: {
+  filters: CustomerFiltersState;
+  page: { value: number };
+  totalPages: Readonly<{ value: number }>;
+  clearSelection: () => void;
+}) {
+  function resetPaging() {
+    input.page.value = 1;
+    input.clearSelection();
   }
 
   return {
+    setScope(scope: CustomerScope) {
+      input.filters.scope = scope;
+      resetPaging();
+    },
+    setSearch(value: string) {
+      input.filters.search = value;
+      resetPaging();
+    },
+    setGroup(value: CustomerGroupFilter) {
+      input.filters.group = value;
+      resetPaging();
+    },
+    setOwner(value: CustomerOwnerFilter) {
+      input.filters.owner = value;
+      resetPaging();
+    },
+    setActiveCases(value: CustomerActiveCasesFilter) {
+      input.filters.activeCases = value;
+      resetPaging();
+    },
+    setPage(value: number) {
+      input.page.value = Math.min(Math.max(value, 1), input.totalPages.value);
+      input.clearSelection();
+    },
     resetFilters() {
-      Object.assign(filters, { ...DEFAULT_FILTERS });
-      clearSelection();
+      Object.assign(input.filters, { ...DEFAULT_FILTERS });
+      resetPaging();
     },
+  };
+}
+
+function createCustomerLoader(input: {
+  repository: ListRepository;
+  filters: CustomerFiltersState;
+  page: { value: number };
+  customers: { value: CustomerSummary[] };
+  total: { value: number };
+  loading: { value: boolean };
+  errorCode: { value: CustomerListModelErrorCode | null };
+  selectedIds: { value: Set<string> };
+  pageSize: number;
+  clearSelection: () => void;
+}) {
+  let requestVersion = 0;
+
+  return async (): Promise<void> => {
+    const activeRequest = ++requestVersion;
+    input.loading.value = true;
+    input.errorCode.value = null;
+    try {
+      const result = await input.repository.listCustomers({
+        scope: input.filters.scope,
+        search: input.filters.search,
+        group: input.filters.group,
+        owner: input.filters.owner,
+        activeCases: input.filters.activeCases,
+        page: input.page.value,
+        limit: input.pageSize,
+      });
+      if (activeRequest !== requestVersion) return;
+      input.customers.value = result.items;
+      input.total.value = result.total;
+      input.selectedIds.value = keepOnlyVisibleSelections(
+        result.items,
+        input.selectedIds.value,
+      );
+    } catch (error) {
+      if (activeRequest !== requestVersion) return;
+      input.customers.value = [];
+      input.total.value = 0;
+      input.clearSelection();
+      input.errorCode.value = mapCustomerListError(error);
+    } finally {
+      if (activeRequest === requestVersion) input.loading.value = false;
+    }
+  };
+}
+
+function createBulkActionRunner(input: {
+  repository: ListRepository;
+  selectedIds: { value: Set<string> };
+  bulkLoading: { value: boolean };
+  bulkErrorCode: { value: CustomerListModelErrorCode | null };
+  clearSelection: () => void;
+  reload: () => Promise<void>;
+}) {
+  async function runBulkMutation(
+    action: () => Promise<unknown>,
+  ): Promise<number> {
+    if (input.bulkLoading.value || input.selectedIds.value.size === 0) return 0;
+
+    input.bulkLoading.value = true;
+    input.bulkErrorCode.value = null;
+    try {
+      await action();
+      input.clearSelection();
+      await input.reload();
+      return 1;
+    } catch (error) {
+      input.bulkErrorCode.value = mapCustomerListError(error);
+      return 0;
+    } finally {
+      input.bulkLoading.value = false;
+    }
+  }
+
+  return {
+    bulkAssignOwner(ownerId: string): Promise<number> {
+      const normalizedOwnerId = ownerId.trim();
+      if (!normalizedOwnerId) return Promise.resolve(0);
+      return runBulkMutation(() =>
+        input.repository.bulkAssignOwner(
+          [...input.selectedIds.value],
+          normalizedOwnerId,
+        ),
+      );
+    },
+    bulkChangeGroup(group: string): Promise<number> {
+      const normalizedGroup = group.trim();
+      if (!normalizedGroup) return Promise.resolve(0);
+      return runBulkMutation(() =>
+        input.repository.bulkChangeGroup(
+          [...input.selectedIds.value],
+          normalizedGroup,
+        ),
+      );
+    },
+  };
+}
+
+function watchCustomerList(
+  state: ReturnType<typeof createListState>,
+  loadCustomers: () => Promise<void>,
+) {
+  watch(
+    [
+      () => state.filters.scope,
+      () => state.filters.search,
+      () => state.filters.group,
+      () => state.filters.owner,
+      () => state.filters.activeCases,
+      state.page,
+    ],
+    () => {
+      void loadCustomers();
+    },
+    { immediate: true },
+  );
+}
+
+function createCustomerListApi(input: {
+  state: ReturnType<typeof createListState>;
+  derived: ReturnType<typeof createDerivedState>;
+  selection: ReturnType<typeof useCustomerSelection>;
+  filters: ReturnType<typeof createFilterActions>;
+  bulk: ReturnType<typeof createBulkActionRunner>;
+  loadCustomers: () => Promise<void>;
+  pageSize: number;
+}) {
+  return {
+    filters: input.state.filters,
+    filteredCustomers: input.derived.filteredCustomers,
+    customers: input.derived.filteredCustomers,
+    total: computed(() => input.state.total.value),
+    page: computed(() => input.state.page.value),
+    pageSize: input.pageSize,
+    totalPages: input.derived.totalPages,
+    loading: computed(() => input.state.loading.value),
+    errorCode: computed(() => input.state.errorCode.value),
+    hasData: input.derived.hasData,
+    isEmpty: input.derived.isEmpty,
+    selectedIds: input.selection.selectedIds,
+    selectedCount: input.selection.selectedCount,
+    isAllSelected: input.derived.isAllSelected,
+    isIndeterminate: input.derived.isIndeterminate,
+    bulkLoading: computed(() => input.state.bulkLoading.value),
+    bulkErrorCode: computed(() => input.state.bulkErrorCode.value),
+    ...input.filters,
     toggleSelectAll(checked: boolean) {
-      const next = new Set(selectedIds.value);
-      for (const c of filteredCustomers.value) {
-        if (checked) next.add(c.id);
-        else next.delete(c.id);
-      }
-      selectedIds.value = next;
+      input.selection.toggleAll(input.state.customers.value, checked);
     },
-    toggleSelectRow(id: string, checked: boolean) {
-      const next = new Set(selectedIds.value);
-      if (checked) next.add(id);
-      else next.delete(id);
-      selectedIds.value = next;
-    },
-    clearSelection,
+    toggleSelectRow: input.selection.toggleRow,
+    clearSelection: input.selection.clearSelection,
+    retry: input.loadCustomers,
+    ...input.bulk,
   };
 }
 
 /**
- * 客户列表页核心 Model：筛选 + 选择。
+ * 客户列表页核心 Model：筛选、远程加载、选择与批量操作。
  *
- * @param allCustomers - 返回完整客户数组的取值函数
- * @returns 筛选状态、过滤结果、选择状态与操作方法
+ * @param input - 列表页依赖项
+ * @param input.repository - 列表加载与批量操作仓储
+ * @param input.pageSize - 可选单页条数，默认 20
+ * @returns 页面消费的响应式状态与操作方法
  */
-export function useCustomerListModel(allCustomers: () => CustomerSummary[]) {
-  const filters = reactive<CustomerFiltersState>({ ...DEFAULT_FILTERS });
-  const selectedIds = ref<Set<string>>(new Set());
-
-  const filteredCustomers = computed(() =>
-    allCustomers().filter((c) => matchesFilters(c, filters)),
+export function useCustomerListModel(input: UseCustomerListModelInput) {
+  const pageSize = input.pageSize ?? DEFAULT_PAGE_SIZE;
+  const state = createListState();
+  const selection = useCustomerSelection();
+  const derived = createDerivedState(
+    state.customers,
+    state.total,
+    state.loading,
+    state.errorCode,
+    selection,
+    pageSize,
   );
-
-  const rows = () => filteredCustomers.value;
-
-  const isAllSelected = computed(() => {
-    const r = rows();
-    return r.length > 0 && r.every((c) => selectedIds.value.has(c.id));
+  const loadCustomers = createCustomerLoader({
+    repository: input.repository,
+    filters: state.filters,
+    page: state.page,
+    customers: state.customers,
+    total: state.total,
+    loading: state.loading,
+    errorCode: state.errorCode,
+    selectedIds: selection.selectedIds,
+    pageSize,
+    clearSelection: selection.clearSelection,
+  });
+  const filters = createFilterActions({
+    filters: state.filters,
+    page: state.page,
+    totalPages: derived.totalPages,
+    clearSelection: selection.clearSelection,
+  });
+  const bulk = createBulkActionRunner({
+    repository: input.repository,
+    selectedIds: selection.selectedIds,
+    bulkLoading: state.bulkLoading,
+    bulkErrorCode: state.bulkErrorCode,
+    clearSelection: selection.clearSelection,
+    reload: loadCustomers,
   });
 
-  const isIndeterminate = computed(() => {
-    const r = rows();
-    const count = r.filter((c) => selectedIds.value.has(c.id)).length;
-    return count > 0 && count < r.length;
-  });
-
-  const selectedCount = computed(
-    () => rows().filter((c) => selectedIds.value.has(c.id)).length,
-  );
-
-  return {
+  watchCustomerList(state, loadCustomers);
+  return createCustomerListApi({
+    state,
+    derived,
+    selection,
     filters,
-    filteredCustomers,
-    selectedIds,
-    selectedCount,
-    isAllSelected,
-    isIndeterminate,
-    ...createFilterSetters(filters),
-    ...createSelectionActions(filters, filteredCustomers, selectedIds),
-  };
+    bulk,
+    loadCustomers,
+    pageSize,
+  });
 }

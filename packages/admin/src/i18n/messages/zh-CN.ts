@@ -15,6 +15,7 @@ const zhCN = {
       localeLabel: "界面语言",
       createLead: "新建咨询",
       createCase: "新建案件",
+      logout: "退出登录",
     },
     nav: {
       asideLabel: "侧边栏导航",
@@ -95,6 +96,8 @@ const zhCN = {
       validation: "请输入邮箱和密码",
       invalidCredentials: "邮箱或密码错误，请重新输入。",
       requestFailed: "登录请求失败，请稍后重试。",
+      sessionExpiredNotice: "登录态已过期，请重新登录继续操作。",
+      loggedOutNotice: "你已安全退出登录。",
       demoHint: "请使用已开通的后台账号登录。",
     },
   },

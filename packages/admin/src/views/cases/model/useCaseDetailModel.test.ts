@@ -1,3 +1,10 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: detail composable (useCaseDetailModel) — tab state,
+//   counters, risk modal, sample-key bridge.
+// Does NOT test: adapters, builders, real repository orchestration,
+//   or other composables.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, it, expect } from "vitest";
 import { ref } from "vue";
 import { useCaseDetailModel } from "./useCaseDetailModel";

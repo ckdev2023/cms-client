@@ -3,8 +3,11 @@ import { useI18n } from "vue-i18n";
 import SegmentedControl from "../../../shared/ui/SegmentedControl.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
 import Button from "../../../shared/ui/Button.vue";
-import type { CustomerScope } from "../types";
-import { GROUP_OPTIONS, OWNER_OPTIONS } from "../fixtures";
+import type {
+  CustomerActiveCasesFilter,
+  CustomerScope,
+  SelectOption,
+} from "../types";
 
 /**
  * 客户列表筛选区：数据范围切换、搜索框、3 个下拉筛选器与重置按钮。
@@ -17,13 +20,22 @@ const scopeOptions = [
   { label: "", value: "all" as const },
 ];
 
+const normalizeActiveCasesFilter = (
+  event: Event,
+): CustomerActiveCasesFilter => {
+  const value = (event.target as HTMLSelectElement).value;
+  return value === "yes" || value === "no" ? value : "";
+};
+
 defineProps<{
   scope?: CustomerScope;
   search?: string;
   groupFilter?: string;
   ownerFilter?: string;
-  activeCasesFilter?: string;
+  activeCasesFilter?: CustomerActiveCasesFilter;
   filteredCount?: number;
+  groupOptions?: SelectOption[];
+  ownerOptions?: SelectOption[];
 }>();
 
 defineEmits<{
@@ -31,7 +43,7 @@ defineEmits<{
   "update:search": [value: string];
   "update:groupFilter": [value: string];
   "update:ownerFilter": [value: string];
-  "update:activeCasesFilter": [value: string];
+  "update:activeCasesFilter": [value: CustomerActiveCasesFilter];
   resetFilters: [];
 }>();
 </script>
@@ -75,7 +87,7 @@ defineEmits<{
       >
         <option value="">{{ t("customers.list.filters.groupAll") }}</option>
         <option
-          v-for="opt in GROUP_OPTIONS"
+          v-for="opt in groupOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >
@@ -95,7 +107,7 @@ defineEmits<{
       >
         <option value="">{{ t("customers.list.filters.ownerAll") }}</option>
         <option
-          v-for="opt in OWNER_OPTIONS"
+          v-for="opt in ownerOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >
@@ -107,10 +119,7 @@ defineEmits<{
         class="customer-filters__select"
         :value="activeCasesFilter ?? ''"
         @change="
-          $emit(
-            'update:activeCasesFilter',
-            ($event.target as HTMLSelectElement).value,
-          )
+          $emit('update:activeCasesFilter', normalizeActiveCasesFilter($event))
         "
       >
         <option value="">

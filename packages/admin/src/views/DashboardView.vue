@@ -1,8 +1,10 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute, useRouter } from "vue-router";
 import {
   getAdminAccessToken,
+  logoutAdmin,
   useAdminSession,
 } from "../auth/model/adminSession";
 import { createDashboardRepository } from "./dashboard/model/DashboardRepository";
@@ -15,6 +17,8 @@ import WorkPanelSection from "./dashboard/WorkPanelSection.vue";
  * 仪表盘首页，聚合快捷动作、摘要卡片与工作面板。
  */
 const { t } = useI18n();
+const route = useRoute();
+const router = useRouter();
 const { currentUser } = useAdminSession();
 const dashboard = useDashboardModel({
   repository: createDashboardRepository({
@@ -55,6 +59,16 @@ const feedbackMessage = computed(() => {
   }
 
   return "";
+});
+
+watch(errorCode, (nextErrorCode) => {
+  if (nextErrorCode !== "unauthorized") return;
+
+  logoutAdmin();
+  void router.replace({
+    name: "login",
+    query: { redirect: route.fullPath, reason: "expired" },
+  });
 });
 </script>
 

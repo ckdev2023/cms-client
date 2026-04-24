@@ -20,6 +20,11 @@ import {
   type TenantDbTx,
 } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import type {
+  DocumentFileListInput,
+  DocumentFileReviewInput,
+  DocumentFileUploadInput,
+} from "../documents.types";
 import {
   buildStorageKey,
   DOC_FILE_COLS,
@@ -31,34 +36,11 @@ import {
   toNumberOrNull,
 } from "./documentFiles.shared";
 
-/**
- * DocumentFile 上传参数。
- */
-export type DocumentFileUploadInput = {
-  requirementId: string;
-  fileName: string;
-  data?: Buffer;
-  contentType?: string;
-  storageType?: string;
-  relativePath?: string | null;
-  expiryDate?: string | null;
-};
-
-/**
- * DocumentFile 列表查询参数。
- */
-export type DocumentFileListInput = {
-  requirementId: string;
-  page?: number;
-  limit?: number;
-};
-
-/**
- * DocumentFile 审核参数。
- */
-export type DocumentFileReviewInput = {
-  decision: "approve" | "reject";
-};
+export type {
+  DocumentFileListInput,
+  DocumentFileReviewInput,
+  DocumentFileUploadInput,
+} from "../documents.types";
 
 /**
  * DocumentFile 服务，提供上传、查询、审核与删除能力。

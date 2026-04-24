@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, ref, type Ref } from "vue";
 import {
   requestAdminLogin,
   type AdminLoginPayload,
@@ -196,6 +196,49 @@ function isAdminSession(value: unknown): value is AdminSession {
   );
 }
 
+function decodeBase64UrlToString(value: string): string | null {
+  try {
+    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
+    return atob(`${normalized}${padding}`);
+  } catch {
+    return null;
+  }
+}
+
+function readTokenExpiryMs(token: string): number | null {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+
+  const payloadText = decodeBase64UrlToString(parts[1] ?? "");
+  if (!payloadText) return null;
+
+  try {
+    const payload = JSON.parse(payloadText) as { exp?: unknown };
+    return typeof payload.exp === "number" && Number.isFinite(payload.exp)
+      ? payload.exp * 1000
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function resolveActiveSession(
+  session: AdminSession | null,
+  storage: AdminSessionStorageLike | null | undefined,
+  now: () => number,
+): AdminSession | null {
+  if (!session) return null;
+
+  const expiryMs = readTokenExpiryMs(session.token);
+  if (expiryMs !== null && now() >= expiryMs) {
+    clearSession(storage);
+    return null;
+  }
+
+  return session;
+}
+
 function createSessionFromLoginResponse(
   result: AdminLoginResponse,
   now: () => number,
@@ -224,6 +267,7 @@ function createDemoSession(
 
 function readSession(
   storage: AdminSessionStorageLike | null | undefined,
+  now: () => number,
 ): AdminSession | null {
   if (!storage) return null;
 
@@ -232,7 +276,9 @@ function readSession(
     if (!raw) return null;
 
     const parsed: unknown = JSON.parse(raw);
-    return isAdminSession(parsed) ? parsed : null;
+    return isAdminSession(parsed)
+      ? resolveActiveSession(parsed, storage, now)
+      : null;
   } catch {
     return null;
   }
@@ -263,6 +309,63 @@ function clearSession(
   }
 }
 
+type AdminSessionControllerState = {
+  sessionState: Ref<AdminSession | null>;
+  hydrated: boolean;
+  now: () => number;
+};
+
+function ensureHydratedSession(
+  state: AdminSessionControllerState,
+  storage: AdminSessionStorageLike | null | undefined,
+): AdminSession | null {
+  if (storage) {
+    state.sessionState.value = readSession(storage, state.now);
+    state.hydrated = true;
+    return state.sessionState.value;
+  }
+
+  if (!state.hydrated) {
+    state.hydrated = true;
+  }
+
+  state.sessionState.value = resolveActiveSession(
+    state.sessionState.value,
+    storage,
+    state.now,
+  );
+  return state.sessionState.value;
+}
+
+function persistActiveSession(
+  state: AdminSessionControllerState,
+  session: AdminSession,
+  storage: AdminSessionStorageLike | null | undefined,
+): AdminSession {
+  state.sessionState.value = resolveActiveSession(session, storage, state.now);
+  state.hydrated = true;
+  if (!state.sessionState.value) {
+    clearSession(storage);
+    throw new Error("Cannot persist an expired admin session");
+  }
+  writeSession(storage, state.sessionState.value);
+  return state.sessionState.value;
+}
+
+function clearActiveSession(
+  state: AdminSessionControllerState,
+  storage: AdminSessionStorageLike | null | undefined,
+): void {
+  state.sessionState.value = null;
+  state.hydrated = true;
+  clearSession(storage);
+}
+
+function resetAdminSessionState(state: AdminSessionControllerState): void {
+  state.sessionState.value = null;
+  state.hydrated = false;
+}
+
 /**
  * 创建后台登录态控制器，统一管理内存状态与本地持久化。
  *
@@ -272,58 +375,47 @@ function clearSession(
 export function createAdminSessionController(
   deps: CreateAdminSessionControllerDeps = {},
 ) {
-  const { now = Date.now } = deps;
-  const sessionState = ref<AdminSession | null>(null);
-  let hydrated = false;
-
-  const persistSession = (
-    session: AdminSession,
-    storage: AdminSessionStorageLike | null | undefined,
-  ): AdminSession => {
-    sessionState.value = session;
-    hydrated = true;
-    writeSession(storage, session);
-    return session;
+  const state: AdminSessionControllerState = {
+    now: deps.now ?? Date.now,
+    sessionState: ref<AdminSession | null>(null),
+    hydrated: false,
   };
 
   return {
-    session: computed(() => sessionState.value),
-    currentUser: computed(() => sessionState.value?.user ?? null),
-    isAuthenticated: computed(() => sessionState.value !== null),
+    session: computed(() => state.sessionState.value),
+    currentUser: computed(() => state.sessionState.value?.user ?? null),
+    isAuthenticated: computed(() => state.sessionState.value !== null),
     isAdmin: computed(() =>
-      isPrivilegedAdminRole(sessionState.value?.user?.role),
+      isPrivilegedAdminRole(state.sessionState.value?.user?.role),
     ),
     hydrate(storage: AdminSessionStorageLike | null | undefined) {
-      if (!hydrated) {
-        sessionState.value = readSession(storage);
-        hydrated = true;
-      }
-
-      return sessionState.value;
+      return ensureHydratedSession(state, storage);
     },
     login(
       payload: AdminLoginPayload,
       storage: AdminSessionStorageLike | null | undefined,
     ) {
-      return persistSession(createDemoSession(payload, now), storage);
+      return persistActiveSession(
+        state,
+        createDemoSession(payload, state.now),
+        storage,
+      );
     },
     loginFromResponse(
       result: AdminLoginResponse,
       storage: AdminSessionStorageLike | null | undefined,
     ) {
-      return persistSession(
-        createSessionFromLoginResponse(result, now),
+      return persistActiveSession(
+        state,
+        createSessionFromLoginResponse(result, state.now),
         storage,
       );
     },
     logout(storage: AdminSessionStorageLike | null | undefined) {
-      sessionState.value = null;
-      hydrated = true;
-      clearSession(storage);
+      clearActiveSession(state, storage);
     },
     reset() {
-      sessionState.value = null;
-      hydrated = false;
+      resetAdminSessionState(state);
     },
   };
 }

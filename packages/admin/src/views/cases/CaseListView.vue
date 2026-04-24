@@ -7,7 +7,7 @@ import Button from "../../shared/ui/Button.vue";
 import CaseSummaryCards from "./components/CaseSummaryCards.vue";
 import CaseFilters from "./components/CaseFilters.vue";
 import CaseTable from "./components/CaseTable.vue";
-import { SAMPLE_CASE_LIST, deriveCaseSummaryCards } from "./fixtures";
+import { SAMPLE_CASE_LIST } from "./fixtures";
 import { useCaseListModel } from "./model/useCaseListModel";
 
 /** 案件列表页：装配筛选、摘要卡片、表格等子模块。 */
@@ -15,20 +15,22 @@ const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
-const { filters, customerId, filteredCases, customerLabel, ...actions } =
-  useCaseListModel({
-    allCases: () => SAMPLE_CASE_LIST,
-    routeQuery: computed(() => route.query),
-    replaceQuery: (query) =>
-      router.replace({
-        path: route.path,
-        query: query as Record<string, string>,
-      }),
-  });
-
-const summaryCards = computed(() =>
-  deriveCaseSummaryCards(filteredCases.value),
-);
+const {
+  filters,
+  customerId,
+  filteredCases,
+  customerLabel,
+  summaryCards,
+  ...actions
+} = useCaseListModel({
+  allCases: () => SAMPLE_CASE_LIST,
+  routeQuery: computed(() => route.query),
+  replaceQuery: (query) =>
+    router.replace({
+      path: route.path,
+      query: query as Record<string, string>,
+    }),
+});
 </script>
 
 <template>

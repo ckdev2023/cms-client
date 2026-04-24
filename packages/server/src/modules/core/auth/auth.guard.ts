@@ -64,6 +64,7 @@ export class AuthGuard implements CanActivate {
       orgId: input.orgId,
       userId: input.userId,
       role,
+      ...(input.groupId ? { groupId: input.groupId } : {}),
     };
 
     const requiredRoles =

@@ -15,6 +15,7 @@ const jaJP = {
       localeLabel: "表示言語",
       createLead: "相談を新規作成",
       createCase: "案件を新規作成",
+      logout: "ログアウト",
     },
     nav: {
       asideLabel: "サイドナビゲーション",
@@ -99,6 +100,9 @@ const jaJP = {
       invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
       requestFailed:
         "ログインに失敗しました。しばらくしてから再試行してください。",
+      sessionExpiredNotice:
+        "セッションの有効期限が切れました。もう一度ログインしてください。",
+      loggedOutNotice: "ログアウトしました。",
       demoHint: "有効な管理画面アカウントでログインしてください。",
     },
   },

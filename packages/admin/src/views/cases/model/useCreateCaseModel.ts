@@ -12,6 +12,11 @@ import type {
   CreateCaseStep,
   FamilyScenario,
 } from "../types";
+import {
+  FAMILY_APPLICANT_ROLES,
+  FAMILY_SUPPORTER_ROLES,
+  mapSelectedRelationsToParties,
+} from "./selectedRelationParties";
 
 export type { CreateCaseDraftState } from "../types";
 
@@ -57,9 +62,6 @@ export interface UseCreateCaseModelDeps {
 
 // ─── Pure Helpers ───────────────────────────────────────────────
 
-const FAMILY_APPLICANT_ROLES = ["主申请人", "配偶", "子女"];
-const FAMILY_SUPPORTER_ROLES = ["扶养者", "保证人"];
-
 /**
  * 根据主申请人、模板、申请类型自动生成案件标题。
  *
@@ -79,6 +81,25 @@ export function buildCaseTitle(
     ? `${customerName} ${templateLabel}${applicationType}`
     : `${templateLabel}${applicationType}`;
   return isFamilyBulk ? `${base}（批量）` : base;
+}
+
+function resolveGroupInheritanceLabel(
+  deps: UseCreateCaseModelDeps,
+  inheritedGroup: string,
+): string {
+  const option = deps
+    .groupOptions()
+    .find((group) => group.value === inheritedGroup);
+  return option?.label ?? inheritedGroup;
+}
+
+function hasAnySourceContext(sourceContext: CaseCreateSourceContext): boolean {
+  return !!(
+    sourceContext.sourceLeadId ||
+    sourceContext.customerId ||
+    sourceContext.relationIds?.length ||
+    sourceContext.selectedRelations?.length
+  );
 }
 
 // ─── State Initialization ───────────────────────────────────────
@@ -165,14 +186,11 @@ function createTemplateDerived(
     () => draft.group !== draft.inheritedGroup,
   );
   const needsGroupOverrideReason = computed(() => isGroupOverridden.value);
-  const groupInheritanceLabel = computed(() => {
-    const opt = deps
-      .groupOptions()
-      .find((g) => g.value === draft.inheritedGroup);
-    return opt?.label ?? draft.inheritedGroup;
-  });
-  const hasSourceContext = computed(
-    () => !!(deps.sourceContext.sourceLeadId || deps.sourceContext.customerId),
+  const groupInheritanceLabel = computed(() =>
+    resolveGroupInheritanceLabel(deps, draft.inheritedGroup),
+  );
+  const hasSourceContext = computed(() =>
+    hasAnySourceContext(deps.sourceContext),
   );
   return {
     currentTemplate,
@@ -297,19 +315,28 @@ function createGroupFamilyActions(
     const groupLabel =
       deps.groupOptions().find((g) => g.value === draft.group)?.label ??
       draft.group;
-    additionalParties.value = scenario.defaultDraftParties.map(
-      (dp): CreateCaseRelatedParty => ({
-        name: dp.name,
-        role: dp.role,
-        relation: dp.relation,
-        contact: dp.contact,
-        note: dp.note,
-        reuseDocs: dp.reuseDocs,
-        staleDocWarning: dp.staleDocWarning,
-        group: draft.group,
-        groupLabel,
-      }),
-    );
+    const seededRelations = deps.sourceContext.selectedRelations?.length
+      ? mapSelectedRelationsToParties({
+          relations: deps.sourceContext.selectedRelations,
+          group: draft.group,
+          groupLabel,
+        })
+      : [];
+    additionalParties.value = seededRelations.length
+      ? seededRelations
+      : scenario.defaultDraftParties.map(
+          (dp): CreateCaseRelatedParty => ({
+            name: dp.name,
+            role: dp.role,
+            relation: dp.relation,
+            contact: dp.contact,
+            note: dp.note,
+            reuseDocs: dp.reuseDocs,
+            staleDocWarning: dp.staleDocWarning,
+            group: draft.group,
+            groupLabel,
+          }),
+        );
     draft.familyBulkSeeded = true;
   }
   return { syncInheritedGroup, seedFamilyBulkParties };

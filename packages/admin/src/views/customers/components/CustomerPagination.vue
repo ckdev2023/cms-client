@@ -8,6 +8,8 @@ import { useI18n } from "vue-i18n";
 const { t } = useI18n();
 
 defineProps<{
+  page: number;
+  totalPages: number;
   start: number;
   end: number;
   total: number;
@@ -28,7 +30,7 @@ defineEmits<{
       <button
         class="customer-pagination__btn"
         type="button"
-        disabled
+        :disabled="page <= 1"
         @click="$emit('prev')"
       >
         {{ t("customers.list.pagination.prev") }}
@@ -36,7 +38,7 @@ defineEmits<{
       <button
         class="customer-pagination__btn"
         type="button"
-        disabled
+        :disabled="page >= totalPages"
         @click="$emit('next')"
       >
         {{ t("customers.list.pagination.next") }}

@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
+import { logoutAdmin } from "../auth/model/adminSession";
 import NavIcon from "./NavIcon.vue";
 import { localeOptions, setAppLocale, type AppLocale } from "../i18n";
 
@@ -28,6 +29,14 @@ const currentLocale = computed<AppLocale>({
 
 const globalSearchInputId = "topbar-global-search";
 const localeSelectId = "topbar-locale-select";
+
+/**
+ * 清理本地后台登录态，并跳回登录页显示退出提示。
+ */
+function handleLogout(): void {
+  logoutAdmin();
+  void router.push({ name: "login", query: { reason: "loggedOut" } });
+}
 </script>
 
 <template>
@@ -86,6 +95,9 @@ const localeSelectId = "topbar-locale-select";
             aria-disabled="true"
           >
             {{ t("shell.topbar.createCase") }}
+          </button>
+          <button class="topbar-action" type="button" @click="handleLogout">
+            {{ t("shell.topbar.logout") }}
           </button>
         </template>
       </div>

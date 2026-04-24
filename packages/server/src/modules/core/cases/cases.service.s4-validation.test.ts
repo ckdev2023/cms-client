@@ -132,7 +132,7 @@ void test("update ignores caseNo patch", async () => {
   assert.equal(updated.caseNo, currentCaseNo);
   const updateCall = calls.find((call) => call.sql.includes("update cases"));
   assert.ok(updateCall);
-  assert.equal(updateCall.params?.[5], currentCaseNo);
+  assert.equal(updateCall.params?.[6], currentCaseNo);
 });
 
 void test("update rejects invalid priority enum", async () => {

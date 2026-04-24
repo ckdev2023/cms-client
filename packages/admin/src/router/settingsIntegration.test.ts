@@ -8,7 +8,10 @@ import {
   findNavItem,
   getVisibleNavGroups,
 } from "../shell/nav-config";
-import { adminSessionController } from "../auth/model/adminSession";
+import {
+  ADMIN_SESSION_STORAGE_KEY,
+  adminSessionController,
+} from "../auth/model/adminSession";
 import { i18n, setAppLocale } from "../i18n";
 import SideNav from "../shell/SideNav.vue";
 
@@ -174,7 +177,7 @@ async function mountSideNav(isAdmin: boolean) {
   if (isAdmin) {
     adminSessionController.login(
       { email: "admin@test.com", password: "pw" },
-      null,
+      window.localStorage,
     );
   }
 
@@ -206,11 +209,13 @@ async function mountSideNav(isAdmin: boolean) {
 
 describe("SideNav — /settings visibility", () => {
   beforeEach(() => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
     setAppLocale("zh-CN");
   });
 
   afterEach(() => {
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
   });
 

@@ -166,7 +166,51 @@ export interface CaseCreateSourceContext {
   /**
    *
    */
+  relationIds?: string[];
+  /**
+   *
+   */
+  selectedRelations?: CaseCreateSelectedRelation[];
+  /**
+   *
+   */
   familyBulkMode: boolean;
+}
+
+/** 批量建案来源里透传的关联人上下文。 */
+export interface CaseCreateSelectedRelation {
+  /**
+   *
+   */
+  id: string;
+  /**
+   *
+   */
+  name: string;
+  /**
+   *
+   */
+  relationType: string;
+  /**
+   *
+   */
+  roleTitle?: string;
+  /**
+   *
+   */
+  phone?: string;
+  /**
+   *
+   */
+  email?: string;
+  /**
+   *
+   */
+  tags?: string[];
+  /**
+   *
+   */
+  note?: string;
 }
 
 /** 新建案件关联人草稿条目（Modal 快速新建或家族批量初始化均使用此结构）。 */

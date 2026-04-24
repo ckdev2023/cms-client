@@ -23,6 +23,7 @@ import {
   type CaseListQueryParams,
 } from "../query";
 import { filterByScope } from "../fixtures";
+import { adaptCaseSummaryCards } from "./CaseAdapterMappers";
 
 // ─── Filter matching ────────────────────────────────────────────
 
@@ -175,12 +176,16 @@ function createDerivedState(
       (item) => item.customerId === customerId.value,
     )?.applicant;
   });
+  const summaryCards = computed(() =>
+    adaptCaseSummaryCards(filteredCases.value),
+  );
   return {
     scopedCases,
     filteredCases,
     activeFilterCount,
     isFilterActive,
     customerLabel,
+    summaryCards,
   };
 }
 

@@ -9,12 +9,14 @@ import SegmentedControl, {
 } from "../../../shared/ui/SegmentedControl.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { LogFilter } from "../types";
+import type { CustomerRepository } from "../model/CustomerRepository";
 import { getLogTypeLabel } from "../types";
 import { useCustomerLogsModel } from "../model/useCustomerLogsModel";
 
 /** 操作日志 Tab：展示按类型筛选的日志表格，支持分页。 */
 const props = defineProps<{
   customerId: string;
+  repository: Pick<CustomerRepository, "listLogs">;
 }>();
 
 const { t } = useI18n();
@@ -26,10 +28,16 @@ const {
   pagedLogs,
   totalCount,
   totalPages,
+  loading,
+  errorCode,
   setLogFilter,
   prevPage,
   nextPage,
-} = useCustomerLogsModel(customerIdRef);
+  retry,
+} = useCustomerLogsModel({
+  customerId: customerIdRef,
+  repository: props.repository,
+});
 
 const segmentOptions = computed<SegmentOption<LogFilter>[]>(() => [
   { value: "all", label: t("customers.detail.logsTab.filterAll") },
@@ -89,7 +97,22 @@ function formatDateTime(iso: string): string {
         </div>
       </div>
 
-      <div v-if="pagedLogs.length" class="logs-tab__table-wrap">
+      <div v-if="loading" class="logs-tab__state">
+        <p class="logs-tab__state-text">
+          {{ t("customers.detail.logsTab.loading") }}
+        </p>
+      </div>
+
+      <div v-else-if="errorCode" class="logs-tab__state">
+        <p class="logs-tab__state-text">
+          {{ t("customers.detail.logsTab.requestFailed") }}
+        </p>
+        <Button size="sm" pill @click="retry">
+          {{ t("customers.detail.logsTab.retry") }}
+        </Button>
+      </div>
+
+      <div v-else-if="pagedLogs.length" class="logs-tab__table-wrap">
         <table class="logs-tab__table">
           <thead>
             <tr>
@@ -199,6 +222,24 @@ function formatDateTime(iso: string): string {
 
 .logs-tab__filter {
   flex-shrink: 0;
+}
+
+.logs-tab__state {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-2);
+}
+
+.logs-tab__state-text {
+  margin: 0;
+  color: var(--color-text-2);
+  font-weight: var(--font-weight-semibold);
 }
 
 .logs-tab__table-wrap {

@@ -15,6 +15,13 @@ const customerDetail = {
   actions: {
     createCase: "Start case",
     batchCreateCase: "Batch create cases",
+    createCaseGate: {
+      blockedTitle: "Case creation is locked",
+      needsSign:
+        "BMV customers must complete signing before a case can be created.",
+      intakeNotReady:
+        "Signing is recorded, but the intake stage is not ready for case creation yet. Refresh and try again.",
+    },
   },
   header: {
     number: "No.",
@@ -55,6 +62,101 @@ const customerDetail = {
       note: "Note",
     },
   },
+  bmvIntake: {
+    ariaLabel: "BMV intake card",
+    eyebrow: "P1 intake",
+    title: "BMV intake",
+    nextStep: "Next step",
+    gateHint: "Case gate",
+    note: "Operational note",
+    steps: {
+      questionnaire: "Questionnaire",
+      quote: "Quote",
+      sign: "Sign",
+    },
+    timeline: {
+      questionnaireSentAt: "Questionnaire sent",
+      questionnaireReturnedAt: "Questionnaire returned",
+      quoteGeneratedAt: "Quote generated",
+      quoteConfirmedAt: "Quote confirmed",
+      signedAt: "Signed at",
+    },
+    stage: {
+      not_started: "Not started",
+      questionnaire_pending: "Questionnaire pending",
+      quote_pending: "Quote pending",
+      sign_pending: "Sign pending",
+      ready_for_case_creation: "Ready for case creation",
+    },
+    questionnaireStatus: {
+      not_started: "Not sent",
+      sent: "Sent",
+      returned: "Returned",
+    },
+    quoteStatus: {
+      not_started: "Not generated",
+      generated: "Generated",
+      confirmed: "Confirmed",
+    },
+    signStatus: {
+      not_started: "Not started",
+      pending: "Pending",
+      signed: "Signed",
+    },
+    nextStepValue: {
+      not_started: "Send the questionnaire to start intake",
+      questionnaire_pending_sent:
+        "Wait for the customer to return the questionnaire",
+      quote_pending: "Generate the quote and move the signing forward",
+      sign_pending: "Confirm the signing schedule with the customer",
+      ready_for_case_creation:
+        "Create the formal case and generate the document checklist",
+    },
+    gateHintValue: {
+      locked: "Case creation stays locked until signing is completed",
+      ready: "Signing is complete — formal case creation is now available",
+    },
+    actions: {
+      questionnaire: "Send questionnaire",
+      quote: "Generate quote",
+      sign: "Record signing",
+    },
+    actionHint: {
+      questionnaire: {
+        ready: "Start intake by sending the questionnaire to the customer",
+        alreadySent: "Questionnaire already sent",
+        stageCompleted:
+          "Questionnaire stage is already completed; do not send it again",
+        signed: "Customer is already signed",
+      },
+      quote: {
+        ready: "Generate the quote and move the intake flow into signing",
+        needsQuestionnaire: "Send the questionnaire first",
+        stageCompleted:
+          "Quote stage is already completed; do not generate it again",
+        signed: "Customer is already signed",
+      },
+      sign: {
+        ready: "Record signing to unlock formal case creation",
+        needsQuote: "Generate the quote first",
+        signed: "Customer is already signed",
+      },
+    },
+    actionState: {
+      questionnaireSuccess:
+        "Questionnaire sent successfully and latest customer detail was refreshed",
+      quoteSuccess:
+        "Quote generated successfully and latest customer detail was refreshed",
+      signSuccess:
+        "Signing recorded successfully and latest customer detail was refreshed",
+      unauthorized: "You are not allowed to update this BMV intake flow",
+      validationError:
+        "This BMV action is no longer available. The latest detail was reloaded when possible",
+      requestFailed: "Could not update the BMV intake flow. Please try again.",
+      refreshFailed:
+        "The BMV action completed, but the latest customer detail could not be refreshed",
+    },
+  },
   casesTab: {
     title: "Related cases",
     create: "Start case",
@@ -75,6 +177,9 @@ const customerDetail = {
     statusArchived: "Archived",
     open: "Open",
     openCase: "Open case {name}",
+    loading: "Loading related cases…",
+    requestFailed: "Could not load related cases",
+    retry: "Retry",
     emptyAll: "No related cases",
     emptyActive: "No active cases",
     emptyArchived: "No archived cases",
@@ -83,6 +188,9 @@ const customerDetail = {
     title: "Contacts",
     add: "Add contact",
     batchCreate: "Batch create cases for contacts",
+    loading: "Loading contacts…",
+    requestFailed: "Could not load contacts. Please try again.",
+    retry: "Retry",
     searchPlaceholder: "Search: name / phone / email / tags",
     searchLabel: "Search contacts",
     count: "{count} contacts total",
@@ -100,10 +208,29 @@ const customerDetail = {
       "Add key contacts first — you can later batch-create cases from selected contacts.",
     emptySearch: "No matching contacts",
     emptySearchHint: "Try different keywords or add a new contact.",
+    form: {
+      createTitle: "Add contact",
+      editTitle: "Edit contact",
+      nameLabel: "Name",
+      namePlaceholder: "Name",
+      relationTypeLabel: "Relationship type",
+      roleTitleLabel: "Role / title",
+      roleTitlePlaceholder: "Role / title",
+      phoneLabel: "Phone",
+      emailLabel: "Email",
+      cancel: "Cancel",
+      create: "Create",
+      save: "Save",
+      validationNameRequired: "Name is required.",
+      requestFailed: "Could not save contact. Please try again.",
+    },
   },
   commsTab: {
     title: "Communications",
     addComm: "Log communication",
+    loading: "Loading communications…",
+    requestFailed: "Could not load communications. Please try again.",
+    retry: "Retry",
     filterLabel: "Visibility filter",
     filterAll: "All",
     filterInternal: "Internal",
@@ -118,6 +245,9 @@ const customerDetail = {
   },
   logsTab: {
     title: "Activity log",
+    loading: "Loading activity logs…",
+    requestFailed: "Could not load activity logs. Please try again.",
+    retry: "Retry",
     filterLabel: "Log type filter",
     filterAll: "All",
     filterInfo: "Info change",

@@ -3,12 +3,22 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
+import CustomerBmvIntakeCard from "./CustomerBmvIntakeCard.vue";
 import type { CustomerDetail } from "../types";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
+import type { CustomerRepository } from "../model/CustomerRepository";
 
 /** 基础信息 Tab：以只读/编辑双模式展示客户的 13 个基础字段。 */
 const props = defineProps<{
   customer: CustomerDetail;
+  repository: Pick<
+    CustomerRepository,
+    | "updateCustomerBasicInfo"
+    | "sendBmvQuestionnaire"
+    | "generateBmvQuote"
+    | "recordBmvSign"
+  >;
+  refreshCustomer?: () => Promise<void>;
 }>();
 
 const { t } = useI18n();
@@ -24,7 +34,11 @@ const {
   startEditing,
   cancelEditing,
   save,
-} = useCustomerBasicInfoModel(customerRef);
+} = useCustomerBasicInfoModel({
+  customer: customerRef,
+  repository: props.repository,
+  refreshCustomer: props.refreshCustomer,
+});
 
 const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
@@ -52,6 +66,13 @@ const displayValues = computed(() =>
           </template>
         </div>
       </div>
+
+      <CustomerBmvIntakeCard
+        :customer="customer"
+        :repository="repository"
+        :refresh-customer="refreshCustomer"
+        class="basic-info__intake-card"
+      />
 
       <form v-if="displayValues" class="basic-info__form" @submit.prevent>
         <div class="basic-info__field">
@@ -398,6 +419,10 @@ const displayValues = computed(() =>
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+}
+
+.basic-info__intake-card {
+  margin-top: 20px;
 }
 
 .basic-info__form {

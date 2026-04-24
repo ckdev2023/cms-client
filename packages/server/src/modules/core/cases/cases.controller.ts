@@ -14,8 +14,21 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
+import {
+  requireString,
+  parseOptionalString,
+  parseOptionalNullableString,
+  parseOptionalNullableNumber,
+  parseObject,
+  parsePage,
+  parseLimit,
+} from "./cases.parsers";
+
 import { RequireRoles } from "../auth/auth.decorators";
-import { PermissionsService } from "../auth/permissions.service";
+import {
+  PermissionsService,
+  resolveRoleTier,
+} from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CasesService } from "./cases.service";
 
@@ -47,6 +60,8 @@ type CreateCaseBody = {
   residenceExpiryDate?: unknown;
   resultOutcome?: unknown;
   quotePrice?: unknown;
+  groupId?: unknown;
+  crossGroupReason?: unknown;
 };
 
 type UpdateCaseBody = {
@@ -73,11 +88,14 @@ type UpdateCaseBody = {
   quotePrice?: unknown;
   overseasVisaStartAt?: unknown;
   entryConfirmedAt?: unknown;
+  groupId?: unknown;
+  groupTransferReason?: unknown;
 };
 
 type TransitionBody = {
   toStage?: unknown;
   toStatus?: unknown;
+  closeReason?: unknown;
 };
 
 type BillingRiskAckBody = {
@@ -101,68 +119,8 @@ type ListCasesQuery = {
   companyId?: unknown;
   page?: unknown;
   limit?: unknown;
+  view?: unknown;
 };
-
-function requireString(value: unknown, field: string): string {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new BadRequestException(`Invalid ${field}`);
-  }
-  return value;
-}
-
-function parseOptionalString(
-  value: unknown,
-  field: string,
-): string | undefined {
-  if (value === undefined) return undefined;
-  return requireString(value, field);
-}
-
-function parseOptionalNullableString(
-  value: unknown,
-  field: string,
-): string | null | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  return requireString(value, field);
-}
-
-function parseOptionalNullableNumber(
-  value: unknown,
-  field: string,
-): number | null | undefined {
-  if (value === undefined) return undefined;
-  if (value === null) return null;
-  const n = Number(value);
-  if (!Number.isFinite(n)) throw new BadRequestException(`Invalid ${field}`);
-  return n;
-}
-
-function parseObject(value: unknown): Record<string, unknown> | undefined {
-  if (value === undefined) return undefined;
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  throw new BadRequestException("Invalid object");
-}
-
-function parsePage(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid page");
-  const i = Math.floor(n);
-  if (i < 1) throw new BadRequestException("Invalid page");
-  return i;
-}
-
-function parseLimit(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid limit");
-  const i = Math.floor(n);
-  if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
-  return i;
-}
 
 /**
  * UpdateCaseBody → CaseUpdateInput 変換。
@@ -173,6 +131,11 @@ function parseUpdateCaseBody(body: UpdateCaseBody) {
   return {
     caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
     ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
+    groupId: parseOptionalNullableString(body.groupId, "groupId"),
+    groupTransferReason: parseOptionalNullableString(
+      body.groupTransferReason,
+      "groupTransferReason",
+    ),
     dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
     metadata: parseObject(body.metadata),
     caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
@@ -250,10 +213,15 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    if (!this.permissionsService.canCreateCase(ctx.role)) {
+      throw new ForbiddenException("Insufficient permissions to create case");
+    }
+
     return this.casesService.create(ctx, {
       customerId: requireString(body.customerId, "customerId"),
       caseTypeCode: requireString(body.caseTypeCode, "caseTypeCode"),
       ownerUserId: requireString(body.ownerUserId, "ownerUserId"),
+      groupId: parseOptionalNullableString(body.groupId, "groupId"),
       stage: parseOptionalString(body.stage, "stage"),
       status: parseOptionalString(body.status, "status"),
       dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
@@ -292,6 +260,10 @@ export class CasesController {
         "resultOutcome",
       ),
       quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
+      crossGroupReason: parseOptionalNullableString(
+        body.crossGroupReason,
+        "crossGroupReason",
+      ),
     });
   }
 
@@ -307,7 +279,7 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
-    return this.casesService.list(ctx, {
+    const listInput = {
       stage: parseOptionalString(query.stage, "stage"),
       status: parseOptionalString(query.status, "status"),
       resultOutcome: parseOptionalString(query.resultOutcome, "resultOutcome"),
@@ -318,7 +290,46 @@ export class CasesController {
       companyId: parseOptionalString(query.companyId, "companyId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
-    });
+      visibility: {
+        userId: ctx.userId,
+        roleTier: resolveRoleTier(ctx.role),
+        groupId: ctx.groupId,
+      },
+    };
+
+    if (query.view === "summary") {
+      return this.casesService.listSummary(ctx, listInput);
+    }
+    return this.casesService.list(ctx, listInput);
+  }
+
+  /**
+   * 获取案件详情聚合 DTO（含关联展示名、tab 计数器、校验/收费概要）。
+   * @param req HTTP 请求对象
+   * @param id 案件 ID
+   * @returns 聚合 DTO
+   */
+  @RequireRoles("viewer")
+  @Get(":id/aggregate")
+  async getAggregate(@Req() req: HttpRequest, @Param("id") id: string) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const aggregate = await this.casesService.getDetailAggregate(ctx, id);
+    if (!aggregate) throw new BadRequestException("Case not found");
+
+    if (
+      !this.permissionsService.canViewCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        aggregate.case,
+      )
+    ) {
+      throw new ForbiddenException("Insufficient permissions to view case");
+    }
+
+    return aggregate;
   }
 
   /**
@@ -335,6 +346,18 @@ export class CasesController {
 
     const caseEntity = await this.casesService.get(ctx, id);
     if (!caseEntity) throw new BadRequestException("Case not found");
+
+    if (
+      !this.permissionsService.canViewCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException("Insufficient permissions to view case");
+    }
+
     return caseEntity;
   }
 
@@ -377,9 +400,12 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    await this.assertCanEditCase(ctx, id);
+
     return this.casesService.transition(ctx, id, {
       toStage: parseOptionalString(body.toStage, "toStage"),
       toStatus: parseOptionalString(body.toStatus, "toStatus"),
+      closeReason: parseOptionalNullableString(body.closeReason, "closeReason"),
     });
   }
 
@@ -399,6 +425,8 @@ export class CasesController {
   ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.assertCanEditCase(ctx, id);
 
     return this.casesService.acknowledgeBillingRisk(ctx, id, {
       reasonCode: requireString(body.reasonCode, "reasonCode"),
@@ -423,6 +451,8 @@ export class CasesController {
   ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.assertCanEditCase(ctx, id);
 
     return this.casesService.updatePostApprovalStage(ctx, id, {
       stage: requireString(body.stage, "stage"),
@@ -455,7 +485,12 @@ export class CasesController {
     if (!caseEntity) return;
 
     if (
-      !this.permissionsService.canEditCase(ctx.userId, ctx.role, caseEntity)
+      !this.permissionsService.canEditCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
     ) {
       throw new ForbiddenException("Insufficient permissions to edit case");
     }

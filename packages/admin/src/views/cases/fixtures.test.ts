@@ -1,3 +1,9 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: fixture data invariants — shape, coverage, helper functions.
+// Does NOT test: mock repository behaviour (→ repository.test.ts),
+//   adapters, builders, or composable logic.
+// ────────────────────────────────────────────────────────────────
+
 import { describe, expect, it } from "vitest";
 import { CASE_SAMPLE_KEYS } from "./constants";
 import {
@@ -12,7 +18,6 @@ import {
   SAMPLE_SUMMARY_CARDS,
 } from "./fixtures";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
-import { createMockCaseRepository } from "./repository";
 import type { CaseListItem } from "./types";
 
 describe("cases/fixtures", () => {
@@ -270,167 +275,5 @@ describe("cases/fixtures-detail (CASE_DETAIL_SAMPLES)", () => {
       if (key === "archived") continue;
       expect(CASE_DETAIL_SAMPLES[key].readonly).toBe(false);
     }
-  });
-});
-
-describe("cases/repository (mock)", () => {
-  const repo = createMockCaseRepository();
-
-  describe("listCases", () => {
-    it("returns items for scope=all", () => {
-      const result = repo.listCases({
-        scope: "all",
-        search: "",
-        stage: "",
-        owner: "",
-        group: "",
-        risk: "",
-        validation: "",
-      });
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    it("filters by customerId", () => {
-      const custId = SAMPLE_CASE_LIST.find((c) => c.customerId)!.customerId!;
-      const result = repo.listCases({
-        scope: "all",
-        search: "",
-        stage: "",
-        owner: "",
-        group: "",
-        risk: "",
-        validation: "",
-        customerId: custId,
-      });
-      expect(result.length).toBeGreaterThan(0);
-      for (const c of result) {
-        expect(c.customerId).toBe(custId);
-      }
-    });
-
-    it("filters by search text", () => {
-      const result = repo.listCases({
-        scope: "all",
-        search: "李娜",
-        stage: "",
-        owner: "",
-        group: "",
-        risk: "",
-        validation: "",
-      });
-      expect(result.length).toBeGreaterThanOrEqual(1);
-      expect(result[0].applicant).toBe("李娜");
-    });
-
-    it("filters by stage", () => {
-      const result = repo.listCases({
-        scope: "all",
-        search: "",
-        stage: "S9",
-        owner: "",
-        group: "",
-        risk: "",
-        validation: "",
-      });
-      for (const c of result) {
-        expect(c.stageId).toBe("S9");
-      }
-    });
-
-    it("filters by risk status", () => {
-      const result = repo.listCases({
-        scope: "all",
-        search: "",
-        stage: "",
-        owner: "",
-        group: "",
-        risk: "critical",
-        validation: "",
-      });
-      expect(result.length).toBeGreaterThan(0);
-      for (const c of result) {
-        expect(c.riskStatus).toBe("critical");
-      }
-    });
-  });
-
-  describe("getDetail", () => {
-    it("returns detail for a list item with sampleKey", () => {
-      const workCase = SAMPLE_CASE_LIST.find((c) => c.sampleKey === "work")!;
-      const detail = repo.getDetail(workCase.id);
-      expect(detail).toBeDefined();
-      expect(detail!.id).toBe(workCase.id);
-      expect(detail!.title).toBeTruthy();
-    });
-
-    it("returns detail for archived list item (readonly)", () => {
-      const archived = SAMPLE_CASE_LIST.find(
-        (c) => c.sampleKey === "archived",
-      )!;
-      const detail = repo.getDetail(archived.id);
-      expect(detail).toBeDefined();
-      expect(detail!.readonly).toBe(true);
-    });
-
-    it("all list items have a sampleKey that resolves to a detail", () => {
-      for (const item of SAMPLE_CASE_LIST) {
-        expect(item.sampleKey).toBeDefined();
-        expect(repo.getDetail(item.id)).toBeDefined();
-      }
-    });
-
-    it("returns undefined for unknown ID", () => {
-      expect(repo.getDetail("NONEXISTENT")).toBeUndefined();
-    });
-
-    it("returns all 6 details via sampleKey-bearing list items", () => {
-      for (const key of CASE_SAMPLE_KEYS) {
-        const listItem = SAMPLE_CASE_LIST.find((c) => c.sampleKey === key);
-        expect(listItem).toBeDefined();
-        const detail = repo.getDetail(listItem!.id);
-        expect(detail).toBeDefined();
-      }
-    });
-  });
-
-  describe("getSummaryCards", () => {
-    it("returns 4 cards", () => {
-      expect(repo.getSummaryCards()).toHaveLength(4);
-    });
-
-    it("derives cards from items when passed", () => {
-      const items = repo.listCases({
-        scope: "all",
-        search: "",
-        stage: "",
-        owner: "",
-        group: "",
-        risk: "",
-        validation: "",
-      });
-      const cards = repo.getSummaryCards(items);
-      expect(cards).toHaveLength(4);
-      expect(cards[0].key).toBe("activeCases");
-    });
-  });
-
-  describe("getCreateCustomers", () => {
-    it("returns at least 3 customers", () => {
-      expect(repo.getCreateCustomers().length).toBeGreaterThanOrEqual(3);
-    });
-  });
-
-  describe("getCreateTemplates", () => {
-    it("returns family and work templates", () => {
-      const templates = repo.getCreateTemplates();
-      expect(templates).toHaveLength(2);
-    });
-  });
-
-  describe("getFamilyScenario", () => {
-    it("returns scenario with draft parties", () => {
-      const scenario = repo.getFamilyScenario();
-      expect(scenario.defaultDraftParties.length).toBeGreaterThan(0);
-    });
   });
 });

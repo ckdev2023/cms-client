@@ -1,37 +1,98 @@
-import { ref, computed, type Ref } from "vue";
+import { computed, ref, watch, type Ref } from "vue";
 import type { CustomerDetail, DetailTab } from "../types";
-import { SAMPLE_CUSTOMER_DETAILS } from "../fixtures";
+import {
+  CustomerRepositoryError,
+  type CustomerRepository,
+} from "./CustomerRepository";
 
-/**
- * 客户详情页整体状态编排，管理当前客户数据与激活的 Tab。
- *
- * @param customerId 路由传入的客户 ID（响应式）
- * @returns 详情页状态：客户数据、激活 Tab、切换 Tab 方法等
- */
-export function useCustomerDetailModel(customerId: Ref<string>) {
-  const activeTab = ref<DetailTab>("basic");
+type DetailRepository = Pick<CustomerRepository, "getCustomerDetail">;
 
-  const customer = computed<CustomerDetail | null>(
-    () => SAMPLE_CUSTOMER_DETAILS[customerId.value] ?? null,
+type CustomerDetailModelErrorCode =
+  | "unauthorized"
+  | "notFound"
+  | "requestFailed";
+
+type UseCustomerDetailModelInput = {
+  customerId: Ref<string>;
+  repository: DetailRepository;
+};
+
+function mapCustomerDetailError(error: unknown): CustomerDetailModelErrorCode {
+  if (error instanceof CustomerRepositoryError) {
+    if (error.code === "UNAUTHORIZED") return "unauthorized";
+    if (error.status === 404) return "notFound";
+  }
+  return "requestFailed";
+}
+
+function useCustomerDetailLoader(input: UseCustomerDetailModelInput) {
+  const customer = ref<CustomerDetail | null>(null);
+  const loading = ref(false);
+  const errorCode = ref<CustomerDetailModelErrorCode | null>(null);
+  let requestVersion = 0;
+
+  async function loadCustomer(): Promise<void> {
+    const nextCustomerId = input.customerId.value.trim();
+    if (!nextCustomerId) {
+      customer.value = null;
+      errorCode.value = "notFound";
+      loading.value = false;
+      return;
+    }
+
+    const activeRequest = ++requestVersion;
+    loading.value = true;
+    errorCode.value = null;
+    try {
+      const detail = await input.repository.getCustomerDetail(nextCustomerId);
+      if (activeRequest !== requestVersion) return;
+      customer.value = detail;
+    } catch (error) {
+      if (activeRequest !== requestVersion) return;
+      customer.value = null;
+      errorCode.value = mapCustomerDetailError(error);
+    } finally {
+      if (activeRequest === requestVersion) loading.value = false;
+    }
+  }
+
+  watch(
+    input.customerId,
+    () => {
+      void loadCustomer();
+    },
+    { immediate: true },
   );
 
-  const notFound = computed(() => customer.value === null);
+  return { customer, loading, errorCode, retry: loadCustomer };
+}
 
-  const avatarInitials = computed(() => {
-    const c = customer.value;
-    if (!c) return "?";
-    return c.displayName.slice(0, 1);
-  });
-
-  function switchTab(tab: DetailTab): void {
-    activeTab.value = tab;
-  }
+/**
+ * 客户详情页整体状态编排，管理当前客户数据与激活 Tab。
+ *
+ * @param input - 详情页依赖项
+ * @param input.customerId - 当前路由中的客户 ID
+ * @param input.repository - 客户详情读取仓储
+ * @returns 详情页状态与交互方法
+ */
+export function useCustomerDetailModel(input: UseCustomerDetailModelInput) {
+  const activeTab = ref<DetailTab>("basic");
+  const detail = useCustomerDetailLoader(input);
+  const notFound = computed(() => detail.errorCode.value === "notFound");
+  const avatarInitials = computed(
+    () => detail.customer.value?.displayName.slice(0, 1) ?? "?",
+  );
 
   return {
     activeTab,
-    customer,
+    customer: computed(() => detail.customer.value),
+    loading: computed(() => detail.loading.value),
+    errorCode: computed(() => detail.errorCode.value),
     notFound,
     avatarInitials,
-    switchTab,
+    switchTab(tab: DetailTab): void {
+      activeTab.value = tab;
+    },
+    retry: detail.retry,
   };
 }

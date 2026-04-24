@@ -10,6 +10,7 @@ export type RequestContext = {
   orgId: string;
   userId: string;
   role: Role;
+  groupId?: string;
 };
 
 /**
@@ -18,6 +19,7 @@ export type RequestContext = {
 export type RequestAuthInput = {
   orgId: string;
   userId: string;
+  groupId?: string;
 };
 
 declare module "http" {
@@ -72,15 +74,18 @@ export function readRequestAuthJwtSecret(): string {
 export function parseRequestContext(headers: Record<string, unknown>): {
   orgId: string | null;
   userId: string | null;
+  groupId: string | null;
   role: unknown;
 } {
   const orgId =
     typeof headers["x-org-id"] === "string" ? headers["x-org-id"] : null;
   const userId =
     typeof headers["x-user-id"] === "string" ? headers["x-user-id"] : null;
+  const groupId =
+    typeof headers["x-group-id"] === "string" ? headers["x-group-id"] : null;
   const role = headers["x-role"];
 
-  return { orgId, userId, role };
+  return { orgId, userId, groupId, role };
 }
 
 let _cachedAuthConfig: AuthConfig | null = null;
@@ -153,7 +158,11 @@ export function parseVerifiedRequestAuthInputFromHeaders(
   const parsed = parseRequestContext(headers);
   if (!parsed.orgId || !parsed.userId) return null;
   if (!isUuid(parsed.orgId) || !isUuid(parsed.userId)) return null;
-  return { orgId: parsed.orgId, userId: parsed.userId };
+  return {
+    orgId: parsed.orgId,
+    userId: parsed.userId,
+    ...(parsed.groupId ? { groupId: parsed.groupId } : {}),
+  };
 }
 
 function parseBearerToken(value: string): string | null {
@@ -202,6 +211,7 @@ export function signRequestAuthToken(
   const payload = {
     orgId: input.orgId,
     userId: input.userId,
+    ...(input.groupId ? { groupId: input.groupId } : {}),
     iat: now,
     exp: now + REQUEST_AUTH_JWT_EXPIRY_SECONDS,
   };

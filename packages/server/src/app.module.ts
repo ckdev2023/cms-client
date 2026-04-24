@@ -27,6 +27,8 @@ import { RemindersController } from "./modules/core/reminders/reminders.controll
 import { RemindersService } from "./modules/core/reminders/reminders.service";
 import { ResidencePeriodsController } from "./modules/core/residence-periods/residencePeriods.controller";
 import { ResidencePeriodsService } from "./modules/core/residence-periods/residencePeriods.service";
+import { GeneratedDocumentsController } from "./modules/core/generated-documents/generatedDocuments.controller";
+import { GeneratedDocumentsService } from "./modules/core/generated-documents/generatedDocuments.service";
 import { ReviewRecordsController } from "./modules/core/review-records/reviewRecords.controller";
 import { ReviewRecordsService } from "./modules/core/review-records/reviewRecords.service";
 import { CommunicationLogsController } from "./modules/core/communication-logs/communicationLogs.controller";
@@ -103,6 +105,7 @@ import {
     RemindersController,
     ResidencePeriodsController,
     ValidationRunsController,
+    GeneratedDocumentsController,
     ReviewRecordsController,
     SubmissionPackagesController,
     TasksController,
@@ -144,6 +147,7 @@ import {
     RemindersService,
     ResidencePeriodsService,
     ValidationRunsService,
+    GeneratedDocumentsService,
     ReviewRecordsService,
     SubmissionPackagesService,
     TasksService,

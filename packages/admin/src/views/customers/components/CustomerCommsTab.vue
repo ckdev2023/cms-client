@@ -8,12 +8,14 @@ import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
 import type { CommFilter, CustomerComm } from "../types";
+import type { CustomerRepository } from "../model/CustomerRepository";
 import { getCommChannelLabel } from "../types";
 import { useCustomerCommsModel } from "../model/useCustomerCommsModel";
 
 /** 沟通记录 Tab：展示按可见范围筛选的沟通时间线，保留"记录沟通"入口占位。 */
 const props = defineProps<{
   customerId: string;
+  repository: Pick<CustomerRepository, "listComms">;
 }>();
 
 const { t } = useI18n();
@@ -25,8 +27,14 @@ const {
   totalCount,
   internalCount,
   customerCount,
+  loading,
+  errorCode,
   setCommFilter,
-} = useCustomerCommsModel(customerIdRef);
+  retry,
+} = useCustomerCommsModel({
+  customerId: customerIdRef,
+  repository: props.repository,
+});
 
 const segmentOptions = computed<SegmentOption<CommFilter>[]>(() => [
   { value: "all", label: t("customers.detail.commsTab.filterAll") },
@@ -111,7 +119,22 @@ function formatDateTime(iso: string): string {
         </div>
       </div>
 
-      <div v-if="filteredComms.length" class="comms-tab__timeline">
+      <div v-if="loading" class="comms-tab__state">
+        <p class="comms-tab__state-text">
+          {{ t("customers.detail.commsTab.loading") }}
+        </p>
+      </div>
+
+      <div v-else-if="errorCode" class="comms-tab__state">
+        <p class="comms-tab__state-text">
+          {{ t("customers.detail.commsTab.requestFailed") }}
+        </p>
+        <Button size="sm" pill @click="retry">
+          {{ t("customers.detail.commsTab.retry") }}
+        </Button>
+      </div>
+
+      <div v-else-if="filteredComms.length" class="comms-tab__timeline">
         <div class="comms-tab__axis" aria-hidden="true" />
         <article v-for="c in filteredComms" :key="c.id" class="comms-tab__item">
           <div class="comms-tab__item-header">
@@ -196,6 +219,24 @@ function formatDateTime(iso: string): string {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+
+.comms-tab__state {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 32px 24px;
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-xl);
+  background: var(--color-bg-2);
+}
+
+.comms-tab__state-text {
+  margin: 0;
+  color: var(--color-text-2);
+  font-weight: var(--font-weight-semibold);
 }
 
 .comms-tab__timeline {

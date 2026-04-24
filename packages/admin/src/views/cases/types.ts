@@ -427,6 +427,7 @@ export type {
   CreateCaseStep,
   CreateCaseStepDef,
   CreateCaseDraftState,
+  CaseCreateSelectedRelation,
   CaseCreateSourceContext,
   CreateCaseRelatedParty,
 } from "./types-create";

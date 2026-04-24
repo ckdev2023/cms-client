@@ -15,6 +15,7 @@ const enUS = {
       localeLabel: "Interface language",
       createLead: "New lead",
       createCase: "New case",
+      logout: "Sign out",
     },
     nav: {
       asideLabel: "Sidebar navigation",
@@ -99,6 +100,8 @@ const enUS = {
       validation: "Enter both email and password",
       invalidCredentials: "Incorrect email or password.",
       requestFailed: "Sign-in failed. Please try again shortly.",
+      sessionExpiredNotice: "Your session has expired. Please sign in again.",
+      loggedOutNotice: "You have been signed out successfully.",
       demoHint: "Use an active admin account to sign in.",
     },
   },

@@ -1,3 +1,9 @@
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: pure document completion statistics helpers.
+// Does NOT test: adapters, repository, composable logic, or
+//   fixture shape invariants (→ fixtures.test.ts).
+// ────────────────────────────────────────────────────────────────
+
 import { describe, it, expect } from "vitest";
 import type { DocumentGroup, DocumentItem } from "../types-detail";
 import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";

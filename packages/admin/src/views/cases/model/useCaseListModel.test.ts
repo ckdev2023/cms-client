@@ -1,10 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+// ── Test Ownership ──────────────────────────────────────────────
+// Owner: list composable (useCaseListModel) — filter state, route
+//   sync, derived computeds, and its own matchesCaseFilters.
+// Does NOT test: mock repository (→ repository.test.ts), adapters,
+//   builders, or other composables.
+// ────────────────────────────────────────────────────────────────
+
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import type { LocationQuery } from "vue-router";
 import { matchesCaseFilters, useCaseListModel } from "./useCaseListModel";
 import { SAMPLE_CASE_LIST } from "../fixtures";
 import type { CaseListFiltersState } from "../types";
 import { DEFAULT_CASE_LIST_FILTERS } from "../constants";
+import { CASE_SUMMARY_CARD_KEYS } from "./CaseAdapterTypes";
 
 const defaults: CaseListFiltersState = { ...DEFAULT_CASE_LIST_FILTERS };
 const item = SAMPLE_CASE_LIST[0];
@@ -247,5 +255,48 @@ describe("useCaseListModel", () => {
       customerId: firstCustomerId,
     });
     expect(model.customerLabel.value).toBeTruthy();
+  });
+
+  describe("summaryCards (p0-fe-002b-06)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date("2026-04-20T12:00:00.000Z"));
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    it("exposes summaryCards computed with 4 cards", () => {
+      const { model } = createModel({ scope: "all" });
+      expect(model.summaryCards.value).toHaveLength(4);
+      expect(model.summaryCards.value.map((c) => c.key)).toEqual([
+        ...CASE_SUMMARY_CARD_KEYS,
+      ]);
+    });
+
+    it("summaryCards reflects filteredCases", () => {
+      const { model } = createModel({ scope: "all" });
+      const allCards = model.summaryCards.value;
+      const allActive = allCards.find((c) => c.key === "activeCases")!.value;
+
+      model.setStage("S9");
+      const s9Cards = model.summaryCards.value;
+      const s9Active = s9Cards.find((c) => c.key === "activeCases")!.value;
+      expect(s9Active).toBe(0);
+      expect(s9Active).toBeLessThan(allActive);
+    });
+
+    it("summaryCards updates when filters change", () => {
+      const { model } = createModel({ scope: "all" });
+      const before = model.summaryCards.value.find(
+        (c) => c.key === "activeCases",
+      )!.value;
+
+      model.setStage("S3");
+      const after = model.summaryCards.value.find(
+        (c) => c.key === "activeCases",
+      )!.value;
+      expect(after).toBeLessThanOrEqual(before);
+    });
   });
 });

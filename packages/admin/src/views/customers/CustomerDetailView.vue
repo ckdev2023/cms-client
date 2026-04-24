@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Card from "../../shared/ui/Card.vue";
 import CustomerDetailHeader from "./components/CustomerDetailHeader.vue";
 import CustomerCaseSummaryStrip from "./components/CustomerCaseSummaryStrip.vue";
@@ -10,16 +10,71 @@ import CustomerCasesTab from "./components/CustomerCasesTab.vue";
 import CustomerContactsTab from "./components/CustomerContactsTab.vue";
 import CustomerCommsTab from "./components/CustomerCommsTab.vue";
 import CustomerLogsTab from "./components/CustomerLogsTab.vue";
+import CustomerToast from "./components/CustomerToast.vue";
+import { useCustomerCreateCaseGateModel } from "./model/useCustomerCreateCaseGateModel";
 import { useCustomerDetailModel } from "./model/useCustomerDetailModel";
+import { createCustomerRepository } from "./model/CustomerRepository";
+import { useCustomerToast } from "./model/useCustomerToast";
 import { DETAIL_TABS } from "./types";
 
 /** 客户详情页：组合头部、案件摘要条与 Tab 内容面板。 */
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
+const repository = createCustomerRepository();
 
-const customerId = computed(() => route.params.id as string);
-const { activeTab, customer, notFound, avatarInitials, switchTab } =
-  useCustomerDetailModel(customerId);
+const customerId = computed(() =>
+  typeof route.params.id === "string" ? route.params.id : "",
+);
+const { activeTab, customer, notFound, avatarInitials, switchTab, retry } =
+  useCustomerDetailModel({ customerId, repository });
+const { createCaseGate } = useCustomerCreateCaseGateModel({ customer });
+const customerToast = useCustomerToast();
+const {
+  visible: customerToastVisible,
+  title: customerToastTitle,
+  description: customerToastDescription,
+} = customerToast;
+
+const createCaseHint = computed(() => {
+  const blockedReasonKey = createCaseGate.value.blockedReasonKey;
+  return blockedReasonKey ? t(blockedReasonKey) : null;
+});
+
+/**
+ * 当建案被门禁阻断时展示统一 toast，并返回是否已阻断。
+ * @returns 是否已经阻断建案操作。
+ */
+function notifyCreateCaseBlocked(): boolean {
+  const blockedReasonKey = createCaseGate.value.blockedReasonKey;
+  if (!blockedReasonKey) return false;
+  customerToast.show({
+    title: t("customers.detail.actions.createCaseGate.blockedTitle"),
+    description: t(blockedReasonKey),
+  });
+  return true;
+}
+
+/** 跳转到案件新建页，并透传当前客户 ID 作为来源上下文。 */
+function handleCreateCase() {
+  const nextCustomerId = customer.value?.id?.trim();
+  if (notifyCreateCaseBlocked() || !nextCustomerId) return;
+  void router.push({
+    name: "case-create",
+    query: { customerId: nextCustomerId },
+  });
+}
+
+/** 跳转到家族批量建案场景，并透传当前客户 ID。 */
+function handleBatchCreateCase() {
+  const nextCustomerId = customer.value?.id?.trim();
+  if (notifyCreateCaseBlocked() || !nextCustomerId) return;
+  void router.push({
+    name: "case-create",
+    hash: "#family-bulk",
+    query: { customerId: nextCustomerId },
+  });
+}
 
 const tabPlaceholder = computed(() => {
   const tabLabel = t(`customers.detail.tabs.${activeTab.value}`);
@@ -34,8 +89,11 @@ const tabPlaceholder = computed(() => {
         <CustomerDetailHeader
           :customer="customer"
           :avatar-initials="avatarInitials"
-          @create-case="() => {}"
-          @batch-create-case="() => {}"
+          :create-case-disabled="createCaseGate.single.disabled"
+          :batch-create-case-disabled="createCaseGate.batch.disabled"
+          :create-case-hint="createCaseHint"
+          @create-case="handleCreateCase"
+          @batch-create-case="handleBatchCreateCase"
         />
       </Card>
 
@@ -72,22 +130,30 @@ const tabPlaceholder = computed(() => {
         <CustomerBasicInfoTab
           v-if="activeTab === 'basic'"
           :customer="customer"
+          :repository="repository"
+          :refresh-customer="retry"
         />
         <CustomerCasesTab
           v-else-if="activeTab === 'cases'"
           :customer-id="customer.id"
+          :repository="repository"
         />
         <CustomerContactsTab
           v-else-if="activeTab === 'contacts'"
           :customer-id="customer.id"
+          :repository="repository"
+          :batch-create-case-disabled="createCaseGate.batch.disabled"
+          :batch-create-case-hint="createCaseHint"
         />
         <CustomerCommsTab
           v-else-if="activeTab === 'comms'"
           :customer-id="customer.id"
+          :repository="repository"
         />
         <CustomerLogsTab
           v-else-if="activeTab === 'log'"
           :customer-id="customer.id"
+          :repository="repository"
         />
         <p v-else class="customer-detail-view__placeholder">
           {{ tabPlaceholder }}
@@ -99,6 +165,12 @@ const tabPlaceholder = computed(() => {
       <p>{{ t("customers.detail.notFound") }}</p>
       <a href="#/customers">{{ t("shell.nav.items.customers") }}</a>
     </div>
+
+    <CustomerToast
+      :visible="customerToastVisible"
+      :title="customerToastTitle"
+      :description="customerToastDescription"
+    />
   </div>
 </template>
 

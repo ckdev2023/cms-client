@@ -18,6 +18,8 @@ describe("CustomerFilters", () => {
         ownerFilter: "",
         activeCasesFilter: "",
         filteredCount: 10,
+        groupOptions: [{ label: "东京一组", value: "tokyo-1" }],
+        ownerOptions: [{ label: "山田翔太", value: "yamada-s" }],
         ...props,
       },
       global: { plugins: [i18n] },
@@ -34,11 +36,7 @@ describe("CustomerFilters", () => {
     value: string,
   ) {
     const selects = getFilterSelects(w);
-    const el = selects[selectIndex].element as HTMLSelectElement;
-    const opt = Array.from(el.options).find((o) => o.value === value);
-    if (opt) opt.selected = true;
-    el.value = value;
-    el.dispatchEvent(new Event("change"));
+    await selects[selectIndex].setValue(value);
     await nextTick();
   }
 

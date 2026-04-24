@@ -18,6 +18,9 @@ import type { RegisterDocumentForm } from "./documents/model/useRegisterDocument
 import type { DocumentListItem } from "./documents/types";
 import { CASE_GROUP_OPTIONS } from "./cases/constants";
 import { useCustomerBasicInfoModel } from "./customers/model/useCustomerBasicInfoModel";
+import { buildCustomerCreateCaseGateViewModel } from "./customers/model/useCustomerCreateCaseGateModel";
+import type { CustomerRepository } from "./customers/model/CustomerRepository";
+import { SAMPLE_CUSTOMER_DETAILS } from "./customers/fixtures";
 import type { CustomerDetail } from "./customers/types";
 
 // ---------------------------------------------------------------------------
@@ -206,6 +209,7 @@ function makeCustomerDetail(group: string): CustomerDetail {
     owner: { name: "田中太郎", initials: "TT" },
     referralSource: "紹介",
     group,
+    bmvProfile: null,
     nationality: "中国",
     gender: "female",
     birthDate: "1990-01-15",
@@ -214,6 +218,15 @@ function makeCustomerDetail(group: string): CustomerDetail {
     archivedCases: 0,
     caseNames: [],
     lastCaseCreatedDate: null,
+  };
+}
+
+function createBasicInfoRepository(): Pick<
+  CustomerRepository,
+  "updateCustomerBasicInfo"
+> {
+  return {
+    updateCustomerBasicInfo: vi.fn().mockResolvedValue({ id: "cust-001" }),
   };
 }
 
@@ -243,7 +256,10 @@ describe("cross-module — customer group display", () => {
 describe("cross-module — customer basic info group dropdown", () => {
   it("shows only active groups when customer is in active group", () => {
     const customer = computed(() => makeCustomerDetail("tokyo-1"));
-    const model = useCustomerBasicInfoModel(customer);
+    const model = useCustomerBasicInfoModel({
+      customer,
+      repository: createBasicInfoRepository(),
+    });
     const groupValues = model.groupOptions.value.map((o) => o.value);
     expect(groupValues).toContain("tokyo-1");
     expect(groupValues).toContain("tokyo-2");
@@ -252,7 +268,10 @@ describe("cross-module — customer basic info group dropdown", () => {
 
   it("appends disabled group with suffix when customer belongs to it", () => {
     const customer = computed(() => makeCustomerDetail("osaka"));
-    const model = useCustomerBasicInfoModel(customer);
+    const model = useCustomerBasicInfoModel({
+      customer,
+      repository: createBasicInfoRepository(),
+    });
     const groupValues = model.groupOptions.value.map((o) => o.value);
     expect(groupValues).toContain("osaka");
     const osakaOption = model.groupOptions.value.find(
@@ -263,14 +282,59 @@ describe("cross-module — customer basic info group dropdown", () => {
 
   it("active groups in dropdown do not have disabled suffix", () => {
     const customer = computed(() => makeCustomerDetail("osaka"));
-    const model = useCustomerBasicInfoModel(customer);
+    const model = useCustomerBasicInfoModel({
+      customer,
+      repository: createBasicInfoRepository(),
+    });
     const tokyo1 = model.groupOptions.value.find((o) => o.value === "tokyo-1");
     expect(tokyo1!.label).toBe("東京一組");
   });
 });
 
 // ---------------------------------------------------------------------------
-// 4. Leads — disabled group label rendering
+// 4. Customers — create-case sign gate
+// ---------------------------------------------------------------------------
+
+describe("cross-module — customer create-case sign gate", () => {
+  it("locks both single and batch create entry points for unsigned BMV customers", () => {
+    const gate = buildCustomerCreateCaseGateViewModel(
+      SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+    );
+
+    expect(gate.single.disabled).toBe(true);
+    expect(gate.batch.disabled).toBe(true);
+    expect(gate.blockedReasonKey).toBe(
+      "customers.detail.actions.createCaseGate.needsSign",
+    );
+  });
+
+  it("does not block non-BMV customers from either create entry point", () => {
+    const gate = buildCustomerCreateCaseGateViewModel(
+      makeCustomerDetail("tokyo-1"),
+    );
+
+    expect(gate.single.disabled).toBe(false);
+    expect(gate.batch.disabled).toBe(false);
+    expect(gate.blockedReasonKey).toBeNull();
+  });
+
+  it("unlocks both entry points once a BMV customer is signed and intake-ready", () => {
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    if (!customer.bmvProfile) throw new Error("Expected BMV profile");
+
+    customer.bmvProfile.signStatus = "signed";
+    customer.bmvProfile.intakeStatus = "ready_for_case_creation";
+
+    const gate = buildCustomerCreateCaseGateViewModel(customer);
+
+    expect(gate.single.disabled).toBe(false);
+    expect(gate.batch.disabled).toBe(false);
+    expect(gate.blockedReasonKey).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 5. Leads — disabled group label rendering
 // ---------------------------------------------------------------------------
 
 describe("cross-module — leads group label rendering", () => {
@@ -290,7 +354,7 @@ describe("cross-module — leads group label rendering", () => {
 });
 
 // ---------------------------------------------------------------------------
-// 5. Shared group data integrity
+// 6. Shared group data integrity
 // ---------------------------------------------------------------------------
 
 describe("cross-module — group data integrity", () => {

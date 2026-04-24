@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
   NotFoundException,
@@ -13,6 +14,9 @@ import {
 } from "@nestjs/common";
 
 import { RequireRoles } from "../auth/auth.decorators";
+import { PermissionsService } from "../auth/permissions.service";
+import { CasesService } from "../cases/cases.service";
+import { VALIDATION_SUBMISSION_ERROR_CODES } from "../cases/cases.types";
 import type { RequestContext } from "../tenancy/requestContext";
 import {
   ValidationRunsService,
@@ -69,21 +73,27 @@ function parseLimit(value: unknown): number | undefined {
 }
 
 /**
- *
+ * 校验运行 CRUD — 资源级鉴权委托给父案件。
  */
 @Controller("validation-runs")
 export class ValidationRunsController {
   /**
-   * 创建校验运行控制器。
-   * @param validationRunsService 校验运行服务。
+   * 构造函数。
+   * @param validationRunsService 校验运行服务
+   * @param casesService 案件服务（查找父案件用于鉴权）
+   * @param permissionsService 权限服务
    */
   constructor(
     @Inject(ValidationRunsService)
     private readonly validationRunsService: ValidationRunsService,
+    @Inject(CasesService)
+    private readonly casesService: CasesService,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   /**
-   * 创建新的校验运行。
+   * 创建新的校验运行（须父案件 edit 权限且非 S9）。
    * @param req 当前请求对象。
    * @param body 请求体。
    * @returns 新建的校验运行记录。
@@ -94,15 +104,18 @@ export class ValidationRunsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId = requireString(body.caseId, "caseId");
+    await this.assertCanEditParentCase(ctx, caseId);
+
     const input: ValidationRunCreateInput = {
-      caseId: requireString(body.caseId, "caseId"),
+      caseId,
       rulesetRef: parseOptionalObject(body.rulesetRef, "rulesetRef"),
     };
     return this.validationRunsService.create(ctx, input);
   }
 
   /**
-   * 列出校验运行记录。
+   * 列出校验运行记录（须父案件 view 权限）。
    * @param req 当前请求对象。
    * @param query 查询参数。
    * @returns 分页结果。
@@ -113,11 +126,17 @@ export class ValidationRunsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId =
+      query.caseId === undefined
+        ? undefined
+        : requireString(query.caseId, "caseId");
+
+    if (caseId) {
+      await this.assertCanViewParentCase(ctx, caseId);
+    }
+
     return this.validationRunsService.list(ctx, {
-      caseId:
-        query.caseId === undefined
-          ? undefined
-          : requireString(query.caseId, "caseId"),
+      caseId,
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
@@ -137,6 +156,65 @@ export class ValidationRunsController {
 
     const result = await this.validationRunsService.get(ctx, id);
     if (!result) throw new NotFoundException("Validation run not found");
+
+    await this.assertCanViewParentCase(ctx, result.caseId);
     return result;
+  }
+
+  private async assertCanViewParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) {
+      throw new NotFoundException(
+        VALIDATION_SUBMISSION_ERROR_CODES.VR_CASE_NOT_FOUND +
+          ": Parent case not found",
+      );
+    }
+    if (
+      !this.permissionsService.canViewCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to view this case's validation runs",
+      );
+    }
+  }
+
+  private async assertCanEditParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) {
+      throw new NotFoundException(
+        VALIDATION_SUBMISSION_ERROR_CODES.VR_CASE_NOT_FOUND +
+          ": Parent case not found",
+      );
+    }
+    const stage = caseEntity.stage ?? caseEntity.status;
+    if (stage === "S9") {
+      throw new BadRequestException(
+        VALIDATION_SUBMISSION_ERROR_CODES.VR_CASE_S9_READONLY +
+          ": Parent case is archived (S9) and read-only",
+      );
+    }
+    if (
+      !this.permissionsService.canEditCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to edit this case's validation runs",
+      );
+    }
   }
 }

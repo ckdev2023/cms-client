@@ -41,6 +41,7 @@ function customer(
     owner: { initials: "", name: "" },
     referralSource: "",
     group: "",
+    bmvProfile: null,
     ...partial,
   };
 }

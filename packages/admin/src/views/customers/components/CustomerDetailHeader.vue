@@ -7,10 +7,20 @@ import type { CustomerDetail } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /** 客户详情页头部：面包屑返回、头像、客户名称、属性 chip 与操作按钮区。 */
-const props = defineProps<{
-  customer: CustomerDetail;
-  avatarInitials: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    customer: CustomerDetail;
+    avatarInitials: string;
+    createCaseDisabled?: boolean;
+    batchCreateCaseDisabled?: boolean;
+    createCaseHint?: string | null;
+  }>(),
+  {
+    createCaseDisabled: false,
+    batchCreateCaseDisabled: false,
+    createCaseHint: null,
+  },
+);
 
 defineEmits<{
   createCase: [];
@@ -49,18 +59,28 @@ const groupDisplay = computed(() =>
           {{ t("customers.detail.breadcrumb") }}
         </span>
       </nav>
-      <div class="detail-header__actions">
-        <Button size="sm" @click="$emit('batchCreateCase')">
-          {{ t("customers.detail.actions.batchCreateCase") }}
-        </Button>
-        <Button
-          variant="filled"
-          tone="primary"
-          size="sm"
-          @click="$emit('createCase')"
-        >
-          {{ t("customers.detail.actions.createCase") }}
-        </Button>
+      <div class="detail-header__actions-block">
+        <div class="detail-header__actions">
+          <Button
+            size="sm"
+            :disabled="batchCreateCaseDisabled"
+            @click="$emit('batchCreateCase')"
+          >
+            {{ t("customers.detail.actions.batchCreateCase") }}
+          </Button>
+          <Button
+            variant="filled"
+            tone="primary"
+            size="sm"
+            :disabled="createCaseDisabled"
+            @click="$emit('createCase')"
+          >
+            {{ t("customers.detail.actions.createCase") }}
+          </Button>
+        </div>
+        <p v-if="createCaseHint" class="detail-header__actions-hint">
+          {{ createCaseHint }}
+        </p>
       </div>
     </div>
 
@@ -140,11 +160,26 @@ const groupDisplay = computed(() =>
   font-weight: var(--font-weight-bold);
 }
 
+.detail-header__actions-block {
+  display: grid;
+  justify-items: end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
 .detail-header__actions {
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-shrink: 0;
+}
+
+.detail-header__actions-hint {
+  margin: 0;
+  max-width: 320px;
+  text-align: right;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
 }
 
 .detail-header__identity {

@@ -186,6 +186,75 @@ export const contactPersons = pgTable(
 );
 
 /**
+ * `groups` 表定义。
+ *
+ * 用途：
+ * - 表示事务所内的业务分组
+ * - 作为 `cases.group_id` / `user_group_memberships.group_id` 的真实来源
+ * - 承载单层 Group 治理（创建/停用/重命名）
+ *
+ * @returns groups 表的 Drizzle schema
+ */
+export const groups = pgTable(
+  "groups",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    groupNo: text("group_no"),
+    name: text("name").notNull(),
+    description: text("description"),
+    activeFlag: boolean("active_flag").notNull().default(true),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedBy: uuid("updated_by").references(() => users.id),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_groups_org").on(table.orgId),
+    index("idx_groups_created_by").on(table.createdBy),
+    index("idx_groups_updated_by").on(table.updatedBy),
+  ],
+);
+
+/**
+ * `user_group_memberships` 表定义。
+ *
+ * 用途：
+ * - 记录用户与 Group 的归属关系
+ * - `is_primary_group` 标识用户的主 Group（决定默认继承与权限判断）
+ *
+ * @returns user_group_memberships 表的 Drizzle schema
+ */
+export const userGroupMemberships = pgTable(
+  "user_group_memberships",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id),
+    isPrimaryGroup: boolean("is_primary_group").notNull().default(false),
+    activeFlag: boolean("active_flag").notNull().default(true),
+    joinedAt: timestamp("joined_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    leftAt: timestamp("left_at", { withTimezone: true, mode: "string" }),
+  },
+  (table) => [
+    index("idx_ugm_user").on(table.userId),
+    index("idx_ugm_group").on(table.groupId),
+  ],
+);
+
+/**
  * `cases` 表定义。
  *
  * 用途：
@@ -194,7 +263,7 @@ export const contactPersons = pgTable(
  * - 承载案件状态、优先级、风险等级以及关键时间字段
  *
  * 说明：
- * - 该定义对齐 `001_init.sql`、`009_core_entities.up.sql` 与 `014_case_truth.up.sql`
+ * - 该定义对齐 `001_init.sql`、`009_core_entities.up.sql`、`014_case_truth.up.sql` 与 `022_groups_and_case_group.up.sql`
  * - 业务流程上的阶段/门槛由上层服务与文档定义，不在 schema 中编码
  *
  * @returns cases 表的 Drizzle schema
@@ -210,6 +279,7 @@ export const cases = pgTable("cases", {
   caseTypeCode: text("case_type_code").notNull(),
   status: text("status").notNull(),
   stage: text("stage"),
+  groupId: uuid("group_id").references(() => groups.id),
   ownerUserId: uuid("owner_user_id")
     .notNull()
     .references(() => users.id),
@@ -864,6 +934,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   users: many(users),
   customers: many(customers),
   companies: many(companies),
+  groups: many(groups),
   cases: many(cases),
   communicationLogs: many(communicationLogs),
   caseStageHistory: many(caseStageHistory),
@@ -889,7 +960,51 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   billingRiskAckedCases: many(cases, { relationName: "case_billing_risk_ack" }),
   createdCommunicationLogs: many(communicationLogs),
   changedStageHistory: many(caseStageHistory),
+  groupMemberships: many(userGroupMemberships),
 }));
+
+/**
+ * `groups` 的关联关系定义。
+ *
+ * @returns groups 相关 relations
+ */
+export const groupsRelations = relations(groups, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [groups.orgId],
+    references: [organizations.id],
+  }),
+  creator: one(users, {
+    fields: [groups.createdBy],
+    references: [users.id],
+    relationName: "group_creator",
+  }),
+  updater: one(users, {
+    fields: [groups.updatedBy],
+    references: [users.id],
+    relationName: "group_updater",
+  }),
+  memberships: many(userGroupMemberships),
+  cases: many(cases),
+}));
+
+/**
+ * `user_group_memberships` 的关联关系定义。
+ *
+ * @returns user_group_memberships 相关 relations
+ */
+export const userGroupMembershipsRelations = relations(
+  userGroupMemberships,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userGroupMemberships.userId],
+      references: [users.id],
+    }),
+    group: one(groups, {
+      fields: [userGroupMemberships.groupId],
+      references: [groups.id],
+    }),
+  }),
+);
 
 /**
  * `customers` 的关联关系定义。
@@ -948,6 +1063,10 @@ export const casesRelations = relations(cases, ({ one, many }) => ({
   customer: one(customers, {
     fields: [cases.customerId],
     references: [customers.id],
+  }),
+  group: one(groups, {
+    fields: [cases.groupId],
+    references: [groups.id],
   }),
   company: one(companies, {
     fields: [cases.companyId],

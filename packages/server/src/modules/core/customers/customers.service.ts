@@ -6,134 +6,61 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
+import { PermissionsService } from "../auth/permissions.service";
 import type { Customer } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
-import { normalizeObject } from "../../../infra/utils/normalize";
+import {
+  buildCustomerDuplicateWhere,
+  buildCustomerDetailSelect,
+  buildCustomerListSelect,
+  buildCustomerListWhere,
+  getCustomerDuplicateMatchedFields,
+} from "./customers.query";
+import {
+  bulkAssignOwner as runBulkAssignOwner,
+  bulkChangeGroup as runBulkChangeGroup,
+} from "./customers.bulk";
+import {
+  generateBmvQuote,
+  recordBmvSign,
+  sendBmvQuestionnaire,
+} from "./customers.bmv";
+import {
+  mapCustomerToDetailDto,
+  mapCustomerToSummaryDto,
+} from "./customers.dto-mappers";
+import { mapCustomerAggregates } from "./customers.row-aggregates";
+import {
+  CUSTOMER_COLS,
+  activeCustomerPredicate,
+  mapCustomerRow,
+  normalizeDistinctIds,
+  validateBaseProfile,
+} from "./customers.utils";
+import type {
+  CustomerCreateInput,
+  CustomerDetailDto,
+  CustomerDuplicateCheckInput,
+  CustomerDuplicateCheckResult,
+  CustomerListInput,
+  CustomerQueryRow,
+  CustomerSummaryDto,
+  CustomerUpdateInput,
+} from "./customers.types";
 
-/**
- * 数据库查询返回的客户行类型。
- */
-export type CustomerQueryRow = {
-  id: string;
-  org_id: string;
-  type: string;
-  base_profile: unknown;
-  contacts: unknown;
-  created_at: unknown;
-  updated_at: unknown;
-};
-
-/**
- * 将数据库查询结果行映射为 Customer 实体。
- * @param row 数据库查询结果行
- * @returns 映射后的 Customer 实体
- */
-export function mapCustomerRow(row: CustomerQueryRow): Customer {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    type: row.type,
-    baseProfile: normalizeObject(row.base_profile),
-    contacts: Array.isArray(row.contacts)
-      ? row.contacts.map(normalizeObject)
-      : [],
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
-  };
-}
-
-/**
- * 创建客户请求参数。
- */
-export type CustomerCreateInput = {
-  type: string;
-  baseProfile?: Record<string, unknown>;
-  contacts?: Record<string, unknown>[];
-};
-
-/**
- * 更新客户请求参数。
- */
-export type CustomerUpdateInput = {
-  type?: string;
-  baseProfile?: Record<string, unknown>;
-  contacts?: Record<string, unknown>[];
-};
-
-/**
- * 查询客户列表请求参数。
- */
-export type CustomerListInput = {
-  page?: number;
-  limit?: number;
-};
-
-type BaseProfileSchemaField = {
-  type: "string" | "date";
-};
-
-const INDIVIDUAL_BASE_PROFILE_SCHEMA: Record<string, BaseProfileSchemaField> = {
-  name_cn: { type: "string" },
-  name_en: { type: "string" },
-  name_jp: { type: "string" },
-  gender: { type: "string" },
-  nationality: { type: "string" },
-  birthday: { type: "date" },
-  birthplace: { type: "string" },
-  passport_no: { type: "string" },
-  passport_expiry_date: { type: "date" },
-  residence_card_no: { type: "string" },
-  residence_expiry_date: { type: "date" },
-};
-
-const INDIVIDUAL_REQUIRED_NAME_FIELDS = ["name_cn", "name_en", "name_jp"];
-
-function isPlainRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === "object" && !Array.isArray(value);
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function validateBaseProfile(
-  type: string,
-  baseProfile: unknown,
-): Record<string, unknown> {
-  if (!isPlainRecord(baseProfile)) {
-    throw new BadRequestException("baseProfile must be an object");
-  }
-  if (type !== "individual") return baseProfile;
-
-  const errors: string[] = [];
-  const hasName = INDIVIDUAL_REQUIRED_NAME_FIELDS.some((field) =>
-    isNonEmptyString(baseProfile[field]),
-  );
-  if (!hasName) {
-    errors.push("at least one of name_cn, name_en or name_jp is required");
-  }
-
-  for (const [field, schema] of Object.entries(
-    INDIVIDUAL_BASE_PROFILE_SCHEMA,
-  )) {
-    const value = baseProfile[field];
-    if (value === undefined || value === null) continue;
-    if (schema.type === "string") {
-      if (typeof value !== "string") errors.push(`${field} must be a string`);
-      continue;
-    }
-    if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
-      errors.push(`${field} must be a valid date string`);
-    }
-  }
-
-  if (errors.length > 0) {
-    throw new BadRequestException(`Invalid baseProfile: ${errors.join("; ")}`);
-  }
-  return baseProfile;
-}
+export type {
+  CustomerActiveCasesFilter,
+  CustomerCreateInput,
+  CustomerDuplicateCheckInput,
+  CustomerDuplicateCheckResult,
+  CustomerDuplicateField,
+  CustomerListInput,
+  CustomerListScope,
+  CustomerQueryRow,
+  CustomerUpdateInput,
+} from "./customers.types";
 
 /**
  * 客户服务，提供客户信息的 CRUD 与软删除能力，以及 Timeline 日志记录。
@@ -141,33 +68,34 @@ function validateBaseProfile(
 @Injectable()
 export class CustomersService {
   /**
-   * 构造函数。
-   * @param pool PostgreSQL 连接池
-   * @param timelineService Timeline 服务用于写入操作日志
+   * 创建客户服务实例。
+   * @param pool PostgreSQL 连接池。
+   * @param permissionsService 客户访问与编辑权限校验服务。
+   * @param timelineService 用于写入 Timeline 日志的服务。
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
     @Inject(TimelineService) private readonly timelineService: TimelineService,
   ) {}
 
   /**
-   * 创建新的客户。
-   * @param ctx 请求上下文
-   * @param input 创建参数
-   * @returns 创建成功的 Customer 实体
+   * 创建新的客户记录。
+   * @param ctx 请求上下文。
+   * @param input 客户创建参数。
+   * @returns 创建成功的客户实体。
    */
   async create(
     ctx: RequestContext,
     input: CustomerCreateInput,
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
     const baseProfile = validateBaseProfile(
       input.type,
       input.baseProfile ?? {},
     );
     const contacts = input.contacts ?? [];
-
     const result = await tenantDb.query<CustomerQueryRow>(
       `
         insert into customers (org_id, type, base_profile, contacts)
@@ -184,85 +112,257 @@ export class CustomersService {
 
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to create customer");
-
     const customer = mapCustomerRow(row);
-
     await this.timelineService.write(ctx, {
       entityType: "customer",
       entityId: customer.id,
       action: "customer.created",
       payload: { type: customer.type },
     });
-
     return customer;
   }
 
   /**
-   * 根据 ID 获取客户详情（过滤已删除）。
-   * @param ctx 请求上下文
-   * @param id 客户 ID
-   * @returns 匹配的 Customer 实体，若未找到或已删除则返回 null
+   * 根据 ID 获取客户详情。
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @returns 客户详情；若不存在或无权限则返回 null。
    */
-  async get(ctx: RequestContext, id: string): Promise<Customer | null> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<CustomerQueryRow>(
-      `
-        select id, org_id, type, base_profile, contacts, created_at, updated_at
-        from customers
-        where id = $1 and coalesce(base_profile->>'status', '') is distinct from 'deleted'
-        limit 1
-      `,
-      [id],
-    );
-
-    const row = result.rows.at(0);
-    return row ? mapCustomerRow(row) : null;
+  async get(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<CustomerDetailDto | null> {
+    const row = await this.getCustomerRowById(ctx, id);
+    if (!row) return null;
+    const customer = mapCustomerRow(row);
+    if (
+      !this.permissionsService.canAccessCustomer(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        customer,
+      )
+    ) {
+      return null;
+    }
+    return mapCustomerToDetailDto(customer, mapCustomerAggregates(row));
   }
 
   /**
-   * 获取客户列表（过滤已删除）。
-   * @param ctx 请求上下文
-   * @param input 列表查询参数
-   * @returns 匹配的 Customer 实体数组和总数
+   * 获取客户列表。
+   * @param ctx 请求上下文。
+   * @param input 列表查询参数。
+   * @returns 客户摘要数组与总数。
    */
   async list(
     ctx: RequestContext,
     input: CustomerListInput = {},
-  ): Promise<{ items: Customer[]; total: number }> {
+  ): Promise<{ items: CustomerSummaryDto[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
-
+    const { whereClause, params } = buildCustomerListWhere(ctx, input);
     const countResult = await tenantDb.query<{ count: string }>(
-      `
-        select count(*) as count
-        from customers
-        where coalesce(base_profile->>'status', '') is distinct from 'deleted'
-      `,
+      `select count(*)::text as count from customers c ${whereClause}`,
+      params,
     );
     const total = parseInt(countResult.rows[0]?.count ?? "0", 10);
-
+    const listParams = [...params, limit, offset];
     const result = await tenantDb.query<CustomerQueryRow>(
       `
-        select id, org_id, type, base_profile, contacts, created_at, updated_at
-        from customers
-        where coalesce(base_profile->>'status', '') is distinct from 'deleted'
+        select ${buildCustomerListSelect("c")}
+        from customers c
+        ${whereClause}
         order by created_at desc, id desc
-        limit $1 offset $2
+        limit $${String(params.length + 1)} offset $${String(params.length + 2)}
       `,
-      [limit, offset],
+      listParams,
     );
 
-    return { items: result.rows.map(mapCustomerRow), total };
+    return {
+      items: result.rows.map((row) =>
+        mapCustomerToSummaryDto(
+          mapCustomerRow(row),
+          mapCustomerAggregates(row),
+        ),
+      ),
+      total,
+    };
+  }
+
+  /**
+   * 按 ID 批量读取客户。
+   * @param ctx 请求上下文。
+   * @param ids 客户 ID 集合。
+   * @returns 匹配的客户实体数组。
+   */
+  async getByIds(ctx: RequestContext, ids: string[]): Promise<Customer[]> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const normalizedIds = normalizeDistinctIds(ids, "customerIds");
+    const result = await tenantDb.query<CustomerQueryRow>(
+      `
+        select ${CUSTOMER_COLS}
+        from customers
+        where id::text = any($1::text[])
+          and ${activeCustomerPredicate()}
+        order by created_at desc, id desc
+      `,
+      [normalizedIds],
+    );
+    return result.rows.map(mapCustomerRow);
+  }
+
+  /**
+   * 按姓名、电话、邮箱执行客户去重检查。
+   * @param ctx 请求上下文
+   * @param input 去重检查参数
+   * @returns 命中的客户及命中字段
+   */
+  async checkDuplicates(
+    ctx: RequestContext,
+    input: CustomerDuplicateCheckInput,
+  ): Promise<CustomerDuplicateCheckResult[]> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const where = [activeCustomerPredicate("c")];
+    const params: unknown[] = [];
+    const {
+      where: duplicateClauses,
+      normalizedName,
+      normalizedPhone,
+      normalizedEmail,
+    } = buildCustomerDuplicateWhere(input, params);
+    if (duplicateClauses.length === 0) return [];
+    where.push(`(${duplicateClauses.join(" or ")})`);
+    const result = await tenantDb.query<CustomerQueryRow>(
+      `
+        select ${CUSTOMER_COLS}
+        from customers c
+        where ${where.join(" and ")}
+        order by created_at desc, id desc
+      `,
+      params,
+    );
+
+    return result.rows
+      .map((row) => mapCustomerRow(row))
+      .map((customer) => {
+        const matchedFields = getCustomerDuplicateMatchedFields(
+          customer,
+          normalizedName,
+          normalizedPhone,
+          normalizedEmail,
+        );
+        return { customer, matchedFields };
+      })
+      .filter((resultItem) => resultItem.matchedFields.length > 0);
+  }
+
+  /**
+   * 批量调整客户负责人。
+   * @param ctx 请求上下文。
+   * @param customerIds 客户 ID 集合。
+   * @param ownerUserId 新负责人 ID。
+   * @returns 成功更新的客户数量。
+   */
+  async bulkAssignOwner(
+    ctx: RequestContext,
+    customerIds: string[],
+    ownerUserId: string,
+  ): Promise<number> {
+    return runBulkAssignOwner(
+      {
+        ctx,
+        customerIds,
+        pool: this.pool,
+        timelineService: this.timelineService,
+        getByIds: this.getByIds.bind(this),
+      },
+      ownerUserId,
+    );
+  }
+
+  /**
+   * 批量调整客户分组。
+   * @param ctx 请求上下文。
+   * @param customerIds 客户 ID 集合。
+   * @param group 新分组编码。
+   * @returns 成功更新的客户数量。
+   */
+  async bulkChangeGroup(
+    ctx: RequestContext,
+    customerIds: string[],
+    group: string,
+  ): Promise<number> {
+    return runBulkChangeGroup(
+      {
+        ctx,
+        customerIds,
+        pool: this.pool,
+        timelineService: this.timelineService,
+        getByIds: this.getByIds.bind(this),
+      },
+      group,
+    );
+  }
+
+  /**
+   * 发送经营管理签问卷。
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @returns 更新后的客户实体。
+   */
+  async sendBmvQuestionnaire(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<Customer> {
+    return sendBmvQuestionnaire({
+      ctx,
+      id,
+      pool: this.pool,
+      timelineService: this.timelineService,
+      getEntity: this.getEntity.bind(this),
+    });
+  }
+
+  /**
+   * 生成经营管理签报价。
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @returns 更新后的客户实体。
+   */
+  async generateBmvQuote(ctx: RequestContext, id: string): Promise<Customer> {
+    return generateBmvQuote({
+      ctx,
+      id,
+      pool: this.pool,
+      timelineService: this.timelineService,
+      getEntity: this.getEntity.bind(this),
+    });
+  }
+
+  /**
+   * 记录经营管理签已签约。
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @returns 更新后的客户实体。
+   */
+  async recordBmvSign(ctx: RequestContext, id: string): Promise<Customer> {
+    return recordBmvSign({
+      ctx,
+      id,
+      pool: this.pool,
+      timelineService: this.timelineService,
+      getEntity: this.getEntity.bind(this),
+    });
   }
 
   /**
    * 更新客户信息。
-   * @param ctx 请求上下文
-   * @param id 客户 ID
-   * @param input 更新参数
-   * @returns 更新后的 Customer 实体
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @param input 更新参数。
+   * @returns 更新后的客户实体。
    */
   async update(
     ctx: RequestContext,
@@ -270,17 +370,14 @@ export class CustomersService {
     input: CustomerUpdateInput,
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
-    const current = await this.get(ctx, id);
+    const current = await this.getEntity(ctx, id);
     if (!current) throw new NotFoundException("Customer not found or deleted");
-
     const nextType = input.type ?? current.type;
     const nextBaseProfile = validateBaseProfile(nextType, {
       ...current.baseProfile,
       ...(input.baseProfile ?? {}),
     });
     const nextContacts = input.contacts ?? current.contacts;
-
     const result = await tenantDb.query<CustomerQueryRow>(
       `
         update customers
@@ -288,8 +385,8 @@ export class CustomersService {
             base_profile = $3::jsonb,
             contacts = $4::jsonb,
             updated_at = now()
-        where id = $1 and coalesce(base_profile->>'status', '') is distinct from 'deleted'
-        returning id, org_id, type, base_profile, contacts, created_at, updated_at
+        where id = $1 and ${activeCustomerPredicate()}
+        returning ${CUSTOMER_COLS}
       `,
       [
         id,
@@ -301,32 +398,27 @@ export class CustomersService {
 
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to update customer");
-
     const customer = mapCustomerRow(row);
-
     await this.timelineService.write(ctx, {
       entityType: "customer",
       entityId: customer.id,
       action: "customer.updated",
       payload: { before: current, after: customer },
     });
-
     return customer;
   }
 
   /**
-   * 软删除客户（在 base_profile 注入 status: 'deleted'）。
-   * @param ctx 请求上下文
-   * @param id 客户 ID
-   * @returns 无返回值
+   * 软删除客户。
+   * @param ctx 请求上下文。
+   * @param id 客户 ID。
+   * @returns 无返回值。
    */
   async softDelete(ctx: RequestContext, id: string): Promise<void> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
-    const current = await this.get(ctx, id);
+    const current = await this.getEntity(ctx, id);
     if (!current)
       throw new NotFoundException("Customer not found or already deleted");
-
     const casesCheck = await tenantDb.query<{ exists: boolean }>(
       `select exists(select 1 from cases where customer_id = $1) as "exists"`,
       [id],
@@ -336,28 +428,49 @@ export class CustomersService {
         "Cannot delete customer with existing cases",
       );
     }
-
     const nextBaseProfile = { ...current.baseProfile, status: "deleted" };
-
     const result = await tenantDb.query<CustomerQueryRow>(
       `
         update customers
         set base_profile = $2::jsonb,
             updated_at = now()
         where id = $1
-        returning id, org_id, type, base_profile, contacts, created_at, updated_at
+        returning ${CUSTOMER_COLS}
       `,
       [id, JSON.stringify(nextBaseProfile)],
     );
-
     if (!result.rowCount || result.rowCount === 0)
       throw new BadRequestException("Failed to soft delete customer");
-
     await this.timelineService.write(ctx, {
       entityType: "customer",
       entityId: id,
       action: "customer.deleted",
       payload: { status: "deleted" },
     });
+  }
+
+  private async getEntity(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<Customer | null> {
+    const row = await this.getCustomerRowById(ctx, id);
+    return row ? mapCustomerRow(row) : null;
+  }
+
+  private async getCustomerRowById(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<CustomerQueryRow | null> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<CustomerQueryRow>(
+      `
+        select ${buildCustomerDetailSelect("c")}
+        from customers c
+        where c.id = $1 and ${activeCustomerPredicate("c")}
+        limit 1
+      `,
+      [id],
+    );
+    return result.rows.at(0) ?? null;
   }
 }

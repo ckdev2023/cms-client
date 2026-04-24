@@ -22,6 +22,7 @@ const mockCase: Case = {
   caseTypeCode: "visa",
   status: "S1",
   stage: "S1",
+  groupId: null,
   ownerUserId: "user-1",
   openedAt: "2026-01-01T00:00:00.000Z",
   dueAt: null,
@@ -65,10 +66,44 @@ const mockCase: Case = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+const viewerCtxReq = {
+  requestContext: {
+    orgId: "org-1",
+    userId: "user-1",
+    role: "viewer" as const,
+  },
+};
+
+const managerCtxReq = {
+  requestContext: {
+    orgId: "org-1",
+    userId: "user-1",
+    role: "manager" as const,
+    groupId: "group-1",
+  },
+};
+
+const staffWithGroupCtxReq = {
+  requestContext: {
+    orgId: "org-1",
+    userId: "user-1",
+    role: "staff" as const,
+    groupId: "group-1",
+  },
+};
+
 function makePermissions(
-  canEditCase: PermissionsService["canEditCase"] = () => true,
+  overrides: Partial<PermissionsService> = {},
 ): PermissionsService {
-  return { canEditCase } as unknown as PermissionsService;
+  return {
+    canViewCase: () => true,
+    canEditCase: () => true,
+    canExportCase: () => true,
+    canAuditCase: () => true,
+    canCreateCase: () => true,
+    canPerformCaseAction: () => true,
+    ...overrides,
+  } as unknown as PermissionsService;
 }
 
 void test("CasesController.update forwards caseNo in patch body", async () => {
@@ -99,7 +134,7 @@ void test("CasesController.update throws when canEditCase denies", async () => {
 
   const controller = new CasesController(
     service,
-    makePermissions(() => false),
+    makePermissions({ canEditCase: () => false }),
   );
 
   await assert.rejects(
@@ -124,4 +159,208 @@ void test("CasesController.delete checks permission before soft delete", async (
 
   assert.equal(res.ok, true);
   assert.equal(deletedId, "case-1");
+});
+
+void test("CasesController.get enforces canViewCase", async () => {
+  const service = {
+    get: () => Promise.resolve(mockCase),
+  } as unknown as CasesService;
+
+  const controller = new CasesController(
+    service,
+    makePermissions({ canViewCase: () => false }),
+  );
+
+  await assert.rejects(
+    () => controller.get(ctxReq as never, "case-1"),
+    ForbiddenException,
+  );
+});
+
+void test("CasesController.get returns case when canViewCase allows", async () => {
+  const service = {
+    get: () => Promise.resolve(mockCase),
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  const result = await controller.get(ctxReq as never, "case-1");
+
+  assert.equal(result.id, "case-1");
+});
+
+void test("CasesController.transition checks canEditCase before executing", async () => {
+  let transitionCalled = false;
+  const service = {
+    get: () => Promise.resolve(mockCase),
+    transition: () => {
+      transitionCalled = true;
+      return Promise.resolve(mockCase);
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(
+    service,
+    makePermissions({ canEditCase: () => false }),
+  );
+
+  await assert.rejects(
+    () => controller.transition(ctxReq as never, "case-1", { toStage: "S2" }),
+    ForbiddenException,
+  );
+  assert.equal(transitionCalled, false);
+});
+
+void test("CasesController.acknowledgeBillingRisk checks canEditCase", async () => {
+  let ackCalled = false;
+  const service = {
+    get: () => Promise.resolve(mockCase),
+    acknowledgeBillingRisk: () => {
+      ackCalled = true;
+      return Promise.resolve(mockCase);
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(
+    service,
+    makePermissions({ canEditCase: () => false }),
+  );
+
+  await assert.rejects(
+    () =>
+      controller.acknowledgeBillingRisk(ctxReq as never, "case-1", {
+        reasonCode: "test",
+      }),
+    ForbiddenException,
+  );
+  assert.equal(ackCalled, false);
+});
+
+void test("CasesController.updatePostApprovalStage checks canEditCase", async () => {
+  let updateCalled = false;
+  const service = {
+    get: () => Promise.resolve(mockCase),
+    updatePostApprovalStage: () => {
+      updateCalled = true;
+      return Promise.resolve(mockCase);
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(
+    service,
+    makePermissions({ canEditCase: () => false }),
+  );
+
+  await assert.rejects(
+    () =>
+      controller.updatePostApprovalStage(ctxReq as never, "case-1", {
+        stage: "coe_sent",
+      }),
+    ForbiddenException,
+  );
+  assert.equal(updateCalled, false);
+});
+
+// ---------------------------------------------------------------------------
+// list — visibility filter pass-through
+// ---------------------------------------------------------------------------
+void test("CasesController.list passes visibility filter with staff role and groupId", async () => {
+  let capturedInput: Record<string, unknown> | undefined;
+  const service = {
+    list: (_ctx: unknown, input: Record<string, unknown>) => {
+      capturedInput = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  await controller.list(staffWithGroupCtxReq as never, {});
+
+  assert.ok(capturedInput);
+  assert.deepStrictEqual(capturedInput.visibility, {
+    userId: "user-1",
+    roleTier: "staff",
+    groupId: "group-1",
+  });
+});
+
+void test("CasesController.list passes admin roleTier for manager", async () => {
+  let capturedInput: Record<string, unknown> | undefined;
+  const service = {
+    list: (_ctx: unknown, input: Record<string, unknown>) => {
+      capturedInput = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  await controller.list(managerCtxReq as never, {});
+
+  assert.ok(capturedInput);
+  const visibility = capturedInput.visibility as Record<string, unknown>;
+  assert.equal(visibility.roleTier, "admin");
+});
+
+void test("CasesController.list passes viewer roleTier for viewer", async () => {
+  let capturedInput: Record<string, unknown> | undefined;
+  const service = {
+    list: (_ctx: unknown, input: Record<string, unknown>) => {
+      capturedInput = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  await controller.list(viewerCtxReq as never, {});
+
+  assert.ok(capturedInput);
+  const visibility = capturedInput.visibility as Record<string, unknown>;
+  assert.equal(visibility.roleTier, "viewer");
+});
+
+// ---------------------------------------------------------------------------
+// create — canCreateCase guard
+// ---------------------------------------------------------------------------
+void test("CasesController.create throws when canCreateCase denies", async () => {
+  let createCalled = false;
+  const service = {
+    create: () => {
+      createCalled = true;
+      return Promise.resolve(mockCase);
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(
+    service,
+    makePermissions({ canCreateCase: () => false }),
+  );
+
+  await assert.rejects(
+    () =>
+      controller.create(ctxReq as never, {
+        customerId: "c1",
+        caseTypeCode: "visa",
+        ownerUserId: "u1",
+      }),
+    ForbiddenException,
+  );
+  assert.equal(createCalled, false);
+});
+
+void test("CasesController.create proceeds when canCreateCase allows", async () => {
+  let createCalled = false;
+  const service = {
+    create: () => {
+      createCalled = true;
+      return Promise.resolve(mockCase);
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  await controller.create(ctxReq as never, {
+    customerId: "c1",
+    caseTypeCode: "visa",
+    ownerUserId: "u1",
+  });
+
+  assert.equal(createCalled, true);
 });
