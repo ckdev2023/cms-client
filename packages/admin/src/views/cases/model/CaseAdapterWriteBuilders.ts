@@ -183,45 +183,68 @@ export function buildCreateCasePayload(
 
 // ─── Update Draft → CaseUpdateInput Bridge ──────────────────────
 
-/** Editable field values for case update forms — all strings, empty = no value. */
+/**
+ * 案件编辑表单的字段取值——全部字符串；空串 = 无值（nullable 字段会被归一化为 `null`，
+ * 非空可选字段会被省略）。
+ *
+ * 字段语义与 `CaseUpdateInput` 对应键相同，类型统一为 `string` 以贴合表单控件输出。
+ */
 export interface UpdateCaseFormValues {
+  /** 案件标题。 */
   caseName: string;
+  /** 案件类型码（对应服务端 `caseTypeCode`）。 */
   caseTypeCode: string;
+  /** 负责人用户 ID。 */
   ownerUserId: string;
+  /** 分组 ID；变更时须配合 `groupTransferReason`。 */
   groupId: string;
+  /** 截止日期（ISO 格式字符串）。 */
   dueAt: string;
+  /** 申请类型（认定 / 变更 / 更新）。 */
   applicationType: string;
+  /** 案件子类型（例如 engineer、family 等）。 */
   caseSubtype: string;
+  /** 优先级（normal / high 等，枚举由服务端约束）。 */
   priority: string;
+  /** 风险等级。 */
   riskLevel: string;
+  /** 协办人用户 ID。 */
   assistantUserId: string;
+  /** 受理渠道（web / offline / referral 等）。 */
   sourceChannel: string;
+  /** 签约日期。 */
   signedAt: string;
+  /** 受理日期。 */
   acceptedAt: string;
+  /** 递交日期。 */
   submissionDate: string;
+  /** 结果日期（下签 / 不许可等）。 */
   resultDate: string;
+  /** 在留资格有效期。 */
   residenceExpiryDate: string;
+  /** 归档时间。 */
   archivedAt: string;
+  /** 结果判定（許可 / 不許可 / 取下等）。 */
   resultOutcome: string;
 }
 
-/** UI draft snapshot for case update — captures before/after state for diff. */
+/** UI 编辑快照——捕获编辑前/后状态，供 diff 求解 patch 语义。 */
 export interface UpdateCaseDraftSnapshot {
-  /** Form values at load time (before editing). */
+  /** 加载时的表单值（编辑前）。 */
   original: UpdateCaseFormValues;
-  /** Form values at save time (after editing). */
+  /** 保存时的表单值（编辑后）。 */
   current: UpdateCaseFormValues;
-  /** Transfer reason — only sent when groupId changed. */
+  /** 跨组转让原因——仅在 `groupId` 变更时发送。 */
   groupTransferReason: string;
-  /** Quote price at load time (UI text, may contain commas). */
+  /** 加载时的报价金额（UI 文本，可能含逗号分隔）。 */
   originalAmount: string;
-  /** Quote price at save time (UI text, may contain commas). */
+  /** 保存时的报价金额（UI 文本，可能含逗号分隔）。 */
   currentAmount: string;
 }
 
 /**
- * Nullable string fields in `CaseUpdateInput` — empty form value → `null` (clear).
- * `groupId` is also nullable but handled separately (triggers `groupTransferReason`).
+ * `CaseUpdateInput` 中的可空字符串字段——空表单值 → `null`（清除）。
+ * `groupId` 亦可空，但单独处理（会联动 `groupTransferReason`）。
  */
 export const UPDATE_PATCH_NULLABLE_FIELDS = [
   "caseName",
@@ -239,9 +262,7 @@ export const UPDATE_PATCH_NULLABLE_FIELDS = [
   "resultOutcome",
 ] as const;
 
-/**
- * Non-nullable optional string fields in `CaseUpdateInput` — empty form value → omit.
- */
+/** `CaseUpdateInput` 中的非空可选字符串字段——空表单值 → 省略（`undefined`）。 */
 export const UPDATE_PATCH_NON_NULL_FIELDS = [
   "caseTypeCode",
   "ownerUserId",
@@ -263,7 +284,7 @@ type _AssertUpdateFormKeysMatch = [
 ] extends [never, never]
   ? true
   : "UpdateCaseFormValues keys do not match field constants — update both";
-/** @internal compile-time assertion — key set mismatch → build failure */
+/** @internal 编译期断言——键集不匹配将导致构建失败。 */
 export const _ASSERT_UPDATE_FORM_KEYS: _AssertUpdateFormKeysMatch = true;
 
 /**
