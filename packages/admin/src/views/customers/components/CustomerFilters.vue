@@ -27,16 +27,22 @@ const normalizeActiveCasesFilter = (
   return value === "yes" || value === "no" ? value : "";
 };
 
-defineProps<{
-  scope?: CustomerScope;
-  search?: string;
-  groupFilter?: string;
-  ownerFilter?: string;
-  activeCasesFilter?: CustomerActiveCasesFilter;
-  filteredCount?: number;
-  groupOptions?: SelectOption[];
-  ownerOptions?: SelectOption[];
-}>();
+withDefaults(
+  defineProps<{
+    scope?: CustomerScope;
+    search?: string;
+    groupFilter?: string;
+    ownerFilter?: string;
+    activeCasesFilter?: CustomerActiveCasesFilter;
+    filteredCount?: number;
+    groupOptions?: SelectOption[];
+    ownerOptions?: SelectOption[];
+    optionsLoading?: boolean;
+  }>(),
+  {
+    optionsLoading: false,
+  },
+);
 
 defineEmits<{
   "update:scope": [value: CustomerScope];
@@ -77,6 +83,8 @@ defineEmits<{
     <div class="customer-filters__selects">
       <select
         class="customer-filters__select"
+        :disabled="optionsLoading && (groupOptions?.length ?? 0) === 0"
+        :aria-busy="optionsLoading && (groupOptions?.length ?? 0) === 0"
         :value="groupFilter ?? ''"
         @change="
           $emit(
@@ -85,7 +93,16 @@ defineEmits<{
           )
         "
       >
-        <option value="">{{ t("customers.list.filters.groupAll") }}</option>
+        <option
+          v-if="optionsLoading && (groupOptions?.length ?? 0) === 0"
+          value=""
+          disabled
+        >
+          {{ t("shared.loading") }}
+        </option>
+        <option v-else value="">
+          {{ t("customers.list.filters.groupAll") }}
+        </option>
         <option
           v-for="opt in groupOptions ?? []"
           :key="opt.value"
@@ -97,6 +114,8 @@ defineEmits<{
 
       <select
         class="customer-filters__select"
+        :disabled="optionsLoading && (ownerOptions?.length ?? 0) === 0"
+        :aria-busy="optionsLoading && (ownerOptions?.length ?? 0) === 0"
         :value="ownerFilter ?? ''"
         @change="
           $emit(
@@ -105,7 +124,16 @@ defineEmits<{
           )
         "
       >
-        <option value="">{{ t("customers.list.filters.ownerAll") }}</option>
+        <option
+          v-if="optionsLoading && (ownerOptions?.length ?? 0) === 0"
+          value=""
+          disabled
+        >
+          {{ t("shared.loading") }}
+        </option>
+        <option v-else value="">
+          {{ t("customers.list.filters.ownerAll") }}
+        </option>
         <option
           v-for="opt in ownerOptions ?? []"
           :key="opt.value"

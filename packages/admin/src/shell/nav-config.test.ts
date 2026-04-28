@@ -51,6 +51,7 @@ describe("nav-config", () => {
     expect(findNavItem("forms")).toBeUndefined();
     expect(findNavItem("reports")).toBeUndefined();
     expect(findNavItem("portal")).toBeUndefined();
+    expect(findNavItem("tasks")).toBeUndefined();
   });
 
   it("isExternalItem returns false for router items", () => {
@@ -90,6 +91,14 @@ describe("nav-config", () => {
     expect(settings.to).toBe("/settings");
     expect(settings.icon).toBe("settings");
     expect(settings.adminOnly).toBe(true);
+  });
+
+  it("keeps the tasks route hidden from the shipped navigation", () => {
+    const businessGroup = navGroups.find((group) => group.key === "business");
+    expect(businessGroup).toBeDefined();
+    expect(businessGroup!.items.some((item) => item.key === "tasks")).toBe(
+      false,
+    );
   });
 
   it("every nav item key has a matching i18n entry in all locales", () => {

@@ -1,4 +1,5 @@
 import type { CaseListItem, CaseSummaryCardData } from "../types";
+import { getBmvStepLabel } from "../constantsBmvSteps";
 import type { CaseListResult, CaseSummaryResult } from "./CaseAdapterTypes";
 import {
   CASE_SUMMARY_CARD_KEYS,
@@ -9,6 +10,7 @@ import {
   formatDate,
   readNullableString,
   readNumber,
+  readOptionalString,
   readString,
   resolveRiskStatus,
   resolveStageId,
@@ -37,6 +39,8 @@ function adaptCaseListItemDto(value: unknown): CaseListItem | null {
   const riskLevel = readString(caseRecord, "riskLevel");
   const dueAt = readNullableString(caseRecord, "dueAt");
 
+  const stepCode = readNullableString(caseRecord, "currentWorkflowStepCode");
+
   return {
     id,
     name:
@@ -47,7 +51,7 @@ function adaptCaseListItemDto(value: unknown): CaseListItem | null {
     applicant:
       readString(record, "customerName") ||
       readString(caseRecord, "customerId"),
-    customerId: readString(caseRecord, "customerId") || undefined,
+    customerId: readOptionalString(caseRecord, "customerId"),
     groupId: readString(caseRecord, "groupId"),
     groupLabel: readString(record, "groupName"),
     stageId,
@@ -65,6 +69,10 @@ function adaptCaseListItemDto(value: unknown): CaseListItem | null {
     riskStatus: resolveRiskStatus(riskLevel),
     riskLabel: riskLevel || "low",
     visibleScopes: ["all"],
+    caseNo: readOptionalString(caseRecord, "caseNo"),
+    businessPhase: readString(caseRecord, "businessPhase"),
+    workflowStepCode: stepCode || undefined,
+    workflowStepLabel: stepCode ? getBmvStepLabel(stepCode) : undefined,
   };
 }
 
@@ -111,6 +119,16 @@ const SUMMARY_LABELS: Record<(typeof CASE_SUMMARY_CARD_KEYS)[number], string> =
     unpaidTotal: "待收金额",
   };
 
+const SUMMARY_I18N_KEYS: Record<
+  (typeof CASE_SUMMARY_CARD_KEYS)[number],
+  string
+> = {
+  activeCases: "cases.constants.summaryCards.activeCases",
+  failedValidations: "cases.constants.summaryCards.failedValidations",
+  dueSoon: "cases.constants.summaryCards.dueSoon",
+  unpaidTotal: "cases.constants.summaryCards.unpaidTotal",
+};
+
 /**
  * 根据案件列表生成仪表板汇总卡片。
  *
@@ -141,24 +159,28 @@ export function adaptCaseSummaryCards(
       variant: CASE_SUMMARY_CARD_VARIANTS.activeCases,
       value: active.length,
       label: SUMMARY_LABELS.activeCases,
+      i18nKey: SUMMARY_I18N_KEYS.activeCases,
     },
     {
       key: "failedValidations",
       variant: CASE_SUMMARY_CARD_VARIANTS.failedValidations,
       value: failedValidations,
       label: SUMMARY_LABELS.failedValidations,
+      i18nKey: SUMMARY_I18N_KEYS.failedValidations,
     },
     {
       key: "dueSoon",
       variant: CASE_SUMMARY_CARD_VARIANTS.dueSoon,
       value: dueSoon,
       label: SUMMARY_LABELS.dueSoon,
+      i18nKey: SUMMARY_I18N_KEYS.dueSoon,
     },
     {
       key: "unpaidTotal",
       variant: CASE_SUMMARY_CARD_VARIANTS.unpaidTotal,
       value: unpaidTotal,
       label: SUMMARY_LABELS.unpaidTotal,
+      i18nKey: SUMMARY_I18N_KEYS.unpaidTotal,
     },
   ];
 }

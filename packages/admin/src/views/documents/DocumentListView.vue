@@ -21,7 +21,7 @@ import {
   deriveDocumentSummaryCards,
   deriveCaseOptions,
 } from "./fixtures";
-import { getProviderLabel } from "./constants";
+import { getProviderLabelKey } from "./constants";
 import type { DocumentListItem } from "./types";
 import { useDocumentFilters } from "./model/useDocumentFilters";
 import { useDocumentSelection } from "./model/useDocumentSelection";
@@ -155,7 +155,7 @@ function handleConfirmReject() {
  * @param item - 目标资料项
  */
 function handleRowRemind(item: DocumentListItem) {
-  const provLabel = getProviderLabel(item.provider);
+  const provLabel = t(getProviderLabelKey(item.provider));
   window.alert(
     `${t("documents.review.toastRemindTitle")}: ${t("documents.review.toastRemindDesc", { provider: provLabel })}`,
   );

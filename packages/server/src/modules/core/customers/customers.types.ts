@@ -18,6 +18,22 @@ export type CustomerQueryRow = {
   last_case_created_date?: unknown;
 };
 
+/** 客户所在地枚举。 */
+export const CUSTOMER_LOCATIONS = ["OVERSEAS", "JAPAN"] as const;
+
+/**
+ *
+ */
+export type CustomerLocation = (typeof CUSTOMER_LOCATIONS)[number];
+
+/** 客户来源渠道枚举。 */
+export const CUSTOMER_SOURCE_TYPES = ["REFERRAL", "WEB", "ADS"] as const;
+
+/**
+ *
+ */
+export type CustomerSourceType = (typeof CUSTOMER_SOURCE_TYPES)[number];
+
 /**
  * 客户关系类型（P0 冻结口径）。
  */
@@ -93,7 +109,17 @@ export type CustomerOwnerSummary = {
   name: string;
 };
 
-/** 经营管理签承接档案。 */
+/**
+ * 经营管理签承接档案。
+ *
+ * **冻结决策（D2）**：数据持久化于 `customers.base_profile` JSONB 的
+ * `bmvProfile` 键（写入路径见 `customers.bmv.ts`）。不新增 `customers`
+ * 顶层列。读路径统一通过 `CustomerSummaryDto.bmvProfile` /
+ * `CustomerDetailDto.bmvProfile` / `CustomerBmvView` DTO view 暴露给
+ * admin/前端，消费方不应直接解析 `base_profile` JSONB。
+ *
+ * @see {@link CustomerBmvView} — 聚合端点使用的顶层 DTO view
+ */
 export type CustomerBmvProfile = {
   questionnaireStatus: CustomerBmvQuestionnaireStatus;
   quoteStatus: CustomerBmvQuoteStatus;
@@ -105,6 +131,77 @@ export type CustomerBmvProfile = {
   quoteConfirmedAt: string | null;
   signedAt: string | null;
   note: string | null;
+  sourceLeadId: string | null;
+  currentQuoteFormId: string | null;
+  visaPlan: string | null;
+  quoteAmount: number | null;
+};
+
+/**
+ * 经营管理签顶层 DTO view — 聚合端点的读路径契约。
+ *
+ * **冻结决策（D2）**：BMV 承接数据的唯一持久化点为
+ * `customers.base_profile.bmvProfile`（JSONB 嵌套），不新增 `customers`
+ * 顶层列。本类型作为 `GET /admin/customers/:id/bmv` 聚合端点的响应骨架，
+ * 将 `bmvProfile` 提升至顶层，消费方无需关心底层存储路径，避免双源。
+ *
+ * D3 阶段将在此基础上扩展 `quoteHistory`、`caseStageSummary`、
+ * `remindersSummary` 等聚合字段。
+ */
+export type CustomerBmvView = {
+  customerId: string;
+  bmvProfile: CustomerBmvProfile;
+  quoteHistory: BmvQuoteHistoryItem[];
+  currentCase: BmvCaseSummary | null;
+  reminders: BmvReminderSummaryItem[];
+};
+
+/** 报价历史条目。 */
+export type BmvQuoteHistoryItem = {
+  id: string;
+  formData: Record<string, unknown>;
+  status: string;
+  createdAt: string;
+};
+
+/** BMV 关联案件摘要。 */
+export type BmvCaseSummary = {
+  id: string;
+  stage: string | null;
+  postApprovalStage: string | null;
+  coeIssuedAt: string | null;
+  coeExpiryDate: string | null;
+  coeSentAt: string | null;
+  status: string;
+};
+
+/** BMV 提醒摘要条目。 */
+export type BmvReminderSummaryItem = {
+  id: string;
+  remindAt: string;
+  sendStatus: string;
+  channel: string;
+};
+
+/** save-survey 请求参数。 */
+export type SaveBmvSurveyInput = {
+  intakeFormId: string;
+  formData: Record<string, unknown>;
+  surveyData?: Record<string, unknown>;
+};
+
+/** quote/modify 请求参数。 */
+export type ModifyBmvQuoteInput = {
+  appUserId: string;
+  formData: Record<string, unknown>;
+  amount?: number | null;
+  visaPlan?: string | null;
+};
+
+/** transition-to-case 可选覆写参数。 */
+export type TransitionBmvToCaseInput = {
+  ownerUserId?: string;
+  groupId?: string | null;
 };
 
 /**
@@ -140,6 +237,13 @@ export type CustomerSummaryDto = {
   owner: CustomerOwnerSummary;
   referralSource: string;
   group: string;
+  /**
+   * 经营管理签承接档案的顶层 DTO 投影。
+   * 存储于 `base_profile.bmvProfile`，由 `resolveCustomerBmvProfile()` 解析。
+   * 消费方应通过此字段读取，不直接访问 `base_profile` JSONB。
+   *
+   * @see {@link CustomerBmvView} — 独立聚合端点的 DTO view
+   */
   bmvProfile: CustomerBmvProfile | null;
 };
 
@@ -150,6 +254,14 @@ export type CustomerDetailDto = CustomerSummaryDto & {
   birthDate: string;
   avatar: string;
   note: string;
+  location: CustomerLocation | null;
+  sourceType: CustomerSourceType | null;
+  /**
+   * 统一签证类型计算字段。
+   * BMV 客户取 `bmvProfile.visaPlan`，非 BMV 客户取 `baseProfile.visaType`。
+   */
+  visaType: string | null;
+  referrerName: string | null;
   archivedCases: number;
   caseNames: string[];
   lastCaseCreatedDate: string | null;

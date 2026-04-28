@@ -12,7 +12,15 @@ process.env.AUTH_JWT_SECRET = TEST_KEY;
 type MockHeaders = Record<string, string>;
 
 function makeContext(headers: MockHeaders) {
-  const req = {
+  const req: {
+    headers: MockHeaders;
+    appUserContext: unknown;
+    requestContext?: {
+      orgId: string;
+      userId: string;
+      role: "staff";
+    };
+  } = {
     headers,
     appUserContext: undefined as unknown,
   };
@@ -100,4 +108,18 @@ void test("AppUserAuthGuard rejects backend User JWT (type=user)", () => {
     () => guard.canActivate(ctx as never),
     /Invalid or expired token/,
   );
+});
+
+void test("AppUserAuthGuard allows request with existing requestContext", () => {
+  const guard = new AppUserAuthGuard();
+  const ctx = makeContext({});
+  ctx._req.requestContext = {
+    orgId: "00000000-0000-4000-8000-000000000000",
+    userId: "00000000-0000-4000-8000-000000000001",
+    role: "staff",
+  };
+
+  const result = guard.canActivate(ctx as never);
+  assert.equal(result, true);
+  assert.equal(ctx._req.appUserContext, undefined);
 });

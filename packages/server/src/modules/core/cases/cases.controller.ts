@@ -6,6 +6,7 @@ import {
   ForbiddenException,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -16,6 +17,7 @@ import {
 
 import {
   requireString,
+  parseCaseScope,
   parseOptionalString,
   parseOptionalNullableString,
   parseOptionalNullableNumber,
@@ -31,96 +33,17 @@ import {
 } from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CasesService } from "./cases.service";
-
-type HttpRequest = {
-  requestContext?: RequestContext;
-};
-
-type CreateCaseBody = {
-  customerId: unknown;
-  caseTypeCode: unknown;
-  ownerUserId: unknown;
-  stage?: unknown;
-  status?: unknown;
-  dueAt?: unknown;
-  metadata?: unknown;
-  caseNo?: unknown;
-  caseName?: unknown;
-  caseSubtype?: unknown;
-  applicationType?: unknown;
-  companyId?: unknown;
-  priority?: unknown;
-  riskLevel?: unknown;
-  assistantUserId?: unknown;
-  sourceChannel?: unknown;
-  signedAt?: unknown;
-  acceptedAt?: unknown;
-  submissionDate?: unknown;
-  resultDate?: unknown;
-  residenceExpiryDate?: unknown;
-  resultOutcome?: unknown;
-  quotePrice?: unknown;
-  groupId?: unknown;
-  crossGroupReason?: unknown;
-};
-
-type UpdateCaseBody = {
-  caseTypeCode?: unknown;
-  ownerUserId?: unknown;
-  dueAt?: unknown;
-  metadata?: unknown;
-  caseNo?: unknown;
-  caseName?: unknown;
-  caseSubtype?: unknown;
-  applicationType?: unknown;
-  companyId?: unknown;
-  priority?: unknown;
-  riskLevel?: unknown;
-  assistantUserId?: unknown;
-  sourceChannel?: unknown;
-  signedAt?: unknown;
-  acceptedAt?: unknown;
-  submissionDate?: unknown;
-  resultDate?: unknown;
-  residenceExpiryDate?: unknown;
-  archivedAt?: unknown;
-  resultOutcome?: unknown;
-  quotePrice?: unknown;
-  overseasVisaStartAt?: unknown;
-  entryConfirmedAt?: unknown;
-  groupId?: unknown;
-  groupTransferReason?: unknown;
-};
-
-type TransitionBody = {
-  toStage?: unknown;
-  toStatus?: unknown;
-  closeReason?: unknown;
-};
-
-type BillingRiskAckBody = {
-  reasonCode: unknown;
-  reasonNote?: unknown;
-  evidenceUrl?: unknown;
-};
-
-type PostApprovalStageBody = {
-  stage: unknown;
-};
-
-type ListCasesQuery = {
-  stage?: unknown;
-  status?: unknown;
-  resultOutcome?: unknown;
-  ownerUserId?: unknown;
-  customerId?: unknown;
-  priority?: unknown;
-  riskLevel?: unknown;
-  companyId?: unknown;
-  page?: unknown;
-  limit?: unknown;
-  view?: unknown;
-};
+import type {
+  HttpRequest,
+  CreateCaseBody,
+  UpdateCaseBody,
+  TransitionBody,
+  BillingRiskAckBody,
+  PostApprovalStageBody,
+  WorkflowStepTransitionBody,
+  PhaseTransitionBody,
+  ListCasesQuery,
+} from "./cases.controller-bodies";
 
 /**
  * UpdateCaseBody → CaseUpdateInput 変換。
@@ -173,6 +96,7 @@ function parseUpdateCaseBody(body: UpdateCaseBody) {
       "resultOutcome",
     ),
     quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
+    visaPlan: parseOptionalNullableString(body.visaPlan, "visaPlan"),
     overseasVisaStartAt: parseOptionalNullableString(
       body.overseasVisaStartAt,
       "overseasVisaStartAt",
@@ -191,8 +115,8 @@ function parseUpdateCaseBody(body: UpdateCaseBody) {
 export class CasesController {
   /**
    * 构造函数。
-   * @param casesService 案件服务实例
-   * @param permissionsService 权限服务实例
+   * @param casesService 案件服务
+   * @param permissionsService 权限服务
    */
   constructor(
     @Inject(CasesService)
@@ -203,9 +127,9 @@ export class CasesController {
 
   /**
    * 创建案件。
-   * @param req HTTP 请求对象
-   * @param body 创建案件请求体
-   * @returns 创建成功的案件信息
+   * @param req HTTP 请求
+   * @param body 创建请求体
+   * @returns 创建成功的案件
    */
   @RequireRoles("staff")
   @Post()
@@ -260,6 +184,7 @@ export class CasesController {
         "resultOutcome",
       ),
       quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
+      visaPlan: parseOptionalNullableString(body.visaPlan, "visaPlan"),
       crossGroupReason: parseOptionalNullableString(
         body.crossGroupReason,
         "crossGroupReason",
@@ -268,10 +193,10 @@ export class CasesController {
   }
 
   /**
-   * 获取案件列表。
-   * @param req HTTP 请求对象
+   * 案件列表。
+   * @param req HTTP 请求
    * @param query 查询参数
-   * @returns 案件列表数组
+   * @returns 案件列表
    */
   @RequireRoles("viewer")
   @Get()
@@ -280,6 +205,7 @@ export class CasesController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     const listInput = {
+      scope: parseCaseScope(query.scope),
       stage: parseOptionalString(query.stage, "stage"),
       status: parseOptionalString(query.status, "status"),
       resultOutcome: parseOptionalString(query.resultOutcome, "resultOutcome"),
@@ -288,6 +214,7 @@ export class CasesController {
       priority: parseOptionalString(query.priority, "priority"),
       riskLevel: parseOptionalString(query.riskLevel, "riskLevel"),
       companyId: parseOptionalString(query.companyId, "companyId"),
+      phase: parseOptionalString(query.phase, "phase"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
       visibility: {
@@ -304,8 +231,25 @@ export class CasesController {
   }
 
   /**
-   * 获取案件详情聚合 DTO（含关联展示名、tab 计数器、校验/收费概要）。
-   * @param req HTTP 请求对象
+   * 案件 billing tab 一次性聚合。
+   * @param req HTTP 请求
+   * @param id 案件 ID
+   * @returns CaseBillingTabAggregate
+   */
+  @RequireRoles("viewer")
+  @Get(":id/billing-tab-aggregate")
+  async getBillingTabAggregate(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+    return this.casesService.getBillingTabAggregate(ctx, id);
+  }
+
+  /**
+   * 案件详情聚合 DTO。
+   * @param req HTTP 请求
    * @param id 案件 ID
    * @returns 聚合 DTO
    */
@@ -334,9 +278,9 @@ export class CasesController {
 
   /**
    * 获取指定案件详情。
-   * @param req HTTP 请求对象
+   * @param req HTTP 请求
    * @param id 案件 ID
-   * @returns 匹配的案件信息
+   * @returns 案件详情
    */
   @RequireRoles("viewer")
   @Get(":id")
@@ -410,6 +354,30 @@ export class CasesController {
   }
 
   /**
+   * businessPhase 维度流转。
+   * @param req HTTP 请求
+   * @param id 案件 ID
+   * @param body 流转请求体
+   * @returns 更新后案件
+   */
+  @RequireRoles("staff")
+  @Post(":id/phase-transition")
+  async phaseTransition(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: PhaseTransitionBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.assertCanEditCase(ctx, id);
+
+    return this.casesService.transitionPhase(ctx, id, {
+      toPhase: requireString(body.toPhase, "toPhase"),
+    });
+  }
+
+  /**
    * 记录欠款风险确认。
    * @param req HTTP 请求对象
    * @param id 案件 ID
@@ -460,6 +428,30 @@ export class CasesController {
   }
 
   /**
+   * P1 业务子步骤流转。
+   * @param req HTTP 请求
+   * @param id 案件 ID
+   * @param body 流转请求体
+   * @returns 更新后案件
+   */
+  @RequireRoles("staff")
+  @Post(":id/workflow-step-transition")
+  async transitionWorkflowStep(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: WorkflowStepTransitionBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.assertCanEditCase(ctx, id);
+
+    return this.casesService.transitionWorkflowStep(ctx, id, {
+      toStepCode: requireString(body.toStepCode, "toStepCode"),
+    });
+  }
+
+  /**
    * 软删除案件。
    * @param req HTTP 请求对象
    * @param id 案件 ID
@@ -481,18 +473,11 @@ export class CasesController {
     ctx: RequestContext,
     id: string,
   ): Promise<void> {
-    const caseEntity = await this.casesService.get(ctx, id);
-    if (!caseEntity) return;
-
-    if (
-      !this.permissionsService.canEditCase(
-        ctx.userId,
-        ctx.role,
-        ctx.groupId,
-        caseEntity,
-      )
-    ) {
-      throw new ForbiddenException("Insufficient permissions to edit case");
+    try {
+      await this.casesService.assertCanEditCase(ctx, id);
+    } catch (e) {
+      if (e instanceof NotFoundException) return;
+      throw e;
     }
   }
 }

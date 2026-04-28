@@ -1,11 +1,16 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { CustomerDetail, SelectOption } from "../types";
-import { OWNER_OPTIONS } from "../fixtures";
 import {
   getActiveGroupOptions,
   isGroupDisabled,
   resolveGroupLabel,
+  resolveGroupValue,
 } from "../../../shared/model/useGroupOptions";
+import {
+  getOwnerOptions,
+  resolveOwnerLabel,
+  resolveOwnerValue,
+} from "../../../shared/model/useOwnerOptions";
 import {
   CustomerRepositoryError,
   type CustomerRepository,
@@ -29,20 +34,12 @@ function mapBasicInfoError(error: unknown): CustomerBasicInfoModelErrorCode {
   return "requestFailed";
 }
 
-function resolveOwnerIdByLabel(
-  ownerLabel: string,
-  ownerOptions: readonly SelectOption[],
-): string | undefined {
-  const matched = ownerOptions.find(
-    (option) => option.label === ownerLabel.trim(),
-  );
-  return matched?.value;
-}
-
 type UseCustomerBasicInfoModelInput = {
   customer: ComputedRef<CustomerDetail | null>;
   repository: Pick<CustomerRepository, "updateCustomerBasicInfo">;
   refreshCustomer?: () => Promise<void>;
+  locale?: Readonly<Ref<string>>;
+  disabledSuffix?: Readonly<Ref<string>>;
 };
 
 /**
@@ -96,6 +93,22 @@ export interface BasicInfoFormSnapshot {
   /**
    *
    */
+  location: string;
+  /**
+   *
+   */
+  sourceType: string;
+  /**
+   * BMV 客户取 `bmvProfile.visaPlan`，非 BMV 客户取 `baseProfile.visaType`。
+   */
+  visaType: string;
+  /**
+   *
+   */
+  referrerName: string;
+  /**
+   *
+   */
   avatar: string;
   /**
    *
@@ -107,10 +120,14 @@ export interface BasicInfoFormSnapshot {
  * 从 CustomerDetail 提取可编辑字段生成表单快照。
  *
  * @param customer 客户详情数据
+ * @param locale - 可选语言标识；用于把 group 显示值转换为当前界面语言
+ * @param disabledSuffix - disabled group 的显示后缀；用于只读态与编辑态保持一致
  * @returns 仅包含可编辑字段的独立快照对象
  */
 export function snapshotFromCustomer(
   customer: CustomerDetail,
+  locale?: string,
+  disabledSuffix = "（已停用）",
 ): BasicInfoFormSnapshot {
   return {
     displayName: customer.displayName,
@@ -121,22 +138,34 @@ export function snapshotFromCustomer(
     birthDate: customer.birthDate,
     phone: customer.phone,
     email: customer.email,
-    group: customer.group,
-    owner: customer.owner.name,
+    group: resolveGroupLabel(customer.group, disabledSuffix, locale),
+    owner: resolveOwnerLabel(customer.owner.name, locale),
     referralSource: customer.referralSource,
+    location: customer.location,
+    sourceType: customer.sourceType,
+    visaType: customer.visaType,
+    referrerName: customer.referrerName,
     avatar: customer.avatar,
     note: customer.note,
   };
 }
 
-function useCommittedSnapshot(customer: ComputedRef<CustomerDetail | null>) {
+function useCommittedSnapshot(
+  customer: ComputedRef<CustomerDetail | null>,
+  locale?: Readonly<Ref<string>>,
+  disabledSuffix?: Readonly<Ref<string>>,
+) {
   const committedSnapshot = ref<BasicInfoFormSnapshot | null>(null);
+  const localeValue = computed(() => locale?.value);
+  const disabledSuffixValue = computed(
+    () => disabledSuffix?.value ?? "（已停用）",
+  );
 
   watch(
-    customer,
-    (nextCustomer) => {
+    [customer, localeValue, disabledSuffixValue],
+    ([nextCustomer, nextLocale, nextDisabledSuffix]) => {
       committedSnapshot.value = nextCustomer
-        ? snapshotFromCustomer(nextCustomer)
+        ? snapshotFromCustomer(nextCustomer, nextLocale, nextDisabledSuffix)
         : null;
     },
     { immediate: true },
@@ -150,14 +179,24 @@ function useCommittedSnapshot(customer: ComputedRef<CustomerDetail | null>) {
 
 function useBasicInfoOptions(
   currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>,
+  locale?: Readonly<Ref<string>>,
+  disabledSuffix?: Readonly<Ref<string>>,
 ) {
   const groupOptions = computed<readonly SelectOption[]>(() => {
-    const active = getActiveGroupOptions();
+    const active = getActiveGroupOptions(locale?.value);
     const currentGroup = currentSnapshot.value?.group ?? "";
-    if (currentGroup && isGroupDisabled(currentGroup)) {
+    const currentGroupValue = resolveGroupValue(currentGroup);
+    if (currentGroupValue && isGroupDisabled(currentGroupValue)) {
       return [
         ...active,
-        { value: currentGroup, label: resolveGroupLabel(currentGroup) },
+        {
+          value: currentGroupValue,
+          label: resolveGroupLabel(
+            currentGroupValue,
+            disabledSuffix?.value ?? "（已停用）",
+            locale?.value,
+          ),
+        },
       ];
     }
     return active;
@@ -165,14 +204,16 @@ function useBasicInfoOptions(
 
   return {
     groupOptions,
-    ownerOptions: ref<readonly SelectOption[]>(OWNER_OPTIONS),
+    ownerOptions: computed<readonly SelectOption[]>(() =>
+      getOwnerOptions(locale?.value).map(({ value, label }) => ({
+        value,
+        label,
+      })),
+    ),
   };
 }
 
-function createBasicInfoPayload(
-  snapshot: BasicInfoFormSnapshot,
-  ownerOptions: readonly SelectOption[],
-) {
+function createBasicInfoPayload(snapshot: BasicInfoFormSnapshot) {
   return {
     displayName: snapshot.displayName,
     legalName: snapshot.legalName,
@@ -182,9 +223,13 @@ function createBasicInfoPayload(
     birthDate: snapshot.birthDate,
     phone: snapshot.phone,
     email: snapshot.email,
-    group: snapshot.group,
-    ownerId: resolveOwnerIdByLabel(snapshot.owner, ownerOptions),
+    group: resolveGroupValue(snapshot.group) ?? snapshot.group,
+    ownerId: resolveOwnerValue(snapshot.owner) ?? undefined,
     referralSource: snapshot.referralSource,
+    location: snapshot.location,
+    sourceType: snapshot.sourceType,
+    visaType: snapshot.visaType,
+    referrerName: snapshot.referrerName,
     avatar: snapshot.avatar,
     note: snapshot.note,
   };
@@ -208,7 +253,6 @@ function useBasicInfoActions(
     errorCode: Ref<CustomerBasicInfoModelErrorCode | null>;
     currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>;
   },
-  ownerOptions: Readonly<Ref<readonly SelectOption[]>>,
 ) {
   function startEditing(): void {
     if (!state.currentSnapshot.value) return;
@@ -235,7 +279,7 @@ function useBasicInfoActions(
     try {
       await input.repository.updateCustomerBasicInfo(
         customer.id,
-        createBasicInfoPayload(snapshot, ownerOptions.value),
+        createBasicInfoPayload(snapshot),
       );
       state.committedSnapshot.value = { ...snapshot };
       state.isEditing.value = false;
@@ -273,21 +317,23 @@ export function useCustomerBasicInfoModel(
   const errorCode = ref<CustomerBasicInfoModelErrorCode | null>(null);
   const { committedSnapshot, currentSnapshot } = useCommittedSnapshot(
     input.customer,
+    input.locale,
+    input.disabledSuffix,
   );
-  const { groupOptions, ownerOptions } = useBasicInfoOptions(currentSnapshot);
-  const { startEditing, cancelEditing, save } = useBasicInfoActions(
-    input,
-    {
-      isEditing,
-      showSavedHint,
-      formSnapshot,
-      committedSnapshot,
-      saving,
-      errorCode,
-      currentSnapshot,
-    },
-    ownerOptions,
+  const { groupOptions, ownerOptions } = useBasicInfoOptions(
+    currentSnapshot,
+    input.locale,
+    input.disabledSuffix,
   );
+  const { startEditing, cancelEditing, save } = useBasicInfoActions(input, {
+    isEditing,
+    showSavedHint,
+    formSnapshot,
+    committedSnapshot,
+    saving,
+    errorCode,
+    currentSnapshot,
+  });
 
   return {
     isEditing,

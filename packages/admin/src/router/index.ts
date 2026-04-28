@@ -90,6 +90,30 @@ export const router = createRouter({
       }),
     },
     {
+      path: "/conversations",
+      name: "conversations",
+      component: () =>
+        import("../views/conversations/ConversationsListView.vue"),
+      meta: withShellMeta({
+        navKey: "conversations",
+        groupKey: "business",
+        titleKey: "shell.nav.items.conversations",
+        requiresStaff: true,
+      }),
+    },
+    {
+      path: "/conversations/:id",
+      name: "conversation-detail",
+      component: () =>
+        import("../views/conversations/ConversationDetailView.vue"),
+      meta: withShellMeta({
+        navKey: "conversations",
+        groupKey: "business",
+        titleKey: "shell.nav.items.conversations",
+        requiresStaff: true,
+      }),
+    },
+    {
       path: "/cases",
       name: "cases",
       component: () => import("../views/cases/CaseListView.vue"),

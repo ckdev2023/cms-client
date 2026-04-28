@@ -6,10 +6,13 @@
  */
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { LeadCreateFormFields, LeadSummary } from "../types";
+import type {
+  DedupMatch,
+  LeadCreateFormFields,
+  OwnerOption,
+  SelectOption,
+} from "../types";
 import {
-  GROUP_OPTIONS,
-  OWNER_OPTIONS,
   BUSINESS_TYPE_OPTIONS,
   LEAD_SOURCE_OPTIONS,
   LANGUAGE_OPTIONS,
@@ -20,12 +23,15 @@ const { t } = useI18n();
 
 const props = defineProps<{
   fields?: LeadCreateFormFields;
+  ownerOptions?: OwnerOption[];
+  groupOptions?: SelectOption[];
   showDedupe?: boolean;
-  dedupeMatches?: LeadSummary[];
+  dedupeMatches?: DedupMatch[];
 }>();
 
 defineEmits<{
   "update:field": [name: keyof LeadCreateFormFields, value: string];
+  "dedup-check": [phone: string, email: string];
 }>();
 
 const showReferrer = computed(() => props.fields?.source === "referral");
@@ -85,6 +91,9 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             :value="fields?.phone"
             :placeholder="t('leads.list.createModal.fields.phonePlaceholder')"
             @input="$emit('update:field', 'phone', inputValue($event))"
+            @blur="
+              $emit('dedup-check', fields?.phone ?? '', fields?.email ?? '')
+            "
           />
         </div>
         <div class="lead-modal-body__field">
@@ -97,6 +106,9 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             :value="fields?.email"
             :placeholder="t('leads.list.createModal.fields.emailPlaceholder')"
             @input="$emit('update:field', 'email', inputValue($event))"
+            @blur="
+              $emit('dedup-check', fields?.phone ?? '', fields?.email ?? '')
+            "
           />
         </div>
       </div>
@@ -192,7 +204,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("leads.list.createModal.fields.groupPlaceholder") }}
             </option>
             <option
-              v-for="opt in GROUP_OPTIONS"
+              v-for="opt in groupOptions ?? []"
               :key="opt.value"
               :value="opt.value"
             >
@@ -222,7 +234,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("leads.list.createModal.fields.ownerPlaceholder") }}
             </option>
             <option
-              v-for="opt in OWNER_OPTIONS"
+              v-for="opt in ownerOptions ?? []"
               :key="opt.value"
               :value="opt.value"
             >

@@ -25,6 +25,33 @@
 
 ## 最新产出
 
+- 时间：2026-04-28
+  问题：以 `docs/事务所流程/` 的经管签 20 状态机 + 7 场景资料矩阵为基线，admin 当前是否能跑完一遍真实端到端流程？
+  结论（TL;DR）：跑不通。admin 状态机仍停在 S1-S9 操作层（业务 20 状态完全缺位）、`POST /api/cases/:id/transition` 不强制顺序（可一步从 S2 跳 S9 归档）、真实新建 case 的 `/aggregate` 全部 500 → 详情页直接「Case not found」、建案模板只有 3 个 zh-CN 硬编码（家族/技人国/经管）且预览资料 9 项 vs 规范 18-25 项、`POST /api/residence-periods` 写入后 `reminderCreated:false` 且日期偏 1 天、Document Center 仍仅展示 fixture A2026-001/002/003。本轮共抓出 21 条新增 Bug（P0×8 / P1×9 / P2×4），全部聚焦在「业务规范 → admin 实现」的覆盖缺口而非 round 1/2 的 fixture/i18n。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/09-事务所流程驱动走查Bug清单.md（本轮全文）
+  - docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md（业务 20 状态机基线）
+  - docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md（7 场景资料矩阵）
+  影响面：
+  - admin 案件状态机（缺 NEED_SUPPLEMENT / APPROVED / COE_SENT / VISA_APPLYING / SUCCESS / CLOSED_SUCCESS / CLOSED_FAILED 等 14 个业务节点）
+  - admin 建案向导模板（缺 company_setup、intra_company_transfer 两个独立模板；4 类经管场景同模板）
+  - server `/api/cases/:id/aggregate`（任意新建 case 500）
+  - server `/api/residence-periods`（提醒未自动派生 + 日期偏移 1 天）
+  - server `/api/cases/:id/transition`（无顺序守卫）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§3.0F 状态机冻结声明 / §3.1A 阶段允许转移矩阵
+    Owner：研发
+    状态：待回灌（需要把 20 状态业务模型与 S1-S9 操作模型的映射加进 §3.0F；§3.1A 需要补"禁止跨多阶段跳跃 + 归档前必须经过 S8"硬规则）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md
+    位置：§1 主流程 + §6 补资料 + §7 异常结案
+    Owner：研发
+    状态：待回灌（需要按业务规范把 Step 13-20 的状态转移路径补到 §1.4 / §7）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/案件详情.md
+    位置：在留期间记录 + 续签提醒 section
+    Owner：产品
+    状态：待回灌（明确「未生成提醒任务不得 CLOSED_SUCCESS」的页面侧表达）
+
 - 时间：2026-04-10
   问题：如何在 P0 阶段把 Karpathy 的“编译式知识库”落地到本仓库，并保证跨编辑器（Trae/Cursor/Augment）一致？
   结论（TL;DR）：以仓库根目录 `AGENTS.md` 作为跨编辑器唯一指令入口；在 `docs/gyoseishoshi_saas_md/` 下新增 `_raw/00-inbox.md` 与 `_output/00-outputs.md`，形成 raw → compile → file-back → lint 的最小闭环，并把入口挂到 README/00-开始这里/99 中，确保可发现与可维护。
@@ -489,3 +516,339 @@
     位置：后续整改排序与验收矩阵
     Owner：研发
     状态：待回灌
+
+- 时间：2026-04-28
+  问题：[billing-phase0-decisions] 账单模块 P0+P1 前后端接入计划 §1.1 的 D1–D10 设计锁定决议是否已全部钉死？
+  结论（TL;DR）：D1–D10 全部锁定。reverse 采用"原地翻状态"方案（D1），复用 voided_* 四列承载 voided/reversed 两态（D10）；overdueAmount 走实时 SQL 聚合、不依赖人工标 overdue 状态（D2）；q 搜索范围冻结为 5 列（D3）；bulk-collect 新增 task_type='collection'（D4）+ fingerprint 必须含 task_type='collection'（D5）；no-assignee 仅取 owner_user_id（D6）；权限走 CasesService.assertCanEditCase（D7）；aggregate recentPayments 上限 50 条（D8）；gateEffectMode=block P0 仅后端解锁、UI 不暴露（D9）。
+  关键依据：
+  - packages/server/src/modules/core/cases/cases.types-billing.ts（CasePaymentRecordDto 第 187–207 行已有 voidReasonCode/voidReasonNote/voidedBy/voidedAt/reversedFromPaymentRecordId 字段定义）
+  - packages/server/src/modules/core/billing/paymentRecords.service.ts（PAYMENT_RECORD_COLS 第 78 行含 record_status/void_reason_code/void_reason_note/voided_by/voided_at/reversed_from_payment_record_id）
+  - packages/server/src/modules/core/billing/billingGuards.ts（syncBillingCacheForCase 签名 (tx: TenantDbTx, caseId: string)，第 22 行）
+  - packages/server/src/modules/core/tasks/tasks.service.ts（VALID_TASK_TYPES 第 80–86 行 = general/document_follow_up/client_contact/submission/review，当前不含 collection）
+  - packages/server/src/modules/core/cases/cases.types-billing.ts（CaseBillingTimelineAction 第 418–424 行，当前不含 payment_record.reversed / case.collection_task_created）
+  - packages/server/src/infra/db/migrations/018_billing_gate_block.up.sql（gate_effect_mode CHECK 已放开 off|warn|block）
+  - packages/server/src/modules/core/cases/cases.controller.ts（assertCanEditCase 为 private，第 428–445 行）
+  影响面：
+  - packages/server/src/modules/core/billing/*（reverse 端点、summary 端点、collections 端点新增）
+  - packages/server/src/modules/core/cases/cases.types-billing.ts（契约扩展：timeline action、gateEffectMode=block、扩展字段）
+  - packages/server/src/modules/core/cases/cases.service.ts（assertCanEditCase 提升为 public）
+  - packages/server/src/modules/core/tasks/tasks.service.ts（VALID_TASK_TYPES 追加 collection）
+  - packages/admin/src/views/billing/*（前端列表、流水、批量催款、风险确认全部对接真实 API）
+  - packages/admin/src/shared/api/repositoryRuntime.ts（新建，消除 feature 间直接依赖）
+
+  §1.1 Phase 0 决议表（D1–D10）锁定全文：
+
+  | ID | 决定项 | 锁定方案 |
+  |---|---|---|
+  | D1 | reverse 数据语义 | **方案 A：原地翻状态。** `reverseInTx` 把原 `payment_records.record_status='valid'` 直接 UPDATE 为 `'reversed'`，不新增行、不出现负数金额。冲正字段填 `void_reason_code/note`，`reversed_at`/`reversed_by` 走既有 `voided_at`/`voided_by` 列复用（语义按 status 区分）；`reversed_from_payment_record_id` 在"复制原行后再翻"场景才用，本方案无需。`recalculateBillingStatus` 不变（仍只看 `valid`）。 |
+  | D2 | overdueAmount 实时口径 | `select sum(br.amount_due - paid) where br.due_date < now() and br.status in ('due','partial','overdue') and br.org_id = $1` 的 `paid` 子聚合按 `record_status='valid'`。**不依赖 status='overdue' 是否被人工标过**。BillingPlan.status 由后续 cron（不在本计划）补落地。 |
+  | D3 | q 模糊搜索字段范围 | `cases.case_no` / `cases.case_name` / `customers.name`（join）/ `billing_records.milestone_name` / `payment_records.note`（仅 payment 列表用）。所有列加 `lower(...) like '%' \|\| lower($q) \|\| '%'`。 |
+  | D4 | bulk-collect task_type | `task_type='collection'`（新增枚举值）。同时扩 `VALID_TASK_TYPES`，给 `task.created` payload 加 `kind:'collection'`。 |
+  | D5 | duplicate-task fingerprint | `tasks` 表查 `task_type='collection' AND source_type='billing_plan' AND source_id=billingPlanId AND status in ('pending','in_progress')`；命中即 skip。**必须含 `task_type='collection'`**，避免与同 plan 来源的 follow-up 任务冲突。 |
+  | D6 | no-assignee 兜底 | P0 简化：仅取 `cases.owner_user_id`。缺失即 skip `no-assignee`。Group 默认负责人列在 `groups` 表暂未建，不在本计划新增。 |
+  | D7 | no-permission 判定 | `BillingCollectionsController` 加 `@RequireRoles('staff')` 粗粒度准入；`BillingCollectionsService` 注入 `CasesService`，对每个 caseId 调 `casesService.assertCanEditCase(ctx, id)`，无写权限或 case 不存在即 skip `no-permission`。不复用 `CasesController.assertCanEditCase`（private，跨模块不可见）；先在 §2.0.2 把同名 helper 提升到 `CasesService` 公开方法。 |
+  | D8 | recentPayments 条数 | aggregate 端点固定返回最近 50 条（按 `received_at desc`，含 voided/reversed 用于审计展示）；超过 50 条时前端切到 PaymentRecords list 端点分页（不在 aggregate 路径继续翻）。 |
+  | D9 | gateEffectMode=block 暴露范围 | P0 仅服务端解锁；契约 `CaseBillingPlanCreateInput.gateEffectMode` 联合追加 `block`，但 admin UI 不暴露 block 选项，留给 P1 COE 流程。DB CHECK 已在 `018_billing_gate_block` 放开，无需新增迁移。 |
+  | D10 | reverse 字段复用语义 | 方案 A 复用 `void_reason_code` / `void_reason_note` / `voided_by` / `voided_at` 列承载 voided/reversed 两态。`CasePaymentRecordDto.voidedBy` / `voidedByDisplayName` / `voidedAt` 在 `recordStatus='reversed'` 时表示 reverse 操作人/时间；契约 JSDoc 必须补此说明，前端 PaymentLogTable 按 `recordStatus` 分支渲染（voided=红/reversed=橙）。不新增独立的 `reversedAt`/`reversedBy` 列。 |
+
+  代码现状验证（快照 2026-04-28）：
+  - `CaseBillingTimelineAction`（cases.types-billing.ts:418–424）当前 **不含** `payment_record.reversed` / `case.collection_task_created` → Phase 1 §2.0.3 追加
+  - `VALID_TASK_TYPES`（tasks.service.ts:80–86）当前 = `general/document_follow_up/client_contact/submission/review`，**不含 `collection`** → Phase 1 §2.7 追加
+  - `PAYMENT_RECORD_COLS`（paymentRecords.service.ts:78）已含 `record_status/void_reason_code/void_reason_note/voided_by/voided_at/reversed_from_payment_record_id` → D1/D10 所需列已就绪
+  - `syncBillingCacheForCase`（billingGuards.ts:22）签名 `(tx: TenantDbTx, caseId: string)` → 事务内调用，无 ctx 参数
+  - `assertCanEditCase`（cases.controller.ts:428–445）为 **private** → D7 要求先提升到 CasesService
+  - `018_billing_gate_block.up.sql` 已将 `gate_effect_mode` CHECK 放开为 `off|warn|block` → D9 无需新迁移
+
+  回灌计划：
+  - 目标文档：billing-module-integration plan §1.1
+    位置：Phase 0 设计锁定决议表
+    Owner：研发
+    状态：已锁定（2026-04-28，D1–D10 全部签字）
+
+- 时间：2026-04-28
+  问题：[T-20-fileback] 《P0+P1 事务所流程驱动 Bug 修复（修订版）》17 项 Bug 修复完成回灌——本轮已修什么、留了什么给 P2、下一轮入口在哪
+  结论（TL;DR）：P0 BUG-062~069（8 个）+ P1 BUG-070~078（9 个）全部修复完毕，`npm run guard` 全绿。核心改动：引入 `cases.business_phase` 双层状态机（20 状态枚举 + 转换图 + gate 条件），落地 7 场景资料模板（内嵌多语言 label），修复 `/aggregate` 500、续签提醒未派生与日期偏 1 天、客户字段缺失，以及 9 项 UI 本地化与字段展示问题。P2（BUG-079~082）及 Document Center 接真实 API、列表 phase 筛选 UI、checklist item i18n 字典迁移留下一轮。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/09-事务所流程驱动走查Bug清单.md（本轮走查全文，BUG-062~082）
+  - docs/gyoseishoshi_saas_md/_output/10-双层状态机映射.md（本轮新增，固化映射表 + 转换图 + gate 条件）
+  - packages/server/src/modules/core/cases/businessPhase.ts（phase 枚举 + 转换图 + assertPhaseTransition + stageToPhaseDefault 实现）
+  - .cursor/plans/p0+p1_事务所流程驱动_bug_修复（修订版）_1c92a793.plan.md（执行计划）
+
+  本轮已修 Bug 清单：
+
+  | BUG ID | 优先级 | 摘要 | 修复要点 |
+  |---|---|---|---|
+  | BUG-062 | P0 | 案件状态机仅 S1-S9，与业务 20 状态脱节 | 新增 `cases.business_phase` NOT NULL 列（20 枚举值），保留 S1-S9 操作层 + 新增 businessPhase 业务层，迁移按 stageToPhaseDefault 回填 |
+  | BUG-063 | P0 | transition 不强制顺序，可 S1→S9 跳跃 | `DEFAULT_CASE_TRANSITIONS` 收紧（移除 S1~S6→S9），S9 仅允许从 S8 进入；新增 `POST /:id/phase-transition` 端点 + assertPhaseTransition 强守卫 |
+  | BUG-064 | P0 | `/aggregate` 任何新建 case 都 500 | `getDetailAggregate` 改 `Promise.allSettled` 兜底，子查询失败仍返回 200 + 部分数据 + logger.error |
+  | BUG-065 | P0 | 建案向导只有 3 模板（家族/技人国/经营管理） | 扩展为 7 场景模板（biz_mgmt_cert_4m/1y/renewal、company_setup、eng_humanities_intl_cert/renewal、intra_company_transfer），item label 用 `{ zh, en, ja }` 内嵌 |
+  | BUG-066 | P0 | 资料清单只有 8-9 项 vs 规范 18-25 项 | 7 场景模板各按业务规范填充完整 checklist（18~31 项不等） |
+  | BUG-067 | P0 | `POST /residence-periods` 后 reminderCreated:false | 修复 `syncExpiryReminders` SAVEPOINT catch，确保 180/90/30 天提醒任务自动派生 |
+  | BUG-068 | P0 | 日期字段被偏移 1 天（时区 bug） | SQL 查询对 date 列 cast 为 text（`valid_from::text`），绕过 pg 驱动的 Date 解析 |
+  | BUG-069 | P0 | 客户实体缺 location/source_type/visa_type | baseProfile zod 加 location/sourceType/visaType/referrerName；前端详情页 + 表单 4 字段；BMV visaType 由 visaPlan 派生 |
+  | BUG-070 | P1 | 案件列表 Stage 列展示原始 S1 码 | CaseTableRow 4 列重构，Stage 走 i18n + phase badge |
+  | BUG-071 | P1 | Owner 列展示 UUID | Owner UUID 解析回退 + 用户名展示 |
+  | BUG-072 | P1 | Risk 列展示 low vs 筛选选项 Normal | riskLevel 走 i18n 映射（low→Normal/medium→Needs attention/high→High risk） |
+  | BUG-073 | P1 | Case 列 UUID 当主标识，caseNo 不可见 | Case 列优先展示 caseNo，UUID 仅 dev tooltip |
+  | BUG-074 | P1 | 活动日志 Time 列首字母 T 被截 | 后端 timeline `String(Date)` 改 `.toISOString()`；前端 formatDateTime 改 `Intl.DateTimeFormat` + locale |
+  | BUG-075 | P1 | 客户 Last created 展示原始 ISO | 接 formatDateTime(locale) |
+  | BUG-076 | P1 | Cases tab Updated/Type/Owner 列原样字段 | Updated 接 formatDateTime(locale)；Type 接 caseTypeLabel i18n；Owner 同 BUG-071 修复 |
+  | BUG-077 | P1 | 建案向导客户下拉混入 fixture | 客户下拉切真实 API，fixture 移除；失败态改重试按钮 |
+  | BUG-078 | P1 | Checklist 章节标题/模板说明写死中文 | i18n 字典三语补 cases.create.* / sections.* / applicationTypes.* |
+
+  留 P2（下一轮）：
+
+  | 项目 | 说明 |
+  |---|---|
+  | BUG-079 | Document Center 新建的真实 case 不出现，仅展示 fixture |
+  | BUG-080 | 客户详情 URL `?tab=communications` 与实际 key `comms` 不一致 |
+  | BUG-081 | `/#/cases?stage=S8` URL query 不被列表筛选器消费 |
+  | BUG-082 | 客户 Avatar 按钮 locale 问题 |
+  | Document Center 接真实 API | 从 fixture 切到 `/api/document-items` 真实数据 |
+  | 列表 phase 筛选 UI | 后端已支持 `?phase=` 查询参数，前端筛选器待实现 |
+  | checklist item i18n 迁移 | 当前 item label 用 `{ zh, en, ja }` 内嵌多语言，后续迁到 i18n 字典或 `/api/case-templates` |
+  | 客户列表按 location/sourceType 过滤 | 字段已入库，筛选 UI 待实现 |
+
+  影响面：
+  - packages/server/src/modules/core/cases/*（双层状态机、phase-transition 端点、aggregate 兜底、transition 收紧）
+  - packages/server/src/modules/core/residence-periods/*（提醒自动派生、日期时区修复）
+  - packages/server/src/modules/core/customers/*（baseProfile 字段扩展）
+  - packages/server/src/infra/db/drizzle/schema.ts（business_phase 列）
+  - packages/admin/src/views/cases/*（7 模板、CaseTableRow 4 列重构、phase badge、客户下拉切 API）
+  - packages/admin/src/views/customers/*（4 字段、formatDateTime、活动日志 i18n）
+  - packages/admin/src/i18n/messages/*（cases/customers/leads/conversations/settings 三语同步）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/10-双层状态机映射.md
+    位置：独立产出文件（新建）
+    Owner：研发
+    状态：已产出（2026-04-28）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§3.0F 状态机冻结声明（追加 businessPhase 20 状态 + stageToPhaseDefault 映射表）
+    Owner：研发
+    状态：待回灌（下一轮优先）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md
+    位置：§双层状态模型（追加 business_phase 字段定义与迁移回填规则）
+    Owner：研发
+    状态：待回灌（下一轮优先）
+
+- 时间：2026-04-28
+  问题：[T-00-ground] 双层状态机实装前的业务规则 ground——20 状态枚举、7 场景资料矩阵、CLOSED_SUCCESS 前置条件、stageToPhaseDefault 映射
+  结论（TL;DR）：MemPalace 4 项查询全部 `status=grounded`；20 状态来源于 `docs/事务所流程/事务所流程.master.json` → `workflow.states`（权威源为 `新规经营管理签申请全套流程Markdown文档.md`）；7 场景资料矩阵来源于 `在留資格別必要情報一覧Ver2.ai-optimized.md` 结构化摘要；CLOSED_SUCCESS 前置条件来源于 P1/01 §M9 + 流程文档业务规则§在留期间记录规则 + §提醒失败兜底规则；`stageToPhaseDefault` 映射是本计划新增的架构决策（§3），P0/P1 权威文档中只定义了 S1-S9 管理层与 CaseWorkflowStep 业务层的双层模型（07 §1 + 08 §双层状态模型），尚无显式 stage→businessPhase 映射表——需要本轮实装时一并固化。
+
+  关键依据：
+
+  ### A. 业务状态机 20 状态完整枚举
+
+  | # | ID | 中文名称 | 所属 phase | 终态 |
+  |---|---|---|---|---|
+  | 1 | `CONSULTING` | 咨询阶段 | consultation | 否 |
+  | 2 | `CONTRACTED` | 已签约 | consultation | 否 |
+  | 3 | `WAITING_MATERIAL` | 等待客户提交资料 | contract_post_processing | 否 |
+  | 4 | `MATERIAL_PREPARING` | 内部制作资料中 | contract_post_processing | 否 |
+  | 5 | `REVIEWING` | 内部/客户确认中 | contract_post_processing | 否 |
+  | 6 | `APPLYING` | 已提交入管 | contract_post_processing | 否 |
+  | 7 | `UNDER_REVIEW` | 入管审查中 | immigration_review | 否 |
+  | 8 | `NEED_SUPPLEMENT` | 入管要求补资料 | immigration_review | 否 |
+  | 9 | `SUPPLEMENT_PROCESSING` | 补资料处理中 | immigration_review | 否 |
+  | 10 | `APPROVED` | 下签（COE） | immigration_review | 否 |
+  | 11 | `REJECTED` | 入管拒签 | immigration_review | 否 |
+  | 12 | `WAITING_PAYMENT` | 待收尾款 | post_approval | 否 |
+  | 13 | `COE_SENT` | 已发送 COE | post_approval | 否 |
+  | 14 | `VISA_APPLYING` | 客户海外返签中 | post_approval | 否 |
+  | 15 | `SUCCESS` | 客户已成功入境 | post_approval | 否 |
+  | 16 | `VISA_REJECTED` | 海外返签拒签 | post_approval | 否 |
+  | 17 | `RESIDENCE_PERIOD_RECORDED` | 已记录新在留有效期间 | residence_management | 否 |
+  | 18 | `RENEWAL_REMINDER_SCHEDULED` | 已设置到期提醒 | residence_management | 否 |
+  | 19 | `CLOSED_SUCCESS` | 成功结案 | residence_management | **是** |
+  | 20 | `CLOSED_FAILED` | 失败结案 | immigration_review | **是** |
+
+  引用来源：
+  - `docs/事务所流程/事务所流程.master.json` → `workflow.states`（20 条）
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §状态说明（State Definition）
+  - MemPalace `P1/01-经营管理签扩展范围与落地计划.md` §0 结构化速查（grounded chunk ac28cbaf）
+
+  ### B. 7 场景资料矩阵
+
+  | scenario_id | 中文名称 | 日文来源名 | 必需项（source_rows 计） | 条件必需项（source_rows 计） | 合计列出 |
+  |---|---|---|---:|---:|---:|
+  | `biz_mgmt_cert_4m` | 经营管理签认定 4 个月 | 経営管理 / 認定4か月 | 18 | 4 | 22 |
+  | `company_setup` | 公司设立资料包 | 会社設立 | 7 | 2 | 9 |
+  | `biz_mgmt_cert_1y` | 经营管理签认定 1 年 | 経営管理 / 認定1年 | 27 | 4 | 31 |
+  | `biz_mgmt_renewal` | 经营管理签续签 | 経営管理 / 期間更新 | 12 | 2 | 14 |
+  | `eng_humanities_intl_cert` | 技人国认定 | 技人国 / 認定 | 21 | 5 | 26 |
+  | `eng_humanities_intl_renewal` | 技人国续签 | 技人国 / 期間更新 | 13 | 2 | 15 |
+  | `intra_company_transfer` | 企业内转勤 | 企業内 / 転勤 | 11 | 2 | 13 |
+
+  去重后全矩阵共 51 个唯一 document key；全场景共通硬必需项仅 `passport_copy`。
+
+  引用来源：
+  - `docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md` → §结构化摘要
+  - `docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md` → §场景一览
+  - `docs/事务所流程/事务所流程.master.json` → `documents_matrix.scenarios`
+  - MemPalace grounded chunk 864f990c（ai-optimized.md §结构化摘要）
+
+  ### C. CLOSED_SUCCESS 前置条件
+
+  进入 `CLOSED_SUCCESS` 必须同时满足以下条件：
+
+  1. **入境成功**：案件已通过 `VISA_APPLYING → SUCCESS` 路径确认客户入境。
+  2. **已录入在留期间**：`ResidencePeriod` 记录已创建（`residence_period_start_date` / `residence_period_end_date` / `residence_years` / `entry_date`），案件处于 `RESIDENCE_PERIOD_RECORDED`。
+  3. **已生成续签提醒**：系统已自动创建 180 / 90 / 30 天到期提醒任务，案件处于 `RENEWAL_REMINDER_SCHEDULED`。
+  4. **提醒创建失败时禁止自动结案**：若提醒任务创建失败，案件不得自动进入 `CLOSED_SUCCESS`，应进入人工待处理队列或异常状态。
+
+  进入 `CLOSED_FAILED` 必须填写 `closeReason`；允许进入的前置状态为 `REJECTED` 或 `VISA_REJECTED`。
+
+  引用来源：
+  - `docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md` → §M9 结案与异常兜底（grounded chunk 8e51f019）
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §在留期间记录规则（grounded chunk c71b2055）
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §提醒失败兜底规则（grounded chunk f8e26ece）
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §到期提醒规则（grounded chunk 9d223783）
+  - `docs/事务所流程/事务所流程.master.json` → `workflow.flow_paths.exception_paths`
+
+  ### D. stageToPhaseDefault 映射（本轮架构决策）
+
+  P0 权威文档中 `Stage (S1-S9)` 是管理协作层，`CaseWorkflowStep` 是业务层（P1 启用）。本计划新增 `cases.business_phase` 字段（NOT NULL），用于承载 20 个业务状态。以下是迁移回填时使用的默认映射：
+
+  | Stage | Stage 说明 | 默认 businessPhase | 映射理由 |
+  |---|---|---|---|
+  | S1 | 已建档 | `CONSULTING` | 案件刚建档，处于咨询→签约前 |
+  | S2 | 资料收集中 | `WAITING_MATERIAL` | 签约后向客户收集资料 |
+  | S3 | 资料审核中 | `MATERIAL_PREPARING` | 内部审核 / 制作资料阶段 |
+  | S4 | 文书制作中 | `REVIEWING` | 行政书士处理 + 确认流程 |
+  | S5 | 待校验 | `REVIEWING` | 最终确认、校验阶段，业务语义同 REVIEWING |
+  | S6 | 待提交 | `APPLYING` | 准备提交入管 |
+  | S7 | 已提交审理中 | `UNDER_REVIEW` | 已提交入管、审查中 |
+  | S8 | 已出结果 | `APPROVED` | 默认走 happy path；REJECTED 由显式 transition 覆盖 |
+  | S9 | 已归档 | `CLOSED_SUCCESS` | 默认走成功结案；CLOSED_FAILED 由 closeReason 路径覆盖 |
+
+  备注：
+  - 该映射仅用于旧数据迁移回填，新建 case 在 service 层根据实际动作写入精确的 phase。
+  - `S4/S5 → REVIEWING`：S4 文书制作和 S5 待校验在业务维度都属于"内部确认中"语义范畴。
+  - `S8 → APPROVED`：S8 已出结果可能是 APPROVED 或 REJECTED，但旧数据未记录具体结果，默认取 happy path。
+  - `S9 → CLOSED_SUCCESS`：旧归档案件默认视为成功结案；若实际为失败结案，后续需人工或脚本修正。
+
+  引用来源：
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §Stage（案件阶段）（grounded chunk 33fd3a93）
+  - `docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md` → §双层状态模型（grounded chunk d3f25952）
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §P0 必须理解的 7 个概念（grounded chunk e0a04d91）
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §双层状态模型（P1 可扩展性核心设计）（grounded chunk 249530ae）
+  - `docs/事务所流程/事务所流程.master.json` → `workflow.states` + `workflow.transitions`（20 状态转换图）
+
+  ### E. 业务规则转换图（允许的 phase 转换）
+
+  ```text
+  CONSULTING → CONTRACTED
+  CONTRACTED → WAITING_MATERIAL
+  WAITING_MATERIAL → MATERIAL_PREPARING
+  MATERIAL_PREPARING → WAITING_MATERIAL (内部补资料回退)
+  MATERIAL_PREPARING → REVIEWING
+  REVIEWING → APPLYING
+  APPLYING → UNDER_REVIEW
+  UNDER_REVIEW → APPROVED | REJECTED | NEED_SUPPLEMENT
+  NEED_SUPPLEMENT → SUPPLEMENT_PROCESSING
+  SUPPLEMENT_PROCESSING → UNDER_REVIEW (补资料循环)
+  APPROVED → WAITING_PAYMENT
+  WAITING_PAYMENT → COE_SENT (guard: 尾款收讫)
+  COE_SENT → VISA_APPLYING
+  VISA_APPLYING → SUCCESS | VISA_REJECTED
+  REJECTED → CLOSED_FAILED
+  VISA_REJECTED → CLOSED_FAILED
+  SUCCESS → RESIDENCE_PERIOD_RECORDED
+  RESIDENCE_PERIOD_RECORDED → RENEWAL_REMINDER_SCHEDULED
+  RENEWAL_REMINDER_SCHEDULED → CLOSED_SUCCESS (guard: 提醒任务创建成功)
+  ```
+
+  引用来源：
+  - `docs/事务所流程/事务所流程.master.json` → `workflow.transitions`（22 条转换边）
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §流程节点定义 Step 5-20
+
+  影响面：
+  - `packages/server/src/modules/core/cases/businessPhase.ts`（新增）：phase 枚举 + 转换图 + 默认映射 + assertPhaseTransition
+  - `packages/server/src/infra/db/drizzle/schema.ts`：`cases` 表加 `business_phase text NOT NULL`
+  - `packages/server/src/modules/core/cases/cases.service.ts`：create/transition 同步推进 phase
+  - `packages/admin/src/views/cases/constants.ts`：`BUSINESS_PHASES` 枚举 + `getPhaseLabel`
+  - `packages/admin/src/views/cases/fixtures-create.ts`：7 场景模板内嵌多语言 label
+  - i18n 字典（cases / customers）三套语言同步补 phase 相关键
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§3.0F 状态机冻结声明（追加"业务 phase 维度 20 状态 + stageToPhaseDefault 映射表"）
+    Owner：研发
+    状态：待回灌（本轮实装完成后回灌）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md
+    位置：§双层状态模型（追加"business_phase 字段定义与迁移回填规则"）
+    Owner：研发
+    状态：待回灌（本轮实装完成后回灌）
+
+---
+
+## T-00b-recon 前置勘察报告
+
+日期：2026-04-28
+
+### (1) drizzle-kit 与日期库
+
+- **drizzle-kit**: devDependencies `"drizzle-kit": "^0.31.10"` ✅
+- **drizzle-orm**: dependencies `"drizzle-orm": "^0.45.2"` ✅
+- **drizzle.config.ts**: schema 指向 `./src/infra/db/drizzle/schema.ts`，输出目录 `./drizzle`
+- **日期库**: 无 `date-fns`、`date-fns-tz`、`dayjs`、`luxon`、`moment` — 全仓零日期依赖
+- **现有日期处理**: `toDateOnlyString` 在 `residencePeriods.service.ts` 中手写（`.slice(0, 10)` / `.toISOString().slice(0, 10)`），timeline 用 `String(r.created_at)`
+- **结论**: 不引入新日期库；BUG-068 时区修正用零依赖方案（详见 §4 下方）
+
+### (2) Migration 文件位置与命令
+
+- 目录: `packages/server/src/infra/db/migrations/`
+- 命名约定: `NNN_name.up.sql` + `NNN_name.down.sql`（NNN 三位数字）
+- 当前最大编号: **031** (`031_billing_admin_indexes`)
+- 下一可用编号: **032**
+- 运行器: `packages/server/src/infra/db/runMigrations.ts`（自建，非 drizzle-kit migrate）
+  - `npm run db:migrate` — 应用全部待执行迁移
+  - `npm run db:rollback [--steps N]` — 回滚最后 N 条（默认 1）
+  - `npm run db:migrations:check` — 校验 up/down 配对完整性（guard 门禁包含）
+  - `npm run db:drizzle:check` — 校验 drizzle schema 与实际迁移一致性
+- 新增 `business_phase` 列应创建 `032_business_phase.up.sql` + `032_business_phase.down.sql`
+- drizzle schema (`schema.ts`) 需同步加 `businessPhase: text("business_phase").notNull()`
+
+### (3) visaPlan ↔ visaType 映射决策
+
+数据分布:
+
+| 字段 | 位置 | 用途 |
+|---|---|---|
+| `CustomerBmvProfile.visaPlan` | `customers.base_profile` JSONB → `bmvProfile.visaPlan` | BMV 承接时选定的签证方案（如 `new_1year`） |
+| `cases.visa_plan` | `cases` 表 SQL 列 | BMV 建案时由 `bmvProfile.visaPlan` 写入 |
+| `ResidencePeriod.visaType` | `residence_periods.visa_type` | 在留资格类型（审批后记录） |
+| `baseProfile.visaType`（新） | 计划新增至 `customers.base_profile` | 非 BMV 客户的签证类型 |
+
+**决策**:
+- **BMV 客户**: `visaType` 由 `bmvProfile.visaPlan` 派生 → `cases.visa_plan` → 审批后写入 `residence_periods.visa_type`。不在 `baseProfile` 重复存储。
+- **非 BMV 客户**: 新增 `baseProfile.visaType` 字段作为唯一来源，建案/记录在留资格时引用此值。
+- **读取路径**: 前端通过 `CustomerDetailDto` 暴露一个统一的 `visaType` 计算字段：若 `bmvProfile` 存在则取 `bmvProfile.visaPlan`，否则取 `baseProfile.visaType`。
+- **无双源风险**: BMV 客户不写 `baseProfile.visaType`，非 BMV 客户不写 `bmvProfile.visaPlan`，两条路径互斥。
+
+### (4) BUG-074 活动日志截断时间戳 — 组件定位与根因
+
+**组件路径**: `packages/admin/src/views/customers/components/CustomerLogsTab.vue`
+
+**截图复现**: Time 列显示 `ue Apr 28 2026 13:40:12 GMT+0900 (Japan Standard Time)` — 首字母 "T" 被吃掉。
+
+**数据链路**:
+1. 后端 `timeline.service.ts` 用原生 `pg` 查询 `timeline_logs.created_at`（`timestamptz`）
+2. `pg` 驱动把 `timestamptz` 解析为 JavaScript `Date` 对象
+3. `mapRow` 中执行 `createdAt: String(r.created_at)` — `String(Date)` 产出 `"Tue Apr 28 2026 13:40:12 GMT+0900 (Japan Standard Time)"`（非 ISO）
+4. 前端 adapter `pickOptionalString` 原样透传
+5. `CustomerLogsTab.vue` 的 `formatDateTime(iso)` 执行 `iso.replace("T", " ")` — 替换了 "Tue" 的首字母 "T" → `" ue Apr 28 ..."`
+6. CSS `width: 180px` + `white-space: nowrap` 导致超长字符串左截
+
+**修复方案**:
+- 后端: `timeline.service.ts` 中改为 `createdAt: r.created_at instanceof Date ? r.created_at.toISOString() : String(r.created_at)`，确保输出 ISO 格式
+- 前端: `CustomerLogsTab.vue` 的 `formatDateTime` 改为 `Intl.DateTimeFormat` + locale，或至少做安全的 ISO→可读转换
+- CSS: `--time` 列宽可放宽到 220px 以容纳 locale 格式化后的时间
+
+### BUG-068 时区问题补充说明
+
+`toDateOnlyString` 在 `residencePeriods.service.ts` 中的行为:
+- 对 `string` 输入: `.slice(0, 10)` — 安全，因为 drizzle schema 已配 `date("valid_from", { mode: "string" })`
+- 对 `Date` 输入: `.toISOString().slice(0, 10)` — 此路径在使用 drizzle query builder 时不会触发（`mode: "string"` 确保返回 string）
+- 但 `residence_periods` 的 CRUD 使用**原生 pg 查询**（非 drizzle query builder），`pg` 驱动对 `date` 列返回 JavaScript `Date` 对象
+- `Date.toISOString()` 在 UTC 输出 → 若原值为 `2026-04-28`（JST），`new Date("2026-04-28")` 在 JST 服务器上被解析为 `2026-04-27T15:00:00.000Z`，`.toISOString().slice(0, 10)` 变成 `2026-04-27` — **日期偏移一天**
+- **修复**: 在 SQL 查询中对 `date` 列 cast 为 text（`valid_from::text`），使 pg 驱动直接返回 `YYYY-MM-DD` 字符串，完全绕过 `Date` 解析

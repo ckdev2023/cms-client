@@ -1,27 +1,23 @@
 <script setup lang="ts">
-/**
- * 线索列表页组合层，装配筛选、表格、批量操作、新建弹窗、toast、草稿等子模块。
- */
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import type { AppLocale } from "../../i18n";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import LeadFilters from "./components/LeadFilters.vue";
 import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
 import LeadTable from "./components/LeadTable.vue";
 import LeadPagination from "./components/LeadPagination.vue";
 import LeadCreateModal from "./components/LeadCreateModal.vue";
 import LeadToast from "./components/LeadToast.vue";
-import {
-  LEAD_SAMPLES,
-  GROUP_OPTIONS,
-  OWNER_OPTIONS,
-  BUSINESS_TYPE_OPTIONS,
-} from "./fixtures";
+import { BUSINESS_TYPE_OPTIONS, getLeadSamples } from "./fixtures";
 import type {
   LeadCreateFormFields,
   LeadStatus,
+  LeadSummary,
   LeadStatusFilter,
 } from "./types";
 import { useLeadFilters } from "./model/useLeadFilters";
@@ -30,11 +26,19 @@ import { useLeadCreateForm } from "./model/useLeadCreateForm";
 import { useLeadToast } from "./model/useLeadToast";
 import { useLeadDrafts } from "./model/useLeadDrafts";
 import { useLeadBulkActions } from "./model/useLeadBulkActions";
+import { createLeadRepository } from "./model/LeadRepository";
+import { syncLeadCreateEntryFromRoute } from "./model/leadCreateEntry";
+import { useLeadCreateActions } from "./model/useLeadCreateActions";
+import type { LeadListResult } from "./model/LeadAdapterTypes";
 
-/** 线索列表页组合层，装配筛选、表格、批量操作、弹窗、toast、草稿等子模块。 */
-const { t } = useI18n();
+/** 线索列表页组合层，装配筛选、表格、批量操作、新建弹窗、toast、草稿等子模块。 */
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
+
+const repository = createLeadRepository();
+const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+const ownerOptions = computed(() => getOwnerOptions(locale.value));
 
 const {
   scope,
@@ -45,15 +49,79 @@ const {
   businessTypeFilter,
   dateFrom,
   dateTo,
-  resetFilters,
-  applyFilters,
+  page,
+  limit,
+  resetFilters: resetFiltersRaw,
+  toListParams,
 } = useLeadFilters({
-  groupOptions: GROUP_OPTIONS,
-  ownerOptions: OWNER_OPTIONS,
+  groupOptions: getActiveGroupOptions(),
+  ownerOptions: getOwnerOptions(),
   businessTypeOptions: BUSINESS_TYPE_OPTIONS,
 });
 
-const filteredLeads = computed(() => applyFilters(LEAD_SAMPLES));
+const leads = ref<LeadSummary[]>([]);
+const totalCount = ref(0);
+const listLoading = ref(false);
+const listError = ref<string | null>(null);
+
+const totalPages = computed(() =>
+  Math.max(1, Math.ceil(totalCount.value / limit.value)),
+);
+const paginationStart = computed(() => (page.value - 1) * limit.value + 1);
+const paginationEnd = computed(() =>
+  Math.min(page.value * limit.value, totalCount.value),
+);
+
+/** 从服务端拉取线索列表，失败时回退到示例数据。 */
+async function fetchLeads() {
+  listLoading.value = true;
+  listError.value = null;
+  try {
+    const result: LeadListResult = await repository.listLeads(toListParams());
+    leads.value = result.items;
+    totalCount.value = result.total;
+  } catch {
+    leads.value = getLeadSamples(locale.value as AppLocale);
+    totalCount.value = leads.value.length;
+  } finally {
+    listLoading.value = false;
+  }
+}
+
+watch(
+  [
+    scope,
+    search,
+    statusFilter,
+    ownerFilter,
+    groupFilter,
+    businessTypeFilter,
+    dateFrom,
+    dateTo,
+    locale,
+  ],
+  () => {
+    page.value = 1;
+    fetchLeads();
+  },
+);
+watch(page, () => {
+  fetchLeads();
+});
+
+/** 重置筛选并刷新列表。 */
+function resetFilters() {
+  resetFiltersRaw();
+  fetchLeads();
+}
+/** 翻到上一页。 */
+function handlePrev() {
+  if (page.value > 1) page.value--;
+}
+/** 翻到下一页。 */
+function handleNext() {
+  if (page.value < totalPages.value) page.value++;
+}
 
 const {
   selectedIds,
@@ -65,8 +133,8 @@ const {
   isIndeterminate,
 } = useLeadSelection();
 
-const allSelected = computed(() => isAllSelected(filteredLeads.value));
-const indeterminate = computed(() => isIndeterminate(filteredLeads.value));
+const allSelected = computed(() => isAllSelected(leads.value));
+const indeterminate = computed(() => isIndeterminate(leads.value));
 
 /**
  * 全选/取消全选当前筛选结果。
@@ -74,7 +142,7 @@ const indeterminate = computed(() => isIndeterminate(filteredLeads.value));
  * @param checked - 是否选中
  */
 function handleSelectAll(checked: boolean) {
-  toggleAll(filteredLeads.value, checked);
+  toggleAll(leads.value, checked);
 }
 
 const toast = useLeadToast();
@@ -84,8 +152,7 @@ const { drafts, saveDraft, removeDraft, getDraft } = useLeadDrafts({
 });
 
 const activeDraftId = ref<string | null>(null);
-
-const bulk = useLeadBulkActions();
+const bulk = useLeadBulkActions({ repository });
 
 /**
  * 批量指派负责人后弹 toast 并清除选择。
@@ -95,11 +162,11 @@ const bulk = useLeadBulkActions();
 async function handleAssignOwner(ownerId: string) {
   const result = await bulk.assignOwner(
     selectedIds.value,
-    filteredLeads.value,
+    leads.value,
     ownerId,
   );
   const label =
-    OWNER_OPTIONS.find((o) => o.value === ownerId)?.label ?? ownerId;
+    ownerOptions.value.find((o) => o.value === ownerId)?.label ?? ownerId;
   toast.show({
     title: t("leads.list.toast.bulkAssign.title"),
     description: t("leads.list.toast.bulkAssign.description", {
@@ -108,6 +175,7 @@ async function handleAssignOwner(ownerId: string) {
     }),
   });
   clearSelection();
+  await fetchLeads();
 }
 
 /**
@@ -118,7 +186,7 @@ async function handleAssignOwner(ownerId: string) {
 async function handleAdjustFollowUp(date: string) {
   const result = await bulk.adjustFollowUp(
     selectedIds.value,
-    filteredLeads.value,
+    leads.value,
     date,
   );
   toast.show({
@@ -129,6 +197,7 @@ async function handleAdjustFollowUp(date: string) {
     }),
   });
   clearSelection();
+  await fetchLeads();
 }
 
 /**
@@ -137,11 +206,7 @@ async function handleAdjustFollowUp(date: string) {
  * @param status - 目标状态
  */
 async function handleMarkStatus(status: LeadStatus) {
-  const result = await bulk.markStatus(
-    selectedIds.value,
-    filteredLeads.value,
-    status,
-  );
+  const result = await bulk.markStatus(selectedIds.value, leads.value, status);
   toast.show({
     title: t("leads.list.toast.bulkStatus.title"),
     description: t("leads.list.toast.bulkStatus.description", {
@@ -150,17 +215,61 @@ async function handleMarkStatus(status: LeadStatus) {
     }),
   });
   clearSelection();
+  await fetchLeads();
+}
+
+/**
+ * 批量打标签后弹 toast 并清除选择。
+ *
+ * @param tags - 标签列表
+ */
+async function handleBulkTags(tags: string[]) {
+  const result = await bulk.bulkTags(selectedIds.value, leads.value, tags);
+  toast.show({
+    title: t("leads.list.toast.bulkTags.title"),
+    description: t("leads.list.toast.bulkTags.description", {
+      count: result.success,
+      tags: tags.join(", "),
+    }),
+  });
+  clearSelection();
+  await fetchLeads();
+}
+
+/**
+ * 批量导出后弹 toast 并清除选择。
+ *
+ * @param format - 导出格式
+ */
+async function handleBulkExport(format: "csv" | "xlsx") {
+  const result = await bulk.bulkExport(selectedIds.value, leads.value, format);
+  toast.show({
+    title: t("leads.list.toast.bulkExport.title"),
+    description: t("leads.list.toast.bulkExport.description", {
+      count: result.success,
+      format: format.toUpperCase(),
+    }),
+  });
+  clearSelection();
 }
 
 const modalOpen = ref(false);
-
 const {
   fields: formFields,
   canCreate,
+  resetForm,
+  showDedupe: localShowDedupe,
+  dedupeMatches: localDedupeMatches,
+} = useLeadCreateForm({ existingLeads: () => leads.value });
+
+const {
+  createSubmitting,
   showDedupe,
   dedupeMatches,
-  resetForm,
-} = useLeadCreateForm({ existingLeads: () => LEAD_SAMPLES });
+  handleDedupCheck,
+  resetServerDedup,
+  createLead,
+} = useLeadCreateActions({ repository, localShowDedupe, localDedupeMatches });
 
 /** 打开新建线索弹窗。 */
 function openModal() {
@@ -171,19 +280,27 @@ function openModal() {
 function closeModal() {
   modalOpen.value = false;
   activeDraftId.value = null;
+  resetServerDedup();
   resetForm();
 }
 
-/** 创建线索：若来自草稿则移除草稿，关闭弹窗并弹 toast。 */
-function handleCreate() {
-  if (activeDraftId.value) {
-    removeDraft(activeDraftId.value);
+/** 提交创建线索，成功后移除草稿、关闭弹窗并刷新列表。 */
+async function handleCreate() {
+  const ok = await createLead(formFields);
+  if (ok) {
+    if (activeDraftId.value) removeDraft(activeDraftId.value);
+    closeModal();
+    toast.show({
+      title: t("leads.list.toast.leadCreated.title"),
+      description: t("leads.list.toast.leadCreated.description"),
+    });
+    await fetchLeads();
+  } else {
+    toast.show({
+      title: t("leads.list.toast.createError.title"),
+      description: t("leads.list.toast.createError.description"),
+    });
   }
-  closeModal();
-  toast.show({
-    title: t("leads.list.toast.leadCreated.title"),
-    description: t("leads.list.toast.leadCreated.description"),
-  });
 }
 
 /** 保存草稿到 localStorage，关闭弹窗并弹 toast。 */
@@ -233,11 +350,16 @@ function updateFormField(name: keyof LeadCreateFormFields, value: string) {
 }
 
 onMounted(() => {
-  if (route.query.action === "new") {
-    openModal();
-    router.replace({ ...route, query: { ...route.query, action: undefined } });
-  }
+  fetchLeads();
+  syncLeadCreateEntryFromRoute(route, router, openModal);
 });
+
+watch(
+  () => route.fullPath,
+  () => {
+    syncLeadCreateEntryFromRoute(route, router, openModal);
+  },
+);
 </script>
 
 <template>
@@ -277,10 +399,12 @@ onMounted(() => {
       :status-filter="statusFilter"
       :owner-filter="ownerFilter"
       :group-filter="groupFilter"
+      :owner-options="ownerOptions"
+      :group-options="groupOptions"
       :business-type-filter="businessTypeFilter"
       :date-from="dateFrom"
       :date-to="dateTo"
-      :filtered-count="filteredLeads.length"
+      :filtered-count="totalCount"
       @update:scope="scope = $event"
       @update:search="search = $event"
       @update:status-filter="statusFilter = $event as LeadStatusFilter"
@@ -295,13 +419,16 @@ onMounted(() => {
     <div class="leads-list-view__table-card">
       <LeadBulkActionBar
         :selected-count="selectedCount"
+        :owner-options="ownerOptions"
         @clear="clearSelection"
         @assign-owner="handleAssignOwner"
         @adjust-follow-up="handleAdjustFollowUp"
         @mark-status="handleMarkStatus"
+        @bulk-tags="handleBulkTags"
+        @bulk-export="handleBulkExport"
       />
       <LeadTable
-        :leads="filteredLeads"
+        :leads="leads"
         :drafts="drafts"
         :selected-ids="selectedIds"
         :all-selected="allSelected"
@@ -313,22 +440,30 @@ onMounted(() => {
         @open-create-modal="openModal"
       />
       <LeadPagination
-        :start="1"
-        :end="filteredLeads.length"
-        :total="filteredLeads.length"
+        :start="paginationStart"
+        :end="paginationEnd"
+        :total="totalCount"
+        :page="page"
+        :total-pages="totalPages"
+        @prev="handlePrev"
+        @next="handleNext"
       />
     </div>
 
     <LeadCreateModal
       :open="modalOpen"
       :fields="formFields"
+      :owner-options="ownerOptions"
+      :group-options="groupOptions"
       :can-create="canCreate"
+      :submitting="createSubmitting"
       :show-dedupe="showDedupe"
       :dedupe-matches="dedupeMatches"
       @close="closeModal"
       @save-draft="handleSaveDraft"
       @create="handleCreate"
       @update:field="updateFormField"
+      @dedup-check="handleDedupCheck"
     />
     <LeadToast
       :visible="toast.visible.value"

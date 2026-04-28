@@ -47,6 +47,10 @@ type BaseProfileInput = {
   email: string;
   group: string;
   referralSource: string;
+  location: string;
+  sourceType: string;
+  visaType: string;
+  referrerName: string;
   avatar: string;
   note: string;
   ownerId?: string;
@@ -190,6 +194,10 @@ export function buildBaseProfile(
     email: input.email.trim(),
     group: input.group.trim(),
     referralSource: input.referralSource.trim(),
+    location: input.location.trim() || undefined,
+    sourceType: input.sourceType.trim() || undefined,
+    visaType: input.visaType.trim() || undefined,
+    referrerName: input.referrerName.trim() || undefined,
     avatar: input.avatar.trim(),
     note: input.note.trim(),
   };

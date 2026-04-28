@@ -15,8 +15,12 @@ import {
   CasesService,
   TEMPLATES_RESOLVER,
 } from "./modules/core/cases/cases.service";
+import { BillingCollectionsController } from "./modules/core/billing/billingCollections.controller";
+import { BillingCollectionsService } from "./modules/core/billing/billingCollections.service";
 import { BillingPlansController } from "./modules/core/billing/billingPlans.controller";
 import { BillingPlansService } from "./modules/core/billing/billingPlans.service";
+import { BillingSummaryController } from "./modules/core/billing/billingSummary.controller";
+import { BillingSummaryService } from "./modules/core/billing/billingSummary.service";
 import { PaymentRecordsController } from "./modules/core/billing/paymentRecords.controller";
 import { PaymentRecordsService } from "./modules/core/billing/paymentRecords.service";
 import { DocumentFilesController } from "./modules/core/document-files/documentFiles.controller";
@@ -49,6 +53,8 @@ import { CasePartiesController } from "./modules/core/case-parties/caseParties.c
 import { CasePartiesService } from "./modules/core/case-parties/caseParties.service";
 import { CustomersController } from "./modules/core/customers/customers.controller";
 import { CustomersService } from "./modules/core/customers/customers.service";
+import { OrganizationsController } from "./modules/core/organizations/organizations.controller";
+import { OrganizationsService } from "./modules/core/organizations/organizations.service";
 import { TimelineController } from "./modules/core/timeline/timeline.controller";
 import { TimelineService } from "./modules/core/timeline/timeline.service";
 import { FeatureFlagsController } from "./modules/feature-flags/featureFlags.controller";
@@ -59,6 +65,12 @@ import { AppUsersController } from "./modules/portal/app-users/appUsers.controll
 import { AppUsersService } from "./modules/portal/app-users/appUsers.service";
 import { LeadsController } from "./modules/portal/leads/leads.controller";
 import { LeadsService } from "./modules/portal/leads/leads.service";
+import { LeadsAdminController } from "./modules/core/leads/leads.admin.controller";
+import { LeadsAdminService } from "./modules/core/leads/leads.admin.service";
+import { ConversationsAdminController } from "./modules/core/conversations/conversations.admin.controller";
+import { ConversationsAdminService } from "./modules/core/conversations/conversations.admin.service";
+import { MessagesAdminController } from "./modules/core/conversations/messages.admin.controller";
+import { MessagesAdminService } from "./modules/core/conversations/messages.admin.service";
 import { ConversationsController } from "./modules/portal/conversations/conversations.controller";
 import { ConversationsService } from "./modules/portal/conversations/conversations.service";
 import { MessagesController } from "./modules/portal/messages/messages.controller";
@@ -95,9 +107,12 @@ import {
     CompaniesController,
     ContactPersonsController,
     DashboardController,
+    OrganizationsController,
     CustomersController,
     CasesController,
+    BillingCollectionsController,
     BillingPlansController,
+    BillingSummaryController,
     PaymentRecordsController,
     CasePartiesController,
     DocumentFilesController,
@@ -112,6 +127,9 @@ import {
     CommunicationLogsController,
     AppUsersController,
     LeadsController,
+    LeadsAdminController,
+    ConversationsAdminController,
+    MessagesAdminController,
     ConversationsController,
     MessagesController,
     UserDocumentsController,
@@ -137,9 +155,12 @@ import {
     CompaniesService,
     ContactPersonsService,
     DashboardService,
+    OrganizationsService,
     CustomersService,
     CasesService,
+    BillingCollectionsService,
     BillingPlansService,
+    BillingSummaryService,
     PaymentRecordsService,
     CasePartiesService,
     DocumentFilesService,
@@ -154,6 +175,9 @@ import {
     CommunicationLogsService,
     AppUsersService,
     LeadsService,
+    LeadsAdminService,
+    ConversationsAdminService,
+    MessagesAdminService,
     ConversationsService,
     MessagesService,
     UserDocumentsService,

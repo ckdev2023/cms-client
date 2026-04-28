@@ -1,15 +1,25 @@
-import { ref, computed, reactive, type Ref, type ComputedRef } from "vue";
+import {
+  ref,
+  computed,
+  reactive,
+  watch,
+  type Ref,
+  type ComputedRef,
+} from "vue";
 import type {
   BannerPresetKey,
   FollowupChannel,
   HeaderButtonStates,
+  LeadConversionInfo,
   LeadDetail,
   LeadDetailTab,
   LeadLogCategory,
   LeadLogEntry,
 } from "../types";
 import { HEADER_BUTTON_PRESETS, LEAD_DETAIL_TABS } from "../types";
-import { LEAD_DETAIL_SAMPLES } from "../fixtures";
+import type { LeadRepository } from "./LeadRepository";
+import { createLeadRepository } from "./LeadRepository";
+import type { LeadFollowupInput, LeadDedupResult } from "./LeadAdapter";
 
 /**
  *
@@ -45,36 +55,81 @@ const BLANK_FOLLOWUP: FollowupFormFields = {
   nextFollowUp: "",
 };
 
-function useFollowupForm(isReadonly: ComputedRef<boolean>) {
+const EMPTY_CONVERSION: LeadConversionInfo = {
+  dedupResult: null,
+  convertedCustomer: null,
+  convertedCase: null,
+  conversions: [],
+};
+
+/**
+ *
+ */
+export interface UseLeadDetailModelDeps {
+  /**
+   *
+   */
+  repo?: LeadRepository;
+}
+
+function useFollowupForm(
+  leadId: Ref<string>,
+  isReadonly: ComputedRef<boolean>,
+  submitting: Ref<boolean>,
+  repo: LeadRepository,
+  fetchDetail: () => Promise<void>,
+) {
   const followupForm = reactive<FollowupFormFields>({ ...BLANK_FOLLOWUP });
 
   const canSubmitFollowup = computed(
     () =>
       followupForm.channel !== "" &&
       followupForm.summary.trim() !== "" &&
-      !isReadonly.value,
+      !isReadonly.value &&
+      !submitting.value,
   );
 
   function resetFollowupForm(): void {
     Object.assign(followupForm, { ...BLANK_FOLLOWUP });
   }
 
-  function submitFollowup(): FollowupFormFields | null {
+  async function submitFollowup(): Promise<FollowupFormFields | null> {
     if (!canSubmitFollowup.value) return null;
     const snapshot = { ...followupForm };
-    resetFollowupForm();
-    return snapshot;
+
+    const normalizedId = leadId.value?.trim();
+    if (!normalizedId) return null;
+
+    const input: LeadFollowupInput = {
+      channel: snapshot.channel as FollowupChannel,
+      summary: snapshot.summary,
+      conclusion: snapshot.conclusion || undefined,
+      nextAction: snapshot.nextAction || undefined,
+      nextFollowUp: snapshot.nextFollowUp || undefined,
+    };
+
+    submitting.value = true;
+    try {
+      await repo.addFollowup(normalizedId, input);
+      resetFollowupForm();
+      await fetchDetail();
+      return snapshot;
+    } catch {
+      return null;
+    } finally {
+      submitting.value = false;
+    }
   }
 
   return { followupForm, canSubmitFollowup, resetFollowupForm, submitFollowup };
 }
 
-function useLogFilter(log: ComputedRef<LeadLogEntry[]>) {
+function useLogFilter(rawLog: ComputedRef<LeadLogEntry[]>) {
   const logCategory = ref<LeadLogCategory>("all");
 
   const filteredLog = computed<LeadLogEntry[]>(() => {
-    if (logCategory.value === "all") return log.value;
-    return log.value.filter((e) => e.type === logCategory.value);
+    if (logCategory.value === "all") return rawLog.value;
+    return rawLog.value.filter((e) => e.type === logCategory.value);
   });
 
   function setLogCategory(cat: LeadLogCategory): void {
@@ -84,36 +139,192 @@ function useLogFilter(log: ComputedRef<LeadLogEntry[]>) {
   return { logCategory, filteredLog, setLogCategory };
 }
 
+function useLeadFetch(leadId: Ref<string>, repo: LeadRepository) {
+  const lead = ref<LeadDetail | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  let fetchGeneration = 0;
+
+  async function fetchDetail(): Promise<void> {
+    const gen = ++fetchGeneration;
+    const normalizedId = leadId.value?.trim();
+    if (!normalizedId) {
+      lead.value = null;
+      return;
+    }
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const result = await repo.getDetail(normalizedId);
+      if (gen !== fetchGeneration) return;
+      lead.value = result?.detail ?? null;
+    } catch (e) {
+      if (gen !== fetchGeneration) return;
+      error.value = e instanceof Error ? e.message : String(e);
+      lead.value = null;
+    } finally {
+      if (gen === fetchGeneration) loading.value = false;
+    }
+  }
+
+  watch(leadId, () => {
+    void fetchDetail();
+  });
+  void fetchDetail();
+
+  return { lead, loading, error, fetchDetail };
+}
+
+interface ConvertDedupState {
+  result: Ref<LeadDedupResult | null>;
+  loading: Ref<boolean>;
+  prompt: Ref<boolean>;
+}
+
+async function checkDedupForConvert(
+  lead: Ref<LeadDetail | null>,
+  repo: LeadRepository,
+  state: ConvertDedupState,
+): Promise<boolean> {
+  const detail = lead.value;
+  if (!detail) return false;
+  const phone = detail.info.phone?.trim();
+  const email = detail.info.email?.trim();
+  if (!phone && !email) return true;
+
+  state.loading.value = true;
+  try {
+    const r = await repo.dedup({
+      phone: phone || undefined,
+      email: email || undefined,
+    });
+    state.result.value = r;
+    if (r.leads.length > 0 || r.customers.length > 0) {
+      state.prompt.value = true;
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  } finally {
+    state.loading.value = false;
+  }
+}
+
+function useConvertActions(
+  leadId: Ref<string>,
+  lead: Ref<LeadDetail | null>,
+  repo: LeadRepository,
+  fetchDetail: () => Promise<void>,
+) {
+  const convertDedupResult = ref<LeadDedupResult | null>(null);
+  const convertDedupLoading = ref(false);
+  const convertSubmitting = ref(false);
+  const convertDedupConfirmed = ref(false);
+  const showConvertDedupPrompt = ref(false);
+
+  const state: ConvertDedupState = {
+    result: convertDedupResult,
+    loading: convertDedupLoading,
+    prompt: showConvertDedupPrompt,
+  };
+
+  async function convertCustomer(): Promise<void> {
+    const id = leadId.value?.trim();
+    if (!id || convertSubmitting.value) return;
+    if (!convertDedupConfirmed.value) {
+      if (!(await checkDedupForConvert(lead, repo, state))) return;
+    }
+    convertSubmitting.value = true;
+    try {
+      await repo.convertLead(id);
+      showConvertDedupPrompt.value = false;
+      convertDedupConfirmed.value = false;
+      convertDedupResult.value = null;
+      await fetchDetail();
+    } finally {
+      convertSubmitting.value = false;
+    }
+  }
+
+  function confirmConvertDedup(): void {
+    convertDedupConfirmed.value = true;
+    showConvertDedupPrompt.value = false;
+    void convertCustomer();
+  }
+
+  function dismissConvertDedup(): void {
+    showConvertDedupPrompt.value = false;
+    convertDedupResult.value = null;
+    convertDedupConfirmed.value = false;
+  }
+
+  return {
+    convertDedupResult,
+    convertDedupLoading,
+    convertSubmitting,
+    showConvertDedupPrompt,
+    convertCustomer,
+    confirmConvertDedup,
+    dismissConvertDedup,
+  };
+}
+
+function useConversionInfo(lead: Ref<LeadDetail | null>) {
+  const conversion = computed<LeadConversionInfo>(
+    () => lead.value?.conversion ?? EMPTY_CONVERSION,
+  );
+
+  const conversionCustomerHref = computed<string | null>(() => {
+    const cust = conversion.value.convertedCustomer;
+    return cust ? `#/customers/${cust.id}` : null;
+  });
+
+  const conversionCaseHref = computed<string | null>(() => {
+    const cas = conversion.value.convertedCase;
+    return cas ? `#/cases/${cas.id}` : null;
+  });
+
+  return { conversion, conversionCustomerHref, conversionCaseHref };
+}
+
 /**
  * 线索详情页整体状态编排。
  *
- * @param leadId 路由传入的线索 ID 或场景 key（响应式）
- * @returns 详情页状态：线索数据、tab、banner、按钮矩阵、跟进表单、日志筛选等
+ * 依赖注入 LeadRepository（默认 `createLeadRepository()`），
+ * 通过 `getDetail` 异步加载线索详情。
+ *
+ * @param leadId 路由传入的线索 ID（响应式）
+ * @param deps 可选依赖注入
+ * @returns 详情页状态
  */
-export function useLeadDetailModel(leadId: Ref<string>) {
+export function useLeadDetailModel(
+  leadId: Ref<string>,
+  deps: UseLeadDetailModelDeps = {},
+) {
+  const repo = deps.repo ?? createLeadRepository();
   const activeTab = ref<LeadDetailTab>("info");
-  const lead = computed<LeadDetail | null>(
-    () => LEAD_DETAIL_SAMPLES[leadId.value] ?? null,
-  );
-  const notFound = computed(() => lead.value === null);
+  const submitting = ref(false);
+
+  const { lead, loading, error, fetchDetail } = useLeadFetch(leadId, repo);
+
+  const notFound = computed(() => !loading.value && lead.value === null);
   const isReadonly = computed(() => lead.value?.readonly ?? false);
   const banner = computed<BannerPresetKey>(() => lead.value?.banner ?? null);
-  const buttonStates = computed<HeaderButtonStates>(() => {
-    const key = lead.value?.buttons ?? "normal";
-    return HEADER_BUTTON_PRESETS[key];
-  });
-  const avatarInitials = computed(() => {
-    if (!lead.value) return "?";
-    return lead.value.name.slice(0, 1);
-  });
+  const buttonStates = computed<HeaderButtonStates>(
+    () => HEADER_BUTTON_PRESETS[lead.value?.buttons ?? "normal"],
+  );
+  const avatarInitials = computed(() =>
+    lead.value ? lead.value.name.slice(0, 1) : "?",
+  );
 
   function switchTab(tab: LeadDetailTab): void {
     activeTab.value = tab;
   }
 
   const rawLog = computed(() => lead.value?.log ?? []);
-  const followup = useFollowupForm(isReadonly);
-  const logFilter = useLogFilter(rawLog);
 
   return {
     activeTab,
@@ -124,8 +335,14 @@ export function useLeadDetailModel(leadId: Ref<string>) {
     banner,
     buttonStates,
     avatarInitials,
+    loading,
+    error,
+    submitting,
     switchTab,
-    ...followup,
-    ...logFilter,
+    refetch: fetchDetail,
+    ...useFollowupForm(leadId, isReadonly, submitting, repo, fetchDetail),
+    ...useLogFilter(rawLog),
+    ...useConversionInfo(lead),
+    ...useConvertActions(leadId, lead, repo, fetchDetail),
   };
 }

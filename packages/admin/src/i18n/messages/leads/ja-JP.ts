@@ -46,6 +46,10 @@ const leadsJaJP = {
       adjustFollowUp: "フォロー日調整",
       markStatus: "ステータス変更",
       selectStatus: "ステータスを選択",
+      addTags: "タグ",
+      tagsPlaceholder: "カンマ区切りでタグを入力",
+      export: "エクスポート",
+      exportBtn: "エクスポート",
       apply: "適用",
     },
     empty: {
@@ -60,7 +64,7 @@ const leadsJaJP = {
     },
     toast: {
       leadCreated: {
-        title: "リード作成済み（デモ）",
+        title: "リード作成済み",
         description: "フォローアップまたは顧客登録へ進めます",
       },
       draftSaved: {
@@ -80,8 +84,20 @@ const leadsJaJP = {
         description: "{count} 件選択、次回フォロー：{date}",
       },
       bulkStatus: {
-        title: "ステータス一括変更（デモ）",
+        title: "ステータス一括変更",
         description: "成功 {success} 件、スキップ {skipped} 件",
+      },
+      bulkTags: {
+        title: "タグ一括適用",
+        description: "{count} 件にタグ適用：{tags}",
+      },
+      bulkExport: {
+        title: "エクスポート開始",
+        description: "{count} 件を {format} でエクスポート",
+      },
+      createError: {
+        title: "作成に失敗しました",
+        description: "リードの作成に失敗しました。もう一度お試しください。",
       },
     },
     draft: {
@@ -138,6 +154,7 @@ const leadsJaJP = {
     tabs: {
       info: "基本情報",
       followups: "フォロー記録",
+      conversations: "会話",
       conversion: "転換情報",
       log: "ログ",
     },
@@ -176,6 +193,9 @@ const leadsJaJP = {
         note: "メモ",
       },
     },
+    conversationsTab: {
+      empty: "このリードに関連する会話はまだありません。",
+    },
     followupsTab: {
       formTitle: "フォロー記録を追加",
       channel: "チャネル",
@@ -210,6 +230,13 @@ const leadsJaJP = {
       typeCustomer: "顧客",
       typeCase: "案件",
     },
+    convertDedup: {
+      title: "重複の可能性が検出されました",
+      description:
+        "このリードの電話/メールが既存のリードまたは顧客と一致しています。転換を続行しますか？",
+      cancel: "キャンセル",
+      confirm: "転換を確認",
+    },
     logTab: {
       title: "操作ログ",
       filterLabel: "ログカテゴリフィルター",
@@ -217,6 +244,55 @@ const leadsJaJP = {
       typeOwner: "担当者変更",
       typeGroup: "グループ変更",
       emptyTitle: "ログがありません",
+    },
+  },
+  errors: {
+    fetchFailed:
+      "リードの読み込みに失敗しました。しばらくしてから再試行してください。",
+    updateFailed:
+      "リードの更新に失敗しました。しばらくしてから再試行してください。",
+    transitionFailed:
+      "ステータス変更に失敗しました。現在のステータスを確認して再試行してください。",
+    followupFailed:
+      "フォロー記録の送信に失敗しました。しばらくしてから再試行してください。",
+    dedupFailed:
+      "重複チェックに失敗しました。しばらくしてから再試行してください。",
+    convertFailed: "転換に失敗しました。しばらくしてから再試行してください。",
+    exportFailed:
+      "エクスポートに失敗しました。しばらくしてから再試行してください。",
+    bulkPartialFailure:
+      "一括操作が一部失敗しました：成功 {success} 件、失敗 {failed} 件。",
+  },
+  statusTransition: {
+    invalidTransition: "現在のステータスではこの操作は許可されていません。",
+    lostReasonRequired: "「失注」にするには失注理由の入力が必須です。",
+    lostRevivalTitle: "リード復活の確認",
+    lostRevivalDescription:
+      "このリードは失注としてマークされています。「フォロー中」に戻してよろしいですか？",
+    lostRevivalConfirm: "復活する",
+    lostRevivalCancel: "キャンセル",
+    lostRevivalSuccess: "リードを「フォロー中」に復活しました。",
+    lostRevivalFailed:
+      "リードの復活に失敗しました。しばらくしてから再試行してください。",
+    transitionSuccess: "ステータスを「{status}」に変更しました。",
+    convertedCannotChange: "転換済みのリードはステータスを変更できません。",
+  },
+  toast: {
+    updateSuccess: {
+      title: "リードを更新しました",
+      description: "変更が保存されました",
+    },
+    followupSuccess: {
+      title: "フォロー記録を送信しました",
+      description: "フォロー内容が保存され、次のステップが更新されました",
+    },
+    transitionSuccess: {
+      title: "ステータスを更新しました",
+      description: "リードのステータスが「{status}」に変更されました",
+    },
+    convertSuccess: {
+      title: "転換完了",
+      description: "顧客レコードが作成されました。案件を開始できます",
     },
   },
 } as const;

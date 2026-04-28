@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
+import CaseCloseoutChecklist from "./CaseCloseoutChecklist.vue";
 import type { CaseDetail, DeadlineItem } from "../types-detail";
 
-/** 期限管理 Tab：展示案件的各项截止日期与紧急度。 */
+/** 关键期限 Tab：展示期限进度、提醒操作与结案检查项。 */
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -31,30 +32,27 @@ const SEVERITY_CHIP_CLASS: Record<string, string> = {
 };
 
 /**
- * 根据紧急度返回进度条颜色。
- *
- * @param item - 期限条目
- * @returns 颜色 CSS 值
+ * 解析期限项进度条颜色。
+ * @param item - 期限项。
+ * @returns 对应的颜色值。
  */
 function barColor(item: DeadlineItem): string {
   return SEVERITY_COLOR[item.severity] ?? "var(--color-border-2)";
 }
 
 /**
- * 根据紧急度返回日期文字 CSS 类名。
- *
- * @param item - 期限条目
- * @returns CSS 类名
+ * 解析期限日期文本样式类名。
+ * @param item - 期限项。
+ * @returns 对应的日期样式类名。
  */
 function dateClass(item: DeadlineItem): string {
   return SEVERITY_TEXT_CLASS[item.severity] ?? "deadlines-tab__date--muted";
 }
 
 /**
- * 根据紧急度返回剩余天数标签 CSS 类名。
- *
- * @param item - 期限条目
- * @returns CSS 类名
+ * 解析剩余时间标签样式类名。
+ * @param item - 期限项。
+ * @returns 对应的标签样式类名。
  */
 function chipClass(item: DeadlineItem): string {
   return (
@@ -86,7 +84,7 @@ function chipClass(item: DeadlineItem): string {
         </Button>
       </template>
 
-      <!-- Residence period & Reminder schedule summaries -->
+      <!-- ── Residence Period Panel ───────────────────────── -->
       <div class="deadlines-tab__summaries">
         <div v-if="detail.residencePeriod" class="deadlines-tab__summary-card">
           <span
@@ -101,9 +99,29 @@ function chipClass(item: DeadlineItem): string {
             <span class="deadlines-tab__summary-label">{{
               detail.residencePeriod.residenceStatus
             }}</span>
+            <span
+              v-if="detail.residencePeriod.periodLabel"
+              class="deadlines-tab__summary-period"
+            >
+              （{{ detail.residencePeriod.periodLabel }}）
+            </span>
             <span class="deadlines-tab__summary-value">
               {{ detail.residencePeriod.startDate }} ～
               {{ detail.residencePeriod.endDate }}
+            </span>
+          </div>
+          <div
+            v-if="
+              detail.residencePeriod.cardNumber ||
+              detail.residencePeriod.entryDate
+            "
+            class="deadlines-tab__summary-details"
+          >
+            <span v-if="detail.residencePeriod.cardNumber">
+              カード: {{ detail.residencePeriod.cardNumber }}
+            </span>
+            <span v-if="detail.residencePeriod.entryDate">
+              入国日: {{ detail.residencePeriod.entryDate }}
             </span>
           </div>
           <span class="deadlines-tab__summary-meta">{{
@@ -111,9 +129,10 @@ function chipClass(item: DeadlineItem): string {
           }}</span>
         </div>
         <div v-else class="deadlines-tab__summary-placeholder">
-          当前样例尚未录入新在留有效期间
+          尚未录入在留期间
         </div>
 
+        <!-- ── Reminder Schedule Panel ──────────────────────── -->
         <div v-if="detail.reminderSchedule" class="deadlines-tab__summary-card">
           <span
             :class="[
@@ -126,19 +145,44 @@ function chipClass(item: DeadlineItem): string {
           <div class="deadlines-tab__summary-body">
             <span class="deadlines-tab__summary-label">到期前提醒设定</span>
             <span class="deadlines-tab__summary-value">
-              {{ detail.reminderSchedule.reminderDate }}
+              满了日: {{ detail.reminderSchedule.reminderDate }}
             </span>
+          </div>
+          <div
+            v-if="detail.reminderSchedule.reminders.length > 0"
+            class="deadlines-tab__reminder-list"
+          >
+            <div
+              v-for="(r, idx) in detail.reminderSchedule.reminders"
+              :key="idx"
+              class="deadlines-tab__reminder-row"
+            >
+              <span
+                :class="[
+                  'deadlines-tab__reminder-dot',
+                  `deadlines-tab__reminder-dot--${r.severity}`,
+                ]"
+              />
+              <span class="deadlines-tab__reminder-label">{{ r.label }}</span>
+              <span class="deadlines-tab__reminder-date">{{ r.date }}</span>
+            </div>
           </div>
           <span class="deadlines-tab__summary-meta">{{
             detail.reminderSchedule.recordMeta
           }}</span>
         </div>
         <div v-else class="deadlines-tab__summary-placeholder">
-          当前样例尚未设置到期前提醒
+          尚未设置续签提醒
         </div>
       </div>
 
-      <!-- Deadline items -->
+      <!-- ── Success Closeout Checklist (BMV S8 only) ─────── -->
+      <CaseCloseoutChecklist
+        v-if="detail.successCloseout"
+        :closeout="detail.successCloseout"
+      />
+
+      <!-- ── Deadline Items ───────────────────────────────── -->
       <div class="deadlines-tab__list">
         <div
           v-for="item in detail.deadlines"
@@ -265,9 +309,62 @@ function chipClass(item: DeadlineItem): string {
   color: var(--color-text-1);
 }
 
+.deadlines-tab__summary-period {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+
+.deadlines-tab__summary-details {
+  display: flex;
+  gap: 12px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-2);
+}
+
 .deadlines-tab__summary-meta {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
+}
+
+.deadlines-tab__reminder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.deadlines-tab__reminder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-2);
+}
+
+.deadlines-tab__reminder-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.deadlines-tab__reminder-dot--danger {
+  background: var(--color-danger);
+}
+.deadlines-tab__reminder-dot--warning {
+  background: #f59e0b;
+}
+.deadlines-tab__reminder-dot--primary {
+  background: var(--color-primary-6);
+}
+
+.deadlines-tab__reminder-label {
+  min-width: 60px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.deadlines-tab__reminder-date {
+  color: var(--color-text-1);
 }
 
 /* ── Deadline list ─────────────────────────────────────── */

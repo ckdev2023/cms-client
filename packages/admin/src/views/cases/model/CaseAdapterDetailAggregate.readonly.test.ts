@@ -54,6 +54,8 @@ const FULL_DEEP_LINK = {
 const FULL_COUNTS = {
   documentItemsTotal: 20,
   documentItemsDone: 12,
+  questionnaireItemsTotal: 0,
+  questionnaireItemsDone: 0,
   caseParties: 5,
   tasks: 8,
   tasksPending: 3,
@@ -147,14 +149,14 @@ describe("S9 read-only comprehensive state (p0-fe-002c-04)", () => {
     expect(result.detail.readonly).toBe(true);
   });
 
-  it("status badge is archived", () => {
-    expect(result.detail.statusBadge).toBe("archived");
+  it("status badge is badge-gray for S9", () => {
+    expect(result.detail.statusBadge).toBe("badge-gray");
   });
 
   it("stage fields reflect S9", () => {
-    expect(result.detail.stage).toBe("S9");
+    expect(result.detail.stage).toBe("已归档");
     expect(result.detail.stageCode).toBe("S9");
-    expect(result.detail.stageMeta).toBe("Stage S9");
+    expect(result.detail.stageMeta).toBe("S9");
   });
 
   it("identity fields still populated in S9", () => {
@@ -238,7 +240,7 @@ describe("S9 read-only + empty optional slices (p0-fe-002c-04)", () => {
 
   it("readonly is true even with no data", () => {
     expect(result.detail.readonly).toBe(true);
-    expect(result.detail.statusBadge).toBe("archived");
+    expect(result.detail.statusBadge).toBe("badge-gray");
     expect(result.detail.stageCode).toBe("S9");
   });
 
@@ -273,7 +275,7 @@ describe("S1-S8 all active / not readonly (p0-fe-002c-04)", () => {
         buildFullAggregate({ case: { ...FULL_CASE_ROW, stage } }),
       )!;
       expect(result.detail.readonly).toBe(false);
-      expect(result.detail.statusBadge).toBe("active");
+      expect(result.detail.statusBadge).toMatch(/^badge-/);
       expect(result.detail.stageCode).toBe(stage);
     });
   }

@@ -83,6 +83,7 @@ const VALID_TASK_TYPES = new Set([
   "client_contact",
   "submission",
   "review",
+  "collection",
 ]);
 const VALID_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
 const VALID_STATUSES = new Set([

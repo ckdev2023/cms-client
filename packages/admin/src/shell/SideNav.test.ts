@@ -152,6 +152,12 @@ describe("SideNav", () => {
     expect(items).toHaveLength(totalItems);
   });
 
+  it("does not render the tasks placeholder entry in the side navigation", async () => {
+    const w = await mountWithRouter();
+    const itemTexts = w.findAll(".nav-item").map((el) => el.text());
+    expect(itemTexts).not.toContain("任务与提醒");
+  });
+
   it("does not render external nav items after portal removal", async () => {
     const w = await mountWithRouter();
     const externalLinks = w.findAll('a.nav-item[target="_blank"]');

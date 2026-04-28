@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, LogEntry } from "../types-detail";
 import type { LogCategoryKey } from "../types";
 import { LOG_CATEGORIES } from "../constants";
 
-/** 日志 Tab：展示三分类日志（操作/审核/状态变更）与分段筛选控件。 */
+/** 日志 Tab：展示案件日志时间线与分类筛选。 */
+const { t } = useI18n();
+
 const props = defineProps<{
   detail: CaseDetail;
+  readonly: boolean;
 }>();
 
 const activeCategory = ref<LogCategoryKey>("all");
@@ -18,61 +22,25 @@ const filteredEntries = computed<LogEntry[]>(() => {
   return props.detail.logEntries.filter((e) => e.type === activeCategory.value);
 });
 
-const DOT_COLOR_MAP: Record<string, string> = {
-  primary: "var(--color-primary-6)",
-  success: "var(--color-success, #22c55e)",
-  warning: "#f59e0b",
-  danger: "var(--color-danger, #dc2626)",
-  border: "var(--color-border-2)",
-};
-
-const AVATAR_BG: Record<string, string> = {
-  primary: "var(--color-primary-6)",
-  success: "var(--color-success, #22c55e)",
-  warning: "#f59e0b",
-  surface: "var(--color-bg-3)",
-};
-
 const CHIP_TONE_MAP: Record<string, ChipTone> = {
-  green: "success",
-  blue: "primary",
+  "chip-muted": "neutral",
+  "chip-warning": "warning",
+  "chip-primary": "primary",
 };
 
 /**
- * 根据日志条目的时间线圆点色标返回 CSS 颜色。
- *
- * @param entry - 日志条目
- * @returns CSS 颜色值
+ * 获取日志时间点圆点的背景颜色。
+ * @param entry - 日志项。
+ * @returns 对应的背景颜色值。
  */
 function dotBg(entry: LogEntry): string {
-  return DOT_COLOR_MAP[entry.dotColor] ?? "var(--color-border-2)";
+  return entry.dotColor || "var(--color-border-2)";
 }
 
 /**
- * 根据头像色调键返回背景色。
- *
- * @param style - 头像样式标识
- * @returns CSS 背景色值
- */
-function avatarBg(style: string): string {
-  return AVATAR_BG[style] ?? "var(--color-primary-6)";
-}
-
-/**
- * 根据头像色调键返回前景色。
- *
- * @param style - 头像样式标识
- * @returns CSS 前景色值
- */
-function avatarColor(style: string): string {
-  return style === "surface" ? "var(--color-text-2)" : "#fff";
-}
-
-/**
- * 根据日志条目的分类标签返回 Chip 色调。
- *
- * @param entry - 日志条目
- * @returns Chip 色调标识
+ * 获取日志分类标签对应的 `ChipTone`。
+ * @param entry - 日志项。
+ * @returns 对应的标签色调。
  */
 function chipTone(entry: LogEntry): ChipTone {
   return CHIP_TONE_MAP[entry.categoryChip] ?? "neutral";
@@ -83,8 +51,12 @@ function chipTone(entry: LogEntry): ChipTone {
   <div class="log-tab">
     <Card padding="lg">
       <div class="log-tab__header">
-        <h2 class="log-tab__title">日志</h2>
-        <div class="log-tab__segmented" role="radiogroup" aria-label="日志分类">
+        <h2 class="log-tab__title">{{ t("cases.detail.log.title") }}</h2>
+        <div
+          class="log-tab__segmented"
+          role="radiogroup"
+          :aria-label="t('cases.detail.log.categoryLabel')"
+        >
           <button
             v-for="cat in LOG_CATEGORIES"
             :key="cat.key"
@@ -97,7 +69,7 @@ function chipTone(entry: LogEntry): ChipTone {
             ]"
             @click="activeCategory = cat.key"
           >
-            {{ cat.label }}
+            {{ t(cat.i18nKey) }}
           </button>
         </div>
       </div>
@@ -116,13 +88,7 @@ function chipTone(entry: LogEntry): ChipTone {
           <div class="log-tab__entry-content">
             <div class="log-tab__entry-main">
               <div class="log-tab__entry-left">
-                <span
-                  class="log-tab__avatar"
-                  :style="{
-                    backgroundColor: avatarBg(entry.avatarStyle),
-                    color: avatarColor(entry.avatarStyle),
-                  }"
-                >
+                <span class="log-tab__avatar" :style="entry.avatarStyle">
                   {{ entry.avatar }}
                 </span>
                 <div class="log-tab__entry-info">
@@ -159,7 +125,7 @@ function chipTone(entry: LogEntry): ChipTone {
             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
           />
         </svg>
-        <p>暂无日志记录</p>
+        <p>{{ t("cases.detail.log.empty") }}</p>
       </div>
     </Card>
   </div>
@@ -292,6 +258,7 @@ function chipTone(entry: LogEntry): ChipTone {
   border-radius: var(--radius-full);
   font-size: 9px;
   font-weight: var(--font-weight-black);
+  color: #fff;
   flex-shrink: 0;
 }
 

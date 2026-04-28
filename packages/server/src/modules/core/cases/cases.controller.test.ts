@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException } from "@nestjs/common";
 
 import { PermissionsService } from "../auth/permissions.service";
 import type { Case } from "../model/coreEntities";
@@ -62,6 +62,8 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
@@ -109,7 +111,7 @@ function makePermissions(
 void test("CasesController.update forwards caseNo in patch body", async () => {
   let calledInput: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     update: (_ctx: unknown, _id: string, input: Record<string, unknown>) => {
       calledInput = input;
       return Promise.resolve({ id: "case-1" });
@@ -125,17 +127,17 @@ void test("CasesController.update forwards caseNo in patch body", async () => {
 void test("CasesController.update throws when canEditCase denies", async () => {
   let updateCalled = false;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     update: () => {
       updateCalled = true;
       return Promise.resolve({ id: "case-1" });
     },
   } as unknown as CasesService;
 
-  const controller = new CasesController(
-    service,
-    makePermissions({ canEditCase: () => false }),
-  );
+  const controller = new CasesController(service, makePermissions());
 
   await assert.rejects(
     () => controller.update(ctxReq as never, "case-1", { caseNo: "CASE-001" }),
@@ -147,7 +149,7 @@ void test("CasesController.update throws when canEditCase denies", async () => {
 void test("CasesController.delete checks permission before soft delete", async () => {
   let deletedId = "";
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     softDelete: (_ctx: unknown, id: string) => {
       deletedId = id;
       return Promise.resolve();
@@ -191,17 +193,17 @@ void test("CasesController.get returns case when canViewCase allows", async () =
 void test("CasesController.transition checks canEditCase before executing", async () => {
   let transitionCalled = false;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     transition: () => {
       transitionCalled = true;
       return Promise.resolve(mockCase);
     },
   } as unknown as CasesService;
 
-  const controller = new CasesController(
-    service,
-    makePermissions({ canEditCase: () => false }),
-  );
+  const controller = new CasesController(service, makePermissions());
 
   await assert.rejects(
     () => controller.transition(ctxReq as never, "case-1", { toStage: "S2" }),
@@ -213,17 +215,17 @@ void test("CasesController.transition checks canEditCase before executing", asyn
 void test("CasesController.acknowledgeBillingRisk checks canEditCase", async () => {
   let ackCalled = false;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     acknowledgeBillingRisk: () => {
       ackCalled = true;
       return Promise.resolve(mockCase);
     },
   } as unknown as CasesService;
 
-  const controller = new CasesController(
-    service,
-    makePermissions({ canEditCase: () => false }),
-  );
+  const controller = new CasesController(service, makePermissions());
 
   await assert.rejects(
     () =>
@@ -238,17 +240,17 @@ void test("CasesController.acknowledgeBillingRisk checks canEditCase", async () 
 void test("CasesController.updatePostApprovalStage checks canEditCase", async () => {
   let updateCalled = false;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     updatePostApprovalStage: () => {
       updateCalled = true;
       return Promise.resolve(mockCase);
     },
   } as unknown as CasesService;
 
-  const controller = new CasesController(
-    service,
-    makePermissions({ canEditCase: () => false }),
-  );
+  const controller = new CasesController(service, makePermissions());
 
   await assert.rejects(
     () =>
@@ -315,6 +317,34 @@ void test("CasesController.list passes viewer roleTier for viewer", async () => 
   assert.ok(capturedInput);
   const visibility = capturedInput.visibility as Record<string, unknown>;
   assert.equal(visibility.roleTier, "viewer");
+});
+
+void test("CasesController.list forwards parsed scope", async () => {
+  let capturedInput: Record<string, unknown> | undefined;
+  const service = {
+    list: (_ctx: unknown, input: Record<string, unknown>) => {
+      capturedInput = input;
+      return Promise.resolve({ items: [], total: 0 });
+    },
+  } as unknown as CasesService;
+
+  const controller = new CasesController(service, makePermissions());
+  await controller.list(staffWithGroupCtxReq as never, { scope: "group" });
+
+  assert.ok(capturedInput);
+  assert.equal(capturedInput.scope, "group");
+});
+
+void test("CasesController.list rejects invalid scope", async () => {
+  const controller = new CasesController(
+    { list: () => Promise.resolve({ items: [], total: 0 }) } as never,
+    makePermissions(),
+  );
+
+  await assert.rejects(
+    () => controller.list(staffWithGroupCtxReq as never, { scope: "invalid" }),
+    BadRequestException,
+  );
 });
 
 // ---------------------------------------------------------------------------

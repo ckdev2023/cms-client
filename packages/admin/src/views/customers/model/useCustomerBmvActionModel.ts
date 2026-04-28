@@ -4,6 +4,10 @@ import {
   CustomerRepositoryError,
   type CustomerRepository,
 } from "./CustomerRepository";
+import {
+  isBmvGateError,
+  resolveFirstBlockerI18nKey,
+} from "./CustomerBmvGateBinding";
 
 /**
  *
@@ -366,6 +370,13 @@ function mapActionError(error: unknown): string {
 
   if (error.code === "UNAUTHORIZED") {
     return "customers.detail.bmvIntake.actionState.unauthorized";
+  }
+
+  if (
+    error.code === "VALIDATION_ERROR" &&
+    isBmvGateError(error.serverErrorCode)
+  ) {
+    return resolveFirstBlockerI18nKey(error.serverBlockers);
   }
 
   if (error.code === "VALIDATION_ERROR") {

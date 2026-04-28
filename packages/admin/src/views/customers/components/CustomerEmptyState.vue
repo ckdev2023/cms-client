@@ -5,6 +5,10 @@ import { useI18n } from "vue-i18n";
  * 客户表格空状态提示行。
  */
 const { t } = useI18n();
+
+defineEmits<{
+  openCreateModal: [];
+}>();
 </script>
 
 <template>
@@ -16,13 +20,20 @@ const { t } = useI18n();
       <div class="customer-empty-state__desc">
         {{ t("customers.list.empty.description") }}
       </div>
+      <button
+        class="customer-empty-state__cta"
+        type="button"
+        @click="$emit('openCreateModal')"
+      >
+        {{ t("customers.list.empty.cta") }}
+      </button>
     </td>
   </tr>
 </template>
 
 <style scoped>
 .customer-empty-state td {
-  padding: 40px 24px;
+  padding: 64px 24px;
   text-align: center;
 }
 
@@ -36,5 +47,25 @@ const { t } = useI18n();
   margin-top: 4px;
   font-size: 13px;
   color: var(--color-text-3);
+}
+
+.customer-empty-state__cta {
+  margin-top: 16px;
+  border: 1px solid var(--color-primary-6);
+  background: transparent;
+  border-radius: var(--radius-default);
+  padding: 6px 16px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: var(--font-weight-extrabold);
+  color: var(--color-primary-6);
+  cursor: pointer;
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.customer-empty-state__cta:hover {
+  background: var(--color-primary-light);
 }
 </style>

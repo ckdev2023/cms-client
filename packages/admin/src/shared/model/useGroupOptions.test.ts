@@ -5,6 +5,7 @@ import {
   isGroupDisabled,
   isGroupDisabledByLabel,
   resolveGroupLabel,
+  resolveGroupValue,
 } from "./useGroupOptions";
 
 describe("getActiveGroupOptions", () => {
@@ -22,6 +23,13 @@ describe("getActiveGroupOptions", () => {
       expect(o).toHaveProperty("label");
       expect(o).not.toHaveProperty("status");
     }
+  });
+
+  it("returns zh-CN labels when locale is zh-CN", () => {
+    expect(getActiveGroupOptions("zh-CN")).toEqual([
+      { value: "tokyo-1", label: "东京一组" },
+      { value: "tokyo-2", label: "东京二组" },
+    ]);
   });
 });
 
@@ -94,5 +102,27 @@ describe("resolveGroupLabel", () => {
 
   it("does not append suffix to active groups regardless of custom suffix", () => {
     expect(resolveGroupLabel("tokyo-1", " (Disabled)")).toBe("東京一組");
+  });
+
+  it("localizes known labels across locales", () => {
+    expect(resolveGroupLabel("東京一組", "（已停用）", "zh-CN")).toBe(
+      "东京一组",
+    );
+    expect(resolveGroupLabel("东京二组", " (Disabled)", "en-US")).toBe(
+      "Tokyo Team 2",
+    );
+  });
+});
+
+describe("resolveGroupValue", () => {
+  it("normalizes localized labels back to stable ids", () => {
+    expect(resolveGroupValue("東京一組")).toBe("tokyo-1");
+    expect(resolveGroupValue("东京一组")).toBe("tokyo-1");
+    expect(resolveGroupValue("Tokyo Team 1")).toBe("tokyo-1");
+    expect(resolveGroupValue("大阪組（已停用）")).toBe("osaka");
+  });
+
+  it("returns null for unknown labels", () => {
+    expect(resolveGroupValue("unknown-group")).toBeNull();
   });
 });

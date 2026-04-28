@@ -10,6 +10,7 @@ import {
   normalizeCustomerBmvProfile,
   resolveCustomerBmvIntakeStatus,
 } from "./customers.dto-mappers";
+import { validateBaseProfile } from "./customers.utils";
 
 const customer: Customer = {
   id: "cust-001",
@@ -154,4 +155,181 @@ void test("mapCustomerToDetailDto merges camel and snake bmvProfile fields", () 
     intakeStatus: "sign_pending",
     note: "legacy note",
   });
+});
+
+// --- validateBaseProfile: new fields ---
+
+void test("validateBaseProfile accepts valid location, sourceType, visaType, referrerName", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    location: "OVERSEAS",
+    sourceType: "REFERRAL",
+    visaType: "business_manager",
+    referrerName: "田中太郎",
+  });
+  assert.equal(result.location, "OVERSEAS");
+  assert.equal(result.sourceType, "REFERRAL");
+  assert.equal(result.visaType, "business_manager");
+  assert.equal(result.referrerName, "田中太郎");
+});
+
+void test("validateBaseProfile accepts null/undefined location and sourceType", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    location: null,
+    sourceType: undefined,
+  });
+  assert.equal(result.location, null);
+  assert.equal(result.sourceType, undefined);
+});
+
+void test("validateBaseProfile rejects invalid location value", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        location: "MARS",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(
+        err.message.includes("location must be one of OVERSEAS, JAPAN"),
+      );
+      return true;
+    },
+  );
+});
+
+void test("validateBaseProfile rejects invalid sourceType value", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        sourceType: "PHONE",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(
+        err.message.includes("sourceType must be one of REFERRAL, WEB, ADS"),
+      );
+      return true;
+    },
+  );
+});
+
+void test("validateBaseProfile rejects non-string visaType", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        visaType: 123,
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("visaType must be a string"));
+      return true;
+    },
+  );
+});
+
+void test("validateBaseProfile rejects non-string referrerName", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        referrerName: 456,
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("referrerName must be a string"));
+      return true;
+    },
+  );
+});
+
+void test("validateBaseProfile skips new field validation for non-individual type", () => {
+  const result = validateBaseProfile("corporation", {
+    location: "INVALID",
+    sourceType: 42,
+  });
+  assert.equal(result.location, "INVALID");
+  assert.equal(result.sourceType, 42);
+});
+
+void test("validateBaseProfile collects multiple errors", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        location: "BAD",
+        sourceType: 999,
+        visaType: false,
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("location"));
+      assert.ok(err.message.includes("sourceType"));
+      assert.ok(err.message.includes("visaType"));
+      return true;
+    },
+  );
+});
+
+// --- mapCustomerToDetailDto: new fields ---
+
+void test("mapCustomerToDetailDto exposes location, sourceType, visaType, referrerName for non-BMV customer", () => {
+  const nonBmvCustomer: Customer = {
+    ...customer,
+    baseProfile: {
+      ...customer.baseProfile,
+      bmvProfile: undefined,
+      location: "JAPAN",
+      sourceType: "WEB",
+      visaType: "engineer_humanities",
+      referrerName: "山田花子",
+    },
+  };
+  const detail = mapCustomerToDetailDto(nonBmvCustomer, {});
+  assert.equal(detail.location, "JAPAN");
+  assert.equal(detail.sourceType, "WEB");
+  assert.equal(detail.visaType, "engineer_humanities");
+  assert.equal(detail.referrerName, "山田花子");
+});
+
+void test("mapCustomerToDetailDto derives visaType from bmvProfile.visaPlan for BMV customer", () => {
+  const bmvCustomer: Customer = {
+    ...customer,
+    baseProfile: {
+      ...customer.baseProfile,
+      bmvProfile: {
+        questionnaireStatus: "returned",
+        quoteStatus: "confirmed",
+        signStatus: "signed",
+        visaPlan: "new_1year",
+      },
+      visaType: "should_be_ignored",
+      location: "OVERSEAS",
+      sourceType: "REFERRAL",
+      referrerName: "鈴木一郎",
+    },
+  };
+  const detail = mapCustomerToDetailDto(bmvCustomer, {});
+  assert.equal(detail.visaType, "new_1year");
+  assert.equal(detail.location, "OVERSEAS");
+  assert.equal(detail.sourceType, "REFERRAL");
+  assert.equal(detail.referrerName, "鈴木一郎");
+});
+
+void test("mapCustomerToDetailDto returns null for missing optional fields", () => {
+  const minCustomer: Customer = {
+    ...customer,
+    baseProfile: {
+      displayName: "テスト",
+    },
+  };
+  const detail = mapCustomerToDetailDto(minCustomer, {});
+  assert.equal(detail.location, null);
+  assert.equal(detail.sourceType, null);
+  assert.equal(detail.visaType, null);
+  assert.equal(detail.referrerName, null);
 });

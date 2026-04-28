@@ -41,25 +41,25 @@ export function deriveDocumentSummaryCards(
       key: "pendingReview",
       variant: "info",
       value: pendingReview,
-      label: "待审核",
+      labelKey: "documents.list.summaryHint.pendingReview",
     },
     {
       key: "missing",
       variant: "warning",
       value: missing,
-      label: "缺件",
+      labelKey: "documents.list.summaryHint.missing",
     },
     {
       key: "expired",
       variant: "danger",
       value: expired,
-      label: "过期",
+      labelKey: "documents.list.summaryHint.expired",
     },
     {
       key: "sharedExpiryRisk",
       variant: "neutral",
       value: sharedExpiryRisk,
-      label: "共享版本过期风险",
+      labelKey: "documents.list.summaryHint.sharedExpiryRisk",
     },
   ];
 }
@@ -230,7 +230,7 @@ export const SAMPLE_DOCUMENTS: DocumentListItem[] = [
     provider: "main_applicant",
     status: "expired",
     dueDate: "2026-03-31",
-    dueDateLabel: "已过期",
+    dueDateLabel: "过期",
     lastReminderAt: "2026-04-01 10:00",
     lastReminderAtLabel: "2026-04-01 10:00",
     relativePath: "A2026-001/main_applicant/tax_income/20260201_kazei.pdf",
@@ -335,7 +335,7 @@ export const SAMPLE_DOCUMENTS: DocumentListItem[] = [
     provider: "employer_org",
     status: "expired",
     dueDate: "2026-03-20",
-    dueDateLabel: "已过期",
+    dueDateLabel: "过期",
     lastReminderAt: "2026-03-25 16:00",
     lastReminderAtLabel: "2026-03-25 16:00",
     relativePath: "A2026-001/employer_org/financial/20250401_kessan.pdf",
@@ -382,7 +382,7 @@ export const SAMPLE_REFERENCE_CANDIDATES: ReferenceCandidate[] = [
 // ─── Shared expiry risk (P0-CONTRACT §9 demo) ───────────────────
 
 export const SAMPLE_RISK_DATA: SharedExpiryRiskData = {
-  versionInfo: "課税証明書（3ヶ月以内） v1 — 有効期限: 2026-03-31（已过期）",
+  versionInfo: "課税証明書（3ヶ月以内） v1 — 有効期限: 2026-03-31（过期）",
   affectedCases: [
     {
       caseId: "case-001",

@@ -58,6 +58,8 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
@@ -88,6 +90,7 @@ function makePermissions(
 
 void test("list with view=summary calls listSummary", async () => {
   let called = false;
+  let capturedInput: Record<string, unknown> | undefined;
   const summaryResult = {
     items: [
       {
@@ -103,8 +106,9 @@ void test("list with view=summary calls listSummary", async () => {
     limit: 50,
   };
   const service = {
-    listSummary: () => {
+    listSummary: (_ctx: unknown, input: Record<string, unknown>) => {
       called = true;
+      capturedInput = input;
       return Promise.resolve(summaryResult);
     },
     list: () => Promise.resolve({ items: [], total: 0 }),
@@ -112,9 +116,11 @@ void test("list with view=summary calls listSummary", async () => {
 
   const controller = new CasesController(service, makePermissions());
   const result = await controller.list(viewerCtxReq as never, {
+    scope: "mine",
     view: "summary",
   });
   assert.equal(called, true);
+  assert.equal(capturedInput?.scope, "mine");
   assert.equal((result as typeof summaryResult).page, 1);
 });
 

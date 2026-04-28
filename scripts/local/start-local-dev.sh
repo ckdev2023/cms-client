@@ -70,18 +70,21 @@ trap cleanup EXIT INT TERM
 
 bash "$ROOT_DIR/scripts/local/start-local-stack.sh"
 
-if is_stable_http_ready "http://127.0.0.1:3000/health"; then
-  echo "[local-dev] reusing existing local server on http://127.0.0.1:3000"
+SERVER_PORT="${PORT:-3300}"
+SERVER_HEALTH_URL="http://127.0.0.1:${SERVER_PORT}/health"
+
+if is_stable_http_ready "$SERVER_HEALTH_URL"; then
+  echo "[local-dev] reusing existing local server on http://127.0.0.1:${SERVER_PORT}"
 else
-  echo "[local-dev] starting server"
+  echo "[local-dev] starting server on port ${SERVER_PORT}"
   (
     cd "$ROOT_DIR"
-    npm run server:dev
+    PORT="$SERVER_PORT" npm run server:dev
   ) &
   SERVER_PID=$!
 
-  if ! wait_for_http_ready "http://127.0.0.1:3000/health"; then
-    echo "[local-dev] server failed to become healthy on http://127.0.0.1:3000" >&2
+  if ! wait_for_http_ready "$SERVER_HEALTH_URL"; then
+    echo "[local-dev] server failed to become healthy on http://127.0.0.1:${SERVER_PORT}" >&2
     exit 1
   fi
 fi

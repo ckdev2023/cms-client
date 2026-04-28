@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   DETAIL_TABS,
+  getRelationTypeLabel,
+  getRelationTypeOptions,
   resolveBmvIntakeStatus,
   type CustomerDetail,
   type DetailTab,
@@ -61,6 +63,10 @@ describe("customers/types", () => {
       birthDate: "2000-01-01",
       avatar: "",
       note: "note",
+      location: "",
+      sourceType: "",
+      visaType: "",
+      referrerName: "",
       archivedCases: 0,
       caseNames: ["Case A"],
       lastCaseCreatedDate: "2025-01-01",
@@ -99,5 +105,22 @@ describe("customers/types", () => {
         signStatus: "signed",
       }),
     ).toBe("ready_for_case_creation");
+  });
+
+  it("localizes relation type labels by locale", () => {
+    expect(getRelationTypeLabel("parent")).toBe("父母");
+    expect(getRelationTypeLabel("parent", "en-US")).toBe("Parent");
+    expect(getRelationTypeLabel("parent", "ja-JP")).toBe("親");
+  });
+
+  it("returns localized relation type options for the active locale", () => {
+    expect(
+      getRelationTypeOptions("en-US").find((option) => option.value === "agent")
+        ?.label,
+    ).toBe("Agent / advisor");
+    expect(
+      getRelationTypeOptions("ja-JP").find((option) => option.value === "other")
+        ?.label,
+    ).toBe("その他");
   });
 });

@@ -5,6 +5,16 @@ const customerDetail = {
   placeholderMessage: "「{tab}」パネルは準備中です。",
   notFound:
     "該当する顧客が見つかりません。削除済みか、IDが正しくない可能性があります。",
+  errorState: {
+    unauthorizedTitle: "この顧客を閲覧する権限がありません。",
+    unauthorizedDescription:
+      "管理者または所属チームに権限付与を依頼してから再度お試しください。",
+    requestFailedTitle: "現在この顧客を読み込めません。",
+    requestFailedDescription:
+      "リクエストが失敗したか、無効なレスポンスが返されました。しばらくしてから再試行してください。",
+    retry: "再試行",
+    backToList: "顧客一覧へ戻る",
+  },
   tabs: {
     basic: "基本情報",
     cases: "関連案件",
@@ -42,6 +52,8 @@ const customerDetail = {
     cancel: "キャンセル",
     save: "保存",
     savedHint: "保存しました",
+    avatarChooseFile: "画像を選択",
+    avatarNoFileSelected: "ファイルが選択されていません",
     fields: {
       displayName: "表示名（社内用）",
       legalName: "氏名（法定）",
@@ -57,6 +69,29 @@ const customerDetail = {
       group: "所属グループ",
       owner: "担当者",
       referralSource: "紹介元 / 来源",
+      location: "所在地",
+      locationNone: "—",
+      locationOverseas: "海外",
+      locationJapan: "日本国内",
+      sourceType: "流入経路",
+      sourceTypeNone: "—",
+      sourceTypeReferral: "紹介",
+      sourceTypeWeb: "ウェブ",
+      sourceTypeAds: "広告",
+      visaType: "在留資格",
+      visaTypeNone: "—",
+      visaTypeBusinessManager: "経営・管理",
+      visaTypeEngineerSpecialist: "技術・人文知識・国際業務",
+      visaTypeSkilledLabor: "技能",
+      visaTypeStudent: "留学",
+      visaTypeDependent: "家族滞在",
+      visaTypePermanentResident: "永住者",
+      visaTypeSpouseOfJpNational: "日本人の配偶者等",
+      visaTypeLongTermResident: "定住者",
+      visaTypeDesignatedActivities: "特定活動",
+      visaTypeOther: "その他",
+      visaTypeBmvDerived: "経営管理ビザプランから自動取得",
+      referrerName: "紹介者名",
       avatar: "アバター",
       note: "備考",
     },
@@ -113,10 +148,70 @@ const customerDetail = {
       locked: "契約完了までは起案できません",
       ready: "契約完了済みのため正式起案が可能です",
     },
+    errors: {
+      saveSurveyFailed:
+        "問診票データの保存に失敗しました。再試行してください。",
+      quoteModifyFailed: "見積の修正に失敗しました。再試行してください。",
+      transitionToCaseFailed:
+        "正式案件への移行に失敗しました。再試行してください。",
+      signRequiredForCase:
+        "契約がまだ完了していません。正式案件を作成できません。",
+      questionnaireRequiredForQuote:
+        "見積を生成する前に問診票ステップを完了してください。",
+      quoteRequiredForSign: "契約に進む前に見積を生成してください。",
+      featureDisabled: "この組織では経営管理ビザ機能が有効になっていません。",
+      billingLinkFailed:
+        "契約と請求の連携に失敗しました。管理者にお問い合わせください。",
+      aggregateFetchFailed:
+        "取込サマリーの読み込みに失敗しました。再試行してください。",
+    },
+    gate: {
+      questionnaireNotDone: "問診票が未完了のため、見積ボタンは無効です",
+      quoteNotDone: "見積が未完了のため、契約ボタンは無効です",
+      signNotDone: "契約が未完了のため、起案ボタンは無効です",
+      allClear: "すべてのゲートを通過しました。正式起案が可能です",
+    },
+    toastSuccess: {
+      saveSurvey: {
+        title: "問診票を保存しました",
+        description: "問診票データが更新されました。見積の生成に進めます",
+      },
+      quoteModify: {
+        title: "見積を更新しました",
+        description:
+          "新しいバージョンの見積が作成されました。過去のバージョンは保持されます",
+      },
+      transitionToCase: {
+        title: "案件を作成しました",
+        description: "正式案件への移行に成功し、資料一覧が生成されました",
+      },
+    },
+    quoteHistory: {
+      title: "見積履歴",
+      version: "バージョン {version}",
+      current: "現在のバージョン",
+      amount: "金額",
+      createdAt: "作成日",
+    },
+    surveyData: {
+      title: "問診票データサマリー",
+      fieldCount: "{count} 項目を収集済み",
+    },
+    caseStage: {
+      title: "関連案件の進捗",
+      stage: "現在のステージ",
+      postApprovalStage: "承認後ステージ",
+      coeStatus: "COE ステータス",
+    },
+    reminders: {
+      title: "リマインダーサマリー",
+      empty: "保留中のリマインダーはありません",
+    },
     actions: {
       questionnaire: "問診票を送付",
       quote: "見積を生成",
       sign: "契約完了を記録",
+      transitionToCase: "正式案件を起案",
     },
     actionHint: {
       questionnaire: {
@@ -223,6 +318,11 @@ const customerDetail = {
   commsTab: {
     title: "コミュニケーション",
     addComm: "コミュニケーションを記録",
+    viewConversations: "会話を表示",
+    loading: "コミュニケーション記録を読み込み中…",
+    requestFailed:
+      "コミュニケーション記録の読み込みに失敗しました。再試行してください。",
+    retry: "再試行",
     filterLabel: "公開範囲フィルター",
     filterAll: "全件",
     filterInternal: "内部",
@@ -237,6 +337,9 @@ const customerDetail = {
   },
   logsTab: {
     title: "操作ログ",
+    loading: "操作ログを読み込み中…",
+    requestFailed: "操作ログの読み込みに失敗しました。再試行してください。",
+    retry: "再試行",
     filterLabel: "ログ種別フィルター",
     filterAll: "全件",
     filterInfo: "情報変更",
@@ -252,6 +355,12 @@ const customerDetail = {
     next: "次へ",
     pageInfo: "{current} / {total} ページ",
     emptyTitle: "操作ログはまだありません",
+    types: {
+      info: "情報変更",
+      relation: "関係変更",
+      case: "案件",
+      comm: "コミュニケーション",
+    },
   },
 } as const;
 

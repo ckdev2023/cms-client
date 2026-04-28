@@ -93,12 +93,12 @@ describe("documents/fixtures — SAMPLE_DOCUMENT_SUMMARY_CARDS", () => {
     expect(SAMPLE_DOCUMENT_SUMMARY_CARDS).toHaveLength(4);
   });
 
-  it("each card has key, variant, value, label", () => {
+  it("each card has key, variant, value, labelKey", () => {
     for (const card of SAMPLE_DOCUMENT_SUMMARY_CARDS) {
       expect(card.key).toBeTruthy();
       expect(card.variant).toBeTruthy();
       expect(typeof card.value).toBe("number");
-      expect(card.label).toBeTruthy();
+      expect(card.labelKey).toBeTruthy();
     }
   });
 

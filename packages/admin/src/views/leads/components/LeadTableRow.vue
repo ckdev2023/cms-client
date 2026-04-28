@@ -9,11 +9,11 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { LeadSummary, LeadStatus } from "../types";
-import { OWNER_OPTIONS } from "../fixtures";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
 
 /** 线索表格行：咨询人信息、状态、负责人、跟进安排、最近更新。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps<{
   lead: LeadSummary;
@@ -33,18 +33,21 @@ const STATUS_TONE: Record<LeadStatus, ChipTone> = {
   lost: "neutral",
 };
 
-const ownerLabel = computed(
-  () => OWNER_OPTIONS.find((o) => o.value === props.lead.ownerId)?.label ?? "—",
+const owner = computed(() =>
+  resolveOwnerOption(props.lead.ownerId, locale.value),
 );
 
-const ownerInitials = computed(
-  () =>
-    OWNER_OPTIONS.find((o) => o.value === props.lead.ownerId)?.initials ?? "?",
-);
+const ownerLabel = computed(() => owner.value?.label ?? "—");
+
+const ownerInitials = computed(() => owner.value?.initials ?? "?");
 
 const groupLabel = computed(() =>
   props.lead.groupId
-    ? resolveGroupLabel(props.lead.groupId, t("shared.group.disabledSuffix"))
+    ? resolveGroupLabel(
+        props.lead.groupId,
+        t("shared.group.disabledSuffix"),
+        locale.value,
+      )
     : "—",
 );
 </script>

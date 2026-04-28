@@ -72,6 +72,19 @@ describe("useCustomerBasicInfoModel", () => {
     expect(currentSnapshot.value!.nationality).toBe("中国");
   });
 
+  it("currentSnapshot localizes owner and group labels when locale is zh-CN", () => {
+    const customer = makeCustomerRef("cust-003");
+    const locale = ref("zh-CN");
+    const { currentSnapshot } = useCustomerBasicInfoModel({
+      customer: customer.computed,
+      repository: createRepository(),
+      locale,
+    });
+
+    expect(currentSnapshot.value!.group).toBe("大阪组（已停用）");
+    expect(currentSnapshot.value!.owner).toBe("高桥健太");
+  });
+
   it("startEditing enters edit mode and creates a form snapshot", () => {
     const customer = makeCustomerRef("cust-001");
     const { isEditing, formSnapshot, startEditing } = useCustomerBasicInfoModel(
@@ -109,6 +122,7 @@ describe("useCustomerBasicInfoModel", () => {
       "cust-001",
       expect.objectContaining({
         displayName: "田中次郎",
+        group: "tokyo-1",
         ownerId: "takahashi-k",
       }),
     );

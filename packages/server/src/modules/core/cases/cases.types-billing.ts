@@ -1,27 +1,6 @@
-// ────────────────────────────────────────────────────────────────
-// BillingPlan / PaymentRecord / BillingGuard / RiskAck
-// 案件视角读写契约 — 冻结契约
-//
-// 案件详情 billing tab 消费 billing-plans 与 payment-records 列表端点；
-// overview / validation tab 消费 billing summary / guard 结果；
-// cases controller 消费 risk-ack 输入。
-//
-// 以下类型描述 admin adapter 消费的 DTO 形状，
-// 与现有 REST 端点的返回值一一对应。
-//
-// 映射关系：
-//   billing-plans  → billing_records 表 (P0 §3.20)
-//   payment-records → payment_records 表 (P0 §3.20)
-//   billing-guards → billingGuards.ts 聚合逻辑
-//   risk-ack       → cases controller billing-risk-ack 端点
-//
-// P0 边界：
-//   - gate_effect_mode 仅通过 HTTP 设置 off | warn；
-//     block 由 P1 COE 步骤级硬阻断引入（gate_trigger_step=COE_SENT）。
-//   - P0 收费阻断默认 warn：允许带欠提交但必须风险确认留痕。
-//   - P1 扩展 gate_trigger_step、invoice 明细等字段，
-//     通过追加可选属性方式叠加，不删除/改名现有属性。
-// ────────────────────────────────────────────────────────────────
+// 案件视角 Billing 读写契约（billing-plans / payment-records / guards / risk-ack）。
+// P0 边界：gate_effect_mode HTTP 层 off|warn；P1 解锁 block（DB CHECK 已就绪）。
+// P1 追加可选属性叠加，不删除/改名现有属性。
 
 import type {
   BillingGateEffectMode,
@@ -58,11 +37,7 @@ export type BillingErrorCode =
 
 // ─── BillingPlan 读模型 ────────────────────────────────────────
 
-/**
- * 案件视角收费计划列表查询参数。
- *
- * 映射端点：`GET /api/billing-plans?caseId=:caseId`
- */
+/** 映射端点：`GET /api/billing-plans?caseId=:caseId` */
 export type CaseBillingPlanListInput = {
   caseId: string;
   page?: number;
@@ -77,11 +52,15 @@ export type CaseBillingPlanListInput = {
  * - `milestoneName`：收费节点名称（签约金 / 尾款 / 结果后报酬 等）
  * - `status`：due | partial | paid | overdue
  * - `gateEffectMode`：off | warn | block
- *   P0 仅通过 HTTP 设置 off | warn；block 保留给 P1 COE 硬阻断。
+ *   P0 HTTP 层限制 off | warn；block 由 P1 解锁（DB CHECK 已就绪）。
  * - `amountDue`：应收金额（≥ 0）
  * - `dueDate`：预定收费日（YYYY-MM-DD 或 null）
  * - `paidAmount`：已收金额（聚合自关联 valid PaymentRecord）
  * - `unpaidAmount`：未收金额（amountDue - paidAmount，≥ 0）
+ *
+ * 列表场景扩展字段（org-wide list 端点 mapper 注入，详情场景不携带）：
+ * - `caseNo` / `caseName` / `customerName`：关联案件/客户冗余展示
+ * - `groupId` / `ownerUserId` / `ownerDisplayName`：负责人/分组冗余展示
  */
 export type CaseBillingPlanDto = {
   id: string;
@@ -96,11 +75,16 @@ export type CaseBillingPlanDto = {
   unpaidAmount: number;
   createdAt: string;
   updatedAt: string;
+
+  caseNo?: string | null;
+  caseName?: string | null;
+  customerName?: string | null;
+  groupId?: string | null;
+  ownerUserId?: string | null;
+  ownerDisplayName?: string | null;
 };
 
-/**
- * 案件视角收费计划列表响应。
- */
+/** 案件视角收费计划列表响应。 */
 export type CaseBillingPlanListResult = {
   items: CaseBillingPlanDto[];
   total: number;
@@ -109,64 +93,38 @@ export type CaseBillingPlanListResult = {
 // ─── BillingPlan 写模型 ────────────────────────────────────────
 
 /**
- * 从案件 billing tab 创建收费计划节点。
- *
  * 映射端点：`POST /api/billing-plans`
- *
- * P0 约束：
- * - amountDue ≥ 0
- * - gateEffectMode 仅接受 off | warn（P0 HTTP 层限制）
- * - 新建时 status 固定为 due
+ * gateEffectMode 接受 off | warn | block（D9：P0 HTTP 层仅放行 off | warn）。
  */
 export type CaseBillingPlanCreateInput = {
   caseId: string;
   milestoneName?: string | null;
   amountDue: number;
   dueDate?: string | null;
-  gateEffectMode?: "off" | "warn";
+  gateEffectMode?: "off" | "warn" | "block";
   remark?: string | null;
 };
 
 /**
- * 从案件 billing tab 更新收费计划非状态字段。
- *
  * 映射端点：`PATCH /api/billing-plans/:id`
- *
- * P0 约束：
- * - status = paid 的节点不可更新
- * - gateEffectMode 仅接受 off | warn（P0 HTTP 层限制）
+ * status=paid 不可更新；gateEffectMode 接受 off | warn | block（D9）。
  */
 export type CaseBillingPlanUpdateInput = {
   milestoneName?: string | null;
   amountDue?: number;
   dueDate?: string | null;
-  gateEffectMode?: "off" | "warn";
+  gateEffectMode?: "off" | "warn" | "block";
   remark?: string | null;
 };
 
-/**
- * 收费计划状态变更（用于手动标记 overdue 等场景）。
- *
- * 映射端点：`POST /api/billing-plans/:id/transition`
- *
- * 合法路径：
- *   due → partial | paid | overdue
- *   partial → paid | overdue
- *   overdue → partial | paid
- */
+/** 映射端点：`POST /api/billing-plans/:id/transition` */
 export type CaseBillingPlanTransitionInput = {
   toStatus: BillingPlanStatus;
 };
 
 // ─── PaymentRecord 读模型 ──────────────────────────────────────
 
-/**
- * 案件视角回款记录列表查询参数。
- *
- * 映射端点：`GET /api/payment-records?caseId=:caseId`
- *
- * 支持按 billingPlanId 或 caseId 过滤（至少提供一个）。
- */
+/** 映射端点：`GET /api/payment-records?caseId=:caseId`，按 billingPlanId 或 caseId 过滤。 */
 export type CasePaymentRecordListInput = {
   billingPlanId?: string;
   caseId?: string;
@@ -182,7 +140,15 @@ export type CasePaymentRecordListInput = {
  * - `recordStatus`：valid | voided | reversed
  * - `paymentMethod`：bank_transfer | cash | credit_card | other
  * - `recordedByDisplayName`：登记人展示名（聚合查询追加）
- * - `voidedByDisplayName`：作废操作人展示名（聚合查询追加）
+ * - `voidedBy` / `voidedByDisplayName` / `voidedAt`：
+ *   当 `recordStatus='voided'` 时表示作废操作人/时间；
+ *   当 `recordStatus='reversed'` 时复用同一列表示冲正操作人/时间（D10 决议：
+ *   方案 A 复用 voided_* 列承载 voided/reversed 两态，不新增独立列）。
+ *   前端 PaymentLogTable 应按 `recordStatus` 分支渲染标签与颜色。
+ *
+ * 列表场景扩展字段（org-wide list 端点 mapper 注入，详情场景不携带）：
+ * - `caseNo` / `caseName`：关联案件冗余展示
+ * - `milestoneName`：关联收费节点名称冗余展示
  */
 export type CasePaymentRecordDto = {
   id: string;
@@ -197,18 +163,32 @@ export type CasePaymentRecordDto = {
   note: string | null;
   voidReasonCode: string | null;
   voidReasonNote: string | null;
+  /**
+   * 作废/冲正操作人 ID。
+   * `recordStatus='reversed'` 时表示冲正操作人（D10 复用语义）。
+   */
   voidedBy: string | null;
+  /**
+   * 作废/冲正操作人展示名。
+   * `recordStatus='reversed'` 时表示冲正操作人展示名（D10 复用语义）。
+   */
   voidedByDisplayName: string | null;
+  /**
+   * 作废/冲正时间。
+   * `recordStatus='reversed'` 时表示冲正时间（D10 复用语义）。
+   */
   voidedAt: string | null;
   reversedFromPaymentRecordId: string | null;
   recordedBy: string | null;
   recordedByDisplayName: string | null;
   createdAt: string;
+
+  caseNo?: string | null;
+  caseName?: string | null;
+  milestoneName?: string | null;
 };
 
-/**
- * 案件视角回款记录列表响应。
- */
+/** 案件视角回款记录列表响应。 */
 export type CasePaymentRecordListResult = {
   items: CasePaymentRecordDto[];
   total: number;
@@ -216,17 +196,7 @@ export type CasePaymentRecordListResult = {
 
 // ─── PaymentRecord 写模型 ──────────────────────────────────────
 
-/**
- * 从案件 billing tab 登记回款（P0-CONTRACT-DETAIL §12：「登記回款」）。
- *
- * 映射端点：`POST /api/payment-records`
- *
- * P0 约束：
- * - amountReceived > 0
- * - billingPlanId 必须存在且属于当前组织
- * - paymentMethod 合法值：bank_transfer | cash | credit_card | other
- * - 登记后自动重算父 BillingPlan.status
- */
+/** 映射端点：`POST /api/payment-records`，登记后自动重算父 BillingPlan.status。 */
 export type CasePaymentRecordCreateInput = {
   billingPlanId: string;
   amountReceived: number;
@@ -235,16 +205,7 @@ export type CasePaymentRecordCreateInput = {
   note?: string | null;
 };
 
-/**
- * 作废回款记录（P0 §6.2 软删除，不物理删除）。
- *
- * 映射端点：`POST /api/payment-records/:id/void`
- *
- * P0 约束：
- * - 仅 manager 角色可操作
- * - 仅 recordStatus = valid 的记录可作废
- * - 作废后自动重算父 BillingPlan.status
- */
+/** 映射端点：`POST /api/payment-records/:id/void`，仅 manager + valid 可操作。 */
 export type CasePaymentRecordVoidInput = {
   reasonCode: string;
   reasonNote?: string | null;
@@ -252,18 +213,7 @@ export type CasePaymentRecordVoidInput = {
 
 // ─── BillingGuard 读模型 ───────────────────────────────────────
 
-/**
- * 案件视角收费守卫检查结果 — Gate-C 与下签后阶段消费。
- *
- * 来源：billingGuards.checkFinalPaymentGuard()
- *
- * 语义：
- * - `null`：无需守卫（无尾款节点或全部 gate_effect_mode=off）
- * - `settled=true`：尾款已结清，守卫通过
- * - `settled=false`：尾款未结清
- *   - `gateEffectMode=block`：P1 硬阻断，不得推进
- *   - `gateEffectMode=warn`：P0 允许继续但必须风险确认留痕
- */
+/** 收费守卫检查结果 — null=无需守卫，settled=true=通过，settled=false=未结清。 */
 export type CaseBillingGuardResult =
   | null
   | { settled: true }
@@ -273,18 +223,7 @@ export type CaseBillingGuardResult =
       gateEffectMode: BillingGateEffectMode;
     };
 
-/**
- * 案件视角收费汇总缓存 — 从 billing_records + payment_records 聚合同步。
- *
- * 来源：billingGuards.syncBillingCacheForCase()
- *
- * 写入 Case 缓存字段：
- * - deposit_paid_cached
- * - final_payment_paid_cached
- * - billing_unpaid_amount_cached
- *
- * admin 消费路径：CaseDetailAggregateDto.billing (CaseBillingSummary)
- */
+/** 收费汇总缓存 — syncBillingCacheForCase() 写入 Case 缓存字段。 */
 export type CaseBillingCacheSyncFields = {
   depositPaid: boolean;
   finalPaymentPaid: boolean;
@@ -293,34 +232,14 @@ export type CaseBillingCacheSyncFields = {
 
 // ─── RiskAck 读写模型 ──────────────────────────────────────────
 
-/**
- * 欠款风险确认请求参数。
- *
- * 映射端点：`POST /api/cases/:id/billing-risk-ack`
- *
- * P0 业务规则（§6 / §4.2-4.3）：
- * - Gate-C 欠款特别规则：若带欠继续提交，必须完成风险确认留痕
- * - 确认后写入 Case 本体字段并记录 timeline
- * - S9 全局只读时不允许操作
- *
- * 确认后影响：
- * - Case.billingRiskAcknowledgedAt 非 null
- * - Case.billingRiskAcknowledgedBy = 操作人
- * - Case.billingRiskAckReasonCode = reasonCode
- * - Timeline action: case.billing_risk_acknowledged
- */
+/** 映射端点：`POST /api/cases/:id/billing-risk-ack`，S9 只读时不可操作。 */
 export type CaseBillingRiskAckInput = {
   reasonCode: string;
   reasonNote?: string;
   evidenceUrl?: string;
 };
 
-/**
- * 欠款风险确认结果 DTO — 案件详情 overview / billing tab 展示。
- *
- * 当 acknowledgedAt 非 null 时表示已完成风险确认。
- * admin adapter 消费此结构映射为 `RiskConfirmationRecord`。
- */
+/** 欠款风险确认结果 DTO — acknowledgedAt 非 null 表示已完成。 */
 export type CaseBillingRiskAckRecord = {
   acknowledged: boolean;
   acknowledgedAt: string | null;
@@ -333,12 +252,7 @@ export type CaseBillingRiskAckRecord = {
 
 // ─── CaseBillingSummary（CaseDetailAggregateDto 子结构）────────
 
-/**
- * 收费汇总 — CaseDetailAggregateDto.billing 的简版形状。
- *
- * 此类型保持与既有 CaseDetailAggregateDto 的向后兼容；
- * 新代码推荐使用 CaseBillingSummaryFull 获取完整字段。
- */
+/** 收费汇总简版 — 向后兼容；新代码推荐 CaseBillingSummaryFull。 */
 export type CaseBillingSummary = {
   quotePrice: number | null;
   depositPaid: boolean;
@@ -351,23 +265,7 @@ export type CaseBillingSummary = {
 
 // ─── Billing Summary（案件详情聚合子结构）──────────────────────
 
-/**
- * 收费汇总 — CaseDetailAggregateDto.billing 的完整形状。
- *
- * 对齐 P0-CONTRACT-DETAIL §12 / §17：
- * - quotePrice：报价总额（Case.quote_price）
- * - totalDue：应收总额（所有 BillingPlan.amountDue 之和）
- * - totalReceived：已收总额（所有 valid PaymentRecord.amountReceived 之和）
- * - unpaidAmount：未收总额（totalDue - totalReceived, ≥ 0）
- * - depositPaid：签约金已结清
- * - finalPaymentPaid：尾款已结清
- * - billingRiskAck：风险确认记录
- * - planCount：收费节点数
- * - paymentCount：回款记录数（含 voided）
- * - overduePlanCount：逾期节点数
- *
- * P1 扩展追加 invoiceSummary 等字段。
- */
+/** 收费汇总完整形状 — P1 扩展追加 invoiceSummary 等字段。 */
 export type CaseBillingSummaryFull = {
   quotePrice: number | null;
   totalDue: number;
@@ -383,25 +281,25 @@ export type CaseBillingSummaryFull = {
 
 // ─── Billing Tab 聚合视图 ──────────────────────────────────────
 
-/**
- * 案件 billing tab 一次性加载所需的聚合数据。
- *
- * 设计意图：减少 billing tab 首屏请求数，
- * 一个端点返回 summary + plans + recentPayments。
- *
- * P0 备选方案：admin 也可分别调 billing-plans + payment-records，
- * 此聚合类型作为后续优化的契约预留。
- */
+/** 案件 billing tab 一次性聚合：summary + plans + recentPayments。 */
 export type CaseBillingTabAggregate = {
   summary: CaseBillingSummaryFull;
   plans: CaseBillingPlanDto[];
+  /**
+   * 最多 50 条，按 receivedAt 倒序，含 voided/reversed（用于审计展示）。
+   * 超出 50 条时前端切到 `/api/payment-records?caseId=...` 端点分页（D8）。
+   */
   recentPayments: CasePaymentRecordDto[];
+  recentPaymentsTotal: number;
 };
 
 // ─── Timeline action 与 entity_type 枚举 ───────────────────────
 
 /**
  * 收费相关 timeline action 枚举 — 对齐 timeline_logs.action 列。
+ *
+ * timeline_logs.action 列为 free-form text（001_init.sql:100），
+ * 无 enum/check 约束，新增 action 字面量无需 DB 迁移。
  *
  * entity_type=billing_plan 时：
  * - billing_plan.created
@@ -411,9 +309,11 @@ export type CaseBillingTabAggregate = {
  * entity_type=payment_record 时：
  * - payment_record.created
  * - payment_record.voided
+ * - payment_record.reversed — 冲正回款（D1 方案 A：原地翻状态）
  *
- * entity_type=case 时（风险确认）：
- * - case.billing_risk_acknowledged
+ * entity_type=case 时：
+ * - case.billing_risk_acknowledged — 欠款风险确认
+ * - case.collection_task_created — 批量催款生成 task（D4）
  */
 export type CaseBillingTimelineAction =
   | "billing_plan.created"
@@ -421,17 +321,50 @@ export type CaseBillingTimelineAction =
   | "billing_plan.transitioned"
   | "payment_record.created"
   | "payment_record.voided"
-  | "case.billing_risk_acknowledged";
+  | "payment_record.reversed"
+  | "case.billing_risk_acknowledged"
+  | "case.collection_task_created";
+
+// ─── Billing List Summary（全组织列表汇总）─────────────────────
+
+/**
+ * 全组织收费列表汇总查询参数。
+ *
+ * 映射端点：`GET /api/billing-summary?status=...&groupId=...&ownerId=...&q=...&from=...&to=...`
+ *
+ * 所有字段可选；不传时返回全组织汇总。
+ */
+export type CaseBillingSummaryRangeQuery = {
+  status?: BillingPlanStatus;
+  groupId?: string;
+  ownerId?: string;
+  q?: string;
+  from?: string;
+  to?: string;
+};
+
+/**
+ * 全组织收费列表汇总 DTO。
+ *
+ * 映射端点：`GET /api/billing-summary` 返回值。
+ *
+ * 字段语义：
+ * - `totalDue`：命中过滤条件的 billing_records.amount_due 之和
+ * - `totalReceived`：命中过滤条件的 valid payment_records.amount_received 之和
+ * - `totalOutstanding`：max(totalDue - totalReceived, 0)
+ * - `overdueAmount`：实时计算（D2 决议）——
+ *   `sum(br.amount_due - paid) where br.due_date < now()
+ *    and br.status in ('due','partial','overdue')`，
+ *   paid 子聚合仅计入 record_status='valid'，不依赖 status='overdue' 是否被人工标过
+ */
+export type BillingListSummaryDto = {
+  totalDue: number;
+  totalReceived: number;
+  totalOutstanding: number;
+  overdueAmount: number;
+};
 
 // ─── 里程碑命名约定 ────────────────────────────────────────────
 
-/**
- * P0 里程碑名称匹配规则 — billingGuards 内部判断依据。
- *
- * 签约金（deposit）：milestone_name 包含「签約」「deposit」「着手」
- * 尾款（final payment）：milestone_name 包含「尾款」「final」「結果」
- *
- * admin 创建收费节点时应引导用户使用上述关键词，
- * 或后续 P1 使用 milestone_type 枚举替代字符串匹配。
- */
+/** P0 里程碑分类 — billingGuards 字符串匹配依据；P1 改用 milestone_type 枚举。 */
 export type CaseBillingMilestoneHint = "deposit" | "final_payment" | "custom";

@@ -3,9 +3,13 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../../i18n";
 import { SAMPLE_CUSTOMER_DETAILS } from "./fixtures";
+import CustomerBasicInfoTab from "./components/CustomerBasicInfoTab.vue";
 import CustomerDetailHeader from "./components/CustomerDetailHeader.vue";
 import CustomerToast from "./components/CustomerToast.vue";
-import type { CustomerRepository } from "./model/CustomerRepository";
+import {
+  CustomerRepositoryError,
+  type CustomerRepository,
+} from "./model/CustomerRepository";
 import CustomerDetailView from "./CustomerDetailView.vue";
 
 type DetailViewRepository = Pick<
@@ -21,15 +25,21 @@ type DetailViewRepository = Pick<
   | "sendBmvQuestionnaire"
   | "generateBmvQuote"
   | "recordBmvSign"
+  | "isBmvEnabled"
 >;
 
 const mockedRepository = vi.hoisted(() => ({
   current: null as DetailViewRepository | null,
 }));
 
-vi.mock("./model/CustomerRepository", () => ({
-  createCustomerRepository: vi.fn(() => mockedRepository.current),
-}));
+vi.mock("./model/CustomerRepository", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("./model/CustomerRepository")>();
+  return {
+    ...actual,
+    createCustomerRepository: vi.fn(() => mockedRepository.current),
+  };
+});
 
 function createRepository(
   overrides: Partial<DetailViewRepository> = {},
@@ -104,6 +114,7 @@ function createRepository(
     recordBmvSign: vi
       .fn()
       .mockResolvedValue({ id: "cust-001", bmvProfile: null }),
+    isBmvEnabled: vi.fn().mockResolvedValue(true),
     ...overrides,
   };
 }
@@ -204,7 +215,7 @@ describe("CustomerDetailView", () => {
     expect(wrapper.text()).toContain("更新客户信息");
   });
 
-  it("navigates to case create with customerId when create-case is clicked", async () => {
+  it("navigates to case create with customer defaults in query when create-case is clicked", async () => {
     const repository = createRepository();
     mockedRepository.current = repository;
 
@@ -216,10 +227,17 @@ describe("CustomerDetailView", () => {
     await flushPromises();
 
     expect(router.currentRoute.value.name).toBe("case-create");
-    expect(router.currentRoute.value.query).toEqual({ customerId: "cust-001" });
+    expect(router.currentRoute.value.query).toMatchObject({
+      customerId: "cust-001",
+      customerName: "田中太郎",
+      customerKana: "タナカタロウ",
+      customerGroup: "tokyo-1",
+      customerGroupLabel: "Tokyo Team 1",
+      customerContact: "090-1234-5678 / tanaka@example.com",
+    });
   });
 
-  it("navigates to family bulk case create when batch-create-case is clicked", async () => {
+  it("navigates to family bulk case create with customer defaults in query when batch-create-case is clicked", async () => {
     const repository = createRepository();
     mockedRepository.current = repository;
 
@@ -232,7 +250,84 @@ describe("CustomerDetailView", () => {
 
     expect(router.currentRoute.value.name).toBe("case-create");
     expect(router.currentRoute.value.hash).toBe("#family-bulk");
-    expect(router.currentRoute.value.query).toEqual({ customerId: "cust-001" });
+    expect(router.currentRoute.value.query).toMatchObject({
+      customerId: "cust-001",
+      customerName: "田中太郎",
+      customerKana: "タナカタロウ",
+      customerGroup: "tokyo-1",
+      customerGroupLabel: "Tokyo Team 1",
+      customerContact: "090-1234-5678 / tanaka@example.com",
+    });
+    expect(router.currentRoute.value.query.templateId).toBeUndefined();
+  });
+
+  it("passes explicit bmv template for signed BMV customers on single create", async () => {
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockResolvedValue({
+        ...SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+        bmvProfile: {
+          ...SAMPLE_CUSTOMER_DETAILS["cust-004"]!.bmvProfile!,
+          signStatus: "signed",
+          intakeStatus: "ready_for_case_creation",
+          signedAt: "2026-04-10T10:00:00.000Z",
+        },
+      }),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper, router } = await mountView("cust-004");
+    const header = wrapper.findComponent(CustomerDetailHeader);
+    const createCaseButton = header.findAll("button")[1];
+
+    await createCaseButton.trigger("click");
+    await flushPromises();
+
+    expect(router.currentRoute.value.name).toBe("case-create");
+    expect(router.currentRoute.value.query).toMatchObject({
+      customerId: "cust-004",
+      templateId: "bmv",
+      customerGroup: "tokyo-1",
+      customerGroupLabel: "Tokyo Team 1",
+      bmvQuestionnaireStatus: "returned",
+      bmvQuoteStatus: "confirmed",
+      bmvSignStatus: "signed",
+      bmvIntakeStatus: "ready_for_case_creation",
+    });
+  });
+
+  it("passes BMV statuses through transition-to-case entry for signed customers", async () => {
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockResolvedValue({
+        ...SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+        bmvProfile: {
+          ...SAMPLE_CUSTOMER_DETAILS["cust-004"]!.bmvProfile!,
+          signStatus: "signed",
+          intakeStatus: "ready_for_case_creation",
+          signedAt: "2026-04-10T10:00:00.000Z",
+        },
+      }),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper, router } = await mountView("cust-004");
+    const basicInfoTab = wrapper.findComponent(CustomerBasicInfoTab);
+
+    basicInfoTab.vm.$emit("transition-to-case");
+    await flushPromises();
+
+    expect(router.currentRoute.value.name).toBe("case-create");
+    expect(router.currentRoute.value.query).toMatchObject({
+      customerId: "cust-004",
+      templateCode: "bmv",
+      templateId: "bmv",
+      sourceLeadId: "lead-bmv-004",
+      ownerUserId: "takahashi-k",
+      customerGroup: "tokyo-1",
+      bmvQuestionnaireStatus: "returned",
+      bmvQuoteStatus: "confirmed",
+      bmvSignStatus: "signed",
+      bmvIntakeStatus: "ready_for_case_creation",
+    });
   });
 
   it("disables create-case entry points and blocks guarded navigation for unsigned BMV customers", async () => {
@@ -307,5 +402,50 @@ describe("CustomerDetailView", () => {
 
     expect(repository.recordBmvSign).toHaveBeenCalledWith("cust-004");
     expect(repository.getCustomerDetail).toHaveBeenCalledTimes(2);
+  });
+
+  it("renders unauthorized fallback instead of blank state", async () => {
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockRejectedValue(
+        new CustomerRepositoryError({
+          code: "UNAUTHORIZED",
+          message: "forbidden",
+          status: 403,
+        }),
+      ),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper } = await mountView();
+
+    expect(wrapper.text()).toContain(
+      "You do not have access to this customer.",
+    );
+    expect(wrapper.text()).toContain("Back to customers");
+  });
+
+  it("renders request-failed fallback and retries loading", async () => {
+    const repository = createRepository({
+      getCustomerDetail: vi
+        .fn()
+        .mockRejectedValueOnce(new Error("boom"))
+        .mockResolvedValueOnce(SAMPLE_CUSTOMER_DETAILS["cust-001"]!),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper } = await mountView();
+
+    expect(wrapper.text()).toContain("Couldn't load this customer right now.");
+
+    const retryButton = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Retry");
+    expect(retryButton).toBeDefined();
+
+    await retryButton!.trigger("click");
+    await flushPromises();
+
+    expect(repository.getCustomerDetail).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).toContain("田中太郎");
   });
 });

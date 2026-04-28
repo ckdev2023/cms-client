@@ -1,15 +1,20 @@
 /**
- * CaseRepositorySupport — 仓储基础设施层（p0-fe-002a-02）。
+ * CaseRepositorySupport — 案件仓储 wrapper。
  *
- * 职责：
- * - 运行时上下文构建（`createRuntime`）：fetch / token / apiPath 的默认值解析。
- * - 认证 HTTP 请求（`requestAndAdapt`）：附加 auth header、JSON 序列化、响应读取。
- * - 错误归一化：将网络异常、HTTP 4xx/5xx、无效响应体统一为 `CaseRepositoryError`。
- *
- * 本文件**不**包含任何字段映射或 DTO 转换逻辑。
+ * 基于 `shared/api/repositoryRuntime` 提供案件默认值：
+ * - `apiPath` 默认 `"/api/cases"`
+ * - `getToken` 默认 `getAdminAccessToken`
+ * - `writeErrorCode` 固定 `"CASE_WRITE_ERROR"`
+ * - `entityLabel` 固定 `"Case"`
  */
 
 import { getAdminAccessToken } from "../../../auth/model/adminSession";
+import {
+  createRepositoryRuntime,
+  RepositoryError,
+  requestAndAdapt,
+  type RepositoryRuntime,
+} from "../../../shared/api/repositoryRuntime";
 
 /**
  *
@@ -20,14 +25,6 @@ export type CaseRepositoryErrorCode =
   | "BAD_RESPONSE"
   | "VALIDATION_ERROR"
   | "CASE_WRITE_ERROR";
-
-interface CaseRepositoryErrorInput {
-  code: CaseRepositoryErrorCode;
-  message: string;
-  status?: number;
-  serverErrorCode?: string;
-  cause?: unknown;
-}
 
 /**
  *
@@ -50,180 +47,20 @@ export interface CaseRepositoryFactoryInput {
 /**
  *
  */
-export interface CaseRepositoryRuntime {
-  /**
-   *
-   */
-  request: typeof fetch;
-  /**
-   *
-   */
-  getToken: () => string | null;
-  /**
-   *
-   */
-  apiPath: string;
-}
+export type CaseRepositoryRuntime = RepositoryRuntime;
 
 /**
  *
  */
-export class CaseRepositoryError extends Error {
-  /**
-   *
-   */
-  readonly code: CaseRepositoryErrorCode;
-  /**
-   *
-   */
-  readonly status?: number;
-  /**
-   *
-   */
-  readonly serverErrorCode?: string;
-
-  /**
-   * 创建包含错误码、可选 HTTP 状态码及服务端错误码的仓库层错误。
-   *
-   * @param input - 结构化错误描述
-   */
-  constructor(input: CaseRepositoryErrorInput) {
-    super(input.message, { cause: input.cause });
-    this.name = "CaseRepositoryError";
-    this.code = input.code;
-    this.status = input.status;
-    this.serverErrorCode = input.serverErrorCode;
-  }
-}
-
-function getDefaultRequest(): typeof fetch {
-  return (...args) => globalThis.fetch(...args);
-}
-
-function readMessageFromBody(body: unknown): string | null {
-  if (typeof body === "string" && body.trim()) return body.trim();
-  if (!body || typeof body !== "object") return null;
-
-  const record = body as Record<string, unknown>;
-  const message = record.message;
-  if (typeof message === "string" && message.trim()) return message.trim();
-  if (!Array.isArray(message)) return null;
-
-  const lines = message.filter(
-    (item): item is string => typeof item === "string",
-  );
-  return lines.length > 0 ? lines.join("; ") : null;
-}
-
-function readErrorCodeFromBody(body: unknown): string | null {
-  if (!body || typeof body !== "object") return null;
-  const record = body as Record<string, unknown>;
-
-  if (typeof record.errorCode === "string" && record.errorCode.trim())
-    return record.errorCode.trim();
-
-  const message = readMessageFromBody(body);
-  if (!message) return null;
-  const colonIdx = message.indexOf(":");
-  if (colonIdx > 0 && colonIdx < 60) {
-    const candidate = message.slice(0, colonIdx).trim();
-    if (/^[A-Z0-9_]+$/.test(candidate)) return candidate;
-  }
-  return null;
-}
-
-async function readResponseBody(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (!text.trim()) return null;
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return text;
-  }
-}
-
-function buildRequestHeaders(
-  token: string | null,
-  hasJsonBody: boolean,
-): Record<string, string> {
-  return {
-    Accept: "application/json",
-    ...(hasJsonBody ? { "Content-Type": "application/json" } : {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-}
-
-function buildBadResponseError(
-  response: Response,
-  body: unknown,
-): CaseRepositoryError {
-  const serverErrorCode = readErrorCodeFromBody(body);
-
-  const code: CaseRepositoryErrorCode =
-    response.status === 401
-      ? "UNAUTHORIZED"
-      : response.status === 400 || response.status === 422
-        ? serverErrorCode
-          ? "CASE_WRITE_ERROR"
-          : "VALIDATION_ERROR"
-        : "BAD_RESPONSE";
-
-  return new CaseRepositoryError({
-    code,
-    status: response.status,
-    serverErrorCode: serverErrorCode ?? undefined,
-    message:
-      readMessageFromBody(body) ??
-      (response.status === 401
-        ? "Case access denied"
-        : `Case request failed with status ${response.status}`),
-  });
-}
-
-async function requestJson(input: {
-  request: typeof fetch;
-  url: string;
-  method: "GET" | "POST" | "PATCH" | "DELETE";
-  token: string | null;
-  body?: unknown;
-}): Promise<{ response: Response; body: unknown }> {
-  let response: Response;
-
-  try {
-    response = await input.request(input.url, {
-      method: input.method,
-      headers: buildRequestHeaders(input.token, input.body !== undefined),
-      body: input.body !== undefined ? JSON.stringify(input.body) : undefined,
-    });
-  } catch (cause) {
-    throw new CaseRepositoryError({
-      code: "NETWORK",
-      message: "Case request failed",
-      cause,
-    });
-  }
-
-  const body = await readResponseBody(response);
-  if (!response.ok) throw buildBadResponseError(response, body);
-  return { response, body };
-}
-
-function expectValid<T>(
-  value: T | null,
-  response: Response,
-  message: string,
-): T {
-  if (value !== null) return value;
-  throw new CaseRepositoryError({
-    code: "BAD_RESPONSE",
-    status: response.status,
-    message,
-  });
-}
+export const CaseRepositoryError = RepositoryError;
+/**
+ *
+ */
+export type CaseRepositoryError = RepositoryError;
 
 /**
- * 根据工厂输入构建运行时上下文，为 fetch、令牌和 API 路径应用默认值。
+ * 根据工厂输入构建案件运行时上下文。
+ * 默认 `apiPath: "/api/cases"`、`getToken: getAdminAccessToken`。
  *
  * @param input - request、getToken 和 apiPath 的可选覆盖
  * @returns 包含所有必要依赖的运行时上下文
@@ -231,40 +68,14 @@ function expectValid<T>(
 export function createRuntime(
   input: CaseRepositoryFactoryInput,
 ): CaseRepositoryRuntime {
-  return {
-    request: input.request ?? getDefaultRequest(),
+  return createRepositoryRuntime({
+    request: input.request,
     getToken: input.getToken ?? getAdminAccessToken,
     apiPath: input.apiPath ?? "/api/cases",
-  };
-}
-
-/**
- * 执行认证 HTTP 请求并通过 `adapt` 函数适配 JSON 响应。
- *
- * @param input - 请求描述
- * @param input.runtime - 已解析的运行时上下文（fetch、令牌、apiPath）
- * @param input.url - 完整请求 URL
- * @param input.method - HTTP 方法
- * @param input.body - 可选的 JSON 请求体（POST/PATCH）
- * @param input.adapt - 用于解析响应体的适配函数
- * @param input.errorMessage - 适配器返回 null 时使用的错误消息
- * @returns 类型 `T` 的适配后响应值
- */
-export async function requestAndAdapt<T>(input: {
-  runtime: CaseRepositoryRuntime;
-  url: string;
-  method: "GET" | "POST" | "PATCH" | "DELETE";
-  body?: unknown;
-  adapt: (value: unknown) => T | null;
-  errorMessage: string;
-}): Promise<T> {
-  const { response, body } = await requestJson({
-    request: input.runtime.request,
-    url: input.url,
-    method: input.method,
-    token: input.runtime.getToken(),
-    body: input.body,
+    writeErrorCode: "CASE_WRITE_ERROR",
+    entityLabel: "Case",
+    errorName: "CaseRepositoryError",
   });
-
-  return expectValid(input.adapt(body), response, input.errorMessage);
 }
+
+export { requestAndAdapt };

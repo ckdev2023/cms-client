@@ -5,10 +5,10 @@ import Button from "../../../shared/ui/Button.vue";
 import type { CaseOption } from "../fixtures";
 import type { DocumentStatusFilter, DocumentProviderFilter } from "../types";
 import {
-  DOCUMENT_PROVIDERS,
   DOCUMENT_PROVIDER_IDS,
-  DOCUMENT_STATUSES,
   DOCUMENT_STATUS_IDS,
+  getProviderLabelKey,
+  getStatusLabelKey,
 } from "../constants";
 
 /**
@@ -62,7 +62,7 @@ defineEmits<{
           {{ t("documents.list.filters.statusMissing") }}
         </option>
         <option v-for="sid in DOCUMENT_STATUS_IDS" :key="sid" :value="sid">
-          {{ DOCUMENT_STATUSES[sid].label }}
+          {{ t(getStatusLabelKey(sid)) }}
         </option>
       </select>
 
@@ -92,7 +92,7 @@ defineEmits<{
       >
         <option value="">{{ t("documents.list.filters.providerAll") }}</option>
         <option v-for="id in DOCUMENT_PROVIDER_IDS" :key="id" :value="id">
-          {{ DOCUMENT_PROVIDERS[id].label }}
+          {{ t(getProviderLabelKey(id)) }}
         </option>
       </select>
 

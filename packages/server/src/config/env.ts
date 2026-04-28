@@ -68,7 +68,7 @@ export function loadEnv(): AppEnv {
   }
 
   return {
-    port: numberEnv("PORT", 3000),
+    port: numberEnv("PORT", 3300),
     dbUrl: requireEnv("DB_URL"),
     redisUrl: requireEnv("REDIS_URL"),
     storageProvider: provider,

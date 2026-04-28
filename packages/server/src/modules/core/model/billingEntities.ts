@@ -69,9 +69,17 @@ export type PaymentRecord = {
   voidReasonCode: string | null;
   /** 作废/冲正原因备注。 */
   voidReasonNote: string | null;
-  /** 作废/冲正操作人。 */
+  /**
+   * 作废/冲正操作人 ID。
+   * `recordStatus='voided'` 时为作废操作人；
+   * `recordStatus='reversed'` 时复用为冲正操作人（D10 决议：方案 A 复用 voided_* 列承载两态）。
+   */
   voidedBy: string | null;
-  /** 作废/冲正时间。 */
+  /**
+   * 作废/冲正时间。
+   * `recordStatus='voided'` 时为作废时间；
+   * `recordStatus='reversed'` 时复用为冲正时间（D10 决议：方案 A 复用 voided_* 列承载两态）。
+   */
   voidedAt: string | null;
   /** 被冲正的原回款记录 ID。 */
   reversedFromPaymentRecordId: string | null;

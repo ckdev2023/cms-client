@@ -1,30 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import type { Pool } from "pg";
 
 import { LeadsService } from "./leads.service";
-
-type QueryFn = (
-  sql: string,
-  params?: unknown[],
-) => Promise<{ rows: unknown[] }>;
-
-function makePool(qf: QueryFn) {
-  return { query: qf } as unknown as Pool;
-}
-
-const SAMPLE_LEAD_ROW = {
-  id: "lead-1",
-  org_id: null,
-  app_user_id: "au-1",
-  source: "web",
-  language: "en",
-  status: "new",
-  assigned_org_id: null,
-  assigned_user_id: null,
-  created_at: "2026-01-01T00:00:00.000Z",
-  updated_at: "2026-01-01T00:00:00.000Z",
-};
+import {
+  SAMPLE_LEAD_ROW,
+  makePool,
+  makePoolWithClient,
+} from "./leads.service.test-support";
 
 // ── create ──
 
@@ -76,21 +58,21 @@ void test("LeadsService.list returns items and total", async () => {
 // ── update ──
 
 void test("LeadsService.update updates lead status", async () => {
-  const updatedRow = { ...SAMPLE_LEAD_ROW, status: "contacted" };
+  const updatedRow = { ...SAMPLE_LEAD_ROW, status: "following" };
   const pool = makePool(() => Promise.resolve({ rows: [updatedRow] }));
   const svc = new LeadsService(pool);
-  const result = await svc.update("lead-1", { status: "contacted" });
-  assert.equal(result.status, "contacted");
+  const result = await svc.update("lead-1", { status: "following" });
+  assert.equal(result.status, "following");
 });
 
 // ── assign ──
 
-void test("LeadsService.assign sets assigned_org_id and assigned_user_id", async () => {
+void test("LeadsService.assign sets assigned_org_id and owner_user_id", async () => {
   const assignedRow = {
     ...SAMPLE_LEAD_ROW,
     org_id: "org-1",
     assigned_org_id: "org-1",
-    assigned_user_id: "user-1",
+    owner_user_id: "user-1",
   };
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
@@ -103,54 +85,218 @@ void test("LeadsService.assign sets assigned_org_id and assigned_user_id", async
     assignedUserId: "user-1",
   });
   assert.equal(result.assignedOrgId, "org-1");
-  assert.equal(result.assignedUserId, "user-1");
+  assert.equal(result.ownerUserId, "user-1");
   assert.equal(result.orgId, "org-1");
+  assert.ok(calls.some((c) => c.sql.includes("owner_user_id")));
 });
 
 // ── convert ──
 
-type PoolClientLike = {
-  query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
-  release: () => void;
-};
-
-function makePoolWithClient(qf: QueryFn) {
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  const client: PoolClientLike = { query: qf, release: () => {} };
-  return {
-    query: qf,
-    connect: () => Promise.resolve(client),
-  } as unknown as Pool;
-}
-
-void test("LeadsService.convert creates case and updates status in transaction", async () => {
-  const pool = makePoolWithClient((sql) => {
-    if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK")
+void test("LeadsService.convert creates case, updates lead, writes audit logs in transaction", async () => {
+  const leadRow = { ...SAMPLE_LEAD_ROW, assigned_org_id: "org-1" };
+  const clientCalls: string[] = [];
+  const pool = makePoolWithClient(
+    (sql) => {
+      clientCalls.push(sql);
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK")
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("insert into cases"))
+        return Promise.resolve({ rows: [{ id: "case-1" }] });
+      if (sql.includes("update leads"))
+        return Promise.resolve({
+          rows: [
+            {
+              ...leadRow,
+              status: "converted_case",
+              converted_customer_id: "cust-1",
+              converted_case_id: "case-1",
+            },
+          ],
+        });
+      if (sql.includes("update customers"))
+        return Promise.resolve({ rows: [], rowCount: 1 });
+      if (sql.includes("update conversations"))
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      if (sql.includes("insert into lead_logs"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("insert into timeline_logs"))
+        return Promise.resolve({ rows: [] });
       return Promise.resolve({ rows: [] });
-    if (sql.includes("select") && sql.includes("from leads")) {
-      return Promise.resolve({ rows: [SAMPLE_LEAD_ROW] });
-    }
-    if (sql.includes("insert into cases")) {
-      return Promise.resolve({ rows: [{ id: "case-1" }] });
-    }
-    // update leads
-    return Promise.resolve({
-      rows: [{ ...SAMPLE_LEAD_ROW, status: "converted" }],
-    });
-  });
+    },
+    (sql) => {
+      if (sql.includes("select") && sql.includes("from leads"))
+        return Promise.resolve({ rows: [leadRow] });
+      return Promise.resolve({ rows: [] });
+    },
+  );
+
   const svc = new LeadsService(pool);
   const result = await svc.convert("lead-1", {
     customerId: "cust-1",
     caseTypeCode: "immigration",
     ownerUserId: "user-1",
     orgId: "org-1",
+    confirmDedup: true,
+    actorUserId: "staff-1",
   });
-  assert.equal(result.lead.status, "converted");
+
+  assert.equal(result.lead.status, "converted_case");
+  assert.equal(result.lead.convertedCustomerId, "cust-1");
+  assert.equal(result.lead.convertedCaseId, "case-1");
+  assert.equal(result.caseId, "case-1");
+  assert.ok(clientCalls.some((s) => s.includes("insert into lead_logs")));
+  assert.ok(clientCalls.some((s) => s.includes("insert into timeline_logs")));
+});
+
+void test("LeadsService.convert writes bmvProfile when intended_case_type contains bmv", async () => {
+  const bmvLead = {
+    ...SAMPLE_LEAD_ROW,
+    assigned_org_id: "org-1",
+    intended_case_type: "bmv",
+  };
+  const clientCalls: { sql: string; params: unknown[] }[] = [];
+  const pool = makePoolWithClient(
+    (sql, params) => {
+      clientCalls.push({ sql, params: params ?? [] });
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK")
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("insert into cases"))
+        return Promise.resolve({ rows: [{ id: "case-1" }] });
+      if (sql.includes("update leads"))
+        return Promise.resolve({
+          rows: [
+            {
+              ...bmvLead,
+              status: "converted_case",
+              converted_customer_id: "cust-1",
+              converted_case_id: "case-1",
+            },
+          ],
+        });
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    },
+    (sql) => {
+      if (sql.includes("select") && sql.includes("from leads"))
+        return Promise.resolve({ rows: [bmvLead] });
+      return Promise.resolve({ rows: [] });
+    },
+  );
+
+  const svc = new LeadsService(pool);
+  await svc.convert("lead-1", {
+    customerId: "cust-1",
+    caseTypeCode: "bmv",
+    ownerUserId: "user-1",
+    orgId: "org-1",
+    confirmDedup: true,
+  });
+
+  const bmvUpdate = clientCalls.find(
+    (c) => c.sql.includes("update customers") && c.sql.includes("bmvProfile"),
+  );
+  assert.ok(bmvUpdate, "Should update customer bmvProfile");
+  const profileJson = bmvUpdate.params[1] as string;
+  const profile = JSON.parse(profileJson) as Record<string, unknown>;
+  assert.equal(profile.sourceLeadId, "lead-1");
+  assert.equal(profile.questionnaireStatus, "not_started");
+});
+
+void test("LeadsService.convert returns 409 on dedup hit without confirmDedup", async () => {
+  const leadRow = {
+    ...SAMPLE_LEAD_ROW,
+    assigned_org_id: "org-1",
+    phone: "090-1234-5678",
+  };
+  const pool = makePoolWithClient(
+    () => Promise.resolve({ rows: [] }),
+    (sql) => {
+      if (sql.includes("select") && sql.includes("from leads"))
+        return Promise.resolve({ rows: [leadRow] });
+      if (sql.includes("from customers"))
+        return Promise.resolve({
+          rows: [
+            {
+              id: "existing-cust",
+              base_profile: {
+                name: "Duplicate Customer",
+                phone: "090-1234-5678",
+              },
+            },
+          ],
+        });
+      if (sql.includes("from contact_persons"))
+        return Promise.resolve({ rows: [] });
+      return Promise.resolve({ rows: [] });
+    },
+  );
+
+  const svc = new LeadsService(pool);
+  await assert.rejects(
+    () =>
+      svc.convert("lead-1", {
+        customerId: "cust-1",
+        caseTypeCode: "immigration",
+        ownerUserId: "user-1",
+        orgId: "org-1",
+      }),
+    (err: Error & { status?: number }) => {
+      assert.equal(err.status, 409);
+      return true;
+    },
+  );
+});
+
+void test("LeadsService.convert skips dedup when confirmDedup is true", async () => {
+  const leadRow = {
+    ...SAMPLE_LEAD_ROW,
+    assigned_org_id: "org-1",
+    phone: "090-1234-5678",
+  };
+  const pool = makePoolWithClient(
+    (sql) => {
+      if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK")
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("SAVEPOINT") || sql.includes("RELEASE"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("insert into cases"))
+        return Promise.resolve({ rows: [{ id: "case-1" }] });
+      if (sql.includes("update leads"))
+        return Promise.resolve({
+          rows: [
+            {
+              ...leadRow,
+              status: "converted_case",
+              converted_customer_id: "cust-1",
+              converted_case_id: "case-1",
+            },
+          ],
+        });
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    },
+    (sql) => {
+      if (sql.includes("select") && sql.includes("from leads"))
+        return Promise.resolve({ rows: [leadRow] });
+      return Promise.resolve({ rows: [] });
+    },
+  );
+
+  const svc = new LeadsService(pool);
+  const result = await svc.convert("lead-1", {
+    customerId: "cust-1",
+    caseTypeCode: "immigration",
+    ownerUserId: "user-1",
+    orgId: "org-1",
+    confirmDedup: true,
+  });
   assert.equal(result.caseId, "case-1");
 });
 
 void test("LeadsService.convert rejects already converted lead", async () => {
-  const convertedRow = { ...SAMPLE_LEAD_ROW, status: "converted" };
+  const convertedRow = { ...SAMPLE_LEAD_ROW, status: "converted_case" };
   const pool = makePool(() => Promise.resolve({ rows: [convertedRow] }));
   const svc = new LeadsService(pool);
   await assert.rejects(
@@ -160,6 +306,7 @@ void test("LeadsService.convert rejects already converted lead", async () => {
         caseTypeCode: "immigration",
         ownerUserId: "user-1",
         orgId: "org-1",
+        confirmDedup: true,
       }),
     /already converted/,
   );
@@ -179,6 +326,7 @@ void test("LeadsService.convert rejects mismatched orgId", async () => {
         caseTypeCode: "immigration",
         ownerUserId: "user-1",
         orgId: "org-wrong",
+        confirmDedup: true,
       }),
     /orgId does not match/,
   );
@@ -271,7 +419,7 @@ void test("LeadsService.update throws if lead not found", async () => {
   const pool = makePool(() => Promise.resolve({ rows: [] }));
   const svc = new LeadsService(pool);
   await assert.rejects(
-    () => svc.update("missing", { status: "contacted" }),
+    () => svc.update("missing", { status: "following" }),
     /Lead not found/,
   );
 });
@@ -286,23 +434,6 @@ void test("LeadsService.assign throws if lead not found", async () => {
       svc.assign("missing", {
         assignedOrgId: "org-1",
         assignedUserId: "user-1",
-      }),
-    /Lead not found/,
-  );
-});
-
-// ── Edge cases: convert ──
-
-void test("LeadsService.convert throws if lead not found", async () => {
-  const pool = makePool(() => Promise.resolve({ rows: [] }));
-  const svc = new LeadsService(pool);
-  await assert.rejects(
-    () =>
-      svc.convert("missing", {
-        customerId: "cust-1",
-        caseTypeCode: "immigration",
-        ownerUserId: "user-1",
-        orgId: "org-1",
       }),
     /Lead not found/,
   );

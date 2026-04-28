@@ -18,6 +18,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
     banner: null,
     buttons: "convertedCase",
     readonly: false,
+    conversationId: "conv-lead-extra-0015",
     info: {
       id: "LEAD-2026-0015",
       name: "王 明",
@@ -119,6 +120,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
     banner: null,
     buttons: "normal",
     readonly: false,
+    conversationId: "conv-lead-0046",
     info: {
       id: "LEAD-2026-0046",
       name: "田中 花子",
@@ -207,6 +209,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
     banner: null,
     buttons: "normal",
     readonly: false,
+    conversationId: null,
     info: {
       id: "LEAD-2026-0047",
       name: "李娜（重复确认）",
@@ -295,6 +298,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
     banner: null,
     buttons: "normal",
     readonly: false,
+    conversationId: null,
     info: {
       id: "LEAD-2026-0042",
       name: "Michael Thompson",

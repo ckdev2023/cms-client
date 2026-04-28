@@ -1,5 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 
+import type { CaseListScope } from "./cases.types";
+
 /**
  * Validates that value is a non-empty string; throws on invalid input.
  * @param value - raw request input
@@ -100,4 +102,17 @@ export function parseLimit(value: unknown): number | undefined {
   const i = Math.floor(n);
   if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
   return i;
+}
+
+/**
+ * 解析案件列表 scope；未传时返回 `undefined`。
+ * @param value - 原始请求参数
+ * @returns 合法的列表 scope 或 `undefined`
+ */
+export function parseCaseScope(value: unknown): CaseListScope | undefined {
+  if (value === undefined) return undefined;
+  if (value === "mine" || value === "group" || value === "all") {
+    return value;
+  }
+  throw new BadRequestException("Invalid scope");
 }

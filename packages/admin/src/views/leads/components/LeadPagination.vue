@@ -1,21 +1,28 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-/**
- * 分页区静态骨架。
- */
+/** 分页区：显示当前页范围与总数，支持上下页切换。 */
 const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   start: number;
   end: number;
   total: number;
+  page?: number;
+  totalPages?: number;
 }>();
 
 defineEmits<{
   prev: [];
   next: [];
 }>();
+
+const hasPrev = computed(() => (props.page ?? 1) > 1);
+const hasNext = computed(() => {
+  if (props.totalPages != null) return (props.page ?? 1) < props.totalPages;
+  return props.end < props.total;
+});
 </script>
 
 <template>
@@ -27,7 +34,7 @@ defineEmits<{
       <button
         class="lead-pagination__btn"
         type="button"
-        disabled
+        :disabled="!hasPrev || undefined"
         @click="$emit('prev')"
       >
         {{ t("leads.list.pagination.prev") }}
@@ -35,7 +42,7 @@ defineEmits<{
       <button
         class="lead-pagination__btn"
         type="button"
-        disabled
+        :disabled="!hasNext || undefined"
         @click="$emit('next')"
       >
         {{ t("leads.list.pagination.next") }}

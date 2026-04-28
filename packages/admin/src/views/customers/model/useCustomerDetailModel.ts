@@ -1,5 +1,6 @@
 import { computed, ref, watch, type Ref } from "vue";
 import type { CustomerDetail, DetailTab } from "../types";
+import { DETAIL_TABS } from "../types";
 import {
   CustomerRepositoryError,
   type CustomerRepository,
@@ -15,7 +16,32 @@ type CustomerDetailModelErrorCode =
 type UseCustomerDetailModelInput = {
   customerId: Ref<string>;
   repository: DetailRepository;
+  routeTab?: Ref<string | undefined>;
+  onTabChange?: (tab: DetailTab) => void;
 };
+
+const DEFAULT_CUSTOMER_DETAIL_TAB: DetailTab = "basic";
+
+/**
+ * 判断字符串是否为合法的客户详情 tab 值。
+ *
+ * @param v - 待检查字符串
+ * @returns 是否属于 `DETAIL_TABS`
+ */
+function isValidCustomerDetailTab(v: string): v is DetailTab {
+  return (DETAIL_TABS as readonly string[]).includes(v);
+}
+
+/**
+ * 将任意外部输入解析为合法客户详情 tab，非法值回退到 `DEFAULT_CUSTOMER_DETAIL_TAB`。
+ *
+ * @param raw - 来自 URL query 或 model 的原始 tab 值
+ * @returns 类型安全的 tab 键名
+ */
+function resolveCustomerDetailTab(raw: string | null | undefined): DetailTab {
+  if (typeof raw === "string" && isValidCustomerDetailTab(raw)) return raw;
+  return DEFAULT_CUSTOMER_DETAIL_TAB;
+}
 
 function mapCustomerDetailError(error: unknown): CustomerDetailModelErrorCode {
   if (error instanceof CustomerRepositoryError) {
@@ -73,15 +99,29 @@ function useCustomerDetailLoader(input: UseCustomerDetailModelInput) {
  * @param input - 详情页依赖项
  * @param input.customerId - 当前路由中的客户 ID
  * @param input.repository - 客户详情读取仓储
+ * @param input.routeTab - URL query 中的 tab 值（响应式，支持浏览器前进/后退同步）
+ * @param input.onTabChange - 用户主动切 tab 时的回调（用于同步 URL query）
  * @returns 详情页状态与交互方法
  */
 export function useCustomerDetailModel(input: UseCustomerDetailModelInput) {
-  const activeTab = ref<DetailTab>("basic");
+  const initialTab = resolveCustomerDetailTab(input.routeTab?.value);
+  const activeTab = ref<DetailTab>(initialTab);
   const detail = useCustomerDetailLoader(input);
   const notFound = computed(() => detail.errorCode.value === "notFound");
   const avatarInitials = computed(
     () => detail.customer.value?.displayName.slice(0, 1) ?? "?",
   );
+
+  if (input.routeTab) {
+    watch(input.routeTab, (raw) => {
+      activeTab.value = resolveCustomerDetailTab(raw);
+    });
+  }
+
+  function switchTab(tab: DetailTab): void {
+    activeTab.value = tab;
+    input.onTabChange?.(tab);
+  }
 
   return {
     activeTab,
@@ -90,9 +130,13 @@ export function useCustomerDetailModel(input: UseCustomerDetailModelInput) {
     errorCode: computed(() => detail.errorCode.value),
     notFound,
     avatarInitials,
-    switchTab(tab: DetailTab): void {
-      activeTab.value = tab;
-    },
+    switchTab,
     retry: detail.retry,
   };
 }
+
+export {
+  DEFAULT_CUSTOMER_DETAIL_TAB,
+  isValidCustomerDetailTab,
+  resolveCustomerDetailTab,
+};

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import Card from "../../shared/ui/Card.vue";
@@ -15,19 +15,61 @@ import { useCustomerCreateCaseGateModel } from "./model/useCustomerCreateCaseGat
 import { useCustomerDetailModel } from "./model/useCustomerDetailModel";
 import { createCustomerRepository } from "./model/CustomerRepository";
 import { useCustomerToast } from "./model/useCustomerToast";
-import { DETAIL_TABS } from "./types";
+import { buildCaseCreateRoute } from "../cases/query";
+import type { CaseCreateQueryParams } from "../cases/query";
+import { DETAIL_TABS, type CustomerBmvProfile, type DetailTab } from "./types";
+import {
+  resolveGroupLabel,
+  resolveGroupValue,
+} from "../../shared/model/groupOptions";
+import Button from "../../shared/ui/Button.vue";
 
 /** 客户详情页：组合头部、案件摘要条与 Tab 内容面板。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 const repository = createCustomerRepository();
 
+const bmvEnabled = ref<boolean | undefined>(undefined);
+onMounted(async () => {
+  bmvEnabled.value = await repository.isBmvEnabled();
+});
+
 const customerId = computed(() =>
   typeof route.params.id === "string" ? route.params.id : "",
 );
-const { activeTab, customer, notFound, avatarInitials, switchTab, retry } =
-  useCustomerDetailModel({ customerId, repository });
+const routeTab = computed(() => {
+  const tab = route.query.tab;
+  return typeof tab === "string" ? tab : undefined;
+});
+
+/**
+ * 切换客户详情 Tab，并同步更新路由查询参数。
+ * @param tab - 目标详情 Tab。
+ * @returns 无。
+ */
+function handleTabChange(tab: DetailTab): void {
+  const query: Record<string, string | undefined> = {
+    ...route.query,
+    tab: tab === "basic" ? undefined : tab,
+  };
+  void router.replace({ query });
+}
+
+const {
+  activeTab,
+  customer,
+  notFound,
+  errorCode,
+  avatarInitials,
+  switchTab,
+  retry,
+} = useCustomerDetailModel({
+  customerId,
+  repository,
+  routeTab,
+  onTabChange: handleTabChange,
+});
 const { createCaseGate } = useCustomerCreateCaseGateModel({ customer });
 const customerToast = useCustomerToast();
 const {
@@ -55,31 +97,128 @@ function notifyCreateCaseBlocked(): boolean {
   return true;
 }
 
-/** 跳转到案件新建页，并透传当前客户 ID 作为来源上下文。 */
-function handleCreateCase() {
-  const nextCustomerId = customer.value?.id?.trim();
-  if (notifyCreateCaseBlocked() || !nextCustomerId) return;
-  void router.push({
-    name: "case-create",
-    query: { customerId: nextCustomerId },
-  });
+/**
+ * 提取 BMV 建案入口所需的四项前提状态查询参数。
+ * @param profile - 客户的 BMV 档案；为空时返回空参数对象。
+ * @returns 仅包含 BMV 状态字段的 query 参数片段。
+ */
+function buildBmvStatusQueryParams(
+  profile: CustomerBmvProfile | null | undefined,
+): Pick<
+  CaseCreateQueryParams,
+  | "bmvQuestionnaireStatus"
+  | "bmvQuoteStatus"
+  | "bmvSignStatus"
+  | "bmvIntakeStatus"
+> {
+  return {
+    bmvQuestionnaireStatus: profile?.questionnaireStatus ?? undefined,
+    bmvQuoteStatus: profile?.quoteStatus ?? undefined,
+    bmvSignStatus: profile?.signStatus ?? undefined,
+    bmvIntakeStatus: profile?.intakeStatus ?? undefined,
+  };
 }
 
-/** 跳转到家族批量建案场景，并透传当前客户 ID。 */
+/**
+ * 构建从客户详情跳转到建案页所需的默认参数。
+ * @returns 建案参数；客户信息不完整时返回 `null`。
+ */
+function buildCustomerCreateParams(): CaseCreateQueryParams | null {
+  const c = customer.value;
+  if (!c?.id?.trim()) return null;
+  const groupId = resolveGroupValue(c.group) ?? undefined;
+  const profile = c.bmvProfile;
+  return {
+    customerId: c.id,
+    customerName: c.displayName,
+    customerKana: c.furigana,
+    customerGroup: groupId,
+    customerGroupLabel: resolveGroupLabel(
+      c.group,
+      t("shared.group.disabledSuffix"),
+      locale.value,
+    ),
+    customerContact: [c.phone, c.email].filter(Boolean).join(" / "),
+    ...buildBmvStatusQueryParams(profile),
+  };
+}
+
+/**
+ * 构造单客户建案入口参数；若满足 BMV 已签约门禁则显式附带 `templateId=bmv`。
+ * @returns 单客户建案 query 参数；当前客户无效时返回 `null`。
+ */
+function buildSingleCreateParams(): CaseCreateQueryParams | null {
+  const params = buildCustomerCreateParams();
+  const profile = customer.value?.bmvProfile;
+  if (!params || !profile) return params;
+  if (
+    profile.signStatus === "signed" &&
+    profile.intakeStatus === "ready_for_case_creation"
+  ) {
+    return { ...params, templateId: "bmv" };
+  }
+  return params;
+}
+
+/** 跳转到案件新建页，并透传当前客户 ID 与默认值作为来源上下文。 */
+function handleCreateCase() {
+  if (notifyCreateCaseBlocked()) return;
+  const params = buildSingleCreateParams();
+  if (!params) return;
+  void router.push(buildCaseCreateRoute(params));
+}
+
+/** BMV 承接卡片「转正式案件」——携带 templateCode=bmv + lead 继承字段跳转建案页。 */
+function handleTransitionToCase() {
+  const params = buildCustomerCreateParams();
+  if (!params) return;
+  const profile = customer.value?.bmvProfile;
+  void router.push(
+    buildCaseCreateRoute({
+      ...params,
+      templateCode: "bmv",
+      sourceLeadId: profile?.sourceLeadId ?? undefined,
+      ownerUserId: profile?.leadOwnerUserId ?? undefined,
+      customerGroup: profile?.leadGroupId ?? params.customerGroup,
+      ...(profile?.signStatus === "signed" ? { templateId: "bmv" } : {}),
+    }),
+  );
+}
+
+/** 跳转到家族批量建案场景，并透传当前客户 ID 与默认值。 */
 function handleBatchCreateCase() {
-  const nextCustomerId = customer.value?.id?.trim();
-  if (notifyCreateCaseBlocked() || !nextCustomerId) return;
-  void router.push({
-    name: "case-create",
-    hash: "#family-bulk",
-    query: { customerId: nextCustomerId },
-  });
+  if (notifyCreateCaseBlocked()) return;
+  const params = buildCustomerCreateParams();
+  if (!params) return;
+  void router.push(buildCaseCreateRoute(params, true));
 }
 
 const tabPlaceholder = computed(() => {
   const tabLabel = t(`customers.detail.tabs.${activeTab.value}`);
   return t("customers.detail.placeholderMessage", { tab: tabLabel });
 });
+
+const detailErrorState = computed(() => {
+  switch (errorCode.value) {
+    case "unauthorized":
+      return {
+        titleKey: "customers.detail.errorState.unauthorizedTitle",
+        descriptionKey: "customers.detail.errorState.unauthorizedDescription",
+      };
+    case "requestFailed":
+      return {
+        titleKey: "customers.detail.errorState.requestFailedTitle",
+        descriptionKey: "customers.detail.errorState.requestFailedDescription",
+      };
+    default:
+      return null;
+  }
+});
+
+/** 重新拉取客户详情，用于异常态重试。 */
+function handleRetry(): void {
+  void retry();
+}
 </script>
 
 <template>
@@ -132,6 +271,8 @@ const tabPlaceholder = computed(() => {
           :customer="customer"
           :repository="repository"
           :refresh-customer="retry"
+          :bmv-enabled="bmvEnabled"
+          @transition-to-case="handleTransitionToCase"
         />
         <CustomerCasesTab
           v-else-if="activeTab === 'cases'"
@@ -144,6 +285,7 @@ const tabPlaceholder = computed(() => {
           :repository="repository"
           :batch-create-case-disabled="createCaseGate.batch.disabled"
           :batch-create-case-hint="createCaseHint"
+          :customer-defaults="buildCustomerCreateParams() ?? undefined"
         />
         <CustomerCommsTab
           v-else-if="activeTab === 'comms'"
@@ -164,6 +306,23 @@ const tabPlaceholder = computed(() => {
     <div v-else-if="notFound" class="customer-detail-view__not-found">
       <p>{{ t("customers.detail.notFound") }}</p>
       <a href="#/customers">{{ t("shell.nav.items.customers") }}</a>
+    </div>
+
+    <div v-else-if="detailErrorState" class="customer-detail-view__error-state">
+      <p class="customer-detail-view__error-title">
+        {{ t(detailErrorState.titleKey) }}
+      </p>
+      <p class="customer-detail-view__error-description">
+        {{ t(detailErrorState.descriptionKey) }}
+      </p>
+      <div class="customer-detail-view__error-actions">
+        <Button variant="filled" tone="primary" size="sm" @click="handleRetry">
+          {{ t("customers.detail.errorState.retry") }}
+        </Button>
+        <a href="#/customers">{{
+          t("customers.detail.errorState.backToList")
+        }}</a>
+      </div>
     </div>
 
     <CustomerToast
@@ -238,13 +397,52 @@ const tabPlaceholder = computed(() => {
   color: var(--color-text-3);
 }
 
+.customer-detail-view__error-state {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--color-text-3);
+}
+
+.customer-detail-view__error-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+}
+
+.customer-detail-view__error-description {
+  margin: 0;
+  max-width: 520px;
+}
+
+.customer-detail-view__error-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .customer-detail-view__not-found a {
   color: var(--color-primary-6);
   text-decoration: none;
   font-weight: var(--font-weight-semibold);
 }
 
+.customer-detail-view__error-actions a {
+  color: var(--color-primary-6);
+  text-decoration: none;
+  font-weight: var(--font-weight-semibold);
+}
+
 .customer-detail-view__not-found a:hover {
+  text-decoration: underline;
+}
+
+.customer-detail-view__error-actions a:hover {
   text-decoration: underline;
 }
 </style>

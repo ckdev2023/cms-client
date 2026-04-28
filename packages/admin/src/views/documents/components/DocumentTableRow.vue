@@ -4,11 +4,12 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { DocumentListItem } from "../types";
 import {
-  DOCUMENT_STATUSES,
-  DOCUMENT_PROVIDERS,
   DOCUMENT_STATUS_TONE,
+  getProviderLabelKey,
+  getStatusLabelKey,
 } from "../constants";
 import { isSelectableForBatch } from "../validation";
+import { buildCaseDetailHref } from "../../cases/query";
 
 /** 资料表格行：checkbox、资料名、案件链接、状态徽章、截止日与路径展示。 */
 const { t } = useI18n();
@@ -33,12 +34,14 @@ const canRemind = computed(
 const isWaived = computed(() => props.item.status === "waived");
 const isExpired = computed(() => props.item.status === "expired");
 
-const statusLabel = computed(() => DOCUMENT_STATUSES[props.item.status].label);
+const statusLabel = computed(() => t(getStatusLabelKey(props.item.status)));
 const statusTone = computed(() => DOCUMENT_STATUS_TONE[props.item.status]);
-const providerLabel = computed(
-  () => DOCUMENT_PROVIDERS[props.item.provider].label,
+const providerLabel = computed(() =>
+  t(getProviderLabelKey(props.item.provider)),
 );
-const caseHref = computed(() => `#/cases/${props.item.caseId}?tab=documents`);
+const caseHref = computed(() =>
+  buildCaseDetailHref(props.item.caseId, "documents"),
+);
 
 const pathDisplay = computed(
   () => props.item.relativePath ?? t("documents.list.pathNotRegistered"),

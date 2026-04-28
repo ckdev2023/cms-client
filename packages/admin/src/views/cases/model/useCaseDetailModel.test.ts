@@ -1,222 +1,351 @@
 // ── Test Ownership ──────────────────────────────────────────────
-// Owner: detail composable (useCaseDetailModel) — tab state,
-//   counters, risk modal, sample-key bridge.
+// Owner: detail composable (useCaseDetailModel) — async loading,
+//   tab state, counters, risk modal, customerId back-link.
 // Does NOT test: adapters, builders, real repository orchestration,
 //   or other composables.
 // ────────────────────────────────────────────────────────────────
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { ref } from "vue";
 import { useCaseDetailModel } from "./useCaseDetailModel";
-import { createMockCaseRepository } from "../repository";
 import { CASE_DETAIL_TABS } from "../constants";
+import type { CaseRepository } from "./CaseRepository";
+import type { CaseDetail } from "../types";
+import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
+import {
+  createDetailRepoStub,
+  createMockAggregate,
+  createMockDetail,
+  flushFetch,
+} from "./useCaseDetailModel.test-support";
 
-const repo = createMockCaseRepository();
+const ACTIVE_DETAIL = createMockDetail();
 
-function idWithSampleKey(key = "work"): string {
-  const item = repo
-    .listCases({
-      scope: "all",
-      search: "",
-      stage: "",
-      owner: "",
-      group: "",
-      risk: "",
-      validation: "",
-    })
-    .find((c) => c.sampleKey === key);
-  return item!.id;
+const ARCHIVED_DETAIL = createMockDetail({
+  id: "CASE-ARCHIVED",
+  customerId: "CUS-ARCHIVED",
+  client: "アーカイブ太郎",
+  stage: "S9",
+  stageCode: "S9",
+  statusBadge: "archived",
+  readonly: true,
+  docsCounter: "",
+  validation: { lastTime: "", blocking: [], warnings: [], info: [] },
+  tasks: [{ done: true, label: "完了" }] as CaseDetail["tasks"],
+  deadlines: [],
+});
+
+function createMockRepository(
+  aggregates: Record<string, CaseDetailAggregate> = {
+    "CASE-001": createMockAggregate(ACTIVE_DETAIL),
+    "CASE-ARCHIVED": createMockAggregate(ARCHIVED_DETAIL),
+  },
+): { repo: CaseRepository; getDetailAggregate: ReturnType<typeof vi.fn> } {
+  const { repo, spy: getDetailAggregate } = createDetailRepoStub(
+    async (id: string) => aggregates[id] ?? null,
+  );
+  return { repo, getDetailAggregate };
 }
 
+// ─── Composable factory ─────────────────────────────────────────
+
+async function createModel(
+  caseId = "CASE-001",
+  deps: Parameters<typeof useCaseDetailModel>[1] = {},
+) {
+  const { repo, getDetailAggregate } = createMockRepository();
+  const caseIdRef = ref(caseId);
+  const model = useCaseDetailModel(caseIdRef, { repo, ...deps });
+  await flushFetch();
+  return { model, caseId: caseIdRef, getDetailAggregate };
+}
+
+// ─── Tests ──────────────────────────────────────────────────────
+
 describe("useCaseDetailModel", () => {
-  it("loads detail for a known list-item ID (via sampleKey bridge)", () => {
-    const caseId = ref(idWithSampleKey());
-    const { detail, notFound } = useCaseDetailModel(caseId, { repo });
+  describe("async loading", () => {
+    it("loads detail for a known case ID", async () => {
+      const { model } = await createModel();
+      expect(model.notFound.value).toBe(false);
+      expect(model.detail.value).not.toBeNull();
+      expect(model.detail.value!.id).toBe("CASE-001");
+    });
 
-    expect(notFound.value).toBe(false);
-    expect(detail.value).not.toBeNull();
-    expect(detail.value!.id).toBe(caseId.value);
+    it("returns notFound for unknown ID", async () => {
+      const { model } = await createModel("UNKNOWN-ID");
+      expect(model.notFound.value).toBe(true);
+      expect(model.detail.value).toBeNull();
+    });
+
+    it("loading is false after fetch completes", async () => {
+      const { model } = await createModel();
+      expect(model.loading.value).toBe(false);
+    });
+
+    it("error is null on successful fetch", async () => {
+      const { model } = await createModel();
+      expect(model.error.value).toBeNull();
+    });
+
+    it("handles repository errors gracefully", async () => {
+      const failingRepo = {
+        getDetailAggregate: vi.fn(async () => {
+          throw new Error("Network error");
+        }),
+      } as unknown as CaseRepository;
+
+      const caseId = ref("CASE-001");
+      const model = useCaseDetailModel(caseId, { repo: failingRepo });
+      await flushFetch();
+
+      expect(model.error.value).toBe("Network error");
+      expect(model.detail.value).toBeNull();
+      expect(model.notFound.value).toBe(true);
+      expect(model.loading.value).toBe(false);
+    });
+
+    it("refetches when caseId changes", async () => {
+      const { model, caseId, getDetailAggregate } = await createModel();
+      expect(model.detail.value).not.toBeNull();
+
+      caseId.value = "UNKNOWN-ID";
+      await flushFetch();
+      expect(model.notFound.value).toBe(true);
+      expect(model.detail.value).toBeNull();
+      expect(getDetailAggregate).toHaveBeenCalledWith("UNKNOWN-ID");
+    });
+
+    it("refetch re-fetches from repository", async () => {
+      const { model, getDetailAggregate } = await createModel();
+      const callsBefore = getDetailAggregate.mock.calls.length;
+      await model.refetch();
+      expect(getDetailAggregate.mock.calls.length).toBe(callsBefore + 1);
+    });
   });
 
-  it("returns notFound for unknown ID", () => {
-    const caseId = ref("UNKNOWN-ID");
-    const { detail, notFound } = useCaseDetailModel(caseId, { repo });
+  describe("customerId back-link", () => {
+    it("exposes customerId from aggregate", async () => {
+      const { model } = await createModel();
+      expect(model.customerId.value).toBe("CUS-001");
+    });
 
-    expect(notFound.value).toBe(true);
-    expect(detail.value).toBeNull();
+    it("customerId is empty string when detail not found", async () => {
+      const { model } = await createModel("UNKNOWN-ID");
+      expect(model.customerId.value).toBe("");
+    });
+
+    it("customerId updates when caseId changes", async () => {
+      const { model, caseId } = await createModel();
+      expect(model.customerId.value).toBe("CUS-001");
+
+      caseId.value = "CASE-ARCHIVED";
+      await flushFetch();
+      expect(model.customerId.value).toBe("CUS-ARCHIVED");
+    });
+
+    it("customerId resets on error", async () => {
+      const failingRepo = {
+        getDetailAggregate: vi.fn(async () => {
+          throw new Error("fail");
+        }),
+      } as unknown as CaseRepository;
+
+      const caseId = ref("CASE-001");
+      const model = useCaseDetailModel(caseId, { repo: failingRepo });
+      await flushFetch();
+
+      expect(model.customerId.value).toBe("");
+    });
   });
 
-  it("defaults activeTab to overview", () => {
-    const caseId = ref(idWithSampleKey());
-    const { activeTab } = useCaseDetailModel(caseId, { repo });
+  describe("tab state", () => {
+    it("defaults activeTab to overview", async () => {
+      const { model } = await createModel();
+      expect(model.activeTab.value).toBe("overview");
+    });
 
-    expect(activeTab.value).toBe("overview");
+    it("resolves valid initialTab", async () => {
+      const { model } = await createModel("CASE-001", {
+        initialTab: "billing",
+      });
+      expect(model.activeTab.value).toBe("billing");
+    });
+
+    it("falls back to overview for invalid initialTab", async () => {
+      const { model } = await createModel("CASE-001", {
+        initialTab: "bogus",
+      });
+      expect(model.activeTab.value).toBe("overview");
+    });
+
+    it("falls back to overview for undefined initialTab", async () => {
+      const { model } = await createModel("CASE-001", {
+        initialTab: undefined,
+      });
+      expect(model.activeTab.value).toBe("overview");
+    });
+
+    it("switchTab changes the active tab", async () => {
+      const { model } = await createModel();
+      model.switchTab("billing");
+      expect(model.activeTab.value).toBe("billing");
+
+      model.switchTab("documents");
+      expect(model.activeTab.value).toBe("documents");
+    });
+
+    it("switchTab is a no-op when tab is already active", async () => {
+      const calls: string[] = [];
+      const { model } = await createModel("CASE-001", {
+        initialTab: "billing",
+        onTabChange: (tab) => calls.push(tab),
+      });
+
+      expect(model.activeTab.value).toBe("billing");
+      model.switchTab("billing");
+      expect(calls).toHaveLength(0);
+    });
+
+    it("switchTab invokes onTabChange callback", async () => {
+      const calls: string[] = [];
+      const { model } = await createModel("CASE-001", {
+        onTabChange: (tab) => calls.push(tab),
+      });
+
+      model.switchTab("billing");
+      expect(calls).toEqual(["billing"]);
+
+      model.switchTab("documents");
+      expect(calls).toEqual(["billing", "documents"]);
+    });
+
+    it("switchTab works without onTabChange callback", async () => {
+      const { model } = await createModel();
+      model.switchTab("log");
+      expect(model.activeTab.value).toBe("log");
+    });
+
+    it("exposes the full tab definitions", async () => {
+      const { model } = await createModel();
+      expect(model.tabs).toBe(CASE_DETAIL_TABS);
+      expect(model.tabs.length).toBe(10);
+    });
   });
 
-  it("switchTab changes the active tab", () => {
-    const caseId = ref(idWithSampleKey());
-    const { activeTab, switchTab } = useCaseDetailModel(caseId, { repo });
+  describe("isReadonly", () => {
+    it("reflects the detail's readonly flag", async () => {
+      const { repo } = createMockRepository();
+      const caseId = ref("CASE-ARCHIVED");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+      expect(model.isReadonly.value).toBe(true);
+    });
 
-    switchTab("billing");
-    expect(activeTab.value).toBe("billing");
-
-    switchTab("documents");
-    expect(activeTab.value).toBe("documents");
-  });
-
-  it("exposes the full tab definitions", () => {
-    const caseId = ref(idWithSampleKey());
-    const { tabs } = useCaseDetailModel(caseId, { repo });
-
-    expect(tabs).toBe(CASE_DETAIL_TABS);
-    expect(tabs.length).toBe(10);
-  });
-
-  it("isReadonly reflects the detail's readonly flag", () => {
-    const archivedId = idWithSampleKey("archived");
-    const caseId = ref(archivedId);
-    const { isReadonly } = useCaseDetailModel(caseId, { repo });
-
-    expect(isReadonly.value).toBe(true);
-  });
-
-  it("isReadonly is false for active cases", () => {
-    const caseId = ref(idWithSampleKey());
-    const { isReadonly } = useCaseDetailModel(caseId, { repo });
-
-    expect(isReadonly.value).toBe(false);
-  });
-
-  it("reacts to caseId changes", () => {
-    const caseId = ref(idWithSampleKey());
-    const { detail, notFound } = useCaseDetailModel(caseId, { repo });
-
-    expect(detail.value).not.toBeNull();
-
-    caseId.value = "NONEXISTENT";
-    expect(notFound.value).toBe(true);
-    expect(detail.value).toBeNull();
+    it("is false for active cases", async () => {
+      const { model } = await createModel();
+      expect(model.isReadonly.value).toBe(false);
+    });
   });
 
   describe("tabCounters", () => {
-    it("returns empty when detail is null", () => {
-      const caseId = ref("UNKNOWN-ID");
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value).toEqual({});
+    it("returns empty when detail is null", async () => {
+      const { model } = await createModel("UNKNOWN-ID");
+      expect(model.tabCounters.value).toEqual({});
     });
 
-    it("includes docsCounter for documents tab", () => {
-      const caseId = ref(idWithSampleKey("work"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.documents).toBeDefined();
-      expect(tabCounters.value.documents!.label).toBe("8/16");
-      expect(tabCounters.value.documents!.tone).toBe("default");
+    it("includes docsCounter for documents tab", async () => {
+      const { model } = await createModel();
+      expect(model.tabCounters.value.documents).toBeDefined();
+      expect(model.tabCounters.value.documents!.label).toBe("8/16");
+      expect(model.tabCounters.value.documents!.tone).toBe("default");
     });
 
-    it("shows validation blocking count when present", () => {
-      const caseId = ref(idWithSampleKey("work"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.validation).toBeDefined();
-      expect(tabCounters.value.validation!.label).toBe("卡点2");
-      expect(tabCounters.value.validation!.tone).toBe("danger");
+    it("shows validation blocking count when present", async () => {
+      const { model } = await createModel();
+      expect(model.tabCounters.value.validation).toBeDefined();
+      expect(model.tabCounters.value.validation!.label).toBe("卡点2");
+      expect(model.tabCounters.value.validation!.tone).toBe("danger");
     });
 
-    it("omits validation counter when no blocking items", () => {
-      const caseId = ref(idWithSampleKey("family"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.validation).toBeUndefined();
+    it("omits validation counter when no blocking items", async () => {
+      const { repo } = createMockRepository();
+      const caseId = ref("CASE-ARCHIVED");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+      expect(model.tabCounters.value.validation).toBeUndefined();
     });
 
-    it("shows pending tasks count", () => {
-      const caseId = ref(idWithSampleKey("work"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.tasks).toBeDefined();
-      expect(tabCounters.value.tasks!.tone).toBe("warning");
-      expect(tabCounters.value.tasks!.label).toMatch(/^待办\d+$/);
+    it("shows pending tasks count", async () => {
+      const { model } = await createModel();
+      expect(model.tabCounters.value.tasks).toBeDefined();
+      expect(model.tabCounters.value.tasks!.tone).toBe("warning");
+      expect(model.tabCounters.value.tasks!.label).toMatch(/^待办\d+$/);
     });
 
-    it("omits tasks counter when all done (archived)", () => {
-      const caseId = ref(idWithSampleKey("archived"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.tasks).toBeUndefined();
+    it("omits tasks counter when all done (archived)", async () => {
+      const { repo } = createMockRepository();
+      const caseId = ref("CASE-ARCHIVED");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+      expect(model.tabCounters.value.tasks).toBeUndefined();
     });
 
-    it("shows urgent deadlines count", () => {
-      const caseId = ref(idWithSampleKey("work"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.deadlines).toBeDefined();
-      expect(tabCounters.value.deadlines!.tone).toBe("warning");
-      expect(Number(tabCounters.value.deadlines!.label)).toBeGreaterThan(0);
+    it("shows urgent deadlines count", async () => {
+      const { model } = await createModel();
+      expect(model.tabCounters.value.deadlines).toBeDefined();
+      expect(model.tabCounters.value.deadlines!.tone).toBe("warning");
+      expect(Number(model.tabCounters.value.deadlines!.label)).toBeGreaterThan(
+        0,
+      );
     });
 
-    it("omits deadlines counter when no urgent deadlines", () => {
-      const caseId = ref(idWithSampleKey("archived"));
-      const { tabCounters } = useCaseDetailModel(caseId, { repo });
-
-      expect(tabCounters.value.deadlines).toBeUndefined();
-    });
-  });
-
-  describe("currentSampleKey", () => {
-    it("returns sample key for known case", () => {
-      const caseId = ref(idWithSampleKey("work"));
-      const { currentSampleKey } = useCaseDetailModel(caseId, { repo });
-
-      expect(currentSampleKey.value).toBe("work");
+    it("omits deadlines counter when no urgent deadlines", async () => {
+      const { repo } = createMockRepository();
+      const caseId = ref("CASE-ARCHIVED");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+      expect(model.tabCounters.value.deadlines).toBeUndefined();
     });
 
-    it("returns null for unknown case", () => {
-      const caseId = ref("UNKNOWN-ID");
-      const { currentSampleKey } = useCaseDetailModel(caseId, { repo });
-
-      expect(currentSampleKey.value).toBeNull();
-    });
-  });
-
-  describe("showRiskModal", () => {
-    it("defaults to false", () => {
-      const caseId = ref(idWithSampleKey());
-      const { showRiskModal } = useCaseDetailModel(caseId, { repo });
-
-      expect(showRiskModal.value).toBe(false);
-    });
-
-    it("openRiskModal sets to true, closeRiskModal resets to false", () => {
-      const caseId = ref(idWithSampleKey());
-      const { showRiskModal, openRiskModal, closeRiskModal } =
-        useCaseDetailModel(caseId, { repo });
-
-      openRiskModal();
-      expect(showRiskModal.value).toBe(true);
-
-      closeRiskModal();
-      expect(showRiskModal.value).toBe(false);
-    });
-  });
-
-  describe("getSampleCaseId", () => {
-    it("returns case ID for a valid sample key", () => {
-      const caseId = ref(idWithSampleKey());
-      const { getSampleCaseId } = useCaseDetailModel(caseId, { repo });
-
-      const familyId = getSampleCaseId("family");
-      expect(familyId).toBeDefined();
-      expect(familyId).toBe(idWithSampleKey("family"));
+    it("shows messages counter when messages are present", async () => {
+      const detailWithMessages = createMockDetail({
+        messages: [
+          {
+            id: "msg-1",
+            avatar: "TY",
+            avatarStyle: "primary",
+            author: "Tanaka",
+            type: "phone",
+            typeLabel: "電話記録",
+            body: "Follow up",
+            time: "2026-03-15",
+          },
+          {
+            id: "msg-2",
+            avatar: "AD",
+            avatarStyle: "primary",
+            author: "Admin",
+            type: "internal",
+            typeLabel: "内部備註",
+            body: "Note",
+            time: "2026-03-16",
+          },
+        ],
+      });
+      const { repo } = createMockRepository({
+        "CASE-MSG": createMockAggregate(detailWithMessages),
+      });
+      const caseId = ref("CASE-MSG");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+      expect(model.tabCounters.value.messages).toBeDefined();
+      expect(model.tabCounters.value.messages!.label).toBe("2");
+      expect(model.tabCounters.value.messages!.tone).toBe("default");
     });
 
-    it("returns undefined for non-existent sample key", () => {
-      const caseId = ref(idWithSampleKey());
-      const { getSampleCaseId } = useCaseDetailModel(caseId, { repo });
-
-      const result = getSampleCaseId("nonexistent" as never);
-      expect(result).toBeUndefined();
+    it("omits messages counter when no messages", async () => {
+      const { model } = await createModel();
+      expect(model.tabCounters.value.messages).toBeUndefined();
     });
   });
 });

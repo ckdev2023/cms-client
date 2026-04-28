@@ -1,9 +1,5 @@
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Inject, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import type { DocumentItem } from "../model/coreEntities";
@@ -17,6 +13,7 @@ import {
   type DocumentItemListInput,
   type DocumentItemTransitionInput,
   type DocumentItemUpdateInput,
+  type DocumentItemUpdateSurveyDataInput,
 } from "../documents.types";
 
 export type {
@@ -25,11 +22,10 @@ export type {
   DocumentItemListInput,
   DocumentItemTransitionInput,
   DocumentItemUpdateInput,
+  DocumentItemUpdateSurveyDataInput,
 } from "../documents.types";
 
-/**
- * 数据库查询返回的 document_item 行类型。
- */
+/** 数据库查询返回的 document_item 行类型。 */
 export type DocumentItemQueryRow = {
   id: string;
   org_id: string;
@@ -45,6 +41,8 @@ export type DocumentItemQueryRow = {
   owner_side: string;
   last_follow_up_at: unknown;
   note: unknown;
+  category: string | null;
+  survey_data: unknown;
   created_at: unknown;
   updated_at: unknown;
 };
@@ -57,13 +55,30 @@ function toTimestampStringOrNull(value: unknown): string | null {
 }
 
 function toTimestampString(value: unknown): string {
-  const s = toTimestampStringOrNull(value);
-  if (!s) return "";
-  return s;
+  return toTimestampStringOrNull(value) ?? "";
 }
 
-/**
- * 将数据库行映射为 DocumentItem 实体。
+function toJsonObjectOrNull(value: unknown): Record<string, unknown> | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "object" && !Array.isArray(value))
+    return value as Record<string, unknown>;
+  if (typeof value === "string") {
+    try {
+      const parsed: unknown = JSON.parse(value);
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+      )
+        return parsed as Record<string, unknown>;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+/** 将数据库行映射为 DocumentItem 实体。
  * @param row 数据库查询结果行
  * @returns DocumentItem 实体
  */
@@ -83,35 +98,22 @@ export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
     ownerSide: row.owner_side,
     lastFollowUpAt: toTimestampStringOrNull(row.last_follow_up_at),
     note: typeof row.note === "string" ? row.note : null,
+    category: row.category ?? null,
+    surveyData: toJsonObjectOrNull(row.survey_data),
     createdAt: toTimestampString(row.created_at),
     updatedAt: toTimestampString(row.updated_at),
   };
 }
 
-/**
- * 合法的状态流转映射。
- *
- * 引用 documents.types.ts 冻结契约。
- *
- * 旧状态迁移方案（数据库 status 列为 text，无约束，旧值仍可存在）：
- *   - requested → 对应新状态 waiting_upload
- *   - received  → 对应新状态 uploaded_reviewing
- *   - reviewed  → 对应新状态 approved
- *   - rejected  → 对应新状态 revision_required
- * 已有旧状态数据需通过数据迁移脚本批量更新。
- */
 export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> =
   DOCUMENT_ITEM_ALLOWED_TRANSITIONS as Partial<Record<string, string[]>>;
 
-const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, created_at, updated_at`;
+const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, category, survey_data, created_at, updated_at`;
 
-/**
- * DocumentItem 服务，提供 CRUD、状态变更、催办与软删除能力。
- */
+/** DocumentItem 服务，提供 CRUD、状态变更、催办、survey_data 与软删除能力。 */
 @Injectable()
 export class DocumentItemsService {
-  /**
-   * 构造函数。
+  /** 构造 DocumentItemsService。
    * @param pool PostgreSQL 连接池
    * @param timelineService Timeline 服务
    */
@@ -120,23 +122,34 @@ export class DocumentItemsService {
     @Inject(TimelineService) private readonly timelineService: TimelineService,
   ) {}
 
-  /**
-   * 创建资料项。
+  /** 创建资料项。
    * @param ctx 请求上下文
    * @param input 创建参数
-   * @returns 创建成功的 DocumentItem 实体
+   * @returns 创建后的资料项
    */
   async create(
     ctx: RequestContext,
     input: DocumentItemCreateInput,
   ): Promise<DocumentItem> {
+    if (
+      input.surveyData !== null &&
+      input.surveyData !== undefined &&
+      input.category !== "questionnaire"
+    ) {
+      throw new BadRequestException(
+        "surveyData can only be set when category is questionnaire",
+      );
+    }
+    const surveyJson =
+      input.surveyData !== null && input.surveyData !== undefined
+        ? JSON.stringify(input.surveyData)
+        : null;
+
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        insert into document_items (org_id, case_id, checklist_item_code, name, status, owner_side, due_at, note)
-        values ($1, $2, $3, $4, $5, $6, $7, $8)
-        returning ${DOC_ITEM_COLS}
-      `,
+      `insert into document_items (org_id, case_id, checklist_item_code, name, status, owner_side, due_at, note, category, survey_data)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       returning ${DOC_ITEM_COLS}`,
       [
         ctx.orgId,
         input.caseId,
@@ -146,9 +159,10 @@ export class DocumentItemsService {
         input.ownerSide ?? "applicant",
         input.dueAt ?? null,
         input.note ?? null,
+        input.category ?? null,
+        surveyJson,
       ],
     );
-
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to create document item");
     const created = mapDocumentItemRow(row);
@@ -159,15 +173,13 @@ export class DocumentItemsService {
       action: "document_item.created",
       payload: { caseId: created.caseId, name: created.name },
     });
-
     return created;
   }
 
-  /**
-   * 根据 ID 获取资料项详情。
+  /** 根据 ID 获取资料项详情。
    * @param ctx 请求上下文
    * @param id 资料项 ID
-   * @returns DocumentItem 或 null
+   * @returns 资料项或 null
    */
   async get(ctx: RequestContext, id: string): Promise<DocumentItem | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
@@ -179,11 +191,10 @@ export class DocumentItemsService {
     return row ? mapDocumentItemRow(row) : null;
   }
 
-  /**
-   * 获取资料项列表（支持 caseId / status 筛选 + 分页）。
+  /** 获取资料项列表。
    * @param ctx 请求上下文
    * @param input 查询参数
-   * @returns 列表和总数
+   * @returns 列表与总数
    */
   async list(
     ctx: RequestContext,
@@ -196,7 +207,6 @@ export class DocumentItemsService {
 
     const where: string[] = ["status != 'deleted'"];
     const params: unknown[] = [];
-
     if (input.caseId) {
       params.push(input.caseId);
       where.push("case_id = $" + String(params.length));
@@ -205,9 +215,12 @@ export class DocumentItemsService {
       params.push(input.status);
       where.push("status = $" + String(params.length));
     }
+    if (input.category) {
+      params.push(input.category);
+      where.push("category = $" + String(params.length));
+    }
 
     const whereClause = `where ${where.join(" and ")}`;
-
     const countResult = await tenantDb.query<{ count: string }>(
       `select count(*) as count from document_items ${whereClause}`,
       params,
@@ -218,46 +231,58 @@ export class DocumentItemsService {
     const limitParam = "$" + String(params.length);
     params.push(offset);
     const offsetParam = "$" + String(params.length);
-
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        select ${DOC_ITEM_COLS}
-        from document_items
-        ${whereClause}
-        order by created_at desc, id desc
-        limit ${limitParam} offset ${offsetParam}
-      `,
+      `select ${DOC_ITEM_COLS} from document_items ${whereClause}
+       order by created_at desc, id desc
+       limit ${limitParam} offset ${offsetParam}`,
       params,
     );
-
     return { items: result.rows.map(mapDocumentItemRow), total };
   }
 
-  /**
-   * 统计案件资料完成率：(approved + waived) / total * 100。
+  /** 统计案件资料完成率。
    * @param ctx 请求上下文
    * @param caseId 案件 ID
-   * @returns 完成率汇总结果
+   * @returns 完成率汇总
    */
   async getCompletionRate(
     ctx: RequestContext,
     caseId: string,
   ): Promise<DocumentCompletionRate> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<{ status: string; count: string }>(
-      `select status, count(*)::text as count from document_items where case_id = $1 and status != 'deleted' group by status`,
+    const result = await tenantDb.query<{
+      status: string;
+      category: string | null;
+      count: string;
+    }>(
+      `select status, category, count(*)::text as count
+       from document_items
+       where case_id = $1 and status != 'deleted'
+       group by status, category`,
       [caseId],
     );
-    let total = 0;
-    let approved = 0;
-    let waived = 0;
+    let total = 0,
+      approved = 0,
+      waived = 0;
+    let qTotal = 0,
+      qApproved = 0,
+      qWaived = 0;
     for (const row of result.rows) {
       const count = parseInt(row.count, 10) || 0;
+      const isQ = row.category === "questionnaire";
       total += count;
-      if (row.status === "approved") approved = count;
-      if (row.status === "waived") waived = count;
+      if (isQ) qTotal += count;
+      if (row.status === "approved") {
+        approved += count;
+        if (isQ) qApproved += count;
+      }
+      if (row.status === "waived") {
+        waived += count;
+        if (isQ) qWaived += count;
+      }
     }
     const completed = approved + waived;
+    const qCompleted = qApproved + qWaived;
     return {
       caseId,
       total,
@@ -265,15 +290,18 @@ export class DocumentItemsService {
       approved,
       waived,
       completionRate: total === 0 ? 0 : (completed / total) * 100,
+      questionnaireTotal: qTotal,
+      questionnaireCompleted: qCompleted,
+      questionnaireCompletionRate:
+        qTotal === 0 ? 0 : (qCompleted / qTotal) * 100,
     };
   }
 
-  /**
-   * 更新资料项基本信息。
+  /** 更新资料项基本信息。
    * @param ctx 请求上下文
    * @param id 资料项 ID
    * @param input 更新参数
-   * @returns 更新后的 DocumentItem
+   * @returns 更新后的资料项
    */
   async update(
     ctx: RequestContext,
@@ -290,15 +318,12 @@ export class DocumentItemsService {
     const nextNote = input.note !== undefined ? input.note : current.note;
 
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        update document_items
-        set name = $2, owner_side = $3, due_at = $4, note = $5, updated_at = now()
-        where id = $1 and status != 'deleted'
-        returning ${DOC_ITEM_COLS}
-      `,
+      `update document_items
+       set name = $2, owner_side = $3, due_at = $4, note = $5, updated_at = now()
+       where id = $1 and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
       [id, nextName, nextOwnerSide, nextDueAt, nextNote],
     );
-
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to update document item");
     const updated = mapDocumentItemRow(row);
@@ -309,16 +334,54 @@ export class DocumentItemsService {
       action: "document_item.updated",
       payload: { before: current, after: updated },
     });
-
     return updated;
   }
 
-  /**
-   * 状态变更（校验合法流转）。
+  /** 更新问卷资料项的 survey_data（仅限 category=questionnaire）。
+   * @param ctx 请求上下文
+   * @param id 资料项 ID
+   * @param input survey_data 更新参数
+   * @returns 更新后的资料项
+   */
+  async updateSurveyData(
+    ctx: RequestContext,
+    id: string,
+    input: DocumentItemUpdateSurveyDataInput,
+  ): Promise<DocumentItem> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Document item not found");
+    if (current.category !== "questionnaire") {
+      throw new BadRequestException(
+        "survey_data can only be updated on questionnaire items",
+      );
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<DocumentItemQueryRow>(
+      `update document_items
+       set survey_data = $2, updated_at = now()
+       where id = $1 and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
+      [id, input.surveyData !== null ? JSON.stringify(input.surveyData) : null],
+    );
+    const row = result.rows.at(0);
+    if (!row) throw new BadRequestException("Failed to update survey data");
+    const updated = mapDocumentItemRow(row);
+
+    await this.timelineService.write(ctx, {
+      entityType: "document_item",
+      entityId: updated.id,
+      action: "document_item.survey_data_updated",
+      payload: { surveyData: updated.surveyData },
+    });
+    return updated;
+  }
+
+  /** 状态变更（校验合法流转）。
    * @param ctx 请求上下文
    * @param id 资料项 ID
    * @param input 变更参数
-   * @returns 变更后的 DocumentItem
+   * @returns 变更后的资料项
    */
   async transition(
     ctx: RequestContext,
@@ -330,36 +393,29 @@ export class DocumentItemsService {
 
     const fromStatus = current.status;
     const toStatus = input.toStatus;
-
     if (!ALLOWED_TRANSITIONS[fromStatus]?.includes(toStatus)) {
       throw new BadRequestException(
         `Transition from '${fromStatus}' to '${toStatus}' is not allowed`,
       );
     }
 
-    // 根据目标状态设置对应时间戳
-    // waiting_upload → requestedAt, uploaded_reviewing → receivedAt, approved → reviewedAt
     const timestampUpdates: string[] = [];
     if (toStatus === "waiting_upload")
       timestampUpdates.push("requested_at = now()");
     if (toStatus === "uploaded_reviewing")
       timestampUpdates.push("received_at = now()");
     if (toStatus === "approved") timestampUpdates.push("reviewed_at = now()");
-
     const extraSets =
       timestampUpdates.length > 0 ? ", " + timestampUpdates.join(", ") : "";
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        update document_items
-        set status = $2, updated_at = now()${extraSets}
-        where id = $1 and status = $3 and status != 'deleted'
-        returning ${DOC_ITEM_COLS}
-      `,
+      `update document_items
+       set status = $2, updated_at = now()${extraSets}
+       where id = $1 and status = $3 and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
       [id, toStatus, fromStatus],
     );
-
     const row = result.rows.at(0);
     if (!row)
       throw new BadRequestException(
@@ -373,24 +429,21 @@ export class DocumentItemsService {
       action: "document_item.transitioned",
       payload: { from: fromStatus, to: toStatus },
     });
-
     return updated;
   }
 
-  /**
-   * 催办：更新 lastFollowUpAt + 写 Timeline。
+  /** 催办：更新 lastFollowUpAt + 写 Timeline。
    * @param ctx 请求上下文
    * @param id 资料项 ID
-   * @returns 更新后的 DocumentItem
+   * @returns 更新后的资料项
    */
   async followUp(ctx: RequestContext, id: string): Promise<DocumentItem> {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Document item not found");
 
-    if (
-      current.status !== "waiting_upload" &&
-      current.status !== "revision_required"
-    ) {
+    const allowedStatuses = ["waiting_upload", "revision_required"];
+    if (current.category === "questionnaire") allowedStatuses.push("pending");
+    if (!allowedStatuses.includes(current.status)) {
       throw new BadRequestException(
         `Cannot follow up on a document item with status '${current.status}'`,
       );
@@ -398,15 +451,12 @@ export class DocumentItemsService {
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        update document_items
-        set last_follow_up_at = now(), updated_at = now()
-        where id = $1 and status != 'deleted'
-        returning ${DOC_ITEM_COLS}
-      `,
+      `update document_items
+       set last_follow_up_at = now(), updated_at = now()
+       where id = $1 and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
       [id],
     );
-
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to follow up");
     const updated = mapDocumentItemRow(row);
@@ -417,12 +467,10 @@ export class DocumentItemsService {
       action: "document_item_follow_up",
       payload: { lastFollowUpAt: updated.lastFollowUpAt },
     });
-
     return updated;
   }
 
-  /**
-   * 软删除资料项（设置 status = 'deleted'）。
+  /** 软删除资料项（设置 status = 'deleted'）。
    * @param ctx 请求上下文
    * @param id 资料项 ID
    */
@@ -433,15 +481,12 @@ export class DocumentItemsService {
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<DocumentItemQueryRow>(
-      `
-        update document_items
-        set status = 'deleted', updated_at = now()
-        where id = $1
-        returning ${DOC_ITEM_COLS}
-      `,
+      `update document_items
+       set status = 'deleted', updated_at = now()
+       where id = $1
+       returning ${DOC_ITEM_COLS}`,
       [id],
     );
-
     if (!result.rowCount || result.rowCount === 0)
       throw new BadRequestException("Failed to soft delete document item");
 

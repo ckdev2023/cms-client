@@ -1,4 +1,9 @@
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+} from "@nestjs/common";
 import { Pool } from "pg";
 
 import type { Message, MessageQueryRow } from "../model/portalEntities";
@@ -23,9 +28,11 @@ export type MessageListInput = {
   conversationId: string;
   page?: number;
   limit?: number;
+  /** Which unread counter to clear when reading. */
+  markReadFor?: "user" | "staff_tenant" | "staff_owner";
 };
 
-const MSG_COLS = `id, conversation_id, org_id, sender_type, sender_id, original_language, original_text, translated_text_ja, translated_text_zh, translated_text_en, translation_status, created_at`;
+const MSG_COLS = `id, conversation_id, org_id, sender_type, sender_id, original_language, original_text, translated_text_ja, translated_text_zh, translated_text_en, translation_status, kind, visible_scope, created_at`;
 
 const DEFAULT_TARGET_LANGUAGES = ["ja", "zh", "en"];
 
@@ -54,6 +61,18 @@ export class MessagesService {
    * @returns 创建的消息
    */
   async send(input: MessageSendInput): Promise<Message> {
+    const convResult = await this.pool.query<{ status: string }>(
+      `select status from conversations where id = $1 limit 1`,
+      [input.conversationId],
+    );
+    const conv = convResult.rows.at(0);
+    if (!conv) throw new BadRequestException("Conversation not found");
+    if (conv.status === "closed") {
+      throw new ConflictException(
+        "Cannot send message to a closed conversation",
+      );
+    }
+
     const result = await this.pool.query<MessageQueryRow>(
       `insert into messages (conversation_id, org_id, sender_type, sender_id, original_language, original_text, translation_status)
        values ($1, $2, $3, $4, $5, $6, 'pending')
@@ -127,6 +146,23 @@ export class MessagesService {
       `select ${MSG_COLS} from messages where conversation_id = $1 order by created_at desc limit $2 offset $3`,
       [input.conversationId, limit, offset],
     );
+
+    if (input.markReadFor === "user") {
+      await this.pool.query(
+        `update conversations set unread_count_user = 0 where id = $1 and unread_count_user > 0`,
+        [input.conversationId],
+      );
+    } else if (input.markReadFor === "staff_tenant") {
+      await this.pool.query(
+        `update conversations set unread_count_staff_tenant = 0 where id = $1 and unread_count_staff_tenant > 0`,
+        [input.conversationId],
+      );
+    } else if (input.markReadFor === "staff_owner") {
+      await this.pool.query(
+        `update conversations set unread_count_staff_owner = 0 where id = $1 and unread_count_staff_owner > 0`,
+        [input.conversationId],
+      );
+    }
 
     return { items: dataResult.rows.map(mapMessageRow), total };
   }

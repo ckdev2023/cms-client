@@ -52,6 +52,10 @@ describe("useCustomerCreateForm", () => {
     expect(fields.email).toBe("");
     expect(fields.displayName).toBe("");
     expect(fields.nationality).toBe("");
+    expect(fields.location).toBe("");
+    expect(fields.sourceType).toBe("");
+    expect(fields.visaType).toBe("");
+    expect(fields.referrerName).toBe("");
   });
 
   it("canCreate is false when all fields are empty", () => {
@@ -160,6 +164,52 @@ describe("useCustomerCreateForm", () => {
     expect(model.dedupeMatches.value).toEqual([]);
   });
 
+  it("round-trips location/sourceType/visaType/referrerName through createCustomer", async () => {
+    const repository = createRepository();
+    const model = useCustomerCreateForm({ repository });
+
+    model.fields.legalName = "田中太郎";
+    model.fields.group = "東京一組";
+    model.fields.phone = "090-1234-5678";
+    model.fields.location = "JAPAN";
+    model.fields.sourceType = "REFERRAL";
+    model.fields.visaType = "business_manager";
+    model.fields.referrerName = "佐藤様";
+
+    const created = await model.createCustomer();
+
+    expect(created).toEqual({ id: "cust-new" });
+    expect(repository.createCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: "JAPAN",
+        sourceType: "REFERRAL",
+        visaType: "business_manager",
+        referrerName: "佐藤様",
+      }),
+    );
+  });
+
+  it("round-trips empty optional fields without error", async () => {
+    const repository = createRepository();
+    const model = useCustomerCreateForm({ repository });
+
+    model.fields.legalName = "Test";
+    model.fields.group = "tokyo-1";
+    model.fields.phone = "090-0000-0000";
+
+    const created = await model.createCustomer();
+
+    expect(created).toEqual({ id: "cust-new" });
+    expect(repository.createCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        location: "",
+        sourceType: "",
+        visaType: "",
+        referrerName: "",
+      }),
+    );
+  });
+
   it("resetForm clears fields and async state", async () => {
     const repository = createRepository({
       checkDuplicates: vi.fn().mockResolvedValue(DUPLICATES),
@@ -185,6 +235,10 @@ describe("useCustomerCreateForm", () => {
     fields.email = "a@b.com";
     fields.nationality = "日本";
     fields.note = "memo";
+    fields.location = "JAPAN";
+    fields.sourceType = "WEB";
+    fields.visaType = "student";
+    fields.referrerName = "田中様";
     await nextTick();
     await flushPromises();
     await createCustomer();
@@ -197,6 +251,10 @@ describe("useCustomerCreateForm", () => {
     expect(fields.email).toBe("");
     expect(fields.nationality).toBe("");
     expect(fields.note).toBe("");
+    expect(fields.location).toBe("");
+    expect(fields.sourceType).toBe("");
+    expect(fields.visaType).toBe("");
+    expect(fields.referrerName).toBe("");
     expect(dedupeMatches.value).toEqual([]);
     expect(submitErrorCode.value).toBeNull();
   });

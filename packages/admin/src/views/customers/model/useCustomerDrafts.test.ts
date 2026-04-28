@@ -32,6 +32,10 @@ const BLANK_FIELDS: CustomerCreateFormFields = {
   phone: "",
   email: "",
   referrer: "",
+  location: "",
+  sourceType: "",
+  visaType: "",
+  referrerName: "",
   avatar: "",
   note: "",
 };

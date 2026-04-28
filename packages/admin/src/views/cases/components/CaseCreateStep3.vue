@@ -1,22 +1,33 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import type { CaseGroupOption, CaseOwnerOption } from "../types";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
-import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../constants";
 
 /** 步骤三：分派 Group、负责人、截止日期、收费金额与初始动作选项。 */
 const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   model: CreateCaseModel;
+  ownerOptions?: readonly CaseOwnerOption[];
+  groupOptions?: readonly CaseGroupOption[];
 }>();
+
+/**
+ * 同步 DatePicker 选中的截止日期到建案表单。
+ *
+ * @param value 当前选择的日期字符串；清空时可能为空
+ */
+function handleDueDateChange(value: string | number | Date | undefined): void {
+  props.model.setDueDate(typeof value === "string" ? value : "");
+}
 </script>
 
 <template>
   <div>
     <h2 class="cc__title">{{ t("cases.create.step3.title") }}</h2>
-    <div v-if="model.groupInheritanceLabel.value" class="info-box">
+    <div v-if="props.model.groupInheritanceLabel.value" class="info-box">
       {{ t("cases.create.step3.groupInherit") }}
-      <strong>{{ model.groupInheritanceLabel.value }}</strong>
+      <strong>{{ props.model.groupInheritanceLabel.value }}</strong>
     </div>
     <div class="cc__fields cc__fields--3">
       <div class="cc__field">
@@ -25,11 +36,13 @@ defineProps<{
         }}</label>
         <select
           class="cc__input cc__input--select"
-          :value="model.draft.group"
-          @change="model.setGroup(($event.target as HTMLSelectElement).value)"
+          :value="props.model.draft.group"
+          @change="
+            props.model.setGroup(($event.target as HTMLSelectElement).value)
+          "
         >
           <option
-            v-for="g in CASE_GROUP_OPTIONS"
+            v-for="g in props.groupOptions ?? []"
             :key="g.value"
             :value="g.value"
           >
@@ -43,11 +56,13 @@ defineProps<{
         }}</label>
         <select
           class="cc__input cc__input--select"
-          :value="model.draft.owner"
-          @change="model.setOwner(($event.target as HTMLSelectElement).value)"
+          :value="props.model.draft.owner"
+          @change="
+            props.model.setOwner(($event.target as HTMLSelectElement).value)
+          "
         >
           <option
-            v-for="o in CASE_OWNER_OPTIONS"
+            v-for="o in props.ownerOptions ?? []"
             :key="o.value"
             :value="o.value"
           >
@@ -59,11 +74,12 @@ defineProps<{
         <label class="cc__label">{{
           t("cases.create.step3.dueDateLabel")
         }}</label>
-        <input
-          type="date"
-          class="cc__input"
-          :value="model.draft.dueDate"
-          @input="model.setDueDate(($event.target as HTMLInputElement).value)"
+        <a-date-picker
+          class="cc__date-picker"
+          :model-value="props.model.draft.dueDate || undefined"
+          format="YYYY-MM-DD"
+          value-format="YYYY-MM-DD"
+          @change="handleDueDateChange"
         />
       </div>
     </div>
@@ -75,14 +91,16 @@ defineProps<{
         <input
           type="text"
           class="cc__input"
-          :value="model.draft.amount"
+          :value="props.model.draft.amount"
           :placeholder="t('cases.create.step3.amountPlaceholder')"
-          @input="model.setAmount(($event.target as HTMLInputElement).value)"
+          @input="
+            props.model.setAmount(($event.target as HTMLInputElement).value)
+          "
         />
       </div>
     </div>
     <div
-      v-if="model.needsGroupOverrideReason.value"
+      v-if="props.model.needsGroupOverrideReason.value"
       class="cc__field"
       style="margin-top: 16px"
     >
@@ -93,10 +111,10 @@ defineProps<{
       <input
         type="text"
         class="cc__input"
-        :value="model.draft.groupOverrideReason"
+        :value="props.model.draft.groupOverrideReason"
         :placeholder="t('cases.create.step3.crossGroupPlaceholder')"
         @input="
-          model.setGroupOverrideReason(
+          props.model.setGroupOverrideReason(
             ($event.target as HTMLInputElement).value,
           )
         "
@@ -106,9 +124,11 @@ defineProps<{
       <label class="check-item">
         <input
           type="checkbox"
-          :checked="model.draft.autoChecklist"
+          :checked="props.model.draft.autoChecklist"
           @change="
-            model.setAutoChecklist(($event.target as HTMLInputElement).checked)
+            props.model.setAutoChecklist(
+              ($event.target as HTMLInputElement).checked,
+            )
           "
         />
         {{ t("cases.create.step3.autoChecklist") }}
@@ -116,9 +136,11 @@ defineProps<{
       <label class="check-item">
         <input
           type="checkbox"
-          :checked="model.draft.autoTasks"
+          :checked="props.model.draft.autoTasks"
           @change="
-            model.setAutoTasks(($event.target as HTMLInputElement).checked)
+            props.model.setAutoTasks(
+              ($event.target as HTMLInputElement).checked,
+            )
           "
         />
         {{ t("cases.create.step3.autoTasks") }}
@@ -140,6 +162,10 @@ defineProps<{
 
 .req-mark {
   color: #dc2626;
+}
+
+.cc__date-picker {
+  width: 100%;
 }
 
 .checks {

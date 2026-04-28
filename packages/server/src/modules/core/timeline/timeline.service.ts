@@ -28,6 +28,18 @@ export type TimelineListInput = {
   limit?: number;
 };
 
+type TimelineListRow = {
+  id: string;
+  org_id: string;
+  entity_type: string;
+  entity_id: string;
+  action: string;
+  actor_user_id: string | null;
+  actor_display_name: string | null;
+  payload: unknown;
+  created_at: unknown;
+};
+
 /**
  * 统一 Timeline 写入服务。
  */
@@ -77,54 +89,69 @@ export class TimelineService {
     input: TimelineListInput = {},
   ): Promise<TimelineLog[]> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
-    const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
-
-    const where: string[] = [];
-    const params: unknown[] = [];
-
-    if (input.entityType) {
-      params.push(input.entityType);
-      where.push("entity_type = $" + String(params.length));
-    }
-    if (input.entityId) {
-      params.push(input.entityId);
-      where.push("entity_id = $" + String(params.length));
-    }
-
-    params.push(limit);
-    const limitParam = "$" + String(params.length);
-
-    const sql = `
-      select id, org_id, entity_type, entity_id, action, actor_user_id, payload, created_at
-      from timeline_logs
-      ${where.length > 0 ? `where ${where.join(" and ")}` : ""}
-      order by created_at desc, id desc
-      limit ${limitParam}
-    `;
-
-    const result = await tenantDb.query<{
-      id: string;
-      org_id: string;
-      entity_type: string;
-      entity_id: string;
-      action: string;
-      actor_user_id: string | null;
-      payload: unknown;
-      created_at: unknown;
-    }>(sql, params);
-
-    return result.rows.map((r) => ({
-      id: r.id,
-      orgId: r.org_id,
-      entityType: r.entity_type as TimelineEntityType,
-      entityId: r.entity_id,
-      action: r.action,
-      actorUserId: r.actor_user_id,
-      payload: normalizePayload(r.payload),
-      createdAt: String(r.created_at),
-    }));
+    const { sql, params } = buildTimelineListQuery(input);
+    const result = await tenantDb.query<TimelineListRow>(sql, params);
+    return result.rows.map(mapTimelineRow);
   }
+}
+
+function buildTimelineListQuery(input: TimelineListInput): {
+  sql: string;
+  params: unknown[];
+} {
+  const where: string[] = [];
+  const params: unknown[] = [];
+
+  pushTimelineFilter(where, params, "tl.entity_type", input.entityType);
+  pushTimelineFilter(where, params, "tl.entity_id", input.entityId);
+
+  params.push(Math.min(Math.max(input.limit ?? 50, 1), 200));
+  const limitParam = `$${String(params.length)}`;
+  return {
+    sql: `
+      select
+        tl.id,
+        tl.org_id,
+        tl.entity_type,
+        tl.entity_id,
+        tl.action,
+        tl.actor_user_id,
+        nullif(trim(u.name), '') as actor_display_name,
+        tl.payload,
+        tl.created_at
+      from timeline_logs tl
+      left join users u on u.id = tl.actor_user_id and u.org_id = tl.org_id
+      ${where.length > 0 ? `where ${where.join(" and ")}` : ""}
+      order by tl.created_at desc, tl.id desc
+      limit ${limitParam}
+    `,
+    params,
+  };
+}
+
+function pushTimelineFilter(
+  where: string[],
+  params: unknown[],
+  column: string,
+  value: string | undefined,
+): void {
+  if (!value) return;
+  params.push(value);
+  where.push(`${column} = $${String(params.length)}`);
+}
+
+function mapTimelineRow(r: TimelineListRow): TimelineLog {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    entityType: r.entity_type as TimelineEntityType,
+    entityId: r.entity_id,
+    action: r.action,
+    actorUserId: r.actor_user_id,
+    actorDisplayName: r.actor_display_name,
+    payload: normalizePayload(r.payload),
+    createdAt: String(r.created_at),
+  };
 }
 
 function normalizePayload(value: unknown): Record<string, unknown> {

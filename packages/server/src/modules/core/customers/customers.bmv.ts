@@ -2,19 +2,27 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { Pool } from "pg";
 
 import type { Customer } from "../model/coreEntities";
+import { BMV_CASE_TYPE } from "../cases/cases.template-bmv";
 import type { RequestContext } from "../tenancy/requestContext";
-import { createTenantDb } from "../tenancy/tenantDb";
 import type { TimelineWriteInput } from "../timeline/timeline.service";
 import {
-  createDefaultCustomerBmvProfile,
-  resolveCustomerBmvProfile,
-} from "./customers.dto-mappers";
-import type { CustomerBmvProfile, CustomerQueryRow } from "./customers.types";
-import {
-  CUSTOMER_COLS,
-  activeCustomerPredicate,
-  mapCustomerRow,
-} from "./customers.utils";
+  createBmvInitialBilling,
+  findBmvCaseId,
+} from "./customers.bmv-billing";
+import { getCurrentBmvProfile, patchBmvProfile } from "./customers.bmv-patch";
+
+export { patchBmvProfile } from "./customers.bmv-patch";
+export {
+  createBmvInitialBilling,
+  BMV_SIGNING_DEPOSIT_MILESTONE,
+} from "./customers.bmv-billing";
+
+export {
+  saveBmvSurvey,
+  modifyBmvQuote,
+  transitionBmvToCase,
+  getBmvAggregate,
+} from "./customers.bmv-d3";
 
 type TimelineWriter = {
   write: (ctx: RequestContext, input: TimelineWriteInput) => Promise<void>;
@@ -27,10 +35,6 @@ type BmvActionDeps = {
   timelineService: TimelineWriter;
   getEntity: (ctx: RequestContext, id: string) => Promise<Customer | null>;
 };
-
-type CustomerBmvProfilePatch = Partial<
-  Omit<CustomerBmvProfile, "intakeStatus">
->;
 
 /**
  * 将经营管理签客户推进到问卷已发送状态。
@@ -199,49 +203,18 @@ export async function recordBmvSign({
       signedAt: now,
     },
   });
+
+  const depositAmount = profile.quoteAmount;
+  const existingCaseId = await findBmvCaseId(pool, ctx, id, BMV_CASE_TYPE);
+  if (existingCaseId && depositAmount !== null && depositAmount > 0) {
+    await createBmvInitialBilling(
+      pool,
+      ctx,
+      existingCaseId,
+      depositAmount,
+      timelineService,
+    );
+  }
+
   return customer;
-}
-
-function getCurrentBmvProfile(customer: Customer): CustomerBmvProfile {
-  return (
-    resolveCustomerBmvProfile(customer.baseProfile) ??
-    createDefaultCustomerBmvProfile()
-  );
-}
-
-async function patchBmvProfile(
-  pool: Pool,
-  ctx: RequestContext,
-  id: string,
-  currentProfile: CustomerBmvProfile,
-  patch: CustomerBmvProfilePatch,
-): Promise<Customer> {
-  const nextProfile =
-    resolveCustomerBmvProfile({
-      bmvProfile: {
-        ...currentProfile,
-        ...patch,
-      },
-    }) ?? createDefaultCustomerBmvProfile();
-  const tenantDb = createTenantDb(pool, ctx.orgId, ctx.userId);
-  const result = await tenantDb.query<CustomerQueryRow>(
-    `
-      update customers
-      set base_profile = jsonb_set(
-            coalesce(base_profile, '{}'::jsonb) - 'bmv_profile',
-            '{bmvProfile}',
-            $2::jsonb,
-            true
-          ),
-          updated_at = now()
-      where id = $1 and ${activeCustomerPredicate()}
-      returning ${CUSTOMER_COLS}
-    `,
-    [id, JSON.stringify(nextProfile)],
-  );
-
-  const row = result.rows.at(0);
-  if (!row)
-    throw new BadRequestException("Failed to update customer BMV state");
-  return mapCustomerRow(row);
 }

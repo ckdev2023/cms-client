@@ -36,6 +36,10 @@ const billingEnUS = {
       amountOutstanding: "Outstanding (¥)",
       nextNode: "Next billing node",
       status: "Payment status",
+      actions: "Actions",
+    },
+    actions: {
+      registerPayment: "Record",
     },
     status: {
       overdue: "Overdue",
@@ -52,6 +56,8 @@ const billingEnUS = {
     empty: {
       title: "No billing records",
       description: "Set up a billing plan in the case first.",
+      noData: "No billing records",
+      noResultForFilters: "No results matching current filters",
     },
     bulk: {
       ariaLabel: "Bulk actions",
@@ -73,7 +79,7 @@ const billingEnUS = {
       },
       paymentRegistered: {
         title: "Payment recorded",
-        description: "¥{amount} recorded",
+        description: "Payment has been recorded successfully.",
       },
       voided: {
         title: "Voided",
@@ -83,6 +89,27 @@ const billingEnUS = {
         title: "Reversed",
         description: "Record {id} marked as reversed",
       },
+    },
+    error: {
+      loadFailed: "Failed to load data. Please try again.",
+      retry: "Retry",
+    },
+  },
+  bulkCollect: {
+    skipReason: {
+      "no-permission": "No permission to edit case",
+      "duplicate-task": "Collection task already exists",
+      "not-overdue": "No overdue billing plan",
+      "no-assignee": "No assignee on case",
+      "system-error": "System error",
+    },
+    drawer: {
+      title: "Collection task results",
+      empty: "No details",
+      details: "Details",
+      successLabel: "Succeeded",
+      skippedLabel: "Skipped",
+      failedLabel: "Failed",
     },
   },
   paymentLog: {
@@ -106,9 +133,46 @@ const billingEnUS = {
     },
     actionVoid: "Void",
     actionReverse: "Reverse",
+    toast: {
+      voided: {
+        title: "Voided",
+        description: "Record {id} marked as voided",
+      },
+      reversed: {
+        title: "Reversed",
+        description: "Record {id} marked as reversed",
+      },
+    },
+    row: {
+      voidedBy: "Voided by {name}",
+      reversedBy: "Reversed by {name}",
+    },
     empty: {
       title: "No payment records",
       description: "Payment records will appear here after recording.",
+    },
+  },
+  riskAck: {
+    modal: {
+      title: "Billing Risk Acknowledgement",
+      submit: "Confirm",
+      cancel: "Cancel",
+    },
+    reasonCode: {
+      customer_promise: "Customer promised to pay within one week",
+      internal_review: "Internal review approved",
+      partial_settled: "Partially settled, remaining risk is manageable",
+      other: "Other",
+    },
+    reasonNote: {
+      placeholder: "Please describe the reason (required for 'Other')",
+    },
+    evidenceUrl: {
+      placeholder: "Evidence URL (optional)",
+    },
+    chip: {
+      acknowledged: "Risk acknowledged ({date})",
+      notAcknowledged: "Risk not acknowledged",
     },
   },
   paymentModal: {
@@ -132,6 +196,9 @@ const billingEnUS = {
     },
     cancel: "Cancel",
     submit: "Record payment",
+    submitting: "Submitting…",
+    loadingNodes: "Loading billing nodes…",
+    submitError: "Failed to record payment. Please try again.",
   },
 } as const;
 

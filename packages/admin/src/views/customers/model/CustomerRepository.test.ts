@@ -16,6 +16,10 @@ const CREATE_FIELDS: CustomerCreateFormFields = {
   phone: "090-1234-5678",
   email: "zhang@example.com",
   referrer: "客户推荐",
+  location: "JAPAN",
+  sourceType: "REFERRAL",
+  visaType: "engineer_specialist",
+  referrerName: "田中先生",
   avatar: "avatar.png",
   note: "prefer wechat",
 };
@@ -89,7 +93,7 @@ describe("CustomerRepository", () => {
 
   it("lists related cases with customerId filter", async () => {
     const request = createRequestMock((input, init) => {
-      expect(String(input)).toBe("/api/cases?customerId=cust-001");
+      expect(String(input)).toBe("/api/cases?customerId=cust-001&view=summary");
       expect(init?.method).toBe("GET");
       expect(init?.headers).toEqual({
         Accept: "application/json",
@@ -232,6 +236,10 @@ describe("CustomerRepository", () => {
               email: "zhang@example.com",
               group: "tokyo-1",
               referralSource: "客户推荐",
+              location: "JAPAN",
+              sourceType: "REFERRAL",
+              visaType: "engineer_specialist",
+              referrerName: "田中先生",
               avatar: "avatar.png",
               note: "prefer wechat",
             },

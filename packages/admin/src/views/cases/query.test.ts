@@ -192,6 +192,16 @@ describe("parseCaseCreateQuery", () => {
     expect(result.customerId).toBe("cust-001");
   });
 
+  it("extracts templateId when valid", () => {
+    const result = parseCaseCreateQuery({ templateId: "bmv" }, "");
+    expect(result.templateId).toBe("bmv");
+  });
+
+  it("ignores invalid templateId", () => {
+    const result = parseCaseCreateQuery({ templateId: "bogus" }, "");
+    expect(result.templateId).toBeUndefined();
+  });
+
   it("extracts relationIds and selectedRelations", () => {
     const result = parseCaseCreateQuery(
       {
@@ -214,10 +224,41 @@ describe("parseCaseCreateQuery", () => {
         id: "rel-001",
         name: "田中花子",
         relationType: "spouse",
+        kind: "customer",
         roleTitle: undefined,
         phone: undefined,
         email: undefined,
         tags: ["紧急联系人"],
+        note: undefined,
+      },
+    ]);
+  });
+
+  it("preserves explicit selected relation kind", () => {
+    const result = parseCaseCreateQuery(
+      {
+        selectedRelations: JSON.stringify([
+          {
+            id: "cp-001",
+            name: "田中顾问",
+            relationType: "agent",
+            kind: "contact_person",
+          },
+        ]),
+      },
+      "",
+    );
+
+    expect(result.selectedRelations).toEqual([
+      {
+        id: "cp-001",
+        name: "田中顾问",
+        relationType: "agent",
+        kind: "contact_person",
+        roleTitle: undefined,
+        phone: undefined,
+        email: undefined,
+        tags: undefined,
         note: undefined,
       },
     ]);

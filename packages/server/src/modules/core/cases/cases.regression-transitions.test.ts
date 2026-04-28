@@ -103,6 +103,8 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     billing_risk_ack_evidence_url: null,
     overseas_visa_start_at: null,
     entry_confirmed_at: null,
+    business_phase: "CONSULTING",
+    current_workflow_step_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -164,10 +166,14 @@ void test("§1 S9 is terminal — no outbound transitions", () => {
   assert.ok(!s9Tos || s9Tos.length === 0);
 });
 
-void test("§1 every non-terminal stage can reach S9 directly", () => {
+void test("§1 only S7 and S8 can reach S9 directly (BUG-063)", () => {
   for (const stage of P0_STAGES.filter((s) => s !== "S9")) {
     const tos = DEFAULT_CASE_TRANSITIONS[stage] ?? [];
-    assert.ok(tos.includes("S9"), `${stage} → S9 must be allowed`);
+    if (stage === "S7" || stage === "S8") {
+      assert.ok(tos.includes("S9"), `${stage} → S9 must be allowed`);
+    } else {
+      assert.ok(!tos.includes("S9"), `${stage} → S9 must NOT be allowed`);
+    }
   }
 });
 

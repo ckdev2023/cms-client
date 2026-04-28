@@ -1,0 +1,1220 @@
+{
+  "$schema_version": "1.0",
+  "title": "事务所业务流程主结构（Master Structured Knowledge）",
+  "description": "把 docs/事务所流程 目录下的状态机流程文档与在留资格资料矩阵合并成一份 AI 友好的结构化知识，用于 RAG / 向量化检索 / 规则引擎 / 表单向导。所有内容均来源于本目录现有材料，未额外引入外部口径。",
+  "generated_at": "2026-04-28",
+  "owner": "cms-client/docs/事务所流程",
+  "language_policy": {
+    "primary": "zh-CN",
+    "secondary": "ja-JP",
+    "rule": "字段与标签同时给出中文显示名 (label_zh) 与日文原表达 (label_ja)，技术 ID（如 scenario_id、状态名）保留英文以便机器使用"
+  },
+  "sources": [
+    {
+      "id": "workflow_md",
+      "type": "process_specification",
+      "path": "docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md",
+      "scope": "新规经营管理签证（BUSINESS_MANAGER 新规）COE 申请的完整状态机、流程节点、字段与业务规则"
+    },
+    {
+      "id": "documents_md_optimized",
+      "type": "matrix_analysis",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md",
+      "scope": "在留资格 × 资料项矩阵的结构化分析（含执行规则、深度分析、源表问题清单）"
+    },
+    {
+      "id": "documents_md_zh",
+      "type": "executable_checklist",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md",
+      "scope": "中文化执行版资料清单"
+    },
+    {
+      "id": "documents_config_json",
+      "type": "machine_readable_config",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.config.json",
+      "scope": "原始 documents/scenarios 字典（本文件继承其 ID 体系）"
+    },
+    {
+      "id": "documents_config_yaml",
+      "type": "machine_readable_config",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.config.yaml",
+      "scope": "config.json 的 YAML 镜像"
+    },
+    {
+      "id": "documents_excel_source",
+      "type": "raw_source",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.xlsx",
+      "scope": "在留资格资料矩阵的原始 Excel 表（Sheet1）"
+    },
+    {
+      "id": "scenarios_dir",
+      "type": "per_scenario_executable",
+      "path": "docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/",
+      "scope": "按场景拆分的 7 份资料清单（单案件可直接打印）"
+    }
+  ],
+  "glossary": [
+    { "term": "COE", "name_zh": "在留资格认定证明书", "name_ja": "在留資格認定証明書", "note": "海外申请人在递交日本签证前先取得的证明书，由日本入管局发放。" },
+    { "term": "经管签 / 経営管理", "name_zh": "经营管理在留资格", "name_ja": "経営管理", "note": "面向在日创业、经营公司的在留资格。" },
+    { "term": "技人国", "name_zh": "技术·人文知识·国际业务", "name_ja": "技術・人文知識・国際業務", "note": "面向以专业知识就业为目的的雇佣型在留资格。" },
+    { "term": "企业内转勤", "name_zh": "企业内转勤", "name_ja": "企業内転勤", "note": "集团内或关联企业内部跨境调动的在留资格。" },
+    { "term": "返签", "name_zh": "海外返签", "note": "拿到 COE 后，申请人在海外日本使领馆办理签证、入境的环节。" },
+    { "term": "补资料", "name_zh": "入管要求补资料", "name_ja": "追加資料要求", "note": "入管在审查中要求补充材料；可能多次循环。" },
+    { "term": "在留期间", "name_zh": "在留有效期间", "name_ja": "在留期間", "note": "在留卡上所记的有效期，到期前需要续签或更新。" }
+  ],
+  "visa_types": {
+    "definition": "本系统当前显式建模 BUSINESS_MANAGER 的新规流程，并通过资料矩阵覆盖 BUSINESS_MANAGER / ENGINEER / DEPENDENT 等场景；其他签证类型作为预留扩展点。",
+    "supported": [
+      { "code": "BUSINESS_MANAGER", "name_zh": "经营管理", "modeled_in": ["workflow", "documents_matrix"] },
+      { "code": "ENGINEER", "name_zh": "技人国（技术·人文知识·国际业务）", "modeled_in": ["documents_matrix"] },
+      { "code": "DEPENDENT", "name_zh": "家族滞在", "modeled_in": ["documents_matrix:conditional"] },
+      { "code": "INTRA_COMPANY_TRANSFER", "name_zh": "企业内转勤", "modeled_in": ["documents_matrix"] }
+    ],
+    "extension_reservation": {
+      "description": "新规经营管理流程文档预留了 visa_type 字段，用于扩展其他签种。",
+      "example": { "visa_type": "BUSINESS_MANAGER | ENGINEER | DEPENDENT" }
+    }
+  },
+
+  "workflow": {
+    "id": "business_manager_new_application",
+    "name_zh": "新规经营管理签证（COE）申请流程",
+    "applies_to_visa_types": ["BUSINESS_MANAGER"],
+    "applies_to_application_types": ["NEW_COE"],
+    "model": "state_machine",
+    "phases": [
+      { "id": "consultation", "name_zh": "咨询阶段", "step_ids": ["step_1", "step_2", "step_3", "step_4", "step_5", "step_6"] },
+      { "id": "contract_post_processing", "name_zh": "签约后处理阶段", "step_ids": ["step_7", "step_8", "step_9", "step_10", "step_11", "step_12"] },
+      { "id": "immigration_review", "name_zh": "入管审查阶段", "step_ids": ["step_13", "step_14"] },
+      { "id": "post_approval", "name_zh": "下签后流程", "step_ids": ["step_15", "step_16", "step_17", "step_18"] },
+      { "id": "residence_management", "name_zh": "入境成功后的在留期间管理", "step_ids": ["step_19", "step_20"] }
+    ],
+    "states": [
+      { "id": "CONSULTING", "name_zh": "咨询阶段", "phase": "consultation", "is_terminal": false },
+      { "id": "CONTRACTED", "name_zh": "已签约", "phase": "consultation", "is_terminal": false },
+      { "id": "WAITING_MATERIAL", "name_zh": "等待客户提交资料", "phase": "contract_post_processing", "is_terminal": false },
+      { "id": "MATERIAL_PREPARING", "name_zh": "内部制作资料中", "phase": "contract_post_processing", "is_terminal": false },
+      { "id": "REVIEWING", "name_zh": "内部/客户确认中", "phase": "contract_post_processing", "is_terminal": false },
+      { "id": "APPLYING", "name_zh": "已提交入管", "phase": "contract_post_processing", "is_terminal": false },
+      { "id": "UNDER_REVIEW", "name_zh": "入管审查中", "phase": "immigration_review", "is_terminal": false },
+      { "id": "NEED_SUPPLEMENT", "name_zh": "入管要求补资料", "phase": "immigration_review", "is_terminal": false },
+      { "id": "SUPPLEMENT_PROCESSING", "name_zh": "补资料处理中", "phase": "immigration_review", "is_terminal": false },
+      { "id": "APPROVED", "name_zh": "下签（COE）", "phase": "immigration_review", "is_terminal": false },
+      { "id": "REJECTED", "name_zh": "入管拒签", "phase": "immigration_review", "is_terminal": false },
+      { "id": "WAITING_PAYMENT", "name_zh": "待收尾款", "phase": "post_approval", "is_terminal": false },
+      { "id": "COE_SENT", "name_zh": "已发送 COE", "phase": "post_approval", "is_terminal": false },
+      { "id": "VISA_APPLYING", "name_zh": "客户海外返签中", "phase": "post_approval", "is_terminal": false },
+      { "id": "SUCCESS", "name_zh": "客户已成功入境", "phase": "post_approval", "is_terminal": false },
+      { "id": "VISA_REJECTED", "name_zh": "海外返签拒签", "phase": "post_approval", "is_terminal": false },
+      { "id": "RESIDENCE_PERIOD_RECORDED", "name_zh": "已记录新在留有效期间", "phase": "residence_management", "is_terminal": false },
+      { "id": "RENEWAL_REMINDER_SCHEDULED", "name_zh": "已设置到期提醒", "phase": "residence_management", "is_terminal": false },
+      { "id": "CLOSED_SUCCESS", "name_zh": "成功结案", "phase": "residence_management", "is_terminal": true },
+      { "id": "CLOSED_FAILED", "name_zh": "失败结案", "phase": "immigration_review", "is_terminal": true }
+    ],
+    "terminal_states": ["CLOSED_SUCCESS", "CLOSED_FAILED"],
+    "transitions": [
+      { "from": "CONSULTING", "to": "CONTRACTED", "trigger": "签约 + 收取定金", "step_id": "step_5" },
+      { "from": "CONTRACTED", "to": "WAITING_MATERIAL", "trigger": "发送资料清单", "step_id": "step_6" },
+      { "from": "WAITING_MATERIAL", "to": "MATERIAL_PREPARING", "trigger": "客户资料齐全", "step_id": "step_7" },
+      { "from": "MATERIAL_PREPARING", "to": "WAITING_MATERIAL", "trigger": "内部制作中发现需要客户补充资料 → 返回资料补充流程", "step_id": "step_9", "is_internal_loop": true, "alternative_behavior": "状态可改为维持在 MATERIAL_PREPARING（不显式回退）" },
+      { "from": "MATERIAL_PREPARING", "to": "REVIEWING", "trigger": "内部 / 客户确认进入审阅环节", "step_id": "step_10" },
+      { "from": "REVIEWING", "to": "APPLYING", "trigger": "负责人最终确认 + 提交入管", "step_id": "step_12" },
+      { "from": "APPLYING", "to": "UNDER_REVIEW", "trigger": "入管受理", "step_id": "step_12" },
+      { "from": "UNDER_REVIEW", "to": "APPROVED", "trigger": "入管反馈：APPROVED", "step_id": "step_13", "branch_case": "Case 1" },
+      { "from": "UNDER_REVIEW", "to": "REJECTED", "trigger": "入管反馈：REJECTED", "step_id": "step_13", "branch_case": "Case 2" },
+      { "from": "UNDER_REVIEW", "to": "NEED_SUPPLEMENT", "trigger": "入管反馈：NEED_SUPPLEMENT", "step_id": "step_13", "branch_case": "Case 3" },
+      { "from": "REJECTED", "to": "CLOSED_FAILED", "trigger": "拒签结案", "step_id": "step_13" },
+      { "from": "NEED_SUPPLEMENT", "to": "SUPPLEMENT_PROCESSING", "trigger": "进入补资料处理", "step_id": "step_14" },
+      { "from": "SUPPLEMENT_PROCESSING", "to": "UNDER_REVIEW", "trigger": "补资料重新提交入管，可循环", "step_id": "step_14" },
+      { "from": "APPROVED", "to": "WAITING_PAYMENT", "trigger": "下签后请求尾款", "step_id": "step_15" },
+      { "from": "WAITING_PAYMENT", "to": "COE_SENT", "trigger": "尾款收讫 → 发送 COE", "step_id": "step_16" },
+      { "from": "COE_SENT", "to": "VISA_APPLYING", "trigger": "客户开始海外返签", "step_id": "step_17" },
+      { "from": "VISA_APPLYING", "to": "SUCCESS", "trigger": "返签成功并入境", "step_id": "step_18", "branch_case": "Case 1" },
+      { "from": "VISA_APPLYING", "to": "VISA_REJECTED", "trigger": "海外返签拒签", "step_id": "step_18", "branch_case": "Case 2" },
+      { "from": "VISA_REJECTED", "to": "CLOSED_FAILED", "trigger": "海外拒签结案", "step_id": "step_18" },
+      { "from": "SUCCESS", "to": "RESIDENCE_PERIOD_RECORDED", "trigger": "记录新在留有效期间", "step_id": "step_19" },
+      { "from": "RESIDENCE_PERIOD_RECORDED", "to": "RENEWAL_REMINDER_SCHEDULED", "trigger": "创建到期提醒任务", "step_id": "step_20" },
+      { "from": "RENEWAL_REMINDER_SCHEDULED", "to": "CLOSED_SUCCESS", "trigger": "提醒任务创建成功 → 结案", "step_id": "step_20" }
+    ],
+    "flow_paths": {
+      "description": "把状态机里的可枚举路径显式化为命名路径，便于 AI 推理 / 测试用例生成 / 流程图渲染。",
+      "happy_path": {
+        "id": "happy",
+        "name_zh": "顺利结案路径",
+        "outcome": "CLOSED_SUCCESS",
+        "states": [
+          "CONSULTING", "CONTRACTED", "WAITING_MATERIAL", "MATERIAL_PREPARING", "REVIEWING",
+          "APPLYING", "UNDER_REVIEW", "APPROVED", "WAITING_PAYMENT", "COE_SENT",
+          "VISA_APPLYING", "SUCCESS", "RESIDENCE_PERIOD_RECORDED", "RENEWAL_REMINDER_SCHEDULED", "CLOSED_SUCCESS"
+        ],
+        "narrative": "客户咨询 → 签约 → 资料齐全 → 内部制作 → 审阅 → 提交入管 → 入管下签 → 收尾款 → 发送 COE → 海外返签成功 → 入境 → 记录在留 → 设置提醒 → 结案成功"
+      },
+      "alt_paths": [
+        {
+          "id": "immigration_rejection",
+          "name_zh": "入管拒签",
+          "outcome": "CLOSED_FAILED",
+          "diverges_at": "UNDER_REVIEW",
+          "states_after_divergence": ["REJECTED", "CLOSED_FAILED"],
+          "linked_business_rules": ["rejection_rule"],
+          "narrative": "入管反馈 = REJECTED → CLOSED_FAILED；按 rejection_rule 部分退款（金额按合同执行）"
+        },
+        {
+          "id": "overseas_rejection",
+          "name_zh": "海外返签拒签",
+          "outcome": "CLOSED_FAILED",
+          "diverges_at": "VISA_APPLYING",
+          "states_after_divergence": ["VISA_REJECTED", "CLOSED_FAILED"],
+          "linked_business_rules": ["overseas_rejection_rule"],
+          "narrative": "海外返签 = VISA_REJECTED → CLOSED_FAILED；按 overseas_rejection_rule 不退款"
+        },
+        {
+          "id": "immigration_supplement_loop",
+          "name_zh": "入管补资料循环",
+          "outcome": "loops back to UNDER_REVIEW，最终落在 APPROVED 或 REJECTED",
+          "diverges_at": "UNDER_REVIEW",
+          "loop_states": ["NEED_SUPPLEMENT", "SUPPLEMENT_PROCESSING", "UNDER_REVIEW"],
+          "exit_states": ["APPROVED", "REJECTED"],
+          "loop_count_field": "Case.supplement_count",
+          "linked_business_rules": ["supplement_rule"],
+          "narrative": "入管反馈 = NEED_SUPPLEMENT → 补资料处理 → 重新进入 UNDER_REVIEW；可循环多次，但只能落在 APPROVED 或 REJECTED"
+        },
+        {
+          "id": "internal_supplement_rollback",
+          "name_zh": "内部制作中回退到资料补充",
+          "outcome": "rejoins MATERIAL_PREPARING after client supplements",
+          "diverges_at": "MATERIAL_PREPARING",
+          "loop_states": ["WAITING_MATERIAL", "MATERIAL_PREPARING"],
+          "linked_step": "step_9",
+          "narrative": "Step 9 行政书士发现需要客户补充材料 → 回退到 WAITING_MATERIAL（或维持 MATERIAL_PREPARING） → 客户补充后再次进入 MATERIAL_PREPARING"
+        }
+      ],
+      "exception_paths": [
+        {
+          "id": "reminder_creation_failure",
+          "name_zh": "续签提醒创建失败兜底",
+          "trigger": "RENEWAL_REMINDER_SCHEDULED 之前提醒任务创建失败",
+          "expected_behavior": "案件不得自动进入 CLOSED_SUCCESS；应进入人工待处理队列或异常状态",
+          "linked_business_rules": ["reminder_failure_fallback_rule"],
+          "modeled_state": null,
+          "modeling_gap_note": "源文未给该异常状态命名，主结构未为其单独建立 state；需要时再扩展（参考 scope_limitations.potential_extensions）"
+        },
+        {
+          "id": "residence_period_not_recorded",
+          "name_zh": "入境后未记录在留期间",
+          "trigger": "SUCCESS 后未补录新在留有效期间",
+          "expected_behavior": "不允许自动完结为 CLOSED_SUCCESS",
+          "linked_business_rules": ["residence_period_record_rule"]
+        }
+      ]
+    },
+    "process_steps": [
+      {
+        "step_id": "step_1",
+        "phase": "consultation",
+        "name_zh": "创建客户",
+        "inputs": ["客户咨询"],
+        "outputs": ["客户记录"],
+        "actor": null,
+        "state_after": "CONSULTING"
+      },
+      {
+        "step_id": "step_2",
+        "phase": "consultation",
+        "name_zh": "基础信息收集",
+        "fields": ["location（OVERSEAS / JAPAN）", "source_type（REFERRAL / WEB / ADS）", "referrer_name（可选）"],
+        "actor": null,
+        "state_after": "CONSULTING"
+      },
+      {
+        "step_id": "step_3",
+        "phase": "consultation",
+        "name_zh": "发送问卷",
+        "outputs": ["问卷《2025M_C 经管签信息表》"],
+        "state_after": "CONSULTING"
+      },
+      {
+        "step_id": "step_4",
+        "phase": "consultation",
+        "name_zh": "问卷回收 + 报价",
+        "inputs": ["问卷数据"],
+        "outputs": ["quote_price（客制化）", "visa_plan（1YEAR / 4PLUS1）"],
+        "state_after": "CONSULTING"
+      },
+      {
+        "step_id": "step_5",
+        "phase": "consultation",
+        "name_zh": "签约",
+        "actions": ["合同签署", "收取 deposit_amount（约 50%）"],
+        "state_transition": { "from": "CONSULTING", "to": "CONTRACTED" }
+      },
+      {
+        "step_id": "step_6",
+        "phase": "consultation",
+        "name_zh": "发送资料清单",
+        "inputs": ["visa_plan"],
+        "outputs": ["material_list_id"],
+        "state_transition": { "from": "CONTRACTED", "to": "WAITING_MATERIAL" },
+        "linked_documents_scenarios": [
+          "biz_mgmt_cert_4m",
+          "biz_mgmt_cert_1y",
+          "company_setup"
+        ],
+        "linked_documents_note": "根据 visa_plan 与是否需要前置公司设立选择对应的资料矩阵场景。"
+      },
+      {
+        "step_id": "step_7",
+        "phase": "contract_post_processing",
+        "name_zh": "客户提交资料",
+        "inputs": ["客户资料"],
+        "guard": "材料齐全",
+        "actor": "CUSTOMER",
+        "actor_source": "explicit (步骤名包含『客户』)",
+        "state_transition": { "from": "WAITING_MATERIAL", "to": "MATERIAL_PREPARING" }
+      },
+      {
+        "step_id": "step_8",
+        "phase": "contract_post_processing",
+        "name_zh": "内部资料制作",
+        "actor": "CLERICAL_STAFF",
+        "actor_source": "explicit (源文：执行角色 = 事务职)",
+        "outputs": ["base_documents"]
+      },
+      {
+        "step_id": "step_9",
+        "phase": "contract_post_processing",
+        "name_zh": "行政书士处理",
+        "actor": "GYOSEISHOSHI",
+        "actor_source": "explicit (步骤名 + 行为)",
+        "actions": ["完整资料制作", "理由书撰写"],
+        "branches": [
+          { "condition": "需要补资料", "behavior": "状态维持在 MATERIAL_PREPARING 或返回资料补充流程（详见 transitions: MATERIAL_PREPARING → WAITING_MATERIAL）" }
+        ]
+      },
+      {
+        "step_id": "step_10",
+        "phase": "contract_post_processing",
+        "name_zh": "确认流程",
+        "actors": ["CASE_OWNER", "CUSTOMER"],
+        "actor_source": "explicit (源文：内部确认 + 客户确认)",
+        "actions": ["内部确认", "客户确认"],
+        "state_transition": { "from": "MATERIAL_PREPARING", "to": "REVIEWING" }
+      },
+      {
+        "step_id": "step_11",
+        "phase": "contract_post_processing",
+        "name_zh": "最终确认",
+        "actor": "CASE_OWNER",
+        "actor_source": "explicit (源文：负责人审核)",
+        "actions": ["负责人审核"]
+      },
+      {
+        "step_id": "step_12",
+        "phase": "contract_post_processing",
+        "name_zh": "提交入管",
+        "outputs": ["application_id"],
+        "state_transitions": [
+          { "from": "REVIEWING", "to": "APPLYING" },
+          { "from": "APPLYING", "to": "UNDER_REVIEW" }
+        ]
+      },
+      {
+        "step_id": "step_13",
+        "phase": "immigration_review",
+        "name_zh": "接收入管反馈",
+        "inputs": ["immigration_result"],
+        "result_enum": ["APPROVED", "REJECTED", "NEED_SUPPLEMENT"],
+        "branches": [
+          { "case": "APPROVED", "state_transition": { "from": "UNDER_REVIEW", "to": "APPROVED" } },
+          { "case": "REJECTED", "state_transitions": [
+              { "from": "UNDER_REVIEW", "to": "REJECTED" },
+              { "from": "REJECTED", "to": "CLOSED_FAILED" }
+            ]
+          },
+          { "case": "NEED_SUPPLEMENT", "state_transition": { "from": "UNDER_REVIEW", "to": "NEED_SUPPLEMENT" } }
+        ]
+      },
+      {
+        "step_id": "step_14",
+        "phase": "immigration_review",
+        "name_zh": "补资料流程",
+        "actions": ["收集补充资料", "行政书士重新提交"],
+        "state_loop": ["UNDER_REVIEW", "NEED_SUPPLEMENT", "SUPPLEMENT_PROCESSING", "UNDER_REVIEW"],
+        "exit_states_allowed": ["APPROVED", "REJECTED"],
+        "rules": [
+          "补资料流程可循环多次",
+          "每次补资料必须记录 supplement_count"
+        ]
+      },
+      {
+        "step_id": "step_15",
+        "phase": "post_approval",
+        "name_zh": "收取尾款",
+        "state_transition": { "from": "APPROVED", "to": "WAITING_PAYMENT" }
+      },
+      {
+        "step_id": "step_16",
+        "phase": "post_approval",
+        "name_zh": "发送 COE",
+        "outputs": ["coe_pdf"],
+        "state_transition": { "from": "WAITING_PAYMENT", "to": "COE_SENT" },
+        "guard": "尾款必须先收讫"
+      },
+      {
+        "step_id": "step_17",
+        "phase": "post_approval",
+        "name_zh": "客户返签",
+        "actor": "CUSTOMER",
+        "actor_source": "explicit (步骤名包含『客户』)",
+        "state_transition": { "from": "COE_SENT", "to": "VISA_APPLYING" }
+      },
+      {
+        "step_id": "step_18",
+        "phase": "post_approval",
+        "name_zh": "返签结果",
+        "actor": "CUSTOMER",
+        "actor_source": "explicit (返签由客户在海外日本使领馆办理)",
+        "result_enum": ["SUCCESS", "VISA_REJECTED"],
+        "branches": [
+          { "case": "SUCCESS", "state_transition": { "from": "VISA_APPLYING", "to": "SUCCESS" } },
+          { "case": "VISA_REJECTED", "state_transitions": [
+              { "from": "VISA_APPLYING", "to": "VISA_REJECTED" },
+              { "from": "VISA_REJECTED", "to": "CLOSED_FAILED" }
+            ]
+          }
+        ]
+      },
+      {
+        "step_id": "step_19",
+        "phase": "residence_management",
+        "name_zh": "记录新在留有效期间",
+        "actor": "SYSTEM",
+        "actor_source": "explicit (源文：系统记录该客户新的在留期间信息)",
+        "trigger": "客户返签成功并完成入境",
+        "actions": ["系统记录该客户新的在留期间信息"],
+        "fields_recommended": [
+          "residence_status",
+          "residence_period_start_date",
+          "residence_period_end_date",
+          "residence_years",
+          "residence_card_number（可选）",
+          "entry_date"
+        ],
+        "state_transition": { "from": "SUCCESS", "to": "RESIDENCE_PERIOD_RECORDED" }
+      },
+      {
+        "step_id": "step_20",
+        "phase": "residence_management",
+        "name_zh": "设置到期前提醒",
+        "actor": "SYSTEM",
+        "actor_source": "explicit (源文：系统自动创建到期提醒任务)",
+        "trigger": "已记录有效期间结束日",
+        "actions": [
+          "系统自动创建到期提醒任务",
+          "在到期前固定时间点通知公司内部人员或对应负责人"
+        ],
+        "default_reminder_offsets_days_before_expiry": [180, 90, 30],
+        "state_transitions": [
+          { "from": "RESIDENCE_PERIOD_RECORDED", "to": "RENEWAL_REMINDER_SCHEDULED" },
+          { "from": "RENEWAL_REMINDER_SCHEDULED", "to": "CLOSED_SUCCESS" }
+        ]
+      }
+    ],
+    "enums": {
+      "Location": ["OVERSEAS", "JAPAN"],
+      "SourceType": ["REFERRAL", "WEB", "ADS"],
+      "VisaType": ["BUSINESS_MANAGER", "ENGINEER", "DEPENDENT"],
+      "VisaPlan": ["1YEAR", "4PLUS1"],
+      "ImmigrationResult": ["APPROVED", "REJECTED", "NEED_SUPPLEMENT"],
+      "VisaApplicationResult": ["SUCCESS", "VISA_REJECTED"],
+      "ResidenceStatus": ["BUSINESS_MANAGER"],
+      "ReminderType": ["RESIDENCE_EXPIRY"],
+      "ReminderStatus": ["PENDING", "SENT", "DONE"],
+      "Role": ["CUSTOMER", "CLERICAL_STAFF", "GYOSEISHOSHI", "CASE_OWNER", "SYSTEM"]
+    },
+    "roles": [
+      { "code": "CUSTOMER", "name_zh": "客户", "name_ja": "顧客", "responsibilities": ["提交资料", "确认资料", "海外返签", "入境"] },
+      { "code": "CLERICAL_STAFF", "name_zh": "事务职", "name_ja": "事務職", "responsibilities": ["内部资料初步制作（base_documents）"] },
+      { "code": "GYOSEISHOSHI", "name_zh": "行政书士", "name_ja": "行政書士", "responsibilities": ["完整资料制作", "理由书撰写", "提交入管", "补资料处理"] },
+      { "code": "CASE_OWNER", "name_zh": "负责人", "name_ja": "案件責任者", "responsibilities": ["最终审核", "签约决策", "异常状态处理"] },
+      { "code": "SYSTEM", "name_zh": "系统", "responsibilities": ["状态推进", "记录在留期间", "创建续签提醒任务", "提醒触发"] }
+    ],
+    "entities": {
+      "Customer": {
+        "description": "客户主体",
+        "primary_key": "customer_id",
+        "schema": {
+          "customer_id": "string",
+          "name": "string",
+          "location": "Location",
+          "source_type": "SourceType",
+          "referrer_name": "string (optional, 仅在 source_type = REFERRAL 时有意义)",
+          "visa_type": "VisaType"
+        }
+      },
+      "Survey": {
+        "description": "问卷数据（《2025M_C 经管签信息表》等）",
+        "primary_key": "survey_id",
+        "foreign_keys": [{ "field": "customer_id", "ref_entity": "Customer" }],
+        "schema": {
+          "survey_id": "string",
+          "customer_id": "string",
+          "personal_info": "object",
+          "education": "object",
+          "work_experience": "object",
+          "financial_info": "object",
+          "visa_history": "object",
+          "business_plan": "object",
+          "family_info": "object"
+        }
+      },
+      "Case": {
+        "description": "签证案件主体",
+        "primary_key": "case_id",
+        "foreign_keys": [{ "field": "customer_id", "ref_entity": "Customer" }],
+        "schema": {
+          "case_id": "string",
+          "customer_id": "string",
+          "status": "string (枚举见 workflow.states[*].id)",
+          "visa_plan": "VisaPlan",
+          "quote_price": "number",
+          "deposit_paid": "boolean",
+          "final_payment_paid": "boolean",
+          "supplement_count": "number"
+        },
+        "invariants": [
+          "deposit_paid = true 才允许进入 WAITING_MATERIAL（签约 + 收取 deposit）",
+          "final_payment_paid = true 才允许从 WAITING_PAYMENT 推进到 COE_SENT",
+          "supplement_count 必须随每次补资料递增（来自 supplement_rule）"
+        ]
+      },
+      "ImmigrationResult": {
+        "description": "入管反馈结果",
+        "primary_key": null,
+        "foreign_keys": [{ "field": "case_id", "ref_entity": "Case" }],
+        "schema": {
+          "case_id": "string",
+          "result": "ImmigrationResult",
+          "supplement_count": "number"
+        }
+      },
+      "ResidencePeriod": {
+        "description": "在留有效期间记录",
+        "primary_key": null,
+        "foreign_keys": [
+          { "field": "customer_id", "ref_entity": "Customer" },
+          { "field": "case_id", "ref_entity": "Case" }
+        ],
+        "schema": {
+          "customer_id": "string",
+          "case_id": "string",
+          "residence_status": "ResidenceStatus",
+          "residence_period_start_date": "string (YYYY-MM-DD)",
+          "residence_period_end_date": "string (YYYY-MM-DD)",
+          "residence_years": "number",
+          "entry_date": "string (YYYY-MM-DD)",
+          "residence_card_number": "string (optional)",
+          "reminder_scheduled": "boolean"
+        }
+      },
+      "RenewalReminderTask": {
+        "description": "续签提醒任务",
+        "primary_key": "reminder_id",
+        "foreign_keys": [
+          { "field": "customer_id", "ref_entity": "Customer" },
+          { "field": "case_id", "ref_entity": "Case" }
+        ],
+        "schema": {
+          "reminder_id": "string",
+          "customer_id": "string",
+          "case_id": "string",
+          "reminder_type": "ReminderType",
+          "target_date": "string (YYYY-MM-DD)",
+          "days_before_expiry": "number",
+          "status": "ReminderStatus",
+          "assignee": "string"
+        }
+      }
+    },
+    "events": [
+      { "id": "CASE_APPROVED", "trigger_state": "APPROVED" },
+      { "id": "FINAL_PAYMENT_CONFIRMED", "trigger_state": "WAITING_PAYMENT → COE_SENT" },
+      { "id": "COE_SENT", "trigger_state": "COE_SENT" },
+      { "id": "VISA_SUCCESS", "trigger_state": "SUCCESS" },
+      { "id": "RESIDENCE_PERIOD_RECORDED", "trigger_state": "RESIDENCE_PERIOD_RECORDED" },
+      { "id": "RENEWAL_REMINDER_CREATED", "trigger_state": "RENEWAL_REMINDER_SCHEDULED" }
+    ],
+    "business_rules": [
+      {
+        "id": "supplement_rule",
+        "name_zh": "补资料规则",
+        "rules": [
+          "补资料流程可循环多次",
+          "每次补资料必须记录次数 (supplement_count)"
+        ]
+      },
+      {
+        "id": "payment_rule",
+        "name_zh": "收款规则",
+        "rules": [
+          "签约时收取定金（约 50%）",
+          "下签后必须收尾款才可发送 COE"
+        ]
+      },
+      {
+        "id": "convergence_rule",
+        "name_zh": "结果收敛规则",
+        "rules": [
+          "所有流程最终必须进入 CLOSED_SUCCESS 或 CLOSED_FAILED"
+        ]
+      },
+      {
+        "id": "rejection_rule",
+        "name_zh": "拒签规则",
+        "rules": [
+          "入管拒签需进行部分退款",
+          "系统仅标记状态，具体退款金额按合同执行"
+        ]
+      },
+      {
+        "id": "overseas_rejection_rule",
+        "name_zh": "海外拒签规则",
+        "rules": [
+          "海外返签被拒不退款",
+          "状态进入 CLOSED_FAILED"
+        ]
+      },
+      {
+        "id": "residence_period_record_rule",
+        "name_zh": "在留期间记录规则",
+        "rules": [
+          "客户成功入境后必须补录或确认新的在留有效期间",
+          "未记录有效期间不允许自动完结为 CLOSED_SUCCESS"
+        ]
+      },
+      {
+        "id": "expiry_reminder_rule",
+        "name_zh": "到期提醒规则",
+        "rules": [
+          "只要存在有效的在留到期日，系统必须自动生成续签提醒任务",
+          "提醒时间点应可配置，默认 180 / 90 / 30 天前"
+        ]
+      },
+      {
+        "id": "reminder_failure_fallback_rule",
+        "name_zh": "提醒失败兜底规则",
+        "rules": [
+          "若提醒任务创建失败，案件不得自动进入 CLOSED_SUCCESS",
+          "应进入人工待处理队列或异常状态"
+        ]
+      }
+    ],
+    "configurable_options": [
+      "提醒提前天数",
+      "不同签证类型对应的提醒模板",
+      "指派负责人规则",
+      "结案条件"
+    ],
+    "suggested_modules": [
+      "客户管理模块",
+      "案件管理模块",
+      "问卷管理模块",
+      "材料管理模块",
+      "审查结果管理模块",
+      "在留期间管理模块",
+      "提醒任务模块"
+    ]
+  },
+
+  "documents_matrix": {
+    "summary": {
+      "row_dimension": "资料项",
+      "column_dimension": "在留资格 / 办理场景",
+      "scenarios_count": 7,
+      "documents_count_source_rows": 52,
+      "documents_count_unique_keys": 51,
+      "deduplication_note": "源表中 additional_case_specific_documents 在第 33 行与第 55 行重复出现；本主结构按业务语义合并为同一个 document key (additional_case_specific_documents.duplicate_in_source = true)",
+      "globally_required_in_all_scenarios": ["passport_copy"],
+      "always_listed_in_all_scenarios": ["passport_copy", "additional_case_specific_documents"],
+      "highest_volume_scenario": "biz_mgmt_cert_1y",
+      "second_highest_volume_scenario": "eng_humanities_intl_cert"
+    },
+    "stats_methodology": {
+      "stats_source_rows": "按源表行数计数（保留 additional_case_specific_documents 的重复出现），与 ai-optimized.md 中的表格一致",
+      "stats_unique_keys": "按本主结构的 document key 去重计数（同一文档只算一次）",
+      "convention_used_in_scenarios_stats": "stats_unique_keys"
+    },
+    "schema": {
+      "status_enum": ["required", "conditional", "not_listed"],
+      "status_zh": {
+        "required": "必需",
+        "conditional": "条件必需（需先判断触发条件）",
+        "not_listed": "源表未列出（不等于绝对不需要）"
+      },
+      "note_rule": "单元格若含有 〇/△ 之外的附加文字，保留到 note",
+      "execution_rule": [
+        "required 默认必须收集",
+        "conditional 需先判断触发条件",
+        "not_listed 不等于绝对不需要"
+      ]
+    },
+    "documents": {
+      "passport_copy": { "label_zh": "护照复印件", "label_ja": "パスポート写し", "source_rows": [4] },
+      "photo_3x4": { "label_zh": "证件照（3x4 厘米）", "label_ja": "証明写真（3×4センチ）", "source_rows": [5] },
+      "resume_cv": { "label_zh": "经历书 / 履历书", "label_ja": "経歴書・履歴書", "source_rows": [6] },
+      "graduation_certificate": { "label_zh": "毕业证明（本国/日本，外国文件需翻译）", "label_ja": "大学等の卒業証明書", "source_rows": [7] },
+      "degree_certificate": { "label_zh": "学位证明（本国/日本，外国文件需翻译）", "label_ja": "学位の証明書", "source_rows": [8] },
+      "transcript_certificate": { "label_zh": "成绩证明（本国/日本，外国文件需翻译）", "label_ja": "大学等の成績証明書", "source_rows": [9] },
+      "business_license": { "label_zh": "营业许可证", "label_ja": "営業許可証", "source_rows": [10] },
+      "qualification_certificate": { "label_zh": "资格证明（日语能力、执照等）", "label_ja": "資格証明書", "source_rows": [11] },
+      "employment_history_certificate": { "label_zh": "在职 / 离职证明等工作经历证明", "label_ja": "在職証明書、退職証明書など", "source_rows": [12] },
+      "capital_balance_certificate_30m": { "label_zh": "资本金 3000 万日元以上余额证明", "label_ja": "資本金3000万円以上残高証明書", "source_rows": [13] },
+      "deposit_image_30m": { "label_zh": "3000 万日元入账截图", "label_ja": "3000万円入金の画像", "source_rows": [14] },
+      "cash_card_front_back": { "label_zh": "银行卡正反面", "label_ja": "ｷｬｯｼｭｶｰﾄﾞ表裏面", "source_rows": [15] },
+      "source_of_funds_certificate": { "label_zh": "资本金来源证明 / 收入证明", "label_ja": "資本金出所証明書、収入証明", "source_rows": [16] },
+      "current_address": { "label_zh": "现住址信息", "label_ja": "現在の住所", "source_rows": [17] },
+      "japan_entry_history": { "label_zh": "来日履历", "label_ja": "来日履歴", "source_rows": [18] },
+      "recent_entry_exit_date": { "label_zh": "最近出入境日期", "label_ja": "直近の出入国日", "source_rows": [19] },
+      "prior_coe_application_history": { "label_zh": "在留资格认定申请记录", "label_ja": "在留資格認定の申請の有無", "source_rows": [20] },
+      "prior_coe_rejection_history": { "label_zh": "在留资格认定不许可记录", "label_ja": "在留資格認定の不許可の有無", "source_rows": [21] },
+      "relatives_in_japan": { "label_zh": "日本亲属情况", "label_ja": "在日親族の有無", "source_rows": [22] },
+      "marriage_certificate_if_family_stay": { "label_zh": "结婚证明（仅家族滞在时）", "label_ja": "結婚証明書（家族滞在の場合のみ）", "source_rows": [23], "trigger_condition": "家族滞在场景" },
+      "birth_certificate_if_family_stay": { "label_zh": "出生证明（仅家族滞在时）", "label_ja": "出生証明書（家族滞在の場合のみ）", "source_rows": [24], "trigger_condition": "家族滞在场景" },
+      "residence_certificate": { "label_zh": "住民票", "label_ja": "住民票", "source_rows": [25] },
+      "seal_certificate": { "label_zh": "印鉴证明（公证书）", "label_ja": "印鑑証明書（公証書）", "source_rows": [26] },
+      "tax_and_tax_payment_certificate": { "label_zh": "最近课税证明 / 纳税证明", "label_ja": "直近の課税証明書・納税証明書", "source_rows": [27] },
+      "income_related_materials": { "label_zh": "收入相关资料", "label_ja": "収入に関する資料", "source_rows": [28] },
+      "mobile_phone_number": { "label_zh": "手机号码", "label_ja": "携帯電話番号", "source_rows": [29] },
+      "residence_application_online_receipt": { "label_zh": "在留申请在线回执", "label_ja": "在留申請ｵﾝﾗｲﾝ控", "source_rows": [30], "trigger_condition": "（源表未给出明确触发条件）通常在曾通过在线渠道递交在留申请时提供作为参考，需在执行时与负责人确认", "trigger_condition_source_gap": true },
+      "residence_card": { "label_zh": "在留卡", "label_ja": "在留カード", "source_rows": [31] },
+      "health_insurance_card": { "label_zh": "健康保险证", "label_ja": "健康保険証", "source_rows": [32] },
+      "additional_case_specific_documents": { "label_zh": "其他视个案需要的材料", "label_ja": "その他事案により必要な書類", "source_rows": [33, 55], "duplicate_in_source": true, "trigger_condition": "个案需要时（兜底项，需追问触发条件）" },
+      "company_name_and_business_purpose_plan": { "label_zh": "公司名称及事业目的预定", "label_ja": "会社名と事業目的予定", "source_rows": [34] },
+      "planned_office_property_materials": { "label_zh": "事务所预定物件资料", "label_ja": "事務所予定物件資料", "source_rows": [35] },
+      "office_setup_power_of_attorney": { "label_zh": "事务所设置委任状（含受任人电话）", "label_ja": "事務所設置委任状", "source_rows": [36] },
+      "office_lease_agreement": { "label_zh": "事务所租赁合同", "label_ja": "事務所賃貸借契約書", "source_rows": [37] },
+      "office_photos": { "label_zh": "事务所照片", "label_ja": "事務所写真", "source_rows": [38] },
+      "office_floor_plan": { "label_zh": "事务所平面图（面积）", "label_ja": "事務所平面図（面積）", "source_rows": [39] },
+      "company_registered_seal": { "label_zh": "公司实印", "label_ja": "会社実印", "source_rows": [40] },
+      "company_registry_certificate": { "label_zh": "公司登本（履历事项全部证明书，3 个月内）", "label_ja": "会社謄本（履歴事項全部証明書）３か月以内", "source_rows": [41] },
+      "establishment_notifications": { "label_zh": "各类设立申报（国税 / 府税 / 市税）", "label_ja": "各種設立届（国税府税市税）", "source_rows": [42] },
+      "articles_of_incorporation": { "label_zh": "定款", "label_ja": "定款", "source_rows": [43] },
+      "latest_financial_statement_or_tax_return": { "label_zh": "最近决算报告书或个人确定申告书", "label_ja": "直近の決算報告書又は個人の場合は確定申告書", "source_rows": [44] },
+      "withholding_summary_table": { "label_zh": "前一年工资所得源泉征收票等法定调书合计表", "label_ja": "前年分の給与所得の源泉徴収票等の源泉法定調書合計表", "source_rows": [45] },
+      "employment_insurance_employer_number": { "label_zh": "雇用保险适用事业者编号", "label_ja": "雇用保険適用事業者番号", "source_rows": [46] },
+      "employee_list": { "label_zh": "员工列表（全员、外国员工、技能实习生人数）", "label_ja": "従業員リスト", "source_rows": [47] },
+      "executive_compensation_minutes": { "label_zh": "役员报酬股东会决议记录", "label_ja": "役員報酬株主総会議事録", "source_rows": [48] },
+      "client_business_cards_or_contracts": { "label_zh": "交易方名片或合同", "label_ja": "取引先の名刺や契約書", "source_rows": [49] },
+      "employment_conditions_notice": { "label_zh": "雇用条件通知书（雇用开始日、给料、勤务地、所属部署、役职、联络电话等）", "label_ja": "雇用条件通知書", "source_rows": [50] },
+      "company_brochure": { "label_zh": "公司介绍（如有）", "label_ja": "会社案内（あれば）", "source_rows": [51] },
+      "transfer_order": { "label_zh": "转勤命令", "label_ja": "転勤辞令", "source_rows": [52] },
+      "assignment_or_transfer_agreement_copy": { "label_zh": "转让 / 让渡合同复印件", "label_ja": "譲渡契約書コピー", "source_rows": [53] },
+      "shareholder_register": { "label_zh": "股东名簿", "label_ja": "株主名簿", "source_rows": [54] }
+    },
+    "scenarios": [
+      {
+        "scenario_id": "biz_mgmt_cert_4m",
+        "display_name_zh": "经营管理签认定 4 个月",
+        "display_name_ja": "経営管理 / 認定4か月",
+        "category": "business_management",
+        "stage": "certification_4m",
+        "summary": "偏向创业前置审查，强调申请人背景、资本来源、来日与认定历史。",
+        "applicability": "经营管理签认定 4 个月场景，重点在申请人背景、资本来源、来日履历与创业前置准备。",
+        "stats": { "required": 18, "conditional": 3, "total_listed": 21 },
+        "stats_source_rows": { "required": 18, "conditional": 4, "total_listed": 22 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "business_license",
+          "qualification_certificate", "employment_history_certificate", "capital_balance_certificate_30m",
+          "source_of_funds_certificate", "current_address", "japan_entry_history", "recent_entry_exit_date",
+          "prior_coe_application_history", "prior_coe_rejection_history", "relatives_in_japan",
+          "company_name_and_business_purpose_plan", "planned_office_property_materials", "office_setup_power_of_attorney"
+        ],
+        "conditional_document_keys": [
+          "marriage_certificate_if_family_stay",
+          "birth_certificate_if_family_stay",
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "先收：护照、证件照、经历史/职历、学历/资格、资本来源、来日与认定历史",
+          "重点追：会社名と事業目的予定、事務所予定物件資料、事務所設置委任状",
+          "事务所相关材料属于前置准备证明，不应空缺"
+        ],
+        "high_risk_omissions": [
+          "资本证明链不完整 / 不可追溯",
+          "来日履历或既往认定 / 不许可历史漏报"
+        ]
+      },
+      {
+        "scenario_id": "company_setup",
+        "display_name_zh": "公司设立资料包",
+        "display_name_ja": "会社設立",
+        "category": "business_management_prerequisite",
+        "stage": "company_setup",
+        "summary": "属于经营管理签的前置材料包，集中在资本金入账、印章和基础设立动作。",
+        "applicability": "经营管理签办理前的公司设立准备，并非完整签证申请包。",
+        "stats": { "required": 7, "conditional": 1, "total_listed": 8 },
+        "stats_source_rows": { "required": 7, "conditional": 2, "total_listed": 9 },
+        "required_document_keys": [
+          "passport_copy", "deposit_image_30m", "cash_card_front_back", "seal_certificate",
+          "residence_card", "company_name_and_business_purpose_plan", "company_registered_seal"
+        ],
+        "conditional_document_keys": [
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "先收：护照、3000 万入账截图、银行卡正反面、印鉴证明、在留卡、公司实印",
+          "重点追：会社名と事業目的予定",
+          "该包只解决公司设立前置问题，不能替代正式签证资料包"
+        ],
+        "high_risk_omissions": [
+          "入资证据与印章 / 印鉴材料不一致"
+        ]
+      },
+      {
+        "scenario_id": "biz_mgmt_cert_1y",
+        "display_name_zh": "经营管理签认定 1 年",
+        "display_name_ja": "経営管理 / 認定1年",
+        "category": "business_management",
+        "stage": "certification_1y",
+        "summary": "材料最完整，兼顾个人背景、办公场地、公司法人与税务资料。",
+        "applicability": "公司实体已基本落地后的经营管理签认定 1 年场景，是经营管理相关场景中材料最完整的一类。",
+        "stats": { "required": 27, "conditional": 3, "total_listed": 30 },
+        "stats_source_rows": { "required": 27, "conditional": 4, "total_listed": 31 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "business_license",
+          "qualification_certificate", "employment_history_certificate", "capital_balance_certificate_30m",
+          "source_of_funds_certificate", "current_address", "japan_entry_history", "recent_entry_exit_date",
+          "prior_coe_application_history", "prior_coe_rejection_history", "relatives_in_japan",
+          "residence_certificate", "seal_certificate", "mobile_phone_number", "residence_card",
+          "office_lease_agreement", "office_photos", "office_floor_plan", "company_registry_certificate",
+          "establishment_notifications", "articles_of_incorporation", "executive_compensation_minutes",
+          "client_business_cards_or_contracts"
+        ],
+        "conditional_document_keys": [
+          "marriage_certificate_if_family_stay",
+          "birth_certificate_if_family_stay",
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "在认定 4 个月阶段的个人与资金材料基础上",
+          "再补：办公室租赁合同、事务所照片、平面图、定款、设立届、役员报酬议事录",
+          "需同时覆盖申请人背景 + 公司实体 + 办公场所 + 税务设立四条证据链"
+        ],
+        "high_risk_omissions": [
+          "公司设立后的实体经营证明未闭环",
+          "事务所实体材料 / 公司法定材料漏项"
+        ]
+      },
+      {
+        "scenario_id": "biz_mgmt_renewal",
+        "display_name_zh": "经营管理签续签",
+        "display_name_ja": "経営管理 / 期間更新",
+        "category": "business_management",
+        "stage": "renewal",
+        "summary": "更强调持续经营事实、税务和在留中信息。",
+        "applicability": "经营管理签期间更新场景，重点不在设立，而在持续经营与持续在留事实。",
+        "stats": { "required": 12, "conditional": 1, "total_listed": 13 },
+        "stats_source_rows": { "required": 12, "conditional": 2, "total_listed": 14 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "current_address", "relatives_in_japan", "residence_certificate",
+          "tax_and_tax_payment_certificate", "mobile_phone_number", "residence_card", "company_registry_certificate",
+          "withholding_summary_table", "employment_insurance_employer_number", "client_business_cards_or_contracts"
+        ],
+        "conditional_document_keys": [
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "先收：住民票、纳税资料、在留卡、电话号码、公司謄本、工资源泉资料",
+          "重点追：取引先の名刺や契約書",
+          "续签材料要能证明公司在持续经营"
+        ],
+        "high_risk_omissions": [
+          "只有存续证明，没有税务和业务往来证明 → 经营持续性材料断裂"
+        ]
+      },
+      {
+        "scenario_id": "eng_humanities_intl_cert",
+        "display_name_zh": "技人国认定",
+        "display_name_ja": "技人国 / 認定",
+        "category": "engineer_humanities_international",
+        "stage": "certification",
+        "summary": "重点落在学历/成绩/职历、雇佣条件、雇主实体和合规性。",
+        "applicability": "技术・人文知识・国际业务签证认定场景，重点在学历、职历、雇佣条件和雇主主体证明。",
+        "stats": { "required": 21, "conditional": 4, "total_listed": 25 },
+        "stats_source_rows": { "required": 21, "conditional": 5, "total_listed": 26 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "resume_cv", "graduation_certificate", "degree_certificate",
+          "transcript_certificate", "qualification_certificate", "employment_history_certificate",
+          "current_address", "japan_entry_history", "relatives_in_japan", "tax_and_tax_payment_certificate",
+          "mobile_phone_number", "residence_card", "company_registry_certificate",
+          "latest_financial_statement_or_tax_return", "withholding_summary_table",
+          "employment_insurance_employer_number", "employee_list", "employment_conditions_notice", "company_brochure"
+        ],
+        "conditional_document_keys": [
+          "marriage_certificate_if_family_stay",
+          "birth_certificate_if_family_stay",
+          "residence_application_online_receipt",
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "先收：护照、证件照、学历/学位/成绩、经历史、资格、地址、在日亲族",
+          "再补：雇用条件通知书、公司案内、公司謄本、决算/申告、纳税、雇保号码、员工列表",
+          "学历链 + 职历链 + 雇佣条件链必须同时完整"
+        ],
+        "high_risk_omissions": [
+          "学历链不完整",
+          "劳动条件不完整",
+          "雇主主体资料不足"
+        ]
+      },
+      {
+        "scenario_id": "eng_humanities_intl_renewal",
+        "display_name_zh": "技人国续签",
+        "display_name_ja": "技人国 / 期間更新",
+        "category": "engineer_humanities_international",
+        "stage": "renewal",
+        "summary": "更新更偏在留卡、住民票、纳税、社保与工资源泉信息。",
+        "applicability": "技术・人文知识・国际业务签证续签场景，重点在在留持续、税务连续和社保连续性。",
+        "stats": { "required": 13, "conditional": 1, "total_listed": 14 },
+        "stats_source_rows": { "required": 13, "conditional": 2, "total_listed": 15 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "current_address", "relatives_in_japan", "residence_certificate",
+          "tax_and_tax_payment_certificate", "mobile_phone_number", "residence_card", "health_insurance_card",
+          "company_registry_certificate", "withholding_summary_table", "employment_insurance_employer_number", "employee_list"
+        ],
+        "conditional_document_keys": [
+          "additional_case_specific_documents"
+        ],
+        "notes": [],
+        "execution_focus": [
+          "先收：护照、证件照、住民票、纳税资料、电话号码、在留卡、健康保险证",
+          "再补：公司謄本、工资源泉资料、雇保号码、员工列表",
+          "税务、社保和在职连续性是续签的核心"
+        ],
+        "high_risk_omissions": [
+          "税务、社保和在职证明链断裂"
+        ]
+      },
+      {
+        "scenario_id": "intra_company_transfer",
+        "display_name_zh": "企业内转勤",
+        "display_name_ja": "企業内 / 転勤",
+        "category": "intra_company_transfer",
+        "stage": "certification",
+        "summary": "更像集团内部调动场景，突出转勤命令、收入证明、股东/交易和日本侧资料。",
+        "applicability": "集团或关联企业内部的人事调动场景，重点证明转勤关系，而不是普通招聘。",
+        "stats": { "required": 11, "conditional": 1, "total_listed": 12 },
+        "stats_source_rows": { "required": 11, "conditional": 2, "total_listed": 13 },
+        "required_document_keys": [
+          "passport_copy", "photo_3x4", "resume_cv", "employment_history_certificate", "income_related_materials",
+          "company_registry_certificate", "latest_financial_statement_or_tax_return", "withholding_summary_table",
+          "transfer_order", "assignment_or_transfer_agreement_copy", "shareholder_register"
+        ],
+        "conditional_document_keys": [
+          "additional_case_specific_documents"
+        ],
+        "notes": [
+          { "document_key": "latest_financial_statement_or_tax_return", "raw_note": "本国・日本", "explanation": "需同时准备本国侧与日本侧" },
+          { "document_key": "shareholder_register", "raw_note": "日本", "explanation": "以日本侧股东名簿为准" }
+        ],
+        "execution_focus": [
+          "先收：护照、证件照、经历史/在职证明、收入资料、公司謄本、工资源泉资料",
+          "再补：転勤辞令、譲渡契約書コピー、株主名簿",
+          "日本侧与本国侧材料必须能互相对应"
+        ],
+        "high_risk_omissions": [
+          "集团内部调动关系证明不足",
+          "日本侧与本国侧资料不匹配"
+        ]
+      }
+    ],
+    "execution_playbook": {
+      "standard_flow": [
+        "先确定场景，只能从 7 个 scenario_id 中选 1 个主场景",
+        "先收集全局共通硬必需项：passport_copy",
+        "再收集该场景下所有 required 项",
+        "逐条判断该场景下的 conditional 项是否触发，不能因为是条件项就直接跳过",
+        "最后检查 note 列，确认是否存在 日本 / 本国・日本 这类来源地域说明",
+        "输出时必须区分 4 个状态：已收到 / 缺失 / 待确认是否触发 / 需补说明（翻译、原件、来源）"
+      ],
+      "minimal_judgment_rules": [
+        "看到 required：默认必须收",
+        "看到 conditional：必须追问触发条件，不可直接当可不交",
+        "看到 not_listed：仅表示源表未列出，不代表绝对不需要",
+        "看到 note：说明该材料还有补充口径，必须连同备注一起执行"
+      ],
+      "delivery_format": [
+        "基础必需材料",
+        "场景专属必需材料",
+        "条件触发材料",
+        "个案补充材料"
+      ],
+      "case_checklist_template_md": "docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md#执行清单模板"
+    },
+    "deep_analysis": [
+      {
+        "id": "rare_global_commons",
+        "title": "共通项非常少",
+        "points": [
+          "全部场景都『必需』的只有 passport_copy",
+          "全部场景都『至少被列出』的只有 passport_copy 与 additional_case_specific_documents",
+          "因此 AI 问答 / 表单向导 / 规则引擎应以『按签种分别建模』为主，不应先做统一清单再删减"
+        ]
+      },
+      {
+        "id": "biz_mgmt_four_layers",
+        "title": "经营管理签被拆成四层逻辑",
+        "points": [
+          "company_setup 是前置准备而非签证结果",
+          "biz_mgmt_cert_4m 偏『人 + 资金 + 来日背景』",
+          "biz_mgmt_cert_1y 进入『公司实体已落地』阶段，新增办公室租赁、平面图、定款、设立届、役员报酬议事录",
+          "biz_mgmt_renewal 收敛为持续经营证明（纳税、住民票、交易证明）"
+        ]
+      },
+      {
+        "id": "ehni_axis",
+        "title": "技人国的核心判断轴是『资质 + 雇佣 + 雇主』",
+        "points": [
+          "认定独有：学位证明、成绩证明、雇用条件通知书、公司案内",
+          "续签新增项很少，更依赖既有在留状态与就业持续事实"
+        ]
+      },
+      {
+        "id": "ict_non_boolean",
+        "title": "企业内转勤不能简单当成布尔矩阵",
+        "points": [
+          "该列含 〇本国・日本、〇日本 这样的附注",
+          "系统至少要保留 status + raw_note 两字段，而不是只存 required/optional"
+        ]
+      },
+      {
+        "id": "source_table_role",
+        "title": "源表更适合做底表，不适合直接做最终提交清单",
+        "points": [
+          "additional_case_specific_documents 在第 33 行和第 55 行重复出现",
+          "第 56/57 行残留 本人情報 / 会社情報 孤立文本",
+          "标题与读音串联，不利于检索与去重",
+          "△ 只表达条件性需要，没有给出『什么时候需要』，需要补业务规则"
+        ]
+      }
+    ],
+    "known_issues": [
+      { "type": "duplicate", "location": "row 33 / row 55", "issue": "additional_case_specific_documents 重复出现", "suggestion": "合并成单一兜底项并补触发条件" },
+      { "type": "structure_residue", "location": "row 56 / row 57", "issue": "出现孤立文本 本人情報 / 会社情報", "suggestion": "若继续维护源表，应做成真正分组标题" },
+      { "type": "inconsistent_note", "location": "row 44 / row 54", "issue": "单元格同时承载『必需 + 地域说明』", "suggestion": "拆成 status 与 raw_note" },
+      { "type": "naming_noise", "location": "全表", "issue": "标题与读音连写，不利于检索", "suggestion": "增加 document_label_normalized" },
+      { "type": "rule_gap", "location": "全表", "issue": "△ 没有解释何时触发", "suggestion": "后续补 trigger_condition" }
+    ],
+    "ai_modeling_fields": {
+      "description": "源文件 in 在留資格別必要情報一覧Ver2.ai-optimized.md 推荐的 AI 建模字段集，本主结构以这些字段为基线设计。",
+      "fields": [
+        { "name": "scenario_id", "in_master": true, "location": "documents_matrix.scenarios[*].scenario_id" },
+        { "name": "document_label_source", "in_master": false, "note": "未单独存储；源标签是『日文标题 + 読音』串联噪声，可在需要原始检索时回查 ai-optimized.md 的 CSV" },
+        { "name": "status", "in_master": true, "location": "通过 required_document_keys / conditional_document_keys 集合表达；未列出的为 not_listed" },
+        { "name": "raw_note", "in_master": true, "location": "documents_matrix.scenarios[*].notes[*].raw_note（仅 intra_company_transfer 出现）" },
+        { "name": "source_row", "in_master": true, "location": "documents_matrix.documents[*].source_rows" },
+        { "name": "document_label_normalized", "in_master": "partial", "note": "用 label_zh 充当中文化的归一化标签；尚未给出独立的 ja-romaji 或 kana-only 归一形" },
+        { "name": "trigger_condition", "in_master": "partial", "note": "marriage_certificate_if_family_stay / birth_certificate_if_family_stay / additional_case_specific_documents / residence_application_online_receipt 已明示；其他 conditional 仍依赖业务侧补充" }
+      ]
+    },
+    "inverse_index": {
+      "description": "document_id → 出现在哪些场景，便于反向检索（『某份资料在哪些场景里被要求？』）",
+      "documents_to_scenarios": {
+      "passport_copy": { "required_in": ["biz_mgmt_cert_4m","company_setup","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal","intra_company_transfer"], "conditional_in": [] },
+      "photo_3x4": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal","intra_company_transfer"], "conditional_in": [] },
+      "resume_cv": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert","intra_company_transfer"], "conditional_in": [] },
+      "graduation_certificate": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert"], "conditional_in": [] },
+      "degree_certificate": { "required_in": ["eng_humanities_intl_cert"], "conditional_in": [] },
+      "transcript_certificate": { "required_in": ["eng_humanities_intl_cert"], "conditional_in": [] },
+      "business_license": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "qualification_certificate": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert"], "conditional_in": [] },
+      "employment_history_certificate": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert","intra_company_transfer"], "conditional_in": [] },
+      "capital_balance_certificate_30m": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "deposit_image_30m": { "required_in": ["company_setup"], "conditional_in": [] },
+      "cash_card_front_back": { "required_in": ["company_setup"], "conditional_in": [] },
+      "source_of_funds_certificate": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "current_address": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "japan_entry_history": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert"], "conditional_in": [] },
+      "recent_entry_exit_date": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "prior_coe_application_history": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "prior_coe_rejection_history": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "relatives_in_japan": { "required_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "marriage_certificate_if_family_stay": { "required_in": [], "conditional_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert"] },
+      "birth_certificate_if_family_stay": { "required_in": [], "conditional_in": ["biz_mgmt_cert_4m","biz_mgmt_cert_1y","eng_humanities_intl_cert"] },
+      "residence_certificate": { "required_in": ["biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "seal_certificate": { "required_in": ["company_setup","biz_mgmt_cert_1y"], "conditional_in": [] },
+      "tax_and_tax_payment_certificate": { "required_in": ["biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "income_related_materials": { "required_in": ["intra_company_transfer"], "conditional_in": [] },
+      "mobile_phone_number": { "required_in": ["biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "residence_application_online_receipt": { "required_in": [], "conditional_in": ["eng_humanities_intl_cert"] },
+      "residence_card": { "required_in": ["company_setup","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "health_insurance_card": { "required_in": ["eng_humanities_intl_renewal"], "conditional_in": [] },
+      "additional_case_specific_documents": { "required_in": [], "conditional_in": ["biz_mgmt_cert_4m","company_setup","biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal","intra_company_transfer"] },
+      "company_name_and_business_purpose_plan": { "required_in": ["biz_mgmt_cert_4m","company_setup"], "conditional_in": [] },
+      "planned_office_property_materials": { "required_in": ["biz_mgmt_cert_4m"], "conditional_in": [] },
+      "office_setup_power_of_attorney": { "required_in": ["biz_mgmt_cert_4m"], "conditional_in": [] },
+      "office_lease_agreement": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "office_photos": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "office_floor_plan": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "company_registered_seal": { "required_in": ["company_setup"], "conditional_in": [] },
+      "company_registry_certificate": { "required_in": ["biz_mgmt_cert_1y","biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal","intra_company_transfer"], "conditional_in": [] },
+      "establishment_notifications": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "articles_of_incorporation": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "latest_financial_statement_or_tax_return": { "required_in": ["eng_humanities_intl_cert","intra_company_transfer"], "conditional_in": [] },
+      "withholding_summary_table": { "required_in": ["biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal","intra_company_transfer"], "conditional_in": [] },
+      "employment_insurance_employer_number": { "required_in": ["biz_mgmt_renewal","eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "employee_list": { "required_in": ["eng_humanities_intl_cert","eng_humanities_intl_renewal"], "conditional_in": [] },
+      "executive_compensation_minutes": { "required_in": ["biz_mgmt_cert_1y"], "conditional_in": [] },
+      "client_business_cards_or_contracts": { "required_in": ["biz_mgmt_cert_1y","biz_mgmt_renewal"], "conditional_in": [] },
+      "employment_conditions_notice": { "required_in": ["eng_humanities_intl_cert"], "conditional_in": [] },
+      "company_brochure": { "required_in": ["eng_humanities_intl_cert"], "conditional_in": [] },
+      "transfer_order": { "required_in": ["intra_company_transfer"], "conditional_in": [] },
+      "assignment_or_transfer_agreement_copy": { "required_in": ["intra_company_transfer"], "conditional_in": [] },
+      "shareholder_register": { "required_in": ["intra_company_transfer"], "conditional_in": [] }
+      }
+    },
+    "coverage_audit": {
+      "documents_with_no_scenario": [],
+      "globally_required_documents": ["passport_copy"],
+      "globally_listed_documents": ["passport_copy", "additional_case_specific_documents"],
+      "single_scenario_only_documents": [
+        { "key": "degree_certificate", "scenarios": ["eng_humanities_intl_cert"] },
+        { "key": "transcript_certificate", "scenarios": ["eng_humanities_intl_cert"] },
+        { "key": "deposit_image_30m", "scenarios": ["company_setup"] },
+        { "key": "cash_card_front_back", "scenarios": ["company_setup"] },
+        { "key": "income_related_materials", "scenarios": ["intra_company_transfer"] },
+        { "key": "residence_application_online_receipt", "scenarios": ["eng_humanities_intl_cert"], "status": "conditional" },
+        { "key": "health_insurance_card", "scenarios": ["eng_humanities_intl_renewal"] },
+        { "key": "planned_office_property_materials", "scenarios": ["biz_mgmt_cert_4m"] },
+        { "key": "office_setup_power_of_attorney", "scenarios": ["biz_mgmt_cert_4m"] },
+        { "key": "office_lease_agreement", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "office_photos", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "office_floor_plan", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "company_registered_seal", "scenarios": ["company_setup"] },
+        { "key": "establishment_notifications", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "articles_of_incorporation", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "executive_compensation_minutes", "scenarios": ["biz_mgmt_cert_1y"] },
+        { "key": "employment_conditions_notice", "scenarios": ["eng_humanities_intl_cert"] },
+        { "key": "company_brochure", "scenarios": ["eng_humanities_intl_cert"] },
+        { "key": "transfer_order", "scenarios": ["intra_company_transfer"] },
+        { "key": "assignment_or_transfer_agreement_copy", "scenarios": ["intra_company_transfer"] },
+        { "key": "shareholder_register", "scenarios": ["intra_company_transfer"] }
+      ]
+    }
+  },
+
+  "cross_links": {
+    "description": "把流程状态机与资料矩阵关联起来，便于 AI 在『当前案件状态 → 当前应该收集哪些材料』之间双向推理。",
+    "visa_plan_to_scenarios": [
+      {
+        "visa_plan": "1YEAR",
+        "name_zh": "直接 1 年认定",
+        "scenario_chain": ["biz_mgmt_cert_1y"],
+        "may_prepend": ["company_setup"],
+        "note": "公司实体已落地或可在认定阶段一并落地的情况，直接走 1 年认定。"
+      },
+      {
+        "visa_plan": "4PLUS1",
+        "name_zh": "先 4 个月、后续转 1 年",
+        "scenario_chain": ["biz_mgmt_cert_4m", "biz_mgmt_cert_1y"],
+        "may_prepend": ["company_setup"],
+        "note": "经管签『4+1 年』模式：先取得 4 个月在留以推进公司实体落地，再续到 1 年。"
+      }
+    ],
+    "workflow_state_to_document_collection": [
+      {
+        "state": "WAITING_MATERIAL",
+        "stage_semantics": "客户尚未提交资料，需要按 visa_plan 选择对应资料矩阵场景",
+        "candidate_scenarios": [
+          { "scenario_id": "company_setup", "when": "客户在日本尚未设立公司，先走前置设立包（不是签证申请包）" },
+          { "scenario_id": "biz_mgmt_cert_4m", "when": "visa_plan = 4PLUS1（先 4 个月）" },
+          { "scenario_id": "biz_mgmt_cert_1y", "when": "visa_plan = 1YEAR（直接 1 年认定）" }
+        ],
+        "linked_workflow_step": "step_6"
+      },
+      {
+        "state": "MATERIAL_PREPARING",
+        "stage_semantics": "事务职 + 行政书士在做内部资料制作，需要根据已选场景去对照 required + conditional 的逐项",
+        "candidate_scenarios": [
+          "biz_mgmt_cert_4m",
+          "biz_mgmt_cert_1y",
+          "company_setup"
+        ],
+        "linked_workflow_steps": ["step_8", "step_9"],
+        "internal_supplement_loop": "Step 9 描述：制作过程中如发现需要客户补充材料，可显式回退到 WAITING_MATERIAL（见 transitions：MATERIAL_PREPARING → WAITING_MATERIAL）或维持当前状态"
+      },
+      {
+        "state": "NEED_SUPPLEMENT",
+        "stage_semantics": "入管要求补资料，对应资料矩阵中的 conditional 项 + additional_case_specific_documents 兜底项",
+        "linked_workflow_step": "step_14"
+      },
+      {
+        "state": "RENEWAL_REMINDER_SCHEDULED",
+        "stage_semantics": "下一周期续签的资料准备需要切换到 *_renewal 场景",
+        "candidate_scenarios": [
+          "biz_mgmt_renewal",
+          "eng_humanities_intl_renewal"
+        ],
+        "linked_workflow_step": "step_20",
+        "next_case_handoff": "续签通常作为新的 case 进入下一轮 CONSULTING / CONTRACTED 流程，而非在当前 case 内部直接续推。"
+      }
+    ],
+    "scenario_to_workflow_phase": [
+      { "scenario_id": "company_setup", "applies_to_workflow_phase": "consultation/contract_post_processing", "note": "若客户未在日本设立公司，需先完成此前置包" },
+      { "scenario_id": "biz_mgmt_cert_4m", "applies_to_workflow_phase": "contract_post_processing", "note": "对应 visa_plan = 4PLUS1 的第 1 段" },
+      { "scenario_id": "biz_mgmt_cert_1y", "applies_to_workflow_phase": "contract_post_processing", "note": "对应 visa_plan = 1YEAR，或 4PLUS1 的第 2 段" },
+      { "scenario_id": "biz_mgmt_renewal", "applies_to_workflow_phase": "next_cycle_after_residence_expiry" },
+      { "scenario_id": "eng_humanities_intl_cert", "applies_to_workflow_phase": "contract_post_processing", "note": "技人国签种当前未在状态机中显式建模，可作为扩展" },
+      { "scenario_id": "eng_humanities_intl_renewal", "applies_to_workflow_phase": "next_cycle_after_residence_expiry" },
+      { "scenario_id": "intra_company_transfer", "applies_to_workflow_phase": "contract_post_processing", "note": "企业内转勤当前未在状态机中显式建模，可作为扩展" }
+    ]
+  },
+
+  "scope_limitations": {
+    "description": "明示当前主结构未显式覆盖、需要后续扩展或外部依赖的范围，避免 AI 把『未建模』误判为『不存在』。",
+    "workflow_only_models": "BUSINESS_MANAGER 新规（COE 申请）的全套状态机；其他签种 / 续签 / 转勤当前未给出独立状态机。",
+    "documents_matrix_only_covers": "在留資格別必要情報一覧Ver2 中的 7 个场景；不覆盖 1 张表之外的签种、特殊案件或申请途径。",
+    "not_modeled": [
+      "ENGINEER（技人国）认定 / 续签的工作流状态机",
+      "INTRA_COMPANY_TRANSFER（企业内转勤）的工作流状态机",
+      "DEPENDENT（家族滞在）独立场景（仅作为家族滞在条件项出现）",
+      "退款金额、合同条款、定价规则的具体数值（业务规则只标记状态，金额按合同执行）",
+      "事务所内部分工与角色权限（仅出现 事务职 / 行政书士 两个角色名）",
+      "案件协作、Slack/邮件通知等通信通道",
+      "风险确认弹窗、批量动作等 UI 层规则"
+    ],
+    "potential_extensions": [
+      "为续签场景（biz_mgmt_renewal / eng_humanities_intl_renewal）建立独立状态机",
+      "为 ENGINEER / INTRA_COMPANY_TRANSFER 建立各自的认定流程",
+      "为 conditional 文档补齐 trigger_condition（参考 known_issues.rule_gap）",
+      "把 raw_note 的来源地域（日本 / 本国・日本）抽象为 country_origin 枚举字段",
+      "把入管补资料 / 海外返签拒签接入退款工作流"
+    ],
+    "non_authoritative": "本文件是结构化整理与分析稿，不替代最终入管受理口径；冲突时以入管最新公告为准。"
+  },
+
+  "ai_usage_hints": {
+    "for_question_answering": [
+      "回答业务问题时优先确定『签种 + 阶段』，再找 scenarios[*] 与 workflow.states / process_steps 的交集。",
+      "如果问题涉及『某一份资料是否需要』，要同时检查 required_document_keys、conditional_document_keys、notes 三个集合，并解释 trigger_condition。",
+      "如果问题涉及『当前状态可以做什么』，从 workflow.transitions 出发，过滤 from = 当前状态。"
+    ],
+    "for_form_wizard": [
+      "在 WAITING_MATERIAL → MATERIAL_PREPARING 阶段，根据 visa_plan + location 选择 cross_links.workflow_state_to_document_collection 中的 candidate_scenarios。",
+      "把 required 项渲染为必填，把 conditional 项渲染为附加问题（先问 trigger_condition）。"
+    ],
+    "for_rule_engine": [
+      "用 workflow.business_rules 作为状态推进的硬约束，例如发送 COE 前必须 final_payment_paid = true。",
+      "用 documents_matrix.execution_playbook.standard_flow 作为资料收集步骤的标准 SOP。"
+    ],
+    "boundary": [
+      "本文件只汇编了 docs/事务所流程/ 内的现有材料，不替代最终入管受理口径。",
+      "如果业务规则更新，应优先更新 sources 中的源文件，再回灌本主结构。"
+    ]
+  }
+}

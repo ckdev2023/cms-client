@@ -19,6 +19,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
     banner: null,
     buttons: "normal",
     readonly: false,
+    conversationId: "conv-lead-0035",
     info: {
       id: "LEAD-2026-0035",
       name: "李华",
@@ -121,6 +122,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
     banner: "lost",
     buttons: "lost",
     readonly: true,
+    conversationId: null,
     info: {
       id: "LEAD-2026-0019",
       name: "佐藤 美咲",
@@ -204,6 +206,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
     banner: "signedNotConverted",
     buttons: "signedNotConverted",
     readonly: false,
+    conversationId: "conv-lead-0022",
     info: {
       id: "LEAD-2026-0022",
       name: "陈 大伟",
@@ -295,6 +298,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
     banner: null,
     buttons: "convertedCustomer",
     readonly: false,
+    conversationId: "conv-lead-0015",
     info: {
       id: "LEAD-2026-0015",
       name: "王 明",

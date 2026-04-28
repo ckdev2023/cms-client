@@ -388,4 +388,61 @@ describe("cross-adapter contract (p0-fe-002b-07)", () => {
     expect(result).not.toBeNull();
     expect(result![0].name).toBe("case-degrade");
   });
+
+  it("customer adapter parses wrapped (summary) DTO into CustomerCase (p0-fe-009-01)", () => {
+    const wrappedDto = {
+      case: {
+        id: "case-wrapped-001",
+        caseName: "技人国更新",
+        caseTypeCode: "work-visa",
+        stage: "S5",
+        ownerUserId: "user-wrapped",
+        customerId: "cust-wrapped",
+        createdAt: "2026-03-01T00:00:00.000Z",
+        updatedAt: "2026-04-01T00:00:00.000Z",
+      },
+      customerName: "佐藤花子",
+      groupName: "Osaka",
+      latestValidation: null,
+    };
+
+    const result = adaptCustomerCaseListResult({ items: [wrappedDto] });
+    expect(result).not.toBeNull();
+    expect(result).toHaveLength(1);
+    expect(result![0].id).toBe("case-wrapped-001");
+    expect(result![0].name).toBe("技人国更新");
+    expect(result![0].type).toBe("work-visa");
+    expect(result![0].stage).toBe("S5");
+    expect(result![0].owner).toBe("user-wrapped");
+  });
+
+  it("customer adapter handles mixed flat + wrapped items (p0-fe-009-01)", () => {
+    const flatDto = flatRow({
+      id: "case-flat-mix",
+      caseName: "flat テスト",
+    });
+    const wrappedDto = {
+      case: {
+        id: "case-wrapped-mix",
+        caseName: "wrapped テスト",
+        caseTypeCode: "visa",
+        stage: "S3",
+        ownerUserId: "user-1",
+        customerId: "cust-1",
+        createdAt: "2026-01-01",
+        updatedAt: "2026-01-02",
+      },
+      customerName: "Test",
+      groupName: "G1",
+      latestValidation: null,
+    };
+
+    const result = adaptCustomerCaseListResult({
+      items: [flatDto, wrappedDto],
+    });
+    expect(result).not.toBeNull();
+    expect(result).toHaveLength(2);
+    expect(result![0].id).toBe("case-flat-mix");
+    expect(result![1].id).toBe("case-wrapped-mix");
+  });
 });

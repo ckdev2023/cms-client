@@ -66,6 +66,46 @@ describe("useCustomerDetailModel", () => {
     expect(errorCode.value).toBe("notFound");
   });
 
+  it("maps unauthorized repository errors to unauthorized", async () => {
+    const id = ref("cust-001");
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockRejectedValue(
+        new CustomerRepositoryError({
+          code: "UNAUTHORIZED",
+          message: "forbidden",
+          status: 403,
+        }),
+      ),
+    });
+    const { customer, notFound, errorCode } = useCustomerDetailModel({
+      customerId: id,
+      repository,
+    });
+
+    await flushPromises();
+
+    expect(customer.value).toBeNull();
+    expect(notFound.value).toBe(false);
+    expect(errorCode.value).toBe("unauthorized");
+  });
+
+  it("maps unknown failures to requestFailed", async () => {
+    const id = ref("cust-001");
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockRejectedValue(new Error("boom")),
+    });
+    const { customer, notFound, errorCode } = useCustomerDetailModel({
+      customerId: id,
+      repository,
+    });
+
+    await flushPromises();
+
+    expect(customer.value).toBeNull();
+    expect(notFound.value).toBe(false);
+    expect(errorCode.value).toBe("requestFailed");
+  });
+
   it("reacts to ID changes", async () => {
     const id = ref("cust-001");
     const { customer } = useCustomerDetailModel({

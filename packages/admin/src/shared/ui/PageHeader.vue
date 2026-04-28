@@ -11,6 +11,8 @@ export interface Breadcrumb {
 </script>
 
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
+
 /**
  * 通用页面头部组件，负责标题、副标题、面包屑和操作区布局。
  */
@@ -19,6 +21,8 @@ defineProps<{
   subtitle?: string;
   breadcrumbs?: Breadcrumb[];
 }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -26,7 +30,7 @@ defineProps<{
     <nav
       v-if="breadcrumbs?.length"
       class="ui-page-header__breadcrumbs"
-      aria-label="パンくずリスト"
+      :aria-label="t('shared.breadcrumbsLabel')"
     >
       <template v-for="(crumb, i) in breadcrumbs" :key="i">
         <span v-if="i > 0" class="ui-page-header__sep" aria-hidden="true">

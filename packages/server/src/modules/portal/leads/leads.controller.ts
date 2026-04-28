@@ -15,6 +15,11 @@ import {
 
 import { Public } from "../../core/auth/auth.decorators";
 import { RequireRoles } from "../../core/auth/auth.decorators";
+import type { RequestContext } from "../../core/tenancy/requestContext";
+import {
+  LeadsAdminService,
+  type LeadListScope,
+} from "../../core/leads/leads.admin.service";
 import { AppUserAuthGuard } from "../auth/appUserAuth.guard";
 import type { AppUserContext } from "../auth/appUserAuth.service";
 import { LeadsService } from "./leads.service";
@@ -48,12 +53,20 @@ type ConvertLeadBody = {
   caseTypeCode?: unknown;
   ownerUserId?: unknown;
   orgId?: unknown;
+  confirmDedup?: unknown;
 };
 
 type ListLeadsQuery = {
   appUserId?: unknown;
+  scope?: unknown;
+  search?: unknown;
   status?: unknown;
   assignedOrgId?: unknown;
+  ownerUserId?: unknown;
+  groupId?: unknown;
+  businessType?: unknown;
+  dateFrom?: unknown;
+  dateTo?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -61,6 +74,7 @@ type ListLeadsQuery = {
 type HttpRequest = {
   headers?: Record<string, unknown>;
   appUserContext?: AppUserContext;
+  requestContext?: RequestContext;
 };
 
 function requireString(value: unknown, field: string): string {
@@ -94,6 +108,12 @@ function parseLimit(value: unknown): number | undefined {
   return i;
 }
 
+function parseScope(value: unknown): LeadListScope | undefined {
+  if (value === undefined) return undefined;
+  if (value === "mine" || value === "group" || value === "all") return value;
+  throw new BadRequestException("Invalid scope");
+}
+
 /**
  * Leads CRUD + 状态变更 + 分配接口。
  *
@@ -105,9 +125,12 @@ export class LeadsController {
   /**
    * 创建控制器。
    * @param leadsService Lead 服务
+   * @param leadsAdminService 管理端 Lead 列表服务
    */
   constructor(
     @Inject(LeadsService) private readonly leadsService: LeadsService,
+    @Inject(LeadsAdminService)
+    private readonly leadsAdminService: LeadsAdminService,
   ) {}
 
   /**
@@ -140,6 +163,22 @@ export class LeadsController {
   @UseGuards(AppUserAuthGuard)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListLeadsQuery) {
+    const adminCtx = req.requestContext;
+    if (adminCtx) {
+      return this.leadsAdminService.list(adminCtx, {
+        scope: parseScope(query.scope),
+        search: parseOptionalString(query.search, "search"),
+        status: parseOptionalString(query.status, "status"),
+        ownerUserId: parseOptionalString(query.ownerUserId, "ownerUserId"),
+        groupId: parseOptionalString(query.groupId, "groupId"),
+        businessType: parseOptionalString(query.businessType, "businessType"),
+        dateFrom: parseOptionalString(query.dateFrom, "dateFrom"),
+        dateTo: parseOptionalString(query.dateTo, "dateTo"),
+        page: parsePage(query.page),
+        limit: parseLimit(query.limit),
+      });
+    }
+
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
     const input: LeadListInput = {
@@ -218,18 +257,25 @@ export class LeadsController {
 
   /**
    * 转化 Lead 为 Case（需后台 staff+ 权限）。
+   * @param req HTTP 请求
    * @param id Lead ID
    * @param body 转化参数
    * @returns 转化结果
    */
   @RequireRoles("staff")
   @Post(":id/convert")
-  async convert(@Param("id") id: string, @Body() body: ConvertLeadBody) {
+  async convert(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: ConvertLeadBody,
+  ) {
     const input: LeadConvertInput = {
       customerId: requireString(body.customerId, "customerId"),
       caseTypeCode: requireString(body.caseTypeCode, "caseTypeCode"),
       ownerUserId: requireString(body.ownerUserId, "ownerUserId"),
       orgId: requireString(body.orgId, "orgId"),
+      confirmDedup: body.confirmDedup === true,
+      actorUserId: req.requestContext?.userId,
     };
     return this.leadsService.convert(id, input);
   }

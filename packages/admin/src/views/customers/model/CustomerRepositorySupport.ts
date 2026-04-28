@@ -9,11 +9,25 @@ export type CustomerRepositoryErrorCode =
   | "BAD_RESPONSE"
   | "VALIDATION_ERROR";
 
+/** 服务端响应体中的结构化阻断项。 */
+export interface ServerBlocker {
+  /**
+   *
+   */
+  code: string;
+  /**
+   *
+   */
+  message?: string;
+}
+
 interface CustomerRepositoryErrorInput {
   code: CustomerRepositoryErrorCode;
   message: string;
   status?: number;
   cause?: unknown;
+  serverErrorCode?: string;
+  serverBlockers?: ServerBlocker[];
 }
 
 /**
@@ -64,6 +78,10 @@ export class CustomerRepositoryError extends Error {
    *
    */
   readonly status?: number;
+  /** 服务端返回的业务错误码（如 CASE_BMV_GATE_BLOCKED）。 */
+  readonly serverErrorCode?: string;
+  /** 服务端返回的门禁阻断项列表。 */
+  readonly serverBlockers?: ServerBlocker[];
 
   /**
    * 创建客户仓储错误实例。
@@ -75,6 +93,8 @@ export class CustomerRepositoryError extends Error {
     this.name = "CustomerRepositoryError";
     this.code = input.code;
     this.status = input.status;
+    this.serverErrorCode = input.serverErrorCode;
+    this.serverBlockers = input.serverBlockers;
   }
 }
 
@@ -122,6 +142,40 @@ function buildRequestHeaders(
   };
 }
 
+function extractServerErrorCode(body: unknown): string | undefined {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return undefined;
+  const record = body as Record<string, unknown>;
+  if (typeof record.code === "string" && record.code.trim()) return record.code;
+  if (typeof record.errorCode === "string" && record.errorCode.trim())
+    return record.errorCode;
+  return undefined;
+}
+
+function extractServerBlockers(body: unknown): ServerBlocker[] | undefined {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return undefined;
+  const record = body as Record<string, unknown>;
+  if (!Array.isArray(record.blockers)) return undefined;
+  const blockers: ServerBlocker[] = [];
+  for (const item of record.blockers) {
+    if (
+      item &&
+      typeof item === "object" &&
+      typeof (item as Record<string, unknown>).code === "string"
+    ) {
+      blockers.push({
+        code: (item as Record<string, unknown>).code as string,
+        message:
+          typeof (item as Record<string, unknown>).message === "string"
+            ? ((item as Record<string, unknown>).message as string)
+            : undefined,
+      });
+    }
+  }
+  return blockers.length > 0 ? blockers : undefined;
+}
+
 function buildBadResponseError(
   response: Response,
   body: unknown,
@@ -141,6 +195,8 @@ function buildBadResponseError(
       (response.status === 401
         ? "Customer access denied"
         : `Customer request failed with status ${response.status}`),
+    serverErrorCode: extractServerErrorCode(body),
+    serverBlockers: extractServerBlockers(body),
   });
 }
 

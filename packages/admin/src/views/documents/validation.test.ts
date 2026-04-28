@@ -10,8 +10,8 @@ import {
   STATUS_TRANSITIONS,
   WAIVED_REASON_CODES,
   WAIVED_REASONS,
-  getProviderLabel,
-  getStatusLabel,
+  getProviderLabelKey,
+  getStatusLabelKey,
   getStatusTone,
   getWaivedReasonLabel,
 } from "./constants";
@@ -31,7 +31,7 @@ describe("documents/constants", () => {
     expect(DOCUMENT_STATUS_IDS).toHaveLength(6);
     for (const id of DOCUMENT_STATUS_IDS) {
       expect(DOCUMENT_STATUSES[id]).toBeDefined();
-      expect(DOCUMENT_STATUSES[id].label).toBeTruthy();
+      expect(DOCUMENT_STATUSES[id].labelKey).toBeTruthy();
       expect(DOCUMENT_STATUSES[id].badge).toBeTruthy();
     }
   });
@@ -62,15 +62,17 @@ describe("documents/constants", () => {
   });
 
   it("label helpers fall back to raw key for unknown values", () => {
-    expect(getStatusLabel("unknown")).toBe("unknown");
-    expect(getProviderLabel("unknown")).toBe("unknown");
+    expect(getStatusLabelKey("unknown")).toBe("unknown");
+    expect(getProviderLabelKey("unknown")).toBe("unknown");
     expect(getWaivedReasonLabel("unknown")).toBe("unknown");
   });
 
-  it("label helpers return correct labels for known values", () => {
-    expect(getStatusLabel("pending")).toBe("待提交");
-    expect(getStatusLabel("waived")).toBe("无需提供");
-    expect(getProviderLabel("main_applicant")).toBe("主申请人");
+  it("label helpers return correct label keys for known values", () => {
+    expect(getStatusLabelKey("pending")).toBe("documents.status.pending");
+    expect(getStatusLabelKey("waived")).toBe("documents.status.waived");
+    expect(getProviderLabelKey("main_applicant")).toBe(
+      "documents.providers.mainApplicant",
+    );
     expect(getWaivedReasonLabel("other")).toBe("其他");
   });
 

@@ -7,6 +7,8 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import CustomerSummaryCards from "./components/CustomerSummaryCards.vue";
 import CustomerFilters from "./components/CustomerFilters.vue";
 import CustomerBulkActionBar from "./components/CustomerBulkActionBar.vue";
@@ -14,25 +16,37 @@ import CustomerTable from "./components/CustomerTable.vue";
 import CustomerPagination from "./components/CustomerPagination.vue";
 import CustomerCreateModal from "./components/CustomerCreateModal.vue";
 import CustomerToast from "./components/CustomerToast.vue";
-import { CURRENT_VIEWER, GROUP_OPTIONS, OWNER_OPTIONS } from "./fixtures";
-import type { CustomerCreateFormFields, SummaryCardData } from "./types";
+import { CURRENT_VIEWER } from "./fixtures";
+import type {
+  CustomerCreateFormFields,
+  SelectOption,
+  SummaryCardData,
+} from "./types";
 import { useCustomerCreateForm } from "./model/useCustomerCreateForm";
 import { useCustomerToast } from "./model/useCustomerToast";
+import { useCustomerCreatedHighlight } from "./model/useCustomerCreatedHighlight";
 import { useCustomerDrafts } from "./model/useCustomerDrafts";
 import { deriveCustomerSummaryStats } from "./model/useCustomerFilters";
 import { useCustomerListModel } from "./model/useCustomerListModel";
 import { createCustomerRepository } from "./model/CustomerRepository";
 
 /** 客户列表页组合层，装配筛选、表格、批量操作、弹窗、toast、草稿等子模块。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
 
 const repository = createCustomerRepository();
+const groupOptions = computed<SelectOption[]>(() =>
+  getActiveGroupOptions(locale.value),
+);
+const ownerOptions = computed<SelectOption[]>(() =>
+  getOwnerOptions(locale.value).map(({ value, label }) => ({ value, label })),
+);
 const listModel = useCustomerListModel({ repository });
 const {
   filters,
   filteredCustomers,
+  loading,
   selectedIds,
   selectedCount,
   isAllSelected,
@@ -89,6 +103,8 @@ function handleSelectAll(checked: boolean) {
 }
 
 const toast = useCustomerToast();
+const { highlightedCustomerId, highlightCustomer } =
+  useCustomerCreatedHighlight();
 
 const { drafts, saveDraft, removeDraft, getDraft } = useCustomerDrafts({
   storage: window.localStorage,
@@ -106,7 +122,7 @@ async function handleAssignOwner(ownerId: string) {
   if (count === 0) return;
 
   const label =
-    OWNER_OPTIONS.find((o) => o.value === ownerId)?.label ?? ownerId;
+    ownerOptions.value.find((o) => o.value === ownerId)?.label ?? ownerId;
   const updated = await bulkAssignOwner(ownerId);
   if (updated === 0) return;
 
@@ -129,7 +145,7 @@ async function handleChangeGroup(groupId: string) {
   if (count === 0) return;
 
   const label =
-    GROUP_OPTIONS.find((g) => g.value === groupId)?.label ?? groupId;
+    groupOptions.value.find((g) => g.value === groupId)?.label ?? groupId;
   const updated = await bulkChangeGroup(groupId);
   if (updated === 0) return;
 
@@ -216,6 +232,7 @@ async function handleCreate() {
   }
 
   await retry();
+  highlightCustomer(created.id);
   closeModal();
   toast.show({
     title: t("customers.list.toast.customerCreated.title"),
@@ -320,6 +337,9 @@ watch(
       :owner-filter="filters.owner"
       :active-cases-filter="filters.activeCases"
       :filtered-count="filteredCustomers.length"
+      :options-loading="loading"
+      :group-options="groupOptions"
+      :owner-options="ownerOptions"
       @update:scope="setScope($event)"
       @update:search="setSearch($event)"
       @update:group-filter="setGroup($event)"
@@ -332,8 +352,8 @@ watch(
       <CustomerBulkActionBar
         :selected-count="selectedCount"
         :loading="bulkLoading"
-        :owner-options="OWNER_OPTIONS"
-        :group-options="GROUP_OPTIONS"
+        :owner-options="ownerOptions"
+        :group-options="groupOptions"
         @clear="clearSelection"
         @assign-owner="handleAssignOwner"
         @change-group="handleChangeGroup"
@@ -344,10 +364,12 @@ watch(
         :selected-ids="selectedIds"
         :all-selected="isAllSelected"
         :indeterminate="isIndeterminate"
+        :highlighted-customer-id="highlightedCustomerId"
         @select-all="handleSelectAll"
         @select-row="toggleSelectRow"
         @resume-draft="handleResumeDraft"
         @remove-draft="handleRemoveDraft"
+        @open-create-modal="openModal"
       />
       <CustomerPagination
         :page="page"
@@ -366,7 +388,7 @@ watch(
       :can-create="canCreate"
       :show-dedupe="showDedupe"
       :dedupe-matches="dedupeMatches"
-      :group-options="GROUP_OPTIONS"
+      :group-options="groupOptions"
       :checking-duplicates="checkingDuplicates"
       :dedupe-error-code="dedupeErrorCode"
       :submitting="submitting"

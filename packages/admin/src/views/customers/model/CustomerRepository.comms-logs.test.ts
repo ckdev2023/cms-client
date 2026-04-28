@@ -127,6 +127,7 @@ describe("CustomerRepository comms/logs", () => {
           id: "log-001",
           action: "customer.updated",
           actorUserId: "user-001",
+          actorDisplayName: "田中太郎",
           payload: {
             before: { displayName: "田中" },
             after: { displayName: "田中太郎" },
@@ -144,7 +145,7 @@ describe("CustomerRepository comms/logs", () => {
       {
         id: "log-001",
         type: "info",
-        actor: "user-001",
+        actor: "田中太郎",
         at: "2026-04-10T09:00:00.000Z",
         message: "更新客户信息",
       },

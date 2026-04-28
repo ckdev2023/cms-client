@@ -303,6 +303,7 @@ describe("adaptCaseLogDto", () => {
     entityId: "case-1",
     action: "case.created",
     actorUserId: "user-abc",
+    actorDisplayName: "Tanaka Yuki",
     payload: { caseTypeCode: "business_manager" },
     createdAt: "2026-03-15T09:00:00.000Z",
   };
@@ -316,9 +317,9 @@ describe("adaptCaseLogDto", () => {
     expect(result!.categoryChip).toBe("chip-muted");
     expect(result!.objectType).toBe("案件");
     expect(result!.time).toBe("2026-03-15T09:00:00.000Z");
+    expect(result!.avatar).toBe("TY");
     expect(result!.dotColor).toBe("var(--muted)");
   });
-
   it("adapts case.status_changed", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -331,7 +332,6 @@ describe("adaptCaseLogDto", () => {
     expect(result!.categoryChip).toBe("chip-primary");
     expect(result!.dotColor).toBe("var(--primary)");
   });
-
   it("adapts case.billing_risk_acknowledged", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -341,7 +341,6 @@ describe("adaptCaseLogDto", () => {
     expect(result!.type).toBe("status");
     expect(result!.text).toBe("未収金リスク確認：deposit_pending");
   });
-
   it("adapts case.post_approval_stage_changed", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -422,16 +421,19 @@ describe("adaptCaseLogDto", () => {
       entity_id: "case-1",
       action: "case.updated",
       actor_user_id: "user-xyz",
+      actor_display_name: "Yamada Hanako",
       payload: {},
       created_at: "2026-03-15T10:00:00.000Z",
     });
     expect(result).not.toBeNull();
     expect(result!.text).toBe("案件情報更新");
+    expect(result!.avatar).toBe("YH");
   });
 
   it("defaults actor to System when actorUserId is null", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
+      actorDisplayName: null,
       actorUserId: null,
     });
     expect(result!.avatar).toBe("SY");
@@ -482,9 +484,10 @@ describe("adaptCaseLogListResult", () => {
     expect(result).toHaveLength(1);
   });
 
-  it("returns null if any item fails to adapt", () => {
+  it("skips malformed items and returns valid ones", () => {
     const result = adaptCaseLogListResult([validLog, { bad: true }]);
-    expect(result).toBeNull();
+    expect(result).toHaveLength(1);
+    expect(result![0].text).toBe("案件作成");
   });
 
   it("returns null for non-array/non-object input", () => {

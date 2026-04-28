@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
+import { ConflictException } from "@nestjs/common";
 
 import { MessagesService } from "./messages.service";
 
@@ -122,4 +123,111 @@ void test("MessagesService.list filters by conversationId", async () => {
   assert.equal(result.total, 1);
   assert.equal(result.items.length, 1);
   assert.ok(calls.some((c) => c.params?.includes("conv-1")));
+});
+
+// ── send: closed conversation → 409 ──
+
+void test("MessagesService.send throws ConflictException when conversation is closed", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("select status from conversations"))
+      return Promise.resolve({ rows: [{ status: "closed" }] });
+    return Promise.resolve({ rows: [SAMPLE_MSG_ROW] });
+  });
+
+  await assert.rejects(
+    () =>
+      svc.send({
+        conversationId: "conv-closed",
+        senderType: "app_user",
+        senderId: "au-1",
+        originalLanguage: "zh",
+        originalText: "hello",
+      }),
+    (err: unknown) => {
+      assert.ok(err instanceof ConflictException);
+      return true;
+    },
+  );
+});
+
+void test("MessagesService.send succeeds when conversation is open", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("select status from conversations"))
+      return Promise.resolve({ rows: [{ status: "open" }] });
+    return Promise.resolve({ rows: [SAMPLE_MSG_ROW] });
+  });
+
+  const result = await svc.send({
+    conversationId: "conv-1",
+    senderType: "app_user",
+    senderId: "au-1",
+    originalLanguage: "zh",
+    originalText: "hello",
+  });
+  assert.equal(result.id, "msg-1");
+});
+
+void test("MessagesService.send throws when conversation not found", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("select status from conversations"))
+      return Promise.resolve({ rows: [] });
+    return Promise.resolve({ rows: [SAMPLE_MSG_ROW] });
+  });
+
+  await assert.rejects(
+    () =>
+      svc.send({
+        conversationId: "conv-missing",
+        senderType: "app_user",
+        senderId: "au-1",
+        originalLanguage: "zh",
+        originalText: "hello",
+      }),
+    (err: unknown) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("Conversation not found"));
+      return true;
+    },
+  );
+});
+
+// ── list: markReadFor clears unread_count_user ──
+
+void test("MessagesService.list clears unread_count_user when markReadFor=user", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const { svc } = createService((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)"))
+      return Promise.resolve({ rows: [{ count: "1" }] });
+    if (sql.includes("update conversations"))
+      return Promise.resolve({ rows: [] });
+    return Promise.resolve({ rows: [SAMPLE_MSG_ROW] });
+  });
+
+  await svc.list({ conversationId: "conv-1", markReadFor: "user" });
+
+  const updateCall = calls.find((c) => c.sql.includes("update conversations"));
+  assert.ok(updateCall, "should issue UPDATE to clear unread_count_user");
+  assert.ok(updateCall.sql.includes("unread_count_user = 0"));
+  assert.ok(!updateCall.sql.includes("unread_count_staff"));
+  assert.deepEqual(updateCall.params, ["conv-1"]);
+});
+
+void test("MessagesService.list does not clear any unread count when markReadFor is omitted", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const { svc } = createService((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)"))
+      return Promise.resolve({ rows: [{ count: "1" }] });
+    return Promise.resolve({ rows: [SAMPLE_MSG_ROW] });
+  });
+
+  await svc.list({ conversationId: "conv-1" });
+
+  const updateCall = calls.find((c) => c.sql.includes("update conversations"));
+  assert.equal(
+    updateCall,
+    undefined,
+    "should NOT issue UPDATE when markReadFor is omitted",
+  );
 });

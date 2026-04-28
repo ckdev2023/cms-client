@@ -1,6 +1,7 @@
 const settingsEnUS = {
   title: "System Settings",
   subnav: {
+    ariaLabel: "Settings sub-navigation",
     groupManagement: "Group Management",
     visibilityConfig: "Visibility Settings",
     storageRoot: "Local Document Root",

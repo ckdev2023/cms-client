@@ -8,9 +8,20 @@ function makeRouter() {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/", component: { template: "<div />" } },
-      { path: "/billing", component: { template: "<div />" } },
-      { path: "/leads", component: { template: "<div />" } },
+      { path: "/", name: "dashboard", component: { template: "<div />" } },
+      { path: "/billing", name: "billing", component: { template: "<div />" } },
+      { path: "/leads", name: "leads", component: { template: "<div />" } },
+      {
+        path: "/customers",
+        name: "customers",
+        component: { template: "<div />" },
+      },
+      { path: "/cases", name: "cases", component: { template: "<div />" } },
+      {
+        path: "/cases/create",
+        name: "case-create",
+        component: { template: "<div />" },
+      },
     ],
   });
 }
@@ -99,13 +110,57 @@ describe("QuickActionsPanel", () => {
     expect(router.currentRoute.value.query).toEqual({ action: "new" });
   });
 
-  it("disables quick actions that do not have a route yet", () => {
+  it("navigates to /cases/create when createCase card is clicked", async () => {
+    const router = makeRouter();
+    await router.push("/");
+    await router.isReady();
+    const w = mount(QuickActionsPanel, {
+      props: { timeWindow: 7, scopeSummary: "" },
+      global: { plugins: [i18n, router] },
+    });
+    const cards = w.findAll(".quick-action-card");
+    await cards[2]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/cases/create");
+  });
+
+  it("navigates to /customers?action=new when createCustomer card is clicked", async () => {
+    const router = makeRouter();
+    await router.push("/");
+    await router.isReady();
+    const w = mount(QuickActionsPanel, {
+      props: { timeWindow: 7, scopeSummary: "" },
+      global: { plugins: [i18n, router] },
+    });
+    const cards = w.findAll(".quick-action-card");
+    await cards[1]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/customers");
+    expect(router.currentRoute.value.query).toEqual({ action: "new" });
+  });
+
+  it("navigates to /cases when chase due items card is clicked", async () => {
+    const router = makeRouter();
+    await router.push("/");
+    await router.isReady();
+    const w = mount(QuickActionsPanel, {
+      props: { timeWindow: 7, scopeSummary: "" },
+      global: { plugins: [i18n, router] },
+    });
+    const cards = w.findAll(".quick-action-card");
+    await cards[3]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/cases");
+    expect(router.currentRoute.value.query).toEqual({});
+  });
+
+  it("keeps quick actions enabled when routes are wired", () => {
     const w = mountPanel();
     const cards = w.findAll(".quick-action-card");
     expect((cards[0]!.element as HTMLButtonElement).disabled).toBe(false);
-    expect((cards[1]!.element as HTMLButtonElement).disabled).toBe(true);
-    expect((cards[2]!.element as HTMLButtonElement).disabled).toBe(true);
-    expect((cards[3]!.element as HTMLButtonElement).disabled).toBe(true);
+    expect((cards[1]!.element as HTMLButtonElement).disabled).toBe(false);
+    expect((cards[2]!.element as HTMLButtonElement).disabled).toBe(false);
+    expect((cards[3]!.element as HTMLButtonElement).disabled).toBe(false);
   });
 
   it("disables inline actions that do not have a route yet", () => {

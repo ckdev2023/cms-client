@@ -3,9 +3,10 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 import type { ApplicationType, CaseTemplateDef } from "../types";
+import { resolveTemplateLabel } from "../types-create";
 
 /** 步骤一：选择案件模板、申请类型、案件标题。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 defineProps<{
   model: CreateCaseModel;
@@ -21,14 +22,30 @@ defineProps<{
         v-for="tpl in templates"
         :key="tpl.id"
         type="button"
-        :class="['tpl', { 'is-active': model.draft.templateId === tpl.id }]"
-        @click="model.selectTemplate(tpl.id)"
+        :class="[
+          'tpl',
+          {
+            'is-active': model.draft.templateId === tpl.id,
+            'is-locked': model.templateLocked.value,
+          },
+        ]"
+        :disabled="
+          model.templateLocked.value && model.draft.templateId !== tpl.id
+        "
+        :aria-disabled="model.templateLocked.value"
+        @click="!model.templateLocked.value && model.selectTemplate(tpl.id)"
       >
         <div class="tpl__head">
-          <span class="tpl__name">{{ tpl.label }}</span>
-          <Chip size="sm" tone="primary">{{ tpl.badge }}</Chip>
+          <span class="tpl__name">{{
+            resolveTemplateLabel(tpl.label, locale)
+          }}</span>
+          <Chip size="sm" tone="primary">{{
+            t("cases.create.templateBadge." + tpl.badge)
+          }}</Chip>
         </div>
-        <span class="tpl__sub">{{ tpl.subtitle }}</span>
+        <span class="tpl__sub">{{
+          resolveTemplateLabel(tpl.subtitle, locale)
+        }}</span>
       </button>
     </div>
     <div class="cc__fields">
@@ -50,7 +67,7 @@ defineProps<{
             :key="at"
             :value="at"
           >
-            {{ at }}
+            {{ t("cases.create.applicationTypes." + at) }}
           </option>
         </select>
       </div>
@@ -111,6 +128,15 @@ defineProps<{
   border-color: var(--color-primary-6);
   background: rgba(3, 105, 161, 0.03);
   box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.08);
+}
+
+.tpl:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.tpl.is-locked.is-active {
+  cursor: default;
 }
 
 .tpl__head {

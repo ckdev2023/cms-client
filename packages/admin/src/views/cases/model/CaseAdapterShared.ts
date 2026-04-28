@@ -1,4 +1,5 @@
 import type { CaseStageId } from "../types";
+import { CASE_STAGES } from "../constants";
 
 /**
  * 安全地将 unknown 值转为 record（仅当值为非数组对象时）。
@@ -44,6 +45,21 @@ export function readNullableString(
 }
 
 /**
+ * 从 record 中读取字符串字段，空字符串视为缺失，返回 `undefined`。
+ *
+ * @param record - 来源记录
+ * @param key - 字段键名
+ * @returns 非空字符串值或 `undefined`
+ */
+export function readOptionalString(
+  record: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const v = record[key];
+  return typeof v === "string" && v ? v : undefined;
+}
+
+/**
  * 从 record 中读取数值字段，缺省返回 `0`。
  *
  * @param record - 来源记录
@@ -73,18 +89,6 @@ export function readBoolean(
   return record[key] === true;
 }
 
-const VALID_STAGES = new Set<string>([
-  "S1",
-  "S2",
-  "S3",
-  "S4",
-  "S5",
-  "S6",
-  "S7",
-  "S8",
-  "S9",
-]);
-
 /**
  * 将原始阶段字符串解析为类型化的 `CaseStageId`。
  *
@@ -92,7 +96,62 @@ const VALID_STAGES = new Set<string>([
  * @returns 类型化阶段 ID，无法识别时默认 `"S1"`
  */
 export function resolveStageId(value: string): CaseStageId {
-  return VALID_STAGES.has(value) ? (value as CaseStageId) : "S1";
+  return value in CASE_STAGES ? (value as CaseStageId) : "S1";
+}
+
+/**
+ * 将阶段 ID 映射为 fallback 标签（不经过 i18n）。
+ *
+ * @param stageId - 类型化阶段 ID
+ * @returns 中文 fallback 标签；未匹配时返回原始值
+ */
+export function resolveStageLabel(stageId: CaseStageId): string {
+  return CASE_STAGES[stageId]?.label ?? stageId;
+}
+
+/**
+ * 将阶段 ID 映射为 i18n key，供 `t()` 翻译。
+ *
+ * @param stageId - 类型化阶段 ID
+ * @returns i18n key；未匹配时返回 `""`
+ */
+export function resolveStageI18nKey(stageId: CaseStageId): string {
+  return CASE_STAGES[stageId]?.i18nKey ?? "";
+}
+
+/**
+ * 将阶段 ID 映射为 badge 类名（对齐 `BADGE_TONE_MAP`）。
+ *
+ * @param stageId - 类型化阶段 ID
+ * @returns badge 类名（如 `"badge-orange"`）
+ */
+export function resolveStageBadge(stageId: CaseStageId): string {
+  return CASE_STAGES[stageId]?.badge ?? "badge-gray";
+}
+
+/**
+ * 判断截止日期是否处于紧急状态（已过期或 `thresholdDays` 天内到期）。
+ *
+ * @param dueAt - ISO 日期字符串或 `null`
+ * @param thresholdDays - 紧急阈值天数，默认 7
+ * @returns `true` 表示到期日在阈值内或已过期
+ */
+export function isDeadlineDanger(
+  dueAt: string | null,
+  thresholdDays = 7,
+): boolean {
+  if (!dueAt) return false;
+  try {
+    const due = new Date(dueAt);
+    if (Number.isNaN(due.getTime())) return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    const diffDays = (due.getTime() - today.getTime()) / 86_400_000;
+    return diffDays <= thresholdDays;
+  } catch {
+    return false;
+  }
 }
 
 /**

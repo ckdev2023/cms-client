@@ -4,12 +4,14 @@ import {
   UnauthorizedException,
   type ExecutionContext,
 } from "@nestjs/common";
+import type { RequestContext } from "../../core/tenancy/requestContext";
 import { verifyAppUserJwt, readJwtSecret } from "./appUserAuth.service";
 import type { AppUserContext } from "./appUserAuth.service";
 
 type HttpRequest = {
   headers?: Record<string, unknown>;
   appUserContext?: AppUserContext;
+  requestContext?: RequestContext;
 };
 
 /**
@@ -29,6 +31,8 @@ export class AppUserAuthGuard implements CanActivate {
    */
   canActivate(context: ExecutionContext): boolean {
     const req = context.switchToHttp().getRequest<HttpRequest>();
+    if (req.requestContext) return true;
+
     const authHeader =
       typeof req.headers?.authorization === "string"
         ? req.headers.authorization

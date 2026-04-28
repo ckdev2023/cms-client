@@ -1,6 +1,7 @@
 const settingsJaJP = {
   title: "システム設定",
   subnav: {
+    ariaLabel: "設定サブナビゲーション",
     groupManagement: "グループ管理",
     visibilityConfig: "可視性設定",
     storageRoot: "ローカル資料ルートディレクトリ",

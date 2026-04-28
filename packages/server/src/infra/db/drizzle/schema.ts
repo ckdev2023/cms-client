@@ -349,6 +349,8 @@ export const cases = pgTable("cases", {
     withTimezone: true,
     mode: "string",
   }),
+  businessPhase: text("business_phase").notNull(),
+  currentWorkflowStepCode: text("current_workflow_step_code"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
     .notNull()
     .defaultNow(),
@@ -523,6 +525,7 @@ export const documentItems = pgTable(
       withTimezone: true,
       mode: "string",
     }),
+    surveyData: jsonb("survey_data").$type<Record<string, unknown> | null>(),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
       .notNull()
       .defaultNow(),
@@ -537,6 +540,66 @@ export const documentItems = pgTable(
     index("idx_document_items_waived_by_user_id_latest").on(
       table.waivedByUserIdLatest,
     ),
+    index("idx_document_items_category").on(table.caseId, table.category),
+  ],
+);
+
+/**
+ * `case_templates` 表定义。
+ *
+ * 用途：
+ * - 预置案件模板（P0：家族滞在、技人国；P1：经营管理签）
+ * - 驱动资料清单生成、校验规则、默认任务与业务子步骤蓝图
+ * - 三个 blueprint 字段（workflow_steps / extra_fields / reminder_schedule）
+ *   P0 为 null（降级运行），P1 经营管理签模板填充后启用
+ *
+ * @returns case_templates 表的 Drizzle schema
+ */
+export const caseTemplates = pgTable(
+  "case_templates",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    templateName: text("template_name").notNull(),
+    caseType: text("case_type").notNull(),
+    applicationType: text("application_type"),
+    requirementBlueprint: jsonb("requirement_blueprint").$type<
+      Record<string, unknown>[] | null
+    >(),
+    defaultTasksBlueprint: jsonb("default_tasks_blueprint").$type<Record<
+      string,
+      unknown
+    > | null>(),
+    validationRulesetRef: jsonb("validation_ruleset_ref").$type<Record<
+      string,
+      unknown
+    > | null>(),
+    reviewRequiredFlag: boolean("review_required_flag")
+      .notNull()
+      .default(false),
+    billingGateMode: text("billing_gate_mode").notNull().default("warn"),
+    workflowStepsBlueprint: jsonb("workflow_steps_blueprint").$type<
+      Record<string, unknown>[] | null
+    >(),
+    extraFieldsSchema: jsonb("extra_fields_schema").$type<
+      Record<string, unknown>[] | null
+    >(),
+    reminderScheduleBlueprint: jsonb(
+      "reminder_schedule_blueprint",
+    ).$type<Record<string, unknown> | null>(),
+    activeFlag: boolean("active_flag").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("idx_case_templates_org").on(table.orgId),
+    index("idx_case_templates_case_type").on(table.orgId, table.caseType),
   ],
 );
 
@@ -570,6 +633,8 @@ export const residencePeriods = pgTable(
     validUntil: date("valid_until", { mode: "string" }).notNull(),
     cardNumber: text("card_number"),
     isCurrent: boolean("is_current").notNull().default(false),
+    entryDate: date("entry_date", { mode: "string" }),
+    reminderCreated: boolean("reminder_created").notNull().default(false),
     notes: text("notes"),
     createdBy: uuid("created_by").references(() => users.id),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
@@ -936,6 +1001,7 @@ export const organizationsRelations = relations(organizations, ({ many }) => ({
   companies: many(companies),
   groups: many(groups),
   cases: many(cases),
+  caseTemplates: many(caseTemplates),
   communicationLogs: many(communicationLogs),
   caseStageHistory: many(caseStageHistory),
 }));
@@ -1113,6 +1179,18 @@ export const caseStageHistoryRelations = relations(
     }),
   }),
 );
+
+/**
+ * `case_templates` 的关联关系定义。
+ *
+ * @returns case_templates 相关 relations
+ */
+export const caseTemplatesRelations = relations(caseTemplates, ({ one }) => ({
+  organization: one(organizations, {
+    fields: [caseTemplates.orgId],
+    references: [organizations.id],
+  }),
+}));
 
 /**
  * `communication_logs` 的关联关系定义。

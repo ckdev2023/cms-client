@@ -1,6 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import { beforeEach, describe, it, expect, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
+import { i18n, setAppLocale } from "../i18n";
 import AppShell from "./AppShell.vue";
 
 const stubs = {
@@ -49,7 +50,7 @@ async function mountShell(options: Parameters<typeof mount>[1] = {}) {
     attachTo: options.attachTo ?? document.body,
     global: {
       ...(options.global ?? {}),
-      plugins: [...(options.global?.plugins ?? []), router],
+      plugins: [...(options.global?.plugins ?? []), i18n, router],
       stubs: {
         ...stubs,
         ...(options.global?.stubs ?? {}),
@@ -61,6 +62,10 @@ async function mountShell(options: Parameters<typeof mount>[1] = {}) {
 }
 
 describe("AppShell", () => {
+  beforeEach(() => {
+    setAppLocale("zh-CN");
+  });
+
   it("renders the app-shell root element", async () => {
     const { wrapper: w } = await mountShell();
     expect(w.find(".app-shell").exists()).toBe(true);
@@ -71,6 +76,26 @@ describe("AppShell", () => {
     const link = w.find(".skip-link");
     expect(link.exists()).toBe(true);
     expect(link.attributes("href")).toBe("#main-content");
+    expect(link.text()).toBe("跳到内容");
+  });
+
+  it("localizes the skip link in ja-JP", async () => {
+    setAppLocale("ja-JP");
+    const { wrapper: w } = await mountShell();
+    expect(w.find(".skip-link").text()).toBe("コンテンツへスキップ");
+  });
+
+  it("adds a visible modifier when the skip link receives focus", async () => {
+    const { wrapper: w } = await mountShell();
+    const link = w.find(".skip-link");
+
+    expect(link.classes()).not.toContain("skip-link--visible");
+
+    await link.trigger("focus");
+    expect(link.classes()).toContain("skip-link--visible");
+
+    await link.trigger("blur");
+    expect(link.classes()).not.toContain("skip-link--visible");
   });
 
   it("renders TopBar component", async () => {
@@ -98,14 +123,19 @@ describe("AppShell", () => {
 
   it("passes userInitials prop to TopBar", async () => {
     const TopBarSpy = {
-      props: ["userInitials"],
-      template: "<header>{{ userInitials }}</header>",
+      props: ["userEmail", "userInitials", "userName"],
+      template:
+        "<header>{{ userName }}|{{ userEmail }}|{{ userInitials }}</header>",
     };
     const { wrapper: w } = await mountShell({
-      props: { userInitials: "TK" },
+      props: {
+        userEmail: "tanaka@example.com",
+        userInitials: "TK",
+        userName: "Tanaka Ken",
+      },
       global: { stubs: { ...stubs, TopBar: TopBarSpy } },
     });
-    expect(w.find("header").text()).toBe("TK");
+    expect(w.find("header").text()).toBe("Tanaka Ken|tanaka@example.com|TK");
   });
 
   it("forwards topbar-actions slot to TopBar", async () => {

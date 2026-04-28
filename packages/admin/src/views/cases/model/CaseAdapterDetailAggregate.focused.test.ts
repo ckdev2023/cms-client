@@ -57,6 +57,8 @@ const FULL_DEEP_LINK = {
 const FULL_COUNTS = {
   documentItemsTotal: 20,
   documentItemsDone: 12,
+  questionnaireItemsTotal: 0,
+  questionnaireItemsDone: 0,
   caseParties: 5,
   tasks: 8,
   tasksPending: 3,
@@ -147,10 +149,10 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
   });
 
   it("header stage fields", () => {
-    expect(result.detail.stage).toBe("S4");
+    expect(result.detail.stage).toBe("文书制作中");
     expect(result.detail.stageCode).toBe("S4");
-    expect(result.detail.stageMeta).toBe("Stage S4");
-    expect(result.detail.statusBadge).toBe("active");
+    expect(result.detail.stageMeta).toBe("S4");
+    expect(result.detail.statusBadge).toBe("badge-blue");
     expect(result.detail.readonly).toBe(false);
   });
 
@@ -297,9 +299,9 @@ describe("all-null empty state (p0-fe-002c-04)", () => {
   });
 
   it("stage defaults to S1", () => {
-    expect(result.detail.stage).toBe("S1");
+    expect(result.detail.stage).toBe("刚开始办案");
     expect(result.detail.stageCode).toBe("S1");
-    expect(result.detail.statusBadge).toBe("active");
+    expect(result.detail.statusBadge).toBe("badge-gray");
     expect(result.detail.readonly).toBe(false);
   });
 

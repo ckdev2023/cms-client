@@ -163,6 +163,15 @@ npm run fix
 npm run guard
 ```
 
-## 7. 备注
+## 7. 関連計画
+
+| 関連計画 | 範囲 | 関係 |
+|---------|------|------|
+| **咨询会话 P0/P1 対接計画**（Cursor Plan `咨询会话p0p1対接_da523116`） | P0 Lead Admin 接口 + P0 会話 Admin 接口 + P1 BMV 签約前承接→転案件交接面 + Admin 前端 Lead/Conversation/BMV 対齐 | 本計画負責 Case 主链路（S1–S9 + Gate 糾偏）；対接計画負責 Lead→Conversation→BMV→Case 的上游交接通道。兩者共享 `tenantDb` / RLS / `timeline_logs` 審計基盤。 |
+| [p1-sv-000-01 BMV 真相源冻結](case-module/p1-sv-000-01-bmv-source-of-truth-freeze.md) | BMV 字段真相源、写入口、聚合入口、双写禁令 | 対接計画 Phase D（BMV 承接接口）必須遵循 000-01 的写入口矩陣与双写禁令。 |
+| [p1-sv-000-02 BMV Schema 帰属](case-module/p1-sv-000-02-bmv-schema-and-readwrite-ownership.md) | Schema 落点、読模型帰属、消費境界 | 対接計画 Phase G（Admin BMV 対齐）必須遵循 000-02 的 admin 読模型消費境界。 |
+| [p1-sv-000-03 Migration Backfill](case-module/p1-sv-000-03-migration-backfill-and-regression-plan.md) | Migration 執行順序、回帰驗證 | 対接計画 Phase A–D 的新 migration（027–030）排在 000-03 定義的 023–025 之後。 |
+
+## 8. 备注
 
 本计划先以 **P0 纠偏** 为主，不建议在修复过程中顺手扩展新的 P1 功能。P1 相关代码优先做“隔离/降级/受开关控制”，而不是继续外扩。

@@ -12,6 +12,10 @@ export {
   BILLING_SLICE_CONSUMED_FIELDS,
   LATEST_VALIDATION_SLICE_CONSUMED_FIELDS,
   PROVIDER_PROGRESS_ENTRY_CONSUMED_FIELDS,
+  BMV_CASE_RECORD_CONSUMED_FIELDS,
+  BMV_DETAIL_TARGET_KEYS,
+  FAILURE_CLOSEOUT_CONSUMED_FIELDS,
+  FAILURE_CLOSEOUT_ATTRIBUTION_CONSUMED_FIELDS,
 } from "./CaseAdapterDetailContracts";
 
 // ─── Boundary (frozen by p0-fe-002b-01) ─────────────────────────
@@ -122,35 +126,22 @@ export interface CaseSummaryResult {
   cards: CaseSummaryCardData[];
 }
 
-// ─── Customer Downstream Reuse Contract (frozen by p0-fe-002b-01 / -03 / -07) ─
-// customer 模块通过 `/api/cases?customerId=` 查询关联案件时，
-// 依赖以下最小字段集。cases 列表接口 / adapter 演进时不得移除这些字段，
-// 否则需同步校准 CustomerAdapterMappers.adaptCustomerCaseDto。
-//
-// 复用路径（3 层）：
-//   CustomerRepository.listRelatedCases
-//     → GET /api/cases?customerId=<id>
-//     → CustomerAdapterMappers.adaptCustomerCaseListResult
-//   cases 侧 buildCaseListSearchParams({ customerId }) 生成同等查询，
-//   两侧共用同一服务端接口，响应 DTO 结构一致。
-//
-// HTTP 参数名 contract（p0-fe-002b-03 冻结）：
-//   - "customerId" 必须在 cases 侧 CASE_LIST_HTTP_FIELD_MAP.customerId
-//     与 customer 侧 CustomerRepository.listRelatedCases 中一致。
-//   - "view=summary" 由 buildCaseListSearchParams 硬编码。
-//   - "page" / "limit" 为可选分页参数，两侧共享语义。
-//
-// 最小字段集：id, caseName | caseNo, caseTypeCode, stage, ownerUserId,
+// ─── Customer Downstream Reuse Contract (p0-fe-002b / p0-fe-009-01) ──
+// customer 通过 `/api/cases?customerId=<id>&view=summary` 查询关联案件。
+// cases 侧 buildCaseListSearchParams({ customerId }) 生成同等查询。
+// 两侧共用 CUSTOMER_CASES_SHARED_HTTP_PARAMS 参数名；
+// 最小字段集: id, caseName|caseNo, caseTypeCode, stage, ownerUserId,
 //   customerId, createdAt, updatedAt
-// 可选扩展字段：groupId, riskLevel, dueAt, billingUnpaidAmountCached
+// 可选: groupId, riskLevel, dueAt, billingUnpaidAmountCached
 
-/**
- * customer 下游复用依赖的案件 DTO 最小字段集——用于回归测试断言。
- *
- * 变更时须同步更新 `CUSTOMER_DOWNSTREAM_FIELD_MAP`、
- * `CustomerAdapterMappers.CUSTOMER_CASE_UPSTREAM_CONTRACT`、
- * `CaseListSummaryDownstream.test.ts` 与 `CaseAdapterReaders.customer-summary-page.test.ts`。
- */
+/** customer→cases 共享 HTTP 查询参数契约（p0-fe-009-01 校准）。 */
+export const CUSTOMER_CASES_SHARED_HTTP_PARAMS = {
+  customerIdKey: "customerId",
+  viewKey: "view",
+  viewValue: "summary",
+} as const;
+
+/** customer 下游复用依赖的案件 DTO 最小字段集——用于回归测试断言。 */
 // prettier-ignore
 export const CUSTOMER_DOWNSTREAM_MINIMUM_FIELDS = ["id","customerId","caseName","caseTypeCode","stage","ownerUserId","createdAt","updatedAt"] as const;
 
@@ -365,6 +356,8 @@ export interface CaseCreateInput {
    *
    */
   crossGroupReason?: string | null;
+  /** P1: 签证方案（经营管理签专属）。 */
+  visaPlan?: string | null;
 }
 
 /** 更新案件表单输入（patch 语义：仅发送需变更字段）。 */
@@ -445,52 +438,61 @@ export interface CaseUpdateInput {
    *
    */
   groupId?: string | null;
-  /**
-   *
-   */
+  /** 组间转移原因。 */
   groupTransferReason?: string | null;
+  /** P1: 签证方案（经营管理签专属）。 */
+  visaPlan?: string | null;
+  /** P1: 海外返签开始日期。 */
+  overseasVisaStartAt?: string | null;
+  /** P1: 入境确认日期。 */
+  entryConfirmedAt?: string | null;
 }
 
 /** 阶段流转输入。 */
 export interface CaseTransitionInput {
-  /**
-   *
-   */
+  /** 目标阶段代码。 */
   toStage: string;
-  /**
-   *
-   */
+  /** 关闭原因（仅关闭时需要）。 */
   closeReason?: string | null;
 }
 
 /** 欠款风险确认输入。 */
 export interface CaseBillingRiskAckInput {
-  /**
-   *
-   */
+  /** 确认原因代码。 */
   reasonCode: string;
-  /**
-   *
-   */
+  /** 补充备注。 */
   reasonNote?: string;
-  /**
-   *
-   */
+  /** 证据附件链接。 */
   evidenceUrl?: string;
 }
 
+/* eslint-disable jsdoc/require-jsdoc -- self-documenting DTO fields */
 /** 下签后阶段变更输入。 */
 export interface CasePostApprovalInput {
-  /**
-   *
-   */
   stage: string;
 }
+/** POST /case-parties 创建输入。 */
+export interface CasePartyCreateInput {
+  caseId: string;
+  partyType: string;
+  customerId?: string | null;
+  contactPersonId?: string | null;
+  relationToCase?: string | null;
+  isPrimary?: boolean;
+}
 
-/** 写入操作统一返回结构。 */
+/** P1 业务子步骤流转输入。 */
+export interface CaseWorkflowStepTransitionInput {
+  toStepCode: string;
+}
+
+/** 写入操作统一返回结構。 */
 export interface CaseMutationResult {
-  /**
-   *
-   */
   id: string;
 }
+
+export {
+  CASE_WRITE_ERROR_I18N_MAP,
+  resolveWriteErrorI18nKey,
+  isGateBlockError,
+} from "./CaseWriteErrorMapping";

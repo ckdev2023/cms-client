@@ -5,11 +5,17 @@ import type { LeadStatus } from "./types";
 /* ------------------------------------------------------------------ */
 
 /** */
-export type LeadDetailTab = "info" | "followups" | "conversion" | "log";
+export type LeadDetailTab =
+  | "info"
+  | "followups"
+  | "conversations"
+  | "conversion"
+  | "log";
 
 export const LEAD_DETAIL_TABS: readonly LeadDetailTab[] = [
   "info",
   "followups",
+  "conversations",
   "conversion",
   "log",
 ] as const;
@@ -393,6 +399,8 @@ export interface LeadDetail {
   buttons: HeaderButtonPresetKey;
   /** 流失态时为 true，全页只读。 */
   readonly: boolean;
+  /** 关联会话 ID；无会话时为 null。 */
+  conversationId: string | null;
   /** */
   info: LeadBasicInfo;
   /** */

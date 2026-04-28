@@ -7,14 +7,17 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CustomerSummary } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
+import { buildCaseListHref, buildCaseCreateHref } from "../../cases/query";
 
 /** 客户表格行：头像、识别名、案件统计、操作按钮；支持草稿行禁用选择。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps<{
   customer: CustomerSummary;
   selected?: boolean;
   isDraft?: boolean;
+  highlighted?: boolean;
 }>();
 
 defineEmits<{
@@ -32,19 +35,37 @@ const casesSummary = computed(() =>
   }),
 );
 
+const owner = computed(() =>
+  resolveOwnerOption(props.customer.owner.name, locale.value),
+);
+
 const groupDisplay = computed(() =>
-  resolveGroupLabel(props.customer.group, t("shared.group.disabledSuffix")),
+  resolveGroupLabel(
+    props.customer.group,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  ),
 );
 
 const detailHref = computed(() => `#/customers/${props.customer.id}`);
-const casesHref = computed(() => `#/cases?customerId=${props.customer.id}`);
-const createCaseHref = computed(
-  () => `#/cases/create?customerId=${props.customer.id}`,
+const casesHref = computed(() =>
+  buildCaseListHref({ customerId: props.customer.id }),
+);
+const createCaseHref = computed(() =>
+  buildCaseCreateHref({ customerId: props.customer.id }),
 );
 </script>
 
 <template>
-  <tr :class="['customer-row', { 'customer-row--draft': isDraft }]">
+  <tr
+    :class="[
+      'customer-row',
+      {
+        'customer-row--draft': isDraft,
+        'customer-row--highlighted': highlighted,
+      },
+    ]"
+  >
     <td class="customer-row__check">
       <input
         type="checkbox"
@@ -112,9 +133,9 @@ const createCaseHref = computed(
     <td class="customer-row__hide-md">
       <div class="customer-row__owner">
         <span class="customer-row__owner-avatar">{{
-          customer.owner.initials
+          owner?.initials ?? customer.owner.initials
         }}</span>
-        {{ customer.owner.name }}
+        {{ owner?.label ?? customer.owner.name }}
       </div>
     </td>
 
@@ -181,6 +202,11 @@ const createCaseHref = computed(
   font-size: var(--font-size-base);
   color: var(--color-text-1);
   vertical-align: middle;
+  transition: background-color var(--transition-normal);
+}
+
+.customer-row--highlighted td {
+  background: rgba(37, 99, 235, 0.08);
 }
 
 .customer-row:last-child td {

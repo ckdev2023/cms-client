@@ -2,7 +2,7 @@ import vue from "@vitejs/plugin-vue";
 import { defineConfig } from "vite";
 
 const adminApiProxyTarget =
-  process.env.ADMIN_API_PROXY_TARGET ?? "http://localhost:3000";
+  process.env.ADMIN_API_PROXY_TARGET ?? "http://localhost:3300";
 
 // https://vite.dev/config/
 export default defineConfig({

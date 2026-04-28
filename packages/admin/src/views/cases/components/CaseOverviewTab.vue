@@ -1,34 +1,40 @@
 <script setup lang="ts">
+/* eslint-disable max-lines */
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseOverviewSidebar from "./CaseOverviewSidebar.vue";
+import CaseWorkflowStepSection from "./CaseWorkflowStepSection.vue";
+import CaseSurveyQuoteSection from "./CaseSurveyQuoteSection.vue";
+import CaseCustomerBackLink from "./CaseCustomerBackLink.vue";
+import CaseProviderProgress from "./CaseProviderProgress.vue";
+import CaseFinalPaymentCoeGate from "./CaseFinalPaymentCoeGate.vue";
+import CaseSupplementRoundPanel from "./CaseSupplementRoundPanel.vue";
+import CaseReminderFailureBanner from "./CaseReminderFailureBanner.vue";
+import CaseFailureCloseoutBanner from "./CaseFailureCloseoutBanner.vue";
 import type { CaseDetailTab } from "../types";
-import type { CaseDetail, ProviderProgress } from "../types-detail";
+import type { CaseDetail } from "../types-detail";
+import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
 
 /** 概览 Tab：展示案件摘要卡片、提供方进度、下一步动作、近期动态与侧边栏。 */
+const { t } = useI18n();
 defineProps<{
   detail: CaseDetail;
+  writeFeedback?: WriteActionFeedback;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
+  (e: "advanceToCoe"): void;
+  (e: "retryReminder"): void;
+  (e: "failureClose"): void;
 }>();
 
 /**
- * 计算提供方资料完成百分比。
- *
- * @param p - 提供方进度数据
- * @returns 完成百分比（0–100）
- */
-function progressPercent(p: ProviderProgress): number {
-  return p.total === 0 ? 0 : Math.round((p.done / p.total) * 100);
-}
-
-/**
- * 将时间线条目的语义色名称映射为 CSS 颜色值。
- *
- * @param color - 语义色名称（如 "primary"、"danger"）
- * @returns 对应的 CSS 变量或色值
+ * 将时间线颜色键映射为实际颜色值。
+ * @param color - 时间线颜色键。
+ * @returns 对应的颜色值。
  */
 function timelineColor(color: string): string {
   const map: Record<string, string> = {
@@ -44,11 +50,19 @@ function timelineColor(color: string): string {
 
 <template>
   <div class="overview-tab">
-    <!-- Summary cards -->
+    <CaseCustomerBackLink
+      v-if="detail.customerId"
+      :customer-id="detail.customerId"
+      :client="detail.client"
+      :group-name="detail.groupName"
+    />
+
     <div class="overview-tab__grid-4">
       <Card padding="md">
-        <div class="overview-tab__stat">
-          <span class="overview-tab__stat-label">当前办案进度</span>
+        <div class="overview-tab__stat" data-testid="overview-card-stage">
+          <span class="overview-tab__stat-label">{{
+            t("cases.detail.overview.cards.stage")
+          }}</span>
           <span class="overview-tab__stat-value">{{ detail.stage }}</span>
           <span class="overview-tab__stat-meta">
             <svg
@@ -66,11 +80,33 @@ function timelineColor(color: string): string {
             </svg>
             {{ detail.stageMeta }}
           </span>
+          <!-- BMV parallel step display -->
+          <div
+            v-if="detail.workflowStep"
+            class="overview-tab__parallel-step"
+            :class="{
+              'overview-tab__parallel-step--danger':
+                detail.workflowStep.isFailureStep,
+            }"
+            data-testid="overview-card-workflow-step"
+          >
+            <span class="overview-tab__parallel-step-arrow" aria-hidden="true">
+              →
+            </span>
+            <span class="overview-tab__parallel-step-label">
+              {{ detail.workflowStep.stepLabel }}
+            </span>
+            <span class="overview-tab__parallel-step-stage">
+              {{ detail.workflowStep.parentStage }}
+            </span>
+          </div>
         </div>
       </Card>
       <Card padding="md">
-        <div class="overview-tab__stat">
-          <span class="overview-tab__stat-label">预计截止日期</span>
+        <div class="overview-tab__stat" data-testid="overview-card-deadline">
+          <span class="overview-tab__stat-label">{{
+            t("cases.detail.overview.cards.deadline")
+          }}</span>
           <span
             :class="[
               'overview-tab__stat-value',
@@ -104,8 +140,10 @@ function timelineColor(color: string): string {
         </div>
       </Card>
       <Card padding="md">
-        <div class="overview-tab__stat">
-          <span class="overview-tab__stat-label">资料完成率</span>
+        <div class="overview-tab__stat" data-testid="overview-card-progress">
+          <span class="overview-tab__stat-label">{{
+            t("cases.detail.overview.cards.progress")
+          }}</span>
           <div class="overview-tab__progress-row">
             <span class="overview-tab__stat-value"
               >{{ detail.progressPercent }}%</span
@@ -123,8 +161,10 @@ function timelineColor(color: string): string {
         </div>
       </Card>
       <Card padding="md">
-        <div class="overview-tab__stat">
-          <span class="overview-tab__stat-label">财务状况</span>
+        <div class="overview-tab__stat" data-testid="overview-card-billing">
+          <span class="overview-tab__stat-label">{{
+            t("cases.detail.overview.cards.billing")
+          }}</span>
           <span class="overview-tab__stat-value">{{
             detail.billingAmount
           }}</span>
@@ -133,36 +173,60 @@ function timelineColor(color: string): string {
       </Card>
     </div>
 
-    <!-- Provider progress -->
-    <Card padding="md">
-      <div class="overview-tab__provider-header">
-        <span class="overview-tab__kicker">按提供方完成率</span>
-        <span class="overview-tab__provider-title">资料收集分组进度</span>
-      </div>
-      <div class="overview-tab__provider-list">
-        <div
-          v-for="(p, i) in detail.providerProgress"
-          :key="i"
-          class="overview-tab__provider-row"
-        >
-          <span class="overview-tab__provider-label">{{ p.label }}</span>
-          <div class="overview-tab__provider-bar">
-            <div
-              class="overview-tab__provider-bar-fill"
-              :style="{ width: `${progressPercent(p)}%` }"
-            />
-          </div>
-          <span class="overview-tab__provider-count"
-            >{{ p.done }}/{{ p.total }}</span
-          >
-        </div>
-      </div>
-    </Card>
+    <CaseWorkflowStepSection
+      v-if="detail.workflowStep"
+      :workflow-step="detail.workflowStep"
+      :management-stage="detail.stageCode"
+      :supplement-count="detail.supplementCount"
+    />
 
-    <!-- Main 2-column layout -->
+    <CaseSurveyQuoteSection
+      v-if="detail.surveyStatus || detail.quoteStatus"
+      :survey-status="detail.surveyStatus"
+      :quote-status="detail.quoteStatus"
+      :pre-sign-gate="detail.preSignGate"
+    />
+
+    <!-- P1 Final Payment & COE Gate (p1-fe-004-01) -->
+    <CaseFinalPaymentCoeGate
+      v-if="detail.finalPaymentGate"
+      :gate="detail.finalPaymentGate"
+      :write-feedback="writeFeedback"
+      :readonly="readonly ?? detail.readonly"
+      @advance-to-coe="emit('advanceToCoe')"
+      @switch-tab="(tab) => emit('switchTab', tab as CaseDetailTab)"
+    />
+
+    <CaseSupplementRoundPanel
+      v-if="detail.supplementRound"
+      :info="detail.supplementRound"
+      :readonly="readonly ?? detail.readonly"
+      @switch-tab="(tab) => emit('switchTab', tab as CaseDetailTab)"
+    />
+    <CaseReminderFailureBanner
+      v-if="detail.reminderFailure"
+      :info="detail.reminderFailure"
+      :write-feedback="writeFeedback"
+      :readonly="readonly ?? detail.readonly"
+      @retry-reminder="emit('retryReminder')"
+    />
+
+    <!-- P1 Failure Closeout Banner (p1-fe-005-02) -->
+    <CaseFailureCloseoutBanner
+      v-if="detail.failureCloseout"
+      :closeout="detail.failureCloseout"
+      :customer-id="detail.customerId"
+      :client-name="detail.client"
+      :readonly="readonly ?? detail.readonly"
+      :write-feedback="writeFeedback"
+      @close-case="emit('failureClose')"
+      @switch-tab="(tab) => emit('switchTab', tab as CaseDetailTab)"
+    />
+
+    <CaseProviderProgress :items="detail.providerProgress" />
+
     <div class="overview-tab__main-grid">
       <div class="overview-tab__main-left">
-        <!-- Next action -->
         <div class="overview-tab__next-action">
           <div class="overview-tab__next-action-icon">
             <svg
@@ -180,7 +244,9 @@ function timelineColor(color: string): string {
             </svg>
           </div>
           <div class="overview-tab__next-action-body">
-            <h3 class="overview-tab__next-action-title">下一关键动作</h3>
+            <h3 class="overview-tab__next-action-title">
+              {{ t("cases.detail.overview.nextAction.title") }}
+            </h3>
             <p class="overview-tab__next-action-text">
               {{ detail.nextAction }}
             </p>
@@ -214,7 +280,7 @@ function timelineColor(color: string): string {
         </div>
 
         <!-- Timeline -->
-        <Card title="近期动态" padding="md">
+        <Card :title="t('cases.detail.overview.timeline.title')" padding="md">
           <div class="overview-tab__timeline">
             <div
               v-for="(entry, i) in detail.timeline"
@@ -237,7 +303,7 @@ function timelineColor(color: string): string {
               type="button"
               @click="emit('switchTab', 'log')"
             >
-              查看完整日志 →
+              {{ t("cases.detail.overview.timeline.viewAll") }}
             </button>
           </template>
         </Card>
@@ -305,6 +371,41 @@ function timelineColor(color: string): string {
 .overview-tab__stat-meta--danger {
   color: var(--color-danger);
 }
+.overview-tab__parallel-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 3px 8px;
+  font-size: var(--font-size-xs);
+  border-radius: var(--radius-md, 6px);
+  background: rgba(var(--color-primary-rgb, 3, 105, 161), 0.05);
+  border: 1px solid rgba(var(--color-primary-rgb, 3, 105, 161), 0.1);
+  width: fit-content;
+}
+.overview-tab__parallel-step--danger {
+  background: rgba(220, 38, 38, 0.05);
+  border-color: rgba(220, 38, 38, 0.1);
+}
+.overview-tab__parallel-step-arrow {
+  color: var(--color-text-3);
+  font-size: 11px;
+}
+.overview-tab__parallel-step-label {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-6);
+}
+.overview-tab__parallel-step--danger .overview-tab__parallel-step-label {
+  color: #991b1b;
+}
+.overview-tab__parallel-step-stage {
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: var(--font-weight-black);
+  border-radius: var(--radius-full);
+  background: var(--color-bg-3);
+  color: var(--color-text-3);
+}
 
 .overview-tab__progress-row {
   display: flex;
@@ -324,63 +425,6 @@ function timelineColor(color: string): string {
   background: var(--color-primary-6);
   border-radius: var(--radius-full);
   transition: width 0.3s ease;
-}
-
-.overview-tab__provider-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 16px;
-}
-.overview-tab__kicker {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.overview-tab__provider-title {
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-.overview-tab__provider-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.overview-tab__provider-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.overview-tab__provider-label {
-  flex-shrink: 0;
-  width: 120px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-2);
-}
-.overview-tab__provider-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--color-bg-3);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-.overview-tab__provider-bar-fill {
-  height: 100%;
-  background: var(--color-primary-6);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-.overview-tab__provider-count {
-  flex-shrink: 0;
-  min-width: 36px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-2);
-  text-align: right;
 }
 
 .overview-tab__main-grid {

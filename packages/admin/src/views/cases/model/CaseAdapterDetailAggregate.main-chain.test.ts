@@ -249,9 +249,16 @@ describe("deadline group", () => {
     expect(result.detail.targetDate).toBe("");
   });
 
-  it("sets deadlineDanger to false by default", () => {
+  it("deadlineDanger is false for far-future due dates", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.deadlineDanger).toBe(false);
+  });
+
+  it("deadlineDanger is true for past-due dates", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate({ case: { ...MOCK_CASE_ROW, dueAt: "2020-01-01" } }),
+    )!;
+    expect(result.detail.deadlineDanger).toBe(true);
   });
 });
 

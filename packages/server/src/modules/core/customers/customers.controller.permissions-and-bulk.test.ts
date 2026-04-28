@@ -8,8 +8,16 @@ import {
 
 import { PermissionsService } from "../auth/permissions.service";
 import type { Customer } from "../model/coreEntities";
+import { FeatureFlagsService } from "../../feature-flags/featureFlags.service";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
+
+const CUSTOMER_DETAIL_ID = "00000000-0000-4000-8000-000000000001";
+const MISSING_CUSTOMER_ID = "00000000-0000-4000-8000-000000000002";
+
+const mockFeatureFlags = {
+  resolve: () => Promise.resolve({ key: "bmv", enabled: true, used: true }),
+} as unknown as FeatureFlagsService;
 
 const mockCustomer: Customer = {
   id: "c1",
@@ -35,7 +43,7 @@ const mockCustomer: Customer = {
 };
 
 const mockCustomerDetailDto = {
-  id: "c1",
+  id: CUSTOMER_DETAIL_ID,
   displayName: "Alice Tanaka",
   legalName: "Alice Tanaka",
   furigana: "アリス タナカ",
@@ -79,7 +87,11 @@ void test("CustomersController checkDuplicates validates context and body", asyn
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     () => controller.checkDuplicates({} as never, {}),
@@ -124,7 +136,11 @@ void test("CustomersController bulk endpoints validate ids and permissions", asy
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
   const req = {
     requestContext: {
       orgId: "org1",
@@ -156,6 +172,7 @@ void test("CustomersController bulk endpoints validate ids and permissions", asy
       () => true,
       () => false,
     ),
+    mockFeatureFlags,
   );
   await assert.rejects(
     () =>
@@ -179,16 +196,21 @@ void test("CustomersController bulk endpoints validate ids and permissions", asy
 void test("CustomersController get validates context and handles not found", async () => {
   const service = {
     get: (_ctx: unknown, id: string) => {
-      if (id === "c1") return Promise.resolve(mockCustomerDetailDto);
+      if (id === CUSTOMER_DETAIL_ID)
+        return Promise.resolve(mockCustomerDetailDto);
       return Promise.resolve(null);
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     async () => {
-      await controller.get({} as never, "c1");
+      await controller.get({} as never, CUSTOMER_DETAIL_ID);
     },
     (err) => {
       assert.ok(err instanceof UnauthorizedException);
@@ -204,8 +226,8 @@ void test("CustomersController get validates context and handles not found", asy
     },
   };
 
-  const res = await controller.get(req as never, "c1");
-  assert.equal(res.id, "c1");
+  const res = await controller.get(req as never, CUSTOMER_DETAIL_ID);
+  assert.equal(res.id, CUSTOMER_DETAIL_ID);
   assert.equal(res.displayName, "Alice Tanaka");
   assert.equal(res.owner.initials, "YS");
   assert.equal(res.nationality, "日本");
@@ -213,7 +235,18 @@ void test("CustomersController get validates context and handles not found", asy
 
   await assert.rejects(
     async () => {
-      await controller.get(req as never, "not_found");
+      await controller.get(req as never, "d28b5dae");
+    },
+    (err) => {
+      assert.ok(err instanceof BadRequestException);
+      assert.equal((err as Error).message, "Invalid id");
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    async () => {
+      await controller.get(req as never, MISSING_CUSTOMER_ID);
     },
     (err) => {
       assert.ok(err instanceof BadRequestException);
@@ -229,7 +262,11 @@ void test("CustomersController update validates DTO", async () => {
     update: () => Promise.resolve(mockCustomer),
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     async () => {
@@ -284,6 +321,7 @@ void test("CustomersController update throws when canEditCustomer denies", async
       () => true,
       () => false,
     ),
+    mockFeatureFlags,
   );
   const req = {
     requestContext: {
@@ -310,7 +348,11 @@ void test("CustomersController delete validates context", async () => {
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     async () => {
@@ -351,6 +393,7 @@ void test("CustomersController delete throws when canEditCustomer denies", async
       () => true,
       () => false,
     ),
+    mockFeatureFlags,
   );
   const req = {
     requestContext: {

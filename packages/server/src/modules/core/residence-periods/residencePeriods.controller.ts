@@ -4,8 +4,10 @@ import {
   BadRequestException,
   Body,
   Controller,
+  ForbiddenException,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -14,7 +16,11 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
+import { CASE_WRITE_ERROR_CODES } from "../cases/cases.types";
+
 import { RequireRoles } from "../auth/auth.decorators";
+import { PermissionsService } from "../auth/permissions.service";
+import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { ResidencePeriodsService } from "./residencePeriods.service";
 
@@ -31,6 +37,7 @@ type CreateResidencePeriodBody = {
   validUntil?: unknown;
   cardNumber?: unknown;
   isCurrent?: unknown;
+  entryDate?: unknown;
   notes?: unknown;
 };
 
@@ -89,6 +96,15 @@ function parseOptionalDateOnly(
   return parseDateOnly(value, field);
 }
 
+function parseOptionalNullableDateOnly(
+  value: unknown,
+  field: string,
+): string | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  return parseDateOnly(value, field);
+}
+
 function parseOptionalInteger(
   value: unknown,
   field: string,
@@ -130,21 +146,28 @@ function parseLimit(value: unknown): number | undefined {
 }
 
 /**
+ * ResidencePeriods CRUD 接口。
  *
+ * 所有端点均通过 PermissionsService 执行父案件资源级鉴权。
+ * GET 列表强制要求 caseId，禁止裸列表查询。
  */
 @Controller("residence-periods")
 export class ResidencePeriodsController {
   /**
-   *
    * @param residencePeriodsService
+   * @param casesService
+   * @param permissionsService
    */
   constructor(
     @Inject(ResidencePeriodsService)
     private readonly residencePeriodsService: ResidencePeriodsService,
+    @Inject(CasesService)
+    private readonly casesService: CasesService,
+    @Inject(PermissionsService)
+    private readonly permissionsService: PermissionsService,
   ) {}
 
   /**
-   *
    * @param req
    * @param body
    */
@@ -157,8 +180,11 @@ export class ResidencePeriodsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId = requireString(body.caseId, "caseId");
+    await this.assertCanEditParentCase(ctx, caseId);
+
     return this.residencePeriodsService.create(ctx, {
-      caseId: requireString(body.caseId, "caseId"),
+      caseId,
       customerId: requireString(body.customerId, "customerId"),
       visaType: requireString(body.visaType, "visaType"),
       statusOfResidence: requireString(
@@ -171,12 +197,12 @@ export class ResidencePeriodsController {
       validUntil: parseDateOnly(body.validUntil, "validUntil"),
       cardNumber: parseOptionalNullableString(body.cardNumber, "cardNumber"),
       isCurrent: parseOptionalBoolean(body.isCurrent, "isCurrent"),
+      entryDate: parseOptionalNullableDateOnly(body.entryDate, "entryDate"),
       notes: parseOptionalNullableString(body.notes, "notes"),
     });
   }
 
   /**
-   *
    * @param req
    * @param query
    */
@@ -189,8 +215,11 @@ export class ResidencePeriodsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const caseId = requireString(query.caseId, "caseId");
+    await this.assertCanViewParentCase(ctx, caseId);
+
     return this.residencePeriodsService.list(ctx, {
-      caseId: parseOptionalString(query.caseId, "caseId"),
+      caseId,
       customerId: parseOptionalString(query.customerId, "customerId"),
       currentOnly: parseOptionalBoolean(query.currentOnly, "currentOnly"),
       expiringBefore: parseOptionalDateOnly(
@@ -203,7 +232,6 @@ export class ResidencePeriodsController {
   }
 
   /**
-   *
    * @param req
    * @param id
    */
@@ -214,12 +242,12 @@ export class ResidencePeriodsController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     const period = await this.residencePeriodsService.get(ctx, id);
-    if (!period) throw new BadRequestException("Residence period not found");
+    if (!period) throw new NotFoundException("Residence period not found");
+    await this.assertCanViewParentCase(ctx, period.caseId);
     return period;
   }
 
   /**
-   *
    * @param req
    * @param id
    * @param body
@@ -234,6 +262,10 @@ export class ResidencePeriodsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const period = await this.residencePeriodsService.get(ctx, id);
+    if (!period) throw new NotFoundException("Residence period not found");
+    await this.assertCanEditParentCase(ctx, period.caseId);
+
     return this.residencePeriodsService.update(ctx, id, {
       visaType: parseOptionalString(body.visaType, "visaType"),
       statusOfResidence: parseOptionalString(
@@ -246,7 +278,58 @@ export class ResidencePeriodsController {
       validUntil: parseOptionalDateOnly(body.validUntil, "validUntil"),
       cardNumber: parseOptionalNullableString(body.cardNumber, "cardNumber"),
       isCurrent: parseOptionalBoolean(body.isCurrent, "isCurrent"),
+      entryDate: parseOptionalNullableDateOnly(body.entryDate, "entryDate"),
       notes: parseOptionalNullableString(body.notes, "notes"),
     });
+  }
+
+  private async assertCanViewParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) throw new NotFoundException("Parent case not found");
+
+    if (
+      !this.permissionsService.canViewCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to view this case's residence periods",
+      );
+    }
+  }
+
+  private async assertCanEditParentCase(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) throw new NotFoundException("Parent case not found");
+
+    const stage = caseEntity.stage ?? caseEntity.status;
+    if (stage === "S9") {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.S9_READONLY +
+          ": Parent case is archived (S9) and read-only",
+      );
+    }
+
+    if (
+      !this.permissionsService.canEditCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException(
+        "Insufficient permissions to edit this case's residence periods",
+      );
+    }
   }
 }

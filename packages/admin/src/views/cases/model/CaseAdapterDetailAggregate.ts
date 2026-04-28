@@ -3,15 +3,19 @@ import type {
   CaseDetailAggregate,
   CaseDetailTabCounts,
 } from "./CaseAdapterDetailContracts";
+import { buildP1Fields, EMPTY_LISTS } from "./CaseAdapterDetailAggregateP1";
 import { CASE_DETAIL_TAB_COUNTS_KEYS } from "./CaseAdapterDetailContracts";
 import {
   asRecord,
   formatDate,
+  isDeadlineDanger,
   readBoolean,
   readNullableString,
   readNumber,
   readString,
+  resolveStageBadge,
   resolveStageId,
+  resolveStageLabel,
 } from "./CaseAdapterShared";
 
 // ─── Aggregate Slices (p0-fe-002c-01) ────────────────────────────
@@ -28,6 +32,9 @@ interface AggregateSlices {
   latestSubmission: Record<string, unknown> | null;
   latestReview: Record<string, unknown> | null;
   providerProgressRaw: unknown[];
+  failureCloseoutCheck: Record<string, unknown> | null;
+  currentResidencePeriod: Record<string, unknown> | null;
+  successCloseoutCheck: Record<string, unknown> | null;
 }
 
 function parseAggregateSlices(
@@ -47,6 +54,9 @@ function parseAggregateSlices(
     providerProgressRaw: Array.isArray(record.documentProgressByProvider)
       ? (record.documentProgressByProvider as unknown[])
       : [],
+    failureCloseoutCheck: asRecord(record.failureCloseoutCheck),
+    currentResidencePeriod: asRecord(record.currentResidencePeriod),
+    successCloseoutCheck: asRecord(record.successCloseoutCheck),
   };
 }
 
@@ -69,6 +79,8 @@ function adaptProviderProgress(raw: unknown[]) {
 const EMPTY_TAB_COUNTS: CaseDetailTabCounts = {
   documentItemsTotal: 0,
   documentItemsDone: 0,
+  questionnaireItemsTotal: 0,
+  questionnaireItemsDone: 0,
   caseParties: 0,
   tasks: 0,
   tasksPending: 0,
@@ -254,13 +266,13 @@ function buildDetailHeader(
     client: dlStr(deepLink, "customerName"),
     owner: dlStr(deepLink, "ownerDisplayName"),
     agency: "",
-    stage: stageId,
+    stage: resolveStageLabel(stageId),
     stageCode: stageId,
-    stageMeta: `Stage ${stageId}`,
-    statusBadge: stageId === "S9" ? "archived" : ("active" as string),
+    stageMeta: stageId,
+    statusBadge: resolveStageBadge(stageId),
     deadline: formatDate(dueAt),
     deadlineMeta: dueAt ? `Due: ${formatDate(dueAt)}` : "",
-    deadlineDanger: false,
+    deadlineDanger: isDeadlineDanger(dueAt),
     progressPercent: m.progressPercent,
     progressCount: `${m.docDone}/${m.docTotal}`,
     billingAmount: m.quotePrice ? `¥${m.quotePrice.toLocaleString()}` : "—",
@@ -275,25 +287,11 @@ function buildDetailHeader(
     groupName: dlStr(deepLink, "groupName"),
     caseType: readString(caseRecord, "caseTypeCode"),
     applicationType: readString(caseRecord, "applicationType"),
+    businessPhase: readString(caseRecord, "businessPhase"),
     acceptedDate: formatDate(readNullableString(caseRecord, "acceptedAt")),
     targetDate: formatDate(dueAt),
   };
 }
-
-const EMPTY_LISTS = {
-  timeline: [] as never[],
-  team: [] as never[],
-  relatedParties: [] as never[],
-  deadlines: [] as never[],
-  submissionPackages: [] as never[],
-  correctionPackage: null,
-  doubleReview: [] as never[],
-  documents: [] as never[],
-  forms: { templates: [] as never[], generated: [] as never[] },
-  tasks: [] as never[],
-  logEntries: [] as never[],
-  messages: [] as never[],
-};
 
 // ─── Public adapter ──────────────────────────────────────────────
 
@@ -345,6 +343,13 @@ export function adaptCaseDetailAggregate(
       m.unpaidAmount,
     ),
     ...EMPTY_LISTS,
+    ...buildP1Fields(
+      caseRecord,
+      slices,
+      m,
+      slices.failureCloseoutCheck,
+      stageId,
+    ),
   };
 
   return {

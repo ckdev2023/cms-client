@@ -354,17 +354,19 @@ describe("customer downstream full contract (p0-fe-002b-08)", () => {
     expect(customerSide![0].owner).toBe("user-integration");
   });
 
-  it("cases adapter handles wrapped DTO; customer adapter reads only flat format", () => {
+  it("both adapters handle flat and wrapped (summary) DTO formats", () => {
+    const flatPayload = canonicalApiResponse([canonicalFlatDto()]);
     const wrappedPayload = canonicalApiResponse([canonicalWrappedDto()]);
 
-    const caseSide = adaptCaseListResult(wrappedPayload);
-    expect(caseSide).not.toBeNull();
-    expect(caseSide!.items[0].id).toBe("case-integration-001");
+    for (const payload of [flatPayload, wrappedPayload]) {
+      const caseSide = adaptCaseListResult(payload);
+      expect(caseSide).not.toBeNull();
+      expect(caseSide!.items[0].id).toBe("case-integration-001");
 
-    const flatPayload = canonicalApiResponse([canonicalFlatDto()]);
-    const customerSide = adaptCustomerCaseListResult(flatPayload);
-    expect(customerSide).not.toBeNull();
-    expect(customerSide![0].id).toBe("case-integration-001");
+      const customerSide = adaptCustomerCaseListResult(payload);
+      expect(customerSide).not.toBeNull();
+      expect(customerSide![0].id).toBe("case-integration-001");
+    }
   });
 
   it("multiple items with same customerId are all preserved by both adapters", () => {

@@ -2,9 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
-/**
- * 分页信息栏。fixtures-first 阶段仅展示条数信息，翻页按钮 disabled。
- */
+/** 分页组件：展示范围文案与前后翻页按钮。 */
 const props = withDefaults(
   defineProps<{
     total?: number;
@@ -18,6 +16,10 @@ const props = withDefaults(
   },
 );
 
+const emit = defineEmits<{
+  "update:page": [page: number];
+}>();
+
 const { t } = useI18n();
 
 const rangeStart = computed(() =>
@@ -30,6 +32,16 @@ const rangeEnd = computed(() =>
 
 const hasPrev = computed(() => props.currentPage > 1);
 const hasNext = computed(() => rangeEnd.value < props.total);
+
+/** 翻到上一页。 */
+function goPrev() {
+  if (hasPrev.value) emit("update:page", props.currentPage - 1);
+}
+
+/** 翻到下一页。 */
+function goNext() {
+  if (hasNext.value) emit("update:page", props.currentPage + 1);
+}
 </script>
 
 <template>
@@ -48,6 +60,7 @@ const hasNext = computed(() => rangeEnd.value < props.total);
         class="billing-pagination__btn"
         :disabled="!hasPrev"
         type="button"
+        @click="goPrev"
       >
         {{ t("billing.list.pagination.prev") }}
       </button>
@@ -55,6 +68,7 @@ const hasNext = computed(() => rangeEnd.value < props.total);
         class="billing-pagination__btn"
         :disabled="!hasNext"
         type="button"
+        @click="goNext"
       >
         {{ t("billing.list.pagination.next") }}
       </button>

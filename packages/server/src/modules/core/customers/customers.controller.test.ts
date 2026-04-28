@@ -3,9 +3,14 @@ import assert from "node:assert/strict";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
 import { PermissionsService } from "../auth/permissions.service";
+import { FeatureFlagsService } from "../../feature-flags/featureFlags.service";
 import { CustomersController } from "./customers.controller";
 import { CustomersService } from "./customers.service";
 import type { Customer } from "../model/coreEntities";
+
+const mockFeatureFlags = {
+  resolve: () => Promise.resolve({ key: "bmv", enabled: true, used: true }),
+} as unknown as FeatureFlagsService;
 
 const mockCustomer: Customer = {
   id: "c1",
@@ -66,7 +71,11 @@ void test("CustomersController create validates DTO and requires context", async
     create: () => Promise.resolve(mockCustomer),
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     async () => {
@@ -210,7 +219,11 @@ void test("CustomersController list parses page and limit", async () => {
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
 
   await assert.rejects(
     async () => {
@@ -350,7 +363,11 @@ void test("CustomersController BMV actions require context, permission and call 
     },
   } as unknown as CustomersService;
 
-  const controller = new CustomersController(service, makePermissions());
+  const controller = new CustomersController(
+    service,
+    makePermissions(),
+    mockFeatureFlags,
+  );
   const req = {
     requestContext: {
       orgId: "org1",
@@ -407,6 +424,7 @@ void test("CustomersController BMV actions require context, permission and call 
       () => true,
       () => false,
     ),
+    mockFeatureFlags,
   );
 
   for (const action of actions) {

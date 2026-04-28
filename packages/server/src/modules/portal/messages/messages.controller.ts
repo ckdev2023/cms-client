@@ -136,6 +136,7 @@ export class MessagesController {
       conversationId,
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
+      markReadFor: "user",
     };
     return this.messagesService.list(input);
   }

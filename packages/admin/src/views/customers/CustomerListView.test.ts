@@ -5,6 +5,7 @@ import { i18n, setAppLocale } from "../../i18n";
 import { SAMPLE_CUSTOMERS } from "./fixtures";
 import type { CustomerRepository } from "./model/CustomerRepository";
 import CustomerListView from "./CustomerListView.vue";
+import CustomerTable from "./components/CustomerTable.vue";
 
 type ListViewRepository = Pick<
   CustomerRepository,
@@ -105,5 +106,86 @@ describe("CustomerListView", () => {
       "takahashi-k",
     );
     expect(repository.listCustomers).toHaveBeenCalledTimes(2);
+  });
+
+  it("shows a success toast and highlights the created customer row", async () => {
+    const createdCustomer = {
+      ...SAMPLE_CUSTOMERS[0]!,
+      id: "cust-new",
+      displayName: "Hanako Yamada",
+      legalName: "Hanako Yamada",
+      customerNumber: "C-999",
+      phone: "090-9999-8888",
+      email: "hanako@example.com",
+    };
+    const repository = createRepository({
+      listCustomers: vi
+        .fn<CustomerRepository["listCustomers"]>()
+        .mockResolvedValueOnce({ items: [SAMPLE_CUSTOMERS[0]!], total: 1 })
+        .mockResolvedValueOnce({
+          items: [createdCustomer, SAMPLE_CUSTOMERS[0]!],
+          total: 2,
+        }),
+      createCustomer: vi.fn().mockResolvedValue({ id: "cust-new" }),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper } = await mountView();
+
+    const addButton = wrapper
+      .findAll("button")
+      .find((node) => node.text().includes("Add customer"));
+    expect(addButton).toBeTruthy();
+    await addButton!.trigger("click");
+
+    const groupSelect = wrapper.findAll("select.customer-modal__select")[0]!;
+    const groupValue = (groupSelect.element as HTMLSelectElement).options[1]!
+      .value;
+    const inputs = wrapper.findAll("input.customer-modal__input");
+
+    await groupSelect.setValue(groupValue);
+    await inputs[1]!.setValue("Hanako Yamada");
+    await inputs[5]!.setValue("090-9999-8888");
+    await flushPromises();
+
+    const createButton = wrapper
+      .findAll("button")
+      .find((node) => node.text().includes("Create customer"));
+    expect(createButton).toBeTruthy();
+    await createButton!.trigger("click");
+    await flushPromises();
+
+    expect(repository.createCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        group: groupValue,
+        legalName: "Hanako Yamada",
+        phone: "090-9999-8888",
+      }),
+    );
+    expect(repository.listCustomers).toHaveBeenCalledTimes(2);
+    expect(wrapper.text()).toContain("Customer created successfully");
+
+    const createdRow = wrapper
+      .findAll(".customer-row")
+      .find((row) => row.text().includes("Hanako Yamada"));
+
+    expect(createdRow).toBeTruthy();
+    expect(createdRow!.classes()).toContain("customer-row--highlighted");
+  });
+
+  it("shows an empty-state cta that opens the create modal", async () => {
+    const repository = createRepository({
+      listCustomers: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+    });
+    mockedRepository.current = repository;
+
+    const { wrapper } = await mountView();
+
+    expect(wrapper.findComponent(CustomerTable).exists()).toBe(true);
+
+    wrapper.findComponent(CustomerTable).vm.$emit("openCreateModal");
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Create customer");
   });
 });

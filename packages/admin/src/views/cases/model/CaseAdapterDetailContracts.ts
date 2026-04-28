@@ -1,7 +1,5 @@
+/* eslint-disable max-lines */
 // ─── Detail Aggregate Contracts (p0-fe-002c) ─────────────────────
-// 从 CaseAdapterTypes 拆出以遵守 max-lines 约束。
-// 包含 detail aggregate adapter 的冻结契约常量与类型。
-
 import type { CaseDetail } from "../types";
 
 // ─── Aggregate Slice Contract (frozen by p0-fe-002c-01) ─────────
@@ -19,6 +17,9 @@ export const AGGREGATE_SLICE_KEYS = [
   "documentProgressByProvider",
   "billing",
   "deepLink",
+  "failureCloseoutCheck",
+  "currentResidencePeriod",
+  "successCloseoutCheck",
 ] as const;
 
 // ─── Detail Deep-Link Fields Contract (frozen by p0-fe-002c-03) ──
@@ -66,6 +67,10 @@ export interface CaseDetailTabCounts {
    *
    */
   documentItemsDone: number;
+  /** P1: questionnaire 类资料项总数（含在 documentItemsTotal 内）。 */
+  questionnaireItemsTotal: number;
+  /** P1: questionnaire 类已完成资料项数（含在 documentItemsDone 内）。 */
+  questionnaireItemsDone: number;
   /**
    *
    */
@@ -111,6 +116,8 @@ export interface CaseDetailTabCounts {
 export const CASE_DETAIL_TAB_COUNTS_KEYS = [
   "documentItemsTotal",
   "documentItemsDone",
+  "questionnaireItemsTotal",
+  "questionnaireItemsDone",
   "caseParties",
   "tasks",
   "tasksPending",
@@ -238,11 +245,227 @@ export const PROVIDER_PROGRESS_ENTRY_CONSUMED_FIELDS = [
   "done",
 ] as const;
 
-// ─── CaseDetailAggregate (p0-fe-002c) ────────────────────────────
+// ─── Overview Tab Consumed Fields (frozen by p0-fe-006a-01) ──────
+// overview tab + sidebar 从 CaseDetail 读取的字段集合。
+// 变更时须同步更新 CaseOverviewTab.vue、CaseOverviewSidebar.vue
+// 与 overview tab contract tests。
 
 /**
+ * overview tab 主区域消费的 CaseDetail 字段。
  *
+ * 4 张 summary card + provider progress + next action + timeline。
  */
+export const OVERVIEW_TAB_MAIN_CONSUMED_FIELDS = [
+  "stage",
+  "stageMeta",
+  "deadline",
+  "deadlineDanger",
+  "deadlineMeta",
+  "progressPercent",
+  "progressCount",
+  "billingAmount",
+  "billingMeta",
+  "providerProgress",
+  "nextAction",
+  "overviewActions",
+  "timeline",
+] as const;
+
+/**
+ * overview sidebar 消费的 CaseDetail 字段。
+ *
+ * risk summary + team + validation hint。
+ */
+export const OVERVIEW_TAB_SIDEBAR_CONSUMED_FIELDS = [
+  "risk",
+  "deadlineDanger",
+  "team",
+  "validationHint",
+] as const;
+
+/**
+ * overview tab + header 的 customerId 回链所需字段。
+ *
+ * 由 CaseDetailView header 和 CaseOverviewTab 客户信息行共用。
+ */
+export const OVERVIEW_TAB_CUSTOMER_BACK_LINK_FIELDS = [
+  "customerId",
+  "client",
+  "groupId",
+  "groupName",
+] as const;
+
+/**
+ * 4 张 summary card 定义——字段来源与展示口径。
+ *
+ * 每张卡片 `id` 对应 UI 的 data-testid / i18n key 后缀。
+ * `fields` 列举该卡片从 CaseDetail 读取的属性。
+ * `source` 标注聚合 DTO 来源 slice。
+ */
+export const OVERVIEW_SUMMARY_CARD_DEFS = [
+  {
+    id: "stage",
+    fields: ["stage", "stageMeta"],
+    source: "caseRecord",
+  },
+  {
+    id: "deadline",
+    fields: ["deadline", "deadlineDanger", "deadlineMeta"],
+    source: "caseRecord",
+  },
+  {
+    id: "progress",
+    fields: ["progressPercent", "progressCount"],
+    source: "counts",
+  },
+  {
+    id: "billing",
+    fields: ["billingAmount", "billingMeta"],
+    source: "billing",
+  },
+] as const;
+
+// ─── Info Tab Consumed Fields (frozen by p0-fe-006a-02) ──────────
+// info tab 从 CaseDetail 读取的字段集合。
+// 变更时须同步更新 CaseInfoTab.vue 与 info tab contract tests。
+
+/**
+ * info tab 案件属性卡消费的 CaseDetail 字段。
+ *
+ * 来源均为 adapter `buildDetailHeader` 产出；
+ * `agency` 当前无 server Case 字段映射，默认空字符串。
+ */
+export const INFO_TAB_CASE_ATTRIBUTES_FIELDS = [
+  "id",
+  "caseType",
+  "applicationType",
+  "acceptedDate",
+  "targetDate",
+  "agency",
+] as const;
+
+/**
+ * info tab 关联主体卡消费的 CaseDetail 字段。
+ *
+ * `relatedParties` 当前为 EMPTY_LISTS 占位，
+ * 后续由 case-parties adapter 填充。
+ */
+export const INFO_TAB_RELATED_PARTIES_FIELDS = ["relatedParties"] as const;
+
+/**
+ * info tab read-only 规则。
+ *
+ * - `alwaysReadonly`：系统生成或当前无编辑入口的字段，无论 case stage 都展示为 disabled。
+ * - P0 阶段所有 info tab 字段均为 display-only（edit 功能尚未实现），
+ *   因此 `readonly` prop 仅控制全局 S9 归档横幅，不影响字段内部样式。
+ */
+export const INFO_TAB_READONLY_RULES = {
+  alwaysReadonly: [
+    "id",
+    "caseType",
+    "applicationType",
+    "acceptedDate",
+    "targetDate",
+    "agency",
+  ],
+} as const;
+
+// ─── P1 BMV Detail Consumed Fields (frozen by p1-fe-001-01) ──────
+// BMV 经营管理签案件从 case record 读取的专属字段。
+// 非 BMV 案件上这些字段为 null / 0 / 空字符串（降级运行）。
+// 变更时须同步更新 CaseAdapterDetailAggregate.buildBmvFields
+// 与对应 contract tests。
+
+/**
+ * case record 上 BMV 专属字段 — adapter 从 caseRecord 读取。
+ */
+export const BMV_CASE_RECORD_CONSUMED_FIELDS = [
+  "currentWorkflowStepCode",
+  "visaPlan",
+  "supplementCount",
+  "resultOutcome",
+  "postApprovalStage",
+  "coeIssuedAt",
+  "coeExpiryDate",
+  "coeSentAt",
+  "overseasVisaStartAt",
+  "entryConfirmedAt",
+  "caseTypeCode",
+] as const;
+
+/**
+ * CaseDetail 上 BMV 专属字段属性名 — 用于 contract tests 断言覆盖完整性。
+ */
+export const BMV_DETAIL_TARGET_KEYS = [
+  "workflowStep",
+  "failureCloseout",
+  "visaPlan",
+  "supplementCount",
+  "resultOutcome",
+  "postApprovalStage",
+  "coeIssuedDate",
+  "coeExpiryDate",
+  "overseasVisaStartDate",
+  "entryConfirmedDate",
+  "residencePeriod",
+  "reminderSchedule",
+  "successCloseout",
+] as const;
+
+// ─── P1 Failure Closeout Consumed Fields (frozen by p1-fe-001-01) ─
+// failureCloseoutCheck slice 消费的字段。
+// 变更时须同步更新 CaseAdapterDetailAggregate.buildFailureCloseoutInfo。
+
+/**
+ * failureCloseoutCheck slice 消费的字段。
+ */
+export const FAILURE_CLOSEOUT_CONSUMED_FIELDS = [
+  "isFailurePath",
+  "attribution",
+] as const;
+
+/**
+ * attribution 子对象消费的字段。
+ */
+export const FAILURE_CLOSEOUT_ATTRIBUTION_CONSUMED_FIELDS = [
+  "reasonCode",
+  "reasonLabel",
+  "canDirectClose",
+  "closeReasonRequired",
+] as const;
+
+// ─── P1 Residence Period / Success Closeout Consumed Fields (p1-fe-004-02) ─
+
+/** currentResidencePeriod slice 消费字段。 */
+export const RESIDENCE_PERIOD_CONSUMED_FIELDS = [
+  "id",
+  "visaType",
+  "statusOfResidence",
+  "periodYears",
+  "periodLabel",
+  "validFrom",
+  "validUntil",
+  "cardNumber",
+  "entryDate",
+  "reminderCreated",
+] as const;
+
+/** successCloseoutCheck slice 消费字段。 */
+export const SUCCESS_CLOSEOUT_CONSUMED_FIELDS = [
+  "allSatisfied",
+  "preconditions",
+] as const;
+
+/** preconditions 子对象消费字段。 */
+export const SUCCESS_CLOSEOUT_PRECONDITION_CONSUMED_FIELDS = [
+  "code",
+  "label",
+  "satisfied",
+] as const;
+
+// ─── CaseDetailAggregate (p0-fe-002c) ────────────────────────────
+
+/** 案件详情页查询聚合结果。 */
 export interface CaseDetailAggregate {
   /**
    *

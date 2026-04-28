@@ -18,6 +18,7 @@ const SAMPLE_FORM_ROW = {
   app_user_id: "au-1",
   lead_id: null,
   case_draft_id: null,
+  form_kind: "general",
   form_data: { fullName: "Taro" },
   status: "draft",
   created_at: "2026-01-01T00:00:00.000Z",
@@ -136,5 +137,56 @@ void test("IntakeService.submit rejects if not owner", async () => {
   await assert.rejects(
     () => svc.submit("form-1", "au-other"),
     /own intake form/,
+  );
+});
+
+// ── form_kind ──
+
+void test("IntakeService.create defaults form_kind to general", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    return Promise.resolve({ rows: [SAMPLE_FORM_ROW] });
+  });
+  const svc = new IntakeService(pool);
+  const result = await svc.create({ appUserId: "au-1" });
+  assert.equal(result.formKind, "general");
+  const insertCall = calls.find((c) => c.sql.includes("insert into"));
+  assert.ok(insertCall);
+  assert.ok(insertCall.params?.includes("general"));
+});
+
+void test("IntakeService.create accepts bmv_questionnaire form_kind", async () => {
+  const bmvRow = { ...SAMPLE_FORM_ROW, form_kind: "bmv_questionnaire" };
+  const pool = makePool(() => Promise.resolve({ rows: [bmvRow] }));
+  const svc = new IntakeService(pool);
+  const result = await svc.create({
+    appUserId: "au-1",
+    formKind: "bmv_questionnaire",
+  });
+  assert.equal(result.formKind, "bmv_questionnaire");
+});
+
+void test("IntakeService.create accepts bmv_quote form_kind", async () => {
+  const quoteRow = { ...SAMPLE_FORM_ROW, form_kind: "bmv_quote" };
+  const pool = makePool(() => Promise.resolve({ rows: [quoteRow] }));
+  const svc = new IntakeService(pool);
+  const result = await svc.create({
+    appUserId: "au-1",
+    formKind: "bmv_quote",
+  });
+  assert.equal(result.formKind, "bmv_quote");
+});
+
+void test("IntakeService.create rejects invalid form_kind", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [SAMPLE_FORM_ROW] }));
+  const svc = new IntakeService(pool);
+  await assert.rejects(
+    () =>
+      svc.create({
+        appUserId: "au-1",
+        formKind: "invalid_kind" as never,
+      }),
+    /Invalid form_kind/,
   );
 });

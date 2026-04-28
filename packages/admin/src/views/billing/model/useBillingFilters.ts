@@ -4,7 +4,6 @@ import type {
   BillingStatusFilter,
   BillingGroupFilter,
   BillingOwnerFilter,
-  CaseBillingRow,
   SelectOption,
 } from "../types";
 
@@ -58,22 +57,6 @@ export function useBillingFilters(deps: UseBillingFiltersDeps) {
     segment.value = next;
   }
 
-  function applyFilters(rows: CaseBillingRow[]): CaseBillingRow[] {
-    return rows.filter((row) => {
-      if (statusFilter.value && row.status !== statusFilter.value) return false;
-      if (groupFilter.value && row.group !== groupFilter.value) return false;
-      if (ownerFilter.value && row.owner !== ownerFilter.value) return false;
-      if (search.value) {
-        const q = search.value.toLowerCase();
-        const haystack = [row.caseName, row.client.name, row.caseNo]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
-      }
-      return true;
-    });
-  }
-
   return {
     statusOptions: deps.statusOptions,
     groupOptions: deps.groupOptions,
@@ -86,6 +69,5 @@ export function useBillingFilters(deps: UseBillingFiltersDeps) {
     isFilterActive,
     resetFilters,
     switchSegment,
-    applyFilters,
   };
 }

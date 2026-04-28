@@ -46,6 +46,10 @@ const leadsZhCN = {
       adjustFollowUp: "调整跟进时间",
       markStatus: "标记状态",
       selectStatus: "选择状态",
+      addTags: "标签",
+      tagsPlaceholder: "逗号分隔的标签",
+      export: "导出",
+      exportBtn: "导出",
       apply: "应用",
     },
     empty: {
@@ -60,7 +64,7 @@ const leadsZhCN = {
     },
     toast: {
       leadCreated: {
-        title: "线索已创建（示例）",
+        title: "线索已创建",
         description: "可继续跟进或建档",
       },
       draftSaved: {
@@ -80,8 +84,20 @@ const leadsZhCN = {
         description: "已选择 {count} 条，下次跟进：{date}",
       },
       bulkStatus: {
-        title: "批量标记状态（示例）",
+        title: "批量标记状态",
         description: "成功 {success} 条，跳过 {skipped} 条",
+      },
+      bulkTags: {
+        title: "批量标签已应用",
+        description: "{count} 条线索已标记：{tags}",
+      },
+      bulkExport: {
+        title: "导出已开始",
+        description: "{count} 条线索已导出为 {format}",
+      },
+      createError: {
+        title: "创建失败",
+        description: "线索创建失败，请稍后重试。",
       },
     },
     draft: {
@@ -137,6 +153,7 @@ const leadsZhCN = {
     tabs: {
       info: "基础信息",
       followups: "跟进记录",
+      conversations: "会话",
       conversion: "转化信息",
       log: "日志",
     },
@@ -174,6 +191,9 @@ const leadsZhCN = {
         note: "备注",
       },
     },
+    conversationsTab: {
+      empty: "该线索暂无关联会话。",
+    },
     followupsTab: {
       formTitle: "新增跟进记录",
       channel: "渠道",
@@ -207,6 +227,12 @@ const leadsZhCN = {
       typeCustomer: "客户",
       typeCase: "案件",
     },
+    convertDedup: {
+      title: "检测到可能重复的记录",
+      description: "该线索的电话/邮箱与已有线索或客户匹配，确认继续转化吗？",
+      cancel: "取消",
+      confirm: "确认转化",
+    },
     logTab: {
       title: "操作日志",
       filterLabel: "日志分类筛选",
@@ -214,6 +240,48 @@ const leadsZhCN = {
       typeOwner: "人员变更",
       typeGroup: "所属组变更",
       emptyTitle: "暂无日志",
+    },
+  },
+  errors: {
+    fetchFailed: "线索数据加载失败，请稍后重试。",
+    updateFailed: "线索更新失败，请稍后重试。",
+    transitionFailed: "状态变更失败，请检查当前状态后重试。",
+    followupFailed: "跟进记录提交失败，请稍后重试。",
+    dedupFailed: "去重查询失败，请稍后重试。",
+    convertFailed: "转化操作失败，请稍后重试。",
+    exportFailed: "导出失败，请稍后重试。",
+    bulkPartialFailure:
+      "批量操作部分失败：成功 {success} 条，失败 {failed} 条。",
+  },
+  statusTransition: {
+    invalidTransition: "当前状态不允许此操作。",
+    lostReasonRequired: "标记为「已流失」时必须填写流失原因。",
+    lostRevivalTitle: "确认复活线索",
+    lostRevivalDescription:
+      "此线索已标记为流失，确认要重新激活为「跟进中」吗？",
+    lostRevivalConfirm: "确认复活",
+    lostRevivalCancel: "取消",
+    lostRevivalSuccess: "线索已成功复活为「跟进中」。",
+    lostRevivalFailed: "线索复活失败，请稍后重试。",
+    transitionSuccess: "状态已更新为「{status}」。",
+    convertedCannotChange: "已转化的线索不可再更改状态。",
+  },
+  toast: {
+    updateSuccess: {
+      title: "线索已更新",
+      description: "修改已保存",
+    },
+    followupSuccess: {
+      title: "跟进记录已提交",
+      description: "跟进内容已保存并更新下一步安排",
+    },
+    transitionSuccess: {
+      title: "状态已更新",
+      description: "线索状态已变更为「{status}」",
+    },
+    convertSuccess: {
+      title: "转化成功",
+      description: "已生成客户档案，可继续建案",
     },
   },
 } as const;

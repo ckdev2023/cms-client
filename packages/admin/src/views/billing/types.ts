@@ -37,6 +37,15 @@ export type CollectionSkipReasonCode =
 /**
  *
  */
+export type RiskAckReasonCode =
+  | "customer_promise"
+  | "internal_review"
+  | "partial_settled"
+  | "other";
+
+/**
+ *
+ */
 export type GroupCode = "tokyo-1" | "tokyo-2" | "osaka";
 
 /**
@@ -178,6 +187,10 @@ export interface CaseBillingRow {
   /**
    *
    */
+  caseId: string;
+  /**
+   *
+   */
   caseName: string;
   /**
    *
@@ -223,6 +236,18 @@ export interface CaseBillingRow {
    *
    */
   nextNode: BillingNextNode | null;
+  /**
+   *
+   */
+  billingRiskAcknowledged: boolean;
+  /**
+   *
+   */
+  billingRiskAcknowledgedAt: string | null;
+  /**
+   *
+   */
+  billingRiskAcknowledgedByDisplayName: string | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -273,6 +298,14 @@ export interface PaymentLogEntry {
    *
    */
   note: string;
+  /**
+   * 作废/冲正操作人展示名（D10：`recordStatus='reversed'` 时表示冲正操作人）。
+   */
+  voidedByDisplayName?: string;
+  /**
+   * 作废/冲正原因码。
+   */
+  reasonCode?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -420,52 +453,6 @@ export interface CollectionResult {
    */
   details: CollectionResultDetail[];
 }
-
-// ---------------------------------------------------------------------------
-// 风险确认
-// ---------------------------------------------------------------------------
-
-/**
- *
- */
-export interface RiskAcknowledgement {
-  /**
-   *
-   */
-  confirmedBy: string;
-  /**
-   *
-   */
-  confirmedAt: string;
-  /**
-   *
-   */
-  reasonCode: string;
-  /**
-   *
-   */
-  reasonNote: string;
-  /**
-   *
-   */
-  receipt: boolean;
-  /**
-   *
-   */
-  amount: number;
-  /**
-   *
-   */
-  caseNo: string;
-  /**
-   *
-   */
-  caseName: string;
-}
-
-// ---------------------------------------------------------------------------
-// 通用选项
-// ---------------------------------------------------------------------------
 
 /**
  *

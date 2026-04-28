@@ -8,10 +8,10 @@ import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
-import type { LogFilter } from "../types";
+import type { LogFilter, LogType } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
-import { getLogTypeLabel } from "../types";
 import { useCustomerLogsModel } from "../model/useCustomerLogsModel";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 操作日志 Tab：展示按类型筛选的日志表格，支持分页。 */
 const props = defineProps<{
@@ -19,7 +19,7 @@ const props = defineProps<{
   repository: Pick<CustomerRepository, "listLogs">;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const customerIdRef = computed(() => props.customerId);
 const {
@@ -47,10 +47,17 @@ const segmentOptions = computed<SegmentOption<LogFilter>[]>(() => [
   { value: "comm", label: t("customers.detail.logsTab.filterComm") },
 ]);
 
+const LOG_TYPE_I18N: Record<LogType, string> = {
+  info: "customers.detail.logsTab.types.info",
+  relation: "customers.detail.logsTab.types.relation",
+  case: "customers.detail.logsTab.types.case",
+  comm: "customers.detail.logsTab.types.comm",
+};
+
 /**
  * 根据日志类型返回 Chip 色调。
  *
- * @param type 日志类型
+ * @param type - 日志类型
  * @returns Chip 色调
  */
 function typeTone(type: string): ChipTone {
@@ -69,14 +76,24 @@ function typeTone(type: string): ChipTone {
 }
 
 /**
- * 格式化 ISO 日期时间为可读格式。
+ * 通过 i18n 获取日志类型的显示标签。
  *
- * @param iso ISO 格式字符串
- * @returns 格式化后的日期时间
+ * @param type - 日志类型
+ * @returns 当前 locale 的类型标签
  */
-function formatDateTime(iso: string): string {
-  if (!iso) return "—";
-  return iso.replace("T", " ");
+function logTypeLabel(type: LogType | string): string {
+  const key = LOG_TYPE_I18N[type as LogType];
+  return key ? t(key) : String(type || "—");
+}
+
+/**
+ * 将 ISO 时间戳格式化为当前 locale 的可读日期时间。
+ *
+ * @param iso - ISO 8601 时间戳
+ * @returns 格式化后的日期时间字符串
+ */
+function fmtDateTime(iso: string): string {
+  return formatDateTime(iso, locale.value) || "—";
 }
 </script>
 
@@ -133,11 +150,11 @@ function formatDateTime(iso: string): string {
           <tbody>
             <tr v-for="l in pagedLogs" :key="l.id" class="logs-tab__row">
               <td class="logs-tab__td logs-tab__td--time">
-                {{ formatDateTime(l.at) }}
+                {{ fmtDateTime(l.at) }}
               </td>
               <td class="logs-tab__td logs-tab__td--type">
                 <Chip :tone="typeTone(l.type)" size="sm">
-                  {{ getLogTypeLabel(l.type) }}
+                  {{ logTypeLabel(l.type) }}
                 </Chip>
               </td>
               <td class="logs-tab__td">{{ l.message }}</td>

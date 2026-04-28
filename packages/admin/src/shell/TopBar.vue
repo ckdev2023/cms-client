@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import { logoutAdmin } from "../auth/model/adminSession";
 import NavIcon from "./NavIcon.vue";
 import { localeOptions, setAppLocale, type AppLocale } from "../i18n";
+import { buildCaseCreateRoute } from "../views/cases/query";
 
 /**
  * 应用顶栏，负责导航入口、全局搜索与语言切换。
  */
-defineProps<{
-  userInitials?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    userEmail?: string;
+    userInitials?: string;
+    userName?: string;
+  }>(),
+  {
+    userEmail: "admin@local.test",
+    userName: "Local Admin",
+  },
+);
 
 defineEmits<{
   toggleMenu: [];
@@ -28,14 +37,56 @@ const currentLocale = computed<AppLocale>({
 });
 
 const globalSearchInputId = "topbar-global-search";
+const globalSearchStatusId = "topbar-global-search-status";
 const localeSelectId = "topbar-locale-select";
+const accountPanelId = "topbar-account-panel";
+const isAccountPanelOpen = ref(false);
+
+/**
+ * 根据用户名生成头像缩写，优先取前两个单词首字母。
+ *
+ * @param name 用户显示名称
+ * @returns 双字母头像缩写；兜底返回 `LA`
+ */
+function buildAvatarInitials(name: string): string {
+  const segments = name.trim().split(/\s+/).filter(Boolean);
+  if (segments.length >= 2) {
+    return segments
+      .map((segment) => segment[0]?.toUpperCase() ?? "")
+      .join("")
+      .slice(0, 2);
+  }
+
+  const compact = name.replace(/\s+/g, "").slice(0, 2).toUpperCase();
+  return compact || "LA";
+}
+
+const resolvedUserInitials = computed(
+  () => props.userInitials?.trim() || buildAvatarInitials(props.userName),
+);
+const accountSummary = computed(() => `${props.userName} (${props.userEmail})`);
 
 /**
  * 清理本地后台登录态，并跳回登录页显示退出提示。
  */
 function handleLogout(): void {
+  isAccountPanelOpen.value = false;
   logoutAdmin();
   void router.push({ name: "login", query: { reason: "loggedOut" } });
+}
+
+/**
+ * 打开案件新建页，保持与案件列表等入口一致的路由构造方式。
+ */
+function handleCreateCase(): void {
+  void router.push(buildCaseCreateRoute({}));
+}
+
+/**
+ * 切换账户信息面板显隐。
+ */
+function toggleAccountPanel(): void {
+  isAccountPanelOpen.value = !isAccountPanelOpen.value;
 }
 </script>
 
@@ -57,10 +108,15 @@ function handleLogout(): void {
           :id="globalSearchInputId"
           name="globalSearch"
           type="search"
-          :placeholder="t('shell.topbar.searchPlaceholder')"
+          :placeholder="t('shell.topbar.searchUnavailablePlaceholder')"
           :aria-label="t('shell.topbar.globalSearch')"
+          :aria-describedby="globalSearchStatusId"
+          disabled
+          aria-disabled="true"
         />
-        <kbd class="topbar-search-kbd">⌘K</kbd>
+        <span :id="globalSearchStatusId" class="topbar-search-status">
+          {{ t("shell.topbar.comingSoon") }}
+        </span>
       </div>
 
       <div class="topbar-actions">
@@ -91,8 +147,7 @@ function handleLogout(): void {
           <button
             class="topbar-action topbar-action--primary"
             type="button"
-            disabled
-            aria-disabled="true"
+            @click="handleCreateCase"
           >
             {{ t("shell.topbar.createCase") }}
           </button>
@@ -102,8 +157,30 @@ function handleLogout(): void {
         </template>
       </div>
 
-      <div class="topbar-avatar" :aria-label="userInitials ?? 'U'">
-        {{ userInitials ?? "U" }}
+      <div class="topbar-account">
+        <button
+          class="topbar-avatar topbar-avatar--button"
+          type="button"
+          :aria-controls="accountPanelId"
+          :aria-expanded="isAccountPanelOpen"
+          :aria-label="accountSummary"
+          aria-haspopup="dialog"
+          :title="accountSummary"
+          @click="toggleAccountPanel"
+        >
+          {{ resolvedUserInitials }}
+        </button>
+        <div
+          v-if="isAccountPanelOpen"
+          :id="accountPanelId"
+          class="topbar-account-panel"
+          role="dialog"
+          :aria-label="accountSummary"
+          @keydown.esc="isAccountPanelOpen = false"
+        >
+          <p class="topbar-account-name">{{ props.userName }}</p>
+          <p class="topbar-account-email">{{ props.userEmail }}</p>
+        </div>
       </div>
     </div>
   </header>

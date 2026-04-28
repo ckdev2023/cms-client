@@ -62,6 +62,16 @@ function resolveRelationLabel(relation: CaseCreateSelectedRelation): string {
   );
 }
 
+function mapRelationTarget(
+  relation: CaseCreateSelectedRelation,
+  key: string,
+): Pick<CreateCaseRelatedParty, "customerId" | "contactPersonId"> {
+  if (relation.kind === "contact_person") {
+    return { contactPersonId: key };
+  }
+  return { customerId: key };
+}
+
 interface MapSelectedRelationsToPartiesInput {
   /** 候选关系人列表。 */
   relations: readonly CaseCreateSelectedRelation[];
@@ -90,6 +100,7 @@ export function mapSelectedRelationsToParties(
 
     seen.add(key);
     parties.push({
+      ...mapRelationTarget(relation, key),
       name,
       role: resolveSelectedRelationRole(relation),
       relation: resolveRelationLabel(relation),

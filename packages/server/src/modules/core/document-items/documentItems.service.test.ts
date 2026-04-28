@@ -6,6 +6,7 @@ import type { Pool } from "pg";
 import {
   DocumentItemsService,
   ALLOWED_TRANSITIONS,
+  mapDocumentItemRow,
 } from "./documentItems.service";
 import type { RequestContext } from "../tenancy/requestContext";
 
@@ -36,6 +37,8 @@ function makeItemRow(overrides: Record<string, unknown> = {}) {
     owner_side: "applicant",
     last_follow_up_at: null,
     note: null,
+    category: null,
+    survey_data: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -186,10 +189,10 @@ void test("DocumentItemsService.getCompletionRate returns aggregated percentage"
     }
     return Promise.resolve({
       rows: [
-        { status: "approved", count: "1" },
-        { status: "waived", count: "1" },
-        { status: "pending", count: "1" },
-        { status: "revision_required", count: "1" },
+        { status: "approved", category: null, count: "1" },
+        { status: "waived", category: null, count: "1" },
+        { status: "pending", category: null, count: "1" },
+        { status: "revision_required", category: null, count: "1" },
       ],
       rowCount: 4,
     });
@@ -206,6 +209,9 @@ void test("DocumentItemsService.getCompletionRate returns aggregated percentage"
     approved: 1,
     waived: 1,
     completionRate: 50,
+    questionnaireTotal: 0,
+    questionnaireCompleted: 0,
+    questionnaireCompletionRate: 0,
   });
 });
 
@@ -227,6 +233,9 @@ void test("DocumentItemsService.getCompletionRate returns zero and keeps tenant 
     approved: 0,
     waived: 0,
     completionRate: 0,
+    questionnaireTotal: 0,
+    questionnaireCompleted: 0,
+    questionnaireCompletionRate: 0,
   });
   const orgCall = calls.find((call) => call.sql.includes("app.org_id"));
   assert.equal(orgCall?.params?.[0], ORG_ID);
@@ -546,6 +555,408 @@ void test("DocumentItemsService.softDelete throws when not found", async () => {
     () => svc.softDelete(makeCtx("manager"), "nonexistent"),
     (err) => {
       assert.ok(err instanceof Error);
+      return true;
+    },
+  );
+});
+
+// ── create with category=questionnaire ──
+void test("create: accepts category=questionnaire and returns it", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("insert into document_items")) {
+      return Promise.resolve({
+        rows: [makeItemRow({ category: "questionnaire" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  const item = await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    checklistItemCode: "bmv-questionnaire",
+    name: "BMV Questionnaire",
+    category: "questionnaire",
+  });
+
+  assert.equal(item.category, "questionnaire");
+  assert.equal(item.surveyData, null);
+});
+
+// ── create with category=questionnaire and surveyData ──
+void test("create: accepts category=questionnaire with surveyData", async () => {
+  const surveyPayload = { personal_info: { name: "Test" } };
+  const pool = makePool((sql) => {
+    if (sql.includes("insert into document_items")) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            category: "questionnaire",
+            survey_data: surveyPayload,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const item = await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    checklistItemCode: "bmv-questionnaire",
+    name: "BMV Questionnaire",
+    category: "questionnaire",
+    surveyData: surveyPayload,
+  });
+
+  assert.equal(item.category, "questionnaire");
+  assert.deepEqual(item.surveyData, surveyPayload);
+});
+
+// ── create rejects surveyData without category=questionnaire ──
+void test("create: rejects surveyData when category is not questionnaire", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
+  const svc = createService(pool, makeTimeline());
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        checklistItemCode: "x",
+        name: "X",
+        category: "standard",
+        surveyData: { foo: "bar" },
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("questionnaire"));
+      return true;
+    },
+  );
+});
+
+// ── create with category=standard (null survey_data) ──
+void test("create: accepts category=standard without surveyData", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("insert into document_items")) {
+      return Promise.resolve({
+        rows: [makeItemRow({ category: "standard" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const item = await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    checklistItemCode: "residence-card",
+    name: "Residence Card",
+    category: "standard",
+  });
+
+  assert.equal(item.category, "standard");
+  assert.equal(item.surveyData, null);
+});
+
+// ── list filters by category ──
+void test("list: applies category filter", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeItemRow({ category: "questionnaire" })],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"), {
+    caseId: CASE_ID,
+    category: "questionnaire",
+  });
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0]?.category, "questionnaire");
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("category = $"));
+});
+
+// ── updateSurveyData: success on questionnaire item ──
+void test("updateSurveyData: updates survey_data on questionnaire item", async () => {
+  const surveyPayload = { business_plan: { revenue: 1000000 } };
+  const pool = makePool((sql, params) => {
+    if (sql.includes("update document_items") && sql.includes("survey_data")) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            category: "questionnaire",
+            survey_data: surveyPayload,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ category: "questionnaire" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  const result = await svc.updateSurveyData(makeCtx(), ITEM_ID, {
+    surveyData: surveyPayload,
+  });
+
+  assert.deepEqual(result.surveyData, surveyPayload);
+  assert.equal(timeline.writes.length, 1);
+  assert.deepEqual(
+    (timeline.writes[0] as Record<string, unknown>).action,
+    "document_item.survey_data_updated",
+  );
+});
+
+// ── updateSurveyData: set to null ──
+void test("updateSurveyData: allows setting survey_data to null", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("update document_items") && sql.includes("survey_data")) {
+      return Promise.resolve({
+        rows: [makeItemRow({ category: "questionnaire", survey_data: null })],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            category: "questionnaire",
+            survey_data: { old: "data" },
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.updateSurveyData(makeCtx(), ITEM_ID, {
+    surveyData: null,
+  });
+  assert.equal(result.surveyData, null);
+});
+
+// ── updateSurveyData: rejects on non-questionnaire item ──
+void test("updateSurveyData: rejects when category is not questionnaire", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ category: "standard" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () =>
+      svc.updateSurveyData(makeCtx(), ITEM_ID, {
+        surveyData: { test: true },
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("questionnaire"));
+      return true;
+    },
+  );
+});
+
+// ── updateSurveyData: rejects when category is null ──
+void test("updateSurveyData: rejects when category is null", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () =>
+      svc.updateSurveyData(makeCtx(), ITEM_ID, {
+        surveyData: { test: true },
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("questionnaire"));
+      return true;
+    },
+  );
+});
+
+// ── updateSurveyData: not found ──
+void test("updateSurveyData: throws when item not found", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
+  const svc = createService(pool, makeTimeline());
+
+  await assert.rejects(
+    () =>
+      svc.updateSurveyData(makeCtx(), "nonexistent", {
+        surveyData: { test: true },
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      return true;
+    },
+  );
+});
+
+// ── mapDocumentItemRow: surveyData from JSON string ──
+void test("mapDocumentItemRow: parses survey_data JSON string", () => {
+  const row = makeItemRow({
+    category: "questionnaire",
+    survey_data: '{"personal_info":{"name":"Taro"}}',
+  });
+  const item = mapDocumentItemRow(row as never);
+  assert.equal(item.category, "questionnaire");
+  assert.deepEqual(item.surveyData, { personal_info: { name: "Taro" } });
+});
+
+// ── mapDocumentItemRow: surveyData from object ──
+void test("mapDocumentItemRow: handles survey_data as object", () => {
+  const row = makeItemRow({
+    category: "questionnaire",
+    survey_data: { business_plan: { revenue: 500000 } },
+  });
+  const item = mapDocumentItemRow(row as never);
+  assert.deepEqual(item.surveyData, { business_plan: { revenue: 500000 } });
+});
+
+// ── mapDocumentItemRow: null category and survey_data ──
+void test("mapDocumentItemRow: handles null category and survey_data", () => {
+  const row = makeItemRow();
+  const item = mapDocumentItemRow(row as never);
+  assert.equal(item.category, null);
+  assert.equal(item.surveyData, null);
+});
+
+// ────────────────────────────────────────────────────────────────
+// P1: questionnaire participation in completion / review / follow-up
+// ────────────────────────────────────────────────────────────────
+
+void test("getCompletionRate includes questionnaire breakdown", async () => {
+  const pool = makePool((sql) => {
+    if (/^(begin|commit|rollback|select set_config)/i.test(sql.trim())) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({
+      rows: [
+        { status: "approved", category: null, count: "3" },
+        { status: "pending", category: null, count: "2" },
+        { status: "approved", category: "questionnaire", count: "1" },
+        { status: "pending", category: "questionnaire", count: "1" },
+      ],
+      rowCount: 4,
+    });
+  });
+
+  const result = await createService(pool, makeTimeline()).getCompletionRate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.equal(result.total, 7);
+  assert.equal(result.completed, 4);
+  assert.equal(result.approved, 4);
+  assert.equal(result.waived, 0);
+  assert.equal(result.questionnaireTotal, 2);
+  assert.equal(result.questionnaireCompleted, 1);
+  assert.equal(result.questionnaireCompletionRate, 50);
+});
+
+void test("getCompletionRate questionnaire fields are zero when no questionnaire items", async () => {
+  const pool = makePool((sql) => {
+    if (/^(begin|commit|rollback|select set_config)/i.test(sql.trim())) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({
+      rows: [
+        { status: "approved", category: null, count: "2" },
+        { status: "pending", category: "standard", count: "1" },
+      ],
+      rowCount: 2,
+    });
+  });
+
+  const result = await createService(pool, makeTimeline()).getCompletionRate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.equal(result.questionnaireTotal, 0);
+  assert.equal(result.questionnaireCompleted, 0);
+  assert.equal(result.questionnaireCompletionRate, 0);
+});
+
+void test("followUp: allowed on questionnaire item in pending status", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("last_follow_up_at = now()")) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "pending",
+            category: "questionnaire",
+            last_follow_up_at: "2026-02-01T00:00:00.000Z",
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending", category: "questionnaire" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  const result = await svc.followUp(makeCtx(), ITEM_ID);
+  assert.equal(result.lastFollowUpAt, "2026-02-01T00:00:00.000Z");
+  assert.equal(result.category, "questionnaire");
+  assert.equal(timeline.writes.length, 1);
+});
+
+void test("followUp: still rejected on non-questionnaire item in pending status", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending", category: null })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.followUp(makeCtx(), ITEM_ID),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("Cannot follow up"));
       return true;
     },
   );

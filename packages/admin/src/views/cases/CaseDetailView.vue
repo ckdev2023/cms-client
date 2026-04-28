@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable max-lines */
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
@@ -16,17 +17,35 @@ import CaseLogTab from "./components/CaseLogTab.vue";
 import CaseValidationTab from "./components/CaseValidationTab.vue";
 import CaseBillingTab from "./components/CaseBillingTab.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
-import { useCaseDetailModel } from "./model/useCaseDetailModel";
-import { parseCaseDetailQuery, buildCustomerDetailHref } from "./query";
-import { CASE_SAMPLE_KEYS, BADGE_TONE_MAP, SAMPLE_LABELS } from "./constants";
-import type { CaseSampleKey } from "./types";
+import {
+  useCaseDetailModel,
+  type TabCounter,
+} from "./model/useCaseDetailModel";
+import {
+  buildCaseDetailQuery,
+  buildCaseListHref,
+  buildCustomerDetailHref,
+} from "./query";
+import { BADGE_TONE_MAP, getPhaseI18nKey, getPhaseBadge } from "./constants";
 
-/** 案件详情页：加载案件数据、展示 Tab 栏与内容面板。 */
+/** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t } = useI18n();
 const route = useRoute();
 const router = useRouter();
+
+/**
+ * 解析 Tab 计数器展示文案，优先使用 i18n 文案。
+ * @param c - Tab 计数器配置。
+ * @returns 当前计数器应展示的文本。
+ */
+function counterLabel(c: TabCounter): string {
+  return c.i18nKey ? t(c.i18nKey, c.i18nParams ?? {}) : c.label;
+}
 const caseId = computed(() => route.params.id as string);
-const detailQuery = parseCaseDetailQuery(route.query);
+const routeTab = computed(() => {
+  const raw = route.query.tab;
+  return typeof raw === "string" ? raw : undefined;
+});
 const {
   activeTab,
   tabs,
@@ -34,33 +53,51 @@ const {
   notFound,
   isReadonly,
   tabCounters,
-  currentSampleKey,
+  loading,
   showRiskModal,
+  isBmvCase,
+  writeFeedback,
   switchTab,
-  getSampleCaseId,
   openRiskModal,
   closeRiskModal,
-} = useCaseDetailModel(caseId, { initialTab: detailQuery.tab });
+  transitionWorkflowStep,
+  retryReminderCreation,
+  failureClose,
+} = useCaseDetailModel(caseId, {
+  routeTab,
+  onTabChange: (tab) =>
+    router.replace({ query: buildCaseDetailQuery({ tab }) }),
+});
 
 /**
- * 将 statusBadge 映射为 Chip 色调。
- *
- * @param badge - 状态徽章标识
- * @returns ChipTone 色调
+ * 将状态徽标映射为 `Chip` 组件使用的 tone。
+ * @param badge - 后端返回的徽标键。
+ * @returns 对应的 `ChipTone`。
  */
 function badgeToTone(badge: string): ChipTone {
   return (BADGE_TONE_MAP[badge] ?? "neutral") as ChipTone;
 }
 
+const phaseTone = computed<ChipTone>(() => {
+  if (!detail.value) return "neutral";
+  return badgeToTone(getPhaseBadge(detail.value.businessPhase));
+});
+
+const phaseLabel = computed(() => {
+  if (!detail.value) return "";
+  const key = getPhaseI18nKey(detail.value.businessPhase);
+  return key ? t(key) : detail.value.businessPhase;
+});
+
 /**
- * 切换演示样本时导航到对应案件 ID。
- *
- * @param event - select 的 change 事件
+ * 依据失败结案信息触发失败结案操作。
+ * @returns 无。
  */
-function onSampleChange(event: Event) {
-  const key = (event.target as HTMLSelectElement).value as CaseSampleKey;
-  const id = getSampleCaseId(key);
-  if (id) router.push(`/cases/${id}`);
+function failureCloseCase(): void {
+  const fc = detail.value?.failureCloseout;
+  if (!fc) return;
+  const reason = fc.reasonLabel ?? fc.reasonCode ?? undefined;
+  failureClose(reason);
 }
 </script>
 
@@ -72,7 +109,7 @@ function onSampleChange(event: Event) {
         :breadcrumbs="[
           { label: t('shell.nav.items.dashboard'), href: '#/' },
           { label: t('shell.nav.groups.business') },
-          { label: t('shell.nav.items.cases'), href: '#/cases' },
+          { label: t('shell.nav.items.cases'), href: buildCaseListHref() },
           { label: `#${detail.id}` },
         ]"
       >
@@ -80,8 +117,19 @@ function onSampleChange(event: Event) {
           <Chip :tone="badgeToTone(detail.statusBadge)" size="sm" dot>
             {{ detail.stage }}
           </Chip>
+          <Chip :tone="phaseTone" size="sm" dot>
+            {{ phaseLabel }}
+          </Chip>
+          <Chip
+            v-if="isBmvCase && detail.workflowStep"
+            :tone="detail.workflowStep.isFailureStep ? 'danger' : 'primary'"
+            size="sm"
+            dot
+          >
+            {{ detail.workflowStep.parentStage }} →
+            {{ detail.workflowStep.stepLabel }}
+          </Chip>
         </template>
-
         <template #meta>
           <p class="case-detail-view__meta">
             <span class="case-detail-view__meta-item">
@@ -149,15 +197,6 @@ function onSampleChange(event: Event) {
         </template>
 
         <template #actions>
-          <select
-            class="case-detail-view__sample-select"
-            :value="currentSampleKey ?? ''"
-            @change="onSampleChange"
-          >
-            <option v-for="key in CASE_SAMPLE_KEYS" :key="key" :value="key">
-              {{ SAMPLE_LABELS[key] }}
-            </option>
-          </select>
           <Button size="sm">
             <svg
               width="16"
@@ -239,6 +278,30 @@ function onSampleChange(event: Event) {
       </div>
 
       <div
+        v-if="detail.failureCloseout && !isReadonly"
+        class="case-detail-view__failure-banner"
+        role="status"
+        data-testid="failure-path-banner"
+      >
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"
+          />
+        </svg>
+        <span>{{ t("cases.detail.failurePathBanner") }}</span>
+      </div>
+
+      <div
         class="case-detail-view__tabs"
         role="tablist"
         :aria-label="t('cases.detail.tabsLabel')"
@@ -254,7 +317,7 @@ function onSampleChange(event: Event) {
           :aria-selected="activeTab === tab.key"
           @click="switchTab(tab.key)"
         >
-          {{ tab.label }}
+          {{ t(tab.i18nKey) }}
           <span
             v-if="tabCounters[tab.key]"
             :class="[
@@ -267,7 +330,7 @@ function onSampleChange(event: Event) {
               },
             ]"
           >
-            {{ tabCounters[tab.key]!.label }}
+            {{ counterLabel(tabCounters[tab.key]!) }}
           </span>
         </button>
       </div>
@@ -281,7 +344,12 @@ function onSampleChange(event: Event) {
         <CaseOverviewTab
           v-if="activeTab === 'overview'"
           :detail="detail"
+          :write-feedback="writeFeedback"
+          :readonly="isReadonly"
           @switch-tab="switchTab"
+          @advance-to-coe="transitionWorkflowStep('COE_SENT')"
+          @retry-reminder="retryReminderCreation()"
+          @failure-close="failureCloseCase()"
         />
         <CaseInfoTab
           v-else-if="activeTab === 'info'"
@@ -313,7 +381,11 @@ function onSampleChange(event: Event) {
           :detail="detail"
           :readonly="isReadonly"
         />
-        <CaseLogTab v-else-if="activeTab === 'log'" :detail="detail" />
+        <CaseLogTab
+          v-else-if="activeTab === 'log'"
+          :detail="detail"
+          :readonly="isReadonly"
+        />
         <CaseValidationTab
           v-else-if="activeTab === 'validation'"
           :detail="detail"
@@ -335,9 +407,15 @@ function onSampleChange(event: Event) {
       />
     </template>
 
+    <div v-else-if="loading" class="case-detail-view__loading" role="status">
+      <span>{{ t("cases.detail.loading") }}</span>
+    </div>
+
     <div v-else-if="notFound" class="case-detail-view__not-found">
       <p>{{ t("cases.detail.notFound.message", { id: caseId }) }}</p>
-      <a href="#/cases">{{ t("cases.detail.notFound.backLink") }}</a>
+      <a :href="buildCaseListHref()">{{
+        t("cases.detail.notFound.backLink")
+      }}</a>
     </div>
   </div>
 </template>
@@ -379,28 +457,6 @@ function onSampleChange(event: Event) {
   color: var(--color-border-1);
 }
 
-/* ── Sample switcher (dev tool) ──────────────────────── */
-
-.case-detail-view__sample-select {
-  appearance: none;
-  padding: 6px 12px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-  background-color: var(--color-bg-overlay);
-  border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
-  cursor: pointer;
-  transition:
-    border-color var(--transition-normal),
-    box-shadow var(--transition-normal);
-}
-
-.case-detail-view__sample-select:focus-visible {
-  outline: 2px solid var(--color-primary-outline);
-  outline-offset: 2px;
-}
-
 .case-detail-view__readonly-banner {
   display: flex;
   align-items: center;
@@ -416,6 +472,24 @@ function onSampleChange(event: Event) {
 
 .case-detail-view__readonly-banner svg {
   flex-shrink: 0;
+}
+
+.case-detail-view__failure-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(220, 38, 38, 0.04);
+  border: 1px solid rgba(220, 38, 38, 0.15);
+  border-radius: var(--radius-lg, 12px);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: #991b1b;
+}
+
+.case-detail-view__failure-banner svg {
+  flex-shrink: 0;
+  color: var(--color-danger, #dc2626);
 }
 
 .case-detail-view__tabs {
@@ -479,6 +553,16 @@ function onSampleChange(event: Event) {
   gap: 16px;
 }
 
+.case-detail-view__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
 .case-detail-view__not-found {
   display: flex;
   flex-direction: column;
@@ -487,14 +571,13 @@ function onSampleChange(event: Event) {
   padding: 64px 24px;
   text-align: center;
   color: var(--color-text-3);
-
   & a {
     color: var(--color-primary-6);
     text-decoration: none;
     font-weight: var(--font-weight-semibold);
-    &:hover {
-      text-decoration: underline;
-    }
+  }
+  & a:hover {
+    text-decoration: underline;
   }
 }
 </style>

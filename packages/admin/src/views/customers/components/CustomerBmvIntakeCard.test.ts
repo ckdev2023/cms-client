@@ -71,6 +71,26 @@ describe("CustomerBmvIntakeCard", () => {
     ).toMatchObject({ disabled: false });
   });
 
+  it("renders an explicit UTC suffix when timeline timestamps come from UTC", () => {
+    setAppLocale("en-US");
+    const repository = createRepository();
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    if (!customer.bmvProfile) throw new Error("Expected BMV profile");
+
+    customer.bmvProfile.quoteConfirmedAt = "2026-04-27T06:07:00Z";
+    customer.bmvProfile.signStatus = "signed";
+    customer.bmvProfile.signedAt = "2026-04-28T03:15:00+00:00";
+    customer.bmvProfile.intakeStatus = "ready_for_case_creation";
+
+    const wrapper = mount(CustomerBmvIntakeCard, {
+      props: { customer, repository },
+      global: { plugins: [i18n] },
+    });
+
+    expect(wrapper.text()).toContain("2026-04-27 06:07 (UTC)");
+    expect(wrapper.text()).toContain("2026-04-28 03:15 (UTC)");
+  });
+
   it("hides itself when the customer has no bmvProfile", () => {
     setAppLocale("en-US");
     const repository = createRepository();

@@ -27,81 +27,50 @@ const CREATE_FIELDS: CustomerCreateFormFields = {
   phone: "090-1234-5678",
   email: "zhang@example.com",
   referrer: "客户推荐",
+  location: "JAPAN",
+  sourceType: "REFERRAL",
+  visaType: "engineer_specialist",
+  referrerName: "田中先生",
   avatar: "avatar.png",
   note: "prefer wechat",
 };
 
+const SUMMARY_DTO = {
+  id: "cust-001",
+  displayName: "张伟（就劳）",
+  legalName: "张伟",
+  furigana: "チョウ イ",
+  customerNumber: "CUS-001",
+  phone: "090-1234-5678",
+  email: "zhang@example.com",
+  totalCases: 2,
+  activeCases: 1,
+  lastContactDate: "2026-04-10",
+  lastContactChannel: "WeChat",
+  owner: { initials: "ZW", name: "张顾问" },
+  referralSource: "客户推荐",
+  group: "东京一组",
+  bmvProfile: null,
+};
+
 describe("CustomerAdapter", () => {
   it("adapts customer list result from DTO", () => {
-    const result = adaptCustomerListResult({
-      total: 1,
-      items: [
-        {
-          id: "cust-001",
-          displayName: "张伟（就劳）",
-          legalName: "张伟",
-          furigana: "チョウ イ",
-          customerNumber: "CUS-001",
-          phone: "090-1234-5678",
-          email: "zhang@example.com",
-          totalCases: 2,
-          activeCases: 1,
-          lastContactDate: "2026-04-10",
-          lastContactChannel: "WeChat",
-          owner: { initials: "ZW", name: "张顾问" },
-          referralSource: "客户推荐",
-          group: "东京一组",
-          bmvProfile: null,
-        },
-      ],
-    });
-
-    expect(result).toEqual({
-      total: 1,
-      items: [
-        {
-          id: "cust-001",
-          displayName: "张伟（就劳）",
-          legalName: "张伟",
-          furigana: "チョウ イ",
-          customerNumber: "CUS-001",
-          phone: "090-1234-5678",
-          email: "zhang@example.com",
-          totalCases: 2,
-          activeCases: 1,
-          lastContactDate: "2026-04-10",
-          lastContactChannel: "WeChat",
-          owner: { initials: "ZW", name: "张顾问" },
-          referralSource: "客户推荐",
-          group: "东京一组",
-          bmvProfile: null,
-        },
-      ],
-    });
+    const result = adaptCustomerListResult({ total: 1, items: [SUMMARY_DTO] });
+    expect(result).toEqual({ total: 1, items: [SUMMARY_DTO] });
   });
 
   it("adapts customer detail DTO with flattened fields", () => {
     const result = adaptCustomerDetailDto({
-      id: "cust-001",
-      displayName: "张伟（就劳）",
-      legalName: "张伟",
-      furigana: "チョウ イ",
-      customerNumber: "CUS-001",
-      phone: "090-1234-5678",
-      email: "zhang@example.com",
-      totalCases: 2,
-      activeCases: 1,
-      lastContactDate: "2026-04-10",
-      lastContactChannel: "WeChat",
-      owner: { initials: "ZW", name: "张顾问" },
-      referralSource: "客户推荐",
-      group: "东京一组",
-      bmvProfile: null,
+      ...SUMMARY_DTO,
       nationality: "中国",
       gender: "男",
       birthDate: "1991-03-14",
       avatar: "avatar.png",
       note: "prefer wechat",
+      location: "JAPAN",
+      sourceType: "REFERRAL",
+      visaType: "engineer_specialist",
+      referrerName: "田中先生",
       archivedCases: 1,
       caseNames: ["技人国更新", "永住申请"],
       lastCaseCreatedDate: "2026-04-01",
@@ -110,6 +79,10 @@ describe("CustomerAdapter", () => {
     expect(result?.birthDate).toBe("1991-03-14");
     expect(result?.archivedCases).toBe(1);
     expect(result?.caseNames).toEqual(["技人国更新", "永住申请"]);
+    expect(result?.location).toBe("JAPAN");
+    expect(result?.sourceType).toBe("REFERRAL");
+    expect(result?.visaType).toBe("engineer_specialist");
+    expect(result?.referrerName).toBe("田中先生");
   });
 
   it("adapts nested baseProfile bmvProfile with snake_case fields", () => {
@@ -151,6 +124,9 @@ describe("CustomerAdapter", () => {
       quoteConfirmedAt: "2026-04-09T18:00:00+09:00",
       signedAt: null,
       note: "待签约后即可进入建案。",
+      sourceLeadId: null,
+      leadGroupId: null,
+      leadOwnerUserId: null,
     });
   });
 
@@ -186,9 +162,11 @@ describe("CustomerAdapter", () => {
       quoteConfirmedAt: null,
       signedAt: null,
       note: "仅录入备注",
+      sourceLeadId: null,
+      leadGroupId: null,
+      leadOwnerUserId: null,
     });
   });
-
   it("treats empty-object bmvProfile as null instead of invalid summary", () => {
     const result = adaptCustomerSummaryDto({
       id: "cust-006",
@@ -348,7 +326,6 @@ describe("CustomerAdapter", () => {
       },
     ]);
   });
-
   it("adapts timeline log list result", () => {
     expect(
       adaptTimelineLogListResult([
@@ -356,6 +333,7 @@ describe("CustomerAdapter", () => {
           id: "log-001",
           action: "customer.group_changed",
           actorUserId: "user-001",
+          actorDisplayName: "山田花子",
           payload: { beforeGroup: "tokyo-1", afterGroup: "osaka" },
           createdAt: "2026-04-10T09:00:00.000Z",
         },
@@ -371,7 +349,7 @@ describe("CustomerAdapter", () => {
       {
         id: "log-001",
         type: "info",
-        actor: "user-001",
+        actor: "山田花子",
         at: "2026-04-10T09:00:00.000Z",
         message: "调整客户分组：osaka",
       },
@@ -384,7 +362,6 @@ describe("CustomerAdapter", () => {
       },
     ]);
   });
-
   it("adapts duplicate candidates from server entity payload", () => {
     const result = adaptCustomerDuplicateCandidates([
       {
@@ -449,6 +426,10 @@ describe("CustomerAdapter", () => {
         email: "zhang@example.com",
         group: "tokyo-1",
         referralSource: "客户推荐",
+        location: "JAPAN",
+        sourceType: "REFERRAL",
+        visaType: "engineer_specialist",
+        referrerName: "田中先生",
         avatar: "avatar.png",
         note: "prefer wechat",
       },
@@ -469,6 +450,10 @@ describe("CustomerAdapter", () => {
         group: "tokyo-2",
         ownerId: "owner-2",
         referralSource: "客户推荐",
+        location: "OVERSEAS",
+        sourceType: "WEB",
+        visaType: "student",
+        referrerName: "佐藤様",
         avatar: "avatar.png",
         note: "updated",
       }),
@@ -486,6 +471,10 @@ describe("CustomerAdapter", () => {
         email: "zhang@example.com",
         group: "tokyo-2",
         referralSource: "客户推荐",
+        location: "OVERSEAS",
+        sourceType: "WEB",
+        visaType: "student",
+        referrerName: "佐藤様",
         avatar: "avatar.png",
         note: "updated",
         owner_user_id: "owner-2",

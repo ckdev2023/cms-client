@@ -1,6 +1,7 @@
 import customerDetail from "./customers/ja-JP";
 import billing from "./billing/ja-JP";
 import cases from "./cases/ja-JP";
+import conversations from "./conversations/ja-JP";
 import documents from "./documents/ja-JP";
 import leads from "./leads/ja-JP";
 import settings from "./settings/ja-JP";
@@ -8,10 +9,13 @@ import dashboardWorkItems from "./work-items/ja-JP";
 
 const jaJP = {
   shell: {
+    skipToContent: "コンテンツへスキップ",
     topbar: {
       openNavigation: "ナビゲーションを開く",
       globalSearch: "グローバル検索",
       searchPlaceholder: "検索: 顧客 / 案件 / 資料 / 書類...",
+      searchUnavailablePlaceholder: "グローバル検索は準備中です",
+      comingSoon: "準備中",
       localeLabel: "表示言語",
       createLead: "相談を新規作成",
       createCase: "案件を新規作成",
@@ -32,6 +36,7 @@ const jaJP = {
       items: {
         dashboard: "ダッシュボード",
         leads: "相談・会話",
+        conversations: "会話",
         customers: "顧客",
         cases: "案件",
         tasks: "タスク・リマインド",
@@ -45,6 +50,9 @@ const jaJP = {
     group: {
       disabledSuffix: "（停止）",
     },
+    breadcrumbsLabel: "パンくずリスト",
+    loading: "読み込み中…",
+    submitting: "送信中…",
   },
   foundation: {
     title: "Foundation",
@@ -176,6 +184,7 @@ const jaJP = {
         title: "条件に一致する顧客がありません",
         description:
           "データ範囲を切り替えるか、検索条件をリセットしてください。",
+        cta: "最初の顧客を追加",
       },
       pagination: {
         summary: "{start}〜{end} 件目（全 {total} 件）",
@@ -188,7 +197,7 @@ const jaJP = {
       },
       toast: {
         customerCreated: {
-          title: "顧客を作成しました（デモ）",
+          title: "顧客を作成しました",
           description: "顧客ファイルを作成済みです。案件を開始できます",
         },
         draftSaved: {
@@ -240,6 +249,29 @@ const jaJP = {
           emailPlaceholder: "メールアドレス",
           referrer: "紹介元 / 来源",
           referrerPlaceholder: "例：紹介 / 広告",
+          location: "所在地",
+          locationNone: "—",
+          locationOverseas: "海外",
+          locationJapan: "日本国内",
+          sourceType: "流入経路",
+          sourceTypeNone: "—",
+          sourceTypeReferral: "紹介",
+          sourceTypeWeb: "ウェブ",
+          sourceTypeAds: "広告",
+          visaType: "在留資格",
+          visaTypeNone: "—",
+          visaTypeBusinessManager: "経営・管理",
+          visaTypeEngineerSpecialist: "技術・人文知識・国際業務",
+          visaTypeSkilledLabor: "技能",
+          visaTypeStudent: "留学",
+          visaTypeDependent: "家族滞在",
+          visaTypePermanentResident: "永住者",
+          visaTypeSpouseOfJpNational: "日本人の配偶者等",
+          visaTypeLongTermResident: "定住者",
+          visaTypeDesignatedActivities: "特定活動",
+          visaTypeOther: "その他",
+          referrerName: "紹介者名",
+          referrerNamePlaceholder: "例：田中様",
           avatar: "アバター",
           note: "備考（検索可）",
           notePlaceholder: "例：引継ぎ事項、注意点...",
@@ -258,6 +290,7 @@ const jaJP = {
   },
   billing,
   cases,
+  conversations,
   documents,
   leads,
   settings,

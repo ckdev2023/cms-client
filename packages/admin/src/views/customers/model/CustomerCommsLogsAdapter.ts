@@ -19,7 +19,18 @@ const COMM_CREATED_AT_FIELDS = ["createdAt", "created_at"];
 const COMM_CREATED_BY_FIELDS = ["createdBy", "created_by"];
 const COMM_FOLLOW_UP_FIELDS = ["followUpDueAt", "follow_up_due_at"];
 const TIMELINE_CREATED_AT_FIELDS = ["createdAt", "created_at"];
-const TIMELINE_ACTOR_FIELDS = ["actorUserId", "actor_user_id"];
+const TIMELINE_ACTOR_FIELDS = [
+  "actorDisplayName",
+  "actor_display_name",
+  "actorName",
+  "actor_name",
+  "actorUserId",
+  "actor_user_id",
+];
+
+function resolveTimelineActor(record: Record<string, unknown>): string {
+  return pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System";
+}
 
 const BMV_QUESTIONNAIRE_ACTIONS = [
   "customer.bmv_questionnaire_sent",
@@ -420,7 +431,7 @@ export function adaptTimelineLogDto(value: unknown): CustomerLog | null {
   return {
     id,
     type: resolveLogType(action),
-    actor: pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System",
+    actor: resolveTimelineActor(record),
     at,
     message: buildTimelineMessage(action, payload),
   };
@@ -469,7 +480,7 @@ export function adaptTimelineBmvCommListResult(
       type: resolveBmvCommType(action, payload),
       visibility: resolveBmvCommVisibility(action),
       occurredAt,
-      actor: pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System",
+      actor: resolveTimelineActor(record),
       summary: buildBmvCommSummary(action) ?? action,
       detail: buildBmvCommDetail(action, payload),
       nextAction: "",

@@ -32,6 +32,7 @@ const ALLOWED_ITEM_TYPES = new Set([
   "field_snapshot",
 ]);
 const ALLOWED_SUBMISSION_KINDS = new Set(["initial", "supplement"]);
+const MAX_SUPPLEMENT_CHAIN_DEPTH = 10;
 
 type SubmissionPackageQueryRow = {
   id: string;
@@ -69,6 +70,10 @@ type ReviewRecordQueryRow = {
   id: string;
   validation_run_id: string;
   decision: string;
+};
+
+type ChainLinkRow = {
+  related_submission_id: string | null;
 };
 
 type SubmissionPackageDetail = SubmissionPackage & {
@@ -383,6 +388,10 @@ export class SubmissionPackagesService {
       return { ...createdPackage, items };
     });
 
+    if (submissionKind === "supplement") {
+      await this.casesService.incrementSupplementCount(ctx, created.caseId);
+    }
+
     await this.timelineService.write(ctx, {
       entityType: "case",
       entityId: created.caseId,
@@ -535,6 +544,129 @@ export class SubmissionPackagesService {
         "relatedSubmissionId does not belong to current case",
       );
     }
+
+    await this.assertRelatedIsLatest(tx, orgId, caseId, relatedSubmissionId);
+    await this.assertNoBranchFromRelated(
+      tx,
+      orgId,
+      caseId,
+      relatedSubmissionId,
+    );
+    await this.assertChainDepthWithinLimit(
+      tx,
+      orgId,
+      caseId,
+      relatedSubmissionId,
+    );
+  }
+
+  /**
+   * 补正包必须指向当前案件最新的提交包，保证链路线性。
+   * @param tx
+   * @param orgId
+   * @param caseId
+   * @param relatedSubmissionId
+   */
+  private async assertRelatedIsLatest(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    relatedSubmissionId: string,
+  ): Promise<void> {
+    const latestResult = await tx.query<{ id: string }>(
+      `
+        select id
+        from submission_packages
+        where org_id = $1 and case_id = $2
+        order by submission_no desc
+        limit 1
+      `,
+      [orgId, caseId],
+    );
+    const latestId = latestResult.rows.at(0)?.id;
+    if (latestId && latestId !== relatedSubmissionId) {
+      throw new BadRequestException(
+        "Supplement must reference the latest submission package for this case (SP_RELATED_NOT_LATEST)",
+      );
+    }
+  }
+
+  /**
+   * 同一提交包不允许被多个补正包引用（防止链路分叉）。
+   * @param tx
+   * @param orgId
+   * @param caseId
+   * @param relatedSubmissionId
+   */
+  private async assertNoBranchFromRelated(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    relatedSubmissionId: string,
+  ): Promise<void> {
+    const branchResult = await tx.query<{ id: string }>(
+      `
+        select id
+        from submission_packages
+        where org_id = $1 and case_id = $2 and related_submission_id = $3
+        limit 1
+      `,
+      [orgId, caseId, relatedSubmissionId],
+    );
+    if ((branchResult.rowCount ?? 0) > 0) {
+      throw new BadRequestException(
+        "Another supplement already references this submission package; chain branching is not allowed (SP_RELATED_ALREADY_BRANCHED)",
+      );
+    }
+  }
+
+  private async assertChainDepthWithinLimit(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    relatedSubmissionId: string,
+  ): Promise<void> {
+    let depth = 1;
+    let currentId: string | null = relatedSubmissionId;
+    const visited = new Set<string>();
+    while (currentId) {
+      if (visited.has(currentId)) {
+        throw new BadRequestException(
+          "Cycle detected in related_submission_id chain (SP_CHAIN_DEPTH_EXCEEDED)",
+        );
+      }
+      visited.add(currentId);
+      if (depth >= MAX_SUPPLEMENT_CHAIN_DEPTH) {
+        throw new BadRequestException(
+          `Supplement chain depth exceeds maximum of ${String(MAX_SUPPLEMENT_CHAIN_DEPTH)} (SP_CHAIN_DEPTH_EXCEEDED)`,
+        );
+      }
+      currentId = await this.getParentSubmissionId(
+        tx,
+        orgId,
+        caseId,
+        currentId,
+      );
+      depth += 1;
+    }
+  }
+
+  private async getParentSubmissionId(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+    packageId: string,
+  ): Promise<string | null> {
+    const result = await tx.query<ChainLinkRow>(
+      `
+        select related_submission_id
+        from submission_packages
+        where id = $1 and org_id = $2 and case_id = $3
+        limit 1
+      `,
+      [packageId, orgId, caseId],
+    );
+    return result.rows.at(0)?.related_submission_id ?? null;
   }
 
   private async getNextSubmissionNo(
@@ -704,9 +836,11 @@ export class SubmissionPackagesService {
         checklist_item_code: string;
         name: string;
         status: string;
+        category: string | null;
+        survey_data: unknown;
       }>(
         `
-          select id, checklist_item_code, name, status
+          select id, checklist_item_code, name, status, category, survey_data
           from document_items
           where id = $1 and org_id = $2 and case_id = $3
           limit 1
@@ -718,12 +852,16 @@ export class SubmissionPackagesService {
         throw new BadRequestException(
           "Document requirement not found for current case",
         );
-      return {
+      const snapshot: Record<string, unknown> = {
         id: row.id,
         checklistItemCode: row.checklist_item_code,
         name: row.name,
         status: row.status,
       };
+      if (row.category) snapshot.category = row.category;
+      if (row.survey_data)
+        snapshot.surveyData = normalizeSnapshotPayload(row.survey_data);
+      return snapshot;
     }
 
     if (item.itemType === "document_file_version") {

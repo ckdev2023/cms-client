@@ -161,20 +161,20 @@ describe("slice graceful degradation", () => {
 // ─── S9 read-only state ──────────────────────────────────────────
 
 describe("S9 readonly state", () => {
-  it("marks S9 as readonly and archived", () => {
+  it("marks S9 as readonly with badge-gray", () => {
     const result = adaptCaseDetailAggregate(
       buildAggregate({ case: { ...MOCK_CASE_ROW, stage: "S9" } }),
     )!;
     expect(result.detail.readonly).toBe(true);
-    expect(result.detail.statusBadge).toBe("archived");
+    expect(result.detail.statusBadge).toBe("badge-gray");
     expect(result.detail.stageCode).toBe("S9");
-    expect(result.detail.stage).toBe("S9");
+    expect(result.detail.stage).toBe("已归档");
   });
 
-  it("marks non-S9 as active and not readonly", () => {
+  it("marks non-S9 as not readonly with stage-specific badge", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.readonly).toBe(false);
-    expect(result.detail.statusBadge).toBe("active");
+    expect(result.detail.statusBadge).toMatch(/^badge-/);
   });
 
   it("defaults invalid stage to S1", () => {

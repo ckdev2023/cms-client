@@ -42,7 +42,11 @@ type UpdateBillingPlanBody = {
 };
 
 type BillingPlanListQuery = {
-  caseId: unknown;
+  caseId?: unknown;
+  status?: unknown;
+  groupId?: unknown;
+  ownerId?: unknown;
+  q?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -98,13 +102,52 @@ function parseOptionalNullableDateOnly(
   return parseDateOnly(value, field);
 }
 
+function parseOptionalString(
+  value: unknown,
+  field: string,
+): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  return requireString(value, field);
+}
+
+const VALID_LIST_STATUSES: ReadonlySet<string> = new Set([
+  "due",
+  "partial",
+  "paid",
+  "overdue",
+]);
+
+function parseOptionalBillingPlanStatus(
+  value: unknown,
+): BillingPlanStatus | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const s = requireString(value, "status");
+  if (!VALID_LIST_STATUSES.has(s)) {
+    throw new BadRequestException(
+      `status must be one of: ${[...VALID_LIST_STATUSES].join(", ")}`,
+    );
+  }
+  return s as BillingPlanStatus;
+}
+
+function parseOptionalSearchQuery(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const s = requireString(value, "q");
+  if (s.length > 100) {
+    throw new BadRequestException("q must be at most 100 characters");
+  }
+  return s;
+}
+
 function parseOptionalGateMode(
   value: unknown,
 ): BillingGateEffectMode | undefined {
   if (value === undefined) return undefined;
   const s = requireString(value, "gateEffectMode");
-  if (s !== "off" && s !== "warn") {
-    throw new BadRequestException("gateEffectMode must be 'off' or 'warn'");
+  if (s !== "off" && s !== "warn" && s !== "block") {
+    throw new BadRequestException(
+      "gateEffectMode must be 'off', 'warn' or 'block'",
+    );
   }
   return s;
 }
@@ -181,7 +224,11 @@ export class BillingPlansController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     return this.billingPlansService.list(ctx, {
-      caseId: requireString(query.caseId, "caseId"),
+      caseId: parseOptionalString(query.caseId, "caseId"),
+      status: parseOptionalBillingPlanStatus(query.status),
+      groupId: parseOptionalString(query.groupId, "groupId"),
+      ownerId: parseOptionalString(query.ownerId, "ownerId"),
+      q: parseOptionalSearchQuery(query.q),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });

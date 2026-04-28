@@ -28,6 +28,8 @@
   z-index: var(--z-skip-link);
 }
 
+.skip-link--visible,
+.skip-link:focus,
 .skip-link:focus-visible {
   transform: translateY(0);
 }
@@ -65,11 +67,13 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  min-height: var(--shell-topbar-height);
+  height: var(--shell-topbar-height) !important;
+  flex-wrap: nowrap !important;
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 14px 16px;
+  padding-block: 0 !important;
+  padding-inline: 16px;
 }
 
 .topbar-inner > * {
@@ -134,12 +138,22 @@
   color: var(--color-text-1);
 }
 
+.topbar-search input:disabled {
+  color: var(--color-text-3);
+  cursor: not-allowed;
+  opacity: 1;
+}
+
 .topbar-search input::placeholder {
   color: var(--color-text-placeholder);
 }
 
-.topbar-search-kbd {
-  display: none;
+.topbar-search input:disabled::placeholder {
+  color: var(--color-text-3);
+}
+
+.topbar-search-status {
+  display: inline-flex;
   flex: 0 0 auto;
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
@@ -149,6 +163,7 @@
   padding: 2px 6px;
   font-family: inherit;
   line-height: 1;
+  white-space: nowrap;
 }
 
 .topbar-actions {
@@ -233,6 +248,49 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-extrabold);
   flex: 0 0 auto;
+}
+
+.topbar-avatar--button {
+  cursor: pointer;
+}
+
+.topbar-avatar--button:hover {
+  background: var(--color-bg-3);
+}
+
+.topbar-account {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.topbar-account-panel {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + 8px);
+  min-width: 220px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-1);
+  box-shadow: var(--shadow-1);
+  z-index: calc(var(--z-topbar) + 1);
+}
+
+.topbar-account-name,
+.topbar-account-email {
+  margin: 0;
+}
+
+.topbar-account-name {
+  color: var(--color-text-1);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.topbar-account-email {
+  margin-top: 4px;
+  color: var(--color-text-2);
+  font-size: var(--font-size-xs);
 }
 
 .sidenav {
@@ -393,23 +451,14 @@
 }
 
 @media (min-width: 640px) {
-  .topbar-search-kbd {
-    display: inline-flex;
-  }
-
   .topbar-action--pill {
     display: inline-flex;
   }
 }
 
 @media (max-width: 1023px) {
-  .topbar-inner {
-    flex-wrap: wrap;
-  }
-
   .topbar-search {
     order: 10;
-    width: 100%;
   }
 
   .topbar-actions {

@@ -2,6 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 
 import type { Customer } from "../model/coreEntities";
 import { normalizeObject } from "../../../infra/utils/normalize";
+import { CUSTOMER_LOCATIONS, CUSTOMER_SOURCE_TYPES } from "./customers.types";
 import type { CustomerQueryRow } from "./customers.types";
 
 type BaseProfileSchemaField = {
@@ -234,8 +235,38 @@ export function validateBaseProfile(
     }
   }
 
+  validateEnumField(baseProfile, "location", CUSTOMER_LOCATIONS, errors);
+  validateEnumField(baseProfile, "sourceType", CUSTOMER_SOURCE_TYPES, errors);
+  validateOptionalStringField(baseProfile, "visaType", errors);
+  validateOptionalStringField(baseProfile, "referrerName", errors);
+
   if (errors.length > 0) {
     throw new BadRequestException(`Invalid baseProfile: ${errors.join("; ")}`);
   }
   return baseProfile;
+}
+
+function validateEnumField(
+  profile: Record<string, unknown>,
+  field: string,
+  allowed: readonly string[],
+  errors: string[],
+): void {
+  const value = profile[field];
+  if (value === undefined || value === null) return;
+  if (typeof value !== "string" || !allowed.includes(value)) {
+    errors.push(`${field} must be one of ${allowed.join(", ")}`);
+  }
+}
+
+function validateOptionalStringField(
+  profile: Record<string, unknown>,
+  field: string,
+  errors: string[],
+): void {
+  const value = profile[field];
+  if (value === undefined || value === null) return;
+  if (typeof value !== "string") {
+    errors.push(`${field} must be a string`);
+  }
 }

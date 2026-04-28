@@ -11,7 +11,7 @@ import { MemoryStorage } from "@infra/storage/MemoryStorage";
 import type { AppContainer } from "./AppContainer";
 
 /** API 基础 URL（开发环境默认值）。 */
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3300";
 
 /**
  * 创建应用容器（依赖组装）。

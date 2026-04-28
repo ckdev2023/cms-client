@@ -1,4 +1,5 @@
 import { ref, computed, type Ref } from "vue";
+import type { UseOrgSettingsReturn } from "../../../shared/model/useOrgSettings";
 import type {
   SettingsPanel,
   GroupStatusFilter,
@@ -18,6 +19,7 @@ import {
   createStorageRootController,
   type GroupMutationCtx,
 } from "./settingsControllers";
+import type { OrgSettingsRepository } from "./OrgSettingsRepository";
 
 export type {
   ToastState,
@@ -66,6 +68,14 @@ export interface UseSettingsPageDeps {
    *
    */
   clearTimeoutFn?: typeof clearTimeout;
+  /**
+   *
+   */
+  orgSettingsRepository?: OrgSettingsRepository;
+  /**
+   *
+   */
+  orgSettingsController?: Pick<UseOrgSettingsReturn, "storageRoot">;
 }
 
 // ---------------------------------------------------------------------------
@@ -114,6 +124,82 @@ function createGroupList(deps: UseSettingsPageDeps) {
   };
 }
 
+function syncSettingsState(input: {
+  next: OrgSettings;
+  visibility: Ref<OrgSettings["visibility"]>;
+  storageRoot: Ref<OrgSettings["storageRoot"]>;
+  orgSettingsController?: Pick<UseOrgSettingsReturn, "storageRoot">;
+}) {
+  input.visibility.value = { ...input.next.visibility };
+  input.storageRoot.value = { ...input.next.storageRoot };
+  if (input.orgSettingsController) {
+    input.orgSettingsController.storageRoot.value = {
+      rootLabel: input.next.storageRoot.rootLabel,
+      rootPath: input.next.storageRoot.rootPath,
+    };
+  }
+}
+
+function createOrgSettingsSection(
+  deps: Pick<
+    UseSettingsPageDeps,
+    "orgSettings" | "orgSettingsRepository" | "orgSettingsController"
+  >,
+  toast: ReturnType<typeof createToastController>,
+) {
+  const visibility = ref({ ...deps.orgSettings.visibility });
+  const sr = createStorageRootController(deps.orgSettings, toast);
+
+  function applyNext(next: OrgSettings) {
+    syncSettingsState({
+      next,
+      visibility,
+      storageRoot: sr.storageRoot,
+      orgSettingsController: deps.orgSettingsController,
+    });
+  }
+
+  async function loadOrgSettings() {
+    if (!deps.orgSettingsRepository) return;
+    try {
+      applyNext(await deps.orgSettingsRepository.getOrgSettings());
+    } catch {
+      return;
+    }
+  }
+
+  async function saveVisibility() {
+    if (!deps.orgSettingsRepository) {
+      toast.show("visibilityUpdated");
+      return;
+    }
+
+    const next = await deps.orgSettingsRepository.updateOrgSettings({
+      visibility: { ...visibility.value },
+    });
+    applyNext(next);
+    toast.show("visibilityUpdated");
+  }
+
+  async function saveStorageRoot() {
+    if (!deps.orgSettingsRepository) {
+      sr.save();
+      return;
+    }
+
+    const next = await deps.orgSettingsRepository.updateOrgSettings({
+      storageRoot: {
+        rootLabel: sr.storageRoot.value.rootLabel,
+        rootPath: sr.storageRoot.value.rootPath,
+      },
+    });
+    applyNext(next);
+    toast.show("storageRootUpdated");
+  }
+
+  return { visibility, sr, loadOrgSettings, saveVisibility, saveStorageRoot };
+}
+
 // ---------------------------------------------------------------------------
 // Main composable
 // ---------------------------------------------------------------------------
@@ -129,7 +215,6 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     typeof deps.isAdmin === "boolean"
       ? computed(() => deps.isAdmin as boolean)
       : deps.isAdmin;
-
   const activePanel = ref<SettingsPanel>(DEFAULT_PANEL);
   const gl = createGroupList(deps);
   const toast = createToastController({
@@ -146,8 +231,9 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     groupStats: deps.groupStats,
     toast,
   };
-  const visibility = ref({ ...deps.orgSettings.visibility });
-  const sr = createStorageRootController(deps.orgSettings, toast);
+  const settings = createOrgSettingsSection(deps, toast);
+
+  void settings.loadOrgSettings();
 
   return {
     isAdmin,
@@ -162,11 +248,11 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     createGroup: buildCreateGroupAction(ctx, groupNameModal, gl.selectGroup),
     renameGroup: buildRenameGroupAction(ctx, groupNameModal),
     disableGroup: buildDisableGroupAction(ctx, disableModal),
-    visibility,
-    saveVisibility: () => toast.show("visibilityUpdated"),
-    storageRoot: sr.storageRoot,
-    isStorageRootConfigured: sr.isConfigured,
-    storageRootPreview: sr.preview,
-    saveStorageRoot: sr.save,
+    visibility: settings.visibility,
+    saveVisibility: settings.saveVisibility,
+    storageRoot: settings.sr.storageRoot,
+    isStorageRootConfigured: settings.sr.isConfigured,
+    storageRootPreview: settings.sr.preview,
+    saveStorageRoot: settings.saveStorageRoot,
   };
 }

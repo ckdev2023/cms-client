@@ -1,6 +1,8 @@
 import customerDetail from "./customers/en-US";
+import customerList from "./customers/en-US-list";
 import billing from "./billing/en-US";
 import cases from "./cases/en-US";
+import conversations from "./conversations/en-US";
 import documents from "./documents/en-US";
 import leads from "./leads/en-US";
 import settings from "./settings/en-US";
@@ -8,10 +10,13 @@ import dashboardWorkItems from "./work-items/en-US";
 
 const enUS = {
   shell: {
+    skipToContent: "Skip to content",
     topbar: {
       openNavigation: "Open navigation",
       globalSearch: "Global search",
       searchPlaceholder: "Search: customers / cases / files / documents...",
+      searchUnavailablePlaceholder: "Global search is coming soon",
+      comingSoon: "Coming soon",
       localeLabel: "Interface language",
       createLead: "New lead",
       createCase: "New case",
@@ -32,6 +37,7 @@ const enUS = {
       items: {
         dashboard: "Dashboard",
         leads: "Leads & chats",
+        conversations: "Conversations",
         customers: "Customers",
         cases: "Cases",
         tasks: "Tasks & reminders",
@@ -45,6 +51,9 @@ const enUS = {
     group: {
       disabledSuffix: " (Disabled)",
     },
+    breadcrumbsLabel: "Breadcrumb navigation",
+    loading: "Loading…",
+    submitting: "Submitting…",
   },
   foundation: {
     title: "Foundation",
@@ -106,155 +115,12 @@ const enUS = {
     },
   },
   customers: {
-    list: {
-      title: "Customers",
-      subtitle: "Manage customer profiles, contacts, and linked cases.",
-      placeholderMessage: "The customer list is coming soon.",
-      addCustomer: "Add customer",
-      summaryTitle: "Customer overview",
-      summarySubtitle: "Quick snapshot of your customers and case workload.",
-      summary: {
-        mine: {
-          label: "My customers",
-          hint: "Customers assigned to the current user — check who needs follow-up today.",
-        },
-        group: {
-          label: "Team customers",
-          hint: "All customers in the team — useful for leads to plan allocation and reassignment.",
-        },
-        active: {
-          label: "Active cases",
-          hint: "Customers with at least one in-progress case — prioritize recent communications and supplements.",
-        },
-        noActive: {
-          label: "No active cases",
-          hint: "Customers without an open case — good candidates for follow-up visits and re-engagement.",
-        },
-      },
-      scopeLabel: "Data scope",
-      scope: {
-        mine: "Mine",
-        group: "My team",
-        all: "All (admin)",
-      },
-      searchPlaceholder: "Search: name / furigana / phone / email",
-      filters: {
-        groupAll: "Group: All",
-        ownerAll: "Owner: All",
-        activeCasesAll: "Active cases: All",
-        activeCasesYes: "Has active cases",
-        activeCasesNo: "No active cases",
-        reset: "Reset",
-      },
-      filterSummary: "Viewing: {scope} · {count} customers",
-      columns: {
-        customer: "Customer",
-        furigana: "Furigana",
-        cases: "Cases",
-        lastContact: "Last contact",
-        owner: "Owner",
-        referral: "Referral",
-        group: "Group",
-        actions: "Actions",
-      },
-      selectAll: "Select all customers",
-      selectRow: "Select {name}",
-      casesSummary: "Total {total} · Active {active}",
-      bulk: {
-        label: "Bulk actions",
-        selected: "{count} selected",
-        clear: "Clear",
-        assignOwner: "Assign owner",
-        selectOwner: "Choose owner",
-        changeGroup: "Change group",
-        selectGroup: "Choose group",
-        apply: "Apply",
-      },
-      empty: {
-        title: "No matching customers",
-        description: "Try changing the scope or resetting your filters.",
-      },
-      pagination: {
-        summary: "Showing {start}–{end} of {total}",
-        prev: "Previous",
-        next: "Next",
-      },
-      actions: {
-        viewDetail: "View customer detail",
-        createCase: "Start a case for this customer",
-      },
-      toast: {
-        customerCreated: {
-          title: "Customer created (demo)",
-          description: "Customer profile created — you can now start a case",
-        },
-        draftSaved: {
-          title: "Draft saved",
-          description: 'Click "Continue" in the customer list to finish',
-        },
-        draftLoaded: {
-          title: "Draft loaded",
-          description: "Complete the form and create the customer",
-        },
-        bulkAssign: {
-          title: "Bulk assign (demo)",
-          description: "{count} selected, owner: {owner}",
-        },
-        bulkGroup: {
-          title: "Bulk group change (demo)",
-          description: "{count} selected, group: {group} (audit required)",
-        },
-      },
-      draft: {
-        rowLabel: "Draft",
-        continue: "Continue",
-        remove: "Remove",
-      },
-      createModal: {
-        title: "Create individual customer",
-        description:
-          "Fill in basic info to create a customer record. At least one of phone or email is required for deduplication.",
-        fields: {
-          displayName: "Display name (internal)",
-          displayNamePlaceholder: "e.g. Wang Wei (work visa)",
-          group: "Group",
-          groupPlaceholder: "Select group",
-          legalName: "Legal name",
-          legalNamePlaceholder: "Enter full name",
-          kana: "Furigana",
-          kanaPlaceholder: "e.g. ワン ウェイ",
-          gender: "Gender",
-          genderDefault: "Any",
-          genderMale: "Male",
-          genderFemale: "Female",
-          birthDate: "Date of birth",
-          nationality: "Nationality",
-          nationalityPlaceholder: "e.g. China / Japan",
-          phone: "Phone",
-          phonePlaceholder: "Mobile / landline",
-          phoneHint: "Phone or email is required (for deduplication & contact)",
-          email: "Email",
-          emailPlaceholder: "Email address",
-          referrer: "Source / referral",
-          referrerPlaceholder: "e.g. referral / introduction",
-          avatar: "Avatar",
-          note: "Notes (searchable)",
-          notePlaceholder: "e.g. handover items, preferences, notes...",
-        },
-        dedupe: {
-          title: "Possible duplicate detected",
-          description:
-            "Please verify whether these records belong to the same person before saving.",
-        },
-        cancel: "Cancel",
-        saveDraft: "Save draft",
-        create: "Create customer",
-      },
-    },
+    list: customerList,
     detail: customerDetail,
   },
   billing,
   cases,
+  conversations,
   documents,
   leads,
   settings,
@@ -280,15 +146,15 @@ const enUS = {
     },
     scope: {
       mine: "Mine",
-      group: "My team",
+      group: "My group",
       all: "All firm",
     },
     scopeSummary: {
       mine: "Showing the cases and tasks I own or participate in. Cards and lists update together.",
       group:
-        "Showing the team's cases and tasks so we can plan today's priorities and deadline pressure together.",
+        "Showing the group's cases and tasks so we can plan today's priorities and deadline pressure together.",
       groupFallback:
-        "The team scope is connected, but backend group-level data is not split yet, so firm-wide aggregates are shown for now.",
+        "The group scope is connected, but backend group-level data is not split yet, so firm-wide aggregates are shown for now.",
       all: "Showing the whole firm so you can quickly scan todos, deadlines, pending submissions, and risks.",
     },
     state: {

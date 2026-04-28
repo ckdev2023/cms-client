@@ -3,6 +3,23 @@ import type {
   CaseTemplateDef,
   FamilyScenario,
 } from "./types";
+import type { I18nLabel } from "./types-create";
+import {
+  TMPL_BMV,
+  TMPL_BMV_CERT_4M,
+  TMPL_BMV_CERT_1Y,
+} from "./fixtures-create-bmv";
+import { TMPL_BMV_RENEWAL } from "./fixtures-create-bmv-renewal";
+import {
+  TMPL_ENG_CERT,
+  TMPL_ENG_RENEWAL,
+  TMPL_INTRA,
+} from "./fixtures-create-eng-intra";
+import { TMPL_COMPANY_SETUP } from "./fixtures-create-company-setup";
+
+function il(zh: string, en: string, ja: string): I18nLabel {
+  return { zh, en, ja };
+}
 
 // ─── Create: Customer Options ───────────────────────────────────
 
@@ -41,75 +58,219 @@ export const SAMPLE_CREATE_CUSTOMERS: CaseCreateCustomerOption[] = [
 
 // ─── Create: Templates ──────────────────────────────────────────
 
+const TMPL_FAMILY: CaseTemplateDef = {
+  id: "family",
+  label: il("家族滞在", "Dependent Visa", "家族滞在"),
+  badge: "popular",
+  applicationTypes: ["certification", "change_of_status", "renewal"],
+  subtitle: il(
+    "适合配偶/子女批量建案，自动展开扶养者/保证人资料。",
+    "Ideal for batch creation of spouse/child cases with auto-expanded supporter documents.",
+    "配偶者・子女の一括建案に最適。扶養者・保証人資料を自動展開します。",
+  ),
+  sections: [
+    {
+      title: il("主申请人提供", "Applicant Documents", "申請者提出書類"),
+      items: [
+        {
+          id: "app_passport",
+          label: il(
+            "护照首页",
+            "Passport (front page)",
+            "パスポート（顔写真ページ）",
+          ),
+          required: true,
+        },
+        {
+          id: "app_photo",
+          label: il("证件照", "ID photo", "証明写真"),
+          required: true,
+        },
+        {
+          id: "app_relation",
+          label: il(
+            "亲属关系证明",
+            "Family relationship certificate",
+            "親族関係証明書",
+          ),
+          required: true,
+        },
+        {
+          id: "app_marriage_cert",
+          label: il(
+            "结婚证公证件",
+            "Marriage certificate (notarized)",
+            "婚姻証明書（公証）",
+          ),
+          required: true,
+          conditionalTag: "仅配偶",
+        },
+        {
+          id: "app_birth_cert",
+          label: il(
+            "出生证明公证件",
+            "Birth certificate (notarized)",
+            "出生証明書（公証）",
+          ),
+          required: true,
+          conditionalTag: "仅子女",
+        },
+      ],
+    },
+    {
+      title: il(
+        "扶养者 / 保证人提供",
+        "Supporter / Guarantor Documents",
+        "扶養者・保証人提出書類",
+      ),
+      items: [
+        {
+          id: "sponsor_residence",
+          label: il("在留卡", "Residence card", "在留カード"),
+          required: true,
+        },
+        {
+          id: "sponsor_income",
+          label: il(
+            "课税/纳税证明",
+            "Tax / payment certificate",
+            "課税・納税証明書",
+          ),
+          required: true,
+        },
+        {
+          id: "sponsor_employer",
+          label: il("在职证明", "Employment certificate", "在職証明書"),
+          required: false,
+        },
+      ],
+    },
+    {
+      title: il(
+        "事务所内部产出",
+        "Office-Produced Documents",
+        "事務所作成書類",
+      ),
+      items: [
+        {
+          id: "office_cover",
+          label: il(
+            "理由书草稿",
+            "Statement of reasons (draft)",
+            "理由書（草案）",
+          ),
+          required: true,
+        },
+        {
+          id: "office_checklist",
+          label: il(
+            "提交包检查单",
+            "Submission package checklist",
+            "提出パッケージチェックリスト",
+          ),
+          required: true,
+        },
+      ],
+    },
+  ],
+};
+
+const TMPL_WORK: CaseTemplateDef = {
+  id: "work",
+  label: il(
+    "技人国",
+    "Engineer/Specialist in Humanities/Int'l Services",
+    "技術・人文知識・国際業務",
+  ),
+  badge: "popular",
+  applicationTypes: ["certification", "change_of_status", "renewal"],
+  subtitle: il(
+    "适合雇主/职位信息驱动的工作类新案。",
+    "For employer/position-driven work visa cases.",
+    "雇用主・職位情報に基づく就労ビザ案件向け。",
+  ),
+  sections: [
+    {
+      title: il("主申请人提供", "Applicant Documents", "申請者提出書類"),
+      items: [
+        {
+          id: "work_passport",
+          label: il(
+            "护照首页",
+            "Passport (front page)",
+            "パスポート（顔写真ページ）",
+          ),
+          required: true,
+        },
+        {
+          id: "work_resume",
+          label: il("履历书", "CV / resume", "経歴書・履歴書"),
+          required: true,
+        },
+        {
+          id: "work_diploma",
+          label: il(
+            "学历/资格证明",
+            "Degree / qualification certificate",
+            "学歴・資格証明書",
+          ),
+          required: true,
+        },
+      ],
+    },
+    {
+      title: il("雇主提供", "Employer Documents", "雇用主提出書類"),
+      items: [
+        {
+          id: "employer_offer",
+          label: il("雇佣合同", "Employment contract", "雇用契約書"),
+          required: true,
+        },
+        {
+          id: "employer_profile",
+          label: il("公司概要", "Company profile", "会社概要"),
+          required: true,
+        },
+        {
+          id: "employer_finance",
+          label: il("决算资料", "Financial statements", "決算資料"),
+          required: false,
+        },
+      ],
+    },
+    {
+      title: il(
+        "事务所内部产出",
+        "Office-Produced Documents",
+        "事務所作成書類",
+      ),
+      items: [
+        {
+          id: "office_reason",
+          label: il("申请理由书", "Statement of reasons", "申請理由書"),
+          required: true,
+        },
+        {
+          id: "office_cover_work",
+          label: il("提出资料封面", "Submission cover sheet", "提出書類表紙"),
+          required: true,
+        },
+      ],
+    },
+  ],
+};
+
 export const SAMPLE_CREATE_TEMPLATES: CaseTemplateDef[] = [
-  {
-    id: "family",
-    label: "家族滞在",
-    badge: "常用模板",
-    applicationTypes: ["认定", "变更", "更新"],
-    subtitle: "适合配偶/子女批量建案，自动展开扶养者/保证人资料。",
-    sections: [
-      {
-        title: "主申请人提供",
-        items: [
-          { id: "app_passport", label: "护照首页", required: true },
-          { id: "app_photo", label: "证件照", required: true },
-          { id: "app_relation", label: "亲属关系证明", required: true },
-        ],
-      },
-      {
-        title: "扶养者 / 保证人提供",
-        items: [
-          { id: "sponsor_residence", label: "在留卡", required: true },
-          { id: "sponsor_income", label: "课税/纳税证明", required: true },
-          { id: "sponsor_employer", label: "在职证明", required: false },
-        ],
-      },
-      {
-        title: "事务所内部产出",
-        items: [
-          { id: "office_cover", label: "理由书草稿", required: true },
-          { id: "office_checklist", label: "提交包检查单", required: true },
-        ],
-      },
-    ],
-  },
-  {
-    id: "work",
-    label: "技人国",
-    badge: "常用模板",
-    applicationTypes: ["认定", "变更", "更新"],
-    subtitle: "适合雇主/职位信息驱动的工作类新案。",
-    sections: [
-      {
-        title: "主申请人提供",
-        items: [
-          { id: "work_passport", label: "护照首页", required: true },
-          { id: "work_resume", label: "履历书", required: true },
-          { id: "work_diploma", label: "学历/资格证明", required: true },
-        ],
-      },
-      {
-        title: "雇主提供",
-        items: [
-          { id: "employer_offer", label: "雇佣合同", required: true },
-          { id: "employer_profile", label: "公司概要", required: true },
-          { id: "employer_finance", label: "决算资料", required: false },
-        ],
-      },
-      {
-        title: "事务所内部产出",
-        items: [
-          { id: "office_reason", label: "申请理由书", required: true },
-          {
-            id: "office_cover_work",
-            label: "提出资料封面",
-            required: true,
-          },
-        ],
-      },
-    ],
-  },
+  TMPL_FAMILY,
+  TMPL_WORK,
+  TMPL_BMV,
+  TMPL_BMV_CERT_4M,
+  TMPL_BMV_CERT_1Y,
+  TMPL_BMV_RENEWAL,
+  TMPL_COMPANY_SETUP,
+  TMPL_ENG_CERT,
+  TMPL_ENG_RENEWAL,
+  TMPL_INTRA,
 ];
 
 // ─── Create: Family Scenario ────────────────────────────────────

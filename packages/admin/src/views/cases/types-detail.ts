@@ -319,6 +319,9 @@ export interface DocumentGroup {
   items: DocumentItem[];
 }
 
+/** 行类别：応収（plan）、入金（valid payment）、作废入金（voided）、冲正入金（reversed）。 */
+export type PaymentRowKind = "plan" | "payment" | "voided" | "reversed";
+
 /**
  *
  */
@@ -343,6 +346,14 @@ export interface PaymentRow {
    *
    */
   statusLabel: string;
+  /** 行类别——用于 UI 底色区分。不提供时默认 `"plan"`（向后兼容）。 */
+  kind?: PaymentRowKind;
+  /** 关联的 billing plan milestone 名称（payment 行用）。 */
+  milestoneName?: string;
+  /** 备注文案（voided/reversed 行展示 reasonCode + 操作人）。 */
+  note?: string;
+  /** 金额是否带删除线（voided/reversed 行）。 */
+  strikethrough?: boolean;
 }
 
 /**
@@ -612,11 +623,19 @@ export interface TaskItem {
   /**
    *
    */
+  id: string;
+  /**
+   *
+   */
   label: string;
   /**
    *
    */
   done: boolean;
+  /**
+   * 服务端原始状态（`"pending"` / `"in_progress"` / `"completed"` / `"cancelled"`）。
+   */
+  status: string;
   /**
    *
    */
@@ -759,6 +778,213 @@ export interface OverviewActions {
   };
 }
 
+// ─── P1 Survey / Quote / Pre-Sign Gate ───────────────────────────
+// 问卷回收、报价确认与签约前建案门禁。
+// 来源：CaseDetailAggregateDto.counts（questionnaireItemsTotal/Done）
+//       + billing（quotePrice）+ case record（visaPlan, signedAt）。
+// P0 案件此字段为 null。
+
+/** 问卷/报价完成度状态键。 */
+export type SurveyQuoteStatusKey = "not_started" | "in_progress" | "completed";
+
+/**
+ * 问卷或报价的完成状态摘要。
+ */
+export interface SurveyQuoteStatus {
+  /** 状态键。 */
+  statusKey: SurveyQuoteStatusKey;
+  /** 展示标签（已翻译）。 */
+  statusLabel: string;
+  /** 语义色调（用于 badge 展示）。 */
+  tone: "muted" | "warning" | "success";
+  /** 进度文案（如 "1/3" 或 "已确认"）。 */
+  progressLabel: string;
+}
+
+/**
+ * 签约前门禁状态 — 问卷回收与报价确认前不得签约建案成功。
+ */
+export interface PreSignGateInfo {
+  /** 门禁是否通过（问卷已完成 + 报价已确认）。 */
+  passed: boolean;
+  /** 阻断原因列表（门禁未通过时展示）。 */
+  blockers: PreSignBlocker[];
+}
+
+/**
+ * 签约前门禁的单个阻断项。
+ */
+export interface PreSignBlocker {
+  /** 阻断代码（`survey_incomplete` / `quote_unconfirmed`）。 */
+  code: string;
+  /** 阻断原因展示标签。 */
+  label: string;
+}
+
+// ─── P1 BMV Workflow Step Summary ─────────────────────────────────
+// 经营管理签业务子步骤摘要 — 与 S1-S9 管理层阶段并行显示。
+// 来源：CaseDetailAggregateDto.case.currentWorkflowStepCode
+//       + BMV_WORKFLOW_STEPS_BLUEPRINT 蓝图。
+// P0 案件此字段为 null（无 workflow step）。
+
+/**
+ * 经营管理签当前业务子步骤摘要。
+ */
+export interface WorkflowStepSummary {
+  /** 步骤代码（如 `"WAITING_MATERIAL"`）。 */
+  stepCode: string;
+  /** 步骤展示标签（如 `"等待资料"`）。 */
+  stepLabel: string;
+  /** 所属管理层阶段（如 `"S2"`）。 */
+  parentStage: string;
+  /** 管理层阶段展示标签（如 `"资料收集中"`）。 */
+  parentStageLabel: string;
+  /** 蓝图排序号。 */
+  sortOrder: number;
+  /** 是否为失败终态步骤（`VISA_REJECTED`）。 */
+  isFailureStep: boolean;
+}
+
+// ─── P1 Final Payment & COE Gate ──────────────────────────────────
+// 尾款门禁与 COE 节点前端反馈。
+// gate_trigger_step=COE_SENT + gate_effect_mode=block：
+// 未结清尾款不得推进 COE_SENT。
+// 来源：CaseDetailAggregateDto.billing（finalPaymentPaid, unpaidAmount, billingRiskAcknowledged）
+//       + case record（currentWorkflowStepCode, postApprovalStage）。
+// 非 BMV 案件或未到下签后阶段时此字段为 null。
+
+/** 尾款门禁阻断项代码。 */
+export type FinalPaymentBlockerCode =
+  | "final_payment_outstanding"
+  | "billing_risk_unacknowledged";
+
+/**
+ * 尾款门禁阻断项。
+ */
+export interface FinalPaymentBlocker {
+  /** 阻断代码。 */
+  code: FinalPaymentBlockerCode;
+  /** 阻断原因展示标签（占位，由 UI 层翻译）。 */
+  label: string;
+}
+
+/**
+ * 尾款门禁与 COE 节点状态 — 控制 COE_SENT 推进按钮的可用性。
+ */
+export interface FinalPaymentGateInfo {
+  /** 尾款是否已全额结清。 */
+  paymentCleared: boolean;
+  /** 未结清金额展示标签（如 "¥50,000"），已结清时为空。 */
+  outstandingLabel: string;
+  /** 是否可推进到 COE_SENT（尾款已清 + 无未确认欠款风险）。 */
+  canAdvanceToCoe: boolean;
+  /** 阻断原因列表（canAdvanceToCoe=false 时展示）。 */
+  blockers: FinalPaymentBlocker[];
+}
+
+// ─── P1 Success Closeout Info (p1-fe-004-02) ──────────────────────
+// 成功结案前置条件検査 — admin detail がチェックリストとして表示。
+// 来源：CaseDetailAggregateDto.successCloseoutCheck。
+// 非 BMV 案件または S8 以外の案件では null。
+
+/**
+ * 成功結案前置条件の単項。
+ */
+export interface SuccessCloseoutPrecondition {
+  /** 条件コード（`ENTRY_CONFIRMED` / `RESIDENCE_PERIOD_RECORDED` / `RENEWAL_REMINDER_SCHEDULED`）。 */
+  code: string;
+  /** 条件の表示ラベル。 */
+  label: string;
+  /** 条件が満たされたか。 */
+  satisfied: boolean;
+}
+
+/**
+ * 成功結案前置条件検査結果 — 全条件が satisfied でなければ成功結案不可。
+ */
+export interface SuccessCloseoutInfo {
+  /** すべての前提条件が満たされたか。 */
+  allSatisfied: boolean;
+  /** 前提条件リスト。 */
+  preconditions: SuccessCloseoutPrecondition[];
+}
+
+// ─── P1 Supplement Round Info (p1-fe-005-01) ─────────────────────
+// 补正多轮异常态摘要 — 当案件处于 NEED_SUPPLEMENT / SUPPLEMENT_PROCESSING 时展示。
+// 来源：case record（supplementCount, currentWorkflowStepCode, lastSupplementNoticeDate,
+//       lastSupplementReason, supplementDeadline）。
+// 非 BMV 案件或不在补正循环中时此字段为 null。
+
+/** 补正循环状态键。 */
+export type SupplementRoundStatusKey =
+  | "notice_received"
+  | "processing"
+  | "resubmitted";
+
+/**
+ * 补正多轮状态摘要 — 展示补正轮次、原因与重试入口。
+ */
+export interface SupplementRoundInfo {
+  /** 当前补正轮次（1-based）。 */
+  round: number;
+  /** 补正状态键。 */
+  statusKey: SupplementRoundStatusKey;
+  /** 状态展示标签（已翻译）。 */
+  statusLabel: string;
+  /** 语义色调。 */
+  tone: "warning" | "danger" | "primary";
+  /** 补正通知日期（格式化后）。 */
+  noticeDate: string;
+  /** 补正原因。 */
+  reason: string;
+  /** 补正提交期限（格式化后），无期限时为空。 */
+  deadline: string;
+  /** 期限是否紧急（≤7天）。 */
+  deadlineUrgent: boolean;
+  /** 是否可以重新提交（当前步骤 = NEED_SUPPLEMENT 且案件非只读）。 */
+  canResubmit: boolean;
+}
+
+// ─── P1 Reminder Failure Info (p1-fe-005-01) ─────────────────────
+// 提醒创建失败状态 — 当 reminderCreated=false 且 reminderError 有值时展示。
+// 来源：currentResidencePeriod（reminderCreated, reminderError, reminderLastAttemptAt）。
+// 非 BMV 案件或无在留期间记录时此字段为 null。
+
+/**
+ * 提醒创建失败信息 — 展示失败原因与重试入口。
+ */
+export interface ReminderFailureInfo {
+  /** 失败原因。 */
+  reason: string;
+  /** 最近一次尝试时间（格式化后）。 */
+  lastAttemptDate: string;
+  /** 重试次数。 */
+  attemptCount: number;
+  /** 是否可以重试。 */
+  canRetry: boolean;
+}
+
+// ─── P1 Failure Closeout Info ─────────────────────────────────────
+// 失败结案路径摘要 — admin detail 根据此信息展示失败结案提示与操作按钮。
+// 来源：CaseDetailAggregateDto.failureCloseoutCheck。
+// 非 BMV 案件或已归档案件此字段为 null。
+
+/**
+ * 失败结案路径信息。
+ */
+export interface FailureCloseoutInfo {
+  /** 当前是否处于失败结案路径。 */
+  isFailurePath: boolean;
+  /** 失败帰因代码（`VISA_REJECTED` / `APPLICATION_REJECTED` / `CLIENT_WITHDRAWN` / `MANUAL_FAILURE_CLOSE`），帰因未确定时为 null。 */
+  reasonCode: string | null;
+  /** 失败帰因展示标签，帰因未确定时为 null。 */
+  reasonLabel: string | null;
+  /** 是否可直接结案（无需额外确认）。 */
+  canDirectClose: boolean;
+  /** 是否必须提供 closeReason。 */
+  closeReasonRequired: boolean;
+}
+
 /**
  *
  */
@@ -805,32 +1031,32 @@ export interface PostApprovalFlow {
 }
 
 /**
- *
+ * 在留期間面板の表示モデル — server `CaseResidencePeriodSummary` から適応。
  */
 export interface ResidencePeriod {
-  /**
-   *
-   */
+  /** server 側レコード ID。 */
+  id: string;
+  /** 語義色調（`"success"` / `"warning"` / `"danger"` / `"neutral"`）。 */
   tone: string;
-  /**
-   *
-   */
+  /** ステータスラベル（「有効」「期限 90 日以内」「期限切れ」等）。 */
   statusLabel: string;
-  /**
-   *
-   */
+  /** 在留資格名。 */
   residenceStatus: string;
-  /**
-   *
-   */
+  /** ビザ種別コード。 */
+  visaType: string;
+  /** 在留期間ラベル（「5年」「3年」等）。null の場合未登録。 */
+  periodLabel: string | null;
+  /** `validFrom` を `YYYY-MM-DD` でフォーマットした値。 */
   startDate: string;
-  /**
-   *
-   */
+  /** `validUntil` を `YYYY-MM-DD` でフォーマットした値。 */
   endDate: string;
-  /**
-   *
-   */
+  /** 在留カード番号（表示用）。null の場合未登録。 */
+  cardNumber: string | null;
+  /** 入国日（フォーマット済み）。null の場合未登録。 */
+  entryDate: string | null;
+  /** 180/90/30 日リマインダーが生成済みか。 */
+  reminderCreated: boolean;
+  /** メタ情報行（カード番号、入国日等のサマリ文字列）。 */
   recordMeta: string;
 }
 
@@ -973,6 +1199,8 @@ export interface CaseDetail {
    *
    */
   applicationType: string;
+  /** 业务维度阶段（双层状态机）。NOT NULL，服务端强制写入。 */
+  businessPhase: string;
   /**
    *
    */
@@ -1074,6 +1302,59 @@ export interface CaseDetail {
    *
    */
   reminderSchedule?: ReminderSchedule | null;
+
+  // ─── P1 BMV 专属读模型字段 ──────────────────────────────────────
+
+  /** 当前业务子步骤摘要（仅 BMV 案件有值）。 */
+  workflowStep?: WorkflowStepSummary | null;
+  /** 失败结案路径信息（仅 BMV 案件有值）。 */
+  failureCloseout?: FailureCloseoutInfo | null;
+  /** 签证方案。 */
+  visaPlan?: string | null;
+  /** 报价金额（数值，由 billing slice 传递）。 */
+  quotePriceRaw?: number;
+  /** 报价金额（格式化展示用）。 */
+  quotePriceLabel?: string;
+  /** 补正次数。 */
+  supplementCount?: number;
+  /** 结果（`approved` / `rejected` / `visa_rejected` / `withdrawn` 等）。 */
+  resultOutcome?: string | null;
+  /** 下签后子阶段（`waiting_final_payment` / `coe_sent` / `overseas_visa_applying` / `entry_success`）。 */
+  postApprovalStage?: string | null;
+  /** COE 签发日期（格式化后）。 */
+  coeIssuedDate?: string;
+  /** COE 有效期限（格式化后）。 */
+  coeExpiryDate?: string;
+  /** 海外返签开始日期（格式化后）。 */
+  overseasVisaStartDate?: string;
+  /** 入境确认日期（格式化后）。 */
+  entryConfirmedDate?: string;
+
+  // ─── P1 Survey / Quote / Pre-Sign Gate ─────────────────────────
+
+  /** 问卷状态摘要（仅 BMV 案件有值）。 */
+  surveyStatus?: SurveyQuoteStatus | null;
+  /** 报价确认状态摘要（仅 BMV 案件有值）。 */
+  quoteStatus?: SurveyQuoteStatus | null;
+  /** 签约前门禁状态（仅 BMV 案件有值）。 */
+  preSignGate?: PreSignGateInfo | null;
+
+  // ─── P1 Final Payment & COE Gate (p1-fe-004-01) ─────────────────
+
+  /** 尾款门禁与 COE 节点状态（仅 BMV 案件下签后有值）。 */
+  finalPaymentGate?: FinalPaymentGateInfo | null;
+
+  // ─── P1 Success Closeout Gate (p1-fe-004-02) ───────────────────
+
+  /** 成功结案前置条件检查（仅 BMV 案件在 S8 时有值）。 */
+  successCloseout?: SuccessCloseoutInfo | null;
+
+  // ─── P1 Supplement & Reminder Failure (p1-fe-005-01) ──────────
+
+  /** 补正多轮状态摘要（仅 BMV 案件处于补正循环时有值）。 */
+  supplementRound?: SupplementRoundInfo | null;
+  /** 提醒创建失败信息（仅 BMV 案件有在留期间且提醒失败时有值）。 */
+  reminderFailure?: ReminderFailureInfo | null;
 }
 
 /**
@@ -1112,6 +1393,18 @@ export interface CaseCreateCustomerOption {
    *
    */
   contact: string;
+
+  // ─── P1 BMV Pre-Sign Gate Profile (p1-fe-003-02) ──────────────
+  // 仅 BMV 顾客有值；创建案件时用于客户端预检签约前门禁。
+
+  /** BMV 问卷回收状态。 */
+  bmvQuestionnaireStatus?: string | null;
+  /** BMV 报价确认状态。 */
+  bmvQuoteStatus?: string | null;
+  /** BMV 签约状态。 */
+  bmvSignStatus?: string | null;
+  /** BMV 承接就绪状态。 */
+  bmvIntakeStatus?: string | null;
 }
 
 /**

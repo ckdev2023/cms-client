@@ -8,14 +8,19 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
-import type { ResidencePeriod, Reminder } from "../model/coreEntities";
+import type { ResidencePeriod } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 
+import type { ReminderScheduleBlueprintItem } from "../cases/cases.types-template-blueprints";
+import {
+  DEFAULT_REMINDER_SCHEDULE,
+  resolveReminderPlans,
+} from "./reminderBlueprintContract";
+
 const RESIDENCE_PERIOD_COLS =
-  "id, org_id, case_id, customer_id, visa_type, status_of_residence, period_years, period_label, valid_from, valid_until, card_number, is_current, notes, created_by, created_at, updated_at";
-const REMINDER_OFFSETS_DAYS = [180, 90, 30] as const;
+  "id, org_id, case_id, customer_id, visa_type, status_of_residence, period_years, period_label, valid_from::text as valid_from, valid_until::text as valid_until, card_number, is_current, entry_date::text as entry_date, reminder_created, notes, created_by, created_at, updated_at";
 
 type ResidencePeriodQueryRow = {
   id: string;
@@ -30,6 +35,8 @@ type ResidencePeriodQueryRow = {
   valid_until: unknown;
   card_number: string | null;
   is_current: boolean;
+  entry_date: unknown;
+  reminder_created: boolean;
   notes: string | null;
   created_by: string | null;
   created_at: unknown;
@@ -40,10 +47,8 @@ type OwnerQueryRow = {
   owner_user_id: string;
 };
 
-type ReminderPlan = {
-  daysBefore: number;
-  remindAt: string;
-  dedupeKey: string;
+type BlueprintQueryRow = {
+  reminder_schedule_blueprint: unknown;
 };
 
 /**
@@ -60,6 +65,7 @@ export type ResidencePeriodCreateInput = {
   validUntil: string;
   cardNumber?: string | null;
   isCurrent?: boolean;
+  entryDate?: string | null;
   notes?: string | null;
 };
 
@@ -75,6 +81,7 @@ export type ResidencePeriodUpdateInput = {
   validUntil?: string;
   cardNumber?: string | null;
   isCurrent?: boolean;
+  entryDate?: string | null;
   notes?: string | null;
 };
 
@@ -90,9 +97,18 @@ export type ResidencePeriodListInput = {
   limit?: number;
 };
 
-function toDateOnlyString(value: unknown): string {
+/**
+ *
+ * @param value
+ */
+export function toDateOnlyString(value: unknown): string {
   if (typeof value === "string") return value.slice(0, 10);
-  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  if (value instanceof Date) {
+    const y = String(value.getFullYear());
+    const m = String(value.getMonth() + 1).padStart(2, "0");
+    const d = String(value.getDate()).padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
   throw new BadRequestException("Invalid date value");
 }
 
@@ -128,6 +144,8 @@ export function mapResidencePeriodRow(
     validUntil: toDateOnlyString(row.valid_until),
     cardNumber: row.card_number,
     isCurrent: row.is_current,
+    entryDate: row.entry_date ? toDateOnlyString(row.entry_date) : null,
+    reminderCreated: row.reminder_created,
     notes: row.notes,
     createdBy: row.created_by,
     createdAt: toTimestampString(row.created_at),
@@ -151,28 +169,6 @@ function requireNonNegativeInteger(
   if (!Number.isInteger(value) || value < 0) {
     throw new BadRequestException(`${field} must be a non-negative integer`);
   }
-}
-
-function buildReminderPlans(
-  periodId: string,
-  validUntil: string,
-): ReminderPlan[] {
-  const [year, month, day] = validUntil.split("-").map(Number);
-  if (!year || !month || !day) {
-    throw new BadRequestException("Invalid validUntil");
-  }
-
-  const base = Date.UTC(year, month - 1, day, 0, 0, 0, 0);
-  return REMINDER_OFFSETS_DAYS.map((daysBefore) => {
-    const remindAt = new Date(
-      base - daysBefore * 24 * 60 * 60 * 1000,
-    ).toISOString();
-    return {
-      daysBefore,
-      remindAt,
-      dedupeKey: `residence_period:${periodId}:${String(daysBefore)}`,
-    };
-  });
 }
 
 /**
@@ -220,9 +216,9 @@ export class ResidencePeriodsService {
           insert into residence_periods (
             org_id, case_id, customer_id, visa_type, status_of_residence,
             period_years, period_label, valid_from, valid_until, card_number,
-            is_current, notes, created_by
+            is_current, entry_date, notes, created_by
           )
-          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
           returning ${RESIDENCE_PERIOD_COLS}
         `,
         [
@@ -237,6 +233,7 @@ export class ResidencePeriodsService {
           input.validUntil,
           input.cardNumber ?? null,
           input.isCurrent ?? false,
+          input.entryDate ?? null,
           input.notes ?? null,
           ctx.userId,
         ],
@@ -246,7 +243,18 @@ export class ResidencePeriodsService {
         throw new BadRequestException("Failed to create residence period");
       const createdPeriod = mapResidencePeriodRow(row);
 
-      await this.syncExpiryReminders(tx, ctx, createdPeriod);
+      const reminderCreated = await this.syncExpiryReminders(
+        tx,
+        ctx,
+        createdPeriod,
+      );
+      if (reminderCreated) {
+        await tx.query(
+          `update residence_periods set reminder_created = true, updated_at = now() where id = $1 and org_id = $2`,
+          [createdPeriod.id, ctx.orgId],
+        );
+        createdPeriod.reminderCreated = true;
+      }
       return createdPeriod;
     });
 
@@ -383,7 +391,8 @@ export class ResidencePeriodsService {
               valid_until = $8,
               card_number = $9,
               is_current = $10,
-              notes = $11,
+              entry_date = $11,
+              notes = $12,
               updated_at = now()
           where id = $1 and org_id = $2
           returning ${RESIDENCE_PERIOD_COLS}
@@ -405,6 +414,7 @@ export class ResidencePeriodsService {
             ? current.cardNumber
             : input.cardNumber,
           nextIsCurrent,
+          input.entryDate === undefined ? current.entryDate : input.entryDate,
           input.notes === undefined ? current.notes : input.notes,
         ],
       );
@@ -412,7 +422,15 @@ export class ResidencePeriodsService {
       if (!row)
         throw new BadRequestException("Failed to update residence period");
       const next = mapResidencePeriodRow(row);
-      await this.syncExpiryReminders(tx, ctx, next);
+
+      const reminderCreated = await this.syncExpiryReminders(tx, ctx, next);
+      if (reminderCreated !== next.reminderCreated) {
+        await tx.query(
+          `update residence_periods set reminder_created = $3, updated_at = now() where id = $1 and org_id = $2`,
+          [next.id, ctx.orgId, reminderCreated],
+        );
+        next.reminderCreated = reminderCreated;
+      }
       return next;
     });
 
@@ -506,18 +524,37 @@ export class ResidencePeriodsService {
     return row ? mapResidencePeriodRow(row) : null;
   }
 
-  private async syncExpiryReminders(
+  /**
+   * 180/90/30 提醒生成 — 失败回滚安全。
+   *
+   * 使用 SAVEPOINT 隔离提醒 INSERT：如果任何一条提醒写入失败，
+   * 回滚到 savepoint 并返回 false（reminder_created = false），
+   * 但不中断外层事务（residence_period 仍正常创建/更新）。
+   *
+   * 结案阻断规则依赖 reminder_created = true，
+   * 因此提醒生成失败会阻止案件进入成功结案。
+   * @param tx
+   * @param ctx
+   * @param period
+   */
+  async syncExpiryReminders(
     tx: TenantDbTx,
     ctx: RequestContext,
     period: ResidencePeriod,
-  ): Promise<void> {
-    const plans = buildReminderPlans(period.id, period.validUntil);
+  ): Promise<boolean> {
+    const blueprint = await this.fetchReminderBlueprint(
+      tx,
+      ctx.orgId,
+      period.caseId,
+    );
+    const plans = resolveReminderPlans(blueprint, period.id, period.validUntil);
+
     await this.cancelExistingReminders(
       tx,
       ctx.orgId,
       plans.map((plan) => plan.dedupeKey),
     );
-    if (!period.isCurrent) return;
+    if (!period.isCurrent) return false;
 
     const ownerResult = await tx.query<OwnerQueryRow>(
       `
@@ -529,36 +566,82 @@ export class ResidencePeriodsService {
       [period.caseId, ctx.orgId],
     );
     const owner = ownerResult.rows.at(0);
-    if (!owner) return;
+    if (!owner) return false;
 
-    for (const plan of plans) {
-      await tx.query<Reminder>(
-        `
-          insert into reminders (
-            org_id, case_id, target_type, target_id, remind_at,
-            recipient_type, recipient_id, channel, dedupe_key, payload_snapshot
-          )
-          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
-        `,
-        [
-          ctx.orgId,
-          period.caseId,
-          "customer",
-          period.customerId,
-          plan.remindAt,
-          "internal_user",
-          owner.owner_user_id,
-          "system",
-          plan.dedupeKey,
-          JSON.stringify({
-            residencePeriodId: period.id,
-            validUntil: period.validUntil,
-            daysBefore: plan.daysBefore,
-            statusOfResidence: period.statusOfResidence,
-          }),
-        ],
+    await tx.query("SAVEPOINT sp_reminders");
+    try {
+      for (const plan of plans) {
+        await tx.query(
+          `
+            insert into reminders (
+              org_id, case_id, target_type, target_id, remind_at,
+              recipient_type, recipient_id, channel, dedupe_key, payload_snapshot
+            )
+            values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb)
+          `,
+          [
+            ctx.orgId,
+            period.caseId,
+            "customer",
+            period.customerId,
+            plan.remindAt,
+            plan.recipientType,
+            owner.owner_user_id,
+            plan.channel,
+            plan.dedupeKey,
+            JSON.stringify({
+              residencePeriodId: period.id,
+              validUntil: period.validUntil,
+              daysBefore: plan.daysBefore,
+              statusOfResidence: period.statusOfResidence,
+            }),
+          ],
+        );
+      }
+      await tx.query("RELEASE SAVEPOINT sp_reminders");
+      return true;
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `[ResidencePeriodsService.syncExpiryReminders] reminder INSERT failed for period ${period.id}: ${err instanceof Error ? err.message : String(err)}`,
       );
+      await tx.query("ROLLBACK TO SAVEPOINT sp_reminders");
+      return false;
     }
+  }
+
+  /**
+   * 从 case_templates 查找当前案件模板的 reminder_schedule_blueprint。
+   * 无模板或无 blueprint 时降级为 DEFAULT_REMINDER_SCHEDULE。
+   * @param tx
+   * @param orgId
+   * @param caseId
+   */
+  private async fetchReminderBlueprint(
+    tx: TenantDbTx,
+    orgId: string,
+    caseId: string,
+  ): Promise<readonly ReminderScheduleBlueprintItem[]> {
+    const result = await tx.query<BlueprintQueryRow>(
+      `
+        select ct.reminder_schedule_blueprint
+        from case_templates ct
+        join cases c on c.case_type_code = ct.case_type and c.org_id = ct.org_id
+        where c.id = $1 and c.org_id = $2
+          and ct.active_flag = true
+        order by ct.updated_at desc
+        limit 1
+      `,
+      [caseId, orgId],
+    );
+    const row = result.rows.at(0);
+    if (!row?.reminder_schedule_blueprint) return DEFAULT_REMINDER_SCHEDULE;
+
+    const raw = row.reminder_schedule_blueprint;
+    if (!Array.isArray(raw) || raw.length === 0)
+      return DEFAULT_REMINDER_SCHEDULE;
+
+    return raw as ReminderScheduleBlueprintItem[];
   }
 
   private async cancelExistingReminders(

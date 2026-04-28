@@ -60,6 +60,8 @@ const MOCK_DEEP_LINK = {
 const MOCK_COUNTS = {
   documentItemsTotal: 10,
   documentItemsDone: 6,
+  questionnaireItemsTotal: 0,
+  questionnaireItemsDone: 0,
   caseParties: 3,
   tasks: 5,
   tasksPending: 2,
@@ -136,6 +138,9 @@ describe("aggregate contract freeze", () => {
       "documentProgressByProvider",
       "billing",
       "deepLink",
+      "failureCloseoutCheck",
+      "currentResidencePeriod",
+      "successCloseoutCheck",
     ]);
   });
 
@@ -166,6 +171,8 @@ describe("aggregate contract freeze", () => {
     expect(CASE_DETAIL_TAB_COUNTS_KEYS).toEqual([
       "documentItemsTotal",
       "documentItemsDone",
+      "questionnaireItemsTotal",
+      "questionnaireItemsDone",
       "caseParties",
       "tasks",
       "tasksPending",

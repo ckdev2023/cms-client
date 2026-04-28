@@ -17,28 +17,35 @@ import {
 import { RequireRoles } from "../auth/auth.decorators";
 import { PermissionsService } from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
+import { isUuid } from "../tenancy/uuid";
+import { FeatureFlagsService } from "../../feature-flags/featureFlags.service";
+import { CustomersService } from "./customers.service";
 import {
-  CustomersService,
-  type CustomerActiveCasesFilter,
-  type CustomerListScope,
-} from "./customers.service";
+  parseActiveCases,
+  parseContacts,
+  parseLimit,
+  parseObject,
+  parseOptionalNumber,
+  parseOptionalTrimmedString,
+  parsePage,
+  parseRequiredObject,
+  parseRequiredTrimmedString,
+  parseScope,
+  parseStringArray,
+  parseType,
+} from "./customers.controller-parsers";
 
-type HttpRequest = {
-  requestContext?: RequestContext;
-};
-
+type HttpRequest = { requestContext?: RequestContext };
 type CreateCustomerBody = {
   type: unknown;
   baseProfile?: unknown;
   contacts?: unknown;
 };
-
 type UpdateCustomerBody = {
   type?: unknown;
   baseProfile?: unknown;
   contacts?: unknown;
 };
-
 type ListCustomersQuery = {
   page?: unknown;
   limit?: unknown;
@@ -51,128 +58,36 @@ type ListCustomersQuery = {
   owner?: unknown;
   activeCases?: unknown;
 };
-
 type CheckDuplicatesBody = {
   name?: unknown;
   phone?: unknown;
   email?: unknown;
   excludeCustomerId?: unknown;
 };
-
-type BulkAssignOwnerBody = {
-  customerIds?: unknown;
-  ownerId?: unknown;
+type BulkAssignOwnerBody = { customerIds?: unknown; ownerId?: unknown };
+type BulkChangeGroupBody = { customerIds?: unknown; group?: unknown };
+type SaveBmvSurveyBody = {
+  intakeFormId?: unknown;
+  formData?: unknown;
+  surveyData?: unknown;
 };
-
-type BulkChangeGroupBody = {
-  customerIds?: unknown;
-  group?: unknown;
+type ModifyBmvQuoteBody = {
+  appUserId?: unknown;
+  formData?: unknown;
+  amount?: unknown;
+  visaPlan?: unknown;
 };
+type TransitionBmvToCaseBody = { ownerUserId?: unknown; groupId?: unknown };
 
-function parsePage(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid page");
-  const i = Math.floor(n);
-  if (i < 1) throw new BadRequestException("Invalid page");
-  return i;
+function requireCtx(req: HttpRequest): RequestContext {
+  if (!req.requestContext)
+    throw new UnauthorizedException("Missing request context");
+  return req.requestContext;
 }
 
-function parseLimit(value: unknown): number | undefined {
-  if (value === undefined) return undefined;
-  const n = typeof value === "string" ? Number(value) : Number(value);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid limit");
-  const i = Math.floor(n);
-  if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
-  return i;
-}
-
-function parseOptionalTrimmedString(
-  value: unknown,
-  field: string,
-): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string") {
-    throw new BadRequestException(`Invalid ${field}`);
-  }
-
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-function parseRequiredTrimmedString(value: unknown, field: string): string {
-  const parsed = parseOptionalTrimmedString(value, field);
-  if (!parsed) throw new BadRequestException(`${field} is required`);
-  return parsed;
-}
-
-function parseScope(value: unknown): CustomerListScope | undefined {
-  if (value === undefined) return undefined;
-  if (value === "mine" || value === "group" || value === "all") return value;
-  throw new BadRequestException("Invalid scope");
-}
-
-function parseActiveCases(
-  value: unknown,
-): CustomerActiveCasesFilter | undefined {
-  if (value === undefined) return undefined;
-  if (value === "yes" || value === "has") return "yes";
-  if (value === "no" || value === "none") return "no";
-  throw new BadRequestException("Invalid activeCases");
-}
-
-function parseType(value: unknown): string {
-  if (typeof value !== "string" || value.length === 0) {
-    throw new BadRequestException("Invalid type");
-  }
-  if (value !== "individual" && value !== "corporation") {
-    throw new BadRequestException("Invalid type enum");
-  }
+function parseUuid(value: string, field: string): string {
+  if (!isUuid(value)) throw new BadRequestException(`Invalid ${field}`);
   return value;
-}
-
-function parseObject(value: unknown): Record<string, unknown> | undefined {
-  if (value === undefined) return undefined;
-  if (value && typeof value === "object" && !Array.isArray(value)) {
-    return value as Record<string, unknown>;
-  }
-  throw new BadRequestException("Invalid object");
-}
-
-function parseContacts(value: unknown): Record<string, unknown>[] | undefined {
-  if (value === undefined) return undefined;
-  if (Array.isArray(value)) {
-    for (const item of value) {
-      if (!item || typeof item !== "object" || Array.isArray(item)) {
-        throw new BadRequestException("Invalid contacts item");
-      }
-    }
-    return value as Record<string, unknown>[];
-  }
-  throw new BadRequestException("Invalid contacts");
-}
-
-function parseStringArray(value: unknown, field: string): string[] {
-  if (!Array.isArray(value)) {
-    throw new BadRequestException(`Invalid ${field}`);
-  }
-
-  const items = value.map((item) => {
-    if (typeof item !== "string") {
-      throw new BadRequestException(`Invalid ${field} item`);
-    }
-    const trimmed = item.trim();
-    if (trimmed.length === 0) {
-      throw new BadRequestException(`Invalid ${field} item`);
-    }
-    return trimmed;
-  });
-
-  if (items.length === 0) {
-    throw new BadRequestException(`${field} must contain at least one id`);
-  }
-
-  return [...new Set(items)];
 }
 
 /**
@@ -184,46 +99,45 @@ export class CustomersController {
    * 构造函数。
    * @param customersService 客户服务实例
    * @param permissionsService 权限服务实例
+   * @param featureFlagsService 功能开关服务实例
    */
   constructor(
     @Inject(CustomersService)
     private readonly customersService: CustomersService,
     @Inject(PermissionsService)
     private readonly permissionsService: PermissionsService,
+    @Inject(FeatureFlagsService)
+    private readonly featureFlagsService: FeatureFlagsService,
   ) {}
 
   /**
    * 创建客户。
-   * @param req HTTP 请求对象
-   * @param body 创建客户请求体
-   * @returns 创建成功的客户信息
+   * @param req - HTTP 请求。
+   * @param body - 请求体。
+   * @returns 创建成功的客户信息。
    */
   @RequireRoles("staff")
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCustomerBody) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
-    const type = parseType(body.type);
-    const baseProfile = parseObject(body.baseProfile);
-    const contacts = parseContacts(body.contacts);
-
-    return this.customersService.create(ctx, { type, baseProfile, contacts });
+    const ctx = requireCtx(req);
+    return this.customersService.create(ctx, {
+      type: parseType(body.type),
+      baseProfile: parseObject(body.baseProfile),
+      contacts: parseContacts(body.contacts),
+    });
   }
 
   /**
    * 获取客户列表。
-   * @param req HTTP 请求对象
-   * @param query 查询参数
-   * @returns 客户列表数组
+   * @param req - HTTP 请求。
+   * @param query - 查询参数。
+   * @returns 客户列表与总数。
    */
   @RequireRoles("viewer")
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListCustomersQuery) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
-    const result = await this.customersService.list(ctx, {
+    const ctx = requireCtx(req);
+    return this.customersService.list(ctx, {
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
       scope: parseScope(query.scope),
@@ -237,15 +151,13 @@ export class CustomersController {
       owner: parseOptionalTrimmedString(query.owner, "owner"),
       activeCases: parseActiveCases(query.activeCases),
     });
-
-    return result;
   }
 
   /**
    * 检查客户去重候选项。
-   * @param req HTTP 请求对象
-   * @param body 去重检查请求体
-   * @returns 去重命中结果列表
+   * @param req - HTTP 请求。
+   * @param body - 去重检查参数。
+   * @returns 命中结果列表。
    */
   @RequireRoles("staff")
   @Post("check-duplicates")
@@ -253,9 +165,7 @@ export class CustomersController {
     @Req() req: HttpRequest,
     @Body() body: CheckDuplicatesBody,
   ) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
     return this.customersService.checkDuplicates(ctx, {
       name: parseOptionalTrimmedString(body.name, "name"),
       phone: parseOptionalTrimmedString(body.phone, "phone"),
@@ -269,9 +179,9 @@ export class CustomersController {
 
   /**
    * 批量调整客户负责人。
-   * @param req HTTP 请求对象
-   * @param body 批量指派负责人请求体
-   * @returns 批量更新结果
+   * @param req - HTTP 请求。
+   * @param body - 批量指派请求体。
+   * @returns 更新结果。
    */
   @RequireRoles("staff")
   @Post("bulk-assign-owner")
@@ -279,9 +189,7 @@ export class CustomersController {
     @Req() req: HttpRequest,
     @Body() body: BulkAssignOwnerBody,
   ) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
     const customerIds = parseStringArray(body.customerIds, "customerIds");
     await this.assertCanEditCustomers(ctx, customerIds);
     const updatedCount = await this.customersService.bulkAssignOwner(
@@ -289,15 +197,14 @@ export class CustomersController {
       customerIds,
       parseRequiredTrimmedString(body.ownerId, "ownerId"),
     );
-
     return { ok: true, updatedCount };
   }
 
   /**
    * 批量调整客户分组。
-   * @param req HTTP 请求对象
-   * @param body 批量调组请求体
-   * @returns 批量更新结果
+   * @param req - HTTP 请求。
+   * @param body - 批量调组请求体。
+   * @returns 更新结果。
    */
   @RequireRoles("staff")
   @Post("bulk-change-group")
@@ -305,9 +212,7 @@ export class CustomersController {
     @Req() req: HttpRequest,
     @Body() body: BulkChangeGroupBody,
   ) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
     const customerIds = parseStringArray(body.customerIds, "customerIds");
     await this.assertCanEditCustomers(ctx, customerIds);
     const updatedCount = await this.customersService.bulkChangeGroup(
@@ -315,81 +220,164 @@ export class CustomersController {
       customerIds,
       parseRequiredTrimmedString(body.group, "group"),
     );
-
     return { ok: true, updatedCount };
   }
 
   /**
    * 发送经营管理签问卷。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @returns 更新后的客户信息
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns 更新后的客户信息。
    */
   @RequireRoles("staff")
   @Post(":id/bmv/questionnaire/send")
   async sendBmvQuestionnaire(@Req() req: HttpRequest, @Param("id") id: string) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
     await this.assertCanEditCustomer(ctx, id);
     return this.customersService.sendBmvQuestionnaire(ctx, id);
   }
 
   /**
    * 生成经营管理签报价。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @returns 更新后的客户信息
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns 更新后的客户信息。
    */
   @RequireRoles("staff")
   @Post(":id/bmv/quote/generate")
   async generateBmvQuote(@Req() req: HttpRequest, @Param("id") id: string) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
     await this.assertCanEditCustomer(ctx, id);
     return this.customersService.generateBmvQuote(ctx, id);
   }
 
   /**
    * 记录经营管理签已签约。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @returns 更新后的客户信息
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns 更新后的客户信息。
    */
   @RequireRoles("staff")
   @Post(":id/bmv/sign/record")
   async recordBmvSign(@Req() req: HttpRequest, @Param("id") id: string) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
     await this.assertCanEditCustomer(ctx, id);
     return this.customersService.recordBmvSign(ctx, id);
   }
 
   /**
+   * 保存 BMV 问卷回收数据。
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @param body - 问卷保存请求体。
+   * @returns 更新后的客户信息。
+   */
+  @RequireRoles("staff")
+  @Post(":id/bmv/save-survey")
+  async saveBmvSurvey(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: SaveBmvSurveyBody,
+  ) {
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
+    await this.assertCanEditCustomer(ctx, id);
+    return this.customersService.saveBmvSurvey(ctx, id, {
+      intakeFormId: parseRequiredTrimmedString(
+        body.intakeFormId,
+        "intakeFormId",
+      ),
+      formData: parseRequiredObject(body.formData, "formData"),
+      surveyData: parseObject(body.surveyData),
+    });
+  }
+
+  /**
+   * 修改 BMV 报价（保留历史版本）。
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @param body - 报价修改请求体。
+   * @returns 更新后的客户信息。
+   */
+  @RequireRoles("staff")
+  @Post(":id/bmv/quote/modify")
+  async modifyBmvQuote(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: ModifyBmvQuoteBody,
+  ) {
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
+    await this.assertCanEditCustomer(ctx, id);
+    return this.customersService.modifyBmvQuote(ctx, id, {
+      appUserId: parseRequiredTrimmedString(body.appUserId, "appUserId"),
+      formData: parseRequiredObject(body.formData, "formData"),
+      amount: parseOptionalNumber(body.amount, "amount"),
+      visaPlan: parseOptionalTrimmedString(body.visaPlan, "visaPlan"),
+    });
+  }
+
+  /**
+   * BMV 客户转正式案件。
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @param body - 可选覆写参数。
+   * @returns 创建的案件信息。
+   */
+  @RequireRoles("staff")
+  @Post(":id/bmv/transition-to-case")
+  async transitionBmvToCase(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: TransitionBmvToCaseBody,
+  ) {
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
+    await this.assertCanEditCustomer(ctx, id);
+    return this.customersService.transitionBmvToCase(ctx, id, {
+      ownerUserId: parseOptionalTrimmedString(body.ownerUserId, "ownerUserId"),
+      groupId: parseOptionalTrimmedString(body.groupId, "groupId"),
+    });
+  }
+
+  /**
+   * 获取 BMV 承接聚合数据。
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns BMV 聚合 DTO。
+   */
+  @RequireRoles("viewer")
+  @Get(":id/bmv")
+  async getBmvAggregate(@Req() req: HttpRequest, @Param("id") id: string) {
+    const ctx = requireCtx(req);
+    await this.assertBmvEnabled(ctx);
+    return this.customersService.getBmvAggregate(ctx, id);
+  }
+
+  /**
    * 获取指定客户详情。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @returns 匹配的客户信息
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns 匹配的客户信息。
    */
   @RequireRoles("viewer")
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
-    const customer = await this.customersService.get(ctx, id);
+    const ctx = requireCtx(req);
+    const customer = await this.customersService.get(ctx, parseUuid(id, "id"));
     if (!customer) throw new BadRequestException("Customer not found");
     return customer;
   }
 
   /**
    * 更新客户信息。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @param body 更新请求体
-   * @returns 更新后的客户信息
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @param body - 更新请求体。
+   * @returns 更新后的客户信息。
    */
   @RequireRoles("staff")
   @Patch(":id")
@@ -398,45 +386,41 @@ export class CustomersController {
     @Param("id") id: string,
     @Body() body: UpdateCustomerBody,
   ) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
     await this.assertCanEditCustomer(ctx, id);
-
-    const type = body.type !== undefined ? parseType(body.type) : undefined;
-    const baseProfile = parseObject(body.baseProfile);
-    const contacts = parseContacts(body.contacts);
-
     return this.customersService.update(ctx, id, {
-      type,
-      baseProfile,
-      contacts,
+      type: body.type !== undefined ? parseType(body.type) : undefined,
+      baseProfile: parseObject(body.baseProfile),
+      contacts: parseContacts(body.contacts),
     });
   }
 
   /**
    * 删除客户。
-   * @param req HTTP 请求对象
-   * @param id 客户 ID
-   * @returns 删除成功状态
+   * @param req - HTTP 请求。
+   * @param id - 客户 ID。
+   * @returns 删除成功状态。
    */
   @RequireRoles("manager")
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
-    const ctx = req.requestContext;
-    if (!ctx) throw new UnauthorizedException("Missing request context");
-
+    const ctx = requireCtx(req);
     await this.assertCanEditCustomer(ctx, id);
-
     await this.customersService.softDelete(ctx, id);
     return { ok: true };
   }
 
-  /**
-   * 校验当前用户是否可以编辑指定客户。
-   * @param ctx 请求上下文
-   * @param id 客户 ID
-   */
+  private async assertBmvEnabled(ctx: RequestContext): Promise<void> {
+    const resolution = await this.featureFlagsService.resolve(ctx, {
+      key: "bmv",
+    });
+    if (!resolution.enabled) {
+      throw new ForbiddenException(
+        "BMV feature is not enabled for this organization",
+      );
+    }
+  }
+
   private async assertCanEditCustomer(
     ctx: RequestContext,
     id: string,
@@ -444,7 +428,6 @@ export class CustomersController {
     const customers = await this.customersService.getByIds(ctx, [id]);
     const customer = customers.at(0);
     if (!customer) return;
-
     if (
       !this.permissionsService.canEditCustomer(
         ctx.userId,
@@ -457,28 +440,21 @@ export class CustomersController {
     }
   }
 
-  /**
-   * 校验当前用户是否可以批量编辑指定客户。
-   * @param ctx 请求上下文
-   * @param customerIds 客户 ID 集合
-   */
   private async assertCanEditCustomers(
     ctx: RequestContext,
     customerIds: string[],
   ): Promise<void> {
     const customers = await this.customersService.getByIds(ctx, customerIds);
-    if (customers.length !== customerIds.length) {
+    if (customers.length !== customerIds.length)
       throw new BadRequestException("Some customers were not found");
-    }
-
     if (
       customers.some(
-        (customer) =>
+        (c) =>
           !this.permissionsService.canEditCustomer(
             ctx.userId,
             ctx.role,
             ctx.groupId,
-            customer,
+            c,
           ),
       )
     ) {

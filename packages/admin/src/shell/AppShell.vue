@@ -10,6 +10,7 @@ import {
   type AsyncComponentLoader,
   type Component,
 } from "vue";
+import { useI18n } from "vue-i18n";
 import { useRouter } from "vue-router";
 import SideNav from "./SideNav.vue";
 import TopBar from "./TopBar.vue";
@@ -18,13 +19,17 @@ import TopBar from "./TopBar.vue";
  * 后台通用应用外壳，负责组合顶栏、侧边栏与移动端导航遮罩。
  */
 defineProps<{
+  userEmail?: string;
   userInitials?: string;
+  userName?: string;
 }>();
 
 const slots = useSlots();
 const isMobileNavOpen = ref(false);
 const router = useRouter();
+const { t } = useI18n();
 const mainContentRef = ref<HTMLElement | null>(null);
+const isSkipLinkVisible = ref(false);
 const currentView = shallowRef<Component | null>(null);
 const currentViewKey = ref(router.currentRoute.value.fullPath);
 const asyncRouteComponentCache = new WeakMap<
@@ -126,8 +131,21 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="app-shell">
-    <a class="skip-link" href="#main-content">跳到内容</a>
-    <TopBar :user-initials="userInitials" @toggle-menu="openMobileNav">
+    <a
+      class="skip-link"
+      :class="{ 'skip-link--visible': isSkipLinkVisible }"
+      href="#main-content"
+      @focus="isSkipLinkVisible = true"
+      @blur="isSkipLinkVisible = false"
+    >
+      {{ t("shell.skipToContent") }}
+    </a>
+    <TopBar
+      :user-email="userEmail"
+      :user-initials="userInitials"
+      :user-name="userName"
+      @toggle-menu="openMobileNav"
+    >
       <template v-if="slots['topbar-actions']" #actions>
         <slot name="topbar-actions" />
       </template>

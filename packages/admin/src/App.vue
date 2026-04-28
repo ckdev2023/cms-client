@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, watch } from "vue";
+import { useI18n } from "vue-i18n";
 import { RouterView, useRoute, useRouter } from "vue-router";
+import { getArcoLocale, type AppLocale } from "./i18n";
 import {
   isAdminAuthenticated,
   useAdminSession,
 } from "./auth/model/adminSession";
+import { createOrgSettingsRepository } from "./views/settings/model/OrgSettingsRepository";
 import { initOrgSettings } from "./shared/model/useOrgSettings";
-import { SAMPLE_ORG_SETTINGS } from "./views/settings/fixtures";
 import AppShell from "./shell/AppShell.vue";
 
 /**
@@ -14,11 +16,21 @@ import AppShell from "./shell/AppShell.vue";
  */
 const route = useRoute();
 const router = useRouter();
-const { currentUser } = useAdminSession();
+const { locale } = useI18n();
+const { currentUser, isAuthenticated } = useAdminSession();
 const usesBlankLayout = computed(() => route.meta.layout === "blank");
+const userName = computed(() => currentUser.value?.name ?? "Local Admin");
+const userEmail = computed(
+  () => currentUser.value?.email ?? "admin@local.test",
+);
 const userInitials = computed(() => currentUser.value?.initials ?? "AD");
+const arcoLocale = computed(() => getArcoLocale(locale.value as AppLocale));
+const orgSettings = initOrgSettings({
+  initialStorageRoot: { rootLabel: null, rootPath: null },
+});
+const orgSettingsRepository = createOrgSettingsRepository();
 
-let sessionCheckTimer: ReturnType<typeof window.setInterval> | null = null;
+let sessionCheckTimer: number | null = null;
 
 /**
  * 当前受保护页面检测到登录态失效时，跳回登录页并保留原目标地址。
@@ -42,11 +54,38 @@ function handleVisibilityChange(): void {
   }
 }
 
-initOrgSettings({ initialStorageRoot: SAMPLE_ORG_SETTINGS.storageRoot });
+async function refreshOrgSettings(): Promise<void> {
+  if (!isAuthenticated.value) {
+    orgSettings.storageRoot.value = { rootLabel: null, rootPath: null };
+    return;
+  }
+
+  try {
+    const settings = await orgSettingsRepository.getOrgSettings();
+    orgSettings.storageRoot.value = {
+      rootLabel: settings.storageRoot.rootLabel,
+      rootPath: settings.storageRoot.rootPath,
+    };
+  } catch {
+    orgSettings.storageRoot.value = { rootLabel: null, rootPath: null };
+  }
+}
 
 watch(() => route.fullPath, redirectToLoginForExpiredSession, {
   immediate: true,
 });
+
+watch(
+  () => isAuthenticated.value,
+  (authenticated) => {
+    if (!authenticated) {
+      orgSettings.storageRoot.value = { rootLabel: null, rootPath: null };
+      return;
+    }
+    void refreshOrgSettings();
+  },
+  { immediate: true },
+);
 
 onMounted(() => {
   window.addEventListener("focus", redirectToLoginForExpiredSession);
@@ -67,6 +106,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <RouterView v-if="usesBlankLayout" />
-  <AppShell v-else :user-initials="userInitials" />
+  <a-config-provider :locale="arcoLocale">
+    <RouterView v-if="usesBlankLayout" />
+    <AppShell
+      v-else
+      :user-email="userEmail"
+      :user-initials="userInitials"
+      :user-name="userName"
+    />
+  </a-config-provider>
 </template>

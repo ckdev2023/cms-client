@@ -34,7 +34,7 @@ defineProps<{
           {{ t(`documents.list.summary.${card.key}`) }}
         </div>
         <div class="doc-summary-card__value">{{ card.value }}</div>
-        <div class="doc-summary-card__hint">{{ card.label }}</div>
+        <div class="doc-summary-card__hint">{{ t(card.labelKey) }}</div>
       </div>
     </div>
   </section>

@@ -7,25 +7,34 @@ import {
 import { Pool } from "pg";
 
 import { PermissionsService } from "../auth/permissions.service";
-import type { Customer } from "../model/coreEntities";
+import type { Case, Customer } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import { CasesService } from "../cases/cases.service";
 import {
   buildCustomerDuplicateWhere,
-  buildCustomerDetailSelect,
   buildCustomerListSelect,
   buildCustomerListWhere,
   getCustomerDuplicateMatchedFields,
 } from "./customers.query";
+import {
+  createCustomerBmvDeps,
+  getCustomerEntity,
+  getCustomerRowById,
+} from "./customers.service.deps";
 import {
   bulkAssignOwner as runBulkAssignOwner,
   bulkChangeGroup as runBulkChangeGroup,
 } from "./customers.bulk";
 import {
   generateBmvQuote,
+  getBmvAggregate,
+  modifyBmvQuote,
   recordBmvSign,
+  saveBmvSurvey,
   sendBmvQuestionnaire,
+  transitionBmvToCase,
 } from "./customers.bmv";
 import {
   mapCustomerToDetailDto,
@@ -40,6 +49,7 @@ import {
   validateBaseProfile,
 } from "./customers.utils";
 import type {
+  CustomerBmvView,
   CustomerCreateInput,
   CustomerDetailDto,
   CustomerDuplicateCheckInput,
@@ -48,6 +58,9 @@ import type {
   CustomerQueryRow,
   CustomerSummaryDto,
   CustomerUpdateInput,
+  ModifyBmvQuoteInput,
+  SaveBmvSurveyInput,
+  TransitionBmvToCaseInput,
 } from "./customers.types";
 
 export type {
@@ -72,12 +85,14 @@ export class CustomersService {
    * @param pool PostgreSQL 连接池。
    * @param permissionsService 客户访问与编辑权限校验服务。
    * @param timelineService 用于写入 Timeline 日志的服务。
+   * @param casesService 案件服务，用于 BMV 转案件流程。
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(PermissionsService)
     private readonly permissionsService: PermissionsService,
     @Inject(TimelineService) private readonly timelineService: TimelineService,
+    @Inject(CasesService) private readonly casesService: CasesService,
   ) {}
 
   /**
@@ -97,11 +112,9 @@ export class CustomersService {
     );
     const contacts = input.contacts ?? [];
     const result = await tenantDb.query<CustomerQueryRow>(
-      `
-        insert into customers (org_id, type, base_profile, contacts)
-        values ($1, $2, $3::jsonb, $4::jsonb)
-        returning id, org_id, type, base_profile, contacts, created_at, updated_at
-      `,
+      `insert into customers (org_id, type, base_profile, contacts)
+       values ($1, $2, $3::jsonb, $4::jsonb)
+       returning id, org_id, type, base_profile, contacts, created_at, updated_at`,
       [
         ctx.orgId,
         input.type,
@@ -109,7 +122,6 @@ export class CustomersService {
         JSON.stringify(contacts),
       ],
     );
-
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to create customer");
     const customer = mapCustomerRow(row);
@@ -132,7 +144,7 @@ export class CustomersService {
     ctx: RequestContext,
     id: string,
   ): Promise<CustomerDetailDto | null> {
-    const row = await this.getCustomerRowById(ctx, id);
+    const row = await getCustomerRowById(ctx, id, this.pool);
     if (!row) return null;
     const customer = mapCustomerRow(row);
     if (
@@ -308,53 +320,96 @@ export class CustomersService {
 
   /**
    * 发送经营管理签问卷。
-   * @param ctx 请求上下文。
-   * @param id 客户 ID。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
    * @returns 更新后的客户实体。
    */
   async sendBmvQuestionnaire(
     ctx: RequestContext,
     id: string,
   ): Promise<Customer> {
-    return sendBmvQuestionnaire({
-      ctx,
-      id,
-      pool: this.pool,
-      timelineService: this.timelineService,
-      getEntity: this.getEntity.bind(this),
-    });
+    return sendBmvQuestionnaire(this.bmvDeps(ctx, id));
   }
-
   /**
    * 生成经营管理签报价。
-   * @param ctx 请求上下文。
-   * @param id 客户 ID。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
    * @returns 更新后的客户实体。
    */
   async generateBmvQuote(ctx: RequestContext, id: string): Promise<Customer> {
-    return generateBmvQuote({
-      ctx,
-      id,
-      pool: this.pool,
-      timelineService: this.timelineService,
-      getEntity: this.getEntity.bind(this),
-    });
+    return generateBmvQuote(this.bmvDeps(ctx, id));
   }
-
   /**
    * 记录经营管理签已签约。
-   * @param ctx 请求上下文。
-   * @param id 客户 ID。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
    * @returns 更新后的客户实体。
    */
   async recordBmvSign(ctx: RequestContext, id: string): Promise<Customer> {
-    return recordBmvSign({
-      ctx,
-      id,
-      pool: this.pool,
-      timelineService: this.timelineService,
-      getEntity: this.getEntity.bind(this),
-    });
+    return recordBmvSign(this.bmvDeps(ctx, id));
+  }
+  /**
+   * 保存 BMV 问卷回收数据并投影 survey_data。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
+   * @param input - 问卷保存参数。
+   * @returns 更新后的客户实体。
+   */
+  async saveBmvSurvey(
+    ctx: RequestContext,
+    id: string,
+    input: SaveBmvSurveyInput,
+  ): Promise<Customer> {
+    return saveBmvSurvey(this.bmvDeps(ctx, id), input);
+  }
+
+  /**
+   * 修改 BMV 报价（保留历史版本）。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
+   * @param input - 报价修改参数。
+   * @returns 更新后的客户实体。
+   */
+  async modifyBmvQuote(
+    ctx: RequestContext,
+    id: string,
+    input: ModifyBmvQuoteInput,
+  ): Promise<Customer> {
+    return modifyBmvQuote(this.bmvDeps(ctx, id), input);
+  }
+
+  /**
+   * BMV 客户转正式案件。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
+   * @param input - 可选覆写参数。
+   * @returns 创建的案件实体。
+   */
+  async transitionBmvToCase(
+    ctx: RequestContext,
+    id: string,
+    input?: TransitionBmvToCaseInput,
+  ): Promise<Case> {
+    return transitionBmvToCase(
+      {
+        ...this.bmvDeps(ctx, id),
+        createCase: this.casesService.create.bind(this.casesService),
+      },
+      input,
+    );
+  }
+
+  /**
+   * 获取 BMV 承接聚合数据。
+   * @param ctx - 请求上下文。
+   * @param id - 客户 ID。
+   * @returns BMV 聚合 DTO。
+   */
+  async getBmvAggregate(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<CustomerBmvView> {
+    return getBmvAggregate(this.bmvDeps(ctx, id));
   }
 
   /**
@@ -370,7 +425,7 @@ export class CustomersService {
     input: CustomerUpdateInput,
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const current = await this.getEntity(ctx, id);
+    const current = await getCustomerEntity(ctx, id, this.pool);
     if (!current) throw new NotFoundException("Customer not found or deleted");
     const nextType = input.type ?? current.type;
     const nextBaseProfile = validateBaseProfile(nextType, {
@@ -379,15 +434,10 @@ export class CustomersService {
     });
     const nextContacts = input.contacts ?? current.contacts;
     const result = await tenantDb.query<CustomerQueryRow>(
-      `
-        update customers
-        set type = $2,
-            base_profile = $3::jsonb,
-            contacts = $4::jsonb,
-            updated_at = now()
-        where id = $1 and ${activeCustomerPredicate()}
-        returning ${CUSTOMER_COLS}
-      `,
+      `update customers set type = $2, base_profile = $3::jsonb,
+       contacts = $4::jsonb, updated_at = now()
+       where id = $1 and ${activeCustomerPredicate()}
+       returning ${CUSTOMER_COLS}`,
       [
         id,
         nextType,
@@ -395,7 +445,6 @@ export class CustomersService {
         JSON.stringify(nextContacts),
       ],
     );
-
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to update customer");
     const customer = mapCustomerRow(row);
@@ -416,7 +465,7 @@ export class CustomersService {
    */
   async softDelete(ctx: RequestContext, id: string): Promise<void> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const current = await this.getEntity(ctx, id);
+    const current = await getCustomerEntity(ctx, id, this.pool);
     if (!current)
       throw new NotFoundException("Customer not found or already deleted");
     const casesCheck = await tenantDb.query<{ exists: boolean }>(
@@ -430,13 +479,8 @@ export class CustomersService {
     }
     const nextBaseProfile = { ...current.baseProfile, status: "deleted" };
     const result = await tenantDb.query<CustomerQueryRow>(
-      `
-        update customers
-        set base_profile = $2::jsonb,
-            updated_at = now()
-        where id = $1
-        returning ${CUSTOMER_COLS}
-      `,
+      `update customers set base_profile = $2::jsonb, updated_at = now()
+       where id = $1 returning ${CUSTOMER_COLS}`,
       [id, JSON.stringify(nextBaseProfile)],
     );
     if (!result.rowCount || result.rowCount === 0)
@@ -448,29 +492,7 @@ export class CustomersService {
       payload: { status: "deleted" },
     });
   }
-
-  private async getEntity(
-    ctx: RequestContext,
-    id: string,
-  ): Promise<Customer | null> {
-    const row = await this.getCustomerRowById(ctx, id);
-    return row ? mapCustomerRow(row) : null;
-  }
-
-  private async getCustomerRowById(
-    ctx: RequestContext,
-    id: string,
-  ): Promise<CustomerQueryRow | null> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<CustomerQueryRow>(
-      `
-        select ${buildCustomerDetailSelect("c")}
-        from customers c
-        where c.id = $1 and ${activeCustomerPredicate("c")}
-        limit 1
-      `,
-      [id],
-    );
-    return result.rows.at(0) ?? null;
+  private bmvDeps(ctx: RequestContext, id: string) {
+    return createCustomerBmvDeps(this.pool, this.timelineService, ctx, id);
   }
 }

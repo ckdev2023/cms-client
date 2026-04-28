@@ -21,6 +21,7 @@ interface NavItemBase {
   label: string;
   icon?: NavIconName;
   adminOnly?: boolean;
+  requiresStaff?: boolean;
 }
 
 /** 通过 `RouterLink` 渲染的站内路由项。 */
@@ -120,9 +121,22 @@ export const navGroups: NavGroup[] = [
     title: "业务",
     items: [
       { key: "leads", label: "咨询与会话", to: "/leads", icon: "message" },
+      // NOTE: 会话（conversations）入口暂时从导航隐藏，等 IM 客户端就绪后再恢复。
+      //   - 路由 /conversations、/conversations/:id 仍然保留，可直链访问。
+      //   - 后端 /api/admin/conversations 与 i18n key `shell.nav.items.conversations` 也保留。
+      //   - 恢复时把下面这段还原即可：
+      //     {
+      //       key: "conversations",
+      //       label: "会话",
+      //       to: "/conversations",
+      //       icon: "message",
+      //       requiresStaff: true,
+      //     },
       { key: "customers", label: "客户", to: "/customers", icon: "users" },
       { key: "cases", label: "案件", to: "/cases", icon: "file-text" },
-      { key: "tasks", label: "任务与提醒", to: "/tasks", icon: "clipboard" },
+      // NOTE: Tasks & reminders 仍为占位页（/tasks -> SectionPlaceholderView），
+      // 暂时从生产侧栏隐藏，避免未上线模块出现在正式业务导航中。
+      // 路由与 i18n 先保留，待任务模块落地后再恢复入口。
     ],
   },
   {

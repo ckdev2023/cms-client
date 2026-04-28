@@ -13,12 +13,18 @@ import type {
 
 export const DOCUMENT_STATUSES: Record<DocumentItemStatus, DocumentStatusDef> =
   {
-    pending: { label: "待提交", badge: "badge-orange" },
-    uploaded_reviewing: { label: "已提交待审核", badge: "badge-blue" },
-    approved: { label: "通过", badge: "badge-green" },
-    rejected: { label: "退回补正", badge: "badge-red" },
-    expired: { label: "过期", badge: "badge-red" },
-    waived: { label: "无需提供", badge: "badge-gray" },
+    pending: { labelKey: "documents.status.pending", badge: "badge-orange" },
+    uploaded_reviewing: {
+      labelKey: "documents.status.uploadedReviewing",
+      badge: "badge-blue",
+    },
+    approved: {
+      labelKey: "documents.status.approved",
+      badge: "badge-green",
+    },
+    rejected: { labelKey: "documents.status.rejected", badge: "badge-red" },
+    expired: { labelKey: "documents.status.expired", badge: "badge-red" },
+    waived: { labelKey: "documents.status.waived", badge: "badge-gray" },
   };
 
 export const DOCUMENT_STATUS_IDS: readonly DocumentItemStatus[] = [
@@ -36,10 +42,12 @@ export const DOCUMENT_PROVIDERS: Record<
   DocumentProviderType,
   DocumentProviderDef
 > = {
-  main_applicant: { label: "主申请人" },
-  dependent_guarantor: { label: "扶養者/保証人" },
-  employer_org: { label: "受入機関/企業担当" },
-  office_internal: { label: "事務所内部" },
+  main_applicant: { labelKey: "documents.providers.mainApplicant" },
+  dependent_guarantor: {
+    labelKey: "documents.providers.dependentGuarantor",
+  },
+  employer_org: { labelKey: "documents.providers.employerOrg" },
+  office_internal: { labelKey: "documents.providers.officeInternal" },
 };
 
 export const DOCUMENT_PROVIDER_IDS: readonly DocumentProviderType[] = [
@@ -161,26 +169,26 @@ export const STATUS_SORT_PRIORITY: Record<DocumentItemStatus, number> = {
 // ─── Label Helpers ───────────────────────────────────────────────
 
 /**
- * 根据状态 key 获取中文标签。
+ * 根据状态 key 获取 i18n 标签 key。
  *
  * @param status - 状态 key 或自由文本
- * @returns 中文标签；未匹配时返回原始值
+ * @returns i18n 标签 key；未匹配时返回原始值
  */
-export function getStatusLabel(status: DocumentItemStatus | string): string {
-  return DOCUMENT_STATUSES[status as DocumentItemStatus]?.label ?? status;
+export function getStatusLabelKey(status: DocumentItemStatus | string): string {
+  return DOCUMENT_STATUSES[status as DocumentItemStatus]?.labelKey ?? status;
 }
 
 /**
- * 根据提供方 key 获取中文标签。
+ * 根据提供方 key 获取 i18n 标签 key。
  *
  * @param provider - 提供方 key 或自由文本
- * @returns 中文标签；未匹配时返回原始值
+ * @returns i18n 标签 key；未匹配时返回原始值
  */
-export function getProviderLabel(
+export function getProviderLabelKey(
   provider: DocumentProviderType | string,
 ): string {
   return (
-    DOCUMENT_PROVIDERS[provider as DocumentProviderType]?.label ?? provider
+    DOCUMENT_PROVIDERS[provider as DocumentProviderType]?.labelKey ?? provider
   );
 }
 

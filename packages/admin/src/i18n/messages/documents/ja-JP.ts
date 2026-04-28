@@ -16,6 +16,12 @@ const documentsJaJP = {
       expired: "期限切れ",
       sharedExpiryRisk: "共有バージョン期限切れリスク",
     },
+    summaryHint: {
+      pendingReview: "審査待ち",
+      missing: "不足",
+      expired: "期限切れ",
+      sharedExpiryRisk: "共有バージョン期限切れリスク",
+    },
     filters: {
       statusAll: "ステータス：全部",
       statusPendingReview: "審査待ち",
@@ -59,6 +65,20 @@ const documentsJaJP = {
       toastApprove: "{count} 件を承認しました",
       toastWaive: "{count} 件を不要としてマークしました",
     },
+  },
+  status: {
+    pending: "未提出",
+    uploadedReviewing: "審査待ち",
+    approved: "承認済み",
+    rejected: "差し戻し",
+    expired: "期限切れ",
+    waived: "提出不要",
+  },
+  providers: {
+    mainApplicant: "主申請者",
+    dependentGuarantor: "扶養者・保証人",
+    employerOrg: "受入機関・企業担当",
+    officeInternal: "事務所内部",
   },
   storageGate: {
     title: "ローカル保管ルートが未設定です",

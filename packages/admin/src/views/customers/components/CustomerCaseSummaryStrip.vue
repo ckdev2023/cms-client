@@ -2,17 +2,22 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CustomerDetail } from "../types";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 案件摘要条：展示累计/活跃/归档案件数与案件名称，位于详情页头部下方。 */
 const props = defineProps<{
   customer: CustomerDetail;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const firstCaseName = computed(() => props.customer.caseNames[0] ?? "—");
 const extraCaseCount = computed(() =>
   Math.max(0, props.customer.caseNames.length - 1),
+);
+
+const lastCreatedDisplay = computed(
+  () => formatDateTime(props.customer.lastCaseCreatedDate, locale.value) || "—",
 );
 </script>
 
@@ -58,8 +63,11 @@ const extraCaseCount = computed(() =>
       <span class="case-strip__footer-label">
         {{ t("customers.detail.caseSummary.lastCreated") }}
       </span>
-      <strong class="case-strip__footer-value">
-        {{ customer.lastCaseCreatedDate ?? "—" }}
+      <strong
+        class="case-strip__footer-value"
+        :title="customer.lastCaseCreatedDate ?? undefined"
+      >
+        {{ lastCreatedDisplay }}
       </strong>
     </div>
   </section>

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useOrgSettings } from "../../shared/model/useOrgSettings";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import GroupListPanel from "./components/GroupListPanel.vue";
 import GroupDetailMeta from "./components/GroupDetailMeta.vue";
@@ -11,23 +12,27 @@ import GroupDisableModal from "./components/GroupDisableModal.vue";
 import VisibilityConfigPanel from "./components/VisibilityConfigPanel.vue";
 import StorageRootPanel from "./components/StorageRootPanel.vue";
 import SettingsToast from "./components/SettingsToast.vue";
+import { createOrgSettingsRepository } from "./model/OrgSettingsRepository";
 import { useSettingsPage } from "./model/useSettingsPage";
 import {
   SETTINGS_SUBNAV_ITEMS,
   SAMPLE_GROUPS,
   SAMPLE_GROUP_DETAILS,
   SAMPLE_GROUP_STATS,
-  SAMPLE_ORG_SETTINGS,
+  SAMPLE_ORG_SETTINGS_UNCONFIGURED,
 } from "./fixtures";
 
 /** 系统设置页入口，编排子导航切换与三个配置面板。 */
 const { t } = useI18n();
+const orgSettingsController = useOrgSettings();
 
 const page = useSettingsPage({
   initialGroups: SAMPLE_GROUPS,
   groupDetails: { ...SAMPLE_GROUP_DETAILS },
   groupStats: { ...SAMPLE_GROUP_STATS },
-  orgSettings: structuredClone(SAMPLE_ORG_SETTINGS),
+  orgSettings: structuredClone(SAMPLE_ORG_SETTINGS_UNCONFIGURED),
+  orgSettingsRepository: createOrgSettingsRepository(),
+  orgSettingsController,
   isAdmin: ref(true),
 });
 </script>
@@ -44,7 +49,10 @@ const page = useSettingsPage({
     />
 
     <div class="settings-view__body">
-      <nav class="settings-view__subnav" aria-label="設定サブナビゲーション">
+      <nav
+        class="settings-view__subnav"
+        :aria-label="t('settings.subnav.ariaLabel')"
+      >
         <button
           v-for="item in SETTINGS_SUBNAV_ITEMS"
           :key="item.id"

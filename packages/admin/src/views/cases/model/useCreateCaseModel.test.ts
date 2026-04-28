@@ -63,6 +63,11 @@ describe("buildCaseTitle", () => {
       "家族滞在更新（批量）",
     );
   });
+  it("accepts resolved label strings (code-based ApplicationType)", () => {
+    expect(
+      buildCaseTitle("王浩", "技人国", "Certificate of Eligibility", false),
+    ).toBe("王浩 技人国Certificate of Eligibility");
+  });
 });
 
 // ─── useCreateCaseModel ──────────────────────────────────────────
@@ -146,6 +151,7 @@ describe("useCreateCaseModel", () => {
       expect(m.derivedTitle.value).toContain("家族滞在");
       m.selectTemplate("work");
       expect(m.derivedTitle.value).toContain("技人国");
+      expect(m.derivedTitle.value).toContain("认定");
     });
     it("detects family / work flags", () => {
       const m = createModel();
@@ -187,7 +193,7 @@ describe("useCreateCaseModel", () => {
       const m = createModel({
         sourceContext: { customerId: "cust-001", familyBulkMode: false },
       });
-      m.setApplicationType("更新");
+      m.setApplicationType("renewal");
       expect(m.derivedTitle.value).toBe("李娜 家族滞在更新");
     });
     it("batch suffix in family bulk mode", () => {
@@ -428,8 +434,8 @@ describe("useCreateCaseModel", () => {
   describe("setters", () => {
     it("setApplicationType", () => {
       const m = createModel();
-      m.setApplicationType("变更");
-      expect(m.draft.applicationType).toBe("变更");
+      m.setApplicationType("change_of_status");
+      expect(m.draft.applicationType).toBe("change_of_status");
     });
     it("setOwner", () => {
       const m = createModel();

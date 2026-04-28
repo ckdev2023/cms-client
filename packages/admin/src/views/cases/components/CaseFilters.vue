@@ -6,7 +6,9 @@ import SearchField from "../../../shared/ui/SearchField.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type {
+  CaseGroupOption,
   CaseGroupFilter,
+  CaseOwnerOption,
   CaseOwnerFilter,
   CaseRiskFilter,
   CaseScope,
@@ -14,8 +16,6 @@ import type {
   CaseValidationFilter,
 } from "../types";
 import {
-  CASE_GROUP_OPTIONS,
-  CASE_OWNER_OPTIONS,
   CASE_RISK_STATUSES,
   CASE_STAGE_IDS,
   CASE_STAGES,
@@ -34,6 +34,8 @@ defineProps<{
   risk: CaseRiskFilter;
   validation: CaseValidationFilter;
   filteredCount: number;
+  ownerOptions?: readonly CaseOwnerOption[];
+  groupOptions?: readonly CaseGroupOption[];
   customerId?: string;
   customerLabel?: string;
 }>();
@@ -115,7 +117,7 @@ const validationLabels = computed<Record<string, string>>(() => ({
       >
         <option value="">{{ t("cases.list.filters.stageAll") }}</option>
         <option v-for="id in CASE_STAGE_IDS" :key="id" :value="id">
-          {{ CASE_STAGES[id].label }}
+          {{ t(CASE_STAGES[id].i18nKey) }}
         </option>
       </select>
 
@@ -131,7 +133,7 @@ const validationLabels = computed<Record<string, string>>(() => ({
       >
         <option value="">{{ t("cases.list.filters.ownerAll") }}</option>
         <option
-          v-for="opt in CASE_OWNER_OPTIONS"
+          v-for="opt in ownerOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >
@@ -151,7 +153,7 @@ const validationLabels = computed<Record<string, string>>(() => ({
       >
         <option value="">{{ t("cases.list.filters.groupAll") }}</option>
         <option
-          v-for="opt in CASE_GROUP_OPTIONS"
+          v-for="opt in groupOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >

@@ -36,6 +36,16 @@ module.exports = {
       to: { path: "^src/modules/(templates|custom)" },
     },
     {
+      name: "modules-core-no-import-portal",
+      severity: "error",
+      from: { path: "^src/modules/core" },
+      to: {
+        path: "^src/modules/portal",
+        pathNot:
+          "^src/modules/portal/(model/portalEntities|intake/intake\\.types)",
+      },
+    },
+    {
       name: "modules-templates-no-import-custom",
       severity: "error",
       from: { path: "^src/modules/templates" },

@@ -57,6 +57,8 @@ const baseMockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
@@ -204,7 +206,7 @@ void test("§8 create: forwards groupId + crossGroupReason", async () => {
 void test("§8 update: forwards groupId + groupTransferReason", async () => {
   let cap: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(baseMockCase),
+    assertCanEditCase: () => Promise.resolve(),
     update: (_: unknown, _id: string, i: Record<string, unknown>) => {
       cap = i;
       return Promise.resolve(baseMockCase);

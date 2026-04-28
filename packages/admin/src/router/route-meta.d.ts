@@ -5,6 +5,7 @@ declare module "vue-router" {
     layout?: "shell" | "blank";
     requiresAuth?: boolean;
     requiresAdmin?: boolean;
+    requiresStaff?: boolean;
     publicOnly?: boolean;
     navKey?: string;
     groupKey?: string;

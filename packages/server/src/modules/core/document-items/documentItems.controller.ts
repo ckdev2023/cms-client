@@ -28,6 +28,8 @@ type CreateDocumentItemBody = {
   ownerSide?: unknown;
   dueAt?: unknown;
   note?: unknown;
+  category?: unknown;
+  surveyData?: unknown;
 };
 
 type UpdateDocumentItemBody = {
@@ -41,9 +43,14 @@ type TransitionBody = {
   toStatus: unknown;
 };
 
+type UpdateSurveyDataBody = {
+  surveyData: unknown;
+};
+
 type ListDocumentItemsQuery = {
   caseId?: unknown;
   status?: unknown;
+  category?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -90,6 +97,42 @@ function parseLimit(value: unknown): number | undefined {
   return i;
 }
 
+const VALID_CATEGORIES = new Set([
+  "standard",
+  "questionnaire",
+  "company",
+  "personal",
+]);
+
+function parseOptionalCategory(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !VALID_CATEGORIES.has(value)) {
+    throw new BadRequestException(
+      `Invalid category: ${typeof value === "string" ? value : "non-string"}`,
+    );
+  }
+  return value;
+}
+
+function parseSurveyData(
+  value: unknown,
+): Record<string, unknown> | null | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) return null;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  throw new BadRequestException("surveyData must be a JSON object or null");
+}
+
+function requireSurveyData(value: unknown): Record<string, unknown> | null {
+  if (value === null) return null;
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+  throw new BadRequestException("surveyData must be a JSON object or null");
+}
+
 /**
  * DocumentItems CRUD 接口。
  */
@@ -126,6 +169,8 @@ export class DocumentItemsController {
       ownerSide: parseOptionalString(body.ownerSide, "ownerSide"),
       dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
       note: parseOptionalNullableString(body.note, "note"),
+      category: parseOptionalCategory(body.category),
+      surveyData: parseSurveyData(body.surveyData),
     });
   }
 
@@ -144,6 +189,7 @@ export class DocumentItemsController {
     return this.documentItemsService.list(ctx, {
       caseId: parseOptionalString(query.caseId, "caseId"),
       status: parseOptionalString(query.status, "status"),
+      category: parseOptionalCategory(query.category),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
@@ -188,6 +234,28 @@ export class DocumentItemsController {
       ownerSide: parseOptionalString(body.ownerSide, "ownerSide"),
       dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
       note: parseOptionalNullableString(body.note, "note"),
+    });
+  }
+
+  /**
+   * 更新问卷资料项的 survey_data（仅限 category=questionnaire）。
+   * @param req HTTP 请求对象
+   * @param id 资料项 ID
+   * @param body survey_data 更新请求体
+   * @returns 更新后的资料项
+   */
+  @RequireRoles("staff")
+  @Patch(":id/survey-data")
+  async updateSurveyData(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: UpdateSurveyDataBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    return this.documentItemsService.updateSurveyData(ctx, id, {
+      surveyData: requireSurveyData(body.surveyData),
     });
   }
 

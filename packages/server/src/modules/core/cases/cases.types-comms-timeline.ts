@@ -81,6 +81,7 @@ export type CaseTimelineLogDto = {
   entityId: string;
   action: string;
   actorUserId: string | null;
+  actorDisplayName?: string | null;
   payload: Record<string, unknown>;
   createdAt: string;
 };

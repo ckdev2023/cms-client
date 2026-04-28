@@ -6,11 +6,23 @@ import type { CustomerCreateFormFields, SelectOption } from "../types";
 import type { CustomerDuplicateCandidate } from "../model/CustomerAdapter";
 import type { CustomerCreateFormErrorCode } from "../model/useCustomerCreateForm";
 
-/**
- * 新建客户弹窗：12 字段表单 + 去重提示 + 创建/草稿按钮。
- */
-
+/** 新建客户弹窗：16 字段表单 + 去重提示 + 创建/草稿按钮。 */
 const { t } = useI18n();
+
+// prettier-ignore
+const VISA_LABEL: Record<string, string> = { business_manager:"visaTypeBusinessManager",engineer_specialist:"visaTypeEngineerSpecialist",skilled_labor:"visaTypeSkilledLabor",student:"visaTypeStudent",dependent:"visaTypeDependent",permanent_resident:"visaTypePermanentResident",spouse_of_jp_national:"visaTypeSpouseOfJpNational",long_term_resident:"visaTypeLongTermResident",designated_activities:"visaTypeDesignatedActivities",other:"visaTypeOther" };
+// prettier-ignore
+const SOURCE_LABEL: Record<string, string> = { REFERRAL:"sourceTypeReferral",WEB:"sourceTypeWeb",ADS:"sourceTypeAds" };
+// prettier-ignore
+const LOCATION_LABEL: Record<string, string> = { OVERSEAS:"locationOverseas",JAPAN:"locationJapan" };
+const p = "customers.list.createModal.fields";
+const toOpts = (map: Record<string, string>) =>
+  computed(() =>
+    Object.entries(map).map(([v, k]) => ({ value: v, label: t(`${p}.${k}`) })),
+  );
+const visaOpts = toOpts(VISA_LABEL);
+const sourceOpts = toOpts(SOURCE_LABEL);
+const locationOpts = toOpts(LOCATION_LABEL);
 
 type CustomerCreateModalProps = {
   open?: boolean;
@@ -35,6 +47,7 @@ defineEmits<{
 }>();
 
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
+const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
 
 /**
  * 根据错误码解析当前状态提示文案。
@@ -154,13 +167,7 @@ const submitStateMessage = computed(() =>
                 <select
                   class="customer-modal__input customer-modal__select"
                   :value="props.fields?.group"
-                  @change="
-                    $emit(
-                      'update:field',
-                      'group',
-                      ($event.target as HTMLSelectElement).value,
-                    )
-                  "
+                  @change="$emit('update:field', 'group', selectValue($event))"
                 >
                   <option value="" disabled>
                     {{
@@ -220,13 +227,7 @@ const submitStateMessage = computed(() =>
                 <select
                   class="customer-modal__input customer-modal__select"
                   :value="props.fields?.gender"
-                  @change="
-                    $emit(
-                      'update:field',
-                      'gender',
-                      ($event.target as HTMLSelectElement).value,
-                    )
-                  "
+                  @change="$emit('update:field', 'gender', selectValue($event))"
                 >
                   <option value="">
                     {{ t("customers.list.createModal.fields.genderDefault") }}
@@ -319,6 +320,99 @@ const submitStateMessage = computed(() =>
                 "
                 @input="$emit('update:field', 'referrer', inputValue($event))"
               />
+            </div>
+
+            <div class="customer-modal__row">
+              <div class="customer-modal__field">
+                <label class="customer-modal__label">
+                  {{ t("customers.list.createModal.fields.location") }}
+                </label>
+                <select
+                  class="customer-modal__input customer-modal__select"
+                  :value="props.fields?.location"
+                  @change="
+                    $emit('update:field', 'location', selectValue($event))
+                  "
+                >
+                  <option value="">
+                    {{ t("customers.list.createModal.fields.locationNone") }}
+                  </option>
+                  <option
+                    v-for="o in locationOpts"
+                    :key="o.value"
+                    :value="o.value"
+                  >
+                    {{ o.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="customer-modal__field">
+                <label class="customer-modal__label">
+                  {{ t("customers.list.createModal.fields.sourceType") }}
+                </label>
+                <select
+                  class="customer-modal__input customer-modal__select"
+                  :value="props.fields?.sourceType"
+                  @change="
+                    $emit('update:field', 'sourceType', selectValue($event))
+                  "
+                >
+                  <option value="">
+                    {{ t("customers.list.createModal.fields.sourceTypeNone") }}
+                  </option>
+                  <option
+                    v-for="o in sourceOpts"
+                    :key="o.value"
+                    :value="o.value"
+                  >
+                    {{ o.label }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <div class="customer-modal__row">
+              <div class="customer-modal__field">
+                <label class="customer-modal__label">
+                  {{ t("customers.list.createModal.fields.visaType") }}
+                </label>
+                <select
+                  class="customer-modal__input customer-modal__select"
+                  :value="props.fields?.visaType"
+                  @change="
+                    $emit('update:field', 'visaType', selectValue($event))
+                  "
+                >
+                  <option value="">
+                    {{ t("customers.list.createModal.fields.visaTypeNone") }}
+                  </option>
+                  <option
+                    v-for="opt in visaOpts"
+                    :key="opt.value"
+                    :value="opt.value"
+                  >
+                    {{ opt.label }}
+                  </option>
+                </select>
+              </div>
+              <div class="customer-modal__field">
+                <label class="customer-modal__label">
+                  {{ t("customers.list.createModal.fields.referrerName") }}
+                </label>
+                <input
+                  type="text"
+                  class="customer-modal__input"
+                  :value="props.fields?.referrerName"
+                  :placeholder="
+                    t(
+                      'customers.list.createModal.fields.referrerNamePlaceholder',
+                    )
+                  "
+                  @input="
+                    $emit('update:field', 'referrerName', inputValue($event))
+                  "
+                />
+              </div>
             </div>
 
             <div class="customer-modal__row">

@@ -67,6 +67,8 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
@@ -116,7 +118,10 @@ const staffNonParticipantCtx = {
 void test("transition: staff non-participant denied by real PermissionsService", async () => {
   let transitionCalled = false;
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     transition: () => {
       transitionCalled = true;
       return Promise.resolve(otherOwnerCase);
@@ -138,7 +143,7 @@ void test("transition: staff non-participant denied by real PermissionsService",
 void test("transition: manager can transition any case regardless of ownership", async () => {
   const transitionedCase = { ...otherOwnerCase, stage: "S2", status: "S2" };
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () => Promise.resolve(transitionedCase),
   } as unknown as CasesService;
 
@@ -157,7 +162,7 @@ void test("transition: assistant can transition their assigned case", async () =
   };
   const transitionedCase = { ...assistantCase, stage: "S2", status: "S2" };
   const service = {
-    get: () => Promise.resolve(assistantCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () => Promise.resolve(transitionedCase),
   } as unknown as CasesService;
 
@@ -171,7 +176,10 @@ void test("transition: assistant can transition their assigned case", async () =
 void test("acknowledgeBillingRisk: staff non-participant denied by real PermissionsService", async () => {
   let ackCalled = false;
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     acknowledgeBillingRisk: () => {
       ackCalled = true;
       return Promise.resolve(otherOwnerCase);
@@ -198,7 +206,7 @@ void test("acknowledgeBillingRisk: manager can ack any case", async () => {
     billingRiskAcknowledgedBy: "user-1",
   };
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: () => Promise.resolve(ackedCase),
   } as unknown as CasesService;
 
@@ -214,7 +222,10 @@ void test("acknowledgeBillingRisk: manager can ack any case", async () => {
 void test("updatePostApprovalStage: staff non-participant denied", async () => {
   let updateCalled = false;
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     updatePostApprovalStage: () => {
       updateCalled = true;
       return Promise.resolve(otherOwnerCase);
@@ -238,7 +249,10 @@ void test("updatePostApprovalStage: staff non-participant denied", async () => {
 void test("delete: staff non-participant denied by real PermissionsService", async () => {
   let deleteCalled = false;
   const service = {
-    get: () => Promise.resolve(otherOwnerCase),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
     softDelete: () => {
       deleteCalled = true;
       return Promise.resolve();
@@ -260,7 +274,7 @@ void test("transition: succeeds and forwards toStage to service", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const transitionedCase = { ...mockCase, stage: "S2", status: "S2" };
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: (
       _ctx: unknown,
       _id: string,
@@ -286,7 +300,7 @@ void test("transition: forwards toStatus when toStage omitted", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const transitionedCase = { ...mockCase, stage: "S3", status: "S3" };
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: (
       _ctx: unknown,
       _id: string,
@@ -316,7 +330,7 @@ void test("acknowledgeBillingRisk: succeeds and forwards all fields", async () =
     billingRiskAckEvidenceUrl: "https://example.com/receipt.pdf",
   };
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: (
       _ctx: unknown,
       _id: string,
@@ -353,7 +367,7 @@ void test("updatePostApprovalStage: succeeds and forwards stage", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const updatedCase = { ...mockCase, postApprovalStage: "entry_success" };
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     updatePostApprovalStage: (
       _ctx: unknown,
       _id: string,
@@ -379,9 +393,8 @@ void test("updatePostApprovalStage: succeeds and forwards stage", async () => {
 // §p0-sv-006: Gate exceptions propagate through controller
 
 void test("transition: Gate-A BadRequestException propagates through controller", async () => {
-  const s3Case = { ...mockCase, stage: "S3", status: "S3" };
   const service = {
-    get: () => Promise.resolve(s3Case),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () =>
       Promise.reject(
         new BadRequestException(
@@ -403,9 +416,8 @@ void test("transition: Gate-A BadRequestException propagates through controller"
 });
 
 void test("transition: Gate-C billing risk error propagates through controller", async () => {
-  const s6Case = { ...mockCase, stage: "S6", status: "S6" };
   const service = {
-    get: () => Promise.resolve(s6Case),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () =>
       Promise.reject(
         new BadRequestException(
@@ -428,7 +440,7 @@ void test("transition: Gate-C billing risk error propagates through controller",
 
 void test("transition: NotFoundException from service propagates", async () => {
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () =>
       Promise.reject(new NotFoundException("Case not found or deleted")),
   } as unknown as CasesService;

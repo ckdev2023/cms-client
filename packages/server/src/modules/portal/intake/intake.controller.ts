@@ -22,10 +22,13 @@ import type {
   IntakeFormUpdateInput,
   IntakeFormListInput,
 } from "./intake.service";
+import type { IntakeFormType } from "./intake.types";
+import { isValidFormKind } from "./intake.types";
 
 type CreateBody = {
   appUserId?: unknown;
   leadId?: unknown;
+  formKind?: unknown;
   formData?: unknown;
 };
 
@@ -40,6 +43,7 @@ type UpdateBody = {
 type ListQuery = {
   appUserId?: unknown;
   leadId?: unknown;
+  formKind?: unknown;
   status?: unknown;
   page?: unknown;
   limit?: unknown;
@@ -92,6 +96,16 @@ function parseLimit(value: unknown): number | undefined {
   return i;
 }
 
+function parseOptionalFormKind(value: unknown): IntakeFormType | undefined {
+  if (value === undefined) return undefined;
+  if (!isValidFormKind(value)) {
+    throw new BadRequestException(
+      "Invalid formKind. Must be one of: general, bmv_questionnaire, bmv_quote",
+    );
+  }
+  return value;
+}
+
 type HttpRequest = {
   headers?: Record<string, unknown>;
   appUserContext?: AppUserContext;
@@ -122,9 +136,11 @@ export class IntakeController {
   async create(@Req() req: HttpRequest, @Body() body: CreateBody) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
+    const formKind = parseOptionalFormKind(body.formKind);
     const input: IntakeFormCreateInput = {
       appUserId: ctx.appUserId,
       leadId: parseOptionalNullableString(body.leadId, "leadId"),
+      formKind,
       formData: parseObject(body.formData),
     };
     return this.intakeService.create(input);
@@ -142,9 +158,11 @@ export class IntakeController {
   async list(@Req() req: HttpRequest, @Query() query: ListQuery) {
     const ctx = req.appUserContext;
     if (!ctx) throw new UnauthorizedException("Missing app user context");
+    const formKind = parseOptionalFormKind(query.formKind);
     const input: IntakeFormListInput = {
       appUserId: ctx.appUserId,
       leadId: parseOptionalString(query.leadId, "leadId"),
+      formKind,
       status: parseOptionalString(query.status, "status"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),

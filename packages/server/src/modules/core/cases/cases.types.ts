@@ -1,13 +1,14 @@
 import type { Case } from "../model/coreEntities";
 import type { CaseRoleTier } from "../auth/permissions.service";
 import type { CaseBillingSummary as _CaseBillingSummary } from "./cases.types-billing";
+import type { FailureCloseoutCheckResult as _FailureCloseoutCheckResult } from "./cases.types-failure-closeout";
+import type {
+  CaseResidencePeriodSummary as _CaseResidencePeriodSummary,
+  SuccessCloseoutCheckResult as _SuccessCloseoutCheckResult,
+} from "./cases.types-residence-closeout";
+import type { WorkflowStepSummary as _WorkflowStepSummary } from "./cases.types-workflow-step";
 
-// ────────────────────────────────────────────────────────────────
-// 写接口错误码 — 冻结契约
-//
-// 每个 write endpoint 可能抛出的语义错误由此枚举集中定义，
-// admin adapter 映射为 i18n key，不依赖 message 文本。
-// ────────────────────────────────────────────────────────────────
+// 写接口错误码 — 冻结契约。admin adapter 依赖这些 code 映射 i18n key。
 
 export const CASE_WRITE_ERROR_CODES = {
   S9_READONLY: "CASE_S9_READONLY",
@@ -25,6 +26,11 @@ export const CASE_WRITE_ERROR_CODES = {
   POST_APPROVAL_BILLING_BLOCKED: "CASE_POST_APPROVAL_BILLING_BLOCKED",
   POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
     "CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED",
+  BMV_GATE_BLOCKED: "CASE_BMV_GATE_BLOCKED",
+  WORKFLOW_STEP_NOT_APPLICABLE: "CASE_WORKFLOW_STEP_NOT_APPLICABLE",
+  WORKFLOW_STEP_TRANSITION_INVALID: "CASE_WORKFLOW_STEP_TRANSITION_INVALID",
+  WORKFLOW_STEP_PARALLEL_BOUNDARY: "CASE_WORKFLOW_STEP_PARALLEL_BOUNDARY",
+  WORKFLOW_STEP_BILLING_BLOCKED: "CASE_WORKFLOW_STEP_BILLING_BLOCKED",
   CROSS_GROUP_REASON_REQUIRED: "CASE_CROSS_GROUP_REASON_REQUIRED",
   GROUP_TRANSFER_REASON_REQUIRED: "CASE_GROUP_TRANSFER_REASON_REQUIRED",
   INVALID_ENUM: "CASE_INVALID_ENUM",
@@ -34,55 +40,49 @@ export const CASE_WRITE_ERROR_CODES = {
   PARTY_PARENT_NOT_FOUND: "CASE_PARTY_PARENT_NOT_FOUND",
   PARTY_NOT_FOUND: "CASE_PARTY_NOT_FOUND",
   PARTY_INVALID_TYPE: "CASE_PARTY_INVALID_TYPE",
+
+  SUCCESS_CLOSEOUT_BLOCKED: "CASE_SUCCESS_CLOSEOUT_BLOCKED",
+  FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
+    "CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED",
+  CLOSE_REASON_REQUIRED: "CASE_CLOSE_REASON_REQUIRED",
 } as const;
 
 // ────────────────────────────────────────────────────────────────
 // validation-runs / review-records / submission-packages 错误码
 //
 // 从 case 视角统一定义，admin adapter 映射为 i18n key。
-// ────────────────────────────────────────────────────────────────
-
 export const VALIDATION_SUBMISSION_ERROR_CODES = {
   VR_CASE_NOT_FOUND: "VR_CASE_NOT_FOUND",
   VR_CASE_S9_READONLY: "VR_CASE_S9_READONLY",
   VR_NOT_FOUND: "VR_NOT_FOUND",
-
   RR_CASE_NOT_FOUND: "RR_CASE_NOT_FOUND",
   RR_CASE_S9_READONLY: "RR_CASE_S9_READONLY",
   RR_NOT_FOUND: "RR_NOT_FOUND",
   RR_INVALID_DECISION: "RR_INVALID_DECISION",
   RR_VALIDATION_RUN_NOT_LATEST: "RR_VALIDATION_RUN_NOT_LATEST",
-
   SP_CASE_NOT_FOUND: "SP_CASE_NOT_FOUND",
   SP_NOT_FOUND: "SP_NOT_FOUND",
   SP_CASE_STAGE_INVALID: "SP_CASE_STAGE_INVALID",
   SP_SUPPLEMENT_REQUIRES_RELATED: "SP_SUPPLEMENT_REQUIRES_RELATED",
   SP_INITIAL_NO_RELATED: "SP_INITIAL_NO_RELATED",
   SP_RELATED_NOT_FOUND: "SP_RELATED_NOT_FOUND",
+  SP_RELATED_NOT_LATEST: "SP_RELATED_NOT_LATEST",
+  SP_RELATED_ALREADY_BRANCHED: "SP_RELATED_ALREADY_BRANCHED",
+  SP_CHAIN_DEPTH_EXCEEDED: "SP_CHAIN_DEPTH_EXCEEDED",
   SP_INVALID_SUBMISSION_KIND: "SP_INVALID_SUBMISSION_KIND",
   SP_INVALID_ITEM_TYPE: "SP_INVALID_ITEM_TYPE",
   SP_DUPLICATE_ITEM: "SP_DUPLICATE_ITEM",
   SP_MISSING_MINIMUM_FIELDS: "SP_MISSING_MINIMUM_FIELDS",
 } as const;
-
-/**
- *
- */
+/** Validation/submission 错误码联合类型。 */
 export type ValidationSubmissionErrorCode =
   (typeof VALIDATION_SUBMISSION_ERROR_CODES)[keyof typeof VALIDATION_SUBMISSION_ERROR_CODES];
 
-/**
- *
- */
+/** Case 写操作错误码联合类型。 */
 export type CaseWriteErrorCode =
   (typeof CASE_WRITE_ERROR_CODES)[keyof typeof CASE_WRITE_ERROR_CODES];
 
-// ────────────────────────────────────────────────────────────────
-// 写接口请求参数 — 冻结契约
-//
-// 以下类型是 admin adapter 和 controller 之间的唯一接口约定。
-// P1 扩展通过追加可选字段方式叠加，不删除/改名现有属性。
-// ────────────────────────────────────────────────────────────────
+// 写接口请求参数 — admin adapter 与 controller 的冻结契约。
 
 /** 创建案件请求参数。 */
 export type CaseCreateInput = {
@@ -111,6 +111,7 @@ export type CaseCreateInput = {
   residenceExpiryDate?: string | null;
   resultOutcome?: string | null;
   quotePrice?: number | null;
+  visaPlan?: string | null;
   /**
    * 跨组建案原因 — 当指定 groupId 与客户默认 group 不同时必填。
    * 对齐 P0 权威基线 §3.2：跨组建案必须留痕（操作人、时间、原因）。
@@ -142,6 +143,7 @@ export type CaseUpdateInput = {
   archivedAt?: string | null;
   resultOutcome?: string | null;
   quotePrice?: number | null;
+  visaPlan?: string | null;
   overseasVisaStartAt?: string | null;
   entryConfirmedAt?: string | null;
   /**
@@ -175,6 +177,19 @@ export type { CaseBillingRiskAckInput } from "./cases.types-billing";
 export type PostApprovalStageInput = {
   stage: string;
 };
+export type {
+  WorkflowStepTransitionInput,
+  WorkflowStepSummary,
+} from "./cases.types-workflow-step";
+
+/**
+ * businessPhase 维度流转请求参数。
+ *
+ * 独立于 S1-S9 stage 流转，用于推进业务语义阶段。
+ */
+export type PhaseTransitionInput = {
+  toPhase: string;
+};
 
 /**
  * 资源级可见性过滤（SQL WHERE 条件）。
@@ -189,8 +204,12 @@ export type CaseVisibilityFilter = {
   groupId?: string;
 };
 
+/** 案件列表 scope 过滤。 */
+export type CaseListScope = "mine" | "group" | "all";
+
 /** 列表查询请求参数。 */
 export type CaseListInput = {
+  scope?: CaseListScope;
   stage?: string;
   status?: string;
   resultOutcome?: string;
@@ -200,6 +219,8 @@ export type CaseListInput = {
   priority?: string;
   riskLevel?: string;
   companyId?: string;
+  /** businessPhase 精确匹配过滤。 */
+  phase?: string;
   page?: number;
   limit?: number;
   visibility?: CaseVisibilityFilter;
@@ -225,25 +246,14 @@ export type CaseListResultDto = {
   limit: number;
 };
 
-// ────────────────────────────────────────────────────────────────
-// Case Detail Aggregate DTO — 冻结契约
-//
-// 覆盖 admin detail 页面 10 个 tab 的共用需求：
-//   header / overview / info / documents / forms / tasks / deadlines /
-//   validation / billing / messages / log
-//
-// 此类型是前端 CaseRepository adapter 的唯一数据源；
-// tab 内部明细（document_items 列表、task 列表等）由各自端点提供，
-// 此处仅提供计数器与摘要。
-//
-// P0 边界：不含 CaseWorkflowStep、extra_fields、CaseDeadline 表
-// （CaseDeadline 表尚未落地）。P1 扩展通过追加字段方式叠加，不破坏现有属性。
-// ────────────────────────────────────────────────────────────────
+// ─── Case Detail Aggregate DTO — admin detail 页面消费 ───
 
 /** 案件详情 tab 级别计数器 — 覆盖全部 10 个 tab 的 badge 需求。 */
 export type CaseDetailCounts = {
   documentItemsTotal: number;
   documentItemsDone: number;
+  questionnaireItemsTotal: number;
+  questionnaireItemsDone: number;
   caseParties: number;
   tasks: number;
   tasksPending: number;
@@ -321,22 +331,7 @@ export type CaseDeepLinkContext = {
   assistantDisplayName: string | null;
 };
 
-/**
- * 案件详情聚合 DTO — 供 admin detail 页面一次性消费。
- *
- * 将 header / overview / info / tabs counts / billing / validation /
- * deep-links 所依赖字段收在一个可引用契约中，
- * 避免散落在多个 controller 响应里。
- *
- * 设计原则：
- * 1. `case` 携带完整 Case 实体，admin adapter 按需取用字段
- * 2. `counts` 覆盖每个 tab badge 的计数器需求
- * 3. `latestValidation` / `latestSubmission` / `latestReview` 为概览摘要
- * 4. `documentProgressByProvider` 为概览资料完成率按提供方展开
- * 5. `billing` 为概览财务卡与收费 tab 头部统计
- * 6. `deepLink` 为跨模块跳转所需标识与展示名
- * 7. P1 扩展追加字段（如 workflowStep 概要），不删除/改名现有属性
- */
+/** 案件详情聚合 DTO — admin detail 页面一次性消费。P1 追加字段不删/改名现有属性。 */
 export type CaseDetailAggregateDto = {
   case: Case;
   counts: CaseDetailCounts;
@@ -346,14 +341,11 @@ export type CaseDetailAggregateDto = {
   documentProgressByProvider: CaseDocumentProgressByProvider[];
   billing: _CaseBillingSummary;
   deepLink: CaseDeepLinkContext;
+  workflowStep?: _WorkflowStepSummary | null;
+  currentResidencePeriod?: _CaseResidencePeriodSummary | null;
+  successCloseoutCheck?: _SuccessCloseoutCheckResult | null;
+  failureCloseoutCheck?: _FailureCloseoutCheckResult | null;
 };
-
-// ────────────────────────────────────────────────────────────────
-// Case-Party 写接口请求参数 — 冻结契约
-//
-// 从 caseParties.service 提升到统一契约层，
-// 保证 admin adapter 引用单一来源。
-// ────────────────────────────────────────────────────────────────
 
 /** 创建案件关联人请求参数。 */
 export type CasePartyCreateInput = {
@@ -380,13 +372,6 @@ export type CasePartyListInput = {
   page?: number;
   limit?: number;
 };
-
-// ────────────────────────────────────────────────────────────────
-// Validation / Review / Submission 写接口请求参数 — case 视角冻结契约
-//
-// 各模块 service 内部仍持有同名类型；此处再导出一份，
-// 供 admin adapter 与跨模块类型检查统一引用。
-// ────────────────────────────────────────────────────────────────
 
 /** 创建校验运行请求参数。 */
 export type ValidationRunCreateInput = {
@@ -454,14 +439,12 @@ export type {
   CaseTimelineLogDto,
   CaseLogCategory,
 } from "./cases.types-comms-timeline";
-
 export {
   GENERATED_DOCUMENT_ERROR_CODES,
   type GeneratedDocumentDto,
   type GeneratedDocumentListResult,
   type GeneratedDocumentCreateInput,
 } from "./cases.types-generated-docs";
-
 export type {
   CaseTaskListInput,
   CaseTaskDto,
@@ -475,7 +458,6 @@ export type {
   CaseReminderListResult,
   CaseDeadlineSourceFields,
 } from "./cases.types-task-deadline";
-
 export {
   BILLING_ERROR_CODES,
   type BillingErrorCode,
@@ -497,4 +479,20 @@ export {
   type CaseBillingTabAggregate,
   type CaseBillingTimelineAction,
   type CaseBillingMilestoneHint,
+  type CaseBillingSummaryRangeQuery,
+  type BillingListSummaryDto,
 } from "./cases.types-billing";
+export {
+  FAILURE_CLOSEOUT_REASON_CODES,
+  FAILURE_CLOSEOUT_PATHS,
+  FAILURE_OUTCOME_SET,
+  FAILURE_CLOSEOUT_ERROR_CODES,
+  resolveFailureAttribution,
+  checkFailureCloseout,
+  canBypassSuccessCloseoutForFailure,
+  type FailureCloseoutReasonCode,
+  type FailureCloseoutAttribution,
+  type FailureCloseoutCheckResult,
+  type FailureCloseoutCheckInput,
+  type FailureCloseoutErrorCode,
+} from "./cases.types-failure-closeout";

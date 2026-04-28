@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
+import { type RouteLocationRaw, useRouter } from "vue-router";
 import type { DashboardSummaryData } from "./model/dashboardTypes";
 
 /**
@@ -10,6 +11,7 @@ const props = defineProps<{
 }>();
 
 const { t } = useI18n();
+const router = useRouter();
 const numberFormatter = new Intl.NumberFormat();
 
 type SummaryCardKey = keyof DashboardSummaryData["summary"];
@@ -18,6 +20,7 @@ interface SummaryCardDef {
   id: SummaryCardKey;
   tone: "info" | "warn" | "risk";
   statusTone: "info" | "warn" | "danger";
+  route?: RouteLocationRaw;
 }
 const cards: SummaryCardDef[] = [
   {
@@ -29,16 +32,19 @@ const cards: SummaryCardDef[] = [
     id: "upcomingCases",
     tone: "warn",
     statusTone: "warn",
+    route: { name: "cases" },
   },
   {
     id: "pendingSubmissions",
     tone: "info",
     statusTone: "info",
+    route: { name: "cases", query: { stage: "S6" } },
   },
   {
     id: "riskCases",
     tone: "risk",
     statusTone: "danger",
+    route: { name: "cases", query: { risk: "critical" } },
   },
 ];
 
@@ -51,6 +57,16 @@ const cards: SummaryCardDef[] = [
 function cardValue(card: SummaryCardDef): string {
   const value = props.summary?.[card.id];
   return typeof value === "number" ? numberFormatter.format(value) : "—";
+}
+
+/**
+ * 跳转到摘要卡片对应的列表页。
+ *
+ * @param route 目标路由地址。
+ */
+function navigateTo(route?: RouteLocationRaw): void {
+  if (!route) return;
+  void router.push(route);
 }
 </script>
 
@@ -82,7 +98,13 @@ function cardValue(card: SummaryCardDef): string {
           <span class="summary-card-meta">
             {{ t(`dashboard.summary.cards.${card.id}.meta`) }}
           </span>
-          <button class="mini-btn" type="button">
+          <button
+            class="mini-btn"
+            type="button"
+            :disabled="!card.route || undefined"
+            :aria-disabled="!card.route"
+            @click="navigateTo(card.route)"
+          >
             {{ t(`dashboard.summary.cards.${card.id}.action`) }}
           </button>
         </div>

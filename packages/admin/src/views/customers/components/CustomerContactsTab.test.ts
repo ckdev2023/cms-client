@@ -109,6 +109,29 @@ describe("CustomerContactsTab", () => {
     expect(wrapper.text()).toContain("tanaka@example.com");
   });
 
+  it("localizes relation labels and relation-type select options in en-US", async () => {
+    const repository = createRepository();
+    const { wrapper } = await mountTab(repository);
+
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Parent");
+    expect(wrapper.text()).not.toContain("父母");
+
+    await wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Add contact")!
+      .trigger("click");
+
+    const optionTexts = wrapper
+      .get("select")
+      .findAll("option")
+      .map((option) => option.text());
+
+    expect(optionTexts).toContain("Agent / advisor");
+    expect(optionTexts).not.toContain("代理 / 顾问");
+  });
+
   it("renders request failed state and retries", async () => {
     const repository = createRepository({
       listRelations: vi
@@ -215,6 +238,7 @@ describe("CustomerContactsTab", () => {
         id: "rel-001",
         name: "田中次郎",
         relationType: "parent",
+        kind: "contact_person",
         roleTitle: "父亲",
         phone: "090-1111-2222",
         email: "tanaka@example.com",

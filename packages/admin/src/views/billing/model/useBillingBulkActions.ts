@@ -1,9 +1,5 @@
 import { ref } from "vue";
-import type {
-  CaseBillingRow,
-  CollectionResult,
-  CollectionResultDetail,
-} from "../types";
+import type { CaseBillingRow, CollectionResult } from "../types";
 
 /**
  * 判断行是否可参与催款（仅逾期行）。
@@ -16,77 +12,110 @@ export function canCollect(row: CaseBillingRow): boolean {
 }
 
 /**
- * 将选中行映射为三段式催款结果。
  *
- * @param selected - 选中的行列表
- * @returns 催款结果
  */
-function buildCollectionResult(selected: CaseBillingRow[]): CollectionResult {
-  const details: CollectionResultDetail[] = selected.map((r) =>
-    canCollect(r)
-      ? {
-          caseNo: r.caseNo,
-          result: "success" as const,
-          taskId: `TSK-${String(Date.now()).slice(-4)}`,
-        }
-      : {
-          caseNo: r.caseNo,
-          result: "skipped" as const,
-          reason: "not-overdue" as const,
-        },
-  );
+export interface BulkCollectDataSource {
+  /**
+   *
+   */
+  bulkCollect(caseIds: string[]): Promise<CollectionResult>;
+}
+
+/**
+ *
+ */
+export interface UseBillingBulkActionsDeps {
+  /**
+   *
+   */
+  dataSource: BulkCollectDataSource;
+}
+
+const EMPTY_RESULT: CollectionResult = {
+  success: 0,
+  skipped: 0,
+  failed: 0,
+  details: [],
+};
+
+function extractUniqueCaseIds(
+  selectedIds: Set<string>,
+  rows: CaseBillingRow[],
+): string[] {
+  const seen = new Set<string>();
+  const caseIds: string[] = [];
+  for (const row of rows) {
+    if (!selectedIds.has(row.id)) continue;
+    if (seen.has(row.caseId)) continue;
+    seen.add(row.caseId);
+    caseIds.push(row.caseId);
+  }
+  return caseIds;
+}
+
+function buildErrorFallback(caseIds: string[]): CollectionResult {
   return {
-    success: details.filter((d) => d.result === "success").length,
-    skipped: details.filter((d) => d.result === "skipped").length,
-    failed: details.filter((d) => d.result === "failed").length,
-    details,
+    success: 0,
+    skipped: 0,
+    failed: caseIds.length,
+    details: caseIds.map((id) => ({
+      caseNo: id,
+      result: "failed" as const,
+      reason: "system-error" as const,
+    })),
   };
 }
 
 /**
- * 批量催款操作管理。
+ * 批量催款操作管理——通过注入的 dataSource 调用服务端 bulkCollect API。
  *
- * 仅逾期行可生成催款任务；非逾期行自动跳过并标注原因。
- *
- * @returns 加载态、最近一次结果、执行与清除方法
+ * @param deps - 数据源依赖
+ * @returns 加载态、结果、抽屉开关与操作方法
  */
-export function useBillingBulkActions() {
+export function useBillingBulkActions(deps: UseBillingBulkActionsDeps) {
   const loading = ref(false);
   const lastResult = ref<CollectionResult | null>(null);
+  const drawerOpen = ref(false);
 
-  /**
-   * 对选中行执行批量催款。
-   *
-   * @param selectedIds - 选中行 ID 集合
-   * @param rows - 完整行列表
-   * @returns 催款结果（success / skipped / failed）
-   */
   async function executeBulkCollection(
     selectedIds: Set<string>,
     rows: CaseBillingRow[],
   ): Promise<CollectionResult> {
+    const caseIds = extractUniqueCaseIds(selectedIds, rows);
+    if (caseIds.length === 0) {
+      lastResult.value = EMPTY_RESULT;
+      return EMPTY_RESULT;
+    }
     loading.value = true;
     try {
-      const result = buildCollectionResult(
-        rows.filter((r) => selectedIds.has(r.id)),
-      );
+      const result = await deps.dataSource.bulkCollect(caseIds);
       lastResult.value = result;
       return result;
+    } catch (e) {
+      lastResult.value = buildErrorFallback(caseIds);
+      throw e;
     } finally {
       loading.value = false;
     }
   }
 
-  /** 清除上次催款结果。 */
   function clearResult() {
     lastResult.value = null;
+    drawerOpen.value = false;
   }
 
   return {
     loading,
     lastResult,
+    drawerOpen,
     canCollect,
     executeBulkCollection,
+    openDrawer: () => {
+      drawerOpen.value = true;
+    },
+    closeDrawer: () => {
+      drawerOpen.value = false;
+    },
     clearResult,
   };
 }

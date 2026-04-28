@@ -72,10 +72,11 @@ describe("leads/types", () => {
   });
 
   describe("LEAD_DETAIL_TABS", () => {
-    it("contains exactly 4 tabs in the expected order", () => {
+    it("contains exactly 5 tabs in the expected order", () => {
       expect(LEAD_DETAIL_TABS).toEqual([
         "info",
         "followups",
+        "conversations",
         "conversion",
         "log",
       ]);
@@ -83,7 +84,7 @@ describe("leads/types", () => {
 
     it("entries satisfy the LeadDetailTab type", () => {
       const tabs: LeadDetailTab[] = [...LEAD_DETAIL_TABS];
-      expect(tabs).toHaveLength(4);
+      expect(tabs).toHaveLength(5);
     });
   });
 
@@ -183,6 +184,7 @@ describe("leads/types", () => {
       banner: null,
       buttons: "normal",
       readonly: false,
+      conversationId: null,
       info: {
         id: "LEAD-TEST",
         name: "Test Lead",

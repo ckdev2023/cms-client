@@ -1,6 +1,5 @@
 import { computed, reactive, ref, type ComputedRef, type Ref } from "vue";
 import type {
-  ApplicationType,
   CaseCreateCustomerOption,
   CaseCreateSourceContext,
   CaseGroupOption,
@@ -13,96 +12,80 @@ import type {
   FamilyScenario,
 } from "../types";
 import {
+  resolveTemplateLabel,
+  APPLICATION_TYPE_LABELS,
+  type ApplicationType,
+} from "../types-create";
+// ─── Source Context → Customer Option Synthesis (p0-fe-010-02) ──
+/**
+ * 当 `sourceContext.customerId` 存在且客户不在 create customer list 中时，
+ * 从 source context 携带的默认值合成一个 `CaseCreateCustomerOption`，
+ * 确保 group 继承、标题派生与主申请人预选正常工作。
+ *
+ * 至少需要 `customerId` 与 `customerName`；缺少 name 则返回 `null`。
+ *
+ * @param ctx - 来源上下文
+ * @returns 合成的客户选项；缺少 name 时返回 `null`
+ */
+function synthesizeCustomerFromSourceContext(
+  ctx: CaseCreateSourceContext,
+): CaseCreateCustomerOption | null {
+  if (!ctx.customerId || !ctx.customerName) return null;
+  return {
+    id: ctx.customerId,
+    name: ctx.customerName,
+    kana: ctx.customerKana ?? "",
+    group: ctx.customerGroup ?? "",
+    groupLabel: ctx.customerGroupLabel ?? "",
+    roleHint: "主申請人",
+    summary: "",
+    contact: ctx.customerContact ?? "",
+    bmvQuestionnaireStatus: ctx.bmvQuestionnaireStatus ?? null,
+    bmvQuoteStatus: ctx.bmvQuoteStatus ?? null,
+    bmvSignStatus: ctx.bmvSignStatus ?? null,
+    bmvIntakeStatus: ctx.bmvIntakeStatus ?? null,
+  };
+}
+import {
   FAMILY_APPLICANT_ROLES,
   FAMILY_SUPPORTER_ROLES,
   mapSelectedRelationsToParties,
 } from "./selectedRelationParties";
-
+import type { CaseRepository } from "./CaseRepository";
+import { createCaseRepository } from "./CaseRepository";
+import { createSubmitFlow } from "./useCreateCaseModelSubmit";
 export type { CreateCaseDraftState } from "../types";
-
-// ─── Dependencies ───────────────────────────────────────────────
-
-/**
- *
- */
+export { synthesizeCustomerFromSourceContext };
+/** 案件新建 composable 的依赖注入接口。 */
 export interface UseCreateCaseModelDeps {
-  /**
-   *
-   */
+  /** 案件模板列表提供函数 */
   templates: () => readonly CaseTemplateDef[];
-  /**
-   *
-   */
+  /** 可选顾客列表提供函数 */
   customers: () => readonly CaseCreateCustomerOption[];
-  /**
-   *
-   */
+  /** 家族场景提供函数 */
   familyScenario: () => FamilyScenario;
-  /**
-   *
-   */
+  /** 案件担当选项提供函数 */
   ownerOptions: () => readonly CaseOwnerOption[];
-  /**
-   *
-   */
+  /** 案件分组选项提供函数 */
   groupOptions: () => readonly CaseGroupOption[];
-  /**
-   *
-   */
+  /** 来源上下文（从 lead / 顾客列表等跳转而来） */
   sourceContext: CaseCreateSourceContext;
-  /**
-   *
-   */
+  /** 默认分组 */
   defaultGroup: string;
-  /**
-   *
-   */
+  /** 默认担当 */
   defaultOwner: string;
+  /** 案件仓储实例——默认使用 `createCaseRepository()`。 */
+  repo?: CaseRepository;
+  /** 当前 locale 提供函数——用于解析模板内嵌多语言标签。 */
+  locale?: () => string;
 }
-
-// ─── Pure Helpers ───────────────────────────────────────────────
-
-/**
- * 根据主申请人、模板、申请类型自动生成案件标题。
- *
- * @param customerName - 主申请人姓名
- * @param templateLabel - 模板中文标签
- * @param applicationType - 申请类型
- * @param isFamilyBulk - 是否批量建案
- * @returns 组合后的标题字符串
- */
-export function buildCaseTitle(
-  customerName: string,
-  templateLabel: string,
-  applicationType: ApplicationType,
-  isFamilyBulk: boolean,
-): string {
-  const base = customerName
-    ? `${customerName} ${templateLabel}${applicationType}`
-    : `${templateLabel}${applicationType}`;
-  return isFamilyBulk ? `${base}（批量）` : base;
-}
-
-function resolveGroupInheritanceLabel(
-  deps: UseCreateCaseModelDeps,
-  inheritedGroup: string,
-): string {
-  const option = deps
-    .groupOptions()
-    .find((group) => group.value === inheritedGroup);
-  return option?.label ?? inheritedGroup;
-}
-
-function hasAnySourceContext(sourceContext: CaseCreateSourceContext): boolean {
-  return !!(
-    sourceContext.sourceLeadId ||
-    sourceContext.customerId ||
-    sourceContext.relationIds?.length ||
-    sourceContext.selectedRelations?.length
-  );
-}
-
-// ─── State Initialization ───────────────────────────────────────
+import {
+  buildCaseTitle,
+  resolveGroupInheritanceLabel,
+  hasAnySourceContext,
+  resolveInitialTemplateId,
+} from "./useCreateCaseModelActions";
+export { buildCaseTitle, resolveGroupInheritanceLabel, hasAnySourceContext };
 
 function initState(deps: UseCreateCaseModelDeps) {
   const templates = computed(() => deps.templates());
@@ -113,23 +96,26 @@ function initState(deps: UseCreateCaseModelDeps) {
   });
   const sourceCustomer = deps.sourceContext.customerId
     ? (deps.customers().find((c) => c.id === deps.sourceContext.customerId) ??
+      synthesizeCustomerFromSourceContext(deps.sourceContext) ??
       null)
     : null;
-  const initialTpl: CaseTemplateId = deps.sourceContext.familyBulkMode
-    ? "family"
-    : (templates.value[0]?.id ?? "family");
+  const initialTpl = resolveInitialTemplateId(
+    deps.sourceContext,
+    templatesById.value,
+    templates.value[0]?.id ?? "family",
+  );
   const initialGroup = sourceCustomer?.group ?? deps.defaultGroup;
-
   const draft = reactive<CreateCaseDraftState>({
     currentStep: 1,
     templateId: initialTpl,
     applicationType:
-      templatesById.value.get(initialTpl)?.applicationTypes[0] ?? "认定",
+      templatesById.value.get(initialTpl)?.applicationTypes[0] ??
+      "certification",
     caseTitle: "",
     caseTitleManual: false,
     group: initialGroup,
     inheritedGroup: initialGroup,
-    owner: deps.defaultOwner,
+    owner: deps.sourceContext.ownerUserId ?? deps.defaultOwner,
     dueDate: "",
     amount: "",
     groupOverrideReason: "",
@@ -137,8 +123,8 @@ function initState(deps: UseCreateCaseModelDeps) {
     autoTasks: true,
     familyBulkMode: deps.sourceContext.familyBulkMode,
     familyBulkSeeded: false,
+    visaPlan: "",
   });
-
   return {
     templates,
     templatesById,
@@ -148,8 +134,6 @@ function initState(deps: UseCreateCaseModelDeps) {
     additionalParties: ref<CreateCaseRelatedParty[]>([]),
   };
 }
-
-// ─── Template & Title Derived ───────────────────────────────────
 
 function createTemplateDerived(
   deps: UseCreateCaseModelDeps,
@@ -169,11 +153,20 @@ function createTemplateDerived(
   const applicationTypes = computed(
     () => currentTemplate.value?.applicationTypes ?? [],
   );
+  const loc = () => deps.locale?.() ?? "zh";
+  const templateLabel = computed(() =>
+    currentTemplate.value
+      ? resolveTemplateLabel(currentTemplate.value.label, loc())
+      : "",
+  );
   const derivedTitle = computed(() =>
     buildCaseTitle(
       primaryCustomer.value?.name ?? "",
-      currentTemplate.value?.label ?? "",
-      draft.applicationType,
+      templateLabel.value,
+      resolveTemplateLabel(
+        APPLICATION_TYPE_LABELS[draft.applicationType as ApplicationType],
+        loc(),
+      ),
       isFamilyBulkScenario.value,
     ),
   );
@@ -185,15 +178,9 @@ function createTemplateDerived(
   const isGroupOverridden = computed(
     () => draft.group !== draft.inheritedGroup,
   );
-  const needsGroupOverrideReason = computed(() => isGroupOverridden.value);
-  const groupInheritanceLabel = computed(() =>
-    resolveGroupInheritanceLabel(deps, draft.inheritedGroup),
-  );
-  const hasSourceContext = computed(() =>
-    hasAnySourceContext(deps.sourceContext),
-  );
   return {
     currentTemplate,
+    templateLabel,
     isFamilyTemplate,
     isWorkTemplate,
     isFamilyBulkScenario,
@@ -201,15 +188,16 @@ function createTemplateDerived(
     derivedTitle,
     effectiveTitle,
     isGroupOverridden,
-    needsGroupOverrideReason,
-    groupInheritanceLabel,
-    hasSourceContext,
+    needsGroupOverrideReason: computed(() => isGroupOverridden.value),
+    groupInheritanceLabel: computed(() =>
+      resolveGroupInheritanceLabel(deps.groupOptions, draft.inheritedGroup),
+    ),
+    hasSourceContext: computed(() => hasAnySourceContext(deps.sourceContext)),
   };
 }
 
-// ─── Family Derived ─────────────────────────────────────────────
-
 function createFamilyDerived(
+  deps: UseCreateCaseModelDeps,
   primaryCustomer: Ref<CaseCreateCustomerOption | null>,
   additionalParties: Ref<CreateCaseRelatedParty[]>,
   isFamilyBulkScenario: ComputedRef<boolean>,
@@ -223,14 +211,16 @@ function createFamilyDerived(
   const familySupporters = computed(() => {
     if (!isFamilyBulkScenario.value) return [];
     const result: CreateCaseRelatedParty[] = [];
-    if (primaryCustomer.value) {
+    const pc = primaryCustomer.value;
+    if (pc) {
       result.push({
-        name: primaryCustomer.value.name,
-        role: primaryCustomer.value.roleHint || "扶养者",
-        contact: primaryCustomer.value.contact,
-        note: primaryCustomer.value.summary,
-        group: primaryCustomer.value.group,
-        groupLabel: primaryCustomer.value.groupLabel,
+        customerId: pc.id,
+        name: pc.name,
+        role: pc.roleHint || "扶养者",
+        contact: pc.contact,
+        note: pc.summary,
+        group: pc.group,
+        groupLabel: pc.groupLabel,
       });
     }
     for (const p of additionalParties.value) {
@@ -238,10 +228,41 @@ function createFamilyDerived(
     }
     return result;
   });
-  return { familyApplicants, familySupporters };
+
+  // ─── Family Context Completeness (p0-fe-011-02) ──────────────
+  const familyContextComplete = computed(() => {
+    if (!isFamilyBulkScenario.value) return true;
+    if (!primaryCustomer.value) return false;
+    if (familyApplicants.value.length === 0) return false;
+    return true;
+  });
+  const familySourcedFromRelations = computed(
+    () =>
+      isFamilyBulkScenario.value &&
+      (deps.sourceContext.selectedRelations?.length ?? 0) > 0,
+  );
+
+  return {
+    familyApplicants,
+    familySupporters,
+    familyContextComplete,
+    familySourcedFromRelations,
+  };
 }
 
-// ─── Validation ─────────────────────────────────────────────────
+import {
+  createPreSignGateComputed,
+  type CreatePreSignGateResult,
+} from "./useCreateCasePreSignGate";
+export type {
+  CreatePreSignGateResult,
+  CreatePreSignGateBlocker,
+  PreSignGateBlockerCode,
+} from "./useCreateCasePreSignGate";
+export {
+  checkCreatePreSignGate,
+  PRE_SIGN_GATE_BLOCKER_CODES,
+} from "./useCreateCasePreSignGate";
 
 function createValidation(
   draft: CreateCaseDraftState,
@@ -250,6 +271,7 @@ function createValidation(
   isFamilyBulkScenario: ComputedRef<boolean>,
   familyApplicants: ComputedRef<CreateCaseRelatedParty[]>,
   needsGroupOverrideReason: ComputedRef<boolean>,
+  preSignGate: ComputedRef<CreatePreSignGateResult>,
 ) {
   const canProceedStep1 = computed(
     () =>
@@ -280,7 +302,9 @@ function createValidation(
     canProceedStep3,
     canProceed,
     canGoNext: computed(() => canProceed(draft.currentStep)),
-    canSubmit: computed(() => canProceedStep3.value),
+    canSubmit: computed(
+      () => canProceedStep3.value && preSignGate.value.passed,
+    ),
     isLastStep: computed(() => draft.currentStep === 4),
     isFirstStep: computed(() => draft.currentStep === 1),
   };
@@ -342,144 +366,124 @@ function createGroupFamilyActions(
   return { syncInheritedGroup, seedFamilyBulkParties };
 }
 
-// ─── Simple Setters ─────────────────────────────────────────────
+import { createSetters, createMutators } from "./useCreateCaseModelActions";
 
-function createSetters(draft: CreateCaseDraftState) {
-  return {
-    setGroup: (v: string) => void (draft.group = v),
-    setOwner: (v: string) => void (draft.owner = v),
-    setDueDate: (v: string) => void (draft.dueDate = v),
-    setAmount: (v: string) => void (draft.amount = v),
-    setGroupOverrideReason: (v: string) => void (draft.groupOverrideReason = v),
-    setAutoChecklist: (v: boolean) => void (draft.autoChecklist = v),
-    setAutoTasks: (v: boolean) => void (draft.autoTasks = v),
-  };
-}
+// ─── Composable Assembly ────────────────────────────────────────
 
-// ─── Draft Mutators ─────────────────────────────────────────────
-
-function createMutators(
-  draft: CreateCaseDraftState,
-  primaryCustomer: Ref<CaseCreateCustomerOption | null>,
-  additionalParties: Ref<CreateCaseRelatedParty[]>,
-  templatesById: ComputedRef<Map<CaseTemplateId, CaseTemplateDef>>,
-  groupFamily: ReturnType<typeof createGroupFamilyActions>,
-  canProceed: (step: CreateCaseStep) => boolean,
+function wireDerived(
+  deps: UseCreateCaseModelDeps,
+  s: ReturnType<typeof initState>,
 ) {
+  const {
+    draft,
+    primaryCustomer,
+    additionalParties,
+    templatesById,
+    templates,
+    sourceCustomer,
+  } = s;
+  const tpl = createTemplateDerived(
+    deps,
+    draft,
+    primaryCustomer,
+    templatesById,
+    templates,
+  );
+  const fam = createFamilyDerived(
+    deps,
+    primaryCustomer,
+    additionalParties,
+    tpl.isFamilyBulkScenario,
+  );
+  const preSignGate = createPreSignGateComputed(draft, primaryCustomer);
+  const val = createValidation(
+    draft,
+    tpl.effectiveTitle,
+    primaryCustomer,
+    tpl.isFamilyBulkScenario,
+    fam.familyApplicants,
+    tpl.needsGroupOverrideReason,
+    preSignGate,
+  );
+  const grp = createGroupFamilyActions(
+    deps,
+    draft,
+    primaryCustomer,
+    additionalParties,
+    sourceCustomer,
+    tpl.isFamilyBulkScenario,
+  );
   return {
-    selectTemplate(id: CaseTemplateId) {
-      draft.templateId = id;
-      const tpl = templatesById.value.get(id);
-      if (tpl) draft.applicationType = tpl.applicationTypes[0];
-      if (!draft.caseTitleManual) draft.caseTitle = "";
-      if (id === "family" && draft.familyBulkMode)
-        groupFamily.seedFamilyBulkParties();
-    },
-    setApplicationType(v: ApplicationType) {
-      draft.applicationType = v;
-      if (!draft.caseTitleManual) draft.caseTitle = "";
-    },
-    setCaseTitle(v: string) {
-      draft.caseTitle = v;
-      draft.caseTitleManual = !!v.trim();
-    },
-    setPrimaryCustomer(customer: CaseCreateCustomerOption | null) {
-      primaryCustomer.value = customer;
-      groupFamily.syncInheritedGroup(false);
-      if (!draft.caseTitleManual) draft.caseTitle = "";
-    },
-    addRelatedParty(party: CreateCaseRelatedParty) {
-      additionalParties.value = [...additionalParties.value, party];
-    },
-    removeRelatedParty(index: number) {
-      additionalParties.value = additionalParties.value.filter(
-        (_, i) => i !== index,
-      );
-    },
-    enableFamilyBulkMode() {
-      if (draft.familyBulkMode) return;
-      draft.familyBulkMode = true;
-      draft.familyBulkSeeded = false;
-      draft.templateId = "family";
-      groupFamily.seedFamilyBulkParties();
-    },
-    goNext() {
-      if (!canProceed(draft.currentStep) || draft.currentStep >= 4) return;
-      draft.currentStep = (draft.currentStep + 1) as CreateCaseStep;
-    },
-    goPrev() {
-      if (draft.currentStep > 1)
-        draft.currentStep = (draft.currentStep - 1) as CreateCaseStep;
-    },
-    goToStep(step: CreateCaseStep) {
-      if (step <= draft.currentStep) draft.currentStep = step;
-    },
+    draft,
+    primaryCustomer,
+    additionalParties,
+    templatesById,
+    tpl,
+    fam,
+    val,
+    grp,
+    preSignGate,
   };
 }
 
-// ─── Composable ─────────────────────────────────────────────────
+function wireModel(
+  deps: UseCreateCaseModelDeps,
+  s: ReturnType<typeof initState>,
+  repo: CaseRepository,
+) {
+  const d = wireDerived(deps, s);
+  const sub = createSubmitFlow({
+    repo,
+    draft: d.draft,
+    effectiveTitle: d.tpl.effectiveTitle,
+    primaryCustomer: d.primaryCustomer,
+    additionalParties: d.additionalParties,
+    canSubmit: d.val.canSubmit,
+    isFamilyBulkScenario: d.tpl.isFamilyBulkScenario,
+    familyApplicants: d.fam.familyApplicants,
+    familySupporters: d.fam.familySupporters,
+    templateLabel: d.tpl.templateLabel,
+  });
+  return {
+    ...d.tpl,
+    ...d.fam,
+    ...d.val,
+    ...d.grp,
+    preSignGate: d.preSignGate,
+    ...createSetters(d.draft),
+    ...createMutators(
+      d.draft,
+      d.primaryCustomer,
+      d.additionalParties,
+      d.templatesById,
+      d.grp,
+      d.val.canProceed,
+    ),
+    ...sub,
+  };
+}
 
 /**
- * 案件新建 Draft Model：来源上下文、stepper、模板切换、group 继承与校验。
+ * 案件新建 Draft Model。
  *
- * @param deps - 数据源与来源上下文注入
- * @returns 草稿状态、派生值与操作方法
+ * @param deps - 数据源与来源上下文。
+ * @returns 草稿状态、派生值与操作集合。
  */
 export function useCreateCaseModel(deps: UseCreateCaseModelDeps) {
+  const repo = deps.repo ?? createCaseRepository();
   const s = initState(deps);
-  const tplDerived = createTemplateDerived(
-    deps,
-    s.draft,
-    s.primaryCustomer,
-    s.templatesById,
-    s.templates,
-  );
-  const famDerived = createFamilyDerived(
-    s.primaryCustomer,
-    s.additionalParties,
-    tplDerived.isFamilyBulkScenario,
-  );
-  const validation = createValidation(
-    s.draft,
-    tplDerived.effectiveTitle,
-    s.primaryCustomer,
-    tplDerived.isFamilyBulkScenario,
-    famDerived.familyApplicants,
-    tplDerived.needsGroupOverrideReason,
-  );
-  const groupFamily = createGroupFamilyActions(
-    deps,
-    s.draft,
-    s.primaryCustomer,
-    s.additionalParties,
-    s.sourceCustomer,
-    tplDerived.isFamilyBulkScenario,
-  );
-  const setters = createSetters(s.draft);
-  const mutators = createMutators(
-    s.draft,
-    s.primaryCustomer,
-    s.additionalParties,
-    s.templatesById,
-    groupFamily,
-    validation.canProceed,
-  );
-
-  groupFamily.syncInheritedGroup(true);
-  if (s.draft.familyBulkMode && tplDerived.isFamilyTemplate.value) {
-    groupFamily.seedFamilyBulkParties();
+  const parts = wireModel(deps, s, repo);
+  parts.syncInheritedGroup(true);
+  if (s.draft.familyBulkMode && parts.isFamilyTemplate.value) {
+    parts.seedFamilyBulkParties();
   }
-
   return {
     draft: s.draft,
     primaryCustomer: s.primaryCustomer,
     additionalParties: s.additionalParties,
-    ...tplDerived,
-    ...famDerived,
-    ...validation,
-    ...groupFamily,
-    ...setters,
-    ...mutators,
+    sourceCustomerId: deps.sourceContext.customerId ?? null,
+    templateLocked: computed(() => !!deps.sourceContext.templateCode),
+    ...parts,
   };
 }
 

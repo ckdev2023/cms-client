@@ -4,7 +4,9 @@ import {
   CUSTOMER_BMV_QUESTIONNAIRE_STATUSES,
   CUSTOMER_BMV_QUOTE_STATUSES,
   CUSTOMER_BMV_SIGN_STATUSES,
+  CUSTOMER_LOCATIONS,
   CUSTOMER_RELATION_TYPES,
+  CUSTOMER_SOURCE_TYPES,
 } from "./customers.types";
 import type {
   CustomerBmvIntakeStatus,
@@ -267,6 +269,10 @@ export function createDefaultCustomerBmvProfile(): CustomerBmvProfile {
     quoteConfirmedAt: null,
     signedAt: null,
     note: null,
+    sourceLeadId: null,
+    currentQuoteFormId: null,
+    visaPlan: null,
+    quoteAmount: null,
   };
 }
 
@@ -359,7 +365,26 @@ export function normalizeCustomerBmvProfile(
     ]),
     signedAt: pickOptionalString(raw, ["signedAt", "signed_at"]),
     note: pickOptionalString(raw, ["note", "memo"]),
+    sourceLeadId: pickOptionalString(raw, ["sourceLeadId", "source_lead_id"]),
+    currentQuoteFormId: pickOptionalString(raw, [
+      "currentQuoteFormId",
+      "current_quote_form_id",
+    ]),
+    visaPlan: pickOptionalString(raw, ["visaPlan", "visa_plan"]),
+    quoteAmount: normalizeOptionalNumber(raw),
   };
+}
+
+function normalizeOptionalNumber(raw: Record<string, unknown>): number | null {
+  for (const key of ["quoteAmount", "quote_amount"]) {
+    const v = raw[key];
+    if (typeof v === "number" && Number.isFinite(v)) return v;
+    if (typeof v === "string") {
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+  return null;
 }
 
 /**
@@ -424,6 +449,17 @@ export function mapCustomerToSummaryDto(
   };
 }
 
+function pickEnum<T extends string>(
+  bp: Record<string, unknown>,
+  fields: readonly string[],
+  allowed: readonly T[],
+): T | null {
+  const raw = pickOptionalString(bp, fields);
+  return raw && (allowed as readonly string[]).includes(raw)
+    ? (raw as T)
+    : null;
+}
+
 /**
  * 将 Customer 领域实体映射为详情 DTO。
  *
@@ -436,16 +472,24 @@ export function mapCustomerToDetailDto(
   aggregates: CustomerDtoAggregates = {},
 ): CustomerDetailDto {
   const summary = mapCustomerToSummaryDto(customer, aggregates);
+  const bp = customer.baseProfile;
   return {
     ...summary,
-    nationality:
-      normalizeOptionalString(customer.baseProfile.nationality) ?? "",
-    gender: normalizeOptionalString(customer.baseProfile.gender) ?? "",
-    birthDate:
-      pickOptionalString(customer.baseProfile, CUSTOMER_BIRTHDATE_FIELDS) ?? "",
-    avatar:
-      pickOptionalString(customer.baseProfile, CUSTOMER_AVATAR_FIELDS) ?? "",
-    note: pickOptionalString(customer.baseProfile, CUSTOMER_NOTE_FIELDS) ?? "",
+    nationality: normalizeOptionalString(bp.nationality) ?? "",
+    gender: normalizeOptionalString(bp.gender) ?? "",
+    birthDate: pickOptionalString(bp, CUSTOMER_BIRTHDATE_FIELDS) ?? "",
+    avatar: pickOptionalString(bp, CUSTOMER_AVATAR_FIELDS) ?? "",
+    note: pickOptionalString(bp, CUSTOMER_NOTE_FIELDS) ?? "",
+    location: pickEnum(bp, ["location"], CUSTOMER_LOCATIONS),
+    sourceType: pickEnum(
+      bp,
+      ["sourceType", "source_type"],
+      CUSTOMER_SOURCE_TYPES,
+    ),
+    visaType: summary.bmvProfile
+      ? summary.bmvProfile.visaPlan
+      : pickOptionalString(bp, ["visaType", "visa_type"]),
+    referrerName: pickOptionalString(bp, ["referrerName", "referrer_name"]),
     archivedCases: aggregates.archivedCases ?? 0,
     caseNames: normalizeStringArray(aggregates.caseNames),
     lastCaseCreatedDate: aggregates.lastCaseCreatedDate ?? null,

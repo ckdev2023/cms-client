@@ -50,6 +50,8 @@ export type TimelineEntityType =
   | "user"
   | "customer"
   | "case"
+  | "lead"
+  | "conversation"
   | "document_item"
   | "reminder"
   | "company"
@@ -189,8 +191,53 @@ export type Case = {
   billingRiskAckEvidenceUrl: string | null;
   overseasVisaStartAt: string | null;
   entryConfirmedAt: string | null;
+  businessPhase: string;
+  currentWorkflowStepCode: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+/**
+ * CaseTemplate 核心对象（案件模板，P0 §3.8）。
+ *
+ * P0 预置 2 类模板（家族滞在、技人国），三个 blueprint 字段为 null（降级运行）。
+ * P1 新增经营管理签模板时填充 blueprint 字段以启用业务子步骤、专属字段与在留提醒。
+ *
+ * 字段命名口径（p1-sv-001-02 冻結）：
+ *   - caseType / config key: snake_case（business_manager_visa）
+ *   - stepCode: UPPER_SNAKE_CASE（WAITING_MATERIAL）
+ *   - extra_fields_schema fieldCode: snake_case（visa_plan, coe_issued_at）
+ *   - requirement_blueprint itemCode: snake_case（bmv_questionnaire）
+ */
+export type CaseTemplate = {
+  id: string;
+  orgId: OrganizationId;
+  templateName: string;
+  caseType: string;
+  applicationType: string | null;
+  requirementBlueprint: CaseTemplateRequirementDef[] | null;
+  defaultTasksBlueprint: Record<string, unknown> | null;
+  validationRulesetRef: Record<string, unknown> | null;
+  reviewRequiredFlag: boolean;
+  billingGateMode: string;
+  workflowStepsBlueprint: CaseTemplateWorkflowStepDef[] | null;
+  extraFieldsSchema: CaseTemplateExtraFieldDef[] | null;
+  reminderScheduleBlueprint: Record<string, unknown> | null;
+  activeFlag: boolean;
+  createdAt: string;
+  updatedAt: string;
+};
+
+import type {
+  CaseTemplateWorkflowStepDef,
+  CaseTemplateExtraFieldDef,
+  CaseTemplateRequirementDef,
+} from "./caseTemplateTypes";
+
+export type {
+  CaseTemplateWorkflowStepDef,
+  CaseTemplateExtraFieldDef,
+  CaseTemplateRequirementDef,
 };
 
 /**
@@ -209,6 +256,8 @@ export type ResidencePeriod = {
   validUntil: string;
   cardNumber: string | null;
   isCurrent: boolean;
+  entryDate: string | null;
+  reminderCreated: boolean;
   notes: string | null;
   createdBy: UserId | null;
   createdAt: string;
@@ -233,6 +282,8 @@ export type DocumentItem = {
   ownerSide: DocumentItemOwnerSide;
   lastFollowUpAt: string | null;
   note: string | null;
+  category: string | null;
+  surveyData: Record<string, unknown> | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -395,6 +446,7 @@ export type TimelineLog = {
   entityId: string;
   action: TimelineAction;
   actorUserId: UserId | null;
+  actorDisplayName?: string | null;
   payload: Record<string, unknown>;
   createdAt: string;
 };
@@ -404,6 +456,8 @@ const TIMELINE_ENTITY_TYPES: ReadonlySet<string> = new Set<string>([
   "user",
   "customer",
   "case",
+  "lead",
+  "conversation",
   "document_item",
   "reminder",
   "company",
@@ -414,6 +468,7 @@ const TIMELINE_ENTITY_TYPES: ReadonlySet<string> = new Set<string>([
   "task",
   "generated_document",
   "billing_record",
+  "billing_plan",
   "payment_record",
 ]);
 

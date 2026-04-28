@@ -113,6 +113,14 @@ function formatDateTime(iso: string): string {
             :aria-label="t('customers.detail.commsTab.filterLabel')"
             @update:model-value="setCommFilter"
           />
+          <a
+            :href="`#/conversations?customerId=${props.customerId}`"
+            class="comms-tab__conv-link"
+          >
+            <Button variant="outlined" tone="primary" size="sm">
+              {{ t("customers.detail.commsTab.viewConversations") }}
+            </Button>
+          </a>
           <Button variant="filled" tone="primary" size="sm" disabled>
             {{ t("customers.detail.commsTab.addComm") }}
           </Button>
@@ -219,6 +227,10 @@ function formatDateTime(iso: string): string {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
+}
+
+.comms-tab__conv-link {
+  text-decoration: none;
 }
 
 .comms-tab__state {

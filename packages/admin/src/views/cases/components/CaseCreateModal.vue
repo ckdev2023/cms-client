@@ -2,8 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
-import { CASE_GROUP_OPTIONS } from "../constants";
-import type { CaseCreateCustomerOption } from "../types";
+import type { CaseCreateCustomerOption, CaseGroupOption } from "../types";
 import type { QuickCreateCustomerForm } from "../model/useCasePartyPicker";
 
 /** 案件新建：当事人快速新建弹窗，含去重确认流程。 */
@@ -20,6 +19,7 @@ const PARTY_ROLE_OPTIONS = computed(() => [
 defineProps<{
   open: boolean;
   form: QuickCreateCustomerForm;
+  groupOptions?: readonly CaseGroupOption[];
   formErrors: Partial<Record<keyof QuickCreateCustomerForm, string>>;
   showDuplicateConfirmation: boolean;
   duplicateHits: CaseCreateCustomerOption[];
@@ -167,7 +167,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                     {{ t("cases.create.modal.fields.groupPlaceholder") }}
                   </option>
                   <option
-                    v-for="g in CASE_GROUP_OPTIONS"
+                    v-for="g in groupOptions ?? []"
                     :key="g.value"
                     :value="g.value"
                   >

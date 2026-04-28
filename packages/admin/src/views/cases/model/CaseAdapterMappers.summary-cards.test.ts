@@ -43,6 +43,7 @@ const LIST_ITEM_BASE: Omit<
   dueDateLabel: "",
   riskStatus: "normal",
   riskLabel: "",
+  businessPhase: "CONSULTING",
   visibleScopes: ["all"],
 };
 

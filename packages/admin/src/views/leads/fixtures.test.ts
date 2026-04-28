@@ -3,6 +3,7 @@ import {
   BUSINESS_TYPE_OPTIONS,
   DEDUP_PRESETS,
   GROUP_OPTIONS,
+  getLeadSamples,
   LANGUAGE_OPTIONS,
   LEAD_DETAIL_SAMPLES,
   LEAD_SAMPLES,
@@ -65,6 +66,13 @@ describe("leads/fixtures", () => {
       expect(converted).toBeDefined();
       expect(converted!.convertedCustomerId).toBeTruthy();
       expect(converted!.convertedCaseId).toBeTruthy();
+    });
+
+    it("derives localized follow-up note and relative time labels for ja-JP", () => {
+      const localized = getLeadSamples("ja-JP");
+      expect(localized[0].nextAction).toBe("電話で意向と在留資格を確認");
+      expect(localized[0].updatedAtLabel).toBe("今日 15:30");
+      expect(localized[1].updatedAtLabel).toBe("昨日 11:20");
     });
   });
 

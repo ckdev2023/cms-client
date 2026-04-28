@@ -41,19 +41,11 @@ const BMV_INTAKE_STATUSES = ["not_started","questionnaire_pending","quote_pendin
 export const CUSTOMER_CASE_UPSTREAM_CONTRACT = ["id","caseName","caseTypeCode","stage","ownerUserId","createdAt","updatedAt"] as const;
 
 const CUSTOMER_CASE_NAME_FIELDS = ["name", "caseName", "title", "caseNo"];
-const CUSTOMER_CASE_TYPE_FIELDS = [
-  "type",
-  "caseType",
-  "caseTypeCode",
-  "applicationType",
-];
+// prettier-ignore
+const CUSTOMER_CASE_TYPE_FIELDS = ["type","caseType","caseTypeCode","applicationType"];
 const CUSTOMER_CASE_STAGE_FIELDS = ["stage", "workflowStage", "statusLabel"];
-const CUSTOMER_CASE_OWNER_FIELDS = [
-  "ownerName",
-  "assigneeName",
-  "ownerUserName",
-  "ownerUserId",
-];
+// prettier-ignore
+const CUSTOMER_CASE_OWNER_FIELDS = ["ownerName","assigneeName","ownerUserName","ownerUserId"];
 const CUSTOMER_CASE_UPDATED_AT_FIELDS = ["updatedAt", "openedAt", "createdAt"];
 const CUSTOMER_CASE_CREATED_AT_FIELDS = ["createdAt", "openedAt"];
 const CONTACT_PERSON_RELATION_FIELDS = ["relationType", "relation_type"];
@@ -105,6 +97,18 @@ function readBmvFields(record: Record<string, unknown>) {
     ]),
     signedAt: readNullableStringFieldByKeys(record, ["signedAt", "signed_at"]),
     note: readNullableStringFieldByKeys(record, ["note", "memo"]),
+    sourceLeadId: readNullableStringFieldByKeys(record, [
+      "sourceLeadId",
+      "source_lead_id",
+    ]),
+    leadGroupId: readNullableStringFieldByKeys(record, [
+      "leadGroupId",
+      "lead_group_id",
+    ]),
+    leadOwnerUserId: readNullableStringFieldByKeys(record, [
+      "leadOwnerUserId",
+      "lead_owner_user_id",
+    ]),
   };
 }
 
@@ -139,20 +143,7 @@ function normalizeBmvStatus<T extends string>(
   return isEnumMember(value, allowed) ? value : "not_started";
 }
 
-/**
- * 解析客户 BMV 档案。
- *
- * @param value - 后端返回的 BMV 档案片段
- * @returns 成功时返回标准化档案，缺失时返回 `null`
- */
-export function adaptBmvProfile(value: unknown): CustomerBmvProfile | null {
-  if (value === null || value === undefined) return null;
-  const record = asRecord(value);
-  if (!record) return null;
-
-  const fields = readBmvFields(record);
-  if (!hasBmvFieldValue(fields)) return null;
-
+function resolveStatuses(fields: ReturnType<typeof readBmvFields>) {
   const questionnaireStatus = normalizeBmvStatus(
     fields.questionnaireStatus,
     BMV_QUESTIONNAIRE_STATUSES,
@@ -162,29 +153,40 @@ export function adaptBmvProfile(value: unknown): CustomerBmvProfile | null {
     BMV_QUOTE_STATUSES,
   );
   const signStatus = normalizeBmvStatus(fields.signStatus, BMV_SIGN_STATUSES);
-
   const intakeStatus = isEnumMember(fields.intakeStatus, BMV_INTAKE_STATUSES)
     ? fields.intakeStatus
-    : resolveBmvIntakeStatus({
-        questionnaireStatus,
-        quoteStatus,
-        signStatus,
-      });
+    : resolveBmvIntakeStatus({ questionnaireStatus, quoteStatus, signStatus });
+  return { questionnaireStatus, quoteStatus, signStatus, intakeStatus };
+}
 
+function buildBmvProfile(
+  fields: ReturnType<typeof readBmvFields>,
+): CustomerBmvProfile {
   return {
-    questionnaireStatus,
-    quoteStatus,
-    signStatus,
-    intakeStatus,
+    ...resolveStatuses(fields),
     questionnaireSentAt: fields.questionnaireSentAt ?? null,
     questionnaireReturnedAt: fields.questionnaireReturnedAt ?? null,
     quoteGeneratedAt: fields.quoteGeneratedAt ?? null,
     quoteConfirmedAt: fields.quoteConfirmedAt ?? null,
     signedAt: fields.signedAt ?? null,
     note: fields.note ?? null,
-  } satisfies CustomerBmvProfile;
+    sourceLeadId: fields.sourceLeadId ?? null,
+    leadGroupId: fields.leadGroupId ?? null,
+    leadOwnerUserId: fields.leadOwnerUserId ?? null,
+  };
 }
-
+/**
+ * 解析客户 BMV 档案。
+ * @param value - 后端返回的 BMV 档案片段
+ * @returns 标准化档案或 null
+ */
+export function adaptBmvProfile(value: unknown): CustomerBmvProfile | null {
+  if (value == null) return null;
+  const record = asRecord(value);
+  if (!record) return null;
+  const fields = readBmvFields(record);
+  return hasBmvFieldValue(fields) ? buildBmvProfile(fields) : null;
+}
 function readSummaryFields(record: Record<string, unknown>) {
   return {
     id: readStringField(record, "id"),
@@ -204,11 +206,9 @@ function readSummaryFields(record: Record<string, unknown>) {
     bmvProfile: adaptBmvProfile(readCustomerBmvProfile(record)),
   };
 }
-
 function isPresent<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
-
 function hasRequiredSummaryFields(
   fields: ReturnType<typeof readSummaryFields>,
 ): boolean {
@@ -231,37 +231,37 @@ function hasRequiredSummaryFields(
     fields.lastContactChannel !== undefined
   );
 }
-
 function hasValidSummaryBmv(record: Record<string, unknown>): boolean {
   const rawBmvProfile = readCustomerBmvProfile(record);
-  return (
-    rawBmvProfile === null ||
-    rawBmvProfile === undefined ||
-    typeof rawBmvProfile === "object"
-  );
+  return rawBmvProfile == null || typeof rawBmvProfile === "object";
 }
-
 function isValidSummaryRecord(
   record: Record<string, unknown>,
   fields: ReturnType<typeof readSummaryFields>,
 ): boolean {
   return hasRequiredSummaryFields(fields) && hasValidSummaryBmv(record);
 }
+function stringOrEmpty(record: Record<string, unknown>, key: string): string {
+  return readStringField(record, key) ?? "";
+}
 
 function readDetailFields(record: Record<string, unknown>) {
   return {
-    nationality: readStringField(record, "nationality") ?? "",
-    gender: readStringField(record, "gender") ?? "",
-    birthDate: readStringField(record, "birthDate") ?? "",
-    avatar: readStringField(record, "avatar") ?? "",
-    note: readStringField(record, "note") ?? "",
+    nationality: stringOrEmpty(record, "nationality"),
+    gender: stringOrEmpty(record, "gender"),
+    birthDate: stringOrEmpty(record, "birthDate"),
+    avatar: stringOrEmpty(record, "avatar"),
+    note: stringOrEmpty(record, "note"),
+    location: stringOrEmpty(record, "location"),
+    sourceType: stringOrEmpty(record, "sourceType"),
+    visaType: stringOrEmpty(record, "visaType"),
+    referrerName: stringOrEmpty(record, "referrerName"),
     archivedCases: readNumberField(record, "archivedCases") ?? 0,
     caseNames: readStringArray(record.caseNames) ?? [],
     lastCaseCreatedDate:
       readNullableStringField(record, "lastCaseCreatedDate") ?? null,
   };
 }
-
 function adaptDuplicateCandidateItem(
   value: unknown,
 ): CustomerDuplicateCandidate | null {
@@ -301,9 +301,19 @@ function readCustomerCaseStatus(
   return rawStatus?.toLowerCase() === "archived" ? "archived" : "active";
 }
 
+function unwrapSummaryCaseRecord(
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  const nested = asRecord(record.case);
+  if (!nested) return record;
+  return { ...nested, ...record };
+}
+
 function adaptCustomerCaseDto(value: unknown): CustomerCase | null {
-  const record = asRecord(value);
-  if (!record) return null;
+  const raw = asRecord(value);
+  if (!raw) return null;
+
+  const record = unwrapSummaryCaseRecord(raw);
 
   const id = readStringField(record, "id");
   if (!id) return null;

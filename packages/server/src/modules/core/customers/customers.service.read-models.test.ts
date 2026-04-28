@@ -31,6 +31,7 @@ function createCustomersService(
     pool,
     makePermissionsService(permissionsOverrides),
     timelineService as never,
+    { create: () => Promise.resolve({}) } as never,
   );
 }
 

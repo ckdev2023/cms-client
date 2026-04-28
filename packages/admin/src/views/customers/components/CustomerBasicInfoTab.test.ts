@@ -137,10 +137,10 @@ describe("CustomerBasicInfoTab", () => {
     expect(w.find(".basic-info__saved-hint").text()).toBe("Saved");
   });
 
-  it("renders all 13 form fields", () => {
+  it("renders all 17 form fields", () => {
     const { wrapper: w } = factory();
     const fields = w.findAll(".basic-info__field");
-    expect(fields).toHaveLength(13);
+    expect(fields).toHaveLength(17);
   });
 
   it("gender select has three options", () => {
@@ -177,14 +177,113 @@ describe("CustomerBasicInfoTab", () => {
     expect(input.value).toBe("1985-06-15");
   });
 
-  it("renders the BMV intake card in the basic info area for BMV customers", () => {
-    const { wrapper: w } = factory(bmvCustomer);
-    expect(w.find(".bmv-intake-card").exists()).toBe(true);
-    expect(w.text()).toContain("Sign pending");
+  it("renders birth date as text in read mode to avoid duplicate native spinbutton labels", () => {
+    const { wrapper: w } = factory();
+    const input = w.find("#basicInfoBirthDate");
+    expect(input.attributes("type")).toBe("text");
+    expect(input.attributes("aria-label")).toBe("Date of birth");
   });
 
-  it("does not render the BMV intake card for non-BMV customers", () => {
-    const { wrapper: w } = factory(customer);
+  it("switches birth date back to native date input in edit mode", async () => {
+    const { wrapper: w } = factory();
+    const editBtn = w.findAll("button").find((b) => b.text() === "Edit")!;
+    await editBtn.trigger("click");
+    await nextTick();
+
+    expect(w.find("#basicInfoBirthDate").attributes("type")).toBe("date");
+  });
+
+  it("renders a localized avatar chooser instead of relying on native file input text", () => {
+    const { wrapper: w } = factory();
+
+    expect(w.find("#basicInfoAvatar").attributes("type")).toBe("file");
+    expect(w.find(".basic-info__file-trigger").text()).toBe("Choose image");
+    expect(w.find(".basic-info__file-status").text()).toBe("No file selected");
+  });
+
+  it("updates avatar status text when a file is selected", async () => {
+    const { wrapper: w } = factory();
+    const editBtn = w.findAll("button").find((b) => b.text() === "Edit")!;
+    await editBtn.trigger("click");
+    await nextTick();
+
+    const input = w.find("#basicInfoAvatar");
+    const file = new File(["avatar"], "profile.png", { type: "image/png" });
+
+    Object.defineProperty(input.element, "files", {
+      configurable: true,
+      value: [file],
+    });
+
+    await input.trigger("change");
+
+    expect(w.find(".basic-info__file-status").text()).toBe("profile.png");
+  });
+
+  it("localizes avatar chooser copy in ja-JP", () => {
+    setAppLocale("ja-JP");
+    const { wrapper: w } = factory();
+
+    expect(w.find(".basic-info__file-trigger").text()).toBe("画像を選択");
+    expect(w.find(".basic-info__file-status").text()).toBe(
+      "ファイルが選択されていません",
+    );
+  });
+
+  it("localizes furigana label and group value in zh-CN", () => {
+    setAppLocale("zh-CN");
+    const { wrapper: w } = factory();
+
+    expect(w.find("label[for='basicInfoFurigana']").text()).toBe(
+      "假名（片假名）",
+    );
+    expect((w.find("#basicInfoGroup").element as HTMLSelectElement).value).toBe(
+      "东京一组",
+    );
+  });
+
+  it("renders the BMV intake card when bmvEnabled is true for BMV customers", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: bmvCustomer,
+        repository,
+        bmvEnabled: true,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
+    expect(wrapper.text()).toContain("Sign pending");
+  });
+
+  it("does not render the BMV intake card for non-BMV customers even when bmvEnabled is true", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer,
+        repository,
+        bmvEnabled: true,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+  });
+
+  it("hides BMV intake card when bmvEnabled is false", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: bmvCustomer,
+        repository,
+        bmvEnabled: false,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+  });
+
+  it("hides BMV intake card when bmvEnabled is undefined (loading state)", () => {
+    const { wrapper: w } = factory(bmvCustomer);
     expect(w.find(".bmv-intake-card").exists()).toBe(false);
   });
 });

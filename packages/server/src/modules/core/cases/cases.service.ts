@@ -1,9 +1,11 @@
 /* eslint-disable max-lines, jsdoc/require-param-description, jsdoc/require-param, jsdoc/require-returns, jsdoc/require-description */
 import {
   BadRequestException,
+  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
+  Optional,
 } from "@nestjs/common";
 import { Pool } from "pg";
 
@@ -15,20 +17,74 @@ import type {
   CaseBillingRiskAckInput,
   PostApprovalStageInput,
   CaseListInput,
+  CaseListScope,
   CaseVisibilityFilter,
   CaseListItemDto,
   CaseListResultDto,
   CaseDetailAggregateDto,
+  CaseDeepLinkContext,
   CaseDetailCounts,
   CaseLatestValidationSummary,
   CaseLatestSubmissionSummary,
   CaseLatestReviewSummary,
   CaseDocumentProgressByProvider,
   CaseBillingSummary,
+  WorkflowStepTransitionInput,
+  PhaseTransitionInput,
 } from "./cases.types";
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
+import {
+  isBmvWorkflowStep,
+  isValidStepTransition,
+  checkParallelBoundary,
+} from "./cases.workflow-step";
+import type { BmvWorkflowStep } from "./cases.workflow-step";
+import { BMV_CASE_TYPE } from "./cases.template-bmv";
+import {
+  resolveWorkflowStepSummary,
+  BMV_STEP_LOOKUP,
+} from "./cases.workflow-step-readmodel";
+import {
+  STAGE_TO_PHASE_DEFAULT,
+  assertPhaseTransition,
+  isBusinessPhase,
+  PhaseTransitionError,
+} from "./businessPhase";
 import { checkFinalPaymentGuard } from "../billing/billingGuards";
+import { decideFinalPaymentGuard } from "./cases.types-final-payment";
+import { checkBmvCaseCreationGate } from "./cases.types-bmv-gate";
+import {
+  OVERSEAS_STEP_CODES,
+  VISA_REJECTED_CLOSURE,
+  OVERSEAS_TIMELINE_ACTIONS,
+} from "./cases.types-overseas-step";
+import type { OverseasStepCode } from "./cases.types-overseas-step";
+import {
+  toResidencePeriodSummary,
+  requiresSuccessCloseoutCheck,
+  checkSuccessCloseoutPreconditions,
+} from "./cases.types-residence-closeout";
+import type { CaseResidencePeriodSummary } from "./cases.types-residence-closeout";
+import {
+  checkFailureCloseout,
+  canBypassSuccessCloseoutForFailure,
+} from "./cases.types-failure-closeout";
+import { mapResidencePeriodRow } from "../residence-periods/residencePeriods.service";
+import { requiresBmvCaseCreationGate } from "../../portal/intake/intake.types";
+import {
+  resolveCustomerBmvProfile,
+  createDefaultCustomerBmvProfile,
+} from "../customers/customers.dto-mappers";
+import { PermissionsService } from "../auth/permissions.service";
+import { BillingPlansService } from "../billing/billingPlans.service";
+import { PaymentRecordsService } from "../billing/paymentRecords.service";
+import type {
+  CaseBillingTabAggregate,
+  CaseBillingSummaryFull,
+  CaseBillingRiskAckRecord,
+} from "./cases.types-billing";
 import type { RequestContext } from "../tenancy/requestContext";
+import { isUuid } from "../tenancy/uuid";
 import { createTenantDb } from "../tenancy/tenantDb";
 import type { TenantDb, TenantDbTx } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
@@ -53,18 +109,20 @@ export const P0_CASE_STAGES = new Set([
  * P0 案件阶段流转矩阵（无 Template 时使用）。
  *
  * S9 为终态，不允许继续流转。
- * 每个阶段都允许直接到 S9（异常结案）。
+ * S1–S6 不得直接跳到 S9（业务约束：未提交入管不得归档）。
+ * S7→S9 需要显式 closeReason（失败结案路径）；S8→S9 为正常归档。
  * 补正在 S7 内闭环，不回退主阶段。
  *
  * @see 04-核心流程与状态流转.md §1.2
+ * @see BUG-063
  */
 export const DEFAULT_CASE_TRANSITIONS: Record<string, string[]> = {
-  S1: ["S2", "S9"],
-  S2: ["S3", "S9"],
-  S3: ["S2", "S4", "S9"],
-  S4: ["S3", "S5", "S9"],
-  S5: ["S3", "S4", "S6", "S9"],
-  S6: ["S5", "S7", "S9"],
+  S1: ["S2"],
+  S2: ["S3"],
+  S3: ["S2", "S4"],
+  S4: ["S3", "S5"],
+  S5: ["S3", "S4", "S6"],
+  S6: ["S5", "S7"],
   S7: ["S8", "S9"],
   S8: ["S9"],
   S9: [],
@@ -138,6 +196,8 @@ export type CaseQueryRow = {
   billing_risk_ack_evidence_url: string | null;
   overseas_visa_start_at: unknown;
   entry_confirmed_at: unknown;
+  business_phase: string;
+  current_workflow_step_code: string | null;
   created_at: unknown;
   updated_at: unknown;
 };
@@ -240,6 +300,8 @@ export function mapCaseRow(row: CaseQueryRow): Case {
     residenceExpiryDate: toTimestampStringOrNull(row.residence_expiry_date),
     archivedAt: toTimestampStringOrNull(row.archived_at),
     ...mapCaseP0Fields(row),
+    businessPhase: row.business_phase,
+    currentWorkflowStepCode: row.current_workflow_step_code ?? null,
     createdAt: toTimestampString(row.created_at),
     updatedAt: toTimestampString(row.updated_at),
   };
@@ -267,9 +329,27 @@ export function mapCaseListSummaryRow(
   };
 }
 
+type BillingSummaryAggRow = {
+  quote_price: string | number | null;
+  total_due: string | number;
+  total_received: string | number;
+  plan_count: number | string;
+  payment_count: number | string;
+  overdue_plan_count: number | string;
+  deposit_paid_cached: boolean;
+  final_payment_paid_cached: boolean;
+  billing_risk_acknowledged_by: string | null;
+  billing_risk_acknowledged_at: unknown;
+  billing_risk_ack_reason_code: string | null;
+  billing_risk_ack_reason_note: string | null;
+  billing_risk_ack_evidence_url: string | null;
+};
+
 type CaseDetailCountsRow = {
   document_items_total: string;
   document_items_done: string;
+  questionnaire_items_total: string;
+  questionnaire_items_done: string;
   case_parties: string;
   tasks: string;
   tasks_pending: string;
@@ -285,6 +365,8 @@ type CaseDetailCountsRow = {
 const ZERO_COUNTS: CaseDetailCounts = {
   documentItemsTotal: 0,
   documentItemsDone: 0,
+  questionnaireItemsTotal: 0,
+  questionnaireItemsDone: 0,
   caseParties: 0,
   tasks: 0,
   tasksPending: 0,
@@ -311,6 +393,8 @@ export function mapDetailCountsRow(
   return {
     documentItemsTotal: parseIntSafe(row.document_items_total),
     documentItemsDone: parseIntSafe(row.document_items_done),
+    questionnaireItemsTotal: parseIntSafe(row.questionnaire_items_total),
+    questionnaireItemsDone: parseIntSafe(row.questionnaire_items_done),
     caseParties: parseIntSafe(row.case_parties),
     tasks: parseIntSafe(row.tasks),
     tasksPending: parseIntSafe(row.tasks_pending),
@@ -445,7 +529,9 @@ export type {
   CaseBillingRiskAckInput,
   PostApprovalStageInput,
   CaseListInput,
+  CaseListScope,
   CaseVisibilityFilter,
+  PhaseTransitionInput,
 } from "./cases.types";
 
 /**
@@ -463,7 +549,7 @@ export const POST_APPROVAL_STAGES = new Set([
   "entry_success",
 ]);
 
-const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, created_at, updated_at`;
+const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, business_phase, current_workflow_step_code, created_at, updated_at`;
 
 const CASE_COLS_PREFIXED = CASE_COLS.split(", ")
   .map((col) => `cs.${col}`)
@@ -499,6 +585,7 @@ export const CASE_RESULT_OUTCOMES = new Set([
   "approved",
   "rejected",
   "withdrawn",
+  "visa_rejected",
 ]);
 
 /** 列表过滤条件构建器（提取以降低 list 方法复杂度）。 */
@@ -509,6 +596,12 @@ function buildCaseListFilter(input: CaseListInput): {
   return buildCaseListFilterPrefixed(input, "");
 }
 
+function hasInvalidCaseListUuidFilter(input: CaseListInput): boolean {
+  return [input.ownerUserId, input.customerId, input.groupId].some(
+    (value) => typeof value === "string" && value.length > 0 && !isUuid(value),
+  );
+}
+
 function buildCaseListFilterPrefixed(
   input: CaseListInput,
   prefix: string,
@@ -516,6 +609,10 @@ function buildCaseListFilterPrefixed(
   whereClause: string;
   params: unknown[];
 } {
+  if (hasInvalidCaseListUuidFilter(input)) {
+    return { whereClause: "where 1 = 0", params: [] };
+  }
+
   const p = prefix;
   const where: string[] = [
     `coalesce(${p}metadata->>'_status', '') is distinct from 'deleted'`,
@@ -531,6 +628,7 @@ function buildCaseListFilterPrefixed(
     [`${p}priority`, input.priority],
     [`${p}risk_level`, input.riskLevel],
     [`${p}company_id`, input.companyId],
+    [`${p}business_phase`, input.phase],
   ];
   for (const [col, val] of filters) {
     if (val) {
@@ -541,6 +639,15 @@ function buildCaseListFilterPrefixed(
 
   if (input.visibility) {
     appendVisibilityConditionPrefixed(where, params, input.visibility, prefix);
+    if (input.scope) {
+      appendScopeConditionPrefixed(
+        where,
+        params,
+        input.scope,
+        input.visibility,
+        prefix,
+      );
+    }
   }
 
   const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
@@ -572,6 +679,33 @@ function appendVisibilityConditionPrefixed(
     return;
   }
 
+  where.push(
+    `(${p}owner_user_id = ${userParam} or ${p}assistant_user_id = ${userParam})`,
+  );
+}
+
+function appendScopeConditionPrefixed(
+  where: string[],
+  params: unknown[],
+  scope: CaseListScope,
+  visibility: CaseVisibilityFilter,
+  prefix: string,
+): void {
+  if (scope === "all") return;
+
+  const p = prefix;
+  if (scope === "group") {
+    if (!visibility.groupId) {
+      where.push("1 = 0");
+      return;
+    }
+    params.push(visibility.groupId);
+    where.push(`${p}group_id = $${String(params.length)}`);
+    return;
+  }
+
+  params.push(visibility.userId);
+  const userParam = `$${String(params.length)}`;
   where.push(
     `(${p}owner_user_id = ${userParam} or ${p}assistant_user_id = ${userParam})`,
   );
@@ -646,6 +780,7 @@ function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
     archivedAt: pickDefined(input.archivedAt, current.archivedAt),
     resultOutcome: pickDefined(input.resultOutcome, current.resultOutcome),
     quotePrice: pickDefined(input.quotePrice, current.quotePrice),
+    visaPlan: pickDefined(input.visaPlan, current.visaPlan),
     overseasVisaStartAt: pickDefined(
       input.overseasVisaStartAt,
       current.overseasVisaStartAt,
@@ -737,6 +872,41 @@ function resolveRequestedTransitionStage(input: CaseTransitionInput): string {
   return requestedStage;
 }
 
+function resolveInitialBusinessPhase(stage: string): string {
+  if (stage in STAGE_TO_PHASE_DEFAULT) {
+    return STAGE_TO_PHASE_DEFAULT[stage as keyof typeof STAGE_TO_PHASE_DEFAULT];
+  }
+  return "CONSULTING";
+}
+
+/**
+ * stage 流转时推导新的 businessPhase。
+ * S9 + closeReason → CLOSED_FAILED（失败结案）；S9 无 closeReason → CLOSED_SUCCESS。
+ * 其余阶段走默认映射。
+ */
+function resolveTransitionBusinessPhase(
+  toStage: string,
+  closeReason: string | null,
+): string {
+  if (toStage === "S9" && closeReason) {
+    return "CLOSED_FAILED";
+  }
+  return resolveInitialBusinessPhase(toStage);
+}
+
+function assertCloseReasonForNonCompletionArchive(
+  fromStage: string,
+  toStage: string,
+  closeReason: string | null,
+): void {
+  if (toStage === "S9" && fromStage !== "S8" && !closeReason) {
+    throw new BadRequestException(
+      CASE_WRITE_ERROR_CODES.CLOSE_REASON_REQUIRED +
+        ": closeReason is required when archiving from a non-completion stage",
+    );
+  }
+}
+
 /** 将 CaseCreateInput 展平为 insert 参数数组。 */
 function buildInsertCaseParams(
   orgId: string,
@@ -777,6 +947,8 @@ function buildInsertCaseParams(
     ...nullableTail,
     input.resultOutcome ?? null,
     input.quotePrice ?? null,
+    input.visaPlan ?? null,
+    resolveInitialBusinessPhase(workflowStage),
   ];
 }
 
@@ -808,6 +980,8 @@ async function queryDetailCounts(
       select
         (select count(*)::text from document_items where case_id = $1 and status != 'deleted') as document_items_total,
         (select count(*)::text from document_items where case_id = $1 and status in ('approved', 'waived')) as document_items_done,
+        (select count(*)::text from document_items where case_id = $1 and status != 'deleted' and category = 'questionnaire') as questionnaire_items_total,
+        (select count(*)::text from document_items where case_id = $1 and status in ('approved', 'waived') and category = 'questionnaire') as questionnaire_items_done,
         (select count(*)::text from case_parties where case_id = $1) as case_parties,
         (select count(*)::text from tasks where case_id = $1 and status != 'deleted') as tasks,
         (select count(*)::text from tasks where case_id = $1 and status = 'pending') as tasks_pending,
@@ -897,6 +1071,29 @@ async function queryDocProgressByProvider(
   return result.rows;
 }
 
+const RESIDENCE_PERIOD_SUMMARY_COLS =
+  "id, org_id, case_id, customer_id, visa_type, status_of_residence, period_years, period_label, valid_from, valid_until, card_number, is_current, entry_date, reminder_created, notes, created_by, created_at, updated_at";
+
+async function queryCurrentResidencePeriod(
+  tenantDb: TenantDb,
+  caseId: string,
+): Promise<CaseResidencePeriodSummary | null> {
+  const result = await tenantDb.query<Record<string, unknown>>(
+    `
+      select ${RESIDENCE_PERIOD_SUMMARY_COLS}
+      from residence_periods
+      where case_id = $1 and is_current = true
+      order by valid_until desc
+      limit 1
+    `,
+    [caseId],
+  );
+  const row = result.rows.at(0);
+  if (!row) return null;
+  const period = mapResidencePeriodRow(row as never);
+  return toResidencePeriodSummary(period);
+}
+
 function deriveBillingSummary(caseEntity: Case): CaseBillingSummary {
   return {
     quotePrice: caseEntity.quotePrice,
@@ -909,17 +1106,171 @@ function deriveBillingSummary(caseEntity: Case): CaseBillingSummary {
   };
 }
 
+function deriveDeepLink(
+  caseEntity: Case,
+  caseRow: CaseListSummaryRow,
+): CaseDeepLinkContext {
+  return {
+    customerId: caseEntity.customerId,
+    customerName: caseRow.customer_name ?? "",
+    groupId: caseEntity.groupId,
+    groupName: caseRow.group_name,
+    ownerUserId: caseEntity.ownerUserId,
+    ownerDisplayName: caseRow.owner_display_name ?? "",
+    assistantUserId: caseEntity.assistantUserId,
+    assistantDisplayName: caseRow.assistant_display_name,
+  };
+}
+
+/** @param current 当前案件 @param toStepCode 目标步骤编码 @returns 已校验的 BMV 步骤 */
+function validateWorkflowStepTransitionTarget(
+  current: Case,
+  toStepCode: string,
+): BmvWorkflowStep {
+  if (current.caseTypeCode !== BMV_CASE_TYPE) {
+    throw new BadRequestException(
+      CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_NOT_APPLICABLE +
+        ": Workflow step transitions are only available for BMV cases",
+    );
+  }
+  if (!isBmvWorkflowStep(toStepCode)) {
+    throw new BadRequestException(
+      CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_TRANSITION_INVALID +
+        `: Invalid target step code: ${toStepCode}`,
+    );
+  }
+  const fromStepCode = current.currentWorkflowStepCode;
+  if (fromStepCode !== null) {
+    if (!isBmvWorkflowStep(fromStepCode)) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_TRANSITION_INVALID +
+          `: Current step code is invalid: ${fromStepCode}`,
+      );
+    }
+    if (!isValidStepTransition(fromStepCode, toStepCode)) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_TRANSITION_INVALID +
+          `: Transition from ${fromStepCode} to ${toStepCode} is not allowed`,
+      );
+    }
+  }
+  const currentStage = current.stage ?? current.status;
+  const boundary = checkParallelBoundary(toStepCode, currentStage);
+  if (!boundary.compatible) {
+    throw new BadRequestException(
+      CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_PARALLEL_BOUNDARY +
+        `: ${boundary.reason ?? "Parallel boundary violated"}`,
+    );
+  }
+  return toStepCode;
+}
+
+const OVERSEAS_STEP_CODE_SET: ReadonlySet<string> = new Set(
+  Object.values(OVERSEAS_STEP_CODES),
+);
+
+/**
+ *
+ */
+export function isOverseasStepCode(code: string): code is OverseasStepCode {
+  return OVERSEAS_STEP_CODE_SET.has(code);
+}
+
+type OverseasStepEffects = {
+  stampCoeSent: boolean;
+  stampOverseasVisa: boolean;
+  stampEntryConfirmed: boolean;
+  resultOutcome: string | null;
+};
+
+/**
+ * 解析海外返签步骤流转的附加副作用（自动打戳 + 结果态收敛）。
+ *
+ * - COE_SENT → stamp coe_sent_at（首次写入）
+ * - VISA_APPLYING → stamp overseas_visa_start_at（首次写入）
+ * - ENTRY_SUCCESS → stamp entry_confirmed_at（首次写入）
+ * - VISA_REJECTED → set result_outcome = 'rejected'
+ */
+export function resolveOverseasStepEffects(
+  current: Case,
+  toStepCode: string,
+): OverseasStepEffects {
+  return {
+    stampCoeSent:
+      toStepCode === OVERSEAS_STEP_CODES.COE_SENT && !current.coeSentAt,
+    stampOverseasVisa:
+      toStepCode === OVERSEAS_STEP_CODES.VISA_APPLYING &&
+      !current.overseasVisaStartAt,
+    stampEntryConfirmed:
+      toStepCode === OVERSEAS_STEP_CODES.ENTRY_SUCCESS &&
+      !current.entryConfirmedAt,
+    resultOutcome:
+      toStepCode === OVERSEAS_STEP_CODES.VISA_REJECTED ? "rejected" : null,
+  };
+}
+
+function settledValueOrUndefined<T>(
+  result: PromiseSettledResult<T>,
+): T | undefined {
+  return result.status === "fulfilled" ? result.value : undefined;
+}
+
+function settledValueOrDefault<T>(
+  result: PromiseSettledResult<T>,
+  fallback: T,
+): T {
+  return result.status === "fulfilled" ? result.value : fallback;
+}
+
+const AGGREGATE_SUB_QUERY_LABELS = [
+  "counts",
+  "latestValidation",
+  "latestSubmission",
+  "latestReview",
+  "docProgress",
+  "currentResidencePeriod",
+] as const;
+
+function logSettledErrors(
+  results: PromiseSettledResult<unknown>[],
+  caseId: string,
+): void {
+  for (let i = 0; i < results.length; i++) {
+    const r = results[i];
+    if (r.status === "rejected") {
+      const msg =
+        r.reason instanceof Error ? r.reason.message : String(r.reason);
+      // eslint-disable-next-line no-console
+      console.error(
+        `[CasesService.getDetailAggregate] sub-query "${AGGREGATE_SUB_QUERY_LABELS[i]}" failed for case ${caseId}: ${msg}`,
+      );
+    }
+  }
+}
+
 /** 案件服务，提供案件 CRUD、状态变更与软删除能力。 */
 @Injectable()
 export class CasesService {
   /**
-   * @param pool 连接池 @param templatesResolver 模板解析服务
-   * @param templatesResolver
+   * @param pool 连接池
+   * @param templatesResolver 模板解析服务
+   * @param permissionsService 权限判定服务
+   * @param billingPlansService 收费计划服务
+   * @param paymentRecordsService 回款记录服务
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(TEMPLATES_RESOLVER)
     private readonly templatesResolver: TemplatesResolver,
+    @Optional()
+    @Inject(PermissionsService)
+    private readonly permissionsService?: PermissionsService,
+    @Optional()
+    @Inject(BillingPlansService)
+    private readonly billingPlansService?: BillingPlansService,
+    @Optional()
+    @Inject(PaymentRecordsService)
+    private readonly paymentRecordsService?: PaymentRecordsService,
   ) {}
 
   /** 创建案件（事务内：写入 + document_items + Timeline + 跨组留痕）。
@@ -984,6 +1335,40 @@ export class CasesService {
     if (input.assistantUserId) {
       await this.assertBelongsToOrg(tx, "users", input.assistantUserId);
     }
+
+    if (requiresBmvCaseCreationGate(input.caseTypeCode)) {
+      await this.assertBmvCaseCreationGate(tx, input);
+    }
+  }
+
+  private async assertBmvCaseCreationGate(
+    tx: TenantDbTx,
+    input: CaseCreateInput,
+  ): Promise<void> {
+    const row = await tx.query<{ base_profile: unknown }>(
+      `select base_profile from customers where id = $1 limit 1`,
+      [input.customerId],
+    );
+    const baseProfile = normalizeObject(row.rows.at(0)?.base_profile);
+    const bmvProfile =
+      resolveCustomerBmvProfile(baseProfile) ??
+      createDefaultCustomerBmvProfile();
+
+    const gate = checkBmvCaseCreationGate({
+      caseTypeCode: input.caseTypeCode,
+      customerId: input.customerId,
+      bmvQuestionnaireStatus: bmvProfile.questionnaireStatus,
+      bmvQuoteStatus: bmvProfile.quoteStatus,
+      bmvSignStatus: bmvProfile.signStatus,
+      bmvIntakeStatus: bmvProfile.intakeStatus,
+    });
+
+    if (!gate.allowed) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.BMV_GATE_BLOCKED,
+        blockers: gate.blockers,
+      });
+    }
   }
 
   private async resolveCreateGroup(
@@ -1029,6 +1414,131 @@ export class CasesService {
     );
     const row = result.rows.at(0);
     return row ? mapCaseRow(row) : null;
+  }
+
+  /**
+   * 断言当前用户可编辑指定案件，否则抛出异常。
+   *
+   * 供跨模块（如 BillingCollectionsService）复用；
+   * case 不存在时抛 NotFoundException，无权限时抛 ForbiddenException。
+   */
+  async assertCanEditCase(ctx: RequestContext, caseId: string): Promise<void> {
+    if (!this.permissionsService) {
+      throw new Error("PermissionsService is required for assertCanEditCase");
+    }
+    const caseEntity = await this.get(ctx, caseId);
+    if (!caseEntity) throw new NotFoundException("Case not found");
+    if (
+      !this.permissionsService.canEditCase(
+        ctx.userId,
+        ctx.role,
+        ctx.groupId,
+        caseEntity,
+      )
+    ) {
+      throw new ForbiddenException("Insufficient permissions to edit case");
+    }
+  }
+
+  /**
+   * 案件 billing tab 一次性聚合：summary + plans + recentPayments。
+   *
+   * summary 走单 SQL 实时聚合（不依赖缓存列）；
+   * plans 与 recentPayments 分别调 BillingPlansService.list / PaymentRecordsService.list。
+   * recentPayments 上限 50 条（D8），超出时前端切到分页端点。
+   *
+   * @param ctx 请求上下文
+   * @param caseId 案件 ID
+   * @returns CaseBillingTabAggregate
+   */
+  async getBillingTabAggregate(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<CaseBillingTabAggregate> {
+    if (!this.billingPlansService || !this.paymentRecordsService) {
+      throw new Error(
+        "BillingPlansService and PaymentRecordsService are required for getBillingTabAggregate",
+      );
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const summary = await this.aggregateCaseBillingSummaryFull(
+      tenantDb,
+      caseId,
+    );
+
+    const [plansResult, paymentsResult] = await Promise.all([
+      this.billingPlansService.list(ctx, { caseId, page: 1, limit: 200 }),
+      this.paymentRecordsService.list(ctx, {
+        caseId,
+        recordStatus: "all",
+        page: 1,
+        limit: 50,
+      }),
+    ]);
+
+    return {
+      summary,
+      plans: plansResult.items,
+      recentPayments: paymentsResult.items,
+      recentPaymentsTotal: paymentsResult.total,
+    };
+  }
+
+  private async aggregateCaseBillingSummaryFull(
+    tenantDb: TenantDb,
+    caseId: string,
+  ): Promise<CaseBillingSummaryFull> {
+    const result = await tenantDb.query<BillingSummaryAggRow>(
+      `select
+        c.quote_price,
+        coalesce((select sum(amount_due) from billing_records where case_id = $1), 0) as total_due,
+        coalesce((select sum(amount_received) from payment_records where case_id = $1 and record_status = 'valid'), 0) as total_received,
+        (select count(*)::int from billing_records where case_id = $1) as plan_count,
+        (select count(*)::int from payment_records where case_id = $1 and record_status = 'valid') as payment_count,
+        (select count(*)::int from billing_records where case_id = $1 and status in ('due','partial','overdue') and due_date < now()::date) as overdue_plan_count,
+        c.deposit_paid_cached,
+        c.final_payment_paid_cached,
+        c.billing_risk_acknowledged_by,
+        c.billing_risk_acknowledged_at,
+        c.billing_risk_ack_reason_code,
+        c.billing_risk_ack_reason_note,
+        c.billing_risk_ack_evidence_url
+      from cases c
+      where c.id = $1
+        and coalesce(c.metadata->>'_status', '') is distinct from 'deleted'
+      limit 1`,
+      [caseId],
+    );
+
+    const row = result.rows.at(0);
+    if (!row) throw new NotFoundException("Case not found");
+
+    const totalDue = Number(row.total_due);
+    const totalReceived = Number(row.total_received);
+
+    const billingRiskAck: CaseBillingRiskAckRecord = {
+      acknowledged: row.billing_risk_acknowledged_by !== null,
+      acknowledgedAt: toTimestampStringOrNull(row.billing_risk_acknowledged_at),
+      acknowledgedBy: row.billing_risk_acknowledged_by ?? null,
+      acknowledgedByDisplayName: null,
+      reasonCode: row.billing_risk_ack_reason_code ?? null,
+      reasonNote: row.billing_risk_ack_reason_note ?? null,
+      evidenceUrl: row.billing_risk_ack_evidence_url ?? null,
+    };
+
+    return {
+      quotePrice: row.quote_price !== null ? Number(row.quote_price) : null,
+      totalDue,
+      totalReceived,
+      unpaidAmount: Math.max(totalDue - totalReceived, 0),
+      depositPaid: row.deposit_paid_cached,
+      finalPaymentPaid: row.final_payment_paid_cached,
+      billingRiskAck,
+      planCount: Number(row.plan_count),
+      paymentCount: Number(row.payment_count),
+      overduePlanCount: Number(row.overdue_plan_count),
+    };
   }
 
   /** 获取案件列表（支持筛选 + 分页）。
@@ -1124,6 +1634,7 @@ export class CasesService {
    * billing / validation / submission / review / deep-link 依赖字段。
    *
    * admin detail 页面消费此方法，避免多轮 HTTP 请求拼装。
+   * 子查询使用 Promise.allSettled 降级：任一子查询失败仍返回部分数据（BUG-064）。
    */
   async getDetailAggregate(
     ctx: RequestContext,
@@ -1135,19 +1646,32 @@ export class CasesService {
     if (!caseRow) return null;
 
     const caseEntity = mapCaseRow(caseRow);
-    const [
-      counts,
-      latestValidation,
-      latestSubmission,
-      latestReview,
-      docProgress,
-    ] = await Promise.all([
+    const needsCloseoutCheck = requiresSuccessCloseoutCheck(caseEntity);
+
+    const settled = await Promise.allSettled([
       queryDetailCounts(tenantDb, id),
       queryLatestValidation(tenantDb, id),
       queryLatestSubmission(tenantDb, id),
       queryLatestReview(tenantDb, id),
       queryDocProgressByProvider(tenantDb, id),
+      queryCurrentResidencePeriod(tenantDb, id),
     ]);
+    logSettledErrors(settled, id);
+
+    const counts = settledValueOrUndefined(settled[0]);
+    const latestValidation = settledValueOrUndefined(settled[1]);
+    const latestSubmission = settledValueOrUndefined(settled[2]);
+    const latestReview = settledValueOrUndefined(settled[3]);
+    const docProgress = settledValueOrDefault(settled[4], []);
+    const currentResidencePeriod = settledValueOrDefault(settled[5], null);
+
+    const successCloseoutCheck = needsCloseoutCheck
+      ? checkSuccessCloseoutPreconditions({
+          caseEntity,
+          currentResidencePeriod,
+        })
+      : null;
+    const failureCheck = checkFailureCloseout(caseEntity);
 
     return {
       case: caseEntity,
@@ -1157,16 +1681,11 @@ export class CasesService {
       latestReview: mapLatestReviewRow(latestReview),
       documentProgressByProvider: mapDocProgressByProviderRows(docProgress),
       billing: deriveBillingSummary(caseEntity),
-      deepLink: {
-        customerId: caseEntity.customerId,
-        customerName: caseRow.customer_name ?? "",
-        groupId: caseEntity.groupId,
-        groupName: caseRow.group_name,
-        ownerUserId: caseEntity.ownerUserId,
-        ownerDisplayName: caseRow.owner_display_name ?? "",
-        assistantUserId: caseEntity.assistantUserId,
-        assistantDisplayName: caseRow.assistant_display_name,
-      },
+      deepLink: deriveDeepLink(caseEntity, caseRow),
+      workflowStep: resolveWorkflowStepSummary(caseEntity),
+      currentResidencePeriod,
+      successCloseoutCheck,
+      failureCloseoutCheck: failureCheck.isFailurePath ? failureCheck : null,
     };
   }
 
@@ -1242,18 +1761,25 @@ export class CasesService {
 
     const fromStage = current.stage ?? current.status;
     const toStage = resolveRequestedTransitionStage(input);
-    await this.validateTransition(ctx, current, fromStage, toStage);
-
     const closeReason = toStage === "S9" ? (input.closeReason ?? null) : null;
 
+    await this.validateTransition(
+      ctx,
+      current,
+      fromStage,
+      toStage,
+      closeReason,
+    );
+    assertCloseReasonForNonCompletionArchive(fromStage, toStage, closeReason);
+    const newPhase = resolveTransitionBusinessPhase(toStage, closeReason);
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
       const result = await tx.query<CaseQueryRow>(
-        `update cases set stage = $2, status = $2, close_reason = coalesce($4, close_reason), updated_at = now()
+        `update cases set stage = $2, status = $2, close_reason = coalesce($4, close_reason), business_phase = $5, updated_at = now()
          where id = $1 and coalesce(stage, status) = $3
            and coalesce(metadata->>'_status','') is distinct from 'deleted'
          returning ${CASE_COLS}`,
-        [id, toStage, fromStage, closeReason],
+        [id, toStage, fromStage, closeReason, newPhase],
       );
       const row = result.rows.at(0);
       if (!row) {
@@ -1271,7 +1797,11 @@ export class CasesService {
         entityType: "case",
         entityId: updated.id,
         action: "case.transitioned",
-        payload: { from: fromStage, to: toStage },
+        payload: {
+          from: fromStage,
+          to: toStage,
+          businessPhase: newPhase,
+        },
       });
       return updated;
     });
@@ -1441,25 +1971,272 @@ export class CasesService {
     if (nextStage !== "coe_sent") return;
 
     const guard = await checkFinalPaymentGuard(tx, current.id);
-    if (!guard || guard.settled) return;
+    const decision = decideFinalPaymentGuard(
+      guard,
+      current.billingRiskAcknowledgedAt !== null,
+    );
 
-    if (guard.gateEffectMode === "block") {
+    if (decision.decision === "block") {
       throw new BadRequestException(
-        `Final payment is still unpaid (${String(guard.unpaid)}). Current billing gate blocks COE sending.`,
+        CASE_WRITE_ERROR_CODES.POST_APPROVAL_BILLING_BLOCKED +
+          `: Final payment is still unpaid (${String(decision.unpaid)}). ` +
+          `Billing gate blocks COE sending.`,
       );
     }
 
-    if (!current.billingRiskAcknowledgedAt) {
+    if (decision.decision === "warn_requires_ack") {
       throw new BadRequestException(
-        `Final payment is still unpaid (${String(guard.unpaid)}). Please acknowledge billing risk before sending COE.`,
+        CASE_WRITE_ERROR_CODES.POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED +
+          `: Final payment is still unpaid (${String(decision.unpaid)}). ` +
+          `Please acknowledge billing risk before sending COE.`,
       );
     }
   }
 
-  /** 预解析 document_checklist template。
-   * @param ctx 请求上下文 @param caseTypeCode 案件类型编码
-   * @param caseTypeCode
-   * @returns checklist 项目数组（legacy/无模板返回空数组；服务异常向上抛出） */
+  /** P1 业务子步骤流转，不修改 Case.stage。海外返签步骤附带自动打戳与结果态收敛。 */
+  async transitionWorkflowStep(
+    ctx: RequestContext,
+    id: string,
+    input: WorkflowStepTransitionInput,
+  ): Promise<Case> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Case not found or deleted");
+    assertNotArchived(current);
+
+    const toStepCode = validateWorkflowStepTransitionTarget(
+      current,
+      input.toStepCode,
+    );
+    const fromStepCode = current.currentWorkflowStepCode;
+    const overseas = resolveOverseasStepEffects(current, toStepCode);
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      await this.assertWorkflowStepBillingGate(tx, current, toStepCode);
+      const result = await tx.query<CaseQueryRow>(
+        `update cases
+         set current_workflow_step_code = $2,
+             coe_sent_at = case when $3::boolean then now() else coe_sent_at end,
+             overseas_visa_start_at = case when $4::boolean then now() else overseas_visa_start_at end,
+             entry_confirmed_at = case when $5::boolean then now() else entry_confirmed_at end,
+             result_outcome = coalesce($6, result_outcome),
+             updated_at = now()
+         where id = $1
+           and coalesce(metadata->>'_status', '') is distinct from 'deleted'
+         returning ${CASE_COLS}`,
+        [
+          id,
+          toStepCode,
+          overseas.stampCoeSent,
+          overseas.stampOverseasVisa,
+          overseas.stampEntryConfirmed,
+          overseas.resultOutcome,
+        ],
+      );
+      const row = result.rows.at(0);
+      if (!row) throw new BadRequestException("Failed to update workflow step");
+      const updated = mapCaseRow(row);
+
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: "case.workflow_step_transitioned",
+        payload: { from: fromStepCode, to: toStepCode },
+      });
+
+      await this.writeOverseasStepTimeline(tx, ctx, updated, toStepCode);
+
+      return updated;
+    });
+  }
+
+  /**
+   * businessPhase 维度流转 — 独立于 S1-S9 stage 轴。
+   *
+   * CLOSED_SUCCESS gate：
+   *   - 当前 phase 必须为 RENEWAL_REMINDER_SCHEDULED
+   *   - 对应 case 必须已有 current residence_period（is_current=true）
+   *   - reminder_created 必须为 true
+   *
+   * CLOSED_FAILED gate：
+   *   - 必须提供 closeReason（由 assertPhaseTransition 校验合法路径后额外检查）
+   */
+  async transitionPhase(
+    ctx: RequestContext,
+    id: string,
+    input: PhaseTransitionInput,
+  ): Promise<Case> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Case not found or deleted");
+    assertNotArchived(current);
+
+    const fromPhase = current.businessPhase;
+    const toPhase = input.toPhase;
+
+    if (!isBusinessPhase(toPhase)) {
+      throw new BadRequestException(`Invalid target phase: ${toPhase}`);
+    }
+
+    try {
+      assertPhaseTransition(fromPhase, toPhase);
+    } catch (e) {
+      if (e instanceof PhaseTransitionError) {
+        throw new BadRequestException(e.message);
+      }
+      throw e;
+    }
+
+    if (toPhase === "CLOSED_SUCCESS") {
+      await this.assertClosedSuccessGate(ctx, id);
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      const result = await tx.query<CaseQueryRow>(
+        `update cases set business_phase = $2, updated_at = now()
+         where id = $1 and business_phase = $3
+           and coalesce(metadata->>'_status','') is distinct from 'deleted'
+         returning ${CASE_COLS}`,
+        [id, toPhase, fromPhase],
+      );
+      const row = result.rows.at(0);
+      if (!row) {
+        throw new BadRequestException(
+          `Phase transition conflict: case phase has already changed from '${fromPhase}'`,
+        );
+      }
+      const updated = mapCaseRow(row);
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: "case.phase_transitioned",
+        payload: {
+          from: fromPhase,
+          to: toPhase,
+        },
+      });
+      return updated;
+    });
+  }
+
+  private async assertClosedSuccessGate(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const rp = await queryCurrentResidencePeriod(tenantDb, caseId);
+
+    if (!rp) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.SUCCESS_CLOSEOUT_BLOCKED +
+          ": CLOSED_SUCCESS requires a current residence period record",
+      );
+    }
+
+    if (!rp.reminderCreated) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.SUCCESS_CLOSEOUT_BLOCKED +
+          ": CLOSED_SUCCESS requires reminderCreated=true on the current residence period",
+      );
+    }
+  }
+
+  /**
+   * 海外返签步骤流转后的额外时间线写入。
+   *
+   * - ENTRY_SUCCESS → case.overseas_entry_confirmed
+   * - VISA_REJECTED → case.overseas_visa_rejected
+   */
+  private async writeOverseasStepTimeline(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    updated: Case,
+    toStepCode: string,
+  ): Promise<void> {
+    if (!isOverseasStepCode(toStepCode)) return;
+
+    if (toStepCode === OVERSEAS_STEP_CODES.ENTRY_SUCCESS) {
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: OVERSEAS_TIMELINE_ACTIONS.ENTRY_CONFIRMED,
+        payload: { entryConfirmedAt: updated.entryConfirmedAt },
+      });
+    }
+
+    if (toStepCode === OVERSEAS_STEP_CODES.VISA_REJECTED) {
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: OVERSEAS_TIMELINE_ACTIONS.VISA_REJECTED_CLOSURE,
+        payload: {
+          stepCode: VISA_REJECTED_CLOSURE.terminalStepCode,
+          resultOutcome: updated.resultOutcome,
+          closeReason: updated.closeReason,
+          targetParentStage: VISA_REJECTED_CLOSURE.targetParentStage,
+          autoTransitionToS9: VISA_REJECTED_CLOSURE.autoTransitionToS9,
+        },
+      });
+    }
+  }
+
+  /** 子步骤收费门禁检查 — block 与 warn 双路径对齐 decideFinalPaymentGuard。 */
+  private async assertWorkflowStepBillingGate(
+    tx: TenantDbTx,
+    current: Case,
+    toStepCode: BmvWorkflowStep,
+  ): Promise<void> {
+    const blueprintItem = BMV_STEP_LOOKUP.get(toStepCode);
+    if (
+      !blueprintItem?.billingGate ||
+      blueprintItem.billingGate.mode === "off"
+    ) {
+      return;
+    }
+
+    const guard = await checkFinalPaymentGuard(tx, current.id);
+    const blueprintMode = blueprintItem.billingGate.mode;
+
+    const effectiveGuard =
+      guard &&
+      !guard.settled &&
+      blueprintMode === "block" &&
+      guard.gateEffectMode !== "block"
+        ? {
+            settled: false as const,
+            unpaid: guard.unpaid,
+            gateEffectMode: "block" as const,
+          }
+        : guard;
+
+    const decision = decideFinalPaymentGuard(
+      effectiveGuard,
+      current.billingRiskAcknowledgedAt !== null,
+    );
+
+    if (decision.decision === "block") {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_BILLING_BLOCKED +
+          `: Final payment is still unpaid (${String(decision.unpaid)}). ` +
+          `Billing gate blocks advancing to ${toStepCode}.`,
+      );
+    }
+
+    if (decision.decision === "warn_requires_ack") {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.WORKFLOW_STEP_BILLING_BLOCKED +
+          `: Final payment is still unpaid (${String(decision.unpaid)}). ` +
+          `Please acknowledge billing risk before advancing to ${toStepCode}.`,
+      );
+    }
+  }
+
+  /**
+   * 预解析 `document_checklist` 模板配置。
+   * @param ctx 请求上下文。
+   * @param caseTypeCode 案件类型编码。
+   * @returns checklist 项目数组；legacy/无模板时返回空数组。
+   */
   private async resolveChecklistItems(
     ctx: RequestContext,
     caseTypeCode: string,
@@ -1469,9 +2246,35 @@ export class CasesService {
       key: caseTypeCode,
     });
     if (resolved.mode !== "template" || !resolved.used) return [];
-    return Array.isArray(resolved.config.items)
-      ? (resolved.config.items as ChecklistItem[])
-      : [];
+
+    const rawItems = Array.isArray(resolved.config.items)
+      ? (resolved.config.items as Record<string, unknown>[])
+      : Array.isArray(resolved.config.requirementBlueprint)
+        ? (resolved.config.requirementBlueprint as Record<string, unknown>[])
+        : [];
+
+    return rawItems.map((item) => {
+      const code =
+        typeof item.code === "string"
+          ? item.code
+          : typeof item.itemCode === "string"
+            ? item.itemCode
+            : typeof item.checklistItemCode === "string"
+              ? item.checklistItemCode
+              : "";
+
+      return {
+        code,
+        name: typeof item.name === "string" ? item.name : "",
+        ownerSide:
+          typeof item.ownerSide === "string" ? item.ownerSide : "applicant",
+        category: typeof item.category === "string" ? item.category : null,
+        requiredFlag:
+          typeof item.requiredFlag === "boolean" ? item.requiredFlag : false,
+        providedByRole:
+          typeof item.providedByRole === "string" ? item.providedByRole : null,
+      };
+    });
   }
 
   /** 校验 state_flow 模板允许的状态变更。
@@ -1484,6 +2287,7 @@ export class CasesService {
     c: Case,
     from: string,
     to: string,
+    closeReason?: string | null,
   ): Promise<void> {
     const resolved = await this.templatesResolver.resolve(ctx, {
       kind: "state_flow",
@@ -1491,7 +2295,6 @@ export class CasesService {
       entityId: c.id,
     });
 
-    // Template 定义的 state_flow 优先
     if (resolved.mode === "template" && resolved.used) {
       const ts = Array.isArray(resolved.config.allowedTransitions)
         ? (resolved.config.allowedTransitions as { from: string; to: string }[])
@@ -1501,11 +2304,10 @@ export class CasesService {
           `Transition from '${from}' to '${to}' is not allowed`,
         );
       }
-      await this.validateTransitionGate(ctx, c, from, to);
+      await this.validateTransitionGate(ctx, c, from, to, closeReason);
       return;
     }
 
-    // 回退到默认流转矩阵
     const allowed = DEFAULT_CASE_TRANSITIONS[from] as string[] | undefined;
     if (!allowed?.includes(to)) {
       throw new BadRequestException(
@@ -1513,7 +2315,7 @@ export class CasesService {
       );
     }
 
-    await this.validateTransitionGate(ctx, c, from, to);
+    await this.validateTransitionGate(ctx, c, from, to, closeReason);
   }
 
   private async validateTransitionGate(
@@ -1521,6 +2323,7 @@ export class CasesService {
     c: Case,
     from: string,
     to: string,
+    closeReason?: string | null,
   ): Promise<void> {
     if (from === "S3" && to === "S4") {
       await this.validateReadyForDocumentPreparation(ctx, c);
@@ -1539,6 +2342,11 @@ export class CasesService {
 
     if (from === "S6" && to === "S7") {
       await this.validateGateC(ctx, c);
+      return;
+    }
+
+    if (from === "S8" && to === "S9") {
+      await this.validateSuccessCloseout(ctx, c, closeReason);
       return;
     }
   }
@@ -1674,6 +2482,45 @@ export class CasesService {
   }
 
   /**
+   * S8→S9 結案前置条件 — BMV 案件で failure path bypass 後、成功結案を検証。
+   *
+   * 失敗結案パス（VISA_REJECTED ステップ / resultOutcome ∈ failure set / closeReason 明示）
+   * は canBypassSuccessCloseoutForFailure() により成功結案前置条件をバイパス。
+   *
+   * 成功結案必须满足三項：入境確認、在留期間録入、续签提醒生成。
+   */
+  private async validateSuccessCloseout(
+    ctx: RequestContext,
+    c: Case,
+    closeReason?: string | null,
+  ): Promise<void> {
+    if (!requiresSuccessCloseoutCheck(c)) return;
+
+    if (canBypassSuccessCloseoutForFailure(c, closeReason)) return;
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const currentResidencePeriod = await queryCurrentResidencePeriod(
+      tenantDb,
+      c.id,
+    );
+
+    const check = checkSuccessCloseoutPreconditions({
+      caseEntity: c,
+      currentResidencePeriod,
+    });
+
+    if (!check.allSatisfied) {
+      const unsatisfied = check.preconditions
+        .filter((p) => !p.satisfied)
+        .map((p) => `${p.code}(${p.label})`);
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.SUCCESS_CLOSEOUT_BLOCKED +
+          `: S8→S9 success closeout blocked: ${unsatisfied.join(", ")}`,
+      );
+    }
+  }
+
+  /**
    * 校验最新 ValidationRun=passed 且 non-stale，以及复核（如启用）。
    * S5→S6 和 Gate-C 共用此逻辑。
    */
@@ -1789,8 +2636,8 @@ export class CasesService {
       `insert into cases (org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, due_at, metadata,
         case_no, case_name, case_subtype, application_type, company_id, priority, risk_level,
         assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date,
-        result_outcome, quote_price)
-       values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25) returning ${CASE_COLS}`,
+        result_outcome, quote_price, visa_plan, business_phase)
+       values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning ${CASE_COLS}`,
       params,
     );
     const row = result.rows.at(0);
@@ -1845,8 +2692,8 @@ export class CasesService {
            risk_level = $13, assistant_user_id = $14, source_channel = $15,
            signed_at = $16, accepted_at = $17, submission_date = $18,
            result_date = $19, residence_expiry_date = $20, archived_at = $21,
-           result_outcome = $22, quote_price = $23,
-           overseas_visa_start_at = $24, entry_confirmed_at = $25,
+           result_outcome = $22, quote_price = $23, visa_plan = $24,
+           overseas_visa_start_at = $25, entry_confirmed_at = $26,
            updated_at = now()
        where id = $1 and coalesce(metadata->>'_status', '') is distinct from 'deleted'
        returning ${CASE_COLS}`,
@@ -1874,6 +2721,7 @@ export class CasesService {
         f.archivedAt,
         f.resultOutcome,
         f.quotePrice,
+        f.visaPlan,
         f.overseasVisaStartAt,
         f.entryConfirmedAt,
       ],
@@ -1896,7 +2744,8 @@ export class CasesService {
   ): Promise<void> {
     for (const item of items) {
       await tx.query(
-        `insert into document_items (org_id,case_id,checklist_item_code,name,status,owner_side) values ($1,$2,$3,$4,$5,$6)`,
+        `insert into document_items (org_id, case_id, checklist_item_code, name, status, owner_side, category, required_flag, provided_by_role)
+         values ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
         [
           orgId,
           caseId,
@@ -1904,6 +2753,9 @@ export class CasesService {
           item.name,
           "pending",
           item.ownerSide ?? "applicant",
+          item.category ?? null,
+          item.requiredFlag ?? false,
+          item.providedByRole ?? null,
         ],
       );
     }
@@ -1931,6 +2783,26 @@ export class CasesService {
       [customerId],
     );
     return result.rows.at(0)?.group_id ?? null;
+  }
+
+  /**
+   *
+   */
+  async incrementSupplementCount(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<number> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<{ supplement_count: string }>(
+      `UPDATE cases
+       SET supplement_count = supplement_count + 1, updated_at = now()
+       WHERE id = $1
+       RETURNING supplement_count`,
+      [caseId],
+    );
+    const row = result.rows.at(0);
+    if (!row) throw new BadRequestException("Case not found");
+    return Number(row.supplement_count);
   }
 
   /** 允许 assertBelongsToOrg 使用的表名白名单。 */
@@ -1963,7 +2835,14 @@ export class CasesService {
   }
 }
 
-type ChecklistItem = { code: string; name: string; ownerSide?: string };
+type ChecklistItem = {
+  code: string;
+  name: string;
+  ownerSide?: string;
+  category?: string | null;
+  requiredFlag?: boolean;
+  providedByRole?: string | null;
+};
 
 type TimelineInput = {
   entityType: string;

@@ -82,6 +82,7 @@ void test("TimelineService lists timeline logs with filters", async () => {
               entity_id: "c1",
               action: "case.status_changed",
               actor_user_id: "00000000-0000-4000-8000-000000000001",
+              actor_display_name: "Tanaka Yuki",
               payload: { from: "intake", to: "review" },
               created_at: "2026-01-01T00:00:00.000Z",
             },
@@ -111,9 +112,11 @@ void test("TimelineService lists timeline logs with filters", async () => {
   assert.equal(logs.length, 1);
   assert.equal(logs[0]?.entityType, "case");
   assert.equal(logs[0]?.entityId, "c1");
+  assert.equal(logs[0]?.actorDisplayName, "Tanaka Yuki");
   assert.deepEqual(logs[0]?.payload, { from: "intake", to: "review" });
 
   const selectCall = calls.find((c) => c.sql.includes("from timeline_logs"));
   if (!selectCall) throw new Error("missing select call");
+  assert.match(selectCall.sql, /left join users/u);
   assert.deepEqual(selectCall.params, ["case", "c1", 10]);
 });

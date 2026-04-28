@@ -1,6 +1,7 @@
 const settingsZhCN = {
   title: "系统设置",
   subnav: {
+    ariaLabel: "设置子导航",
     groupManagement: "Group 管理",
     visibilityConfig: "可见性配置",
     storageRoot: "本地资料根目录",

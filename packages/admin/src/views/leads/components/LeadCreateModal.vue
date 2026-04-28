@@ -6,7 +6,12 @@
  */
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
-import type { LeadCreateFormFields, LeadSummary } from "../types";
+import type {
+  DedupMatch,
+  LeadCreateFormFields,
+  OwnerOption,
+  SelectOption,
+} from "../types";
 import LeadCreateModalBody from "./LeadCreateModalBody.vue";
 
 /** 新建线索弹窗：表单外壳 + 去重面板 + 创建/草稿按钮。 */
@@ -15,9 +20,12 @@ const { t } = useI18n();
 defineProps<{
   open?: boolean;
   fields?: LeadCreateFormFields;
+  ownerOptions?: OwnerOption[];
+  groupOptions?: SelectOption[];
   canCreate?: boolean;
+  submitting?: boolean;
   showDedupe?: boolean;
-  dedupeMatches?: LeadSummary[];
+  dedupeMatches?: DedupMatch[];
 }>();
 
 defineEmits<{
@@ -25,6 +33,7 @@ defineEmits<{
   saveDraft: [];
   create: [];
   "update:field": [name: keyof LeadCreateFormFields, value: string];
+  "dedup-check": [phone: string, email: string];
 }>();
 </script>
 
@@ -63,11 +72,17 @@ defineEmits<{
         <div class="lead-modal__body">
           <LeadCreateModalBody
             :fields="fields"
+            :owner-options="ownerOptions"
+            :group-options="groupOptions"
             :show-dedupe="showDedupe"
             :dedupe-matches="dedupeMatches"
             @update:field="
               (n: keyof LeadCreateFormFields, v: string) =>
                 $emit('update:field', n, v)
+            "
+            @dedup-check="
+              (phone: string, email: string) =>
+                $emit('dedup-check', phone, email)
             "
           />
         </div>
@@ -82,10 +97,14 @@ defineEmits<{
           <Button
             variant="filled"
             tone="primary"
-            :disabled="!canCreate"
+            :disabled="!canCreate || submitting"
             @click="$emit('create')"
           >
-            {{ t("leads.list.createModal.create") }}
+            {{
+              submitting
+                ? t("shared.submitting")
+                : t("leads.list.createModal.create")
+            }}
           </Button>
         </div>
       </div>

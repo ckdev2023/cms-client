@@ -2,11 +2,7 @@
  * Portal 域实体类型定义与 DB 行映射函数。
  */
 
-// ── Portal Timeline Entity Type ──
-
-/**
- * Portal 侧的 timeline entity type。
- */
+/** Portal 侧的 timeline entity type。 */
 export type PortalTimelineEntityType =
   | "app_user"
   | "lead"
@@ -14,8 +10,6 @@ export type PortalTimelineEntityType =
   | "message"
   | "user_document"
   | "intake_form";
-
-// ── Entity Types ──
 
 /** AppUser 核心对象（用户端账号）。 */
 export type AppUser = {
@@ -29,7 +23,12 @@ export type AppUser = {
   updatedAt: string;
 };
 
-/** Lead 核心对象（线索/咨询）。 */
+/**
+ * Lead 核心对象（线索/咨询）。
+ *
+ * P0 扩展（027 migration）：owner_user_id 为单一负责人字段。
+ * 旧 assigned_user_id 在 DB 侧保留为 view alias 一个版本。
+ */
 export type Lead = {
   id: string;
   orgId: string | null;
@@ -38,12 +37,30 @@ export type Lead = {
   language: string;
   status: string;
   assignedOrgId: string | null;
+  /** @deprecated Use {@link ownerUserId}. Kept as alias during migration 027. */
   assignedUserId: string | null;
+  leadNo: string | null;
+  name: string | null;
+  phone: string | null;
+  email: string | null;
+  sourceChannel: string | null;
+  referrer: string | null;
+  intendedCaseType: string | null;
+  groupId: string | null;
+  /** 单一负责人。027 migration 中由 assigned_user_id rename 而来。 */
+  ownerUserId: string | null;
+  nextAction: string | null;
+  nextFollowUpAt: string | null;
+  quoteAmount: number | null;
+  note: string | null;
+  lostReason: string | null;
+  convertedCustomerId: string | null;
+  convertedCaseId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-/** Conversation 核心对象（会话）。 */
+/** Conversation 核心对象（会話）。 */
 export type Conversation = {
   id: string;
   leadId: string | null;
@@ -52,11 +69,18 @@ export type Conversation = {
   channel: string;
   preferredLanguage: string;
   status: string;
+  ownerUserId: string | null;
+  lastMessageAt: string | null;
+  unreadCountStaffTenant: number;
+  unreadCountStaffOwner: number;
+  unreadCountUser: number;
+  customerId: string | null;
+  caseId: string | null;
   createdAt: string;
   updatedAt: string;
 };
 
-/** Message 核心对象（消息，含多语翻译）。 */
+/** Message 核心对象（消息，含多語翻訳）。 */
 export type Message = {
   id: string;
   conversationId: string;
@@ -69,6 +93,8 @@ export type Message = {
   translatedTextZh: string | null;
   translatedTextEn: string | null;
   translationStatus: string;
+  kind: string;
+  visibleScope: string;
   createdAt: string;
 };
 
@@ -92,13 +118,12 @@ export type IntakeForm = {
   appUserId: string;
   leadId: string | null;
   caseDraftId: string | null;
+  formKind: string;
   formData: Record<string, unknown>;
   status: string;
   createdAt: string;
   updatedAt: string;
 };
-
-// ── DB Row Types ──
 
 /** 数据库查询返回的 AppUser 行类型。 */
 export type AppUserQueryRow = {
@@ -112,7 +137,12 @@ export type AppUserQueryRow = {
   updated_at: unknown;
 };
 
-/** 数据库查询返回的 Lead 行类型。 */
+/**
+ * 数据库查询返回的 Lead 行类型。
+ *
+ * P0 新列在 027 migration 后可用；标记为可选以兼容迁移前查询。
+ * owner_user_id 为 canonical 列；assigned_user_id 为 view alias（一版本过渡）。
+ */
 export type LeadQueryRow = {
   id: string;
   org_id: string | null;
@@ -121,7 +151,24 @@ export type LeadQueryRow = {
   language: string;
   status: string;
   assigned_org_id: string | null;
-  assigned_user_id: string | null;
+  /** @deprecated View alias; prefer owner_user_id. */
+  assigned_user_id?: string | null;
+  lead_no?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  source_channel?: string | null;
+  referrer?: string | null;
+  intended_case_type?: string | null;
+  group_id?: string | null;
+  owner_user_id?: string | null;
+  next_action?: string | null;
+  next_follow_up_at?: unknown;
+  quote_amount?: unknown;
+  note?: string | null;
+  lost_reason?: string | null;
+  converted_customer_id?: string | null;
+  converted_case_id?: string | null;
   created_at: unknown;
   updated_at: unknown;
 };
@@ -135,6 +182,13 @@ export type ConversationQueryRow = {
   channel: string;
   preferred_language: string;
   status: string;
+  owner_user_id?: string | null;
+  last_message_at?: unknown;
+  unread_count_staff_tenant?: unknown;
+  unread_count_staff_owner?: unknown;
+  unread_count_user?: unknown;
+  customer_id?: string | null;
+  case_id?: string | null;
   created_at: unknown;
   updated_at: unknown;
 };
@@ -152,6 +206,8 @@ export type MessageQueryRow = {
   translated_text_zh: string | null;
   translated_text_en: string | null;
   translation_status: string;
+  kind?: string;
+  visible_scope?: string;
   created_at: unknown;
 };
 
@@ -175,18 +231,31 @@ export type IntakeFormQueryRow = {
   app_user_id: string;
   lead_id: string | null;
   case_draft_id: string | null;
+  form_kind?: string;
   form_data: unknown;
   status: string;
   created_at: unknown;
   updated_at: unknown;
 };
 
-// ── Timestamp Helpers ──
-
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") return value;
   if (value instanceof Date) return value.toISOString();
+  return null;
+}
+
+function toNullableString(value: string | null | undefined): string | null {
+  return value ?? null;
+}
+
+function parseNullableNumber(value: unknown): number | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : null;
+  }
   return null;
 }
 
@@ -196,12 +265,71 @@ function requireTimestampString(value: unknown, field: string): string {
   return s;
 }
 
-// ── Map Functions ──
+type LeadQueryRowWithLegacyAlias = Omit<LeadQueryRow, "assigned_user_id"> & {
+  assigned_user_id?: string | null;
+};
+
+function readLegacyAssignedUserId(r: LeadQueryRow): string | null {
+  const legacyRow = r as LeadQueryRowWithLegacyAlias;
+  return toNullableString(legacyRow.assigned_user_id);
+}
+
+function resolveLeadOwnerUserId(r: LeadQueryRow): string | null {
+  return r.owner_user_id ?? readLegacyAssignedUserId(r);
+}
+
+function mapLeadIdentityFields(
+  r: LeadQueryRow,
+): Pick<
+  Lead,
+  | "leadNo"
+  | "name"
+  | "phone"
+  | "email"
+  | "sourceChannel"
+  | "referrer"
+  | "intendedCaseType"
+  | "groupId"
+> {
+  return {
+    leadNo: toNullableString(r.lead_no),
+    name: toNullableString(r.name),
+    phone: toNullableString(r.phone),
+    email: toNullableString(r.email),
+    sourceChannel: toNullableString(r.source_channel),
+    referrer: toNullableString(r.referrer),
+    intendedCaseType: toNullableString(r.intended_case_type),
+    groupId: toNullableString(r.group_id),
+  };
+}
+
+function mapLeadLifecycleFields(
+  r: LeadQueryRow,
+): Pick<
+  Lead,
+  | "nextAction"
+  | "nextFollowUpAt"
+  | "quoteAmount"
+  | "note"
+  | "lostReason"
+  | "convertedCustomerId"
+  | "convertedCaseId"
+> {
+  return {
+    nextAction: toNullableString(r.next_action),
+    nextFollowUpAt: toTimestampStringOrNull(r.next_follow_up_at),
+    quoteAmount: parseNullableNumber(r.quote_amount),
+    note: toNullableString(r.note),
+    lostReason: toNullableString(r.lost_reason),
+    convertedCustomerId: toNullableString(r.converted_customer_id),
+    convertedCaseId: toNullableString(r.converted_case_id),
+  };
+}
 
 /**
- * 将 DB 行映射为 AppUser。
+ * DB 行→AppUser。
  * @param r DB 行
- * @returns AppUser
+ * @returns 映射結果
  */
 export function mapAppUserRow(r: AppUserQueryRow): AppUser {
   return {
@@ -218,10 +346,14 @@ export function mapAppUserRow(r: AppUserQueryRow): AppUser {
 
 /**
  * 将 DB 行映射为 Lead。
- * @param r DB 行
- * @returns Lead
+ *
+ * owner_user_id 优先；若缺失则回退到兼容视图中的 assigned_user_id。
+ * assignedUserId（deprecated）与 ownerUserId 会保持同一值。
+ * @param r Lead 查询结果行。
+ * @returns 映射后的 Lead 实体。
  */
 export function mapLeadRow(r: LeadQueryRow): Lead {
+  const ownerUserId = resolveLeadOwnerUserId(r);
   return {
     id: r.id,
     orgId: r.org_id,
@@ -230,16 +362,19 @@ export function mapLeadRow(r: LeadQueryRow): Lead {
     language: r.language,
     status: r.status,
     assignedOrgId: r.assigned_org_id,
-    assignedUserId: r.assigned_user_id,
+    assignedUserId: ownerUserId,
+    ...mapLeadIdentityFields(r),
+    ownerUserId,
+    ...mapLeadLifecycleFields(r),
     createdAt: requireTimestampString(r.created_at, "created_at"),
     updatedAt: requireTimestampString(r.updated_at, "updated_at"),
   };
 }
 
 /**
- * 将 DB 行映射为 Conversation。
+ * DB 行→Conversation。
  * @param r DB 行
- * @returns Conversation
+ * @returns 映射結果
  */
 export function mapConversationRow(r: ConversationQueryRow): Conversation {
   return {
@@ -250,15 +385,23 @@ export function mapConversationRow(r: ConversationQueryRow): Conversation {
     channel: r.channel,
     preferredLanguage: r.preferred_language,
     status: r.status,
+    ownerUserId: toNullableString(r.owner_user_id),
+    lastMessageAt: toTimestampStringOrNull(r.last_message_at),
+    unreadCountStaffTenant:
+      parseNullableNumber(r.unread_count_staff_tenant) ?? 0,
+    unreadCountStaffOwner: parseNullableNumber(r.unread_count_staff_owner) ?? 0,
+    unreadCountUser: parseNullableNumber(r.unread_count_user) ?? 0,
+    customerId: toNullableString(r.customer_id),
+    caseId: toNullableString(r.case_id),
     createdAt: requireTimestampString(r.created_at, "created_at"),
     updatedAt: requireTimestampString(r.updated_at, "updated_at"),
   };
 }
 
 /**
- * 将 DB 行映射为 Message。
+ * DB 行→Message。
  * @param r DB 行
- * @returns Message
+ * @returns 映射結果
  */
 export function mapMessageRow(r: MessageQueryRow): Message {
   return {
@@ -273,14 +416,16 @@ export function mapMessageRow(r: MessageQueryRow): Message {
     translatedTextZh: r.translated_text_zh,
     translatedTextEn: r.translated_text_en,
     translationStatus: r.translation_status,
+    kind: r.kind ?? "text",
+    visibleScope: r.visible_scope ?? "client_visible",
     createdAt: requireTimestampString(r.created_at, "created_at"),
   };
 }
 
 /**
- * 将 DB 行映射为 UserDocument。
+ * DB 行→UserDocument。
  * @param r DB 行
- * @returns UserDocument
+ * @returns 映射結果
  */
 export function mapUserDocumentRow(r: UserDocumentQueryRow): UserDocument {
   return {
@@ -298,9 +443,9 @@ export function mapUserDocumentRow(r: UserDocumentQueryRow): UserDocument {
 }
 
 /**
- * 将 DB 行映射为 IntakeForm。
+ * DB 行→IntakeForm。
  * @param r DB 行
- * @returns IntakeForm
+ * @returns 映射結果
  */
 export function mapIntakeFormRow(r: IntakeFormQueryRow): IntakeForm {
   return {
@@ -308,6 +453,7 @@ export function mapIntakeFormRow(r: IntakeFormQueryRow): IntakeForm {
     appUserId: r.app_user_id,
     leadId: r.lead_id,
     caseDraftId: r.case_draft_id,
+    formKind: r.form_kind ?? "general",
     formData: normalizeFormData(r.form_data),
     status: r.status,
     createdAt: requireTimestampString(r.created_at, "created_at"),
@@ -334,19 +480,21 @@ function normalizeFormData(value: unknown): Record<string, unknown> {
   return {};
 }
 
+const PORTAL_ENTITY_TYPES = new Set([
+  "app_user",
+  "lead",
+  "conversation",
+  "message",
+  "user_document",
+  "intake_form",
+]);
 /**
- * 判断输入是否为 PortalTimelineEntityType。
- * @param value 待判断值
- * @returns 是否为 PortalTimelineEntityType
+ * 判定是否为 PortalTimelineEntityType。
+ * @param value 待判断値
+ * @returns 判定結果
  */
 export function isPortalTimelineEntityType(
   value: unknown,
 ): value is PortalTimelineEntityType {
-  if (value === "app_user") return true;
-  if (value === "lead") return true;
-  if (value === "conversation") return true;
-  if (value === "message") return true;
-  if (value === "user_document") return true;
-  if (value === "intake_form") return true;
-  return false;
+  return typeof value === "string" && PORTAL_ENTITY_TYPES.has(value);
 }

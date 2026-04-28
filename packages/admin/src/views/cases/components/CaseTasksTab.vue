@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import type { CaseDetail, TaskItem } from "../types-detail";
 
 /** 任务列表 Tab：展示待办与已完成任务，含到期日与负责人。 */
+const { t } = useI18n();
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -45,7 +47,7 @@ function avatarBg(item: TaskItem): string {
   <div class="tasks-tab">
     <Card padding="none">
       <template #header>
-        <h2 class="tasks-tab__title">任务列表</h2>
+        <h2 class="tasks-tab__title">{{ t("cases.detail.tasks.title") }}</h2>
         <button v-if="!readonly" class="tasks-tab__add-link" type="button">
           <svg
             width="16"
@@ -60,12 +62,12 @@ function avatarBg(item: TaskItem): string {
           >
             <path d="M12 4v16m8-8H4" />
           </svg>
-          新增任务
+          {{ t("cases.detail.tasks.addTask") }}
         </button>
       </template>
 
       <template v-if="detail.tasks.length > 0">
-        <div v-for="(task, i) in detail.tasks" :key="i" class="tasks-tab__row">
+        <div v-for="task in detail.tasks" :key="task.id" class="tasks-tab__row">
           <div class="tasks-tab__row-left">
             <span
               :class="[
@@ -129,7 +131,7 @@ function avatarBg(item: TaskItem): string {
             >
               <path d="M12 4v16m8-8H4" />
             </svg>
-            <span>添加新任务...</span>
+            <span>{{ t("cases.detail.tasks.addInline") }}</span>
           </button>
         </div>
       </template>
@@ -150,7 +152,7 @@ function avatarBg(item: TaskItem): string {
             d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
           />
         </svg>
-        <p>暂无待办任务</p>
+        <p>{{ t("cases.detail.tasks.empty") }}</p>
       </div>
     </Card>
   </div>

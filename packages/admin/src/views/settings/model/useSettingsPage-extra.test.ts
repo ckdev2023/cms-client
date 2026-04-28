@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref } from "vue";
+import { createOrgSettingsController } from "../../../shared/model/useOrgSettings";
 import { useSettingsPage, type UseSettingsPageDeps } from "./useSettingsPage";
 import type { OrgSettings } from "../types";
 import {
@@ -23,7 +24,7 @@ function createDeps(
     setTimeoutFn: vi.fn((fn: TimerHandler) => {
       if (typeof fn === "function") fn();
       return 0 as unknown as ReturnType<typeof setTimeout>;
-    }),
+    }) as unknown as typeof setTimeout,
     clearTimeoutFn: vi.fn(),
     ...overrides,
   };
@@ -39,7 +40,9 @@ function createDepsNoAutoToast(
     orgSettings: structuredClone(SAMPLE_ORG_SETTINGS),
     isAdmin: ref(true),
     toastDuration: 100,
-    setTimeoutFn: vi.fn(() => 999 as unknown as ReturnType<typeof setTimeout>),
+    setTimeoutFn: vi.fn(
+      () => 999 as unknown as ReturnType<typeof setTimeout>,
+    ) as unknown as typeof setTimeout,
     clearTimeoutFn: vi.fn(),
     ...overrides,
   };
@@ -83,6 +86,109 @@ describe("useSettingsPage — disableModal confirmation branches", () => {
     });
     expect(s.disableModal.groupName.value).toBe("東京二組");
     expect(s.disableModal.hasReferences.value).toBe(false);
+  });
+
+  it("loads org settings from repository on init", async () => {
+    const ctrl = createOrgSettingsController({
+      initialStorageRoot: { rootLabel: null, rootPath: null },
+    });
+    const s = useSettingsPage(
+      createDeps({
+        orgSettingsRepository: {
+          getOrgSettings: vi.fn().mockResolvedValue({
+            visibility: {
+              allowCrossGroupCaseCreate: true,
+              allowPrincipalViewCrossGroupCollab: true,
+            },
+            storageRoot: {
+              rootLabel: "共享盘",
+              rootPath: "\\srv\\shared",
+              updatedBy: "Admin",
+              updatedAt: "2026-04-27T10:00:00.000Z",
+            },
+          }),
+          updateOrgSettings: vi.fn(),
+        },
+        orgSettingsController: ctrl,
+      }),
+    );
+
+    await Promise.resolve();
+
+    expect(s.visibility.value.allowCrossGroupCaseCreate).toBe(true);
+    expect(s.storageRoot.value.rootLabel).toBe("共享盘");
+    expect(ctrl.storageRoot.value.rootPath).toBe("\\srv\\shared");
+  });
+
+  it("saveVisibility persists through repository and shows toast", async () => {
+    const updateOrgSettings = vi.fn().mockResolvedValue({
+      visibility: {
+        allowCrossGroupCaseCreate: true,
+        allowPrincipalViewCrossGroupCollab: false,
+      },
+      storageRoot: structuredClone(SAMPLE_ORG_SETTINGS.storageRoot),
+    });
+    const s = useSettingsPage(
+      createDepsNoAutoToast({
+        orgSettingsRepository: {
+          getOrgSettings: vi.fn().mockResolvedValue(SAMPLE_ORG_SETTINGS),
+          updateOrgSettings,
+        },
+      }),
+    );
+
+    s.visibility.value.allowCrossGroupCaseCreate = true;
+    await s.saveVisibility();
+
+    expect(updateOrgSettings).toHaveBeenCalledWith({
+      visibility: {
+        allowCrossGroupCaseCreate: true,
+        allowPrincipalViewCrossGroupCollab: false,
+      },
+    });
+    expect(s.toast.visible.value).toBe(true);
+    expect(s.toast.titleKey.value).toBe(
+      "settings.toast.visibilityUpdated.title",
+    );
+  });
+
+  it("saveStorageRoot syncs global controller after persistence", async () => {
+    const ctrl = createOrgSettingsController({
+      initialStorageRoot: { rootLabel: null, rootPath: null },
+    });
+    const updateOrgSettings = vi.fn().mockResolvedValue({
+      visibility: structuredClone(SAMPLE_ORG_SETTINGS.visibility),
+      storageRoot: {
+        rootLabel: "案件资料",
+        rootPath: "\\fileserver\\cases",
+        updatedBy: "Admin",
+        updatedAt: "2026-04-27T11:00:00.000Z",
+      },
+    });
+    const s = useSettingsPage(
+      createDepsNoAutoToast({
+        orgSettingsRepository: {
+          getOrgSettings: vi.fn().mockResolvedValue(SAMPLE_ORG_SETTINGS),
+          updateOrgSettings,
+        },
+        orgSettingsController: ctrl,
+      }),
+    );
+
+    s.storageRoot.value.rootLabel = "案件资料";
+    s.storageRoot.value.rootPath = "\\fileserver\\cases";
+    await s.saveStorageRoot();
+
+    expect(updateOrgSettings).toHaveBeenCalledWith({
+      storageRoot: {
+        rootLabel: "案件资料",
+        rootPath: "\\fileserver\\cases",
+      },
+    });
+    expect(ctrl.storageRoot.value).toEqual({
+      rootLabel: "案件资料",
+      rootPath: "\\fileserver\\cases",
+    });
   });
 });
 

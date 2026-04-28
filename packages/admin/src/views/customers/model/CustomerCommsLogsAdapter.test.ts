@@ -12,6 +12,7 @@ describe("CustomerCommsLogsAdapter BMV timeline mapping", () => {
           id: "log-001",
           action: "customer.bmv_questionnaire_sent",
           actorUserId: "user-001",
+          actorDisplayName: "田中太郎",
           payload: {
             beforeQuestionnaireStatus: "not_started",
             afterQuestionnaireStatus: "sent",
@@ -47,7 +48,7 @@ describe("CustomerCommsLogsAdapter BMV timeline mapping", () => {
       {
         id: "log-001",
         type: "comm",
-        actor: "user-001",
+        actor: "田中太郎",
         at: "2026-04-10T09:00:00.000Z",
         message: "发送经营管理签问卷：问卷：未发送 → 已发送",
       },
@@ -87,6 +88,7 @@ describe("CustomerCommsLogsAdapter BMV timeline mapping", () => {
           id: "log-001",
           action: "customer.bmv_questionnaire_sent",
           actorUserId: "user-001",
+          actorDisplayName: "田中太郎",
           payload: {
             beforeQuestionnaireStatus: "not_started",
             afterQuestionnaireStatus: "sent",
@@ -125,7 +127,7 @@ describe("CustomerCommsLogsAdapter BMV timeline mapping", () => {
         type: "email",
         visibility: "customer",
         occurredAt: "2026-04-10T09:00:00.000Z",
-        actor: "user-001",
+        actor: "田中太郎",
         summary: "发送经营管理签问卷",
         detail: "问卷：未发送 → 已发送",
         nextAction: "",

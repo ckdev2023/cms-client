@@ -20,6 +20,7 @@ function createCustomersService(
       canEditCustomer: () => true,
     } as unknown as PermissionsService,
     timelineService as never,
+    { create: () => Promise.resolve({}) } as never,
   );
 }
 

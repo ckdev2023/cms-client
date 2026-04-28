@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  *
  */
@@ -24,6 +25,8 @@ export interface CaseStage {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.stages.<code>`。 */
+  i18nKey: string;
   /**
    *
    */
@@ -196,6 +199,16 @@ export interface CaseListItem {
    *
    */
   materialSummary?: string;
+  /**
+   *
+   */
+  caseNo?: string;
+  /** 业务维度阶段（双层状态机）。NOT NULL，服务端强制写入。 */
+  businessPhase: string;
+  /** P1 BMV 当前业务子步骤标签（如"审查中"），非 BMV 案件为 `undefined`。 */
+  workflowStepLabel?: string;
+  /** P1 BMV 当前业务子步骤代码（如 `"UNDER_REVIEW"`），非 BMV 案件为 `undefined`。 */
+  workflowStepCode?: string;
 }
 
 /**
@@ -227,6 +240,8 @@ export interface CaseSummaryCardData {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.summaryCards.<key>`。 */
+  i18nKey: string;
 }
 
 /**
@@ -256,6 +271,8 @@ export interface CaseDetailTabDef {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.detailTabs.<key>`。 */
+  i18nKey: string;
   /**
    *
    */
@@ -283,6 +300,8 @@ export interface GateDefinition {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.gates.<id>.label`。 */
+  i18nKey: string;
   /**
    *
    */
@@ -291,6 +310,8 @@ export interface GateDefinition {
    *
    */
   desc: string;
+  /** 对应的 i18n key：`cases.constants.gates.<id>.desc`。 */
+  descI18nKey: string;
 }
 
 /**
@@ -311,6 +332,8 @@ export interface BillingStatusDef {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.billingStatuses.<key>`。 */
+  i18nKey: string;
   /**
    *
    */
@@ -334,6 +357,8 @@ export interface LogCategoryDef {
    *
    */
   label: string;
+  /** 对应的 i18n key：`cases.constants.logCategories.<key>`。 */
+  i18nKey: string;
 }
 
 /**
@@ -460,6 +485,12 @@ export type {
   PostApprovalFlow,
   ResidencePeriod,
   ReminderSchedule,
+  SurveyQuoteStatusKey,
+  SurveyQuoteStatus,
+  PreSignGateInfo,
+  PreSignBlocker,
+  WorkflowStepSummary,
+  FailureCloseoutInfo,
   CaseDetail,
   CaseCreateCustomerOption,
   FamilyDraftParty,
@@ -468,4 +499,7 @@ export type {
   DocumentReviewRecord,
   DocumentReminderRecord,
   DocumentItemActions,
+  SupplementRoundInfo,
+  SupplementRoundStatusKey,
+  ReminderFailureInfo,
 } from "./types-detail";

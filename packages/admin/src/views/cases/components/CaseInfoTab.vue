@@ -1,18 +1,42 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import type { CaseDetail, RelatedParty } from "../types-detail";
+import {
+  INFO_TAB_CASE_ATTRIBUTES_FIELDS,
+  INFO_TAB_READONLY_RULES,
+} from "../model/CaseAdapterDetailContracts";
 
-/** 基础信息 Tab：案件属性表单、关联主体列表与风险标签占位。 */
-defineProps<{
+/** 基本信息 Tab：展示案件属性、相关方与只读字段状态。 */
+const { t } = useI18n();
+
+const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
 }>();
 
+const isBmvCase = computed(
+  () => props.detail.workflowStep != null || props.detail.visaPlan != null,
+);
+
 /**
- * 根据关联主体的 avatarStyle 生成头像内联样式。
- *
- * @param party - 关联主体数据
- * @returns 包含 background 和 color 的样式对象
+ * P0 阶段所有 info tab 属性字段均为 display-only。
+ * 此函数统一判断：字段在 alwaysReadonly 列表中 → 永远 disabled；
+ * 否则退化为与 props.readonly（S9 归档）一致。
+ * @param field - info tab 字段 key
+ * @returns 当前字段是否应为只读展示态
+ */
+function isFieldDisabled(field: string): boolean {
+  const always = INFO_TAB_READONLY_RULES.alwaysReadonly as readonly string[];
+  if (always.includes(field)) return true;
+  return props.readonly;
+}
+
+/**
+ * 生成关联方头像区域的内联样式。
+ * @param party - 关联方信息。
+ * @returns 头像容器样式对象。
  */
 function partyAvatarStyle(party: RelatedParty): Record<string, string> {
   if (party.avatarStyle === "gradient") {
@@ -27,6 +51,9 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
     color: "var(--color-text-1)",
   };
 }
+
+const _contractGuard: readonly string[] = INFO_TAB_CASE_ATTRIBUTES_FIELDS;
+void _contractGuard;
 </script>
 
 <template>
@@ -34,72 +61,109 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
     <div class="info-tab__grid">
       <!-- Case attributes -->
       <div class="info-tab__main">
-        <Card title="案件属性" padding="md">
+        <Card :title="t('cases.detail.info.cardTitle')" padding="md">
           <div class="info-tab__fields">
             <div class="info-tab__field">
-              <label class="info-tab__label">案件编号</label>
-              <input
-                type="text"
-                class="info-tab__input info-tab__input--disabled"
-                :value="detail.id"
-                disabled
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.caseId")
+              }}</label>
+              <span class="info-tab__value info-tab__value--disabled">
+                {{ detail.id || "—" }}
+              </span>
             </div>
             <div class="info-tab__field">
-              <label class="info-tab__label">案件类型</label>
-              <input
-                type="text"
-                class="info-tab__input"
-                :class="{ 'info-tab__input--disabled': readonly }"
-                :value="detail.caseType"
-                :disabled="readonly"
-                readonly
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.caseType")
+              }}</label>
+              <span
+                class="info-tab__value"
+                :class="{
+                  'info-tab__value--disabled': isFieldDisabled('caseType'),
+                }"
+              >
+                {{ detail.caseType || "—" }}
+              </span>
             </div>
             <div class="info-tab__field">
-              <label class="info-tab__label">申请类型</label>
-              <input
-                type="text"
-                class="info-tab__input"
-                :class="{ 'info-tab__input--disabled': readonly }"
-                :value="detail.applicationType"
-                :disabled="readonly"
-                readonly
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.applicationType")
+              }}</label>
+              <span
+                class="info-tab__value"
+                :class="{
+                  'info-tab__value--disabled':
+                    isFieldDisabled('applicationType'),
+                }"
+              >
+                {{ detail.applicationType || "—" }}
+              </span>
             </div>
             <div class="info-tab__field">
-              <label class="info-tab__label">受理日期</label>
-              <input
-                type="text"
-                class="info-tab__input"
-                :class="{ 'info-tab__input--disabled': readonly }"
-                :value="detail.acceptedDate"
-                :disabled="readonly"
-                readonly
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.acceptedDate")
+              }}</label>
+              <span
+                class="info-tab__value"
+                :class="{
+                  'info-tab__value--disabled': isFieldDisabled('acceptedDate'),
+                }"
+              >
+                {{ detail.acceptedDate || "—" }}
+              </span>
             </div>
             <div class="info-tab__field">
-              <label class="info-tab__label">目标提交日期</label>
-              <input
-                type="text"
-                class="info-tab__input"
-                :class="{ 'info-tab__input--disabled': readonly }"
-                :value="detail.targetDate"
-                :disabled="readonly"
-                readonly
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.targetDate")
+              }}</label>
+              <span
+                class="info-tab__value"
+                :class="{
+                  'info-tab__value--disabled': isFieldDisabled('targetDate'),
+                }"
+              >
+                {{ detail.targetDate || "—" }}
+              </span>
             </div>
             <div class="info-tab__field">
-              <label class="info-tab__label">管辖机构</label>
-              <input
-                type="text"
-                class="info-tab__input"
-                :class="{ 'info-tab__input--disabled': readonly }"
-                :value="detail.agency"
-                :disabled="readonly"
-                readonly
-              />
+              <label class="info-tab__label">{{
+                t("cases.detail.info.fields.agency")
+              }}</label>
+              <span
+                class="info-tab__value"
+                :class="{
+                  'info-tab__value--disabled': isFieldDisabled('agency'),
+                }"
+              >
+                {{ detail.agency || "—" }}
+              </span>
             </div>
+
+            <template v-if="isBmvCase">
+              <div class="info-tab__field">
+                <label class="info-tab__label">{{
+                  t("cases.detail.info.fields.visaPlan")
+                }}</label>
+                <span class="info-tab__value info-tab__value--disabled">
+                  {{ detail.visaPlan || "—" }}
+                </span>
+              </div>
+              <div class="info-tab__field">
+                <label class="info-tab__label">{{
+                  t("cases.detail.info.fields.quotePrice")
+                }}</label>
+                <span class="info-tab__value info-tab__value--disabled">
+                  {{ detail.quotePriceLabel || "—" }}
+                </span>
+              </div>
+              <div class="info-tab__field">
+                <label class="info-tab__label">{{
+                  t("cases.detail.info.fields.supplementCount")
+                }}</label>
+                <span class="info-tab__value info-tab__value--disabled">
+                  {{ detail.supplementCount ?? "—" }}
+                </span>
+              </div>
+            </template>
           </div>
         </Card>
       </div>
@@ -109,9 +173,14 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
         <!-- Related parties -->
         <Card padding="md">
           <template #header>
-            <h3 class="info-tab__section-title">关联主体</h3>
+            <h3 class="info-tab__section-title">
+              {{ t("cases.detail.info.relatedParties.title") }}
+            </h3>
           </template>
-          <div class="info-tab__parties">
+          <div
+            v-if="detail.relatedParties.length > 0"
+            class="info-tab__parties"
+          >
             <div
               v-for="(party, i) in detail.relatedParties"
               :key="i"
@@ -132,18 +201,25 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
               <div class="info-tab__party-detail">{{ party.detail }}</div>
             </div>
           </div>
+          <div v-else class="info-tab__placeholder">
+            <span class="info-tab__placeholder-text">
+              {{ t("cases.detail.info.relatedParties.empty") }}
+            </span>
+          </div>
         </Card>
 
         <!-- Risk tags placeholder -->
         <Card padding="md">
           <h3 class="info-tab__section-title" style="margin-bottom: 12px">
-            风险标签
+            {{ t("cases.detail.info.riskTags.title") }}
           </h3>
           <div class="info-tab__placeholder">
-            <span class="info-tab__placeholder-text">暂无风险标签</span>
-            <span class="info-tab__placeholder-sub"
-              >风险标签功能将在后续版本上线</span
-            >
+            <span class="info-tab__placeholder-text">
+              {{ t("cases.detail.info.riskTags.empty") }}
+            </span>
+            <span class="info-tab__placeholder-sub">
+              {{ t("cases.detail.info.riskTags.placeholder") }}
+            </span>
           </div>
         </Card>
       </div>
@@ -204,7 +280,7 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
   letter-spacing: 0.04em;
 }
 
-.info-tab__input {
+.info-tab__value {
   padding: 8px 12px;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
@@ -212,21 +288,13 @@ function partyAvatarStyle(party: RelatedParty): Record<string, string> {
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-2);
   border-radius: var(--radius-default);
-  outline: none;
-  transition:
-    border-color var(--transition-normal),
-    box-shadow var(--transition-normal);
+  min-height: 38px;
+  line-height: 1.4;
 }
 
-.info-tab__input:focus-visible {
-  border-color: var(--color-primary-6);
-  box-shadow: 0 0 0 2px var(--color-primary-outline);
-}
-
-.info-tab__input--disabled {
+.info-tab__value--disabled {
   background: var(--color-bg-3);
   color: var(--color-text-3);
-  cursor: not-allowed;
 }
 
 /* ── Section title ─────────────────────────────────────── */

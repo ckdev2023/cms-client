@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import CaseCreatePreSignGate from "./CaseCreatePreSignGate.vue";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 
 /** 步骤四：创建复核摘要与成功状态展示。 */
@@ -9,18 +10,26 @@ const { t } = useI18n();
 defineProps<{
   model: CreateCaseModel;
   submitted: boolean;
+  submitError: string | null;
   summaryItems: { label: string; value: string }[];
-  createdCaseId: string;
 }>();
 
 const emit = defineEmits<{
   viewDetail: [];
   viewList: [];
+  goToCustomer: [];
 }>();
 </script>
 
 <template>
   <div>
+    <!-- Pre-sign gate feedback (p1-fe-003-02) -->
+    <CaseCreatePreSignGate
+      :gate="model.preSignGate.value"
+      :customer-id="model.primaryCustomer.value?.id ?? null"
+      @go-to-customer="emit('goToCustomer')"
+    />
+
     <div v-if="submitted" class="success">
       <div class="success__title">
         {{ t("cases.create.step4.successTitle") }}
@@ -40,6 +49,12 @@ const emit = defineEmits<{
           t("cases.create.step4.viewList")
         }}</Button>
       </div>
+    </div>
+    <div v-if="submitError" class="submit-error">
+      <div class="submit-error__title">
+        {{ t("cases.create.step4.errorTitle") }}
+      </div>
+      <div class="submit-error__desc">{{ submitError }}</div>
     </div>
     <h2 class="cc__title">{{ t("cases.create.step4.reviewTitle") }}</h2>
     <div class="summary">
@@ -90,6 +105,26 @@ const emit = defineEmits<{
   display: flex;
   gap: 10px;
   margin-top: 12px;
+}
+
+.submit-error {
+  padding: 20px;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  border-radius: var(--radius-lg);
+  background: rgba(254, 242, 242, 0.8);
+  margin-bottom: 20px;
+}
+
+.submit-error__title {
+  font-size: 17px;
+  font-weight: var(--font-weight-semibold);
+  color: #991b1b;
+}
+
+.submit-error__desc {
+  font-size: var(--font-size-sm);
+  color: #991b1b;
+  margin-top: 4px;
 }
 
 .summary {

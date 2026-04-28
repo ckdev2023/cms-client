@@ -2,6 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import type { SharedExpiryRiskData } from "../types";
+import { buildCaseDetailHref } from "../../cases/query";
 
 /**
  * 共享版本过期风险面板（P0-CONTRACT §9）。
@@ -79,7 +80,7 @@ defineEmits<{
                 >
                   <a
                     class="risk-panel__case-link"
-                    :href="`#/cases/${c.caseId}`"
+                    :href="buildCaseDetailHref(c.caseId)"
                   >
                     {{ c.caseName }}
                   </a>

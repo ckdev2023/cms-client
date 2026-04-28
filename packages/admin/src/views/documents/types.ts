@@ -24,7 +24,7 @@ export interface DocumentStatusDef {
   /**
    *
    */
-  label: string;
+  labelKey: string;
   /**
    *
    */
@@ -57,7 +57,7 @@ export interface DocumentProviderDef {
   /**
    *
    */
-  label: string;
+  labelKey: string;
 }
 
 // ─── Waived ──────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ export interface DocumentSummaryCardData {
   /**
    *
    */
-  label: string;
+  labelKey: string;
 }
 
 // ─── List Item (cross-case list) ─────────────────────────────────

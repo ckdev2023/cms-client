@@ -74,5 +74,11 @@ export default {
       from: { path: "^src/data" },
       to: { path: "^src/shared/ui" },
     },
+    {
+      name: "billing-no-cases",
+      severity: "error",
+      from: { path: "^src/views/billing" },
+      to: { path: "^src/views/cases" },
+    },
   ],
 };

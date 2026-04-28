@@ -46,6 +46,10 @@ const leadsEnUS = {
       adjustFollowUp: "Adjust follow-up",
       markStatus: "Mark status",
       selectStatus: "Select status",
+      addTags: "Tags",
+      tagsPlaceholder: "Comma-separated tags",
+      export: "Export",
+      exportBtn: "Export",
       apply: "Apply",
     },
     empty: {
@@ -60,7 +64,7 @@ const leadsEnUS = {
     },
     toast: {
       leadCreated: {
-        title: "Lead created (demo)",
+        title: "Lead created",
         description: "Ready for follow-up or filing",
       },
       draftSaved: {
@@ -80,8 +84,20 @@ const leadsEnUS = {
         description: "{count} selected, next follow-up: {date}",
       },
       bulkStatus: {
-        title: "Bulk status update (demo)",
+        title: "Bulk status update",
         description: "Success: {success}, skipped: {skipped}",
+      },
+      bulkTags: {
+        title: "Bulk tags applied",
+        description: "{count} leads tagged: {tags}",
+      },
+      bulkExport: {
+        title: "Export started",
+        description: "{count} leads exported as {format}",
+      },
+      createError: {
+        title: "Creation failed",
+        description: "Failed to create the lead. Please try again.",
       },
     },
     draft: {
@@ -138,6 +154,7 @@ const leadsEnUS = {
     tabs: {
       info: "Basic Info",
       followups: "Follow-ups",
+      conversations: "Conversations",
       conversion: "Conversion",
       log: "Log",
     },
@@ -176,6 +193,9 @@ const leadsEnUS = {
         note: "Note",
       },
     },
+    conversationsTab: {
+      empty: "No conversations linked to this lead yet.",
+    },
     followupsTab: {
       formTitle: "New Follow-up",
       channel: "Channel",
@@ -210,6 +230,13 @@ const leadsEnUS = {
       typeCustomer: "Customer",
       typeCase: "Case",
     },
+    convertDedup: {
+      title: "Possible duplicate detected",
+      description:
+        "This lead's phone/email matches an existing lead or customer. Continue converting?",
+      cancel: "Cancel",
+      confirm: "Confirm conversion",
+    },
     logTab: {
       title: "Activity Log",
       filterLabel: "Log category filter",
@@ -217,6 +244,51 @@ const leadsEnUS = {
       typeOwner: "Owner Change",
       typeGroup: "Group Change",
       emptyTitle: "No log entries",
+    },
+  },
+  errors: {
+    fetchFailed: "Failed to load leads. Please try again.",
+    updateFailed: "Failed to update the lead. Please try again.",
+    transitionFailed:
+      "Status transition failed. Check the current status and try again.",
+    followupFailed: "Failed to submit follow-up. Please try again.",
+    dedupFailed: "Duplicate check failed. Please try again.",
+    convertFailed: "Conversion failed. Please try again.",
+    exportFailed: "Export failed. Please try again.",
+    bulkPartialFailure:
+      "Bulk action partially failed: {success} succeeded, {failed} failed.",
+  },
+  statusTransition: {
+    invalidTransition: "This action is not allowed for the current status.",
+    lostReasonRequired:
+      "A lost reason is required when marking a lead as lost.",
+    lostRevivalTitle: "Confirm lead revival",
+    lostRevivalDescription:
+      'This lead is marked as lost. Are you sure you want to reactivate it to "Following"?',
+    lostRevivalConfirm: "Reactivate",
+    lostRevivalCancel: "Cancel",
+    lostRevivalSuccess: 'Lead has been reactivated to "Following".',
+    lostRevivalFailed: "Failed to reactivate the lead. Please try again.",
+    transitionSuccess: 'Status updated to "{status}".',
+    convertedCannotChange:
+      "A converted lead's status can no longer be changed.",
+  },
+  toast: {
+    updateSuccess: {
+      title: "Lead updated",
+      description: "Changes have been saved",
+    },
+    followupSuccess: {
+      title: "Follow-up submitted",
+      description: "Follow-up saved and next step updated",
+    },
+    transitionSuccess: {
+      title: "Status updated",
+      description: 'Lead status changed to "{status}"',
+    },
+    convertSuccess: {
+      title: "Conversion successful",
+      description: "Customer record created — you can now start a case",
     },
   },
 } as const;

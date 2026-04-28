@@ -9,6 +9,10 @@ import SearchField from "../../../shared/ui/SearchField.vue";
 import { getRelationTypeLabel } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerContactsModel } from "../model/useCustomerContactsModel";
+import {
+  buildCaseCreateRoute,
+  type CaseCreateQueryParams,
+} from "../../cases/query";
 import CustomerRelationModal from "./CustomerRelationModal.vue";
 /** 关联人 Tab：展示关联人表格，支持搜索、多选与批量操作占位。 */
 const props = withDefaults(
@@ -20,13 +24,16 @@ const props = withDefaults(
     >;
     batchCreateCaseDisabled?: boolean;
     batchCreateCaseHint?: string | null;
+    /** 从父组件传入的客户默认值 query 参数基础，合并到批量建案 route。 */
+    customerDefaults?: CaseCreateQueryParams;
   }>(),
   {
     batchCreateCaseDisabled: false,
     batchCreateCaseHint: null,
+    customerDefaults: undefined,
   },
 );
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 const customerIdRef = computed(() => props.customerId);
 const {
@@ -58,32 +65,45 @@ const {
   customerId: customerIdRef,
   repository: props.repository,
 });
+
+/**
+ * 根据当前语言返回关联人关系类型展示文案。
+ *
+ * @param type 关系类型值
+ * @returns 当前语言对应的关系类型标签
+ */
+function relationTypeLabel(type: string): string {
+  return getRelationTypeLabel(type, locale.value);
+}
 /** 跳转到家族批量建案，并把当前选中的关联人上下文序列化到 query。 */
 function handleBatchCreate(): void {
   const nextCustomerId = props.customerId.trim();
   if (!nextCustomerId || !selectedRelations.value.length) return;
-  void router.push({
-    name: "case-create",
-    hash: "#family-bulk",
-    query: {
-      customerId: nextCustomerId,
-      relationIds: selectedRelations.value
-        .map((relation) => relation.id)
-        .join(","),
-      selectedRelations: JSON.stringify(
-        selectedRelations.value.map((relation) => ({
-          id: relation.id,
-          name: relation.name,
-          relationType: relation.relationType,
-          roleTitle: relation.tags[0] || undefined,
-          phone: relation.phone || undefined,
-          email: relation.email || undefined,
-          tags: relation.tags,
-          note: relation.note || undefined,
-        })),
-      ),
-    },
-  });
+  void router.push(
+    buildCaseCreateRoute(
+      {
+        ...props.customerDefaults,
+        customerId: nextCustomerId,
+        relationIds: selectedRelations.value
+          .map((relation) => relation.id)
+          .join(","),
+        selectedRelations: JSON.stringify(
+          selectedRelations.value.map((relation) => ({
+            id: relation.id,
+            name: relation.name,
+            relationType: relation.relationType,
+            kind: "contact_person",
+            roleTitle: relation.tags[0] || undefined,
+            phone: relation.phone || undefined,
+            email: relation.email || undefined,
+            tags: relation.tags,
+            note: relation.note || undefined,
+          })),
+        ),
+      },
+      true,
+    ),
+  );
 }
 </script>
 
@@ -204,7 +224,7 @@ function handleBatchCreate(): void {
                 <div class="contacts-tab__sub">{{ r.kana || "—" }}</div>
               </td>
               <td class="contacts-tab__td contacts-tab__td--type">
-                {{ getRelationTypeLabel(r.relationType) }}
+                {{ relationTypeLabel(r.relationType) }}
               </td>
               <td class="contacts-tab__td contacts-tab__td--contact">
                 <div>{{ r.phone || "—" }}</div>
@@ -285,215 +305,4 @@ function handleBatchCreate(): void {
   </Card>
 </template>
 
-<style scoped>
-.contacts-tab {
-  display: flex;
-  flex-direction: column;
-}
-
-.contacts-tab__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.contacts-tab__title {
-  margin: 0;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-1);
-}
-
-.contacts-tab__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.contacts-tab__actions-hint {
-  margin: 0;
-  width: 100%;
-  text-align: right;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.contacts-tab__toolbar {
-  margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.contacts-tab__count {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  white-space: nowrap;
-}
-
-.contacts-tab__table-wrap {
-  margin-top: 16px;
-  overflow-x: auto;
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-xl);
-}
-
-.contacts-tab__state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 32px 24px;
-}
-
-.contacts-tab__state-text {
-  margin: 0;
-  color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
-}
-
-.contacts-tab__table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--font-size-sm);
-}
-
-.contacts-tab__th {
-  padding: 12px 16px;
-  text-align: left;
-  font-weight: var(--font-weight-black);
-  color: var(--color-text-3);
-  background: var(--color-bg-3);
-  white-space: nowrap;
-}
-
-.contacts-tab__th--check {
-  width: 44px;
-}
-
-.contacts-tab__th--type {
-  width: 120px;
-}
-
-.contacts-tab__th--contact {
-  width: 180px;
-}
-
-.contacts-tab__th--tags {
-  width: 160px;
-}
-
-.contacts-tab__th--note {
-  width: 180px;
-}
-
-.contacts-tab__th--action {
-  width: 120px;
-}
-
-@media (max-width: 767px) {
-  .contacts-tab__th--contact,
-  .contacts-tab__td--contact {
-    display: none;
-  }
-}
-
-@media (max-width: 1023px) {
-  .contacts-tab__th--tags,
-  .contacts-tab__td--tags,
-  .contacts-tab__th--note,
-  .contacts-tab__td--note {
-    display: none;
-  }
-}
-
-.contacts-tab__checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--color-primary-6);
-  cursor: pointer;
-}
-
-.contacts-tab__row {
-  transition: background-color var(--transition-normal);
-}
-
-.contacts-tab__row:hover {
-  background-color: var(--color-bg-3);
-}
-
-.contacts-tab__row + .contacts-tab__row {
-  border-top: 1px solid var(--color-border-1);
-}
-
-.contacts-tab__td {
-  padding: 12px 16px;
-  color: var(--color-text-2);
-  font-weight: var(--font-weight-semibold);
-}
-
-.contacts-tab__name {
-  font-weight: var(--font-weight-black);
-  color: var(--color-text-1);
-}
-
-.contacts-tab__sub {
-  margin-top: 2px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
-}
-
-.contacts-tab__tag-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.contacts-tab__dash {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
-}
-
-.contacts-tab__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 48px 24px;
-}
-
-.contacts-tab__empty-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: var(--radius-xl);
-  background: var(--color-bg-3);
-  border: 1px solid var(--color-border-1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-3);
-}
-
-.contacts-tab__empty-title {
-  margin: 16px 0 0;
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-1);
-}
-
-.contacts-tab__empty-desc {
-  margin: 8px 0 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  max-width: 400px;
-}
-</style>
+<style scoped src="./CustomerContactsTab.css"></style>

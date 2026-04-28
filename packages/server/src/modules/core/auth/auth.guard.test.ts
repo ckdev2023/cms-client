@@ -143,3 +143,31 @@ void test("AuthGuard keeps groupId in requestContext when provided", async () =>
     groupId: "tokyo",
   });
 });
+
+void test("AuthGuard attaches requestContext on public routes when admin auth is present", async () => {
+  const orgId = "00000000-0000-4000-8000-000000000000";
+  const userId = "00000000-0000-4000-8000-000000000001";
+
+  const reflector = new FakeReflector({
+    [IS_PUBLIC_KEY]: true,
+    [REQUIRED_ROLES_KEY]: [],
+  });
+  const pool = createPoolStub({ id: userId, role: "staff", status: "active" });
+  const guard = new AuthGuard(reflector as never, pool);
+
+  const req: {
+    requestAuthInput?: { orgId: string; userId: string };
+    requestContext?: {
+      orgId: string;
+      userId: string;
+      role: "owner" | "manager" | "staff" | "viewer";
+    };
+  } = {
+    requestAuthInput: { orgId, userId },
+  };
+  const ctx = createExecutionContext(req);
+
+  const ok = await guard.canActivate(ctx);
+  assert.equal(ok, true);
+  assert.deepEqual(req.requestContext, { orgId, userId, role: "staff" });
+});

@@ -28,6 +28,8 @@ const props = withDefaults(
 defineEmits<{
   "toggle-row": [id: string, checked: boolean];
   "toggle-all": [checked: boolean];
+  "register-payment": [caseId: string, billingPlanId: string];
+  "risk-ack": [caseId: string];
 }>();
 
 const { t } = useI18n();
@@ -137,6 +139,14 @@ watchEffect(() => {
           </th>
           <th class="billing-table__th billing-table__col--status">
             {{ t("billing.list.columns.status") }}
+          </th>
+          <th
+            class="billing-table__th billing-table__col--risk-ack billing-table__col--hide-sm"
+          >
+            {{ t("billing.riskAck.modal.title") }}
+          </th>
+          <th class="billing-table__th billing-table__col--actions">
+            {{ t("billing.list.columns.actions") }}
           </th>
         </tr>
       </thead>
@@ -265,6 +275,43 @@ watchEffect(() => {
               {{ t(STATUS_KEY[row.status]) }}
             </Chip>
           </td>
+
+          <!-- 风险確認 -->
+          <td
+            class="billing-table__td billing-table__col--risk-ack billing-table__col--hide-sm"
+          >
+            <template v-if="row.status === 'overdue'">
+              <Chip v-if="row.billingRiskAcknowledged" tone="success" size="sm">
+                {{
+                  t("billing.riskAck.chip.acknowledged", {
+                    date: row.billingRiskAcknowledgedAt ?? "",
+                  })
+                }}
+              </Chip>
+              <button
+                v-else
+                class="billing-table__risk-ack-btn"
+                type="button"
+                @click="$emit('risk-ack', row.caseId)"
+              >
+                <Chip tone="danger" size="sm" dot>
+                  {{ t("billing.riskAck.chip.notAcknowledged") }}
+                </Chip>
+              </button>
+            </template>
+          </td>
+
+          <!-- 操作 -->
+          <td class="billing-table__td billing-table__col--actions">
+            <button
+              v-if="row.status !== 'paid'"
+              class="billing-table__action-btn"
+              type="button"
+              @click="$emit('register-payment', row.caseId, row.id)"
+            >
+              {{ t("billing.list.actions.registerPayment") }}
+            </button>
+          </td>
         </tr>
       </tbody>
     </table>
@@ -275,13 +322,11 @@ watchEffect(() => {
 .billing-table {
   width: 100%;
 }
-
 .billing-table__grid {
   width: 100%;
   text-align: left;
   border-collapse: collapse;
 }
-
 .billing-table__th {
   padding: 10px 16px;
   font-size: var(--font-size-xs);
@@ -290,7 +335,6 @@ watchEffect(() => {
   border-bottom: 1px solid var(--color-border-1);
   white-space: nowrap;
 }
-
 .billing-table__td {
   padding: 12px 16px;
   font-size: var(--font-size-sm);
@@ -298,154 +342,141 @@ watchEffect(() => {
   border-bottom: 1px solid var(--color-border-1);
   vertical-align: middle;
 }
-
 .billing-table__row--overdue {
   background: rgba(220, 38, 38, 0.04);
 }
-
-/* --- Checkbox --- */
-
 .billing-table__col--checkbox {
   width: 44px;
   text-align: center;
 }
-
 .billing-table__checkbox-wrap {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 100%;
 }
-
 .billing-table__checkbox {
   accent-color: var(--color-primary-6);
   cursor: pointer;
 }
-
 .billing-table__checkbox--disabled {
   opacity: 0.4;
   cursor: not-allowed;
 }
-
-/* --- Column widths --- */
-
 .billing-table__col--group {
   width: 100px;
 }
-
 .billing-table__col--amount {
   width: 100px;
   text-align: right;
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
-
 .billing-table__col--status {
   width: 100px;
 }
-
-/* --- Case name --- */
-
+.billing-table__col--risk-ack {
+  width: 160px;
+}
+.billing-table__risk-ack-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+}
+.billing-table__col--actions {
+  width: 100px;
+  text-align: center;
+}
+.billing-table__action-btn {
+  all: unset;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-default);
+  transition: background var(--transition-fast);
+}
+.billing-table__action-btn:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
 .billing-table__case-name {
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
 }
-
 .billing-table__case-no {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
   margin-top: 2px;
   font-weight: var(--font-weight-semibold);
 }
-
-/* --- Client --- */
-
+.billing-table__client-name,
+.billing-table__client-type {
+  font-weight: var(--font-weight-semibold);
+}
 .billing-table__client-name {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
-
 .billing-table__client-type {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
 }
-
-/* --- Amount colors --- */
-
 .billing-table__amount--positive {
   color: var(--color-success);
 }
-
 .billing-table__amount--zero {
   color: var(--color-text-3);
 }
-
 .billing-table__amount--danger {
   color: var(--color-danger);
   font-weight: var(--font-weight-semibold);
 }
-
 .billing-table__amount--warning {
   color: #b45309;
 }
-
-/* --- Next node --- */
-
 .billing-table__node-name {
   font-size: var(--font-size-sm);
 }
-
 .billing-table__node-name--overdue {
   color: #991b1b;
   font-weight: var(--font-weight-extrabold);
 }
-
+.billing-table__node-date,
+.billing-table__node-empty {
+  font-weight: var(--font-weight-semibold);
+}
 .billing-table__node-date {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
 }
-
 .billing-table__node-date--overdue {
   color: #991b1b;
 }
-
 .billing-table__node-empty {
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
-  font-weight: var(--font-weight-semibold);
 }
-
-/* --- Empty state --- */
-
 .billing-table__empty {
   padding: 64px 16px;
   text-align: center;
 }
-
 .billing-table__empty-title {
   font-size: 15px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   margin: 0 0 4px;
 }
-
 .billing-table__empty-sub {
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
   margin: 0;
 }
-
-/* --- Responsive --- */
-
 @media (max-width: 767px) {
   .billing-table__col--hide-sm {
     display: none;
   }
 }
-
 @media (max-width: 1023px) {
   .billing-table__col--hide-md {
     display: none;

@@ -59,7 +59,10 @@ function statusTone(
 <template>
   <section class="detail-header">
     <div class="detail-header__top">
-      <nav class="detail-header__breadcrumb" aria-label="パンくずリスト">
+      <nav
+        class="detail-header__breadcrumb"
+        :aria-label="t('shared.breadcrumbsLabel')"
+      >
         <a href="#/leads" class="detail-header__back-link">
           <svg
             width="16"

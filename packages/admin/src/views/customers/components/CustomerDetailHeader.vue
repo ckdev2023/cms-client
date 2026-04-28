@@ -5,6 +5,7 @@ import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CustomerDetail } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerLabel } from "../../../shared/model/useOwnerOptions";
 
 /** 客户详情页头部：面包屑返回、头像、客户名称、属性 chip 与操作按钮区。 */
 const props = withDefaults(
@@ -27,17 +28,28 @@ defineEmits<{
   batchCreateCase: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const groupDisplay = computed(() =>
-  resolveGroupLabel(props.customer.group, t("shared.group.disabledSuffix")),
+  resolveGroupLabel(
+    props.customer.group,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  ),
+);
+
+const ownerDisplay = computed(() =>
+  resolveOwnerLabel(props.customer.owner.name, locale.value),
 );
 </script>
 
 <template>
   <section class="detail-header">
     <div class="detail-header__top">
-      <nav class="detail-header__breadcrumb" aria-label="パンくずリスト">
+      <nav
+        class="detail-header__breadcrumb"
+        :aria-label="t('shared.breadcrumbsLabel')"
+      >
         <a href="#/customers" class="detail-header__back-link">
           <svg
             width="16"
@@ -102,7 +114,7 @@ const groupDisplay = computed(() =>
           </Chip>
           <Chip size="sm">
             {{ t("customers.detail.header.owner") }}
-            <strong>{{ customer.owner.name }}</strong>
+            <strong>{{ ownerDisplay }}</strong>
           </Chip>
           <Chip size="sm">
             {{ t("customers.detail.header.lastContact") }}

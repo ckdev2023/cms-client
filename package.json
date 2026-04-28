@@ -38,6 +38,7 @@
     "server:guard": "npm --workspace server run guard",
     "guard": "npm run mobile:guard && npm run admin:guard && npm run server:guard",
     "fix": "npm run mobile:fix && npm run admin:fix && npm --workspace server run fix",
+    "batch:exit": "bash ./scripts/batch-exit-matrix.sh",
     "prepare": "husky"
   },
   "devDependencies": {

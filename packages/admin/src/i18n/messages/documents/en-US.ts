@@ -16,6 +16,12 @@ const documentsEnUS = {
       expired: "Expired",
       sharedExpiryRisk: "Shared version expiry risk",
     },
+    summaryHint: {
+      pendingReview: "Pending review",
+      missing: "Missing",
+      expired: "Expired",
+      sharedExpiryRisk: "Shared version expiry risk",
+    },
     filters: {
       statusAll: "Status: All",
       statusPendingReview: "Pending review",
@@ -59,6 +65,20 @@ const documentsEnUS = {
       toastApprove: "Approved {count} items",
       toastWaive: "Marked {count} items as waived",
     },
+  },
+  status: {
+    pending: "Pending submission",
+    uploadedReviewing: "Pending review",
+    approved: "Approved",
+    rejected: "Returned for revision",
+    expired: "Expired",
+    waived: "Not required",
+  },
+  providers: {
+    mainApplicant: "Main applicant",
+    dependentGuarantor: "Dependent / guarantor",
+    employerOrg: "Employer / organization contact",
+    officeInternal: "Office internal",
   },
   storageGate: {
     title: "Storage root not configured",

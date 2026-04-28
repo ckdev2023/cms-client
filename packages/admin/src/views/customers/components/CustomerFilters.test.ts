@@ -56,6 +56,20 @@ describe("CustomerFilters", () => {
     expect(getFilterSelects(w)).toHaveLength(3);
   });
 
+  it("shows loading placeholder when group and owner options are pending", () => {
+    const w = factory({
+      groupOptions: [],
+      ownerOptions: [],
+      optionsLoading: true,
+    });
+
+    const [groupSelect, ownerSelect] = getFilterSelects(w);
+    expect(groupSelect.attributes("disabled")).toBeDefined();
+    expect(ownerSelect.attributes("disabled")).toBeDefined();
+    expect(groupSelect.text()).toContain("Loading…");
+    expect(ownerSelect.text()).toContain("Loading…");
+  });
+
   it("renders reset button", () => {
     const w = factory();
     const btn = w.findAll("button").find((b) => b.text() === "Reset");

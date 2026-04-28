@@ -8,6 +8,7 @@ void test("isTimelineEntityType returns true for known entity types", () => {
   assert.equal(isTimelineEntityType("user"), true);
   assert.equal(isTimelineEntityType("customer"), true);
   assert.equal(isTimelineEntityType("case"), true);
+  assert.equal(isTimelineEntityType("conversation"), true);
   assert.equal(isTimelineEntityType("document_item"), true);
   assert.equal(isTimelineEntityType("reminder"), true);
   assert.equal(isTimelineEntityType("company"), true);

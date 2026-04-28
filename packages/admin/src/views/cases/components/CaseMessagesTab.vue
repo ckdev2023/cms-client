@@ -1,15 +1,21 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, MessageTypeKey } from "../types-detail";
 import { MESSAGE_FILTERS } from "../constants";
 
 /** 沟通记录 Tab：消息时间线、撰写区与类型筛选面板。 */
-defineProps<{
+const { t } = useI18n();
+const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
 }>();
+
+const conversationsHref = computed(
+  () => `#/conversations?caseId=${props.detail.id}`,
+);
 
 const activeFilter = ref<"all" | MessageTypeKey>("all");
 
@@ -54,27 +60,49 @@ function avatarColor(style: string): string {
 
 <template>
   <div class="messages-tab">
+    <div class="messages-tab__conv-link-bar">
+      <a :href="conversationsHref" class="messages-tab__conv-link">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <path
+            d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+          />
+        </svg>
+        {{ t("cases.detail.messages.viewConversations") }}
+      </a>
+    </div>
     <div class="messages-tab__grid">
       <div class="messages-tab__main">
         <Card v-if="!readonly" padding="md">
           <textarea
             class="messages-tab__composer"
             rows="3"
-            placeholder="记录内部备注、客户可见备注或电话/线下沟通内容..."
+            :placeholder="t('cases.detail.messages.composerPlaceholder')"
           />
           <p class="messages-tab__composer-hint">
-            内部备注默认客户不可见；如需客户可见，需显式选择"客户可见备注"。
+            {{ t("cases.detail.messages.composerHint") }}
           </p>
           <div class="messages-tab__composer-footer">
             <div class="messages-tab__composer-right">
               <select class="messages-tab__type-select">
-                <option>内部备注</option>
-                <option>客户可见备注</option>
-                <option>电话记录</option>
-                <option>线下会议</option>
+                <option>{{ t("cases.detail.messages.typeInternal") }}</option>
+                <option>
+                  {{ t("cases.detail.messages.typeClientVisible") }}
+                </option>
+                <option>{{ t("cases.detail.messages.typePhone") }}</option>
+                <option>{{ t("cases.detail.messages.typeMeeting") }}</option>
               </select>
               <button class="messages-tab__publish-btn" type="button">
-                记录留痕
+                {{ t("cases.detail.messages.publish") }}
               </button>
             </div>
           </div>
@@ -118,30 +146,34 @@ function avatarColor(style: string): string {
               class="messages-tab__msg-hover-actions"
             >
               <button class="messages-tab__hover-btn" type="button">
-                回复
+                {{ t("cases.detail.messages.reply") }}
               </button>
               <button class="messages-tab__hover-btn" type="button">
-                编辑
+                {{ t("cases.detail.messages.edit") }}
               </button>
             </div>
           </Card>
         </template>
 
         <Card v-else padding="lg">
-          <p class="messages-tab__empty">暂无沟通记录</p>
+          <p class="messages-tab__empty">
+            {{ t("cases.detail.messages.empty") }}
+          </p>
         </Card>
       </div>
 
       <div class="messages-tab__sidebar">
         <Card padding="md">
           <template #header>
-            <h2 class="messages-tab__filter-title">过滤筛选</h2>
+            <h2 class="messages-tab__filter-title">
+              {{ t("cases.detail.messages.filterTitle") }}
+            </h2>
             <button
               class="messages-tab__filter-reset"
               type="button"
               @click="activeFilter = 'all'"
             >
-              重置
+              {{ t("cases.detail.messages.filterReset") }}
             </button>
           </template>
           <div class="messages-tab__filter-list">
@@ -167,7 +199,7 @@ function avatarColor(style: string): string {
                   },
                 ]"
               >
-                {{ f.label }}
+                {{ t(f.i18nKey) }}
               </span>
             </label>
           </div>
@@ -181,6 +213,30 @@ function avatarColor(style: string): string {
 .messages-tab {
   display: grid;
   gap: 20px;
+}
+.messages-tab__conv-link-bar {
+  display: flex;
+  justify-content: flex-end;
+}
+.messages-tab__conv-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-default);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+  background: var(--color-bg-1);
+  transition:
+    background-color 0.15s,
+    border-color 0.15s;
+  &:hover {
+    background: var(--color-bg-2);
+    border-color: var(--color-primary-6);
+  }
 }
 .messages-tab__grid {
   display: grid;

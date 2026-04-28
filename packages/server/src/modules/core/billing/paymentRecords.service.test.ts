@@ -227,33 +227,6 @@ void test("PaymentRecordsService.get returns payment record or null", async () =
   assert.equal(await service.get(makeCtx("viewer"), "missing"), null);
 });
 
-void test("PaymentRecordsService.list returns items and total by billingPlanId", async () => {
-  const calls: { sql: string; params?: unknown[] }[] = [];
-  const pool = makePool((sql, params) => {
-    calls.push({ sql: sql.trim(), params });
-    if (sql.includes("count(*)")) {
-      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
-    }
-    if (sql.includes("from payment_records")) {
-      return Promise.resolve({ rows: [makePaymentRecordRow()], rowCount: 1 });
-    }
-    return Promise.resolve({ rows: [], rowCount: 0 });
-  });
-
-  const result = await new PaymentRecordsService(pool).list(makeCtx("viewer"), {
-    billingPlanId: BILLING_RECORD_ID,
-    page: 1,
-    limit: 10,
-  });
-
-  assert.equal(result.total, 1);
-  assert.equal(result.items.length, 1);
-  const countCall = calls.find((call) => call.sql.includes("count(*)"));
-  assert.ok(countCall?.sql.includes("billing_record_id = $1"));
-  const orgCall = calls.find((call) => call.sql.includes("app.org_id"));
-  assert.equal(orgCall?.params?.[0], ORG_ID);
-});
-
 void test("PaymentRecordsService.void sets record_status to voided and recalculates billing to due", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {

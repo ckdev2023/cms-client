@@ -1,50 +1,90 @@
 <script setup lang="ts">
-import { watch } from "vue";
+import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import type { BillingPlanNode, RegisterPaymentFormFields } from "../types";
+import type { BillingPlanNode } from "../types";
+import type { CreatePaymentInput } from "../model/BillingAdapterUrls";
+import type { BillingMutationResult } from "../model/BillingAdapters";
 import { usePaymentModal } from "../model/usePaymentModal";
 import Button from "../../../shared/ui/Button.vue";
 
 /**
- * 登记回款弹窗：金额、日期、关联节点、凭证、备注 5 个字段。
- *
- * 内部使用 usePaymentModal 管理表单状态与校验；
- * 金额超限为软提示（不阻断）；多未结清节点未选择时阻断提交。
+ * 登记回款弹窗：接收 caseId，打开时拉取节点，提交走 createPayment → toast → refresh。
  */
 const props = withDefaults(
   defineProps<{
     open: boolean;
-    nodes?: BillingPlanNode[];
+    caseId: string;
+    defaultBillingPlanId?: string;
+    getBillingPlanNodes: (caseId: string) => Promise<BillingPlanNode[]>;
+    createPayment: (
+      input: CreatePaymentInput,
+    ) => Promise<BillingMutationResult>;
   }>(),
   {
-    nodes: () => [],
+    caseId: "",
+    defaultBillingPlanId: "",
   },
 );
 
 const emit = defineEmits<{
   close: [];
-  submit: [fields: RegisterPaymentFormFields];
+  submitted: [];
 }>();
 
 const { t } = useI18n();
 const modal = usePaymentModal();
+const loadingNodes = ref(false);
+const nodeError = ref<string | null>(null);
+const submitting = ref(false);
 
 watch(
   () => props.open,
-  (val) => {
-    if (val) {
-      modal.open(props.nodes);
-    } else if (modal.isOpen.value) {
+  async (val) => {
+    if (val && props.caseId) {
+      loadingNodes.value = true;
+      nodeError.value = null;
+      try {
+        const nodes = await props.getBillingPlanNodes(props.caseId);
+        modal.open(nodes);
+        if (props.defaultBillingPlanId) {
+          const exists = modal.availableNodes.value.some(
+            (n) => n.id === props.defaultBillingPlanId,
+          );
+          if (exists) {
+            modal.fields.value.billingPlanId = props.defaultBillingPlanId;
+          }
+        }
+      } catch (e) {
+        nodeError.value = e instanceof Error ? e.message : String(e);
+      } finally {
+        loadingNodes.value = false;
+      }
+    } else if (!val && modal.isOpen.value) {
       modal.close();
+      nodeError.value = null;
+      submitting.value = false;
     }
   },
 );
 
-/** 提交回款表单并关闭弹窗。 */
-function handleSubmit() {
-  if (!modal.canSubmit.value) return;
-  emit("submit", { ...modal.fields.value });
-  emit("close");
+async function handleSubmit() {
+  if (!modal.canSubmit.value || submitting.value) return;
+  submitting.value = true;
+  try {
+    await props.createPayment({
+      billingPlanId: modal.fields.value.billingPlanId,
+      amountReceived: modal.parsedAmount.value,
+      receivedAt: modal.fields.value.date,
+      paymentMethod: modal.fields.value.receipt || null,
+      note: modal.fields.value.note || null,
+    });
+    emit("submitted");
+    emit("close");
+  } catch {
+    nodeError.value = t("billing.paymentModal.submitError");
+  } finally {
+    submitting.value = false;
+  }
 }
 
 /** 关闭弹窗。 */
@@ -93,7 +133,15 @@ function handleClose() {
         <div class="pm-body">
           <p class="pm-body__hint">{{ t("billing.paymentModal.hint") }}</p>
 
-          <div class="pm-fields">
+          <div v-if="loadingNodes" class="pm-body__loading">
+            {{ t("billing.paymentModal.loadingNodes") }}
+          </div>
+
+          <div v-else-if="nodeError" class="pm-body__error">
+            {{ nodeError }}
+          </div>
+
+          <div v-else class="pm-fields">
             <!-- 金额 -->
             <div class="pm-field">
               <label class="pm-label">
@@ -208,10 +256,14 @@ function handleClose() {
             variant="filled"
             tone="primary"
             size="md"
-            :disabled="!modal.canSubmit.value"
+            :disabled="!modal.canSubmit.value || submitting || loadingNodes"
             @click="handleSubmit"
           >
-            {{ t("billing.paymentModal.submit") }}
+            {{
+              submitting
+                ? t("billing.paymentModal.submitting")
+                : t("billing.paymentModal.submit")
+            }}
           </Button>
         </div>
       </div>
@@ -285,6 +337,23 @@ function handleClose() {
   color: var(--color-text-3);
   font-weight: var(--font-weight-semibold);
   margin: 0 0 20px;
+}
+
+.pm-body__loading {
+  text-align: center;
+  padding: 32px 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
+  font-weight: var(--font-weight-semibold);
+}
+
+.pm-body__error {
+  padding: 12px 16px;
+  font-size: var(--font-size-sm);
+  color: #991b1b;
+  background: rgba(220, 38, 38, 0.06);
+  border-radius: var(--radius-default);
+  font-weight: var(--font-weight-semibold);
 }
 
 .pm-fields {

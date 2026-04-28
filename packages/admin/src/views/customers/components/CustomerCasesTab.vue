@@ -11,6 +11,9 @@ import SegmentedControl, {
 import type { CaseFilter, CustomerCase } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
+import { buildCaseDetailRoute } from "../../cases/query";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
+import { getCaseTypeI18nKey } from "../../cases/constants";
 
 /** 关联案件 Tab：按全部/活跃/归档筛选案件列表，保留办案入口占位。 */
 const props = defineProps<{
@@ -18,7 +21,7 @@ const props = defineProps<{
   repository: Pick<CustomerRepository, "listRelatedCases">;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const router = useRouter();
 
 const customerIdRef = computed(() => props.customerId);
@@ -62,7 +65,28 @@ function statusLabel(c: CustomerCase) {
  * @param id 案件 ID
  */
 function openCase(id: string) {
-  void router.push({ name: "case-detail", params: { id } });
+  void router.push(buildCaseDetailRoute(id));
+}
+
+/**
+ * 将案件类型代码转为显示用标签。
+ * @param code - 案件类型代码
+ * @returns 本地化标签或原始代码
+ */
+function caseTypeLabel(code: string): string {
+  const key = getCaseTypeI18nKey(code);
+  if (!key) return "—";
+  const translated = t(key);
+  return translated !== key ? translated : code;
+}
+
+/**
+ * 将 ISO 时间格式化为本地化日期字符串。
+ * @param iso - ISO 8601 时间戳
+ * @returns 本地化日期字符串
+ */
+function fmtUpdated(iso: string): string {
+  return formatDateTime(iso, locale.value) || "—";
 }
 </script>
 
@@ -149,8 +173,8 @@ function openCase(id: string) {
                   {{ c.name }}
                 </button>
               </td>
-              <td class="cases-tab__td cases-tab__td--type">
-                {{ c.type || "—" }}
+              <td class="cases-tab__td cases-tab__td--type" :title="c.type">
+                {{ caseTypeLabel(c.type) }}
               </td>
               <td class="cases-tab__td cases-tab__td--stage">
                 <div>{{ c.stage || "—" }}</div>
@@ -163,8 +187,11 @@ function openCase(id: string) {
                   {{ statusLabel(c) }}
                 </Chip>
               </td>
-              <td class="cases-tab__td cases-tab__td--updated">
-                {{ c.updatedAt || "—" }}
+              <td
+                class="cases-tab__td cases-tab__td--updated"
+                :title="c.updatedAt"
+              >
+                {{ fmtUpdated(c.updatedAt) }}
               </td>
               <td class="cases-tab__td cases-tab__td--action">
                 <Button

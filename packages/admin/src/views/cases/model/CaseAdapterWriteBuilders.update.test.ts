@@ -38,6 +38,9 @@ describe("buildUpdateCaseInputFromDraft", () => {
     residenceExpiryDate: "",
     archivedAt: "",
     resultOutcome: "",
+    visaPlan: "",
+    overseasVisaStartAt: "",
+    entryConfirmedAt: "",
   };
 
   const BASE_SNAPSHOT: UpdateCaseDraftSnapshot = {
@@ -204,6 +207,9 @@ describe("buildUpdateCaseInputFromDraft", () => {
       residenceExpiryDate: "2029-06-01",
       archivedAt: "2027-01-01",
       resultOutcome: "approved",
+      visaPlan: "renewal_3year",
+      overseasVisaStartAt: "2026-08-10",
+      entryConfirmedAt: "2026-08-25",
     };
     const input = buildUpdateCaseInputFromDraft({
       original: { ...BASE_FORM },
@@ -231,6 +237,9 @@ describe("buildUpdateCaseInputFromDraft", () => {
     expect(input.residenceExpiryDate).toBe("2029-06-01");
     expect(input.archivedAt).toBe("2027-01-01");
     expect(input.resultOutcome).toBe("approved");
+    expect(input.visaPlan).toBe("renewal_3year");
+    expect(input.overseasVisaStartAt).toBe("2026-08-10");
+    expect(input.entryConfirmedAt).toBe("2026-08-25");
     expect(input.quotePrice).toBe(500000);
   });
 
@@ -286,6 +295,9 @@ describe("UPDATE_PATCH field constants", () => {
       "residenceExpiryDate",
       "archivedAt",
       "resultOutcome",
+      "visaPlan",
+      "overseasVisaStartAt",
+      "entryConfirmedAt",
     ];
     expect([...allKeys].sort()).toEqual([...formKeys].sort());
   });

@@ -4,6 +4,7 @@ import type {
   CaseSampleKey,
   DocumentItem,
   MessageItem,
+  TaskItem,
 } from "./types";
 
 function buildDocItem(
@@ -15,6 +16,25 @@ function buildDocItem(
     reviews: [],
     reminders: [],
     ...overrides,
+  };
+}
+
+let taskSequence = 0;
+
+function buildTaskItem(
+  overrides: Partial<TaskItem> &
+    Pick<
+      TaskItem,
+      "label" | "done" | "due" | "assignee" | "color" | "dueColor"
+    >,
+): TaskItem {
+  const { id, status, ...rest } = overrides;
+  taskSequence += 1;
+
+  return {
+    id: id ?? `task-${taskSequence}`,
+    status: status ?? (overrides.done ? "completed" : "pending"),
+    ...rest,
   };
 }
 
@@ -60,6 +80,7 @@ function buildWorkSample(): CaseDetail {
     groupName: "東京支所",
     caseType: "就労ビザ（技術・人文知識・国際業務）",
     applicationType: "更新（在留期間更新）",
+    businessPhase: "APPROVED",
     acceptedDate: "2026-04-01",
     targetDate: "2026-04-20",
     providerProgress: [
@@ -682,46 +703,46 @@ function buildWorkSample(): CaseDetail {
       ],
     },
     tasks: [
-      {
+      buildTaskItem({
         label: "发送资料收集清单给客户",
         done: true,
         due: "04/01",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "初审护照复印件与在留卡",
         done: true,
         due: "04/05",
         assignee: "TN",
         color: "success",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "起草申请理由书",
         done: false,
         due: "04/20",
         assignee: "TN",
         color: "success",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "催办雇主材料（在職証明書 + 雇用契約書）",
         done: false,
         due: "04/12",
         assignee: "SZ",
         color: "primary",
         dueColor: "warning",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "执行提交前检查",
         done: false,
         due: "04/22",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
+      }),
     ],
     logEntries: [
       {
@@ -826,6 +847,7 @@ function buildFamilySample(): CaseDetail {
     groupName: "東京支所",
     caseType: "家族滞在",
     applicationType: "认定（在留資格認定）",
+    businessPhase: "WAITING_MATERIAL",
     acceptedDate: "2026-04-03",
     targetDate: "2026-05-10",
     providerProgress: [
@@ -1130,30 +1152,30 @@ function buildFamilySample(): CaseDetail {
       generated: [],
     },
     tasks: [
-      {
+      buildTaskItem({
         label: "催办亲属关系证明",
         done: false,
         due: "04/15",
         assignee: "TN",
         color: "success",
         dueColor: "warning",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "扶養者 纳税证明収集",
         done: false,
         due: "04/20",
         assignee: "TN",
         color: "success",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "准备申请理由书",
         done: false,
         due: "05/01",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
+      }),
     ],
     logEntries: [
       {
@@ -1244,6 +1266,7 @@ function buildGateFailSample(): CaseDetail {
     groupName: "大阪支所",
     caseType: "特定技能",
     applicationType: "认定（在留資格認定）",
+    businessPhase: "APPLYING",
     acceptedDate: "2026-03-20",
     targetDate: "2026-04-18",
     providerProgress: [
@@ -1535,30 +1558,30 @@ function buildGateFailSample(): CaseDetail {
     ],
     forms: { templates: [], generated: [] },
     tasks: [
-      {
+      buildTaskItem({
         label: "向雇主 HR 索取雇用条件書原件",
         done: false,
         due: "04/12",
         assignee: "TM",
         color: "warning",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "确认技能検定合格証明",
         done: false,
         due: "04/14",
         assignee: "LI",
         color: "primary",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "处理完当前卡点后重新检查",
         done: false,
         due: "04/16",
         assignee: "TM",
         color: "warning",
         dueColor: "danger",
-      },
+      }),
     ],
     logEntries: [
       {
@@ -1637,6 +1660,7 @@ function buildArrearsSample(): CaseDetail {
     groupName: "東京支所",
     caseType: "経営・管理",
     applicationType: "更新（在留期間更新）",
+    businessPhase: "APPROVED",
     acceptedDate: "2026-03-10",
     targetDate: "2026-04-15",
     providerProgress: [
@@ -1924,30 +1948,30 @@ function buildArrearsSample(): CaseDetail {
       ],
     },
     tasks: [
-      {
+      buildTaskItem({
         label: "催收尾款 ¥120,000",
         done: false,
         due: "04/10",
         assignee: "RN",
         color: "primary",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "完成欠款风险确认",
         done: true,
         due: "04/08",
         assignee: "MG",
         color: "warning",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "生成提交包",
         done: false,
         due: "04/12",
         assignee: "RN",
         color: "primary",
         dueColor: "warning",
-      },
+      }),
     ],
     logEntries: [
       {
@@ -2026,6 +2050,7 @@ function buildCorrectionSample(): CaseDetail {
     groupName: "東京支所",
     caseType: "家族滞在",
     applicationType: "更新（在留期間更新）",
+    businessPhase: "WAITING_PAYMENT",
     acceptedDate: "2026-02-15",
     targetDate: "2026-03-25",
     providerProgress: [
@@ -2312,30 +2337,30 @@ function buildCorrectionSample(): CaseDetail {
     ],
     forms: { templates: [], generated: [] },
     tasks: [
-      {
+      buildTaskItem({
         label: "获取 2025 年度源泉徴収票",
         done: false,
         due: "04/12",
         assignee: "AK",
         color: "primary",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "起草补正说明书",
         done: false,
         due: "04/13",
         assignee: "AK",
         color: "primary",
         dueColor: "danger",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "邮送补正包",
         done: false,
         due: "04/15",
         assignee: "AK",
         color: "primary",
         dueColor: "danger",
-      },
+      }),
     ],
     logEntries: [
       {
@@ -2404,6 +2429,7 @@ function buildArchivedSample(): CaseDetail {
     groupName: "東京支所",
     caseType: "就労ビザ（技術・人文知識・国際業務）",
     applicationType: "更新（在留期間更新）",
+    businessPhase: "CLOSED_SUCCESS",
     acceptedDate: "2025-11-01",
     targetDate: "2026-01-15",
     providerProgress: [
@@ -2670,38 +2696,38 @@ function buildArchivedSample(): CaseDetail {
     ],
     forms: { templates: [], generated: [] },
     tasks: [
-      {
+      buildTaskItem({
         label: "发送资料收集清单",
         done: true,
         due: "11/10",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "执行提交前检查",
         done: true,
         due: "01/10",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "窗口提交申请",
         done: true,
         due: "01/15",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
-      {
+      }),
+      buildTaskItem({
         label: "归档案件",
         done: true,
         due: "02/20",
         assignee: "SZ",
         color: "primary",
         dueColor: "muted",
-      },
+      }),
     ],
     logEntries: [
       {

@@ -5,17 +5,22 @@ import Chip from "../../../shared/ui/Chip.vue";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 import type { PartyPickerMode } from "../model/useCasePartyPicker";
 import type { CaseCreateCustomerOption } from "../types";
+import { resolveTemplateLabel } from "../types-create";
 
 /** 步骤二：主申请人、关联人管理、资料清单预览。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps<{
   model: CreateCaseModel;
   customerOptions: readonly CaseCreateCustomerOption[];
+  customersLoading?: boolean;
+  customersError?: string | null;
+  customersLoaded?: boolean;
 }>();
 
 const emit = defineEmits<{
   openPicker: [mode: PartyPickerMode, defaultRole?: string];
+  retryCustomers: [];
 }>();
 
 /**
@@ -38,9 +43,46 @@ function onPrimarySelect(e: Event) {
         <label class="cc__label">{{
           t("cases.create.step2.selectExisting")
         }}</label>
+
+        <div
+          v-if="customersLoading"
+          class="customer-loading"
+          data-testid="customers-loading"
+        >
+          {{ t("cases.create.step2.customersLoading") }}
+        </div>
+
+        <div
+          v-else-if="customersError"
+          class="customer-error"
+          data-testid="customers-error"
+        >
+          <span>{{ t("cases.create.step2.customersError") }}</span>
+          <Button
+            size="sm"
+            @click="emit('retryCustomers')"
+            data-testid="customers-retry"
+          >
+            {{ t("cases.create.step2.customersRetry") }}
+          </Button>
+        </div>
+
+        <div
+          v-else-if="customersLoaded && customerOptions.length === 0"
+          class="customer-empty"
+          data-testid="customers-empty"
+        >
+          {{ t("cases.create.step2.customersEmpty") }}
+          <a href="#/customers" class="customer-empty__link">
+            {{ t("cases.create.step2.customersGoCreate") }}
+          </a>
+        </div>
+
         <select
+          v-else
           class="cc__input cc__input--select"
           :value="model.primaryCustomer.value?.id ?? ''"
+          data-testid="customer-select"
           @change="onPrimarySelect"
         >
           <option value="" disabled>
@@ -141,11 +183,13 @@ function onPrimarySelect(e: Event) {
       {{ t("cases.create.step2.documentPreview") }}
     </h3>
     <div v-if="model.currentTemplate.value">
-      <div v-for="sec in model.currentTemplate.value.sections" :key="sec.title">
-        <div class="req-title">{{ sec.title }}</div>
+      <div v-for="(sec, si) in model.currentTemplate.value.sections" :key="si">
+        <div class="req-title">
+          {{ resolveTemplateLabel(sec.title, locale) }}
+        </div>
         <ul class="req-list">
           <li v-for="item in sec.items" :key="item.id">
-            {{ item.label }}
+            {{ resolveTemplateLabel(item.label, locale) }}
             <Chip v-if="item.required" size="sm" tone="warning">{{
               t("cases.create.step2.requiredBadge")
             }}</Chip>
@@ -212,5 +256,38 @@ function onPrimarySelect(e: Event) {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.customer-loading {
+  padding: 12px 16px;
+  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+}
+
+.customer-error {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border: 1px solid var(--color-danger-border, #fdd);
+  border-radius: var(--radius-default);
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger-text, #b91c1c);
+  font-size: var(--font-size-sm);
+}
+
+.customer-empty {
+  padding: 12px 16px;
+  border: 1px dashed var(--color-border-1);
+  border-radius: var(--radius-default);
+  text-align: center;
+  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+}
+
+.customer-empty__link {
+  color: var(--color-primary-6);
+  text-decoration: underline;
+  margin-left: 4px;
 }
 </style>

@@ -12,9 +12,11 @@ import Chip from "../../../shared/ui/Chip.vue";
 withDefaults(
   defineProps<{
     entries?: PaymentLogEntry[];
+    isManager?: boolean;
   }>(),
   {
     entries: () => [],
+    isManager: false,
   },
 );
 
@@ -194,7 +196,26 @@ function isInactive(entry: PaymentLogEntry): boolean {
               { 'payment-log__td--muted': isInactive(entry) },
             ]"
           >
-            {{ entry.operator }}
+            <span>{{ entry.operator }}</span>
+            <div
+              v-if="isInactive(entry) && entry.voidedByDisplayName"
+              class="payment-log__voided-by"
+            >
+              {{
+                t(
+                  entry.recordStatus === "reversed"
+                    ? "billing.paymentLog.row.reversedBy"
+                    : "billing.paymentLog.row.voidedBy",
+                  { name: entry.voidedByDisplayName },
+                )
+              }}
+            </div>
+            <div
+              v-if="isInactive(entry) && entry.reasonCode"
+              class="payment-log__reason-code"
+            >
+              {{ entry.reasonCode }}
+            </div>
           </td>
 
           <!-- 备注 -->
@@ -211,7 +232,7 @@ function isInactive(entry: PaymentLogEntry): boolean {
           <td
             class="payment-log__td payment-log__col--hide-sm payment-log__col--ops"
           >
-            <template v-if="entry.recordStatus === 'valid'">
+            <template v-if="isManager && entry.recordStatus === 'valid'">
               <button
                 class="payment-log__action payment-log__action--void"
                 type="button"
@@ -312,6 +333,16 @@ function isInactive(entry: PaymentLogEntry): boolean {
 .payment-log__col--ops {
   width: 110px;
   text-align: right;
+}
+
+/* --- Voided-by / reason-code sub-lines --- */
+
+.payment-log__voided-by,
+.payment-log__reason-code {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+  margin-top: 2px;
+  font-weight: var(--font-weight-semibold);
 }
 
 /* --- Amount strikethrough --- */

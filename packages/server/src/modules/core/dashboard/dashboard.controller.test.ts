@@ -47,13 +47,15 @@ void test("DashboardController.summary uses default query values", async () => {
   assert.deepEqual(calledWith, { scope: "mine", timeWindow: 7 });
 });
 
-void test("DashboardController.summary rejects invalid scope", async () => {
+void test("DashboardController.summary rejects invalid scope aliases", async () => {
   const controller = new DashboardController({} as DashboardService);
 
-  await assert.rejects(
-    () => controller.summary(req as never, { scope: "invalid" }),
-    BadRequestException,
-  );
+  for (const scope of ["invalid", "team", "my-team", "all-firm", "firm"]) {
+    await assert.rejects(
+      () => controller.summary(req as never, { scope }),
+      BadRequestException,
+    );
+  }
 });
 
 void test("DashboardController.summary requires request context", async () => {

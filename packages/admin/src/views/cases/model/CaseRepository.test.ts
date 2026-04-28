@@ -1,5 +1,4 @@
-// Test Ownership: real HTTP repository orchestration (fetch, auth, error, wiring).
-// Not tested here: adapter mapping, write builder serialization, mock repository.
+// Test Ownership: real HTTP repository orchestration (fetch, auth, error, wiring). Not tested: adapter mapping, write builder serialization, mock repository.
 import { describe, expect, it, vi } from "vitest";
 import { CaseRepositoryError, createCaseRepository } from "./CaseRepository";
 
@@ -327,6 +326,7 @@ describe("CaseRepository", () => {
       dueDateLabel: "",
       riskStatus: "normal" as const,
       riskLabel: "",
+      businessPhase: "CONSULTING",
       visibleScopes: ["all" as const],
     };
     const repo = createCaseRepository({});

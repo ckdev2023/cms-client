@@ -1,6 +1,7 @@
 import customerDetail from "./customers/zh-CN";
 import billing from "./billing/zh-CN";
 import cases from "./cases/zh-CN";
+import conversations from "./conversations/zh-CN";
 import documents from "./documents/zh-CN";
 import leads from "./leads/zh-CN";
 import settings from "./settings/zh-CN";
@@ -8,10 +9,13 @@ import dashboardWorkItems from "./work-items/zh-CN";
 
 const zhCN = {
   shell: {
+    skipToContent: "跳到内容",
     topbar: {
       openNavigation: "打开导航",
       globalSearch: "全局搜索",
       searchPlaceholder: "搜索：客户 / 案件 / 资料 / 文书...",
+      searchUnavailablePlaceholder: "全局搜索功能建设中",
+      comingSoon: "建设中",
       localeLabel: "界面语言",
       createLead: "新建咨询",
       createCase: "新建案件",
@@ -32,6 +36,7 @@ const zhCN = {
       items: {
         dashboard: "仪表盘",
         leads: "咨询与会话",
+        conversations: "会话",
         customers: "客户",
         cases: "案件",
         tasks: "任务与提醒",
@@ -45,6 +50,9 @@ const zhCN = {
     group: {
       disabledSuffix: "（已停用）",
     },
+    breadcrumbsLabel: "面包屑导航",
+    loading: "加载中…",
+    submitting: "提交中…",
   },
   foundation: {
     title: "Foundation",
@@ -170,6 +178,7 @@ const zhCN = {
       empty: {
         title: "当前筛选没有匹配客户",
         description: "可尝试切换数据范围，或重置搜索条件。",
+        cta: "添加第一位客户",
       },
       pagination: {
         summary: "显示 {start} - {end} 条，共 {total} 条",
@@ -182,7 +191,7 @@ const zhCN = {
       },
       toast: {
         customerCreated: {
-          title: "客户已创建（示例）",
+          title: "客户创建成功",
           description: "已生成客户档案，可继续建案",
         },
         draftSaved: {
@@ -234,6 +243,29 @@ const zhCN = {
           emailPlaceholder: "邮箱地址",
           referrer: "来源 / 介绍人",
           referrerPlaceholder: "例如：推荐 / 介绍人",
+          location: "所在地",
+          locationNone: "—",
+          locationOverseas: "海外",
+          locationJapan: "日本国内",
+          sourceType: "来源渠道",
+          sourceTypeNone: "—",
+          sourceTypeReferral: "转介绍",
+          sourceTypeWeb: "网站",
+          sourceTypeAds: "广告",
+          visaType: "签证类型",
+          visaTypeNone: "—",
+          visaTypeBusinessManager: "经营管理",
+          visaTypeEngineerSpecialist: "技术·人文知识·国际业务",
+          visaTypeSkilledLabor: "技能",
+          visaTypeStudent: "留学",
+          visaTypeDependent: "家族滞在",
+          visaTypePermanentResident: "永住者",
+          visaTypeSpouseOfJpNational: "日本人配偶",
+          visaTypeLongTermResident: "定住者",
+          visaTypeDesignatedActivities: "特定活动",
+          visaTypeOther: "其他",
+          referrerName: "介绍人姓名",
+          referrerNamePlaceholder: "例如：田中先生",
           avatar: "头像",
           note: "备注（可搜索）",
           notePlaceholder: "例如：交接事项、偏好、注意点...",
@@ -252,6 +284,7 @@ const zhCN = {
   },
   billing,
   cases,
+  conversations,
   documents,
   leads,
   settings,

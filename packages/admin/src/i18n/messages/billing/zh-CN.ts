@@ -36,6 +36,10 @@ const billingZhCN = {
       amountOutstanding: "未收(¥)",
       nextNode: "下一收款节点",
       status: "回款状态",
+      actions: "操作",
+    },
+    actions: {
+      registerPayment: "登记回款",
     },
     status: {
       overdue: "逾期",
@@ -52,6 +56,8 @@ const billingZhCN = {
     empty: {
       title: "暂无收费记录",
       description: "请先在案件中配置收费计划",
+      noData: "暂无收费记录",
+      noResultForFilters: "当前筛选条件下暂无结果",
     },
     bulk: {
       ariaLabel: "批量操作",
@@ -73,7 +79,7 @@ const billingZhCN = {
       },
       paymentRegistered: {
         title: "回款登记成功",
-        description: "¥{amount} 已记录",
+        description: "回款已成功登记。",
       },
       voided: {
         title: "已作废",
@@ -83,6 +89,27 @@ const billingZhCN = {
         title: "已冲正",
         description: "流水 {id} 已标记为冲正",
       },
+    },
+    error: {
+      loadFailed: "数据加载失败，请重试。",
+      retry: "重试",
+    },
+  },
+  bulkCollect: {
+    skipReason: {
+      "no-permission": "无权限编辑该案件",
+      "duplicate-task": "已存在未完成催款任务",
+      "not-overdue": "无逾期收费节点",
+      "no-assignee": "案件未分配负责人",
+      "system-error": "系统错误",
+    },
+    drawer: {
+      title: "催款任务执行结果",
+      empty: "暂无明细",
+      details: "明细",
+      successLabel: "成功",
+      skippedLabel: "跳过",
+      failedLabel: "失败",
     },
   },
   paymentLog: {
@@ -106,9 +133,46 @@ const billingZhCN = {
     },
     actionVoid: "作废",
     actionReverse: "冲正",
+    toast: {
+      voided: {
+        title: "已作废",
+        description: "流水 {id} 已标记为作废",
+      },
+      reversed: {
+        title: "已冲正",
+        description: "流水 {id} 已标记为冲正",
+      },
+    },
+    row: {
+      voidedBy: "{name} 作废",
+      reversedBy: "{name} 冲正",
+    },
     empty: {
       title: "暂无回款流水",
       description: "登记回款后，流水记录将显示在此处",
+    },
+  },
+  riskAck: {
+    modal: {
+      title: "收费风险确认",
+      submit: "确认",
+      cancel: "取消",
+    },
+    reasonCode: {
+      customer_promise: "客户承诺一周内补缴",
+      internal_review: "事务所内部审查通过",
+      partial_settled: "部分尾款已收，余款风险可控",
+      other: "其它",
+    },
+    reasonNote: {
+      placeholder: '请描述原因（选择"其它"时必填）',
+    },
+    evidenceUrl: {
+      placeholder: "证据链接（可选）",
+    },
+    chip: {
+      acknowledged: "已风险确认（{date}）",
+      notAcknowledged: "未风险确认",
     },
   },
   paymentModal: {
@@ -131,6 +195,9 @@ const billingZhCN = {
     },
     cancel: "取消",
     submit: "登记回款",
+    submitting: "提交中…",
+    loadingNodes: "正在加载收费节点…",
+    submitError: "回款登记失败，请重试。",
   },
 } as const;
 

@@ -1,4 +1,5 @@
 import type { CustomerBmvProfile } from "./types-bmv";
+import type { CustomerCreateFormFields } from "./types-customer-fields";
 
 /**
  *
@@ -170,63 +171,6 @@ export interface SelectOption {
 }
 
 /**
- *
- */
-export interface CustomerCreateFormFields {
-  /**
-   *
-   */
-  displayName: string;
-  /**
-   *
-   */
-  group: string;
-  /**
-   *
-   */
-  legalName: string;
-  /**
-   *
-   */
-  kana: string;
-  /**
-   *
-   */
-  gender: string;
-  /**
-   *
-   */
-  birthDate: string;
-  /**
-   *
-   */
-  nationality: string;
-  /**
-   *
-   */
-  phone: string;
-  /**
-   *
-   */
-  email: string;
-  /**
-   *
-   */
-  referrer: string;
-  /**
-   *
-   */
-  avatar: string;
-  /**
-   *
-   */
-  note: string;
-}
-
-/**
- *
- */
-/**
  * 客户草稿：序列化到 localStorage 的快照。
  */
 export interface CustomerDraft {
@@ -256,6 +200,32 @@ export const DETAIL_TABS: readonly DetailTab[] = [
   "comms",
   "log",
 ] as const;
+
+/** 客户详情页默认 tab。 */
+export const DEFAULT_CUSTOMER_DETAIL_TAB: DetailTab = "basic";
+
+/**
+ * 判断字符串是否为合法的客户详情 tab。
+ *
+ * @param v - 待校验字符串
+ * @returns 是否属于 DETAIL_TABS
+ */
+export function isValidCustomerDetailTab(v: string): v is DetailTab {
+  return (DETAIL_TABS as readonly string[]).includes(v);
+}
+
+/**
+ * 将任意外部输入解析为合法 DetailTab，非法值回退到 DEFAULT_CUSTOMER_DETAIL_TAB。
+ *
+ * @param raw - 来自 URL query 或 model deps 的原始值
+ * @returns 类型安全的 tab 键名
+ */
+export function resolveCustomerDetailTab(
+  raw: string | null | undefined,
+): DetailTab {
+  if (typeof raw === "string" && isValidCustomerDetailTab(raw)) return raw;
+  return DEFAULT_CUSTOMER_DETAIL_TAB;
+}
 
 /**
  * 关联案件状态。
@@ -374,39 +344,16 @@ export interface CustomerRelationFormFields {
   email: string;
 }
 
-export const RELATION_TYPE_OPTIONS: readonly {
-  /**
-   *
-   */
-  value: RelationType;
-  /**
-   *
-   */
-  label: string;
-}[] = [
-  { value: "spouse", label: "配偶" },
-  { value: "parent", label: "父母" },
-  { value: "child", label: "子女" },
-  { value: "agent", label: "代理 / 顾问" },
-  { value: "other", label: "其他" },
-] as const;
-
-/**
- * 根据关系类型值获取中文标签。
- *
- * @param type 关系类型值或自由文本
- * @returns 中文标签；未匹配时返回原始值
- */
-export function getRelationTypeLabel(type: RelationType | string): string {
-  const found = RELATION_TYPE_OPTIONS.find((opt) => opt.value === type);
-  return found ? found.label : String(type || "—");
-}
-
 export type {
   BmvIntakeStatus,
+  BmvLinkedCaseSummary,
   BmvQuestionnaireStatus,
   BmvQuoteStatus,
+  BmvQuoteVersion,
+  BmvReminderSummary,
   BmvSignStatus,
+  BmvSurveyDataSummary,
+  CustomerBmvAggregate,
   CustomerBmvProfile,
 } from "./types-bmv";
 export type {
@@ -418,6 +365,11 @@ export type {
   LogFilter,
   CustomerLog,
 } from "./types-comms-logs";
+export {
+  getRelationTypeLabel,
+  getRelationTypeOptions,
+  RELATION_TYPE_OPTIONS,
+} from "./relationTypes";
 export { resolveBmvIntakeStatus } from "./types-bmv";
 export {
   COMM_CHANNEL_OPTIONS,
@@ -425,6 +377,15 @@ export {
   LOG_TYPE_OPTIONS,
   getLogTypeLabel,
 } from "./types-comms-logs";
+export {
+  CUSTOMER_LOCATIONS,
+  CUSTOMER_SOURCE_TYPES,
+  CUSTOMER_VISA_TYPES,
+  type CustomerCreateFormFields,
+  type CustomerLocation,
+  type CustomerSourceType,
+  type CustomerVisaType,
+} from "./types-customer-fields";
 
 /**
  * 客户详情完整数据，在 CustomerSummary 基础上扩展编辑与案件摘要字段。
@@ -450,6 +411,20 @@ export interface CustomerDetail extends CustomerSummary {
    *
    */
   note: string;
+  /**
+   *
+   */
+  location: string;
+  /**
+   *
+   */
+  sourceType: string;
+  /** BMV 客户取 `bmvProfile.visaPlan`，非 BMV 客户取 `baseProfile.visaType`。 */
+  visaType: string;
+  /**
+   *
+   */
+  referrerName: string;
   /**
    *
    */

@@ -22,7 +22,7 @@ function createDeps(
     setTimeoutFn: vi.fn((fn: TimerHandler) => {
       if (typeof fn === "function") fn();
       return 0 as unknown as ReturnType<typeof setTimeout>;
-    }),
+    }) as unknown as typeof setTimeout,
     clearTimeoutFn: vi.fn(),
     ...overrides,
   };
@@ -38,7 +38,9 @@ function createDepsNoAutoToast(
     orgSettings: structuredClone(SAMPLE_ORG_SETTINGS),
     isAdmin: ref(true),
     toastDuration: 100,
-    setTimeoutFn: vi.fn(() => 999 as unknown as ReturnType<typeof setTimeout>),
+    setTimeoutFn: vi.fn(
+      () => 999 as unknown as ReturnType<typeof setTimeout>,
+    ) as unknown as typeof setTimeout,
     clearTimeoutFn: vi.fn(),
     ...overrides,
   };

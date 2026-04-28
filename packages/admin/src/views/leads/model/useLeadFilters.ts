@@ -5,6 +5,7 @@ import type {
   LeadSummary,
   SelectOption,
 } from "../types";
+import type { LeadListParams } from "./LeadAdapterTypes";
 
 /**
  *
@@ -77,6 +78,26 @@ function matchesDateRange(
   return true;
 }
 
+function buildListParams(
+  scopeVal: LeadScope,
+  f: Omit<LeadFiltersState, "scope">,
+  pageVal: number,
+  limitVal: number,
+): LeadListParams {
+  return {
+    scope: scopeVal || undefined,
+    search: f.search || undefined,
+    status: f.status || undefined,
+    ownerUserId: f.owner || undefined,
+    groupId: f.group || undefined,
+    businessType: f.businessType || undefined,
+    dateFrom: f.dateFrom || undefined,
+    dateTo: f.dateTo || undefined,
+    page: pageVal,
+    limit: limitVal,
+  };
+}
+
 /**
  * 线索列表筛选状态管理。
  *
@@ -86,11 +107,14 @@ function matchesDateRange(
 export function useLeadFilters(deps: UseLeadFiltersDeps) {
   const scope = ref<LeadScope>("mine");
   const f = reactive({ ...BLANK_FILTERS });
+  const page = ref(1);
+  const limit = ref(20);
 
   const isFilterActive = computed(() => Object.values(f).some((v) => v !== ""));
 
   function resetFilters() {
     Object.assign(f, { ...BLANK_FILTERS });
+    page.value = 1;
   }
 
   function applyFilters(leads: LeadSummary[]): LeadSummary[] {
@@ -119,8 +143,12 @@ export function useLeadFilters(deps: UseLeadFiltersDeps) {
     businessTypeFilter: refs.businessType,
     dateFrom: refs.dateFrom,
     dateTo: refs.dateTo,
+    page,
+    limit,
     isFilterActive,
     resetFilters,
     applyFilters,
+    toListParams: () =>
+      buildListParams(scope.value, f, page.value, limit.value),
   };
 }

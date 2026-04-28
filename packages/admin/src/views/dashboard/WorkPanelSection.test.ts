@@ -65,8 +65,9 @@ function makeRouter() {
   return createRouter({
     history: createMemoryHistory(),
     routes: [
-      { path: "/", component: { template: "<div />" } },
-      { path: "/billing", component: { template: "<div />" } },
+      { path: "/", name: "dashboard", component: { template: "<div />" } },
+      { path: "/billing", name: "billing", component: { template: "<div />" } },
+      { path: "/cases", name: "cases", component: { template: "<div />" } },
     ],
   });
 }
@@ -142,6 +143,42 @@ describe("WorkPanelSection", () => {
     const { wrapper: w } = await mountSection();
     expect(w.findAll(".work-panel-action")).toHaveLength(4);
     expect(w.findAll(".work-item-actions .mini-btn").length).toBeGreaterThan(0);
+  });
+
+  it("disables unfinished panel actions and enables routed ones", async () => {
+    const { wrapper: w } = await mountSection();
+    const buttons = w.findAll(".work-panel-action");
+    expect((buttons[0]!.element as HTMLButtonElement).disabled).toBe(true);
+    expect((buttons[1]!.element as HTMLButtonElement).disabled).toBe(false);
+    expect((buttons[2]!.element as HTMLButtonElement).disabled).toBe(false);
+    expect((buttons[3]!.element as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it("navigates to /cases when the due soon panel action is clicked", async () => {
+    const { wrapper: w, router } = await mountSection();
+    const buttons = w.findAll(".work-panel-action");
+    await buttons[1]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/cases");
+    expect(router.currentRoute.value.query).toEqual({});
+  });
+
+  it("navigates to /cases?stage=S6 when the submit panel action is clicked", async () => {
+    const { wrapper: w, router } = await mountSection();
+    const buttons = w.findAll(".work-panel-action");
+    await buttons[2]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/cases");
+    expect(router.currentRoute.value.query).toEqual({ stage: "S6" });
+  });
+
+  it("navigates to /cases?risk=critical when the risk panel action is clicked", async () => {
+    const { wrapper: w, router } = await mountSection();
+    const buttons = w.findAll(".work-panel-action");
+    await buttons[3]!.trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.path).toBe("/cases");
+    expect(router.currentRoute.value.query).toEqual({ risk: "critical" });
   });
 
   it("navigates when a work item action has a route", async () => {

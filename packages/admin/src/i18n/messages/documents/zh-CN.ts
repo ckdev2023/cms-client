@@ -13,6 +13,12 @@ const documentsZhCN = {
       expired: "过期",
       sharedExpiryRisk: "共享版本过期风险",
     },
+    summaryHint: {
+      pendingReview: "待审核",
+      missing: "缺件",
+      expired: "过期",
+      sharedExpiryRisk: "共享版本过期风险",
+    },
     filters: {
       statusAll: "状态：全部",
       statusPendingReview: "待审核",
@@ -56,6 +62,20 @@ const documentsZhCN = {
       toastApprove: "已审核通过 {count} 项",
       toastWaive: "已标记 {count} 项为无需提供",
     },
+  },
+  status: {
+    pending: "待提交",
+    uploadedReviewing: "待审核",
+    approved: "已通过",
+    rejected: "已拒绝",
+    expired: "过期",
+    waived: "无需提供",
+  },
+  providers: {
+    mainApplicant: "主申请人",
+    dependentGuarantor: "扶养者/保证人",
+    employerOrg: "受入机构/企业担当",
+    officeInternal: "事务所内部",
   },
   storageGate: {
     title: "本地资料根目录未配置",

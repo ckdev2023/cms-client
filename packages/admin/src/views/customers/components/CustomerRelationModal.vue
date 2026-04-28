@@ -1,8 +1,11 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
-import type { CustomerRelationFormFields } from "../types";
-import { RELATION_TYPE_OPTIONS } from "../types";
+import {
+  getRelationTypeOptions,
+  type CustomerRelationFormFields,
+} from "../types";
 
 /** 关联人编辑弹窗：承载新增与编辑表单输入，并反馈保存状态。 */
 const props = defineProps<{
@@ -20,7 +23,10 @@ defineEmits<{
   "update:field": [field: keyof CustomerRelationFormFields, value: string];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const relationTypeOptions = computed(() =>
+  getRelationTypeOptions(locale.value),
+);
 </script>
 
 <template>
@@ -89,7 +95,7 @@ const { t } = useI18n();
               "
             >
               <option
-                v-for="option in RELATION_TYPE_OPTIONS"
+                v-for="option in relationTypeOptions"
                 :key="option.value"
                 :value="option.value"
               >

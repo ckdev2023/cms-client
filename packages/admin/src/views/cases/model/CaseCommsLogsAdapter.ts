@@ -1,5 +1,5 @@
 /**
- * CaseCommsLogsAdapter — messages / log 独立 adapter（p0-fe-002a-04 确认独立）。
+ * CaseCommsLogsAdapter — messages / log 独立 adapter（p0-fe-002e-01 落地）。
  *
  * 本 adapter 完全自包含，拥有独立的解析器（`asRecord` / `pickOptionalString` 等），
  * 不依赖 `CaseAdapterShared` 或其他 adapter 文件。
@@ -13,7 +13,7 @@
  *   分类映射（对齐 P0-CONTRACT-DETAIL §7 / §13）。
  *
  * 其他配套模块 adapter（documents / forms / validation / billing / tasks / deadlines）
- * 的接缝定义在 `CaseAdapterSupportSeams.ts`，待后续子任务实现。
+ * 的接缝定义在 `CaseAdapterSupportSeams.ts`，待 p0-fe-006b / p0-fe-006d 填充。
  */
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
@@ -182,7 +182,18 @@ export function adaptCaseMessageListResult(
 // ────────────────────────────────────────────────────────────────
 
 const TIMELINE_CREATED_AT_FIELDS = ["createdAt", "created_at"];
-const TIMELINE_ACTOR_FIELDS = ["actorUserId", "actor_user_id"];
+const TIMELINE_ACTOR_FIELDS = [
+  "actorDisplayName",
+  "actor_display_name",
+  "actorName",
+  "actor_name",
+  "actorUserId",
+  "actor_user_id",
+];
+
+function resolveTimelineActor(record: Record<string, unknown>): string {
+  return pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System";
+}
 
 const LOG_CATEGORY_LABELS: Record<Exclude<LogCategoryKey, "all">, string> = {
   operation: "操作日志",
@@ -330,7 +341,7 @@ export function adaptCaseLogDto(value: unknown): LogEntry | null {
   if (!id || !action || !createdAt) return null;
 
   const category = resolveLogCategory(action);
-  const actor = pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System";
+  const actor = resolveTimelineActor(record);
   const payload = readPayloadRecord(record.payload);
   const text = buildCaseTimelineMessage(action, payload);
 
@@ -360,7 +371,43 @@ export function adaptCaseLogListResult(value: unknown): LogEntry[] | null {
   const adapted = items
     .map((item) => adaptCaseLogDto(item))
     .filter((item): item is LogEntry => item !== null);
-  return adapted.length === items.length ? adapted : null;
+  return adapted;
+}
+
+// ────────────────────────────────────────────────────────────────
+// URL builders (extracted from CaseRepository — p0-fe-002f-02)
+// ────────────────────────────────────────────────────────────────
+
+function deriveApiPrefix(casesApiPath: string): string {
+  return casesApiPath.replace(/\/cases\/?$/, "");
+}
+
+/**
+ * 构建获取指定案件沟通记录的完整请求 URL。
+ *
+ * @param casesApiPath - 案件 API 基础路径，例如 `/api/cases`。
+ * @param caseId - 要查询的案件 ID。
+ * @returns 带查询参数的完整 URL。
+ */
+export function buildCaseMessagesUrl(
+  casesApiPath: string,
+  caseId: string,
+): string {
+  return `${deriveApiPrefix(casesApiPath)}/communication-logs?caseId=${encodeURIComponent(caseId)}`;
+}
+
+/**
+ * 构建获取指定案件时间线日志的完整请求 URL。
+ *
+ * @param casesApiPath - 案件 API 基础路径，例如 `/api/cases`。
+ * @param caseId - 要查询的案件 ID。
+ * @returns 带查询参数的完整 URL。
+ */
+export function buildCaseLogEntriesUrl(
+  casesApiPath: string,
+  caseId: string,
+): string {
+  return `${deriveApiPrefix(casesApiPath)}/timeline?entityType=case&entityId=${encodeURIComponent(caseId)}`;
 }
 
 // ────────────────────────────────────────────────────────────────

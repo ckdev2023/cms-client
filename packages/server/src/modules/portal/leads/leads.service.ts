@@ -1,8 +1,19 @@
-import { BadRequestException, Inject, Injectable } from "@nestjs/common";
-import { Pool } from "pg";
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+} from "@nestjs/common";
+import { Pool, type PoolClient } from "pg";
 
+import { createDefaultCustomerBmvProfile } from "../../core/customers/customers.dto-mappers";
 import type { Lead, LeadQueryRow } from "../model/portalEntities";
 import { mapLeadRow } from "../model/portalEntities";
+import {
+  hasConvertDedupHits,
+  isBmvLead,
+  queryConvertDedup,
+} from "./leads.service.convert-support";
 
 /** Lead 创建入参。 */
 export type LeadCreateInput = {
@@ -30,6 +41,8 @@ export type LeadConvertInput = {
   caseTypeCode: string;
   ownerUserId: string;
   orgId: string;
+  confirmDedup?: boolean;
+  actorUserId?: string;
 };
 
 /** Lead 列表查询入参。 */
@@ -41,23 +54,68 @@ export type LeadListInput = {
   limit?: number;
 };
 
-const LEAD_COLS = `id, org_id, app_user_id, source, language, status, assigned_org_id, assigned_user_id, created_at, updated_at`;
+/** Dedup 命中结果（用于 409 响应）。 */
+export type ConvertDedupHit = {
+  customers: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+  }[];
+  contactPersons: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
+    customerId: string | null;
+  }[];
+};
+
+const LEAD_COLS = [
+  "id",
+  "org_id",
+  "app_user_id",
+  "source",
+  "language",
+  "status",
+  "assigned_org_id",
+  "owner_user_id",
+  "lead_no",
+  "name",
+  "phone",
+  "email",
+  "source_channel",
+  "referrer",
+  "intended_case_type",
+  "group_id",
+  "next_action",
+  "next_follow_up_at",
+  "quote_amount",
+  "note",
+  "lost_reason",
+  "converted_customer_id",
+  "converted_case_id",
+  "created_at",
+  "updated_at",
+].join(", ");
+
+type LeadTxClient = PoolClient;
 
 /**
- * Lead CRUD + 状态变更 + 分配服务。
+ * Lead CRUD + 状态変更 + 分配サービス。
  */
 @Injectable()
 export class LeadsService {
   /**
-   * 创建服务实例。
-   * @param pool PostgreSQL 连接池
+   * サービスインスタンスを作成する。
+   * @param pool PostgreSQL 接続プール
    */
   constructor(@Inject(Pool) private readonly pool: Pool) {}
 
   /**
-   * 创建 lead（初始 org_id 为空）。
-   * @param input 创建参数
-   * @returns 创建的 Lead
+   * Lead を作成する（初期 org_id は空）。
+   * @param input 作成パラメータ
+   * @returns 作成された Lead
    */
   async create(input: LeadCreateInput): Promise<Lead> {
     const result = await this.pool.query<LeadQueryRow>(
@@ -70,9 +128,9 @@ export class LeadsService {
   }
 
   /**
-   * 查看 lead 详情。
+   * Lead 詳細を取得する。
    * @param id Lead ID
-   * @returns Lead 或 null
+   * @returns Lead または null
    */
   async get(id: string): Promise<Lead | null> {
     const result = await this.pool.query<LeadQueryRow>(
@@ -84,9 +142,9 @@ export class LeadsService {
   }
 
   /**
-   * 列表查询。
-   * @param input 查询参数
-   * @returns 分页结果
+   * Lead 一覧を取得する。
+   * @param input 検索条件
+   * @returns ページ分割結果
    */
   async list(
     input: LeadListInput = {},
@@ -123,10 +181,10 @@ export class LeadsService {
   }
 
   /**
-   * 更新 lead。
+   * Lead を更新する。
    * @param id Lead ID
-   * @param input 更新参数
-   * @returns 更新后的 Lead
+   * @param input 更新パラメータ
+   * @returns 更新後の Lead
    */
   async update(id: string, input: LeadUpdateInput): Promise<Lead> {
     const sets: string[] = [];
@@ -161,14 +219,14 @@ export class LeadsService {
   }
 
   /**
-   * 分配 lead 给事务所/人员。
+   * Lead を事務所/担当者に割り当てる。
    * @param id Lead ID
-   * @param input 分配参数
-   * @returns 更新后的 Lead
+   * @param input 割当パラメータ
+   * @returns 更新後の Lead
    */
   async assign(id: string, input: LeadAssignInput): Promise<Lead> {
     const result = await this.pool.query<LeadQueryRow>(
-      `update leads set assigned_org_id = $1, assigned_user_id = $2, org_id = $1, updated_at = now() where id = $3 returning ${LEAD_COLS}`,
+      `update leads set assigned_org_id = $1, owner_user_id = $2, org_id = $1, updated_at = now() where id = $3 returning ${LEAD_COLS}`,
       [input.assignedOrgId, input.assignedUserId, id],
     );
     const row = result.rows.at(0);
@@ -177,48 +235,81 @@ export class LeadsService {
   }
 
   /**
-   * 转化为 Case（事务内：创建 Case + 更新 lead.status = converted）。
+   * Lead を Customer/Case に転化する（トランザクション内）。
    *
-   * 安全：orgId 必须与 lead.assignedOrgId 一致（防止跨租户写入）。
+   * ① 再度 dedup：customers/contact_persons の phone/email 一致をチェック
+   * ② BMV intended_case_type 時に customer.base_profile.bmvProfile を初期化
+   * ③ 関連 conversations の customer_id をバックフィル
+   * ④ lead_logs(converted) + timeline_logs を双書き込み
    *
    * @param id Lead ID
-   * @param input 转化参数
-   * @returns 转化后的 Lead 和新 Case ID
+   * @param input 転化パラメータ
+   * @returns 転化後の Lead と新規 Case ID
    */
   async convert(
     id: string,
     input: LeadConvertInput,
   ): Promise<{ lead: Lead; caseId: string }> {
+    const lead = await this.getRequiredLead(id);
+    this.assertLeadConvertible(lead, input);
+    await this.ensureConvertDedup(lead, input);
+    return this.runConvertTransaction(id, lead, input);
+  }
+
+  // ── Private helpers ──
+
+  private async getRequiredLead(id: string): Promise<Lead> {
     const lead = await this.get(id);
     if (!lead) throw new BadRequestException("Lead not found");
-    if (lead.status === "converted")
-      throw new BadRequestException("Lead already converted");
+    return lead;
+  }
 
-    // P10: orgId 必须与 lead 已分配的 orgId 一致
+  private assertLeadConvertible(lead: Lead, input: LeadConvertInput): void {
+    if (lead.status === "converted_case") {
+      throw new BadRequestException("Lead already converted");
+    }
     if (lead.assignedOrgId && input.orgId !== lead.assignedOrgId) {
       throw new BadRequestException(
         "orgId does not match lead's assigned organization",
       );
     }
+  }
 
-    // P10: 使用事务保证原子性
+  private async ensureConvertDedup(
+    lead: Lead,
+    input: LeadConvertInput,
+  ): Promise<void> {
+    if (input.confirmDedup) return;
+    const dedupHits = await this.checkConvertDedup(lead, input.orgId);
+    if (!hasConvertDedupHits(dedupHits)) return;
+    throw new ConflictException({
+      statusCode: 409,
+      message:
+        "Duplicate customer or contact person found — confirm to proceed",
+      dedupHits,
+    });
+  }
+
+  private async runConvertTransaction(
+    id: string,
+    lead: Lead,
+    input: LeadConvertInput,
+  ): Promise<{ lead: Lead; caseId: string }> {
     const client = await this.pool.connect();
+    const isBmv = isBmvLead(lead);
     try {
       await client.query("BEGIN");
-      const caseResult = await client.query<{ id: string }>(
-        `insert into cases (org_id, customer_id, case_type_code, owner_user_id, status) values ($1, $2, $3, $4, 'open') returning id`,
-        [input.orgId, input.customerId, input.caseTypeCode, input.ownerUserId],
+      const caseId = await this.createCaseInTx(client, input);
+      const updatedRow = await this.updateConvertedLeadInTx(
+        client,
+        id,
+        input,
+        caseId,
       );
-      const caseId = caseResult.rows.at(0)?.id;
-      if (!caseId) throw new BadRequestException("Failed to create case");
-
-      const updatedResult = await client.query<LeadQueryRow>(
-        `update leads set status = 'converted', updated_at = now() where id = $1 returning ${LEAD_COLS}`,
-        [id],
-      );
-      const updatedRow = updatedResult.rows.at(0);
-      if (!updatedRow) throw new BadRequestException("Failed to update lead");
-
+      if (isBmv)
+        await this.initializeBmvProfileInTx(client, input.customerId, id);
+      await this.backfillConversationCustomerInTx(client, input.customerId, id);
+      await this.writeConvertAuditInTx(client, id, input, caseId, isBmv);
       await client.query("COMMIT");
       return { lead: mapLeadRow(updatedRow), caseId };
     } catch (err) {
@@ -227,5 +318,105 @@ export class LeadsService {
     } finally {
       client.release();
     }
+  }
+
+  private async createCaseInTx(
+    client: LeadTxClient,
+    input: LeadConvertInput,
+  ): Promise<string> {
+    const result = await client.query<{ id: string }>(
+      `insert into cases (org_id, customer_id, case_type_code, owner_user_id, status) values ($1, $2, $3, $4, 'open') returning id`,
+      [input.orgId, input.customerId, input.caseTypeCode, input.ownerUserId],
+    );
+    const caseId = result.rows.at(0)?.id;
+    if (!caseId) throw new BadRequestException("Failed to create case");
+    return caseId;
+  }
+
+  private async updateConvertedLeadInTx(
+    client: LeadTxClient,
+    id: string,
+    input: LeadConvertInput,
+    caseId: string,
+  ): Promise<LeadQueryRow> {
+    const result = await client.query<LeadQueryRow>(
+      `update leads set status = 'converted_case', converted_customer_id = $2, converted_case_id = $3, updated_at = now() where id = $1 returning ${LEAD_COLS}`,
+      [id, input.customerId, caseId],
+    );
+    const updatedRow = result.rows.at(0);
+    if (!updatedRow) throw new BadRequestException("Failed to update lead");
+    return updatedRow;
+  }
+
+  private async initializeBmvProfileInTx(
+    client: LeadTxClient,
+    customerId: string,
+    leadId: string,
+  ): Promise<void> {
+    const defaultProfile = createDefaultCustomerBmvProfile();
+    const bmvProfile = { ...defaultProfile, sourceLeadId: leadId };
+    await client.query(
+      `update customers
+       set base_profile = jsonb_set(
+             coalesce(base_profile, '{}'::jsonb),
+             '{bmvProfile}',
+             $2::jsonb,
+             true
+           ),
+           updated_at = now()
+       where id = $1
+         and (base_profile->'bmvProfile' is null
+              or base_profile->'bmvProfile' = 'null'::jsonb
+              or base_profile->'bmvProfile' = '{}'::jsonb)`,
+      [customerId, JSON.stringify(bmvProfile)],
+    );
+  }
+
+  private async backfillConversationCustomerInTx(
+    client: LeadTxClient,
+    customerId: string,
+    leadId: string,
+  ): Promise<void> {
+    await client.query("SAVEPOINT conv_backfill");
+    try {
+      await client.query(
+        "update conversations set customer_id = $1 where lead_id = $2 and customer_id is null",
+        [customerId, leadId],
+      );
+      await client.query("RELEASE SAVEPOINT conv_backfill");
+    } catch {
+      await client.query("ROLLBACK TO SAVEPOINT conv_backfill");
+    }
+  }
+
+  private async writeConvertAuditInTx(
+    client: LeadTxClient,
+    id: string,
+    input: LeadConvertInput,
+    caseId: string,
+    isBmv: boolean,
+  ): Promise<void> {
+    const auditPayload = JSON.stringify({
+      customerId: input.customerId,
+      caseId,
+      caseTypeCode: input.caseTypeCode,
+      isBmv,
+    });
+    const actorUserId = input.actorUserId ?? input.ownerUserId;
+    await client.query(
+      `insert into lead_logs (lead_id, log_type, payload, created_by) values ($1, 'converted', $2::jsonb, $3)`,
+      [id, auditPayload, actorUserId],
+    );
+    await client.query(
+      `insert into timeline_logs (org_id, entity_type, entity_id, action, actor_user_id, payload) values ($1, 'lead', $2, 'lead.converted', $3, $4::jsonb)`,
+      [input.orgId, id, actorUserId, auditPayload],
+    );
+  }
+
+  private async checkConvertDedup(
+    lead: Lead,
+    orgId: string,
+  ): Promise<ConvertDedupHit> {
+    return queryConvertDedup(this.pool, lead, orgId);
   }
 }

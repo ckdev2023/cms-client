@@ -196,6 +196,8 @@ export type DocumentItemCreateInput = {
   ownerSide?: string;
   dueAt?: string | null;
   note?: string | null;
+  category?: string;
+  surveyData?: Record<string, unknown> | null;
 };
 
 /** 更新资料项请求参数。 */
@@ -204,6 +206,11 @@ export type DocumentItemUpdateInput = {
   ownerSide?: string;
   dueAt?: string | null;
   note?: string | null;
+};
+
+/** 更新问卷资料项 survey_data 请求参数（P1 扩展）。 */
+export type DocumentItemUpdateSurveyDataInput = {
+  surveyData: Record<string, unknown> | null;
 };
 
 /** 资料项状态变更请求参数。 */
@@ -247,6 +254,7 @@ export type DocumentFileReviewInput = {
 export type DocumentItemListInput = {
   caseId?: string;
   status?: string;
+  category?: string;
   page?: number;
   limit?: number;
 };
@@ -281,6 +289,12 @@ export type DocumentCompletionRate = {
   approved: number;
   waived: number;
   completionRate: number;
+  /** P1: questionnaire 类资料项总数（含在 total 内）。0 when no questionnaire items. */
+  questionnaireTotal: number;
+  /** P1: questionnaire 类已完成项数（含在 completed 内）。 */
+  questionnaireCompleted: number;
+  /** P1: questionnaire 类完成率。 */
+  questionnaireCompletionRate: number;
 };
 
 // ────────────────────────────────────────────────────────────────

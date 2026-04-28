@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import Chip from "../../shared/ui/Chip.vue";
 import Card from "../../shared/ui/Card.vue";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import CaseCreateStep1 from "./components/CaseCreateStep1.vue";
 import CaseCreateStep2 from "./components/CaseCreateStep2.vue";
 import CaseCreateStep3 from "./components/CaseCreateStep3.vue";
@@ -15,33 +17,48 @@ import CaseCreateToast from "./components/CaseCreateToast.vue";
 import { useCreateCaseModel } from "./model/useCreateCaseModel";
 import { useCasePartyPicker } from "./model/useCasePartyPicker";
 import type { PartyPickerMode } from "./model/useCasePartyPicker";
-import { parseCaseCreateQuery } from "./query";
+import { useCustomerDropdownData } from "./model/useCustomerDropdownData";
+import {
+  parseCaseCreateQuery,
+  buildCaseDetailRoute,
+  buildCaseListRoute,
+  buildCaseListHref,
+  buildCustomerDetailHref,
+} from "./query";
 import { createMockCaseRepository } from "./repository";
-import { CREATE_CASE_STEPS, CASE_OWNER_OPTIONS } from "./constants";
+import { CREATE_CASE_STEPS } from "./constants";
 import "./case-create-shared.css";
 
 /** 案件新建页：四步表单向导、来源上下文、party picker modal、toast。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
-const repo = createMockCaseRepository();
-const viewer = repo.getViewer();
+const fixtureRepo = createMockCaseRepository();
+const viewer = fixtureRepo.getViewer();
 const sourceContext = parseCaseCreateQuery(route.query, route.hash);
-const templates = repo.getCreateTemplates();
+const templates = fixtureRepo.getCreateTemplates();
+const ownerOptions = computed(() => getOwnerOptions(locale.value));
+const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+
+const customerDropdown = useCustomerDropdownData();
+onMounted(() => {
+  customerDropdown.fetch();
+});
 
 const model = useCreateCaseModel({
   templates: () => templates,
-  customers: () => repo.getCreateCustomers(),
-  familyScenario: () => repo.getFamilyScenario(),
-  ownerOptions: () => repo.getOwnerOptions(),
-  groupOptions: () => repo.getGroupOptions(),
+  customers: () => customerDropdown.customers.value,
+  familyScenario: () => fixtureRepo.getFamilyScenario(),
+  ownerOptions: () => ownerOptions.value,
+  groupOptions: () => groupOptions.value,
   sourceContext,
   defaultGroup: viewer.groupId,
   defaultOwner: viewer.ownerId,
+  locale: () => locale.value,
 });
 
 const picker = useCasePartyPicker({
-  existingCustomers: () => repo.getCreateCustomers(),
+  existingCustomers: () => customerDropdown.customers.value,
 });
 
 const toastVisible = ref(false);
@@ -65,24 +82,54 @@ function showToast(title: string, desc = "") {
   }, 3000);
 }
 
-const submitted = ref(false);
-const submitting = ref(false);
-const createdCaseId = ref("CASE-MOCK-001");
+const submitted = computed(() => model.submitResult.value !== null);
+const createdCaseId = computed(() => model.submitResult.value?.id ?? "");
 
-/** 模拟提交案件并展示成功状态。 */
-function handleSubmit() {
-  if (!model.canSubmit.value || submitting.value) return;
-  submitting.value = true;
-  setTimeout(() => {
-    submitting.value = false;
-    submitted.value = true;
+async function handleSubmit() {
+  const result = await model.submit();
+  if (result) {
     showToast(
       t("cases.create.toast.caseCreated"),
       t("cases.create.toast.caseCreatedDesc", {
         title: model.effectiveTitle.value,
       }),
     );
-  }, 600);
+  } else if (model.submitError.value) {
+    showToast(t("cases.create.toast.createFailed"), model.submitError.value);
+  }
+}
+
+/**
+ * 跳转到刚创建完成的案件详情页。
+ * @returns 无。
+ */
+function navigateToCreatedDetail() {
+  if (!createdCaseId.value) return;
+  router.push(buildCaseDetailRoute(createdCaseId.value));
+}
+
+/**
+ * 返回案件列表页，并在存在客户来源时保留客户筛选上下文。
+ * @returns 无。
+ */
+function navigateToList() {
+  router.push(
+    buildCaseListRoute(
+      sourceContext.customerId
+        ? { customerId: sourceContext.customerId }
+        : undefined,
+    ),
+  );
+}
+
+/**
+ * 跳转到当前主客户的详情页。
+ * @returns 无。
+ */
+function navigateToCustomer() {
+  const cid = model.primaryCustomer.value?.id;
+  if (!cid) return;
+  window.location.href = buildCustomerDetailHref(cid);
 }
 
 /**
@@ -119,7 +166,7 @@ watch(
 );
 
 const customerSelectOptions = computed(() => {
-  const base = [...repo.getCreateCustomers()];
+  const base = [...customerDropdown.customers.value];
   const p = model.primaryCustomer.value;
   if (p && !base.some((c) => c.id === p.id)) base.unshift(p);
   return base;
@@ -135,12 +182,12 @@ const nextLabel = computed(() => {
 });
 
 const summaryItems = computed(() => {
-  const owner = CASE_OWNER_OPTIONS.find((o) => o.value === model.draft.owner);
+  const owner = ownerOptions.value.find((o) => o.value === model.draft.owner);
   const notSet = t("cases.create.summary.notSet");
   return [
     {
       label: t("cases.create.summary.template"),
-      value: `${model.currentTemplate.value?.label ?? ""} · ${model.draft.applicationType}`,
+      value: `${model.templateLabel.value} · ${t("cases.create.applicationTypes." + model.draft.applicationType)}`,
     },
     {
       label: t("cases.create.summary.title"),
@@ -180,7 +227,7 @@ const summaryItems = computed(() => {
       :breadcrumbs="[
         { label: t('shell.nav.items.dashboard'), href: '#/' },
         { label: t('shell.nav.groups.business') },
-        { label: t('shell.nav.items.cases'), href: '#/cases' },
+        { label: t('shell.nav.items.cases'), href: buildCaseListHref() },
         { label: t('cases.create.breadcrumbNew') },
       ]"
     />
@@ -205,6 +252,9 @@ const summaryItems = computed(() => {
         <Chip v-if="sourceContext.familyBulkMode" tone="primary" size="sm">
           {{ t("cases.create.source.familyBulk") }}
         </Chip>
+        <Chip v-if="sourceContext.templateCode" tone="primary" size="sm">
+          {{ t("cases.create.source.templateLocked") }}
+        </Chip>
       </div>
     </div>
 
@@ -228,7 +278,7 @@ const summaryItems = computed(() => {
         @click="model.goToStep(s.step)"
       >
         <span class="cc__step-num">{{ s.step }}</span>
-        <span class="cc__step-text">{{ s.label }}</span>
+        <span class="cc__step-text">{{ t(s.i18nKey) }}</span>
       </button>
     </div>
 
@@ -240,22 +290,31 @@ const summaryItems = computed(() => {
       <CaseCreateStep2
         :model="model"
         :customer-options="customerSelectOptions"
+        :customers-loading="customerDropdown.loading.value"
+        :customers-error="customerDropdown.error.value"
+        :customers-loaded="customerDropdown.loaded.value"
         @open-picker="openPicker"
+        @retry-customers="customerDropdown.fetch()"
       />
     </Card>
 
     <Card v-show="model.draft.currentStep === 3" padding="lg">
-      <CaseCreateStep3 :model="model" />
+      <CaseCreateStep3
+        :model="model"
+        :owner-options="ownerOptions"
+        :group-options="groupOptions"
+      />
     </Card>
 
     <Card v-show="model.draft.currentStep === 4" padding="lg">
       <CaseCreateStep4
         :model="model"
         :submitted="submitted"
+        :submit-error="model.submitError.value"
         :summary-items="summaryItems"
-        :created-case-id="createdCaseId"
-        @view-detail="router.push(`/cases/${createdCaseId}`)"
-        @view-list="router.push('/cases')"
+        @view-detail="navigateToCreatedDetail"
+        @view-list="navigateToList"
+        @go-to-customer="navigateToCustomer"
       />
     </Card>
 
@@ -268,6 +327,15 @@ const summaryItems = computed(() => {
               total: 4,
             })
           }}
+          <span
+            v-if="
+              model.preSignGate.value.active && !model.preSignGate.value.passed
+            "
+            class="cc__footer-gate-warn"
+            data-testid="footer-gate-warn"
+          >
+            — {{ t("cases.create.preSignGate.blockedTitle") }}
+          </span>
         </span>
         <div class="cc__footer-actions">
           <Button v-if="!model.isFirstStep.value" @click="model.goPrev()">
@@ -287,7 +355,7 @@ const summaryItems = computed(() => {
             variant="filled"
             tone="primary"
             :disabled="!model.canSubmit.value"
-            :loading="submitting"
+            :loading="model.submitting.value"
             @click="handleSubmit"
           >
             {{ t("cases.create.navigation.submit") }}
@@ -299,6 +367,7 @@ const summaryItems = computed(() => {
     <CaseCreateModal
       :open="picker.isOpen.value"
       :form="picker.form"
+      :group-options="groupOptions"
       :form-errors="picker.formErrors.value"
       :show-duplicate-confirmation="picker.showDuplicateConfirmation.value"
       :duplicate-hits="picker.duplicateHits.value"
@@ -317,130 +386,3 @@ const summaryItems = computed(() => {
     />
   </div>
 </template>
-
-<style scoped>
-.cc {
-  display: grid;
-  gap: 24px;
-  padding-bottom: 80px;
-}
-
-.cc__source {
-  padding: 16px 20px;
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-1);
-}
-
-.cc__source-kicker {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 4px;
-}
-
-.cc__source-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-2);
-}
-
-.cc__stepper {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-}
-
-.cc__step {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg);
-  background: var(--color-bg-1);
-  cursor: pointer;
-  font: inherit;
-  transition: all var(--transition-normal);
-}
-
-.cc__step.is-active {
-  border-color: var(--color-primary-6);
-  background: rgba(3, 105, 161, 0.04);
-}
-
-.cc__step.is-done {
-  border-color: rgba(22, 163, 74, 0.3);
-  background: rgba(22, 163, 74, 0.04);
-}
-
-.cc__step-num {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  border: 2px solid var(--color-border-2);
-  color: var(--color-text-3);
-  flex-shrink: 0;
-}
-
-.cc__step.is-active .cc__step-num {
-  background: var(--color-primary-6);
-  color: #fff;
-  border-color: var(--color-primary-6);
-}
-
-.cc__step.is-done .cc__step-num {
-  background: var(--color-success);
-  color: #fff;
-  border-color: var(--color-success);
-}
-
-.cc__step-text {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-2);
-}
-
-.cc__step.is-active .cc__step-text {
-  color: var(--color-primary-6);
-}
-
-.cc__footer {
-  position: sticky;
-  bottom: 0;
-  z-index: 10;
-  margin: 0 -32px;
-  padding: 0 32px;
-}
-
-.cc__footer-inner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 24px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--color-border-1);
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.cc__footer-hint {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.cc__footer-actions {
-  display: flex;
-  gap: 10px;
-}
-</style>

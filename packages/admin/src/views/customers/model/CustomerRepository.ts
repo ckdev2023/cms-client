@@ -35,6 +35,10 @@ import {
   type CustomerRelationMutationInput,
 } from "./CustomerAdapter";
 import {
+  CUSTOMER_CASES_API_PATH,
+  CUSTOMER_CASES_QUERY_HTTP_CONTRACT,
+} from "./CustomerAdapterTypes";
+import {
   assertBulkInput,
   assertRelationInput,
   createRuntime,
@@ -120,9 +124,14 @@ export interface CustomerRepository {
     customerIds: string[],
     group: string,
   ): Promise<{ updatedCount: number }>;
+  /** 检查 BMV 功能开关是否对当前租户启用。 */
+  isBmvEnabled(): Promise<boolean>;
 }
 
-export { CustomerRepositoryError } from "./CustomerRepositorySupport";
+export {
+  CustomerRepositoryError,
+  type ServerBlocker,
+} from "./CustomerRepositorySupport";
 
 function createListCustomers(runtime: CustomerRepositoryRuntime) {
   return async (params: CustomerListParams): Promise<CustomerListResult> => {
@@ -149,29 +158,36 @@ function createGetCustomerDetail(runtime: CustomerRepositoryRuntime) {
     });
 }
 
-// ─── Customer → Cases Downstream Reuse (p0-fe-002b-01 / p0-fe-002b-03) ──
-// This function queries the cases API directly: GET /api/cases?customerId=<id>
+// ─── Customer → Cases Downstream Reuse (p0-fe-002b-01 / p0-fe-002b-03, calibrated by p0-fe-009-01) ──
+// This function queries the cases API directly: GET /api/cases?customerId=<id>&view=summary
 // It shares the same server endpoint as CaseRepository.listCases but constructs
 // its own URLSearchParams to avoid cross-feature import (architecture rule).
 //
-// Contract dependency (p0-fe-002b-03 frozen):
+// Contract dependency (p0-fe-002b-03 frozen, p0-fe-009-01 calibrated):
 //   - Server query param name: "customerId" (must match CASE_LIST_HTTP_FIELD_MAP.customerId)
+//   - "view=summary" ensures response includes customerName/groupName/latestValidation
+//     (aligned with CaseAdapterReaders.buildCaseListSearchParams)
 //   - Locked by CaseAdapterReaders.customer-summary-page.test.ts
 //   - Response DTO minimum fields: see CUSTOMER_DOWNSTREAM_MINIMUM_FIELDS in CaseAdapterTypes
+//   - Shared HTTP params: see CUSTOMER_CASES_QUERY_HTTP_CONTRACT in CustomerAdapterTypes
 //   - Response adaptation: adaptCustomerCaseListResult (flexible multi-key resilient parser)
 //
-// If the cases list API renames "customerId" or changes its response shape,
-// this function and adaptCustomerCaseListResult must be updated in sync.
+// If the cases list API renames "customerId", changes "view=summary" semantics,
+// or changes its response shape, this function and adaptCustomerCaseListResult
+// must be updated in sync.
 
 function createListRelatedCases(runtime: CustomerRepositoryRuntime) {
   return async (customerId: string): Promise<CustomerCase[]> => {
     const normalizedCustomerId = customerId.trim();
     if (!normalizedCustomerId) return [];
 
-    const query = new URLSearchParams({ customerId: normalizedCustomerId });
+    const query = new URLSearchParams({
+      [CUSTOMER_CASES_QUERY_HTTP_CONTRACT.customerId]: normalizedCustomerId,
+      view: CUSTOMER_CASES_QUERY_HTTP_CONTRACT.view,
+    });
     return requestAndAdapt({
       runtime,
-      url: `/api/cases?${query.toString()}`,
+      url: `${CUSTOMER_CASES_API_PATH}?${query.toString()}`,
       method: "GET",
       adapt: adaptCustomerCaseListResult,
       errorMessage: "Invalid related cases response",
@@ -333,6 +349,31 @@ function createCheckDuplicates(runtime: CustomerRepositoryRuntime) {
     });
 }
 
+function adaptFeatureFlagEnabled(value: unknown): boolean | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const record = value as Record<string, unknown>;
+  if (typeof record.enabled !== "boolean") return null;
+  return record.enabled;
+}
+
+function createIsBmvEnabled(runtime: CustomerRepositoryRuntime) {
+  return async (): Promise<boolean> => {
+    const query = new URLSearchParams({ key: "bmv" });
+    try {
+      const result = await requestAndAdapt({
+        runtime,
+        url: `/api/feature-flags/resolve?${query.toString()}`,
+        method: "GET",
+        adapt: adaptFeatureFlagEnabled,
+        errorMessage: "Invalid feature flag resolve response",
+      });
+      return result;
+    } catch {
+      return false;
+    }
+  };
+}
+
 function createBulkMutation(
   runtime: CustomerRepositoryRuntime,
   input: {
@@ -419,5 +460,6 @@ export function createCustomerRepository(
       errorMessage: "Invalid bulk change group response",
       buildBody: (customerIds, group) => ({ customerIds, group }),
     }),
+    isBmvEnabled: createIsBmvEnabled(runtime),
   };
 }

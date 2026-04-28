@@ -62,6 +62,8 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
@@ -84,11 +86,9 @@ function makePermissions(
 // §p0-sv-008: write contract — S9 write guard
 // ---------------------------------------------------------------------------
 
-const archivedCase: Case = { ...mockCase, stage: "S9", status: "S9" };
-
 void test("update: S9 archived case rejected by service", async () => {
   const service = {
-    get: () => Promise.resolve(archivedCase),
+    assertCanEditCase: () => Promise.resolve(),
     update: () =>
       Promise.reject(
         new BadRequestException(
@@ -106,7 +106,7 @@ void test("update: S9 archived case rejected by service", async () => {
 
 void test("transition: S9 archived case rejected by service", async () => {
   const service = {
-    get: () => Promise.resolve(archivedCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () =>
       Promise.reject(
         new BadRequestException(
@@ -124,7 +124,7 @@ void test("transition: S9 archived case rejected by service", async () => {
 
 void test("acknowledgeBillingRisk: S9 archived case rejected by service", async () => {
   const service = {
-    get: () => Promise.resolve(archivedCase),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: () =>
       Promise.reject(
         new BadRequestException(
@@ -145,7 +145,7 @@ void test("acknowledgeBillingRisk: S9 archived case rejected by service", async 
 
 void test("updatePostApprovalStage: S9 archived case rejected by service", async () => {
   const service = {
-    get: () => Promise.resolve(archivedCase),
+    assertCanEditCase: () => Promise.resolve(),
     updatePostApprovalStage: () =>
       Promise.reject(
         new BadRequestException(
@@ -194,7 +194,7 @@ void test("create: forwards groupId and crossGroupReason to service", async () =
 void test("update: forwards groupId and groupTransferReason to service", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     update: (_ctx: unknown, _id: string, input: Record<string, unknown>) => {
       capturedInput = input;
       return Promise.resolve(mockCase);
@@ -216,7 +216,7 @@ void test("transition: forwards closeReason to service for S9 transition", async
   let capturedInput: Record<string, unknown> | undefined;
   const transitionedCase = { ...mockCase, stage: "S9", status: "S9" };
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     transition: (
       _ctx: unknown,
       _id: string,
@@ -286,7 +286,7 @@ void test("create: forwards all optional fields to service", async () => {
 void test("update: forwards all nullable fields correctly (null clears)", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     update: (_ctx: unknown, _id: string, input: Record<string, unknown>) => {
       capturedInput = input;
       return Promise.resolve(mockCase);
@@ -313,7 +313,7 @@ void test("update: forwards all nullable fields correctly (null clears)", async 
 void test("billingRiskAck: forwards reasonCode, reasonNote, evidenceUrl", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: (
       _ctx: unknown,
       _id: string,
@@ -344,7 +344,7 @@ void test("billingRiskAck: forwards reasonCode, reasonNote, evidenceUrl", async 
 void test("postApprovalStage: forwards stage value", async () => {
   let capturedInput: Record<string, unknown> | undefined;
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     updatePostApprovalStage: (
       _ctx: unknown,
       _id: string,
@@ -387,7 +387,7 @@ void test("create: rejects missing required fields", async () => {
 
 void test("billingRiskAck: rejects missing reasonCode", async () => {
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: () => Promise.resolve(mockCase),
   } as unknown as CasesService;
 
@@ -403,7 +403,7 @@ void test("billingRiskAck: rejects missing reasonCode", async () => {
 
 void test("postApprovalStage: rejects missing stage", async () => {
   const service = {
-    get: () => Promise.resolve(mockCase),
+    assertCanEditCase: () => Promise.resolve(),
     updatePostApprovalStage: () => Promise.resolve(mockCase),
   } as unknown as CasesService;
 

@@ -8,13 +8,12 @@ import {
 import { Pool } from "pg";
 
 import { hasRequiredRole } from "../auth/roles";
+import type { CasePaymentRecordDto } from "../cases/cases.types-billing";
 import type {
   BillingPlan,
   PaymentMethod,
   PaymentRecord,
   PaymentRecordStatus,
-  TimelineAction,
-  TimelineEntityType,
 } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
@@ -22,6 +21,23 @@ import {
   mapBillingPlanRow,
   type BillingPlanQueryRow,
 } from "./billingPlans.service";
+import { syncBillingCacheForCase } from "./billingGuards";
+import {
+  buildPaymentRecordListWhere,
+  buildPaymentTimelinePayload,
+  deriveBillingStatus,
+  PAYMENT_RECORD_LIST_COLS,
+  PAYMENT_RECORD_LIST_FROM,
+  type PaymentRecordListInput,
+  validateAmountReceived,
+  validatePaymentMethod,
+  validateReceivedAt,
+  writeTimelineInTx,
+} from "./paymentRecordHelpers";
+export type {
+  PaymentRecordListInput,
+  PaymentRecordListRecordStatus,
+} from "./paymentRecordHelpers";
 
 /** Database row shape for payment_records (P0 aligned). */
 export type PaymentRecordQueryRow = {
@@ -54,36 +70,14 @@ export type PaymentRecordCreateInput = {
   note?: string | null;
 };
 
-/** Input for listing payment records. */
-export type PaymentRecordListInput = {
-  billingPlanId?: string;
-  caseId?: string;
-  page?: number;
-  limit?: number;
-};
-
 /** Input for voiding a payment record. */
 export type PaymentRecordVoidInput = {
   reasonCode: string;
   reasonNote?: string | null;
 };
 
-type TimelineInput = {
-  entityType: TimelineEntityType;
-  entityId: string;
-  action: TimelineAction;
-  payload: Record<string, unknown>;
-};
-
 const PAYMENT_RECORD_COLS = `id, org_id, billing_record_id, case_id, amount_received, received_at, payment_method, record_status, receipt_storage_type, receipt_relative_path_or_key, note, void_reason_code, void_reason_note, voided_by, voided_at, reversed_from_payment_record_id, recorded_by, created_at`;
 const BILLING_PLAN_COLS = `id, org_id, case_id, milestone_name, amount_due, due_date, status, gate_effect_mode, remark, created_at, updated_at`;
-const VALID_PAYMENT_METHODS: ReadonlySet<string> = new Set([
-  "bank_transfer",
-  "cash",
-  "credit_card",
-  "other",
-]);
-
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") return value;
@@ -117,6 +111,38 @@ export function mapPaymentRecordRow(row: PaymentRecordQueryRow): PaymentRecord {
     reversedFromPaymentRecordId: row.reversed_from_payment_record_id ?? null,
     recordedBy: row.recorded_by,
     createdAt: toTimestampStringOrNull(row.created_at) ?? "",
+  };
+}
+
+/** list 路径聚合行：payment_records JOIN billing_records/cases/customers/users。 */
+export type PaymentRecordListRow = PaymentRecordQueryRow & {
+  milestone_name: string | null;
+  case_name: string | null;
+  case_no: string | null;
+  recorded_by_display_name: string | null;
+  voided_by_display_name: string | null;
+};
+
+/**
+ * list 路径专用 mapper — 输出 CasePaymentRecordDto（含 displayName + 扩展字段）。
+ *
+ * D10 复用语义：`recordStatus='reversed'` 时 `voidedByDisplayName` 表示冲正操作人。
+ *
+ * @param row - 聚合 join 行
+ * @returns CasePaymentRecordDto
+ */
+export function mapPaymentRecordListRow(
+  row: PaymentRecordListRow,
+): CasePaymentRecordDto {
+  const { orgId: _orgId, ...base } = mapPaymentRecordRow(row);
+  void _orgId;
+  return {
+    ...base,
+    voidedByDisplayName: row.voided_by_display_name ?? null,
+    recordedByDisplayName: row.recorded_by_display_name ?? null,
+    caseNo: row.case_no ?? null,
+    caseName: row.case_name ?? null,
+    milestoneName: row.milestone_name ?? null,
   };
 }
 
@@ -168,51 +194,48 @@ export class PaymentRecordsService {
   }
 
   /**
-   * List payment records with pagination.
+   * List payment records with pagination (org-wide, all filters optional).
+   *
+   * JOIN billing_records / cases / customers / users 以获取
+   * caseName / caseNo / milestoneName / recordedByDisplayName / voidedByDisplayName。
+   *
+   * `recordStatus` 默认 `'valid'`；传 `'all'` 时返回三态全量。
    *
    * @param ctx - request context
    * @param input - list input
-   * @returns paginated list
+   * @returns paginated CasePaymentRecordDto list
    */
   async list(
     ctx: RequestContext,
     input: PaymentRecordListInput = {},
-  ): Promise<{ items: PaymentRecord[]; total: number }> {
-    if (!input.billingPlanId && !input.caseId) {
-      throw new BadRequestException(
-        "billingPlanId or caseId is required for listing payment records",
-      );
-    }
+  ): Promise<{ items: CasePaymentRecordDto[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const where: string[] = [];
-    const params: unknown[] = [];
-    if (input.billingPlanId) {
-      params.push(input.billingPlanId);
-      where.push(`billing_record_id = $${String(params.length)}`);
-    }
-    if (input.caseId) {
-      params.push(input.caseId);
-      where.push(`case_id = $${String(params.length)}`);
-    }
-    const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
+    const { whereClause, params } = buildPaymentRecordListWhere(
+      ctx.orgId,
+      input,
+    );
+
     const countResult = await tenantDb.query<{ count: string }>(
-      `select count(*) as count from payment_records ${whereClause}`,
+      `select count(*) as count from ${PAYMENT_RECORD_LIST_FROM} ${whereClause}`,
       params,
     );
     const total = Number.parseInt(countResult.rows[0]?.count ?? "0", 10);
 
     const listParams = [...params, limit, offset];
-    const result = await tenantDb.query<PaymentRecordQueryRow>(
-      `select ${PAYMENT_RECORD_COLS} from payment_records ${whereClause}
-       order by received_at desc, created_at desc, id desc
+    const result = await tenantDb.query<PaymentRecordListRow>(
+      `select ${PAYMENT_RECORD_LIST_COLS}
+       from ${PAYMENT_RECORD_LIST_FROM}
+       ${whereClause}
+       order by pr.received_at desc, pr.created_at desc, pr.id desc
        limit $${String(listParams.length - 1)} offset $${String(listParams.length)}`,
       listParams,
     );
-    return { items: result.rows.map(mapPaymentRecordRow), total };
+
+    return { items: result.rows.map(mapPaymentRecordListRow), total };
   }
 
   /**
@@ -266,8 +289,76 @@ export class PaymentRecordsService {
         },
       });
       await this.recalculateBillingStatus(tx, ctx, bp, voided.id);
+      await syncBillingCacheForCase(tx, bp.caseId);
       return voided;
     });
+  }
+
+  /**
+   * Reverse a valid payment record (D1 方案 A：原地翻状态).
+   *
+   * 原地将 `record_status` 从 `'valid'` 翻为 `'reversed'`，不新增行、不引入负数金额。
+   * 冲正信息复用 `void_reason_code / void_reason_note / voided_by / voided_at` 列承载——
+   * 当 `recordStatus='reversed'` 时，`voidedBy` / `voidedAt` 表示冲正操作人/时间（D10 复用语义）。
+   *
+   * @param ctx - request context
+   * @param id - PaymentRecord ID
+   * @param input - reverse reason (reasonCode required)
+   * @returns reversed PaymentRecord
+   */
+  async reverse(
+    ctx: RequestContext,
+    id: string,
+    input: PaymentRecordVoidInput,
+  ): Promise<PaymentRecord> {
+    if (!hasRequiredRole(ctx.role, ["manager"])) {
+      throw new ForbiddenException(
+        "Reversing payment record requires manager role",
+      );
+    }
+    if (!input.reasonCode || typeof input.reasonCode !== "string") {
+      throw new BadRequestException("reasonCode is required for reverse");
+    }
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction((tx) => this.reverseInTx(tx, ctx, id, input));
+  }
+
+  private async reverseInTx(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    id: string,
+    input: PaymentRecordVoidInput,
+  ): Promise<PaymentRecord> {
+    const pr = await this.getPaymentRecordForUpdate(tx, id);
+    if (pr.recordStatus !== "valid") {
+      throw new BadRequestException(
+        `Only valid payment records can be reversed (current: ${pr.recordStatus})`,
+      );
+    }
+    const bp = await this.getBillingPlanForUpdate(tx, pr.billingPlanId);
+    const result = await tx.query<PaymentRecordQueryRow>(
+      `update payment_records
+       set record_status = 'reversed', void_reason_code = $2,
+           void_reason_note = $3, voided_by = $4, voided_at = now()
+       where id = $1
+       returning ${PAYMENT_RECORD_COLS}`,
+      [id, input.reasonCode, input.reasonNote ?? null, ctx.userId],
+    );
+    const row = result.rows.at(0);
+    if (!row) throw new BadRequestException("Failed to reverse payment record");
+    const reversed = mapPaymentRecordRow(row);
+    await writeTimelineInTx(tx, ctx, {
+      entityType: "payment_record",
+      entityId: reversed.id,
+      action: "payment_record.reversed",
+      payload: {
+        ...buildPaymentTimelinePayload(reversed),
+        reasonCode: input.reasonCode,
+      },
+    });
+    await this.recalculateBillingStatus(tx, ctx, bp, reversed.id);
+    await syncBillingCacheForCase(tx, bp.caseId);
+    return reversed;
   }
 
   private async createInTx(
@@ -284,6 +375,7 @@ export class PaymentRecordsService {
       payload: buildPaymentTimelinePayload(pr),
     });
     await this.recalculateBillingStatus(tx, ctx, bp, pr.id);
+    await syncBillingCacheForCase(tx, bp.caseId);
     return pr;
   }
 
@@ -395,65 +487,4 @@ export class PaymentRecordsService {
     );
     return Number(result.rows[0]?.total_received ?? 0);
   }
-}
-
-function validateAmountReceived(amountReceived: number): void {
-  if (!Number.isFinite(amountReceived) || amountReceived <= 0) {
-    throw new BadRequestException("amountReceived must be greater than 0");
-  }
-}
-
-function validateReceivedAt(receivedAt: string): void {
-  if (Number.isNaN(new Date(receivedAt).getTime())) {
-    throw new BadRequestException("Invalid receivedAt");
-  }
-}
-
-function validatePaymentMethod(
-  paymentMethod: PaymentMethod | null | undefined,
-): void {
-  if (paymentMethod === undefined || paymentMethod === null) return;
-  if (!VALID_PAYMENT_METHODS.has(paymentMethod)) {
-    throw new BadRequestException(
-      `Invalid paymentMethod: ${paymentMethod}. Must be one of: ${[...VALID_PAYMENT_METHODS].join(", ")}`,
-    );
-  }
-}
-
-function deriveBillingStatus(totalReceived: number, amountDue: number): string {
-  if (totalReceived >= amountDue && totalReceived > 0) return "paid";
-  if (totalReceived > 0) return "partial";
-  return "due";
-}
-
-async function writeTimelineInTx(
-  tx: TenantDbTx,
-  ctx: RequestContext,
-  input: TimelineInput,
-): Promise<void> {
-  await tx.query(
-    `insert into timeline_logs(org_id, entity_type, entity_id, action, actor_user_id, payload)
-     values ($1, $2, $3, $4, $5, $6::jsonb)`,
-    [
-      ctx.orgId,
-      input.entityType,
-      input.entityId,
-      input.action,
-      ctx.userId,
-      JSON.stringify(input.payload),
-    ],
-  );
-}
-
-function buildPaymentTimelinePayload(
-  pr: PaymentRecord,
-): Record<string, unknown> {
-  return {
-    billingPlanId: pr.billingPlanId,
-    caseId: pr.caseId,
-    amountReceived: pr.amountReceived,
-    receivedAt: pr.receivedAt,
-    paymentMethod: pr.paymentMethod,
-    recordStatus: pr.recordStatus,
-  };
 }

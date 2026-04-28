@@ -10,13 +10,13 @@ import type {
 } from "../types";
 
 const GROUP_OPTIONS: SelectOption[] = [
-  { value: "tokyo-1", label: "東京一組" },
-  { value: "osaka", label: "大阪組" },
+  { value: "tokyo-1", label: "Tokyo Team 1" },
+  { value: "osaka", label: "Osaka Team" },
 ];
 
 const OWNER_OPTIONS: SelectOption[] = [
-  { value: "ys", label: "山田翔太" },
-  { value: "tk", label: "高橋健太" },
+  { value: "yamada-s", label: "Shota Yamada" },
+  { value: "takahashi-k", label: "Kenta Takahashi" },
 ];
 
 const VIEWER: CustomerViewerContext = {
@@ -102,7 +102,7 @@ describe("useCustomerFilters", () => {
 
   it("isFilterActive becomes true when ownerFilter is set", () => {
     const f = create();
-    f.ownerFilter.value = "ys";
+    f.ownerFilter.value = "yamada-s";
     expect(f.isFilterActive.value).toBe(true);
   });
 
@@ -188,7 +188,7 @@ describe("useCustomerFilters", () => {
     expect(f.applyFilters(CUSTOMERS)).toHaveLength(1);
   });
 
-  it("filters by group (resolves option value → label)", () => {
+  it("filters by group using stable ids even when labels are localized", () => {
     const f = create();
     f.groupFilter.value = "osaka";
     const result = f.applyFilters(CUSTOMERS);
@@ -196,9 +196,9 @@ describe("useCustomerFilters", () => {
     expect(result[0].group).toBe("大阪組");
   });
 
-  it("filters by owner (resolves option value → label)", () => {
+  it("filters by owner using stable ids even when labels are localized", () => {
     const f = create();
-    f.ownerFilter.value = "tk";
+    f.ownerFilter.value = "takahashi-k";
     const result = f.applyFilters(CUSTOMERS);
     expect(result).toHaveLength(1);
     expect(result[0].owner.name).toBe("高橋健太");

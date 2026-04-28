@@ -36,6 +36,10 @@ const billingJaJP = {
       amountOutstanding: "未入金額(¥)",
       nextNode: "次の請求ノード",
       status: "入金状態",
+      actions: "操作",
+    },
+    actions: {
+      registerPayment: "入金登録",
     },
     status: {
       overdue: "期限超過",
@@ -52,6 +56,8 @@ const billingJaJP = {
     empty: {
       title: "請求レコードがありません",
       description: "案件で請求プランを設定してください。",
+      noData: "請求レコードがありません",
+      noResultForFilters: "現在の条件に該当する結果がありません",
     },
     bulk: {
       ariaLabel: "一括操作",
@@ -74,7 +80,7 @@ const billingJaJP = {
       },
       paymentRegistered: {
         title: "入金を登録しました",
-        description: "¥{amount} を記録しました",
+        description: "入金の登録が完了しました。",
       },
       voided: {
         title: "無効化しました",
@@ -84,6 +90,27 @@ const billingJaJP = {
         title: "取消処理しました",
         description: "明細 {id} を取消処理しました",
       },
+    },
+    error: {
+      loadFailed: "データの読み込みに失敗しました。再度お試しください。",
+      retry: "再試行",
+    },
+  },
+  bulkCollect: {
+    skipReason: {
+      "no-permission": "案件の編集権限がありません",
+      "duplicate-task": "未完了の督促タスクが既に存在します",
+      "not-overdue": "期限超過の請求ノードがありません",
+      "no-assignee": "案件に担当者が設定されていません",
+      "system-error": "システムエラー",
+    },
+    drawer: {
+      title: "督促タスク作成結果",
+      empty: "明細なし",
+      details: "明細",
+      successLabel: "成功",
+      skippedLabel: "スキップ",
+      failedLabel: "失敗",
     },
   },
   paymentLog: {
@@ -107,9 +134,46 @@ const billingJaJP = {
     },
     actionVoid: "無効化",
     actionReverse: "取消処理",
+    toast: {
+      voided: {
+        title: "無効化しました",
+        description: "明細 {id} を無効にしました",
+      },
+      reversed: {
+        title: "取消処理しました",
+        description: "明細 {id} を取消処理しました",
+      },
+    },
+    row: {
+      voidedBy: "{name} が無効化",
+      reversedBy: "{name} が取消処理",
+    },
     empty: {
       title: "入金履歴がありません",
       description: "入金登録後、履歴がここに表示されます。",
+    },
+  },
+  riskAck: {
+    modal: {
+      title: "請求リスク確認",
+      submit: "確認",
+      cancel: "キャンセル",
+    },
+    reasonCode: {
+      customer_promise: "顧客が1週間以内の支払いを約束",
+      internal_review: "事務所内部審査通過",
+      partial_settled: "一部入金済み、残額のリスクは許容範囲",
+      other: "その他",
+    },
+    reasonNote: {
+      placeholder: "理由を入力してください（「その他」の場合は必須）",
+    },
+    evidenceUrl: {
+      placeholder: "証拠URL（任意）",
+    },
+    chip: {
+      acknowledged: "リスク確認済み（{date}）",
+      notAcknowledged: "リスク未確認",
     },
   },
   paymentModal: {
@@ -133,6 +197,9 @@ const billingJaJP = {
     },
     cancel: "キャンセル",
     submit: "入金登録",
+    submitting: "送信中…",
+    loadingNodes: "請求ノードを読み込み中…",
+    submitError: "入金の登録に失敗しました。再度お試しください。",
   },
 } as const;
 

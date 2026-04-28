@@ -44,7 +44,7 @@ const subtitle = computed(() =>
       :title="title"
       :subtitle="subtitle"
       :breadcrumbs="[
-        { label: t('shell.nav.items.dashboard'), href: '/' },
+        { label: t('shell.nav.items.dashboard'), href: '#/' },
         { label: groupLabel },
         { label: title },
       ]"

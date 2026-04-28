@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import type { CaseSummaryCardData } from "../types";
 
 /** 案件摘要卡片组：展示各阶段案件统计。 */
 defineProps<{
   cards: CaseSummaryCardData[];
 }>();
+
+const { t } = useI18n();
 </script>
 
 <template>
@@ -20,7 +23,7 @@ defineProps<{
       <span class="case-summary-cards__value">{{
         card.value.toLocaleString()
       }}</span>
-      <span class="case-summary-cards__label">{{ card.label }}</span>
+      <span class="case-summary-cards__label">{{ t(card.i18nKey) }}</span>
     </div>
   </div>
 </template>

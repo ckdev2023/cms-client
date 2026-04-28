@@ -62,6 +62,8 @@ const BASE: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  businessPhase: "CONSULTING",
+  currentWorkflowStepCode: null,
   createdAt: TS,
   updatedAt: TS,
 };
@@ -95,7 +97,6 @@ function stubPerms(o: Partial<PermissionsService> = {}): PermissionsService {
 }
 
 const realPerms = new PermissionsService();
-const S9_CASE = mc({ stage: "S9", status: "S9" });
 
 // ═══════════════════════════════════════════════════════════════
 // §3 S9 全局只读
@@ -103,7 +104,7 @@ const S9_CASE = mc({ stage: "S9", status: "S9" });
 
 void test("§3 S9: PATCH update rejected", async () => {
   const service = {
-    get: () => Promise.resolve(S9_CASE),
+    assertCanEditCase: () => Promise.resolve(),
     update: () => Promise.reject(new BadRequestException("CASE_S9_READONLY")),
   } as unknown as CasesService;
   const ctrl = new CasesController(service, stubPerms());
@@ -115,7 +116,7 @@ void test("§3 S9: PATCH update rejected", async () => {
 
 void test("§3 S9: POST transition rejected", async () => {
   const service = {
-    get: () => Promise.resolve(S9_CASE),
+    assertCanEditCase: () => Promise.resolve(),
     transition: () =>
       Promise.reject(new BadRequestException("CASE_S9_READONLY")),
   } as unknown as CasesService;
@@ -129,7 +130,7 @@ void test("§3 S9: POST transition rejected", async () => {
 
 void test("§3 S9: POST billing-risk-ack rejected", async () => {
   const service = {
-    get: () => Promise.resolve(S9_CASE),
+    assertCanEditCase: () => Promise.resolve(),
     acknowledgeBillingRisk: () =>
       Promise.reject(new BadRequestException("CASE_S9_READONLY")),
   } as unknown as CasesService;
@@ -145,7 +146,7 @@ void test("§3 S9: POST billing-risk-ack rejected", async () => {
 
 void test("§3 S9: POST post-approval-stage rejected", async () => {
   const service = {
-    get: () => Promise.resolve(S9_CASE),
+    assertCanEditCase: () => Promise.resolve(),
     updatePostApprovalStage: () =>
       Promise.reject(new BadRequestException("CASE_S9_READONLY")),
   } as unknown as CasesService;
@@ -249,10 +250,12 @@ void test("§4 create denied for viewer", async () => {
 });
 
 void test("§4 staff non-participant: transition denied", async () => {
-  const other = mc({ ownerUserId: "x", assistantUserId: null, groupId: "x" });
   const service = {
-    get: () => Promise.resolve(other),
-    transition: () => Promise.resolve(other),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
+    transition: () => Promise.resolve(mc()),
   } as unknown as CasesService;
   const ctrl = new CasesController(service, realPerms);
   await assert.rejects(
@@ -267,10 +270,12 @@ void test("§4 staff non-participant: transition denied", async () => {
 });
 
 void test("§4 staff non-participant: update denied", async () => {
-  const other = mc({ ownerUserId: "x", assistantUserId: null, groupId: "x" });
   const service = {
-    get: () => Promise.resolve(other),
-    update: () => Promise.resolve(other),
+    assertCanEditCase: () =>
+      Promise.reject(
+        new ForbiddenException("Insufficient permissions to edit case"),
+      ),
+    update: () => Promise.resolve(mc()),
   } as unknown as CasesService;
   const ctrl = new CasesController(service, realPerms);
   await assert.rejects(

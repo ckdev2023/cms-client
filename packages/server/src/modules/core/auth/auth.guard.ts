@@ -55,17 +55,23 @@ export class AuthGuard implements CanActivate {
    * @returns 是否允许
    */
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    if (this.isPublicRoute(context)) return true;
     const req = context.switchToHttp().getRequest<HttpRequest>();
-    const input = this.readRequestAuthInput(req);
-    const role = await this.resolveActiveRole(input);
+    const isPublicRoute = this.isPublicRoute(context);
+    const input = this.readOptionalRequestAuthInput(req);
+
+    if (!input && isPublicRoute) return true;
+
+    const verifiedInput = input ?? this.readRequestAuthInput(req);
+    const role = await this.resolveActiveRole(verifiedInput);
 
     req.requestContext = {
-      orgId: input.orgId,
-      userId: input.userId,
+      orgId: verifiedInput.orgId,
+      userId: verifiedInput.userId,
       role,
-      ...(input.groupId ? { groupId: input.groupId } : {}),
+      ...(verifiedInput.groupId ? { groupId: verifiedInput.groupId } : {}),
     };
+
+    if (isPublicRoute) return true;
 
     const requiredRoles =
       this.reflector.getAllAndOverride<Role[] | undefined>(REQUIRED_ROLES_KEY, [
@@ -87,18 +93,26 @@ export class AuthGuard implements CanActivate {
     ]);
   }
 
-  private readRequestAuthInput(req: HttpRequest): RequestAuthInput {
+  private readOptionalRequestAuthInput(
+    req: HttpRequest,
+  ): RequestAuthInput | undefined {
     const input =
       req.requestAuthInput ??
       parseVerifiedRequestAuthInputFromHeaders(
         req.headers,
         readAuthConfigFromEnv(),
       );
-    if (!input) {
-      throw new UnauthorizedException("Missing authorization");
-    }
+    if (!input) return undefined;
     if (!isUuid(input.orgId) || !isUuid(input.userId)) {
       throw new UnauthorizedException("Invalid auth context");
+    }
+    return input;
+  }
+
+  private readRequestAuthInput(req: HttpRequest): RequestAuthInput {
+    const input = this.readOptionalRequestAuthInput(req);
+    if (!input) {
+      throw new UnauthorizedException("Missing authorization");
     }
     return input;
   }

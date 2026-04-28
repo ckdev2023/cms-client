@@ -71,6 +71,73 @@ describe("CustomerCasesTab", () => {
     expect(wrapper.text()).toContain("Active");
   });
 
+  it("shows i18n label for known caseTypeCode", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-002",
+          name: "Test Case",
+          type: "family",
+          stage: "S1",
+          status: "active",
+          owner: "Owner",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-20T09:00:00Z",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Dependent visa");
+  });
+
+  it("formats updatedAt with locale and preserves ISO in title", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-003",
+          name: "Fmt Case",
+          type: "work",
+          stage: "S2",
+          status: "active",
+          owner: "Owner",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-20T09:00:00Z",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const updatedTd = wrapper.find(".cases-tab__td--updated");
+    expect(updatedTd.attributes("title")).toBe("2026-04-20T09:00:00Z");
+    expect(updatedTd.text()).toContain("2026");
+    expect(updatedTd.text()).not.toBe("2026-04-20T09:00:00Z");
+  });
+
+  it("falls back to raw code for unknown caseTypeCode", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-004",
+          name: "Unknown Type",
+          type: "exotic_type",
+          stage: "S1",
+          status: "active",
+          owner: "Owner",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-20",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const typeTd = wrapper.find(".cases-tab__td--type");
+    expect(typeTd.text()).toBe("exotic_type");
+  });
+
   it("renders request failed state and retries", async () => {
     const repository = createRepository({
       listRelatedCases: vi

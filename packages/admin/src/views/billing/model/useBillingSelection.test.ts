@@ -6,6 +6,7 @@ function makeRow(
   partial: Partial<CaseBillingRow> & { id: string },
 ): CaseBillingRow {
   return {
+    caseId: partial.id,
     caseName: "",
     caseNo: "",
     client: { name: "", type: "" },
@@ -16,6 +17,9 @@ function makeRow(
     amountOutstanding: 0,
     status: "due",
     nextNode: null,
+    billingRiskAcknowledged: false,
+    billingRiskAcknowledgedAt: null,
+    billingRiskAcknowledgedByDisplayName: null,
     ...partial,
   };
 }

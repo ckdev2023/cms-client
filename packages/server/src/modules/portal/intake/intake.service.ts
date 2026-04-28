@@ -3,11 +3,14 @@ import { Pool } from "pg";
 
 import type { IntakeForm, IntakeFormQueryRow } from "../model/portalEntities";
 import { mapIntakeFormRow } from "../model/portalEntities";
+import type { IntakeFormType } from "./intake.types";
+import { isValidFormKind } from "./intake.types";
 
 /** IntakeForm 创建入参。 */
 export type IntakeFormCreateInput = {
   appUserId: string;
   leadId?: string | null;
+  formKind?: IntakeFormType;
   formData?: Record<string, unknown>;
 };
 
@@ -21,12 +24,13 @@ export type IntakeFormUpdateInput = {
 export type IntakeFormListInput = {
   appUserId?: string;
   leadId?: string;
+  formKind?: IntakeFormType;
   status?: string;
   page?: number;
   limit?: number;
 };
 
-const FORM_COLS = `id, app_user_id, lead_id, case_draft_id, form_data, status, created_at, updated_at`;
+const FORM_COLS = `id, app_user_id, lead_id, case_draft_id, form_kind, form_data, status, created_at, updated_at`;
 
 /**
  * IntakeForms 服务：信息采集表单 CRUD。
@@ -45,12 +49,19 @@ export class IntakeService {
    * @returns 创建的表单
    */
   async create(input: IntakeFormCreateInput): Promise<IntakeForm> {
+    const formKind = input.formKind ?? "general";
+    if (!isValidFormKind(formKind)) {
+      throw new BadRequestException(
+        `Invalid form_kind: ${String(formKind)}. Must be one of: general, bmv_questionnaire, bmv_quote`,
+      );
+    }
     const result = await this.pool.query<IntakeFormQueryRow>(
-      `insert into intake_forms (app_user_id, lead_id, form_data, status)
-       values ($1, $2, $3::jsonb, 'draft') returning ${FORM_COLS}`,
+      `insert into intake_forms (app_user_id, lead_id, form_kind, form_data, status)
+       values ($1, $2, $3, $4::jsonb, 'draft') returning ${FORM_COLS}`,
       [
         input.appUserId,
         input.leadId ?? null,
+        formKind,
         JSON.stringify(input.formData ?? {}),
       ],
     );
@@ -93,6 +104,15 @@ export class IntakeService {
     if (input.leadId) {
       params.push(input.leadId);
       where.push(`lead_id = $${String(params.length)}`);
+    }
+    if (input.formKind) {
+      if (!isValidFormKind(input.formKind)) {
+        throw new BadRequestException(
+          `Invalid form_kind filter: ${String(input.formKind)}`,
+        );
+      }
+      params.push(input.formKind);
+      where.push(`form_kind = $${String(params.length)}`);
     }
     if (input.status) {
       params.push(input.status);

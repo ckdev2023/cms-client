@@ -1,12 +1,18 @@
 import { ref } from "vue";
 import type { LeadStatus, LeadSummary } from "../types";
+import type { LeadRepository } from "./LeadRepository";
 
 /* ------------------------------------------------------------------ */
 /*  批量操作类型                                                        */
 /* ------------------------------------------------------------------ */
 
 /** 批量操作种类。 */
-export type BulkActionKind = "assign_owner" | "adjust_followup" | "mark_status";
+export type BulkActionKind =
+  | "assign_owner"
+  | "adjust_followup"
+  | "mark_status"
+  | "tags"
+  | "export";
 
 /** */
 export interface BulkActionResultDetail {
@@ -81,6 +87,10 @@ function resolveSelected(
   return rows.filter((r) => selectedIds.has(r.id));
 }
 
+function operableIds(selected: LeadSummary[]): string[] {
+  return selected.filter(canBulkOperate).map((r) => r.id);
+}
+
 /* ------------------------------------------------------------------ */
 /*  独立操作函数（fixture 模式，不做实际写入）                             */
 /* ------------------------------------------------------------------ */
@@ -137,24 +147,129 @@ export function executeMarkStatus(
 }
 
 /* ------------------------------------------------------------------ */
+/*  Deps                                                               */
+/* ------------------------------------------------------------------ */
+
+/**
+ *
+ */
+export interface UseLeadBulkActionsDeps {
+  /**
+   *
+   */
+  repository?: LeadRepository;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Repository-backed action executors                                  */
+/* ------------------------------------------------------------------ */
+
+async function execAssign(
+  repo: LeadRepository | undefined,
+  ids: Set<string>,
+  rows: LeadSummary[],
+  ownerId: string,
+): Promise<BulkActionResult> {
+  const selected = resolveSelected(ids, rows);
+  const operable = operableIds(selected);
+  if (repo && operable.length > 0) {
+    await repo.bulkAssign({ leadIds: operable, ownerUserId: ownerId });
+  }
+  return buildResult("assign_owner", selected);
+}
+
+async function execFollowUp(
+  repo: LeadRepository | undefined,
+  ids: Set<string>,
+  rows: LeadSummary[],
+  date: string,
+): Promise<BulkActionResult> {
+  const selected = resolveSelected(ids, rows);
+  const operable = operableIds(selected);
+  if (repo && operable.length > 0) {
+    await repo.bulkFollowup({
+      leadIds: operable,
+      channel: "phone",
+      summary: "",
+      nextFollowUp: date,
+    });
+  }
+  return buildResult("adjust_followup", selected);
+}
+
+async function execStatus(
+  repo: LeadRepository | undefined,
+  ids: Set<string>,
+  rows: LeadSummary[],
+  status: LeadStatus,
+): Promise<BulkActionResult> {
+  const selected = resolveSelected(ids, rows);
+  const operable = operableIds(selected);
+  if (repo && operable.length > 0) {
+    await repo.bulkStatus({ leadIds: operable, toStatus: status });
+  }
+  return buildResult("mark_status", selected);
+}
+
+async function execTags(
+  repo: LeadRepository | undefined,
+  ids: Set<string>,
+  rows: LeadSummary[],
+  tags: string[],
+): Promise<BulkActionResult> {
+  const selected = resolveSelected(ids, rows);
+  const operable = operableIds(selected);
+  if (repo && operable.length > 0) {
+    await repo.bulkTags({ leadIds: operable, tags });
+  }
+  return buildResult("tags", selected);
+}
+
+async function execExport(
+  repo: LeadRepository | undefined,
+  ids: Set<string>,
+  rows: LeadSummary[],
+  format?: "csv" | "xlsx",
+): Promise<BulkActionResult> {
+  const selected = resolveSelected(ids, rows);
+  if (repo) {
+    await repo.bulkExport({ leadIds: selected.map((r) => r.id), format });
+  }
+  return {
+    kind: "export",
+    success: selected.length,
+    skipped: 0,
+    details: selected.map((r) => ({
+      leadId: r.id,
+      result: "success" as const,
+    })),
+  };
+}
+
+/* ------------------------------------------------------------------ */
 /*  Composable                                                         */
 /* ------------------------------------------------------------------ */
 
 /**
- * 线索列表批量操作：指派负责人、调整跟进时间、标记状态。
+ * 线索列表批量操作：指派负责人、调整跟进时间、标记状态、标签、导出。
  *
+ * 当提供 `repository` 时批量操作走服务端请求；否则回退到本地 fixture 模式。
  * 终态（已创建案件/已流失）行自动跳过。
  *
- * @returns 加载态、最近一次结果、三项执行方法与清除方法
+ * @param deps - 可选依赖注入
+ * @returns 加载态、最近一次结果、执行方法与清除方法
  */
-export function useLeadBulkActions() {
+export function useLeadBulkActions(deps: UseLeadBulkActionsDeps = {}) {
   const loading = ref(false);
   const lastResult = ref<BulkActionResult | null>(null);
+  const repo = deps.repository;
 
-  async function run(fn: () => BulkActionResult): Promise<BulkActionResult> {
+  async function run(
+    fn: () => BulkActionResult | Promise<BulkActionResult>,
+  ): Promise<BulkActionResult> {
     loading.value = true;
     try {
-      const result = fn();
+      const result = await fn();
       lastResult.value = result;
       return result;
     } finally {
@@ -167,11 +282,18 @@ export function useLeadBulkActions() {
     lastResult,
     canBulkOperate,
     assignOwner: (ids: Set<string>, rows: LeadSummary[], ownerId: string) =>
-      run(() => executeAssignOwner(ids, rows, ownerId)),
+      run(() => execAssign(repo, ids, rows, ownerId)),
     adjustFollowUp: (ids: Set<string>, rows: LeadSummary[], date: string) =>
-      run(() => executeAdjustFollowUp(ids, rows, date)),
+      run(() => execFollowUp(repo, ids, rows, date)),
     markStatus: (ids: Set<string>, rows: LeadSummary[], status: LeadStatus) =>
-      run(() => executeMarkStatus(ids, rows, status)),
+      run(() => execStatus(repo, ids, rows, status)),
+    bulkTags: (ids: Set<string>, rows: LeadSummary[], tags: string[]) =>
+      run(() => execTags(repo, ids, rows, tags)),
+    bulkExport: (
+      ids: Set<string>,
+      rows: LeadSummary[],
+      format?: "csv" | "xlsx",
+    ) => run(() => execExport(repo, ids, rows, format)),
     clearResult: () => {
       lastResult.value = null;
     },

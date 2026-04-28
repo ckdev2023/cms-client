@@ -338,6 +338,9 @@ describe("update draft → payload round-trip edge cases", () => {
     residenceExpiryDate: "",
     archivedAt: "",
     resultOutcome: "",
+    visaPlan: "",
+    overseasVisaStartAt: "",
+    entryConfirmedAt: "",
   };
 
   it("whitespace-only change to nullable field → null in payload", () => {

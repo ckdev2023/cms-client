@@ -32,6 +32,10 @@ const BLANK_FIELDS: CustomerCreateFormFields = {
   phone: "",
   email: "",
   referrer: "",
+  location: "",
+  sourceType: "",
+  visaType: "",
+  referrerName: "",
   avatar: "",
   note: "",
 };
@@ -63,6 +67,10 @@ function cloneFields(
     phone: fields.phone,
     email: fields.email,
     referrer: fields.referrer,
+    location: fields.location,
+    sourceType: fields.sourceType,
+    visaType: fields.visaType,
+    referrerName: fields.referrerName,
     avatar: fields.avatar,
     note: fields.note,
   };

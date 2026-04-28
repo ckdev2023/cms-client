@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { type RouteLocationRaw, useRouter } from "vue-router";
 import {
   panels as panelDefinitions,
   type PanelDef,
@@ -22,6 +22,7 @@ type ResolvedPanel = {
   action: string;
   emptyMessage: string;
   items: DashboardWorkItem[];
+  route?: PanelDef["route"];
 };
 
 /**
@@ -38,7 +39,7 @@ const router = useRouter();
  *
  * @param route 目标路由地址。
  */
-function navigateTo(route?: string): void {
+function navigateTo(route?: RouteLocationRaw): void {
   if (!route) return;
   void router.push(route);
 }
@@ -52,6 +53,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
     action: t(`dashboard.panels.${panel.id}.action`),
     emptyMessage: t(`dashboard.panels.${panel.id}.emptyMessage`),
     items: props.panels?.[panel.listKey] ?? [],
+    route: panel.route,
   })),
 );
 </script>
@@ -71,7 +73,13 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
             <h2 class="panel-title">{{ panel.title }}</h2>
             <p class="panel-subtitle">{{ panel.subtitle }}</p>
           </div>
-          <button class="mini-btn work-panel-action" type="button">
+          <button
+            class="mini-btn work-panel-action"
+            type="button"
+            :disabled="!panel.route || undefined"
+            :aria-disabled="!panel.route"
+            @click="navigateTo(panel.route)"
+          >
             {{ panel.action }}
           </button>
         </div>

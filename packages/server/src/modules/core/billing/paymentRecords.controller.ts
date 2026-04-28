@@ -31,9 +31,20 @@ type VoidPaymentRecordBody = {
   reasonNote?: unknown;
 };
 
+type ReversePaymentRecordBody = {
+  reasonCode: unknown;
+  reasonNote?: unknown;
+};
+
 type PaymentRecordListQuery = {
   billingPlanId?: unknown;
   caseId?: unknown;
+  recordStatus?: unknown;
+  q?: unknown;
+  from?: unknown;
+  to?: unknown;
+  groupId?: unknown;
+  ownerId?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -49,7 +60,7 @@ function parseOptionalString(
   value: unknown,
   field: string,
 ): string | undefined {
-  if (value === undefined) return undefined;
+  if (value === undefined || value === null || value === "") return undefined;
   return requireString(value, field);
 }
 
@@ -99,6 +110,47 @@ function parseLimit(value: unknown): number | undefined {
     throw new BadRequestException("Invalid limit");
   }
   return Math.floor(n);
+}
+
+const VALID_RECORD_STATUSES: ReadonlySet<string> = new Set([
+  "valid",
+  "voided",
+  "reversed",
+  "all",
+]);
+
+function parseOptionalRecordStatus(
+  value: unknown,
+): "valid" | "voided" | "reversed" | "all" | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const s = requireString(value, "recordStatus");
+  if (!VALID_RECORD_STATUSES.has(s)) {
+    throw new BadRequestException(
+      `recordStatus must be one of: ${[...VALID_RECORD_STATUSES].join(", ")}`,
+    );
+  }
+  return s as "valid" | "voided" | "reversed" | "all";
+}
+
+function parseOptionalSearchQuery(value: unknown): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const s = requireString(value, "q");
+  if (s.length > 100) {
+    throw new BadRequestException("q must be at most 100 characters");
+  }
+  return s;
+}
+
+function parseOptionalISODateTime(
+  value: unknown,
+  field: string,
+): string | undefined {
+  if (value === undefined || value === null || value === "") return undefined;
+  const raw = requireString(value, field);
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime()))
+    throw new BadRequestException(`Invalid ${field}`);
+  return date.toISOString();
 }
 
 /**
@@ -152,6 +204,12 @@ export class PaymentRecordsController {
     return this.paymentRecordsService.list(ctx, {
       billingPlanId: parseOptionalString(query.billingPlanId, "billingPlanId"),
       caseId: parseOptionalString(query.caseId, "caseId"),
+      recordStatus: parseOptionalRecordStatus(query.recordStatus),
+      q: parseOptionalSearchQuery(query.q),
+      from: parseOptionalISODateTime(query.from, "from"),
+      to: parseOptionalISODateTime(query.to, "to"),
+      groupId: parseOptionalString(query.groupId, "groupId"),
+      ownerId: parseOptionalString(query.ownerId, "ownerId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
@@ -193,6 +251,29 @@ export class PaymentRecordsController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     return this.paymentRecordsService.void(ctx, id, {
+      reasonCode: requireString(body.reasonCode, "reasonCode"),
+      reasonNote: parseOptionalNullableString(body.reasonNote, "reasonNote"),
+    });
+  }
+
+  /**
+   * Reverse a payment record (D1 方案 A：原地翻状态，不引入负数金额).
+   *
+   * @param req - HTTP request
+   * @param id - payment record ID
+   * @param body - reverse reason (reasonCode required)
+   * @returns reversed PaymentRecord
+   */
+  @RequireRoles("manager")
+  @Post(":id/reverse")
+  async reverse(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: ReversePaymentRecordBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+    return this.paymentRecordsService.reverse(ctx, id, {
       reasonCode: requireString(body.reasonCode, "reasonCode"),
       reasonNote: parseOptionalNullableString(body.reasonNote, "reasonNote"),
     });

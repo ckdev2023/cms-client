@@ -46,6 +46,7 @@ function caseItem(
     dueDateLabel: "",
     riskStatus: "normal",
     riskLabel: "",
+    businessPhase: "CONSULTING",
     visibleScopes: ["mine", "group", "all"],
     ...partial,
   };
@@ -271,8 +272,9 @@ describe("createMockCaseRepository", () => {
     expect(repo.getCreateCustomers().length).toBeGreaterThanOrEqual(2);
   });
 
-  it("getCreateTemplates returns templates", () => {
-    expect(repo.getCreateTemplates().length).toBe(2);
+  it("getCreateTemplates returns all supported templates", () => {
+    const ids = repo.getCreateTemplates().map((template) => template.id);
+    expect(ids).toEqual(expect.arrayContaining(["family", "work", "bmv"]));
   });
 
   it("getFamilyScenario returns scenario with draft parties", () => {

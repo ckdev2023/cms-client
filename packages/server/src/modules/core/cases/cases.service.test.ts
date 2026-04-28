@@ -1,4 +1,4 @@
-/* eslint-disable max-lines */
+/* eslint-disable max-lines, no-console */
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Pool } from "pg";
@@ -73,6 +73,8 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     billing_risk_ack_evidence_url: null,
     overseas_visa_start_at: null,
     entry_confirmed_at: null,
+    business_phase: "CONSULTING",
+    current_workflow_step_code: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -391,7 +393,7 @@ void test("list: applies filters", async () => {
   await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
     stage: "S3",
     ownerUserId: USER_ID,
-    customerId: "cust-1",
+    customerId: "00000000-0000-4000-8000-000000000010",
   });
   const cq = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(cq);
@@ -404,6 +406,54 @@ void test("list: handles empty result", async () => {
   const r = await svc(pool, makeTemplates()).list(makeCtx("viewer"));
   assert.equal(r.total, 0);
   assert.equal(r.items.length, 0);
+});
+
+void test("list: invalid customerId filter returns empty without querying invalid uuid", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)")) return ok([{ count: "0" }]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
+    customerId: "cust-001",
+  });
+
+  assert.equal(result.total, 0);
+  assert.equal(result.items.length, 0);
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("where 1 = 0"));
+  const dataCall = calls.find((call) =>
+    call.sql.includes("order by created_at"),
+  );
+  assert.ok(dataCall);
+  assert.ok(dataCall.sql.includes("where 1 = 0"));
+});
+
+void test("list: invalid ownerUserId filter returns empty without querying invalid uuid", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)")) return ok([{ count: "0" }]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
+    ownerUserId: "owner-001",
+  });
+
+  assert.equal(result.total, 0);
+  assert.equal(result.items.length, 0);
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("where 1 = 0"));
+  const dataCall = calls.find((call) =>
+    call.sql.includes("order by created_at"),
+  );
+  assert.ok(dataCall);
+  assert.ok(dataCall.sql.includes("where 1 = 0"));
 });
 
 // ── update ──
@@ -659,10 +709,14 @@ const ALL_VALID_PAIRS: [string, string][] = Object.entries(
 
 for (const [from, to] of ALL_VALID_PAIRS) {
   void test(`transition: default allows ${from} → ${to}`, async () => {
+    const input: Record<string, string> = { toStatus: to };
+    if (to === "S9" && from !== "S8") {
+      input.closeReason = "test_close";
+    }
     const r = await svc(transitionPool(to, from), makeTemplates()).transition(
       makeCtx(),
       CASE_ID,
-      { toStatus: to },
+      input,
     );
     assert.equal(r.status, to);
   });
@@ -1431,12 +1485,13 @@ void test("update: rejects invalid resultOutcome", async () => {
   );
 });
 
-void test("CASE_RESULT_OUTCOMES matches P0 spec", () => {
+void test("CASE_RESULT_OUTCOMES matches P0 spec + P1 visa_rejected", () => {
   assert.ok(CASE_RESULT_OUTCOMES.has("pending"));
   assert.ok(CASE_RESULT_OUTCOMES.has("approved"));
   assert.ok(CASE_RESULT_OUTCOMES.has("rejected"));
   assert.ok(CASE_RESULT_OUTCOMES.has("withdrawn"));
-  assert.equal(CASE_RESULT_OUTCOMES.size, 4);
+  assert.ok(CASE_RESULT_OUTCOMES.has("visa_rejected"));
+  assert.equal(CASE_RESULT_OUTCOMES.size, 5);
 });
 
 // ── acknowledgeBillingRisk ──
@@ -1603,7 +1658,7 @@ void test("updatePostApprovalStage: blocks coe_sent when final payment gate is b
       svc(pool, makeTemplates()).updatePostApprovalStage(makeCtx(), CASE_ID, {
         stage: "coe_sent",
       }),
-    /Current billing gate blocks COE sending/,
+    /CASE_POST_APPROVAL_BILLING_BLOCKED.*Billing gate blocks COE sending/,
   );
 });
 
@@ -1759,13 +1814,14 @@ void test("transition: S7→S9 writes stage history for terminal transition", as
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
     if (sql.includes("update cases") && sql.includes("stage = $2"))
-      return ok([makeCaseRow({ status: "S9" })]);
+      return ok([makeCaseRow({ status: "S9", close_reason: "rejected" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S7" })]);
     return ok();
   });
   await svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
     toStatus: "S9",
+    closeReason: "rejected",
   });
   const historyInsert = calls.find((c) =>
     c.sql.includes("insert into case_stage_history"),
@@ -2120,13 +2176,22 @@ void test("transition: S7 correction semantics — cannot roll back to S5 or S6"
 });
 
 void test("transition: S7 can only proceed to S8 or S9", async () => {
-  for (const target of ["S8", "S9"]) {
-    const r = await svc(
-      transitionPool(target, "S7"),
-      makeTemplates(),
-    ).transition(makeCtx(), CASE_ID, { toStatus: target });
-    assert.equal(r.status, target);
-  }
+  const r8 = await svc(transitionPool("S8", "S7"), makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S8" },
+  );
+  assert.equal(r8.status, "S8");
+
+  const r9 = await svc(transitionPool("S9", "S7"), makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    {
+      toStatus: "S9",
+      closeReason: "rejected_by_immigration",
+    },
+  );
+  assert.equal(r9.status, "S9");
 });
 
 // ── Focused regression: result archival path ──
@@ -2191,16 +2256,43 @@ void test("acknowledgeBillingRisk: timeline payload includes evidenceUrl", async
   assert.equal(payload.evidenceUrl, "https://example.com/doc.pdf");
 });
 
-// ── Focused regression: every stage can emergency-close to S9 ──
+// ── Focused regression: only S7 (with closeReason) and S8 can reach S9 ──
 
-void test("transition: every non-terminal stage allows direct S9", async () => {
-  for (const stage of ["S1", "S2", "S3", "S4", "S5", "S6", "S7", "S8"]) {
-    const r = await svc(
-      transitionPool("S9", stage),
-      makeTemplates(),
-    ).transition(makeCtx(), CASE_ID, { toStatus: "S9" });
-    assert.equal(r.status, "S9", `${stage} → S9 should succeed`);
+void test("transition: S1-S6 are blocked from direct S9 (BUG-063)", async () => {
+  for (const stage of ["S1", "S2", "S3", "S4", "S5", "S6"]) {
+    const pool = makePool((sql, p) =>
+      sql.includes("from cases") && p?.[0] === CASE_ID
+        ? ok([makeCaseRow({ status: stage })])
+        : ok(),
+    );
+    await assert.rejects(
+      () =>
+        svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+          toStatus: "S9",
+        }),
+      (e) => e instanceof Error,
+      `${stage} → S9 should be blocked`,
+    );
   }
+});
+
+void test("transition: S7→S9 with closeReason and S8→S9 are allowed", async () => {
+  const r7 = await svc(transitionPool("S9", "S7"), makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    {
+      toStatus: "S9",
+      closeReason: "rejected_by_immigration",
+    },
+  );
+  assert.equal(r7.status, "S9", "S7 → S9 with closeReason should succeed");
+
+  const r8 = await svc(transitionPool("S9", "S8"), makeTemplates()).transition(
+    makeCtx(),
+    CASE_ID,
+    { toStatus: "S9" },
+  );
+  assert.equal(r8.status, "S9", "S8 → S9 should succeed");
 });
 
 // ── Group: CASE_COLS includes group_id ──
@@ -2318,7 +2410,7 @@ void test("list: applies groupId filter", async () => {
       : ok([makeCaseRow()]);
   });
   await svc(pool, makeTemplates()).list(makeCtx("viewer"), {
-    groupId: "grp-filter",
+    groupId: "00000000-0000-4000-8000-000000000011",
   });
   const cq = calls.find((c) => c.sql.includes("count(*)"));
   assert.ok(cq);
@@ -2390,6 +2482,24 @@ void test("list: viewer visibility filters by participant only", async () => {
   assert.ok(!cq.sql.includes("group_id = $"));
   assert.ok(cq.sql.includes("owner_user_id = $"));
   assert.ok(cq.sql.includes("assistant_user_id = $"));
+});
+
+void test("list: admin scope=mine filters by participant only", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    return sql.includes("count(*)") ? ok([{ count: "0" }]) : ok([]);
+  });
+  await svc(pool, makeTemplates()).list(makeCtx("manager"), {
+    scope: "mine",
+    visibility: { userId: USER_ID, roleTier: "admin", groupId: "grp-1" },
+  });
+  const cq = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(cq);
+  assert.ok(!cq.sql.includes("group_id = $"));
+  assert.ok(cq.sql.includes("owner_user_id = $"));
+  assert.ok(cq.sql.includes("assistant_user_id = $"));
+  assert.equal(cq.params?.[0], USER_ID);
 });
 
 // ============================================================================
@@ -2657,34 +2767,26 @@ void test("transition: rejects when neither toStage nor toStatus provided", asyn
   );
 });
 
-// ── Emergency close: all stages → S9 skip Gate checks ──
+// ── BUG-063: S3/S6→S9 emergency close is now blocked ──
 
-void test("transition: S3→S9 emergency close skips Gate-A", async () => {
-  const calls: string[] = [];
+void test("transition: S3→S9 is blocked after BUG-063 tightening", async () => {
   const pool = makePool((sql, p) => {
-    calls.push(sql.trim());
-    if (sql.includes("update cases") && sql.includes("stage = $2"))
-      return ok([makeCaseRow({ status: "S9" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow({ status: "S3" })]);
     return ok();
   });
 
-  const result = await svc(pool, makeTemplates()).transition(
-    makeCtx(),
-    CASE_ID,
-    { toStatus: "S9" },
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S9",
+      }),
+    (e) => e instanceof Error && /not allowed/i.test(e.message),
   );
-  assert.equal(result.stage, "S9");
-  assert.ok(!calls.some((sql) => sql.includes("from case_parties")));
 });
 
-void test("transition: S6→S9 emergency close skips Gate-C and billing check", async () => {
-  const calls: string[] = [];
+void test("transition: S6→S9 is blocked after BUG-063 tightening", async () => {
   const pool = makePool((sql, p) => {
-    calls.push(sql.trim());
-    if (sql.includes("update cases") && sql.includes("stage = $2"))
-      return ok([makeCaseRow({ status: "S9" })]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([
         makeCaseRow({
@@ -2696,13 +2798,13 @@ void test("transition: S6→S9 emergency close skips Gate-C and billing check", 
     return ok();
   });
 
-  const result = await svc(pool, makeTemplates()).transition(
-    makeCtx(),
-    CASE_ID,
-    { toStatus: "S9" },
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S9",
+      }),
+    (e) => e instanceof Error && /not allowed/i.test(e.message),
   );
-  assert.equal(result.stage, "S9");
-  assert.ok(!calls.some((sql) => sql.includes("from validation_runs")));
 });
 
 // ── S5→S6 success: VR passed + non-stale + no review required ──
@@ -2976,6 +3078,8 @@ void test("mapDetailCountsRow maps string counts to numbers", () => {
   const counts = mapDetailCountsRow({
     document_items_total: "16",
     document_items_done: "10",
+    questionnaire_items_total: "2",
+    questionnaire_items_done: "1",
     case_parties: "3",
     tasks: "5",
     tasks_pending: "2",
@@ -2989,6 +3093,8 @@ void test("mapDetailCountsRow maps string counts to numbers", () => {
   });
   assert.equal(counts.documentItemsTotal, 16);
   assert.equal(counts.documentItemsDone, 10);
+  assert.equal(counts.questionnaireItemsTotal, 2);
+  assert.equal(counts.questionnaireItemsDone, 1);
   assert.equal(counts.caseParties, 3);
   assert.equal(counts.tasks, 5);
   assert.equal(counts.tasksPending, 2);
@@ -3005,6 +3111,8 @@ void test("mapDetailCountsRow returns zeros for undefined row", () => {
   const counts = mapDetailCountsRow(undefined);
   assert.equal(counts.documentItemsTotal, 0);
   assert.equal(counts.documentItemsDone, 0);
+  assert.equal(counts.questionnaireItemsTotal, 0);
+  assert.equal(counts.questionnaireItemsDone, 0);
   assert.equal(counts.caseParties, 0);
   assert.equal(counts.tasks, 0);
   assert.equal(counts.tasksPending, 0);
@@ -3191,6 +3299,76 @@ void test("listSummary respects page and limit", async () => {
   assert.equal(capturedParams[capturedParams.length - 1], 20);
 });
 
+void test("listSummary: admin scope=group adds prefixed group filter", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) return ok([{ count: "0" }]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).listSummary(
+    makeCtx("manager"),
+    {
+      scope: "group",
+      visibility: { userId: USER_ID, roleTier: "admin", groupId: "grp-1" },
+    },
+  );
+
+  assert.equal(result.total, 0);
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("cs.group_id = $"));
+  assert.equal(countCall.params?.[0], "grp-1");
+  const dataCall = calls.find((call) => call.sql.includes("customer_name"));
+  assert.ok(dataCall);
+  assert.ok(dataCall.sql.includes("cs.group_id = $"));
+});
+
+void test("listSummary: invalid customerId filter returns empty without uuid error", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)")) return ok([{ count: "0" }]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).listSummary(makeCtx(), {
+    customerId: "cust-001",
+  });
+
+  assert.equal(result.total, 0);
+  assert.equal(result.items.length, 0);
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("where 1 = 0"));
+  const dataCall = calls.find((call) => call.sql.includes("customer_name"));
+  assert.ok(dataCall);
+  assert.ok(dataCall.sql.includes("where 1 = 0"));
+});
+
+void test("listSummary: invalid groupId filter returns empty without uuid error", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    if (sql.includes("count(*)")) return ok([{ count: "0" }]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).listSummary(makeCtx(), {
+    groupId: "grp-filter",
+  });
+
+  assert.equal(result.total, 0);
+  assert.equal(result.items.length, 0);
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("where 1 = 0"));
+  const dataCall = calls.find((call) => call.sql.includes("customer_name"));
+  assert.ok(dataCall);
+  assert.ok(dataCall.sql.includes("where 1 = 0"));
+});
+
 // ── read model contract: getDetailAggregate ──
 
 void test("getDetailAggregate returns null for missing case", async () => {
@@ -3343,6 +3521,197 @@ void test("getDetailAggregate handles no validation/submission/review", async ()
   assert.equal(result.counts.documentItemsTotal, 0);
   assert.equal(result.deepLink.customerName, "Charlie");
   assert.equal(result.deepLink.groupName, null);
+});
+
+// ── BUG-064: getDetailAggregate resilience (Promise.allSettled) ──
+
+void test("getDetailAggregate returns partial data when counts sub-query throws", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Alice",
+    group_name: null,
+    owner_display_name: "Owner",
+    assistant_display_name: null,
+  };
+
+  const stderr: string[] = [];
+  const origError = console.error;
+  console.error = (msg: string) => stderr.push(msg);
+
+  try {
+    const pool = makePool((sql) => {
+      if (sql.includes("customer_name")) return ok([summaryRow]);
+      if (sql.includes("document_items_total"))
+        return Promise.reject(new Error("counts query timeout"));
+      return ok([]);
+    });
+
+    const result = await svc(pool, makeTemplates()).getDetailAggregate(
+      makeCtx(),
+      CASE_ID,
+    );
+    assert.ok(result);
+    assert.equal(result.case.id, CASE_ID);
+    assert.equal(result.counts.documentItemsTotal, 0);
+    assert.equal(result.counts.tasks, 0);
+    assert.equal(result.latestValidation, null);
+    assert.equal(result.deepLink.customerName, "Alice");
+    assert.ok(stderr.some((m) => m.includes("counts") && m.includes("failed")));
+  } finally {
+    console.error = origError;
+  }
+});
+
+void test("getDetailAggregate returns partial data when latestValidation sub-query throws", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Bob",
+    group_name: null,
+    owner_display_name: "Staff",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "5",
+    document_items_done: "3",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "1",
+    tasks: "2",
+    tasks_pending: "1",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+
+  const stderr: string[] = [];
+  const origError = console.error;
+  console.error = (msg: string) => stderr.push(msg);
+
+  try {
+    const pool = makePool((sql) => {
+      if (sql.includes("customer_name")) return ok([summaryRow]);
+      if (sql.includes("document_items_total")) return ok([countsRow]);
+      if (sql.includes("result_status") && sql.includes("validation_runs"))
+        return Promise.reject(new Error("validation query failed"));
+      return ok([]);
+    });
+
+    const result = await svc(pool, makeTemplates()).getDetailAggregate(
+      makeCtx(),
+      CASE_ID,
+    );
+    assert.ok(result);
+    assert.equal(result.counts.documentItemsTotal, 5);
+    assert.equal(result.counts.tasks, 2);
+    assert.equal(result.latestValidation, null);
+    assert.equal(result.latestSubmission, null);
+    assert.ok(
+      stderr.some(
+        (m) => m.includes("latestValidation") && m.includes("failed"),
+      ),
+    );
+  } finally {
+    console.error = origError;
+  }
+});
+
+void test("getDetailAggregate returns partial data when docProgress sub-query throws", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Charlie",
+    group_name: null,
+    owner_display_name: "Admin",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "3",
+    document_items_done: "1",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+
+  const stderr: string[] = [];
+  const origError = console.error;
+  console.error = (msg: string) => stderr.push(msg);
+
+  try {
+    const pool = makePool((sql) => {
+      if (sql.includes("customer_name")) return ok([summaryRow]);
+      if (sql.includes("document_items_total")) return ok([countsRow]);
+      if (sql.includes("provided_by_role") && sql.includes("group by"))
+        return Promise.reject(new Error("docProgress exploded"));
+      return ok([]);
+    });
+
+    const result = await svc(pool, makeTemplates()).getDetailAggregate(
+      makeCtx(),
+      CASE_ID,
+    );
+    assert.ok(result);
+    assert.equal(result.counts.documentItemsTotal, 3);
+    assert.deepEqual(result.documentProgressByProvider, []);
+    assert.ok(
+      stderr.some((m) => m.includes("docProgress") && m.includes("failed")),
+    );
+  } finally {
+    console.error = origError;
+  }
+});
+
+void test("getDetailAggregate returns partial data when all sub-queries throw", async () => {
+  const summaryRow = {
+    ...makeCaseRow(),
+    customer_name: "Dan",
+    group_name: null,
+    owner_display_name: "Owner",
+    assistant_display_name: null,
+  };
+
+  const stderr: string[] = [];
+  const origError = console.error;
+  console.error = (msg: string) => stderr.push(msg);
+
+  try {
+    const pool = makePool((sql) => {
+      if (sql.includes("customer_name")) return ok([summaryRow]);
+      return Promise.reject(new Error("database down"));
+    });
+
+    const result = await svc(pool, makeTemplates()).getDetailAggregate(
+      makeCtx(),
+      CASE_ID,
+    );
+    assert.ok(result);
+    assert.equal(result.case.id, CASE_ID);
+    assert.equal(result.counts.documentItemsTotal, 0);
+    assert.equal(result.counts.tasks, 0);
+    assert.equal(result.latestValidation, null);
+    assert.equal(result.latestSubmission, null);
+    assert.equal(result.latestReview, null);
+    assert.deepEqual(result.documentProgressByProvider, []);
+    assert.equal(result.currentResidencePeriod, null);
+    assert.equal(result.deepLink.customerName, "Dan");
+    assert.ok(
+      stderr.length >= 6,
+      `expected >= 6 error logs, got ${String(stderr.length)}`,
+    );
+  } finally {
+    console.error = origError;
+  }
 });
 
 // ---------------------------------------------------------------------------

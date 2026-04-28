@@ -6,13 +6,9 @@ import { useI18n } from "vue-i18n";
 import SegmentedControl from "../../../shared/ui/SegmentedControl.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
 import Button from "../../../shared/ui/Button.vue";
-import type { LeadScope } from "../types";
+import type { LeadScope, OwnerOption, SelectOption } from "../types";
 import { LEAD_STATUSES } from "../types";
-import {
-  GROUP_OPTIONS,
-  OWNER_OPTIONS,
-  BUSINESS_TYPE_OPTIONS,
-} from "../fixtures";
+import { BUSINESS_TYPE_OPTIONS } from "../fixtures";
 
 /** 线索列表筛选区：范围切换、搜索、下拉筛选与日期范围。 */
 const { t } = useI18n();
@@ -29,6 +25,8 @@ defineProps<{
   statusFilter?: string;
   ownerFilter?: string;
   groupFilter?: string;
+  ownerOptions?: OwnerOption[];
+  groupOptions?: SelectOption[];
   businessTypeFilter?: string;
   dateFrom?: string;
   dateTo?: string;
@@ -102,7 +100,7 @@ defineEmits<{
       >
         <option value="">{{ t("leads.list.filters.ownerAll") }}</option>
         <option
-          v-for="opt in OWNER_OPTIONS"
+          v-for="opt in ownerOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >
@@ -122,7 +120,7 @@ defineEmits<{
       >
         <option value="">{{ t("leads.list.filters.groupAll") }}</option>
         <option
-          v-for="opt in GROUP_OPTIONS"
+          v-for="opt in groupOptions ?? []"
           :key="opt.value"
           :value="opt.value"
         >

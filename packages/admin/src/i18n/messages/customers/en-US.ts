@@ -5,6 +5,16 @@ const customerDetail = {
   placeholderMessage: 'The "{tab}" panel is coming soon.',
   notFound:
     "Customer not found — it may have been deleted or the ID is incorrect.",
+  errorState: {
+    unauthorizedTitle: "You do not have access to this customer.",
+    unauthorizedDescription:
+      "Ask an admin or the owning team for access, then try again.",
+    requestFailedTitle: "Couldn't load this customer right now.",
+    requestFailedDescription:
+      "The request failed or returned an invalid response. Please retry in a moment.",
+    retry: "Retry",
+    backToList: "Back to customers",
+  },
   tabs: {
     basic: "Basic info",
     cases: "Cases",
@@ -43,6 +53,8 @@ const customerDetail = {
     cancel: "Cancel",
     save: "Save",
     savedHint: "Saved",
+    avatarChooseFile: "Choose image",
+    avatarNoFileSelected: "No file selected",
     fields: {
       displayName: "Display name (internal)",
       legalName: "Legal name",
@@ -58,6 +70,29 @@ const customerDetail = {
       group: "Group",
       owner: "Owner",
       referralSource: "Referral source",
+      location: "Location",
+      locationNone: "—",
+      locationOverseas: "Overseas",
+      locationJapan: "Japan",
+      sourceType: "Source type",
+      sourceTypeNone: "—",
+      sourceTypeReferral: "Referral",
+      sourceTypeWeb: "Web",
+      sourceTypeAds: "Advertising",
+      visaType: "Visa type",
+      visaTypeNone: "—",
+      visaTypeBusinessManager: "Business manager",
+      visaTypeEngineerSpecialist: "Engineer / Specialist in humanities",
+      visaTypeSkilledLabor: "Skilled labor",
+      visaTypeStudent: "Student",
+      visaTypeDependent: "Dependent",
+      visaTypePermanentResident: "Permanent resident",
+      visaTypeSpouseOfJpNational: "Spouse of Japanese national",
+      visaTypeLongTermResident: "Long-term resident",
+      visaTypeDesignatedActivities: "Designated activities",
+      visaTypeOther: "Other",
+      visaTypeBmvDerived: "Derived from BMV visa plan",
+      referrerName: "Referrer name",
       avatar: "Avatar",
       note: "Note",
     },
@@ -116,10 +151,73 @@ const customerDetail = {
       locked: "Case creation stays locked until signing is completed",
       ready: "Signing is complete — formal case creation is now available",
     },
+    errors: {
+      saveSurveyFailed: "Failed to save the survey. Please try again.",
+      quoteModifyFailed: "Failed to modify the quote. Please try again.",
+      transitionToCaseFailed:
+        "Failed to transition to a formal case. Please try again.",
+      signRequiredForCase:
+        "Signing is not yet complete. A formal case cannot be created.",
+      questionnaireRequiredForQuote:
+        "Complete the questionnaire step before generating a quote.",
+      quoteRequiredForSign: "Generate the quote before proceeding to signing.",
+      featureDisabled: "The BMV feature is not enabled for this organization.",
+      billingLinkFailed:
+        "Failed to link signing with billing. Please contact an administrator.",
+      aggregateFetchFailed:
+        "Failed to load the intake summary. Please try again.",
+    },
+    gate: {
+      questionnaireNotDone:
+        "Questionnaire is not complete — the quote button is disabled",
+      quoteNotDone: "Quote is not complete — the signing button is disabled",
+      signNotDone:
+        "Signing is not complete — the create case button is disabled",
+      allClear: "All gates passed — the case can now be formally created",
+    },
+    toastSuccess: {
+      saveSurvey: {
+        title: "Survey saved",
+        description:
+          "Survey data updated. You can now proceed to generate a quote",
+      },
+      quoteModify: {
+        title: "Quote updated",
+        description:
+          "A new quote version has been created. Previous versions are preserved",
+      },
+      transitionToCase: {
+        title: "Case created",
+        description:
+          "Successfully transitioned to a formal case with a generated document checklist",
+      },
+    },
+    quoteHistory: {
+      title: "Quote history",
+      version: "Version {version}",
+      current: "Current version",
+      amount: "Amount",
+      createdAt: "Created at",
+    },
+    surveyData: {
+      title: "Survey data summary",
+      fieldCount: "{count} fields collected",
+    },
+    caseStage: {
+      title: "Linked case progress",
+      stage: "Current stage",
+      postApprovalStage: "Post-approval stage",
+      coeStatus: "COE status",
+    },
+    reminders: {
+      title: "Reminder summary",
+      empty: "No pending reminders",
+    },
     actions: {
       questionnaire: "Send questionnaire",
       quote: "Generate quote",
       sign: "Record signing",
+      transitionToCase: "Create formal case",
     },
     actionHint: {
       questionnaire: {
@@ -228,6 +326,7 @@ const customerDetail = {
   commsTab: {
     title: "Communications",
     addComm: "Log communication",
+    viewConversations: "View conversations",
     loading: "Loading communications…",
     requestFailed: "Could not load communications. Please try again.",
     retry: "Retry",
@@ -263,6 +362,12 @@ const customerDetail = {
     next: "Next",
     pageInfo: "Page {current} / {total}",
     emptyTitle: "No activity logs",
+    types: {
+      info: "Info change",
+      relation: "Relation change",
+      case: "Case",
+      comm: "Communication",
+    },
   },
 } as const;
 

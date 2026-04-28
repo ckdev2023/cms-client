@@ -5,6 +5,8 @@ import type {
   CustomerViewerContext,
   SelectOption,
 } from "../types";
+import { resolveGroupValue } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerValue } from "../../../shared/model/useOwnerOptions";
 
 /**
  *
@@ -20,6 +22,17 @@ export interface UseCustomerFiltersDeps {
   ownerOptions: SelectOption[];
 }
 
+function matchesKnownOption(
+  selectedValue: string,
+  options: SelectOption[],
+  currentValue: string,
+  resolveValue: (value: string) => string | null,
+): boolean {
+  if (!selectedValue) return true;
+  const known = options.some((option) => option.value === selectedValue);
+  return !known || resolveValue(currentValue) === selectedValue;
+}
+
 function matchesSearch(c: CustomerSummary, query: string): boolean {
   const q = query.toLowerCase();
   return (
@@ -31,21 +44,23 @@ function matchesSearch(c: CustomerSummary, query: string): boolean {
   );
 }
 
-function resolveLabel(
-  options: SelectOption[],
-  value: string,
-): string | undefined {
-  return options.find((o) => o.value === value)?.label;
-}
-
 function matchesScope(
   customer: CustomerSummary,
   currentScope: CustomerScope,
   viewer?: CustomerViewerContext,
 ): boolean {
   if (!viewer) return true;
-  if (currentScope === "mine") return customer.owner.name === viewer.ownerName;
-  if (currentScope === "group") return customer.group === viewer.group;
+  if (currentScope === "mine") {
+    return (
+      resolveOwnerValue(customer.owner.name) ===
+      resolveOwnerValue(viewer.ownerName)
+    );
+  }
+  if (currentScope === "group") {
+    return (
+      resolveGroupValue(customer.group) === resolveGroupValue(viewer.group)
+    );
+  }
   return true;
 }
 
@@ -62,10 +77,17 @@ export function deriveCustomerSummaryStats(
 ): Record<"mine" | "group" | "active" | "noActive", number> {
   return customers.reduce(
     (stats, customer) => {
-      if (!viewer || customer.owner.name === viewer.ownerName) {
+      if (
+        !viewer ||
+        resolveOwnerValue(customer.owner.name) ===
+          resolveOwnerValue(viewer.ownerName)
+      ) {
         stats.mine += 1;
       }
-      if (!viewer || customer.group === viewer.group) {
+      if (
+        !viewer ||
+        resolveGroupValue(customer.group) === resolveGroupValue(viewer.group)
+      ) {
         stats.group += 1;
       }
       if (customer.activeCases > 0) {
@@ -77,6 +99,38 @@ export function deriveCustomerSummaryStats(
     },
     { mine: 0, group: 0, active: 0, noActive: 0 },
   );
+}
+
+function matchesDropdownFilters(
+  customer: CustomerSummary,
+  deps: UseCustomerFiltersDeps,
+  groupFilter: string,
+  ownerFilter: string,
+  activeCasesFilter: string,
+): boolean {
+  if (
+    !matchesKnownOption(
+      groupFilter,
+      deps.groupOptions,
+      customer.group,
+      resolveGroupValue,
+    )
+  ) {
+    return false;
+  }
+  if (
+    !matchesKnownOption(
+      ownerFilter,
+      deps.ownerOptions,
+      customer.owner.name,
+      resolveOwnerValue,
+    )
+  ) {
+    return false;
+  }
+  if (activeCasesFilter === "yes" && customer.activeCases === 0) return false;
+  if (activeCasesFilter === "no" && customer.activeCases > 0) return false;
+  return true;
 }
 
 /**
@@ -107,20 +161,6 @@ export function useCustomerFilters(deps: UseCustomerFiltersDeps) {
     activeCasesFilter.value = "";
   }
 
-  function matchesDropdowns(c: CustomerSummary): boolean {
-    if (groupFilter.value) {
-      const label = resolveLabel(deps.groupOptions, groupFilter.value);
-      if (label && c.group !== label) return false;
-    }
-    if (ownerFilter.value) {
-      const label = resolveLabel(deps.ownerOptions, ownerFilter.value);
-      if (label && c.owner.name !== label) return false;
-    }
-    if (activeCasesFilter.value === "yes" && c.activeCases === 0) return false;
-    if (activeCasesFilter.value === "no" && c.activeCases > 0) return false;
-    return true;
-  }
-
   function applyFilters(
     customers: CustomerSummary[],
     viewer?: CustomerViewerContext,
@@ -129,7 +169,13 @@ export function useCustomerFilters(deps: UseCustomerFiltersDeps) {
       (c) =>
         matchesScope(c, scope.value, viewer) &&
         (!search.value || matchesSearch(c, search.value)) &&
-        matchesDropdowns(c),
+        matchesDropdownFilters(
+          c,
+          deps,
+          groupFilter.value,
+          ownerFilter.value,
+          activeCasesFilter.value,
+        ),
     );
   }
 

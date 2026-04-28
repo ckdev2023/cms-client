@@ -4,18 +4,33 @@ import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseListItem } from "../types";
-import { findOwnerOption } from "../fixtures";
+import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
+import { buildCaseDetailHref } from "../query";
+import {
+  getStageI18nKey,
+  getStageLabel,
+  getPhaseI18nKey,
+  getPhaseBadge,
+  BADGE_TONE_MAP,
+} from "../constants";
 
-/** 案件一覧の行コンポーネント：ステージ Chip、リスク表示、詳細リンク。 */
-const { t } = useI18n();
+/** 案件列表行：展示案件摘要信息和操作入口。 */
+const { t, locale } = useI18n();
 
 const props = defineProps<{
   item: CaseListItem;
 }>();
 
-const detailHref = computed(() => `#/cases/${props.item.id}`);
+const detailHref = computed(() => buildCaseDetailHref(props.item.id));
 
-const owner = computed(() => findOwnerOption(props.item.ownerId));
+const owner = computed(() =>
+  resolveOwnerOption(props.item.ownerId, locale.value),
+);
+
+const stageLabel = computed(() => {
+  const key = getStageI18nKey(props.item.stageId);
+  return key ? t(key) : getStageLabel(props.item.stageId);
+});
 
 const stageTone = computed<ChipTone>(() => {
   const s = props.item.stageId;
@@ -25,6 +40,10 @@ const stageTone = computed<ChipTone>(() => {
   if (s === "S2") return "success";
   return "neutral";
 });
+
+const riskLabel = computed(() =>
+  t(`cases.list.riskLabels.${props.item.riskStatus}`),
+);
 
 const riskTone = computed<ChipTone>(() => {
   if (props.item.riskStatus === "critical") return "danger";
@@ -37,19 +56,74 @@ const validationTone = computed<ChipTone>(() => {
   if (props.item.validationStatus === "passed") return "success";
   return "neutral";
 });
+
+const phaseTone = computed<ChipTone>(() => {
+  const badge = getPhaseBadge(props.item.businessPhase);
+  return (BADGE_TONE_MAP[badge] ?? "neutral") as ChipTone;
+});
+
+const phaseLabel = computed(() => {
+  const key = getPhaseI18nKey(props.item.businessPhase);
+  return key ? t(key) : props.item.businessPhase;
+});
+
+const identityMeta = computed(() => props.item.caseNo || props.item.id);
+
+const FAILURE_STEP_CODES = new Set(["VISA_REJECTED"]);
+
+const isFailureStep = computed(
+  () =>
+    !!props.item.workflowStepCode &&
+    FAILURE_STEP_CODES.has(props.item.workflowStepCode),
+);
 </script>
 
 <template>
   <tr class="case-row">
     <td>
-      <div class="case-row__identity">
+      <div class="case-row__identity" :title="item.id">
         <a class="case-row__name" :href="detailHref">{{ item.name }}</a>
-        <span class="case-row__meta">{{ item.id }}</span>
+        <span class="case-row__meta">{{ identityMeta }}</span>
       </div>
     </td>
 
     <td class="case-row__hide-md">
-      <Chip :tone="stageTone" size="sm">{{ item.stageLabel }}</Chip>
+      <div class="case-row__stage-cell">
+        <div class="case-row__stage-row">
+          <Chip :tone="stageTone" size="sm">{{ stageLabel }}</Chip>
+          <Chip
+            v-if="item.businessPhase"
+            :tone="phaseTone"
+            size="sm"
+            class="case-row__phase-chip"
+          >
+            {{ phaseLabel }}
+          </Chip>
+        </div>
+        <span
+          v-if="item.workflowStepLabel"
+          :class="[
+            'case-row__workflow-step',
+            { 'case-row__workflow-step--danger': isFailureStep },
+          ]"
+          :title="
+            t(
+              item.workflowStepCode
+                ? `cases.constants.bmvSteps.${item.workflowStepCode}`
+                : '',
+            ) || item.workflowStepLabel
+          "
+        >
+          →
+          {{
+            t(
+              item.workflowStepCode
+                ? `cases.constants.bmvSteps.${item.workflowStepCode}`
+                : "",
+            ) || item.workflowStepLabel
+          }}
+        </span>
+      </div>
     </td>
 
     <td class="case-row__hide-md">{{ item.applicant }}</td>
@@ -63,7 +137,9 @@ const validationTone = computed<ChipTone>(() => {
         </span>
         {{ owner.label }}
       </div>
-      <span v-else class="case-row__na">{{ item.ownerId }}</span>
+      <span v-else class="case-row__na">{{
+        t("cases.list.ownerUnassigned")
+      }}</span>
     </td>
 
     <td class="case-row__hide-lg">
@@ -86,9 +162,9 @@ const validationTone = computed<ChipTone>(() => {
 
     <td class="case-row__hide-lg">
       <Chip v-if="item.riskStatus !== 'normal'" :tone="riskTone" size="sm">
-        {{ item.riskLabel }}
+        {{ riskLabel }}
       </Chip>
-      <span v-else class="case-row__na">{{ item.riskLabel }}</span>
+      <span v-else class="case-row__na">{{ riskLabel }}</span>
     </td>
 
     <td class="case-row__actions-cell">
@@ -198,6 +274,38 @@ const validationTone = computed<ChipTone>(() => {
   text-align: right;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
+}
+
+.case-row__stage-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.case-row__stage-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.case-row__phase-chip {
+  opacity: 0.85;
+  font-size: 11px;
+}
+
+.case-row__workflow-step {
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.case-row__workflow-step--danger {
+  color: #991b1b;
 }
 
 .case-row__na {

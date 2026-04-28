@@ -82,6 +82,18 @@ describe("CustomerTable", () => {
     expect(w.findComponent(CustomerEmptyState).exists()).toBe(true);
   });
 
+  it("emits openCreateModal when empty state cta is clicked", async () => {
+    const w = factory({ customers: [], drafts: [], showEmptyState: true });
+
+    expect(w.find(".customer-empty-state__cta").text()).toContain(
+      "Add your first customer",
+    );
+
+    await w.find(".customer-empty-state__cta").trigger("click");
+
+    expect(w.emitted("openCreateModal")).toBeTruthy();
+  });
+
   it("header checkbox reflects allSelected prop", () => {
     const w = factory({ allSelected: true });
     const cb = w.find(".customer-table__checkbox").element as HTMLInputElement;
@@ -117,6 +129,14 @@ describe("CustomerTable", () => {
     expect((rowCheckboxes[1].element as HTMLInputElement).checked).toBe(false);
   });
 
+  it("highlights the matching customer row", () => {
+    const w = factory({ highlightedCustomerId: "c2" });
+    const rows = w.findAll(".customer-row");
+
+    expect(rows[0]!.classes()).not.toContain("customer-row--highlighted");
+    expect(rows[1]!.classes()).toContain("customer-row--highlighted");
+  });
+
   it("renders clickable links for case summary and create-case action", () => {
     const w = factory();
     const caseLinks = w.findAll(".customer-row__cases-link");
@@ -125,5 +145,11 @@ describe("CustomerTable", () => {
     expect(actionLinks[1].attributes("href")).toBe(
       "#/cases/create?customerId=c1",
     );
+  });
+
+  it("localizes owner and group labels in en-US", () => {
+    const w = factory();
+    expect(w.text()).toContain("Shota Yamada");
+    expect(w.text()).toContain("Osaka Team");
   });
 });

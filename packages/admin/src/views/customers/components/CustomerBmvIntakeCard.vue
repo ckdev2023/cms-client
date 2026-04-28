@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
@@ -7,6 +7,7 @@ import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerBmvActionModel } from "../model/useCustomerBmvActionModel";
 import { useCustomerBmvIntakeCardModel } from "../model/useCustomerBmvIntakeCardModel";
 import type { CustomerDetail } from "../types";
+import type { CustomerBmvAggregate } from "../types-bmv";
 
 /**
  * 在客户基础信息区域展示经营管理签承接进度、下一步与建案门禁状态。
@@ -18,11 +19,22 @@ const props = defineProps<{
     "sendBmvQuestionnaire" | "generateBmvQuote" | "recordBmvSign"
   >;
   refreshCustomer?: () => Promise<void>;
+  aggregate?: CustomerBmvAggregate | null;
+}>();
+
+const emit = defineEmits<{
+  (e: "transition-to-case"): void;
 }>();
 
 const { t } = useI18n();
 const customerRef = computed(() => props.customer);
-const { intakeCard } = useCustomerBmvIntakeCardModel({ customer: customerRef });
+const aggregateRef = computed(
+  () => props.aggregate ?? null,
+) as Ref<CustomerBmvAggregate | null>;
+const { intakeCard } = useCustomerBmvIntakeCardModel({
+  customer: customerRef,
+  aggregate: aggregateRef,
+});
 const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
   {
     customer: customerRef,
@@ -129,12 +141,150 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
       </div>
     </dl>
 
+    <section
+      v-if="intakeCard.quoteHistory.length"
+      class="bmv-intake-card__section"
+    >
+      <h5 class="bmv-intake-card__section-title">
+        {{ t("customers.detail.bmvIntake.quoteHistory.title") }}
+      </h5>
+      <ul class="bmv-intake-card__quote-list">
+        <li
+          v-for="quote in intakeCard.quoteHistory"
+          :key="quote.id"
+          class="bmv-intake-card__quote-item"
+        >
+          <span class="bmv-intake-card__quote-version">
+            {{ quote.versionLabel }}
+            <Chip v-if="quote.isCurrent" tone="success" size="sm">
+              {{ t("customers.detail.bmvIntake.quoteHistory.current") }}
+            </Chip>
+          </span>
+          <span class="bmv-intake-card__quote-detail">
+            {{ t("customers.detail.bmvIntake.quoteHistory.amount") }}:
+            {{ quote.amount }}
+          </span>
+          <span
+            class="bmv-intake-card__quote-detail bmv-intake-card__quote-detail--muted"
+          >
+            {{ quote.createdAt }}
+          </span>
+        </li>
+      </ul>
+    </section>
+
+    <section
+      v-if="intakeCard.surveyDataSummary"
+      class="bmv-intake-card__section"
+    >
+      <h5 class="bmv-intake-card__section-title">
+        {{ t("customers.detail.bmvIntake.surveyData.title") }}
+      </h5>
+      <p class="bmv-intake-card__survey-meta">
+        {{
+          t("customers.detail.bmvIntake.surveyData.fieldCount", {
+            count: intakeCard.surveyDataSummary.fieldCount,
+          })
+        }}
+        ·
+        {{ intakeCard.surveyDataSummary.completedAt }}
+      </p>
+      <dl
+        v-if="intakeCard.surveyDataSummary.highlightFields.length"
+        class="bmv-intake-card__survey-fields"
+      >
+        <div
+          v-for="(field, idx) in intakeCard.surveyDataSummary.highlightFields"
+          :key="idx"
+          class="bmv-intake-card__survey-field"
+        >
+          <dt class="bmv-intake-card__label">{{ field.label }}</dt>
+          <dd class="bmv-intake-card__timeline-value">{{ field.value }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section v-if="intakeCard.linkedCase" class="bmv-intake-card__section">
+      <h5 class="bmv-intake-card__section-title">
+        {{ t("customers.detail.bmvIntake.caseStage.title") }}
+      </h5>
+      <dl class="bmv-intake-card__case-stage">
+        <div class="bmv-intake-card__case-stage-item">
+          <dt class="bmv-intake-card__label">
+            {{ t("customers.detail.bmvIntake.caseStage.stage") }}
+          </dt>
+          <dd class="bmv-intake-card__timeline-value">
+            {{ intakeCard.linkedCase.stage }}
+          </dd>
+        </div>
+        <div
+          v-if="intakeCard.linkedCase.postApprovalStage"
+          class="bmv-intake-card__case-stage-item"
+        >
+          <dt class="bmv-intake-card__label">
+            {{ t("customers.detail.bmvIntake.caseStage.postApprovalStage") }}
+          </dt>
+          <dd class="bmv-intake-card__timeline-value">
+            {{ intakeCard.linkedCase.postApprovalStage }}
+          </dd>
+        </div>
+        <div
+          v-if="intakeCard.linkedCase.coeStatus"
+          class="bmv-intake-card__case-stage-item"
+        >
+          <dt class="bmv-intake-card__label">
+            {{ t("customers.detail.bmvIntake.caseStage.coeStatus") }}
+          </dt>
+          <dd class="bmv-intake-card__timeline-value">
+            {{ intakeCard.linkedCase.coeStatus }}
+          </dd>
+        </div>
+      </dl>
+    </section>
+
+    <section
+      class="bmv-intake-card__section"
+      v-if="intakeCard.reminders.length"
+    >
+      <h5 class="bmv-intake-card__section-title">
+        {{ t("customers.detail.bmvIntake.reminders.title") }}
+      </h5>
+      <ul class="bmv-intake-card__reminder-list">
+        <li
+          v-for="reminder in intakeCard.reminders"
+          :key="reminder.id"
+          class="bmv-intake-card__reminder-item"
+        >
+          <span>{{ reminder.type }}</span>
+          <span class="bmv-intake-card__quote-detail--muted">
+            {{ reminder.dueAt }}
+          </span>
+          <Chip tone="warning" size="sm">{{ reminder.status }}</Chip>
+        </li>
+      </ul>
+    </section>
+
     <p v-if="intakeCard.note" class="bmv-intake-card__note">
       <span class="bmv-intake-card__label">
         {{ t("customers.detail.bmvIntake.note") }}
       </span>
       <span>{{ intakeCard.note }}</span>
     </p>
+
+    <div
+      v-if="intakeCard.canTransitionToCase"
+      class="bmv-intake-card__transition"
+    >
+      <Button
+        variant="filled"
+        tone="primary"
+        size="sm"
+        pill
+        @click="emit('transition-to-case')"
+      >
+        {{ t("customers.detail.bmvIntake.actions.transitionToCase") }}
+      </Button>
+    </div>
   </section>
 </template>
 
@@ -263,6 +413,74 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
   padding-top: 12px;
   border-top: 1px solid var(--color-border-1);
   font-size: var(--font-size-sm);
+}
+
+.bmv-intake-card__section {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-1);
+}
+
+.bmv-intake-card__section-title {
+  margin: 0 0 8px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+}
+
+.bmv-intake-card__quote-list,
+.bmv-intake-card__reminder-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.bmv-intake-card__quote-item,
+.bmv-intake-card__reminder-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-1);
+}
+.bmv-intake-card__quote-version {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: var(--font-weight-semibold);
+  min-width: 80px;
+}
+.bmv-intake-card__quote-detail {
+  font-size: var(--font-size-sm);
+}
+.bmv-intake-card__quote-detail--muted {
+  color: var(--color-text-3);
+  font-size: var(--font-size-xs);
+}
+.bmv-intake-card__survey-meta {
+  margin: 0 0 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+.bmv-intake-card__survey-fields,
+.bmv-intake-card__case-stage {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+.bmv-intake-card__survey-field,
+.bmv-intake-card__case-stage-item {
+  padding: 8px;
+  border-radius: var(--radius-default, 10px);
+  background-color: var(--color-bg-1);
+  border: 1px solid var(--color-border-1);
+}
+.bmv-intake-card__transition {
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-1);
+  display: flex;
+  justify-content: flex-end;
 }
 
 @media (max-width: 767px) {

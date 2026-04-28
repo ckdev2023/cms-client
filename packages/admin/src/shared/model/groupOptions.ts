@@ -7,5 +7,6 @@ export {
   isGroupDisabled,
   isGroupDisabledByLabel,
   resolveGroupLabel,
+  resolveGroupValue,
   ALL_OPTIONS as ALL_GROUP_ENTRIES,
 } from "./useGroupOptions";

@@ -17,6 +17,7 @@ defineProps<{
   allSelected?: boolean;
   indeterminate?: boolean;
   showEmptyState?: boolean;
+  highlightedCustomerId?: string | null;
 }>();
 
 defineEmits<{
@@ -24,6 +25,7 @@ defineEmits<{
   selectRow: [id: string, checked: boolean];
   resumeDraft: [draftId: string];
   removeDraft: [draftId: string];
+  openCreateModal: [];
 }>();
 </script>
 
@@ -112,6 +114,7 @@ defineEmits<{
         :key="customer.id"
         :customer="customer"
         :selected="selectedIds?.has(customer.id) ?? false"
+        :highlighted="highlightedCustomerId === customer.id"
         @select="
           (id: string, checked: boolean) => $emit('selectRow', id, checked)
         "
@@ -121,6 +124,7 @@ defineEmits<{
           showEmptyState ??
           (customers.length === 0 && (drafts ?? []).length === 0)
         "
+        @open-create-modal="$emit('openCreateModal')"
       />
     </tbody>
   </table>

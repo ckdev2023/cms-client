@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { type RouteLocationRaw, useRouter } from "vue-router";
+import { buildCaseCreateRoute } from "../cases/query";
 
 /**
  * 仪表盘快捷操作面板，提供常用入口与时间窗口切换工具。
@@ -21,36 +22,39 @@ const quickActions: {
   id: string;
   tone: string;
   icon: string;
-  route?: string;
+  route?: RouteLocationRaw;
 }[] = [
   {
     id: "createLead",
     tone: "blue",
     icon: "M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z",
-    route: "/leads?action=new",
+    route: { name: "leads", query: { action: "new" } },
   },
   {
     id: "createCustomer",
     tone: "indigo",
     icon: "M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z",
+    route: { name: "customers", query: { action: "new" } },
   },
   {
     id: "createCase",
     tone: "teal",
     icon: "M12 4v16m8-8H4",
+    route: buildCaseCreateRoute({}),
   },
   {
     id: "dueSoon",
     tone: "rose",
     icon: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z",
+    route: { name: "cases" },
   },
 ];
 
-const inlineActions: { id: string; route?: string }[] = [
+const inlineActions: { id: string; route?: RouteLocationRaw }[] = [
   { id: "createFollowUp" },
   { id: "completeToday" },
   { id: "goSubmit" },
-  { id: "addReceipt", route: "/billing" },
+  { id: "addReceipt", route: { name: "billing" } },
 ];
 
 /**
@@ -59,7 +63,7 @@ const inlineActions: { id: string; route?: string }[] = [
  * @param route 按钮绑定的目标路由
  * @returns 存在目标路由时返回 `true`
  */
-function isActionAvailable(route?: string): boolean {
+function isActionAvailable(route?: RouteLocationRaw): boolean {
   return Boolean(route);
 }
 
@@ -68,9 +72,9 @@ function isActionAvailable(route?: string): boolean {
  *
  * @param route 按钮绑定的目标路由
  */
-function navigateTo(route?: string): void {
+function navigateTo(route?: RouteLocationRaw): void {
   if (!route) return;
-  router.push(route);
+  void router.push(route);
 }
 </script>
 

@@ -47,6 +47,138 @@ export interface CustomerBmvProfile {
   signedAt: string | null;
   /** */
   note: string | null;
+  /** 来源 Lead ID——Lead 转化时写入，便于追溯与建案入口透传。 */
+  sourceLeadId: string | null;
+  /** 来源 Lead 的 group_id——建案时继承。 */
+  leadGroupId: string | null;
+  /** 来源 Lead 的 owner_user_id——建案时继承。 */
+  leadOwnerUserId: string | null;
+}
+
+/**
+ * 报价历史版本（来自 intake_forms[form_kind='bmv_quote']）。
+ */
+export interface BmvQuoteVersion {
+  /**
+   *
+   */
+  id: string;
+  /**
+   *
+   */
+  version: number;
+  /**
+   *
+   */
+  amount: string;
+  /**
+   *
+   */
+  createdAt: string;
+  /**
+   *
+   */
+  isCurrent: boolean;
+}
+
+/**
+ * 问卷回收数据摘要（来自 intake_forms[form_kind='bmv_questionnaire']）。
+ */
+export interface BmvSurveyDataSummary {
+  /**
+   *
+   */
+  completedAt: string | null;
+  /**
+   *
+   */
+  fieldCount: number;
+  /**
+   *
+   */
+  highlightFields: { label: string; value: string }[];
+}
+
+/**
+ * 关联 BMV 案件进度摘要。
+ */
+export interface BmvLinkedCaseSummary {
+  /**
+   *
+   */
+  caseId: string;
+  /**
+   *
+   */
+  caseName: string;
+  /**
+   *
+   */
+  stage: string;
+  /**
+   *
+   */
+  postApprovalStage: string | null;
+  /**
+   *
+   */
+  coeStatus: string | null;
+  /**
+   *
+   */
+  coeIssuedAt: string | null;
+  /**
+   *
+   */
+  coeExpiresAt: string | null;
+}
+
+/**
+ * BMV 相关提醒摘要。
+ */
+export interface BmvReminderSummary {
+  /**
+   *
+   */
+  id: string;
+  /**
+   *
+   */
+  type: string;
+  /**
+   *
+   */
+  dueAt: string;
+  /**
+   *
+   */
+  status: string;
+}
+
+/**
+ * BMV 聚合数据（对应 GET /admin/customers/:id/bmv 返回）。
+ */
+export interface CustomerBmvAggregate {
+  /**
+   *
+   */
+  profile: CustomerBmvProfile;
+  /**
+   *
+   */
+  quoteHistory: BmvQuoteVersion[];
+  /**
+   *
+   */
+  surveyDataSummary: BmvSurveyDataSummary | null;
+  /**
+   *
+   */
+  linkedCase: BmvLinkedCaseSummary | null;
+  /**
+   *
+   */
+  reminders: BmvReminderSummary[];
 }
 
 /**

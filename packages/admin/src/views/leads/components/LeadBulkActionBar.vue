@@ -1,18 +1,15 @@
 <script setup lang="ts">
-/**
- * 批量操作栏：指派负责人、调整跟进时间、标记状态。
- */
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { LEAD_STATUSES } from "../types";
-import type { LeadStatus } from "../types";
-import { OWNER_OPTIONS } from "../fixtures";
+import type { LeadStatus, OwnerOption } from "../types";
 
-/** 批量操作栏：显示选择计数，执行指派负责人、调整跟进时间、标记状态。 */
+/** 批量操作栏：显示选择计数，执行指派负责人、调整跟进时间、标记状态、标签、导出。 */
 const { t } = useI18n();
 
 defineProps<{
   selectedCount?: number;
+  ownerOptions?: OwnerOption[];
 }>();
 
 const emit = defineEmits<{
@@ -20,11 +17,15 @@ const emit = defineEmits<{
   assignOwner: [ownerId: string];
   adjustFollowUp: [date: string];
   markStatus: [status: LeadStatus];
+  bulkTags: [tags: string[]];
+  bulkExport: [format: "csv" | "xlsx"];
 }>();
 
 const ownerValue = ref("");
 const followUpValue = ref("");
 const statusValue = ref("");
+const tagsValue = ref("");
+const exportFormat = ref<"csv" | "xlsx">("csv");
 
 const bulkStatusOptions = LEAD_STATUSES.filter(
   (s) => s.value !== "converted_case",
@@ -52,6 +53,25 @@ function applyStatus() {
     emit("markStatus", statusValue.value as LeadStatus);
     statusValue.value = "";
   }
+}
+
+/** 确认标签操作并触发事件。 */
+function applyTags() {
+  const raw = tagsValue.value.trim();
+  if (!raw) return;
+  const tags = raw
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+  if (tags.length > 0) {
+    emit("bulkTags", tags);
+    tagsValue.value = "";
+  }
+}
+
+/** 确认导出操作并触发事件。 */
+function applyExport() {
+  emit("bulkExport", exportFormat.value);
 }
 </script>
 
@@ -81,7 +101,7 @@ function applyStatus() {
         <select v-model="ownerValue" class="lead-bulk-bar__select">
           <option value="">{{ t("leads.list.bulk.selectOwner") }}</option>
           <option
-            v-for="opt in OWNER_OPTIONS"
+            v-for="opt in ownerOptions ?? []"
             :key="opt.value"
             :value="opt.value"
           >
@@ -138,6 +158,39 @@ function applyStatus() {
           @click="applyStatus"
         >
           {{ t("leads.list.bulk.apply") }}
+        </button>
+      </div>
+
+      <div class="lead-bulk-bar__action-group">
+        <span class="lead-bulk-bar__action-label">
+          {{ t("leads.list.bulk.addTags") }}
+        </span>
+        <input
+          v-model="tagsValue"
+          type="text"
+          class="lead-bulk-bar__select"
+          :placeholder="t('leads.list.bulk.tagsPlaceholder')"
+        />
+        <button
+          class="lead-bulk-bar__apply"
+          type="button"
+          :disabled="!tagsValue.trim() || undefined"
+          @click="applyTags"
+        >
+          {{ t("leads.list.bulk.apply") }}
+        </button>
+      </div>
+
+      <div class="lead-bulk-bar__action-group">
+        <span class="lead-bulk-bar__action-label">
+          {{ t("leads.list.bulk.export") }}
+        </span>
+        <select v-model="exportFormat" class="lead-bulk-bar__select">
+          <option value="csv">CSV</option>
+          <option value="xlsx">Excel</option>
+        </select>
+        <button class="lead-bulk-bar__apply" type="button" @click="applyExport">
+          {{ t("leads.list.bulk.exportBtn") }}
         </button>
       </div>
     </div>
