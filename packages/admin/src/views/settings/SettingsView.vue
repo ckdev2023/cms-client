@@ -13,6 +13,7 @@ import VisibilityConfigPanel from "./components/VisibilityConfigPanel.vue";
 import StorageRootPanel from "./components/StorageRootPanel.vue";
 import SettingsToast from "./components/SettingsToast.vue";
 import { createOrgSettingsRepository } from "./model/OrgSettingsRepository";
+import { createGroupsRepository } from "./model/GroupsRepository";
 import { useSettingsPage } from "./model/useSettingsPage";
 import {
   SETTINGS_SUBNAV_ITEMS,
@@ -32,6 +33,7 @@ const page = useSettingsPage({
   groupStats: { ...SAMPLE_GROUP_STATS },
   orgSettings: structuredClone(SAMPLE_ORG_SETTINGS_UNCONFIGURED),
   orgSettingsRepository: createOrgSettingsRepository(),
+  groupsRepository: createGroupsRepository(),
   orgSettingsController,
   isAdmin: ref(true),
 });

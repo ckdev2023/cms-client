@@ -180,6 +180,10 @@ export const SETTINGS_TOAST_PRESETS: Record<
     titleKey: "settings.toast.groupDisabled.title",
     descriptionKey: "settings.toast.groupDisabled.description",
   },
+  groupActionFailed: {
+    titleKey: "settings.toast.groupActionFailed.title",
+    descriptionKey: "settings.toast.groupActionFailed.description",
+  },
   visibilityUpdated: {
     titleKey: "settings.toast.visibilityUpdated.title",
     descriptionKey: "settings.toast.visibilityUpdated.description",

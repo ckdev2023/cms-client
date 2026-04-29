@@ -8,6 +8,7 @@ import { Pool } from "pg";
 
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { TimelineService } from "../timeline/timeline.service";
 
 type OrganizationSettingsRow = {
   settings: unknown;
@@ -85,6 +86,57 @@ export function normalizeOrganizationSettings(
   };
 }
 
+/**
+ * 设置变更差分结果。
+ */
+export type SettingsDiffResult = {
+  fields: string[];
+  before: Record<string, unknown>;
+  after: Record<string, unknown>;
+};
+
+const STORAGE_ROOT_USER_FIELDS = ["rootLabel", "rootPath"] as const;
+
+/**
+ * 比较两版组织设置，输出变化字段列表与变更前后值。
+ *
+ * 只比较用户可编辑字段；storageRoot 的 updatedBy / updatedAt 是自动元数据，不参与差分。
+ *
+ * @param prev - 变更前设置
+ * @param next - 变更后设置
+ * @returns 差分结果（fields 为空表示无变化）
+ */
+export function diffSettings(
+  prev: OrganizationSettings,
+  next: OrganizationSettings,
+): SettingsDiffResult {
+  const fields: string[] = [];
+  const before: Record<string, unknown> = {};
+  const after: Record<string, unknown> = {};
+
+  for (const key of Object.keys(
+    prev.visibility,
+  ) as (keyof OrganizationSettings["visibility"])[]) {
+    if (prev.visibility[key] !== next.visibility[key]) {
+      const path = `visibility.${key}`;
+      fields.push(path);
+      before[path] = prev.visibility[key];
+      after[path] = next.visibility[key];
+    }
+  }
+
+  for (const key of STORAGE_ROOT_USER_FIELDS) {
+    if (prev.storageRoot[key] !== next.storageRoot[key]) {
+      const path = `storageRoot.${key}`;
+      fields.push(path);
+      before[path] = prev.storageRoot[key];
+      after[path] = next.storageRoot[key];
+    }
+  }
+
+  return { fields, before, after };
+}
+
 function hasVisibilityUpdate(
   input: OrganizationSettingsUpdateInput,
 ): input is OrganizationSettingsUpdateInput & {
@@ -147,8 +199,13 @@ export class OrganizationsService {
    * 创建组织设置服务。
    *
    * @param pool - Postgres 连接池
+   * @param timelineService - 统一 Timeline 写入服务
    */
-  constructor(@Inject(Pool) private readonly pool: Pool) {}
+  constructor(
+    @Inject(Pool) private readonly pool: Pool,
+    @Inject(TimelineService)
+    private readonly timelineService: TimelineService,
+  ) {}
 
   /**
    * 读取当前组织设置。
@@ -206,6 +263,20 @@ export class OrganizationsService {
     const row = result.rows.at(0);
     if (!row) {
       throw new BadRequestException("Failed to update organization settings");
+    }
+
+    const diff = diffSettings(current, next);
+    if (diff.fields.length > 0) {
+      await this.timelineService.write(ctx, {
+        entityType: "organization",
+        entityId: ctx.orgId,
+        action: "org_settings_changed",
+        payload: {
+          before: diff.before,
+          after: diff.after,
+          fields: diff.fields,
+        },
+      });
     }
 
     return normalizeOrganizationSettings(row.settings);

@@ -6,6 +6,7 @@ import type {
   OrgSettings,
   SettingsToastKey,
 } from "../types";
+import type { GroupsRepository } from "./GroupsRepository";
 import { SETTINGS_TOAST_PRESETS, TOAST_DURATION_MS } from "../fixtures";
 
 // ---------------------------------------------------------------------------
@@ -92,7 +93,6 @@ export function createToastController(opts?: ToastControllerOpts): ToastState {
 
   return { visible, titleKey, descriptionKey, show, hide };
 }
-
 // ---------------------------------------------------------------------------
 // Group name modal (create / rename)
 // ---------------------------------------------------------------------------
@@ -184,7 +184,6 @@ export function createGroupNameModal(): GroupNameModalState {
     close,
   };
 }
-
 // ---------------------------------------------------------------------------
 // Disable confirmation modal
 // ---------------------------------------------------------------------------
@@ -197,6 +196,10 @@ export interface DisableModalState {
    *
    */
   isOpen: Ref<boolean>;
+  /**
+   *
+   */
+  loading: Ref<boolean>;
   /**
    *
    */
@@ -234,6 +237,7 @@ export interface DisableModalState {
  */
 export function createDisableModal(): DisableModalState {
   const isOpen = ref(false);
+  const loading = ref(false);
   const targetGroupId = ref<string | null>(null);
   const groupName = ref("");
   const customerCount = ref(0);
@@ -248,11 +252,13 @@ export function createDisableModal(): DisableModalState {
     groupName.value = group.name;
     customerCount.value = stats.customerCount;
     caseCount.value = stats.activeCaseCount;
+    loading.value = false;
     isOpen.value = true;
   }
 
   function close() {
     isOpen.value = false;
+    loading.value = false;
     targetGroupId.value = null;
     groupName.value = "";
     customerCount.value = 0;
@@ -261,6 +267,7 @@ export function createDisableModal(): DisableModalState {
 
   return {
     isOpen,
+    loading,
     targetGroupId,
     groupName,
     customerCount,
@@ -295,6 +302,26 @@ export interface GroupMutationCtx {
    *
    */
   toast: ToastState;
+  /**
+   *
+   */
+  groupsRepository?: GroupsRepository;
+}
+
+function insertCreatedGroup(
+  ctx: GroupMutationCtx,
+  summary: GroupSummary,
+  groupNo: string,
+) {
+  ctx.groups.value = [...ctx.groups.value, summary];
+  ctx.groupDetails[summary.id] = {
+    ...summary,
+    groupNo,
+    description: null,
+    members: [],
+    customerCount: 0,
+  };
+  ctx.groupStats[summary.id] = { customerCount: 0, activeCaseCount: 0 };
 }
 
 /**
@@ -312,9 +339,22 @@ export function buildCreateGroupAction(
 ) {
   let nextIndex = ctx.groups.value.length + 1;
 
-  return function createGroup() {
+  return async function createGroup() {
     const name = modal.inputValue.value.trim();
     if (!name) return;
+
+    if (ctx.groupsRepository) {
+      try {
+        const summary = await ctx.groupsRepository.createGroup({ name });
+        insertCreatedGroup(ctx, summary, "");
+        modal.close();
+        selectGroup(summary.id);
+        ctx.toast.show("groupCreated");
+      } catch {
+        ctx.toast.show("groupActionFailed");
+      }
+      return;
+    }
 
     const id = `grp-new-${nextIndex}`;
     const groupNo = `GRP-${String(nextIndex).padStart(3, "0")}`;
@@ -330,20 +370,19 @@ export function buildCreateGroupAction(
       memberCount: 0,
     };
 
-    ctx.groups.value = [...ctx.groups.value, summary];
-    ctx.groupDetails[id] = {
-      ...summary,
-      groupNo,
-      description: null,
-      members: [],
-      customerCount: 0,
-    };
-    ctx.groupStats[id] = { customerCount: 0, activeCaseCount: 0 };
-
+    insertCreatedGroup(ctx, summary, groupNo);
     modal.close();
     selectGroup(id);
     ctx.toast.show("groupCreated");
   };
+}
+
+function applyGroupName(ctx: GroupMutationCtx, id: string, name: string) {
+  ctx.groups.value = ctx.groups.value.map((g) =>
+    g.id === id ? { ...g, name } : g,
+  );
+  const d = ctx.groupDetails[id];
+  if (d) ctx.groupDetails[id] = { ...d, name };
 }
 
 /**
@@ -351,24 +390,37 @@ export function buildCreateGroupAction(
  *
  * @param ctx - Group 变更上下文
  * @param modal - 名称弹窗状态
- * @returns 重命名操作函数
+ * @returns 重命名操作函数（async）
  */
 export function buildRenameGroupAction(
   ctx: GroupMutationCtx,
   modal: GroupNameModalState,
 ) {
-  return function renameGroup() {
+  return async function renameGroup() {
     const newName = modal.inputValue.value.trim();
     const targetId = modal.targetGroupId.value;
     if (!newName || !targetId) return;
 
-    ctx.groups.value = ctx.groups.value.map((g) =>
-      g.id === targetId ? { ...g, name: newName } : g,
-    );
-    const detail = ctx.groupDetails[targetId];
-    if (detail) ctx.groupDetails[targetId] = { ...detail, name: newName };
+    const oldName =
+      ctx.groups.value.find((g) => g.id === targetId)?.name ?? newName;
 
+    applyGroupName(ctx, targetId, newName);
     modal.close();
+
+    if (ctx.groupsRepository) {
+      try {
+        const updated = await ctx.groupsRepository.renameGroup(
+          targetId,
+          newName,
+        );
+        applyGroupName(ctx, targetId, updated.name);
+      } catch {
+        applyGroupName(ctx, targetId, oldName);
+        ctx.toast.show("groupActionFailed");
+        return;
+      }
+    }
+
     ctx.toast.show("groupRenamed");
   };
 }
@@ -378,15 +430,24 @@ export function buildRenameGroupAction(
  *
  * @param ctx - Group 变更上下文
  * @param modal - 停用确认弹窗状态
- * @returns 停用操作函数
+ * @returns 停用操作函数（async）
  */
 export function buildDisableGroupAction(
   ctx: GroupMutationCtx,
   modal: DisableModalState,
 ) {
-  return function disableGroup() {
+  return async function disableGroup() {
     const targetId = modal.targetGroupId.value;
     if (!targetId) return;
+
+    if (ctx.groupsRepository) {
+      try {
+        await ctx.groupsRepository.disableGroup(targetId);
+      } catch {
+        ctx.toast.show("groupActionFailed");
+        return;
+      }
+    }
 
     ctx.groups.value = ctx.groups.value.map((g) =>
       g.id === targetId ? { ...g, status: "disabled" as const } : g,

@@ -63,7 +63,8 @@ export type TimelineEntityType =
   | "generated_document"
   | "billing_record"
   | "billing_plan"
-  | "payment_record";
+  | "payment_record"
+  | "group";
 
 /**
  * Timeline 动作标识。
@@ -470,6 +471,7 @@ const TIMELINE_ENTITY_TYPES: ReadonlySet<string> = new Set<string>([
   "billing_record",
   "billing_plan",
   "payment_record",
+  "group",
 ]);
 
 /**

@@ -197,14 +197,15 @@ describe("settings/fixtures", () => {
   });
 
   describe("toast presets", () => {
-    it("has all 5 P0 scenarios", () => {
+    it("has all 6 toast scenarios", () => {
       const keys = Object.keys(SETTINGS_TOAST_PRESETS);
-      expect(keys).toHaveLength(5);
+      expect(keys).toHaveLength(6);
       expect(keys).toEqual(
         expect.arrayContaining([
           "groupCreated",
           "groupRenamed",
           "groupDisabled",
+          "groupActionFailed",
           "visibilityUpdated",
           "storageRootUpdated",
         ]),

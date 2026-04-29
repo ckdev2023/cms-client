@@ -20,6 +20,7 @@ void test("isTimelineEntityType returns true for known entity types", () => {
   assert.equal(isTimelineEntityType("generated_document"), true);
   assert.equal(isTimelineEntityType("billing_record"), true);
   assert.equal(isTimelineEntityType("payment_record"), true);
+  assert.equal(isTimelineEntityType("group"), true);
 });
 
 void test("isTimelineEntityType returns false for unknown entity types", () => {

@@ -25,6 +25,16 @@ vi.mock("./model/OrgSettingsRepository", () => ({
   }),
 }));
 
+vi.mock("./model/GroupsRepository", () => ({
+  createGroupsRepository: () => ({
+    listGroups: vi.fn().mockResolvedValue([]),
+    getGroupDetail: vi.fn(),
+    createGroup: vi.fn(),
+    renameGroup: vi.fn(),
+    disableGroup: vi.fn(),
+  }),
+}));
+
 function mountView() {
   return shallowMount(SettingsView, {
     global: {

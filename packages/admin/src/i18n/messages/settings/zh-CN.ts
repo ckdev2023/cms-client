@@ -114,6 +114,10 @@ const settingsZhCN = {
       title: "Group 已停用（示例）",
       description: "「{name}」已停用，不可再选择",
     },
+    groupActionFailed: {
+      title: "操作失败",
+      description: "Group 操作未能完成，请稍后重试。",
+    },
     visibilityUpdated: {
       title: "可见性配置已更新（示例）",
       description: "{item} 已{state}",

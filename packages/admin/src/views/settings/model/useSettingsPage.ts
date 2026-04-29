@@ -20,6 +20,7 @@ import {
   type GroupMutationCtx,
 } from "./settingsControllers";
 import type { OrgSettingsRepository } from "./OrgSettingsRepository";
+import type { GroupsRepository } from "./GroupsRepository";
 
 export type {
   ToastState,
@@ -76,6 +77,10 @@ export interface UseSettingsPageDeps {
    *
    */
   orgSettingsController?: Pick<UseOrgSettingsReturn, "storageRoot">;
+  /**
+   *
+   */
+  groupsRepository?: GroupsRepository;
 }
 
 // ---------------------------------------------------------------------------
@@ -201,6 +206,46 @@ function createOrgSettingsSection(
 }
 
 // ---------------------------------------------------------------------------
+// Group loading & disable-modal helpers
+// ---------------------------------------------------------------------------
+
+async function loadGroupsFromRepo(
+  repo: GroupsRepository | undefined,
+  groups: ReturnType<typeof createGroupList>["groups"],
+) {
+  if (!repo) return;
+  try {
+    const summaries = await repo.listGroups();
+    if (!Array.isArray(summaries)) return;
+    groups.value = summaries;
+  } catch {
+    return;
+  }
+}
+
+function buildOpenDisableModal(
+  repo: GroupsRepository | undefined,
+  modal: ReturnType<typeof createDisableModal>,
+) {
+  return async (group: GroupSummary, fallbackStats: GroupStats) => {
+    modal.open(group, fallbackStats);
+    if (!repo) return;
+
+    modal.loading.value = true;
+    try {
+      const detail = await repo.getGroupDetail(group.id);
+      if (modal.targetGroupId.value !== group.id) return;
+      modal.customerCount.value = detail.customerCount;
+      modal.caseCount.value = detail.activeCaseCount;
+    } catch {
+      /* keep fallback counts */
+    } finally {
+      modal.loading.value = false;
+    }
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Main composable
 // ---------------------------------------------------------------------------
 
@@ -230,9 +275,11 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     groupDetails: deps.groupDetails,
     groupStats: deps.groupStats,
     toast,
+    groupsRepository: deps.groupsRepository,
   };
   const settings = createOrgSettingsSection(deps, toast);
 
+  void loadGroupsFromRepo(deps.groupsRepository, gl.groups);
   void settings.loadOrgSettings();
 
   return {
@@ -245,6 +292,10 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     toast,
     groupNameModal,
     disableModal,
+    openDisableModal: buildOpenDisableModal(
+      deps.groupsRepository,
+      disableModal,
+    ),
     createGroup: buildCreateGroupAction(ctx, groupNameModal, gl.selectGroup),
     renameGroup: buildRenameGroupAction(ctx, groupNameModal),
     disableGroup: buildDisableGroupAction(ctx, disableModal),

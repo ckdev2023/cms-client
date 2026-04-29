@@ -118,6 +118,10 @@ const settingsEnUS = {
       title: "Group disabled (demo)",
       description: '"{name}" is now disabled and can no longer be selected',
     },
+    groupActionFailed: {
+      title: "Action failed",
+      description: "Could not complete the group operation. Please try again.",
+    },
     visibilityUpdated: {
       title: "Visibility updated (demo)",
       description: "{item} has been {state}",

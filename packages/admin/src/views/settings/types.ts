@@ -293,6 +293,7 @@ export type SettingsToastKey =
   | "groupCreated"
   | "groupRenamed"
   | "groupDisabled"
+  | "groupActionFailed"
   | "visibilityUpdated"
   | "storageRootUpdated";
 

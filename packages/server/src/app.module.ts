@@ -53,6 +53,8 @@ import { CasePartiesController } from "./modules/core/case-parties/caseParties.c
 import { CasePartiesService } from "./modules/core/case-parties/caseParties.service";
 import { CustomersController } from "./modules/core/customers/customers.controller";
 import { CustomersService } from "./modules/core/customers/customers.service";
+import { GroupsController } from "./modules/core/groups/groups.controller";
+import { GroupsService } from "./modules/core/groups/groups.service";
 import { OrganizationsController } from "./modules/core/organizations/organizations.controller";
 import { OrganizationsService } from "./modules/core/organizations/organizations.service";
 import { TimelineController } from "./modules/core/timeline/timeline.controller";
@@ -107,6 +109,7 @@ import {
     CompaniesController,
     ContactPersonsController,
     DashboardController,
+    GroupsController,
     OrganizationsController,
     CustomersController,
     CasesController,
@@ -155,6 +158,7 @@ import {
     CompaniesService,
     ContactPersonsService,
     DashboardService,
+    GroupsService,
     OrganizationsService,
     CustomersService,
     CasesService,

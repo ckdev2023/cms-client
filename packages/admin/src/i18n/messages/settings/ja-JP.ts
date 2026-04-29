@@ -118,6 +118,11 @@ const settingsJaJP = {
       title: "グループを停止しました（デモ）",
       description: "「{name}」を停止しました。新規選択不可",
     },
+    groupActionFailed: {
+      title: "操作に失敗しました",
+      description:
+        "グループの操作を完了できませんでした。もう一度お試しください。",
+    },
     visibilityUpdated: {
       title: "可視性設定を更新しました（デモ）",
       description: "{item} を{state}しました",

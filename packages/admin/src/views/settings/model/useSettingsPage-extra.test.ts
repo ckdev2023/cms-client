@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import { ref } from "vue";
 import { createOrgSettingsController } from "../../../shared/model/useOrgSettings";
 import { useSettingsPage, type UseSettingsPageDeps } from "./useSettingsPage";
-import type { OrgSettings } from "../types";
+import type { GroupSummary, OrgSettings } from "../types";
+import type { GroupsRepository } from "./GroupsRepository";
 import {
   SAMPLE_GROUPS,
   SAMPLE_GROUP_DETAILS,
@@ -358,5 +359,120 @@ describe("useSettingsPage — toast edge cases", () => {
       titles.add(s.toast.titleKey.value);
     }
     expect(titles.size).toBe(presets.length);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loadGroups — repository-driven initial load
+// ---------------------------------------------------------------------------
+
+function stubGroupsRepo(
+  overrides?: Partial<GroupsRepository>,
+): GroupsRepository {
+  return {
+    listGroups: vi.fn().mockResolvedValue([]),
+    getGroupDetail: vi.fn().mockRejectedValue(new Error("not stubbed")),
+    createGroup: vi.fn().mockRejectedValue(new Error("not stubbed")),
+    renameGroup: vi.fn().mockRejectedValue(new Error("not stubbed")),
+    disableGroup: vi.fn().mockRejectedValue(new Error("not stubbed")),
+    ...overrides,
+  };
+}
+
+describe("useSettingsPage — loadGroups", () => {
+  const API_GROUPS: GroupSummary[] = [
+    {
+      id: "api-g1",
+      name: "API Group 1",
+      status: "active",
+      createdAt: "2026-01-10",
+      activeCaseCount: 5,
+      memberCount: 2,
+    },
+    {
+      id: "api-g2",
+      name: "API Group 2",
+      status: "disabled",
+      createdAt: "2026-02-20",
+      activeCaseCount: 0,
+      memberCount: 1,
+    },
+  ];
+
+  it("replaces groups with API data on init", async () => {
+    const repo = stubGroupsRepo({
+      listGroups: vi.fn().mockResolvedValue(API_GROUPS),
+    });
+    const s = useSettingsPage(createDeps({ groupsRepository: repo }));
+
+    expect(repo.listGroups).toHaveBeenCalledOnce();
+
+    await Promise.resolve();
+
+    expect(s.groups.value).toHaveLength(2);
+    expect(s.groups.value[0]!.id).toBe("api-g1");
+    expect(s.groups.value[1]!.id).toBe("api-g2");
+  });
+
+  it("retains fixture data when listGroups fails", async () => {
+    const repo = stubGroupsRepo({
+      listGroups: vi.fn().mockRejectedValue(new Error("network error")),
+    });
+    const s = useSettingsPage(createDeps({ groupsRepository: repo }));
+
+    await Promise.resolve();
+
+    expect(s.groups.value).toHaveLength(3);
+    expect(s.groups.value[0]!.id).toBe("tokyo-1");
+  });
+
+  it("keeps fixture data when no groupsRepository is injected", () => {
+    const s = useSettingsPage(createDeps());
+    expect(s.groups.value).toHaveLength(3);
+    expect(s.groups.value[0]!.id).toBe("tokyo-1");
+  });
+
+  it("filteredGroups reflects API data after load", async () => {
+    const repo = stubGroupsRepo({
+      listGroups: vi.fn().mockResolvedValue(API_GROUPS),
+    });
+    const s = useSettingsPage(createDeps({ groupsRepository: repo }));
+
+    await Promise.resolve();
+
+    s.statusFilter.value = "active";
+    expect(s.filteredGroups.value).toHaveLength(1);
+    expect(s.filteredGroups.value[0]!.id).toBe("api-g1");
+  });
+
+  it("does not clear groupDetails or groupStats", async () => {
+    const repo = stubGroupsRepo({
+      listGroups: vi.fn().mockResolvedValue(API_GROUPS),
+    });
+    const details = { ...SAMPLE_GROUP_DETAILS };
+    const stats = { ...SAMPLE_GROUP_STATS };
+    useSettingsPage(
+      createDeps({
+        groupsRepository: repo,
+        groupDetails: details,
+        groupStats: stats,
+      }),
+    );
+
+    await Promise.resolve();
+
+    expect(Object.keys(details).length).toBeGreaterThan(0);
+    expect(Object.keys(stats).length).toBeGreaterThan(0);
+  });
+
+  it("is a no-op when listGroups returns a non-array value", async () => {
+    const repo = stubGroupsRepo({
+      listGroups: vi.fn().mockResolvedValue(null),
+    });
+    const s = useSettingsPage(createDeps({ groupsRepository: repo }));
+
+    await Promise.resolve();
+
+    expect(s.groups.value).toHaveLength(3);
   });
 });
