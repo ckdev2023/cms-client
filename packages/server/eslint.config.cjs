@@ -102,5 +102,19 @@ module.exports = [
       "max-statements": "off",
     },
   },
+  {
+    files: ["tests/**/*.ts"],
+    rules: {
+      "jsdoc/require-jsdoc": "off",
+      "jsdoc/require-description": "off",
+      "jsdoc/require-param": "off",
+      "jsdoc/require-param-description": "off",
+      "jsdoc/require-returns": "off",
+      "jsdoc/require-returns-description": "off",
+      "max-lines-per-function": "off",
+      complexity: "off",
+      "max-statements": "off",
+    },
+  },
   prettierConfig,
 ];

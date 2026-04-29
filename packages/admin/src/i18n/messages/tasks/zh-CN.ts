@@ -1,0 +1,98 @@
+const tasksZhCN = {
+  workbench: {
+    subtitle:
+      "查看任务池与续签提醒日志，承接 Dashboard CTA 与 Step 19-20 的工作面。",
+    refresh: "刷新",
+    reload: "重新加载",
+    loading: "加载中…",
+    errorTitle: "加载异常",
+    placeholder: "—",
+    lastUpdated: "最后刷新：{time}",
+    notLoaded: "尚未加载",
+    panelCount: "显示 {visible} / {total} 条",
+    views: {
+      pending: {
+        title: "待处理任务",
+        hint: "统一查看 pending / in_progress 任务。",
+        panelTitle: "待处理任务",
+      },
+      today: {
+        title: "今日到期",
+        hint: "优先清掉今天必须收口的动作。",
+        panelTitle: "今日到期任务",
+      },
+      overdue: {
+        title: "已逾期",
+        hint: "把已超期的催办与补件先拉出来。",
+        panelTitle: "已逾期任务",
+      },
+      reminders: {
+        title: "提醒日志",
+        hint: "核对续签提醒是否已生成并进入提醒队列。",
+        panelTitle: "提醒日志",
+      },
+    },
+    reminderTable: {
+      headerTitle: "提醒内容",
+      headerTime: "提醒时间",
+      headerStatus: "状态",
+      headerMeta: "附加信息",
+      empty:
+        "当前没有提醒日志。等续签提醒生成后，会在这里显示 180 / 90 / 30 天提醒记录。",
+    },
+    taskTable: {
+      headerTask: "任务",
+      headerCase: "案件 / 责任人",
+      headerDue: "截止时间",
+      headerStatus: "状态",
+      headerPriority: "优先级",
+      headerActions: "操作",
+      unassigned: "未指派",
+      complete: "标记完成",
+      empty:
+        "当前视图没有命中的任务。可以切换到“提醒日志”检查续签提醒是否已经生成。",
+    },
+    aside: {
+      title: "工作面说明",
+      copy: "此页已接入真实 `GET /api/tasks` 与 `GET /api/reminders`，不再是占位页。",
+      list: {
+        item1: "“待处理 / 今日到期 / 已逾期” 基于任务状态与截止时间实时分组。",
+        item2:
+          "“提醒日志” 会显示续签提醒的 remindAt、发送状态与 payload 摘要。",
+        item3: "单条任务支持直接调用 `/api/tasks/:id/complete` 标记完成。",
+      },
+    },
+  },
+  taskStatus: {
+    pending: "待处理",
+    in_progress: "处理中",
+    completed: "已完成",
+    cancelled: "已取消",
+  },
+  priority: {
+    low: "低",
+    normal: "普通",
+    high: "高",
+    urgent: "紧急",
+  },
+  reminderStatus: {
+    pending: "未发送",
+    sent: "已发送",
+    failed: "发送失败",
+    canceled: "已取消",
+  },
+  reminderTitle: {
+    daysBefore: "{visa}到期前 {days} 天提醒",
+    daysBeforeNoVisa: "到期前 {days} 天提醒",
+    pendingCoeDate: "等待 COE 日期回填的续签提醒",
+    fallback: "{type} · {id}",
+  },
+  reminderMeta: {
+    case: "案件 {id}",
+    recipient: "接收人 {id}",
+    dedupeKey: "去重键 {key}",
+    empty: "—",
+  },
+} as const;
+
+export default tasksZhCN;

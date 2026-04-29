@@ -12,6 +12,14 @@ export type DashboardTimeWindow = 7 | 30;
 export type DashboardStatusTone = "info" | "warn" | "danger" | "muted";
 
 /**
+ * 前端工作面板 meta 条目的 i18n key 结构。
+ */
+export type DashboardMetaKey = {
+  key: string;
+  params?: Record<string, string | number>;
+};
+
+/**
  * 前端工作面板通用项结构。
  */
 export type DashboardWorkItem = {
@@ -24,6 +32,11 @@ export type DashboardWorkItem = {
   action: string;
   route?: string;
   daysLeft?: number;
+  statusLabelKey?: string;
+  descKey?: string;
+  descParams?: Record<string, string | number>;
+  actionKey?: string;
+  metaKeys?: DashboardMetaKey[];
 };
 
 /**

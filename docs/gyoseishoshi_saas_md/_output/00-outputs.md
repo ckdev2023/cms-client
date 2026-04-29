@@ -852,3 +852,84 @@
 - 但 `residence_periods` 的 CRUD 使用**原生 pg 查询**（非 drizzle query builder），`pg` 驱动对 `date` 列返回 JavaScript `Date` 对象
 - `Date.toISOString()` 在 UTC 输出 → 若原值为 `2026-04-28`（JST），`new Date("2026-04-28")` 在 JST 服务器上被解析为 `2026-04-27T15:00:00.000Z`，`.toISOString().slice(0, 10)` 变成 `2026-04-27` — **日期偏移一天**
 - **修复**: 在 SQL 查询中对 `date` 列 cast 为 text（`valid_from::text`），使 pg 驱动直接返回 `YYYY-MM-DD` 字符串，完全绕过 `Date` 解析
+
+- 时间：2026-04-29
+  问题：[BUG-121] 失败结案（CLOSED_FAILED）路径下是否存在退款规则？系统是否自动退款 / 部分退款？金额计算逻辑？用户操作流？数据模型预案？
+  结论（TL;DR）：P0/P1 权威文档中 **完全未定义** 失败结案退款规则。BillingPlan 状态枚举只覆盖正向收费流（due / partial / paid / overdue），无 refunded / cancelled 状态；PaymentRecord 仅记录收到的付款，无退款记录概念；收费页面规格的「关键动作」仅含登记回款 / 上传凭证 / 创建催款任务 / 欠款风险确认，无退款动作；「P0 明确不做」列表中亦未将退款列为 P1 延后项。退款 SOP 属于 **权威文档缺口**，需产品/业务/会计三方输入后才能排技术 PR。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md §3.20 BillingPlan / PaymentRecord——BillingPlan.status ∈ {due, partial, paid, overdue}，PaymentRecord 仅含 amount_received / record_status(valid/voided/reversed)，无退款金额或退款类型字段
+  - docs/gyoseishoshi_saas_md/P0/08-术语表.md §BillingPlan / §PaymentRecord——定义中无退款相关条目
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md §4 关键动作——4 项动作均为正向收费流，无退款入口
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md §P0 明确不做——6 项延后功能无一涉及退款
+  - docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md §6 收费与欠款策略——仅定义欠款 warn 模式、风险确认留痕、回款归集口径、回款更正（voided/reversed），未涉及退款场景
+  - MemPalace 检索：`prepare_grounded_answer("失败结案路径下的退款规则")` + `prepare_grounded_answer("案件拒签失败后退款流程...")` + `search_knowledge("退款 refund 收费 billing 结案 失败 拒签")` 三次查询均未命中任何退款相关内容
+  影响面：
+  - CLOSED_FAILED phase transition 后的财务收尾流：当前 phase 推到 CLOSED_FAILED 后 billing 状态无变化，未结清节点保持 due/overdue
+  - BillingPlan 状态枚举：可能需追加 refunded / partially_refunded / cancelled 等状态
+  - PaymentRecord 数据模型：可能需追加 kind 字段（payment / refund）或独立 RefundRecord 实体
+  - 收费页面规格：需追加退款操作入口与退款记录展示
+  - 案件详情页/仪表盘：CLOSED_FAILED 案件的财务摘要展示逻辑
+
+  待业务侧确认的 3 个开放问题：
+
+  | # | 问题 | 影响 | 建议Owner |
+  |---|---|---|---|
+  | Q1 | 拒签/失败结案时，是否系统级自动触发退款？还是由事务所手动发起退款？ | 决定是否需要 phase-transition 联动自动退款逻辑 vs 纯手动操作 | 产品 + 业务 |
+  | Q2 | 退款金额按什么规则计算？全额退款 / 按 milestone 阶段比例退 / 按已服务工时扣除？是否存在不退款的场景（如已完成部分阶段工作）？ | 决定退款金额计算逻辑的复杂度与数据模型 | 业务 + 会计 |
+  | Q3 | 退款记录的数据模型：是在 PaymentRecord 上追加 kind=refund + 负数金额？还是新增独立的 RefundRecord 实体？是否需要关联退款凭证（银行转账截图等）？ | 决定数据模型扩展方案 | 产品 + 研发 |
+
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§6 收费与欠款策略（需追加「失败结案退款规则」小节）
+    Owner：产品/业务/会计
+    状态：待输入（Q1-Q3 关闭后回灌）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md
+    位置：§3.20 BillingPlan / PaymentRecord（需追加退款相关字段或实体）
+    Owner：研发
+    状态：待输入（依赖 Q3 决议）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md
+    位置：§4 关键动作（需追加退款操作）
+    Owner：产品/设计
+    状态：待输入（依赖 Q1-Q2 决议）
+
+- 时间：2026-04-29
+  问题：[BUG-115] 无 case 历史客户的 `base_profile` 缺 `ownerUserId / groupId`，如何回填？是否需要手动补录入口？
+  结论（TL;DR）：`034_customer_backfill_profile` 迁移仅能回填有 case 的客户（以最早 case 的 `owner_user_id / group_id` 为源），无 case 的历史客户因无数据来源，设计上无法自动回填——这是预期行为而非 bug。当前 admin UI 已具备手动补录能力（`CustomerBasicInfoTab.vue` 的 group / owner 字段在编辑模式下可修改，通过 `PATCH /api/customers/:id` 持久化），因此无需新建独立的"补全档案"入口。遗留问题：① 无 case 历史客户在列表页展示"无负责人 / 无分组"缺乏引导性提示；② 产品侧需明确是否为此类客户维护"已知缺失"白名单或在列表页增加筛选/批量补录能力。
+  关键依据：
+  - packages/server/src/infra/db/migrations/034_customer_backfill_profile.up.sql（迁移逻辑：JOIN cases 取最早 case 的 owner_user_id / group_id 写入 customers.base_profile）
+  - packages/server/src/modules/core/customers/customers.controller.ts:382-396（PATCH /:id 端点已支持 baseProfile 整体更新）
+  - packages/admin/src/views/customers/components/CustomerBasicInfoTab.vue:252-288（group / owner 字段已渲染为可编辑 <select>）
+  - packages/admin/src/views/customers/model/useCustomerBasicInfoModel.ts:271-298（save 流程已完整：startEditing → 修改 snapshot → save → PATCH API → refreshCustomer）
+  - docs/gyoseishoshi_saas_md/_output/12-双层状态机自动化复盘走查Bug清单-第六轮.md §BUG-115（原始发现：历史 4 条 customer ownerUserId / groupId 全空）
+  - docs/gyoseishoshi_saas_md/_output/13-第六轮§7下一轮覆盖走查Bug清单-第七轮.md §0.3（R7 验证：034 已应用并对有 case 客户回填成功；无 case 历史客户仍空）
+  - docs/gyoseishoshi_saas_md/P0/02-版本范围与优先级.md §2.12（归属继承链：Lead.group → Customer.group → Case.group）
+  - docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md §2.2（Case.group 是案件归属快照；Customer.group 后续变更不回写覆盖历史案件）
+
+  现状分析：
+
+  | 维度 | 现状 | 结论 |
+  |---|---|---|
+  | 自动回填覆盖范围 | `034_customer_backfill_profile` 已覆盖所有有 case 的历史客户 | ✅ 设计完整 |
+  | 无 case 客户的 owner/group 来源 | 无数据来源（无 case → 无 owner_user_id / group_id 可推） | ⚠️ 预期行为 |
+  | 手动补录 API | `PATCH /api/customers/:id` body `{ baseProfile: { ownerUserId, groupId } }` | ✅ 已可用 |
+  | 手动补录 UI | `CustomerBasicInfoTab.vue` 编辑模式下 group / owner 下拉已可修改 | ✅ 已可用 |
+  | 列表页缺失提示 | 列表页展示"无负责人 / 无分组"但无引导用户去详情页补录的 CTA | ⚠️ 待产品决策 |
+  | 批量补录 | 无批量更新 owner / group 的 UI 或 API | ⚠️ 待产品决策 |
+
+  待产品侧明确的问题（建议单工单跟踪）：
+
+  | ID | 问题 | 影响面 | 建议 |
+  |---|---|---|---|
+  | Q-115-1 | 无 case 历史客户在列表页是否需要视觉提示（如"档案不完整"标签）引导补录？ | admin 客户列表 UI | 低优先级；当前数量少（4 条），可人工逐一打开详情页编辑 |
+  | Q-115-2 | 是否需要维护"已知缺失客户"白名单（标记哪些客户预期无 owner/group）？ | 数据治理策略 | 建议暂不做；当客户量增长后再考虑 |
+  | Q-115-3 | 是否需要在客户列表增加"缺 owner/group"筛选条件或批量补录能力？ | admin 客户列表筛选 + 批量操作 | P2 以后；当前 4 条手动补录成本极低 |
+
+  影响面：
+  - packages/admin/src/views/customers/（列表页展示、详情页手动编辑）
+  - packages/server/src/infra/db/migrations/（034 backfill 迁移已完成）
+  - 数据治理策略（无 case 客户的 profile 完整性）
+  回灌计划：
+  - 目标文档：无需回灌到权威文档（BUG-115 是数据治理层面的跟踪项，不涉及业务规则变更）
+    位置：—
+    Owner：产品/研发
+    状态：不回灌（Q-115-1/2/3 决议后若有新规则再回灌）

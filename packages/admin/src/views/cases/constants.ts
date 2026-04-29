@@ -448,6 +448,7 @@ export const DEFAULT_CASE_LIST_FILTERS: CaseListFiltersState = {
   group: "",
   risk: "",
   validation: "",
+  phase: "",
 };
 
 // ─── Label / i18n Helpers ────────────────────────────────────────

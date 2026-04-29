@@ -598,6 +598,48 @@ const casesZhCN = {
     wfStepNotAllowed: "当前步骤不允许此业务子步骤流转。",
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
   },
+  log: {
+    category: {
+      operation: "操作日志",
+      review: "审核日志",
+      status: "状态变更",
+    },
+    objectType: {
+      case: "案件",
+      communicationLog: "沟通记录",
+      documentItem: "资料",
+      documentFile: "文件",
+      task: "任务",
+      billingRecord: "收费",
+      paymentRecord: "入金",
+      reviewRecord: "复核",
+      validationRun: "检查",
+      submissionPackage: "提交包",
+      generatedDocument: "文书",
+      reminder: "提醒",
+      caseParty: "关联人",
+    },
+    timeline: {
+      caseCreated: "案件创建：{suffix}",
+      caseUpdated: "案件信息更新",
+      caseDeleted: "案件删除",
+      stageChange: "阶段变更：{from} → {to}",
+      billingRiskAck: "未收款风险确认：{suffix}",
+      postApprovalStageChange: "许可后阶段变更：{suffix}",
+      crossGroupCreated: "跨组建案：{suffix}",
+      groupTransferred: "案件转组：{from} → {to}（{reason}）",
+      commLogCreated: "沟通记录追加：{suffix}",
+      commLogUpdated: "沟通记录更新",
+    },
+  },
+  validation: {
+    refReport: "详细请参阅检查报告",
+    lastFailed: "上次检查有未通过项，请修改后重新检查。",
+  },
+  coach: {
+    docManagement: "资料管理",
+    runValidation: "执行检查",
+  },
 } as const;
 
 export default casesZhCN;

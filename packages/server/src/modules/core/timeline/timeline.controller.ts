@@ -36,6 +36,7 @@ type TimelineListQuery = {
   entityType?: unknown;
   entityId?: unknown;
   limit?: unknown;
+  [key: string]: unknown;
 };
 
 type ParsedTimelineListQuery = {
@@ -44,15 +45,57 @@ type ParsedTimelineListQuery = {
   limit?: number;
 };
 
+const TIMELINE_LIST_QUERY_KEYS: ReadonlySet<string> = new Set([
+  "entityType",
+  "entityId",
+  "limit",
+]);
+
+const TIMELINE_LIST_QUERY_ALIAS_HINT: Readonly<Record<string, string>> = {
+  caseId: "entityType=case&entityId=<id>",
+  customerId: "entityType=customer&entityId=<id>",
+  taskId: "entityType=task&entityId=<id>",
+};
+
+function rejectUnknownTimelineQueryKey(key: string): never {
+  const hint = TIMELINE_LIST_QUERY_ALIAS_HINT[key];
+  const suffix = hint ? `; use ${hint} instead` : "";
+  throw new BadRequestException(`Unknown query parameter: ${key}${suffix}`);
+}
+
+function assertKnownTimelineQueryKeys(query: TimelineListQuery): void {
+  for (const key of Object.keys(query)) {
+    if (!TIMELINE_LIST_QUERY_KEYS.has(key)) {
+      rejectUnknownTimelineQueryKey(key);
+    }
+  }
+}
+
+function parseTimelineLimit(rawLimit: unknown): number | undefined {
+  if (rawLimit === undefined) return undefined;
+  const limit =
+    typeof rawLimit === "string"
+      ? Number(rawLimit)
+      : typeof rawLimit === "number"
+        ? rawLimit
+        : NaN;
+  if (!Number.isFinite(limit) || limit <= 0) {
+    throw new BadRequestException("Invalid limit");
+  }
+  return limit;
+}
+
 /**
  * 解析并校验 Timeline list query 参数。
  *
  * @param query query 参数
  * @returns 校验后的参数
  */
-function parseTimelineListQuery(
+export function parseTimelineListQuery(
   query: TimelineListQuery,
 ): ParsedTimelineListQuery {
+  assertKnownTimelineQueryKeys(query);
+
   const entityType = query.entityType;
   if (entityType !== undefined && !isTimelineEntityType(entityType)) {
     throw new BadRequestException("Invalid entityType");
@@ -66,19 +109,7 @@ function parseTimelineListQuery(
     throw new BadRequestException("Invalid entityId");
   }
 
-  const rawLimit = query.limit;
-  const limit =
-    rawLimit === undefined
-      ? undefined
-      : typeof rawLimit === "string"
-        ? Number(rawLimit)
-        : typeof rawLimit === "number"
-          ? rawLimit
-          : NaN;
-
-  if (limit !== undefined && (!Number.isFinite(limit) || limit <= 0)) {
-    throw new BadRequestException("Invalid limit");
-  }
+  const limit = parseTimelineLimit(query.limit);
 
   return { entityType, entityId, limit };
 }

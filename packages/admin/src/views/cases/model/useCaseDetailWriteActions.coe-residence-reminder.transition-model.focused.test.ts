@@ -182,8 +182,8 @@ describe("useCaseDetailModel COE/residence/reminder fields (p1-fe-004-03)", () =
     nextAction: "",
     validationHint: "",
     overviewActions: {
-      primary: { label: "資料管理", tab: "documents" },
-      secondary: { label: "校験実行", tab: "validation" },
+      primary: { label: "cases.coach.docManagement", tab: "documents" },
+      secondary: { label: "cases.coach.runValidation", tab: "validation" },
     },
     timeline: [],
     team: [],

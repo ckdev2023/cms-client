@@ -42,10 +42,11 @@ function createWiredRepository(detail: CaseDetail): CaseRepository {
         type: "status",
         avatar: "SY",
         avatarStyle: "primary",
-        text: "段階変更：S3 → S4",
-        category: "状態変更",
+        text: "cases.log.timeline.stageChange",
+        textParams: { from: "S3", to: "S4" },
+        category: "cases.log.category.status",
         categoryChip: "chip-primary",
-        objectType: "案件",
+        objectType: "cases.log.objectType.case",
         time: "2026-03-15",
         dotColor: "var(--primary)",
       },
@@ -109,7 +110,13 @@ describe("messages/log tab wiring (p0-fe-006c-01)", () => {
     await flushFetch();
     expect(model.detail.value).not.toBeNull();
     expect(model.detail.value!.logEntries).toHaveLength(1);
-    expect(model.detail.value!.logEntries[0].text).toBe("段階変更：S3 → S4");
+    expect(model.detail.value!.logEntries[0].text).toBe(
+      "cases.log.timeline.stageChange",
+    );
+    expect(model.detail.value!.logEntries[0].textParams).toEqual({
+      from: "S3",
+      to: "S4",
+    });
   });
 
   it("calls getMessages with the current caseId", async () => {

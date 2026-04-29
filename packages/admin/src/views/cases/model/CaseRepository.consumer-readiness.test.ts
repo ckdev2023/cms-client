@@ -126,6 +126,7 @@ const REPOSITORY_REQUIRED_METHODS = [
   "createCase",
   "updateCase",
   "transitionCase",
+  "transitionPhase",
   "acknowledgeBillingRisk",
   "updatePostApprovalStage",
   "transitionWorkflowStep",

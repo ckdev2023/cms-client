@@ -187,7 +187,8 @@ describe("log tab empty state (p0-fe-006c-03)", () => {
       timelineLog({ id: "tl-f02", action: "case.updated" }),
     ]);
     expect(result).toHaveLength(2);
-    expect(result![0].text).toBe("案件作成：business_manager");
-    expect(result![1].text).toBe("案件情報更新");
+    expect(result![0].text).toBe("cases.log.timeline.caseCreated");
+    expect(result![0].textParams).toEqual({ suffix: "business_manager" });
+    expect(result![1].text).toBe("cases.log.timeline.caseUpdated");
   });
 });

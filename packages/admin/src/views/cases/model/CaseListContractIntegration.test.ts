@@ -426,7 +426,7 @@ describe("master contract surface lock (p0-fe-002b-08)", () => {
   });
 
   it("frozen key set sizes are stable", () => {
-    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(8);
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(9);
     expect(CASE_LIST_PARAM_KEYS).toHaveLength(9);
     expect(Object.keys(CASE_LIST_BASE_FIELD_MAP)).toHaveLength(10);
     expect(CASE_LIST_BASE_TARGET_KEYS).toHaveLength(10);
@@ -464,9 +464,9 @@ describe("master contract surface lock (p0-fe-002b-08)", () => {
     expect(CASE_LIST_QUERY_PARAM_KEYS).not.toContain("limit");
   });
 
-  it("query filter keys (minus validation/customerId) are a subset of HTTP param keys", () => {
+  it("query filter keys (minus validation/customerId/phase) are a subset of HTTP param keys", () => {
     const queryFilterKeys = CASE_LIST_QUERY_PARAM_KEYS.filter(
-      (k) => k !== "validation" && k !== "customerId",
+      (k) => k !== "validation" && k !== "customerId" && k !== "phase",
     );
     for (const key of queryFilterKeys) {
       expect(

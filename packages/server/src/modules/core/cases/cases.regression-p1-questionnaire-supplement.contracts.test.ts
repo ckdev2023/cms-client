@@ -85,25 +85,34 @@ void describe("§14 supplement cycle: step transition rules (pure)", () => {
   });
 });
 
-void describe("§15 supplement_count increment via service", () => {
-  void test("incrementSupplementCount returns new count", async () => {
+void describe("§15 supplement_count recalc via service (BUG-118)", () => {
+  void test("incrementSupplementCount returns recalculated count", async () => {
     const pool = makePool((sql) => {
-      if (sql.includes("UPDATE cases") && sql.includes("supplement_count")) {
-        return ok([{ supplement_count: "1" }]);
-      }
+      if (
+        sql.includes("FROM submission_packages") &&
+        sql.includes("submission_kind = 'supplement'")
+      )
+        return ok([{ cnt: "1" }]);
+      if (sql.includes("UPDATE cases") && sql.includes("supplement_count = $2"))
+        return ok();
       return ok();
     });
     const count = await svc(pool).incrementSupplementCount(ctx(), CASE_ID);
     assert.equal(count, 1);
   });
 
-  void test("incrementSupplementCount twice returns sequential counts", async () => {
-    let dbCount = 0;
+  void test("incrementSupplementCount twice returns count from submission_packages", async () => {
+    let supplementPkgs = 0;
     const pool = makePool((sql) => {
-      if (sql.includes("UPDATE cases") && sql.includes("supplement_count")) {
-        dbCount += 1;
-        return ok([{ supplement_count: String(dbCount) }]);
+      if (
+        sql.includes("FROM submission_packages") &&
+        sql.includes("submission_kind = 'supplement'")
+      ) {
+        supplementPkgs += 1;
+        return ok([{ cnt: String(supplementPkgs) }]);
       }
+      if (sql.includes("UPDATE cases") && sql.includes("supplement_count = $2"))
+        return ok();
       return ok();
     });
     const s = svc(pool);
@@ -111,19 +120,6 @@ void describe("§15 supplement_count increment via service", () => {
     const c2 = await s.incrementSupplementCount(ctx(), CASE_ID);
     assert.equal(c1, 1);
     assert.equal(c2, 2);
-  });
-
-  void test("incrementSupplementCount throws when case not found", async () => {
-    const pool = makePool((sql) => {
-      if (sql.includes("UPDATE cases") && sql.includes("supplement_count")) {
-        return ok([]);
-      }
-      return ok();
-    });
-    await assert.rejects(
-      () => svc(pool).incrementSupplementCount(ctx(), CASE_ID),
-      /not found/i,
-    );
   });
 
   void test("mapCaseRow maps supplement_count from numeric string", () => {

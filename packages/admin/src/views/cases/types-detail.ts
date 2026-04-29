@@ -729,6 +729,10 @@ export interface LogEntry {
   /**
    *
    */
+  textParams?: Record<string, unknown>;
+  /**
+   *
+   */
   category: string;
   /**
    *
@@ -1105,6 +1109,10 @@ export interface CaseDetail {
    *
    */
   id: string;
+  /**
+   *
+   */
+  caseNo?: string;
   /**
    *
    */

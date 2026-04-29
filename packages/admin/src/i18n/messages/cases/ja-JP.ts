@@ -631,6 +631,49 @@ const casesJaJP = {
     reminderCreationFailed:
       "更新リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
   },
+  log: {
+    category: {
+      operation: "操作ログ",
+      review: "審査ログ",
+      status: "状態変更",
+    },
+    objectType: {
+      case: "案件",
+      communicationLog: "沟通記録",
+      documentItem: "資料",
+      documentFile: "ファイル",
+      task: "タスク",
+      billingRecord: "請求",
+      paymentRecord: "入金",
+      reviewRecord: "復核",
+      validationRun: "校験",
+      submissionPackage: "提出パッケージ",
+      generatedDocument: "文書",
+      reminder: "リマインダー",
+      caseParty: "関連人",
+    },
+    timeline: {
+      caseCreated: "案件作成：{suffix}",
+      caseUpdated: "案件情報更新",
+      caseDeleted: "案件削除",
+      stageChange: "段階変更：{from} → {to}",
+      billingRiskAck: "未収金リスク確認：{suffix}",
+      postApprovalStageChange: "許可後段階変更：{suffix}",
+      crossGroupCreated: "越境建案：{suffix}",
+      groupTransferred: "案件転組：{from} → {to}（{reason}）",
+      commLogCreated: "沟通記録追加：{suffix}",
+      commLogUpdated: "沟通記録更新",
+    },
+  },
+  validation: {
+    refReport: "詳細は校験レポートを参照",
+    lastFailed:
+      "前回の校験で不合格項目が検出されました。修正後に再校験を実行してください。",
+  },
+  coach: {
+    docManagement: "資料管理",
+    runValidation: "校験実行",
+  },
 } as const;
 
 export default casesJaJP;

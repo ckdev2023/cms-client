@@ -170,13 +170,13 @@ describe("overview tab field display (p0-fe-006a-03)", () => {
     expect(result.detail.nextAction).toBe("");
   });
 
-  it("overviewActions point to documents and validation tabs", () => {
+  it("overviewActions point to documents and validation tabs with i18n keys", () => {
     expect(result.detail.overviewActions.primary).toEqual({
-      label: "資料管理",
+      label: "cases.coach.docManagement",
       tab: "documents",
     });
     expect(result.detail.overviewActions.secondary).toEqual({
-      label: "校験実行",
+      label: "cases.coach.runValidation",
       tab: "validation",
     });
   });

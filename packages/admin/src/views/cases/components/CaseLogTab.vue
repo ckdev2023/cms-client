@@ -92,13 +92,15 @@ function chipTone(entry: LogEntry): ChipTone {
                   {{ entry.avatar }}
                 </span>
                 <div class="log-tab__entry-info">
-                  <p class="log-tab__entry-text">{{ entry.text }}</p>
+                  <p class="log-tab__entry-text">
+                    {{ t(entry.text, entry.textParams ?? {}) }}
+                  </p>
                   <div class="log-tab__entry-meta">
                     <Chip :tone="chipTone(entry)" size="sm">
-                      {{ entry.category }}
+                      {{ t(entry.category) }}
                     </Chip>
                     <span class="log-tab__entry-object">
-                      {{ entry.objectType }}
+                      {{ t(entry.objectType) }}
                     </span>
                   </div>
                 </div>

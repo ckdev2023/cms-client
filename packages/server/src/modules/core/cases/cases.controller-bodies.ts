@@ -84,7 +84,11 @@ export type PostApprovalStageBody = { stage: unknown };
 export type WorkflowStepTransitionBody = { toStepCode: unknown };
 
 /** businessPhase 维度流转请求体。 */
-export type PhaseTransitionBody = { toPhase: unknown };
+export type PhaseTransitionBody = {
+  toPhase: unknown;
+  closeReason?: unknown;
+  resultOutcome?: unknown;
+};
 
 /** 案件列表查询参数。 */
 export type ListCasesQuery = {

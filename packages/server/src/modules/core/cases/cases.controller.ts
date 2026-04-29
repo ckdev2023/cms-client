@@ -374,6 +374,11 @@ export class CasesController {
 
     return this.casesService.transitionPhase(ctx, id, {
       toPhase: requireString(body.toPhase, "toPhase"),
+      closeReason: parseOptionalNullableString(body.closeReason, "closeReason"),
+      resultOutcome: parseOptionalNullableString(
+        body.resultOutcome,
+        "resultOutcome",
+      ),
     });
   }
 

@@ -631,6 +631,49 @@ const casesEnUS = {
     reminderCreationFailed:
       "Failed to create renewal reminders. Please try again later.",
   },
+  log: {
+    category: {
+      operation: "Operation",
+      review: "Review",
+      status: "Status change",
+    },
+    objectType: {
+      case: "Case",
+      communicationLog: "Communication log",
+      documentItem: "Document",
+      documentFile: "File",
+      task: "Task",
+      billingRecord: "Billing",
+      paymentRecord: "Payment",
+      reviewRecord: "Review",
+      validationRun: "Validation",
+      submissionPackage: "Submission package",
+      generatedDocument: "Generated document",
+      reminder: "Reminder",
+      caseParty: "Related party",
+    },
+    timeline: {
+      caseCreated: "Case created: {suffix}",
+      caseUpdated: "Case info updated",
+      caseDeleted: "Case deleted",
+      stageChange: "Stage change: {from} → {to}",
+      billingRiskAck: "Unpaid risk acknowledged: {suffix}",
+      postApprovalStageChange: "Post-approval stage change: {suffix}",
+      crossGroupCreated: "Cross-group case created: {suffix}",
+      groupTransferred: "Case transferred: {from} → {to} ({reason})",
+      commLogCreated: "Communication log added: {suffix}",
+      commLogUpdated: "Communication log updated",
+    },
+  },
+  validation: {
+    refReport: "See the validation report for details",
+    lastFailed:
+      "Blocking items were found in the previous validation. Please fix them and re-run.",
+  },
+  coach: {
+    docManagement: "Document management",
+    runValidation: "Run validation",
+  },
 } as const;
 
 export default casesEnUS;

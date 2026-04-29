@@ -88,6 +88,7 @@ import { isUuid } from "../tenancy/uuid";
 import { createTenantDb } from "../tenancy/tenantDb";
 import type { TenantDb, TenantDbTx } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
+import { recalcSupplementCount } from "./casesSupplementCount";
 
 /**
  * P0 案件阶段枚举（S1–S9）。
@@ -1209,6 +1210,103 @@ export function resolveOverseasStepEffects(
   };
 }
 
+type PhaseStampEffects = {
+  stampCoeSent: boolean;
+  stampOverseasVisa: boolean;
+  stampEntryConfirmed: boolean;
+};
+
+/**
+ * 解析 businessPhase 推进时应附带的时间戳副作用（首次进入才打戳）。
+ *
+ * - COE_SENT → stamp coe_sent_at
+ * - VISA_APPLYING → stamp overseas_visa_start_at
+ * - SUCCESS → stamp entry_confirmed_at
+ *
+ * 与 `resolveOverseasStepEffects` 共享语义但作用于业务维度 phase 推进通路；
+ * 二者各司其职：workflow_step 维度在 `transitionWorkflowStep` 内打戳，
+ * businessPhase 维度在 `transitionPhase` 内打戳。
+ *
+ * @param current 当前 case
+ * @param toPhase 目标 phase（已经过合法性校验）
+ * @returns 三个 stamping 标志的布尔组合
+ * @see BUG-098
+ */
+export function resolvePhaseStampEffects(
+  current: Case,
+  toPhase: string,
+): PhaseStampEffects {
+  return {
+    stampCoeSent: toPhase === "COE_SENT" && !current.coeSentAt,
+    stampOverseasVisa:
+      toPhase === "VISA_APPLYING" && !current.overseasVisaStartAt,
+    stampEntryConfirmed: toPhase === "SUCCESS" && !current.entryConfirmedAt,
+  };
+}
+
+/**
+ * 判断 businessPhase 推进是否应递增 `supplement_count`。
+ *
+ * 业务规范：补资料循环以「重新进入 NEED_SUPPLEMENT」为一次循环计次。
+ * 仅当来源为 UNDER_REVIEW、目标为 NEED_SUPPLEMENT 时计为新一轮补资料。
+ * `supplement_count_cached` 仅作快速读取缓存，真相源仍为 SubmissionPackage 数量。
+ *
+ * @param fromPhase 当前 phase
+ * @param toPhase 目标 phase
+ * @returns 是否应将 supplement_count + 1
+ * @see BUG-099
+ */
+export function shouldIncrementSupplementCount(
+  fromPhase: string,
+  toPhase: string,
+): boolean {
+  return fromPhase === "UNDER_REVIEW" && toPhase === "NEED_SUPPLEMENT";
+}
+
+/**
+ * 终态 phase → S9 映射。非终态返回 null（stage 不动）。
+ */
+export function mapPhaseToTerminalStage(phase: string): string | null {
+  if (phase === "CLOSED_SUCCESS" || phase === "CLOSED_FAILED") return "S9";
+  return null;
+}
+
+type PhaseTransitionSideEffects = {
+  stamps: PhaseStampEffects;
+  incrementSupplement: boolean;
+  closeReason: string | null;
+  resultOutcome: string | null;
+};
+
+function buildPhaseTransitionTimelinePayload(
+  fromPhase: string,
+  toPhase: string,
+  updated: Case,
+  effects: PhaseTransitionSideEffects,
+): Record<string, unknown> {
+  const { stamps, incrementSupplement } = effects;
+  return {
+    from: fromPhase,
+    to: toPhase,
+    coeSentAt: stamps.stampCoeSent ? updated.coeSentAt : null,
+    overseasVisaStartAt: stamps.stampOverseasVisa
+      ? updated.overseasVisaStartAt
+      : null,
+    entryConfirmedAt: stamps.stampEntryConfirmed
+      ? updated.entryConfirmedAt
+      : null,
+    ...(incrementSupplement
+      ? { supplementCount: updated.supplementCount }
+      : {}),
+    ...(effects.closeReason !== null
+      ? { closeReason: effects.closeReason }
+      : {}),
+    ...(effects.resultOutcome !== null
+      ? { resultOutcome: effects.resultOutcome }
+      : {}),
+  };
+}
+
 function settledValueOrUndefined<T>(
   result: PromiseSettledResult<T>,
 ): T | undefined {
@@ -1969,6 +2067,21 @@ export class CasesService {
     nextStage: string,
   ): Promise<void> {
     if (nextStage !== "coe_sent") return;
+    await this.runCoeSendBillingGate(tx, current);
+  }
+
+  private async runCoeSendBillingGate(
+    tx: TenantDbTx,
+    current: Case,
+  ): Promise<void> {
+    const hasPlans = await this.hasFinalPaymentBillingRecords(tx, current.id);
+    if (!hasPlans) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.POST_APPROVAL_BILLING_BLOCKED +
+          `: Final payment milestone is missing. ` +
+          `Please create a final-payment billing record before sending COE.`,
+      );
+    }
 
     const guard = await checkFinalPaymentGuard(tx, current.id);
     const decision = decideFinalPaymentGuard(
@@ -1991,6 +2104,24 @@ export class CasesService {
           `Please acknowledge billing risk before sending COE.`,
       );
     }
+  }
+
+  private async hasFinalPaymentBillingRecords(
+    tx: TenantDbTx,
+    caseId: string,
+  ): Promise<boolean> {
+    const result = await tx.query<Record<string, unknown>>(
+      `select amount_due, status, milestone_name, gate_effect_mode
+       from billing_records
+       where case_id = $1 and (
+         lower(milestone_name) like '%尾款%'
+         or lower(milestone_name) like '%final%'
+         or lower(milestone_name) like '%結果%'
+       )
+       limit 1`,
+      [caseId],
+    );
+    return result.rows.length > 0;
   }
 
   /** P1 业务子步骤流转，不修改 Case.stage。海外返签步骤附带自动打戳与结果态收敛。 */
@@ -2053,13 +2184,17 @@ export class CasesService {
   /**
    * businessPhase 维度流转 — 独立于 S1-S9 stage 轴。
    *
+   * 终态联动（BUG-116/117）：
+   *   - CLOSED_SUCCESS → stage=S9, result_outcome='success'
+   *   - CLOSED_FAILED → stage=S9, close_reason=$X, result_outcome=coalesce($Y,'failure')
+   *
    * CLOSED_SUCCESS gate：
    *   - 当前 phase 必须为 RENEWAL_REMINDER_SCHEDULED
    *   - 对应 case 必须已有 current residence_period（is_current=true）
    *   - reminder_created 必须为 true
    *
    * CLOSED_FAILED gate：
-   *   - 必须提供 closeReason（由 assertPhaseTransition 校验合法路径后额外检查）
+   *   - 必须提供 closeReason
    */
   async transitionPhase(
     ctx: RequestContext,
@@ -2072,11 +2207,88 @@ export class CasesService {
 
     const fromPhase = current.businessPhase;
     const toPhase = input.toPhase;
+    this.assertValidPhaseTransitionInput(fromPhase, toPhase);
 
+    this.assertCloseReasonForFailedPhase(toPhase, input.closeReason);
+
+    if (toPhase === "CLOSED_SUCCESS") {
+      await this.assertClosedSuccessGate(ctx, id);
+    }
+
+    const effects = this.buildPhaseTransitionEffects(
+      current,
+      fromPhase,
+      toPhase,
+      input,
+    );
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      await this.assertCoeSendBillingGate(tx, current, toPhase);
+      const updated = await this.executePhaseTransitionUpdate(
+        tx,
+        id,
+        fromPhase,
+        toPhase,
+        effects,
+      );
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: updated.id,
+        action: "case.phase_transitioned",
+        payload: buildPhaseTransitionTimelinePayload(
+          fromPhase,
+          toPhase,
+          updated,
+          effects,
+        ),
+      });
+      return updated;
+    });
+  }
+
+  private assertCloseReasonForFailedPhase(
+    toPhase: string,
+    closeReason: string | null | undefined,
+  ): void {
+    if (toPhase === "CLOSED_FAILED" && !closeReason) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.CLOSE_REASON_REQUIRED +
+          ": closeReason is required when transitioning to CLOSED_FAILED",
+      );
+    }
+  }
+
+  private buildPhaseTransitionEffects(
+    current: Case,
+    fromPhase: string,
+    toPhase: string,
+    input: PhaseTransitionInput,
+  ): PhaseTransitionSideEffects {
+    const closeReason: string | null =
+      toPhase === "CLOSED_FAILED" ? (input.closeReason ?? null) : null;
+    const resultOutcome: string | null =
+      toPhase === "CLOSED_SUCCESS"
+        ? "success"
+        : toPhase === "CLOSED_FAILED"
+          ? (input.resultOutcome ?? "failure")
+          : null;
+
+    return {
+      stamps: resolvePhaseStampEffects(current, toPhase),
+      incrementSupplement: shouldIncrementSupplementCount(fromPhase, toPhase),
+      closeReason,
+      resultOutcome,
+    };
+  }
+
+  private assertValidPhaseTransitionInput(
+    fromPhase: string,
+    toPhase: string,
+  ): void {
     if (!isBusinessPhase(toPhase)) {
       throw new BadRequestException(`Invalid target phase: ${toPhase}`);
     }
-
     try {
       assertPhaseTransition(fromPhase, toPhase);
     } catch (e) {
@@ -2085,38 +2297,74 @@ export class CasesService {
       }
       throw e;
     }
+  }
 
-    if (toPhase === "CLOSED_SUCCESS") {
-      await this.assertClosedSuccessGate(ctx, id);
-    }
-
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    return tenantDb.transaction(async (tx) => {
-      const result = await tx.query<CaseQueryRow>(
-        `update cases set business_phase = $2, updated_at = now()
+  private async executePhaseTransitionUpdate(
+    tx: TenantDbTx,
+    id: string,
+    fromPhase: string,
+    toPhase: string,
+    effects: PhaseTransitionSideEffects,
+  ): Promise<Case> {
+    const result = await tx.query<CaseQueryRow>(
+      `update cases
+         set business_phase = $2,
+             stage = case
+               when $2 in ('CLOSED_SUCCESS','CLOSED_FAILED') then 'S9'
+               else stage
+             end,
+             close_reason = case when $2 = 'CLOSED_FAILED' then $7 else close_reason end,
+             result_outcome = case
+               when $2 = 'CLOSED_SUCCESS' then 'success'
+               when $2 = 'CLOSED_FAILED' then coalesce($8, 'failure')
+               else result_outcome
+             end,
+             coe_sent_at = case when $4::boolean then now() else coe_sent_at end,
+             overseas_visa_start_at = case when $5::boolean then now() else overseas_visa_start_at end,
+             entry_confirmed_at = case when $6::boolean then now() else entry_confirmed_at end,
+             updated_at = now()
          where id = $1 and business_phase = $3
            and coalesce(metadata->>'_status','') is distinct from 'deleted'
          returning ${CASE_COLS}`,
-        [id, toPhase, fromPhase],
+      [
+        id,
+        toPhase,
+        fromPhase,
+        effects.stamps.stampCoeSent,
+        effects.stamps.stampOverseasVisa,
+        effects.stamps.stampEntryConfirmed,
+        effects.closeReason,
+        effects.resultOutcome,
+      ],
+    );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException(
+        `Phase transition conflict: case phase has already changed from '${fromPhase}'`,
       );
-      const row = result.rows.at(0);
-      if (!row) {
-        throw new BadRequestException(
-          `Phase transition conflict: case phase has already changed from '${fromPhase}'`,
-        );
-      }
-      const updated = mapCaseRow(row);
-      await writeTimelineInTx(tx, ctx, {
-        entityType: "case",
-        entityId: updated.id,
-        action: "case.phase_transitioned",
-        payload: {
-          from: fromPhase,
-          to: toPhase,
-        },
-      });
-      return updated;
-    });
+    }
+    let caseEntity = mapCaseRow(row);
+
+    if (effects.incrementSupplement) {
+      const newCount = await recalcSupplementCount(tx, id);
+      caseEntity = { ...caseEntity, supplementCount: newCount };
+    }
+
+    return caseEntity;
+  }
+
+  /**
+   * businessPhase 维度推进到 COE_SENT 时的尾款守卫。
+   *
+   * 触发条件：仅当 toPhase === COE_SENT 时执行；其他 phase 立即放行。
+   */
+  private async assertCoeSendBillingGate(
+    tx: TenantDbTx,
+    current: Case,
+    toPhase: string,
+  ): Promise<void> {
+    if (toPhase !== "COE_SENT") return;
+    await this.runCoeSendBillingGate(tx, current);
   }
 
   private async assertClosedSuccessGate(
@@ -2793,16 +3041,9 @@ export class CasesService {
     caseId: string,
   ): Promise<number> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<{ supplement_count: string }>(
-      `UPDATE cases
-       SET supplement_count = supplement_count + 1, updated_at = now()
-       WHERE id = $1
-       RETURNING supplement_count`,
-      [caseId],
+    return tenantDb.transaction(async (tx) =>
+      recalcSupplementCount(tx, caseId),
     );
-    const row = result.rows.at(0);
-    if (!row) throw new BadRequestException("Case not found");
-    return Number(row.supplement_count);
   }
 
   /** 允许 assertBelongsToOrg 使用的表名白名单。 */

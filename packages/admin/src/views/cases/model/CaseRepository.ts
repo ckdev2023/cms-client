@@ -135,6 +135,18 @@ export interface CaseRepository {
   /**
    *
    */
+  transitionPhase(
+    id: string,
+    input: {
+      toPhase: string;
+      closeReason?: string;
+      resultOutcome?: string;
+    },
+  ): Promise<CaseMutationResult>;
+
+  /**
+   *
+   */
   deleteCase(id: string): Promise<void>;
 
   /**
@@ -301,6 +313,25 @@ function createTransitionCase(runtime: CaseRepositoryRuntime) {
     });
 }
 
+function createTransitionPhase(runtime: CaseRepositoryRuntime) {
+  return async (
+    id: string,
+    input: {
+      toPhase: string;
+      closeReason?: string;
+      resultOutcome?: string;
+    },
+  ): Promise<CaseMutationResult> =>
+    requestAndAdapt({
+      runtime,
+      url: `${buildCaseDetailPath(runtime.apiPath, id)}/phase-transition`,
+      method: "POST",
+      body: input,
+      adapt: adaptCaseTransitionResult,
+      errorMessage: "Invalid phase transition response",
+    });
+}
+
 function createAcknowledgeBillingRisk(runtime: CaseRepositoryRuntime) {
   return async (
     id: string,
@@ -418,6 +449,7 @@ export function createCaseRepository(
     createCase: createCreateCase(runtime),
     updateCase: createUpdateCase(runtime),
     transitionCase: createTransitionCase(runtime),
+    transitionPhase: createTransitionPhase(runtime),
     acknowledgeBillingRisk: createAcknowledgeBillingRisk(runtime),
     updatePostApprovalStage: createUpdatePostApprovalStage(runtime),
     transitionWorkflowStep: createTransitionWorkflowStep(runtime),

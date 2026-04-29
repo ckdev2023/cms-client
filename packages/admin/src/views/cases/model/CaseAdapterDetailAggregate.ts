@@ -332,8 +332,14 @@ export function adaptCaseDetailAggregate(
     nextAction: "",
     validationHint: buildValidationHint(m.blockingCount, m.warningCount),
     overviewActions: {
-      primary: { label: "資料管理", tab: "documents" as const },
-      secondary: { label: "校験実行", tab: "validation" as const },
+      primary: {
+        label: "cases.coach.docManagement",
+        tab: "documents" as const,
+      },
+      secondary: {
+        label: "cases.coach.runValidation",
+        tab: "validation" as const,
+      },
     },
     billing: buildBillingBlock(m.quotePrice, m.unpaidAmount, m.totalReceived),
     validation: buildValidationBlock(latestValidation),

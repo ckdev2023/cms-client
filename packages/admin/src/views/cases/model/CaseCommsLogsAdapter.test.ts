@@ -1,10 +1,3 @@
-// ── Test Ownership ──────────────────────────────────────────────
-// Owner: communication logs + timeline DTO mapping (messages,
-//   log entries, channel/category resolution).
-// Does NOT test: case detail aggregate, list adapters, write
-//   builders, or repository orchestration.
-// ────────────────────────────────────────────────────────────────
-
 import { describe, expect, it } from "vitest";
 import {
   adaptCaseMessageDto,
@@ -308,59 +301,59 @@ describe("adaptCaseLogDto", () => {
     createdAt: "2026-03-15T09:00:00.000Z",
   };
 
-  it("adapts a valid case.created timeline entry", () => {
+  it("adapts a valid case.created timeline entry with i18n keys", () => {
     const result = adaptCaseLogDto(baseTimelineLog);
     expect(result).not.toBeNull();
     expect(result!.type).toBe("operation");
-    expect(result!.text).toBe("案件作成：business_manager");
-    expect(result!.category).toBe("操作日志");
+    expect(result!.text).toBe("cases.log.timeline.caseCreated");
+    expect(result!.textParams).toEqual({ suffix: "business_manager" });
+    expect(result!.category).toBe("cases.log.category.operation");
     expect(result!.categoryChip).toBe("chip-muted");
-    expect(result!.objectType).toBe("案件");
+    expect(result!.objectType).toBe("cases.log.objectType.case");
     expect(result!.time).toBe("2026-03-15T09:00:00.000Z");
     expect(result!.avatar).toBe("TY");
     expect(result!.dotColor).toBe("var(--muted)");
   });
-  it("adapts case.status_changed", () => {
+  it("adapts case.status_changed with i18n keys", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "case.status_changed",
       payload: { from: "S3", to: "S4" },
     });
     expect(result!.type).toBe("status");
-    expect(result!.text).toBe("段階変更：S3 → S4");
-    expect(result!.category).toBe("状態変更");
+    expect(result!.text).toBe("cases.log.timeline.stageChange");
+    expect(result!.textParams).toEqual({ from: "S3", to: "S4" });
+    expect(result!.category).toBe("cases.log.category.status");
     expect(result!.categoryChip).toBe("chip-primary");
     expect(result!.dotColor).toBe("var(--primary)");
   });
-  it("adapts case.billing_risk_acknowledged", () => {
-    const result = adaptCaseLogDto({
+  it("adapts billing_risk / post_approval / cross_group with i18n keys", () => {
+    const brk = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "case.billing_risk_acknowledged",
       payload: { reasonCode: "deposit_pending" },
-    });
-    expect(result!.type).toBe("status");
-    expect(result!.text).toBe("未収金リスク確認：deposit_pending");
-  });
-  it("adapts case.post_approval_stage_changed", () => {
-    const result = adaptCaseLogDto({
+    })!;
+    expect(brk.text).toBe("cases.log.timeline.billingRiskAck");
+    expect(brk.textParams).toEqual({ suffix: "deposit_pending" });
+
+    const pa = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "case.post_approval_stage_changed",
       payload: { stage: "coe_sent" },
-    });
-    expect(result!.type).toBe("status");
-    expect(result!.text).toBe("許可後段階変更：coe_sent");
-  });
+    })!;
+    expect(pa.text).toBe("cases.log.timeline.postApprovalStageChange");
+    expect(pa.textParams).toEqual({ suffix: "coe_sent" });
 
-  it("adapts case.cross_group_created", () => {
-    const result = adaptCaseLogDto({
+    const cg = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "case.cross_group_created",
       payload: { reason: "Client relocated" },
-    });
-    expect(result!.text).toBe("越境建案：Client relocated");
+    })!;
+    expect(cg.text).toBe("cases.log.timeline.crossGroupCreated");
+    expect(cg.textParams).toEqual({ suffix: "Client relocated" });
   });
 
-  it("adapts case.group_transferred", () => {
+  it("adapts case.group_transferred with i18n key and params", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "case.group_transferred",
@@ -370,37 +363,39 @@ describe("adaptCaseLogDto", () => {
         reason: "Transfer",
       },
     });
-    expect(result!.text).toBe("案件転組；Tokyo → Osaka；理由：Transfer");
+    expect(result!.text).toBe("cases.log.timeline.groupTransferred");
+    expect(result!.textParams).toEqual({
+      from: "Tokyo",
+      to: "Osaka",
+      reason: "Transfer",
+    });
   });
 
-  it("adapts communication_log.created in case timeline", () => {
-    const result = adaptCaseLogDto({
+  it("adapts communication_log actions with i18n keys", () => {
+    const created = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "communication_log.created",
       payload: { channelType: "phone" },
-    });
-    expect(result!.type).toBe("operation");
-    expect(result!.text).toBe("沟通記録追加：phone");
-    expect(result!.objectType).toBe("沟通記録");
-  });
-
-  it("adapts communication_log.updated", () => {
-    const result = adaptCaseLogDto({
+    })!;
+    expect(created.text).toBe("cases.log.timeline.commLogCreated");
+    expect(created.textParams).toEqual({ suffix: "phone" });
+    expect(created.objectType).toBe("cases.log.objectType.communicationLog");
+    const updated = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "communication_log.updated",
       payload: {},
-    });
-    expect(result!.text).toBe("沟通記録更新");
+    })!;
+    expect(updated.text).toBe("cases.log.timeline.commLogUpdated");
   });
 
-  it("adapts review_record.created as review category", () => {
+  it("adapts review_record.created as review category with i18n key", () => {
     const result = adaptCaseLogDto({
       ...baseTimelineLog,
       action: "review_record.created",
       payload: {},
     });
     expect(result!.type).toBe("review");
-    expect(result!.category).toBe("審核日志");
+    expect(result!.category).toBe("cases.log.category.review");
     expect(result!.categoryChip).toBe("chip-warning");
   });
 
@@ -426,7 +421,7 @@ describe("adaptCaseLogDto", () => {
       created_at: "2026-03-15T10:00:00.000Z",
     });
     expect(result).not.toBeNull();
-    expect(result!.text).toBe("案件情報更新");
+    expect(result!.text).toBe("cases.log.timeline.caseUpdated");
     expect(result!.avatar).toBe("YH");
   });
 
@@ -487,7 +482,7 @@ describe("adaptCaseLogListResult", () => {
   it("skips malformed items and returns valid ones", () => {
     const result = adaptCaseLogListResult([validLog, { bad: true }]);
     expect(result).toHaveLength(1);
-    expect(result![0].text).toBe("案件作成");
+    expect(result![0].text).toBe("cases.log.timeline.caseCreated");
   });
 
   it("returns null for non-array/non-object input", () => {

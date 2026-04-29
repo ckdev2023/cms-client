@@ -35,6 +35,7 @@ import {
   CASE_VALIDATION_STATUSES,
   DEFAULT_CASE_LIST_FILTERS,
 } from "./constants";
+import { BUSINESS_PHASES } from "./constantsBusinessPhase";
 
 export type { CaseCreateQueryParams } from "./query-create";
 export {
@@ -101,6 +102,7 @@ export const CASE_LIST_QUERY_PARAM_KEYS = [
   "group",
   "risk",
   "validation",
+  "phase",
   "customerId",
 ] as const;
 
@@ -127,6 +129,7 @@ export function parseCaseListQuery(query: LocationQuery): CaseListQueryParams {
   const stage = firstString(query.stage);
   const risk = firstString(query.risk);
   const validation = firstString(query.validation);
+  const phase = firstString(query.phase);
 
   return {
     scope: isValidScope(scope) ? scope : DEFAULT_CASE_LIST_FILTERS.scope,
@@ -136,6 +139,7 @@ export function parseCaseListQuery(query: LocationQuery): CaseListQueryParams {
     group: firstString(query.group),
     risk: isValidRisk(risk) ? risk : "",
     validation: isValidValidation(validation) ? validation : "",
+    phase: (BUSINESS_PHASES as readonly string[]).includes(phase) ? phase : "",
     customerId: firstString(query.customerId) || undefined,
   };
 }
@@ -160,6 +164,7 @@ export function buildCaseListQuery(
     group: params.group || undefined,
     risk: params.risk || undefined,
     validation: params.validation || undefined,
+    phase: params.phase || undefined,
     customerId: params.customerId || undefined,
   };
 }

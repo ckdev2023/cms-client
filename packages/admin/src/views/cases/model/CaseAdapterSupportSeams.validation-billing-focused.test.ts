@@ -162,7 +162,7 @@ describe("validation tab summary display (p0-fe-006b-03)", () => {
       items: [vrItem({ resultStatus: "failed", blockingCount: 1 })],
     })!;
     expect(failed.retriggerNote).toBeTruthy();
-    expect(failed.retriggerNote).toContain("再校験");
+    expect(failed.retriggerNote).toBe("cases.validation.lastFailed");
 
     const passed = adaptCaseValidationData({
       items: [vrItem({ resultStatus: "passed" })],

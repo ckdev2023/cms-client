@@ -89,6 +89,10 @@ export interface CaseListFiltersState {
    *
    */
   validation: CaseValidationFilter;
+  /**
+   *
+   */
+  phase?: string;
 }
 
 /**

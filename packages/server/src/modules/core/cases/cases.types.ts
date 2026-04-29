@@ -189,6 +189,8 @@ export type {
  */
 export type PhaseTransitionInput = {
   toPhase: string;
+  closeReason?: string | null;
+  resultOutcome?: string | null;
 };
 
 /**

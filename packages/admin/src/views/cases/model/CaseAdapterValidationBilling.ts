@@ -197,22 +197,20 @@ export function adaptCaseValidationData(value: unknown): ValidationData | null {
     blocking.push({
       gate: "A",
       title: `${readNumber(latest, "blockingCount")} 件の阻断項目`,
-      note: "詳細は校験レポートを参照",
+      note: "cases.validation.refReport",
     });
   }
   if (warnings.length === 0 && readNumber(latest, "warningCount") > 0) {
     warnings.push({
       gate: "B",
       title: `${readNumber(latest, "warningCount")} 件の警告項目`,
-      note: "詳細は校験レポートを参照",
+      note: "cases.validation.refReport",
     });
   }
 
   const status = readString(latest, "resultStatus");
   const retriggerNote =
-    status === "failed"
-      ? "前回の校験で不合格項目が検出されました。修正後に再校験を実行してください。"
-      : undefined;
+    status === "failed" ? "cases.validation.lastFailed" : undefined;
 
   return {
     lastTime: formatDate(executedAt),

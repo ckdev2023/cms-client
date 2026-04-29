@@ -134,11 +134,13 @@ describe("CaseRepository messages/log (p0-fe-002e-01)", () => {
 
     expect(entries).toHaveLength(2);
     expect(entries[0].type).toBe("operation");
-    expect(entries[0].text).toBe("案件作成：business_manager");
-    expect(entries[0].category).toBe("操作日志");
+    expect(entries[0].text).toBe("cases.log.timeline.caseCreated");
+    expect(entries[0].textParams).toEqual({ suffix: "business_manager" });
+    expect(entries[0].category).toBe("cases.log.category.operation");
     expect(entries[1].type).toBe("status");
-    expect(entries[1].text).toBe("段階変更：S3 → S4");
-    expect(entries[1].category).toBe("状態変更");
+    expect(entries[1].text).toBe("cases.log.timeline.stageChange");
+    expect(entries[1].textParams).toEqual({ from: "S3", to: "S4" });
+    expect(entries[1].category).toBe("cases.log.category.status");
   });
 
   it("getLogEntries returns empty array for blank caseId without fetching", async () => {
@@ -167,7 +169,7 @@ describe("CaseRepository messages/log (p0-fe-002e-01)", () => {
     const entries = await repo.getLogEntries("case-001");
     expect(entries).toHaveLength(1);
     expect(entries[0].type).toBe("review");
-    expect(entries[0].category).toBe("審核日志");
+    expect(entries[0].category).toBe("cases.log.category.review");
   });
 
   // ─── Custom apiPath derivation ────────────────────────────────

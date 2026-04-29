@@ -1,0 +1,1 @@
+-- noop: schema-compatible, no structural rollback needed

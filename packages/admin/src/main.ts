@@ -8,25 +8,13 @@ import App from "./App.vue";
 import { i18n } from "./i18n";
 import { router } from "./router";
 import { pinia } from "./store";
+import { setupTitleSync } from "./titleSync";
 
 const app = createApp(App);
-const appTitle = "Gyosei OS";
 
 app.use(pinia).use(router).use(i18n).use(ArcoVue);
 
-router.afterEach((to) => {
-  const titleKey =
-    typeof to.meta.titleKey === "string" ? to.meta.titleKey : undefined;
-  const translatedTitle = titleKey ? i18n.global.t(titleKey) : "";
-  const routeTitle =
-    typeof to.meta.title === "string"
-      ? to.meta.title
-      : translatedTitle && translatedTitle !== titleKey
-        ? translatedTitle
-        : "";
-
-  document.title = routeTitle ? `${routeTitle} - ${appTitle}` : appTitle;
-});
+setupTitleSync(router);
 
 router.isReady().then(() => {
   app.mount("#app");

@@ -17,7 +17,7 @@ const timelineLog = (
 });
 
 describe("log tab timeline display (p0-fe-006c-03)", () => {
-  it("status category: chip-primary, var(--primary) dot, 状態変更 label", () => {
+  it("status category: chip-primary, var(--primary) dot, i18n key", () => {
     const e = adaptCaseLogDto(
       timelineLog({
         action: "case.status_changed",
@@ -25,28 +25,29 @@ describe("log tab timeline display (p0-fe-006c-03)", () => {
       }),
     )!;
     expect(e.type).toBe("status");
-    expect(e.category).toBe("状態変更");
+    expect(e.category).toBe("cases.log.category.status");
     expect(e.categoryChip).toBe("chip-primary");
     expect(e.dotColor).toBe("var(--primary)");
-    expect(e.text).toBe("段階変更：S3 → S4");
+    expect(e.text).toBe("cases.log.timeline.stageChange");
+    expect(e.textParams).toEqual({ from: "S3", to: "S4" });
   });
 
-  it("review category: chip-warning, var(--warning) dot, 審核日志 label", () => {
+  it("review category: chip-warning, var(--warning) dot, i18n key", () => {
     const e = adaptCaseLogDto(
       timelineLog({ action: "review_record.approved", payload: {} }),
     )!;
     expect(e.type).toBe("review");
-    expect(e.category).toBe("審核日志");
+    expect(e.category).toBe("cases.log.category.review");
     expect(e.categoryChip).toBe("chip-warning");
     expect(e.dotColor).toBe("var(--warning)");
   });
 
-  it("operation category: chip-muted, var(--muted) dot, 操作日志 label", () => {
+  it("operation category: chip-muted, var(--muted) dot, i18n key", () => {
     const e = adaptCaseLogDto(
       timelineLog({ action: "case.created", payload: {} }),
     )!;
     expect(e.type).toBe("operation");
-    expect(e.category).toBe("操作日志");
+    expect(e.category).toBe("cases.log.category.operation");
     expect(e.categoryChip).toBe("chip-muted");
     expect(e.dotColor).toBe("var(--muted)");
   });
@@ -66,46 +67,53 @@ describe("log tab timeline display (p0-fe-006c-03)", () => {
     expect(new Set(dots).size).toBe(3);
   });
 
-  it("stage change shows from → to message", () => {
+  it("stage change returns i18n key with from/to params", () => {
     const e = adaptCaseLogDto(
       timelineLog({
         action: "case.stage_changed",
         payload: { from: "S5", to: "S6" },
       }),
     )!;
-    expect(e.text).toBe("段階変更：S5 → S6");
+    expect(e.text).toBe("cases.log.timeline.stageChange");
+    expect(e.textParams).toEqual({ from: "S5", to: "S6" });
   });
 
-  it("billing risk acknowledged shows reason code", () => {
+  it("billing risk acknowledged returns i18n key with suffix param", () => {
     const e = adaptCaseLogDto(
       timelineLog({
         action: "case.billing_risk_acknowledged",
         payload: { reasonCode: "deposit_pending" },
       }),
     )!;
-    expect(e.text).toBe("未収金リスク確認：deposit_pending");
+    expect(e.text).toBe("cases.log.timeline.billingRiskAck");
+    expect(e.textParams).toEqual({ suffix: "deposit_pending" });
   });
 
-  it("group transferred shows from → to with reason", () => {
+  it("group transferred returns i18n key with from/to/reason params", () => {
     const e = adaptCaseLogDto(
       timelineLog({
         action: "case.group_transferred",
         payload: { fromGroupName: "東京", toGroupName: "大阪", reason: "移転" },
       }),
     )!;
-    expect(e.text).toBe("案件転組；東京 → 大阪；理由：移転");
+    expect(e.text).toBe("cases.log.timeline.groupTransferred");
+    expect(e.textParams).toEqual({
+      from: "東京",
+      to: "大阪",
+      reason: "移転",
+    });
   });
 
-  it("objectType resolves known prefixes to Japanese labels", () => {
+  it("objectType resolves known prefixes to i18n key paths", () => {
     const knownPrefixes: Record<string, string> = {
-      "case.created": "案件",
-      "communication_log.created": "沟通記録",
-      "document_item.uploaded": "資料",
-      "task.completed": "任務",
-      "review_record.approved": "復核",
-      "validation_run.created": "校験",
-      "submission_package.created": "提出包",
-      "billing_record.created": "収費",
+      "case.created": "cases.log.objectType.case",
+      "communication_log.created": "cases.log.objectType.communicationLog",
+      "document_item.uploaded": "cases.log.objectType.documentItem",
+      "task.completed": "cases.log.objectType.task",
+      "review_record.approved": "cases.log.objectType.reviewRecord",
+      "validation_run.created": "cases.log.objectType.validationRun",
+      "submission_package.created": "cases.log.objectType.submissionPackage",
+      "billing_record.created": "cases.log.objectType.billingRecord",
     };
     for (const [action, expected] of Object.entries(knownPrefixes)) {
       const e = adaptCaseLogDto(timelineLog({ action, payload: {} }))!;

@@ -164,6 +164,7 @@ describe("buildCaseListQuery", () => {
       group: "tokyo-2",
       risk: "critical",
       validation: "failed",
+      phase: "",
       customerId: "cust-003",
     };
     const query = buildCaseListQuery(original);
@@ -303,12 +304,13 @@ describe("contract freeze — CaseListQueryParams key set", () => {
     expect(_ASSERT_QUERY_FROZEN_KEYS).toBe(true);
   });
 
-  it("CASE_LIST_QUERY_PARAM_KEYS enumerates exactly 8 keys", () => {
-    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(8);
+  it("CASE_LIST_QUERY_PARAM_KEYS enumerates exactly 9 keys", () => {
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(9);
     expect([...CASE_LIST_QUERY_PARAM_KEYS].sort()).toEqual([
       "customerId",
       "group",
       "owner",
+      "phase",
       "risk",
       "scope",
       "search",
@@ -354,6 +356,7 @@ describe("contract freeze — CaseListQueryParams key set", () => {
       group: "g",
       risk: "critical",
       validation: "passed",
+      phase: "UNDER_REVIEW",
       customerId: "c",
     };
     const result = buildCaseListQuery(input);

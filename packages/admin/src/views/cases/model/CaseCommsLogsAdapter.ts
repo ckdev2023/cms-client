@@ -195,10 +195,10 @@ function resolveTimelineActor(record: Record<string, unknown>): string {
   return pickOptionalString(record, TIMELINE_ACTOR_FIELDS) ?? "System";
 }
 
-const LOG_CATEGORY_LABELS: Record<Exclude<LogCategoryKey, "all">, string> = {
-  operation: "操作日志",
-  review: "審核日志",
-  status: "状態変更",
+const LOG_CATEGORY_KEYS: Record<Exclude<LogCategoryKey, "all">, string> = {
+  operation: "cases.log.category.operation",
+  review: "cases.log.category.review",
+  status: "cases.log.category.status",
 };
 
 const CATEGORY_CHIP_MAP: Record<Exclude<LogCategoryKey, "all">, string> = {
@@ -247,82 +247,94 @@ export function resolveLogCategory(
   return "operation";
 }
 
-const OBJECT_TYPE_LABELS: Record<string, string> = {
-  case: "案件",
-  communication_log: "沟通記録",
-  document_item: "資料",
-  document_file: "文件",
-  task: "任務",
-  billing_record: "収費",
-  payment_record: "入金",
-  review_record: "復核",
-  validation_run: "校験",
-  submission_package: "提出包",
-  generated_document: "文書",
-  reminder: "提醒",
-  case_party: "関連人",
+const OBJECT_TYPE_KEYS: Record<string, string> = {
+  case: "cases.log.objectType.case",
+  communication_log: "cases.log.objectType.communicationLog",
+  document_item: "cases.log.objectType.documentItem",
+  document_file: "cases.log.objectType.documentFile",
+  task: "cases.log.objectType.task",
+  billing_record: "cases.log.objectType.billingRecord",
+  payment_record: "cases.log.objectType.paymentRecord",
+  review_record: "cases.log.objectType.reviewRecord",
+  validation_run: "cases.log.objectType.validationRun",
+  submission_package: "cases.log.objectType.submissionPackage",
+  generated_document: "cases.log.objectType.generatedDocument",
+  reminder: "cases.log.objectType.reminder",
+  case_party: "cases.log.objectType.caseParty",
 };
 
-function resolveObjectType(action: string): string {
+function resolveObjectTypeKey(action: string): string {
   const dot = action.indexOf(".");
   if (dot < 0) return action;
   const prefix = action.slice(0, dot);
-  return OBJECT_TYPE_LABELS[prefix] ?? prefix;
+  return OBJECT_TYPE_KEYS[prefix] ?? prefix;
 }
 
-function buildGroupTransferMessage(payload: Record<string, unknown>): string {
-  const fromGroup = pickOptionalString(payload, ["fromGroupName", "fromGroup"]);
-  const toGroup = pickOptionalString(payload, ["toGroupName", "toGroup"]);
-  const reason = pickOptionalString(payload, ["reason"]);
-  const parts = [
-    "案件転組",
-    fromGroup && toGroup ? `${fromGroup} → ${toGroup}` : null,
-    reason ? `理由：${reason}` : null,
-  ].filter(Boolean);
-  return parts.join("；");
+interface TimelineMessageResult {
+  key: string;
+  params?: Record<string, string>;
 }
 
-function labelWithSuffix(
-  label: string,
-  payload: Record<string, unknown>,
-  keys: string[],
-): string {
-  const suffix = pickOptionalString(payload, keys);
-  return suffix ? `${label}：${suffix}` : label;
+function pickSuffix(payload: Record<string, unknown>, keys: string[]): string {
+  return pickOptionalString(payload, keys) ?? "";
 }
 
-function buildStageChangeMessage(payload: Record<string, unknown>): string {
-  const from = pickOptionalString(payload, ["from", "fromStage"]);
-  const to = pickOptionalString(payload, ["to", "toStage"]);
-  return from && to ? `段階変更：${from} → ${to}` : "段階変更";
-}
+type TimelineMessageBuilder = (
+  p: Record<string, unknown>,
+) => TimelineMessageResult;
 
-type TimelineMessageBuilder = (p: Record<string, unknown>) => string;
+function buildStageChangeResult(
+  p: Record<string, unknown>,
+): TimelineMessageResult {
+  const from = pickOptionalString(p, ["from", "fromStage"]) ?? "";
+  const to = pickOptionalString(p, ["to", "toStage"]) ?? "";
+  return { key: "cases.log.timeline.stageChange", params: { from, to } };
+}
 
 const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
-  "case.created": (p) =>
-    labelWithSuffix("案件作成", p, ["caseTypeCode", "case_type_code"]),
-  "case.updated": () => "案件情報更新",
-  "case.deleted": () => "案件削除",
-  "case.status_changed": buildStageChangeMessage,
-  "case.stage_changed": buildStageChangeMessage,
-  "case.billing_risk_acknowledged": (p) =>
-    labelWithSuffix("未収金リスク確認", p, ["reasonCode", "reason_code"]),
-  "case.post_approval_stage_changed": (p) =>
-    labelWithSuffix("許可後段階変更", p, ["stage", "toStage"]),
-  "case.cross_group_created": (p) => labelWithSuffix("越境建案", p, ["reason"]),
-  "case.group_transferred": buildGroupTransferMessage,
-  "communication_log.created": (p) =>
-    labelWithSuffix("沟通記録追加", p, ["channelType", "channel_type"]),
-  "communication_log.updated": () => "沟通記録更新",
+  "case.created": (p) => ({
+    key: "cases.log.timeline.caseCreated",
+    params: { suffix: pickSuffix(p, ["caseTypeCode", "case_type_code"]) },
+  }),
+  "case.updated": () => ({ key: "cases.log.timeline.caseUpdated" }),
+  "case.deleted": () => ({ key: "cases.log.timeline.caseDeleted" }),
+  "case.status_changed": buildStageChangeResult,
+  "case.stage_changed": buildStageChangeResult,
+  "case.billing_risk_acknowledged": (p) => ({
+    key: "cases.log.timeline.billingRiskAck",
+    params: { suffix: pickSuffix(p, ["reasonCode", "reason_code"]) },
+  }),
+  "case.post_approval_stage_changed": (p) => ({
+    key: "cases.log.timeline.postApprovalStageChange",
+    params: { suffix: pickSuffix(p, ["stage", "toStage"]) },
+  }),
+  "case.cross_group_created": (p) => ({
+    key: "cases.log.timeline.crossGroupCreated",
+    params: { suffix: pickSuffix(p, ["reason"]) },
+  }),
+  "case.group_transferred": (p) => ({
+    key: "cases.log.timeline.groupTransferred",
+    params: {
+      from: pickOptionalString(p, ["fromGroupName", "fromGroup"]) ?? "",
+      to: pickOptionalString(p, ["toGroupName", "toGroup"]) ?? "",
+      reason: pickOptionalString(p, ["reason"]) ?? "",
+    },
+  }),
+  "communication_log.created": (p) => ({
+    key: "cases.log.timeline.commLogCreated",
+    params: { suffix: pickSuffix(p, ["channelType", "channel_type"]) },
+  }),
+  "communication_log.updated": () => ({
+    key: "cases.log.timeline.commLogUpdated",
+  }),
 };
 
-function buildCaseTimelineMessage(
+function buildCaseTimelineMessageResult(
   action: string,
   payload: Record<string, unknown>,
-): string {
+): TimelineMessageResult {
   const builder = TIMELINE_MESSAGE_BUILDERS[action];
-  return builder ? builder(payload) : action;
+  return builder ? builder(payload) : { key: action };
 }
 
 /**
@@ -343,16 +355,17 @@ export function adaptCaseLogDto(value: unknown): LogEntry | null {
   const category = resolveLogCategory(action);
   const actor = resolveTimelineActor(record);
   const payload = readPayloadRecord(record.payload);
-  const text = buildCaseTimelineMessage(action, payload);
+  const msg = buildCaseTimelineMessageResult(action, payload);
 
   return {
     type: category,
     avatar: deriveInitials(actor),
     avatarStyle: deriveAvatarStyle(actor),
-    text,
-    category: LOG_CATEGORY_LABELS[category],
+    text: msg.key,
+    textParams: msg.params,
+    category: LOG_CATEGORY_KEYS[category],
     categoryChip: CATEGORY_CHIP_MAP[category],
-    objectType: resolveObjectType(action),
+    objectType: resolveObjectTypeKey(action),
     time: createdAt,
     dotColor: DOT_COLOR_MAP[category],
   };
