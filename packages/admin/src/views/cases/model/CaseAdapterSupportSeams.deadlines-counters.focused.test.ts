@@ -39,55 +39,59 @@ const reminderDto = (overrides: R = {}): R => ({
 });
 
 describe("deadlines tab severity tier filtering (p0-fe-006d-03)", () => {
-  it("overdue → danger + 超過 remaining text", () => {
+  it("overdue → danger + overdue remaining key", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: pastDate(5) })],
     })!;
     expect(result[0].severity).toBe("danger");
-    expect(result[0].remaining).toContain("超過");
-    expect(result[0].remaining).toContain("5");
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.overdue");
+    expect(result[0].remainingParams).toEqual({ days: 5 });
   });
 
-  it("today → danger + 本日", () => {
+  it("today → danger + today remaining key", () => {
     const today = new Date();
     today.setHours(12, 0, 0, 0);
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: today.toISOString() })],
     })!;
     expect(result[0].severity).toBe("danger");
-    expect(result[0].remaining).toBe("本日");
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.today");
   });
 
-  it("within 7 days → danger + あとN日", () => {
+  it("within 7 days → danger + daysLeft key", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: futureDate(5) })],
     })!;
     expect(result[0].severity).toBe("danger");
-    expect(result[0].remaining).toMatch(/^あと\d+日$/);
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.daysLeft");
+    expect(result[0].remainingParams).toHaveProperty("days");
   });
 
-  it("8–30 days → warning + あとN日", () => {
+  it("8–30 days → warning + daysLeft key", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: futureDate(20) })],
     })!;
     expect(result[0].severity).toBe("warning");
-    expect(result[0].remaining).toMatch(/^あと\d+日$/);
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.daysLeft");
+    expect(result[0].remainingParams).toHaveProperty("days");
   });
 
-  it("31–90 days → primary + あとN日", () => {
+  it("31–90 days → primary + daysLeft key", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: futureDate(60) })],
     })!;
     expect(result[0].severity).toBe("primary");
-    expect(result[0].remaining).toMatch(/^あと\d+日$/);
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.daysLeft");
+    expect(result[0].remainingParams).toHaveProperty("days");
   });
 
-  it(">90 days → muted + あとN日", () => {
+  it(">90 days → muted + daysLeft key", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: futureDate(120) })],
     })!;
     expect(result[0].severity).toBe("muted");
-    expect(result[0].remaining).toMatch(/^あと\d+日$/);
+    expect(result[0].remainingKey).toBe("cases.deadlines.remaining.daysLeft");
+    expect(result[0].remainingParams).toHaveProperty("days");
   });
 
   it("null remindAt → muted severity, — remaining", () => {
@@ -166,7 +170,7 @@ const BASE_DETAIL: CaseDetail = {
   risk: {
     blockingCount: "0",
     blockingDetail: "",
-    arrearsStatus: "なし",
+    arrearsStatus: "cases.detail.arrearsNo",
     arrearsDetail: "",
     deadlineAlert: "",
     deadlineAlertDetail: "",

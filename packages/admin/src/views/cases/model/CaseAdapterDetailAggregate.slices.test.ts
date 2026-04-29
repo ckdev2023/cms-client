@@ -241,7 +241,7 @@ describe("risk block", () => {
 
   it("populates arrears status from billing", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.arrearsDetail).toContain("50,000");
   });
 

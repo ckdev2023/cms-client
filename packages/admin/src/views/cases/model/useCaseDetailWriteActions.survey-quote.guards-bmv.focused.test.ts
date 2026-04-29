@@ -203,7 +203,7 @@ describe("isBmvCase composable computed (p1-fe-003-03)", () => {
     risk: {
       blockingCount: "0",
       blockingDetail: "",
-      arrearsStatus: "なし",
+      arrearsStatus: "cases.detail.arrearsNo",
       arrearsDetail: "",
       deadlineAlert: "",
       deadlineAlertDetail: "",

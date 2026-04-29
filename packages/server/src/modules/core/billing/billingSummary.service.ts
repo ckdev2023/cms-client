@@ -126,7 +126,7 @@ function applyFilters(
     params.push(`%${input.q.toLowerCase()}%`);
     const qi = `$${String(params.length)}`;
     where.push(
-      `(lower(c.case_no) like ${qi} or lower(c.case_name) like ${qi} or lower(cu.name) like ${qi} or lower(br.milestone_name) like ${qi})`,
+      `(lower(c.case_no) like ${qi} or lower(c.case_name) like ${qi} or lower(cu.base_profile->>'displayName') like ${qi} or lower(br.milestone_name) like ${qi})`,
     );
   }
   if (input.from) {

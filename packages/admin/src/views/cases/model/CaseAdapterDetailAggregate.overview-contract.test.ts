@@ -156,7 +156,7 @@ describe("overview tab sidebar consumed fields (p0-fe-006a-01)", () => {
 
   it("risk block fields populated from full aggregate", () => {
     expect(result.detail.risk.blockingCount).toBe("0");
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.arrearsDetail).toContain("80,000");
   });
 

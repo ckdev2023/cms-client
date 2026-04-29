@@ -216,6 +216,7 @@ const DOT_COLOR_MAP: Record<Exclude<LogCategoryKey, "all">, string> = {
 const STATUS_CHANGE_ACTIONS = new Set([
   "case.status_changed",
   "case.stage_changed",
+  "case.phase_transitioned",
   "case.billing_risk_acknowledged",
   "case.post_approval_stage_changed",
 ]);
@@ -320,6 +321,17 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       reason: pickOptionalString(p, ["reason"]) ?? "",
     },
   }),
+  "case.phase_transitioned": (p) => {
+    const fromPhase = pickOptionalString(p, ["from", "fromPhase"]) ?? "";
+    const toPhase = pickOptionalString(p, ["to", "toPhase"]) ?? "";
+    return {
+      key: "cases.log.timeline.phaseChange",
+      params: {
+        fromPhaseKey: fromPhase ? `cases.constants.phases.${fromPhase}` : "",
+        toPhaseKey: toPhase ? `cases.constants.phases.${toPhase}` : "",
+      },
+    };
+  },
   "communication_log.created": (p) => ({
     key: "cases.log.timeline.commLogCreated",
     params: { suffix: pickSuffix(p, ["channelType", "channel_type"]) },

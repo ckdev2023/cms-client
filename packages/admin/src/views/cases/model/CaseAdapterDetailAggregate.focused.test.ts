@@ -187,7 +187,7 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
   it("risk block populated from validation + billing", () => {
     expect(result.detail.risk.blockingCount).toBe("2");
     expect(result.detail.risk.blockingDetail).toBe("2 blocking issues");
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.arrearsDetail).toContain("100,000");
     expect(result.detail.risk.lastValidation).toBe("failed");
     expect(result.detail.risk.reviewStatus).toBe("rejected");
@@ -338,7 +338,7 @@ describe("all-null empty state (p0-fe-002c-04)", () => {
   it("risk block is neutral", () => {
     expect(result.detail.risk.blockingCount).toBe("0");
     expect(result.detail.risk.blockingDetail).toBe("");
-    expect(result.detail.risk.arrearsStatus).toBe("なし");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsNo");
     expect(result.detail.risk.arrearsDetail).toBe("");
     expect(result.detail.risk.lastValidation).toBe("");
     expect(result.detail.risk.reviewStatus).toBe("");

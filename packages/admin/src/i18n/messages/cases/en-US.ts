@@ -231,7 +231,38 @@ const casesEnUS = {
       editInfo: "Edit info",
       exportZip: "Export ZIP",
       statusTransition: "Status transition",
+      exportZipNotReady: "ZIP export is not yet available.",
     },
+    editModal: {
+      title: "Edit case info",
+      fields: {
+        caseName: "Case name",
+        agency: "Agency",
+        memo: "Memo",
+      },
+      cancel: "Cancel",
+      save: "Save",
+    },
+    phaseMenu: {
+      title: "Phase transition",
+      closeReasonRequired: "Close reason is required for failure closeout",
+      submit: "Confirm transition",
+      cancel: "Cancel",
+      errorPrefix: "Transition failed",
+      closeReasonLabel: "Close reason",
+    },
+    terminalStage: {
+      label: "Closed",
+    },
+    terminalNextAction: {
+      success:
+        "Case closed successfully. You may export ZIP or review renewal reminders.",
+      failed:
+        "Case closed (failed). Review close reason; refund requires manual handling.",
+    },
+    unpaidLabel: "Unpaid: {amount}",
+    arrearsYes: "Yes",
+    arrearsNo: "No",
     readonlyBanner:
       "This case is archived ({stage}). All fields are read-only. Only the Log tab remains accessible.",
     failurePathBanner:
@@ -661,6 +692,7 @@ const casesEnUS = {
       postApprovalStageChange: "Post-approval stage change: {suffix}",
       crossGroupCreated: "Cross-group case created: {suffix}",
       groupTransferred: "Case transferred: {from} → {to} ({reason})",
+      phaseChange: "Phase change: {from} → {to}",
       commLogCreated: "Communication log added: {suffix}",
       commLogUpdated: "Communication log updated",
     },
@@ -669,6 +701,27 @@ const casesEnUS = {
     refReport: "See the validation report for details",
     lastFailed:
       "Blocking items were found in the previous validation. Please fix them and re-run.",
+  },
+  deadlines: {
+    types: {
+      case: "Case deadline",
+      customer: "Customer-related deadline",
+      requirement: "Document submission deadline",
+      deadline: "Procedure deadline",
+      billingPlan: "Payment deadline",
+      default: "Deadline",
+    },
+    sendStatus: {
+      pending: "Not sent",
+      sent: "Sent",
+      failed: "Send failed",
+      canceled: "Canceled",
+    },
+    remaining: {
+      overdue: "{days} days overdue",
+      today: "Today",
+      daysLeft: "{days} days left",
+    },
   },
   coach: {
     docManagement: "Document management",

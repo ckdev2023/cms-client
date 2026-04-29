@@ -62,109 +62,97 @@ function ctx() {
 
 // ─── list SQL schema assertions ─────────────────────────────────
 
-void test(
-  "list SQL selects gen_u.name and apr_u.name, not display_name",
-  { skip: "pending BUG-122 display_name fix" },
-  async () => {
-    const captured: { sql: string; params?: unknown[] }[] = [];
+void test("list SQL selects gen_u.name and apr_u.name, not display_name", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
 
-    const pool = makePool((sql, params) => {
-      captured.push({ sql, params });
-      if (sql.includes("count(*)")) return ok([{ count: "1" }]);
-      if (sql.includes("gen_u.name")) return ok([makeGdRow()]);
-      return ok([]);
-    });
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("count(*)")) return ok([{ count: "1" }]);
+    if (sql.includes("gen_u.name")) return ok([makeGdRow()]);
+    return ok([]);
+  });
 
-    const svc = new GeneratedDocumentsService(pool, makeTimeline());
-    await svc.list(ctx(), { caseId: CASE_ID });
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await svc.list(ctx(), { caseId: CASE_ID });
 
-    const selectCall = captured.find(
-      (c) => c.sql.includes("gen_u.") && !c.sql.includes("count(*)"),
-    );
-    assert.ok(selectCall, "list must emit a SELECT with user join aliases");
+  const selectCall = captured.find(
+    (c) => c.sql.includes("gen_u.") && !c.sql.includes("count(*)"),
+  );
+  assert.ok(selectCall, "list must emit a SELECT with user join aliases");
 
-    assert.ok(
-      selectCall.sql.includes("gen_u.name"),
-      "SELECT must reference gen_u.name (not gen_u.display_name)",
-    );
-    assert.ok(
-      selectCall.sql.includes("apr_u.name"),
-      "SELECT must reference apr_u.name (not apr_u.display_name)",
-    );
-    assert.ok(
-      !selectCall.sql.includes("gen_u.display_name"),
-      "SELECT must NOT reference gen_u.display_name",
-    );
-    assert.ok(
-      !selectCall.sql.includes("apr_u.display_name"),
-      "SELECT must NOT reference apr_u.display_name",
-    );
-  },
-);
+  assert.ok(
+    selectCall.sql.includes("gen_u.name"),
+    "SELECT must reference gen_u.name (not gen_u.display_name)",
+  );
+  assert.ok(
+    selectCall.sql.includes("apr_u.name"),
+    "SELECT must reference apr_u.name (not apr_u.display_name)",
+  );
+  assert.ok(
+    !selectCall.sql.includes("gen_u.display_name"),
+    "SELECT must NOT reference gen_u.display_name",
+  );
+  assert.ok(
+    !selectCall.sql.includes("apr_u.display_name"),
+    "SELECT must NOT reference apr_u.display_name",
+  );
+});
 
-void test(
-  "getDto SQL selects gen_u.name, not display_name",
-  { skip: "pending BUG-122 display_name fix" },
-  async () => {
-    const captured: { sql: string; params?: unknown[] }[] = [];
+void test("getDto SQL selects gen_u.name, not display_name", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
 
-    const pool = makePool((sql, params) => {
-      captured.push({ sql, params });
-      if (sql.includes("gen_u.name")) return ok([makeGdRow()]);
-      return ok([]);
-    });
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("gen_u.name")) return ok([makeGdRow()]);
+    return ok([]);
+  });
 
-    const svc = new GeneratedDocumentsService(pool, makeTimeline());
-    await svc.getDto(ctx(), GD_ID);
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await svc.getDto(ctx(), GD_ID);
 
-    const selectCall = captured.find((c) => c.sql.includes("gen_u."));
-    assert.ok(selectCall, "getDto must emit a SELECT with user join aliases");
+  const selectCall = captured.find((c) => c.sql.includes("gen_u."));
+  assert.ok(selectCall, "getDto must emit a SELECT with user join aliases");
 
-    assert.ok(
-      selectCall.sql.includes("gen_u.name"),
-      "getDto SELECT must reference gen_u.name",
-    );
-    assert.ok(
-      !selectCall.sql.includes("gen_u.display_name"),
-      "getDto SELECT must NOT reference gen_u.display_name",
-    );
-  },
-);
+  assert.ok(
+    selectCall.sql.includes("gen_u.name"),
+    "getDto SELECT must reference gen_u.name",
+  );
+  assert.ok(
+    !selectCall.sql.includes("gen_u.display_name"),
+    "getDto SELECT must NOT reference gen_u.display_name",
+  );
+});
 
-void test(
-  "insertAndReturn (via create) selects u.name, not u.display_name",
-  { skip: "pending BUG-122 display_name fix" },
-  async () => {
-    const captured: { sql: string; params?: unknown[] }[] = [];
+void test("insertAndReturn (via create) selects u.name, not u.display_name", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
 
-    const pool = makePool((sql, params) => {
-      captured.push({ sql, params });
-      if (sql.includes("max(version_no)")) return ok([{ max_ver: 0 }]);
-      if (sql.includes("insert into generated_documents"))
-        return ok([makeGdRow()]);
-      if (sql.includes("insert into timeline_events")) return ok([]);
-      return ok([]);
-    });
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("max(version_no)")) return ok([{ max_ver: 0 }]);
+    if (sql.includes("insert into generated_documents"))
+      return ok([makeGdRow()]);
+    if (sql.includes("insert into timeline_events")) return ok([]);
+    return ok([]);
+  });
 
-    const svc = new GeneratedDocumentsService(pool, makeTimeline());
-    await svc.create(ctx(), {
-      caseId: CASE_ID,
-      title: "テスト文書",
-      outputFormat: "pdf",
-    });
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await svc.create(ctx(), {
+    caseId: CASE_ID,
+    title: "テスト文書",
+    outputFormat: "pdf",
+  });
 
-    const insertCall = captured.find((c) =>
-      c.sql.includes("insert into generated_documents"),
-    );
-    assert.ok(insertCall, "create must emit an INSERT");
+  const insertCall = captured.find((c) =>
+    c.sql.includes("insert into generated_documents"),
+  );
+  assert.ok(insertCall, "create must emit an INSERT");
 
-    assert.ok(
-      insertCall.sql.includes("u.name"),
-      "INSERT CTE must reference u.name (not u.display_name)",
-    );
-    assert.ok(
-      !insertCall.sql.includes("u.display_name"),
-      "INSERT CTE must NOT reference u.display_name",
-    );
-  },
-);
+  assert.ok(
+    insertCall.sql.includes("u.name"),
+    "INSERT CTE must reference u.name (not u.display_name)",
+  );
+  assert.ok(
+    !insertCall.sql.includes("u.display_name"),
+    "INSERT CTE must NOT reference u.display_name",
+  );
+});

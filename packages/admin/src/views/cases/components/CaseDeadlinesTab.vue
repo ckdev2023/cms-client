@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseCloseoutChecklist from "./CaseCloseoutChecklist.vue";
 import type { CaseDetail, DeadlineItem } from "../types-detail";
 
 /** 关键期限 Tab：展示期限进度、提醒操作与结案检查项。 */
+const { t } = useI18n();
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -194,15 +196,19 @@ function chipClass(item: DeadlineItem): string {
             :style="{ backgroundColor: barColor(item) }"
           />
           <div class="deadlines-tab__item-left">
-            <div class="deadlines-tab__item-title">{{ item.title }}</div>
-            <div class="deadlines-tab__item-desc">{{ item.desc }}</div>
+            <div class="deadlines-tab__item-title">{{ t(item.title) }}</div>
+            <div class="deadlines-tab__item-desc">{{ t(item.desc) }}</div>
           </div>
           <div class="deadlines-tab__item-right">
             <div :class="['deadlines-tab__item-date', dateClass(item)]">
               {{ item.date }}
             </div>
             <span :class="['deadlines-tab__remaining', chipClass(item)]">
-              {{ item.remaining }}
+              {{
+                item.remainingKey
+                  ? t(item.remainingKey, item.remainingParams ?? {})
+                  : item.remaining
+              }}
             </span>
           </div>
         </div>

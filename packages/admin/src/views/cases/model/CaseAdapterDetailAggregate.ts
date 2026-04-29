@@ -115,7 +115,8 @@ function buildRiskBlock(
   return {
     blockingCount: blockingCount > 0 ? String(blockingCount) : "0",
     blockingDetail: blockingCount > 0 ? `${blockingCount} blocking issues` : "",
-    arrearsStatus: unpaidAmount > 0 ? "あり" : "なし",
+    arrearsStatus:
+      unpaidAmount > 0 ? "cases.detail.arrearsYes" : "cases.detail.arrearsNo",
     arrearsDetail: unpaidAmount > 0 ? `¥${unpaidAmount.toLocaleString()}` : "",
     deadlineAlert: "",
     deadlineAlertDetail: "",
@@ -276,9 +277,11 @@ function buildDetailHeader(
     progressPercent: m.progressPercent,
     progressCount: `${m.docDone}/${m.docTotal}`,
     billingAmount: m.quotePrice ? `¥${m.quotePrice.toLocaleString()}` : "—",
-    billingMeta: formatYen(m.unpaidAmount)
-      ? `未収: ${formatYen(m.unpaidAmount)}`
-      : "",
+    billingMeta: formatYen(m.unpaidAmount) || "",
+    billingMetaKey: m.unpaidAmount > 0 ? "cases.detail.unpaidLabel" : "",
+    billingMetaParams: m.unpaidAmount > 0
+      ? { amount: formatYen(m.unpaidAmount) }
+      : undefined,
     billingStatusKey: m.unpaidAmount > 0 ? "unpaid" : "paid",
     docsCounter: `${m.docDone}/${m.docTotal}`,
     readonly: stageId === "S9",

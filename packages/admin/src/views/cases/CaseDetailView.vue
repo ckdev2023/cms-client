@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
@@ -17,6 +17,8 @@ import CaseLogTab from "./components/CaseLogTab.vue";
 import CaseValidationTab from "./components/CaseValidationTab.vue";
 import CaseBillingTab from "./components/CaseBillingTab.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
+import CaseEditModal from "./components/CaseEditModal.vue";
+import PhaseTransitionPopover from "./components/PhaseTransitionPopover.vue";
 import {
   useCaseDetailModel,
   type TabCounter,
@@ -63,6 +65,9 @@ const {
   transitionWorkflowStep,
   retryReminderCreation,
   failureClose,
+  updateCaseFields,
+  phaseMenu,
+  isTerminalPhase: isTerminal,
 } = useCaseDetailModel(caseId, {
   routeTab,
   onTabChange: (tab) =>
@@ -98,6 +103,51 @@ function failureCloseCase(): void {
   if (!fc) return;
   const reason = fc.reasonLabel ?? fc.reasonCode ?? undefined;
   failureClose(reason);
+}
+
+const editModalOpen = ref(false);
+const editSaving = ref(false);
+
+async function onSaveCaseEdit(fields: {
+  caseName: string;
+  agency: string;
+  memo: string;
+}): Promise<void> {
+  editSaving.value = true;
+  const ok = await updateCaseFields(fields);
+  editSaving.value = false;
+  if (ok) editModalOpen.value = false;
+}
+
+/** 导出 ZIP（stub — 功能尚未上线）。 */
+function onExportZip(): void {
+  writeFeedback.value = {
+    submitting: false,
+    errorMessage: null,
+    errorI18nKey: null,
+    serverErrorCode: null,
+    isGateBlock: false,
+  };
+  alert(t("cases.detail.actions.exportZipNotReady"));
+}
+
+/**
+ * 提交业务阶段流转请求。
+ *
+ * @param payload - 流转载荷
+ * @param payload.toPhase - 目标阶段
+ * @param payload.closeReason - 关闭原因
+ * @param payload.resultOutcome - 结果
+ */
+function onPhaseSubmit(payload: {
+  toPhase: string;
+  closeReason?: string;
+  resultOutcome?: string;
+}): void {
+  void phaseMenu.performTransition(payload.toPhase, {
+    closeReason: payload.closeReason,
+    resultOutcome: payload.resultOutcome,
+  });
 }
 </script>
 
@@ -197,7 +247,7 @@ function failureCloseCase(): void {
         </template>
 
         <template #actions>
-          <Button size="sm">
+          <Button size="sm" @click="editModalOpen = true">
             <svg
               width="16"
               height="16"
@@ -215,7 +265,7 @@ function failureCloseCase(): void {
             </svg>
             {{ t("cases.detail.actions.editInfo") }}
           </Button>
-          <Button size="sm">
+          <Button size="sm" @click="onExportZip">
             <svg
               width="16"
               height="16"
@@ -233,7 +283,12 @@ function failureCloseCase(): void {
             </svg>
             {{ t("cases.detail.actions.exportZip") }}
           </Button>
-          <Button variant="filled" tone="primary" size="sm">
+          <Button
+            variant="filled"
+            tone="primary"
+            size="sm"
+            @click="phaseMenu.openMenu()"
+          >
             {{ t("cases.detail.actions.statusTransition") }}
             <svg
               width="16"
@@ -346,6 +401,7 @@ function failureCloseCase(): void {
           :detail="detail"
           :write-feedback="writeFeedback"
           :readonly="isReadonly"
+          :is-terminal="isTerminal"
           @switch-tab="switchTab"
           @advance-to-coe="transitionWorkflowStep('COE_SENT')"
           @retry-reminder="retryReminderCreation()"
@@ -404,6 +460,25 @@ function failureCloseCase(): void {
         :visible="showRiskModal"
         @close="closeRiskModal"
         @confirm="closeRiskModal"
+      />
+
+      <CaseEditModal
+        :open="editModalOpen"
+        :case-name="detail.title"
+        :agency="detail.agency"
+        :memo="''"
+        :submitting="editSaving"
+        @close="editModalOpen = false"
+        @save="onSaveCaseEdit"
+      />
+
+      <PhaseTransitionPopover
+        :menu-open="phaseMenu.menuOpen.value"
+        :available-targets="phaseMenu.availableTargets.value"
+        :submitting="phaseMenu.submitting.value"
+        :error-message="phaseMenu.errorMessage.value"
+        @close="phaseMenu.closeMenu()"
+        @submit="onPhaseSubmit"
       />
     </template>
 

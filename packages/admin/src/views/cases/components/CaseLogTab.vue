@@ -45,6 +45,26 @@ function dotBg(entry: LogEntry): string {
 function chipTone(entry: LogEntry): ChipTone {
   return CHIP_TONE_MAP[entry.categoryChip] ?? "neutral";
 }
+
+/**
+ * 解析时间线文本——对 `fromPhaseKey` / `toPhaseKey` 进行二次翻译后再插值。
+ *
+ * Adapter 层返回的 params 中包含「待翻译的 i18n key」（如 `cases.phases.APPROVED`），
+ * 视图层需要先把这些 key 翻译成当前 locale 下的文案，再传给外层 `t()` 做最终插值。
+ *
+ * @param entry - 日志条目
+ * @returns 翻译后的时间线文本
+ */
+function resolveTimelineText(entry: LogEntry): string {
+  const params: Record<string, unknown> = { ...(entry.textParams ?? {}) };
+  if (typeof params.fromPhaseKey === "string" && params.fromPhaseKey) {
+    params.from = t(params.fromPhaseKey);
+  }
+  if (typeof params.toPhaseKey === "string" && params.toPhaseKey) {
+    params.to = t(params.toPhaseKey);
+  }
+  return t(entry.text, params);
+}
 </script>
 
 <template>
@@ -93,7 +113,7 @@ function chipTone(entry: LogEntry): ChipTone {
                 </span>
                 <div class="log-tab__entry-info">
                   <p class="log-tab__entry-text">
-                    {{ t(entry.text, entry.textParams ?? {}) }}
+                    {{ resolveTimelineText(entry) }}
                   </p>
                   <div class="log-tab__entry-meta">
                     <Chip :tone="chipTone(entry)" size="sm">

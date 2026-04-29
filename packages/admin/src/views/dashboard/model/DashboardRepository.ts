@@ -161,6 +161,31 @@ function normalizeOptionalNumber(value: unknown): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function normalizeMetaKeyList(
+  value: unknown,
+): { key: string; params?: Record<string, unknown> }[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const result: { key: string; params?: Record<string, unknown> }[] = [];
+  for (const entry of value) {
+    const rec = asRecord(entry);
+    if (!rec || typeof rec.key !== "string") return undefined;
+    const item: { key: string; params?: Record<string, unknown> } = {
+      key: rec.key,
+    };
+    const params = asRecord(rec.params);
+    if (params) item.params = params;
+    result.push(item);
+  }
+  return result;
+}
+
+function normalizeOptionalRecord(
+  value: unknown,
+): Record<string, unknown> | undefined {
+  const rec = asRecord(value);
+  return rec ?? undefined;
+}
+
 function normalizeDashboardWorkItem(value: unknown): DashboardWorkItem | null {
   const candidate = asRecord(value);
   if (!candidate) return null;
@@ -195,6 +220,11 @@ function normalizeDashboardWorkItem(value: unknown): DashboardWorkItem | null {
     action,
     route: normalizeOptionalString(candidate.route),
     daysLeft: normalizeOptionalNumber(candidate.daysLeft),
+    statusLabelKey: normalizeOptionalString(candidate.statusLabelKey),
+    descKey: normalizeOptionalString(candidate.descKey),
+    descParams: normalizeOptionalRecord(candidate.descParams),
+    actionKey: normalizeOptionalString(candidate.actionKey),
+    metaKeys: normalizeMetaKeyList(candidate.metaKeys),
   };
 }
 

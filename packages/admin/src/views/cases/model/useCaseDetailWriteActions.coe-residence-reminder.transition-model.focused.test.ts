@@ -172,7 +172,7 @@ describe("useCaseDetailModel COE/residence/reminder fields (p1-fe-004-03)", () =
     risk: {
       blockingCount: "0",
       blockingDetail: "",
-      arrearsStatus: "なし",
+      arrearsStatus: "cases.detail.arrearsNo",
       arrearsDetail: "",
       deadlineAlert: "",
       deadlineAlertDetail: "",

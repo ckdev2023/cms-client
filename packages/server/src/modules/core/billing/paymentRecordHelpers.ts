@@ -35,8 +35,8 @@ export const PAYMENT_RECORD_LIST_COLS = `pr.id, pr.org_id, pr.billing_record_id,
   pr.recorded_by, pr.created_at,
   br.milestone_name,
   c.case_name, c.case_no,
-  recorded_user.display_name as recorded_by_display_name,
-  voided_user.display_name as voided_by_display_name`;
+  recorded_user.name as recorded_by_display_name,
+  voided_user.name as voided_by_display_name`;
 
 export const PAYMENT_RECORD_LIST_FROM = `payment_records pr
   join billing_records br on br.id = pr.billing_record_id
@@ -97,7 +97,7 @@ export function buildPaymentRecordListWhere(
     where.push(
       `(lower(c.case_no) like '%' || lower(${qi}) || '%'` +
         ` or lower(c.case_name) like '%' || lower(${qi}) || '%'` +
-        ` or lower(cu.name) like '%' || lower(${qi}) || '%'` +
+        ` or lower(cu.base_profile->>'displayName') like '%' || lower(${qi}) || '%'` +
         ` or lower(br.milestone_name) like '%' || lower(${qi}) || '%'` +
         ` or lower(pr.note) like '%' || lower(${qi}) || '%')`,
     );

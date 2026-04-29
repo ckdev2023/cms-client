@@ -162,6 +162,14 @@ export interface DeadlineItem {
   /**
    *
    */
+  remainingKey?: string;
+  /**
+   *
+   */
+  remainingParams?: Record<string, unknown>;
+  /**
+   *
+   */
   severity: string;
 }
 
@@ -1173,6 +1181,14 @@ export interface CaseDetail {
    *
    */
   billingMeta: string;
+  /**
+   *
+   */
+  billingMetaKey?: string;
+  /**
+   *
+   */
+  billingMetaParams?: Record<string, string>;
   /**
    *
    */

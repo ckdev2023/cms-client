@@ -158,6 +158,101 @@ describe("createDashboardRepository", () => {
     ).rejects.toMatchObject(expectedError);
   });
 
+  it("passes through i18n key fields when present", async () => {
+    const repo = createDashboardRepository({
+      request: vi.fn().mockResolvedValue(
+        jsonResponse({
+          scope: "mine",
+          timeWindow: 7,
+          summary: {
+            todayTasks: 1,
+            upcomingCases: 0,
+            pendingSubmissions: 0,
+            riskCases: 0,
+          },
+          panels: {
+            todo: [
+              {
+                id: "item-1",
+                title: "Risk case",
+                meta: ["owner: Admin"],
+                desc: "legacy desc",
+                status: "danger",
+                statusLabel: "legacy label",
+                action: "legacy action",
+                statusLabelKey: "billingRisk",
+                descKey: "risk.unpaidAmount",
+                descParams: { amount: "¥80,000" },
+                actionKey: "viewBilling",
+                metaKeys: [
+                  { key: "owner", params: { name: "Local Admin" } },
+                  { key: "unpaid", params: { amount: "¥80,000" } },
+                ],
+              },
+            ],
+            deadlines: [],
+            submissions: [],
+            risks: [],
+          },
+        }),
+      ),
+    });
+
+    const result = await repo.getSummary({ scope: "mine", timeWindow: 7 });
+    const item = result.panels.todo[0]!;
+
+    expect(item.statusLabelKey).toBe("billingRisk");
+    expect(item.descKey).toBe("risk.unpaidAmount");
+    expect(item.descParams).toEqual({ amount: "¥80,000" });
+    expect(item.actionKey).toBe("viewBilling");
+    expect(item.metaKeys).toEqual([
+      { key: "owner", params: { name: "Local Admin" } },
+      { key: "unpaid", params: { amount: "¥80,000" } },
+    ]);
+  });
+
+  it("leaves i18n key fields undefined when server omits them", async () => {
+    const repo = createDashboardRepository({
+      request: vi.fn().mockResolvedValue(
+        jsonResponse({
+          scope: "mine",
+          timeWindow: 7,
+          summary: {
+            todayTasks: 1,
+            upcomingCases: 0,
+            pendingSubmissions: 0,
+            riskCases: 0,
+          },
+          panels: {
+            todo: [
+              {
+                id: "item-2",
+                title: "Legacy item",
+                meta: ["case: A-001"],
+                desc: "legacy desc",
+                status: "info",
+                statusLabel: "legacy label",
+                action: "legacy action",
+              },
+            ],
+            deadlines: [],
+            submissions: [],
+            risks: [],
+          },
+        }),
+      ),
+    });
+
+    const result = await repo.getSummary({ scope: "mine", timeWindow: 7 });
+    const item = result.panels.todo[0]!;
+
+    expect(item.statusLabelKey).toBeUndefined();
+    expect(item.descKey).toBeUndefined();
+    expect(item.descParams).toBeUndefined();
+    expect(item.actionKey).toBeUndefined();
+    expect(item.metaKeys).toBeUndefined();
+  });
+
   it("normalizes numeric strings and nullable optional fields", async () => {
     const repo = createDashboardRepository({
       request: vi.fn().mockResolvedValue(

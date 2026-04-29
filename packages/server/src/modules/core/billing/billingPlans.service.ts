@@ -14,6 +14,7 @@ import type {
 import type { CaseBillingPlanDto } from "../cases/cases.types-billing";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
+import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import { syncBillingCacheForCase } from "./billingGuards";
 import { writeTimelineInTx } from "./timelineHelpers";
 
@@ -70,13 +71,13 @@ export type BillingPlanTransitionInput = {
 const BILLING_TABLE = "billing_records";
 const BILLING_PLAN_COLS = `id, org_id, case_id, milestone_name, amount_due, due_date, status, gate_effect_mode, remark, created_at, updated_at`;
 
-const BILLING_PLAN_LIST_COLS = `br.id, br.org_id, br.case_id, br.milestone_name, br.amount_due, br.due_date, br.status, br.gate_effect_mode, br.remark, br.created_at, br.updated_at,
+export const BILLING_PLAN_LIST_COLS = `br.id, br.org_id, br.case_id, br.milestone_name, br.amount_due, br.due_date, br.status, br.gate_effect_mode, br.remark, br.created_at, br.updated_at,
   coalesce((select sum(pr.amount_received) from payment_records pr where pr.billing_record_id = br.id and pr.record_status = 'valid'), 0) as paid_amount,
   c.case_no, c.case_name, c.group_id, c.owner_user_id,
-  cu.name as customer_name,
-  owner.display_name as owner_display_name`;
+  ${customerNameExpr("cu")} as customer_name,
+  owner.name as owner_display_name`;
 
-const BILLING_PLAN_LIST_FROM = `${BILLING_TABLE} br
+export const BILLING_PLAN_LIST_FROM = `${BILLING_TABLE} br
   join cases c on c.id = br.case_id
   left join customers cu on cu.id = c.customer_id
   left join users owner on owner.id = c.owner_user_id`;
@@ -114,7 +115,7 @@ function buildListWhere(orgId: string, input: BillingPlanListInput) {
     const like = (col: string) =>
       `lower(${col}) like '%' || lower(${qi}) || '%'`;
     w.push(
-      `(${[like("c.case_no"), like("c.case_name"), like("cu.name"), like("br.milestone_name")].join(" or ")})`,
+      `(${[like("c.case_no"), like("c.case_name"), like("cu.base_profile->>'displayName'"), like("br.milestone_name")].join(" or ")})`,
     );
   }
   return { whereClause: `where ${w.join(" and ")}`, params: p };

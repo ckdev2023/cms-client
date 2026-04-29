@@ -164,7 +164,8 @@ describe("adaptCaseDeadlineList", () => {
     expect(d.title).toBe("申請書提出期限");
     expect(d.desc).toContain("入管への提出");
     expect(d.date).toBeTruthy();
-    expect(d.remaining).toContain("あと");
+    expect(d.remainingKey).toBe("cases.deadlines.remaining.daysLeft");
+    expect(d.remainingParams).toHaveProperty("days");
     expect(d.severity).toBe("primary");
   });
 
@@ -177,7 +178,7 @@ describe("adaptCaseDeadlineList", () => {
         }),
       ],
     });
-    expect(result![0].title).toBe("支払期限");
+    expect(result![0].title).toBe("cases.deadlines.types.billingPlan");
   });
 
   it("falls back to generic title when targetType is unknown and payload is null", () => {
@@ -189,7 +190,7 @@ describe("adaptCaseDeadlineList", () => {
         }),
       ],
     });
-    expect(result![0].title).toBe("期限");
+    expect(result![0].title).toBe("cases.deadlines.types.default");
   });
 
   it("derives severity danger for overdue reminders", () => {
@@ -197,7 +198,7 @@ describe("adaptCaseDeadlineList", () => {
       items: [reminderDto({ remindAt: futureDate(-3) })],
     });
     expect(result![0].severity).toBe("danger");
-    expect(result![0].remaining).toContain("超過");
+    expect(result![0].remainingKey).toBe("cases.deadlines.remaining.overdue");
   });
 
   it("derives severity danger for today", () => {
@@ -207,7 +208,7 @@ describe("adaptCaseDeadlineList", () => {
       items: [reminderDto({ remindAt: today.toISOString() })],
     });
     expect(result![0].severity).toBe("danger");
-    expect(result![0].remaining).toBe("本日");
+    expect(result![0].remainingKey).toBe("cases.deadlines.remaining.today");
   });
 
   it("derives severity danger for ≤7 days", () => {
@@ -242,7 +243,7 @@ describe("adaptCaseDeadlineList", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ sendStatus: "sent" })],
     });
-    expect(result![0].desc).toContain("送信済み");
+    expect(result![0].desc).toContain("cases.deadlines.sendStatus.sent");
   });
 
   it("shows — for date when remindAt is null", () => {
@@ -266,19 +267,25 @@ describe("adaptCaseDeadlineList", () => {
     expect(result).toHaveLength(1);
   });
 
-  it("maps all targetType titles", () => {
+  it("maps all targetType titles to i18n keys", () => {
     const types = [
-      { targetType: "case", expected: "案件期限" },
-      { targetType: "customer", expected: "顧客関連期限" },
-      { targetType: "requirement", expected: "資料提出期限" },
-      { targetType: "deadline", expected: "手続き期限" },
-      { targetType: "billing_plan", expected: "支払期限" },
+      { targetType: "case", expectedKey: "cases.deadlines.types.case" },
+      { targetType: "customer", expectedKey: "cases.deadlines.types.customer" },
+      {
+        targetType: "requirement",
+        expectedKey: "cases.deadlines.types.requirement",
+      },
+      { targetType: "deadline", expectedKey: "cases.deadlines.types.deadline" },
+      {
+        targetType: "billing_plan",
+        expectedKey: "cases.deadlines.types.billingPlan",
+      },
     ];
-    for (const { targetType, expected } of types) {
+    for (const { targetType, expectedKey } of types) {
       const result = adaptCaseDeadlineList({
         items: [reminderDto({ targetType, payloadSnapshot: null })],
       });
-      expect(result![0].title).toBe(expected);
+      expect(result![0].title).toBe(expectedKey);
     }
   });
 });

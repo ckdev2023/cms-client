@@ -371,29 +371,29 @@ describe("deadlines tab summary display (p0-fe-006d-03)", () => {
     expect(result[0].title).toBe("在留カード更新期限");
   });
 
-  it("title falls back to targetType label when payload has no title", () => {
+  it("title falls back to targetType i18n key when payload has no title", () => {
     const typeMap: [string, string][] = [
-      ["case", "案件期限"],
-      ["customer", "顧客関連期限"],
-      ["requirement", "資料提出期限"],
-      ["deadline", "手続き期限"],
-      ["billing_plan", "支払期限"],
+      ["case", "cases.deadlines.types.case"],
+      ["customer", "cases.deadlines.types.customer"],
+      ["requirement", "cases.deadlines.types.requirement"],
+      ["deadline", "cases.deadlines.types.deadline"],
+      ["billing_plan", "cases.deadlines.types.billingPlan"],
     ];
-    for (const [targetType, expected] of typeMap) {
+    for (const [targetType, expectedKey] of typeMap) {
       const result = adaptCaseDeadlineList({
         items: [reminderDto({ targetType, payloadSnapshot: null })],
       })!;
-      expect(result[0].title).toBe(expected);
+      expect(result[0].title).toBe(expectedKey);
     }
   });
 
-  it("title falls back to generic 期限 for unknown targetType", () => {
+  it("title falls back to generic default key for unknown targetType", () => {
     const result = adaptCaseDeadlineList({
       items: [
         reminderDto({ targetType: "unknown_type", payloadSnapshot: null }),
       ],
     })!;
-    expect(result[0].title).toBe("期限");
+    expect(result[0].title).toBe("cases.deadlines.types.default");
   });
 
   it("desc includes payloadSnapshot.description", () => {
@@ -407,12 +407,12 @@ describe("deadlines tab summary display (p0-fe-006d-03)", () => {
     expect(result[0].desc).toContain("東京入管への提出");
   });
 
-  it("desc includes sendStatus label", () => {
+  it("desc includes sendStatus i18n key", () => {
     const sendStatusMap: [string, string][] = [
-      ["pending", "未送信"],
-      ["sent", "送信済み"],
-      ["failed", "送信失敗"],
-      ["canceled", "取消済み"],
+      ["pending", "cases.deadlines.sendStatus.pending"],
+      ["sent", "cases.deadlines.sendStatus.sent"],
+      ["failed", "cases.deadlines.sendStatus.failed"],
+      ["canceled", "cases.deadlines.sendStatus.canceled"],
     ];
     for (const [sendStatus, expected] of sendStatusMap) {
       const result = adaptCaseDeadlineList({

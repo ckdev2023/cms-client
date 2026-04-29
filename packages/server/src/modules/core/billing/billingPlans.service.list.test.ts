@@ -196,7 +196,7 @@ void test("list with q filter adds lower() like conditions for D3 columns", asyn
     "q searches case_name",
   );
   assert.ok(
-    cnt.sql.includes("lower(cu.name) like"),
+    cnt.sql.includes("lower(cu.base_profile->>'displayName') like"),
     "q searches customer name",
   );
   assert.ok(

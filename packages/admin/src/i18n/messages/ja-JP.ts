@@ -6,6 +6,7 @@ import documents from "./documents/ja-JP";
 import leads from "./leads/ja-JP";
 import settings from "./settings/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
+import dashboardWorkItem from "./dashboard-work-item/ja-JP";
 
 const jaJP = {
   shell: {
@@ -483,6 +484,7 @@ const jaJP = {
       },
     },
     workItems: dashboardWorkItems,
+    workItem: dashboardWorkItem,
   },
 } as const;
 

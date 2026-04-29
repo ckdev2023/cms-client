@@ -36,7 +36,7 @@ const BASE_DETAIL: CaseDetail = {
   risk: {
     blockingCount: "2",
     blockingDetail: "2 blocking issues",
-    arrearsStatus: "なし",
+    arrearsStatus: "cases.detail.arrearsNo",
     arrearsDetail: "",
     deadlineAlert: "",
     deadlineAlertDetail: "",

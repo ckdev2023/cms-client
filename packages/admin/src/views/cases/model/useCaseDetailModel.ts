@@ -5,7 +5,13 @@ import type { CaseRepository } from "./CaseRepository";
 import { createCaseRepository } from "./CaseRepository";
 import { resolveDetailTab } from "../query";
 import { createWriteActions } from "./useCaseDetailWriteActions";
+import {
+  useCasePhaseTransitionMenu,
+  isTerminalPhase,
+  type PhaseTransitionMenuState,
+} from "./useCasePhaseTransitionMenu";
 export type { WriteActionFeedback } from "./useCaseDetailWriteActions";
+export { isTerminalPhase } from "./useCasePhaseTransitionMenu";
 
 /**
  * Tab 标签上的计数器信息。
@@ -269,6 +275,8 @@ function createDetailModelResult(input: {
   refetch: () => Promise<void>;
   writeActions: DetailWriteActions;
   isBmvCase: Ref<boolean>;
+  phaseMenu: PhaseTransitionMenuState;
+  isTerminalPhaseComputed: Ref<boolean>;
 }) {
   return {
     activeTab: input.state.activeTab,
@@ -296,6 +304,9 @@ function createDetailModelResult(input: {
     updateCaseFields: input.writeActions.updateCaseFields,
     retryReminderCreation: input.writeActions.retryReminderCreation,
     failureClose: input.writeActions.failureClose,
+
+    phaseMenu: input.phaseMenu,
+    isTerminalPhase: input.isTerminalPhaseComputed,
   };
 }
 
@@ -350,6 +361,17 @@ export function useCaseDetailModel(
       state.detail.value?.visaPlan != null,
   );
 
+  const phaseMenu = useCasePhaseTransitionMenu({
+    detail: state.detail,
+    repo,
+    getCaseId: () => caseId.value,
+    onSuccess: fetchDetail,
+  });
+
+  const isTerminalPhaseComputed = computed(() =>
+    isTerminalPhase(state.detail.value?.businessPhase ?? ""),
+  );
+
   void fetchDetail();
 
   return createDetailModelResult({
@@ -359,5 +381,7 @@ export function useCaseDetailModel(
     refetch: fetchDetail,
     writeActions,
     isBmvCase,
+    phaseMenu,
+    isTerminalPhaseComputed,
   });
 }

@@ -10,6 +10,7 @@ import {
 } from "./useCaseDetailModel.test-support";
 
 const ACTIVE_DETAIL = createMockDetail();
+const TERMINAL_DETAIL = createMockDetail({ businessPhase: "CLOSED_SUCCESS" });
 
 function createWiredRepository(detail: CaseDetail): CaseRepository {
   const aggregate = createMockAggregate(detail);
@@ -72,6 +73,7 @@ function createWiredRepository(detail: CaseDetail): CaseRepository {
     getDoubleReviewEntries: vi.fn(async () => []),
     getTasks: vi.fn(async () => []),
     getDeadlines: vi.fn(async () => []),
+    transitionPhase: vi.fn(async () => ({ id: "case-001" })),
   } as unknown as CaseRepository;
 }
 
@@ -284,5 +286,68 @@ describe("routeTab bidirectional sync", () => {
     routeTab.value = undefined;
     await Promise.resolve();
     expect(model.activeTab.value).toBe("overview");
+  });
+});
+
+describe("phaseMenu wiring (BUG-123)", () => {
+  it("exposes phaseMenu with openMenu/closeMenu/performTransition", async () => {
+    const { model } = await createModel();
+    expect(model.phaseMenu).toBeDefined();
+    expect(typeof model.phaseMenu.openMenu).toBe("function");
+    expect(typeof model.phaseMenu.closeMenu).toBe("function");
+    expect(typeof model.phaseMenu.performTransition).toBe("function");
+  });
+
+  it("phaseMenu.openMenu toggles menuOpen", async () => {
+    const { model } = await createModel();
+    expect(model.phaseMenu.menuOpen.value).toBe(false);
+    model.phaseMenu.openMenu();
+    expect(model.phaseMenu.menuOpen.value).toBe(true);
+    model.phaseMenu.closeMenu();
+    expect(model.phaseMenu.menuOpen.value).toBe(false);
+  });
+
+  it("phaseMenu.availableTargets derived from detail businessPhase", async () => {
+    const { model } = await createModel();
+    expect(model.phaseMenu.availableTargets.value).toEqual(["REVIEWING"]);
+  });
+
+  it("phaseMenu.performTransition calls repo.transitionPhase", async () => {
+    const repo = createWiredRepository(ACTIVE_DETAIL);
+    const caseIdRef = ref("CASE-001");
+    const model = useCaseDetailModel(caseIdRef, { repo });
+    await flushFetch();
+    await flushFetch();
+
+    const ok = await model.phaseMenu.performTransition("REVIEWING");
+    expect(ok).toBe(true);
+    expect(repo.transitionPhase).toHaveBeenCalledWith("CASE-001", {
+      toPhase: "REVIEWING",
+      closeReason: undefined,
+      resultOutcome: undefined,
+    });
+  });
+
+  it("isTerminalPhase is false for active case", async () => {
+    const { model } = await createModel();
+    expect(model.isTerminalPhase.value).toBe(false);
+  });
+
+  it("isTerminalPhase is true for CLOSED_SUCCESS", async () => {
+    const repo = createWiredRepository(TERMINAL_DETAIL);
+    const caseIdRef = ref("CASE-001");
+    const model = useCaseDetailModel(caseIdRef, { repo });
+    await flushFetch();
+    await flushFetch();
+    expect(model.isTerminalPhase.value).toBe(true);
+  });
+
+  it("phaseMenu returns empty targets for terminal phase", async () => {
+    const repo = createWiredRepository(TERMINAL_DETAIL);
+    const caseIdRef = ref("CASE-001");
+    const model = useCaseDetailModel(caseIdRef, { repo });
+    await flushFetch();
+    await flushFetch();
+    expect(model.phaseMenu.availableTargets.value).toEqual([]);
   });
 });

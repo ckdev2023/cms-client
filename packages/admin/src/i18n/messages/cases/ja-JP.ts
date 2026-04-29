@@ -229,7 +229,37 @@ const casesJaJP = {
       editInfo: "情報を編集",
       exportZip: "ZIP エクスポート",
       statusTransition: "ステータス遷移",
+      exportZipNotReady: "ZIP エクスポート機能は準備中です。",
     },
+    editModal: {
+      title: "案件情報を編集",
+      fields: {
+        caseName: "案件名",
+        agency: "管轄機関",
+        memo: "メモ",
+      },
+      cancel: "キャンセル",
+      save: "保存",
+    },
+    phaseMenu: {
+      title: "業務フェーズ遷移",
+      closeReasonRequired: "失敗クローズには理由が必要です",
+      submit: "遷移を確認",
+      cancel: "キャンセル",
+      errorPrefix: "遷移に失敗しました",
+      closeReasonLabel: "クローズ理由",
+    },
+    terminalStage: {
+      label: "結案済み",
+    },
+    terminalNextAction: {
+      success: "結案済み — ZIP エクスポート / 更新リマインダーを確認できます。",
+      failed:
+        "結案済み（失敗） — クローズ理由を確認 / 返金は手動対応が必要です。",
+    },
+    unpaidLabel: "未収: {amount}",
+    arrearsYes: "あり",
+    arrearsNo: "なし",
     readonlyBanner:
       "この案件はアーカイブ済み（{stage}）です。全フィールドが読み取り専用です。日志タブのみアクセス可能です。",
     failurePathBanner:
@@ -661,6 +691,7 @@ const casesJaJP = {
       postApprovalStageChange: "許可後段階変更：{suffix}",
       crossGroupCreated: "越境建案：{suffix}",
       groupTransferred: "案件転組：{from} → {to}（{reason}）",
+      phaseChange: "業務フェーズ変更：{from} → {to}",
       commLogCreated: "沟通記録追加：{suffix}",
       commLogUpdated: "沟通記録更新",
     },
@@ -669,6 +700,27 @@ const casesJaJP = {
     refReport: "詳細は校験レポートを参照",
     lastFailed:
       "前回の校験で不合格項目が検出されました。修正後に再校験を実行してください。",
+  },
+  deadlines: {
+    types: {
+      case: "案件期限",
+      customer: "顧客関連期限",
+      requirement: "資料提出期限",
+      deadline: "手続き期限",
+      billingPlan: "支払期限",
+      default: "期限",
+    },
+    sendStatus: {
+      pending: "未送信",
+      sent: "送信済み",
+      failed: "送信失敗",
+      canceled: "取消済み",
+    },
+    remaining: {
+      overdue: "{days}日超過",
+      today: "本日",
+      daysLeft: "あと{days}日",
+    },
   },
   coach: {
     docManagement: "資料管理",

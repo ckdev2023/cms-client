@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
+import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import type { Case } from "../model/coreEntities";
 import type {
   CaseCreateInput,
@@ -550,30 +551,22 @@ export const POST_APPROVAL_STAGES = new Set([
   "entry_success",
 ]);
 
-const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, business_phase, current_workflow_step_code, created_at, updated_at`;
+export const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, business_phase, current_workflow_step_code, created_at, updated_at`;
 
-const CASE_COLS_PREFIXED = CASE_COLS.split(", ")
+export const CASE_COLS_PREFIXED = CASE_COLS.split(", ")
   .map((col) => `cs.${col}`)
   .join(", ");
 
-const CUSTOMER_NAME_EXPR = `coalesce(
-  nullif(trim(cu.base_profile->>'displayName'), ''),
-  nullif(trim(cu.base_profile->>'display_name'), ''),
-  nullif(trim(cu.base_profile->>'name'), ''),
-  nullif(trim(cu.base_profile->>'name_cn'), ''),
-  nullif(trim(cu.base_profile->>'name_en'), ''),
-  nullif(trim(cu.base_profile->>'name_jp'), ''),
-  ''
-)`;
+const CUSTOMER_NAME_EXPR = customerNameExpr("cu");
 
-const SUMMARY_JOINS = `
+export const SUMMARY_JOINS = `
   left join customers cu on cu.id = cs.customer_id
   left join groups g on g.id = cs.group_id
   left join users owner_u on owner_u.id = cs.owner_user_id
   left join users asst_u on asst_u.id = cs.assistant_user_id
 `;
 
-const SUMMARY_EXTRA_COLS = `
+export const SUMMARY_EXTRA_COLS = `
   ${CUSTOMER_NAME_EXPR} as customer_name,
   g.name as group_name,
   owner_u.name as owner_display_name,
@@ -1040,7 +1033,7 @@ async function queryLatestReview(
   const result = await tenantDb.query<LatestReviewRow>(
     `
       select rr.id, rr.decision, rr.reviewed_at, rr.reviewer_user_id,
-             u.display_name as reviewer_display_name
+             u.name as reviewer_display_name
       from review_records rr
       left join users u on u.id = rr.reviewer_user_id
       where rr.case_id = $1

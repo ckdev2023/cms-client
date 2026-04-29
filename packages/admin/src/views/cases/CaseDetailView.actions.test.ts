@@ -64,6 +64,48 @@ describe("CaseDetailView actions wiring", () => {
       const targets = getAvailablePhaseTargets("CLOSED_SUCCESS");
       expect(targets.length).toBe(0);
     });
+
+    it("performTransition sends closeReason for CLOSED_FAILED", async () => {
+      const detail = ref<CaseDetail | null>(
+        createMockDetail({ businessPhase: "REJECTED" }),
+      );
+      const repo = makeStubRepo();
+      const menu = useCasePhaseTransitionMenu({
+        detail,
+        repo,
+        getCaseId: () => "case-001",
+        onSuccess: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const ok = await menu.performTransition("CLOSED_FAILED", {
+        closeReason: "BMV-VISA-REJECTED",
+        resultOutcome: "failure",
+      });
+      expect(ok).toBe(true);
+      expect(repo.transitionPhase).toHaveBeenCalledWith("case-001", {
+        toPhase: "CLOSED_FAILED",
+        closeReason: "BMV-VISA-REJECTED",
+        resultOutcome: "failure",
+      });
+    });
+
+    it("closeMenu resets menuOpen after performTransition succeeds", async () => {
+      const detail = ref<CaseDetail | null>(
+        createMockDetail({ businessPhase: "UNDER_REVIEW" }),
+      );
+      const repo = makeStubRepo();
+      const menu = useCasePhaseTransitionMenu({
+        detail,
+        repo,
+        getCaseId: () => "case-001",
+        onSuccess: vi.fn().mockResolvedValue(undefined),
+      });
+
+      menu.openMenu();
+      expect(menu.menuOpen.value).toBe(true);
+      await menu.performTransition("APPROVED");
+      expect(menu.menuOpen.value).toBe(false);
+    });
   });
 
   describe("export zip button", () => {

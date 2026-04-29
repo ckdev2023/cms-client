@@ -17,26 +17,33 @@ function deriveApiPrefix(casesApiPath: string): string {
 }
 
 const TARGET_TYPE_TITLES: Record<string, string> = {
-  case: "案件期限",
-  customer: "顧客関連期限",
-  requirement: "資料提出期限",
-  deadline: "手続き期限",
-  billing_plan: "支払期限",
+  case: "cases.deadlines.types.case",
+  customer: "cases.deadlines.types.customer",
+  requirement: "cases.deadlines.types.requirement",
+  deadline: "cases.deadlines.types.deadline",
+  billing_plan: "cases.deadlines.types.billingPlan",
 };
 
 const SEND_STATUS_LABELS: Record<string, string> = {
-  pending: "未送信",
-  sent: "送信済み",
-  failed: "送信失敗",
-  canceled: "取消済み",
+  pending: "cases.deadlines.sendStatus.pending",
+  sent: "cases.deadlines.sendStatus.sent",
+  failed: "cases.deadlines.sendStatus.failed",
+  canceled: "cases.deadlines.sendStatus.canceled",
 };
 
-const DEFAULT_REMAINING = { label: "—", severity: "muted" } as const;
-
-function computeRemaining(remindAt: string): {
+interface RemainingResult {
   label: string;
   severity: string;
-} {
+  labelKey?: string;
+  labelParams?: Record<string, unknown>;
+}
+
+const DEFAULT_REMAINING: RemainingResult = {
+  label: "—",
+  severity: "muted",
+};
+
+function computeRemaining(remindAt: string): RemainingResult {
   try {
     const target = new Date(remindAt);
     if (Number.isNaN(target.getTime())) return { ...DEFAULT_REMAINING };
@@ -45,12 +52,45 @@ function computeRemaining(remindAt: string): {
     target.setHours(0, 0, 0, 0);
     const days = Math.ceil((target.getTime() - now.getTime()) / 86_400_000);
     if (days < 0)
-      return { label: `${Math.abs(days)}日超過`, severity: "danger" };
-    if (days === 0) return { label: "本日", severity: "danger" };
-    if (days <= 7) return { label: `あと${days}日`, severity: "danger" };
-    if (days <= 30) return { label: `あと${days}日`, severity: "warning" };
-    if (days <= 90) return { label: `あと${days}日`, severity: "primary" };
-    return { label: `あと${days}日`, severity: "muted" };
+      return {
+        label: "",
+        labelKey: "cases.deadlines.remaining.overdue",
+        labelParams: { days: Math.abs(days) },
+        severity: "danger",
+      };
+    if (days === 0)
+      return {
+        label: "",
+        labelKey: "cases.deadlines.remaining.today",
+        severity: "danger",
+      };
+    if (days <= 7)
+      return {
+        label: "",
+        labelKey: "cases.deadlines.remaining.daysLeft",
+        labelParams: { days },
+        severity: "danger",
+      };
+    if (days <= 30)
+      return {
+        label: "",
+        labelKey: "cases.deadlines.remaining.daysLeft",
+        labelParams: { days },
+        severity: "warning",
+      };
+    if (days <= 90)
+      return {
+        label: "",
+        labelKey: "cases.deadlines.remaining.daysLeft",
+        labelParams: { days },
+        severity: "primary",
+      };
+    return {
+      label: "",
+      labelKey: "cases.deadlines.remaining.daysLeft",
+      labelParams: { days },
+      severity: "muted",
+    };
   } catch {
     return { ...DEFAULT_REMAINING };
   }
@@ -63,7 +103,7 @@ function resolveReminderTitle(
   return (
     (payload ? readString(payload, "title") : "") ||
     TARGET_TYPE_TITLES[targetType] ||
-    "期限"
+    "cases.deadlines.types.default"
   );
 }
 
@@ -99,6 +139,8 @@ function adaptReminderDto(value: unknown): DeadlineItem | null {
     desc: buildReminderDesc(payload, targetType, sendStatus),
     date: remindAt ? formatDate(remindAt) : "—",
     remaining: remainingState.label,
+    remainingKey: remainingState.labelKey,
+    remainingParams: remainingState.labelParams,
     severity: remainingState.severity,
   };
 }

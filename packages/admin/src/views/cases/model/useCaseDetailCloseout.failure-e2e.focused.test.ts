@@ -92,7 +92,7 @@ describe("failure closeout end-to-end via useCaseDetailModel (p1-qa-001-03)", ()
     risk: {
       blockingCount: "0",
       blockingDetail: "",
-      arrearsStatus: "なし",
+      arrearsStatus: "cases.detail.arrearsNo",
       arrearsDetail: "",
       deadlineAlert: "",
       deadlineAlertDetail: "",

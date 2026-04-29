@@ -223,7 +223,36 @@ const casesZhCN = {
       editInfo: "编辑信息",
       exportZip: "导出 ZIP",
       statusTransition: "状态流转",
+      exportZipNotReady: "ZIP 导出功能尚未上线，敬请期待。",
     },
+    editModal: {
+      title: "编辑案件信息",
+      fields: {
+        caseName: "案件名称",
+        agency: "管辖机构",
+        memo: "备注",
+      },
+      cancel: "取消",
+      save: "保存",
+    },
+    phaseMenu: {
+      title: "业务阶段流转",
+      closeReasonRequired: "失败结案必须填写关闭原因",
+      submit: "确认流转",
+      cancel: "取消",
+      errorPrefix: "流转失败",
+      closeReasonLabel: "关闭原因",
+    },
+    terminalStage: {
+      label: "已结案",
+    },
+    terminalNextAction: {
+      success: "已结案，可导出 ZIP / 查看续签提醒。",
+      failed: "已结案（失败），可查看关闭原因 / 退款待人工处理。",
+    },
+    unpaidLabel: "未收: {amount}",
+    arrearsYes: "有",
+    arrearsNo: "无",
     readonlyBanner:
       "此案件已归档（{stage}），所有字段为只读。仅日志 Tab 保持可访问。",
     failurePathBanner:
@@ -628,6 +657,7 @@ const casesZhCN = {
       postApprovalStageChange: "许可后阶段变更：{suffix}",
       crossGroupCreated: "跨组建案：{suffix}",
       groupTransferred: "案件转组：{from} → {to}（{reason}）",
+      phaseChange: "业务阶段变更：{from} → {to}",
       commLogCreated: "沟通记录追加：{suffix}",
       commLogUpdated: "沟通记录更新",
     },
@@ -635,6 +665,27 @@ const casesZhCN = {
   validation: {
     refReport: "详细请参阅检查报告",
     lastFailed: "上次检查有未通过项，请修改后重新检查。",
+  },
+  deadlines: {
+    types: {
+      case: "案件期限",
+      customer: "客户关联期限",
+      requirement: "资料提出期限",
+      deadline: "手续期限",
+      billingPlan: "支付期限",
+      default: "期限",
+    },
+    sendStatus: {
+      pending: "未发送",
+      sent: "已发送",
+      failed: "发送失败",
+      canceled: "已取消",
+    },
+    remaining: {
+      overdue: "{days}日超期",
+      today: "今日",
+      daysLeft: "剩余{days}日",
+    },
   },
   coach: {
     docManagement: "资料管理",

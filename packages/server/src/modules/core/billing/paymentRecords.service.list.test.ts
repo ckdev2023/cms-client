@@ -281,7 +281,7 @@ void test("list passes q filter matching note and case fields", async () => {
   assert.ok(countCall.sql.includes("lower(pr.note)"));
   assert.ok(countCall.sql.includes("lower(c.case_no)"));
   assert.ok(countCall.sql.includes("lower(c.case_name)"));
-  assert.ok(countCall.sql.includes("lower(cu.name)"));
+  assert.ok(countCall.sql.includes("lower(cu.base_profile->>'displayName')"));
   assert.ok(countCall.sql.includes("lower(br.milestone_name)"));
   assert.ok(countCall.params?.includes("振込"));
 });

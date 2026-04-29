@@ -18,10 +18,11 @@ import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
 
 /** 概览 Tab：展示案件摘要卡片、提供方进度、下一步动作、近期动态与侧边栏。 */
 const { t } = useI18n();
-defineProps<{
+const props = defineProps<{
   detail: CaseDetail;
   writeFeedback?: WriteActionFeedback;
   readonly?: boolean;
+  isTerminal?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -63,7 +64,9 @@ function timelineColor(color: string): string {
           <span class="overview-tab__stat-label">{{
             t("cases.detail.overview.cards.stage")
           }}</span>
-          <span class="overview-tab__stat-value">{{ detail.stage }}</span>
+          <span class="overview-tab__stat-value">{{
+            props.isTerminal ? "S9" : detail.stage
+          }}</span>
           <span class="overview-tab__stat-meta">
             <svg
               width="14"
@@ -78,7 +81,11 @@ function timelineColor(color: string): string {
             >
               <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            {{ detail.stageMeta }}
+            {{
+              props.isTerminal
+                ? t("cases.detail.terminalStage.label")
+                : detail.stageMeta
+            }}
           </span>
           <!-- BMV parallel step display -->
           <div
@@ -168,7 +175,11 @@ function timelineColor(color: string): string {
           <span class="overview-tab__stat-value">{{
             detail.billingAmount
           }}</span>
-          <span class="overview-tab__stat-meta">{{ detail.billingMeta }}</span>
+          <span class="overview-tab__stat-meta">{{
+            detail.billingMetaKey
+              ? t(detail.billingMetaKey, detail.billingMetaParams ?? {})
+              : detail.billingMeta
+          }}</span>
         </div>
       </Card>
     </div>
@@ -227,7 +238,12 @@ function timelineColor(color: string): string {
 
     <div class="overview-tab__main-grid">
       <div class="overview-tab__main-left">
-        <div class="overview-tab__next-action">
+        <div
+          class="overview-tab__next-action"
+          :data-testid="
+            props.isTerminal ? 'terminal-next-action' : 'next-action'
+          "
+        >
           <div class="overview-tab__next-action-icon">
             <svg
               width="20"
@@ -247,10 +263,23 @@ function timelineColor(color: string): string {
             <h3 class="overview-tab__next-action-title">
               {{ t("cases.detail.overview.nextAction.title") }}
             </h3>
-            <p class="overview-tab__next-action-text">
+            <p v-if="props.isTerminal" class="overview-tab__next-action-text">
+              {{
+                t(
+                  "cases.detail.terminalNextAction." +
+                    (detail.businessPhase === "CLOSED_SUCCESS"
+                      ? "success"
+                      : "failed"),
+                )
+              }}
+            </p>
+            <p v-else class="overview-tab__next-action-text">
               {{ detail.nextAction }}
             </p>
-            <div class="overview-tab__next-action-buttons">
+            <div
+              v-if="!props.isTerminal"
+              class="overview-tab__next-action-buttons"
+            >
               <Button
                 variant="filled"
                 tone="primary"

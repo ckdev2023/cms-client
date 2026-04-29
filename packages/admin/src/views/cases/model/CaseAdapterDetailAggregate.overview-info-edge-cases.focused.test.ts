@@ -138,7 +138,7 @@ describe("partial data: deepLink present but billing/counts null (p0-fe-006a-03)
 
   it("risk block degrades to neutral", () => {
     expect(result.detail.risk.blockingCount).toBe("0");
-    expect(result.detail.risk.arrearsStatus).toBe("なし");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsNo");
     expect(result.detail.risk.lastValidation).toBe("");
   });
 
@@ -203,7 +203,7 @@ describe("S9 readonly — overview tab (p0-fe-006a-03)", () => {
   });
 
   it("risk block still populated in S9", () => {
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.lastValidation).toBe("passed");
     expect(result.detail.risk.reviewStatus).toBe("approved");
   });
@@ -280,7 +280,7 @@ describe("S9 readonly + empty slices (p0-fe-006a-03)", () => {
 
   it("risk block neutral in S9 empty", () => {
     expect(result.detail.risk.blockingCount).toBe("0");
-    expect(result.detail.risk.arrearsStatus).toBe("なし");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsNo");
     expect(result.detail.risk.lastValidation).toBe("");
   });
 

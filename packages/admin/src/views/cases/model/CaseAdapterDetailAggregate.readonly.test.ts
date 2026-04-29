@@ -193,7 +193,7 @@ describe("S9 read-only comprehensive state (p0-fe-002c-04)", () => {
 
   it("risk block still populated in S9", () => {
     expect(result.detail.risk.blockingCount).toBe("2");
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.lastValidation).toBe("failed");
     expect(result.detail.risk.reviewStatus).toBe("rejected");
   });

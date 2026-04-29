@@ -58,6 +58,8 @@ describe("CaseCommsLogsAdapter i18n key resolution", () => {
         makeLogDto("case.status_changed", { from: "S3", to: "S4" }),
       );
       expect(entry).not.toBeNull();
+      expect(entry!.text).toBe("cases.log.timeline.stageChange");
+      expect(entry!.category).toBe("cases.log.category.status");
       expect(t(entry!.text, entry!.textParams ?? {})).toBe(expectedText);
       expect(t(entry!.category)).toBe(expectedCategory);
     },
@@ -78,6 +80,7 @@ describe("CaseCommsLogsAdapter i18n key resolution", () => {
         }),
       );
       expect(entry).not.toBeNull();
+      expect(entry!.text).toBe("cases.log.timeline.billingRiskAck");
       expect(t(entry!.text, entry!.textParams ?? {})).toBe(expectedText);
     },
   );
@@ -102,6 +105,102 @@ describe("CaseCommsLogsAdapter i18n key resolution", () => {
       expect(t(entry!.text, entry!.textParams ?? {})).toBe(expectedText);
     },
   );
+
+  it.each([
+    [
+      "zh-CN",
+      "cases.log.timeline.phaseChange",
+      "cases.constants.phases.UNDER_REVIEW",
+      "cases.constants.phases.APPROVED",
+      "状态变更",
+    ],
+    [
+      "ja-JP",
+      "cases.log.timeline.phaseChange",
+      "cases.constants.phases.UNDER_REVIEW",
+      "cases.constants.phases.APPROVED",
+      "状態変更",
+    ],
+    [
+      "en-US",
+      "cases.log.timeline.phaseChange",
+      "cases.constants.phases.UNDER_REVIEW",
+      "cases.constants.phases.APPROVED",
+      "Status change",
+    ],
+  ] as const)(
+    "case.phase_transitioned builder returns correct key+params in %s",
+    (locale, expectedKey, expectedFromKey, expectedToKey, expectedCategory) => {
+      const i18n = makeI18n(locale);
+      const t = i18n.global.t;
+      const entry = adaptCaseLogDto(
+        makeLogDto("case.phase_transitioned", {
+          from: "UNDER_REVIEW",
+          to: "APPROVED",
+        }),
+      );
+      expect(entry).not.toBeNull();
+      expect(entry!.text).toBe(expectedKey);
+      expect(entry!.textParams).toEqual({
+        fromPhaseKey: expectedFromKey,
+        toPhaseKey: expectedToKey,
+      });
+      expect(t(entry!.category)).toBe(expectedCategory);
+    },
+  );
+
+  it.each([
+    ["zh-CN", "业务阶段变更：审查中（入管） → 已批准"],
+    ["ja-JP", "業務フェーズ変更：審査中（入管） → 許可済み"],
+    ["en-US", "Phase change: Under immigration review → Approved"],
+  ] as const)(
+    "case.phase_transitioned double-layer t() renders in %s",
+    (locale, expectedText) => {
+      const i18n = makeI18n(locale);
+      const t = i18n.global.t;
+      const entry = adaptCaseLogDto(
+        makeLogDto("case.phase_transitioned", {
+          from: "UNDER_REVIEW",
+          to: "APPROVED",
+        }),
+      );
+      expect(entry).not.toBeNull();
+      const params: Record<string, unknown> = {
+        ...(entry!.textParams ?? {}),
+      };
+      if (typeof params.fromPhaseKey === "string" && params.fromPhaseKey) {
+        params.from = t(params.fromPhaseKey);
+      }
+      if (typeof params.toPhaseKey === "string" && params.toPhaseKey) {
+        params.to = t(params.toPhaseKey);
+      }
+      expect(t(entry!.text, params)).toBe(expectedText);
+    },
+  );
+
+  it("case.phase_transitioned falls back to empty strings when payload is missing", () => {
+    const entry = adaptCaseLogDto(makeLogDto("case.phase_transitioned", {}));
+    expect(entry).not.toBeNull();
+    expect(entry!.text).toBe("cases.log.timeline.phaseChange");
+    expect(entry!.textParams).toEqual({
+      fromPhaseKey: "",
+      toPhaseKey: "",
+    });
+  });
+
+  it("case.phase_transitioned accepts fromPhase/toPhase alias keys", () => {
+    const entry = adaptCaseLogDto(
+      makeLogDto("case.phase_transitioned", {
+        fromPhase: "CONSULTING",
+        toPhase: "CONTRACTED",
+      }),
+    );
+    expect(entry).not.toBeNull();
+    expect(entry!.textParams).toEqual({
+      fromPhaseKey: "cases.constants.phases.CONSULTING",
+      toPhaseKey: "cases.constants.phases.CONTRACTED",
+    });
+  });
 
   it.each(["zh-CN", "ja-JP", "en-US"] as const)(
     "object type keys resolve for all known prefixes in %s",

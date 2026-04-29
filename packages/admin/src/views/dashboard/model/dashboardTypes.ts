@@ -81,6 +81,26 @@ export interface DashboardWorkItem {
    *
    */
   daysLeft?: number;
+  /**
+   *
+   */
+  statusLabelKey?: string;
+  /**
+   *
+   */
+  descKey?: string;
+  /**
+   *
+   */
+  descParams?: Record<string, unknown>;
+  /**
+   *
+   */
+  actionKey?: string;
+  /**
+   *
+   */
+  metaKeys?: { key: string; params?: Record<string, unknown> }[];
 }
 
 /**

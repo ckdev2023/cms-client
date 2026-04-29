@@ -102,7 +102,7 @@ function teamGradient(member: TeamMember): string {
           />
           <div>
             <div class="overview-sidebar__risk-title">
-              {{ detail.risk.arrearsStatus }}
+              {{ t(detail.risk.arrearsStatus) }}
             </div>
             <div class="overview-sidebar__risk-detail">
               {{ detail.risk.arrearsDetail }}

@@ -90,14 +90,37 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
               <div>
                 <h3 class="work-item-title">{{ item.title }}</h3>
                 <div class="work-item-meta">
-                  <span v-for="m in item.meta" :key="m">{{ m }}</span>
+                  <template v-if="item.metaKeys?.length">
+                    <span v-for="mk in item.metaKeys" :key="mk.key">{{
+                      t("dashboard.workItem.meta." + mk.key, mk.params ?? {})
+                    }}</span>
+                  </template>
+                  <template v-else>
+                    <span v-for="m in item.meta" :key="m">{{ m }}</span>
+                  </template>
                 </div>
               </div>
               <span :class="['status-pill', `status-${item.status}`]">
-                {{ item.statusLabel }}
+                {{
+                  item.statusLabelKey
+                    ? t(
+                        "dashboard.workItem.statusLabels." +
+                          item.statusLabelKey,
+                      )
+                    : item.statusLabel
+                }}
               </span>
             </div>
-            <p class="work-item-desc">{{ item.desc }}</p>
+            <p class="work-item-desc">
+              {{
+                item.descKey
+                  ? t(
+                      "dashboard.workItem.desc." + item.descKey,
+                      item.descParams ?? {},
+                    )
+                  : item.desc
+              }}
+            </p>
             <div class="work-item-actions">
               <button
                 class="mini-btn"
@@ -106,7 +129,11 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
                 :aria-disabled="!item.route"
                 @click="navigateTo(item.route)"
               >
-                {{ item.action }}
+                {{
+                  item.actionKey
+                    ? t("dashboard.workItem.actions." + item.actionKey)
+                    : item.action
+                }}
               </button>
             </div>
           </article>

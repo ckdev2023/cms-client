@@ -38,13 +38,13 @@ const GD_COLS = [
   "gd.approved_at",
 ].join(", ");
 
-const GD_DTO_SELECT = `
+export const GD_DTO_SELECT = `
   ${GD_COLS},
-  gen_u.display_name as generated_by_display_name,
-  apr_u.display_name as approved_by_display_name
+  gen_u.name as generated_by_display_name,
+  apr_u.name as approved_by_display_name
 `;
 
-const GD_DTO_JOINS = `
+export const GD_DTO_JOINS = `
   from generated_documents gd
   left join users gen_u on gen_u.id = gd.generated_by
   left join users apr_u on apr_u.id = gd.approved_by
@@ -281,7 +281,7 @@ export class GeneratedDocumentsService {
           ins.id, ins.org_id, ins.case_id, ins.template_id, ins.title,
           ins.version_no, ins.output_format, ins.file_url, ins.status,
           ins.generated_by, ins.approved_by, ins.generated_at, ins.approved_at,
-          u.display_name as generated_by_display_name,
+          u.name as generated_by_display_name,
           null::text as approved_by_display_name
         from ins
         left join users u on u.id = ins.generated_by

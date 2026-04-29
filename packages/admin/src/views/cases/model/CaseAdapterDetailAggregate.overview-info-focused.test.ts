@@ -207,7 +207,7 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
 
   it("arrears shows あり with yen amount when unpaid > 0", () => {
     const result = adaptCaseDetailAggregate(buildFull())!;
-    expect(result.detail.risk.arrearsStatus).toBe("あり");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.arrearsDetail).toContain("70,000");
   });
 
@@ -215,7 +215,7 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
     const result = adaptCaseDetailAggregate(
       buildFull({ billing: { ...BILLING_FULL, unpaidAmount: 0 } }),
     )!;
-    expect(result.detail.risk.arrearsStatus).toBe("なし");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsNo");
     expect(result.detail.risk.arrearsDetail).toBe("");
   });
 
@@ -389,7 +389,7 @@ describe("overview empty state degradation (p0-fe-006a-03)", () => {
   it("risk block is neutral: no blocking, no arrears, no validation", () => {
     expect(result.detail.risk.blockingCount).toBe("0");
     expect(result.detail.risk.blockingDetail).toBe("");
-    expect(result.detail.risk.arrearsStatus).toBe("なし");
+    expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsNo");
     expect(result.detail.risk.arrearsDetail).toBe("");
     expect(result.detail.risk.lastValidation).toBe("");
     expect(result.detail.risk.reviewStatus).toBe("");

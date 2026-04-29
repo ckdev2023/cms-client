@@ -189,7 +189,10 @@ void test("getSummary applies q search filter across D3 columns", async () => {
   assert.ok(main);
   assert.ok(main.sql.includes("lower(c.case_no)"), "q searches case_no");
   assert.ok(main.sql.includes("lower(c.case_name)"), "q searches case_name");
-  assert.ok(main.sql.includes("lower(cu.name)"), "q searches customer name");
+  assert.ok(
+    main.sql.includes("lower(cu.base_profile->>'displayName')"),
+    "q searches customer name",
+  );
   assert.ok(
     main.sql.includes("lower(br.milestone_name)"),
     "q searches milestone_name",

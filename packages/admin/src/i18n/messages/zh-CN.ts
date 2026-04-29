@@ -6,6 +6,7 @@ import documents from "./documents/zh-CN";
 import leads from "./leads/zh-CN";
 import settings from "./settings/zh-CN";
 import dashboardWorkItems from "./work-items/zh-CN";
+import dashboardWorkItem from "./dashboard-work-item/zh-CN";
 
 const zhCN = {
   shell: {
@@ -474,6 +475,7 @@ const zhCN = {
       },
     },
     workItems: dashboardWorkItems,
+    workItem: dashboardWorkItem,
   },
 } as const;
 
