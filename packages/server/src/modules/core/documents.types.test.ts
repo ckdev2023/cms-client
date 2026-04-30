@@ -81,6 +81,19 @@ void test("no status can transition to deleted (soft delete is a separate path)"
   }
 });
 
+void test("no status can transition to waived via ALLOWED_TRANSITIONS (use dedicated waive endpoint)", () => {
+  const entries = Object.entries(DOCUMENT_ITEM_ALLOWED_TRANSITIONS) as [
+    string,
+    readonly string[],
+  ][];
+  for (const [from, targets] of entries) {
+    assert.ok(
+      !targets.includes("waived"),
+      `'${from}' should not transition to 'waived' — use POST /:id/waive instead`,
+    );
+  }
+});
+
 void test("DOCUMENT_FILE_REVIEW_STATUSES has 3 values", () => {
   assert.deepEqual(
     [...DOCUMENT_FILE_REVIEW_STATUSES],

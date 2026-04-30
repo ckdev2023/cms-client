@@ -64,6 +64,23 @@ const documentsJaJP = {
       toastRemind: "{count} 件を催促しました",
       toastApprove: "{count} 件を承認しました",
       toastWaive: "{count} 件を不要としてマークしました",
+      toastPartialFailure:
+        "{count} 件の操作に失敗しました。確認の上、再試行してください",
+    },
+    errorUnauthorized: "セッションが切れました。再ログインしてください",
+    errorRequestFailed:
+      "資料一覧の読み込みに失敗しました。しばらくしてから再試行してください",
+    retry: "再試行",
+    state: {
+      loading: "資料一覧を読み込み中…",
+      unauthorized: "セッションが切れました。再ログインしてください",
+      requestFailed:
+        "資料一覧の読み込みに失敗しました。しばらくしてから再試行してください",
+      badResponse:
+        "サーバーからの応答データに異常があります。管理者にお問い合わせください",
+      retry: "再試行",
+      fallbackHint:
+        "現在サンプルデータを表示しています。バックエンドデータは一時的に利用できません。",
     },
   },
   status: {
@@ -146,6 +163,13 @@ const documentsJaJP = {
     reasonNoteRequired: "理由が「その他」の場合、備考は必須です",
     cancel: "キャンセル",
     confirm: "マークする",
+    reasons: {
+      visaTypeExempt: "提出不要（当該ビザ種別で免除）",
+      guarantorFamilyExempt: "保証人が配偶者・直系親族（免除）",
+      equivalentInOtherCase: "他の案件で同等資料を提出済み",
+      immigrationConfirmedExempt: "入管局が免除を確認済み",
+      other: "その他",
+    },
   },
   reference: {
     title: "既存バージョンを引用",
@@ -163,6 +187,24 @@ const documentsJaJP = {
     affectedCasesLabel: "影響を受ける案件",
     suggestedActionLabel: "推奨対応",
     close: "閉じる",
+    loading: "リスク情報を読み込み中…",
+  },
+  addItem: {
+    title: "資料項目を手動追加",
+    fields: {
+      name: "資料項目名",
+      namePlaceholder: "例：在留カード（コピー）、雇用契約書など",
+      ownerSide: "提供者",
+      ownerSidePlaceholder: "提供者を選択してください",
+      dueAt: "期限",
+      dueAtHint: "任意。省略した場合、期限なしとなります。",
+      note: "備考",
+      notePlaceholder: "備考を入力してください…",
+    },
+    cancel: "キャンセル",
+    confirm: "追加する",
+    toastTitle: "資料項目を追加しました",
+    toastDesc: "「{name}」を資料清単に追加しました",
   },
   actions: {
     approve: "審査承認",

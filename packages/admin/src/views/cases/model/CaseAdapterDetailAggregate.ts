@@ -236,6 +236,24 @@ function resolveTitle(caseRecord: Record<string, unknown>, id: string) {
   );
 }
 
+/**
+ * 从 case slice 抽取业务编号 `caseNo`，去除两侧空白并把空白值视为缺失。
+ *
+ * BUG-128 / BUG-130：detail header 必须暴露原始业务编号给面包屑/列表行使用，
+ * 不可与 `id` (UUID) 合并；`detail.id` 仍保留 UUID 用于 hover/复制等场景。
+ *
+ * @param caseRecord - case slice 记录
+ * @returns 业务编号字符串；缺失或空白时返回 `undefined`
+ */
+function extractCaseNo(
+  caseRecord: Record<string, unknown>,
+): string | undefined {
+  const raw = caseRecord["caseNo"];
+  if (typeof raw !== "string") return undefined;
+  const trimmed = raw.trim();
+  return trimmed === "" ? undefined : trimmed;
+}
+
 function dlStr(dl: Record<string, unknown> | null, key: string) {
   return dl ? readString(dl, key) : "";
 }
@@ -263,6 +281,7 @@ function buildDetailHeader(
 ) {
   return {
     id,
+    caseNo: extractCaseNo(caseRecord),
     title: resolveTitle(caseRecord, id),
     client: dlStr(deepLink, "customerName"),
     owner: dlStr(deepLink, "ownerDisplayName"),
@@ -279,9 +298,8 @@ function buildDetailHeader(
     billingAmount: m.quotePrice ? `¥${m.quotePrice.toLocaleString()}` : "—",
     billingMeta: formatYen(m.unpaidAmount) || "",
     billingMetaKey: m.unpaidAmount > 0 ? "cases.detail.unpaidLabel" : "",
-    billingMetaParams: m.unpaidAmount > 0
-      ? { amount: formatYen(m.unpaidAmount) }
-      : undefined,
+    billingMetaParams:
+      m.unpaidAmount > 0 ? { amount: formatYen(m.unpaidAmount) } : undefined,
     billingStatusKey: m.unpaidAmount > 0 ? "unpaid" : "paid",
     docsCounter: `${m.docDone}/${m.docTotal}`,
     readonly: stageId === "S9",

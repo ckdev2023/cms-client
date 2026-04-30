@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -14,9 +15,12 @@ import {
 } from "@nestjs/common";
 
 import { RequireRoles } from "../auth/auth.decorators";
+import { CasesService } from "../cases/cases.service";
+import { DOCUMENT_FILE_ERROR_CODES } from "../documents.types";
 import type { DocumentFile } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
+import { DocumentItemsService } from "../document-items/documentItems.service";
 import { DocumentFilesService } from "./documentFiles.service";
 
 type HttpRequest = {
@@ -178,10 +182,16 @@ export class DocumentFilesController {
   /**
    * 构造函数。
    * @param documentFilesService 资料文件服务
+   * @param documentItemsService 资料项服务（S9 守卫用）
+   * @param casesService 案件服务（S9 守卫用）
    */
   constructor(
     @Inject(DocumentFilesService)
     private readonly documentFilesService: DocumentFilesService,
+    @Inject(DocumentItemsService)
+    private readonly documentItemsService: DocumentItemsService,
+    @Inject(CasesService)
+    private readonly casesService: CasesService,
   ) {}
 
   /**
@@ -196,8 +206,11 @@ export class DocumentFilesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const requirementId = parseUuid(body.requirementId, "requirementId");
+    await this.assertRequirementCaseNotS9(ctx, requirementId);
+
     const created = await this.documentFilesService.upload(ctx, {
-      requirementId: parseUuid(body.requirementId, "requirementId"),
+      requirementId,
       fileName: sanitizeFileName(requireString(body.fileName, "fileName")),
       data: body.data === undefined ? undefined : parseBase64Data(body.data),
       contentType: parseOptionalContentType(body.contentType),
@@ -291,5 +304,32 @@ export class DocumentFilesController {
 
     await this.documentFilesService.remove(ctx, parseUuid(id, "id"));
     return { ok: true };
+  }
+
+  private async assertRequirementCaseNotS9(
+    ctx: RequestContext,
+    requirementId: string,
+  ): Promise<void> {
+    const item = await this.documentItemsService.get(ctx, requirementId);
+    if (!item) {
+      throw new NotFoundException(
+        DOCUMENT_FILE_ERROR_CODES.REQUIREMENT_NOT_FOUND +
+          ": Document requirement not found",
+      );
+    }
+    const caseEntity = await this.casesService.get(ctx, item.caseId);
+    if (!caseEntity) {
+      throw new NotFoundException(
+        DOCUMENT_FILE_ERROR_CODES.REQUIREMENT_NOT_FOUND +
+          ": Parent case not found",
+      );
+    }
+    const stage = caseEntity.stage ?? caseEntity.status;
+    if (stage === "S9") {
+      throw new BadRequestException(
+        DOCUMENT_FILE_ERROR_CODES.CASE_S9_READONLY +
+          ": Parent case is archived (S9) and read-only",
+      );
+    }
   }
 }

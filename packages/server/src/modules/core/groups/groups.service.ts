@@ -7,6 +7,7 @@ import { Pool } from "pg";
 
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { requireTimestampString } from "../model/timestamps";
 import { TimelineService } from "../timeline/timeline.service";
 import type {
   CreateGroupInput,
@@ -40,7 +41,7 @@ function mapGroupSummaryRow(row: GroupSummaryRow): GroupSummaryDto {
     name: row.name,
     description: row.description,
     activeFlag: row.active_flag,
-    createdAt: String(row.created_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
     activeCaseCount: Number.parseInt(row.active_case_count, 10),
     memberCount: Number.parseInt(row.member_count, 10),
   };
@@ -76,7 +77,7 @@ function mapGroupMemberRow(row: GroupMemberRow): GroupMemberDto {
     userId: row.user_id,
     isPrimaryGroup: row.is_primary_group,
     activeFlag: row.active_flag,
-    joinedAt: String(row.joined_at),
+    joinedAt: requireTimestampString(row.joined_at, "joined_at"),
     userName: row.user_name,
     userEmail: row.user_email,
     userRole: row.user_role,
@@ -236,9 +237,9 @@ export class GroupsService {
       description: groupRow.description,
       activeFlag: groupRow.active_flag,
       createdBy: groupRow.created_by,
-      createdAt: String(groupRow.created_at),
+      createdAt: requireTimestampString(groupRow.created_at, "created_at"),
       updatedBy: groupRow.updated_by,
-      updatedAt: String(groupRow.updated_at),
+      updatedAt: requireTimestampString(groupRow.updated_at, "updated_at"),
       members,
       references,
     };

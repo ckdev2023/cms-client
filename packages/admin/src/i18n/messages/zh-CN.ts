@@ -5,6 +5,7 @@ import conversations from "./conversations/zh-CN";
 import documents from "./documents/zh-CN";
 import leads from "./leads/zh-CN";
 import settings from "./settings/zh-CN";
+import tasks from "./tasks/zh-CN";
 import dashboardWorkItems from "./work-items/zh-CN";
 import dashboardWorkItem from "./dashboard-work-item/zh-CN";
 
@@ -279,6 +280,12 @@ const zhCN = {
         cancel: "取消",
         saveDraft: "保存草稿",
         create: "创建客户",
+        state: {
+          checkingDuplicates: "正在检查重复客户…",
+          unauthorized: "你暂无权限创建客户，请联系管理员后重试。",
+          validationError: "请检查表单字段填写是否正确后再提交。",
+          requestFailed: "客户创建失败，请稍后重试。",
+        },
       },
     },
     detail: customerDetail,
@@ -289,6 +296,7 @@ const zhCN = {
   documents,
   leads,
   settings,
+  tasks,
   dashboard: {
     hero: {
       kicker: "Dashboard",

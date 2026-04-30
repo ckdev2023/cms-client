@@ -54,7 +54,14 @@ const { t } = useI18n();
         >
           {{ crumb.label }}
         </a>
-        <span v-else class="ui-page-header__crumb" aria-current="page">
+        <span
+          v-else-if="i === breadcrumbs.length - 1"
+          class="ui-page-header__crumb ui-page-header__crumb--current"
+          aria-current="page"
+        >
+          {{ crumb.label }}
+        </span>
+        <span v-else class="ui-page-header__crumb ui-page-header__crumb--group">
           {{ crumb.label }}
         </span>
       </template>

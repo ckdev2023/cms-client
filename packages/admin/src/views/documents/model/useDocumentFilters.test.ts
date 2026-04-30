@@ -365,6 +365,68 @@ describe("useDocumentFilters — applyFilters (combined)", () => {
   });
 });
 
+// ─── apiParams ──────────────────────────────────────────────────
+
+describe("useDocumentFilters — apiParams", () => {
+  it("returns empty object when no filter is active", () => {
+    const f = create();
+    expect(f.apiParams.value).toEqual({});
+  });
+
+  it("maps 'missing' to statusIn", () => {
+    const f = create();
+    f.status.value = "missing";
+    expect(f.apiParams.value.statusIn).toEqual([
+      "pending",
+      "waiting_upload",
+      "revision_required",
+    ]);
+  });
+
+  it("maps 'pending' to statusIn", () => {
+    const f = create();
+    f.status.value = "pending";
+    expect(f.apiParams.value.statusIn).toEqual(["pending", "waiting_upload"]);
+  });
+
+  it("maps 'expired' to statusIn", () => {
+    const f = create();
+    f.status.value = "expired";
+    expect(f.apiParams.value.statusIn).toEqual(["expired"]);
+  });
+
+  it("maps provider to ownerSide", () => {
+    const f = create();
+    f.provider.value = "employer_org";
+    expect(f.apiParams.value.ownerSide).toBe("employer");
+  });
+
+  it("does NOT include search", () => {
+    const f = create();
+    f.search.value = "パスポート";
+    expect(f.apiParams.value).toEqual({});
+  });
+});
+
+// ─── applySearchAndSort ─────────────────────────────────────────
+
+describe("useDocumentFilters — applySearchAndSort", () => {
+  it("returns all items sorted when no search is active", () => {
+    const f = create();
+    const result = f.applySearchAndSort(ITEMS);
+    expect(result).toHaveLength(ITEMS.length);
+  });
+
+  it("filters by search only, ignores status/caseId/provider", () => {
+    const f = create();
+    f.status.value = "pending";
+    f.search.value = "パスポート";
+    const result = f.applySearchAndSort(ITEMS);
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toContain("パスポート");
+  });
+});
+
 // ─── applyFilters — sorting ─────────────────────────────────────
 
 describe("useDocumentFilters — applyFilters (sorting)", () => {

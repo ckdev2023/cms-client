@@ -285,6 +285,10 @@ export type DocumentItem = {
   note: string | null;
   category: string | null;
   surveyData: Record<string, unknown> | null;
+  waiveReasonLatest: string | null;
+  waiveReasonCodeLatest: string | null;
+  waivedByUserIdLatest: string | null;
+  waivedAtLatest: string | null;
   createdAt: string;
   updatedAt: string;
 };
@@ -310,6 +314,7 @@ export type DocumentFile = {
   reviewAt: string | null;
   expiryDate: string | null;
   hashValue: string | null;
+  assetId: string | null;
   createdAt: string;
 };
 

@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import type { CaseBillingRow, BillingStatus } from "../types";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import Chip from "../../../shared/ui/Chip.vue";
+import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 
 /**
  * 案件收费表格，展示 8 列数据 + checkbox 选择列。
@@ -32,7 +33,7 @@ defineEmits<{
   "risk-ack": [caseId: string];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const STATUS_TONE: Record<BillingStatus, ChipTone> = {
   overdue: "danger",
@@ -48,11 +49,21 @@ const STATUS_KEY: Record<BillingStatus, string> = {
   paid: "billing.list.status.paid",
 };
 
-const GROUP_KEY: Record<string, string> = {
-  "tokyo-1": "billing.list.groups.tokyo-1",
-  "tokyo-2": "billing.list.groups.tokyo-2",
-  osaka: "billing.list.groups.osaka",
-};
+/**
+ * 解析单元格 Group 显示文案：先走运行期 `/api/groups` 别名表，再回落
+ * `useGroupOptions` 静态 catalog；UUID 未命中时返回 `—` 占位以防直显裸 ID。
+ *
+ * @param value - row.group 字段值（可能是 catalog code、DB UUID 或 server name）
+ * @returns 经过本地化与停用后缀处理的展示字符串
+ */
+function formatGroupLabel(value: string): string {
+  if (!value) return "—";
+  return resolveGroupLabel(
+    value,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  );
+}
 
 /**
  * 判断行是否可勾选（仅逾期行可选）。
@@ -203,7 +214,7 @@ watchEffect(() => {
             class="billing-table__td billing-table__col--hide-md billing-table__col--group"
           >
             <Chip tone="neutral" size="sm">
-              {{ GROUP_KEY[row.group] ? t(GROUP_KEY[row.group]) : row.group }}
+              {{ formatGroupLabel(row.group) }}
             </Chip>
           </td>
 

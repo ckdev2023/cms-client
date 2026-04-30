@@ -20,6 +20,7 @@
     "test:integration-pg:ci": "npm run test:integration-pg:up && npm run test:integration-pg; EXIT=$?; npm run test:integration-pg:down; exit $EXIT",
     "db:migrate": "tsx --env-file=.env src/infra/db/runMigrations.ts migrate",
     "db:init-local-admin": "tsx --env-file=.env src/scripts/initLocalAdmin.ts",
+    "db:seed-dev": "tsx --env-file=.env src/scripts/seedDevData.ts",
     "db:rollback": "tsx --env-file=.env src/infra/db/runMigrations.ts rollback",
     "db:migrations:check": "tsx --env-file=.env src/infra/db/runMigrations.ts check",
     "db:drizzle:check": "node --import tsx scripts/checkDrizzleSetup.mjs",

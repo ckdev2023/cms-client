@@ -16,10 +16,10 @@ import BillingRiskAckModal from "./components/BillingRiskAckModal.vue";
 import type { BillingSegment, BillingStatusFilter } from "./types";
 import {
   BILLING_STATUS_OPTIONS,
-  GROUP_OPTIONS,
   BILLING_SEGMENTS,
   SUMMARY_CARD_DEFS,
 } from "./fixtures";
+import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import { createBillingRepository } from "./model/BillingRepository";
 import { useBillingFilters } from "./model/useBillingFilters";
@@ -37,12 +37,16 @@ const adminSession = useAdminSession();
 const isManager = computed(() => adminSession.isAdmin.value);
 
 const ownerOptions = computed(() => getOwnerOptions(locale.value));
+// BUG-134：Group 下拉必须随 locale 切换重算，否则模块顶层 const 会
+// 在加载期固化为 ja-JP 默认（`normalizeGroupLocale(undefined)` → `ja-JP`），
+// 导致 zh-CN / en-US 仍渲染日文 `東京一組 / 東京二組`。
+const groupOptions = computed(() => getActiveGroupOptions(locale.value));
 
 const repo = createBillingRepository();
 
 const filters = useBillingFilters({
   statusOptions: BILLING_STATUS_OPTIONS,
-  groupOptions: GROUP_OPTIONS,
+  groupOptions: groupOptions.value,
   ownerOptions: ownerOptions.value,
 });
 
@@ -266,7 +270,7 @@ function handlePaymentLogPageChange(page: number) {
       :owner-filter="filters.ownerFilter.value"
       :segments="BILLING_SEGMENTS"
       :status-options="BILLING_STATUS_OPTIONS"
-      :group-options="GROUP_OPTIONS"
+      :group-options="groupOptions"
       :owner-options="ownerOptions"
       :filtered-count="
         filters.segment.value === 'billing-list'

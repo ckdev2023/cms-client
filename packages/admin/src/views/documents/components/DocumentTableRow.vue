@@ -79,7 +79,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
           >{{ item.name }}</span
         >
         <span
-          v-if="item.sharedExpiryRisk"
+          v-if="item.referenceCount > 1 && item.status === 'expired'"
           class="doc-row__risk-badge"
           :title="t('documents.list.summary.sharedExpiryRisk')"
         >
@@ -154,7 +154,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
           {{ t("documents.actions.remind") }}
         </button>
         <button
-          v-if="item.sharedExpiryRisk"
+          v-if="item.referenceCount > 1 && item.status === 'expired'"
           class="doc-row__action doc-row__action--risk"
           type="button"
           @click="$emit('openRiskPanel', item)"

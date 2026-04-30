@@ -240,11 +240,11 @@ function resolveCustomerGroup(
  * 从客户 `baseProfile` 中解析经营管理签档案。
  *
  * @param baseProfile - 客户档案 JSONB 对象
- * @returns 规范化后的经营管理签档案；不存在时返回 `null`
+ * @returns 规范化后的经营管理签档案；空缺时返回 `not_started` 默认值
  */
 export function resolveCustomerBmvProfile(
   baseProfile: Record<string, unknown>,
-): CustomerBmvProfile | null {
+): CustomerBmvProfile {
   return normalizeCustomerBmvProfile(mergeBmvProfileRecord(baseProfile));
 }
 
@@ -314,13 +314,13 @@ export function resolveCustomerBmvIntakeStatus(profile: {
  * 规范化经营管理签承接档案。
  *
  * @param value - 客户基础档案中的 bmvProfile 原始值
- * @returns 规范化后的经营管理签承接档案；空对象时返回 `null`
+ * @returns 规范化后的经营管理签承接档案；空对象时返回 `not_started` 默认值
  */
 export function normalizeCustomerBmvProfile(
   value: unknown,
-): CustomerBmvProfile | null {
+): CustomerBmvProfile {
   const raw = normalizeObject(value);
-  if (Object.keys(raw).length === 0) return null;
+  if (Object.keys(raw).length === 0) return createDefaultCustomerBmvProfile();
 
   const questionnaireStatus = normalizeBmvStatus(
     raw,
@@ -486,9 +486,9 @@ export function mapCustomerToDetailDto(
       ["sourceType", "source_type"],
       CUSTOMER_SOURCE_TYPES,
     ),
-    visaType: summary.bmvProfile
-      ? summary.bmvProfile.visaPlan
-      : pickOptionalString(bp, ["visaType", "visa_type"]),
+    visaType:
+      summary.bmvProfile.visaPlan ??
+      pickOptionalString(bp, ["visaType", "visa_type"]),
     referrerName: pickOptionalString(bp, ["referrerName", "referrer_name"]),
     archivedCases: aggregates.archivedCases ?? 0,
     caseNames: normalizeStringArray(aggregates.caseNames),

@@ -21,6 +21,7 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
     "postApprovalBillingRiskUnacknowledged",
   CASE_CROSS_GROUP_REASON_REQUIRED: "crossGroupReasonRequired",
   CASE_GROUP_TRANSFER_REASON_REQUIRED: "groupTransferReasonRequired",
+  CASE_GROUP_NOT_FOUND: "groupNotFound",
   CASE_INVALID_ENUM: "invalidEnum",
   CASE_NOT_FOUND: "notFound",
   CASE_REF_NOT_FOUND: "refNotFound",

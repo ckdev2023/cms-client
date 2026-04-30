@@ -9,6 +9,7 @@ import {
   GROUP_STATUS_BADGE,
   GROUP_TABLE_COLUMNS,
 } from "../fixtures";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** Group 列表面板，展示状态筛选、表格列表、空状态和行选中交互。 */
 const props = withDefaults(
@@ -34,7 +35,7 @@ defineEmits<{
   openCreate: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const STATUS_CHIP_TONE: Record<string, ChipTone> = {
   green: "success",
@@ -50,6 +51,16 @@ const STATUS_CHIP_TONE: Record<string, ChipTone> = {
 function chipToneFor(status: GroupSummary["status"]): ChipTone {
   const badge = GROUP_STATUS_BADGE[status];
   return STATUS_CHIP_TONE[badge.variant] ?? "neutral";
+}
+
+/**
+ * 将 ISO 时间戳格式化为当前 locale 的日期时间字符串；空值或解析失败时返回 `"—"`。
+ *
+ * @param iso - ISO 8601 时间戳
+ * @returns 本地化时间或 `"—"`
+ */
+function fmtCreatedAt(iso: string | null | undefined): string {
+  return formatDateTime(iso, locale.value) || "—";
 }
 </script>
 
@@ -157,7 +168,7 @@ function chipToneFor(status: GroupSummary["status"]): ChipTone {
               </Chip>
             </td>
             <td class="group-list-panel__td">
-              {{ group.createdAt }}
+              {{ fmtCreatedAt(group.createdAt) }}
             </td>
             <td class="group-list-panel__td group-list-panel__td--center">
               {{ group.activeCaseCount }}

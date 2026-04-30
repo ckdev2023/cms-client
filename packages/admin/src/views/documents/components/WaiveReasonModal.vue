@@ -94,7 +94,7 @@ defineEmits<{
                 :key="code"
                 :value="code"
               >
-                {{ WAIVED_REASONS[code].label }}
+                {{ t(WAIVED_REASONS[code].labelKey) }}
               </option>
             </select>
           </div>

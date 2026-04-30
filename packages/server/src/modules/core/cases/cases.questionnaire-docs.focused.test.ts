@@ -5,11 +5,9 @@ import {
   SURVEY_DATA_CATEGORY,
   DOCUMENT_ITEM_CATEGORIES,
   validateSurveyData,
-} from "./cases.types-survey-visa-quote";
-import type {
-  SurveyDataWriteContract,
-  SurveyDataReadContract,
-  DocumentItemCategory,
+  type SurveyDataWriteContract,
+  type SurveyDataReadContract,
+  type DocumentItemCategory,
 } from "./cases.types-survey-visa-quote";
 import { mapDetailCountsRow } from "./cases.service";
 import type { CaseDetailCounts } from "./cases.types";
@@ -39,6 +37,10 @@ function makeRow(
     note: null,
     category: "questionnaire",
     survey_data: null,
+    waive_reason_latest: null,
+    waive_reason_code_latest: null,
+    waived_by_user_id_latest: null,
+    waived_at_latest: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,

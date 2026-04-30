@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
-import Chip from "../../../shared/ui/Chip.vue";
-import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import Button from "../../../shared/ui/Button.vue";
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail, TeamMember } from "../types-detail";
-import { getPhaseI18nKey, getPhaseBadge, BADGE_TONE_MAP } from "../constants";
 
 /** 概览右侧边栏：阻断与风险摘要、案件团队、提交前校验提示。 */
 const { t } = useI18n();
@@ -17,26 +14,6 @@ defineProps<{
 const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
 }>();
-
-/**
- * 将业务阶段代码映射为 Chip 组件的 tone。
- * @param phase - 业务阶段代码
- * @returns 对应的 ChipTone
- */
-function phaseTone(phase: string): ChipTone {
-  const badge = getPhaseBadge(phase);
-  return (BADGE_TONE_MAP[badge] ?? "neutral") as ChipTone;
-}
-
-/**
- * 获取业务阶段的国际化显示文案。
- * @param phase - 业务阶段代码
- * @returns 国际化文案；未知 phase 原样返回
- */
-function phaseDisplayLabel(phase: string): string {
-  const key = getPhaseI18nKey(phase);
-  return key ? t(key) : phase;
-}
 
 /**
  * 将团队成员的渐变标记映射为实际背景渐变。
@@ -63,18 +40,6 @@ function teamGradient(member: TeamMember): string {
 
 <template>
   <div class="overview-sidebar">
-    <!-- Phase -->
-    <Card padding="md">
-      <span class="overview-sidebar__kicker">{{
-        t("cases.detail.overview.sidebar.phaseTitle")
-      }}</span>
-      <div class="overview-sidebar__phase-row">
-        <Chip :tone="phaseTone(detail.businessPhase)" size="sm" dot>
-          {{ phaseDisplayLabel(detail.businessPhase) }}
-        </Chip>
-      </div>
-    </Card>
-
     <!-- Risk summary -->
     <Card padding="md">
       <span class="overview-sidebar__kicker">{{
@@ -244,10 +209,6 @@ function teamGradient(member: TeamMember): string {
   color: var(--color-text-3);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-}
-
-.overview-sidebar__phase-row {
-  margin-top: 8px;
 }
 
 /* ── Risk ──────────────────────────────────────────────── */

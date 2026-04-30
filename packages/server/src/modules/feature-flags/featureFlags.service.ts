@@ -4,6 +4,7 @@ import { Pool } from "pg";
 import { TimelineService } from "../core/timeline/timeline.service";
 import type { RequestContext } from "../core/tenancy/requestContext";
 import { createTenantDb } from "../core/tenancy/tenantDb";
+import { requireTimestampString } from "../core/model/timestamps";
 import { normalizeObject } from "../../infra/utils/normalize";
 import {
   shouldEnableFlagByRollout,
@@ -199,8 +200,8 @@ function mapRow(row: {
     key: row.key,
     enabled: row.enabled,
     payload: normalizeObject(row.payload),
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
 }
 

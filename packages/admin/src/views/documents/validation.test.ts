@@ -13,7 +13,7 @@ import {
   getProviderLabelKey,
   getStatusLabelKey,
   getStatusTone,
-  getWaivedReasonLabel,
+  getWaivedReasonLabelKey,
 } from "./constants";
 import {
   canTransition,
@@ -44,7 +44,7 @@ describe("documents/constants", () => {
     expect(WAIVED_REASON_CODES).toHaveLength(5);
     for (const code of WAIVED_REASON_CODES) {
       expect(WAIVED_REASONS[code]).toBeDefined();
-      expect(WAIVED_REASONS[code].label).toBeTruthy();
+      expect(WAIVED_REASONS[code].labelKey).toBeTruthy();
     }
   });
 
@@ -64,7 +64,7 @@ describe("documents/constants", () => {
   it("label helpers fall back to raw key for unknown values", () => {
     expect(getStatusLabelKey("unknown")).toBe("unknown");
     expect(getProviderLabelKey("unknown")).toBe("unknown");
-    expect(getWaivedReasonLabel("unknown")).toBe("unknown");
+    expect(getWaivedReasonLabelKey("unknown")).toBe("unknown");
   });
 
   it("label helpers return correct label keys for known values", () => {
@@ -73,7 +73,9 @@ describe("documents/constants", () => {
     expect(getProviderLabelKey("main_applicant")).toBe(
       "documents.providers.mainApplicant",
     );
-    expect(getWaivedReasonLabel("other")).toBe("其他");
+    expect(getWaivedReasonLabelKey("other")).toBe(
+      "documents.waive.reasons.other",
+    );
   });
 
   it("DOCUMENT_STATUS_TONE has an entry for every status", () => {

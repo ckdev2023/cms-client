@@ -55,7 +55,14 @@ const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
 );
 const isBmvCustomer = computed(() => props.customer.bmvProfile !== null);
-const showBmvIntakeCard = computed(() => props.bmvEnabled === true);
+const isBmvCandidate = computed(
+  () =>
+    props.customer.bmvProfile !== null ||
+    props.customer.visaType === "business_manager",
+);
+const showBmvIntakeCard = computed(
+  () => props.bmvEnabled === true && isBmvCandidate.value,
+);
 const avatarInputId = "basicInfoAvatar";
 
 const inputCls = computed(() => [

@@ -28,6 +28,7 @@ import type {
   CaseValidationStatus,
 } from "./types";
 import {
+  CASE_DETAIL_TAB_ALIASES,
   CASE_DETAIL_TAB_KEYS,
   CASE_RISK_STATUSES,
   CASE_SCOPES,
@@ -228,10 +229,7 @@ export function isValidDetailTab(v: string): v is CaseDetailTab {
 
 /**
  * 将任意外部输入解析为合法 `CaseDetailTab`，非法值回退到 `DEFAULT_CASE_DETAIL_TAB`。
- *
- * 回退规则（按优先级）：
- *   1. `raw` 为 `string` 且属于 `CASE_DETAIL_TAB_KEYS` → 原值返回
- *   2. 其他情况（`null` / `undefined` / 空串 / 非法值）→ `DEFAULT_CASE_DETAIL_TAB`
+ * 先查 `CASE_DETAIL_TAB_ALIASES`（读时容错），再走白名单校验。
  *
  * @param raw - 来自 `route.query.tab`、URL hash 或 model deps 的原始值
  * @returns 类型安全的 tab 键名
@@ -239,8 +237,9 @@ export function isValidDetailTab(v: string): v is CaseDetailTab {
 export function resolveDetailTab(
   raw: string | null | undefined,
 ): CaseDetailTab {
-  if (typeof raw === "string" && isValidDetailTab(raw)) return raw;
-  return DEFAULT_CASE_DETAIL_TAB;
+  if (typeof raw !== "string") return DEFAULT_CASE_DETAIL_TAB;
+  const aliased = CASE_DETAIL_TAB_ALIASES[raw] ?? raw;
+  return isValidDetailTab(aliased) ? aliased : DEFAULT_CASE_DETAIL_TAB;
 }
 
 /**

@@ -120,6 +120,24 @@ export default [
       complexity: "off",
       "max-statements": "off",
       "@typescript-eslint/no-explicit-any": "off",
+      // 禁止 `describe.skip` / `it.skip` / `test.skip` 与 `xdescribe` / `xit` / `xtest`
+      // 直接合入 main——R5/R8/R9 三轮回归同一条「caseNo 透传」链路均因为
+      // 关键单测被 `describe.skip` 默默关掉而漏过。
+      // 存量例外用 `// eslint-disable-next-line no-restricted-syntax` + 跟踪 BUG/issue 注释豁免。
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "MemberExpression[object.name=/^(describe|it|test|suite)$/][property.name='skip']",
+          message:
+            "禁止合入被 skip 的测试（describe.skip / it.skip / test.skip）；如需临时禁用请挂跟踪 BUG/issue 注释并 eslint-disable-next-line。",
+        },
+        {
+          selector: "CallExpression[callee.name=/^(xdescribe|xit|xtest)$/]",
+          message:
+            "禁止合入被 skip 的测试（xdescribe / xit / xtest）；如需临时禁用请挂跟踪 BUG/issue 注释并 eslint-disable-next-line。",
+        },
+      ],
     },
   },
 ];

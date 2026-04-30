@@ -66,7 +66,31 @@ describe("buildCaseTitle", () => {
   it("accepts resolved label strings (code-based ApplicationType)", () => {
     expect(
       buildCaseTitle("王浩", "技人国", "Certificate of Eligibility", false),
-    ).toBe("王浩 技人国Certificate of Eligibility");
+    ).toBe("王浩 技人国 Certificate of Eligibility");
+  });
+  it("dedupes when template label already contains the application type (BUG-149 zh-CN)", () => {
+    expect(
+      buildCaseTitle("张三", "经营管理（认定 4 个月）", "认定", false),
+    ).toBe("张三 经营管理（认定 4 个月）");
+    expect(buildCaseTitle("", "技人国（认定）", "认定", false)).toBe(
+      "技人国（认定）",
+    );
+    expect(buildCaseTitle("", "経営管理（更新）", "更新", false)).toBe(
+      "経営管理（更新）",
+    );
+  });
+  it("inserts a space between Latin template and application type (BUG-149 en-US)", () => {
+    expect(
+      buildCaseTitle("", "Dependent Visa", "Certificate of Eligibility", false),
+    ).toBe("Dependent Visa Certificate of Eligibility");
+    expect(
+      buildCaseTitle(
+        "John",
+        "Business Manager Visa",
+        "Certificate of Eligibility",
+        false,
+      ),
+    ).toBe("John Business Manager Visa Certificate of Eligibility");
   });
 });
 

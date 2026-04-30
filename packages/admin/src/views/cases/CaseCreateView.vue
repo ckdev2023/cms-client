@@ -6,8 +6,16 @@ import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import Chip from "../../shared/ui/Chip.vue";
 import Card from "../../shared/ui/Card.vue";
-import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
-import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
+import {
+  getActiveGroupOptions,
+  resolveGroupLabel,
+} from "../../shared/model/useGroupOptions";
+import {
+  getOwnerOptions,
+  withCurrentUserOwnerOption,
+} from "../../shared/model/useOwnerOptions";
+import { formatJpyAmount } from "../../shared/model/formatCurrency";
+import { useAdminSession } from "../../auth/model/adminSession";
 import CaseCreateStep1 from "./components/CaseCreateStep1.vue";
 import CaseCreateStep2 from "./components/CaseCreateStep2.vue";
 import CaseCreateStep3 from "./components/CaseCreateStep3.vue";
@@ -35,12 +43,17 @@ const route = useRoute();
 const router = useRouter();
 const fixtureRepo = createMockCaseRepository();
 const viewer = fixtureRepo.getViewer();
+const { currentUser } = useAdminSession();
 const sourceContext = parseCaseCreateQuery(route.query, route.hash);
 const templates = fixtureRepo.getCreateTemplates();
-const ownerOptions = computed(() => getOwnerOptions(locale.value));
+const ownerOptions = computed(() =>
+  withCurrentUserOwnerOption(getOwnerOptions(locale.value), currentUser.value),
+);
 const groupOptions = computed(() => getActiveGroupOptions(locale.value));
 
-const customerDropdown = useCustomerDropdownData();
+const customerDropdown = useCustomerDropdownData({
+  locale: () => locale.value,
+});
 onMounted(() => {
   customerDropdown.fetch();
 });
@@ -133,6 +146,16 @@ function navigateToCustomer() {
 }
 
 /**
+ * 跳转到客户详情页 BMV 承接卡片位置。
+ */
+function navigateToCustomerBmvIntake() {
+  const cid = model.primaryCustomer.value?.id;
+  if (!cid) return;
+  window.location.href =
+    buildCustomerDetailHref(cid) + "?tab=basic#bmv-intake-card";
+}
+
+/**
  * 打开当事人快速新建弹窗并预填角色。
  *
  * @param mode - 弹窗模式（主申请人或关联人）
@@ -169,7 +192,12 @@ const customerSelectOptions = computed(() => {
   const base = [...customerDropdown.customers.value];
   const p = model.primaryCustomer.value;
   if (p && !base.some((c) => c.id === p.id)) base.unshift(p);
-  return base;
+  return base.map((c) => ({
+    ...c,
+    groupLabel: c.group
+      ? resolveGroupLabel(c.group, undefined, locale.value)
+      : "",
+  }));
 });
 
 const nextLabel = computed(() => {
@@ -213,7 +241,7 @@ const summaryItems = computed(() => {
     },
     {
       label: t("cases.create.summary.amount"),
-      value: model.draft.amount || notSet,
+      value: formatJpyAmount(model.draft.amount) || notSet,
     },
   ];
 });
@@ -231,6 +259,44 @@ const summaryItems = computed(() => {
         { label: t('cases.create.breadcrumbNew') },
       ]"
     />
+
+    <div
+      v-if="model.preSignGate.value.active && !model.preSignGate.value.passed"
+      class="cc__gate-banner"
+      data-testid="gate-banner"
+    >
+      <div class="cc__gate-banner-header">
+        <span class="cc__gate-banner-icon" aria-hidden="true">⚠</span>
+        <strong>{{ t("cases.create.preSignGate.blockedTitle") }}</strong>
+      </div>
+      <p class="cc__gate-banner-desc">
+        {{ t("cases.create.preSignGate.blockedDesc") }}
+      </p>
+      <ul class="cc__gate-banner-list">
+        <li
+          v-for="b in model.preSignGate.value.blockers"
+          :key="b.code"
+          class="cc__gate-banner-item"
+        >
+          <span>{{ t(b.i18nKey) }}</span>
+          <span class="cc__gate-banner-recovery">{{
+            t(b.recoveryI18nKey)
+          }}</span>
+        </li>
+      </ul>
+      <a
+        v-if="model.primaryCustomer.value?.id"
+        class="cc__gate-banner-link"
+        data-testid="gate-banner-customer-link"
+        :href="
+          buildCustomerDetailHref(model.primaryCustomer.value.id) +
+          '?tab=basic#bmv-intake-card'
+        "
+        @click.prevent="navigateToCustomerBmvIntake"
+      >
+        {{ t("cases.create.preSignGate.goToCustomer") }} →
+      </a>
+    </div>
 
     <div v-if="model.hasSourceContext.value" class="cc__source">
       <div class="cc__source-kicker">{{ t("cases.create.source.kicker") }}</div>

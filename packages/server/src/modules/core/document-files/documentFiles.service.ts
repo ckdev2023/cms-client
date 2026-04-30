@@ -20,18 +20,22 @@ import {
   type TenantDbTx,
 } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
-import type {
-  DocumentFileListInput,
-  DocumentFileReviewInput,
-  DocumentFileUploadInput,
+import {
+  DOCUMENT_ITEM_ALLOWED_TRANSITIONS,
+  type DocumentFileListInput,
+  type DocumentFileReviewInput,
+  type DocumentFileUploadInput,
+  type DocumentItemStatusEnum,
 } from "../documents.types";
 import {
   buildStorageKey,
   DOC_FILE_COLS,
+  insertRequirementFileRef,
   LOCAL_STORAGE_TYPE,
   mapDecisionToReviewStatus,
   mapDocumentFileRow,
   normalizeRelativePath,
+  resolveAssetId,
   type DocumentFileQueryRow,
   toNumberOrNull,
 } from "./documentFiles.shared";
@@ -42,17 +46,13 @@ export type {
   DocumentFileUploadInput,
 } from "../documents.types";
 
-/**
- * DocumentFile 服务，提供上传、查询、审核与删除能力。
- */
+/** 资料文件服务。 */
 @Injectable()
 export class DocumentFilesService {
-  /**
-   * 构造函数。
-   * @param pool PostgreSQL 连接池
+  /** 构造函数。
+   * @param pool DB 连接池
    * @param timelineService Timeline 服务
-   * @param storage 文件存储适配器
-   */
+   * @param storage 存储适配器 */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(TimelineService) private readonly timelineService: TimelineService,
@@ -62,35 +62,70 @@ export class DocumentFilesService {
   private async assertRequirementExists(
     tx: TenantDbTx,
     requirementId: string,
-  ): Promise<void> {
-    const requirementResult = await tx.query<{ id: string }>(
-      `
-        select id
-        from document_items
-        where id = $1 and status != 'deleted'
-        limit 1
-        for update
-      `,
+  ): Promise<{ status: string; caseId: string; checklistItemCode: string }> {
+    const result = await tx.query<{
+      id: string;
+      status: string;
+      case_id: string;
+      checklist_item_code: string;
+    }>(
+      `select id, status, case_id, checklist_item_code from document_items
+       where id = $1 and status != 'deleted' limit 1 for update`,
       [requirementId],
     );
-    if (!requirementResult.rows.at(0)) {
-      throw new NotFoundException("Document requirement not found");
+    const row = result.rows.at(0);
+    if (!row) throw new NotFoundException("Document requirement not found");
+    return {
+      status: row.status,
+      caseId: row.case_id,
+      checklistItemCode: row.checklist_item_code,
+    };
+  }
+
+  private static readonly UPLOAD_TRANSITION_TARGET: DocumentItemStatusEnum =
+    "uploaded_reviewing";
+
+  private static readonly UPLOAD_TRANSITION_ELIGIBLE: readonly string[] = (
+    Object.entries(DOCUMENT_ITEM_ALLOWED_TRANSITIONS) as [
+      string,
+      readonly string[],
+    ][]
+  )
+    .filter(([, targets]) =>
+      targets.includes(DocumentFilesService.UPLOAD_TRANSITION_TARGET),
+    )
+    .map(([from]) => from);
+
+  private async transitionItemAfterUpload(
+    tx: TenantDbTx,
+    requirementId: string,
+    currentStatus: string,
+  ): Promise<{ transitioned: boolean; from: string }> {
+    if (
+      !DocumentFilesService.UPLOAD_TRANSITION_ELIGIBLE.includes(currentStatus)
+    ) {
+      return { transitioned: false, from: currentStatus };
     }
+    const target = DocumentFilesService.UPLOAD_TRANSITION_TARGET;
+    const result = await tx.query(
+      `update document_items
+       set status = $2, received_at = now(), updated_at = now()
+       where id = $1 and status = $3 and status != 'deleted'`,
+      [requirementId, target, currentStatus],
+    );
+    return { transitioned: (result.rowCount ?? 0) > 0, from: currentStatus };
   }
 
   private async getNextVersionNo(
     tx: TenantDbTx,
     requirementId: string,
   ): Promise<number> {
-    const versionResult = await tx.query<{ next_version: unknown }>(
-      `
-        select coalesce(max(version_no), 0) + 1 as next_version
-        from document_files
-        where requirement_id = $1
-      `,
+    const r = await tx.query<{ next_version: unknown }>(
+      `select coalesce(max(version_no), 0) + 1 as next_version
+       from document_files where requirement_id = $1`,
       [requirementId],
     );
-    return toNumberOrNull(versionResult.rows.at(0)?.next_version) ?? 1;
+    return toNumberOrNull(r.rows.at(0)?.next_version) ?? 1;
   }
 
   private async insertDocumentFile(
@@ -100,6 +135,7 @@ export class DocumentFilesService {
     fileUrl: string | null,
     hashValue: string | null,
     versionNo: number,
+    assetId: string | null = null,
   ): Promise<DocumentFile> {
     const insertResult = await tx.query<DocumentFileQueryRow>(
       `
@@ -115,9 +151,10 @@ export class DocumentFilesService {
           storage_type,
           relative_path,
           expiry_date,
-          hash_value
+          hash_value,
+          asset_id
         )
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         returning ${DOC_FILE_COLS}
       `,
       [
@@ -133,6 +170,7 @@ export class DocumentFilesService {
         input.relativePath ?? null,
         input.expiryDate ?? null,
         hashValue,
+        assetId,
       ],
     );
 
@@ -141,9 +179,11 @@ export class DocumentFilesService {
     return mapDocumentFileRow(row);
   }
 
-  private async writeUploadedTimeline(
+  private async writePostUploadTimelines(
     ctx: RequestContext,
     file: DocumentFile,
+    requirementId: string,
+    transition: { transitioned: boolean; from: string },
   ): Promise<void> {
     await this.timelineService.write(ctx, {
       entityType: "document_file",
@@ -155,19 +195,63 @@ export class DocumentFilesService {
         hashValue: file.hashValue,
       },
     });
+    if (transition.transitioned) {
+      await this.timelineService.write(ctx, {
+        entityType: "document_item",
+        entityId: requirementId,
+        action: "document_item.transitioned",
+        payload: {
+          from: transition.from,
+          to: DocumentFilesService.UPLOAD_TRANSITION_TARGET,
+          trigger: "file_upload",
+        },
+      });
+    }
   }
 
-  private async deleteUploadedObject(fileUrl: string | null): Promise<void> {
-    if (!fileUrl) return;
-    await this.storage.remove(fileUrl).catch(() => undefined);
+  private async executeUploadTx(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    input: DocumentFileUploadInput,
+    fileUrl: string | null,
+    hashValue: string | null,
+  ): Promise<{
+    file: DocumentFile;
+    transition: { transitioned: boolean; from: string };
+  }> {
+    const requirement = await this.assertRequirementExists(
+      tx,
+      input.requirementId,
+    );
+    const versionNo = await this.getNextVersionNo(tx, input.requirementId);
+    const assetId = await resolveAssetId(tx, ctx, input, requirement);
+    const file = await this.insertDocumentFile(
+      tx,
+      ctx,
+      input,
+      fileUrl,
+      hashValue,
+      versionNo,
+      assetId,
+    );
+    await insertRequirementFileRef(
+      tx,
+      input.requirementId,
+      file.id,
+      ctx.userId,
+    );
+    const transition = await this.transitionItemAfterUpload(
+      tx,
+      input.requirementId,
+      requirement.status,
+    );
+    return { file, transition };
   }
 
-  /**
-   * 上传资料文件并创建版本记录。
+  /** 上传资料文件并创建版本记录。
    * @param ctx 请求上下文
    * @param input 上传参数
-   * @returns 创建后的资料文件
-   */
+   * @returns 创建后的资料文件 */
   async upload(
     ctx: RequestContext,
     input: DocumentFileUploadInput,
@@ -203,21 +287,16 @@ export class DocumentFilesService {
       relativePath: normalizeRelativePath(input.relativePath ?? ""),
     };
 
-    const created = await tenantDb.transaction(async (tx) => {
-      await this.assertRequirementExists(tx, input.requirementId);
-      const versionNo = await this.getNextVersionNo(tx, input.requirementId);
-      return this.insertDocumentFile(
-        tx,
-        ctx,
-        localInput,
-        null,
-        null,
-        versionNo,
-      );
-    });
-
-    await this.writeUploadedTimeline(ctx, created);
-    return created;
+    const { file, transition } = await tenantDb.transaction((tx) =>
+      this.executeUploadTx(tx, ctx, localInput, null, null),
+    );
+    await this.writePostUploadTimelines(
+      ctx,
+      file,
+      input.requirementId,
+      transition,
+    );
+    return file;
   }
 
   private async uploadBinaryFile(
@@ -241,32 +320,26 @@ export class DocumentFilesService {
     await this.storage.upload(fileUrl, input.data, input.contentType);
 
     try {
-      const created = await tenantDb.transaction(async (tx) => {
-        await this.assertRequirementExists(tx, input.requirementId);
-        const versionNo = await this.getNextVersionNo(tx, input.requirementId);
-        return this.insertDocumentFile(
-          tx,
-          ctx,
-          input,
-          fileUrl,
-          hashValue,
-          versionNo,
-        );
-      });
-      await this.writeUploadedTimeline(ctx, created);
-      return created;
+      const { file, transition } = await tenantDb.transaction((tx) =>
+        this.executeUploadTx(tx, ctx, input, fileUrl, hashValue),
+      );
+      await this.writePostUploadTimelines(
+        ctx,
+        file,
+        input.requirementId,
+        transition,
+      );
+      return file;
     } catch (error) {
-      await this.deleteUploadedObject(fileUrl);
+      await this.storage.remove(fileUrl).catch(() => undefined);
       throw error;
     }
   }
 
-  /**
-   * 按资料项获取文件版本列表。
+  /** 按资料项获取文件版本列表。
    * @param ctx 请求上下文
    * @param input 查询参数
-   * @returns 文件列表及总数
-   */
+   * @returns 文件列表及总数 */
   async list(
     ctx: RequestContext,
     input: DocumentFileListInput,
@@ -300,12 +373,10 @@ export class DocumentFilesService {
     return { items: result.rows.map(mapDocumentFileRow), total };
   }
 
-  /**
-   * 根据 ID 获取资料文件。
+  /** 根据 ID 获取资料文件。
    * @param ctx 请求上下文
    * @param id 文件 ID
-   * @returns 文件详情或 null
-   */
+   * @returns 文件详情或 null */
   async get(ctx: RequestContext, id: string): Promise<DocumentFile | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<DocumentFileQueryRow>(
@@ -316,13 +387,11 @@ export class DocumentFilesService {
     return row ? mapDocumentFileRow(row) : null;
   }
 
-  /**
-   * 审核资料文件。
+  /** 审核资料文件。
    * @param ctx 请求上下文
    * @param id 文件 ID
    * @param input 审核参数
-   * @returns 审核后的文件
-   */
+   * @returns 审核后的文件 */
   async review(
     ctx: RequestContext,
     id: string,
@@ -368,12 +437,9 @@ export class DocumentFilesService {
     return updated;
   }
 
-  /**
-   * 删除资料文件及其存储对象。
+  /** 删除资料文件及其存储对象。
    * @param ctx 请求上下文
-   * @param id 文件 ID
-   * @returns void
-   */
+   * @param id 文件 ID */
   async remove(ctx: RequestContext, id: string): Promise<void> {
     const current = await this.get(ctx, id);
     if (!current) throw new NotFoundException("Document file not found");

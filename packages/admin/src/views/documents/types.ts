@@ -79,7 +79,7 @@ export interface WaivedReasonDef {
   /**
    *
    */
-  label: string;
+  labelKey: string;
   /**
    *
    */

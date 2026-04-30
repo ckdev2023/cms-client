@@ -10,6 +10,10 @@ const ORG_ID = "00000000-0000-4000-8000-000000000000";
 const USER_ID = "00000000-0000-4000-8000-000000000001";
 const FILE_ID = "file-1";
 const REQUIREMENT_ID = "00000000-0000-4000-8000-000000000010";
+const CASE_ID = "00000000-0000-4000-8000-000000000020";
+const CUSTOMER_ID = "00000000-0000-4000-8000-000000000030";
+const ASSET_ID = "00000000-0000-4000-8000-000000000040";
+const CHECKLIST_ITEM_CODE = "passport_copy";
 
 type QueryResult = { rows: unknown[]; rowCount?: number };
 type QueryFn = (sql: string, params?: unknown[]) => Promise<QueryResult>;
@@ -102,18 +106,43 @@ function createService(queryFn: QueryFn) {
   return { svc, timeline, storage };
 }
 
+function handleD3Queries(sql: string): QueryResult | null {
+  if (sql.includes("customer_id from cases")) {
+    return { rows: [{ customer_id: CUSTOMER_ID }], rowCount: 1 };
+  }
+  if (sql.includes("INSERT INTO document_assets")) {
+    return { rows: [{ id: ASSET_ID }], rowCount: 1 };
+  }
+  if (sql.includes("document_requirement_file_refs")) {
+    return { rows: [], rowCount: 1 };
+  }
+  return null;
+}
+
 void test("DocumentFilesService.upload uploads, auto-increments version and writes timeline", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc, timeline, storage } = createService((sql, params) => {
     calls.push({ sql, params });
     if (sql.includes("from document_items") && sql.includes("for update")) {
-      return Promise.resolve({ rows: [{ id: REQUIREMENT_ID }], rowCount: 1 });
+      return Promise.resolve({
+        rows: [
+          {
+            id: REQUIREMENT_ID,
+            status: "approved",
+            case_id: CASE_ID,
+            checklist_item_code: CHECKLIST_ITEM_CODE,
+          },
+        ],
+        rowCount: 1,
+      });
     }
     if (
       sql.includes("select coalesce(max(version_no), 0) + 1 as next_version")
     ) {
       return Promise.resolve({ rows: [{ next_version: "3" }], rowCount: 1 });
     }
+    const d3 = handleD3Queries(sql);
+    if (d3) return Promise.resolve(d3);
     if (sql.includes("insert into document_files")) {
       return Promise.resolve({
         rows: [makeFileRow({ version_no: 3 })],
@@ -149,6 +178,7 @@ void test("DocumentFilesService.upload uploads, auto-increments version and writ
   assert.equal(insertCall.params[6], 3);
   assert.equal(insertCall.params[8], "local_server");
   assert.equal(insertCall.params[9], null);
+  assert.equal(insertCall.params[12], ASSET_ID);
 });
 
 void test("DocumentFilesService.upload supports local paper archive registration", async () => {
@@ -156,13 +186,25 @@ void test("DocumentFilesService.upload supports local paper archive registration
   const { svc, timeline, storage } = createService((sql, params) => {
     calls.push({ sql, params });
     if (sql.includes("from document_items") && sql.includes("for update")) {
-      return Promise.resolve({ rows: [{ id: REQUIREMENT_ID }], rowCount: 1 });
+      return Promise.resolve({
+        rows: [
+          {
+            id: REQUIREMENT_ID,
+            status: "approved",
+            case_id: CASE_ID,
+            checklist_item_code: CHECKLIST_ITEM_CODE,
+          },
+        ],
+        rowCount: 1,
+      });
     }
     if (
       sql.includes("select coalesce(max(version_no), 0) + 1 as next_version")
     ) {
       return Promise.resolve({ rows: [{ next_version: "2" }], rowCount: 1 });
     }
+    const d3 = handleD3Queries(sql);
+    if (d3) return Promise.resolve(d3);
     if (sql.includes("insert into document_files")) {
       return Promise.resolve({
         rows: [
@@ -201,6 +243,7 @@ void test("DocumentFilesService.upload supports local paper archive registration
   assert.equal(insertCall.params[3], null);
   assert.equal(insertCall.params[8], "local_server");
   assert.equal(insertCall.params[9], "paper-archive/2026/box-01/passport.pdf");
+  assert.equal(insertCall.params[12], ASSET_ID);
 });
 
 void test("DocumentFilesService.upload rejects unsafe local paper archive path", async () => {

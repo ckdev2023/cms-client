@@ -10,7 +10,6 @@ import type {
   SelectOption,
   StatusOption,
 } from "./types";
-import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 
 // ---------------------------------------------------------------------------
 // 状态选项（枚举 + 样式映射）
@@ -35,12 +34,6 @@ export const PAYMENT_RECORD_STATUS_OPTIONS: StatusOption[] = [
   { value: "voided", label: "已作废", badge: "tag-red" },
   { value: "reversed", label: "已冲正", badge: "tag-orange" },
 ];
-
-// ---------------------------------------------------------------------------
-// Group 选项
-// ---------------------------------------------------------------------------
-
-export const GROUP_OPTIONS: SelectOption[] = getActiveGroupOptions();
 
 // ---------------------------------------------------------------------------
 // 催款跳过原因

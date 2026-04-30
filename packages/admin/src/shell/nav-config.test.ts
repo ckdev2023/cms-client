@@ -51,7 +51,6 @@ describe("nav-config", () => {
     expect(findNavItem("forms")).toBeUndefined();
     expect(findNavItem("reports")).toBeUndefined();
     expect(findNavItem("portal")).toBeUndefined();
-    expect(findNavItem("tasks")).toBeUndefined();
   });
 
   it("isExternalItem returns false for router items", () => {
@@ -93,12 +92,19 @@ describe("nav-config", () => {
     expect(settings.adminOnly).toBe(true);
   });
 
-  it("keeps the tasks route hidden from the shipped navigation", () => {
+  it("exposes the tasks route in the business navigation (BUG-157)", () => {
     const businessGroup = navGroups.find((group) => group.key === "business");
     expect(businessGroup).toBeDefined();
-    expect(businessGroup!.items.some((item) => item.key === "tasks")).toBe(
-      false,
-    );
+
+    const tasks = businessGroup!.items.find((item) => item.key === "tasks") as
+      | NavRouterItem
+      | undefined;
+    expect(tasks).toBeDefined();
+    expect(tasks!.to).toBe("/tasks");
+    expect(tasks!.icon).toBe("clipboard");
+
+    const keys = businessGroup!.items.map((item) => item.key);
+    expect(keys.indexOf("tasks")).toBeGreaterThan(keys.indexOf("cases"));
   });
 
   it("every nav item key has a matching i18n entry in all locales", () => {

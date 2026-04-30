@@ -1,9 +1,65 @@
-import { ref, computed } from "vue";
-import type { WaivedReasonCode } from "../types";
+import { ref, computed, type Ref } from "vue";
+import type {
+  WaivedReasonCode,
+  ReferenceCandidate,
+  SharedExpiryRiskData,
+} from "../types";
+import type {
+  DocumentRepository,
+  ReferenceCandidateDto,
+} from "./DocumentRepositoryTypes";
 
-interface ReviewTargetItem {
+/**
+ *
+ */
+export interface ReviewTargetItem {
+  /**
+   *
+   */
   id: string;
+  /**
+   *
+   */
   name: string;
+}
+
+/**
+ *
+ */
+export interface DocumentReviewDeps {
+  /**
+   *
+   */
+  repository?: Pick<
+    DocumentRepository,
+    | "transition"
+    | "waive"
+    | "followUp"
+    | "listReferenceCandidates"
+    | "linkRef"
+    | "listFiles"
+    | "getSharedExpiryRisk"
+  >;
+  /**
+   *
+   */
+  onApproveSuccess?: (item: ReviewTargetItem) => void;
+  /**
+   *
+   */
+  onRejectSuccess?: (item: ReviewTargetItem) => void;
+  /**
+   *
+   */
+  onRemindSuccess?: (item: ReviewTargetItem) => void;
+  /**
+   *
+   */
+  onReferenceSuccess?: (item: ReviewTargetItem) => void;
+  /**
+   *
+   */
+  onError?: (error: unknown) => void;
 }
 
 function setupApprove() {
@@ -86,20 +142,35 @@ function setupWaive() {
   };
 }
 
-function setupReference() {
+function adaptCandidate(
+  dto: ReferenceCandidateDto,
+  caseNameLookup?: Map<string, string>,
+): ReferenceCandidate {
+  return {
+    id: dto.fileId,
+    sourceCaseId: dto.sourceCaseId,
+    sourceCaseName: caseNameLookup?.get(dto.sourceCaseId) ?? dto.sourceCaseId,
+    sourceDocName: dto.sourceRequirementName,
+    version: dto.versionNo,
+    reviewedAt: dto.uploadedAt,
+    expiryDate: dto.expiryDate,
+  };
+}
+
+function setupReferenceState(submitting: Ref<boolean>) {
   const referenceTarget = ref<ReviewTargetItem | null>(null);
   const referenceOpen = computed(() => referenceTarget.value !== null);
   const selectedReferenceId = ref("");
-  const canConfirmReference = computed(() => selectedReferenceId.value !== "");
+  const canConfirmReference = computed(
+    () => selectedReferenceId.value !== "" && !submitting.value,
+  );
+  const referenceCandidates = ref<ReferenceCandidate[]>([]);
+  const referenceCandidatesLoading = ref(false);
 
-  function openReference(item: ReviewTargetItem) {
-    referenceTarget.value = item;
-    selectedReferenceId.value = "";
-  }
-
-  function closeReference() {
+  function resetAll() {
     referenceTarget.value = null;
     selectedReferenceId.value = "";
+    referenceCandidates.value = [];
   }
 
   return {
@@ -107,38 +178,187 @@ function setupReference() {
     referenceOpen,
     selectedReferenceId,
     canConfirmReference,
-    openReference,
-    closeReference,
+    referenceCandidates,
+    referenceCandidatesLoading,
+    resetAll,
   };
 }
 
-function setupRiskPanel() {
-  const riskPanelOpen = ref(false);
+function setupReferenceActions(
+  deps: DocumentReviewDeps,
+  submitting: Ref<boolean>,
+  s: ReturnType<typeof setupReferenceState>,
+) {
+  async function loadCandidates(requirementId: string) {
+    if (!deps.repository?.listReferenceCandidates) return;
+    s.referenceCandidatesLoading.value = true;
+    try {
+      const dtos = await deps.repository.listReferenceCandidates(requirementId);
+      s.referenceCandidates.value = dtos.map((d) => adaptCandidate(d));
+    } catch {
+      s.referenceCandidates.value = [];
+    } finally {
+      s.referenceCandidatesLoading.value = false;
+    }
+  }
 
-  function openRiskPanel() {
+  function openReference(item: ReviewTargetItem) {
+    s.referenceTarget.value = item;
+    s.selectedReferenceId.value = "";
+    s.referenceCandidates.value = [];
+    loadCandidates(item.id);
+  }
+
+  async function confirmReference() {
+    const target = s.referenceTarget.value;
+    if (!target || !s.selectedReferenceId.value || submitting.value) return;
+    submitting.value = true;
+    try {
+      await deps.repository?.linkRef({
+        requirementId: target.id,
+        fileVersionId: s.selectedReferenceId.value,
+      });
+      s.resetAll();
+      deps.onReferenceSuccess?.(target);
+    } catch (error) {
+      deps.onError?.(error);
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  return {
+    ...s,
+    openReference,
+    closeReference: s.resetAll,
+    confirmReference,
+  };
+}
+
+interface RiskPanelDeps {
+  repository?: Pick<DocumentRepository, "listFiles" | "getSharedExpiryRisk">;
+  onError?: (error: unknown) => void;
+}
+
+function setupRiskPanel(riskDeps: RiskPanelDeps) {
+  const riskPanelOpen = ref(false);
+  const riskData = ref<SharedExpiryRiskData | null>(null);
+  const riskLoading = ref(false);
+
+  async function loadRiskData(itemId: string) {
+    const repo = riskDeps.repository;
+    if (!repo?.listFiles || !repo?.getSharedExpiryRisk) return;
+    riskLoading.value = true;
+    riskData.value = null;
+    try {
+      const files = await repo.listFiles(itemId, { limit: 1 });
+      const assetId = files.items[0]?.assetId;
+      if (!assetId) return;
+      riskData.value = await repo.getSharedExpiryRisk(assetId);
+    } catch (error) {
+      riskDeps.onError?.(error);
+    } finally {
+      riskLoading.value = false;
+    }
+  }
+
+  function openRiskPanel(item: ReviewTargetItem) {
     riskPanelOpen.value = true;
+    void loadRiskData(item.id);
   }
 
   function closeRiskPanel() {
     riskPanelOpen.value = false;
+    riskData.value = null;
   }
 
-  return { riskPanelOpen, openRiskPanel, closeRiskPanel };
+  return {
+    riskPanelOpen,
+    riskData,
+    riskLoading,
+    openRiskPanel,
+    closeRiskPanel,
+  };
+}
+
+function setupConfirmActions(
+  deps: DocumentReviewDeps,
+  approve: ReturnType<typeof setupApprove>,
+  reject: ReturnType<typeof setupReject>,
+  submitting: Ref<boolean>,
+) {
+  async function confirmApprove() {
+    const target = approve.approveTarget.value;
+    if (!target || submitting.value) return;
+    submitting.value = true;
+    try {
+      await deps.repository?.transition(target.id, { toStatus: "approved" });
+      approve.closeApprove();
+      deps.onApproveSuccess?.(target);
+    } catch (error) {
+      deps.onError?.(error);
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  async function confirmReject() {
+    const target = reject.rejectTarget.value;
+    if (!target || !reject.canConfirmReject.value || submitting.value) return;
+    submitting.value = true;
+    try {
+      await deps.repository?.transition(target.id, {
+        toStatus: "revision_required",
+      });
+      reject.closeReject();
+      deps.onRejectSuccess?.(target);
+    } catch (error) {
+      deps.onError?.(error);
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  async function confirmRemind(item: ReviewTargetItem) {
+    if (submitting.value) return;
+    submitting.value = true;
+    try {
+      await deps.repository?.followUp(item.id);
+      deps.onRemindSuccess?.(item);
+    } catch (error) {
+      deps.onError?.(error);
+    } finally {
+      submitting.value = false;
+    }
+  }
+
+  return { confirmApprove, confirmReject, confirmRemind };
 }
 
 /**
- * 审核/退回/waive/引用/风险面板的状态管理（P0-CONTRACT §8）。
+ * 审核/退回/waive/引用/风险面板的状态管理 + API 调用（P0-CONTRACT §8）。
  *
- * 纯状态管理，不包含业务副作用；视图层负责 toast 回调与选择清理。
- *
- * @returns 各面板的状态 refs 与操作方法
+ * @param deps - 可选依赖注入（repository + 回调）
+ * @returns 各面板的状态 refs、操作方法、与 API 对接的 confirm 方法
  */
-export function useDocumentReviewModel() {
+export function useDocumentReviewModel(deps: DocumentReviewDeps = {}) {
+  const approve = setupApprove();
+  const reject = setupReject();
+  const submitting = ref(false);
+  const actions = setupConfirmActions(deps, approve, reject, submitting);
+  const refState = setupReferenceState(submitting);
+  const reference = setupReferenceActions(deps, submitting, refState);
+
   return {
-    ...setupApprove(),
-    ...setupReject(),
+    ...approve,
+    ...reject,
     ...setupWaive(),
-    ...setupReference(),
-    ...setupRiskPanel(),
+    ...reference,
+    ...setupRiskPanel({
+      repository: deps.repository,
+      onError: deps.onError,
+    }),
+    submitting,
+    ...actions,
   };
 }

@@ -1,14 +1,15 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
 /**
- * 资料列表分页区：显示当前范围与翻页按钮。
+ * 资料列表分页区：受控组件，接收 page/limit/total 计算显示范围与按钮可用状态。
  */
 const { t } = useI18n();
 
 const props = defineProps<{
-  start: number;
-  end: number;
+  page: number;
+  limit: number;
   total: number;
 }>();
 
@@ -16,6 +17,13 @@ defineEmits<{
   prev: [];
   next: [];
 }>();
+
+const start = computed(() =>
+  props.total > 0 ? (props.page - 1) * props.limit + 1 : 0,
+);
+const end = computed(() => Math.min(props.page * props.limit, props.total));
+const hasPrev = computed(() => props.page > 1);
+const hasNext = computed(() => props.page * props.limit < props.total);
 </script>
 
 <template>
@@ -23,8 +31,8 @@ defineEmits<{
     <div class="doc-pagination__summary">
       {{
         t("documents.list.pagination.summary", {
-          start: props.start,
-          end: props.end,
+          start,
+          end,
           total: props.total,
         })
       }}
@@ -33,7 +41,7 @@ defineEmits<{
       <button
         class="doc-pagination__btn"
         type="button"
-        disabled
+        :disabled="!hasPrev"
         @click="$emit('prev')"
       >
         {{ t("documents.list.pagination.prev") }}
@@ -41,7 +49,7 @@ defineEmits<{
       <button
         class="doc-pagination__btn"
         type="button"
-        disabled
+        :disabled="!hasNext"
         @click="$emit('next')"
       >
         {{ t("documents.list.pagination.next") }}

@@ -39,6 +39,10 @@ function makeItemRow(overrides: Record<string, unknown> = {}) {
     note: null,
     category: null,
     survey_data: null,
+    waive_reason_latest: null,
+    waive_reason_code_latest: null,
+    waived_by_user_id_latest: null,
+    waived_at_latest: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
     ...overrides,
@@ -341,6 +345,58 @@ void test("DocumentItemsService.transition rejects invalid transition", async ()
       return true;
     },
   );
+});
+
+// ── transition: toStatus='waived' is explicitly blocked ──
+void test("transition: rejects toStatus='waived' and directs to dedicated waive endpoint", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "waived" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("POST /:id/waive"));
+      return true;
+    },
+  );
+});
+
+void test("transition: rejects toStatus='waived' regardless of current status", async () => {
+  for (const fromStatus of [
+    "pending",
+    "waiting_upload",
+    "approved",
+    "expired",
+  ]) {
+    const pool = makePool((sql, params) => {
+      if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+        return Promise.resolve({
+          rows: [makeItemRow({ status: fromStatus })],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const svc = createService(pool, makeTimeline());
+    await assert.rejects(
+      () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "waived" }),
+      (err) => {
+        assert.ok(err instanceof Error);
+        assert.ok(
+          err.message.includes("POST /:id/waive"),
+          `from '${fromStatus}': expected message to include 'POST /:id/waive', got: ${err.message}`,
+        );
+        return true;
+      },
+    );
+  }
 });
 
 void test("transition: throws when not found", async () => {
@@ -853,6 +909,93 @@ void test("mapDocumentItemRow: handles null category and survey_data", () => {
   assert.equal(item.surveyData, null);
 });
 
+// ── mapDocumentItemRow: waive fields ──
+
+void test("mapDocumentItemRow: maps waive fields when populated", () => {
+  const row = makeItemRow({
+    status: "waived",
+    waive_reason_code_latest: "visa_type_exempt",
+    waive_reason_latest: "N1 visa holders exempt",
+    waived_by_user_id_latest: USER_ID,
+    waived_at_latest: "2026-04-01T09:00:00.000Z",
+  });
+  const item = mapDocumentItemRow(row as never);
+  assert.equal(item.waiveReasonCodeLatest, "visa_type_exempt");
+  assert.equal(item.waiveReasonLatest, "N1 visa holders exempt");
+  assert.equal(item.waivedByUserIdLatest, USER_ID);
+  assert.equal(item.waivedAtLatest, "2026-04-01T09:00:00.000Z");
+});
+
+void test("mapDocumentItemRow: waive fields are null when not populated", () => {
+  const row = makeItemRow();
+  const item = mapDocumentItemRow(row as never);
+  assert.equal(item.waiveReasonCodeLatest, null);
+  assert.equal(item.waiveReasonLatest, null);
+  assert.equal(item.waivedByUserIdLatest, null);
+  assert.equal(item.waivedAtLatest, null);
+});
+
+// ── get: returns waive fields ──
+
+void test("get: returns waive fields when item is waived", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "waived",
+            waive_reason_code_latest: "equivalent_in_other_case",
+            waive_reason_latest: "provided in case #7",
+            waived_by_user_id_latest: USER_ID,
+            waived_at_latest: "2026-04-15T12:00:00.000Z",
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const item = await svc.get(makeCtx("viewer"), ITEM_ID);
+  assert.ok(item);
+  assert.equal(item.waiveReasonCodeLatest, "equivalent_in_other_case");
+  assert.equal(item.waiveReasonLatest, "provided in case #7");
+  assert.equal(item.waivedByUserIdLatest, USER_ID);
+  assert.equal(item.waivedAtLatest, "2026-04-15T12:00:00.000Z");
+});
+
+// ── list: returns waive fields ──
+
+void test("list: returns waive fields on waived items", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [
+        makeItemRow({
+          status: "waived",
+          waive_reason_code_latest: "other",
+          waive_reason_latest: "client confirmed exempt",
+          waived_by_user_id_latest: USER_ID,
+          waived_at_latest: "2026-04-20T08:30:00.000Z",
+        }),
+      ],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"), { caseId: CASE_ID });
+  assert.equal(result.items.length, 1);
+  const item = result.items[0];
+  assert.equal(item.waiveReasonCodeLatest, "other");
+  assert.equal(item.waiveReasonLatest, "client confirmed exempt");
+  assert.equal(item.waivedByUserIdLatest, USER_ID);
+  assert.equal(item.waivedAtLatest, "2026-04-20T08:30:00.000Z");
+});
+
 // ────────────────────────────────────────────────────────────────
 // P1: questionnaire participation in completion / review / follow-up
 // ────────────────────────────────────────────────────────────────
@@ -960,4 +1103,514 @@ void test("followUp: still rejected on non-questionnaire item in pending status"
       return true;
     },
   );
+});
+
+// ────────────────────────────────────────────────────────────────
+// waive
+// ────────────────────────────────────────────────────────────────
+
+const WAIVE_TS = "2026-03-01T00:00:00.000Z";
+
+function waivePool(fromStatus: string) {
+  return makePool((sql, params) => {
+    if (
+      sql.includes("update document_items") &&
+      sql.includes("status = 'waived'")
+    ) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "waived",
+            waive_reason_code_latest: "visa_type_exempt",
+            waive_reason_latest: null,
+            waived_by_user_id_latest: USER_ID,
+            waived_at_latest: WAIVE_TS,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: fromStatus })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+}
+
+for (const fromStatus of [
+  "pending",
+  "waiting_upload",
+  "revision_required",
+  "approved",
+  "expired",
+]) {
+  void test(`waive: allows from ${fromStatus}`, async () => {
+    const timeline = makeTimeline();
+    const svc = createService(waivePool(fromStatus), timeline);
+    const result = await svc.waive(makeCtx(), ITEM_ID, {
+      reasonCode: "visa_type_exempt",
+    });
+    assert.equal(result.status, "waived");
+    assert.equal(result.waiveReasonCodeLatest, "visa_type_exempt");
+    assert.equal(result.waivedByUserIdLatest, USER_ID);
+    assert.equal(result.waivedAtLatest, WAIVE_TS);
+    assert.equal(timeline.writes.length, 1);
+    assert.deepEqual(
+      (timeline.writes[0] as Record<string, unknown>).action,
+      "document_item.waived",
+    );
+  });
+}
+
+void test("waive: writes timeline with reasonCode and note", async () => {
+  const pool = makePool((sql, params) => {
+    if (
+      sql.includes("update document_items") &&
+      sql.includes("status = 'waived'")
+    ) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "waived",
+            waive_reason_code_latest: "other",
+            waive_reason_latest: "custom reason",
+            waived_by_user_id_latest: USER_ID,
+            waived_at_latest: WAIVE_TS,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  await svc.waive(makeCtx(), ITEM_ID, {
+    reasonCode: "other",
+    note: "custom reason",
+  });
+
+  assert.equal(timeline.writes.length, 1);
+  const payload = (timeline.writes[0] as Record<string, unknown>)
+    .payload as Record<string, unknown>;
+  assert.equal(payload.from, "pending");
+  assert.equal(payload.reasonCode, "other");
+  assert.equal(payload.note, "custom reason");
+});
+
+void test("waive: rejects from waived status", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "waived" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.waive(makeCtx(), ITEM_ID, { reasonCode: "visa_type_exempt" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("Cannot waive"));
+      return true;
+    },
+  );
+});
+
+void test("waive: rejects from deleted status", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.waive(makeCtx(), ITEM_ID, { reasonCode: "visa_type_exempt" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      return true;
+    },
+  );
+});
+
+void test("waive: rejects from uploaded_reviewing status", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "uploaded_reviewing" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.waive(makeCtx(), ITEM_ID, { reasonCode: "visa_type_exempt" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("Cannot waive"));
+      return true;
+    },
+  );
+});
+
+void test("waive: requires note when reasonCode is 'other'", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.waive(makeCtx(), ITEM_ID, { reasonCode: "other" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("note is required"));
+      return true;
+    },
+  );
+});
+
+void test("waive: allows note to be omitted for non-other reasonCode", async () => {
+  const timeline = makeTimeline();
+  const svc = createService(waivePool("pending"), timeline);
+  const result = await svc.waive(makeCtx(), ITEM_ID, {
+    reasonCode: "visa_type_exempt",
+  });
+  assert.equal(result.status, "waived");
+});
+
+void test("waive: throws on item not found", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () =>
+      svc.waive(makeCtx(), "nonexistent", {
+        reasonCode: "visa_type_exempt",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      return true;
+    },
+  );
+});
+
+void test("waive: concurrent status change causes failure", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending" })],
+        rowCount: 1,
+      });
+    }
+    if (
+      sql.includes("update document_items") &&
+      sql.includes("status = 'waived'")
+    ) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.waive(makeCtx(), ITEM_ID, { reasonCode: "visa_type_exempt" }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(
+        err.message.includes("concurrently") || err.message.includes("Failed"),
+      );
+      return true;
+    },
+  );
+});
+
+void test("waive: passes userId and reasonCode to SQL params", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql, params });
+    if (
+      sql.includes("update document_items") &&
+      sql.includes("status = 'waived'")
+    ) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "waived",
+            waive_reason_code_latest: "equivalent_in_other_case",
+            waive_reason_latest: "see case #42",
+            waived_by_user_id_latest: USER_ID,
+            waived_at_latest: WAIVE_TS,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "approved" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.waive(makeCtx(), ITEM_ID, {
+    reasonCode: "equivalent_in_other_case",
+    note: "see case #42",
+  });
+
+  assert.equal(result.waiveReasonCodeLatest, "equivalent_in_other_case");
+  assert.equal(result.waiveReasonLatest, "see case #42");
+
+  const updateCall = calls.find(
+    (c) =>
+      c.sql.includes("update document_items") &&
+      c.sql.includes("status = 'waived'"),
+  );
+  assert.ok(updateCall);
+  assert.ok(updateCall.params);
+  assert.equal(updateCall.params[1], "equivalent_in_other_case");
+  assert.equal(updateCall.params[2], "see case #42");
+  assert.equal(updateCall.params[3], USER_ID);
+  assert.equal(updateCall.params[4], "approved");
+});
+
+// ────────────────────────────────────────────────────────────────
+// A2: ownerSide filter + statusIn array + expired derived
+// ────────────────────────────────────────────────────────────────
+
+void test("list: applies ownerSide filter", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeItemRow({ owner_side: "office" })],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"), { ownerSide: "office" });
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0]?.ownerSide, "office");
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("owner_side = $"));
+  assert.ok(countCall.params?.includes("office"));
+});
+
+void test("list: applies statusIn with single value", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeItemRow({ status: "approved" })],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), { statusIn: ["approved"] });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(countCall.params?.includes("approved"));
+});
+
+void test("list: statusIn with multiple values produces IN clause", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "2" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [makeItemRow()], rowCount: 1 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), {
+    statusIn: ["pending", "waiting_upload"],
+  });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(countCall.params?.includes("pending"));
+  assert.ok(countCall.params?.includes("waiting_upload"));
+});
+
+void test("list: statusIn 'missing' expands to pending + revision_required", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), { statusIn: ["missing"] });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(countCall.params?.includes("pending"));
+  assert.ok(countCall.params?.includes("revision_required"));
+});
+
+void test("list: statusIn 'expired' produces derived SQL (approved AND due_at < now())", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), { statusIn: ["expired"] });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(
+    countCall.sql.includes("status = 'approved' AND due_at < now()"),
+    `Expected derived expired clause, got: ${countCall.sql}`,
+  );
+});
+
+void test("list: statusIn 'expired' combined with other statuses produces OR clause", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), {
+    statusIn: ["pending", "expired"],
+  });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(
+    countCall.sql.includes("status IN ("),
+    `Expected IN clause for direct statuses, got: ${countCall.sql}`,
+  );
+  assert.ok(
+    countCall.sql.includes("status = 'approved' AND due_at < now()"),
+    `Expected derived expired clause, got: ${countCall.sql}`,
+  );
+  assert.ok(
+    countCall.sql.includes(" OR "),
+    `Expected OR between clauses, got: ${countCall.sql}`,
+  );
+  assert.ok(countCall.params?.includes("pending"));
+});
+
+void test("list: statusIn 'missing' combined with 'expired' produces both expansions", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), {
+    statusIn: ["missing", "expired"],
+  });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(countCall.params?.includes("pending"));
+  assert.ok(countCall.params?.includes("revision_required"));
+  assert.ok(countCall.sql.includes("status = 'approved' AND due_at < now()"));
+});
+
+void test("list: statusIn takes precedence over status when both provided", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await svc.list(makeCtx("viewer"), {
+    status: "approved",
+    statusIn: ["pending"],
+  });
+
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(!countCall.sql.includes("status = $"));
+  assert.ok(countCall.params?.includes("pending"));
+  assert.ok(!countCall.params?.includes("approved"));
+});
+
+void test("list: ownerSide combined with statusIn and caseId", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeItemRow({ owner_side: "customer", status: "pending" })],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"), {
+    caseId: CASE_ID,
+    ownerSide: "customer",
+    statusIn: ["missing"],
+  });
+
+  assert.equal(result.items.length, 1);
+  const countCall = calls.find((c) => c.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(countCall.sql.includes("case_id = $"));
+  assert.ok(countCall.sql.includes("owner_side = $"));
+  assert.ok(countCall.sql.includes("status IN ("));
+  assert.ok(countCall.params?.includes(CASE_ID));
+  assert.ok(countCall.params?.includes("customer"));
 });

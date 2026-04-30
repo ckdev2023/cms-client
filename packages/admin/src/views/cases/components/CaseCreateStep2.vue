@@ -1,14 +1,31 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
+import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 import type { PartyPickerMode } from "../model/useCasePartyPicker";
 import type { CaseCreateCustomerOption } from "../types";
 import { resolveTemplateLabel } from "../types-create";
 
 /** 步骤二：主申请人、关联人管理、资料清单预览。 */
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
+
+/**
+ * 角色字面解析：当 `value` 为已注册 i18n key 时返回当前 locale 翻译，
+ * 否则原样返回（兼容快速新建时用户自填的角色字面，如 "扶养者"、"配偶"）。
+ *
+ * 修复 BUG-152：服务端拉取 / sourceContext 合成的客户 roleHint 现统一为
+ * `cases.create.step2.primaryRole`，渲染时按当前语言翻译，避免硬编码 JA。
+ *
+ * @param value - 角色字面或 i18n key
+ * @returns 渲染用本地化字符串
+ */
+function resolveRoleLabel(value: string | undefined | null): string {
+  if (!value) return "";
+  return te(value) ? t(value) : value;
+}
 
 const props = defineProps<{
   model: CreateCaseModel;
@@ -33,6 +50,16 @@ function onPrimarySelect(e: Event) {
   const c = props.customerOptions.find((x) => x.id === id) ?? null;
   props.model.setPrimaryCustomer(c);
 }
+
+/**
+ * 选中主申请人卡片的分组标签：始终基于 raw `group` 字段实时解析，
+ * 以便 locale 切换或 `/api/groups` 别名晚到时仍能保持本地化（BUG-139）。
+ */
+const primaryGroupDisplay = computed(() => {
+  const group = props.model.primaryCustomer.value?.group;
+  if (!group) return "";
+  return resolveGroupLabel(group, undefined, locale.value);
+});
 </script>
 
 <template>
@@ -108,8 +135,8 @@ function onPrimarySelect(e: Event) {
     <div v-if="model.primaryCustomer.value" class="party">
       <strong>{{ model.primaryCustomer.value.name }}</strong>
       <span class="cc__muted">
-        · {{ model.primaryCustomer.value.roleHint }} ·
-        {{ model.primaryCustomer.value.groupLabel }}
+        · {{ resolveRoleLabel(model.primaryCustomer.value.roleHint) }} ·
+        {{ primaryGroupDisplay }}
       </span>
       <div class="cc__muted">{{ model.primaryCustomer.value.contact }}</div>
     </div>
@@ -129,7 +156,7 @@ function onPrimarySelect(e: Event) {
           class="party"
         >
           {{ p.name }}
-          <Chip size="sm">{{ p.role }}</Chip>
+          <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
           <div v-if="p.note" class="cc__muted">{{ p.note }}</div>
         </div>
       </div>
@@ -143,7 +170,7 @@ function onPrimarySelect(e: Event) {
           class="party"
         >
           {{ p.name }}
-          <Chip size="sm">{{ p.role }}</Chip>
+          <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
           <div v-if="p.contact" class="cc__muted">{{ p.contact }}</div>
         </div>
       </div>
@@ -157,7 +184,7 @@ function onPrimarySelect(e: Event) {
     >
       <div>
         {{ p.name }}
-        <Chip size="sm">{{ p.role }}</Chip>
+        <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
         <span v-if="p.contact" class="cc__muted"> {{ p.contact }}</span>
       </div>
       <button

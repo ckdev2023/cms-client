@@ -91,7 +91,7 @@ describe("CustomerBmvIntakeCard", () => {
     expect(wrapper.text()).toContain("2026-04-28 03:15 (UTC)");
   });
 
-  it("hides itself when the customer has no bmvProfile", () => {
+  it("renders not_started empty state when bmvProfile is null", () => {
     setAppLocale("en-US");
     const repository = createRepository();
 
@@ -100,7 +100,77 @@ describe("CustomerBmvIntakeCard", () => {
       global: { plugins: [i18n] },
     });
 
-    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
+    expect(wrapper.text()).toContain("Not started");
+    expect(wrapper.text()).toContain("Send the questionnaire to start intake");
+    expect(wrapper.text()).toContain(
+      "Case creation stays locked until signing is completed",
+    );
+  });
+
+  it("enables send questionnaire CTA in not_started state", async () => {
+    setAppLocale("en-US");
+    const sendBmvQuestionnaire = vi.fn().mockResolvedValue({
+      id: "cust-bmv-ns",
+      bmvProfile: {
+        questionnaireStatus: "sent",
+        quoteStatus: "not_started",
+        signStatus: "not_started",
+        intakeStatus: "questionnaire_pending",
+        questionnaireSentAt: "2026-04-30T10:00:00+09:00",
+        questionnaireReturnedAt: null,
+        quoteGeneratedAt: null,
+        quoteConfirmedAt: null,
+        signedAt: null,
+        note: null,
+        sourceLeadId: null,
+        leadGroupId: null,
+        leadOwnerUserId: null,
+      },
+    });
+    const repository = createRepository({ sendBmvQuestionnaire });
+    const refreshCustomer = vi.fn().mockResolvedValue(undefined);
+
+    const notStartedCustomer = structuredClone(
+      SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+    );
+    notStartedCustomer.id = "cust-bmv-ns";
+    notStartedCustomer.bmvProfile = {
+      questionnaireStatus: "not_started",
+      quoteStatus: "not_started",
+      signStatus: "not_started",
+      intakeStatus: "not_started",
+      questionnaireSentAt: null,
+      questionnaireReturnedAt: null,
+      quoteGeneratedAt: null,
+      quoteConfirmedAt: null,
+      signedAt: null,
+      note: null,
+      sourceLeadId: null,
+      leadGroupId: null,
+      leadOwnerUserId: null,
+    };
+
+    const wrapper = mount(CustomerBmvIntakeCard, {
+      props: {
+        customer: notStartedCustomer,
+        repository,
+        refreshCustomer,
+      },
+      global: { plugins: [i18n] },
+    });
+
+    const sendButton = wrapper
+      .findAll("button")
+      .find((button) => button.text() === "Send questionnaire");
+    expect(sendButton).toBeDefined();
+    expect(sendButton!.element.disabled).toBe(false);
+
+    await sendButton!.trigger("click");
+    await flushPromises();
+
+    expect(sendBmvQuestionnaire).toHaveBeenCalledWith("cust-bmv-ns");
+    expect(refreshCustomer).toHaveBeenCalledTimes(1);
   });
 
   it("calls sign action and refreshes detail after success", async () => {

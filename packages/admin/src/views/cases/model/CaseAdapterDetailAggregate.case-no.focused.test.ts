@@ -52,7 +52,7 @@ function buildAggregate(overrides: Record<string, unknown> = {}) {
   };
 }
 
-describe.skip("BUG-106: detail header exposes caseNo for breadcrumb parity", () => {
+describe("BUG-106 / BUG-128 / BUG-130: detail header exposes caseNo for breadcrumb parity", () => {
   it("maps caseNo from case slice when present", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.caseNo).toBe("CASE-202604-0003");

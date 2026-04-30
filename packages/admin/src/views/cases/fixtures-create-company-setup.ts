@@ -12,8 +12,11 @@ export const TMPL_COMPANY_SETUP: CaseTemplateDef = {
   label: il("公司设立", "Company Establishment", "会社設立"),
   badge: "BMV",
   applicationTypes: ["certification"],
-  subtitle:
+  subtitle: il(
     "经营管理签公司设立阶段 — 重点在资本金证明、法人登记、设立申报与办公场地。",
+    "Business Manager Visa company-establishment stage — focus on capital proof, corporate registration, establishment filings, and office space.",
+    "経営管理ビザの会社設立フェーズ — 資本金証明、法人登記、設立届、事務所が重点。",
+  ),
   sections: [
     {
       title: il(

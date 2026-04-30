@@ -401,19 +401,36 @@ function buildTimelineItems(
   ];
 }
 
+const DEFAULT_NOT_STARTED_BMV_PROFILE: CustomerBmvProfile = {
+  questionnaireStatus: "not_started",
+  quoteStatus: "not_started",
+  signStatus: "not_started",
+  intakeStatus: "not_started",
+  questionnaireSentAt: null,
+  questionnaireReturnedAt: null,
+  quoteGeneratedAt: null,
+  quoteConfirmedAt: null,
+  signedAt: null,
+  note: null,
+  sourceLeadId: null,
+  leadGroupId: null,
+  leadOwnerUserId: null,
+};
+
 /**
  * 根据客户详情构建 BMV 承接卡片所需的展示态数据。
+ * 当客户存在但 bmvProfile 为 null 时，返回 not_started 空态视图。
  *
- * @param customer 客户详情；若不存在 BMV 档案则返回 null。
- * @param aggregate 可选的 BMV 聚合数据（来自 GET /admin/customers/:id/bmv）。
- * @returns 可直接供视图渲染的承接卡片展示态。
+ * @param customer - 客户详情；为 null 时返回 null。
+ * @param aggregate - 可选的 BMV 聚合数据（来自 GET /admin/customers/:id/bmv）。
+ * @returns 可直接供视图渲染的承接卡片展示态；客户为 null 时返回 null。
  */
 export function buildCustomerBmvIntakeCardViewModel(
   customer: CustomerDetail | null,
   aggregate?: CustomerBmvAggregate | null,
 ): CustomerBmvIntakeCardViewModel | null {
-  const profile = customer?.bmvProfile;
-  if (!profile) return null;
+  if (!customer) return null;
+  const profile = customer.bmvProfile ?? DEFAULT_NOT_STARTED_BMV_PROFILE;
 
   return {
     stage: {

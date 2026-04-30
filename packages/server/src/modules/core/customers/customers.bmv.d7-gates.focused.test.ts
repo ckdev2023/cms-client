@@ -298,3 +298,151 @@ void describe("D7 gate: error code contract alignment", () => {
     assert.equal(result.id, "case-1");
   });
 });
+
+// ────────────────────────────────────────────────────────────────
+// 5. 端到端 — send→generate→sign→POST /cases business_manager_visa
+// ────────────────────────────────────────────────────────────────
+
+void describe("D7 gate: end-to-end send→generate→sign→case creation", () => {
+  void test("fixture customer walks full BMV intake then transitions to case", async () => {
+    let currentProfile: Record<string, unknown> = {
+      questionnaireStatus: "not_started",
+      quoteStatus: "not_started",
+      signStatus: "not_started",
+    };
+
+    function makeCurrentRow() {
+      return makeBaseCustomerRow({
+        base_profile: { name: "Alice", bmvProfile: { ...currentProfile } },
+      });
+    }
+
+    const createdCase = {
+      id: "case-e2e-1",
+      caseTypeCode: BMV_CASE_TYPE,
+      status: "open",
+    };
+
+    function e2eQueryFn(
+      sql: string,
+      params?: unknown[],
+    ): Promise<{ rows: unknown[] }> {
+      if (sql.includes("from leads where"))
+        return Promise.resolve({
+          rows: [{ group_id: "grp-1", owner_user_id: "owner-1" }],
+        });
+      if (sql.includes("from intake_forms where id"))
+        return Promise.resolve({
+          rows: [{ form_data: { amount: 550000 } }],
+        });
+      if (
+        sql.includes("from intake_forms") &&
+        sql.includes("bmv_questionnaire")
+      )
+        return Promise.resolve({
+          rows: [{ form_data: { companyName: "Test" } }],
+        });
+      if (
+        sql.includes("update conversations") ||
+        sql.includes("update leads") ||
+        sql.includes("update document_items") ||
+        sql.includes("insert into residence_periods") ||
+        sql.includes("insert into reminders")
+      )
+        return Promise.resolve({ rows: [] });
+      if (
+        sql.includes("from billing_records") &&
+        sql.includes("milestone_name")
+      )
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("insert into billing_records"))
+        return Promise.resolve({ rows: [{ id: "bp-e2e" }] });
+      if (sql.includes("insert into payment_records"))
+        return Promise.resolve({ rows: [{ id: "pr-e2e" }] });
+      if (
+        sql.includes("update billing_records") &&
+        sql.includes("status = 'paid'")
+      )
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("select id from cases"))
+        return Promise.resolve({ rows: [] });
+      if (sql.includes("update customers")) {
+        const raw = params?.[1];
+        if (typeof raw === "string") {
+          currentProfile = JSON.parse(raw) as Record<string, unknown>;
+        }
+        return Promise.resolve({ rows: [makeCurrentRow()] });
+      }
+      return Promise.resolve({ rows: [makeCurrentRow()] });
+    }
+
+    const { service } = createTestService(e2eQueryFn, {
+      createCase: () => Promise.resolve(createdCase),
+    });
+
+    await service.sendBmvQuestionnaire(ctx, "c1");
+    assert.equal(currentProfile.questionnaireStatus, "sent");
+    assert.equal(currentProfile.quoteStatus, "not_started");
+
+    await service.generateBmvQuote(ctx, "c1");
+    assert.equal(currentProfile.questionnaireStatus, "returned");
+    assert.equal(currentProfile.quoteStatus, "generated");
+    assert.equal(currentProfile.signStatus, "pending");
+
+    await service.recordBmvSign(ctx, "c1");
+    assert.equal(currentProfile.quoteStatus, "confirmed");
+    assert.equal(currentProfile.signStatus, "signed");
+
+    const gateInput: BmvCaseCreationGateInput = {
+      caseTypeCode: "business_manager_visa",
+      customerId: "c1",
+      bmvQuestionnaireStatus: currentProfile.questionnaireStatus as "returned",
+      bmvQuoteStatus: currentProfile.quoteStatus as "confirmed",
+      bmvSignStatus: currentProfile.signStatus as "signed",
+      bmvIntakeStatus: currentProfile.intakeStatus as "ready_for_case_creation",
+    };
+    const gateResult = checkBmvCaseCreationGate(gateInput);
+    assert.ok(gateResult.allowed, "gate should pass after send→generate→sign");
+    assert.equal(gateResult.blockers.length, 0);
+
+    const result = await service.transitionBmvToCase(ctx, "c1");
+    assert.equal(result.id, "case-e2e-1");
+  });
+
+  void test("gate blocks mid-flow when sign not yet completed", () => {
+    const profile: Record<string, unknown> = {
+      questionnaireStatus: "returned",
+      quoteStatus: "generated",
+      signStatus: "pending",
+    };
+
+    const gateInput: BmvCaseCreationGateInput = {
+      caseTypeCode: "business_manager_visa",
+      customerId: "c1",
+      bmvQuestionnaireStatus: profile.questionnaireStatus as "returned",
+      bmvQuoteStatus: profile.quoteStatus as "generated",
+      bmvSignStatus: profile.signStatus as "pending",
+      bmvIntakeStatus: "sign_pending",
+    };
+    const result = checkBmvCaseCreationGate(gateInput);
+    assert.ok(!result.allowed);
+    assert.ok(result.blockers.length >= 2);
+    const codes = result.blockers.map((b) => b.code);
+    assert.ok(codes.includes(BMV_CASE_CREATION_GATE_CODES.QUOTE_NOT_CONFIRMED));
+    assert.ok(codes.includes(BMV_CASE_CREATION_GATE_CODES.NOT_SIGNED));
+  });
+
+  void test("gate blocks at very start — all 4 prerequisites fail for not_started customer", () => {
+    const gateInput: BmvCaseCreationGateInput = {
+      caseTypeCode: "business_manager_visa",
+      customerId: "c1",
+      bmvQuestionnaireStatus: "not_started",
+      bmvQuoteStatus: "not_started",
+      bmvSignStatus: "not_started",
+      bmvIntakeStatus: "not_started",
+    };
+    const result = checkBmvCaseCreationGate(gateInput);
+    assert.ok(!result.allowed);
+    assert.equal(result.blockers.length, 4);
+  });
+});

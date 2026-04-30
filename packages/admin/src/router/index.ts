@@ -2,15 +2,13 @@ import { createRouter, createWebHashHistory, type RouteMeta } from "vue-router";
 import { isAdminAuthenticated, isAdminRole } from "../auth/model/adminSession";
 import { resolveAdminAuthGuard } from "./authGuard";
 
-const placeholderRoutes = [
-  {
-    path: "/tasks",
-    name: "tasks",
-    navKey: "tasks",
-    groupKey: "business",
-    titleKey: "shell.nav.items.tasks",
-  },
-] as const;
+const placeholderRoutes: ReadonlyArray<{
+  path: string;
+  name: string;
+  navKey: string;
+  groupKey: string;
+  titleKey: string;
+}> = [];
 
 function withShellMeta(meta: RouteMeta): RouteMeta {
   return {
@@ -161,6 +159,16 @@ export const router = createRouter({
         navKey: "documents",
         groupKey: "content",
         titleKey: "shell.nav.items.documents",
+      }),
+    },
+    {
+      path: "/tasks",
+      name: "tasks",
+      component: () => import("../views/tasks/TaskListView.vue"),
+      meta: withShellMeta({
+        navKey: "tasks",
+        groupKey: "business",
+        titleKey: "shell.nav.items.tasks",
       }),
     },
     {

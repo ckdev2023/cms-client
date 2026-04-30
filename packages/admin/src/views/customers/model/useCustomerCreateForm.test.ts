@@ -41,11 +41,22 @@ function createRepository(
   };
 }
 
+// 既存スイートはデバウンスを 0ms にして watcher 即時発火を前提に検証する。
+// デバウンス挙動本体（BUG-147 回帰）は useCustomerCreateForm.bug147.test.ts でカバー。
+function buildForm(
+  overrides: Partial<
+    Pick<CustomerRepository, "checkDuplicates" | "createCustomer">
+  > = {},
+) {
+  return useCustomerCreateForm({
+    repository: createRepository(overrides),
+    duplicateCheckDebounceMs: 0,
+  });
+}
+
 describe("useCustomerCreateForm", () => {
   it("initializes with empty fields", () => {
-    const { fields } = useCustomerCreateForm({
-      repository: createRepository(),
-    });
+    const { fields } = buildForm();
     expect(fields.legalName).toBe("");
     expect(fields.group).toBe("");
     expect(fields.phone).toBe("");
@@ -59,16 +70,12 @@ describe("useCustomerCreateForm", () => {
   });
 
   it("canCreate is false when all fields are empty", () => {
-    const { canCreate } = useCustomerCreateForm({
-      repository: createRepository(),
-    });
+    const { canCreate } = buildForm();
     expect(canCreate.value).toBe(false);
   });
 
   it("canCreate is true with legalName + group + phone", () => {
-    const { fields, canCreate } = useCustomerCreateForm({
-      repository: createRepository(),
-    });
+    const { fields, canCreate } = buildForm();
     fields.legalName = "Test";
     fields.group = "tokyo-1";
     fields.phone = "090-0000-0000";
@@ -76,11 +83,9 @@ describe("useCustomerCreateForm", () => {
   });
 
   it("requests duplicates when key fields change", async () => {
-    const repository = createRepository({
-      checkDuplicates: vi.fn().mockResolvedValue(DUPLICATES),
-    });
-    const { fields, dedupeMatches, showDedupe } = useCustomerCreateForm({
-      repository,
+    const checkDuplicates = vi.fn().mockResolvedValue(DUPLICATES);
+    const { fields, dedupeMatches, showDedupe } = buildForm({
+      checkDuplicates,
     });
 
     fields.legalName = "田中太郎";
@@ -88,7 +93,7 @@ describe("useCustomerCreateForm", () => {
     await nextTick();
     await flushPromises();
 
-    expect(repository.checkDuplicates).toHaveBeenLastCalledWith({
+    expect(checkDuplicates).toHaveBeenLastCalledWith({
       name: "田中太郎",
       phone: "090-1234-5678",
       email: "",
@@ -100,13 +105,12 @@ describe("useCustomerCreateForm", () => {
   it("keeps only the latest duplicate result", async () => {
     const first = deferred<CustomerDuplicateCandidate[]>();
     const second = deferred<CustomerDuplicateCandidate[]>();
-    const repository = createRepository({
+    const { fields, dedupeMatches } = buildForm({
       checkDuplicates: vi
         .fn<CustomerRepository["checkDuplicates"]>()
         .mockImplementationOnce(() => first.promise)
         .mockImplementationOnce(() => second.promise),
     });
-    const { fields, dedupeMatches } = useCustomerCreateForm({ repository });
 
     fields.phone = "090-1111-1111";
     await nextTick();
@@ -124,7 +128,10 @@ describe("useCustomerCreateForm", () => {
 
   it("createCustomer submits current fields", async () => {
     const repository = createRepository();
-    const model = useCustomerCreateForm({ repository });
+    const model = useCustomerCreateForm({
+      repository,
+      duplicateCheckDebounceMs: 0,
+    });
 
     model.fields.legalName = "田中太郎";
     model.fields.group = "東京一組";
@@ -145,7 +152,7 @@ describe("useCustomerCreateForm", () => {
   });
 
   it("maps duplicate check errors", async () => {
-    const repository = createRepository({
+    const model = buildForm({
       checkDuplicates: vi.fn().mockRejectedValue(
         new CustomerRepositoryError({
           code: "UNAUTHORIZED",
@@ -154,7 +161,6 @@ describe("useCustomerCreateForm", () => {
         }),
       ),
     });
-    const model = useCustomerCreateForm({ repository });
 
     model.fields.phone = "090-1234-5678";
     await nextTick();
@@ -166,7 +172,10 @@ describe("useCustomerCreateForm", () => {
 
   it("round-trips location/sourceType/visaType/referrerName through createCustomer", async () => {
     const repository = createRepository();
-    const model = useCustomerCreateForm({ repository });
+    const model = useCustomerCreateForm({
+      repository,
+      duplicateCheckDebounceMs: 0,
+    });
 
     model.fields.legalName = "田中太郎";
     model.fields.group = "東京一組";
@@ -191,7 +200,10 @@ describe("useCustomerCreateForm", () => {
 
   it("round-trips empty optional fields without error", async () => {
     const repository = createRepository();
-    const model = useCustomerCreateForm({ repository });
+    const model = useCustomerCreateForm({
+      repository,
+      duplicateCheckDebounceMs: 0,
+    });
 
     model.fields.legalName = "Test";
     model.fields.group = "tokyo-1";
@@ -211,7 +223,13 @@ describe("useCustomerCreateForm", () => {
   });
 
   it("resetForm clears fields and async state", async () => {
-    const repository = createRepository({
+    const {
+      fields,
+      resetForm,
+      createCustomer,
+      dedupeMatches,
+      submitErrorCode,
+    } = buildForm({
       checkDuplicates: vi.fn().mockResolvedValue(DUPLICATES),
       createCustomer: vi.fn().mockRejectedValue(
         new CustomerRepositoryError({
@@ -221,13 +239,6 @@ describe("useCustomerCreateForm", () => {
         }),
       ),
     });
-    const {
-      fields,
-      resetForm,
-      createCustomer,
-      dedupeMatches,
-      submitErrorCode,
-    } = useCustomerCreateForm({ repository });
 
     fields.legalName = "Test";
     fields.group = "tokyo-1";

@@ -7,6 +7,7 @@ import {
 import { Pool } from "pg";
 
 import type { ContactPerson } from "../model/coreEntities";
+import { requireTimestampString } from "../model/timestamps";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -49,8 +50,8 @@ export function mapContactPersonRow(row: ContactPersonQueryRow): ContactPerson {
     phone: row.phone,
     email: row.email,
     preferredLanguage: row.preferred_language,
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
 }
 

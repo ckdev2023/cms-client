@@ -16,6 +16,7 @@ defineProps<{
   candidates: ReferenceCandidate[];
   selectedId: string;
   canConfirm: boolean;
+  loading?: boolean;
 }>();
 
 defineEmits<{
@@ -72,7 +73,9 @@ defineEmits<{
               <span class="ref-modal__required">*</span>
             </label>
 
-            <div v-if="candidates.length === 0" class="ref-modal__empty">
+            <div v-if="loading" class="ref-modal__empty" role="status">…</div>
+
+            <div v-else-if="candidates.length === 0" class="ref-modal__empty">
               {{ t("documents.reference.selectPlaceholder") }}
             </div>
 

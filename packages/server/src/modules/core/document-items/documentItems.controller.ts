@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Inject,
+  NotFoundException,
   Param,
   Patch,
   Post,
@@ -14,6 +15,14 @@ import {
 } from "@nestjs/common";
 
 import { RequireRoles } from "../auth/auth.decorators";
+import { CasesService } from "../cases/cases.service";
+import {
+  DOCUMENT_ITEM_ERROR_CODES,
+  DOCUMENT_ITEM_OWNER_SIDES,
+  DOCUMENT_ITEM_STATUSES,
+  WAIVE_REASON_CODES,
+  type WaiveReasonCode,
+} from "../documents.types";
 import type { RequestContext } from "../tenancy/requestContext";
 import { DocumentItemsService } from "./documentItems.service";
 
@@ -47,9 +56,16 @@ type UpdateSurveyDataBody = {
   surveyData: unknown;
 };
 
+type WaiveBody = {
+  reasonCode: unknown;
+  note?: unknown;
+};
+
 type ListDocumentItemsQuery = {
   caseId?: unknown;
   status?: unknown;
+  statusIn?: unknown;
+  ownerSide?: unknown;
   category?: unknown;
   page?: unknown;
   limit?: unknown;
@@ -114,6 +130,37 @@ function parseOptionalCategory(value: unknown): string | undefined {
   return value;
 }
 
+const VALID_OWNER_SIDES = new Set<string>(DOCUMENT_ITEM_OWNER_SIDES);
+
+const VALID_STATUS_IN_VALUES = new Set<string>([
+  ...DOCUMENT_ITEM_STATUSES.filter((s) => s !== "deleted"),
+  "missing",
+]);
+
+function parseOptionalOwnerSide(value: unknown): string | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value !== "string" || !VALID_OWNER_SIDES.has(value)) {
+    throw new BadRequestException(
+      `Invalid ownerSide: ${typeof value === "string" ? value : "non-string"}`,
+    );
+  }
+  return value;
+}
+
+function parseOptionalStatusIn(value: unknown): string[] | undefined {
+  if (value === undefined) return undefined;
+  const raw = typeof value === "string" ? value.split(",") : undefined;
+  if (!raw || raw.length === 0) {
+    throw new BadRequestException("Invalid statusIn");
+  }
+  for (const v of raw) {
+    if (!VALID_STATUS_IN_VALUES.has(v)) {
+      throw new BadRequestException(`Invalid statusIn value: ${v}`);
+    }
+  }
+  return raw;
+}
+
 function parseSurveyData(
   value: unknown,
 ): Record<string, unknown> | null | undefined {
@@ -141,10 +188,13 @@ export class DocumentItemsController {
   /**
    * 构造函数。
    * @param documentItemsService 资料项服务实例
+   * @param casesService 案件服务（S9 readonly 守卫）
    */
   constructor(
     @Inject(DocumentItemsService)
     private readonly documentItemsService: DocumentItemsService,
+    @Inject(CasesService)
+    private readonly casesService: CasesService,
   ) {}
 
   /**
@@ -189,10 +239,32 @@ export class DocumentItemsController {
     return this.documentItemsService.list(ctx, {
       caseId: parseOptionalString(query.caseId, "caseId"),
       status: parseOptionalString(query.status, "status"),
+      statusIn: parseOptionalStatusIn(query.statusIn),
+      ownerSide: parseOptionalOwnerSide(query.ownerSide),
       category: parseOptionalCategory(query.category),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });
+  }
+
+  /**
+   * 案件资料完成率汇总。
+   * @param req HTTP 请求对象
+   * @param query 查询参数（caseId 必填）
+   * @param query.caseId 案件 ID（必填）
+   * @returns 完成率汇总
+   */
+  @RequireRoles("viewer")
+  @Get("completion-rate")
+  async getCompletionRate(
+    @Req() req: HttpRequest,
+    @Query() query: { caseId?: unknown },
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const caseId = requireString(query.caseId, "caseId");
+    return this.documentItemsService.getCompletionRate(ctx, caseId);
   }
 
   /**
@@ -282,6 +354,40 @@ export class DocumentItemsController {
   }
 
   /**
+   * 豁免资料项（专用端点，独立白名单 + S9 守卫）。
+   * @param req HTTP 请求对象
+   * @param id 资料项 ID
+   * @param body 豁免请求体
+   * @returns 更新后的资料项
+   */
+  @RequireRoles("staff")
+  @Post(":id/waive")
+  async waive(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: WaiveBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const reasonCode = requireString(
+      body.reasonCode,
+      "reasonCode",
+    ) as WaiveReasonCode;
+    if (!WAIVE_REASON_CODES.includes(reasonCode)) {
+      throw new BadRequestException(`Invalid reasonCode: ${reasonCode}`);
+    }
+    const note = parseOptionalNullableString(body.note, "note");
+
+    const item = await this.documentItemsService.get(ctx, id);
+    if (!item) throw new BadRequestException("Document item not found");
+
+    await this.assertCaseNotS9(ctx, item.caseId);
+
+    return this.documentItemsService.waive(ctx, id, { reasonCode, note });
+  }
+
+  /**
    * 催办操作。
    * @param req HTTP 请求对象
    * @param id 资料项 ID
@@ -310,5 +416,24 @@ export class DocumentItemsController {
 
     await this.documentItemsService.softDelete(ctx, id);
     return { ok: true };
+  }
+
+  private async assertCaseNotS9(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<void> {
+    const caseEntity = await this.casesService.get(ctx, caseId);
+    if (!caseEntity) {
+      throw new NotFoundException(
+        DOCUMENT_ITEM_ERROR_CODES.NOT_FOUND + ": Parent case not found",
+      );
+    }
+    const stage = caseEntity.stage ?? caseEntity.status;
+    if (stage === "S9") {
+      throw new BadRequestException(
+        DOCUMENT_ITEM_ERROR_CODES.CASE_S9_READONLY +
+          ": Parent case is archived (S9) and read-only",
+      );
+    }
   }
 }

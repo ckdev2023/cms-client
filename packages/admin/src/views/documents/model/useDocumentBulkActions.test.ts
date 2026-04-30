@@ -1,7 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import type { DocumentListItem } from "../types";
-import type { BulkActionType } from "./useDocumentBulkActions";
 import { useDocumentBulkActions } from "./useDocumentBulkActions";
+import type { BulkActionResult } from "./useDocumentBulkActions";
+import type { DocumentRepository } from "./DocumentRepositoryTypes";
 
 function makeItem(
   overrides: Partial<Pick<DocumentListItem, "id" | "status">> = {},
@@ -9,15 +10,30 @@ function makeItem(
   return { id: "doc-1", status: "pending", ...overrides };
 }
 
+function stubRepository(): Pick<
+  DocumentRepository,
+  "transition" | "followUp" | "waive"
+> {
+  return {
+    transition: vi.fn().mockResolvedValue({ id: "x", status: "approved" }),
+    followUp: vi.fn().mockResolvedValue({ id: "x" }),
+    waive: vi.fn().mockResolvedValue({ id: "x", status: "waived" }),
+  };
+}
+
 function createWithItems(items: Pick<DocumentListItem, "id" | "status">[]) {
   const clearSelection = vi.fn();
-  const onToast = vi.fn<(action: BulkActionType, count: number) => void>();
+  const onSuccess = vi.fn<(result: BulkActionResult) => void>();
+  const onError = vi.fn();
+  const repository = stubRepository();
   const bulk = useDocumentBulkActions({
     getSelectedItems: () => items,
     clearSelection,
-    onToast,
+    repository,
+    onSuccess,
+    onError,
   });
-  return { bulk, clearSelection, onToast };
+  return { bulk, clearSelection, onSuccess, onError, repository };
 }
 
 // ─── canRemind ───────────────────────────────────────────────────
@@ -84,23 +100,62 @@ describe("useDocumentBulkActions — canWaive", () => {
 // ─── bulkRemind ──────────────────────────────────────────────────
 
 describe("useDocumentBulkActions — bulkRemind", () => {
-  it("calls onToast with remind and remindable count", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([
+  it("calls repository.followUp for each remindable item and reports success", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([
       makeItem({ id: "d1", status: "pending" }),
       makeItem({ id: "d2", status: "rejected" }),
       makeItem({ id: "d3", status: "uploaded_reviewing" }),
     ]);
-    bulk.bulkRemind();
-    expect(onToast).toHaveBeenCalledWith("remind", 2);
+    await bulk.bulkRemind();
+    expect(repository.followUp).toHaveBeenCalledTimes(2);
+    expect(repository.followUp).toHaveBeenCalledWith("d1");
+    expect(repository.followUp).toHaveBeenCalledWith("d2");
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "remind",
+        successCount: 2,
+        failedCount: 0,
+      }),
+    );
     expect(clearSelection).toHaveBeenCalled();
   });
 
-  it("does nothing when no remindable items", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([
+  it("does nothing when no remindable items", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([
       makeItem({ status: "uploaded_reviewing" }),
     ]);
-    bulk.bulkRemind();
-    expect(onToast).not.toHaveBeenCalled();
+    await bulk.bulkRemind();
+    expect(repository.followUp).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("collects failed ids when some calls fail", async () => {
+    const repo = stubRepository();
+    (repo.followUp as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("fail"));
+    const clearSelection = vi.fn();
+    const onSuccess = vi.fn();
+    const items = [
+      makeItem({ id: "d1", status: "pending" }),
+      makeItem({ id: "d2", status: "rejected" }),
+    ];
+    const bulk = useDocumentBulkActions({
+      getSelectedItems: () => items,
+      clearSelection,
+      repository: repo,
+      onSuccess,
+    });
+    await bulk.bulkRemind();
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "remind",
+        successCount: 1,
+        failedCount: 1,
+      }),
+    );
+    expect(bulk.failedIds.value).toContain("d2");
     expect(clearSelection).not.toHaveBeenCalled();
   });
 });
@@ -108,23 +163,62 @@ describe("useDocumentBulkActions — bulkRemind", () => {
 // ─── bulkApprove ─────────────────────────────────────────────────
 
 describe("useDocumentBulkActions — bulkApprove", () => {
-  it("calls onToast with approve and approvable count", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([
+  it("calls repository.transition for each approvable item", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([
       makeItem({ id: "d1", status: "uploaded_reviewing" }),
       makeItem({ id: "d2", status: "uploaded_reviewing" }),
       makeItem({ id: "d3", status: "pending" }),
     ]);
-    bulk.bulkApprove();
-    expect(onToast).toHaveBeenCalledWith("approve", 2);
+    await bulk.bulkApprove();
+    expect(repository.transition).toHaveBeenCalledTimes(2);
+    expect(repository.transition).toHaveBeenCalledWith("d1", {
+      toStatus: "approved",
+    });
+    expect(repository.transition).toHaveBeenCalledWith("d2", {
+      toStatus: "approved",
+    });
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "approve",
+        successCount: 2,
+        failedCount: 0,
+      }),
+    );
     expect(clearSelection).toHaveBeenCalled();
   });
 
-  it("does nothing when no approvable items", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([
+  it("does nothing when no approvable items", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([
       makeItem({ status: "pending" }),
     ]);
-    bulk.bulkApprove();
-    expect(onToast).not.toHaveBeenCalled();
+    await bulk.bulkApprove();
+    expect(repository.transition).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("collects failed ids on partial failure", async () => {
+    const repo = stubRepository();
+    (repo.transition as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("fail"));
+    const clearSelection = vi.fn();
+    const onSuccess = vi.fn();
+    const items = [
+      makeItem({ id: "d1", status: "uploaded_reviewing" }),
+      makeItem({ id: "d2", status: "uploaded_reviewing" }),
+    ];
+    const bulk = useDocumentBulkActions({
+      getSelectedItems: () => items,
+      clearSelection,
+      repository: repo,
+      onSuccess,
+    });
+    await bulk.bulkApprove();
+    expect(bulk.failedIds.value).toContain("d2");
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({ successCount: 1, failedCount: 1 }),
+    );
     expect(clearSelection).not.toHaveBeenCalled();
   });
 });
@@ -132,21 +226,64 @@ describe("useDocumentBulkActions — bulkApprove", () => {
 // ─── bulkWaive ───────────────────────────────────────────────────
 
 describe("useDocumentBulkActions — bulkWaive", () => {
-  it("calls onToast with waive and total selected count", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([
+  it("calls repository.waive for each selected item with params", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([
       makeItem({ id: "d1", status: "pending" }),
       makeItem({ id: "d2", status: "rejected" }),
       makeItem({ id: "d3", status: "expired" }),
     ]);
-    bulk.bulkWaive();
-    expect(onToast).toHaveBeenCalledWith("waive", 3);
+    const waiveParams = {
+      reasonCode: "visa_type_exempt" as const,
+      note: undefined,
+    };
+    await bulk.bulkWaive(waiveParams);
+    expect(repository.waive).toHaveBeenCalledTimes(3);
+    expect(repository.waive).toHaveBeenCalledWith("d1", waiveParams);
+    expect(repository.waive).toHaveBeenCalledWith("d2", waiveParams);
+    expect(repository.waive).toHaveBeenCalledWith("d3", waiveParams);
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({
+        action: "waive",
+        successCount: 3,
+        failedCount: 0,
+      }),
+    );
     expect(clearSelection).toHaveBeenCalled();
   });
 
-  it("does nothing when no items selected", () => {
-    const { bulk, onToast, clearSelection } = createWithItems([]);
-    bulk.bulkWaive();
-    expect(onToast).not.toHaveBeenCalled();
+  it("does nothing when no items selected", async () => {
+    const { bulk, onSuccess, clearSelection, repository } = createWithItems([]);
+    await bulk.bulkWaive({ reasonCode: "other", note: "test" });
+    expect(repository.waive).not.toHaveBeenCalled();
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(clearSelection).not.toHaveBeenCalled();
+  });
+
+  it("collects failed ids on partial failure", async () => {
+    const repo = stubRepository();
+    (repo.waive as ReturnType<typeof vi.fn>)
+      .mockResolvedValueOnce({})
+      .mockRejectedValueOnce(new Error("fail"))
+      .mockResolvedValueOnce({});
+    const clearSelection = vi.fn();
+    const onSuccess = vi.fn();
+    const items = [
+      makeItem({ id: "d1", status: "pending" }),
+      makeItem({ id: "d2", status: "rejected" }),
+      makeItem({ id: "d3", status: "expired" }),
+    ];
+    const bulk = useDocumentBulkActions({
+      getSelectedItems: () => items,
+      clearSelection,
+      repository: repo,
+      onSuccess,
+    });
+    await bulk.bulkWaive({ reasonCode: "other", note: "reason" });
+    expect(bulk.failedIds.value).toContain("d2");
+    expect(bulk.failedIds.value.size).toBe(1);
+    expect(onSuccess).toHaveBeenCalledWith(
+      expect.objectContaining({ successCount: 2, failedCount: 1 }),
+    );
     expect(clearSelection).not.toHaveBeenCalled();
   });
 });
@@ -165,5 +302,42 @@ describe("useDocumentBulkActions — mixed items", () => {
     expect(bulk.canRemind.value).toBe(true);
     expect(bulk.canApprove.value).toBe(true);
     expect(bulk.canWaive.value).toBe(true);
+  });
+});
+
+// ─── loading state ───────────────────────────────────────────────
+
+describe("useDocumentBulkActions — loading", () => {
+  it("sets loading during async operation", async () => {
+    const { bulk } = createWithItems([
+      makeItem({ id: "d1", status: "uploaded_reviewing" }),
+    ]);
+    expect(bulk.loading.value).toBe(false);
+    const p = bulk.bulkApprove();
+    expect(bulk.loading.value).toBe(true);
+    await p;
+    expect(bulk.loading.value).toBe(false);
+  });
+});
+
+// ─── clearFailedIds ──────────────────────────────────────────────
+
+describe("useDocumentBulkActions — clearFailedIds", () => {
+  it("resets failedIds to empty set", async () => {
+    const repo = stubRepository();
+    (repo.followUp as ReturnType<typeof vi.fn>).mockRejectedValue(
+      new Error("fail"),
+    );
+    const items = [makeItem({ id: "d1", status: "pending" })];
+    const bulk = useDocumentBulkActions({
+      getSelectedItems: () => items,
+      clearSelection: vi.fn(),
+      repository: repo,
+      onSuccess: vi.fn(),
+    });
+    await bulk.bulkRemind();
+    expect(bulk.failedIds.value.size).toBe(1);
+    bulk.clearFailedIds();
+    expect(bulk.failedIds.value.size).toBe(0);
   });
 });

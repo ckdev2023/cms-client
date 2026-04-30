@@ -183,6 +183,11 @@ export const CASE_DETAIL_TAB_KEYS: readonly CaseDetailTab[] = [
   "log",
 ] as const;
 
+export const CASE_DETAIL_TAB_ALIASES: Readonly<Record<string, CaseDetailTab>> =
+  {
+    timeline: "log",
+  } as const;
+
 // ─── Gates ──────────────────────────────────────────────────────
 
 export const CASE_GATES: Record<GateId, GateDefinition> = {

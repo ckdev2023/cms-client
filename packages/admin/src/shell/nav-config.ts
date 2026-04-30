@@ -134,9 +134,7 @@ export const navGroups: NavGroup[] = [
       //     },
       { key: "customers", label: "客户", to: "/customers", icon: "users" },
       { key: "cases", label: "案件", to: "/cases", icon: "file-text" },
-      // NOTE: Tasks & reminders 仍为占位页（/tasks -> SectionPlaceholderView），
-      // 暂时从生产侧栏隐藏，避免未上线模块出现在正式业务导航中。
-      // 路由与 i18n 先保留，待任务模块落地后再恢复入口。
+      { key: "tasks", label: "任务与提醒", to: "/tasks", icon: "clipboard" },
     ],
   },
   {

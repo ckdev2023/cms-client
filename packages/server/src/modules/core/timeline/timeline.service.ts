@@ -8,6 +8,7 @@ import type {
   TimelineEntityType,
   TimelineLog,
 } from "../model/coreEntities";
+import { requireTimestampString } from "../model/timestamps";
 
 /**
  * Timeline 写入入参。
@@ -150,7 +151,7 @@ function mapTimelineRow(r: TimelineListRow): TimelineLog {
     actorUserId: r.actor_user_id,
     actorDisplayName: r.actor_display_name,
     payload: normalizePayload(r.payload),
-    createdAt: String(r.created_at),
+    createdAt: requireTimestampString(r.created_at, "created_at"),
   };
 }
 

@@ -12,8 +12,11 @@ export const TMPL_BMV: CaseTemplateDef = {
   label: il("经营管理签", "Business Manager Visa", "経営管理ビザ"),
   badge: "BMV",
   applicationTypes: ["certification", "change_of_status", "renewal"],
-  subtitle:
+  subtitle: il(
     "经营管理签总览 — 根据具体场景选择认定 4 个月、认定 1 年或续签子模板。",
+    "Business Manager Visa overview — pick the CoE 4-month, CoE 1-year, or renewal sub-template based on the scenario.",
+    "経営管理ビザ全体ガイド — シナリオに応じて認定（4ヶ月）、認定（1年）、または更新のサブテンプレートを選択してください。",
+  ),
   sections: [
     {
       title: il(
@@ -53,8 +56,11 @@ export const TMPL_BMV_CERT_4M: CaseTemplateDef = {
   ),
   badge: "BMV",
   applicationTypes: ["certification"],
-  subtitle:
+  subtitle: il(
     "认定 4 个月 — 重点：申请人背景、资本来源、来日履历与创业前置准备。",
+    "CoE 4-month — focus on applicant background, capital source, Japan stay history, and pre-startup preparation.",
+    "認定（4ヶ月）— 申請人の経歴、資本金の出所、来日履歴、創業前準備が重点。",
+  ),
   sections: [
     {
       title: il(
@@ -215,7 +221,11 @@ export const TMPL_BMV_CERT_1Y: CaseTemplateDef = {
   ),
   badge: "BMV",
   applicationTypes: ["certification"],
-  subtitle: "认定 1 年 — 需同时覆盖申请人背景、办公场地、公司主体、税务设立。",
+  subtitle: il(
+    "认定 1 年 — 需同时覆盖申请人背景、办公场地、公司主体、税务设立。",
+    "CoE 1-year — covers applicant background, office space, corporate entity, and tax setup at the same time.",
+    "認定（1年）— 申請人の経歴・事務所・法人主体・税務設立を同時にカバー。",
+  ),
   sections: [
     {
       title: il(

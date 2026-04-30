@@ -115,6 +115,84 @@ function matchesOwner(owner: OwnerCatalogEntry, idOrLabel: string): boolean {
 }
 
 /**
+ * 当前登录用户在负责人选项中的最小输入；
+ * 与 `auth/model/adminSession#AdminUser` 字段子集兼容。
+ */
+export interface CurrentUserOwnerInput {
+  /** 显示名（必填）；为空时视为不可作为 owner 选项。 */
+  name: string;
+  /** 邮箱；存在时优先作为稳定 id（避免与 catalog slug 冲突）。 */
+  email?: string;
+  /** 头像缩写；缺省时按名称推导。 */
+  initials?: string;
+}
+
+const CURRENT_USER_VALUE_PREFIX = "current-user:";
+const CURRENT_USER_AVATAR_CLASS = "bg-slate-100 text-slate-700";
+
+function deriveCurrentUserInitials(input: CurrentUserOwnerInput): string {
+  const explicit = input.initials?.trim();
+  if (explicit) return explicit;
+  const trimmed = input.name.trim();
+  if (!trimmed) return "";
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (
+      words
+        .map((segment) => segment[0]?.toUpperCase() ?? "")
+        .join("")
+        .slice(0, 2) || trimmed.slice(0, 2).toUpperCase()
+    );
+  }
+  return trimmed.slice(0, 2).toUpperCase();
+}
+
+function buildCurrentUserOwnerValue(input: CurrentUserOwnerInput): string {
+  const email = input.email?.trim().toLowerCase();
+  if (email) return email;
+  return `${CURRENT_USER_VALUE_PREFIX}${input.name.trim()}`;
+}
+
+/**
+ * 把当前登录用户合并进负责人下拉选项；当用户已在静态 catalog 中（或选项里）时，原样返回。
+ *
+ * 用于建案向导 Step 3 等场景：catalog 是 fixture 静态数据，不含登录用户（如 `Local Admin`），
+ * 否则用户无法把案件分给自己（参见 BUG-150）。
+ *
+ * @param options - 已有负责人选项（通常来自 `getOwnerOptions(locale)`）。
+ * @param currentUser - 当前登录用户（可空；空时直接返回原列表副本）。
+ * @returns 合并后的选项列表。当前用户作为首项；与 catalog 重名/重复 value 时不重复插入。
+ */
+export function withCurrentUserOwnerOption(
+  options: readonly OwnerSelectOption[],
+  currentUser: CurrentUserOwnerInput | null | undefined,
+): OwnerSelectOption[] {
+  if (!currentUser) return [...options];
+  const trimmedName = currentUser.name?.trim();
+  if (!trimmedName) return [...options];
+  if (resolveOwnerValue(trimmedName) !== null) return [...options];
+
+  const value = buildCurrentUserOwnerValue(currentUser);
+  if (
+    options.some(
+      (option) => option.value === value || option.label === trimmedName,
+    )
+  ) {
+    return [...options];
+  }
+
+  return [
+    {
+      value,
+      label: trimmedName,
+      initials: deriveCurrentUserInitials(currentUser),
+      avatarClass: CURRENT_USER_AVATAR_CLASS,
+    },
+    ...options,
+  ];
+}
+
+/**
  * 返回用于下拉选择与摘要展示的本地化负责人选项列表。
  *
  * @param locale - 可选的当前语言代码。

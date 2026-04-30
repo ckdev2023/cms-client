@@ -22,10 +22,32 @@ function createRequestMock(
 
 const NOW = new Date("2026-04-29T10:00:00Z");
 
-describe("DocumentRepository (BUG-079)", () => {
+const ITEM_ROW = {
+  id: "doc-1",
+  caseId: "case-1",
+  name: "護照写し",
+  status: "uploaded_reviewing",
+  ownerSide: "applicant",
+  dueAt: "2026-05-10T00:00:00Z",
+  lastFollowUpAt: null,
+};
+
+function createDefaultRepo(
+  handler: (input: RequestInfo | URL, init?: RequestInit) => Response,
+) {
+  return createDocumentRepository({
+    request: createRequestMock(handler),
+    getToken: () => "t-1",
+    now: () => NOW,
+  });
+}
+
+// ─── listDocuments ───────────────────────────────────────────────
+
+describe("DocumentRepository.listDocuments", () => {
   it("calls /api/document-items + /api/cases?view=summary with bearer token", async () => {
     const calls: string[] = [];
-    const request = createRequestMock((input, init) => {
+    const repository = createDefaultRepo((input, init) => {
       const url = String(input);
       calls.push(url);
       expect(init?.method).toBe("GET");
@@ -33,20 +55,7 @@ describe("DocumentRepository (BUG-079)", () => {
         "Bearer t-1",
       );
       if (url.startsWith("/api/document-items")) {
-        return jsonResponse({
-          total: 1,
-          items: [
-            {
-              id: "doc-1",
-              caseId: "case-1",
-              name: "护照写し",
-              status: "uploaded_reviewing",
-              ownerSide: "applicant",
-              dueAt: "2026-05-10T00:00:00Z",
-              lastFollowUpAt: null,
-            },
-          ],
-        });
+        return jsonResponse({ total: 1, items: [ITEM_ROW] });
       }
       if (url.startsWith("/api/cases")) {
         return jsonResponse({
@@ -57,19 +66,11 @@ describe("DocumentRepository (BUG-079)", () => {
       throw new Error(`Unexpected URL: ${url}`);
     });
 
-    const repository = createDocumentRepository({
-      request,
-      getToken: () => "t-1",
-      now: () => NOW,
-    });
-    const items = await repository.listDocuments();
-
-    expect(calls).toEqual([
-      "/api/document-items?limit=200",
-      "/api/cases?view=summary&limit=200",
-    ]);
-    expect(items).toHaveLength(1);
-    expect(items[0]).toMatchObject({
+    const result = await repository.listDocuments();
+    expect(calls).toHaveLength(2);
+    expect(result.items).toHaveLength(1);
+    expect(result.total).toBe(1);
+    expect(result.items[0]).toMatchObject({
       id: "doc-1",
       caseId: "case-1",
       caseName: "经管签新规",
@@ -79,15 +80,37 @@ describe("DocumentRepository (BUG-079)", () => {
     });
   });
 
+  it("passes caseId, statusIn, ownerSide, page, limit as query params", async () => {
+    let capturedUrl = "";
+    const repository = createDefaultRepo((input) => {
+      const url = String(input);
+      if (url.startsWith("/api/document-items")) {
+        capturedUrl = url;
+        return jsonResponse({ total: 0, items: [] });
+      }
+      return jsonResponse({ total: 0, items: [] });
+    });
+
+    await repository.listDocuments({
+      caseId: "case-99",
+      statusIn: ["pending", "revision_required"],
+      ownerSide: "applicant",
+      page: 2,
+      limit: 50,
+    });
+
+    const params = new URL(capturedUrl, "http://x").searchParams;
+    expect(params.get("caseId")).toBe("case-99");
+    expect(params.get("statusIn")).toBe("pending,revision_required");
+    expect(params.get("ownerSide")).toBe("applicant");
+    expect(params.get("page")).toBe("2");
+    expect(params.get("limit")).toBe("50");
+  });
+
   it("throws UNAUTHORIZED on 401 from document-items", async () => {
-    const request = createRequestMock(
+    const repository = createDefaultRepo(
       () => new Response(null, { status: 401 }),
     );
-    const repository = createDocumentRepository({
-      request,
-      getToken: () => null,
-      now: () => NOW,
-    });
     await expect(repository.listDocuments()).rejects.toMatchObject({
       name: "DocumentRepositoryError",
       code: "UNAUTHORIZED",
@@ -96,16 +119,11 @@ describe("DocumentRepository (BUG-079)", () => {
   });
 
   it("throws BAD_RESPONSE when items array is missing", async () => {
-    const request = createRequestMock((input) => {
+    const repository = createDefaultRepo((input) => {
       if (String(input).startsWith("/api/document-items")) {
         return jsonResponse({ total: 0 });
       }
       return jsonResponse({ total: 0, items: [] });
-    });
-    const repository = createDocumentRepository({
-      request,
-      getToken: () => "t",
-      now: () => NOW,
     });
     await expect(repository.listDocuments()).rejects.toBeInstanceOf(
       DocumentRepositoryError,
@@ -113,60 +131,51 @@ describe("DocumentRepository (BUG-079)", () => {
   });
 
   it("falls back to caseId when /api/cases best-effort lookup fails", async () => {
-    const request = createRequestMock((input) => {
+    const repository = createDefaultRepo((input) => {
       if (String(input).startsWith("/api/document-items")) {
         return jsonResponse({
           total: 1,
-          items: [
-            {
-              id: "doc-1",
-              caseId: "case-x",
-              name: "课税证明",
-              status: "pending",
-              ownerSide: "applicant",
-              dueAt: null,
-              lastFollowUpAt: null,
-            },
-          ],
+          items: [{ ...ITEM_ROW, caseId: "case-x" }],
         });
       }
       return new Response(null, { status: 500 });
     });
-    const repository = createDocumentRepository({
-      request,
-      getToken: () => "t",
-      now: () => NOW,
-    });
-    const items = await repository.listDocuments();
-    expect(items[0]?.caseName).toBe("case-x");
+    const result = await repository.listDocuments();
+    expect(result.items[0]?.caseName).toBe("case-x");
   });
 
   it("upgrades approved → expired when dueAt is past", async () => {
-    const request = createRequestMock((input) => {
+    const repository = createDefaultRepo((input) => {
       if (String(input).startsWith("/api/document-items")) {
         return jsonResponse({
           total: 1,
           items: [
-            {
-              id: "doc-1",
-              caseId: "case-1",
-              name: "课税证明",
-              status: "approved",
-              ownerSide: "applicant",
-              dueAt: "2026-04-01T00:00:00Z",
-              lastFollowUpAt: null,
-            },
+            { ...ITEM_ROW, status: "approved", dueAt: "2026-04-01T00:00:00Z" },
           ],
         });
       }
       return jsonResponse({ items: [] });
     });
-    const repository = createDocumentRepository({
-      request,
-      getToken: () => "t",
-      now: () => NOW,
+    const result = await repository.listDocuments();
+    expect(result.items[0]?.status).toBe("expired");
+  });
+});
+
+// ─── Error model ─────────────────────────────────────────────────
+
+describe("DocumentRepositoryError", () => {
+  it("has name, code, status, serverCode on instance", () => {
+    const err = new DocumentRepositoryError({
+      code: "VALIDATION",
+      message: "bad",
+      status: 400,
+      serverCode: "DOCUMENT_ITEM_TRANSITION_NOT_ALLOWED",
     });
-    const items = await repository.listDocuments();
-    expect(items[0]?.status).toBe("expired");
+    expect(err.name).toBe("DocumentRepositoryError");
+    expect(err.code).toBe("VALIDATION");
+    expect(err.status).toBe(400);
+    expect(err.serverCode).toBe("DOCUMENT_ITEM_TRANSITION_NOT_ALLOWED");
+    expect(err.message).toBe("bad");
+    expect(err).toBeInstanceOf(Error);
   });
 });

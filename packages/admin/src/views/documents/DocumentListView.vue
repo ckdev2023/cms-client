@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useOrgSettings } from "../../shared/model/useOrgSettings";
 import PageHeader from "../../shared/ui/PageHeader.vue";
@@ -14,34 +14,51 @@ import ReviewDocumentModal from "./components/ReviewDocumentModal.vue";
 import WaiveReasonModal from "./components/WaiveReasonModal.vue";
 import ReferenceVersionModal from "./components/ReferenceVersionModal.vue";
 import SharedExpiryRiskPanel from "./components/SharedExpiryRiskPanel.vue";
-import {
-  SAMPLE_DOCUMENTS,
-  SAMPLE_REFERENCE_CANDIDATES,
-  SAMPLE_RISK_DATA,
-  deriveDocumentSummaryCards,
-  deriveCaseOptions,
-} from "./fixtures";
+import { deriveDocumentSummaryCards, deriveCaseOptions } from "./fixtures";
 import { getProviderLabelKey } from "./constants";
-import type { DocumentListItem } from "./types";
+import type { DocumentListItem, WaivedReasonCode } from "./types";
 import { useDocumentFilters } from "./model/useDocumentFilters";
 import { useDocumentSelection } from "./model/useDocumentSelection";
 import { useDocumentBulkActions } from "./model/useDocumentBulkActions";
 import { useRegisterDocumentModel } from "./model/useRegisterDocumentModel";
 import { useDocumentReviewModel } from "./model/useDocumentReviewModel";
-import type { BulkActionType } from "./model/useDocumentBulkActions";
+import { useDocumentListModel } from "./model/useDocumentListModel";
+import { createDocumentRepository } from "./model/DocumentRepository";
+import { useToast } from "../../shared/model/useToast";
 
-/** 资料中心列表页：展示资料汇总统计、筛选与分页表格。 */
+/** 跨案件资料一览页面。model 驱动 + loading/error 处理 + 过滤推送到 API。 */
 const { t } = useI18n();
+const toast = useToast();
 const { isStorageRootConfigured } = useOrgSettings();
+const repository = createDocumentRepository();
 
-const { status, caseId, provider, search, resetFilters, applyFilters } =
-  useDocumentFilters();
+const filters = useDocumentFilters();
+const {
+  status,
+  caseId,
+  provider,
+  search,
+  apiParams,
+  resetFilters,
+  applySearchAndSort,
+} = filters;
 
-const filteredItems = computed(() => applyFilters(SAMPLE_DOCUMENTS));
+const listModel = useDocumentListModel({
+  repository,
+  fallbackToFixturesWhenEmpty: false,
+  params: apiParams.value,
+});
+
+watch(apiParams, (params) => {
+  clearSelection();
+  listModel.refresh(params);
+});
+
+const displayItems = computed(() => applySearchAndSort(listModel.items.value));
 const summaryCards = computed(() =>
-  deriveDocumentSummaryCards(SAMPLE_DOCUMENTS),
+  deriveDocumentSummaryCards(listModel.items.value),
 );
-const caseOptions = computed(() => deriveCaseOptions(SAMPLE_DOCUMENTS));
+const caseOptions = computed(() => deriveCaseOptions(listModel.items.value));
 
 const {
   selectedIds,
@@ -53,169 +70,203 @@ const {
   isIndeterminate,
 } = useDocumentSelection();
 
-const allSelected = computed(() => isAllSelected(filteredItems.value));
-const indeterminate = computed(() => isIndeterminate(filteredItems.value));
+const allSelected = computed(() => isAllSelected(displayItems.value));
+const indeterminate = computed(() => isIndeterminate(displayItems.value));
 
 /**
- * 全选/取消全选文档。
+ * 全选切换。
  *
- * @param checked - 是否全选
+ * @param checked - 勾选状态
  */
 function handleSelectAll(checked: boolean) {
-  toggleAll(filteredItems.value, checked);
+  toggleAll(displayItems.value, checked);
 }
 
 /**
- * 批量操作后显示提示。
+ * 获取已选中项。
  *
- * @param action - 批量操作类型
- * @param count - 选中文档数量
- */
-function handleToast(action: BulkActionType, count: number) {
-  const messages: Record<BulkActionType, string> = {
-    remind: t("documents.list.bulk.toastRemind", { count }),
-    approve: t("documents.list.bulk.toastApprove", { count }),
-    waive: t("documents.list.bulk.toastWaive", { count }),
-  };
-  window.alert(messages[action]);
-}
-
-/**
- * 获取当前选中的文档列表。
- *
- * @returns 已勾选的文档数组
+ * @returns 已选中的资料列表
  */
 function getSelectedItems() {
-  return filteredItems.value.filter((item) => selectedIds.value.has(item.id));
+  return displayItems.value.filter((item) => selectedIds.value.has(item.id));
 }
 
-const { loading, canRemind, canApprove, canWaive, bulkRemind, bulkApprove } =
-  useDocumentBulkActions({
-    getSelectedItems,
-    clearSelection,
-    onToast: handleToast,
-  });
+/**
+ * API 错误 toast 通知。
+ *
+ * @param error - 发生的错误
+ */
+function handleApiError(error: unknown) {
+  const msg = error instanceof Error ? error.message : String(error);
+  toast.add({ title: msg, tone: "error" });
+}
+
+/** 重新加载列表。 */
+function handleRetry() {
+  listModel.refresh();
+}
+
+const {
+  loading: bulkLoading,
+  canRemind,
+  canApprove,
+  canWaive,
+  bulkRemind,
+  bulkApprove,
+  bulkWaive,
+  failedIds,
+} = useDocumentBulkActions({
+  getSelectedItems,
+  clearSelection,
+  repository,
+  onSuccess: (result) => {
+    const messages: Record<typeof result.action, string> = {
+      remind: t("documents.list.bulk.toastRemind", {
+        count: result.successCount,
+      }),
+      approve: t("documents.list.bulk.toastApprove", {
+        count: result.successCount,
+      }),
+      waive: t("documents.list.bulk.toastWaive", {
+        count: result.successCount,
+      }),
+    };
+    toast.add({ title: messages[result.action] });
+    if (result.failedCount > 0) {
+      toast.add({
+        title: t("documents.list.bulk.toastPartialFailure", {
+          count: result.failedCount,
+        }),
+        tone: "error",
+      });
+    }
+    listModel.refresh();
+  },
+  onError: (_action, error) => handleApiError(error),
+});
 
 const register = useRegisterDocumentModel({
-  allItems: () => SAMPLE_DOCUMENTS,
-  onSubmit: (form) => {
+  allItems: () => listModel.items.value,
+  repository,
+  onSuccess: (form) => {
     const name = form.fileName || form.relativePath.split("/").pop() || "";
-    window.alert(t("documents.register.toastDesc", { fileName: name }));
+    toast.add({
+      title: t("documents.register.toastDesc", { fileName: name }),
+    });
+    listModel.refresh();
   },
+  onError: handleApiError,
   isStorageRootConfigured: () => isStorageRootConfigured.value,
 });
 
-const review = useDocumentReviewModel();
+/** 操作成功后刷新列表。 */
+function refreshAfterAction() {
+  listModel.refresh();
+}
+
+const review = useDocumentReviewModel({
+  repository,
+  onApproveSuccess(item) {
+    toast.add({
+      title: t("documents.review.toastApproveTitle"),
+      description: t("documents.review.toastApproveDesc", { name: item.name }),
+    });
+    refreshAfterAction();
+  },
+  onRejectSuccess(item) {
+    toast.add({
+      title: t("documents.review.toastRejectTitle"),
+      description: t("documents.review.toastRejectDesc", { name: item.name }),
+      tone: "warning",
+    });
+    refreshAfterAction();
+  },
+  onRemindSuccess(item) {
+    toast.add({
+      title: t("documents.review.toastRemindTitle"),
+      description: t("documents.review.toastRemindDesc", {
+        provider: item.name,
+      }),
+      tone: "info",
+    });
+    refreshAfterAction();
+  },
+  onReferenceSuccess(item) {
+    toast.add({
+      title: t("documents.review.toastReferenceTitle"),
+      description: t("documents.review.toastReferenceDesc", {
+        caseName: "",
+        docName: item.name,
+      }),
+    });
+    refreshAfterAction();
+  },
+  onError: handleApiError,
+});
 
 /**
- * 行级审核通过：打开审核确认弹窗。
+ * 行级审批。
  *
- * @param item - 目标资料项
+ * @param item - 目标资料
  */
 function handleRowApprove(item: DocumentListItem) {
   review.openApprove({ id: item.id, name: item.name });
 }
-
 /**
- * 确认审核通过后弹 toast 并关闭弹窗。
- */
-function handleConfirmApprove() {
-  if (!review.approveTarget.value) return;
-  const name = review.approveTarget.value.name;
-  window.alert(
-    `${t("documents.review.toastApproveTitle")}: ${t("documents.review.toastApproveDesc", { name })}`,
-  );
-  review.closeApprove();
-}
-
-/**
- * 行级退回补正：打开退回弹窗。
+ * 行级驳回。
  *
- * @param item - 目标资料项
+ * @param item - 目标资料
  */
 function handleRowReject(item: DocumentListItem) {
   review.openReject({ id: item.id, name: item.name });
 }
-
 /**
- * 确认退回补正后弹 toast 并关闭弹窗。
- */
-function handleConfirmReject() {
-  if (!review.rejectTarget.value || !review.canConfirmReject.value) return;
-  const name = review.rejectTarget.value.name;
-  window.alert(
-    `${t("documents.review.toastRejectTitle")}: ${t("documents.review.toastRejectDesc", { name })}`,
-  );
-  review.closeReject();
-}
-
-/**
- * 行级催办：直接弹 toast，无需弹窗。
+ * 行级催办。
  *
- * @param item - 目标资料项
+ * @param item - 目标资料
  */
-function handleRowRemind(item: DocumentListItem) {
-  const provLabel = t(getProviderLabelKey(item.provider));
-  window.alert(
-    `${t("documents.review.toastRemindTitle")}: ${t("documents.review.toastRemindDesc", { provider: provLabel })}`,
-  );
+async function handleRowRemind(item: DocumentListItem) {
+  await review.confirmRemind({
+    id: item.id,
+    name: t(getProviderLabelKey(item.provider)),
+  });
 }
-
-/**
- * 批量标记无需提供：打开 waive 原因弹窗。
- */
+/** 打开批量免除对话框。 */
 function handleBulkWaive() {
   review.openWaive();
 }
-
-/**
- * 确认 waive 原因后弹 toast、清除选择并关闭弹窗。
- */
-function handleConfirmWaive() {
+/** 确认免除。 */
+async function handleConfirmWaive() {
   if (!review.canConfirmWaive.value) return;
-  const items = getSelectedItems();
-  const count = items.length;
-  if (count > 0) {
-    window.alert(t("documents.list.bulk.toastWaive", { count }));
-    clearSelection();
-  }
+  await bulkWaive({
+    reasonCode: review.waiveReasonCode.value as WaivedReasonCode,
+    note: review.waiveNote.value.trim() || undefined,
+  });
   review.closeWaive();
 }
-
 /**
- * 打开共享版本过期风险面板。
- */
-function handleOpenRiskPanel() {
-  review.openRiskPanel();
-}
-
-/**
- * 行级引用既有版本：打开引用选择弹窗。
+ * 打开共享过期风险面板。
  *
- * @param item - 目标资料项
+ * @param item - 目标资料
+ */
+function handleOpenRiskPanel(item: DocumentListItem) {
+  review.openRiskPanel({ id: item.id, name: item.name });
+}
+/**
+ * 行级引用版本对话框。
+ *
+ * @param item - 目标资料
  */
 function handleRowReference(item: DocumentListItem) {
   review.openReference({ id: item.id, name: item.name });
 }
-
-/**
- * 确认引用后弹 toast 并关闭弹窗。
- */
-function handleConfirmReference() {
-  if (!review.referenceTarget.value || !review.canConfirmReference.value)
-    return;
-  const candidate = SAMPLE_REFERENCE_CANDIDATES.find(
-    (c) => c.id === review.selectedReferenceId.value,
-  );
-  if (candidate) {
-    window.alert(
-      `${t("documents.review.toastReferenceTitle")}: ${t("documents.review.toastReferenceDesc", { caseName: candidate.sourceCaseName, docName: candidate.sourceDocName })}`,
-    );
-  }
-  review.closeReference();
+/** 确认引用版本。 */
+async function handleConfirmReference() {
+  await review.confirmReference();
 }
 
 void handleRowReference;
+void failedIds;
 </script>
 
 <template>
@@ -265,30 +316,42 @@ void handleRowReference;
 
     <div
       v-if="!isStorageRootConfigured"
-      class="document-list-view__storage-gate"
+      class="document-list-view__alert document-list-view__alert--warning"
       role="alert"
     >
-      <svg
-        class="document-list-view__gate-icon"
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-        aria-hidden="true"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          stroke-width="2"
-          d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-        />
-      </svg>
       <div>
-        <p class="document-list-view__gate-title">
+        <p class="document-list-view__alert-title">
           {{ t("documents.storageGate.title") }}
         </p>
-        <p class="document-list-view__gate-desc">
+        <p class="document-list-view__alert-desc">
           {{ t("documents.storageGate.description") }}
         </p>
+      </div>
+    </div>
+
+    <div
+      v-if="listModel.errorCode.value"
+      class="document-list-view__alert document-list-view__alert--danger"
+      role="alert"
+      data-testid="list-error-banner"
+    >
+      <div class="document-list-view__alert-row">
+        <p class="document-list-view__alert-title">
+          {{
+            listModel.errorCode.value === "unauthorized"
+              ? t("documents.list.errorUnauthorized")
+              : t("documents.list.errorRequestFailed")
+          }}
+        </p>
+        <Button
+          v-if="listModel.errorCode.value !== 'unauthorized'"
+          variant="outlined"
+          size="sm"
+          data-testid="list-retry-button"
+          @click="handleRetry"
+        >
+          {{ t("documents.list.retry") }}
+        </Button>
       </div>
     </div>
 
@@ -300,7 +363,7 @@ void handleRowReference;
       :provider="provider"
       :search="search"
       :case-options="caseOptions"
-      :filtered-count="filteredItems.length"
+      :filtered-count="displayItems.length"
       @update:status="status = $event"
       @update:case-id="caseId = $event"
       @update:provider="provider = $event"
@@ -309,19 +372,28 @@ void handleRowReference;
     />
 
     <div class="document-list-view__table-card">
+      <div
+        v-if="listModel.loading.value"
+        class="document-list-view__loading-bar"
+        role="status"
+        data-testid="list-loading"
+      >
+        <div class="document-list-view__loading-bar-inner" />
+      </div>
+
       <DocumentBulkActionBar
         :selected-count="selectedCount"
         :can-remind="canRemind"
         :can-approve="canApprove"
         :can-waive="canWaive"
-        :loading="loading"
+        :loading="bulkLoading"
         @clear="clearSelection"
         @bulk-remind="bulkRemind"
         @bulk-approve="bulkApprove"
         @bulk-waive="handleBulkWaive"
       />
       <DocumentTable
-        :items="filteredItems"
+        :items="displayItems"
         :selected-ids="selectedIds"
         :all-selected="allSelected"
         :indeterminate="indeterminate"
@@ -333,9 +405,17 @@ void handleRowReference;
         @open-risk-panel="handleOpenRiskPanel"
       />
       <DocumentPagination
-        :start="filteredItems.length > 0 ? 1 : 0"
-        :end="filteredItems.length"
-        :total="filteredItems.length"
+        :page="listModel.page.value"
+        :limit="listModel.limit.value"
+        :total="listModel.total.value"
+        @prev="
+          clearSelection();
+          listModel.prevPage();
+        "
+        @next="
+          clearSelection();
+          listModel.nextPage();
+        "
       />
     </div>
 
@@ -359,7 +439,7 @@ void handleRowReference;
       :doc-name="review.approveTarget.value?.name ?? ''"
       :can-confirm="true"
       @close="review.closeApprove()"
-      @confirm="handleConfirmApprove"
+      @confirm="review.confirmApprove()"
     />
 
     <ReviewDocumentModal
@@ -371,7 +451,7 @@ void handleRowReference;
       :can-confirm="review.canConfirmReject.value"
       @close="review.closeReject()"
       @update:reject-reason="review.rejectReason.value = $event"
-      @confirm="handleConfirmReject"
+      @confirm="review.confirmReject()"
     />
 
     <WaiveReasonModal
@@ -391,9 +471,10 @@ void handleRowReference;
       v-if="review.referenceOpen.value"
       :open="review.referenceOpen.value"
       :doc-name="review.referenceTarget.value?.name ?? ''"
-      :candidates="SAMPLE_REFERENCE_CANDIDATES"
+      :candidates="review.referenceCandidates.value"
       :selected-id="review.selectedReferenceId.value"
       :can-confirm="review.canConfirmReference.value"
+      :loading="review.referenceCandidatesLoading.value"
       @close="review.closeReference()"
       @update:selected-id="review.selectedReferenceId.value = $event"
       @confirm="handleConfirmReference"
@@ -401,59 +482,11 @@ void handleRowReference;
 
     <SharedExpiryRiskPanel
       :open="review.riskPanelOpen.value"
-      :data="SAMPLE_RISK_DATA"
+      :data="review.riskData.value"
+      :loading="review.riskLoading.value"
       @close="review.closeRiskPanel()"
     />
   </div>
 </template>
 
-<style scoped>
-.document-list-view {
-  display: grid;
-  gap: 24px;
-}
-
-.document-list-view__register-wrap {
-  display: inline-flex;
-}
-
-.document-list-view__storage-gate {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-warning-border, #fde68a);
-  background: var(--color-warning-bg, #fffbeb);
-}
-
-.document-list-view__gate-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: var(--color-warning-icon, #d97706);
-}
-
-.document-list-view__gate-title {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-warning-title, #92400e);
-}
-
-.document-list-view__gate-desc {
-  margin: 4px 0 0;
-  font-size: var(--font-size-xs);
-  color: var(--color-warning-text, #b45309);
-  line-height: 1.5;
-}
-
-.document-list-view__table-card {
-  background: var(--color-bg-1);
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-1);
-  overflow: hidden;
-}
-</style>
+<style scoped src="./DocumentListView.css"></style>

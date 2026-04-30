@@ -1,4 +1,5 @@
-import type { ComputedRef, Ref } from "vue";
+import { computed, type ComputedRef, type Ref } from "vue";
+import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type {
   ApplicationType,
   CaseCreateCustomerOption,
@@ -46,7 +47,38 @@ export function resolveInitialTemplateId(
 // ─── Pure Helpers ───────────────────────────────────────────────
 
 /**
+ * 拼接模板标签与申请类型标签，处理双重拼接与跨脚本空格问题（BUG-149）。
+ *
+ * 规则：
+ * - 模板标签若已包含申请类型字面（zh-CN "经营管理（认定 4 个月）" + "认定" /
+ *   ja "経営管理（更新）" + "更新"），直接返回模板标签，避免重复出现。
+ * - 边界字符任一为 ASCII 字母数字时插入空格（en-US "Dependent Visa" +
+ *   "Certificate of Eligibility" → 中间补空格），CJK 之间保持紧贴。
+ *
+ * @param templateLabel - 模板标签（已解析为当前语言）
+ * @param applicationTypeLabel - 申请类型标签（已解析为当前语言）
+ * @returns 拼接结果
+ */
+function joinTemplateAndType(
+  templateLabel: string,
+  applicationTypeLabel: string,
+): string {
+  const tpl = templateLabel.trim();
+  const type = applicationTypeLabel.trim();
+  if (!type) return tpl;
+  if (!tpl) return type;
+  if (tpl.includes(type)) return tpl;
+  const isLatinChar = (ch: string): boolean => /[A-Za-z0-9]/.test(ch);
+  const needSpace = isLatinChar(tpl[tpl.length - 1]!) || isLatinChar(type[0]!);
+  return needSpace ? `${tpl} ${type}` : `${tpl}${type}`;
+}
+
+/**
  * 根据主申请人、模板、申请类型自动生成案件标题。
+ *
+ * 模板标签与申请类型标签的拼接由 `joinTemplateAndType` 处理：
+ * - 当模板标签已包含申请类型字面（如 "经营管理（认定 4 个月）"）时不重复追加；
+ * - 当任一侧出现 Latin 字符（en-US 链路）时在中间补空格，避免黏连。
  *
  * @param customerName - 主申请人姓名
  * @param templateLabel - 模板标签（已解析为当前语言）
@@ -60,25 +92,33 @@ export function buildCaseTitle(
   applicationTypeLabel: string,
   isFamilyBulk: boolean,
 ): string {
-  const base = customerName
-    ? `${customerName} ${templateLabel}${applicationTypeLabel}`
-    : `${templateLabel}${applicationTypeLabel}`;
+  const head = joinTemplateAndType(templateLabel, applicationTypeLabel);
+  const base = customerName ? `${customerName} ${head}` : head;
   return isFamilyBulk ? `${base}（批量）` : base;
 }
 
 /**
  * 解析 group 继承标签。
  *
- * @param groupOptions - group 选项提供函数
- * @param inheritedGroup - 继承的 group 值
+ * 解析顺序：先在静态 catalog 选项里直查 `value`；未命中时回落到
+ * `resolveGroupLabel`，以便覆盖服务端 UUID + 别名表的 BMV 链路场景
+ * （BUG-139）。提供 locale 时按 locale 返回本地化标签；缺省时由
+ * `resolveGroupLabel` 内部默认 ja-JP，保持历史行为。
+ *
+ * @param groupOptions - group 选项提供函数（catalog snapshot）
+ * @param inheritedGroup - 继承的 group 值（可能是 catalog id 或 DB UUID）
+ * @param locale - 当前 locale；未提供时退回 `resolveGroupLabel` 默认值
  * @returns group 标签
  */
 export function resolveGroupInheritanceLabel(
   groupOptions: () => readonly CaseGroupOption[],
   inheritedGroup: string,
+  locale?: string,
 ): string {
+  if (!inheritedGroup) return inheritedGroup;
   const option = groupOptions().find((group) => group.value === inheritedGroup);
-  return option?.label ?? inheritedGroup;
+  if (option) return option.label;
+  return resolveGroupLabel(inheritedGroup, undefined, locale);
 }
 
 /**
@@ -95,6 +135,37 @@ export function hasAnySourceContext(
     sourceContext.customerId ||
     sourceContext.relationIds?.length ||
     sourceContext.selectedRelations?.length
+  );
+}
+
+/** 建案 wizard 共用的 deps 子集，仅暴露 group 继承标签所需字段。 */
+export interface GroupInheritanceLabelDeps {
+  /** group 选项提供函数（catalog snapshot）。 */
+  groupOptions: () => readonly CaseGroupOption[];
+  /** 当前 locale 提供函数；缺省时 `resolveGroupLabel` 默认 ja-JP。 */
+  locale?: () => string;
+}
+
+/**
+ * 工厂方法：基于 deps + draft 生成 `groupInheritanceLabel` 计算属性。
+ *
+ * 抽出此 helper 是为了让 `createTemplateDerived` 在维持 `max-lines-per-function`
+ * 60 行预算的前提下仍能透传 locale 参数（BUG-139）。
+ *
+ * @param deps - 提供 groupOptions 与 locale 的依赖子集
+ * @param draft - 建案草稿状态，读取 `inheritedGroup`
+ * @returns 解析后的 group 继承标签计算属性
+ */
+export function createGroupInheritanceLabel(
+  deps: GroupInheritanceLabelDeps,
+  draft: CreateCaseDraftState,
+): ComputedRef<string> {
+  return computed(() =>
+    resolveGroupInheritanceLabel(
+      deps.groupOptions,
+      draft.inheritedGroup,
+      deps.locale?.(),
+    ),
   );
 }
 

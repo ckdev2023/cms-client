@@ -19,6 +19,7 @@ import CustomerToast from "./components/CustomerToast.vue";
 import { CURRENT_VIEWER } from "./fixtures";
 import type {
   CustomerCreateFormFields,
+  CustomerViewerContext,
   SelectOption,
   SummaryCardData,
 } from "./types";
@@ -29,6 +30,7 @@ import { useCustomerDrafts } from "./model/useCustomerDrafts";
 import { deriveCustomerSummaryStats } from "./model/useCustomerFilters";
 import { useCustomerListModel } from "./model/useCustomerListModel";
 import { createCustomerRepository } from "./model/CustomerRepository";
+import { useAdminSession } from "../../auth/model/adminSession";
 
 /** 客户列表页组合层，装配筛选、表格、批量操作、弹窗、toast、草稿等子模块。 */
 const { t, locale } = useI18n();
@@ -36,6 +38,7 @@ const route = useRoute();
 const router = useRouter();
 
 const repository = createCustomerRepository();
+const { currentUser } = useAdminSession();
 const groupOptions = computed<SelectOption[]>(() =>
   getActiveGroupOptions(locale.value),
 );
@@ -43,6 +46,19 @@ const ownerOptions = computed<SelectOption[]>(() =>
   getOwnerOptions(locale.value).map(({ value, label }) => ({ value, label })),
 );
 const listModel = useCustomerListModel({ repository });
+
+// BUG-155：摘要卡片"我的客户/本组客户"必须以当前登录管理员的身份判定，
+// 否则会与服务端 `scope=mine`（按 `owner_user_id === currentUser`）口径
+// 错位，造成卡片 0 而列表 2 条的视觉矛盾。无 session（如某些测试场景）
+// 时回退到 fixture viewer，保持既有 fixture 测试与原型行为不变。
+const viewer = computed<CustomerViewerContext>(() => {
+  const user = currentUser.value;
+  if (!user || !user.name.trim()) return CURRENT_VIEWER;
+  return {
+    ownerName: user.name,
+    group: CURRENT_VIEWER.group,
+  };
+});
 const {
   filters,
   filteredCustomers,
@@ -73,7 +89,7 @@ const {
 const summaryCards = computed<SummaryCardData[]>(() => {
   const stats = deriveCustomerSummaryStats(
     filteredCustomers.value,
-    CURRENT_VIEWER,
+    viewer.value,
   );
   return [
     { key: "mine", variant: "primary", value: stats.mine },

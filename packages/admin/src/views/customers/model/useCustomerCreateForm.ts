@@ -1,4 +1,11 @@
-import { computed, reactive, ref, watch } from "vue";
+import {
+  computed,
+  getCurrentScope,
+  onScopeDispose,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import type { CustomerCreateFormFields } from "../types";
 import type { CustomerDuplicateCandidate } from "./CustomerAdapter";
 import {
@@ -13,7 +20,16 @@ type CreateFormRepository = Pick<
 
 type UseCustomerCreateFormDeps = {
   repository: CreateFormRepository;
+  /**
+   * 查重 watcher 的防抖间隔（ms）。默认 250ms：
+   * 单次表单填写时只会在用户停顿后触发一次 `checkDuplicates`，
+   * 而不是每个 keystroke / 字段变更都打一次后端。
+   * 测试时可传 0 立即触发。
+   */
+  duplicateCheckDebounceMs?: number;
 };
+
+const DEFAULT_DUPLICATE_CHECK_DEBOUNCE_MS = 250;
 
 /** 新建客户流程可识别的错误码。 */
 export type CustomerCreateFormErrorCode =
@@ -88,16 +104,45 @@ function resetDuplicateState(input: {
   input.checkingDuplicates.value = false;
 }
 
+function createDebouncedTrigger(
+  refreshDedupe: () => Promise<void>,
+  debounceMs: number,
+) {
+  let timer: ReturnType<typeof setTimeout> | null = null;
+  function cancel() {
+    if (timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+    }
+  }
+  function trigger() {
+    cancel();
+    if (debounceMs <= 0) {
+      void refreshDedupe();
+      return;
+    }
+    timer = setTimeout(() => {
+      timer = null;
+      void refreshDedupe();
+    }, debounceMs);
+  }
+  return { trigger, cancel };
+}
+
 function watchDuplicateFields(
   fields: CustomerCreateFormFields,
   refreshDedupe: () => Promise<void>,
+  debounceMs: number,
 ) {
+  const { trigger, cancel } = createDebouncedTrigger(refreshDedupe, debounceMs);
   watch(
     [() => fields.legalName, () => fields.phone, () => fields.email],
     () => {
-      void refreshDedupe();
+      trigger();
     },
   );
+  if (getCurrentScope()) onScopeDispose(cancel);
+  return { cancelPendingDedupe: cancel };
 }
 
 function createDuplicateStateApi(input: {
@@ -117,62 +162,70 @@ function createDuplicateStateApi(input: {
   };
 }
 
-function useDuplicateCheckState(
+type DuplicateCheckRefs = {
+  dedupeMatches: { value: CustomerDuplicateCandidate[] };
+  checkingDuplicates: { value: boolean };
+  dedupeErrorCode: { value: CustomerCreateFormErrorCode | null };
+  duplicateRequestVersion: { value: number };
+};
+
+function createRefreshDedupe(
   fields: CustomerCreateFormFields,
   repository: CreateFormRepository,
+  refs: DuplicateCheckRefs,
 ) {
-  const dedupeMatches = ref<CustomerDuplicateCandidate[]>([]);
-  const checkingDuplicates = ref(false);
-  const dedupeErrorCode = ref<CustomerCreateFormErrorCode | null>(null);
-  const duplicateRequestVersion = ref(0);
-
-  async function refreshDedupe(): Promise<void> {
+  return async function refreshDedupe(): Promise<void> {
     if (!shouldCheckDuplicates(fields)) {
-      resetDuplicateState({
-        dedupeMatches,
-        checkingDuplicates,
-        dedupeErrorCode,
-        duplicateRequestVersion,
-      });
+      resetDuplicateState(refs);
       return;
     }
-
-    const activeRequest = ++duplicateRequestVersion.value;
-    checkingDuplicates.value = true;
-    dedupeErrorCode.value = null;
-
+    const activeRequest = ++refs.duplicateRequestVersion.value;
+    refs.checkingDuplicates.value = true;
+    refs.dedupeErrorCode.value = null;
     try {
       const nextMatches = await repository.checkDuplicates({
         name: fields.legalName,
         phone: fields.phone,
         email: fields.email,
       });
-      if (activeRequest !== duplicateRequestVersion.value) return;
-      dedupeMatches.value = nextMatches;
+      if (activeRequest !== refs.duplicateRequestVersion.value) return;
+      refs.dedupeMatches.value = nextMatches;
     } catch (error) {
-      if (activeRequest !== duplicateRequestVersion.value) return;
-      dedupeMatches.value = [];
-      dedupeErrorCode.value = mapCreateFormError(error);
+      if (activeRequest !== refs.duplicateRequestVersion.value) return;
+      refs.dedupeMatches.value = [];
+      refs.dedupeErrorCode.value = mapCreateFormError(error);
     } finally {
-      if (activeRequest === duplicateRequestVersion.value)
-        checkingDuplicates.value = false;
+      if (activeRequest === refs.duplicateRequestVersion.value)
+        refs.checkingDuplicates.value = false;
     }
-  }
+  };
+}
 
+function useDuplicateCheckState(
+  fields: CustomerCreateFormFields,
+  repository: CreateFormRepository,
+  debounceMs: number,
+) {
+  const refs: DuplicateCheckRefs = {
+    dedupeMatches: ref<CustomerDuplicateCandidate[]>([]),
+    checkingDuplicates: ref(false),
+    dedupeErrorCode: ref<CustomerCreateFormErrorCode | null>(null),
+    duplicateRequestVersion: ref(0),
+  };
+  const refreshDedupe = createRefreshDedupe(fields, repository, refs);
+  const { cancelPendingDedupe } = watchDuplicateFields(
+    fields,
+    refreshDedupe,
+    debounceMs,
+  );
   function resetDedupeState() {
-    resetDuplicateState({
-      dedupeMatches,
-      checkingDuplicates,
-      dedupeErrorCode,
-      duplicateRequestVersion,
-    });
+    cancelPendingDedupe();
+    resetDuplicateState(refs);
   }
-
-  watchDuplicateFields(fields, refreshDedupe);
   return createDuplicateStateApi({
-    dedupeMatches,
-    checkingDuplicates,
-    dedupeErrorCode,
+    dedupeMatches: refs.dedupeMatches,
+    checkingDuplicates: refs.checkingDuplicates,
+    dedupeErrorCode: refs.dedupeErrorCode,
     refreshDedupe,
     resetDedupeState,
   });
@@ -223,7 +276,11 @@ export function useCustomerCreateForm(deps: UseCustomerCreateFormDeps) {
       fields.group !== "" &&
       (fields.phone.trim() !== "" || fields.email.trim() !== ""),
   );
-  const dedupe = useDuplicateCheckState(fields, deps.repository);
+  const dedupe = useDuplicateCheckState(
+    fields,
+    deps.repository,
+    deps.duplicateCheckDebounceMs ?? DEFAULT_DUPLICATE_CHECK_DEBOUNCE_MS,
+  );
   const submission = useCreateSubmission(fields, canCreate, deps.repository);
 
   function resetForm() {

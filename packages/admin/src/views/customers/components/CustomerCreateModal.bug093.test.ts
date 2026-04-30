@@ -42,7 +42,7 @@ function mountModal(fields: Partial<CustomerCreateFormFields> = {}) {
   });
 }
 
-describe.skip("CustomerCreateModal — BUG-093 字段去重", () => {
+describe("CustomerCreateModal — BUG-093 字段去重", () => {
   afterEach(() => {
     document.body.innerHTML = "";
   });

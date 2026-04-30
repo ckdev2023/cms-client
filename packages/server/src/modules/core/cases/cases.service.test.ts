@@ -2360,6 +2360,11 @@ void test("create: explicit groupId overrides customer inheritance", async () =>
       return ok([{ id: params?.[0] }]);
     if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
       return ok([{ group_id: EXPLICIT_GROUP }]);
+    if (
+      sql.includes("select id from groups") &&
+      sql.includes("id::text = $2 or name = $2")
+    )
+      return ok([{ id: EXPLICIT_GROUP }]);
     if (sql.includes("insert into cases"))
       return ok([makeCaseRow({ group_id: EXPLICIT_GROUP })]);
     return ok();
@@ -3861,6 +3866,11 @@ void test("create rejects cross-group without crossGroupReason", async () => {
       return ok([{ id: params?.[0] }]);
     if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
       return ok([{ group_id: "customer-group" }]);
+    if (
+      sql.includes("select id from groups") &&
+      sql.includes("id::text = $2 or name = $2")
+    )
+      return ok([{ id: "different-group" }]);
     return ok();
   });
 
@@ -3890,6 +3900,11 @@ void test("create with cross-group and reason writes audit timeline", async () =
       return ok([{ id: params?.[0] }]);
     if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
       return ok([{ group_id: "customer-group" }]);
+    if (
+      sql.includes("select id from groups") &&
+      sql.includes("id::text = $2 or name = $2")
+    )
+      return ok([{ id: "different-group" }]);
     if (sql.includes("select settings from organizations"))
       return ok([{ settings: {} }]);
     if (sql.includes("select count(*)")) return ok([{ count: "0" }]);

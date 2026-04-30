@@ -16,6 +16,7 @@ export type CustomerQueryRow = {
   archived_cases?: unknown;
   case_names?: unknown;
   last_case_created_date?: unknown;
+  owner_name?: unknown;
 };
 
 /** 客户所在地枚举。 */
@@ -240,11 +241,11 @@ export type CustomerSummaryDto = {
   /**
    * 经营管理签承接档案的顶层 DTO 投影。
    * 存储于 `base_profile.bmvProfile`，由 `resolveCustomerBmvProfile()` 解析。
-   * 消费方应通过此字段读取，不直接访问 `base_profile` JSONB。
+   * 空缺时下发 `intakeStatus: "not_started"` 默认值，始终非 null。
    *
    * @see {@link CustomerBmvView} — 独立聚合端点的 DTO view
    */
-  bmvProfile: CustomerBmvProfile | null;
+  bmvProfile: CustomerBmvProfile;
 };
 
 /** 客户详情 DTO。 */

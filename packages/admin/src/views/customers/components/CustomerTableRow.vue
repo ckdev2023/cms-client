@@ -28,6 +28,17 @@ const avatarInitial = computed(
   () => props.customer.displayName.charAt(0) || "?",
 );
 
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const customerNumberDisplay = computed(() => {
+  const raw = props.customer.customerNumber?.trim() ?? "";
+  if (!raw) return "—";
+  if (raw === props.customer.id) return "—";
+  if (UUID_PATTERN.test(raw)) return "—";
+  return raw;
+});
+
 const casesSummary = computed(() =>
   t("customers.list.casesSummary", {
     total: props.customer.totalCases,
@@ -94,7 +105,7 @@ const createCaseHref = computed(() =>
               {{ customer.displayName }}
             </a>
             <span class="customer-row__meta">
-              {{ customer.customerNumber }}
+              {{ customerNumberDisplay }}
             </span>
           </div>
           <div

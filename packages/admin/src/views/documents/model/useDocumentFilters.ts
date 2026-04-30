@@ -2,9 +2,11 @@ import { ref, computed } from "vue";
 import type {
   DocumentListItem,
   DocumentProviderFilter,
+  DocumentProviderType,
   DocumentStatusFilter,
 } from "../types";
 import { sortDocumentsByDefault } from "../fixtures";
+import type { ListDocumentsParams } from "./DocumentRepositoryTypes";
 
 function matchesStatus(
   item: DocumentListItem,
@@ -26,6 +28,86 @@ function matchesSearch(item: DocumentListItem, query: string): boolean {
 }
 
 /**
+ * 前端 provider → 后端 `ownerSide` 正规値のマッピング。
+ *
+ * DocumentAdapter の OWNER_SIDE_PROVIDER_MAP の逆引き。
+ */
+const PROVIDER_TO_OWNER_SIDE: Record<DocumentProviderType, string> = {
+  main_applicant: "applicant",
+  dependent_guarantor: "guarantor",
+  employer_org: "employer",
+  office_internal: "office",
+};
+
+function statusFilterToApiParams(
+  s: DocumentStatusFilter,
+): Pick<ListDocumentsParams, "status" | "statusIn"> {
+  switch (s) {
+    case "":
+      return {};
+    case "missing":
+      return {
+        statusIn: ["pending", "waiting_upload", "revision_required"],
+      };
+    case "pending":
+      return { statusIn: ["pending", "waiting_upload"] };
+    case "rejected":
+      return { statusIn: ["revision_required"] };
+    case "expired":
+      return { statusIn: ["expired"] };
+    default:
+      return { status: s };
+  }
+}
+
+function buildApiParams(
+  status: DocumentStatusFilter,
+  caseId: string,
+  provider: DocumentProviderFilter,
+): ListDocumentsParams {
+  const p: ListDocumentsParams = {
+    ...statusFilterToApiParams(status),
+  };
+  if (caseId) p.caseId = caseId;
+  if (provider) {
+    p.ownerSide =
+      PROVIDER_TO_OWNER_SIDE[provider as DocumentProviderType] ?? provider;
+  }
+  return p;
+}
+
+function filterItems(
+  items: readonly DocumentListItem[],
+  status: DocumentStatusFilter,
+  caseId: string,
+  provider: DocumentProviderFilter,
+  search: string,
+): DocumentListItem[] {
+  let result = [...items];
+  if (status) result = result.filter((d) => matchesStatus(d, status));
+  if (caseId) result = result.filter((d) => d.caseId === caseId);
+  if (provider) result = result.filter((d) => d.provider === provider);
+  if (search) result = result.filter((d) => matchesSearch(d, search));
+  return sortDocumentsByDefault(result);
+}
+
+/**
+ * API 取得済みアイテムにクライアントサイド検索 + デフォルトソートのみ適用。
+ *
+ * @param items - API 結果
+ * @param search - 検索クエリ
+ * @returns フィルタ・ソート済みリスト
+ */
+function searchAndSort(
+  items: readonly DocumentListItem[],
+  search: string,
+): DocumentListItem[] {
+  let result = [...items];
+  if (search) result = result.filter((d) => matchesSearch(d, search));
+  return sortDocumentsByDefault(result);
+}
+
+/**
  * 资料列表筛选/搜索/排序状态管理。
  *
  * @returns 筛选状态 refs、派生 computed、重置与过滤函数
@@ -44,35 +126,9 @@ export function useDocumentFilters() {
       search.value !== "",
   );
 
-  function resetFilters() {
-    status.value = "";
-    caseId.value = "";
-    provider.value = "";
-    search.value = "";
-  }
-
-  function applyFilters(
-    items: readonly DocumentListItem[],
-  ): DocumentListItem[] {
-    let result = [...items];
-
-    if (status.value) {
-      result = result.filter((d) => matchesStatus(d, status.value));
-    }
-    if (caseId.value) {
-      const id = caseId.value;
-      result = result.filter((d) => d.caseId === id);
-    }
-    if (provider.value) {
-      const p = provider.value;
-      result = result.filter((d) => d.provider === p);
-    }
-    if (search.value) {
-      result = result.filter((d) => matchesSearch(d, search.value));
-    }
-
-    return sortDocumentsByDefault(result);
-  }
+  const apiParams = computed<ListDocumentsParams>(() =>
+    buildApiParams(status.value, caseId.value, provider.value),
+  );
 
   return {
     status,
@@ -80,7 +136,22 @@ export function useDocumentFilters() {
     provider,
     search,
     isFilterActive,
-    resetFilters,
-    applyFilters,
+    apiParams,
+    resetFilters() {
+      status.value = "";
+      caseId.value = "";
+      provider.value = "";
+      search.value = "";
+    },
+    applyFilters: (items: readonly DocumentListItem[]) =>
+      filterItems(
+        items,
+        status.value,
+        caseId.value,
+        provider.value,
+        search.value,
+      ),
+    applySearchAndSort: (items: readonly DocumentListItem[]) =>
+      searchAndSort(items, search.value),
   };
 }

@@ -10,6 +10,7 @@ import {
   getOwnerOptions,
   resolveOwnerLabel,
   resolveOwnerValue,
+  withCurrentUserOwnerOption,
 } from "../../../shared/model/useOwnerOptions";
 import {
   CustomerRepositoryError,
@@ -179,6 +180,7 @@ function useCommittedSnapshot(
 
 function useBasicInfoOptions(
   currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>,
+  customer: ComputedRef<CustomerDetail | null>,
   locale?: Readonly<Ref<string>>,
   disabledSuffix?: Readonly<Ref<string>>,
 ) {
@@ -202,15 +204,24 @@ function useBasicInfoOptions(
     return active;
   });
 
-  return {
-    groupOptions,
-    ownerOptions: computed<readonly SelectOption[]>(() =>
-      getOwnerOptions(locale?.value).map(({ value, label }) => ({
-        value,
-        label,
-      })),
-    ),
-  };
+  // BUG-154：客户已存在的 owner 若不在静态 catalog 内（如 server 直回 `Local Admin`），
+  // 必须把它合并到下拉选项里，否则 `<option :value="opt.label">` 没有命中项，
+  // 即便快照值正确，select 仍显示空（dropdown unselected）。复用 `withCurrentUserOwnerOption`
+  // 的「不存在则注入」语义，确保已有 owner 能在表单中默认选中。
+  const ownerOptions = computed<readonly SelectOption[]>(() => {
+    const base = getOwnerOptions(locale?.value);
+    const persistedOwner = customer.value?.owner;
+    const persistedName = persistedOwner?.name?.trim() ?? "";
+    const merged = persistedName
+      ? withCurrentUserOwnerOption(base, {
+          name: persistedName,
+          initials: persistedOwner?.initials,
+        })
+      : base;
+    return merged.map(({ value, label }) => ({ value, label }));
+  });
+
+  return { groupOptions, ownerOptions };
 }
 
 function createBasicInfoPayload(snapshot: BasicInfoFormSnapshot) {
@@ -322,6 +333,7 @@ export function useCustomerBasicInfoModel(
   );
   const { groupOptions, ownerOptions } = useBasicInfoOptions(
     currentSnapshot,
+    input.customer,
     input.locale,
     input.disabledSuffix,
   );

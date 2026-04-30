@@ -17,7 +17,14 @@ export function mapCustomerAggregates(
     archivedCases: toOptionalNumber(row.archived_cases),
     caseNames: toStringArray(row.case_names),
     lastCaseCreatedDate: toOptionalDateString(row.last_case_created_date),
+    ownerName: toOptionalString(row.owner_name),
   };
+}
+
+function toOptionalString(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 function toOptionalNumber(value: unknown): number | undefined {

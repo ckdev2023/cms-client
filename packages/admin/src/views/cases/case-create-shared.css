@@ -204,3 +204,81 @@
   color: #92400e;
   font-weight: var(--font-weight-bold);
 }
+
+.cc__gate-banner {
+  padding: 16px 20px;
+  border: 1px solid #fbbf24;
+  border-radius: var(--radius-lg);
+  background: #fffbeb;
+}
+
+.cc__gate-banner-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: var(--font-size-base);
+  color: #92400e;
+}
+
+.cc__gate-banner-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.cc__gate-banner-desc {
+  margin: 0 0 12px;
+  font-size: var(--font-size-sm);
+  color: #78350f;
+}
+
+.cc__gate-banner-list {
+  margin: 0 0 12px;
+  padding: 0 0 0 20px;
+  list-style: disc;
+}
+
+.cc__gate-banner-item {
+  margin-bottom: 6px;
+  font-size: var(--font-size-sm);
+  color: #92400e;
+}
+
+.cc__gate-banner-recovery {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  color: #a16207;
+}
+
+.cc__gate-banner-link {
+  display: inline-block;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cc__gate-banner-link:hover {
+  text-decoration: underline;
+}
+
+.bmv-intake-card {
+  scroll-margin-top: 80px;
+}
+
+@keyframes bmv-intake-highlight {
+  0% {
+    outline: 3px solid var(--color-primary-6);
+    outline-offset: 4px;
+  }
+  100% {
+    outline: 3px solid transparent;
+    outline-offset: 4px;
+  }
+}
+
+.bmv-intake-card--highlight {
+  animation: bmv-intake-highlight 1.2s ease-out forwards;
+}

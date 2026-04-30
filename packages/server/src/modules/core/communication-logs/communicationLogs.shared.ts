@@ -2,6 +2,10 @@ import { BadRequestException } from "@nestjs/common";
 
 import { communicationLogs } from "../../../infra/db/drizzle/schema";
 import type { CommunicationLog } from "../model/coreEntities";
+import {
+  requireTimestampString,
+  toTimestampStringOrNull,
+} from "../model/timestamps";
 
 /**
  * Database row shape for `communication_logs` queries.
@@ -113,13 +117,6 @@ const VALID_CHANNEL_TYPES = new Set([
 ]);
 const VALID_DIRECTIONS = new Set(["inbound", "outbound"]);
 
-function toTimestampStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  return null;
-}
-
 /**
  * Maps a database row into the domain communication log shape.
  *
@@ -144,7 +141,7 @@ export function mapCommunicationLogRow(
     createdBy: row.created_by,
     followUpRequired: row.follow_up_required,
     followUpDueAt: toTimestampStringOrNull(row.follow_up_due_at),
-    createdAt: String(row.created_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
   };
 }
 

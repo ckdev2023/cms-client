@@ -41,6 +41,17 @@ const groupDisplay = computed(() =>
 const ownerDisplay = computed(() =>
   resolveOwnerLabel(props.customer.owner.name, locale.value),
 );
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const customerNumberDisplay = computed(() => {
+  const raw = props.customer.customerNumber?.trim() ?? "";
+  if (!raw) return "—";
+  if (raw === props.customer.id) return "—";
+  if (UUID_PATTERN.test(raw)) return "—";
+  return raw;
+});
 </script>
 
 <template>
@@ -106,7 +117,7 @@ const ownerDisplay = computed(() =>
         <div class="detail-header__chips">
           <Chip size="sm">
             {{ t("customers.detail.header.number") }}
-            <strong>{{ customer.customerNumber }}</strong>
+            <strong>{{ customerNumberDisplay }}</strong>
           </Chip>
           <Chip size="sm">
             {{ t("customers.detail.header.group") }}

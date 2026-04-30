@@ -25,6 +25,124 @@
 
 ## 最新产出
 
+- 时间：2026-04-30（BUG-158 FIX-LANDED）
+  问题：[BUG-158] R13 P0 阻塞——BMV 建案前置门禁数据缺失（`customers.base_profile.bmvProfile` 全 null），admin UI 完全无法建 BMV 经管签新案。如何修复使 BMV 客户详情页有承接入口、建案向导前置门禁可通过？
+  结论（TL;DR）：BUG-158 ✅ FIX-LANDED。4 处关键改动：① server `normalizeCustomerBmvProfile` 在 `base_profile.bmvProfile` 为空时返回 `createDefaultCustomerBmvProfile()`（`intakeStatus: "not_started"`），使 `/api/customers` list/detail 始终下发非 null 的 `bmvProfile`；② admin `buildCustomerBmvIntakeCardViewModel` 在 profile 为 null 时返回 `not_started` 占位视图，不再 `return null`，BMV 承接卡片挂入 `CustomerDetailView` 主路径；③ 新增 `038_backfill_customer_bmv_profile.up.sql` 迁移为已有 BMV 案件的客户倒推四前提满足；④ `CaseCreateView.vue` 顶部 banner 增加"前往客户详情完成承接 →"恢复链路。`npm run fix` + `npm run guard` 全绿。
+  关键依据：
+  - packages/server/src/modules/core/customers/customers.dto-mappers.ts（normalizeCustomerBmvProfile 默认工厂）
+  - packages/server/src/infra/db/migrations/038_backfill_customer_bmv_profile.up.sql（历史 BMV 客户 bmvProfile 回填）
+  - packages/admin/src/views/customers/model/useCustomerBmvIntakeCardModel.ts（空态占位视图）
+  - packages/admin/src/views/customers/components/CustomerBmvIntakeCard.vue（承接卡片组件）
+  - packages/admin/src/views/customers/CustomerDetailView.vue（挂载承接卡片）
+  - packages/admin/src/views/cases/CaseCreateView.vue（恢复链路 banner）
+  - packages/admin/src/views/cases/model/useCreateCasePreSignGate.ts:80-110（四前提门禁判定）
+  - docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md §1 BUG-158（原始发现 + FIX-LANDED 标注）
+  影响面：
+  - admin 客户详情页（BMV 候选客户现在可见承接卡片 + 发送问卷 CTA）
+  - admin 建案向导（BMV 模板前置门禁链路恢复：承接卡片 → 问卷/报价/签约三步 → 门禁通过 → 下一步 enabled）
+  - server `/api/customers` list/detail（bmvProfile 字段始终非 null）
+  - server BMV verb endpoints（questionnaire/send、quote/generate、sign/record 三个端点已挂入）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md
+    位置：§0.3 BUG-158 行 + §0.4 P0 行 + §1 BUG-158 详情 + §4 待立项
+    Owner：研发
+    状态：已回灌（2026-04-30，BUG-158 标 ✅ FIX-LANDED）
+
+- 时间：2026-04-30（R13）
+  问题：以"事务所流程 20 状态机 + 7 场景资料矩阵 + R12 §1 BUG-133~156 24 条"为锚再走一遍 admin e2e，R12 land 项是否真的全部到位？哪些 R12 ❌ FAIL 项目实测已 land 但文档未更新？是否还有新的 P0 阻塞？
+  结论（TL;DR）：R12 §1 24 条修复整体大幅 land 到位（20/24 ✅ PASS，含 R12 标 ❌ 但实测已 land 的 6 条「文档遗漏」=BUG-133/138/139/143/144/152），但**事务所流程 Step 5 建案启动出现新的 P0 阻塞 BUG-158**：所有客户 `base_profile.bmvProfile = null`，前端门禁始终 4 条 blocker（问卷/报价/签约/承接），admin UI 不可建出新的 BMV 经营管理签案件；同时新增 7 条偏差（BUG-157~164：sidebar Tasks 入口缺漏 / 建案 group_id 不持久化 / POST /api/cases 500 / 顶部 customerId raw UUID / CoE 缩写与全称语义重复 / Reminder log raw UUID / customer dto-mapper 不对称）。R12 文档对 BUG-133/138/139/143/144/152 的 ❌ FAIL 结论需回灌为 ✅ FIXED。**更新**：BUG-158 已于同日 ✅ FIX-LANDED（见上条）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md（本轮全文）
+  - docs/gyoseishoshi_saas_md/_output/18-双层状态机自动化复盘走查Bug清单-第十二轮.md §1 BUG-133~156（24 条原始定义）
+  - docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md §适用说明（mempalace prepare_grounded_answer 引用）
+  - docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md §执行重点（mempalace 引用）
+  - packages/admin/src/views/cases/model/useCreateCasePreSignGate.ts:80-110（BUG-158 root：四前提门禁判定）
+  - packages/admin/src/views/cases/model/useCustomerDropdownData.ts:144-150（BMV 状态读取路径，server 永远下发 null）
+  - packages/admin/src/shell/nav-config.ts:137-139（BUG-157 root：Tasks nav 注释与实际不一致）
+  - packages/admin/src/views/cases/model/useCreateCaseModelActions.ts joinTemplateAndType（BUG-162 root：缩写未识别）
+  影响面：
+  - admin 案件建案向导（BUG-158 P0 / BUG-159 / BUG-161 / BUG-162）—— BMV 模板建案完全阻塞 + 数据持久化分裂 + UX UUID 暴露
+  - admin 任务与提醒（BUG-157 / BUG-163）—— sidebar 入口缺漏 + reminder log raw UUID
+  - server cases 创建路径（BUG-160）—— unhandled exception 让前端拿不到结构化错误
+  - server customers DTO 契约（BUG-164）—— POST/GET 字段位置不对称
+  - admin 客户新建（BUG-137 仍卡 birthday=""）—— R12 ❌ FAIL 继承
+  - R12 文档结论（BUG-133/138/139/143/144/152）—— 实测已 land 但 R12 §1 仍标 ❌ FAIL，需回灌
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md
+    位置：§0.3 BUG-158 行 + §0.4 P0 行 + §1 BUG-158 详情 + §4 待立项
+    Owner：研发
+    状态：已回灌（2026-04-30，BUG-158 ✅ FIX-LANDED 标注已写入 R13 文档）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/18-双层状态机自动化复盘走查Bug清单-第十二轮.md
+    位置：§0.1 R11 §1 四条 bug 验收表 + §1 BUG-133/138/139/143/144/152 各条头部
+    Owner：研发
+    状态：待回灌（在 R12 文档头部增 "R13 实测确认 ✅ FIXED 项" 摘要；逐条把 ❌ FAIL 改为 R13 实测 ✅ FIXED + 引 R13 §2.1 证据）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md
+    位置：§建案前置条件、§字段持久化、§i18n & a11y 约束
+    Owner：研发 + 产品
+    状态：待回灌（把"BMV 四前提门禁字段必须有写入入口 + customer.bmvProfile 必须 server 显式下发"作为页面规格红线；BUG-159 group_id 继承默认值规则纳入数据契约）——**BUG-158 server 侧"必须显式下发"已 land，页面规格红线仍需回灌**
+  - 目标文档：packages/admin/.eslintrc / 守门 lint
+    位置：i18n 静态规则 + sidebar nav smoke
+    Owner：研发
+    状态：待回灌（admin shell smoke 测试加 sidebar Tasks 入口断言；lint 禁止 views/** 渲染 cases\.|customers\.|leads\. 前缀 raw key）
+  - 目标文档：packages/server cases.service.ts
+    位置：create 路径
+    Owner：研发
+    状态：待回灌（强制 try/catch + BadRequestException；group_id 缺省时从 customer.base_profile.group 继承；返回体字段位置与 list/detail 对齐）
+
+- 时间：2026-04-30（R12）
+  问题：以"事务所流程 20 状态机 + 7 场景资料矩阵"为锚再走一遍 admin e2e，R11 §1 BUG-133~136 是否已 land？哪些 R4 / R11 闭环结论被回退？
+  结论（TL;DR）：R11 §1 修了 1.5/4：BUG-135 server 时间戳契约 ✅ land；BUG-136 group UUID 直显只覆盖 `views/customers`，case 建案向导（Step 2 客户下拉 / 选中卡 / Step 3 inherited group）+ 收费列表 row group cell 仍直显 UUID；BUG-133 / BUG-134 与 R11 描述完全相符，仍未 land。同时 R4 闭环 4 条全部回退：BUG-086 → `/#/tasks` 退回 placeholder（P0 BUG-142）；BUG-088 → `customerNumber=UUID`；BUG-089 → 客户列表 owner 列空白；BUG-093 → `CustomerCreateModal` 仍并存 legacy + 新介绍人字段且测试 `describe.skip`。本轮抓出 20 条新增偏差（P0×1 / P1×9 / P2×6 / P3×4），加上 R11 §1 仍未 land 的 BUG-133 / BUG-134 与 BUG-136 增量遗漏，事务所流程 Step 1-20 在 admin UI 端目前不可端到端走通。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/18-双层状态机自动化复盘走查Bug清单-第十二轮.md（本轮全文）
+  - docs/gyoseishoshi_saas_md/_output/17-双层状态机自动化复盘走查Bug清单-第十一轮.md §1 BUG-133~136
+  - docs/gyoseishoshi_saas_md/_output/10-事务所流程驱动走查Bug清单-第四轮.md §0.4（R4 闭环对照）
+  - packages/admin/src/views/cases/model/useCustomerDropdownData.ts:117-134（BUG-139 root：groupLabel 直透 raw UUID）
+  - packages/admin/src/views/customers/components/CustomerCreateModal.vue:310-415（BUG-141 root：legacy referrer 未删 + referrerName 无 v-if）
+  - packages/admin/src/views/customers/components/CustomerCreateModal.bug093.test.ts:46（describe.skip 关闭回归契约）
+  - packages/admin/src/views/customers/model/CustomerAdapterShared.ts:183-200（BUG-137 root：empty birthday 透传 ''）
+  影响面：
+  - admin 客户新建（BUG-137 / 141 / 147 / 148）—— 表单 i18n、字段去重、性能、a11y 全部退化
+  - admin 案件建案向导（BUG-139 / 144 / 149 / 150 / 151 / 152）—— Step 1-4 各踩 1+ 处
+  - admin 案件列表 / 详情 / 收费（BUG-133 / 134 / 138 / 140 / 143 / 153）—— i18n + alias map 链路系统性遗漏
+  - admin 任务与提醒页（BUG-142 P0）—— Step 19-20 续签提醒链路再次切断
+  - server 客户编号生成（BUG-145）—— 默认创建路径不走 numbering helper
+  - admin 客户列表 / 详情 owner 字段（BUG-146 / 154）—— BUG-089 修复路径回退
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/案件.md / 客户.md / 收费.md
+    位置：§字段、§i18n & a11y 约束、§数据契约
+    Owner：研发
+    状态：待回灌（把"raw 字段透传 → 必须 i18n / 必须走 alias map"纳入页面规格红线；把"R4 闭环回退"作为 PR-level 守门项）
+  - 目标文档：packages/admin/.eslintrc / 守门 lint
+    位置：i18n 静态规则 + describe.skip 黑名单
+    Owner：研发
+    状态：待回灌（lint 禁止 `views/**` 渲染 `^cases\.|^customers\.|^leads\.` 前缀的 raw key；禁止 `bug\d+` 测试文件含 `describe.skip`）
+  - 目标文档：packages/server 守门 lint
+    位置：customers.controller create 路径
+    Owner：研发
+    状态：待回灌（lint 强制 `customers/*.controller.ts` create 路径调用 `createCustomerWithNumbering`）
+
+- 时间：2026-04-30
+  问题：R9 BUG-130（adapter 漏写 caseNo 致 BUG-128 半 land 回归）是否已 land，且 admin 还有哪些可低成本自动化抓出的 UI/i18n/a11y 偏差？
+  结论（TL;DR）：R9 BUG-130 修复链路三处全到位（adapter `buildDetailHeader.caseNo: resolveCaseNo(...)` + `case-no.focused.test.ts` `describe.skip → describe`，6 用例全 active），UI 端面包屑显示 `CASE-202604-0011`、与 BUG-116 / 127 / 129 一并 ✅ PASS；同时 chrome-devtools-mcp 在同一详情页扫出 2 条新偏差：BUG-131 `PageHeader.vue:50-59` 把所有无 href 的中间 crumb 都标 `aria-current="page"`（违反 ARIA 1.2 唯一性，影响 9 个 view），BUG-132 `CaseDetailView.vue:169 / 332` 直接插 raw `detail.stage`（非 i18n），切 EN/JA 后 stage Chip 仍出现 `刚开始办案`（同行 phaseLabel 已正确 i18n）。三轮 BUG-128 → 130 → 131/132 同根：单组件单测全 PASS，但缺跨组件契约 / 跨语言 e2e。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/16-双层状态机自动化复盘走查Bug清单-第十轮.md（本轮全文）
+  - packages/admin/src/views/cases/model/CaseAdapterDetailAggregate.ts:241-275（R9 修复 land 点）
+  - packages/admin/src/shared/ui/PageHeader.vue:50-59（BUG-131 根因）
+  - packages/admin/src/views/cases/CaseDetailView.vue:160-172, 330-333（BUG-132 根因）
+  影响面：
+  - admin 详情页面包屑（BUG-130 ✅ / BUG-131 ❌ / BUG-132 ❌）
+  - admin 8+ 个用 `<PageHeader>` 的 view（BUG-131 全部命中）
+  - admin EN/JA 用户进案件详情时的 stage 标签视觉一致性（BUG-132）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/案件详情.md
+    位置：§面包屑 / §头部 Chip / §i18n & a11y 约束
+    Owner：研发
+    状态：待回灌（把 BUG-131 a11y 唯一性约束、BUG-132 i18n stage 标签约束补成「禁止 raw 字段插值」红线）
+  - 目标文档：packages/admin/.eslintrc / 守门 lint
+    位置：a11y / i18n 静态规则
+    Owner：研发
+    状态：待回灌（建议引入 axe-core a11y 检查 + 自定义 lint 禁止 `{{ detail.stage }}` 之类 raw 枚举插值）
+
 - 时间：2026-04-28
   问题：以 `docs/事务所流程/` 的经管签 20 状态机 + 7 场景资料矩阵为基线，admin 当前是否能跑完一遍真实端到端流程？
   结论（TL;DR）：跑不通。admin 状态机仍停在 S1-S9 操作层（业务 20 状态完全缺位）、`POST /api/cases/:id/transition` 不强制顺序（可一步从 S2 跳 S9 归档）、真实新建 case 的 `/aggregate` 全部 500 → 详情页直接「Case not found」、建案模板只有 3 个 zh-CN 硬编码（家族/技人国/经管）且预览资料 9 项 vs 规范 18-25 项、`POST /api/residence-periods` 写入后 `reminderCreated:false` 且日期偏 1 天、Document Center 仍仅展示 fixture A2026-001/002/003。本轮共抓出 21 条新增 Bug（P0×8 / P1×9 / P2×4），全部聚焦在「业务规范 → admin 实现」的覆盖缺口而非 round 1/2 的 fixture/i18n。
@@ -779,6 +897,36 @@
     Owner：研发
     状态：待回灌（本轮实装完成后回灌）
 
+- 时间：2026-04-30
+  问题：[F2-doc-backfill] 资料中心 P0 闭环 + P1 四层模型实装后的关键决策回填——transition→waived 路径关闭、ALLOWED_TRANSITIONS 矩阵扩展、asset 去重策略、waive 专用端点 5 类原因码
+  结论（TL;DR）：本轮资料中心 P0 闭环 + P1 四层模型实装，产生 5 项需回灌到权威文档的关键架构/产品决策：(1) waive 操作从 transition 矩阵剥离，改走专用端点 `POST /document-items/:id/waive`，transition 端点显式拒绝 `toStatus='waived'`；(2) `DOCUMENT_ITEM_ALLOWED_TRANSITIONS` 矩阵扩展两条边：`pending→uploaded_reviewing`（行政书士直接登记后待审核）、`revision_required→uploaded_reviewing`（退回后重新提交）；(3) `document_assets` 去重策略按 `(org_id, material_code, owner_subject_type, owner_customer_id)` 唯一索引 + `ON CONFLICT DO NOTHING`，**不使用** `hash_value`（因 hash 在 `document_files` 表而非 `document_assets` 表）；(4) waive 端点 5 类原因码（`visa_type_exempt` / `guarantor_family_exempt` / `equivalent_in_other_case` / `immigration_confirmed_exempt` / `other`），`other` 时 `note` 必填；(5) 登记资料与引用既有版本均在事务内联动推进资料项状态到 `uploaded_reviewing`，S9 已归档案件统一返回 `CASE_S9_READONLY`。
+  关键依据：
+  - packages/server/src/modules/core/documents.types.ts §DOCUMENT_ITEM_ALLOWED_TRANSITIONS（扩展矩阵）+ §WAIVE_REASON_CODES（5 码）+ §WAIVE_ALLOWED_FROM_STATUSES（5 状态白名单）
+  - packages/server/src/modules/core/document-items/documentItems.controller.ts（waive 端点 + transition→waived reject）
+  - packages/server/src/modules/core/document-files/documentFiles.service.ts（upload 状态联动，同事务）
+  - packages/server/src/modules/core/document-requirement-file-refs/documentRequirementFileRefs.service.ts（link 状态联动）
+  - packages/server/src/modules/core/document-assets/documentAssets.shared.ts §buildUpsertAssetSql（ON CONFLICT DO NOTHING 去重）
+  - packages/server/src/infra/db/migrations/036_document_assets_uniqueness.up.sql（partial unique index：customer_owned + employer_owned）
+  - packages/admin/src/views/documents/model/useDocumentBulkActions.ts（Promise.allSettled 错误聚合）
+  - packages/admin/src/shared/ui/Toast.vue + packages/admin/src/shared/model/useToast.ts（替换 window.alert）
+  影响面：
+  - packages/server/src/modules/core/document-items/*（waive 端点、transition→waived 关闭、list 扩展 ownerSide/statusIn/expired）
+  - packages/server/src/modules/core/document-files/*（upload 状态联动 + asset upsert）
+  - packages/server/src/modules/core/document-assets/*（新增 controller + service，asset 去重 + 共享过期风险）
+  - packages/server/src/modules/core/document-requirement-file-refs/*（新增 controller + service，link 状态联动 + unlink 提交包守卫）
+  - packages/admin/src/views/documents/*（跨案件列表接 API、写操作接 API、toast 替换 alert、ReferenceVersionModal + SharedExpiryRiskPanel 接真实数据）
+  - packages/admin/src/views/cases/components/CaseDocumentsTab.vue（资料清单 Tab 接 model + 完成率读后端）
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/资料中心.md（§2.3 批量 waive 走专用端点、§4 waive 行更新、§4.1 登记状态联动 + §4.2 引用状态联动、§6 waive 路径说明）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/资料中心.md
+    位置：§2.3 批量动作（waive 走专用端点）、§4 关键动作表（waive 行扩展 5 码 + 专用端点）、§4.1 登记资料（状态联动 + S9 守卫）、新增 §4.2 引用既有版本（P1 跨案件复用，含状态联动 + 撤销守卫）、§6 权限与可见性（waive 路径说明 + S9 统一守卫）
+    Owner：研发
+    状态：已回灌（2026-04-30）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§3.2 资料项状态（ALLOWED_TRANSITIONS 扩展两条边）、§7.2 waived 治理（waive 走专用端点 + 5 码）
+    Owner：研发
+    状态：待回灌（下一轮；本轮仅回灌页面规格层）
+
 ---
 
 ## T-00b-recon 前置勘察报告
@@ -891,6 +1039,54 @@
     位置：§4 关键动作（需追加退款操作）
     Owner：产品/设计
     状态：待输入（依赖 Q1-Q2 决议）
+
+- 时间：2026-04-30
+  问题：[R8 P1 修复回灌] 双层状态机自动化复盘走查第八轮 4 条 P1 Bug（BUG-116/127/128/129）修复结论 + R7 §3 复现脚本修订
+  结论（TL;DR）：R8 走查发现的 4 条 P1（BUG-116 tab 别名缺失 + BUG-127/128/129 三条 R5 回归）全部 land。修复口径：server 端抽出 `toTimestampStringOrNull` 共享 helper 堵住 `String(Date)` 根因，admin 端恢复 `ownerDisplayName` 透传 / `formatCaseIdentity` 面包屑调用 / `formatEntryTime` UI 兜底 / `CASE_DETAIL_TAB_ALIASES` 别名映射，并在每个修复点新增或恢复防回归测试。R7 §3 复现脚本 5 处文档漂移（脚本名 / 字段名 / 端点路径 / CSS 类名 / 函数位点）同步修订。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/14-双层状态机自动化复盘走查Bug清单-第八轮.md（§1 BUG-116/127/128/129 + §2 复现脚本修订）
+  - docs/gyoseishoshi_saas_md/_output/13-双层状态机自动化复盘走查Bug清单-第七轮.md（§1 BUG-105 行注脚 → R8 修复）
+  - .cursor/plans/r8_双层状态机_p1_修复_47078c80.plan.md（执行计划）
+
+  ### 4 条 P1 修复结论
+
+  | BUG ID | 优先级 | 摘要 | 修复要点 | 防回归测试 |
+  |---|---|---|---|---|
+  | BUG-116 | P1 | `?tab=timeline` 深链回退 Overview 而非 Log | `constants.ts` 新增 `CASE_DETAIL_TAB_ALIASES = { timeline: 'log' }`；`query.ts` `resolveDetailTab` 先做 alias 命中再走白名单；出口仅产出规范 key（读时容错、写时规范） | `query.cross-module-regression.test.ts`：`resolveDetailTab("timeline") === "log"`、大小写敏感、白名单不退化 |
+  | BUG-127 | P1 | 案件列表 owner 列 19/19 行「未指派」，API 已返回 `ownerDisplayName` | `types.ts` `CaseListItem` 追加 `ownerDisplayName?: string`；`CaseAdapterMappers.ts` 双路兼容读取；`CaseTableRow.vue` 优先用后端展示名，缺失时回退 fixture | `CaseTableRow.test.ts`：后端 ownerDisplayName 优先 / 空白视作缺失 / fixture 兜底 / 中英文双语保持原样，共 5 个用例 |
+  | BUG-128 | P1 | 案件详情面包屑显示原始 UUID `#df9d1e84-…` | `CaseDetailView.vue:163` 改用 `formatCaseIdentity(detail.caseNo, detail.id)`；`caseNo` 优先，缺失回退 `id` | `CaseDetailView.breadcrumb.test.ts`：caseNo 存在 / caseNo 空白 / caseNo 缺失三路 |
+  | BUG-129 | P1 | `/api/timeline` `String(Date)` 序列化，UI 时间戳退化为 `Date.toString()` 长串 | server: `model/timestamps.ts` 抽 `toTimestampStringOrNull` / `requireTimestampString` helper，`timeline.service.ts` + `templates.service.ts` 全部替换 `String(r.created_at)`；admin: `CaseLogTab.vue:128` 恢复 `formatEntryTime` UI 兜底 | `timeline.service.test.ts` + `templates.service.test.ts`：Date→ISO / string→原样 / null→抛错；`CaseLogTab.bug129-regression.test.ts`：`Date.toString()` 格式输入 → 本地化短串输出 |
+
+  ### R7 §3 复现脚本修订（5 处文档漂移）
+
+  | # | R7 原文 | R8 修订 | 修订理由 |
+  |---|---|---|---|
+  | 1 | `npm run db:migrations:check:db` | `npm run db:migrations:check` | 脚本已合并，原名报 `Missing script` |
+  | 2 | 列表行字段 `phase` | `businessPhase` | 字段已改名；query 参数 `?phase=` 仍兼容 |
+  | 3 | `/api/cases/:id/timeline` | `/api/timeline?entityType=case&entityId=:id` | 端点路径已变更 |
+  | 4 | CSS 类 `case-row__stage-meta` | `case-row__workflow-step` | 类名已重构 |
+  | 5 | `CaseLogTab.vue:59-63 formatEntryTime` | 函数已下沉到 `CaseCommsLogsAdapter`，模板用 `entry.time` | 行号/函数名/调用位点都变了，职责仍在 |
+
+  影响面：
+  - packages/server/src/modules/core/model/timestamps.ts（新增共享 helper）
+  - packages/server/src/modules/core/timeline/timeline.service.ts（BUG-129 server 根因修复）
+  - packages/server/src/modules/core/templates/templates.service.ts（BUG-129 同模式扩展修复）
+  - packages/admin/src/views/cases/constants.ts（BUG-116 别名表）
+  - packages/admin/src/views/cases/query.ts（BUG-116 resolveDetailTab 别名逻辑）
+  - packages/admin/src/views/cases/types.ts（BUG-127 ownerDisplayName 字段）
+  - packages/admin/src/views/cases/model/CaseAdapterMappers.ts（BUG-127 适配层透传）
+  - packages/admin/src/views/cases/components/CaseTableRow.vue（BUG-127 视图层）
+  - packages/admin/src/views/cases/CaseDetailView.vue（BUG-128 面包屑）
+  - packages/admin/src/views/cases/components/CaseLogTab.vue（BUG-129 admin 兜底）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/14-双层状态机自动化复盘走查Bug清单-第八轮.md
+    位置：§1 BUG-116/127/128/129 + §2 复现脚本修订 + §4 待立项清单
+    Owner：研发
+    状态：已回灌（2026-04-30，各条标注「✅ R8 已 land」）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/13-双层状态机自动化复盘走查Bug清单-第七轮.md
+    位置：§1 BUG-105 行
+    Owner：研发
+    状态：已回灌（2026-04-30，保留 ❌ 原判 + 追加注脚指向 R8 BUG-116 修复）
 
 - 时间：2026-04-29
   问题：[BUG-115] 无 case 历史客户的 `base_profile` 缺 `ownerUserId / groupId`，如何回填？是否需要手动补录入口？

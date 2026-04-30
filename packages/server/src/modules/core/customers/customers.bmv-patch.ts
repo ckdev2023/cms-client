@@ -4,10 +4,7 @@ import type { Pool } from "pg";
 import type { Customer } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
-import {
-  createDefaultCustomerBmvProfile,
-  resolveCustomerBmvProfile,
-} from "./customers.dto-mappers";
+import { resolveCustomerBmvProfile } from "./customers.dto-mappers";
 import type { CustomerBmvProfile, CustomerQueryRow } from "./customers.types";
 import {
   CUSTOMER_COLS,
@@ -35,10 +32,9 @@ export async function patchBmvProfile(
   currentProfile: CustomerBmvProfile,
   patch: CustomerBmvProfilePatch,
 ): Promise<Customer> {
-  const nextProfile =
-    resolveCustomerBmvProfile({
-      bmvProfile: { ...currentProfile, ...patch },
-    }) ?? createDefaultCustomerBmvProfile();
+  const nextProfile = resolveCustomerBmvProfile({
+    bmvProfile: { ...currentProfile, ...patch },
+  });
   const tenantDb = createTenantDb(pool, ctx.orgId, ctx.userId);
   const result = await tenantDb.query<CustomerQueryRow>(
     `update customers
@@ -62,8 +58,5 @@ export async function patchBmvProfile(
  * @returns 当前 BMV Profile。
  */
 export function getCurrentBmvProfile(customer: Customer): CustomerBmvProfile {
-  return (
-    resolveCustomerBmvProfile(customer.baseProfile) ??
-    createDefaultCustomerBmvProfile()
-  );
+  return resolveCustomerBmvProfile(customer.baseProfile);
 }

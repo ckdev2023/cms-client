@@ -8,8 +8,15 @@ import {
   useAdminSession,
 } from "./auth/model/adminSession";
 import { createOrgSettingsRepository } from "./views/settings/model/OrgSettingsRepository";
+import { createGroupsRepository } from "./views/settings/model/GroupsRepository";
 import { initOrgSettings } from "./shared/model/useOrgSettings";
+import {
+  clearGroupAliases,
+  registerGroupAliases,
+} from "./shared/model/useGroupOptions";
 import AppShell from "./shell/AppShell.vue";
+import Toast from "./shared/ui/Toast.vue";
+import { initToast } from "./shared/model/useToast";
 
 /**
  * 后台应用根组件，按路由元信息在登录页与管理外壳之间切换布局。
@@ -25,10 +32,12 @@ const userEmail = computed(
 );
 const userInitials = computed(() => currentUser.value?.initials ?? "AD");
 const arcoLocale = computed(() => getArcoLocale(locale.value as AppLocale));
+initToast();
 const orgSettings = initOrgSettings({
   initialStorageRoot: { rootLabel: null, rootPath: null },
 });
 const orgSettingsRepository = createOrgSettingsRepository();
+const groupsRepository = createGroupsRepository();
 
 let sessionCheckTimer: number | null = null;
 
@@ -71,6 +80,21 @@ async function refreshOrgSettings(): Promise<void> {
   }
 }
 
+async function refreshGroupAliases(): Promise<void> {
+  if (!isAuthenticated.value) {
+    clearGroupAliases();
+    return;
+  }
+  try {
+    const groups = await groupsRepository.listGroups();
+    registerGroupAliases(
+      groups.map((group) => ({ id: group.id, name: group.name })),
+    );
+  } catch {
+    // 拉取失败时保持已注册别名不变；resolveGroupLabel 会回落到占位符 "—"。
+  }
+}
+
 watch(() => route.fullPath, redirectToLoginForExpiredSession, {
   immediate: true,
 });
@@ -80,9 +104,11 @@ watch(
   (authenticated) => {
     if (!authenticated) {
       orgSettings.storageRoot.value = { rootLabel: null, rootPath: null };
+      clearGroupAliases();
       return;
     }
     void refreshOrgSettings();
+    void refreshGroupAliases();
   },
   { immediate: true },
 );
@@ -114,5 +140,6 @@ onBeforeUnmount(() => {
       :user-initials="userInitials"
       :user-name="userName"
     />
+    <Toast />
   </a-config-provider>
 </template>

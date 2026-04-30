@@ -3,6 +3,7 @@ import { nextTick } from "vue";
 import type { DocumentListItem } from "../types";
 import type { RegisterDocumentForm } from "./useRegisterDocumentModel";
 import { useRegisterDocumentModel } from "./useRegisterDocumentModel";
+import type { DocumentRepository } from "./DocumentRepositoryTypes";
 
 function makeItem(overrides: Partial<DocumentListItem> = {}): DocumentListItem {
   return {
@@ -43,14 +44,39 @@ const ITEMS: DocumentListItem[] = [
   makeItem({ id: "d6", caseId: "c2", caseName: "案件B", status: "expired" }),
 ];
 
+function stubRepository(): Pick<DocumentRepository, "uploadLocalArchive"> {
+  return {
+    uploadLocalArchive: vi.fn().mockResolvedValue({
+      id: "file-1",
+      requirementId: "d1",
+      fileName: "file.pdf",
+      fileUrl: null,
+      relativePath: "case/doc/file.pdf",
+      fileKey: "k1",
+      versionNo: 1,
+      storageType: "local_server",
+      reviewStatus: "pending",
+      reviewBy: null,
+      reviewAt: null,
+      expiryDate: null,
+      uploadedBy: null,
+      uploadedAt: "2026-04-30",
+      createdAt: "2026-04-30",
+    }),
+  };
+}
+
 function create() {
-  const onSubmit =
-    vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+  const repository = stubRepository();
+  const onSuccess = vi.fn<(form: RegisterDocumentForm) => void>();
+  const onError = vi.fn<(error: unknown) => void>();
   const model = useRegisterDocumentModel({
     allItems: () => ITEMS,
-    onSubmit,
+    repository,
+    onSuccess,
+    onError,
   });
-  return { model, onSubmit };
+  return { model, repository, onSuccess, onError };
 }
 
 // ─── Initial state ──────────────────────────────────────────────
@@ -299,11 +325,9 @@ describe("useRegisterDocumentModel — canSubmit", () => {
 
 describe("useRegisterDocumentModel — storage root gate", () => {
   it("openModal is blocked when storage root is not configured", () => {
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
     const model = useRegisterDocumentModel({
       allItems: () => ITEMS,
-      onSubmit,
+      repository: stubRepository(),
       isStorageRootConfigured: () => false,
     });
     model.openModal();
@@ -311,11 +335,9 @@ describe("useRegisterDocumentModel — storage root gate", () => {
   });
 
   it("openModal works when storage root is configured", () => {
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
     const model = useRegisterDocumentModel({
       allItems: () => ITEMS,
-      onSubmit,
+      repository: stubRepository(),
       isStorageRootConfigured: () => true,
     });
     model.openModal();
@@ -333,33 +355,74 @@ describe("useRegisterDocumentModel — storage root gate", () => {
 // ─── submit ─────────────────────────────────────────────────────
 
 describe("useRegisterDocumentModel — submit", () => {
-  it("calls onSubmit with form data and version", () => {
-    const { model, onSubmit } = create();
+  it("calls repository.uploadLocalArchive and onSuccess on submit", async () => {
+    const { model, repository, onSuccess } = create();
     model.updateField("caseId", "c1");
     model.updateField("docItemId", "d1");
     model.updateField("relativePath", "case/doc/file.pdf");
-    model.submit();
-    expect(onSubmit).toHaveBeenCalledOnce();
-    const [formArg, versionArg] = onSubmit.mock.calls[0];
-    expect(formArg.caseId).toBe("c1");
-    expect(formArg.docItemId).toBe("d1");
-    expect(formArg.relativePath).toBe("case/doc/file.pdf");
-    expect(versionArg).toBe(1);
+    await model.submit();
+    expect(repository.uploadLocalArchive).toHaveBeenCalledOnce();
+    expect(repository.uploadLocalArchive).toHaveBeenCalledWith({
+      requirementId: "d1",
+      fileName: "file.pdf",
+      relativePath: "case/doc/file.pdf",
+    });
+    expect(onSuccess).toHaveBeenCalledOnce();
+    expect(onSuccess.mock.calls[0][0].caseId).toBe("c1");
   });
 
-  it("closes the modal after submit", () => {
+  it("closes the modal after successful submit", async () => {
     const { model } = create();
     model.openModal();
     model.updateField("caseId", "c1");
     model.updateField("docItemId", "d1");
     model.updateField("relativePath", "case/doc/file.pdf");
-    model.submit();
+    await model.submit();
     expect(model.open.value).toBe(false);
   });
 
-  it("does nothing when canSubmit is false", () => {
-    const { model, onSubmit } = create();
-    model.submit();
-    expect(onSubmit).not.toHaveBeenCalled();
+  it("does nothing when canSubmit is false", async () => {
+    const { model, repository } = create();
+    await model.submit();
+    expect(repository.uploadLocalArchive).not.toHaveBeenCalled();
+  });
+
+  it("calls onError and keeps modal open on API failure", async () => {
+    const { model, onError } = create();
+    const repo = model as unknown as {
+      submit: () => Promise<void>;
+    };
+    void repo;
+    const failRepo = stubRepository();
+    const apiError = new Error("upload failed");
+    (failRepo.uploadLocalArchive as ReturnType<typeof vi.fn>).mockRejectedValue(
+      apiError,
+    );
+    const onErrFn = vi.fn();
+    const m = useRegisterDocumentModel({
+      allItems: () => ITEMS,
+      repository: failRepo,
+      onError: onErrFn,
+    });
+    m.openModal();
+    m.updateField("caseId", "c1");
+    m.updateField("docItemId", "d1");
+    m.updateField("relativePath", "case/doc/file.pdf");
+    await m.submit();
+    expect(onErrFn).toHaveBeenCalledWith(apiError);
+    expect(m.open.value).toBe(true);
+    void onError;
+  });
+
+  it("sets submitting during async submit", async () => {
+    const { model } = create();
+    model.updateField("caseId", "c1");
+    model.updateField("docItemId", "d1");
+    model.updateField("relativePath", "case/doc/file.pdf");
+    expect(model.submitting.value).toBe(false);
+    const p = model.submit();
+    expect(model.submitting.value).toBe(true);
+    await p;
+    expect(model.submitting.value).toBe(false);
   });
 });

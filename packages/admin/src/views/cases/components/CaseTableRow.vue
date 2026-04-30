@@ -11,6 +11,7 @@ import {
   getStageLabel,
   getPhaseI18nKey,
   getPhaseBadge,
+  getCaseTypeI18nKey,
   BADGE_TONE_MAP,
 } from "../constants";
 
@@ -23,9 +24,17 @@ const props = defineProps<{
 
 const detailHref = computed(() => buildCaseDetailHref(props.item.id));
 
-const owner = computed(() =>
-  resolveOwnerOption(props.item.ownerId, locale.value),
-);
+const owner = computed(() => {
+  const fromBackend = props.item.ownerDisplayName?.trim();
+  if (fromBackend) {
+    return {
+      label: fromBackend,
+      initials: fromBackend.slice(0, 2),
+      avatarClass: "case-row__owner-avatar--la",
+    };
+  }
+  return resolveOwnerOption(props.item.ownerId, locale.value);
+});
 
 const stageLabel = computed(() => {
   const key = getStageI18nKey(props.item.stageId);
@@ -65,6 +74,15 @@ const phaseTone = computed<ChipTone>(() => {
 const phaseLabel = computed(() => {
   const key = getPhaseI18nKey(props.item.businessPhase);
   return key ? t(key) : props.item.businessPhase;
+});
+
+const typeLabel = computed(() => {
+  const code = props.item.type;
+  if (!code) return "—";
+  const key = getCaseTypeI18nKey(code);
+  if (!key) return code;
+  const translated = t(key);
+  return translated !== key ? translated : code;
 });
 
 const identityMeta = computed(() => props.item.caseNo || props.item.id);
@@ -128,7 +146,7 @@ const isFailureStep = computed(
 
     <td class="case-row__hide-md">{{ item.applicant }}</td>
 
-    <td class="case-row__hide-md">{{ item.type }}</td>
+    <td class="case-row__hide-md">{{ typeLabel }}</td>
 
     <td class="case-row__hide-lg">
       <div v-if="owner" class="case-row__owner">

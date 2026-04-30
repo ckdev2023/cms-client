@@ -6,6 +6,7 @@ import conversations from "./conversations/en-US";
 import documents from "./documents/en-US";
 import leads from "./leads/en-US";
 import settings from "./settings/en-US";
+import tasks from "./tasks/en-US";
 import dashboardWorkItems from "./work-items/en-US";
 import dashboardWorkItem from "./dashboard-work-item/en-US";
 
@@ -125,6 +126,7 @@ const enUS = {
   documents,
   leads,
   settings,
+  tasks,
   dashboard: {
     hero: {
       kicker: "Dashboard",

@@ -14,7 +14,11 @@ export const TMPL_BMV_RENEWAL: CaseTemplateDef = {
   ),
   badge: "BMV",
   applicationTypes: ["renewal"],
-  subtitle: "期间更新 — 重点在持续经营与持续在留事实，而非设立材料。",
+  subtitle: il(
+    "期间更新 — 重点在持续经营与持续在留事实，而非设立材料。",
+    "Renewal — focuses on ongoing business operation and continuous residence, not incorporation documents.",
+    "期間更新 — 設立資料ではなく、継続的な経営実態と在留実態が重点。",
+  ),
   sections: [
     {
       title: il(

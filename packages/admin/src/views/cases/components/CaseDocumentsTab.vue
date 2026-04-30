@@ -1,16 +1,22 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, toRef } from "vue";
 import { useI18n } from "vue-i18n";
 import { useOrgSettings } from "../../../shared/model/useOrgSettings";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseDocumentRow from "./CaseDocumentRow.vue";
+import RegisterDocumentModal from "../../documents/components/RegisterDocumentModal.vue";
+import ReviewDocumentModal from "../../documents/components/ReviewDocumentModal.vue";
+import WaiveReasonModal from "../../documents/components/WaiveReasonModal.vue";
+import ReferenceVersionModal from "../../documents/components/ReferenceVersionModal.vue";
+import AddDocumentItemModal from "../../documents/components/AddDocumentItemModal.vue";
 import type { CaseDetail } from "../types-detail";
 import {
   computeProviderStat,
   computeCaseDocumentCompletionRate,
   isDocumentListEmpty,
 } from "../model/caseDocumentStats";
+import { useCaseDocumentsTab } from "../model/useCaseDocumentsTab";
 
 /** 文書管理 Tab：按提供者分组展示进度与文書清单，含空状态与动态完成率。 */
 const { t } = useI18n();
@@ -21,14 +27,43 @@ const props = defineProps<{
   readonly: boolean;
 }>();
 
-const isEmpty = computed(() => isDocumentListEmpty(props.detail.documents));
+const {
+  listModel,
+  documentGroups,
+  hasApiData,
+  apiCompletionRate,
+  review,
+  register,
+  addItem,
+  handleRowApprove,
+  handleRowReject,
+  handleRowRemind,
+  handleRowRegister,
+  handleRowReference,
+  handleRowWaive,
+  handleConfirmWaive,
+  handleConfirmReference,
+  handleRegisterClick,
+  handleAddItemClick,
+} = useCaseDocumentsTab({
+  caseId: toRef(() => props.detail.id),
+  isStorageRootConfigured,
+});
 
-const overallRate = computed(() =>
-  computeCaseDocumentCompletionRate(props.detail.documents),
+const activeGroups = computed(() =>
+  hasApiData.value ? documentGroups.value : props.detail.documents,
+);
+
+const isEmpty = computed(() => isDocumentListEmpty(activeGroups.value));
+
+const overallRate = computed(
+  () =>
+    apiCompletionRate.value ??
+    computeCaseDocumentCompletionRate(activeGroups.value),
 );
 
 const groupStats = computed(() =>
-  props.detail.documents.map((g) => ({
+  activeGroups.value.map((g) => ({
     group: g,
     stat: computeProviderStat(g),
   })),
@@ -102,10 +137,13 @@ const groupStats = computed(() =>
               tone="primary"
               size="sm"
               :disabled="!isStorageRootConfigured"
+              @click="handleRegisterClick(detail.id)"
               >登记资料</Button
             >
           </span>
-          <Button size="sm">手动添加</Button>
+          <Button size="sm" @click="handleAddItemClick(detail.id)"
+            >手动添加</Button
+          >
         </div>
       </div>
     </Card>
@@ -171,6 +209,7 @@ const groupStats = computed(() =>
                   tone="primary"
                   size="sm"
                   :disabled="!isStorageRootConfigured"
+                  @click="handleRegisterClick(detail.id)"
                 >
                   <svg
                     width="14"
@@ -190,7 +229,7 @@ const groupStats = computed(() =>
                   登记资料
                 </Button>
               </span>
-              <Button size="sm">
+              <Button size="sm" @click="handleAddItemClick(detail.id)">
                 <svg
                   width="14"
                   height="14"
@@ -236,6 +275,12 @@ const groupStats = computed(() =>
             :item="item"
             :readonly="readonly"
             :storage-root-configured="isStorageRootConfigured"
+            @approve="handleRowApprove"
+            @reject="handleRowReject"
+            @remind="handleRowRemind"
+            @register="handleRowRegister"
+            @reference="handleRowReference"
+            @waive="handleRowWaive"
           />
           <div v-if="group.items.length === 0" class="docs-tab__group-empty">
             该分组暂无资料项
@@ -243,252 +288,88 @@ const groupStats = computed(() =>
         </div>
       </Card>
     </template>
+
+    <div v-if="listModel.loading.value" class="docs-tab__loading" role="status">
+      <div class="docs-tab__loading-bar" />
+    </div>
+
+    <RegisterDocumentModal
+      :open="register.open.value"
+      :form="register.form.value"
+      :path-error="register.pathError.value"
+      :case-options="register.caseOptions.value"
+      :doc-item-options="register.docItemOptions.value"
+      :version-label="register.versionLabel.value"
+      :can-submit="register.canSubmit.value"
+      @close="register.closeModal()"
+      @update:field="(field, value) => register.updateField(field, value)"
+      @submit="register.submit()"
+    />
+
+    <ReviewDocumentModal
+      v-if="review.approveOpen.value"
+      :open="review.approveOpen.value"
+      mode="approve"
+      :doc-name="review.approveTarget.value?.name ?? ''"
+      :can-confirm="true"
+      @close="review.closeApprove()"
+      @confirm="review.confirmApprove()"
+    />
+
+    <ReviewDocumentModal
+      v-if="review.rejectOpen.value"
+      :open="review.rejectOpen.value"
+      mode="reject"
+      :doc-name="review.rejectTarget.value?.name ?? ''"
+      :reject-reason="review.rejectReason.value"
+      :can-confirm="review.canConfirmReject.value"
+      @close="review.closeReject()"
+      @update:reject-reason="review.rejectReason.value = $event"
+      @confirm="review.confirmReject()"
+    />
+
+    <WaiveReasonModal
+      :open="review.waiveOpen.value"
+      :target-label="review.waiveTargetLabel.value"
+      :reason-code="review.waiveReasonCode.value"
+      :reason-note="review.waiveNote.value"
+      :note-required="review.waiveNoteRequired.value"
+      :can-confirm="review.canConfirmWaive.value"
+      @close="review.closeWaive()"
+      @update:reason-code="review.waiveReasonCode.value = $event"
+      @update:reason-note="review.waiveNote.value = $event"
+      @confirm="handleConfirmWaive"
+    />
+
+    <ReferenceVersionModal
+      v-if="review.referenceOpen.value"
+      :open="review.referenceOpen.value"
+      :doc-name="review.referenceTarget.value?.name ?? ''"
+      :candidates="review.referenceCandidates.value"
+      :selected-id="review.selectedReferenceId.value"
+      :can-confirm="review.canConfirmReference.value"
+      :loading="review.referenceCandidatesLoading.value"
+      @close="review.closeReference()"
+      @update:selected-id="review.selectedReferenceId.value = $event"
+      @confirm="handleConfirmReference"
+    />
+
+    <AddDocumentItemModal
+      :open="addItem.open.value"
+      :name="addItem.form.value.name"
+      :owner-side="addItem.form.value.ownerSide"
+      :due-at="addItem.form.value.dueAt"
+      :note="addItem.form.value.note"
+      :can-submit="addItem.canSubmit.value"
+      :submitting="addItem.submitting.value"
+      @close="addItem.closeModal()"
+      @update:name="addItem.updateField('name', $event)"
+      @update:owner-side="addItem.updateField('ownerSide', $event)"
+      @update:due-at="addItem.updateField('dueAt', $event)"
+      @update:note="addItem.updateField('note', $event)"
+      @submit="addItem.submit()"
+    />
   </div>
 </template>
 
-<style scoped>
-.docs-tab {
-  display: grid;
-  gap: 20px;
-}
-
-.docs-tab__storage-gate {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 16px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--color-warning-border, #fde68a);
-  background: var(--color-warning-bg, #fffbeb);
-}
-.docs-tab__gate-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: var(--color-warning-icon, #d97706);
-}
-.docs-tab__gate-title {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-warning-title, #92400e);
-}
-.docs-tab__gate-desc {
-  margin: 4px 0 0;
-  font-size: var(--font-size-xs);
-  color: var(--color-warning-text, #b45309);
-  line-height: 1.5;
-}
-.docs-tab__register-wrap {
-  display: inline-flex;
-}
-
-.docs-tab__empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 40px 24px;
-  text-align: center;
-}
-
-.docs-tab__empty-icon {
-  color: var(--color-text-3);
-  opacity: 0.5;
-  margin-bottom: 4px;
-}
-
-.docs-tab__empty-title {
-  font-size: var(--font-size-base);
-  font-weight: var(--font-weight-extrabold);
-  color: var(--color-text-1);
-}
-
-.docs-tab__empty-desc {
-  font-size: 13px;
-  color: var(--color-text-3);
-  max-width: 360px;
-  line-height: 1.5;
-}
-
-.docs-tab__empty-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.docs-tab__progress-header {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 16px;
-}
-
-.docs-tab__kicker {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.docs-tab__progress-title {
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-
-.docs-tab__progress-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.docs-tab__progress-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.docs-tab__progress-label {
-  flex-shrink: 0;
-  width: 140px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-2);
-}
-
-.docs-tab__progress-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--color-bg-3);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.docs-tab__progress-bar-fill {
-  height: 100%;
-  background: var(--color-primary-6);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.docs-tab__progress-count {
-  flex-shrink: 0;
-  min-width: 36px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-2);
-  text-align: right;
-}
-
-.docs-tab__card-header {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  width: 100%;
-}
-
-.docs-tab__section-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-
-.docs-tab__global-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.docs-tab__global-progress-track {
-  flex: 1;
-  min-width: 120px;
-  height: 6px;
-  background: var(--color-bg-3);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.docs-tab__global-progress-fill {
-  height: 100%;
-  background: var(--color-primary-6);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.docs-tab__global-progress-label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  white-space: nowrap;
-}
-
-.docs-tab__header-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.docs-tab__group + .docs-tab__group {
-  border-top: 1px solid var(--color-border-1);
-}
-
-.docs-tab__group-header {
-  padding: 16px 20px 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.docs-tab__group-header-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.docs-tab__group-title {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.docs-tab__group-count {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.docs-tab__group-bar {
-  height: 4px;
-  background: var(--color-bg-3);
-  border-radius: var(--radius-full);
-  overflow: hidden;
-}
-
-.docs-tab__group-bar-fill {
-  height: 100%;
-  background: var(--color-primary-6);
-  border-radius: var(--radius-full);
-  transition: width 0.3s ease;
-}
-
-.docs-tab__group-bar-fill--complete {
-  background: var(--color-success);
-}
-
-.docs-tab__group-empty {
-  padding: 20px;
-  text-align: center;
-  font-size: 13px;
-  color: var(--color-text-3);
-}
-</style>
+<style scoped src="./CaseDocumentsTab.css"></style>

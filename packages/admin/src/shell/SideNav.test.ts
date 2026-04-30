@@ -152,10 +152,10 @@ describe("SideNav", () => {
     expect(items).toHaveLength(totalItems);
   });
 
-  it("does not render the tasks placeholder entry in the side navigation", async () => {
+  it("renders the tasks entry in the business nav group (BUG-157)", async () => {
     const w = await mountWithRouter();
     const itemTexts = w.findAll(".nav-item").map((el) => el.text());
-    expect(itemTexts).not.toContain("任务与提醒");
+    expect(itemTexts).toContain("任务与提醒");
   });
 
   it("does not render external nav items after portal removal", async () => {

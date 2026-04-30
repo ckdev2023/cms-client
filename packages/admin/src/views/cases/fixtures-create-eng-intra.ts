@@ -12,8 +12,11 @@ export const TMPL_ENG_CERT: CaseTemplateDef = {
   label: il("技人国（认定）", "Engineer/Specialist (CoE)", "技人国（認定）"),
   badge: "popular",
   applicationTypes: ["certification"],
-  subtitle:
+  subtitle: il(
     "技术・人文知识・国际业务认定 — 重点在学历链、职历链、雇佣条件与雇主主体证明。",
+    "Engineer / Specialist in Humanities / Int'l Services CoE — focus on academic chain, career chain, employment conditions, and employer entity proof.",
+    "技術・人文知識・国際業務（認定）— 学歴チェーン、職歴チェーン、雇用条件、雇用主の実体証明が重点。",
+  ),
   sections: [
     {
       title: il(
@@ -215,8 +218,11 @@ export const TMPL_ENG_RENEWAL: CaseTemplateDef = {
   ),
   badge: "popular",
   applicationTypes: ["renewal"],
-  subtitle:
+  subtitle: il(
     "技术・人文知识・国际业务期间更新 — 重点在在留持续、税务连续和社保连续性。",
+    "Engineer / Specialist in Humanities / Int'l Services renewal — focus on residence continuity, tax continuity, and social insurance continuity.",
+    "技術・人文知識・国際業務（期間更新）— 在留継続、税務連続、社会保険の連続性が重点。",
+  ),
   sections: [
     {
       title: il(
@@ -327,8 +333,11 @@ export const TMPL_INTRA: CaseTemplateDef = {
   label: il("企業内転勤", "Intra-company Transfer", "企業内転勤"),
   badge: "p1",
   applicationTypes: ["certification"],
-  subtitle:
+  subtitle: il(
     "集团 / 关联企業内部人事调动 — 重点证明転勤关系而非普通招聘，日本侧与本国侧材料须互相对应。",
+    "Group / affiliate intra-company transfer — must prove a transfer relationship rather than ordinary hiring; Japan-side and home-country documents must correspond.",
+    "グループ／関連企業内部の人事異動 — 通常採用ではなく転勤関係の証明が重点。日本側と本国側の書類は相互に対応させる必要がある。",
+  ),
   sections: [
     {
       title: il(

@@ -139,6 +139,8 @@ export interface CaseListItem {
    *
    */
   ownerId: string;
+  /** 后端下发的负责人显示名；缺失时前端回退 fixture。 */
+  ownerDisplayName?: string;
   /**
    *
    */

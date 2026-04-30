@@ -182,6 +182,8 @@ export function readStringArray(value: unknown): string[] | null {
 export function buildBaseProfile(
   input: BaseProfileInput,
 ): Record<string, unknown> {
+  const trimmedBirthday = input.birthDate.trim();
+  // BUG-137：birthday 留空时省略字段，避免 server `birthday must be a valid date string` 校验失败。
   const baseProfile: Record<string, unknown> = {
     displayName: input.displayName.trim(),
     legalName: input.legalName.trim(),
@@ -189,7 +191,7 @@ export function buildBaseProfile(
     furigana: input.furigana.trim(),
     nationality: input.nationality.trim(),
     gender: input.gender.trim(),
-    birthday: input.birthDate.trim(),
+    ...(trimmedBirthday ? { birthday: trimmedBirthday } : {}),
     phone: input.phone.trim(),
     email: input.email.trim(),
     group: input.group.trim(),

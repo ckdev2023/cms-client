@@ -37,7 +37,7 @@ function synthesizeCustomerFromSourceContext(
     kana: ctx.customerKana ?? "",
     group: ctx.customerGroup ?? "",
     groupLabel: ctx.customerGroupLabel ?? "",
-    roleHint: "主申請人",
+    roleHint: "cases.create.step2.primaryRole",
     summary: "",
     contact: ctx.customerContact ?? "",
     bmvQuestionnaireStatus: ctx.bmvQuestionnaireStatus ?? null,
@@ -81,6 +81,7 @@ export interface UseCreateCaseModelDeps {
 }
 import {
   buildCaseTitle,
+  createGroupInheritanceLabel,
   resolveGroupInheritanceLabel,
   hasAnySourceContext,
   resolveInitialTemplateId,
@@ -189,9 +190,7 @@ function createTemplateDerived(
     effectiveTitle,
     isGroupOverridden,
     needsGroupOverrideReason: computed(() => isGroupOverridden.value),
-    groupInheritanceLabel: computed(() =>
-      resolveGroupInheritanceLabel(deps.groupOptions, draft.inheritedGroup),
-    ),
+    groupInheritanceLabel: createGroupInheritanceLabel(deps, draft),
     hasSourceContext: computed(() => hasAnySourceContext(deps.sourceContext)),
   };
 }

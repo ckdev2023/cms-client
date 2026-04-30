@@ -34,7 +34,7 @@ import {
   DEFAULT_CASE_DETAIL_TAB,
   CASE_CROSS_MODULE_LINK_CONTRACT,
 } from "./query";
-import { CASE_DETAIL_TAB_KEYS } from "./constants";
+import { CASE_DETAIL_TAB_ALIASES, CASE_DETAIL_TAB_KEYS } from "./constants";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
 import {
   createDetailRepoStub,
@@ -389,6 +389,36 @@ describe("tab query consistency across cross-module entries (p0-fe-012-03)", () 
 
     const route = buildCaseDetailRoute("case-001", defaultTab);
     expect(route.query).toBeUndefined();
+  });
+});
+
+// ─── Tab Alias Resolution (BUG-116) ─────────────────────────────
+
+describe("tab alias resolution — timeline → log (BUG-116)", () => {
+  it('resolveDetailTab("timeline") returns "log"', () => {
+    expect(resolveDetailTab("timeline")).toBe("log");
+  });
+
+  it('resolveDetailTab("Timeline") returns DEFAULT (case-sensitive)', () => {
+    expect(resolveDetailTab("Timeline")).toBe(DEFAULT_CASE_DETAIL_TAB);
+  });
+
+  it('resolveDetailTab("messages") still returns "messages" (whitelist not degraded)', () => {
+    expect(resolveDetailTab("messages")).toBe("messages");
+  });
+
+  it("all aliased keys resolve to their target", () => {
+    for (const [alias, target] of Object.entries(CASE_DETAIL_TAB_ALIASES)) {
+      expect(resolveDetailTab(alias)).toBe(target);
+    }
+  });
+
+  it("alias does not appear in CASE_DETAIL_TAB_KEYS (write-side stays canonical)", () => {
+    for (const alias of Object.keys(CASE_DETAIL_TAB_ALIASES)) {
+      expect((CASE_DETAIL_TAB_KEYS as readonly string[]).includes(alias)).toBe(
+        false,
+      );
+    }
   });
 });
 

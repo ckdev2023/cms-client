@@ -10,6 +10,8 @@ import {
 import { NestFactory } from "@nestjs/core";
 import type { NestExpressApplication } from "@nestjs/platform-express";
 
+import { CasesService } from "../cases/cases.service";
+import { DocumentItemsService } from "../document-items/documentItems.service";
 import type { DocumentFile } from "../model/coreEntities";
 import { DocumentFilesController } from "./documentFiles.controller";
 import { DocumentFilesService } from "./documentFiles.service";
@@ -37,6 +39,7 @@ const mockFile: DocumentFile = {
   reviewAt: null,
   expiryDate: null,
   hashValue: "hash",
+  assetId: null,
   createdAt: "2026-01-01T00:00:00.000Z",
 };
 
@@ -59,6 +62,14 @@ class TestCoreContextGuard implements CanActivate {
         get: (_ctx: unknown, id: string) =>
           Promise.resolve(id === FILE_ID ? mockFile : null),
       },
+    },
+    {
+      provide: DocumentItemsService,
+      useValue: { get: () => Promise.resolve(null) },
+    },
+    {
+      provide: CasesService,
+      useValue: { get: () => Promise.resolve(null) },
     },
   ],
 })

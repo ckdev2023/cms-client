@@ -55,6 +55,15 @@ module.exports = [
       "max-statements": ["error", 30],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-definitions": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.name='String'][arguments.0.type='MemberExpression'][arguments.0.property.name=/^.*_at$/]",
+          message:
+            "禁止对时间戳列直接 String() 透传 Date.prototype.toString()。改用 core/model/timestamps.ts 的 requireTimestampString / toTimestampStringOrNull（BUG-135）。",
+        },
+      ],
       "jsdoc/require-jsdoc": [
         "error",
         {

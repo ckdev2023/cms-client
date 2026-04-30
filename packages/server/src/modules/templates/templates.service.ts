@@ -5,6 +5,7 @@ import { Pool } from "pg";
 
 import { createTenantDb } from "../core/tenancy/tenantDb";
 import type { RequestContext } from "../core/tenancy/requestContext";
+import { toIsoTimestampString } from "../../infra/utils/timestamps";
 import {
   shouldUseTemplateByRollout,
   type TemplateKind,
@@ -94,7 +95,7 @@ const mapVersionRow = (r: TemplateVersionQueryRow): TemplateVersionRow => ({
   version: r.version,
   config: normalizeConfig(r.config),
   createdByUserId: r.created_by_user_id,
-  createdAt: String(r.created_at),
+  createdAt: toIsoTimestampString(r.created_at),
 });
 
 const mapReleaseRow = (r: TemplateReleaseQueryRow): TemplateReleaseRow => ({
@@ -107,7 +108,7 @@ const mapReleaseRow = (r: TemplateReleaseQueryRow): TemplateReleaseRow => ({
   previousVersion: r.previous_version,
   rollout: normalizeRollout(r.rollout),
   updatedByUserId: r.updated_by_user_id,
-  updatedAt: String(r.updated_at),
+  updatedAt: toIsoTimestampString(r.updated_at),
 });
 
 /**

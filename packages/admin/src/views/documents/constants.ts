@@ -61,22 +61,22 @@ export const DOCUMENT_PROVIDER_IDS: readonly DocumentProviderType[] = [
 
 export const WAIVED_REASONS: Record<WaivedReasonCode, WaivedReasonDef> = {
   visa_type_exempt: {
-    label: "无需提供（该签证类型免除）",
+    labelKey: "documents.waive.reasons.visaTypeExempt",
     requiresNote: false,
   },
   guarantor_family_exempt: {
-    label: "保证人为配偶/直系亲属（免除）",
+    labelKey: "documents.waive.reasons.guarantorFamilyExempt",
     requiresNote: false,
   },
   equivalent_in_other_case: {
-    label: "客户已在其他案件提供等价材料",
+    labelKey: "documents.waive.reasons.equivalentInOtherCase",
     requiresNote: false,
   },
   immigration_confirmed_exempt: {
-    label: "入管局确认免除",
+    labelKey: "documents.waive.reasons.immigrationConfirmedExempt",
     requiresNote: false,
   },
-  other: { label: "其他", requiresNote: true },
+  other: { labelKey: "documents.waive.reasons.other", requiresNote: true },
 };
 
 export const WAIVED_REASON_CODES: readonly WaivedReasonCode[] = [
@@ -193,11 +193,13 @@ export function getProviderLabelKey(
 }
 
 /**
- * 根据 waived 原因码获取中文标签。
+ * 根据 waived 原因码获取 i18n 标签 key。
  *
  * @param code - 原因码或自由文本
- * @returns 中文标签；未匹配时返回原始值
+ * @returns i18n 标签 key；未匹配时返回原始值
  */
-export function getWaivedReasonLabel(code: WaivedReasonCode | string): string {
-  return WAIVED_REASONS[code as WaivedReasonCode]?.label ?? code;
+export function getWaivedReasonLabelKey(
+  code: WaivedReasonCode | string,
+): string {
+  return WAIVED_REASONS[code as WaivedReasonCode]?.labelKey ?? code;
 }

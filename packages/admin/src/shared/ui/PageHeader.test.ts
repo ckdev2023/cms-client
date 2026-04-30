@@ -60,6 +60,57 @@ describe("PageHeader", () => {
     expect(w.find(".ui-page-header__sep").exists()).toBe(true);
   });
 
+  // BUG-131: ARIA 1.2 要求面包屑里 aria-current="page" 至多一项；
+  // 之前 v-if/v-else 二分把所有无 href 的中间分组 crumb 都误标成 current。
+  it("only the last breadcrumb gets aria-current='page' (BUG-131)", () => {
+    const w = mountPageHeader({
+      props: {
+        title: "Detail",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/" },
+          { label: "Business" },
+          { label: "Cases", href: "/cases" },
+          { label: "CASE-001" },
+        ],
+      },
+    });
+    const current = w.findAll('[aria-current="page"]');
+    expect(current).toHaveLength(1);
+    expect(current[0].text()).toBe("CASE-001");
+  });
+
+  it("middle non-href crumb is rendered as a plain group label without aria-current (BUG-131)", () => {
+    const w = mountPageHeader({
+      props: {
+        title: "Detail",
+        breadcrumbs: [
+          { label: "Dashboard", href: "/" },
+          { label: "Business" },
+          { label: "Cases", href: "/cases" },
+          { label: "CASE-001" },
+        ],
+      },
+    });
+    const crumbs = w.findAll(".ui-page-header__crumb");
+    expect(crumbs).toHaveLength(4);
+    expect(crumbs[1].element.tagName).toBe("SPAN");
+    expect(crumbs[1].attributes("aria-current")).toBeUndefined();
+    expect(crumbs[1].classes()).toContain("ui-page-header__crumb--group");
+    expect(crumbs[3].classes()).toContain("ui-page-header__crumb--current");
+  });
+
+  it("falls back to current span when only one non-href crumb is provided", () => {
+    const w = mountPageHeader({
+      props: {
+        title: "Detail",
+        breadcrumbs: [{ label: "CASE-001" }],
+      },
+    });
+    const crumbs = w.findAll(".ui-page-header__crumb");
+    expect(crumbs).toHaveLength(1);
+    expect(crumbs[0].attributes("aria-current")).toBe("page");
+  });
+
   it("localizes breadcrumb aria-label", () => {
     const w = mountPageHeader(
       {

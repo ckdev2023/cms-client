@@ -7,6 +7,7 @@ import {
 import { Pool } from "pg";
 
 import type { Company } from "../model/coreEntities";
+import { requireTimestampString } from "../model/timestamps";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -61,8 +62,8 @@ export function mapCompanyRow(row: CompanyQueryRow): Company {
     contactPhone: row.contact_phone,
     contactEmail: row.contact_email,
     ownerUserId: row.owner_user_id,
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
 }
 

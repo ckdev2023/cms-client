@@ -13,6 +13,7 @@ import {
   pgTable,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -686,6 +687,21 @@ export const documentAssets = pgTable(
     index("idx_document_assets_org_id").on(table.orgId),
     index("idx_document_assets_owner_customer_id").on(table.ownerCustomerId),
     index("idx_document_assets_origin_case_id").on(table.originCaseId),
+    uniqueIndex("idx_document_assets_unique_customer_owned")
+      .on(
+        table.orgId,
+        table.materialCode,
+        table.ownerSubjectType,
+        table.ownerCustomerId,
+      )
+      .where(
+        sql`${table.activeFlag} = true AND ${table.ownerCustomerId} IS NOT NULL`,
+      ),
+    uniqueIndex("idx_document_assets_unique_employer_owned")
+      .on(table.orgId, table.materialCode, table.ownerEmployerIdentityKey)
+      .where(
+        sql`${table.activeFlag} = true AND ${table.ownerEmployerIdentityKey} IS NOT NULL`,
+      ),
   ],
 );
 

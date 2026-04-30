@@ -64,6 +64,19 @@ const documentsEnUS = {
       toastRemind: "Reminded {count} items",
       toastApprove: "Approved {count} items",
       toastWaive: "Marked {count} items as waived",
+      toastPartialFailure: "{count} items failed, please review and retry",
+    },
+    errorUnauthorized: "Session expired — please log in again",
+    errorRequestFailed: "Failed to load document list, please try again",
+    retry: "Retry",
+    state: {
+      loading: "Loading document list…",
+      unauthorized: "Session expired — please log in again",
+      requestFailed: "Failed to load document list, please try again",
+      badResponse:
+        "Unexpected response from the server — please contact an administrator",
+      retry: "Retry",
+      fallbackHint: "Showing sample data — backend is temporarily unavailable.",
     },
   },
   status: {
@@ -146,6 +159,14 @@ const documentsEnUS = {
     reasonNoteRequired: "Note is required when reason is 'Other'",
     cancel: "Cancel",
     confirm: "Confirm waive",
+    reasons: {
+      visaTypeExempt: "Not required (exempt for this visa type)",
+      guarantorFamilyExempt: "Guarantor is spouse / direct family (exempt)",
+      equivalentInOtherCase:
+        "Equivalent document already provided in another case",
+      immigrationConfirmedExempt: "Confirmed exempt by immigration bureau",
+      other: "Other",
+    },
   },
   reference: {
     title: "Reference existing version",
@@ -163,6 +184,24 @@ const documentsEnUS = {
     affectedCasesLabel: "Affected cases",
     suggestedActionLabel: "Suggested action",
     close: "Close",
+    loading: "Loading risk information…",
+  },
+  addItem: {
+    title: "Add document item manually",
+    fields: {
+      name: "Document item name",
+      namePlaceholder: "e.g. Residence card (copy), Employment contract",
+      ownerSide: "Provider",
+      ownerSidePlaceholder: "Select a provider",
+      dueAt: "Due date",
+      dueAtHint: "Optional. If left empty, no due date will be set.",
+      note: "Note",
+      notePlaceholder: "Enter a note…",
+    },
+    cancel: "Cancel",
+    confirm: "Add item",
+    toastTitle: "Document item added",
+    toastDesc: '"{name}" has been added to the document list',
   },
   actions: {
     approve: "Approve",

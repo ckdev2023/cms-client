@@ -88,6 +88,42 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
     expect(item.lastReminderAtLabel).toBe("2026-04-20 07:25");
   });
 
+  it("derives sharedExpiryRisk=true when referenceCount>1 and status=expired", () => {
+    const item = adaptDocumentItem(
+      {
+        ...ROW,
+        status: "approved",
+        dueAt: "2026-04-01T00:00:00Z",
+        referenceCount: 3,
+      },
+      () => undefined,
+      NOW,
+    );
+    expect(item.status).toBe("expired");
+    expect(item.referenceCount).toBe(3);
+    expect(item.sharedExpiryRisk).toBe(true);
+  });
+
+  it("derives sharedExpiryRisk=false when referenceCount=1 even if expired", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, status: "approved", dueAt: "2026-04-01T00:00:00Z" },
+      () => undefined,
+      NOW,
+    );
+    expect(item.status).toBe("expired");
+    expect(item.referenceCount).toBe(1);
+    expect(item.sharedExpiryRisk).toBe(false);
+  });
+
+  it("uses referenceCount from backend when provided", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, referenceCount: 5 },
+      () => undefined,
+      NOW,
+    );
+    expect(item.referenceCount).toBe(5);
+  });
+
   it("filters out deleted rows in adaptDocumentItems", () => {
     const items = adaptDocumentItems(
       [ROW, { ...ROW, id: "doc-2", status: "deleted" }],

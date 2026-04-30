@@ -57,6 +57,9 @@ function adaptCaseListItemDto(value: unknown): CaseListItem | null {
     stageId,
     stageLabel: stageId,
     ownerId: readString(caseRecord, "ownerUserId"),
+    ownerDisplayName:
+      readOptionalString(record, "ownerDisplayName") ??
+      readOptionalString(caseRecord, "ownerDisplayName"),
     completionPercent: 0,
     completionLabel: "",
     validationStatus: resolveValidationStatus(record.latestValidation),

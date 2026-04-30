@@ -73,6 +73,8 @@ export interface DocumentItemDtoLike {
    *
    */
   lastFollowUpAt: string | null;
+  /** 跨案件引用计数（后端 list 派生字段提供时使用，缺省回退到 1）。 */
+  referenceCount?: number;
 }
 
 /** 案件摘要 → 用于补齐 `DocumentListItem.caseName`。 */
@@ -163,6 +165,7 @@ export function adaptDocumentItem(
   const dueDate = toIsoDate(row.dueAt);
   const lastReminderAt = toIsoMinute(row.lastFollowUpAt);
   const caseName = caseNameOf(row.caseId) ?? row.caseId;
+  const referenceCount = row.referenceCount ?? 1;
 
   return {
     id: row.id,
@@ -176,8 +179,8 @@ export function adaptDocumentItem(
     lastReminderAt,
     lastReminderAtLabel: lastReminderAt ?? "—",
     relativePath: null,
-    sharedExpiryRisk: false,
-    referenceCount: 1,
+    sharedExpiryRisk: referenceCount > 1 && status === "expired",
+    referenceCount,
   };
 }
 

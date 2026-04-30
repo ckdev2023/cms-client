@@ -257,6 +257,20 @@ describe("CustomerBasicInfoTab", () => {
   });
 
   it("does not render the BMV intake card for non-BMV customers even when bmvEnabled is true", () => {
+    const nonBmvCustomer = SAMPLE_CUSTOMER_DETAILS["cust-003"]!;
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: nonBmvCustomer,
+        repository,
+        bmvEnabled: true,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+  });
+
+  it("renders the BMV intake card in not_started state for BMV-candidate customers with null profile", () => {
     const repository = createRepository();
     const wrapper = mount(CustomerBasicInfoTab, {
       props: {
@@ -266,7 +280,8 @@ describe("CustomerBasicInfoTab", () => {
       },
       global: { plugins: [i18n] },
     });
-    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
+    expect(wrapper.text()).toContain("Not started");
   });
 
   it("hides BMV intake card when bmvEnabled is false", () => {

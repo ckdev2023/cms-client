@@ -18,6 +18,7 @@ import {
   buildCustomerListWhere,
   getCustomerDuplicateMatchedFields,
 } from "./customers.query";
+import { createCustomerWithNumbering } from "./customers.numbering";
 import {
   createCustomerBmvDeps,
   getCustomerEntity,
@@ -111,20 +112,14 @@ export class CustomersService {
       input.baseProfile ?? {},
     );
     const contacts = input.contacts ?? [];
-    const result = await tenantDb.query<CustomerQueryRow>(
-      `insert into customers (org_id, type, base_profile, contacts)
-       values ($1, $2, $3::jsonb, $4::jsonb)
-       returning id, org_id, type, base_profile, contacts, created_at, updated_at`,
-      [
-        ctx.orgId,
-        input.type,
-        JSON.stringify(baseProfile),
-        JSON.stringify(contacts),
-      ],
+    const customer = await tenantDb.transaction((tx) =>
+      createCustomerWithNumbering(tx, {
+        orgId: ctx.orgId,
+        type: input.type,
+        baseProfile,
+        contacts,
+      }),
     );
-    const row = result.rows.at(0);
-    if (!row) throw new BadRequestException("Failed to create customer");
-    const customer = mapCustomerRow(row);
     await this.timelineService.write(ctx, {
       entityType: "customer",
       entityId: customer.id,

@@ -35,7 +35,7 @@ function createCustomersService(
   );
 }
 
-void test("CustomersService.create inserts row and writes timeline", async () => {
+void test("CustomersService.create inserts row with generated customer number and writes timeline", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
 
   type PoolClientLike = {
@@ -50,14 +50,22 @@ void test("CustomersService.create inserts row and writes timeline", async () =>
   const client: PoolClientLike = {
     query: (sql: string, params?: unknown[]) => {
       calls.push({ sql: sql.trim(), params });
+      if (sql.includes("coalesce(max(substring")) {
+        return Promise.resolve({ rows: [{ max_seq: "7" }] });
+      }
       if (sql.includes("insert into customers")) {
+        const insertParams = params as [string, string, string, string];
+        const persistedProfile = JSON.parse(insertParams[2]) as Record<
+          string,
+          unknown
+        >;
         return Promise.resolve({
           rows: [
             {
               id: "c1",
               org_id: "00000000-0000-4000-8000-000000000000",
               type: "individual",
-              base_profile: { name_cn: "Alice" },
+              base_profile: persistedProfile,
               contacts: [],
               created_at: "2026-01-01T00:00:00.000Z",
               updated_at: "2026-01-01T00:00:00.000Z",
@@ -98,16 +106,20 @@ void test("CustomersService.create inserts row and writes timeline", async () =>
 
   assert.equal(customer.id, "c1");
   assert.equal(customer.type, "individual");
+  assert.match(String(customer.baseProfile.customerNumber), /^CUS-\d{6}-0008$/);
 
   const insertCall = calls.find((c) => c.sql.includes("insert into customers"));
   if (!insertCall) throw new Error("missing insert call");
-
-  assert.deepEqual(insertCall.params, [
-    "00000000-0000-4000-8000-000000000000",
-    "individual",
-    JSON.stringify({ name_cn: "Alice" }),
-    "[]",
-  ]);
+  const insertParams = insertCall.params as [string, string, string, string];
+  assert.equal(insertParams[0], "00000000-0000-4000-8000-000000000000");
+  assert.equal(insertParams[1], "individual");
+  const persistedProfile = JSON.parse(insertParams[2]) as Record<
+    string,
+    unknown
+  >;
+  assert.equal(persistedProfile.name_cn, "Alice");
+  assert.match(String(persistedProfile.customerNumber), /^CUS-\d{6}-0008$/);
+  assert.equal(insertParams[3], "[]");
 
   assert.equal(timelineWrites.length, 1);
   assert.deepEqual(timelineWrites[0], {

@@ -5,6 +5,11 @@ import type { Pool } from "pg";
 import { shouldUseTemplateByRollout } from "./templates.model";
 import { TemplatesService } from "./templates.service";
 
+type PoolClientLike = {
+  query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
+  release: () => void;
+};
+
 void test("shouldUseTemplateByRollout supports all/percentage", () => {
   assert.equal(shouldUseTemplateByRollout({ type: "all" }, undefined), true);
   assert.equal(
@@ -30,15 +35,6 @@ void test("shouldUseTemplateByRollout supports all/percentage", () => {
 
 void test("TemplatesService.createVersion allocates next version per kind+key", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
-
-  type PoolClientLike = {
-    query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
-    release: () => void;
-  };
-
-  type PoolLike = {
-    connect: () => Promise<PoolClientLike>;
-  };
 
   const client: PoolClientLike = {
     query: (sql: string, params?: unknown[]) => {
@@ -68,8 +64,8 @@ void test("TemplatesService.createVersion allocates next version per kind+key", 
     release: () => undefined,
   };
 
-  const pool: PoolLike = { connect: () => Promise.resolve(client) };
-  const service = new TemplatesService(pool as unknown as Pool);
+  const pool = { connect: () => Promise.resolve(client) } as unknown as Pool;
+  const service = new TemplatesService(pool);
 
   const created = await service.createVersion(
     {
@@ -98,15 +94,6 @@ void test("TemplatesService.createVersion allocates next version per kind+key", 
 
 void test("TemplatesService.releaseVersion stores previous_version for rollback", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
-
-  type PoolClientLike = {
-    query: (sql: string, params?: unknown[]) => Promise<{ rows: unknown[] }>;
-    release: () => void;
-  };
-
-  type PoolLike = {
-    connect: () => Promise<PoolClientLike>;
-  };
 
   const client: PoolClientLike = {
     query: (sql: string, params?: unknown[]) => {
@@ -153,8 +140,8 @@ void test("TemplatesService.releaseVersion stores previous_version for rollback"
     release: () => undefined,
   };
 
-  const pool: PoolLike = { connect: () => Promise.resolve(client) };
-  const service = new TemplatesService(pool as unknown as Pool);
+  const pool = { connect: () => Promise.resolve(client) } as unknown as Pool;
+  const service = new TemplatesService(pool);
 
   const release = await service.releaseVersion(
     {
@@ -181,4 +168,138 @@ void test("TemplatesService.releaseVersion stores previous_version for rollback"
     JSON.stringify({ type: "all" }),
     "00000000-0000-4000-8000-000000000001",
   ]);
+});
+
+// ---------------------------------------------------------------------------
+// mapVersionRow / mapReleaseRow timestamp normalisation
+// ---------------------------------------------------------------------------
+
+function buildVersionClient(createdAt: unknown): {
+  pool: Pool;
+  service: TemplatesService;
+} {
+  const client: PoolClientLike = {
+    query: (sql: string) => {
+      if (sql.includes("select")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: "v1",
+              org_id: "00000000-0000-4000-8000-000000000000",
+              kind: "case_type",
+              key: "k1",
+              version: 1,
+              config: {},
+              created_by_user_id: null,
+              created_at: createdAt,
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ rows: [] });
+    },
+    release: () => undefined,
+  };
+  const pool = { connect: () => Promise.resolve(client) } as unknown as Pool;
+  return { pool, service: new TemplatesService(pool) };
+}
+
+const ctx = {
+  orgId: "00000000-0000-4000-8000-000000000000",
+  userId: "00000000-0000-4000-8000-000000000001",
+  role: "manager" as const,
+};
+
+void test("mapVersionRow normalizes Date to ISO string (createdAt)", async () => {
+  const { service } = buildVersionClient(new Date("2026-04-29T02:15:16.000Z"));
+  const rows = await service.listVersions(ctx, {
+    kind: "case_type",
+    key: "k1",
+  });
+  assert.equal(rows.at(0)?.createdAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapVersionRow normalizes Date.toString() to ISO string (createdAt)", async () => {
+  const dateToString = new Date("2026-04-29T02:15:16.000Z").toString();
+  const { service } = buildVersionClient(dateToString);
+  const rows = await service.listVersions(ctx, {
+    kind: "case_type",
+    key: "k1",
+  });
+  assert.equal(rows.at(0)?.createdAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapVersionRow preserves ISO string as-is (createdAt)", async () => {
+  const { service } = buildVersionClient("2026-04-29T02:15:16.000Z");
+  const rows = await service.listVersions(ctx, {
+    kind: "case_type",
+    key: "k1",
+  });
+  assert.equal(rows.at(0)?.createdAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapVersionRow returns empty string for null (createdAt)", async () => {
+  const { service } = buildVersionClient(null);
+  const rows = await service.listVersions(ctx, {
+    kind: "case_type",
+    key: "k1",
+  });
+  assert.equal(rows.at(0)?.createdAt, "");
+});
+
+function buildReleaseClient(updatedAt: unknown): {
+  pool: Pool;
+  service: TemplatesService;
+} {
+  const client: PoolClientLike = {
+    query: (sql: string) => {
+      if (sql.includes("select") || sql.includes("insert")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: "r1",
+              org_id: "00000000-0000-4000-8000-000000000000",
+              kind: "case_type",
+              key: "k1",
+              mode: "template",
+              current_version: 1,
+              previous_version: null,
+              rollout: { type: "all" },
+              updated_by_user_id: null,
+              updated_at: updatedAt,
+            },
+          ],
+        });
+      }
+      return Promise.resolve({ rows: [] });
+    },
+    release: () => undefined,
+  };
+  const pool = { connect: () => Promise.resolve(client) } as unknown as Pool;
+  return { pool, service: new TemplatesService(pool) };
+}
+
+void test("mapReleaseRow normalizes Date to ISO string (updatedAt)", async () => {
+  const { service } = buildReleaseClient(new Date("2026-04-29T02:15:16.000Z"));
+  const row = await service.getRelease(ctx, { kind: "case_type", key: "k1" });
+  assert.equal(row?.updatedAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapReleaseRow normalizes Date.toString() to ISO string (updatedAt)", async () => {
+  const dateToString = new Date("2026-04-29T02:15:16.000Z").toString();
+  const { service } = buildReleaseClient(dateToString);
+  const row = await service.getRelease(ctx, { kind: "case_type", key: "k1" });
+  assert.equal(row?.updatedAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapReleaseRow preserves ISO string as-is (updatedAt)", async () => {
+  const { service } = buildReleaseClient("2026-04-29T02:15:16.000Z");
+  const row = await service.getRelease(ctx, { kind: "case_type", key: "k1" });
+  assert.equal(row?.updatedAt, "2026-04-29T02:15:16.000Z");
+});
+
+void test("mapReleaseRow returns empty string for null (updatedAt)", async () => {
+  const { service } = buildReleaseClient(null);
+  const row = await service.getRelease(ctx, { kind: "case_type", key: "k1" });
+  assert.equal(row?.updatedAt, "");
 });

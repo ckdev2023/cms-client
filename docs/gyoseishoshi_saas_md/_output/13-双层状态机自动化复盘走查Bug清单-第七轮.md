@@ -33,6 +33,21 @@
 2. **R6 新增的 P0 schema-mismatch（BUG-108/109）也已修复**：`/api/billing-plans`、`/api/payment-records`、`/api/cases/:id/aggregate` 均回到 HTTP 200；`aggregate.latestReview` 现为 null 是因为对应 case 没有 review 记录，而非 schema 错误。
 3. **R6 §0.4 三句话结论中第 2、3 条因此过期**：BUG-091（Billing 简繁混杂）的 i18n 修复在 admin Billing 列表页已恢复可验证；BUG-097 的尾款 gate「修了等于没修」已不再成立。剩余 R6 新增 P1/P2（BUG-110 test gap / BUG-112 Tasks 未 i18n / BUG-113 timeline 静默忽略 query / BUG-114 dashboard 文案 / BUG-115 customer backfill）本轮未复测，沿用 R6 状态。
 
+### 0.4 同日自动化复测增量发现（2026-04-30 凌晨追补）
+
+R7 当晚（首版生成约 6 小时后）以 `curl + psql` 跑了一遍 §3 复现脚本，新发现两类问题，已在第八轮（`14-...md`）正式登记：
+
+1. **BUG-105 文档与实现不符（FAIL，P1）**：R7 §1 BUG-105 行原本断言 `query.ts:237-300 CASE_DETAIL_TAB_ALIASES = { timeline: 'log' }`，自动化复测时该常量在 `packages/admin/src/views/cases/query.ts` 中不存在（git 历史 `git log --all -S 'CASE_DETAIL_TAB_ALIASES'` 也无任何提交命中）。当前 `resolveDetailTab` 仅做 `CASE_DETAIL_TAB_KEYS` 白名单校验（不含 `timeline`），未识别值统一回退到 `DEFAULT_CASE_DETAIL_TAB = 'overview'`。结果：`?tab=timeline` 落到 Overview，与「timeline 是 log 的别名」的产品语义相反。**已在第八轮登记为 BUG-116**，§1 BUG-105 行同步改为 ❌。
+
+2. **R7 §3 复现脚本里若干符号已经漂移**（PASS 项的引用文字过期，但行为本身仍 PASS）：
+   - `npm run db:migrations:check:db` → 实际脚本是 `npm run db:migrations:check`（`packages/server/package.json` 已合并）
+   - 案件列表行字段 `phase` → 已改名为 `businessPhase`（query 参数 `?phase=` 仍兼容）
+   - timeline 端点：R7 暗示 `/api/cases/:id/timeline`，实际只有 `/api/timeline?entityType=case&entityId=:id`
+   - BUG-101 引用的 CSS 类 `case-row__stage-meta` → 当前是 `case-row__workflow-step`
+   - BUG-107 引用的 `CaseLogTab.vue:59-63 formatEntryTime` → 函数已下沉到 `CaseCommsLogsAdapter`（`entry.time` 由 adapter 注入，由 `CaseCommsLogsAdapter.timeline-display.focused.test.ts` 锁定）
+
+第八轮 §2 给出修订后的复现脚本，本文件 §3 不再追改（保留首版以便 audit）。
+
 ---
 
 ## 1. 第五轮 12 条 Bug 同日复测对照表
@@ -48,9 +63,11 @@
 | BUG-102（owner 列展示）| P1 | ✅ PASS | **✅ PASS** | `?view=summary` 12/12 `ownerDisplayName="Local Admin"` |
 | BUG-103（列表 phase 筛选）| P1 | ✅ PASS | **✅ PASS** | `?phase=CLOSED_SUCCESS` total=3，distinct={CLOSED_SUCCESS} |
 | BUG-104（timeline payload from/to）| P1 | ✅ PASS | **✅ PASS** | `case.phase_transitioned` payload keys = {from, to, coeSentAt, overseasVisaStartAt, entryConfirmedAt, supplementCount} |
-| BUG-105（`?tab=timeline` 别名）| P1 | ✅（代码层）| **✅（代码层）** | `query.ts:237-300` `CASE_DETAIL_TAB_ALIASES = { timeline: 'log' }` |
+| BUG-105（`?tab=timeline` 别名）| P1 | ✅（代码层）| **❌（文档与实现不符）** | 见 §0.4 / 第八轮 BUG-116：`query.ts` 当前不存在 `CASE_DETAIL_TAB_ALIASES`，`resolveDetailTab("timeline") = "overview"` ⁽¹⁾ |
 | BUG-106（详情面包屑 UUID）| P2 | ✅（代码层）| **✅（代码层）** | `caseIdentity.ts:13-19` `formatCaseIdentity(caseNo, id)` |
 | BUG-107（case timeline 时间戳）| P2 | ✅（代码层）| **✅（代码层）** | `CaseLogTab.vue:59-63` `formatEntryTime` 用 `formatDateTime(raw, locale.value)` |
+
+> ⁽¹⁾ **R8 已修复**：BUG-105 → BUG-116（`14-双层状态机自动化复盘走查Bug清单-第八轮.md` §1），采用方案 A（恢复 `timeline → log` 别名），在 `constants.ts` 新增 `CASE_DETAIL_TAB_ALIASES = { timeline: 'log' }`，`resolveDetailTab` 先做 alias 命中再走白名单。同时 BUG-102 → BUG-127、BUG-106 → BUG-128、BUG-107 → BUG-129 三条 R5 回归亦在 R8 一并修复。
 
 ---
 

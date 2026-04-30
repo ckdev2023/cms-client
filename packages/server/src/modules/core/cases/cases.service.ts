@@ -72,10 +72,7 @@ import {
 } from "./cases.types-failure-closeout";
 import { mapResidencePeriodRow } from "../residence-periods/residencePeriods.service";
 import { requiresBmvCaseCreationGate } from "../../portal/intake/intake.types";
-import {
-  resolveCustomerBmvProfile,
-  createDefaultCustomerBmvProfile,
-} from "../customers/customers.dto-mappers";
+import { resolveCustomerBmvProfile } from "../customers/customers.dto-mappers";
 import { PermissionsService } from "../auth/permissions.service";
 import { BillingPlansService } from "../billing/billingPlans.service";
 import { PaymentRecordsService } from "../billing/paymentRecords.service";
@@ -1379,7 +1376,7 @@ export class CasesService {
     return tenantDb.transaction(async (tx) => {
       await this.assertCreateRefs(tx, input);
       const { resolvedGroupId, isCrossGroup, customerGroupId } =
-        await this.resolveCreateGroup(tx, input);
+        await this.resolveCreateGroup(tx, ctx, input);
 
       const created = await this.insertCaseWithAutoNumber(tx, ctx, {
         ...input,
@@ -1441,9 +1438,7 @@ export class CasesService {
       [input.customerId],
     );
     const baseProfile = normalizeObject(row.rows.at(0)?.base_profile);
-    const bmvProfile =
-      resolveCustomerBmvProfile(baseProfile) ??
-      createDefaultCustomerBmvProfile();
+    const bmvProfile = resolveCustomerBmvProfile(baseProfile);
 
     const gate = checkBmvCaseCreationGate({
       caseTypeCode: input.caseTypeCode,
@@ -1464,6 +1459,7 @@ export class CasesService {
 
   private async resolveCreateGroup(
     tx: TenantDbTx,
+    ctx: RequestContext,
     input: CaseCreateInput,
   ): Promise<{
     resolvedGroupId: string | null;
@@ -1474,7 +1470,12 @@ export class CasesService {
       tx,
       input.customerId,
     );
-    const resolvedGroupId = input.groupId ?? customerGroupId;
+    const explicitGroupId = await this.resolveExplicitGroupId(
+      tx,
+      ctx.orgId,
+      input.groupId,
+    );
+    const resolvedGroupId = explicitGroupId ?? customerGroupId;
     const isCrossGroup =
       resolvedGroupId !== null &&
       customerGroupId !== null &&
@@ -1487,6 +1488,43 @@ export class CasesService {
       );
     }
     return { resolvedGroupId, isCrossGroup, customerGroupId };
+  }
+
+  /**
+   * 将显式 groupId 入参（UUID / slug / 显示名）规范化为 groups.id（UUID）。
+   *
+   * 兼容前端 admin 链路：建案向导 Step 3 的 `draft.group` 来自客户 DTO 的
+   * `customer.group` 字段（即 `groups.name`），既可能是 catalog slug
+   * （如 `tokyo-1`），也可能是真实 UUID。统一在 service 入口做归一化，
+   * 避免 cases.group_id 列直接接收非 UUID 字符串导致 FK 违例 / 500。
+   *
+   * - 入参为空/null → 返回 null
+   * - 入参为 UUID → 校验组织内是否存在；不存在抛 400
+   * - 入参为非 UUID 字符串 → 按 `groups.name` 精确匹配；未命中抛 400
+   */
+  private async resolveExplicitGroupId(
+    tx: TenantDbTx,
+    orgId: string,
+    raw: string | null | undefined,
+  ): Promise<string | null> {
+    if (raw === undefined || raw === null) return null;
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+
+    const result = await tx.query<{ id: string }>(
+      `select id from groups
+       where org_id = $1 and (id::text = $2 or name = $2)
+       limit 1`,
+      [orgId, trimmed],
+    );
+    const found = result.rows.at(0)?.id ?? null;
+    if (!found) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.GROUP_NOT_FOUND +
+          `: groupId "${trimmed}" does not match any active group in the organization`,
+      );
+    }
+    return found;
   }
 
   /** 根据 ID 获取案件详情（过滤已软删除）。
@@ -3004,6 +3042,12 @@ export class CasesService {
 
   /**
    * 从 Customer.base_profile 中解析 group_id，再查 groups 表确认有效性。
+   *
+   * 接受两种存储形态以兼容历史数据与新建路径（BUG-159）：
+   * - `groups.name = base_profile->>'group_id'/'groupId'/'group'`（slug / 显示名）
+   * - `groups.id::text = base_profile->>'group_id'/'groupId'/'group'`（migration 034
+   *   将 group_id UUID 字面回填到 baseProfile 的场景）
+   *
    * 若 customer 未关联 group 或 group 不存在于 groups 表，返回 null。
    */
   private async resolveCustomerGroupId(
@@ -3013,12 +3057,15 @@ export class CasesService {
     const result = await tx.query<{ group_id: string }>(
       `SELECT g.id AS group_id
        FROM customers c
-       JOIN groups g ON g.org_id = c.org_id
-         AND g.name = coalesce(
+       CROSS JOIN LATERAL (
+         SELECT coalesce(
            nullif(trim(c.base_profile->>'group_id'), ''),
            nullif(trim(c.base_profile->>'groupId'), ''),
            nullif(trim(c.base_profile->>'group'), '')
-         )
+         ) AS group_val
+       ) cv
+       JOIN groups g ON g.org_id = c.org_id
+         AND (g.name = cv.group_val OR g.id::text = cv.group_val)
        WHERE c.id = $1
        LIMIT 1`,
       [customerId],

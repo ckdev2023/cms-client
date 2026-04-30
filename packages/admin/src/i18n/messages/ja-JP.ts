@@ -5,9 +5,9 @@ import conversations from "./conversations/ja-JP";
 import documents from "./documents/ja-JP";
 import leads from "./leads/ja-JP";
 import settings from "./settings/ja-JP";
+import tasks from "./tasks/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
 import dashboardWorkItem from "./dashboard-work-item/ja-JP";
-
 const jaJP = {
   shell: {
     skipToContent: "コンテンツへスキップ",
@@ -285,6 +285,15 @@ const jaJP = {
         cancel: "キャンセル",
         saveDraft: "下書き保存",
         create: "顧客を作成",
+        state: {
+          checkingDuplicates: "重複顧客を確認中…",
+          unauthorized:
+            "顧客を作成する権限がありません。管理者にご連絡ください。",
+          validationError:
+            "入力内容に誤りがあります。各項目を確認してください。",
+          requestFailed:
+            "顧客の作成に失敗しました。しばらくしてから再試行してください。",
+        },
       },
     },
     detail: customerDetail,
@@ -295,6 +304,7 @@ const jaJP = {
   documents,
   leads,
   settings,
+  tasks,
   dashboard: {
     hero: {
       kicker: "Dashboard",
@@ -487,5 +497,4 @@ const jaJP = {
     workItem: dashboardWorkItem,
   },
 } as const;
-
 export default jaJP;

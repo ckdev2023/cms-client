@@ -8,6 +8,10 @@ import {
 import { Pool } from "pg";
 
 import type { Task } from "../model/coreEntities";
+import {
+  requireTimestampString,
+  toTimestampStringOrNull,
+} from "../model/timestamps";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -93,13 +97,6 @@ const VALID_STATUSES = new Set([
   "cancelled",
 ]);
 
-function toTimestampStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  return null;
-}
-
 export function mapTaskRow(row: TaskQueryRow): Task {
   return {
     id: row.id,
@@ -115,8 +112,8 @@ export function mapTaskRow(row: TaskQueryRow): Task {
     sourceType: row.source_type,
     sourceId: row.source_id,
     completedAt: toTimestampStringOrNull(row.completed_at),
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
 }
 

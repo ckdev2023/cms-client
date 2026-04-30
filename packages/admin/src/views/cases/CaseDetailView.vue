@@ -28,7 +28,13 @@ import {
   buildCaseListHref,
   buildCustomerDetailHref,
 } from "./query";
-import { BADGE_TONE_MAP, getPhaseI18nKey, getPhaseBadge } from "./constants";
+import {
+  BADGE_TONE_MAP,
+  getPhaseI18nKey,
+  getPhaseBadge,
+  getStageI18nKey,
+} from "./constants";
+import { formatCaseIdentity } from "./caseIdentity";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t } = useI18n();
@@ -92,6 +98,12 @@ const phaseLabel = computed(() => {
   if (!detail.value) return "";
   const key = getPhaseI18nKey(detail.value.businessPhase);
   return key ? t(key) : detail.value.businessPhase;
+});
+
+const stageLabel = computed(() => {
+  if (!detail.value) return "";
+  const key = getStageI18nKey(detail.value.stageCode);
+  return key ? t(key) : detail.value.stage;
 });
 
 /**
@@ -160,12 +172,12 @@ function onPhaseSubmit(payload: {
           { label: t('shell.nav.items.dashboard'), href: '#/' },
           { label: t('shell.nav.groups.business') },
           { label: t('shell.nav.items.cases'), href: buildCaseListHref() },
-          { label: `#${detail.id}` },
+          { label: formatCaseIdentity(detail.caseNo, detail.id) },
         ]"
       >
         <template #badge>
           <Chip :tone="badgeToTone(detail.statusBadge)" size="sm" dot>
-            {{ detail.stage }}
+            {{ stageLabel }}
           </Chip>
           <Chip :tone="phaseTone" size="sm" dot>
             {{ phaseLabel }}
@@ -328,7 +340,7 @@ function onPhaseSubmit(payload: {
           />
         </svg>
         <span>
-          {{ t("cases.detail.readonlyBanner", { stage: detail.stage }) }}
+          {{ t("cases.detail.readonlyBanner", { stage: stageLabel }) }}
         </span>
       </div>
 

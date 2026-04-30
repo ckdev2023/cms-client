@@ -8,13 +8,26 @@ import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 import {
   DOCUMENT_ITEM_ALLOWED_TRANSITIONS,
+  WAIVE_ALLOWED_FROM_STATUSES,
   type DocumentCompletionRate,
   type DocumentItemCreateInput,
   type DocumentItemListInput,
   type DocumentItemTransitionInput,
   type DocumentItemUpdateInput,
   type DocumentItemUpdateSurveyDataInput,
+  type DocumentItemWaiveInput,
 } from "../documents.types";
+import {
+  DOC_ITEM_COLS,
+  buildListFilters,
+  mapDocumentItemRow,
+  type DocumentItemQueryRow,
+} from "./documentItems.shared";
+
+export {
+  mapDocumentItemRow,
+  type DocumentItemQueryRow,
+} from "./documentItems.shared";
 
 export type {
   DocumentCompletionRate,
@@ -23,92 +36,11 @@ export type {
   DocumentItemTransitionInput,
   DocumentItemUpdateInput,
   DocumentItemUpdateSurveyDataInput,
+  DocumentItemWaiveInput,
 } from "../documents.types";
-
-/** 数据库查询返回的 document_item 行类型。 */
-export type DocumentItemQueryRow = {
-  id: string;
-  org_id: string;
-  case_id: string;
-  checklist_item_code: string;
-  name: string;
-  status: string;
-  required_flag: boolean;
-  requested_at: unknown;
-  received_at: unknown;
-  reviewed_at: unknown;
-  due_at: unknown;
-  owner_side: string;
-  last_follow_up_at: unknown;
-  note: unknown;
-  category: string | null;
-  survey_data: unknown;
-  created_at: unknown;
-  updated_at: unknown;
-};
-
-function toTimestampStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  return null;
-}
-
-function toTimestampString(value: unknown): string {
-  return toTimestampStringOrNull(value) ?? "";
-}
-
-function toJsonObjectOrNull(value: unknown): Record<string, unknown> | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "object" && !Array.isArray(value))
-    return value as Record<string, unknown>;
-  if (typeof value === "string") {
-    try {
-      const parsed: unknown = JSON.parse(value);
-      if (
-        typeof parsed === "object" &&
-        parsed !== null &&
-        !Array.isArray(parsed)
-      )
-        return parsed as Record<string, unknown>;
-    } catch {
-      return null;
-    }
-  }
-  return null;
-}
-
-/** 将数据库行映射为 DocumentItem 实体。
- * @param row 数据库查询结果行
- * @returns DocumentItem 实体
- */
-export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    caseId: row.case_id,
-    checklistItemCode: row.checklist_item_code,
-    name: row.name,
-    status: row.status,
-    requiredFlag: row.required_flag,
-    requestedAt: toTimestampStringOrNull(row.requested_at),
-    receivedAt: toTimestampStringOrNull(row.received_at),
-    reviewedAt: toTimestampStringOrNull(row.reviewed_at),
-    dueAt: toTimestampStringOrNull(row.due_at),
-    ownerSide: row.owner_side,
-    lastFollowUpAt: toTimestampStringOrNull(row.last_follow_up_at),
-    note: typeof row.note === "string" ? row.note : null,
-    category: row.category ?? null,
-    surveyData: toJsonObjectOrNull(row.survey_data),
-    createdAt: toTimestampString(row.created_at),
-    updatedAt: toTimestampString(row.updated_at),
-  };
-}
 
 export const ALLOWED_TRANSITIONS: Partial<Record<string, string[]>> =
   DOCUMENT_ITEM_ALLOWED_TRANSITIONS as Partial<Record<string, string[]>>;
-
-const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, category, survey_data, created_at, updated_at`;
 
 /** DocumentItem 服务，提供 CRUD、状态变更、催办、survey_data 与软删除能力。 */
 @Injectable()
@@ -205,21 +137,7 @@ export class DocumentItemsService {
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const where: string[] = ["status != 'deleted'"];
-    const params: unknown[] = [];
-    if (input.caseId) {
-      params.push(input.caseId);
-      where.push("case_id = $" + String(params.length));
-    }
-    if (input.status) {
-      params.push(input.status);
-      where.push("status = $" + String(params.length));
-    }
-    if (input.category) {
-      params.push(input.category);
-      where.push("category = $" + String(params.length));
-    }
-
+    const { where, params } = buildListFilters(input);
     const whereClause = `where ${where.join(" and ")}`;
     const countResult = await tenantDb.query<{ count: string }>(
       `select count(*) as count from document_items ${whereClause}`,
@@ -393,6 +311,9 @@ export class DocumentItemsService {
 
     const fromStatus = current.status;
     const toStatus = input.toStatus;
+    if (toStatus === "waived") {
+      throw new BadRequestException("Use POST /:id/waive instead");
+    }
     if (!ALLOWED_TRANSITIONS[fromStatus]?.includes(toStatus)) {
       throw new BadRequestException(
         `Transition from '${fromStatus}' to '${toStatus}' is not allowed`,
@@ -428,6 +349,64 @@ export class DocumentItemsService {
       entityId: updated.id,
       action: "document_item.transitioned",
       payload: { from: fromStatus, to: toStatus },
+    });
+    return updated;
+  }
+
+  /** 豁免资料项（专用端点，独立白名单校验）。
+   * @param ctx 请求上下文
+   * @param id 资料项 ID
+   * @param input 豁免参数
+   * @returns 更新后的资料项
+   */
+  async waive(
+    ctx: RequestContext,
+    id: string,
+    input: DocumentItemWaiveInput,
+  ): Promise<DocumentItem> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Document item not found");
+
+    if (!WAIVE_ALLOWED_FROM_STATUSES.includes(current.status as never)) {
+      throw new BadRequestException(
+        `Cannot waive a document item with status '${current.status}'`,
+      );
+    }
+    if (input.reasonCode === "other" && !input.note) {
+      throw new BadRequestException(
+        "note is required when reasonCode is 'other'",
+      );
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<DocumentItemQueryRow>(
+      `update document_items
+       set status = 'waived',
+           waive_reason_code_latest = $2,
+           waive_reason_latest = $3,
+           waived_by_user_id_latest = $4,
+           waived_at_latest = now(),
+           updated_at = now()
+       where id = $1 and status = $5 and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
+      [id, input.reasonCode, input.note ?? null, ctx.userId, current.status],
+    );
+    const row = result.rows.at(0);
+    if (!row)
+      throw new BadRequestException(
+        "Failed to waive document item or status changed concurrently",
+      );
+    const updated = mapDocumentItemRow(row);
+
+    await this.timelineService.write(ctx, {
+      entityType: "document_item",
+      entityId: updated.id,
+      action: "document_item.waived",
+      payload: {
+        from: current.status,
+        reasonCode: input.reasonCode,
+        note: input.note ?? null,
+      },
     });
     return updated;
   }

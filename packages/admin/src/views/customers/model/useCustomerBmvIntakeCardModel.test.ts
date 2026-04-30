@@ -12,10 +12,44 @@ import {
 } from "./useCustomerBmvIntakeCardModel";
 
 describe("buildCustomerBmvIntakeCardViewModel", () => {
-  it("returns null for non-BMV customers", () => {
-    expect(
-      buildCustomerBmvIntakeCardViewModel(SAMPLE_CUSTOMER_DETAILS["cust-001"]!),
-    ).toBeNull();
+  it("returns null when customer is null", () => {
+    expect(buildCustomerBmvIntakeCardViewModel(null)).toBeNull();
+  });
+
+  it("returns not_started empty state when bmvProfile is null", () => {
+    const viewModel = buildCustomerBmvIntakeCardViewModel(
+      SAMPLE_CUSTOMER_DETAILS["cust-001"]!,
+    );
+    expect(viewModel).not.toBeNull();
+    expect(viewModel).toMatchObject({
+      stage: {
+        labelKey: "customers.detail.bmvIntake.stage.not_started",
+        tone: "neutral",
+      },
+      nextStepKey: "customers.detail.bmvIntake.nextStepValue.not_started",
+      gateHintKey: "customers.detail.bmvIntake.gateHintValue.locked",
+      stepStatuses: [
+        {
+          labelKey: "customers.detail.bmvIntake.steps.questionnaire",
+          valueKey:
+            "customers.detail.bmvIntake.questionnaireStatus.not_started",
+          tone: "neutral",
+        },
+        {
+          labelKey: "customers.detail.bmvIntake.steps.quote",
+          valueKey: "customers.detail.bmvIntake.quoteStatus.not_started",
+          tone: "neutral",
+        },
+        {
+          labelKey: "customers.detail.bmvIntake.steps.sign",
+          valueKey: "customers.detail.bmvIntake.signStatus.not_started",
+          tone: "neutral",
+        },
+      ],
+      note: null,
+      canTransitionToCase: false,
+    });
+    expect(viewModel!.timeline.every((t) => t.value === "—")).toBe(true);
   });
 
   it("derives stage, next step, gate hint and timeline from bmvProfile", () => {

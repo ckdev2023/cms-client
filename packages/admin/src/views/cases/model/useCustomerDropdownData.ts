@@ -1,5 +1,6 @@
 import { ref, type Ref } from "vue";
 import { getAdminAccessToken } from "../../../auth/model/adminSession";
+import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CaseCreateCustomerOption } from "../types";
 
 /**
@@ -56,6 +57,12 @@ export interface UseCustomerDropdownDeps {
    *
    */
   apiPath?: string;
+  /**
+   * 当前 locale 提供函数；传入时 `groupLabel` 会通过 `resolveGroupLabel`
+   * 将服务端 UUID/别名翻译为本地化标签，未提供时退回原始 `group` 字段
+   * 以保持与既有调用方/测试的兼容。
+   */
+  locale?: () => string;
 }
 
 interface RawCustomerItem {
@@ -99,13 +106,24 @@ function resolveBmvField(
   return profile?.[key] ?? null;
 }
 
+function resolveGroupLabelForOption(group: string, locale?: string): string {
+  if (!group) return "";
+  if (locale === undefined) return group;
+  return resolveGroupLabel(group, undefined, locale);
+}
+
 /**
  * 将服务端客户 DTO 适配为建案下拉选项。
  *
  * @param raw - 单条客户原始数据
+ * @param locale - 可选 locale；提供时通过 `resolveGroupLabel` 将服务端 group
+ *   UUID/别名翻译为本地化标签，缺省时退回原始 group 透传以兼容既有调用方
  * @returns 适配后的下拉选项；数据不足时返回 `null`
  */
-function adaptItem(raw: unknown): CaseCreateCustomerOption | null {
+function adaptItem(
+  raw: unknown,
+  locale?: string,
+): CaseCreateCustomerOption | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as RawCustomerItem;
   if (!r.id || typeof r.id !== "string") return null;
@@ -119,8 +137,8 @@ function adaptItem(raw: unknown): CaseCreateCustomerOption | null {
     name,
     kana: readStringField(r.furigana),
     group,
-    groupLabel: group,
-    roleHint: "主申請人",
+    groupLabel: resolveGroupLabelForOption(group, locale),
+    roleHint: "cases.create.step2.primaryRole",
     summary: "",
     contact: resolveContact(r),
     bmvQuestionnaireStatus: resolveBmvField(
@@ -137,16 +155,20 @@ function adaptItem(raw: unknown): CaseCreateCustomerOption | null {
  * 将客户列表接口响应体适配为下拉选项数组。
  *
  * @param body - 列表接口响应体
+ * @param locale - 可选 locale；透传给 `adaptItem` 用于翻译 `groupLabel`
  * @returns 适配后的选项数组；格式不符时返回 `null`
  */
-function adaptList(body: unknown): CaseCreateCustomerOption[] | null {
+function adaptList(
+  body: unknown,
+  locale?: string,
+): CaseCreateCustomerOption[] | null {
   if (!body || typeof body !== "object") return null;
   const record = body as Record<string, unknown>;
   if (!Array.isArray(record.items)) return null;
 
   const results: CaseCreateCustomerOption[] = [];
   for (const item of record.items) {
-    const adapted = adaptItem(item);
+    const adapted = adaptItem(item, locale);
     if (adapted) results.push(adapted);
   }
   return results;
@@ -193,7 +215,7 @@ export function useCustomerDropdownData(
       }
 
       const body: unknown = await response.json();
-      const adapted = adaptList(body);
+      const adapted = adaptList(body, deps.locale?.());
       if (!adapted) {
         throw new Error("Invalid response format");
       }

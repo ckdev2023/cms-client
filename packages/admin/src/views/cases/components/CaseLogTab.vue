@@ -6,9 +6,10 @@ import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, LogEntry } from "../types-detail";
 import type { LogCategoryKey } from "../types";
 import { LOG_CATEGORIES } from "../constants";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 日志 Tab：展示案件日志时间线与分类筛选。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const props = defineProps<{
   detail: CaseDetail;
@@ -44,6 +45,19 @@ function dotBg(entry: LogEntry): string {
  */
 function chipTone(entry: LogEntry): ChipTone {
   return CHIP_TONE_MAP[entry.categoryChip] ?? "neutral";
+}
+
+/**
+ * 格式化日志条目的时间戳：成功则返回 locale 格式化结果，失败回退原值。
+ *
+ * @param raw - 原始时间戳字符串。
+ * @param loc - BCP 47 locale 标识符。
+ * @returns 格式化后的日期时间，或在解析失败时回退原值。
+ */
+function formatEntryTime(raw: string, loc: string): string {
+  if (!raw) return "";
+  const formatted = formatDateTime(raw, loc);
+  return formatted || raw;
 }
 
 /**
@@ -125,7 +139,9 @@ function resolveTimelineText(entry: LogEntry): string {
                   </div>
                 </div>
               </div>
-              <span class="log-tab__entry-time">{{ entry.time }}</span>
+              <span class="log-tab__entry-time">{{
+                formatEntryTime(entry.time, locale)
+              }}</span>
             </div>
           </div>
         </div>

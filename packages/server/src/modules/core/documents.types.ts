@@ -86,24 +86,26 @@ export const DOCUMENT_ITEM_STATUSES = [
 export type DocumentItemStatusEnum = (typeof DOCUMENT_ITEM_STATUSES)[number];
 
 /**
- * 合法的资料项状态流转矩阵（P0 冻结）。
+ * 合法的资料项状态流转矩阵（P0 冻結）。
  *
- * P0 权威：03 §3.2
- * - `pending` → `waiting_upload`（已发出请求）、`waived`（标记豁免）
- * - `waiting_upload` → `uploaded_reviewing`（已登记/已上传）、`waived`
+ * P0 権威：03 §3.2
+ * - `pending` → `waiting_upload`（已发出请求）、`uploaded_reviewing`（登记后待审核）
+ * - `waiting_upload` → `uploaded_reviewing`（已登记/已上传）
  * - `uploaded_reviewing` → `approved`（审核通过）、`revision_required`（退回补正）
- * - `revision_required` → `waiting_upload`（重新登记）
+ * - `revision_required` → `waiting_upload`（重新登记）、`uploaded_reviewing`（重新提交后待审核）
  * - `approved` → `expired`（过期）
  * - `waived` → `pending`（取消豁免，回到初始）
  * - `expired` → `waiting_upload`（重新请求有效版本）
+ *
+ * 注意：`*→waived` 路径已关闭，豁免必须走专用端点 `POST /:id/waive`。
  */
 export const DOCUMENT_ITEM_ALLOWED_TRANSITIONS: Readonly<
   Partial<Record<DocumentItemStatusEnum, readonly DocumentItemStatusEnum[]>>
 > = {
-  pending: ["waiting_upload", "waived"],
-  waiting_upload: ["uploaded_reviewing", "waived"],
+  pending: ["waiting_upload", "uploaded_reviewing"],
+  waiting_upload: ["uploaded_reviewing"],
   uploaded_reviewing: ["approved", "revision_required"],
-  revision_required: ["waiting_upload"],
+  revision_required: ["waiting_upload", "uploaded_reviewing"],
   approved: ["expired"],
   waived: ["pending"],
   expired: ["waiting_upload"],
@@ -185,8 +187,42 @@ export const DOCUMENT_STORAGE_TYPES = [LOCAL_STORAGE_TYPE] as const;
 export type DocumentStorageType = (typeof DOCUMENT_STORAGE_TYPES)[number];
 
 // ────────────────────────────────────────────────────────────────
+// Waive 原因码 — P0 产品决策
+//
+// 仅用于 POST /document-items/:id/waive 端点。
+// 不走 DOCUMENT_ITEM_ALLOWED_TRANSITIONS 矩阵。
+// ────────────────────────────────────────────────────────────────
+
+export const WAIVE_REASON_CODES = [
+  "visa_type_exempt",
+  "guarantor_family_exempt",
+  "equivalent_in_other_case",
+  "immigration_confirmed_exempt",
+  "other",
+] as const;
+
+/**
+ *
+ */
+export type WaiveReasonCode = (typeof WAIVE_REASON_CODES)[number];
+
+export const WAIVE_ALLOWED_FROM_STATUSES: readonly DocumentItemStatusEnum[] = [
+  "pending",
+  "waiting_upload",
+  "revision_required",
+  "approved",
+  "expired",
+];
+
+// ────────────────────────────────────────────────────────────────
 // 写接口请求参数 — 冻结契约
 // ────────────────────────────────────────────────────────────────
+
+/** 资料项豁免请求参数。 */
+export type DocumentItemWaiveInput = {
+  reasonCode: WaiveReasonCode;
+  note?: string | null;
+};
 
 /** 创建资料项请求参数。 */
 export type DocumentItemCreateInput = {
@@ -239,6 +275,14 @@ export type DocumentFileUploadInput = {
   storageType?: string;
   relativePath?: string | null;
   expiryDate?: string | null;
+  /** D3: 前端传入的 material_code（优先）；缺省时回退到 requirement 的 checklist_item_code。 */
+  materialCode?: string | null;
+  /** D3: asset owner_subject_type（缺省 'customer'）。 */
+  ownerSubjectType?: string | null;
+  /** D3: asset owner_customer_id（缺省从 case.customer_id 取得）。 */
+  ownerCustomerId?: string | null;
+  /** D3: asset owner_employer_identity_key（缺省 null）。 */
+  ownerEmployerIdentityKey?: string | null;
 };
 
 /** 资料文件审核请求参数。 */
@@ -254,6 +298,9 @@ export type DocumentFileReviewInput = {
 export type DocumentItemListInput = {
   caseId?: string;
   status?: string;
+  /** 多状态过滤（数组）。支持虚拟值 "missing"→['pending','revision_required']、"expired"→派生查询。 */
+  statusIn?: string[];
+  ownerSide?: string;
   category?: string;
   page?: number;
   limit?: number;

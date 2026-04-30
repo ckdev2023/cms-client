@@ -1,6 +1,7 @@
 import { ref, computed, watch, type Ref } from "vue";
 import type { DocumentListItem } from "../types";
 import { validateRelativePath } from "../validation";
+import type { DocumentRepository } from "./DocumentRepositoryTypes";
 
 /**
  *
@@ -63,7 +64,15 @@ export interface RegisterDocumentDeps {
   /**
    *
    */
-  onSubmit: (form: RegisterDocumentForm, version: number) => void;
+  repository: Pick<DocumentRepository, "uploadLocalArchive">;
+  /**
+   *
+   */
+  onSuccess?: (form: RegisterDocumentForm) => void;
+  /**
+   *
+   */
+  onError?: (error: unknown) => void;
   /**
    *
    */
@@ -167,16 +176,41 @@ function setupWatchers(
   );
 }
 
+async function executeSubmit(
+  deps: RegisterDocumentDeps,
+  form: Ref<RegisterDocumentForm>,
+  submitting: Ref<boolean>,
+  closeModal: () => void,
+) {
+  submitting.value = true;
+  try {
+    const f = form.value;
+    await deps.repository.uploadLocalArchive({
+      requirementId: f.docItemId,
+      fileName: f.fileName || derivePathTail(f.relativePath),
+      relativePath: f.relativePath.trim(),
+    });
+    const snapshot = { ...f };
+    closeModal();
+    deps.onSuccess?.(snapshot);
+  } catch (error) {
+    deps.onError?.(error);
+  } finally {
+    submitting.value = false;
+  }
+}
+
 /**
  * 登记资料弹窗的状态管理（P0-CONTRACT §8.1）。
  *
- * @param deps - 依赖注入（allItems + onSubmit）
+ * @param deps - 依赖注入（allItems + repository + callbacks）
  * @returns 弹窗状态与操作方法
  */
 export function useRegisterDocumentModel(deps: RegisterDocumentDeps) {
   const open = ref(false);
   const form = ref<RegisterDocumentForm>(emptyForm());
   const fileNameManuallyEdited = ref(false);
+  const submitting = ref(false);
 
   const storageRootConfigured = computed(
     () => deps.isStorageRootConfigured?.() ?? true,
@@ -196,25 +230,25 @@ export function useRegisterDocumentModel(deps: RegisterDocumentDeps) {
     open.value = true;
   }
 
-  function closeModal() {
+  const closeModal = () => {
     open.value = false;
-  }
+  };
 
   function updateField(field: keyof RegisterDocumentForm, value: string) {
     form.value = { ...form.value, [field]: value };
     if (field === "fileName") fileNameManuallyEdited.value = true;
   }
 
-  function submit() {
-    if (!derived.canSubmit.value) return;
-    deps.onSubmit({ ...form.value }, derived.version.value);
-    closeModal();
+  async function submit() {
+    if (!derived.canSubmit.value || submitting.value) return;
+    await executeSubmit(deps, form, submitting, closeModal);
   }
 
   return {
     open,
     form,
     fileNameManuallyEdited,
+    submitting,
     storageRootConfigured,
     ...derived,
     openModal,

@@ -113,6 +113,28 @@ function buildLastCaseCreatedDateExpr(customerAlias: string): string {
     where ${buildCaseBaseWhere("ca", customerAlias)})`;
 }
 
+/**
+ * 构造客户负责人姓名子查询表达式。
+ *
+ * BUG-089 / BUG-146：`base_profile.owner_user_id`（兼容 `ownerUserId` 写法）
+ * 仅存 UUID，列表 / 详情 DTO 必须 join `users.name` 才能向 admin 输出
+ * `owner.name`。这里以相关子查询形式落地，保持与
+ * {@link buildTotalCasesExpr} 等聚合表达式同款，避免影响 `where` / `order by`。
+ *
+ * @param customerAlias - 客户表在 SQL 中使用的别名
+ * @returns 返回 owner 显示名的相关子查询片段
+ */
+function buildOwnerNameExpr(customerAlias: string): string {
+  const conditions = CUSTOMER_OWNER_FIELDS.map(
+    (field) => `u.id::text = ${customerAlias}.base_profile->>'${field}'`,
+  ).join(" or ");
+  return `(select u.name
+    from users u
+    where u.org_id = ${customerAlias}.org_id
+      and (${conditions})
+    limit 1)`;
+}
+
 function escapeLikePattern(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/%/g, "\\%").replace(/_/g, "\\_");
 }
@@ -331,6 +353,7 @@ export function buildCustomerListSelect(alias = "c"): string {
     `${buildArchivedCasesExpr(alias)} as archived_cases`,
     `${buildCaseNamesExpr(alias)} as case_names`,
     `${buildLastCaseCreatedDateExpr(alias)} as last_case_created_date`,
+    `${buildOwnerNameExpr(alias)} as owner_name`,
   ].join(",\n        ");
 }
 

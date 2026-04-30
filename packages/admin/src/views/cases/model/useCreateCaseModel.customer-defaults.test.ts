@@ -87,7 +87,7 @@ describe("synthesizeCustomerFromSourceContext (p0-fe-010-02)", () => {
     expect(result!.group).toBe("tokyo-2");
     expect(result!.groupLabel).toBe("東京二組");
     expect(result!.contact).toBe("090-9999-8888 / yamada@example.com");
-    expect(result!.roleHint).toBe("主申請人");
+    expect(result!.roleHint).toBe("cases.create.step2.primaryRole");
   });
 
   it("carries BMV pre-sign gate statuses when provided", () => {

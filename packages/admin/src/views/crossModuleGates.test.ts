@@ -14,8 +14,8 @@ import {
   resetOrgSettings,
 } from "../shared/model/useOrgSettings";
 import { useRegisterDocumentModel } from "./documents/model/useRegisterDocumentModel";
-import type { RegisterDocumentForm } from "./documents/model/useRegisterDocumentModel";
 import type { DocumentListItem } from "./documents/types";
+import type { DocumentRepository } from "./documents/model/DocumentRepositoryTypes";
 import { CASE_GROUP_OPTIONS } from "./cases/constants";
 import { useCustomerBasicInfoModel } from "./customers/model/useCustomerBasicInfoModel";
 import { buildCustomerCreateCaseGateViewModel } from "./customers/model/useCustomerCreateCaseGateModel";
@@ -66,11 +66,12 @@ describe("cross-module — documents storage root gate", () => {
       initialStorageRoot: { rootLabel: null, rootPath: null },
     });
 
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const stubRepo: Pick<DocumentRepository, "uploadLocalArchive"> = {
+      uploadLocalArchive: vi.fn().mockResolvedValue({}),
+    };
     const model = useRegisterDocumentModel({
       allItems: () => DOC_ITEMS,
-      onSubmit,
+      repository: stubRepo,
       isStorageRootConfigured: () => ctrl.isStorageRootConfigured.value,
     });
 
@@ -86,11 +87,12 @@ describe("cross-module — documents storage root gate", () => {
       },
     });
 
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const stubRepo: Pick<DocumentRepository, "uploadLocalArchive"> = {
+      uploadLocalArchive: vi.fn().mockResolvedValue({}),
+    };
     const model = useRegisterDocumentModel({
       allItems: () => DOC_ITEMS,
-      onSubmit,
+      repository: stubRepo,
       isStorageRootConfigured: () => ctrl.isStorageRootConfigured.value,
     });
 
@@ -103,11 +105,12 @@ describe("cross-module — documents storage root gate", () => {
       initialStorageRoot: { rootLabel: null, rootPath: null },
     });
 
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const stubRepo: Pick<DocumentRepository, "uploadLocalArchive"> = {
+      uploadLocalArchive: vi.fn().mockResolvedValue({}),
+    };
     const model = useRegisterDocumentModel({
       allItems: () => DOC_ITEMS,
-      onSubmit,
+      repository: stubRepo,
       isStorageRootConfigured: () => ctrl.isStorageRootConfigured.value,
     });
 
@@ -129,11 +132,12 @@ describe("cross-module — documents storage root gate", () => {
     });
     const settings = useOrgSettings();
 
-    const onSubmit =
-      vi.fn<(form: RegisterDocumentForm, version: number) => void>();
+    const stubRepo: Pick<DocumentRepository, "uploadLocalArchive"> = {
+      uploadLocalArchive: vi.fn().mockResolvedValue({}),
+    };
     const model = useRegisterDocumentModel({
       allItems: () => DOC_ITEMS,
-      onSubmit,
+      repository: stubRepo,
       isStorageRootConfigured: () => settings.isStorageRootConfigured.value,
     });
 

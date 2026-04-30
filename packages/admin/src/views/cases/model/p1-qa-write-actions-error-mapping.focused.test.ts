@@ -314,6 +314,7 @@ describe("CaseWriteErrorMapping complete coverage (p1-qa-001-01)", () => {
       "CASE_POST_APPROVAL_STAGE_INVALID",
       "CASE_CROSS_GROUP_REASON_REQUIRED",
       "CASE_GROUP_TRANSFER_REASON_REQUIRED",
+      "CASE_GROUP_NOT_FOUND",
       "CASE_INVALID_ENUM",
       "CASE_NOT_FOUND",
       "CASE_REF_NOT_FOUND",

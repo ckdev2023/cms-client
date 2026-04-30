@@ -182,6 +182,56 @@ describe("CaseTableRow", () => {
     });
   });
 
+  describe("BUG-102: Owner column prefers backend ownerDisplayName", () => {
+    it("renders backend ownerDisplayName when present", () => {
+      const w = mountRow(
+        baseItem({ ownerId: "suzuki", ownerDisplayName: "Local Admin" }),
+      );
+      const ownerCell = w.findAll("td")[4];
+      expect(ownerCell.text()).toContain("Local Admin");
+      expect(ownerCell.find(".case-row__na").exists()).toBe(false);
+    });
+
+    it("falls back to fixture when ownerDisplayName is absent and ownerId matches", () => {
+      const w = mountRow(
+        baseItem({ ownerId: "suzuki", ownerDisplayName: undefined }),
+        "en-US",
+      );
+      const ownerCell = w.findAll("td")[4];
+      expect(ownerCell.text()).toContain("Suzuki");
+    });
+
+    it("shows Unassigned when ownerDisplayName is absent and ownerId is unknown", () => {
+      const w = mountRow(
+        baseItem({
+          ownerId: "unknown-uuid-value",
+          ownerDisplayName: undefined,
+        }),
+        "zh-CN",
+      );
+      const ownerCell = w.findAll("td")[4];
+      expect(ownerCell.text()).toBe("未指派");
+    });
+
+    it("treats whitespace-only ownerDisplayName as missing", () => {
+      const w = mountRow(
+        baseItem({ ownerId: "suzuki", ownerDisplayName: "   " }),
+        "en-US",
+      );
+      const ownerCell = w.findAll("td")[4];
+      expect(ownerCell.text()).toContain("Suzuki");
+    });
+
+    it("preserves backend string as-is regardless of locale", () => {
+      const w = mountRow(
+        baseItem({ ownerId: "suzuki", ownerDisplayName: "管理者A" }),
+        "en-US",
+      );
+      const ownerCell = w.findAll("td")[4];
+      expect(ownerCell.text()).toContain("管理者A");
+    });
+  });
+
   describe("BUG-072: Risk column uses i18n labels", () => {
     it("shows Normal for normal risk in en-US", () => {
       const w = mountRow(baseItem({ riskStatus: "normal" }), "en-US");

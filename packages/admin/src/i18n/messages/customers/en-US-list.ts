@@ -159,9 +159,11 @@ const customerList = {
     create: "Create customer",
     state: {
       checkingDuplicates: "Checking for duplicates…",
-      duplicateCheckFailed:
-        "Duplicate check failed — you may still create the customer.",
-      submitFailed: "Customer creation failed. Please try again.",
+      unauthorized:
+        "You do not have permission to create customers. Please contact an admin.",
+      validationError:
+        "Please review the form fields and fix any invalid values before submitting.",
+      requestFailed: "Customer creation failed. Please try again.",
     },
   },
 } as const;

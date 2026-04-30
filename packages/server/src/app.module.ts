@@ -23,10 +23,14 @@ import { BillingSummaryController } from "./modules/core/billing/billingSummary.
 import { BillingSummaryService } from "./modules/core/billing/billingSummary.service";
 import { PaymentRecordsController } from "./modules/core/billing/paymentRecords.controller";
 import { PaymentRecordsService } from "./modules/core/billing/paymentRecords.service";
+import { DocumentAssetsController } from "./modules/core/document-assets/documentAssets.controller";
+import { DocumentAssetsService } from "./modules/core/document-assets/documentAssets.service";
 import { DocumentFilesController } from "./modules/core/document-files/documentFiles.controller";
 import { DocumentFilesService } from "./modules/core/document-files/documentFiles.service";
 import { DocumentItemsController } from "./modules/core/document-items/documentItems.controller";
 import { DocumentItemsService } from "./modules/core/document-items/documentItems.service";
+import { DocumentRequirementFileRefsController } from "./modules/core/document-requirement-file-refs/documentRequirementFileRefs.controller";
+import { DocumentRequirementFileRefsService } from "./modules/core/document-requirement-file-refs/documentRequirementFileRefs.service";
 import { RemindersController } from "./modules/core/reminders/reminders.controller";
 import { RemindersService } from "./modules/core/reminders/reminders.service";
 import { ResidencePeriodsController } from "./modules/core/residence-periods/residencePeriods.controller";
@@ -118,8 +122,10 @@ import {
     BillingSummaryController,
     PaymentRecordsController,
     CasePartiesController,
+    DocumentAssetsController,
     DocumentFilesController,
     DocumentItemsController,
+    DocumentRequirementFileRefsController,
     RemindersController,
     ResidencePeriodsController,
     ValidationRunsController,
@@ -167,8 +173,10 @@ import {
     BillingSummaryService,
     PaymentRecordsService,
     CasePartiesService,
+    DocumentAssetsService,
     DocumentFilesService,
     DocumentItemsService,
+    DocumentRequirementFileRefsService,
     RemindersService,
     ResidencePeriodsService,
     ValidationRunsService,

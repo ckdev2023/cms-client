@@ -1,5 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
@@ -12,6 +13,7 @@ import CaseFinalPaymentCoeGate from "./CaseFinalPaymentCoeGate.vue";
 import CaseSupplementRoundPanel from "./CaseSupplementRoundPanel.vue";
 import CaseReminderFailureBanner from "./CaseReminderFailureBanner.vue";
 import CaseFailureCloseoutBanner from "./CaseFailureCloseoutBanner.vue";
+import { getStageI18nKey } from "../constants";
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail } from "../types-detail";
 import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
@@ -24,6 +26,11 @@ const props = defineProps<{
   readonly?: boolean;
   isTerminal?: boolean;
 }>();
+
+const stageValue = computed(() => {
+  const key = getStageI18nKey(props.detail.stageCode);
+  return key ? t(key) : props.detail.stage;
+});
 
 const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
@@ -64,9 +71,7 @@ function timelineColor(color: string): string {
           <span class="overview-tab__stat-label">{{
             t("cases.detail.overview.cards.stage")
           }}</span>
-          <span class="overview-tab__stat-value">{{
-            props.isTerminal ? "S9" : detail.stage
-          }}</span>
+          <span class="overview-tab__stat-value">{{ stageValue }}</span>
           <span class="overview-tab__stat-meta">
             <svg
               width="14"
@@ -291,7 +296,7 @@ function timelineColor(color: string): string {
                   )
                 "
               >
-                {{ detail.overviewActions.primary.label }}
+                {{ t(detail.overviewActions.primary.label) }}
               </Button>
               <Button
                 size="sm"
@@ -302,7 +307,7 @@ function timelineColor(color: string): string {
                   )
                 "
               >
-                {{ detail.overviewActions.secondary.label }}
+                {{ t(detail.overviewActions.secondary.label) }}
               </Button>
             </div>
           </div>

@@ -45,6 +45,7 @@ function simulateCustomerEntryWithDefaults(
   return parseCaseCreateQuery(query as Record<string, string>, "");
 }
 
+// eslint-disable-next-line no-restricted-syntax -- BUG-092 待立项跟踪后再启用
 describe.skip("tryPreselectPrimary on async customer dropdown load (BUG-092)", () => {
   it("preselects primary when customers populate after init (only customerId in URL)", () => {
     const ctx = simulateCustomerEntry("cust-001");

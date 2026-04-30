@@ -53,7 +53,7 @@ void test("mapCustomerToSummaryDto maps stable admin-facing fields", () => {
   assert.equal(summary.phone, "070-8888-1208");
   assert.equal(summary.owner.initials, "TK");
   assert.equal(summary.group, "東京一組");
-  assert.equal(summary.bmvProfile?.intakeStatus, "sign_pending");
+  assert.equal(summary.bmvProfile.intakeStatus, "sign_pending");
 });
 
 void test("mapCustomerToDetailDto includes detail-only aggregates", () => {
@@ -254,6 +254,65 @@ void test("validateBaseProfile skips new field validation for non-individual typ
   });
   assert.equal(result.location, "INVALID");
   assert.equal(result.sourceType, 42);
+});
+
+// BUG-137：empty / whitespace 字符串作为可选日期字段时，server 应当视为"未提供"并 strip 掉，
+// 避免直接 curl 或老客户端发 `birthday=""` 时报 400 "must be a valid date string"。
+void test("validateBaseProfile treats empty birthday string as not provided", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    birthday: "",
+  });
+  assert.equal(result.birthday, undefined);
+  assert.ok(!Object.prototype.hasOwnProperty.call(result, "birthday"));
+});
+
+void test("validateBaseProfile treats whitespace-only birthday string as not provided", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    birthday: "   ",
+  });
+  assert.equal(result.birthday, undefined);
+  assert.ok(!Object.prototype.hasOwnProperty.call(result, "birthday"));
+});
+
+void test("validateBaseProfile strips empty optional date fields uniformly", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    birthday: "",
+    passport_expiry_date: "",
+    residence_expiry_date: " ",
+  });
+  assert.ok(!Object.prototype.hasOwnProperty.call(result, "birthday"));
+  assert.ok(
+    !Object.prototype.hasOwnProperty.call(result, "passport_expiry_date"),
+  );
+  assert.ok(
+    !Object.prototype.hasOwnProperty.call(result, "residence_expiry_date"),
+  );
+});
+
+void test("validateBaseProfile still rejects invalid (non-empty) birthday string", () => {
+  assert.throws(
+    () =>
+      validateBaseProfile("individual", {
+        name_cn: "张三",
+        birthday: "not-a-date",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("birthday must be a valid date string"));
+      return true;
+    },
+  );
+});
+
+void test("validateBaseProfile still accepts a valid ISO birthday", () => {
+  const result = validateBaseProfile("individual", {
+    name_cn: "张三",
+    birthday: "1991-03-14",
+  });
+  assert.equal(result.birthday, "1991-03-14");
 });
 
 void test("validateBaseProfile collects multiple errors", () => {

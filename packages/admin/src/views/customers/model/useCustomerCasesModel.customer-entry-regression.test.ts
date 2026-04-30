@@ -278,7 +278,7 @@ describe("synthesizeCustomerFromSourceContext (p0-fe-010-03)", () => {
     expect(option!.group).toBe("osaka");
     expect(option!.groupLabel).toBe("大阪支店");
     expect(option!.contact).toBe("080-9999-0000");
-    expect(option!.roleHint).toBe("主申請人");
+    expect(option!.roleHint).toBe("cases.create.step2.primaryRole");
   });
 
   it("returns null when customerId is missing", () => {

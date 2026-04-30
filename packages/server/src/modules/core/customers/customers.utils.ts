@@ -1,6 +1,7 @@
 import { BadRequestException } from "@nestjs/common";
 
 import type { Customer } from "../model/coreEntities";
+import { requireTimestampString } from "../model/timestamps";
 import { normalizeObject } from "../../../infra/utils/normalize";
 import { CUSTOMER_LOCATIONS, CUSTOMER_SOURCE_TYPES } from "./customers.types";
 import type { CustomerQueryRow } from "./customers.types";
@@ -72,8 +73,8 @@ export function mapCustomerRow(row: CustomerQueryRow): Customer {
     contacts: Array.isArray(row.contacts)
       ? row.contacts.map(normalizeObject)
       : [],
-    createdAt: String(row.created_at),
-    updatedAt: String(row.updated_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
 }
 
@@ -213,14 +214,54 @@ export function validateBaseProfile(
   }
   if (type !== "individual") return baseProfile;
 
+  // BUG-137：可选日期/字符串字段允许空字符串入参，统一在校验前剥离空字符串，
+  // 避免直接 curl 或历史客户端发送 `birthday=""` 时被当作非法日期。
+  const sanitized = stripEmptySchemaFields(baseProfile);
+
   const errors: string[] = [];
+  validateRequiredName(sanitized, errors);
+  validateSchemaFields(sanitized, errors);
+  validateEnumField(sanitized, "location", CUSTOMER_LOCATIONS, errors);
+  validateEnumField(sanitized, "sourceType", CUSTOMER_SOURCE_TYPES, errors);
+  validateOptionalStringField(sanitized, "visaType", errors);
+  validateOptionalStringField(sanitized, "referrerName", errors);
+
+  if (errors.length > 0) {
+    throw new BadRequestException(`Invalid baseProfile: ${errors.join("; ")}`);
+  }
+  return sanitized;
+}
+
+function stripEmptySchemaFields(
+  baseProfile: Record<string, unknown>,
+): Record<string, unknown> {
+  const next: Record<string, unknown> = { ...baseProfile };
+  for (const field of Object.keys(INDIVIDUAL_BASE_PROFILE_SCHEMA)) {
+    const value = next[field];
+    if (typeof value === "string" && value.trim().length === 0) {
+      next[field] = undefined;
+      Reflect.deleteProperty(next, field);
+    }
+  }
+  return next;
+}
+
+function validateRequiredName(
+  baseProfile: Record<string, unknown>,
+  errors: string[],
+): void {
   const hasName = INDIVIDUAL_REQUIRED_NAME_FIELDS.some((field) =>
     isNonEmptyString(baseProfile[field]),
   );
   if (!hasName) {
     errors.push("at least one of name_cn, name_en or name_jp is required");
   }
+}
 
+function validateSchemaFields(
+  baseProfile: Record<string, unknown>,
+  errors: string[],
+): void {
   for (const [field, schema] of Object.entries(
     INDIVIDUAL_BASE_PROFILE_SCHEMA,
   )) {
@@ -234,16 +275,6 @@ export function validateBaseProfile(
       errors.push(`${field} must be a valid date string`);
     }
   }
-
-  validateEnumField(baseProfile, "location", CUSTOMER_LOCATIONS, errors);
-  validateEnumField(baseProfile, "sourceType", CUSTOMER_SOURCE_TYPES, errors);
-  validateOptionalStringField(baseProfile, "visaType", errors);
-  validateOptionalStringField(baseProfile, "referrerName", errors);
-
-  if (errors.length > 0) {
-    throw new BadRequestException(`Invalid baseProfile: ${errors.join("; ")}`);
-  }
-  return baseProfile;
 }
 
 function validateEnumField(

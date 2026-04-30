@@ -14,6 +14,7 @@ const { t } = useI18n();
 defineProps<{
   open: boolean;
   data: SharedExpiryRiskData | null;
+  loading?: boolean;
 }>();
 
 defineEmits<{
@@ -55,7 +56,16 @@ defineEmits<{
             </button>
           </div>
 
-          <div v-if="data" class="risk-panel__body">
+          <div
+            v-if="loading"
+            class="risk-panel__body risk-panel__body--loading"
+          >
+            <p class="risk-panel__loading-text">
+              {{ t("documents.risk.loading") }}
+            </p>
+          </div>
+
+          <div v-else-if="data" class="risk-panel__body">
             <section class="risk-panel__section">
               <h4 class="risk-panel__section-title">
                 {{ t("documents.risk.versionInfoLabel") }}
@@ -166,6 +176,17 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   gap: 24px;
+}
+
+.risk-panel__body--loading {
+  align-items: center;
+  justify-content: center;
+}
+
+.risk-panel__loading-text {
+  margin: 0;
+  font-size: var(--font-size-base);
+  color: var(--color-text-3);
 }
 
 .risk-panel__section {
