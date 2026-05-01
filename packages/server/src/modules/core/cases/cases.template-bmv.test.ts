@@ -10,6 +10,7 @@ import type {
 
 import {
   BMV_CASE_TYPE,
+  isBmvCaseTypeCode,
   BMV_WORKFLOW_STEPS_BLUEPRINT,
   BMV_EXTRA_FIELDS_SCHEMA,
   BMV_REQUIREMENT_BLUEPRINT,
@@ -266,6 +267,25 @@ void describe("CaseTemplate type compatibility", () => {
 });
 
 // 6. naming conventions
+
+void describe("isBmvCaseTypeCode", () => {
+  void test("matches BMV_CASE_TYPE exactly", () => {
+    assert.equal(isBmvCaseTypeCode(BMV_CASE_TYPE), true);
+  });
+
+  void test("matches biz_mgmt prefix subtypes", () => {
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_4m"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_1y"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_renewal"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt"), true);
+  });
+
+  void test("rejects non-BMV codes", () => {
+    assert.equal(isBmvCaseTypeCode("family_stay"), false);
+    assert.equal(isBmvCaseTypeCode("tech_humanities"), false);
+    assert.equal(isBmvCaseTypeCode(""), false);
+  });
+});
 
 void describe("field naming conventions", () => {
   void test("BMV_CASE_TYPE is snake_case", () => {

@@ -2,6 +2,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { type Pool } from "pg";
+import { InternalServerErrorException } from "@nestjs/common";
 
 import {
   CasesService,
@@ -298,7 +299,7 @@ void test("create: throws on insert failure", async () => {
   );
 });
 
-// ── create: template service error propagates ──
+// ── create: template service error propagates as 500 with detail ──
 void test("create: propagates template service error (500)", async () => {
   const pool = makePool(stdQ());
   await assert.rejects(
@@ -308,8 +309,13 @@ void test("create: propagates template service error (500)", async () => {
         CREATE_INPUT,
       ),
     (e) => {
-      assert.ok(e instanceof Error);
-      assert.ok(e.message.includes("Service unavailable"));
+      assert.ok(e instanceof InternalServerErrorException);
+      assert.equal(e.getStatus(), 500);
+      const body = e.getResponse() as { detail?: string };
+      assert.ok(
+        body.detail?.includes("Service unavailable"),
+        `expected detail to include "Service unavailable", got: ${String(body.detail)}`,
+      );
       return true;
     },
   );

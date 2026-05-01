@@ -9,6 +9,7 @@ import {
 import type { BmvCaseCreationGateInput } from "../cases/cases.types-bmv-gate";
 import { CASE_WRITE_ERROR_CODES } from "../cases/cases.types";
 import { BMV_CASE_TYPE } from "../cases/cases.template-bmv";
+import { requiresBmvCaseCreationGate } from "../../portal/intake/intake.types";
 import {
   ctx,
   makeBaseCustomerRow,
@@ -445,4 +446,55 @@ void describe("D7 gate: end-to-end send→generate→sign→case creation", () =
     assert.ok(!result.allowed);
     assert.equal(result.blockers.length, 4);
   });
+});
+
+// ────────────────────────────────────────────────────────────────
+// 6. BMV 子类型契约 — biz_mgmt_* 前缀与 business_manager_visa 同等门禁
+// ────────────────────────────────────────────────────────────────
+
+void describe("D7 gate: BMV subtype parity (biz_mgmt_4m / biz_mgmt_renewal)", () => {
+  const BMV_SUBTYPES = ["biz_mgmt_4m", "biz_mgmt_renewal"] as const;
+
+  for (const subtype of BMV_SUBTYPES) {
+    void test(`requiresBmvCaseCreationGate("${subtype}") returns true`, () => {
+      assert.equal(requiresBmvCaseCreationGate(subtype), true);
+    });
+    void test(`checkBmvCaseCreationGate returns 4 blockers for ${subtype} (same as business_manager_visa)`, () => {
+      const baseInput: BmvCaseCreationGateInput = {
+        caseTypeCode: "business_manager_visa",
+        customerId: "c1",
+        bmvQuestionnaireStatus: "not_started",
+        bmvQuoteStatus: "not_started",
+        bmvSignStatus: "not_started",
+        bmvIntakeStatus: "not_started",
+      };
+      const subtypeInput: BmvCaseCreationGateInput = {
+        ...baseInput,
+        caseTypeCode: subtype,
+      };
+
+      const baseResult = checkBmvCaseCreationGate(baseInput);
+      const subtypeResult = checkBmvCaseCreationGate(subtypeInput);
+
+      assert.equal(subtypeResult.allowed, false);
+      assert.equal(subtypeResult.blockers.length, 4);
+      assert.deepStrictEqual(
+        subtypeResult.blockers.map((b) => b.code),
+        baseResult.blockers.map((b) => b.code),
+      );
+    });
+    void test(`checkBmvCaseCreationGate passes for ${subtype} when all prerequisites met`, () => {
+      const input: BmvCaseCreationGateInput = {
+        caseTypeCode: subtype,
+        customerId: "c1",
+        bmvQuestionnaireStatus: "returned",
+        bmvQuoteStatus: "confirmed",
+        bmvSignStatus: "signed",
+        bmvIntakeStatus: "ready_for_case_creation",
+      };
+      const result = checkBmvCaseCreationGate(input);
+      assert.ok(result.allowed);
+      assert.equal(result.blockers.length, 0);
+    });
+  }
 });

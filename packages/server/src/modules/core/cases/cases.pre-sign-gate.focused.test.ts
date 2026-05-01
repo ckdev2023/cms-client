@@ -283,10 +283,6 @@ void describe("pre-sign gate: happy path — all prerequisites met", () => {
   });
 });
 
-// ────────────────────────────────────────────────────────────────
-// 6. 非 BMV 案件类型不受此门禁约束
-// ────────────────────────────────────────────────────────────────
-
 void describe("pre-sign gate: non-BMV case types bypass gate", () => {
   const NON_BMV_TYPES = [
     "family_stay",
@@ -309,6 +305,27 @@ void describe("pre-sign gate: non-BMV case types bypass gate", () => {
       });
       assert.equal(result.allowed, true);
       assert.equal(result.blockers.length, 0);
+    });
+  }
+});
+void describe("pre-sign gate: biz_mgmt_* subtypes trigger gate (migration 038)", () => {
+  for (const ct of ["biz_mgmt_4m", "biz_mgmt_1y", "biz_mgmt_renewal"]) {
+    void test(`${ct}: blocked when prerequisites not met`, () => {
+      const r = checkBmvCaseCreationGate({
+        caseTypeCode: ct,
+        customerId: "cust-1",
+        bmvQuestionnaireStatus: null,
+        bmvQuoteStatus: null,
+        bmvSignStatus: null,
+        bmvIntakeStatus: null,
+      });
+      assert.equal(r.allowed, false);
+      assert.equal(r.blockers.length, 4);
+    });
+    void test(`${ct}: allowed when all prerequisites met`, () => {
+      const r = checkBmvCaseCreationGate(readyInput({ caseTypeCode: ct }));
+      assert.equal(r.allowed, true);
+      assert.equal(r.blockers.length, 0);
     });
   }
 });
@@ -412,6 +429,12 @@ void describe("pre-sign gate: error code alignment", () => {
 void describe("pre-sign gate: requiresBmvCaseCreationGate alignment", () => {
   void test("returns true for business_manager_visa", () => {
     assert.equal(requiresBmvCaseCreationGate("business_manager_visa"), true);
+  });
+
+  void test("returns true for biz_mgmt_* subtypes (migration 038 alignment)", () => {
+    assert.equal(requiresBmvCaseCreationGate("biz_mgmt_4m"), true);
+    assert.equal(requiresBmvCaseCreationGate("biz_mgmt_1y"), true);
+    assert.equal(requiresBmvCaseCreationGate("biz_mgmt_renewal"), true);
   });
 
   void test("returns false for non-BMV types", () => {

@@ -21,6 +21,20 @@ import type { ReminderScheduleBlueprintItem } from "./cases.types-template-bluep
 export const BMV_CASE_TYPE = "business_manager_visa" as const;
 
 /**
+ * 判定 caseTypeCode 是否属于经営管理签系列。
+ *
+ * 匹配规则（与 migration 038 `LIKE 'biz_mgmt%'` 对齐）：
+ *   - 精确匹配 `business_manager_visa`
+ *   - 前缀匹配 `biz_mgmt`（含 `biz_mgmt_4m`、`biz_mgmt_1y`、`biz_mgmt_renewal` 等）
+ *
+ * @param code 案件类型编码
+ * @returns 是否属于 BMV 系列
+ */
+export function isBmvCaseTypeCode(code: string): boolean {
+  return code === BMV_CASE_TYPE || code.startsWith("biz_mgmt");
+}
+
+/**
  * 経管签業務子步骤蓝图（P1/01 §3 M5）。
  */
 export const BMV_WORKFLOW_STEPS_BLUEPRINT: CaseTemplateWorkflowStepDef[] = [

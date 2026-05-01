@@ -20,6 +20,10 @@
 //   - survey_data 的结构化提取和写入由 case 创建流程负责
 // ────────────────────────────────────────────────────────────────
 
+import { isBmvCaseTypeCode } from "../../core/cases/cases.template-bmv";
+
+export { isBmvCaseTypeCode };
+
 export const INTAKE_FORM_STATUSES = [
   "draft",
   "submitted",
@@ -137,11 +141,14 @@ export type CaseCreationPrerequisite = {
 /**
  * 判断是否需要 BMV 建案门禁。
  *
+ * 识别 `business_manager_visa` 及 `biz_mgmt_*` 前缀子类型，
+ * 与 migration 038 `LIKE 'biz_mgmt%'` 模式对齐。
+ *
  * @param caseTypeCode 案件类型编码
  * @returns 是否需要 BMV 建案门禁
  */
 export function requiresBmvCaseCreationGate(caseTypeCode: string): boolean {
-  return caseTypeCode === "business_manager_visa";
+  return isBmvCaseTypeCode(caseTypeCode);
 }
 
 // ────────────────────────────────────────────────────────────────

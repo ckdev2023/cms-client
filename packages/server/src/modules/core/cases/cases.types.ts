@@ -9,7 +9,6 @@ import type {
 import type { WorkflowStepSummary as _WorkflowStepSummary } from "./cases.types-workflow-step";
 
 // 写接口错误码 — 冻结契约。admin adapter 依赖这些 code 映射 i18n key。
-
 export const CASE_WRITE_ERROR_CODES = {
   S9_READONLY: "CASE_S9_READONLY",
   TRANSITION_NOT_ALLOWED: "CASE_TRANSITION_NOT_ALLOWED",
@@ -45,6 +44,7 @@ export const CASE_WRITE_ERROR_CODES = {
   FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
     "CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED",
   CLOSE_REASON_REQUIRED: "CASE_CLOSE_REASON_REQUIRED",
+  CREATE_FAILED: "CASE_CREATE_FAILED",
 } as const;
 
 // ────────────────────────────────────────────────────────────────

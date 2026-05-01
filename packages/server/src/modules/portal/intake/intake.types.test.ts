@@ -6,6 +6,7 @@ import {
   INTAKE_FORM_TYPES,
   isValidFormKind,
   requiresBmvCaseCreationGate,
+  isBmvCaseTypeCode,
   BMV_QUESTIONNAIRE_TRANSITIONS,
   isValidQuestionnaireTransition,
   BMV_QUESTIONNAIRE_REQUIRED_SECTIONS,
@@ -61,10 +62,53 @@ void test("requiresBmvCaseCreationGate returns true for BMV type code", () => {
   assert.equal(requiresBmvCaseCreationGate("business_manager_visa"), true);
 });
 
+void test("requiresBmvCaseCreationGate returns true for biz_mgmt_* subtypes", () => {
+  assert.equal(requiresBmvCaseCreationGate("biz_mgmt_4m"), true);
+  assert.equal(requiresBmvCaseCreationGate("biz_mgmt_1y"), true);
+  assert.equal(requiresBmvCaseCreationGate("biz_mgmt_renewal"), true);
+});
+
 void test("requiresBmvCaseCreationGate returns false for non-BMV type codes", () => {
   assert.equal(requiresBmvCaseCreationGate("visa"), false);
   assert.equal(requiresBmvCaseCreationGate("family_stay"), false);
   assert.equal(requiresBmvCaseCreationGate("tech_humanities"), false);
+});
+
+void describe("isBmvCaseTypeCode", () => {
+  void test("matches business_manager_visa exactly", () => {
+    assert.equal(isBmvCaseTypeCode("business_manager_visa"), true);
+  });
+
+  void test("matches biz_mgmt prefix subtypes (migration 038 alignment)", () => {
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_4m"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_1y"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt_renewal"), true);
+    assert.equal(isBmvCaseTypeCode("biz_mgmt"), true);
+  });
+
+  void test("rejects non-BMV type codes", () => {
+    assert.equal(isBmvCaseTypeCode("visa"), false);
+    assert.equal(isBmvCaseTypeCode("family_stay"), false);
+    assert.equal(isBmvCaseTypeCode("tech_humanities"), false);
+    assert.equal(isBmvCaseTypeCode(""), false);
+  });
+
+  void test("delegates from requiresBmvCaseCreationGate consistently", () => {
+    const codes = [
+      "business_manager_visa",
+      "biz_mgmt_4m",
+      "biz_mgmt_1y",
+      "family_stay",
+      "tech_humanities",
+    ];
+    for (const code of codes) {
+      assert.equal(
+        requiresBmvCaseCreationGate(code),
+        isBmvCaseTypeCode(code),
+        `mismatch for "${code}"`,
+      );
+    }
+  });
 });
 
 // ── questionnaire transitions ──
@@ -267,6 +311,7 @@ void describe("intake type contracts", () => {
 void describe("intake ↔ cases alignment", () => {
   void test("requiresBmvCaseCreationGate matches the BMV case type code used in cases gate", () => {
     assert.equal(requiresBmvCaseCreationGate("business_manager_visa"), true);
+    assert.equal(requiresBmvCaseCreationGate("biz_mgmt_4m"), true);
     assert.equal(requiresBmvCaseCreationGate("family_stay"), false);
   });
 

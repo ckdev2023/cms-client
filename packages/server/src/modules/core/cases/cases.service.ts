@@ -2,8 +2,10 @@
 import {
   BadRequestException,
   ForbiddenException,
+  HttpException,
   Inject,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
   Optional,
 } from "@nestjs/common";
@@ -1365,47 +1367,89 @@ export class CasesService {
    * @param input
    * @param ctx 请求上下文 @param input 创建参数 @returns Case 实体 */
   async create(ctx: RequestContext, input: CaseCreateInput): Promise<Case> {
-    validateDueAt(input.dueAt);
-    validateCaseEnums(input);
-    const checklistItems = await this.resolveChecklistItems(
-      ctx,
-      input.caseTypeCode,
-    );
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    try {
+      validateDueAt(input.dueAt);
+      validateCaseEnums(input);
+      const checklistItems = await this.resolveChecklistItems(
+        ctx,
+        input.caseTypeCode,
+      );
+      const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
 
-    return tenantDb.transaction(async (tx) => {
-      await this.assertCreateRefs(tx, input);
-      const { resolvedGroupId, isCrossGroup, customerGroupId } =
-        await this.resolveCreateGroup(tx, ctx, input);
+      return await tenantDb.transaction(async (tx) => {
+        await this.assertCreateRefs(tx, input);
+        const { resolvedGroupId, isCrossGroup, customerGroupId } =
+          await this.resolveCreateGroup(tx, ctx, input);
 
-      const created = await this.insertCaseWithAutoNumber(tx, ctx, {
-        ...input,
-        groupId: resolvedGroupId,
-      });
-      await this.insertDocumentItems(tx, ctx.orgId, created.id, checklistItems);
-      await writeTimelineInTx(tx, ctx, {
-        entityType: "case",
-        entityId: created.id,
-        action: "case.created",
-        payload: {
-          caseTypeCode: created.caseTypeCode,
-          stage: created.stage,
-          status: created.status,
-        },
-      });
-
-      if (isCrossGroup) {
-        await writeCrossGroupTimeline(
+        const created = await this.insertCaseWithAutoNumber(tx, ctx, {
+          ...input,
+          groupId: resolvedGroupId,
+        });
+        await this.insertDocumentItems(
           tx,
-          ctx,
+          ctx.orgId,
           created.id,
-          customerGroupId,
-          resolvedGroupId,
-          input.crossGroupReason,
+          checklistItems,
         );
-      }
+        await writeTimelineInTx(tx, ctx, {
+          entityType: "case",
+          entityId: created.id,
+          action: "case.created",
+          payload: {
+            caseTypeCode: created.caseTypeCode,
+            stage: created.stage,
+            status: created.status,
+          },
+        });
 
-      return created;
+        if (isCrossGroup) {
+          await writeCrossGroupTimeline(
+            tx,
+            ctx,
+            created.id,
+            customerGroupId,
+            resolvedGroupId,
+            input.crossGroupReason,
+          );
+        }
+
+        return created;
+      });
+    } catch (error) {
+      CasesService.wrapCreateError(error, input);
+    }
+  }
+
+  private static wrapCreateError(
+    error: unknown,
+    input: CaseCreateInput,
+  ): never {
+    if (error instanceof HttpException) throw error;
+
+    const pgCode = (error as { code?: string }).code;
+    const PG_KNOWN_CONSTRAINTS = ["23503", "23505", "23514"];
+    if (pgCode && PG_KNOWN_CONSTRAINTS.includes(pgCode)) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.CREATE_FAILED,
+        detail: {
+          source: "pg",
+          constraint: (error as { constraint?: string }).constraint ?? null,
+          pgCode,
+        },
+        message: `Failed to create case: ${pgCode === "23503" ? "foreign key violation" : pgCode === "23505" ? "unique constraint violation" : "check constraint violation"}`,
+      });
+    }
+
+    const errMsg = error instanceof Error ? error.message : String(error);
+    // eslint-disable-next-line no-console
+    console.error(
+      `[CasesService.create] unexpected error for customer=${input.customerId} caseType=${input.caseTypeCode}:`,
+      error,
+    );
+    throw new InternalServerErrorException({
+      code: CASE_WRITE_ERROR_CODES.CREATE_FAILED,
+      detail: errMsg,
+      message: "Failed to create case",
     });
   }
 

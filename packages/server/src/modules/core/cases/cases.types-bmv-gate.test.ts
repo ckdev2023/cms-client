@@ -191,6 +191,66 @@ void describe("checkBmvCaseCreationGate — null profile fields", () => {
   });
 });
 
+// ── BMV undefined profile fields ──
+
+void describe("checkBmvCaseCreationGate — undefined profile fields", () => {
+  void test("blocks all four when profile fields are undefined", () => {
+    const result = checkBmvCaseCreationGate({
+      caseTypeCode: "business_manager_visa",
+      customerId: "cust-1",
+      bmvQuestionnaireStatus: undefined,
+      bmvQuoteStatus: undefined,
+      bmvSignStatus: undefined,
+      bmvIntakeStatus: undefined,
+    });
+    assert.equal(result.allowed, false);
+    assert.equal(result.blockers.length, 4);
+  });
+
+  void test("each undefined field produces the correct blocker code", () => {
+    const result = checkBmvCaseCreationGate({
+      caseTypeCode: "business_manager_visa",
+      customerId: "cust-1",
+      bmvQuestionnaireStatus: undefined,
+      bmvQuoteStatus: undefined,
+      bmvSignStatus: undefined,
+      bmvIntakeStatus: undefined,
+    });
+    const codes = result.blockers.map((b) => b.code).sort();
+    assert.deepEqual(codes, [
+      "BMV_INTAKE_NOT_READY",
+      "BMV_NOT_SIGNED",
+      "BMV_QUESTIONNAIRE_NOT_RETURNED",
+      "BMV_QUOTE_NOT_CONFIRMED",
+    ]);
+  });
+
+  void test("mixed null and undefined fields all produce blockers", () => {
+    const result = checkBmvCaseCreationGate({
+      caseTypeCode: "business_manager_visa",
+      customerId: "cust-1",
+      bmvQuestionnaireStatus: null,
+      bmvQuoteStatus: undefined,
+      bmvSignStatus: null,
+      bmvIntakeStatus: undefined,
+    });
+    assert.equal(result.allowed, false);
+    assert.equal(result.blockers.length, 4);
+  });
+
+  void test("single undefined field among valid ones produces exactly one blocker", () => {
+    const result = checkBmvCaseCreationGate(
+      readyInput({ bmvSignStatus: undefined }),
+    );
+    assert.equal(result.allowed, false);
+    assert.equal(result.blockers.length, 1);
+    assert.equal(
+      result.blockers[0].code,
+      BMV_CASE_CREATION_GATE_CODES.NOT_SIGNED,
+    );
+  });
+});
+
 // ── BMV accumulation ──
 
 void describe("checkBmvCaseCreationGate — blocker accumulation", () => {

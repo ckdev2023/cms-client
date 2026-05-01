@@ -24,6 +24,7 @@ import type {
   CustomerBmvSignStatus,
   CustomerBmvIntakeStatus,
 } from "../customers/customers.types";
+import { isBmvCaseTypeCode } from "./cases.template-bmv";
 
 export const BMV_CASE_CREATION_GATE_CODES = {
   QUESTIONNAIRE_NOT_RETURNED: "BMV_QUESTIONNAIRE_NOT_RETURNED",
@@ -47,10 +48,10 @@ export type BmvCaseCreationBlockerCode =
 export type BmvCaseCreationGateInput = {
   caseTypeCode: string;
   customerId: string;
-  bmvQuestionnaireStatus: CustomerBmvQuestionnaireStatus | null;
-  bmvQuoteStatus: CustomerBmvQuoteStatus | null;
-  bmvSignStatus: CustomerBmvSignStatus | null;
-  bmvIntakeStatus: CustomerBmvIntakeStatus | null;
+  bmvQuestionnaireStatus: CustomerBmvQuestionnaireStatus | null | undefined;
+  bmvQuoteStatus: CustomerBmvQuoteStatus | null | undefined;
+  bmvSignStatus: CustomerBmvSignStatus | null | undefined;
+  bmvIntakeStatus: CustomerBmvIntakeStatus | null | undefined;
 };
 
 /** 单个阻断原因。 */
@@ -81,7 +82,7 @@ export type BmvCaseCreationGateResult = {
 export function checkBmvCaseCreationGate(
   input: BmvCaseCreationGateInput,
 ): BmvCaseCreationGateResult {
-  if (input.caseTypeCode !== "business_manager_visa") {
+  if (!isBmvCaseTypeCode(input.caseTypeCode)) {
     return { allowed: true, blockers: [] };
   }
 
