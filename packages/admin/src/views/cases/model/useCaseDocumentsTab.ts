@@ -258,7 +258,7 @@ function buildApiCompletionRate(repo: DocumentRepository, caseId: Ref<string>) {
     }
   }
 
-  fetchRate();
+  watch(caseId, (id) => fetchRate(id), { immediate: true });
 
   return { apiRate, fetchRate };
 }
@@ -311,7 +311,6 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
 
   watch(deps.caseId, (caseId) => {
     listModel.refresh({ caseId });
-    fetchRate(caseId);
   });
 
   const { detailItems, documentGroups } = buildGrouping(listModel, t);

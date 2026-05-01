@@ -81,11 +81,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               </li>
             </ul>
             <div class="ccm__field" style="margin-top: 12px">
-              <label class="ccm__label">
+              <label class="ccm__label" for="case-create-confirmReason">
                 {{ t("cases.create.modal.dedupe.reasonLabel") }}
                 <span class="ccm__required">*</span>
               </label>
               <input
+                id="case-create-confirmReason"
+                name="confirmReason"
                 type="text"
                 class="ccm__input"
                 :value="confirmReason"
@@ -98,11 +100,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <div class="ccm__fields">
             <div class="ccm__row">
               <div class="ccm__field">
-                <label class="ccm__label">
+                <label class="ccm__label" for="case-create-name">
                   {{ t("cases.create.modal.fields.name") }}
                   <span class="ccm__required">*</span>
                 </label>
                 <input
+                  id="case-create-name"
+                  name="name"
                   type="text"
                   class="ccm__input"
                   :value="form.name"
@@ -114,11 +118,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 </div>
               </div>
               <div class="ccm__field">
-                <label class="ccm__label">
+                <label class="ccm__label" for="case-create-role">
                   {{ t("cases.create.modal.fields.role") }}
                   <span class="ccm__required">*</span>
                 </label>
                 <select
+                  id="case-create-role"
+                  name="role"
                   class="ccm__input ccm__select"
                   :value="form.role"
                   @change="
@@ -148,11 +154,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
             <div class="ccm__row">
               <div class="ccm__field">
-                <label class="ccm__label">
+                <label class="ccm__label" for="case-create-groupId">
                   {{ t("cases.create.modal.fields.group") }}
                   <span class="ccm__required">*</span>
                 </label>
                 <select
+                  id="case-create-groupId"
+                  name="groupId"
                   class="ccm__input ccm__select"
                   :value="form.groupId"
                   @change="
@@ -179,10 +187,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
                 </div>
               </div>
               <div class="ccm__field">
-                <label class="ccm__label">{{
+                <label class="ccm__label" for="case-create-phone">{{
                   t("cases.create.modal.fields.phone")
                 }}</label>
                 <input
+                  id="case-create-phone"
+                  name="phone"
                   type="tel"
                   class="ccm__input"
                   :value="form.phone"
@@ -196,10 +206,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             </div>
 
             <div class="ccm__field">
-              <label class="ccm__label">{{
+              <label class="ccm__label" for="case-create-email">{{
                 t("cases.create.modal.fields.email")
               }}</label>
               <input
+                id="case-create-email"
+                name="email"
                 type="email"
                 class="ccm__input"
                 :value="form.email"
@@ -212,10 +224,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             </div>
 
             <div class="ccm__field">
-              <label class="ccm__label">{{
+              <label class="ccm__label" for="case-create-note">{{
                 t("cases.create.modal.fields.note")
               }}</label>
               <input
+                id="case-create-note"
+                name="note"
                 type="text"
                 class="ccm__input"
                 :value="form.note"

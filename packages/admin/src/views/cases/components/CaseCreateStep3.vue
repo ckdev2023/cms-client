@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CaseGroupOption, CaseOwnerOption } from "../types";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
@@ -20,6 +21,17 @@ const props = defineProps<{
 function handleDueDateChange(value: string | number | Date | undefined): void {
   props.model.setDueDate(typeof value === "string" ? value : "");
 }
+
+onMounted(async () => {
+  await nextTick();
+  const label = document.getElementById("case-create-dueDate-label");
+  const input = label?.parentElement?.querySelector(
+    "input.arco-picker-start-time",
+  ) as HTMLElement | null;
+  if (input) {
+    input.setAttribute("aria-label", t("cases.create.step3.dueDateLabel"));
+  }
+});
 </script>
 
 <template>
@@ -31,10 +43,12 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
     </div>
     <div class="cc__fields cc__fields--3">
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label class="cc__label" for="case-create-group">{{
           t("cases.create.step3.groupLabel")
         }}</label>
         <select
+          id="case-create-group"
+          name="group"
           class="cc__input cc__input--select"
           :value="props.model.draft.group"
           @change="
@@ -51,10 +65,12 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
         </select>
       </div>
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label class="cc__label" for="case-create-owner">{{
           t("cases.create.step3.ownerLabel")
         }}</label>
         <select
+          id="case-create-owner"
+          name="owner"
           class="cc__input cc__input--select"
           :value="props.model.draft.owner"
           @change="
@@ -71,7 +87,7 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
         </select>
       </div>
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label id="case-create-dueDate-label" class="cc__label">{{
           t("cases.create.step3.dueDateLabel")
         }}</label>
         <a-date-picker
@@ -79,16 +95,19 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
           :model-value="props.model.draft.dueDate || undefined"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
+          aria-labelledby="case-create-dueDate-label"
           @change="handleDueDateChange"
         />
       </div>
     </div>
     <div class="cc__fields" style="margin-top: 16px">
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label class="cc__label" for="case-create-amount">{{
           t("cases.create.step3.amountLabel")
         }}</label>
         <input
+          id="case-create-amount"
+          name="amount"
           type="text"
           class="cc__input"
           :value="props.model.draft.amount"
@@ -104,11 +123,13 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
       class="cc__field"
       style="margin-top: 16px"
     >
-      <label class="cc__label">
+      <label class="cc__label" for="case-create-groupOverrideReason">
         {{ t("cases.create.step3.crossGroupReason") }}
         <span class="req-mark">*</span>
       </label>
       <input
+        id="case-create-groupOverrideReason"
+        name="groupOverrideReason"
         type="text"
         class="cc__input"
         :value="props.model.draft.groupOverrideReason"

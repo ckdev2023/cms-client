@@ -246,6 +246,29 @@ const leadsJaJP = {
       emptyTitle: "ログがありません",
     },
   },
+  options: {
+    source: {
+      web: "Webフォーム",
+      referral: "紹介",
+      walkin: "来所",
+      phone: "電話",
+      other: "その他",
+    },
+    businessType: {
+      highlySkilled: "高度専門職",
+      workVisa: "技術・人文知識・国際業務",
+      familyStay: "家族滞在",
+      businessManager: "経営・管理",
+      permanent: "永住",
+      other: "その他",
+    },
+    language: {
+      ja: "日本語",
+      zh: "中国語",
+      en: "英語",
+      vi: "ベトナム語",
+    },
+  },
   errors: {
     fetchFailed:
       "リードの読み込みに失敗しました。しばらくしてから再試行してください。",

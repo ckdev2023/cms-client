@@ -246,6 +246,29 @@ const leadsEnUS = {
       emptyTitle: "No log entries",
     },
   },
+  options: {
+    source: {
+      web: "Website form",
+      referral: "Referral",
+      walkin: "Walk-in",
+      phone: "Phone",
+      other: "Other",
+    },
+    businessType: {
+      highlySkilled: "Highly Skilled Professional",
+      workVisa: "Engineer/Specialist in Humanities",
+      familyStay: "Dependent",
+      businessManager: "Business Manager",
+      permanent: "Permanent Resident",
+      other: "Other",
+    },
+    language: {
+      ja: "Japanese",
+      zh: "Chinese",
+      en: "English",
+      vi: "Vietnamese",
+    },
+  },
   errors: {
     fetchFailed: "Failed to load leads. Please try again.",
     updateFailed: "Failed to update the lead. Please try again.",

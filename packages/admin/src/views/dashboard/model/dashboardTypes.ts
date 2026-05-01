@@ -88,6 +88,10 @@ export interface DashboardWorkItem {
   /**
    *
    */
+  statusLabelParams?: Record<string, unknown>;
+  /**
+   *
+   */
   descKey?: string;
   /**
    *

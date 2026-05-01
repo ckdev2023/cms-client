@@ -96,16 +96,25 @@ describe("leads/fixtures", () => {
       }
     });
 
-    it("BUSINESS_TYPE_OPTIONS has 6 business types", () => {
+    it("BUSINESS_TYPE_OPTIONS has 6 business types with i18n keys", () => {
       expect(BUSINESS_TYPE_OPTIONS).toHaveLength(6);
+      for (const opt of BUSINESS_TYPE_OPTIONS) {
+        expect(opt.label).toMatch(/^leads\.options\.businessType\./);
+      }
     });
 
-    it("LEAD_SOURCE_OPTIONS has 5 sources", () => {
+    it("LEAD_SOURCE_OPTIONS has 5 sources with i18n keys", () => {
       expect(LEAD_SOURCE_OPTIONS).toHaveLength(5);
+      for (const opt of LEAD_SOURCE_OPTIONS) {
+        expect(opt.label).toMatch(/^leads\.options\.source\./);
+      }
     });
 
-    it("LANGUAGE_OPTIONS has 4 languages", () => {
+    it("LANGUAGE_OPTIONS has 4 languages with i18n keys", () => {
       expect(LANGUAGE_OPTIONS).toHaveLength(4);
+      for (const opt of LANGUAGE_OPTIONS) {
+        expect(opt.label).toMatch(/^leads\.options\.language\./);
+      }
     });
   });
 

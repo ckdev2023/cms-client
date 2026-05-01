@@ -5,6 +5,7 @@ import type { CaseBillingRow, BillingStatus } from "../types";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveMilestoneLabel } from "../model/BillingAdapters";
 
 /**
  * 案件收费表格，展示 8 列数据 + checkbox 选择列。
@@ -263,7 +264,7 @@ watchEffect(() => {
                   },
                 ]"
               >
-                {{ row.nextNode.name }}
+                {{ resolveMilestoneLabel(row.nextNode.name, t) }}
               </div>
               <div
                 :class="[

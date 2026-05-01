@@ -50,10 +50,12 @@ defineProps<{
     </div>
     <div class="cc__fields">
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label class="cc__label" for="case-create-applicationType">{{
           t("cases.create.step1.applicationType")
         }}</label>
         <select
+          id="case-create-applicationType"
+          name="applicationType"
           class="cc__input cc__input--select"
           :value="model.draft.applicationType"
           @change="
@@ -72,8 +74,12 @@ defineProps<{
         </select>
       </div>
       <div class="cc__field">
-        <label class="cc__label">{{ t("cases.create.step1.caseTitle") }}</label>
+        <label class="cc__label" for="case-create-caseTitle">{{
+          t("cases.create.step1.caseTitle")
+        }}</label>
         <input
+          id="case-create-caseTitle"
+          name="caseTitle"
           type="text"
           class="cc__input"
           :value="

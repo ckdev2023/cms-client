@@ -199,6 +199,13 @@ const billingZhCN = {
     loadingNodes: "正在加载收费节点…",
     submitError: "回款登记失败，请重试。",
   },
+  milestone: {
+    down_payment: "着手金",
+    final_payment: "尾款",
+    balance: "残金",
+    interim_payment: "中间金",
+    installment: "分期付款",
+  },
 } as const;
 
 export default billingZhCN;

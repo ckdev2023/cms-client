@@ -3,7 +3,10 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { BillingPlanNode } from "../types";
 import type { CreatePaymentInput } from "../model/BillingAdapterUrls";
-import type { BillingMutationResult } from "../model/BillingAdapters";
+import {
+  type BillingMutationResult,
+  resolveMilestoneLabel,
+} from "../model/BillingAdapters";
 import { usePaymentModal } from "../model/usePaymentModal";
 import Button from "../../../shared/ui/Button.vue";
 
@@ -195,7 +198,7 @@ function handleClose() {
                   :key="node.id"
                   :value="node.id"
                 >
-                  {{ node.name }} — ¥{{
+                  {{ resolveMilestoneLabel(node.name, t) }} — ¥{{
                     node.amount.toLocaleString("ja-JP")
                   }}
                   ({{ node.dueDate }})

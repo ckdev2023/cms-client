@@ -201,6 +201,13 @@ const billingJaJP = {
     loadingNodes: "請求ノードを読み込み中…",
     submitError: "入金の登録に失敗しました。再度お試しください。",
   },
+  milestone: {
+    down_payment: "着手金",
+    final_payment: "残金",
+    balance: "残額",
+    interim_payment: "中間金",
+    installment: "分割払い",
+  },
 } as const;
 
 export default billingJaJP;

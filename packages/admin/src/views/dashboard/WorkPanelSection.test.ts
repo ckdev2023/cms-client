@@ -13,48 +13,74 @@ function createPanels(
       {
         id: "todo-1",
         title: "上传回执",
-        meta: ["案件：A-001", "执行人：田中"],
-        desc: "今天 15:00 前完成上传。",
+        meta: [],
+        desc: "",
         status: "info",
-        statusLabel: "进行中",
-        action: "查看案件",
+        statusLabel: "",
+        action: "",
         route: "/billing",
+        metaKeys: [
+          { key: "case", params: { caseLabel: "A-001" } },
+          { key: "assignee", params: { name: "田中" } },
+        ],
+        statusLabelKey: "inProgress",
+        descKey: "todo.statusPriority",
+        descParams: { status: "active", priority: "high" },
+        actionKey: "viewCase",
       },
     ],
     deadlines: [
       {
         id: "deadline-1",
         title: "经营管理签更新",
-        meta: ["负责人：佐藤", "期限：2026-04-20"],
-        desc: "当前阶段：待提交",
+        meta: [],
+        desc: "",
         status: "warn",
-        statusLabel: "剩余 4 天",
-        action: "查看案件",
+        statusLabel: "",
+        action: "",
         route: "/billing",
         daysLeft: 4,
+        metaKeys: [
+          { key: "owner", params: { name: "佐藤" } },
+          { key: "due", params: { date: "2026-04-20" } },
+        ],
+        statusLabelKey: "daysLeft",
+        statusLabelParams: { days: 4 },
+        descKey: "deadline.currentStage",
+        descParams: { status: "pending" },
+        actionKey: "viewCase",
       },
     ],
     submissions: [
       {
         id: "submission-1",
         title: "技人国续签",
-        meta: ["负责人：林"],
-        desc: "检查已通过，待复核。",
+        meta: [],
+        desc: "",
         status: "info",
-        statusLabel: "可提交",
-        action: "查看案件",
+        statusLabel: "",
+        action: "",
+        metaKeys: [{ key: "owner", params: { name: "林" } }],
+        statusLabelKey: "readyToSubmit",
+        descKey: "submission.pendingReview",
+        actionKey: "viewCase",
       },
     ],
     risks: [
       {
         id: "risk-1",
         title: "未收款案件",
-        meta: ["待收：¥30,000"],
-        desc: "需尽快跟进收费。",
+        meta: [],
+        desc: "",
         status: "danger",
-        statusLabel: "收费风险",
-        action: "查看收费",
+        statusLabel: "",
+        action: "",
         route: "/billing",
+        metaKeys: [{ key: "unpaid", params: { amount: "¥30,000" } }],
+        statusLabelKey: "billingRisk",
+        descKey: "risk.unpaidAmount",
+        descParams: { amount: "¥30,000" },
+        actionKey: "viewBilling",
       },
     ],
     ...overrides,
@@ -117,7 +143,7 @@ describe("WorkPanelSection", () => {
     expect(tags[0]?.text()).toBe("Top Priority");
   });
 
-  it("keeps backend content while panel chrome follows locale", async () => {
+  it("renders i18n-keyed content in current locale while preserving server title", async () => {
     setAppLocale("ja-JP");
     const { wrapper: w } = await mountSection();
     const firstPanel = w.findAll(".work-panel")[0]!;
@@ -125,6 +151,10 @@ describe("WorkPanelSection", () => {
 
     expect(firstPanel.text()).toContain("本日の対応");
     expect(firstItem.text()).toContain("上传回执");
+    expect(firstItem.find(".status-pill").text()).toBe("進行中");
+    expect(firstItem.find(".work-item-actions .mini-btn").text()).toBe(
+      "案件を見る",
+    );
   });
 
   it("renders panel empty state when a list is empty", async () => {
@@ -180,6 +210,25 @@ describe("WorkPanelSection", () => {
     expect(router.currentRoute.value.path).toBe("/cases");
     expect(router.currentRoute.value.query).toEqual({ risk: "critical" });
   });
+
+  it.each([
+    ["zh-CN", "收费风险", "查看收费", "待收：¥30,000"],
+    ["ja-JP", "請求リスク", "請求を見る", "未収：¥30,000"],
+    ["en-US", "Billing risk", "View billing", "Unpaid: ¥30,000"],
+  ] as const)(
+    "renders risk card correctly in %s",
+    async (locale, expectedStatus, expectedAction, expectedMeta) => {
+      setAppLocale(locale);
+      const { wrapper: w } = await mountSection();
+      const riskPanel = w.findAll(".work-panel")[3]!;
+      const riskItem = riskPanel.find(".work-item");
+      expect(riskItem.find(".status-pill").text()).toBe(expectedStatus);
+      expect(riskItem.find(".work-item-actions .mini-btn").text()).toBe(
+        expectedAction,
+      );
+      expect(riskItem.find(".work-item-meta span").text()).toBe(expectedMeta);
+    },
+  );
 
   it("navigates when a work item action has a route", async () => {
     const { wrapper: w, router } = await mountSection();

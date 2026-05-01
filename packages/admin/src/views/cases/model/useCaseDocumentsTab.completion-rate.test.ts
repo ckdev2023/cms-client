@@ -80,6 +80,21 @@ describe("useCaseDocumentsTab — completion rate from API (C3)", () => {
     expect(repo.getCompletionRate).toHaveBeenCalledTimes(2);
   });
 
+  it("does not fetch when caseId is initially empty", async () => {
+    const { tab, caseIdRef } = createTab(repo, "");
+    await flushPromises();
+
+    expect(repo.getCompletionRate).not.toHaveBeenCalled();
+    expect(tab.apiCompletionRate.value).toBeNull();
+
+    caseIdRef.value = "case-late";
+    await nextTick();
+    await flushPromises();
+
+    expect(repo.getCompletionRate).toHaveBeenCalledWith("case-late");
+    expect(tab.apiCompletionRate.value).toEqual(API_RATE);
+  });
+
   it("sets apiCompletionRate to null when API fails (fallback path)", async () => {
     const failingRepo = stubRepository({
       getCompletionRate: vi.fn().mockRejectedValue(new Error("network")),

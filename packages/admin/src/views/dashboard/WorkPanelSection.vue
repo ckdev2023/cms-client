@@ -106,6 +106,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
                     ? t(
                         "dashboard.workItem.statusLabels." +
                           item.statusLabelKey,
+                        item.statusLabelParams ?? {},
                       )
                     : item.statusLabel
                 }}

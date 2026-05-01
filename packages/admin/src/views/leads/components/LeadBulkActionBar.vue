@@ -98,7 +98,13 @@ function applyExport() {
         <span class="lead-bulk-bar__action-label">
           {{ t("leads.list.bulk.assignOwner") }}
         </span>
-        <select v-model="ownerValue" class="lead-bulk-bar__select">
+        <select
+          id="lead-bulk-assignOwner"
+          v-model="ownerValue"
+          name="bulkOwner"
+          class="lead-bulk-bar__select"
+          :aria-label="t('leads.list.bulk.assignOwner')"
+        >
           <option value="">{{ t("leads.list.bulk.selectOwner") }}</option>
           <option
             v-for="opt in ownerOptions ?? []"
@@ -123,9 +129,12 @@ function applyExport() {
           {{ t("leads.list.bulk.adjustFollowUp") }}
         </span>
         <input
+          id="lead-bulk-followUp"
           v-model="followUpValue"
+          name="bulkFollowUp"
           type="datetime-local"
           class="lead-bulk-bar__datetime"
+          :aria-label="t('leads.list.bulk.adjustFollowUp')"
         />
         <button
           class="lead-bulk-bar__apply"
@@ -141,7 +150,13 @@ function applyExport() {
         <span class="lead-bulk-bar__action-label">
           {{ t("leads.list.bulk.markStatus") }}
         </span>
-        <select v-model="statusValue" class="lead-bulk-bar__select">
+        <select
+          id="lead-bulk-status"
+          v-model="statusValue"
+          name="bulkStatus"
+          class="lead-bulk-bar__select"
+          :aria-label="t('leads.list.bulk.markStatus')"
+        >
           <option value="">{{ t("leads.list.bulk.selectStatus") }}</option>
           <option
             v-for="s in bulkStatusOptions"
@@ -166,9 +181,12 @@ function applyExport() {
           {{ t("leads.list.bulk.addTags") }}
         </span>
         <input
+          id="lead-bulk-tags"
           v-model="tagsValue"
+          name="bulkTags"
           type="text"
           class="lead-bulk-bar__select"
+          :aria-label="t('leads.list.bulk.addTags')"
           :placeholder="t('leads.list.bulk.tagsPlaceholder')"
         />
         <button
@@ -185,7 +203,13 @@ function applyExport() {
         <span class="lead-bulk-bar__action-label">
           {{ t("leads.list.bulk.export") }}
         </span>
-        <select v-model="exportFormat" class="lead-bulk-bar__select">
+        <select
+          id="lead-bulk-exportFormat"
+          v-model="exportFormat"
+          name="bulkExportFormat"
+          class="lead-bulk-bar__select"
+          :aria-label="t('leads.list.bulk.export')"
+        >
           <option value="csv">CSV</option>
           <option value="xlsx">Excel</option>
         </select>

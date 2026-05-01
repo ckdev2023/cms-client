@@ -1,4 +1,8 @@
 import { describe, expect, it } from "vitest";
+import arcoEnUS from "@arco-design/web-vue/es/locale/lang/en-us";
+import arcoJaJP from "@arco-design/web-vue/es/locale/lang/ja-jp";
+import arcoZhCN from "@arco-design/web-vue/es/locale/lang/zh-cn";
+import { getArcoLocale } from "./index";
 import {
   DEFAULT_LOCALE,
   LOCALE_STORAGE_KEY,
@@ -76,5 +80,17 @@ describe("locale helpers", () => {
     const storage = createStorage();
     persistLocale("zh-CN", storage);
     expect(storage.getItem(LOCALE_STORAGE_KEY)).toBe("zh-CN");
+  });
+});
+
+describe("getArcoLocale", () => {
+  it("returns matching Arco locale for each supported app locale", () => {
+    expect(getArcoLocale("zh-CN")).toBe(arcoZhCN);
+    expect(getArcoLocale("en-US")).toBe(arcoEnUS);
+    expect(getArcoLocale("ja-JP")).toBe(arcoJaJP);
+  });
+
+  it("falls back to zh-CN for an unknown locale", () => {
+    expect(getArcoLocale("fr-FR" as never)).toBe(arcoZhCN);
   });
 });

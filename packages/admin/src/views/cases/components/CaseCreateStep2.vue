@@ -67,7 +67,7 @@ const primaryGroupDisplay = computed(() => {
     <h2 class="cc__title">{{ t("cases.create.step2.primaryTitle") }}</h2>
     <div class="cc__fields">
       <div class="cc__field">
-        <label class="cc__label">{{
+        <label class="cc__label" for="case-create-primaryCustomer">{{
           t("cases.create.step2.selectExisting")
         }}</label>
 
@@ -107,6 +107,8 @@ const primaryGroupDisplay = computed(() => {
 
         <select
           v-else
+          id="case-create-primaryCustomer"
+          name="primaryCustomer"
           class="cc__input cc__input--select"
           :value="model.primaryCustomer.value?.id ?? ''"
           data-testid="customer-select"

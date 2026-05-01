@@ -67,11 +67,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
     <div class="lead-modal-body__fields">
       <div class="lead-modal-body__field">
-        <label class="lead-modal-body__label">
+        <label class="lead-modal-body__label" for="lead-create-name">
           {{ t("leads.list.createModal.fields.name") }}
           <span class="lead-modal-body__required">*</span>
         </label>
         <input
+          id="lead-create-name"
+          name="name"
           type="text"
           class="lead-modal-body__input"
           :value="fields?.name"
@@ -82,10 +84,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
       <div class="lead-modal-body__row">
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-phone">
             {{ t("leads.list.createModal.fields.phone") }}
           </label>
           <input
+            id="lead-create-phone"
+            name="phone"
             type="tel"
             class="lead-modal-body__input"
             :value="fields?.phone"
@@ -97,10 +101,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           />
         </div>
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-email">
             {{ t("leads.list.createModal.fields.email") }}
           </label>
           <input
+            id="lead-create-email"
+            name="email"
             type="email"
             class="lead-modal-body__input"
             :value="fields?.email"
@@ -115,10 +121,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
       <div class="lead-modal-body__row">
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-source">
             {{ t("leads.list.createModal.fields.source") }}
           </label>
           <select
+            id="lead-create-source"
+            name="source"
             class="lead-modal-body__input lead-modal-body__select"
             :value="fields?.source"
             @change="
@@ -137,15 +145,17 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               :key="opt.value"
               :value="opt.value"
             >
-              {{ opt.label }}
+              {{ t(opt.label) }}
             </option>
           </select>
         </div>
         <div v-if="showReferrer" class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-referrer">
             {{ t("leads.list.createModal.fields.referrer") }}
           </label>
           <input
+            id="lead-create-referrer"
+            name="referrer"
             type="text"
             class="lead-modal-body__input"
             :value="fields?.referrer"
@@ -159,10 +169,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
       <div class="lead-modal-body__row">
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-businessType">
             {{ t("leads.list.createModal.fields.businessType") }}
           </label>
           <select
+            id="lead-create-businessType"
+            name="businessType"
             class="lead-modal-body__input lead-modal-body__select"
             :value="fields?.businessType"
             @change="
@@ -181,15 +193,17 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               :key="opt.value"
               :value="opt.value"
             >
-              {{ opt.label }}
+              {{ t(opt.label) }}
             </option>
           </select>
         </div>
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-group">
             {{ t("leads.list.createModal.fields.group") }}
           </label>
           <select
+            id="lead-create-group"
+            name="group"
             class="lead-modal-body__input lead-modal-body__select"
             :value="fields?.group"
             @change="
@@ -216,10 +230,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
       <div class="lead-modal-body__row">
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-owner">
             {{ t("leads.list.createModal.fields.owner") }}
           </label>
           <select
+            id="lead-create-owner"
+            name="owner"
             class="lead-modal-body__input lead-modal-body__select"
             :value="fields?.owner"
             @change="
@@ -243,10 +259,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           </select>
         </div>
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label">
+          <label class="lead-modal-body__label" for="lead-create-language">
             {{ t("leads.list.createModal.fields.language") }}
           </label>
           <select
+            id="lead-create-language"
+            name="language"
             class="lead-modal-body__input lead-modal-body__select"
             :value="fields?.language"
             @change="
@@ -265,17 +283,19 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               :key="opt.value"
               :value="opt.value"
             >
-              {{ opt.label }}
+              {{ t(opt.label) }}
             </option>
           </select>
         </div>
       </div>
 
       <div class="lead-modal-body__field">
-        <label class="lead-modal-body__label">
+        <label class="lead-modal-body__label" for="lead-create-nextAction">
           {{ t("leads.list.createModal.fields.nextAction") }}
         </label>
         <input
+          id="lead-create-nextAction"
+          name="nextAction"
           type="text"
           class="lead-modal-body__input"
           :value="fields?.nextAction"
@@ -287,10 +307,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
       </div>
 
       <div class="lead-modal-body__field">
-        <label class="lead-modal-body__label">
+        <label class="lead-modal-body__label" for="lead-create-nextFollowUp">
           {{ t("leads.list.createModal.fields.nextFollowUp") }}
         </label>
         <input
+          id="lead-create-nextFollowUp"
+          name="nextFollowUp"
           type="datetime-local"
           class="lead-modal-body__input"
           :value="fields?.nextFollowUp"
@@ -299,10 +321,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
       </div>
 
       <div class="lead-modal-body__field">
-        <label class="lead-modal-body__label">
+        <label class="lead-modal-body__label" for="lead-create-note">
           {{ t("leads.list.createModal.fields.note") }}
         </label>
         <input
+          id="lead-create-note"
+          name="note"
           type="text"
           class="lead-modal-body__input"
           :value="fields?.note"

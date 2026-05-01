@@ -242,6 +242,29 @@ const leadsZhCN = {
       emptyTitle: "暂无日志",
     },
   },
+  options: {
+    source: {
+      web: "网站表单",
+      referral: "介绍",
+      walkin: "来访",
+      phone: "电话",
+      other: "其他",
+    },
+    businessType: {
+      highlySkilled: "高度人才",
+      workVisa: "技人国",
+      familyStay: "家族滞在",
+      businessManager: "设立法人",
+      permanent: "永住",
+      other: "其他",
+    },
+    language: {
+      ja: "日语",
+      zh: "中文",
+      en: "英语",
+      vi: "越南语",
+    },
+  },
   errors: {
     fetchFailed: "线索数据加载失败，请稍后重试。",
     updateFailed: "线索更新失败，请稍后重试。",

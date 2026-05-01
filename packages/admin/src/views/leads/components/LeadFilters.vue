@@ -73,7 +73,10 @@ defineEmits<{
 
     <div class="lead-filters__selects">
       <select
+        id="lead-filter-status"
+        name="statusFilter"
         class="lead-filters__select"
+        :aria-label="t('leads.list.filters.statusAll')"
         :value="statusFilter ?? ''"
         @change="
           $emit(
@@ -89,7 +92,10 @@ defineEmits<{
       </select>
 
       <select
+        id="lead-filter-owner"
+        name="ownerFilter"
         class="lead-filters__select"
+        :aria-label="t('leads.list.filters.ownerAll')"
         :value="ownerFilter ?? ''"
         @change="
           $emit(
@@ -109,7 +115,10 @@ defineEmits<{
       </select>
 
       <select
+        id="lead-filter-group"
+        name="groupFilter"
         class="lead-filters__select"
+        :aria-label="t('leads.list.filters.groupAll')"
         :value="groupFilter ?? ''"
         @change="
           $emit(
@@ -129,7 +138,10 @@ defineEmits<{
       </select>
 
       <select
+        id="lead-filter-businessType"
+        name="businessTypeFilter"
         class="lead-filters__select"
+        :aria-label="t('leads.list.filters.businessTypeAll')"
         :value="businessTypeFilter ?? ''"
         @change="
           $emit(
@@ -146,7 +158,7 @@ defineEmits<{
           :key="opt.value"
           :value="opt.value"
         >
-          {{ opt.label }}
+          {{ t(opt.label) }}
         </option>
       </select>
 
@@ -155,8 +167,11 @@ defineEmits<{
           {{ t("leads.list.filters.dateLabel") }}
         </span>
         <input
+          id="lead-filter-dateFrom"
+          name="dateFrom"
           type="date"
           class="lead-filters__date-input"
+          :aria-label="t('leads.list.filters.dateLabel') + ' (from)'"
           :value="dateFrom ?? ''"
           @input="
             $emit('update:dateFrom', ($event.target as HTMLInputElement).value)
@@ -164,8 +179,11 @@ defineEmits<{
         />
         <span class="lead-filters__date-sep">–</span>
         <input
+          id="lead-filter-dateTo"
+          name="dateTo"
           type="date"
           class="lead-filters__date-input"
+          :aria-label="t('leads.list.filters.dateLabel') + ' (to)'"
           :value="dateTo ?? ''"
           @input="
             $emit('update:dateTo', ($event.target as HTMLInputElement).value)

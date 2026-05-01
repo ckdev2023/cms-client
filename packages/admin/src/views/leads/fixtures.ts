@@ -35,27 +35,33 @@ export const OWNER_OPTIONS: OwnerOption[] = [
 ];
 
 export const BUSINESS_TYPE_OPTIONS: SelectOption[] = [
-  { value: "highly-skilled", label: "高度人才" },
-  { value: "work-visa", label: "技人国" },
-  { value: "family-stay", label: "家族滞在" },
-  { value: "business-manager", label: "设立法人" },
-  { value: "permanent", label: "永住" },
-  { value: "other", label: "其他" },
+  {
+    value: "highly-skilled",
+    label: "leads.options.businessType.highlySkilled",
+  },
+  { value: "work-visa", label: "leads.options.businessType.workVisa" },
+  { value: "family-stay", label: "leads.options.businessType.familyStay" },
+  {
+    value: "business-manager",
+    label: "leads.options.businessType.businessManager",
+  },
+  { value: "permanent", label: "leads.options.businessType.permanent" },
+  { value: "other", label: "leads.options.businessType.other" },
 ];
 
 export const LEAD_SOURCE_OPTIONS: SelectOption[] = [
-  { value: "web", label: "网站表单" },
-  { value: "referral", label: "介绍" },
-  { value: "walkin", label: "来访" },
-  { value: "phone", label: "电话" },
-  { value: "other", label: "其他" },
+  { value: "web", label: "leads.options.source.web" },
+  { value: "referral", label: "leads.options.source.referral" },
+  { value: "walkin", label: "leads.options.source.walkin" },
+  { value: "phone", label: "leads.options.source.phone" },
+  { value: "other", label: "leads.options.source.other" },
 ];
 
 export const LANGUAGE_OPTIONS: SelectOption[] = [
-  { value: "ja", label: "日语" },
-  { value: "zh", label: "中文" },
-  { value: "en", label: "英语" },
-  { value: "vi", label: "越南语" },
+  { value: "ja", label: "leads.options.language.ja" },
+  { value: "zh", label: "leads.options.language.zh" },
+  { value: "en", label: "leads.options.language.en" },
+  { value: "vi", label: "leads.options.language.vi" },
 ];
 
 /* ------------------------------------------------------------------ */

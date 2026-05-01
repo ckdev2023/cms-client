@@ -200,6 +200,13 @@ const billingEnUS = {
     loadingNodes: "Loading billing nodes…",
     submitError: "Failed to record payment. Please try again.",
   },
+  milestone: {
+    down_payment: "Down payment",
+    final_payment: "Final payment",
+    balance: "Balance",
+    interim_payment: "Interim payment",
+    installment: "Installment",
+  },
 } as const;
 
 export default billingEnUS;

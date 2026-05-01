@@ -240,6 +240,19 @@ const isDisabled = computed(() => props.disabled || props.loading);
   }
 }
 
+.ui-btn__content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.ui-btn__content > svg {
+  flex-shrink: 0;
+  display: block;
+}
+
 .ui-btn__content--hidden {
   visibility: hidden;
 }

@@ -11,7 +11,7 @@ import {
   type Component,
 } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
+import { useRouter, type RouteLocationNormalized } from "vue-router";
 import SideNav from "./SideNav.vue";
 import TopBar from "./TopBar.vue";
 
@@ -31,7 +31,19 @@ const { t } = useI18n();
 const mainContentRef = ref<HTMLElement | null>(null);
 const isSkipLinkVisible = ref(false);
 const currentView = shallowRef<Component | null>(null);
-const currentViewKey = ref(router.currentRoute.value.fullPath);
+
+/**
+ * 根据路由名称与 params 生成渲染 key；query 变化不影响 key，避免无意义的重挂载。
+ *
+ * @param to - 目标路由位置
+ * @returns 由路由名和 params 拼接的字符串 key
+ */
+function viewKeyOf(to: RouteLocationNormalized): string {
+  const name = to.matched.at(-1)?.name?.toString() ?? to.path;
+  return `${name}|${JSON.stringify(to.params)}`;
+}
+
+const currentViewKey = ref(viewKeyOf(router.currentRoute.value));
 const asyncRouteComponentCache = new WeakMap<
   AsyncComponentLoader<Component>,
   Component
@@ -94,20 +106,22 @@ function scrollToTop(): void {
 
 /**
  * 根据当前路由同步主区域渲染的页面组件与渲染 key。
- *
- * @param path 当前路由的完整路径，用作强制刷新视图的稳定 key
+ * key 仅包含路由名 + params，query-only 变化不触发重挂载。
+ * @param to - 目标路由位置，默认为当前路由
  */
-function syncRouteView(path = router.currentRoute.value.fullPath): void {
-  const matched = router.currentRoute.value.matched ?? [];
+function syncRouteView(
+  to: RouteLocationNormalized = router.currentRoute.value,
+): void {
+  const matched = to.matched ?? [];
   const activeRecord = matched[matched.length - 1];
   currentView.value = resolveRouteComponent(activeRecord?.components?.default);
-  currentViewKey.value = path;
+  currentViewKey.value = viewKeyOf(to);
 }
 
 syncRouteView();
 
 const stopRouteSync = router.afterEach(async (to) => {
-  syncRouteView(to.fullPath);
+  syncRouteView(to);
   closeMobileNav();
   await nextTick();
   mainContentRef.value?.focus({ preventScroll: true });

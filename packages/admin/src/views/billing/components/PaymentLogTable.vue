@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import type { PaymentLogEntry, PaymentRecordStatus } from "../types";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import Chip from "../../../shared/ui/Chip.vue";
+import { resolveMilestoneLabel } from "../model/BillingAdapters";
 
 /**
  * 回款流水表格：8 列（金额/日期/案件/节点/凭证/状态/操作人/备注）+ 操作列。
@@ -167,7 +168,7 @@ function isInactive(entry: PaymentLogEntry): boolean {
               { 'payment-log__td--muted': isInactive(entry) },
             ]"
           >
-            {{ entry.node }}
+            {{ resolveMilestoneLabel(entry.node, t) }}
           </td>
 
           <!-- 凭证 -->

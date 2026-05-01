@@ -18,7 +18,11 @@ const homeRouteStub = {
 const leadsRouteStub = {
   template: "<div class='stub-route-view stub-route-view--leads' />",
 };
+let casesMountCount = 0;
 const casesRouteStub = {
+  setup() {
+    casesMountCount++;
+  },
   template: "<div class='stub-route-view stub-route-view--cases' />",
 };
 
@@ -64,6 +68,7 @@ async function mountShell(options: Parameters<typeof mount>[1] = {}) {
 describe("AppShell", () => {
   beforeEach(() => {
     setAppLocale("zh-CN");
+    casesMountCount = 0;
   });
 
   it("renders the app-shell root element", async () => {
@@ -188,6 +193,48 @@ describe("AppShell", () => {
 
     expect(w.find("main .stub-route-view--home").exists()).toBe(false);
     expect(w.find("main .stub-route-view--cases").exists()).toBe(true);
+  });
+
+  it("does not remount the view when only query changes", async () => {
+    const { router } = await mountShell();
+    await router.push("/cases/case-123");
+    await flushPromises();
+
+    expect(casesMountCount).toBe(1);
+
+    await router.push("/cases/case-123?tab=billing");
+    await flushPromises();
+    await router.push("/cases/case-123?tab=documents");
+    await flushPromises();
+    await router.push("/cases/case-123?tab=log");
+    await flushPromises();
+    await router.push("/cases/case-123?tab=tasks");
+    await flushPromises();
+
+    expect(casesMountCount).toBe(1);
+  });
+
+  it("remounts the view when path params change", async () => {
+    const { wrapper: w, router } = await mountShell();
+    await router.push("/cases/case-aaa");
+    await flushPromises();
+    expect(w.find("main .stub-route-view--cases").exists()).toBe(true);
+
+    await router.push("/cases/case-bbb");
+    await flushPromises();
+    expect(w.find("main .stub-route-view--cases").exists()).toBe(true);
+  });
+
+  it("remounts the view when navigating from one route to another", async () => {
+    const { wrapper: w, router } = await mountShell();
+    await router.push("/cases");
+    await flushPromises();
+    expect(w.find("main .stub-route-view--cases").exists()).toBe(true);
+
+    await router.push("/leads");
+    await flushPromises();
+    expect(w.find("main .stub-route-view--leads").exists()).toBe(true);
+    expect(w.find("main .stub-route-view--cases").exists()).toBe(false);
   });
 
   it("scrolls back to the top after navigation", async () => {

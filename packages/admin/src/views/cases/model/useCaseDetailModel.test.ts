@@ -219,6 +219,55 @@ describe("useCaseDetailModel", () => {
       expect(calls).toEqual(["billing", "documents"]);
     });
 
+    it("switchTab 4 times does not trigger additional fetches", async () => {
+      const getDocumentItems = vi.fn(async () => []);
+      const getDetailAggregate = vi.fn(async () =>
+        createMockAggregate(createMockDetail()),
+      );
+      const repo = {
+        getDetailAggregate,
+        getDocumentItems,
+        getGeneratedDocuments: vi.fn(async () => ({
+          templates: [],
+          generated: [],
+        })),
+        getValidationData: vi.fn(async () => ({
+          lastTime: "",
+          blocking: [],
+          warnings: [],
+          info: [],
+        })),
+        getBillingData: vi.fn(async () => ({
+          total: "—",
+          received: "¥0",
+          outstanding: "¥0",
+          payments: [],
+        })),
+        getSubmissionPackages: vi.fn(async () => []),
+        getDoubleReviewEntries: vi.fn(async () => []),
+        getMessages: vi.fn(async () => []),
+        getLogEntries: vi.fn(async () => []),
+        getTasks: vi.fn(async () => []),
+        getDeadlines: vi.fn(async () => []),
+      } as unknown as CaseRepository;
+
+      const caseId = ref("CASE-001");
+      const model = useCaseDetailModel(caseId, { repo });
+      await flushFetch();
+
+      expect(getDetailAggregate).toHaveBeenCalledTimes(1);
+      expect(getDocumentItems).toHaveBeenCalledTimes(1);
+
+      model.switchTab("billing");
+      model.switchTab("documents");
+      model.switchTab("validation");
+      model.switchTab("log");
+      await flushFetch();
+
+      expect(getDetailAggregate).toHaveBeenCalledTimes(1);
+      expect(getDocumentItems).toHaveBeenCalledTimes(1);
+    });
+
     it("switchTab works without onTabChange callback", async () => {
       const { model } = await createModel();
       model.switchTab("log");

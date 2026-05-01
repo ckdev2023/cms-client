@@ -42,6 +42,46 @@ export {
   buildPaymentRecordsUrl,
 } from "./BillingAdapterUrls";
 
+// ─── Milestone name → code fallback mapping ────────────────────
+//
+// Server currently sends raw CJK milestone names (e.g. "尾款", "着手金").
+// Until the server exposes a stable `milestone_code` column, we reverse-map
+// known names to codes so the view layer can use i18n keys.
+
+const MILESTONE_NAME_TO_CODE: Record<string, string> = {
+  着手金: "down_payment",
+  尾款: "final_payment",
+  残金: "balance",
+  中間金: "interim_payment",
+  中间金: "interim_payment",
+  分割払い: "installment",
+  分期付款: "installment",
+};
+
+/**
+ * 将服务端的里程碑原始名称解析为本地化标签。
+ *
+ * 已知的中日文文案通过反向映射拿到 code 后走 i18n catalog；
+ * 未命中映射时保留原值并打印 console.warn 便于排查。
+ *
+ * @param rawName - 服务端返回的 milestoneName
+ * @param t - vue-i18n 的 t 函数
+ * @returns 本地化后的里程碑标签
+ */
+export function resolveMilestoneLabel(
+  rawName: string,
+  t: (key: string) => string,
+): string {
+  if (!rawName || rawName === "—") return rawName;
+  const code = MILESTONE_NAME_TO_CODE[rawName];
+  if (code) return t(`billing.milestone.${code}`);
+  // eslint-disable-next-line no-console -- intentional: surface unmapped server values for debugging
+  console.warn(
+    `[BillingAdapters] Unknown milestoneName "${rawName}" — no i18n mapping, displaying raw value.`,
+  );
+  return rawName;
+}
+
 // ─── Shared helpers ─────────────────────────────────────────────
 
 const DISPLAY_NAME_FALLBACK = "—";
