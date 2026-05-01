@@ -160,6 +160,82 @@ describe("CustomerCasesTab", () => {
     expect(wrapper.text()).not.toContain("Could not load related cases");
   });
 
+  it("shows ownerDisplayName from backend instead of UUID (BUG p1 Local Admin)", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-la-001",
+          name: "経営管理ビザ",
+          type: "business-management",
+          stage: "S4",
+          status: "active",
+          owner: "11111111-2222-3333-4444-555555555555",
+          ownerId: "11111111-2222-3333-4444-555555555555",
+          ownerDisplayName: "Local Admin",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const stageTd = wrapper.find(".cases-tab__td--stage");
+    expect(stageTd.text()).toContain("Local Admin");
+    expect(stageTd.text()).not.toContain(
+      "11111111-2222-3333-4444-555555555555",
+    );
+  });
+
+  it("falls back to catalog label when only ownerId is present", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-cat-001",
+          name: "Visa",
+          type: "visa-change",
+          stage: "S2",
+          status: "active",
+          owner: "tanaka",
+          ownerId: "tanaka",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const stageTd = wrapper.find(".cases-tab__td--stage");
+    expect(stageTd.text()).toContain("Tanaka");
+  });
+
+  it("hides raw UUID when neither displayName nor catalog match", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-unknown-001",
+          name: "Visa",
+          type: "visa-change",
+          stage: "S2",
+          status: "active",
+          owner: "11111111-2222-3333-4444-555555555555",
+          ownerId: "11111111-2222-3333-4444-555555555555",
+          createdAt: "2026-04-01",
+          updatedAt: "2026-04-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const stageTd = wrapper.find(".cases-tab__td--stage");
+    expect(stageTd.text()).not.toContain(
+      "11111111-2222-3333-4444-555555555555",
+    );
+    expect(stageTd.text()).toContain("—");
+  });
+
   it("navigates to case detail when clicking open", async () => {
     const repository = createRepository();
     const { wrapper, router } = await factory(repository);

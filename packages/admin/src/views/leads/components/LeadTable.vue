@@ -72,7 +72,9 @@ defineEmits<{
         class="lead-table__draft-row"
       >
         <td class="lead-table__th-check">
-          <input type="checkbox" disabled class="lead-table__checkbox" />
+          <label class="ui-checkbox-hit">
+            <input type="checkbox" disabled class="lead-table__checkbox" />
+          </label>
         </td>
         <td colspan="5" class="lead-table__draft-cell">
           <span class="lead-table__draft-chip">

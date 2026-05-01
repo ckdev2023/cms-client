@@ -170,15 +170,17 @@ function handleBatchCreate(): void {
           <thead>
             <tr>
               <th class="contacts-tab__th contacts-tab__th--check">
-                <input
-                  class="contacts-tab__checkbox"
-                  type="checkbox"
-                  :checked="isAllSelected"
-                  :indeterminate="isIndeterminate"
-                  :aria-label="t('customers.detail.contactsTab.selectAll')"
-                  :disabled="!filteredRelations.length"
-                  @change="toggleSelectAll"
-                />
+                <label class="ui-checkbox-hit">
+                  <input
+                    class="contacts-tab__checkbox"
+                    type="checkbox"
+                    :checked="isAllSelected"
+                    :indeterminate="isIndeterminate"
+                    :aria-label="t('customers.detail.contactsTab.selectAll')"
+                    :disabled="!filteredRelations.length"
+                    @change="toggleSelectAll"
+                  />
+                </label>
               </th>
               <th class="contacts-tab__th">
                 {{ t("customers.detail.contactsTab.colName") }}
@@ -207,17 +209,19 @@ function handleBatchCreate(): void {
               class="contacts-tab__row"
             >
               <td class="contacts-tab__td contacts-tab__td--check">
-                <input
-                  class="contacts-tab__checkbox"
-                  type="checkbox"
-                  :checked="!!selectedIds[r.id]"
-                  :aria-label="
-                    t('customers.detail.contactsTab.selectRow', {
-                      name: r.name,
-                    })
-                  "
-                  @change="toggleSelect(r.id)"
-                />
+                <label class="ui-checkbox-hit">
+                  <input
+                    class="contacts-tab__checkbox"
+                    type="checkbox"
+                    :checked="!!selectedIds[r.id]"
+                    :aria-label="
+                      t('customers.detail.contactsTab.selectRow', {
+                        name: r.name,
+                      })
+                    "
+                    @change="toggleSelect(r.id)"
+                  />
+                </label>
               </td>
               <td class="contacts-tab__td">
                 <div class="contacts-tab__name">{{ r.name || "—" }}</div>

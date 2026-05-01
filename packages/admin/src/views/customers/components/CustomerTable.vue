@@ -78,7 +78,9 @@ defineEmits<{
         class="customer-table__draft-row"
       >
         <td class="customer-table__th-check">
-          <input type="checkbox" disabled class="customer-table__checkbox" />
+          <label class="ui-checkbox-hit">
+            <input type="checkbox" disabled class="customer-table__checkbox" />
+          </label>
         </td>
         <td colspan="7" class="customer-table__draft-cell">
           <span class="customer-table__draft-chip">

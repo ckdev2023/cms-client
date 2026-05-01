@@ -14,6 +14,7 @@ import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
 import { buildCaseDetailRoute } from "../../cases/query";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { getCaseTypeI18nKey } from "../../cases/constants";
+import { resolveOwnerLabel } from "../../../shared/model/useOwnerOptions";
 
 /** 关联案件 Tab：按全部/活跃/归档筛选案件列表，保留办案入口占位。 */
 const props = defineProps<{
@@ -87,6 +88,41 @@ function caseTypeLabel(code: string): string {
  */
 function fmtUpdated(iso: string): string {
   return formatDateTime(iso, locale.value) || "—";
+}
+
+/**
+ * 解析负责人显示名：与全局 Cases 表保持一致的优先级。
+ *
+ * 优先级：后端下发的 `ownerDisplayName` → fixture catalog（按 `ownerId`）
+ * → 后端给的 owner 字符串（仅当不是疑似 UUID 时）→ "—"。
+ * 用于消除 BUG：直接渲染 `owner` 字段会泄露 UUID。
+ *
+ * @param c - 客户关联案件
+ * @returns 适合直接展示的负责人名称
+ */
+function ownerLabel(c: CustomerCase): string {
+  const fromBackend = c.ownerDisplayName?.trim();
+  if (fromBackend) return fromBackend;
+  if (c.ownerId) {
+    const resolved = resolveOwnerLabel(c.ownerId, locale.value);
+    if (resolved && resolved !== c.ownerId) return resolved;
+  }
+  const legacy = c.owner?.trim();
+  if (legacy && !looksLikeUuid(legacy)) return legacy;
+  return "—";
+}
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * 判断字符串是否疑似 UUID，避免在 owner 兜底显示时把后端 UUID 暴露给用户。
+ *
+ * @param value - 待校验字符串
+ * @returns 命中 UUID v1-v5 标准形态时返回 `true`
+ */
+function looksLikeUuid(value: string): boolean {
+  return UUID_PATTERN.test(value);
 }
 </script>
 
@@ -179,7 +215,7 @@ function fmtUpdated(iso: string): string {
               <td class="cases-tab__td cases-tab__td--stage">
                 <div>{{ c.stage || "—" }}</div>
                 <div class="cases-tab__sub">
-                  {{ t("customers.detail.casesTab.owner") }}{{ c.owner }}
+                  {{ t("customers.detail.casesTab.owner") }}{{ ownerLabel(c) }}
                 </div>
               </td>
               <td class="cases-tab__td cases-tab__td--status">

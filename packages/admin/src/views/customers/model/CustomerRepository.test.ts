@@ -128,6 +128,7 @@ describe("CustomerRepository", () => {
         stage: "补件中",
         status: "active",
         owner: "owner-1",
+        ownerId: "owner-1",
         createdAt: "2026-04-01",
         updatedAt: "2026-04-10",
       },

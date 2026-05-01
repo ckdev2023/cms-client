@@ -121,7 +121,7 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
       />
     </div>
     <div class="checks">
-      <label class="check-item">
+      <label class="check-item ui-checkbox-hit">
         <input
           type="checkbox"
           :checked="props.model.draft.autoChecklist"
@@ -133,7 +133,7 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
         />
         {{ t("cases.create.step3.autoChecklist") }}
       </label>
-      <label class="check-item">
+      <label class="check-item ui-checkbox-hit">
         <input
           type="checkbox"
           :checked="props.model.draft.autoTasks"

@@ -1,5 +1,4 @@
 import type {
-  CustomerCase,
   CustomerDetail,
   CustomerRelation,
   CustomerSummary,
@@ -36,18 +35,11 @@ const BMV_SIGN_STATUSES = ["not_started", "pending", "signed"] as const;
 // prettier-ignore
 const BMV_INTAKE_STATUSES = ["not_started","questionnaire_pending","quote_pending","sign_pending","ready_for_case_creation"] as const;
 
-/** cases API DTO 中 `adaptCustomerCaseDto` 依赖的权威主键名（p0-fe-002b-07 contract）。 */
-// prettier-ignore
-export const CUSTOMER_CASE_UPSTREAM_CONTRACT = ["id","caseName","caseTypeCode","stage","ownerUserId","createdAt","updatedAt"] as const;
+export {
+  CUSTOMER_CASE_UPSTREAM_CONTRACT,
+  adaptCustomerCaseListResult,
+} from "./CustomerAdapterCaseMapper";
 
-const CUSTOMER_CASE_NAME_FIELDS = ["name", "caseName", "title", "caseNo"];
-// prettier-ignore
-const CUSTOMER_CASE_TYPE_FIELDS = ["type","caseType","caseTypeCode","applicationType"];
-const CUSTOMER_CASE_STAGE_FIELDS = ["stage", "workflowStage", "statusLabel"];
-// prettier-ignore
-const CUSTOMER_CASE_OWNER_FIELDS = ["ownerName","assigneeName","ownerUserName","ownerUserId"];
-const CUSTOMER_CASE_UPDATED_AT_FIELDS = ["updatedAt", "openedAt", "createdAt"];
-const CUSTOMER_CASE_CREATED_AT_FIELDS = ["createdAt", "openedAt"];
 const CONTACT_PERSON_RELATION_FIELDS = ["relationType", "relation_type"];
 const CONTACT_PERSON_ROLE_FIELDS = ["roleTitle", "role_title"];
 const CONTACT_PERSON_PHONE_FIELDS = ["phone", "phoneNumber"];
@@ -291,51 +283,6 @@ function adaptDuplicateCandidateItem(
   };
 }
 
-function readCustomerCaseStatus(
-  record: Record<string, unknown>,
-): CustomerCase["status"] {
-  const archivedAt = readNullableStringField(record, "archivedAt");
-  if (typeof archivedAt === "string" && archivedAt.trim()) return "archived";
-
-  const rawStatus = pickOptionalString(record, ["status", "caseStatus"]);
-  return rawStatus?.toLowerCase() === "archived" ? "archived" : "active";
-}
-
-function unwrapSummaryCaseRecord(
-  record: Record<string, unknown>,
-): Record<string, unknown> {
-  const nested = asRecord(record.case);
-  if (!nested) return record;
-  return { ...nested, ...record };
-}
-
-function adaptCustomerCaseDto(value: unknown): CustomerCase | null {
-  const raw = asRecord(value);
-  if (!raw) return null;
-
-  const record = unwrapSummaryCaseRecord(raw);
-
-  const id = readStringField(record, "id");
-  if (!id) return null;
-
-  const ownerRecord = asRecord(record.owner);
-  const ownerName = ownerRecord ? readStringField(ownerRecord, "name") : null;
-
-  return {
-    id,
-    name: pickOptionalString(record, CUSTOMER_CASE_NAME_FIELDS) ?? id,
-    type: pickOptionalString(record, CUSTOMER_CASE_TYPE_FIELDS) ?? "",
-    stage: pickOptionalString(record, CUSTOMER_CASE_STAGE_FIELDS) ?? "",
-    status: readCustomerCaseStatus(record),
-    owner:
-      ownerName ?? pickOptionalString(record, CUSTOMER_CASE_OWNER_FIELDS) ?? "",
-    createdAt:
-      pickOptionalString(record, CUSTOMER_CASE_CREATED_AT_FIELDS) ?? "",
-    updatedAt:
-      pickOptionalString(record, CUSTOMER_CASE_UPDATED_AT_FIELDS) ?? "",
-  };
-}
-
 /**
  * 将后端联系人 DTO 转成前端 `CustomerRelation`。
  *
@@ -442,28 +389,6 @@ export function adaptCustomerListResult(
   return items.length === record.items.length && total !== null
     ? { items, total }
     : null;
-}
-
-/**
- * 解析关联案件列表接口返回值。
- *
- * @param value - 关联案件接口响应体
- * @returns 成功时返回案件列表，失败时返回 `null`
- */
-export function adaptCustomerCaseListResult(
-  value: unknown,
-): CustomerCase[] | null {
-  const items = Array.isArray(value)
-    ? value
-    : asRecord(value) && Array.isArray(asRecord(value)!.items)
-      ? (asRecord(value)!.items as unknown[])
-      : null;
-  if (!items) return null;
-
-  const adapted = items
-    .map((item) => adaptCustomerCaseDto(item))
-    .filter((item): item is CustomerCase => item !== null);
-  return adapted.length === items.length ? adapted : null;
 }
 
 /**

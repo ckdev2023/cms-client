@@ -262,9 +262,15 @@ export interface CustomerCase {
    */
   status: CaseStatus;
   /**
-   *
+   * 兜底显示用 owner 字段：优先取后端 `ownerName`/`ownerDisplayName`，
+   * 缺失时回落到 `ownerUserId`（可能是 UUID）。新代码请优先消费
+   * `ownerDisplayName` + `ownerId`，避免直接渲染本字段导致 UUID 外泄。
    */
   owner: string;
+  /** 后端稳定的负责人 id，用于 catalog/Local Admin 解析（可能为 UUID）。 */
+  ownerId?: string;
+  /** 后端下发的负责人显示名（如 Local Admin / 担当太郎）；缺失时回落 catalog。 */
+  ownerDisplayName?: string;
   /**
    *
    */

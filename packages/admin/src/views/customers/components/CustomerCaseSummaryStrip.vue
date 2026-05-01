@@ -124,7 +124,7 @@ const lastCreatedDisplay = computed(
 }
 
 .case-strip__metric-value {
-  font-size: 24px;
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
   line-height: var(--leading-display);

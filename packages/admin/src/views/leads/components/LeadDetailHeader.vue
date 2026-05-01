@@ -274,8 +274,8 @@ function statusTone(
 
 .detail-header__name {
   margin: 0;
-  font-size: 24px;
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
   letter-spacing: var(--letter-spacing-tight);
   line-height: var(--leading-tight);
