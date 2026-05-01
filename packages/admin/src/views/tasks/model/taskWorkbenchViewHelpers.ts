@@ -143,6 +143,20 @@ function toShortUuid(value: string): string {
     : value;
 }
 
+const UUID_V4_RE =
+  /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi;
+
+/**
+ * dedupeKey 内の UUID v4 部分を 8 文字短縮形に置き換え、
+ * `residence_period:` / `case:` 等のビジネスプレフィックスはそのまま保持する（BUG-171）。
+ *
+ * @param key - 原始 dedupeKey 文字列。
+ * @returns UUID 部分が短縮された文字列。
+ */
+export function maskDedupeKeyUuid(key: string): string {
+  return key.replace(UUID_V4_RE, (match) => toShortUuid(match));
+}
+
 /**
  * 选取案件展示标签：优先 `caseNo`，缺失时回退短 UUID（BUG-163）。
  *
@@ -188,7 +202,9 @@ export function reminderMeta(reminder: ReminderRecord, t: TaskI18nT): string {
       ? t("tasks.reminderMeta.recipient", { id: recipientLabel })
       : null,
     reminder.dedupeKey
-      ? t("tasks.reminderMeta.dedupeKey", { key: reminder.dedupeKey })
+      ? t("tasks.reminderMeta.dedupeKey", {
+          key: maskDedupeKeyUuid(reminder.dedupeKey),
+        })
       : null,
   ].filter((value): value is string => Boolean(value));
 

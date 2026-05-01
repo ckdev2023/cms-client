@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ReminderRecord } from "../types";
 import {
+  maskDedupeKeyUuid,
   reminderCaseLabel,
   reminderMeta,
   reminderRecipientLabel,
@@ -113,5 +114,55 @@ describe("BUG-163 reminder reference resolution", () => {
   it("returns 8-char short id for the cell-meta hint", () => {
     const reminder = createReminder();
     expect(reminderShortId(reminder)).toBe("eefe7803");
+  });
+});
+
+describe("BUG-171 dedupeKey UUID masking", () => {
+  it("replaces UUID in dedupeKey with 8-char short form", () => {
+    expect(
+      maskDedupeKeyUuid(
+        "residence_period:e00ea5d2-210a-4f65-a205-5d4e0da4cc7d",
+      ),
+    ).toBe("residence_period:e00ea5d2");
+  });
+
+  it("preserves dedupeKey without UUID unchanged", () => {
+    expect(maskDedupeKeyUuid("case:residence_expiry:180")).toBe(
+      "case:residence_expiry:180",
+    );
+  });
+
+  it("masks multiple UUIDs in a single key", () => {
+    const input =
+      "link:aabbccdd-1122-3344-5566-778899aabbcc:ffeeddcc-aabb-ccdd-eeff-001122334455";
+    expect(maskDedupeKeyUuid(input)).toBe("link:aabbccdd:ffeeddcc");
+  });
+
+  it("handles bare UUID without prefix", () => {
+    expect(maskDedupeKeyUuid("e00ea5d2-210a-4f65-a205-5d4e0da4cc7d")).toBe(
+      "e00ea5d2",
+    );
+  });
+
+  it("reminderMeta masks UUID dedupeKey (BUG-171)", () => {
+    const t = (
+      key: string,
+      named?: Record<string, string | number>,
+    ): string => {
+      if (key === "tasks.reminderMeta.case") return `Case ${String(named?.id)}`;
+      if (key === "tasks.reminderMeta.recipient")
+        return `Recipient ${String(named?.id)}`;
+      if (key === "tasks.reminderMeta.dedupeKey")
+        return `Dedupe ${String(named?.key)}`;
+      if (key === "tasks.reminderMeta.empty") return "—";
+      return key;
+    };
+
+    const reminder = createReminder({
+      dedupeKey: "residence_period:e00ea5d2-210a-4f65-a205-5d4e0da4cc7d",
+    });
+    const meta = reminderMeta(reminder, t);
+    expect(meta).toContain("Dedupe residence_period:e00ea5d2");
+    expect(meta).not.toContain("210a-4f65");
   });
 });
