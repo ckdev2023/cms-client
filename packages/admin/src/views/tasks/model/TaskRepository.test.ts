@@ -59,6 +59,10 @@ describe("createTaskRepository", () => {
           sendStatus: "pending",
           targetType: "customer",
           targetId: "customer-001",
+          caseId: "case-001",
+          caseNo: "CASE-202604-0011",
+          recipientId: "user-001",
+          recipientName: "Local Admin",
           payloadSnapshot: { daysBefore: 90 },
           createdAt: "2026-04-28T09:00:00.000Z",
           updatedAt: "2026-04-28T09:00:00.000Z",
@@ -75,11 +79,38 @@ describe("createTaskRepository", () => {
 
     expect(result.total).toBe(1);
     expect(result.items[0]?.payloadSnapshot).toEqual({ daysBefore: 90 });
+    expect(result.items[0]?.caseNo).toBe("CASE-202604-0011");
+    expect(result.items[0]?.recipientName).toBe("Local Admin");
 
     const [url, init] = vi.mocked(request).mock.calls[0]!;
     expect(String(url)).toContain("/api/reminders");
     expect(String(url)).toContain("sendStatus=pending");
     expect(init?.method).toBe("GET");
+  });
+
+  it("tolerates missing caseNo / recipientName fields from /api/reminders", async () => {
+    const request = createRequestStub({
+      items: [
+        {
+          id: "rem-002",
+          remindAt: "2026-05-01T00:00:00.000Z",
+          sendStatus: "pending",
+          targetType: "case",
+          targetId: "case-002",
+          caseId: "case-002",
+          recipientId: "user-002",
+          createdAt: "2026-04-28T09:00:00.000Z",
+          updatedAt: "2026-04-28T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+    });
+
+    const repo = createTaskRepository({ request, getToken: () => "token-3" });
+    const result = await repo.listReminders();
+
+    expect(result.items[0]?.caseNo).toBeNull();
+    expect(result.items[0]?.recipientName).toBeNull();
   });
 
   it("completes a task via POST /api/tasks/:id/complete", async () => {

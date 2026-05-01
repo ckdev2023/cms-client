@@ -93,11 +93,13 @@ function adaptReminder(value: unknown): ReminderRecord | null {
   return {
     id,
     caseId: readNullableString(record, "caseId"),
+    caseNo: readNullableString(record, "caseNo"),
     targetType: readString(record, "targetType") || "case",
     targetId: readString(record, "targetId"),
     remindAt,
     recipientType: readString(record, "recipientType") || "user",
     recipientId: readNullableString(record, "recipientId"),
+    recipientName: readNullableString(record, "recipientName"),
     channel: readString(record, "channel") || "in_app",
     dedupeKey: readNullableString(record, "dedupeKey"),
     sendStatus: readString(record, "sendStatus") || "pending",

@@ -34,6 +34,22 @@ export type ReminderQueryRow = {
 };
 
 /**
+ * Reminder 列表行额外携带的引用解析字段（BUG-163）。
+ */
+export type ReminderListJoinRow = ReminderQueryRow & {
+  case_no: string | null;
+  recipient_name: string | null;
+};
+
+/**
+ * 列表视图返回的 Reminder + 引用展示字段（BUG-163：避免 UI 直显 raw UUID）。
+ */
+export type ReminderListItem = Reminder & {
+  caseNo: string | null;
+  recipientName: string | null;
+};
+
+/**
  * 创建 Reminder 入参（P0 aligned）。
  */
 export type ReminderCreateInput = {
@@ -111,6 +127,28 @@ export function mapReminderRow(row: ReminderQueryRow): Reminder {
 }
 
 const REMINDER_COLS = `id, org_id, case_id, target_type, target_id, remind_at, recipient_type, recipient_id, channel, dedupe_key, send_status, retry_count, sent_at, payload_snapshot, created_at, updated_at`;
+
+const REMINDER_LIST_SELECT = `
+  r.id, r.org_id, r.case_id, r.target_type, r.target_id, r.remind_at,
+  r.recipient_type, r.recipient_id, r.channel, r.dedupe_key, r.send_status,
+  r.retry_count, r.sent_at, r.payload_snapshot, r.created_at, r.updated_at,
+  c.case_no as case_no,
+  u.name as recipient_name
+`;
+
+/**
+ * 把 reminder 列表 join row 映射成附带 caseNo / recipientName 的列表项。
+ *
+ * @param row reminders + cases + users join 后的查询结果
+ * @returns 列表展示用的 Reminder + 引用解析字段
+ */
+export function mapReminderListRow(row: ReminderListJoinRow): ReminderListItem {
+  return {
+    ...mapReminderRow(row),
+    caseNo: row.case_no ?? null,
+    recipientName: row.recipient_name ?? null,
+  };
+}
 
 /**
  * Reminder 服务，提供 CRUD、到期查询与软取消能力（P0 aligned）。
@@ -214,53 +252,60 @@ export class RemindersService {
   async list(
     ctx: RequestContext,
     input: ReminderListInput = {},
-  ): Promise<{ items: Reminder[]; total: number }> {
+  ): Promise<{ items: ReminderListItem[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const where: string[] = [];
-    const params: unknown[] = [];
+    const filterWhere: string[] = [];
+    const filterParams: unknown[] = [];
 
     if (input.sendStatus) {
-      params.push(input.sendStatus);
-      where.push("send_status = $" + String(params.length));
+      filterParams.push(input.sendStatus);
+      filterWhere.push("send_status = $" + String(filterParams.length));
     }
     if (input.targetType) {
-      params.push(input.targetType);
-      where.push("target_type = $" + String(params.length));
+      filterParams.push(input.targetType);
+      filterWhere.push("target_type = $" + String(filterParams.length));
     }
     if (input.caseId) {
-      params.push(input.caseId);
-      where.push("case_id = $" + String(params.length));
+      filterParams.push(input.caseId);
+      filterWhere.push("case_id = $" + String(filterParams.length));
     }
 
-    const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
-
+    const countWhereClause =
+      filterWhere.length > 0 ? `where ${filterWhere.join(" and ")}` : "";
     const countResult = await tenantDb.query<{ count: string }>(
-      `select count(*) as count from reminders ${whereClause}`,
-      params,
+      `select count(*) as count from reminders ${countWhereClause}`,
+      filterParams,
     );
     const total = parseInt(countResult.rows[0]?.count ?? "0", 10);
 
-    params.push(limit);
-    const limitParam = "$" + String(params.length);
-    params.push(offset);
-    const offsetParam = "$" + String(params.length);
+    const listWhere: string[] = filterWhere.map((clause) => `r.${clause}`);
+    const listParams: unknown[] = [...filterParams];
+    const listWhereClause =
+      listWhere.length > 0 ? `where ${listWhere.join(" and ")}` : "";
 
-    const result = await tenantDb.query<ReminderQueryRow>(
+    listParams.push(limit);
+    const limitParam = "$" + String(listParams.length);
+    listParams.push(offset);
+    const offsetParam = "$" + String(listParams.length);
+
+    const result = await tenantDb.query<ReminderListJoinRow>(
       `
-        select ${REMINDER_COLS}
-        from reminders
-        ${whereClause}
-        order by created_at desc, id desc
+        select ${REMINDER_LIST_SELECT}
+        from reminders r
+        left join cases c on c.id = r.case_id and c.org_id = r.org_id
+        left join users u on u.id = r.recipient_id and u.org_id = r.org_id
+        ${listWhereClause}
+        order by r.created_at desc, r.id desc
         limit ${limitParam} offset ${offsetParam}
       `,
-      params,
+      listParams,
     );
 
-    return { items: result.rows.map(mapReminderRow), total };
+    return { items: result.rows.map(mapReminderListRow), total };
   }
 
   /**

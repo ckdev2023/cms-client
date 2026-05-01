@@ -29,11 +29,13 @@ function createReminder(
   return {
     id: "rem-001",
     caseId: "case-001",
+    caseNo: "CASE-202604-0011",
     targetType: "customer",
     targetId: "customer-001",
     remindAt: "2026-04-30T00:00:00.000Z",
     recipientType: "user",
     recipientId: "user-001",
+    recipientName: "Local Admin",
     channel: "in_app",
     dedupeKey: "residence_period:1:180",
     sendStatus: "pending",

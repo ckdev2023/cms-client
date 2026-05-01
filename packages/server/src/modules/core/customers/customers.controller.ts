@@ -20,6 +20,7 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
 import { FeatureFlagsService } from "../../feature-flags/featureFlags.service";
 import { CustomersService } from "./customers.service";
+import { mapCustomerToCreateResponseDto } from "./customers.dto-mappers.create";
 import {
   parseActiveCases,
   parseContacts,
@@ -120,11 +121,12 @@ export class CustomersController {
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCustomerBody) {
     const ctx = requireCtx(req);
-    return this.customersService.create(ctx, {
+    const customer = await this.customersService.create(ctx, {
       type: parseType(body.type),
       baseProfile: parseObject(body.baseProfile),
       contacts: parseContacts(body.contacts),
     });
+    return mapCustomerToCreateResponseDto(customer);
   }
 
   /**

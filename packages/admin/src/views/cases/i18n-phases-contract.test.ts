@@ -140,6 +140,7 @@ describe("create section i18n keys (T-17)", () => {
     "create.source.fromLead",
     "create.source.familyBulk",
     "create.source.templateLocked",
+    "create.source.resolving",
     "create.preSignGate.title",
     "create.preSignGate.passed",
     "create.preSignGate.blockedTitle",

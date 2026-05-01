@@ -1389,6 +1389,8 @@ export interface CaseCreateCustomerOption {
    *
    */
   id: string;
+  /** 客户业务编号，例如 `CUS-202604-0005`；部分合成/旧数据可能缺失。 */
+  customerNumber?: string;
   /**
    *
    */

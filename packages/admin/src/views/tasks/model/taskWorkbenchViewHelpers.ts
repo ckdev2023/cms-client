@@ -129,6 +129,49 @@ export function reminderTitle(reminder: ReminderRecord, t: TaskI18nT): string {
   });
 }
 
+const SHORT_UUID_LENGTH = 8;
+
+/**
+ * 把 raw UUID 折叠成 8 位短码，避免直接渲染整段 UUID。
+ *
+ * @param value - 原始 UUID。
+ * @returns 截断后的短码；若原值短于阈值则原样返回。
+ */
+function toShortUuid(value: string): string {
+  return value.length > SHORT_UUID_LENGTH
+    ? value.slice(0, SHORT_UUID_LENGTH)
+    : value;
+}
+
+/**
+ * 选取案件展示标签：优先 `caseNo`，缺失时回退短 UUID（BUG-163）。
+ *
+ * @param reminder - 提醒记录。
+ * @returns 适合在表格中展示的案件标识；无案件信息时返回 `null`。
+ */
+export function reminderCaseLabel(reminder: ReminderRecord): string | null {
+  if (reminder.caseNo && reminder.caseNo.trim()) return reminder.caseNo.trim();
+  if (reminder.caseId && reminder.caseId.trim())
+    return toShortUuid(reminder.caseId.trim());
+  return null;
+}
+
+/**
+ * 选取接收人展示标签：优先 `recipientName`，缺失时回退短 UUID（BUG-163）。
+ *
+ * @param reminder - 提醒记录。
+ * @returns 适合在表格中展示的接收人标识；无接收人信息时返回 `null`。
+ */
+export function reminderRecipientLabel(
+  reminder: ReminderRecord,
+): string | null {
+  if (reminder.recipientName && reminder.recipientName.trim())
+    return reminder.recipientName.trim();
+  if (reminder.recipientId && reminder.recipientId.trim())
+    return toShortUuid(reminder.recipientId.trim());
+  return null;
+}
+
 /**
  * 拼装提醒记录的附加元信息文案。
  *
@@ -137,12 +180,12 @@ export function reminderTitle(reminder: ReminderRecord, t: TaskI18nT): string {
  * @returns 案件、接收人和去重键组成的摘要文本。
  */
 export function reminderMeta(reminder: ReminderRecord, t: TaskI18nT): string {
+  const caseLabel = reminderCaseLabel(reminder);
+  const recipientLabel = reminderRecipientLabel(reminder);
   const segments = [
-    reminder.caseId
-      ? t("tasks.reminderMeta.case", { id: reminder.caseId })
-      : null,
-    reminder.recipientId
-      ? t("tasks.reminderMeta.recipient", { id: reminder.recipientId })
+    caseLabel ? t("tasks.reminderMeta.case", { id: caseLabel }) : null,
+    recipientLabel
+      ? t("tasks.reminderMeta.recipient", { id: recipientLabel })
       : null,
     reminder.dedupeKey
       ? t("tasks.reminderMeta.dedupeKey", { key: reminder.dedupeKey })
@@ -150,6 +193,16 @@ export function reminderMeta(reminder: ReminderRecord, t: TaskI18nT): string {
   ].filter((value): value is string => Boolean(value));
 
   return segments.join(" · ") || t("tasks.reminderMeta.empty");
+}
+
+/**
+ * 生成提醒 id 的弱化展示文本（短 UUID）。
+ *
+ * @param reminder - 提醒记录。
+ * @returns 8 位短 UUID，可放入 `<small>` 弱化展示（BUG-163）。
+ */
+export function reminderShortId(reminder: ReminderRecord): string {
+  return toShortUuid(reminder.id);
 }
 
 /**

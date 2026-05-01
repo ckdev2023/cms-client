@@ -66,6 +66,7 @@ const casesZhCN = {
       fromLead: "来自咨询转化 · {id}",
       familyBulk: "家族签批量建案",
       templateLocked: "模板已锁定",
+      resolving: "客户信息加载中…",
     },
     stepperLabel: "创建步骤",
     steps: {

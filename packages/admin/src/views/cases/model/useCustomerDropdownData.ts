@@ -67,6 +67,7 @@ export interface UseCustomerDropdownDeps {
 
 interface RawCustomerItem {
   id?: string;
+  customerNumber?: string;
   displayName?: string;
   legalName?: string;
   furigana?: string;
@@ -132,8 +133,10 @@ function adaptItem(
   if (!name) return null;
 
   const group = readStringField(r.group);
+  const customerNumber = readStringField(r.customerNumber);
   return {
     id: r.id,
+    customerNumber: customerNumber || undefined,
     name,
     kana: readStringField(r.furigana),
     group,

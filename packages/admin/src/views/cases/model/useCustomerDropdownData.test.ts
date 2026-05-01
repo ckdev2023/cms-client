@@ -94,6 +94,23 @@ describe("adaptCustomerDropdownItem", () => {
     const result = adaptCustomerDropdownItem(VALID_ITEMS.items[1]);
     expect(result?.bmvQuestionnaireStatus).toBe("completed");
   });
+
+  // BUG-161：建案向导顶部 source 标签避免直显 raw UUID。
+  // 需要 adapter 把后端 `customerNumber` 顶层字段提升到下拉选项。
+  it("extracts customerNumber when present in raw item (BUG-161)", () => {
+    const result = adaptCustomerDropdownItem({
+      id: "c-5",
+      customerNumber: "CUS-202604-0005",
+      displayName: "R6试探客户",
+      group: "tokyo-1",
+    });
+    expect(result?.customerNumber).toBe("CUS-202604-0005");
+  });
+
+  it("leaves customerNumber undefined when raw item omits it (BUG-161)", () => {
+    const result = adaptCustomerDropdownItem(VALID_ITEMS.items[0]);
+    expect(result?.customerNumber).toBeUndefined();
+  });
 });
 
 // ─── BUG-139 — locale-aware groupLabel resolution ───────────────

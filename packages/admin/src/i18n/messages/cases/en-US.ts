@@ -68,6 +68,7 @@ const casesEnUS = {
       fromLead: "From lead conversion · {id}",
       familyBulk: "Family visa bulk creation",
       templateLocked: "Template locked",
+      resolving: "Loading customer…",
     },
     stepperLabel: "Creation steps",
     steps: {

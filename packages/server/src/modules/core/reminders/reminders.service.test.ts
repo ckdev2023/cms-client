@@ -37,6 +37,15 @@ function makeReminderRow(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function makeReminderListRow(overrides: Record<string, unknown> = {}) {
+  return {
+    ...makeReminderRow(),
+    case_no: "CASE-202604-0011",
+    recipient_name: "Local Admin",
+    ...overrides,
+  };
+}
+
 type PoolClientLike = {
   query: (
     sql: string,
@@ -154,7 +163,7 @@ void test("RemindersService.list returns items and total", async () => {
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "2" }], rowCount: 1 });
     }
-    return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
+    return Promise.resolve({ rows: [makeReminderListRow()], rowCount: 1 });
   });
 
   const svc = createService(pool, makeTimeline());
@@ -171,7 +180,7 @@ void test("RemindersService.list applies sendStatus/targetType filters", async (
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
     }
-    return Promise.resolve({ rows: [makeReminderRow()], rowCount: 1 });
+    return Promise.resolve({ rows: [makeReminderListRow()], rowCount: 1 });
   });
 
   const svc = createService(pool, makeTimeline());
@@ -184,6 +193,61 @@ void test("RemindersService.list applies sendStatus/targetType filters", async (
   assert.ok(countCall);
   assert.ok(countCall.sql.includes("send_status = $"));
   assert.ok(countCall.sql.includes("target_type = $"));
+});
+
+// ── list joins cases/users to expose caseNo + recipientName (BUG-163) ──
+void test("RemindersService.list joins cases/users and exposes caseNo + recipientName", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [
+        makeReminderListRow({
+          case_no: "CASE-202604-0011",
+          recipient_name: "Local Admin",
+        }),
+      ],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"));
+
+  const listCall = calls.find((c) => c.sql.includes("from reminders r"));
+  assert.ok(listCall);
+  assert.ok(listCall.sql.includes("left join cases c on c.id = r.case_id"));
+  assert.ok(
+    listCall.sql.includes("left join users u on u.id = r.recipient_id"),
+  );
+  assert.ok(listCall.sql.includes("c.case_no as case_no"));
+  assert.ok(listCall.sql.includes("u.name as recipient_name"));
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0]?.caseNo, "CASE-202604-0011");
+  assert.equal(result.items[0]?.recipientName, "Local Admin");
+});
+
+// ── list returns null caseNo / recipientName when joined rows missing ──
+void test("RemindersService.list tolerates missing case_no / recipient_name", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeReminderListRow({ case_no: null, recipient_name: null })],
+      rowCount: 1,
+    });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  const result = await svc.list(makeCtx("viewer"));
+
+  assert.equal(result.items[0]?.caseNo, null);
+  assert.equal(result.items[0]?.recipientName, null);
 });
 
 // ── update ──

@@ -47,11 +47,50 @@ export function resolveInitialTemplateId(
 // ─── Pure Helpers ───────────────────────────────────────────────
 
 /**
- * 拼接模板标签与申请类型标签，处理双重拼接与跨脚本空格问题（BUG-149）。
+ * 申请类型规范英文名 → 同义缩写/别名（BUG-162）。
+ *
+ * 仅用于 en-US 链路下的"模板标签已含申请类型语义"判定：模板标签里出现
+ * `CoE` / `CoS` 等业内常用缩写时，应视为已包含 `Certificate of Eligibility`
+ * / `Change of Status` 全称，避免最终标题出现"缩写 + 全称"的语义重复。
+ *
+ * - zh-CN / ja-JP 通过字面 `includes`（"认定" / "認定" / "更新"）已能命中，
+ *   无需在此登记。
+ * - 全部 alias 以原始大小写写入，匹配时统一 `toLowerCase` 容错。
+ */
+const TYPE_ACRONYM_ALIASES: ReadonlyMap<string, readonly string[]> = new Map([
+  ["Certificate of Eligibility", ["CoE", "C.O.E."]],
+  ["Change of Status", ["CoS"]],
+]);
+
+/**
+ * 判定模板标签是否已经包含申请类型的语义（字面或缩写）。
+ *
+ * 先做字面 `includes`（覆盖 zh / ja 与 en-US 全称命中场景），再回退到
+ * `TYPE_ACRONYM_ALIASES` 做大小写不敏感的子串匹配。
+ *
+ * @param templateLabel - 模板标签（已 trim，已解析为当前语言）
+ * @param applicationTypeLabel - 申请类型标签（已 trim，已解析为当前语言）
+ * @returns 模板标签是否已经传达了申请类型语义
+ */
+function templateImpliesType(
+  templateLabel: string,
+  applicationTypeLabel: string,
+): boolean {
+  if (templateLabel.includes(applicationTypeLabel)) return true;
+  const aliases = TYPE_ACRONYM_ALIASES.get(applicationTypeLabel);
+  if (!aliases?.length) return false;
+  const lowerTpl = templateLabel.toLowerCase();
+  return aliases.some((alias) => lowerTpl.includes(alias.toLowerCase()));
+}
+
+/**
+ * 拼接模板标签与申请类型标签，处理双重拼接与跨脚本空格问题（BUG-149 / BUG-162）。
  *
  * 规则：
  * - 模板标签若已包含申请类型字面（zh-CN "经营管理（认定 4 个月）" + "认定" /
- *   ja "経営管理（更新）" + "更新"），直接返回模板标签，避免重复出现。
+ *   ja "経営管理（更新）" + "更新"），或包含同义缩写（en-US "Business Manager
+ *   (CoE 4-month)" + "Certificate of Eligibility"），直接返回模板标签，
+ *   避免出现"缩写 + 全称"的语义重复。
  * - 边界字符任一为 ASCII 字母数字时插入空格（en-US "Dependent Visa" +
  *   "Certificate of Eligibility" → 中间补空格），CJK 之间保持紧贴。
  *
@@ -67,7 +106,7 @@ function joinTemplateAndType(
   const type = applicationTypeLabel.trim();
   if (!type) return tpl;
   if (!tpl) return type;
-  if (tpl.includes(type)) return tpl;
+  if (templateImpliesType(tpl, type)) return tpl;
   const isLatinChar = (ch: string): boolean => /[A-Za-z0-9]/.test(ch);
   const needSpace = isLatinChar(tpl[tpl.length - 1]!) || isLatinChar(type[0]!);
   return needSpace ? `${tpl} ${type}` : `${tpl}${type}`;

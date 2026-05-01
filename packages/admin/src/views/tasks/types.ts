@@ -73,6 +73,10 @@ export interface ReminderRecord {
    */
   caseId: string | null;
   /**
+   * 服务端 join `cases.case_no` 解析出的案件编号，缺失时为 `null`（BUG-163）。
+   */
+  caseNo: string | null;
+  /**
    *
    */
   targetType: string;
@@ -92,6 +96,10 @@ export interface ReminderRecord {
    *
    */
   recipientId: string | null;
+  /**
+   * 服务端 join `users.name` 解析出的接收人显示名，缺失时为 `null`（BUG-163）。
+   */
+  recipientName: string | null;
   /**
    *
    */

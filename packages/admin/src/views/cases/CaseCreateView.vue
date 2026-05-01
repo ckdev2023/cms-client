@@ -26,6 +26,7 @@ import { useCreateCaseModel } from "./model/useCreateCaseModel";
 import { useCasePartyPicker } from "./model/useCasePartyPicker";
 import type { PartyPickerMode } from "./model/useCasePartyPicker";
 import { useCustomerDropdownData } from "./model/useCustomerDropdownData";
+import { resolveSourceCustomerLabel } from "./model/useSourceCustomerLabel";
 import {
   parseCaseCreateQuery,
   buildCaseDetailRoute,
@@ -200,6 +201,15 @@ const customerSelectOptions = computed(() => {
   }));
 });
 
+const sourceCustomerLabel = computed<string>(() =>
+  resolveSourceCustomerLabel(
+    sourceContext,
+    model.primaryCustomer.value,
+    customerDropdown.customers.value,
+    t("cases.create.source.resolving"),
+  ),
+);
+
 const nextLabel = computed(() => {
   const labels: Record<number, string> = {
     1: t("cases.create.navigation.nextParties"),
@@ -301,10 +311,13 @@ const summaryItems = computed(() => {
     <div v-if="model.hasSourceContext.value" class="cc__source">
       <div class="cc__source-kicker">{{ t("cases.create.source.kicker") }}</div>
       <div class="cc__source-row">
-        <span v-if="sourceContext.customerId">
+        <span
+          v-if="sourceContext.customerId"
+          data-testid="case-create-source-customer"
+        >
           {{
             t("cases.create.source.fromCustomer", {
-              id: sourceContext.customerId,
+              id: sourceCustomerLabel,
             })
           }}
         </span>

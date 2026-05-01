@@ -12,6 +12,7 @@ import {
   priorityLabel,
   reminderMeta,
   reminderRowTone,
+  reminderShortId,
   reminderStatusLabel,
   reminderTitle,
   taskRowTone,
@@ -169,7 +170,9 @@ onMounted(() => {
                 <td>
                   <div class="cell-stack">
                     <strong>{{ reminderTitle(reminder, t) }}</strong>
-                    <span class="cell-meta">{{ reminder.id }}</span>
+                    <small class="cell-id-hint" :title="reminder.id">
+                      #{{ reminderShortId(reminder) }}
+                    </small>
                   </div>
                 </td>
                 <td>{{ formatDateTime(reminder.remindAt, locale) }}</td>
@@ -374,6 +377,13 @@ onMounted(() => {
 .aside-stack {
   display: grid;
   gap: 6px;
+}
+
+.cell-id-hint {
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+  letter-spacing: 0.04em;
 }
 
 .status-pill {

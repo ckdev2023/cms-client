@@ -67,6 +67,7 @@ const casesJaJP = {
       fromLead: "相談転換から · {id}",
       familyBulk: "家族ビザ一括建案",
       templateLocked: "テンプレート固定",
+      resolving: "顧客情報を読み込み中…",
     },
     stepperLabel: "作成ステップ",
     steps: {
