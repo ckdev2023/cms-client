@@ -182,6 +182,9 @@ const casesZhCN = {
       primarySet: "主申请人已设置",
       relatedAdded: "关联人已添加",
     },
+    errorChip: {
+      ownerInvalid: "所选负责人无法识别，请返回步骤 3 重新选择负责人。",
+    },
     modal: {
       dialogLabel: "快速新建客户",
       title: "快速新建客户",

@@ -1,10 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, DoubleReviewEntry } from "../types-detail";
 
-/** 校验支持区：双人复核记录与欠款风险确认。 */
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -14,6 +14,8 @@ const emit = defineEmits<{
   (e: "open-risk-modal"): void;
 }>();
 
+const { t } = useI18n();
+
 const VERDICT_TONE: Record<string, ChipTone> = {
   "badge-green": "success",
   "badge-red": "danger",
@@ -21,12 +23,6 @@ const VERDICT_TONE: Record<string, ChipTone> = {
   "badge-gray": "neutral",
 };
 
-/**
- * 根据复核结果 badge 返回 Chip 色调。
- *
- * @param entry - 复核记录
- * @returns ChipTone 色调
- */
 function verdictTone(entry: DoubleReviewEntry): ChipTone {
   return VERDICT_TONE[entry.verdictBadge] ?? "neutral";
 }
@@ -37,8 +33,12 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
     <!-- Double Review -->
     <Card padding="lg">
       <template #header>
-        <h2 class="valsup__title">双人复核</h2>
-        <Button v-if="!readonly" size="sm" pill>发起复核</Button>
+        <h2 class="valsup__title">
+          {{ t("cases.detail.validation.reviewer.title") }}
+        </h2>
+        <Button v-if="!readonly" size="sm" pill>{{
+          t("cases.detail.validation.reviewer.startCta")
+        }}</Button>
       </template>
 
       <div v-if="detail.doubleReview.length > 0" class="valsup__reviews">
@@ -61,46 +61,62 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
             {{ entry.comment }}
           </div>
           <div v-if="entry.rejectReason" class="valsup__review-reject">
-            <span class="valsup__review-reject-label">驳回原因：</span>
+            <span class="valsup__review-reject-label">{{
+              t("cases.detail.validation.reviewer.rejectReasonLabel")
+            }}</span>
             {{ entry.rejectReason }}
           </div>
         </div>
       </div>
-      <div v-else class="valsup__empty">暂无复核记录</div>
+      <div v-else class="valsup__empty">
+        {{ t("cases.detail.validation.reviewer.empty") }}
+      </div>
     </Card>
 
     <!-- Risk Confirmation -->
     <Card padding="lg">
-      <h2 class="valsup__title">欠款风险确认记录</h2>
+      <h2 class="valsup__title">
+        {{ t("cases.detail.validation.risk.title") }}
+      </h2>
 
       <template v-if="detail.riskConfirmationRecord">
         <div class="valsup__risk-record">
           <div class="valsup__risk-row">
-            <span class="valsup__risk-label">确认人</span>
+            <span class="valsup__risk-label">{{
+              t("cases.detail.validation.risk.rows.confirmedBy")
+            }}</span>
             <span class="valsup__risk-value">
               {{ detail.riskConfirmationRecord.confirmedBy }}
             </span>
           </div>
           <div class="valsup__risk-row">
-            <span class="valsup__risk-label">原因</span>
+            <span class="valsup__risk-label">{{
+              t("cases.detail.validation.risk.rows.reason")
+            }}</span>
             <span class="valsup__risk-value">
               {{ detail.riskConfirmationRecord.reason }}
             </span>
           </div>
           <div class="valsup__risk-row">
-            <span class="valsup__risk-label">凭证</span>
+            <span class="valsup__risk-label">{{
+              t("cases.detail.validation.risk.rows.evidence")
+            }}</span>
             <span class="valsup__risk-value">
               {{ detail.riskConfirmationRecord.evidence }}
             </span>
           </div>
           <div class="valsup__risk-row">
-            <span class="valsup__risk-label">确认时间</span>
+            <span class="valsup__risk-label">{{
+              t("cases.detail.validation.risk.rows.time")
+            }}</span>
             <span class="valsup__risk-value">
               {{ detail.riskConfirmationRecord.time }}
             </span>
           </div>
           <div class="valsup__risk-row">
-            <span class="valsup__risk-label">涉及金额</span>
+            <span class="valsup__risk-label">{{
+              t("cases.detail.validation.risk.rows.amount")
+            }}</span>
             <span class="valsup__risk-value">
               {{ detail.riskConfirmationRecord.amount }}
             </span>
@@ -109,28 +125,33 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
       </template>
 
       <div v-else class="valsup__risk-empty">
-        <p>当前无欠款风险确认</p>
+        <p>{{ t("cases.detail.validation.risk.empty") }}</p>
         <Button
           v-if="!readonly"
           size="sm"
           pill
           @click="emit('open-risk-modal')"
         >
-          模拟欠款确认
+          {{ t("cases.detail.validation.risk.simulateCta") }}
         </Button>
       </div>
     </Card>
 
     <!-- Post-approval flow placeholder -->
     <Card padding="lg">
-      <span class="valsup__kicker">下签后处理</span>
+      <span class="valsup__kicker">{{
+        t("cases.detail.validation.postApproval.kicker")
+      }}</span>
       <div class="valsup__post-head">
-        <h2 class="valsup__title">COE / 海外贴签 / 返签结果</h2>
-        <Chip tone="primary" size="sm">当前案件未到该阶段</Chip>
+        <h2 class="valsup__title">
+          {{ t("cases.detail.validation.postApproval.title") }}
+        </h2>
+        <Chip tone="primary" size="sm">{{
+          t("cases.detail.validation.postApproval.stagingChip")
+        }}</Chip>
       </div>
       <p class="valsup__post-note">
-        当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE
-        发送、海外贴签和返签结果。切换到相应样例后可查看完整流程。
+        {{ t("cases.detail.validation.postApproval.note") }}
       </p>
     </Card>
   </div>

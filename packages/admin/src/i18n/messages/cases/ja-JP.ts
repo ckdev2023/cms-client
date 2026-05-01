@@ -187,6 +187,10 @@ const casesJaJP = {
       primarySet: "主申請者を設定しました",
       relatedAdded: "関連者を追加しました",
     },
+    errorChip: {
+      ownerInvalid:
+        "選択した担当者が見つかりません。ステップ 3 に戻り、担当者を再選択してください。",
+    },
     modal: {
       dialogLabel: "簡易顧客新規作成",
       title: "簡易顧客新規作成",

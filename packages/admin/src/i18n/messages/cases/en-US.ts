@@ -189,6 +189,10 @@ const casesEnUS = {
       primarySet: "Primary applicant set",
       relatedAdded: "Related party added",
     },
+    errorChip: {
+      ownerInvalid:
+        "The selected owner could not be resolved. Please go back to Step 3 and re-select the owner.",
+    },
     modal: {
       dialogLabel: "Quick-create customer",
       title: "Quick-create customer",
