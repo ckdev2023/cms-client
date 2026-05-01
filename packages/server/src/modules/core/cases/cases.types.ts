@@ -33,6 +33,7 @@ export const CASE_WRITE_ERROR_CODES = {
   CROSS_GROUP_REASON_REQUIRED: "CASE_CROSS_GROUP_REASON_REQUIRED",
   GROUP_TRANSFER_REASON_REQUIRED: "CASE_GROUP_TRANSFER_REASON_REQUIRED",
   GROUP_NOT_FOUND: "CASE_GROUP_NOT_FOUND",
+  OWNER_NOT_FOUND: "CASE_OWNER_NOT_FOUND",
   INVALID_ENUM: "CASE_INVALID_ENUM",
   NOT_FOUND: "CASE_NOT_FOUND",
   REF_NOT_FOUND: "CASE_REF_NOT_FOUND",
@@ -49,7 +50,6 @@ export const CASE_WRITE_ERROR_CODES = {
 
 // ────────────────────────────────────────────────────────────────
 // validation-runs / review-records / submission-packages 错误码
-//
 // 从 case 视角统一定义，admin adapter 映射为 i18n key。
 export const VALIDATION_SUBMISSION_ERROR_CODES = {
   VR_CASE_NOT_FOUND: "VR_CASE_NOT_FOUND",

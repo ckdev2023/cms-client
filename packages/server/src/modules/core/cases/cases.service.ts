@@ -1375,14 +1375,21 @@ export class CasesService {
         input.caseTypeCode,
       );
       const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
       return await tenantDb.transaction(async (tx) => {
-        await this.assertCreateRefs(tx, input);
+        const inputWithOwner: CaseCreateInput = {
+          ...input,
+          ownerUserId: await this.resolveOwnerUserId(
+            tx,
+            input.ownerUserId,
+            ctx.userId,
+          ),
+        };
+        await this.assertCreateRefs(tx, inputWithOwner);
         const { resolvedGroupId, isCrossGroup, customerGroupId } =
-          await this.resolveCreateGroup(tx, ctx, input);
+          await this.resolveCreateGroup(tx, ctx, inputWithOwner);
 
         const created = await this.insertCaseWithAutoNumber(tx, ctx, {
-          ...input,
+          ...inputWithOwner,
           groupId: resolvedGroupId,
         });
         await this.insertDocumentItems(
@@ -1420,6 +1427,20 @@ export class CasesService {
     }
   }
 
+  // PG SQLSTATE → 人类可读原因；落在表内即视为客户输入类错误，统一映射为 400。
+  // 23xxx 为 integrity constraint violation；22xxx 为 data exception。
+  private static readonly PG_CLIENT_ERROR_REASONS: Readonly<
+    Record<string, string>
+  > = {
+    "23503": "foreign key violation",
+    "23505": "unique constraint violation",
+    "23514": "check constraint violation",
+    "23502": "not null violation",
+    "22P02": "invalid input format",
+    "22008": "datetime field overflow",
+    "22007": "invalid datetime format",
+  };
+
   private static wrapCreateError(
     error: unknown,
     input: CaseCreateInput,
@@ -1427,16 +1448,20 @@ export class CasesService {
     if (error instanceof HttpException) throw error;
 
     const pgCode = (error as { code?: string }).code;
-    const PG_KNOWN_CONSTRAINTS = ["23503", "23505", "23514"];
-    if (pgCode && PG_KNOWN_CONSTRAINTS.includes(pgCode)) {
+    const reason = pgCode
+      ? CasesService.PG_CLIENT_ERROR_REASONS[pgCode]
+      : undefined;
+    if (pgCode && reason) {
+      const pgMessage = error instanceof Error ? error.message : String(error);
       throw new BadRequestException({
         code: CASE_WRITE_ERROR_CODES.CREATE_FAILED,
         detail: {
           source: "pg",
           constraint: (error as { constraint?: string }).constraint ?? null,
           pgCode,
+          pgMessage,
         },
-        message: `Failed to create case: ${pgCode === "23503" ? "foreign key violation" : pgCode === "23505" ? "unique constraint violation" : "check constraint violation"}`,
+        message: `Failed to create case: ${reason}`,
       });
     }
 
@@ -1458,7 +1483,8 @@ export class CasesService {
     input: CaseCreateInput,
   ): Promise<void> {
     await this.assertBelongsToOrg(tx, "customers", input.customerId);
-    await this.assertBelongsToOrg(tx, "users", input.ownerUserId);
+    // ownerUserId 在 create() 入口已通过 resolveOwnerUserId 归一化为真实
+    // users.id（UUID），并校验存在性；此处无需重复 assertBelongsToOrg。
     // eslint-disable-next-line @typescript-eslint/no-deprecated
     if (input.companyId) {
       // eslint-disable-next-line @typescript-eslint/no-deprecated
@@ -1566,6 +1592,50 @@ export class CasesService {
       throw new BadRequestException(
         CASE_WRITE_ERROR_CODES.GROUP_NOT_FOUND +
           `: groupId "${trimmed}" does not match any active group in the organization`,
+      );
+    }
+    return found;
+  }
+
+  /**
+   * 将显式 ownerUserId 入参（UUID / email / display name / admin 占位）
+   * 规范化为 users.id（UUID）。
+   *
+   * 兼容前端 admin 链路：建案向导 Step 3 的 owner 选项来自前端 fixture
+   * catalog（如 `suzuki` / `tanaka`）以及 `withCurrentUserOwnerOption` 注入的
+   * 当前登录用户（value 可能是 email 或 `current-user:<name>` 占位）。统一在
+   * service 入口做归一化，避免 `cases.owner_user_id` 列直接接收非 UUID 字符串
+   * 触发 PG 22P02 / 23503 → 500（参见 BUG-165 / R13 BUG-159 v2 对称模式）。
+   *
+   * - 入参为 undefined/null/空白 → 继承 `fallbackUserId`（当前请求用户）
+   * - 入参以 `current-user:` 前缀打头 → 视同缺省，继承 `fallbackUserId`
+   * - 入参为 UUID → 校验组织内是否存在；不存在抛 400 OWNER_NOT_FOUND
+   * - 入参匹配 `users.email`（不区分大小写）或 `users.name` → 返回真实 id
+   * - 完全无法解析 → 400 OWNER_NOT_FOUND（避免 PG 22P02 → 500）
+   */
+  private async resolveOwnerUserId(
+    tx: TenantDbTx,
+    raw: string | null | undefined,
+    fallbackUserId: string,
+  ): Promise<string> {
+    if (raw === undefined || raw === null) return fallbackUserId;
+    const trimmed = raw.trim();
+    if (!trimmed) return fallbackUserId;
+    if (trimmed.toLowerCase().startsWith("current-user:")) {
+      return fallbackUserId;
+    }
+
+    const result = await tx.query<{ id: string }>(
+      `select id from users
+       where id::text = $1 or lower(email) = lower($1) or name = $1
+       limit 1`,
+      [trimmed],
+    );
+    const found = result.rows.at(0)?.id ?? null;
+    if (!found) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.OWNER_NOT_FOUND +
+          `: ownerUserId "${trimmed}" does not match any active user in the organization`,
       );
     }
     return found;

@@ -1129,3 +1129,48 @@
     位置：—
     Owner：产品/研发
     状态：不回灌（Q-115-1/2/3 决议后若有新规则再回灌）
+
+- 时间：2026-05-01（BUG-166 FIX-LANDED）
+  问题：[BUG-166][P2][BE] R14 §1 — `cases.service.ts#wrapCreateError` 仅识别 PG `23503/23505/23514` 三个约束码，漏掉客户输入类的 `22P02`（invalid_text_representation，含 UUID 解析失败）等错误，导致 admin 提交脏数据（如 `ownerUserId="suzuki"`）时落到 500 路径，破坏 server 错误契约。如何把客户输入类 PG 错误统一收口到 400？
+  结论（TL;DR）：BUG-166 ✅ FIX-LANDED。`PG_KNOWN_CONSTRAINTS` 数组下沉为类静态只读 map `PG_CLIENT_ERROR_REASONS`，覆盖 7 个客户输入类 SQLSTATE：`23503/23505/23514/23502`（integrity constraint）+ `22P02/22008/22007`（data exception）。命中即映射为 400 `CASE_CREATE_FAILED`，detail 同时携带 `source/constraint/pgCode/pgMessage`（新增 `pgMessage` 让前端 / 集成方拿到 PG 原始报错文本，便于 BUG-173 后续在 toast 暴露 actionable detail）。message suffix 由原本的 if-ladder 改为 map 查表，覆盖三种新错误类型时不必再扩三元表达式。`bug160-create-error-mapping.focused.test.ts` 扩展 3 个用例（f/g/h 分别覆盖 22P02 / 23502 / 22008），全 8 用例 PASS。
+  关键依据：
+  - packages/server/src/modules/core/cases/cases.service.ts#PG_CLIENT_ERROR_REASONS（新增静态 SQLSTATE 表，含 7 条客户输入类错误码）
+  - packages/server/src/modules/core/cases/cases.service.ts#wrapCreateError（map 查表 + detail.pgMessage 透传）
+  - packages/server/src/modules/core/cases/cases.service.bug160-create-error-mapping.focused.test.ts（扩展 BUG-166(f/g/h) 三个用例，覆盖 22P02 uuid 解析失败 / 23502 not null / 22008 datetime overflow，全 8 用例 PASS）
+  - docs/gyoseishoshi_saas_md/_output/20-双层状态机自动化复盘走查Bug清单-第十四轮.md §1 BUG-166（原始发现 + 修复方向 + 测试补强建议）
+  - docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md §1 BUG-160（同源 fix；R13 仅覆盖 23xxx 三种约束）
+  影响面：
+  - server `POST /api/cases` 错误契约：UUID 字面量错误（如 admin 提交 catalog slug `suzuki`）现在返 400 而非 500
+  - server 错误 detail 结构新增 `pgMessage` 字段（向后兼容，不影响既有 detail.source/constraint/pgCode 消费方）
+  - 间接收益：BUG-165（owner UUID 未解析）即便走老路径触发 PG 22P02，也会回到 400 而非 500；BUG-173（toast 无 actionable detail）拿到 detail.pgMessage 后可在前端展示
+  - 不影响 BMV 门禁拦截路径（CASE_BMV_GATE_BLOCKED 仍走专属 BadRequest）
+  - 不影响业务 HttpException 透传路径（GROUP_NOT_FOUND / OWNER_NOT_FOUND 仍走原通道）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/20-双层状态机自动化复盘走查Bug清单-第十四轮.md
+    位置：§0.3 BUG-166 行 + §0.4 P2 计数 + §1 BUG-166 详情
+    Owner：研发
+    状态：已回灌（2026-05-01，BUG-166 标 ✅ FIX-LANDED）
+
+- 时间：2026-05-01（BUG-167~173 全部 FIX-LANDED 批量收口）
+  问题：R14 §1 BUG-167~173 共 7 条新增偏差（含 2×P0 + 3×P2 + 2×P3），涉及 admin case detail 三 tab i18n 缺漏（BUG-167/168/169）、建案向导失败 toast 无 actionable detail（BUG-173）、Overview group raw slug（BUG-170）、Reminder dedupe key UUID 直显（BUG-171）、案件列表 Type 列大小写不统一（BUG-172）。
+  结论（TL;DR）：7 条全部 ✅ FIX-LANDED（2026-05-01），连同之前已 land 的 BUG-165/166，R14 本轮 9 条新增偏差全部闭环。Guard 全绿：admin 3242 PASS / server integration 28 PASS / 0 FAIL。
+  关键依据（commit 清单）：
+  - `de68cdf` fix(admin/cases): BUG-167 i18n CaseBillingTab billing labels
+  - `c52ced9` fix(admin/cases): BUG-168 i18n CaseValidationSupport pre-submission check tab
+  - `dd10526` fix(admin/cases): BUG-169 i18n CaseDocumentsTab empty state + section labels
+  - `5c07d65` fix(admin/cases): BUG-170 overview group slug 走 resolveGroupLabel 本地化
+  - `1eaf3dd` fix(admin/tasks): BUG-171 mask UUID in reminderMeta dedupeKey display
+  - `1adc5b0` fix(admin/cases): BUG-172 caseTypes catalog v1 visa code aliases + en-US Title Case
+  - `db99e2c` fix(admin/cases): BUG-173 server detail 透传到建案失败 toast 与 inline error chip
+  影响面：
+  - admin i18n：三语 catalog 新增约 50 个 key（cases.detail.billing.* / validation.* / documents.*）
+  - admin 建案向导：submitError 类型从 string → 结构体 {message, code?, detail?}，影响约 12 处断言（已全部更新）
+  - admin CaseOverviewTab：group slug 走 resolveGroupLabel 本地化
+  - admin taskWorkbenchViewHelpers：dedupeKey UUID 短哈希化
+  - admin cases i18n catalog：v1 visa code 别名补齐 + en-US Title Case 统一
+  - admin repositoryRuntime：RepositoryError 新增 detail 字段
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/20-双层状态机自动化复盘走查Bug清单-第十四轮.md
+    位置：§0.3 表（每条行标 ✅ FIX-LANDED）+ §0.4 总计偏差数（全 9 条已闭环）+ §1 各 BUG 段尾部（FIX-LANDED 实测块）+ §4 待立项（全部标 ✅，仅留后续清理项）
+    Owner：研发
+    状态：已回灌（2026-05-01）

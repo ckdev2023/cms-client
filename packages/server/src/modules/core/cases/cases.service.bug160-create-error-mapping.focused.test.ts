@@ -1,13 +1,15 @@
 /**
  * BUG-160 [P2][BE]：POST /api/cases 500 → 400 / 5xx 带 detail。
+ * BUG-166 [P2][BE]：补 PG 22P02 / 23502 / 22008 等客户输入类错误码到 400 映射。
  *
  * 修复契约：
  * - 已知业务错误（HttpException）原样透传，不被 catch 改写。
- * - PG 约束违例（23503 / 23505 / 23514）→ 400 CASE_CREATE_FAILED + detail。
+ * - PG 约束违例（23503 / 23505 / 23514 / 23502）→ 400 CASE_CREATE_FAILED + detail。
+ * - PG 数据格式错误（22P02 / 22008 / 22007）→ 400 CASE_CREATE_FAILED + detail。
  * - 未知 throw → 500 CASE_CREATE_FAILED + detail。
  * - BMV 门禁拦截 → 400 CASE_BMV_GATE_BLOCKED + blockers。
  *
- * 覆盖 5 类异常映射场景。
+ * 覆盖 8 类异常映射场景。
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -246,6 +248,115 @@ void test("BUG-160(e): 现有 BadRequest (GROUP_NOT_FOUND) 原样透传不被改
       assert.ok(
         msg?.includes("CASE_GROUP_NOT_FOUND"),
         `expected CASE_GROUP_NOT_FOUND in message, got: ${msg ?? "(undefined)"}`,
+      );
+      return true;
+    },
+  );
+});
+
+// ─── BUG-166 客户输入类 PG 错误码映射 ─────────────────────────────────
+//
+// 边界缺口：R13 BUG-160 fix 仅覆盖 23503/23505/23514；admin 提交脏数据
+// （e.g. ownerUserId="suzuki" 非 UUID）会触发 PG 22P02，落到 500 路径。
+// 这里覆盖 22P02 / 23502 / 22008 三类客户输入错误，统一回归到 400。
+
+type PgError = Error & { code?: string; constraint?: string };
+
+function makePoolThrowingPg(pgError: PgError) {
+  return makePool((sql, params) => {
+    if (
+      sql.includes("select id from customers") ||
+      sql.includes("select id from users")
+    )
+      return ok([{ id: params?.[0] }]);
+    if (sql.includes("FROM customers c") && sql.includes("JOIN groups g"))
+      return ok([]);
+    if (sql.includes("insert into cases")) {
+      throw pgError;
+    }
+    return ok();
+  });
+}
+
+void test("BUG-166(f): PG 22P02 invalid_text_representation (uuid 解析失败) → 400 CASE_CREATE_FAILED", async () => {
+  const pgErr: PgError = Object.assign(
+    new Error('invalid input syntax for type uuid: "suzuki"'),
+    { code: "22P02" },
+  );
+  const pool = makePoolThrowingPg(pgErr);
+
+  await assert.rejects(
+    () => svc(pool).create(makeCtx(), BASE_INPUT),
+    (err: unknown) => {
+      assert.ok(err instanceof HttpException);
+      assert.equal(err.getStatus(), 400);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.code, CASE_WRITE_ERROR_CODES.CREATE_FAILED);
+      const detail = body.detail as Record<string, unknown>;
+      assert.equal(detail.source, "pg");
+      assert.equal(detail.pgCode, "22P02");
+      assert.equal(detail.constraint, null);
+      assert.ok(
+        typeof detail.pgMessage === "string" &&
+          detail.pgMessage.includes("invalid input syntax for type uuid"),
+        `expected pgMessage to carry original PG message, got: ${String(detail.pgMessage)}`,
+      );
+      assert.ok(
+        typeof body.message === "string" &&
+          body.message.includes("invalid input format"),
+      );
+      return true;
+    },
+  );
+});
+
+void test("BUG-166(g): PG 23502 not_null_violation → 400 CASE_CREATE_FAILED", async () => {
+  const pgErr: PgError = Object.assign(
+    new Error('null value in column "owner_user_id" violates not-null'),
+    { code: "23502", constraint: "cases_owner_user_id_not_null" },
+  );
+  const pool = makePoolThrowingPg(pgErr);
+
+  await assert.rejects(
+    () => svc(pool).create(makeCtx(), BASE_INPUT),
+    (err: unknown) => {
+      assert.ok(err instanceof HttpException);
+      assert.equal(err.getStatus(), 400);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.code, CASE_WRITE_ERROR_CODES.CREATE_FAILED);
+      const detail = body.detail as Record<string, unknown>;
+      assert.equal(detail.source, "pg");
+      assert.equal(detail.pgCode, "23502");
+      assert.equal(detail.constraint, "cases_owner_user_id_not_null");
+      assert.ok(
+        typeof body.message === "string" &&
+          body.message.includes("not null violation"),
+      );
+      return true;
+    },
+  );
+});
+
+void test("BUG-166(h): PG 22008 datetime_field_overflow → 400 CASE_CREATE_FAILED", async () => {
+  const pgErr: PgError = Object.assign(
+    new Error('date/time field value out of range: "2026-13-40"'),
+    { code: "22008" },
+  );
+  const pool = makePoolThrowingPg(pgErr);
+
+  await assert.rejects(
+    () => svc(pool).create(makeCtx(), BASE_INPUT),
+    (err: unknown) => {
+      assert.ok(err instanceof HttpException);
+      assert.equal(err.getStatus(), 400);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.code, CASE_WRITE_ERROR_CODES.CREATE_FAILED);
+      const detail = body.detail as Record<string, unknown>;
+      assert.equal(detail.source, "pg");
+      assert.equal(detail.pgCode, "22008");
+      assert.ok(
+        typeof body.message === "string" &&
+          body.message.includes("datetime field overflow"),
       );
       return true;
     },
