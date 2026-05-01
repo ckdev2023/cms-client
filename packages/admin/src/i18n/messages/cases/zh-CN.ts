@@ -458,6 +458,24 @@ const casesZhCN = {
       addInline: "添加新任务…",
       empty: "暂无待办任务",
     },
+    documents: {
+      empty: {
+        title: "暂无资料登记",
+        desc: "该案件尚未添加任何资料需求。请通过「登记资料」或「手动添加」开始建立资料清单。",
+        registerCta: "登记资料",
+        addCta: "手动添加",
+      },
+      section: {
+        title: "资料登记清单",
+        registerCta: "登记资料",
+        addCta: "手动添加",
+      },
+      provider: {
+        kicker: "按提供方完成率",
+        title: "资料收集分组进度",
+      },
+      groupEmpty: "该分组暂无资料项",
+    },
     log: {
       title: "日志",
       categoryLabel: "日志分类",
@@ -645,6 +663,10 @@ const casesZhCN = {
       "visa-change": "变更在留资格",
       "business-management": "经营管理",
       business_manager: "经营管理",
+      business_manager_visa: "经营管理签",
+      dependent_visa: "家族滞在",
+      engineer_visa: "技人国（认定）",
+      engineer_humanities_intl_visa: "技人国（认定）",
     },
   },
   writeErrors: {

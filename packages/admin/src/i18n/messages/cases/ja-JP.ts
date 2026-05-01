@@ -475,6 +475,24 @@ const casesJaJP = {
       addInline: "新しいタスクを追加…",
       empty: "タスクがありません",
     },
+    documents: {
+      empty: {
+        title: "書類登録なし",
+        desc: "この案件にはまだ書類の登録がありません。「書類登録」または「手動追加」で書類チェックリストを作成してください。",
+        registerCta: "書類登録",
+        addCta: "手動追加",
+      },
+      section: {
+        title: "書類登録チェックリスト",
+        registerCta: "書類登録",
+        addCta: "手動追加",
+      },
+      provider: {
+        kicker: "提供者別完成率",
+        title: "書類収集グループ別進捗",
+      },
+      groupEmpty: "このグループには書類項目がありません",
+    },
     log: {
       title: "ログ",
       categoryLabel: "ログ分類",
@@ -664,6 +682,10 @@ const casesJaJP = {
       "visa-change": "在留資格変更",
       "business-management": "経営管理",
       business_manager: "経営管理",
+      business_manager_visa: "経営管理ビザ",
+      dependent_visa: "家族滞在",
+      engineer_visa: "技人国（認定）",
+      engineer_humanities_intl_visa: "技人国（認定）",
     },
   },
   writeErrors: {

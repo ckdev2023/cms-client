@@ -23,17 +23,25 @@ const TYPE_LABELS = {
     hum_renewal: "技人国（更新）",
     family: "家族滞在",
     intra_company: "企業内转勤",
+    business_manager_visa: "经营管理签",
+    dependent_visa: "家族滞在",
+    engineer_visa: "技人国（认定）",
+    engineer_humanities_intl_visa: "技人国（认定）",
   },
   "en-US": {
-    biz_mgmt: "Business manager visa",
+    biz_mgmt: "Business Manager Visa",
     biz_mgmt_4m: "BMV (CoE 4-month)",
     biz_mgmt_1y: "BMV (CoE 1-year)",
     biz_mgmt_renewal: "BMV (Renewal)",
-    company_setup: "Company establishment",
+    company_setup: "Company Establishment",
     hum: "Engineer/Specialist (CoE)",
     hum_renewal: "Engineer/Specialist (Renewal)",
-    family: "Dependent visa",
-    intra_company: "Intra-company transfer",
+    family: "Dependent Visa",
+    intra_company: "Intra-Company Transfer",
+    business_manager_visa: "Business Manager Visa",
+    dependent_visa: "Dependent Visa",
+    engineer_visa: "Engineer/Specialist (CoE)",
+    engineer_humanities_intl_visa: "Engineer/Specialist (CoE)",
   },
   "ja-JP": {
     biz_mgmt: "経営管理ビザ",
@@ -45,6 +53,10 @@ const TYPE_LABELS = {
     hum_renewal: "技人国（更新）",
     family: "家族滞在",
     intra_company: "企業内転勤",
+    business_manager_visa: "経営管理ビザ",
+    dependent_visa: "家族滞在",
+    engineer_visa: "技人国（認定）",
+    engineer_humanities_intl_visa: "技人国（認定）",
   },
 } as const;
 
@@ -153,5 +165,31 @@ describe("CaseTableRow — BUG-143 type column i18n", () => {
     const w = mountRow("", "zh-CN");
     const cell = w.findAll("td")[3];
     expect(cell.text()).toBe("—");
+  });
+
+  describe("BUG-172 en-US Title Case consistency", () => {
+    const TITLE_CASE_RE =
+      /^[A-Z][a-z]+(-[A-Z][a-z]+)*(\s[A-Z][a-z]+(-[A-Z][a-z]+)*)*(\s\(.+\))?$/;
+    const ABBREVIATED_CODES = new Set([
+      "biz_mgmt_4m",
+      "biz_mgmt_1y",
+      "biz_mgmt_cert_4m",
+      "biz_mgmt_cert_1y",
+      "biz_mgmt_renewal",
+      "hum",
+      "hum_renewal",
+      "eng_humanities_intl_cert",
+      "eng_humanities_intl_renewal",
+      "engineer_visa",
+      "engineer_humanities_intl_visa",
+    ]);
+
+    const enLabels = TYPE_LABELS["en-US"];
+    for (const [code, label] of Object.entries(enLabels)) {
+      if (ABBREVIATED_CODES.has(code)) continue;
+      it(`en-US "${code}" label "${label}" follows Title Case`, () => {
+        expect(label).toMatch(TITLE_CASE_RE);
+      });
+    }
   });
 });
