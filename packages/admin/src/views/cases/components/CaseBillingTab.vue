@@ -1,16 +1,18 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, PaymentRow } from "../types-detail";
-import { BILLING_STATUSES } from "../constants";
-import type { BillingStatusKey } from "../types";
+import { getBillingStatusI18nKey } from "../constants";
 
 /** 收费 Tab：展示费用统计卡片、收款节点表格与发票占位。 */
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
 }>();
+
+const { t, te } = useI18n();
 
 const STATUS_TONE: Record<string, ChipTone> = {
   paid: "success",
@@ -31,15 +33,17 @@ function paymentTone(row: PaymentRow): ChipTone {
 }
 
 /**
- * 获取收费状态中文标签。
+ * 获取收费状态本地化标签；优先走 i18n catalog，fallback 到 fixture 自带 statusLabel。
  *
  * @param row - 收款节点
- * @returns 中文状态标签
+ * @returns 已本地化的状态标签
  */
 function paymentLabel(row: PaymentRow): string {
-  return (
-    BILLING_STATUSES[row.status as BillingStatusKey]?.label ?? row.statusLabel
-  );
+  const key = getBillingStatusI18nKey(row.status);
+  if (key && te(key)) {
+    return t(key);
+  }
+  return row.statusLabel;
 }
 </script>
 
@@ -47,7 +51,9 @@ function paymentLabel(row: PaymentRow): string {
   <div class="billing-tab">
     <Card padding="lg">
       <template #header>
-        <h2 class="billing-tab__title">收费</h2>
+        <h2 class="billing-tab__title">
+          {{ t("cases.detail.billing.title") }}
+        </h2>
         <Button v-if="!readonly" variant="filled" tone="primary" size="sm">
           <svg
             width="14"
@@ -62,19 +68,21 @@ function paymentLabel(row: PaymentRow): string {
           >
             <path d="M12 4v16m8-8H4" />
           </svg>
-          登记回款
+          {{ t("cases.detail.billing.recordPayment") }}
         </Button>
       </template>
 
       <!-- Stats cards -->
       <div class="billing-tab__stats">
         <div class="billing-tab__stat billing-tab__stat--total">
-          <div class="billing-tab__stat-label">总费用</div>
+          <div class="billing-tab__stat-label">
+            {{ t("cases.detail.billing.stats.total") }}
+          </div>
           <div class="billing-tab__stat-value">{{ detail.billing.total }}</div>
         </div>
         <div class="billing-tab__stat billing-tab__stat--received">
           <div class="billing-tab__stat-label billing-tab__stat-label--success">
-            已收金额
+            {{ t("cases.detail.billing.stats.collected") }}
           </div>
           <div class="billing-tab__stat-value billing-tab__stat-value--success">
             {{ detail.billing.received }}
@@ -82,7 +90,7 @@ function paymentLabel(row: PaymentRow): string {
         </div>
         <div class="billing-tab__stat billing-tab__stat--outstanding">
           <div class="billing-tab__stat-label billing-tab__stat-label--danger">
-            未收金额
+            {{ t("cases.detail.billing.stats.outstanding") }}
           </div>
           <div class="billing-tab__stat-value billing-tab__stat-value--danger">
             {{ detail.billing.outstanding }}
@@ -95,11 +103,21 @@ function paymentLabel(row: PaymentRow): string {
         <table class="billing-tab__table">
           <thead>
             <tr>
-              <th class="billing-tab__th">日期</th>
-              <th class="billing-tab__th">类型</th>
-              <th class="billing-tab__th billing-tab__th--right">金额</th>
-              <th class="billing-tab__th billing-tab__th--center">状态</th>
-              <th class="billing-tab__th billing-tab__th--right">操作</th>
+              <th class="billing-tab__th">
+                {{ t("cases.detail.billing.table.date") }}
+              </th>
+              <th class="billing-tab__th">
+                {{ t("cases.detail.billing.table.type") }}
+              </th>
+              <th class="billing-tab__th billing-tab__th--right">
+                {{ t("cases.detail.billing.table.amount") }}
+              </th>
+              <th class="billing-tab__th billing-tab__th--center">
+                {{ t("cases.detail.billing.table.status") }}
+              </th>
+              <th class="billing-tab__th billing-tab__th--right">
+                {{ t("cases.detail.billing.table.actions") }}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -128,14 +146,14 @@ function paymentLabel(row: PaymentRow): string {
                   class="billing-tab__link"
                   type="button"
                 >
-                  查看收据
+                  {{ t("cases.detail.billing.table.viewReceipt") }}
                 </button>
                 <button
                   v-else-if="!readonly"
                   class="billing-tab__link"
                   type="button"
                 >
-                  登记回款
+                  {{ t("cases.detail.billing.table.recordPayment") }}
                 </button>
               </td>
             </tr>
@@ -146,9 +164,11 @@ function paymentLabel(row: PaymentRow): string {
       <!-- Invoice placeholder -->
       <template #footer>
         <div class="billing-tab__invoice">
-          <h3 class="billing-tab__invoice-title">发票信息</h3>
+          <h3 class="billing-tab__invoice-title">
+            {{ t("cases.detail.billing.invoice.title") }}
+          </h3>
           <p class="billing-tab__invoice-placeholder">
-            当前原型暂不展示发票详情。
+            {{ t("cases.detail.billing.invoice.placeholder") }}
           </p>
         </div>
       </template>

@@ -445,6 +445,28 @@ const casesEnUS = {
         placeholder: "Risk tags will be available in a future release",
       },
     },
+    billing: {
+      title: "Billing",
+      recordPayment: "Record payment",
+      stats: {
+        total: "Total fees",
+        collected: "Collected",
+        outstanding: "Outstanding",
+      },
+      table: {
+        date: "Date",
+        type: "Type",
+        amount: "Amount",
+        status: "Status",
+        actions: "Actions",
+        viewReceipt: "View receipt",
+        recordPayment: "Record payment",
+      },
+      invoice: {
+        title: "Invoice",
+        placeholder: "Invoice details are not shown in the current prototype.",
+      },
+    },
     tasks: {
       title: "Task list",
       addTask: "Add task",
@@ -487,6 +509,32 @@ const casesEnUS = {
         "Supports screenshots, emails, payment commitment letters, etc. (prototype: text only)",
       cancel: "Cancel",
       confirm: "Confirm & continue submission",
+    },
+    validation: {
+      reviewer: {
+        title: "Double Review",
+        startCta: "Start Review",
+        empty: "No review records yet",
+        rejectReasonLabel: "Rejection reason:",
+      },
+      risk: {
+        title: "Arrears Risk Confirmation Log",
+        empty: "No arrears risk confirmation",
+        simulateCta: "Simulate Risk Confirmation",
+        rows: {
+          confirmedBy: "Confirmed by",
+          reason: "Reason",
+          evidence: "Evidence",
+          time: "Confirmed at",
+          amount: "Amount involved",
+        },
+      },
+      postApproval: {
+        kicker: "Post-Approval",
+        title: "COE / Overseas Visa / Re-entry Result",
+        stagingChip: "Case has not reached this stage",
+        note: "This case is still in the pre-submission or supplement stage, so COE dispatch, overseas visa stamping, and re-entry results are not shown here. Switch to the relevant sample to see the full flow.",
+      },
     },
   },
   constants: {

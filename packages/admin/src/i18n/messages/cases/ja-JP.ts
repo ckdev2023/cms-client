@@ -443,6 +443,28 @@ const casesJaJP = {
         placeholder: "リスクタグ機能は今後のバージョンで公開予定です",
       },
     },
+    billing: {
+      title: "請求",
+      recordPayment: "入金登録",
+      stats: {
+        total: "総費用",
+        collected: "入金済み",
+        outstanding: "未収",
+      },
+      table: {
+        date: "日付",
+        type: "種別",
+        amount: "金額",
+        status: "ステータス",
+        actions: "操作",
+        viewReceipt: "領収書を見る",
+        recordPayment: "入金を登録",
+      },
+      invoice: {
+        title: "請求書情報",
+        placeholder: "現在のプロトタイプでは請求書詳細を表示していません。",
+      },
+    },
     tasks: {
       title: "タスク一覧",
       addTask: "タスクを追加",
@@ -484,6 +506,32 @@ const casesJaJP = {
         "スクリーンショット、メール、支払い誓約書等の証拠資料をサポート（プロトタイプはテキストのみ）",
       cancel: "キャンセル",
       confirm: "確認して提出を続行",
+    },
+    validation: {
+      reviewer: {
+        title: "ダブルチェック",
+        startCta: "レビューを開始",
+        empty: "レビュー記録がありません",
+        rejectReasonLabel: "却下理由：",
+      },
+      risk: {
+        title: "未収リスク確認記録",
+        empty: "未収リスク確認がありません",
+        simulateCta: "未収確認をシミュレート",
+        rows: {
+          confirmedBy: "確認者",
+          reason: "理由",
+          evidence: "証憑",
+          time: "確認日時",
+          amount: "関連金額",
+        },
+      },
+      postApproval: {
+        kicker: "許可後処理",
+        title: "COE / 海外ビザ貼付 / 再入国結果",
+        stagingChip: "この案件はまだ当該段階に達していません",
+        note: "この案件はまだ提出前または補正処理段階にあるため、COE 送付・海外ビザ貼付・再入国結果はここに表示されません。該当するサンプルに切り替えると完全なフローを確認できます。",
+      },
     },
   },
   constants: {

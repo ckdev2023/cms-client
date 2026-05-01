@@ -427,6 +427,28 @@ const casesZhCN = {
         placeholder: "风险标签功能将在后续版本上线",
       },
     },
+    billing: {
+      title: "收费",
+      recordPayment: "登记回款",
+      stats: {
+        total: "总费用",
+        collected: "已收金额",
+        outstanding: "未收金额",
+      },
+      table: {
+        date: "日期",
+        type: "类型",
+        amount: "金额",
+        status: "状态",
+        actions: "操作",
+        viewReceipt: "查看收据",
+        recordPayment: "登记回款",
+      },
+      invoice: {
+        title: "发票信息",
+        placeholder: "当前原型暂不展示发票详情。",
+      },
+    },
     tasks: {
       title: "任务列表",
       addTask: "新增任务",
@@ -466,6 +488,32 @@ const casesZhCN = {
         "支持上传截图、邮件、付款承诺书等佐证材料（原型仅录入说明）",
       cancel: "取消",
       confirm: "确认并继续提交",
+    },
+    validation: {
+      reviewer: {
+        title: "双人复核",
+        startCta: "发起复核",
+        empty: "暂无复核记录",
+        rejectReasonLabel: "驳回原因：",
+      },
+      risk: {
+        title: "欠款风险确认记录",
+        empty: "当前无欠款风险确认",
+        simulateCta: "模拟欠款确认",
+        rows: {
+          confirmedBy: "确认人",
+          reason: "原因",
+          evidence: "凭证",
+          time: "确认时间",
+          amount: "涉及金额",
+        },
+      },
+      postApproval: {
+        kicker: "下签后处理",
+        title: "COE / 海外贴签 / 返签结果",
+        stagingChip: "当前案件未到该阶段",
+        note: "当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE 发送、海外贴签和返签结果。切换到相应样例后可查看完整流程。",
+      },
     },
   },
   constants: {
