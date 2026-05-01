@@ -89,7 +89,7 @@ describe("CustomerCasesTab", () => {
     const { wrapper } = await factory(repository);
     await flushPromises();
 
-    expect(wrapper.text()).toContain("Dependent visa");
+    expect(wrapper.text()).toContain("Dependent Visa");
   });
 
   it("formats updatedAt with locale and preserves ISO in title", async () => {

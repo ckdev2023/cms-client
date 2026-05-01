@@ -14,12 +14,13 @@ import CaseSupplementRoundPanel from "./CaseSupplementRoundPanel.vue";
 import CaseReminderFailureBanner from "./CaseReminderFailureBanner.vue";
 import CaseFailureCloseoutBanner from "./CaseFailureCloseoutBanner.vue";
 import { getStageI18nKey } from "../constants";
+import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail } from "../types-detail";
 import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
 
 /** 概览 Tab：展示案件摘要卡片、提供方进度、下一步动作、近期动态与侧边栏。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const props = defineProps<{
   detail: CaseDetail;
   writeFeedback?: WriteActionFeedback;
@@ -30,6 +31,11 @@ const props = defineProps<{
 const stageValue = computed(() => {
   const key = getStageI18nKey(props.detail.stageCode);
   return key ? t(key) : props.detail.stage;
+});
+
+const resolvedGroupName = computed(() => {
+  if (!props.detail.groupName) return undefined;
+  return resolveGroupLabel(props.detail.groupName, undefined, locale.value);
 });
 
 const emit = defineEmits<{
@@ -62,7 +68,7 @@ function timelineColor(color: string): string {
       v-if="detail.customerId"
       :customer-id="detail.customerId"
       :client="detail.client"
-      :group-name="detail.groupName"
+      :group-name="resolvedGroupName"
     />
 
     <div class="overview-tab__grid-4">
