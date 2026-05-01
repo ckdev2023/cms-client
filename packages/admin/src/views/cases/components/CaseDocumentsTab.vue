@@ -120,9 +120,11 @@ const groupStats = computed(() =>
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <span class="docs-tab__empty-title">暂无资料登记</span>
+        <span class="docs-tab__empty-title">{{
+          t("cases.detail.documents.empty.title")
+        }}</span>
         <span class="docs-tab__empty-desc">
-          该案件尚未添加任何资料需求。请通过"登记资料"或"手动添加"开始建立资料清单。
+          {{ t("cases.detail.documents.empty.desc") }}
         </span>
         <div v-if="!readonly" class="docs-tab__empty-actions">
           <span
@@ -138,12 +140,12 @@ const groupStats = computed(() =>
               size="sm"
               :disabled="!isStorageRootConfigured"
               @click="handleRegisterClick(detail.id)"
-              >登记资料</Button
+              >{{ t("cases.detail.documents.empty.registerCta") }}</Button
             >
           </span>
-          <Button size="sm" @click="handleAddItemClick(detail.id)"
-            >手动添加</Button
-          >
+          <Button size="sm" @click="handleAddItemClick(detail.id)">{{
+            t("cases.detail.documents.empty.addCta")
+          }}</Button>
         </div>
       </div>
     </Card>
@@ -152,8 +154,12 @@ const groupStats = computed(() =>
       <!-- Provider progress -->
       <Card padding="md">
         <div class="docs-tab__progress-header">
-          <span class="docs-tab__kicker">按提供方完成率</span>
-          <span class="docs-tab__progress-title">资料收集分组进度</span>
+          <span class="docs-tab__kicker">{{
+            t("cases.detail.documents.provider.kicker")
+          }}</span>
+          <span class="docs-tab__progress-title">{{
+            t("cases.detail.documents.provider.title")
+          }}</span>
         </div>
         <div class="docs-tab__progress-list">
           <div
@@ -182,7 +188,9 @@ const groupStats = computed(() =>
         <template #header>
           <div class="docs-tab__card-header">
             <div>
-              <h2 class="docs-tab__section-title">资料登记清单</h2>
+              <h2 class="docs-tab__section-title">
+                {{ t("cases.detail.documents.section.title") }}
+              </h2>
               <div class="docs-tab__global-progress">
                 <div class="docs-tab__global-progress-track">
                   <div
@@ -226,7 +234,7 @@ const groupStats = computed(() =>
                       d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
                     />
                   </svg>
-                  登记资料
+                  {{ t("cases.detail.documents.section.registerCta") }}
                 </Button>
               </span>
               <Button size="sm" @click="handleAddItemClick(detail.id)">
@@ -243,7 +251,7 @@ const groupStats = computed(() =>
                 >
                   <path d="M12 4v16m8-8H4" />
                 </svg>
-                手动添加
+                {{ t("cases.detail.documents.section.addCta") }}
               </Button>
             </div>
           </div>
@@ -283,7 +291,7 @@ const groupStats = computed(() =>
             @waive="handleRowWaive"
           />
           <div v-if="group.items.length === 0" class="docs-tab__group-empty">
-            该分组暂无资料项
+            {{ t("cases.detail.documents.groupEmpty") }}
           </div>
         </div>
       </Card>
