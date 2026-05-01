@@ -14,6 +14,7 @@ interface RepositoryErrorInput {
   message: string;
   status?: number;
   serverErrorCode?: string;
+  detail?: string;
   cause?: unknown;
   errorName?: string;
 }
@@ -98,6 +99,10 @@ export class RepositoryError extends Error {
    *
    */
   readonly serverErrorCode?: string;
+  /**
+   * 服务端返回的 actionable detail（如实体 ID、字段名等补充诊断信息）。
+   */
+  readonly detail?: string;
 
   /**
    * 根据仓储错误输入构建统一错误实例。
@@ -110,6 +115,7 @@ export class RepositoryError extends Error {
     this.code = input.code;
     this.status = input.status;
     this.serverErrorCode = input.serverErrorCode;
+    this.detail = input.detail;
   }
 }
 
@@ -130,6 +136,14 @@ function readMessageFromBody(body: unknown): string | null {
     (item): item is string => typeof item === "string",
   );
   return lines.length > 0 ? lines.join("; ") : null;
+}
+
+function readDetailFromBody(body: unknown): string | null {
+  if (!body || typeof body !== "object") return null;
+  const record = body as Record<string, unknown>;
+  if (typeof record.detail === "string" && record.detail.trim())
+    return record.detail.trim();
+  return null;
 }
 
 function readErrorCodeFromBody(body: unknown): string | null {
@@ -193,6 +207,7 @@ function buildBadResponseError(
     code,
     status: response.status,
     serverErrorCode: serverErrorCode ?? undefined,
+    detail: readDetailFromBody(body) ?? undefined,
     errorName,
     message:
       readMessageFromBody(body) ??

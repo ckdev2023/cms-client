@@ -253,7 +253,7 @@ describe("submit success result (p0-fe-007-01)", () => {
     });
     const m = createSubmittableModel({ repo });
     await m.submit();
-    expect(m.submitError.value).toBe("first fail");
+    expect(m.submitError.value?.message).toBe("first fail");
 
     fail = false;
     await m.submit();
@@ -279,7 +279,9 @@ describe("submit error normalization (p0-fe-007-01)", () => {
     const m = createSubmittableModel({ repo });
     const result = await m.submit();
     expect(result).toBeNull();
-    expect(m.submitError.value).toBe("CUSTOMER_NOT_FOUND: Customer not found");
+    expect(m.submitError.value?.message).toBe(
+      "CUSTOMER_NOT_FOUND: Customer not found",
+    );
   });
 
   it("normalizes CaseRepositoryError without serverErrorCode", async () => {
@@ -291,7 +293,7 @@ describe("submit error normalization (p0-fe-007-01)", () => {
     });
     const m = createSubmittableModel({ repo });
     await m.submit();
-    expect(m.submitError.value).toBe("Case request failed");
+    expect(m.submitError.value?.message).toBe("Case request failed");
   });
 
   it("normalizes generic Error", async () => {
@@ -300,7 +302,7 @@ describe("submit error normalization (p0-fe-007-01)", () => {
     });
     const m = createSubmittableModel({ repo });
     await m.submit();
-    expect(m.submitError.value).toBe("unexpected error");
+    expect(m.submitError.value?.message).toBe("unexpected error");
   });
 
   it("normalizes raw string throw", async () => {
@@ -309,7 +311,7 @@ describe("submit error normalization (p0-fe-007-01)", () => {
     });
     const m = createSubmittableModel({ repo });
     await m.submit();
-    expect(m.submitError.value).toBe("raw string");
+    expect(m.submitError.value?.message).toBe("raw string");
   });
 
   it("returns null on error", async () => {
@@ -378,7 +380,7 @@ describe("submit guards (p0-fe-007-01)", () => {
     const m = createSubmittableModel({ repo });
 
     await m.submit();
-    expect(m.submitError.value).toBe("temporary");
+    expect(m.submitError.value?.message).toBe("temporary");
     expect(spy).toHaveBeenCalledTimes(1);
 
     fail = false;
@@ -419,7 +421,7 @@ describe("submit combined lifecycle (p0-fe-007-01)", () => {
     const m = createSubmittableModel({ repo });
 
     await m.submit();
-    expect(m.submitError.value).toBe("Missing required fields");
+    expect(m.submitError.value?.message).toBe("Missing required fields");
     expect(m.submitResult.value).toBeNull();
     expect(m.submitting.value).toBe(false);
 

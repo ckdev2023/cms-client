@@ -109,9 +109,19 @@ async function handleSubmit() {
       }),
     );
   } else if (model.submitError.value) {
-    showToast(t("cases.create.toast.createFailed"), model.submitError.value);
+    const err = model.submitError.value;
+    showToast(t("cases.create.toast.createFailed"), err.detail || err.message);
   }
 }
+
+const ownerErrorChipVisible = computed(() => {
+  const err = model.submitError.value;
+  if (!err) return false;
+  return (
+    err.code === "CASE_OWNER_NOT_FOUND" ||
+    (typeof err.detail === "string" && err.detail.includes("uuid"))
+  );
+});
 
 /**
  * 跳转到刚创建完成的案件详情页。
@@ -390,6 +400,7 @@ const summaryItems = computed(() => {
         :model="model"
         :submitted="submitted"
         :submit-error="model.submitError.value"
+        :owner-error-chip="ownerErrorChipVisible"
         :summary-items="summaryItems"
         @view-detail="navigateToCreatedDetail"
         @view-list="navigateToList"

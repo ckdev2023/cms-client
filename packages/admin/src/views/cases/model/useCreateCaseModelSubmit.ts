@@ -4,7 +4,6 @@ import type {
   CreateCaseDraftState,
   CreateCaseRelatedParty,
 } from "../types";
-import { getAdminAccessToken } from "../../../auth/model/adminSession";
 import type { CaseRepository } from "./CaseRepository";
 import { CaseRepositoryError } from "./CaseRepositorySupport";
 import type { CaseMutationResult } from "./CaseAdapterTypes";
@@ -14,6 +13,7 @@ import {
   buildRelatedCasePartyInput,
   type CreateCaseDraftSnapshot,
 } from "./CaseAdapterWriteBuilders";
+import { defaultQuickCreateCustomer } from "./quickCreateCustomer";
 /**
  * 草稿状態から提出用のプレーンなスナップショットを生成する。
  *
@@ -42,111 +42,43 @@ function collectDraftSnapshot(
   };
 }
 
-/**
- * 提出エラーを統一的な文字列に正規化する。
- *
- * @param e - 任意错误对象
- * @returns 归一化后的错误信息字符串
- */
-export function normalizeSubmitError(e: unknown): string {
-  if (e instanceof CaseRepositoryError) {
-    if (e.serverErrorCode) return `${e.serverErrorCode}: ${e.message}`;
-    return e.message;
-  }
-  if (e instanceof Error) return e.message;
-  return String(e);
+/** `normalizeSubmitError` が返す構造化エラー情報。 */
+export interface SubmitErrorInfo {
+  /**
+   *
+   */
+  message: string;
+  /**
+   *
+   */
+  code?: string;
+  /**
+   *
+   */
+  detail?: string;
 }
 
-type QuickCreateCustomerResult = { id: string };
-function readQuickCreateMessage(body: unknown): string | null {
-  if (typeof body === "string" && body.trim()) return body.trim();
-  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
-  const message = (body as Record<string, unknown>).message;
-  if (typeof message === "string" && message.trim()) return message.trim();
-  if (!Array.isArray(message)) return null;
-  const lines = message.filter(
-    (item): item is string => typeof item === "string",
-  );
-  return lines.length > 0 ? lines.join("; ") : null;
-}
-async function readQuickCreateBody(response: Response): Promise<unknown> {
-  const text = await response.text();
-  if (!text.trim()) return null;
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return text;
+/**
+ * 提出エラーを構造化情報に正規化する。
+ *
+ * @param e - 任意错误对象
+ * @returns 归一化后的结构化错误信息
+ */
+export function normalizeSubmitError(e: unknown): SubmitErrorInfo {
+  if (e instanceof CaseRepositoryError) {
+    const message = e.serverErrorCode
+      ? `${e.serverErrorCode}: ${e.message}`
+      : e.message;
+    return {
+      message,
+      code: e.serverErrorCode ?? undefined,
+      detail: e.detail ?? undefined,
+    };
   }
+  if (e instanceof Error) return { message: e.message };
+  return { message: String(e) };
 }
-function splitQuickCreateContact(contact: string): {
-  phone?: string;
-  email?: string;
-} {
-  const parts = contact
-    .split("/")
-    .map((part) => part.trim())
-    .filter(Boolean);
-  let phone: string | undefined;
-  let email: string | undefined;
-  for (const part of parts) {
-    if (!email && part.includes("@")) {
-      email = part;
-      continue;
-    }
-    if (!phone && /[0-9０-９]/.test(part)) phone = part;
-  }
-  return { phone, email };
-}
-function buildQuickCreateCustomerPayload(applicant: CreateCaseRelatedParty) {
-  const name = applicant.name.trim();
-  const { phone, email } = splitQuickCreateContact(applicant.contact);
-  return {
-    type: "individual",
-    baseProfile: {
-      displayName: name,
-      legalName: name,
-      name_jp: name,
-      group: applicant.group?.trim() || undefined,
-      phone,
-      email,
-    },
-  };
-}
-async function defaultQuickCreateCustomer(
-  applicant: CreateCaseRelatedParty,
-): Promise<QuickCreateCustomerResult> {
-  const token = getAdminAccessToken();
-  let response: Response;
-  try {
-    response = await globalThis.fetch("/api/customers", {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify(buildQuickCreateCustomerPayload(applicant)),
-    });
-  } catch (e) {
-    throw new Error(
-      `Quick-create customer request failed: ${normalizeSubmitError(e)}`,
-    );
-  }
-  const body = await readQuickCreateBody(response);
-  if (!response.ok) {
-    throw new Error(
-      readQuickCreateMessage(body) ??
-        `Quick-create customer failed with status ${response.status}`,
-    );
-  }
-  const record =
-    body && typeof body === "object" && !Array.isArray(body)
-      ? (body as Record<string, unknown>)
-      : null;
-  const id = typeof record?.id === "string" ? record.id.trim() : "";
-  if (!id) throw new Error("Invalid create customer response");
-  return { id };
-}
+
 async function resolveBulkApplicantCustomer(
   applicant: CreateCaseRelatedParty,
 ): Promise<CreateCaseRelatedParty> {
@@ -180,7 +112,9 @@ async function submitPartiesAfterCreate(
         buildPrimaryCasePartyInput(caseId, primaryCustomerId),
       );
     } catch (e) {
-      warnings.push(`Primary party submit failed: ${normalizeSubmitError(e)}`);
+      warnings.push(
+        `Primary party submit failed: ${normalizeSubmitError(e).message}`,
+      );
     }
   }
 
@@ -189,7 +123,7 @@ async function submitPartiesAfterCreate(
       await repo.createCaseParty(buildRelatedCasePartyInput(caseId, party));
     } catch (e) {
       warnings.push(
-        `Party "${party.name}" submit failed: ${normalizeSubmitError(e)}`,
+        `Party "${party.name}" submit failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
@@ -245,7 +179,7 @@ async function submitBulkApplicantParty(
     return [];
   } catch (e) {
     return [
-      `[${applicant.name}] Primary party failed: ${normalizeSubmitError(e)}`,
+      `[${applicant.name}] Primary party failed: ${normalizeSubmitError(e).message}`,
     ];
   }
 }
@@ -263,7 +197,7 @@ async function submitBulkSupporters(
       await repo.createCaseParty(buildRelatedCasePartyInput(caseId, supporter));
     } catch (e) {
       warnings.push(
-        `[${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e)}`,
+        `[${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
@@ -280,7 +214,7 @@ async function submitBulkSupporters(
       );
     } catch (e) {
       warnings.push(
-        `[${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e)}`,
+        `[${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
@@ -325,7 +259,7 @@ async function submitOneBulkCase(
     );
     entry.partyWarnings = [...pw, ...sw];
   } catch (e) {
-    entry.error = normalizeSubmitError(e);
+    entry.error = normalizeSubmitError(e).message;
   }
   return entry;
 }
@@ -463,7 +397,7 @@ async function executeBulkSubmit(
  */
 export function createSubmitFlow(input: SubmitFlowInput) {
   const submitting = ref(false);
-  const submitError = ref<string | null>(null);
+  const submitError = ref<SubmitErrorInfo | null>(null);
   const submitResult = ref<CaseMutationResult | null>(null);
   const partyWarnings = ref<string[]>([]);
   const bulkResults = ref<FamilyBulkCaseResult[]>([]);

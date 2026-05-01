@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import Chip from "../../../shared/ui/Chip.vue";
 import CaseCreatePreSignGate from "./CaseCreatePreSignGate.vue";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
+import type { SubmitErrorInfo } from "../model/useCreateCaseModelSubmit";
 
 /** 步骤四：创建复核摘要与成功状态展示。 */
 const { t } = useI18n();
@@ -10,7 +12,8 @@ const { t } = useI18n();
 defineProps<{
   model: CreateCaseModel;
   submitted: boolean;
-  submitError: string | null;
+  submitError: SubmitErrorInfo | null;
+  ownerErrorChip: boolean;
   summaryItems: { label: string; value: string }[];
 }>();
 
@@ -54,7 +57,18 @@ const emit = defineEmits<{
       <div class="submit-error__title">
         {{ t("cases.create.step4.errorTitle") }}
       </div>
-      <div class="submit-error__desc">{{ submitError }}</div>
+      <div class="submit-error__desc">
+        {{ submitError.detail || submitError.message }}
+      </div>
+      <Chip
+        v-if="ownerErrorChip"
+        tone="danger"
+        size="sm"
+        class="submit-error__chip"
+        data-testid="owner-error-chip"
+      >
+        {{ t("cases.create.errorChip.ownerInvalid") }}
+      </Chip>
     </div>
     <h2 class="cc__title">{{ t("cases.create.step4.reviewTitle") }}</h2>
     <div class="summary">
@@ -125,6 +139,10 @@ const emit = defineEmits<{
   font-size: var(--font-size-sm);
   color: #991b1b;
   margin-top: 4px;
+}
+
+.submit-error__chip {
+  margin-top: 8px;
 }
 
 .summary {

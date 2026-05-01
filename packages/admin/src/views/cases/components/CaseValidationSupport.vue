@@ -5,6 +5,7 @@ import Button from "../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, DoubleReviewEntry } from "../types-detail";
 
+/** 提交前检查与审核复核支持面板。 */
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
@@ -23,6 +24,12 @@ const VERDICT_TONE: Record<string, ChipTone> = {
   "badge-gray": "neutral",
 };
 
+/**
+ * 根据审核条目的 badge 类型返回对应的 Chip 色调。
+ *
+ * @param entry - 审核条目
+ * @returns 对应的 ChipTone
+ */
 function verdictTone(entry: DoubleReviewEntry): ChipTone {
   return VERDICT_TONE[entry.verdictBadge] ?? "neutral";
 }

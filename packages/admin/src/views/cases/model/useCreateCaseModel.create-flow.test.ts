@@ -273,7 +273,7 @@ describe("create flow end-to-end (p0-fe-007-03)", () => {
 
     const r1 = await m.submit();
     expect(r1).toBeNull();
-    expect(m.submitError.value).toBe("Missing customer");
+    expect(m.submitError.value?.message).toBe("Missing customer");
 
     const r2 = await m.submit();
     expect(r2).toEqual({ id: "CASE-E2E-RETRY" });
