@@ -156,6 +156,5 @@ function capitalize(s: string): string {
 .sq-section__blocker {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 </style>

@@ -63,7 +63,6 @@ const emit = defineEmits<{
       <Chip
         v-if="ownerErrorChip"
         tone="danger"
-        size="sm"
         class="submit-error__chip"
         data-testid="owner-error-chip"
       >
@@ -104,7 +103,7 @@ const emit = defineEmits<{
 }
 
 .success__title {
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: #166534;
 }
@@ -130,7 +129,7 @@ const emit = defineEmits<{
 }
 
 .submit-error__title {
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: #991b1b;
 }

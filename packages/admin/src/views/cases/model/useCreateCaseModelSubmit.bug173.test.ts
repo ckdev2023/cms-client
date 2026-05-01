@@ -96,6 +96,48 @@ describe("BUG-173 normalizeSubmitError returns SubmitErrorInfo", () => {
   });
 });
 
+describe("BUG-176 normalizeSubmitError prevents double-prefix", () => {
+  it("message already prefixed with serverErrorCode → no double prefix", () => {
+    const err = new CaseRepositoryError({
+      code: "CASE_WRITE_ERROR",
+      message: "CASE_OWNER_NOT_FOUND: ownerUserId e00ea5d2 not found",
+      status: 400,
+      serverErrorCode: "CASE_OWNER_NOT_FOUND",
+      detail: "ownerUserId e00ea5d2 not found",
+    });
+    const info = normalizeSubmitError(err);
+    expect(info.message).toBe(
+      "CASE_OWNER_NOT_FOUND: ownerUserId e00ea5d2 not found",
+    );
+    expect(info.code).toBe("CASE_OWNER_NOT_FOUND");
+    expect(info.detail).toBe("ownerUserId e00ea5d2 not found");
+  });
+
+  it("message NOT prefixed (legacy) → single prefix added", () => {
+    const err = new CaseRepositoryError({
+      code: "CASE_WRITE_ERROR",
+      message: "ownerUserId e00ea5d2 not found",
+      status: 400,
+      serverErrorCode: "CASE_OWNER_NOT_FOUND",
+    });
+    const info = normalizeSubmitError(err);
+    expect(info.message).toBe(
+      "CASE_OWNER_NOT_FOUND: ownerUserId e00ea5d2 not found",
+    );
+    expect(info.code).toBe("CASE_OWNER_NOT_FOUND");
+  });
+
+  it("no serverErrorCode → message passed through unchanged", () => {
+    const err = new CaseRepositoryError({
+      code: "NETWORK",
+      message: "Case request failed",
+    });
+    const info = normalizeSubmitError(err);
+    expect(info.message).toBe("Case request failed");
+    expect(info.code).toBeUndefined();
+  });
+});
+
 describe("BUG-173 submitError ref carries structured error info", () => {
   it("4xx with {code, detail, message} → submitError has all three", async () => {
     const { repo } = stubRepo(async () => {

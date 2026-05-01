@@ -97,9 +97,13 @@ function goNext() {
 
 .billing-pagination__btn {
   all: unset;
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
+  min-height: 32px;
+  box-sizing: border-box;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
   cursor: pointer;

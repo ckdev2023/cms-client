@@ -229,7 +229,7 @@ onMounted(() => {
               <span class="conv-list-view__preview">
                 {{ item.lastMessagePreview }}
               </span>
-              <Chip v-if="totalUnread(item) > 0" tone="danger" size="sm">
+              <Chip v-if="totalUnread(item) > 0" tone="danger">
                 {{
                   t("conversations.list.unread.badge", {
                     count: totalUnread(item),
@@ -238,7 +238,7 @@ onMounted(() => {
               </Chip>
             </td>
             <td>
-              <Chip :tone="statusTone(item.status)" size="sm">
+              <Chip :tone="statusTone(item.status)">
                 {{ t(`conversations.list.status.${item.status}`) }}
               </Chip>
             </td>
@@ -302,7 +302,7 @@ onMounted(() => {
   padding: 12px 16px;
   background: var(--color-danger-bg, #fef2f2);
   color: var(--color-danger, #ef4444);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   font-size: 14px;
 }
 
@@ -382,7 +382,7 @@ onMounted(() => {
 }
 
 .conv-list-view__pagination-summary {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3, #6b7280);
 }
 
@@ -394,9 +394,9 @@ onMounted(() => {
 .conv-list-view__pagination-controls button {
   padding: 6px 14px;
   border: 1px solid var(--color-border-1, #d1d5db);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   background: var(--color-bg-1, #fff);
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   cursor: pointer;
   color: var(--color-text-1, #1f2937);
 }

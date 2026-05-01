@@ -95,13 +95,24 @@ export function reminderStatusLabel(status: string, t: TaskI18nT): string {
 }
 
 /**
+ * 将 server 端 ja-JP 在留资格字面量转换为 i18n catalog 标签的解析器。
+ * 命中返回翻译后的文案；未命中返回 null（调用方保留原值）。
+ */
+export type VisaLabelResolver = (raw: string) => string | null;
+
+/**
  * 根据提醒快照信息生成列表标题。
  *
  * @param reminder - 提醒记录。
  * @param t - vue-i18n 翻译函数。
+ * @param resolveVisaLabel - 可选：将 statusOfResidence 转换为 i18n 文案。
  * @returns 适合在表格中展示的提醒标题。
  */
-export function reminderTitle(reminder: ReminderRecord, t: TaskI18nT): string {
+export function reminderTitle(
+  reminder: ReminderRecord,
+  t: TaskI18nT,
+  resolveVisaLabel?: VisaLabelResolver,
+): string {
   const payload = reminder.payloadSnapshot ?? {};
   if (typeof payload.label === "string" && payload.label.trim()) {
     return payload.label.trim();
@@ -111,8 +122,10 @@ export function reminderTitle(reminder: ReminderRecord, t: TaskI18nT): string {
   const statusOfResidence = payload.statusOfResidence;
   if (typeof daysBefore === "number") {
     if (typeof statusOfResidence === "string" && statusOfResidence.trim()) {
+      const rawVisa = statusOfResidence.trim();
+      const visaLabel = resolveVisaLabel?.(rawVisa) ?? rawVisa;
       return t("tasks.reminderTitle.daysBefore", {
-        visa: `${statusOfResidence.trim()} · `,
+        visa: `${visaLabel} · `,
         days: daysBefore,
       });
     }

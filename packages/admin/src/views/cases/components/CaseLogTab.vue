@@ -130,7 +130,7 @@ function resolveTimelineText(entry: LogEntry): string {
                     {{ resolveTimelineText(entry) }}
                   </p>
                   <div class="log-tab__entry-meta">
-                    <Chip :tone="chipTone(entry)" size="sm">
+                    <Chip :tone="chipTone(entry)">
                       {{ t(entry.category) }}
                     </Chip>
                     <span class="log-tab__entry-object">
@@ -198,7 +198,7 @@ function resolveTimelineText(entry: LogEntry): string {
 .log-tab__segmented {
   display: inline-flex;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   overflow: hidden;
   background: var(--color-bg-3);
 }
@@ -229,7 +229,7 @@ function resolveTimelineText(entry: LogEntry): string {
 .log-tab__segment--active {
   background: var(--color-bg-1);
   color: var(--color-text-1);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
@@ -291,11 +291,11 @@ function resolveTimelineText(entry: LogEntry): string {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-full);
-  font-size: 9px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: #fff;
   flex-shrink: 0;
 }
@@ -311,7 +311,6 @@ function resolveTimelineText(entry: LogEntry): string {
   margin: 0;
   font-size: 14px;
   color: var(--color-text-1);
-  line-height: 1.5;
 }
 
 .log-tab__entry-meta {
@@ -322,7 +321,7 @@ function resolveTimelineText(entry: LogEntry): string {
 }
 
 .log-tab__entry-object {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-3);
 }
 

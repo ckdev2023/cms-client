@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
@@ -17,6 +18,8 @@ const emit = defineEmits<{
   (e: "switch-tab", tab: CaseDetailTab): void;
   (e: "open-risk-modal"): void;
 }>();
+
+const { t } = useI18n();
 
 const SEVERITY_CLASS: Record<string, string> = {
   A: "vt__item--danger",
@@ -63,12 +66,14 @@ function onNavigate(tab: CaseDetailTab | string) {
         <Card padding="lg">
           <template #header>
             <div class="vt__header-left">
-              <h2 class="vt__title">提交前检查</h2>
+              <h2 class="vt__title">
+                {{ t("cases.detail.validation.tab.gateCard.title") }}
+              </h2>
               <span
                 v-if="detail.validation.blocking.length > 0"
                 class="vt__chip vt__chip--danger"
               >
-                当前卡点
+                {{ t("cases.detail.validation.tab.gateCard.currentBlocker") }}
               </span>
             </div>
             <Button v-if="!readonly" variant="filled" tone="primary" size="sm">
@@ -87,7 +92,7 @@ function onNavigate(tab: CaseDetailTab | string) {
                   d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
                 />
               </svg>
-              重新检查
+              {{ t("cases.detail.validation.tab.gateCard.recheck") }}
             </Button>
           </template>
 
@@ -96,8 +101,12 @@ function onNavigate(tab: CaseDetailTab | string) {
           <template v-if="hasValidationItems(detail)">
             <div v-if="detail.validation.blocking.length > 0" class="vt__group">
               <div class="vt__group-head">
-                <span class="vt__kicker vt__kicker--danger">必须先处理</span>
-                <span class="vt__chip vt__chip--danger">当前卡点</span>
+                <span class="vt__kicker vt__kicker--danger">{{
+                  t("cases.detail.validation.tab.gateCard.mustHandleFirst")
+                }}</span>
+                <span class="vt__chip vt__chip--danger">{{
+                  t("cases.detail.validation.tab.gateCard.currentBlocker")
+                }}</span>
               </div>
               <div
                 v-for="(item, i) in detail.validation.blocking"
@@ -108,7 +117,12 @@ function onNavigate(tab: CaseDetailTab | string) {
                   <div class="vt__item-main">
                     <div class="vt__item-title">{{ item.title }}</div>
                     <div v-if="item.fix" class="vt__item-desc">
-                      修复建议：{{ item.fix }}
+                      {{
+                        t(
+                          "cases.detail.validation.tab.gateCard.fixSuggestion",
+                          { fix: item.fix },
+                        )
+                      }}
                     </div>
                   </div>
                   <Button
@@ -124,16 +138,28 @@ function onNavigate(tab: CaseDetailTab | string) {
                   v-if="item.assignee || item.deadline"
                   class="vt__item-meta"
                 >
-                  <span v-if="item.assignee">责任人：{{ item.assignee }}</span>
-                  <span v-if="item.deadline">截止：{{ item.deadline }}</span>
+                  <span v-if="item.assignee">{{
+                    t("cases.detail.validation.tab.gateCard.assignee", {
+                      name: item.assignee,
+                    })
+                  }}</span>
+                  <span v-if="item.deadline">{{
+                    t("cases.detail.validation.tab.gateCard.deadline", {
+                      date: item.deadline,
+                    })
+                  }}</span>
                 </div>
               </div>
             </div>
 
             <div v-if="detail.validation.warnings.length > 0" class="vt__group">
               <div class="vt__group-head">
-                <span class="vt__kicker vt__kicker--warning">建议补强</span>
-                <span class="vt__chip vt__chip--warning">建议处理</span>
+                <span class="vt__kicker vt__kicker--warning">{{
+                  t("cases.detail.validation.tab.gateCard.recommendStrengthen")
+                }}</span>
+                <span class="vt__chip vt__chip--warning">{{
+                  t("cases.detail.validation.tab.gateCard.recommendHandle")
+                }}</span>
               </div>
               <div
                 v-for="(item, i) in detail.validation.warnings"
@@ -142,15 +168,23 @@ function onNavigate(tab: CaseDetailTab | string) {
               >
                 <div class="vt__item-title">{{ item.title }}</div>
                 <div v-if="item.note" class="vt__item-desc">
-                  建议：{{ item.note }}
+                  {{
+                    t("cases.detail.validation.tab.gateCard.suggestion", {
+                      note: item.note,
+                    })
+                  }}
                 </div>
               </div>
             </div>
 
             <div v-if="detail.validation.info.length > 0" class="vt__group">
               <div class="vt__group-head">
-                <span class="vt__kicker vt__kicker--info">补充说明</span>
-                <span class="vt__chip vt__chip--info">仅提示</span>
+                <span class="vt__kicker vt__kicker--info">{{
+                  t("cases.detail.validation.tab.gateCard.supplementaryInfo")
+                }}</span>
+                <span class="vt__chip vt__chip--info">{{
+                  t("cases.detail.validation.tab.gateCard.onlyTip")
+                }}</span>
               </div>
               <div
                 v-for="(item, i) in detail.validation.info"
@@ -179,7 +213,7 @@ function onNavigate(tab: CaseDetailTab | string) {
             >
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            <p>校验通过，无阻断项</p>
+            <p>{{ t("cases.detail.validation.tab.gateCard.noBlockers") }}</p>
           </div>
 
           <template #footer>
@@ -194,7 +228,9 @@ function onNavigate(tab: CaseDetailTab | string) {
       <div class="vt__col">
         <Card padding="lg">
           <template #header>
-            <h2 class="vt__title">提交包（历史快照）</h2>
+            <h2 class="vt__title">
+              {{ t("cases.detail.validation.tab.submissionPackages.title") }}
+            </h2>
             <Button v-if="!readonly" size="sm">
               <svg
                 width="14"
@@ -209,7 +245,7 @@ function onNavigate(tab: CaseDetailTab | string) {
               >
                 <path d="M12 4v16m8-8H4" />
               </svg>
-              新建提交包
+              {{ t("cases.detail.validation.tab.submissionPackages.create") }}
             </Button>
           </template>
 
@@ -223,31 +259,53 @@ function onNavigate(tab: CaseDetailTab | string) {
               <div class="vt__pkg-meta">{{ pkg.summary }}</div>
               <div class="vt__pkg-info">
                 <span>{{ pkg.date }}</span>
-                <Chip :tone="pkg.locked ? 'neutral' : 'primary'" size="sm">
-                  {{ pkg.locked ? "已锁定" : pkg.status }}
+                <Chip :tone="pkg.locked ? 'neutral' : 'primary'">
+                  {{
+                    pkg.locked
+                      ? t(
+                          "cases.detail.validation.tab.submissionPackages.locked",
+                        )
+                      : pkg.status
+                  }}
                 </Chip>
               </div>
             </div>
           </div>
-          <div v-else class="vt__empty">暂无提交包记录</div>
+          <div v-else class="vt__empty">
+            {{ t("cases.detail.validation.tab.submissionPackages.empty") }}
+          </div>
         </Card>
 
         <Card v-if="detail.correctionPackage" padding="lg">
-          <span class="vt__kicker vt__kicker--warning">补正包</span>
-          <h2 class="vt__title">补正通知关联</h2>
+          <span class="vt__kicker vt__kicker--warning">{{
+            t("cases.detail.validation.tab.correction.kicker")
+          }}</span>
+          <h2 class="vt__title">
+            {{ t("cases.detail.validation.tab.correction.title") }}
+          </h2>
           <div class="vt__corr">
             <div class="vt__pkg-id">{{ detail.correctionPackage.id }}</div>
             <div class="vt__pkg-meta">
               {{ detail.correctionPackage.status }}
             </div>
             <div class="vt__corr-details">
-              <span
-                >关联原提交包：{{ detail.correctionPackage.relatedSub }}</span
-              >
-              <span>补正截止：{{ detail.correctionPackage.corrDeadline }}</span>
+              <span>{{
+                t("cases.detail.validation.tab.correction.relatedSub", {
+                  id: detail.correctionPackage.relatedSub,
+                })
+              }}</span>
+              <span>{{
+                t("cases.detail.validation.tab.correction.deadline", {
+                  date: detail.correctionPackage.corrDeadline,
+                })
+              }}</span>
             </div>
             <div v-if="detail.correctionPackage.items" class="vt__corr-items">
-              补正项：{{ detail.correctionPackage.items }}
+              {{
+                t("cases.detail.validation.tab.correction.items", {
+                  items: detail.correctionPackage.items,
+                })
+              }}
             </div>
             <div v-if="detail.correctionPackage.note" class="vt__corr-note">
               {{ detail.correctionPackage.note }}
@@ -265,226 +323,4 @@ function onNavigate(tab: CaseDetailTab | string) {
   </div>
 </template>
 
-<style scoped>
-.vt {
-  display: grid;
-  gap: 20px;
-}
-.vt__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-@media (max-width: 1024px) {
-  .vt__grid {
-    grid-template-columns: 1fr;
-  }
-}
-.vt__col {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.vt__header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-.vt__title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-.vt__last-time {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  margin-bottom: 16px;
-}
-
-.vt__chip {
-  display: inline-flex;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: var(--font-weight-bold);
-  line-height: 1.5;
-  white-space: nowrap;
-}
-.vt__chip--danger {
-  background: rgba(220, 38, 38, 0.08);
-  color: #991b1b;
-}
-.vt__chip--warning {
-  background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
-}
-.vt__chip--info {
-  background: rgba(59, 130, 246, 0.08);
-  color: #1d4ed8;
-}
-
-.vt__group {
-  padding-top: 12px;
-}
-.vt__group + .vt__group {
-  border-top: 1px solid var(--color-border-1);
-}
-.vt__group-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
-}
-.vt__kicker {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.vt__kicker--danger {
-  color: var(--color-danger);
-}
-.vt__kicker--warning {
-  color: #f59e0b;
-}
-.vt__kicker--info {
-  color: var(--color-primary-6);
-}
-
-.vt__item {
-  padding: 12px 16px;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid var(--color-border-1);
-  background: var(--color-bg-3);
-}
-.vt__item + .vt__item {
-  margin-top: 8px;
-}
-.vt__item--danger {
-  border-left: 3px solid var(--color-danger);
-}
-.vt__item--warning {
-  border-left: 3px solid #f59e0b;
-}
-.vt__item--info {
-  border-left: 3px solid var(--color-primary-6);
-}
-
-.vt__item-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.vt__item-main {
-  min-width: 0;
-  flex: 1;
-}
-.vt__item-title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-.vt__item-desc {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  margin-top: 4px;
-}
-.vt__item-meta {
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-
-.vt__empty-gates {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 32px 16px;
-  color: var(--color-success, #22c55e);
-}
-.vt__empty-gates p {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-.vt__retrigger {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-
-.vt__packages {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.vt__pkg {
-  padding: 16px;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid var(--color-border-1);
-  background: var(--color-bg-3);
-}
-.vt__pkg-id {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-.vt__pkg-meta {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  margin-top: 4px;
-}
-.vt__pkg-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-
-.vt__corr {
-  padding: 16px;
-  margin-top: 12px;
-  border-radius: var(--radius-lg, 12px);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  background: rgba(245, 158, 11, 0.03);
-}
-.vt__corr-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-.vt__corr-items {
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-2);
-}
-.vt__corr-note {
-  margin-top: 8px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  font-style: italic;
-}
-
-.vt__empty {
-  padding: 24px 16px;
-  text-align: center;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-</style>
+<style scoped src="./CaseValidationTab.css"></style>

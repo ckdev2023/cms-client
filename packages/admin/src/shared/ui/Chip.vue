@@ -6,7 +6,7 @@ export type ChipTone = "neutral" | "primary" | "success" | "warning" | "danger";
 /**
  * 标签支持的尺寸规格。
  */
-export type ChipSize = "sm" | "md";
+export type ChipSize = "micro" | "md";
 </script>
 
 <script setup lang="ts">
@@ -48,7 +48,8 @@ withDefaults(
   border-radius: var(--radius-full);
   font-weight: var(--font-weight-bold);
   white-space: nowrap;
-  line-height: 1.1;
+  line-height: var(--leading-3xl);
+  letter-spacing: var(--letter-spacing-normal);
   border: 1px solid transparent;
 }
 
@@ -59,7 +60,7 @@ withDefaults(
   font-size: var(--font-size-sm);
 }
 
-.ui-chip--sm {
+.ui-chip--micro {
   padding: 2px 8px;
   font-size: var(--font-size-xs);
 }
@@ -87,7 +88,20 @@ withDefaults(
 .ui-chip--primary {
   background-color: rgba(3, 105, 161, 0.08);
   border-color: rgba(3, 105, 161, 0.18);
-  color: var(--color-primary-6);
+  color: var(--color-primary-7);
+}
+
+.ui-chip--primary[aria-selected="true"],
+.ui-chip--primary.is-active,
+.ui-chip--success[aria-selected="true"],
+.ui-chip--success.is-active,
+.ui-chip--warning[aria-selected="true"],
+.ui-chip--warning.is-active,
+.ui-chip--danger[aria-selected="true"],
+.ui-chip--danger.is-active {
+  color: #fff;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 /* --- Tone: success --- */
@@ -95,7 +109,7 @@ withDefaults(
 .ui-chip--success {
   background-color: rgba(22, 163, 74, 0.08);
   border-color: rgba(22, 163, 74, 0.18);
-  color: var(--color-success);
+  color: #166534;
 }
 
 /* --- Tone: warning --- */
@@ -103,7 +117,7 @@ withDefaults(
 .ui-chip--warning {
   background-color: rgba(245, 158, 11, 0.08);
   border-color: rgba(245, 158, 11, 0.18);
-  color: #b45309;
+  color: #92400e;
 }
 
 /* --- Tone: danger --- */
@@ -111,6 +125,6 @@ withDefaults(
 .ui-chip--danger {
   background-color: rgba(220, 38, 38, 0.07);
   border-color: rgba(220, 38, 38, 0.18);
-  color: var(--color-danger);
+  color: #991b1b;
 }
 </style>

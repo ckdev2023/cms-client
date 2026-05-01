@@ -154,8 +154,8 @@ function onClose() {
 }
 
 .risk-modal__title {
-  font-size: 18px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
@@ -190,7 +190,7 @@ function onClose() {
 .risk-modal__textarea {
   padding: 10px 14px;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-sm);
   color: var(--color-text-1);

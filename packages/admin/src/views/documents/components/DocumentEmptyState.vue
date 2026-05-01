@@ -34,7 +34,7 @@ const { t } = useI18n();
 
 .doc-empty-state__desc {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 </style>

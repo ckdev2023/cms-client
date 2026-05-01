@@ -186,8 +186,7 @@ function onFieldInput(key: string, value: string) {
 .storage-panel__warning-desc {
   margin: 4px 0 0;
   font-size: var(--font-size-xs);
-  color: var(--color-warning-text, #b45309);
-  line-height: 1.5;
+  color: var(--color-warning-text);
 }
 
 /* Card */
@@ -236,7 +235,7 @@ function onFieldInput(key: string, value: string) {
 }
 
 .storage-panel__input::placeholder {
-  color: var(--color-text-4);
+  color: var(--color-text-3);
 }
 
 .storage-panel__input:focus {
@@ -252,8 +251,8 @@ function onFieldInput(key: string, value: string) {
 /* Hint */
 .storage-panel__hint {
   margin: 4px 0 0;
-  font-size: 11px;
-  color: var(--color-text-4);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
 }
 
 /* Info box */
@@ -279,7 +278,6 @@ function onFieldInput(key: string, value: string) {
   margin: 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 
 /* Preview */

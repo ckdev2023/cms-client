@@ -471,15 +471,12 @@ export interface CaseBillingRiskAckInput {
 export interface CasePostApprovalInput {
   stage: string;
 }
-/** POST /case-parties 创建输入。 */
-export interface CasePartyCreateInput {
-  caseId: string;
-  partyType: string;
-  customerId?: string | null;
-  contactPersonId?: string | null;
-  relationToCase?: string | null;
-  isPrimary?: boolean;
-}
+
+export {
+  type PartyType,
+  type CasePartyCreateInput,
+  ADMIN_VALID_PARTY_TYPES,
+} from "./CaseAdapterTypes.party";
 
 /** P1 业务子步骤流转输入。 */
 export interface CaseWorkflowStepTransitionInput {

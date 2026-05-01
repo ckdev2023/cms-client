@@ -100,7 +100,7 @@ defineEmits<{
   color: var(--color-text-3);
   cursor: pointer;
   padding: 2px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   transition: color var(--transition-fast);
 }
 

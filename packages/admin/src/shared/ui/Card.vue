@@ -54,7 +54,7 @@ withDefaults(
 <style scoped>
 .ui-card {
   background-color: var(--color-bg-1);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
   overflow: hidden;
 }
@@ -72,6 +72,7 @@ withDefaults(
 .ui-card--hoverable:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
+  background-color: var(--color-bg-overlay-hover);
 }
 
 /* --- Padding scale --- */

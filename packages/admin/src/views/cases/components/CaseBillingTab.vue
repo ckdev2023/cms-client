@@ -136,7 +136,7 @@ function paymentLabel(row: PaymentRow): string {
                 {{ row.amount }}
               </td>
               <td class="billing-tab__td billing-tab__td--center">
-                <Chip :tone="paymentTone(row)" size="sm">
+                <Chip :tone="paymentTone(row)">
                   {{ paymentLabel(row) }}
                 </Chip>
               </td>
@@ -206,7 +206,7 @@ function paymentLabel(row: PaymentRow): string {
 
 .billing-tab__stat {
   padding: 20px;
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
 }
 
 .billing-tab__stat--total {
@@ -239,7 +239,7 @@ function paymentLabel(row: PaymentRow): string {
 
 .billing-tab__stat-value {
   font-size: 20px;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
   letter-spacing: -0.02em;
 }

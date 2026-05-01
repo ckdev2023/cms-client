@@ -59,7 +59,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
           {{ t("customers.detail.bmvIntake.title") }}
         </h4>
       </div>
-      <Chip :tone="intakeCard.stage.tone" size="sm">
+      <Chip :tone="intakeCard.stage.tone">
         {{ t(intakeCard.stage.labelKey) }}
       </Chip>
     </div>
@@ -90,7 +90,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
         class="bmv-intake-card__step"
       >
         <span class="bmv-intake-card__label">{{ t(item.labelKey) }}</span>
-        <Chip :tone="item.tone" size="sm">{{ t(item.valueKey) }}</Chip>
+        <Chip :tone="item.tone">{{ t(item.valueKey) }}</Chip>
       </div>
     </div>
 
@@ -156,7 +156,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
         >
           <span class="bmv-intake-card__quote-version">
             {{ quote.versionLabel }}
-            <Chip v-if="quote.isCurrent" tone="success" size="sm">
+            <Chip v-if="quote.isCurrent" tone="success">
               {{ t("customers.detail.bmvIntake.quoteHistory.current") }}
             </Chip>
           </span>
@@ -259,7 +259,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
           <span class="bmv-intake-card__quote-detail--muted">
             {{ reminder.dueAt }}
           </span>
-          <Chip tone="warning" size="sm">{{ reminder.status }}</Chip>
+          <Chip tone="warning">{{ reminder.status }}</Chip>
         </li>
       </ul>
     </section>
@@ -398,7 +398,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
 
 .bmv-intake-card__timeline-item {
   padding: 12px;
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
 }
@@ -472,7 +472,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
 .bmv-intake-card__survey-field,
 .bmv-intake-card__case-stage-item {
   padding: 8px;
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
 }

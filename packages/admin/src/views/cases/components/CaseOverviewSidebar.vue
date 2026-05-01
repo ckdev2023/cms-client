@@ -267,7 +267,7 @@ function teamGradient(member: TeamMember): string {
   gap: 12px;
   padding: 8px;
   margin: 0 -8px;
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   transition: background-color 0.15s;
 }
 
@@ -349,7 +349,7 @@ function teamGradient(member: TeamMember): string {
   margin: 0 0 16px;
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .overview-sidebar__validation-hint-btn {

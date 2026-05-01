@@ -392,10 +392,10 @@ function timelineColor(color: string): string {
   letter-spacing: 0.04em;
 }
 .overview-tab__stat-value {
-  font-size: 22px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 .overview-tab__stat-value--danger {
   color: var(--color-danger);
@@ -418,7 +418,7 @@ function timelineColor(color: string): string {
   margin-top: 4px;
   padding: 3px 8px;
   font-size: var(--font-size-xs);
-  border-radius: var(--radius-md, 6px);
+  border-radius: var(--radius-md);
   background: rgba(var(--color-primary-rgb, 3, 105, 161), 0.05);
   border: 1px solid rgba(var(--color-primary-rgb, 3, 105, 161), 0.1);
   width: fit-content;
@@ -429,7 +429,7 @@ function timelineColor(color: string): string {
 }
 .overview-tab__parallel-step-arrow {
   color: var(--color-text-3);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 .overview-tab__parallel-step-label {
   font-weight: var(--font-weight-bold);
@@ -441,7 +441,7 @@ function timelineColor(color: string): string {
 .overview-tab__parallel-step-stage {
   padding: 0 4px;
   font-size: 10px;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-full);
   background: var(--color-bg-3);
   color: var(--color-text-3);
@@ -518,7 +518,7 @@ function timelineColor(color: string): string {
   margin: 0 0 16px;
   font-size: var(--font-size-sm);
   color: var(--color-text-1);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 .overview-tab__next-action-buttons {
   display: flex;

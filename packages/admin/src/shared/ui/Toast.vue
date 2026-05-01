@@ -102,13 +102,11 @@ const { items, dismiss } = useToast();
   font-size: var(--font-size-sm, 14px);
   font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-1, #1f2937);
-  line-height: 1.4;
 }
 
 .ui-toast__desc {
   font-size: var(--font-size-xs, 12px);
   color: var(--color-text-3, #6b7280);
-  line-height: 1.5;
 }
 
 .ui-toast__close {

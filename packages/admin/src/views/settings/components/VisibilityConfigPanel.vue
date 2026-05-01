@@ -100,7 +100,6 @@ function onToggle(itemId: string, value: boolean) {
   margin: 4px 0 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 
 .visibility-panel__actions {

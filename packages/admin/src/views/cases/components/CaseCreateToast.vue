@@ -40,7 +40,7 @@ defineProps<{
 }
 
 .case-create-toast__title {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
 }

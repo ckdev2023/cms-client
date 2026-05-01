@@ -169,7 +169,6 @@ const emit = defineEmits<{
   margin: 12px 0 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
-  line-height: 1.5;
 }
 
 .psg__blockers {
@@ -183,7 +182,7 @@ const emit = defineEmits<{
 
 .psg__blocker {
   padding: 10px 14px;
-  border-radius: var(--radius-md, 6px);
+  border-radius: var(--radius-md);
   background: rgba(245, 158, 11, 0.06);
   border: 1px solid rgba(245, 158, 11, 0.12);
 }
@@ -212,7 +211,6 @@ const emit = defineEmits<{
   margin: 4px 0 0 14px;
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 
 .psg__actions {

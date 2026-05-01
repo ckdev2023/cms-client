@@ -251,7 +251,7 @@ const relationTypeOptions = computed(() =>
   min-height: 40px;
   padding: 10px 12px;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   box-sizing: border-box;
   font: inherit;
 }

@@ -333,7 +333,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 }
 
 .lead-modal-body__dedupe-title {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -378,7 +378,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-base);
   color: var(--color-text-1);

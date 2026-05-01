@@ -64,15 +64,21 @@ const groupLabel = computed(() =>
   >
     <!-- Checkbox -->
     <td class="lead-row__check">
-      <input
-        type="checkbox"
-        class="lead-row__checkbox"
-        :checked="selected"
-        :aria-label="t('leads.list.columns.selectRow', { name: lead.name })"
-        @change="
-          $emit('select', lead.id, ($event.target as HTMLInputElement).checked)
-        "
-      />
+      <label class="ui-checkbox-hit">
+        <input
+          type="checkbox"
+          class="lead-row__checkbox"
+          :checked="selected"
+          :aria-label="t('leads.list.columns.selectRow', { name: lead.name })"
+          @change="
+            $emit(
+              'select',
+              lead.id,
+              ($event.target as HTMLInputElement).checked,
+            )
+          "
+        />
+      </label>
     </td>
 
     <!-- 咨询人 -->
@@ -108,7 +114,7 @@ const groupLabel = computed(() =>
 
     <!-- 当前状态 -->
     <td>
-      <Chip :tone="STATUS_TONE[lead.status]" size="sm" :dot="true">
+      <Chip :tone="STATUS_TONE[lead.status]" :dot="true">
         {{ t(`leads.list.status.${lead.status}`) }}
       </Chip>
     </td>
@@ -120,7 +126,7 @@ const groupLabel = computed(() =>
         {{ ownerLabel }}
       </div>
       <div class="lead-row__group">
-        <Chip tone="neutral" size="sm">{{ groupLabel }}</Chip>
+        <Chip tone="neutral">{{ groupLabel }}</Chip>
       </div>
     </td>
 
@@ -145,8 +151,13 @@ const groupLabel = computed(() =>
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border-table-row);
   font-size: var(--font-size-base);
+  line-height: var(--leading-sm);
   color: var(--color-text-1);
   vertical-align: middle;
+}
+
+.lead-row:hover td {
+  background-color: var(--color-bg-overlay-hover);
 }
 
 .lead-row:last-child td {
@@ -179,6 +190,9 @@ const groupLabel = computed(() =>
 }
 
 .lead-row__name {
+  display: inline-block;
+  padding: 4px 0;
+  min-height: 24px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   text-decoration: none;
@@ -199,7 +213,7 @@ const groupLabel = computed(() =>
   margin-top: 4px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: #b45309;
+  color: var(--color-warning-text);
 }
 
 .lead-row__contact-info {

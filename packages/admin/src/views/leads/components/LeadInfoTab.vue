@@ -163,6 +163,6 @@ const groupDisplay = computed(() =>
 }
 
 .info-tab__value--note {
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 </style>

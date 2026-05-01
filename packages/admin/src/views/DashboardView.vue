@@ -174,7 +174,7 @@ watch(errorCode, (nextErrorCode) => {
   gap: 20px;
   padding: 24px;
   border: 1px solid var(--color-border-1);
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-1);
   background:
     linear-gradient(135deg, rgb(255 255 255 / 92%), rgb(238 246 255 / 95%)),
@@ -184,7 +184,7 @@ watch(errorCode, (nextErrorCode) => {
 .hero-kicker {
   margin: 0 0 8px;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-caps);
   color: var(--color-primary-6);
@@ -193,14 +193,14 @@ watch(errorCode, (nextErrorCode) => {
 .hero-title {
   margin: 0;
   font-size: clamp(28px, 3vw, 36px);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
 }
 
 .hero-subtitle {
   margin: 8px 0 0;
   color: var(--color-text-3);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .hero-toolbar {
@@ -231,7 +231,7 @@ watch(errorCode, (nextErrorCode) => {
 .filter-hint {
   margin: 0;
   font-size: var(--font-size-sm);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
 }
 
@@ -243,7 +243,7 @@ watch(errorCode, (nextErrorCode) => {
   gap: 12px;
   padding: 14px 16px;
   border: 1px solid var(--color-border-1);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--color-bg-1);
   color: var(--color-text-2);
 }

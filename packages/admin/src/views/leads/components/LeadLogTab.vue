@@ -231,7 +231,7 @@ function logTypeLabel(type: string): string {
 .log-timeline__card {
   padding: 12px 16px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   background: var(--color-bg-1);
 }
 

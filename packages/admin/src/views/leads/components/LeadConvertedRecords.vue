@@ -112,7 +112,7 @@ const hasConvertedCase = computed(
         :key="rec.id"
         class="history-item"
       >
-        <Chip :tone="rec.type === 'customer' ? 'success' : 'primary'" size="sm">
+        <Chip :tone="rec.type === 'customer' ? 'success' : 'primary'">
           {{
             rec.type === "customer"
               ? t("leads.detail.conversionTab.typeCustomer")
@@ -138,7 +138,7 @@ const hasConvertedCase = computed(
 .converted-records__title {
   margin: 0;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 

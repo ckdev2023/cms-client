@@ -233,7 +233,7 @@ const form = reactive(props.followupForm);
 .followup-form__title {
   margin: 0;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
@@ -276,7 +276,7 @@ const form = reactive(props.followupForm);
   color: var(--color-text-1);
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   transition:
     border-color 0.15s,
     background-color 0.15s;
@@ -427,7 +427,7 @@ const form = reactive(props.followupForm);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .followup-timeline__details {

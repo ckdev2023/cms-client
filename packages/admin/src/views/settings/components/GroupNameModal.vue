@@ -191,7 +191,7 @@ function confirmLabelKey(): string {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border-input, var(--color-border-2));
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: var(--color-bg-1);
   font: inherit;
   font-size: var(--font-size-sm);
@@ -207,7 +207,7 @@ function confirmLabelKey(): string {
 }
 
 .gnm-input::placeholder {
-  color: var(--color-text-4, var(--color-text-3));
+  color: var(--color-text-3);
 }
 
 .gnm-footer {

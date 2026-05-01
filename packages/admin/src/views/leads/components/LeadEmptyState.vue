@@ -46,7 +46,7 @@ defineEmits<{
 
 .lead-empty-state__desc {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 
@@ -54,10 +54,10 @@ defineEmits<{
   margin-top: 16px;
   border: 1px solid var(--color-primary-6);
   background: transparent;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 16px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-primary-6);
   cursor: pointer;

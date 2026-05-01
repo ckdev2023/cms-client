@@ -207,7 +207,6 @@ function reasonI18nKey(code: string | null): string | null {
   margin: 4px 0 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
-  line-height: 1.5;
 }
 
 .fc-banner__body {
@@ -217,7 +216,7 @@ function reasonI18nKey(code: string | null): string | null {
   padding: 12px 16px;
   background: rgba(220, 38, 38, 0.03);
   border: 1px solid rgba(220, 38, 38, 0.1);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
 }
 
 .fc-banner__reason-row,
@@ -272,7 +271,7 @@ function reasonI18nKey(code: string | null): string | null {
 
 .fc-banner__error {
   padding: 8px 12px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: rgba(220, 38, 38, 0.06);
   border: 1px solid rgba(220, 38, 38, 0.12);
   font-size: var(--font-size-xs);

@@ -74,7 +74,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
   gap: 6px;
   border: 1px solid transparent;
   font-family: inherit;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-normal);
   cursor: pointer;
   user-select: none;
@@ -104,6 +104,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 /* --- Size --- */
 
 .ui-btn--sm {
+  min-height: var(--button-height-sm, 32px);
   padding: 6px 10px;
   font-size: var(--font-size-sm);
   border-radius: var(--radius-md);
@@ -112,7 +113,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 .ui-btn--md {
   padding: 10px 14px;
   font-size: var(--font-size-base);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
 }
 
 .ui-btn--lg {
@@ -199,6 +200,14 @@ const isDisabled = computed(() => props.disabled || props.loading);
 
 .ui-btn--outlined:hover:not(:disabled) {
   background-color: var(--color-bg-overlay-hover);
+}
+
+.ui-btn--outlined.ui-btn--tone-neutral:hover:not(:disabled) {
+  background-color: var(--color-bg-3);
+}
+
+.ui-btn--outlined.ui-btn--tone-neutral:active:not(:disabled) {
+  background-color: var(--color-bg-3);
 }
 
 /* --- Variant: ghost --- */

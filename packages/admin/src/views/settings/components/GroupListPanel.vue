@@ -163,7 +163,7 @@ function fmtCreatedAt(iso: string | null | undefined): string {
               <span class="group-list-panel__group-name">{{ group.name }}</span>
             </td>
             <td class="group-list-panel__td">
-              <Chip :tone="chipToneFor(group.status)" size="sm" dot>
+              <Chip :tone="chipToneFor(group.status)" dot>
                 {{ t(GROUP_STATUS_BADGE[group.status].label) }}
               </Chip>
             </td>
@@ -203,11 +203,11 @@ function fmtCreatedAt(iso: string | null | undefined): string {
   appearance: none;
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 12px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   width: 140px;

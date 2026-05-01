@@ -11,6 +11,7 @@ import type { CaseParty } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import { VALID_PARTY_TYPES, type PartyType } from "./caseParties.types";
 
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -45,7 +46,7 @@ export function mapCasePartyRow(row: CasePartyQueryRow): CaseParty {
     id: row.id,
     orgId: row.org_id,
     caseId: row.case_id,
-    partyType: row.party_type,
+    partyType: row.party_type as PartyType,
     customerId: row.customer_id,
     contactPersonId: row.contact_person_id,
     relationToCase: row.relation_to_case,
@@ -57,18 +58,10 @@ export function mapCasePartyRow(row: CasePartyQueryRow): CaseParty {
 
 const PARTY_COLS = `id, org_id, case_id, party_type, customer_id, contact_person_id, relation_to_case, is_primary, created_at, updated_at`;
 
-const VALID_PARTY_TYPES = new Set([
-  "spouse",
-  "child",
-  "guarantor",
-  "representative",
-  "other",
-]);
-
 /** 创建案件关联人请求参数。 */
 export type CasePartyCreateInput = {
   caseId: string;
-  partyType: string;
+  partyType: PartyType;
   customerId?: string | null;
   contactPersonId?: string | null;
   relationToCase?: string | null;
@@ -77,7 +70,7 @@ export type CasePartyCreateInput = {
 
 /** 更新案件关联人请求参数。 */
 export type CasePartyUpdateInput = {
-  partyType?: string;
+  partyType?: PartyType;
   customerId?: string | null;
   contactPersonId?: string | null;
   relationToCase?: string | null;
@@ -348,7 +341,7 @@ function validatePartyType(partyType: string): void {
 }
 
 type ResolvedUpdateFields = {
-  partyType: string;
+  partyType: PartyType;
   isPrimary: boolean;
   customerId: string | null;
   contactPersonId: string | null;

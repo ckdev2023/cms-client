@@ -64,7 +64,7 @@ function chipToneFor(role: string): ChipTone {
         <tr v-for="(member, idx) in members" :key="idx">
           <td class="group-member-list__td">{{ member.name }}</td>
           <td class="group-member-list__td">
-            <Chip :tone="chipToneFor(member.role)" size="sm">
+            <Chip :tone="chipToneFor(member.role)">
               {{ member.role }}
             </Chip>
           </td>

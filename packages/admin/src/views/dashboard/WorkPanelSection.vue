@@ -200,23 +200,23 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
   background: var(--color-bg-2);
   color: var(--color-text-3);
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .panel-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
-  line-height: 1.3;
+  line-height: var(--leading-xl);
 }
 
 .panel-subtitle {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
   font-weight: var(--font-weight-bold);
 }
@@ -234,7 +234,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
 
 .work-item {
   border: 1px solid var(--color-border-1);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   padding: 16px;
   background: rgb(255 255 255 / 88%);
   display: grid;
@@ -249,6 +249,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
   transform: translateY(-1px);
   border-color: var(--color-border-2);
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+  background-color: var(--color-bg-overlay-hover);
 }
 
 .work-item-head {
@@ -261,8 +262,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
 .work-item-title {
   margin: 0;
   font-size: var(--font-size-md);
-  line-height: 1.45;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
@@ -271,7 +271,6 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
   flex-wrap: wrap;
   gap: 8px;
   font-size: var(--font-size-sm);
-  line-height: 1.5;
   color: var(--color-text-3);
   font-weight: var(--font-weight-extrabold);
   margin-top: 6px;
@@ -279,8 +278,8 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
 
 .work-item-desc {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
   font-weight: var(--font-weight-bold);
 }
@@ -300,7 +299,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
   padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   font-weight: var(--font-weight-extrabold);
   border: 1px solid transparent;
   white-space: nowrap;
@@ -316,21 +315,21 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
 }
 
 .status-info {
-  color: #0369a1;
-  background: rgba(14, 165, 233, 0.12);
-  border-color: rgba(14, 165, 233, 0.2);
+  color: #fff;
+  background: #0369a1;
+  border-color: #0369a1;
 }
 
 .status-warn {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.22);
+  color: #fff;
+  background: #b45309;
+  border-color: #b45309;
 }
 
 .status-danger {
-  color: #b91c1c;
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.16);
+  color: #fff;
+  background: #b91c1c;
+  border-color: #b91c1c;
 }
 
 .status-muted {
@@ -346,7 +345,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
   border-radius: 16px;
   padding: 18px;
   font-size: 14px;
-  line-height: 1.7;
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
   background: var(--color-bg-2);
 }

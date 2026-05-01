@@ -153,7 +153,7 @@ function fmtDateTime(iso: string): string {
                 {{ fmtDateTime(l.at) }}
               </td>
               <td class="logs-tab__td logs-tab__td--type">
-                <Chip :tone="typeTone(l.type)" size="sm">
+                <Chip :tone="typeTone(l.type)">
                   {{ logTypeLabel(l.type) }}
                 </Chip>
               </td>
@@ -275,7 +275,7 @@ function fmtDateTime(iso: string): string {
 .logs-tab__th {
   padding: 12px 16px;
   text-align: left;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   background: var(--color-bg-3);
   white-space: nowrap;

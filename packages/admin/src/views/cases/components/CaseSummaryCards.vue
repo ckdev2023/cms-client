@@ -48,15 +48,15 @@ const { t } = useI18n();
   padding: 20px;
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
 }
 
 .case-summary-cards__value {
-  font-size: 28px;
+  font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .case-summary-cards__label {
@@ -74,7 +74,7 @@ const { t } = useI18n();
 }
 
 .case-summary-cards__item--warning .case-summary-cards__value {
-  color: #b45309;
+  color: var(--color-warning-text);
 }
 
 .case-summary-cards__item--neutral .case-summary-cards__value {

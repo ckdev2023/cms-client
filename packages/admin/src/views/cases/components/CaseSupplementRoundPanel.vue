@@ -219,7 +219,7 @@ function toneClass(tone: string): string {
   display: inline-flex;
   padding: 2px 8px;
   font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-full);
   background: var(--color-bg-3);
   color: var(--color-text-2);
@@ -272,13 +272,12 @@ function toneClass(tone: string): string {
 .supplement-panel__row-value {
   font-size: var(--font-size-sm);
   color: var(--color-text-1);
-  line-height: 1.5;
 }
 .supplement-panel__reason {
   padding: 8px 12px;
   background: rgba(220, 38, 38, 0.04);
   border: 1px solid rgba(220, 38, 38, 0.1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);
 }
 .supplement-panel--warning .supplement-panel__reason {
@@ -302,7 +301,7 @@ function toneClass(tone: string): string {
   min-width: 120px;
 }
 .supplement-panel__meta-label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;

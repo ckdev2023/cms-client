@@ -287,9 +287,8 @@ void _contractGuard;
   color: var(--color-text-1);
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   min-height: 38px;
-  line-height: 1.4;
 }
 
 .info-tab__value--disabled {
@@ -317,7 +316,7 @@ void _contractGuard;
 .info-tab__party-card {
   padding: 12px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   transition: border-color 0.15s;
 }
 
@@ -340,7 +339,7 @@ void _contractGuard;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
 }
 
@@ -351,7 +350,7 @@ void _contractGuard;
 }
 
 .info-tab__party-role {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-3);
 }
 

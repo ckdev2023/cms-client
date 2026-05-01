@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
 import { CasePartiesService, mapCasePartyRow } from "./caseParties.service";
+import type { PartyType } from "./caseParties.types";
 import type { RequestContext } from "../tenancy/requestContext";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -145,7 +146,7 @@ void test("CasePartiesService.create throws on invalid partyType", async () => {
     () =>
       svc(pool, makeTimeline()).create(makeCtx(), {
         caseId: CASE_ID,
-        partyType: "invalid_type",
+        partyType: "invalid_type" as PartyType,
         customerId: "cust-1",
       }),
     (err) => {

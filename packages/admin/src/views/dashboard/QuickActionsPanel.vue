@@ -193,7 +193,7 @@ function navigateTo(route?: RouteLocationRaw): void {
 .section-link {
   color: var(--color-primary-6);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-bold);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -276,16 +276,14 @@ function navigateTo(route?: RouteLocationRaw): void {
 .quick-action-title {
   display: block;
   font-size: var(--font-size-md);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
-  line-height: 1.35;
 }
 
 .quick-action-desc {
   display: block;
   margin-top: 3px;
   font-size: var(--font-size-sm);
-  line-height: 1.5;
   color: var(--color-text-3);
   font-weight: var(--font-weight-bold);
 }
@@ -307,9 +305,8 @@ function navigateTo(route?: RouteLocationRaw): void {
   font-size: var(--font-size-sm);
   letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
-  line-height: 1.4;
 }
 
 .toolbar-inline-actions {
@@ -320,8 +317,8 @@ function navigateTo(route?: RouteLocationRaw): void {
 
 .scope-summary-note {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
 }
 

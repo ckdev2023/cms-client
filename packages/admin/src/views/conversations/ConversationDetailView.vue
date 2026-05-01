@@ -178,15 +178,15 @@ onMounted(() => {
 
         <Card padding="sm">
           <div class="conv-detail__unread-summary">
-            <Chip tone="neutral" size="sm">
+            <Chip tone="neutral">
               {{ t("conversations.list.unread.user") }}:
               {{ detail.unreadCountUser }}
             </Chip>
-            <Chip tone="neutral" size="sm">
+            <Chip tone="neutral">
               {{ t("conversations.list.unread.staffTenant") }}:
               {{ detail.unreadCountStaffTenant }}
             </Chip>
-            <Chip tone="neutral" size="sm">
+            <Chip tone="neutral">
               {{ t("conversations.list.unread.staffOwner") }}:
               {{ detail.unreadCountStaffOwner }}
             </Chip>
@@ -248,7 +248,7 @@ onMounted(() => {
   padding: 12px 16px;
   background: var(--color-danger-bg, #fef2f2);
   color: var(--color-danger, #ef4444);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   font-size: 14px;
 }
 
@@ -263,7 +263,7 @@ onMounted(() => {
   background: var(--color-warning-bg, #fffbeb);
   color: var(--color-warning-text, #92400e);
   border: 1px solid var(--color-warning-border, #fcd34d);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   font-size: 14px;
 }
 
@@ -286,7 +286,7 @@ onMounted(() => {
 
 .conv-detail__meta-item dt {
   flex: 0 0 120px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium, 500);
   color: var(--color-text-3, #6b7280);
 }
@@ -329,7 +329,7 @@ onMounted(() => {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border-1, #d1d5db);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   font-size: 14px;
   font-family: inherit;
   resize: vertical;
@@ -354,6 +354,6 @@ onMounted(() => {
   font-size: 14px;
   color: var(--color-text-3, #6b7280);
   background: var(--color-bg-2, #f3f4f6);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
 }
 </style>

@@ -232,10 +232,10 @@ function handleBatchCreate(): void {
               </td>
               <td class="contacts-tab__td contacts-tab__td--tags">
                 <div v-if="r.tags.length" class="contacts-tab__tag-wrap">
-                  <Chip v-for="tag in r.tags.slice(0, 4)" :key="tag" size="sm">
+                  <Chip v-for="tag in r.tags.slice(0, 4)" :key="tag">
                     {{ tag }}
                   </Chip>
-                  <Chip v-if="r.tags.length > 4" size="sm">
+                  <Chip v-if="r.tags.length > 4">
                     +{{ r.tags.length - 4 }}
                   </Chip>
                 </div>

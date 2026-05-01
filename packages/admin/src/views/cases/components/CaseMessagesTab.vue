@@ -129,7 +129,7 @@ function avatarColor(style: string): string {
                   {{ msg.avatar }}
                 </span>
                 <span class="messages-tab__author-name">{{ msg.author }}</span>
-                <Chip :tone="CHIP_TONE_MAP[msg.type] ?? 'neutral'" size="sm">
+                <Chip :tone="CHIP_TONE_MAP[msg.type] ?? 'neutral'">
                   {{ msg.typeLabel }}
                 </Chip>
               </div>
@@ -224,7 +224,7 @@ function avatarColor(style: string): string {
   gap: 6px;
   padding: 6px 14px;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
@@ -262,7 +262,7 @@ function avatarColor(style: string): string {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-sm);
   color: var(--color-text-1);
@@ -294,7 +294,7 @@ function avatarColor(style: string): string {
   appearance: none;
   padding: 6px 10px;
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
@@ -305,7 +305,7 @@ function avatarColor(style: string): string {
 .messages-tab__publish-btn {
   padding: 6px 16px;
   border: none;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
@@ -337,8 +337,8 @@ function avatarColor(style: string): string {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   flex-shrink: 0;
 }
 .messages-tab__author-name {
@@ -357,7 +357,7 @@ function avatarColor(style: string): string {
   margin: 0 0 0 36px;
   font-size: 14px;
   color: var(--color-text-1);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 .messages-tab__msg-action {
   margin: 8px 0 0 36px;
@@ -431,7 +431,7 @@ function avatarColor(style: string): string {
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition: background-color 0.15s;
   &:hover {

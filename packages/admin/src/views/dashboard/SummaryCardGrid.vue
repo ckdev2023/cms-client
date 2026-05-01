@@ -148,12 +148,10 @@ function navigateTo(route?: RouteLocationRaw): void {
 
 .summary-card-orb {
   position: absolute;
-  top: -18px;
-  right: -18px;
-  width: 104px;
-  height: 104px;
-  border-radius: 0 0 0 999px;
-  opacity: 0.94;
+  top: -24px;
+  right: -24px;
+  width: 120px;
+  height: 120px;
   transition: transform 180ms ease;
 }
 
@@ -162,13 +160,13 @@ function navigateTo(route?: RouteLocationRaw): void {
 }
 
 .summary-card[data-tone="info"] .summary-card-orb {
-  background: #eff6ff;
+  background: radial-gradient(circle at 100% 0%, #eff6ff 0%, transparent 70%);
 }
 .summary-card[data-tone="warn"] .summary-card-orb {
-  background: #fff7ed;
+  background: radial-gradient(circle at 100% 0%, #fff7ed 0%, transparent 70%);
 }
 .summary-card[data-tone="risk"] .summary-card-orb {
-  background: #fff1f2;
+  background: radial-gradient(circle at 100% 0%, #fff1f2 0%, transparent 70%);
 }
 
 .summary-card[data-tone="risk"] {
@@ -196,24 +194,23 @@ function navigateTo(route?: RouteLocationRaw): void {
   font-size: var(--font-size-sm);
   letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
-  line-height: 1.4;
 }
 
 .summary-card-value {
   margin-top: 14px;
-  font-size: 40px;
-  line-height: 1;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-display-2);
+  line-height: var(--leading-display);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
   letter-spacing: -0.03em;
 }
 
 .summary-card-helper {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-3);
   font-weight: var(--font-weight-bold);
   position: relative;
@@ -245,7 +242,7 @@ function navigateTo(route?: RouteLocationRaw): void {
   padding: 4px 10px;
   border-radius: var(--radius-full);
   font-size: var(--font-size-sm);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   font-weight: var(--font-weight-extrabold);
   border: 1px solid transparent;
   white-space: nowrap;
@@ -260,19 +257,19 @@ function navigateTo(route?: RouteLocationRaw): void {
 }
 
 .status-info {
-  color: #0369a1;
-  background: rgba(14, 165, 233, 0.12);
-  border-color: rgba(14, 165, 233, 0.2);
+  color: #fff;
+  background: #0369a1;
+  border-color: #0369a1;
 }
 .status-warn {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.22);
+  color: #fff;
+  background: #b45309;
+  border-color: #b45309;
 }
 .status-danger {
-  color: #b91c1c;
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.16);
+  color: #fff;
+  background: #b91c1c;
+  border-color: #b91c1c;
 }
 
 @media (max-width: 1279px) {

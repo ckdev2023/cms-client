@@ -116,8 +116,8 @@ const lastCreatedDisplay = computed(
 }
 
 .case-strip__metric-label {
-  font-size: 11px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.06em;
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -125,14 +125,14 @@ const lastCreatedDisplay = computed(
 
 .case-strip__metric-value {
   font-size: 24px;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
-  line-height: 1;
+  line-height: var(--leading-display);
 }
 
 @media (min-width: 768px) {
   .case-strip__metric-value {
-    font-size: 28px;
+    font-size: var(--font-size-3xl);
   }
 }
 
@@ -146,7 +146,7 @@ const lastCreatedDisplay = computed(
 
 .case-strip__case-link {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -182,6 +182,6 @@ const lastCreatedDisplay = computed(
 
 .case-strip__footer-value {
   color: var(--color-text-1);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
 }
 </style>

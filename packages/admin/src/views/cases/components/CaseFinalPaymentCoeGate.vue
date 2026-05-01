@@ -420,7 +420,7 @@ function cancelConfirm(): void {
   padding: 10px 12px;
   background: rgba(220, 38, 38, 0.03);
   border: 1px solid rgba(220, 38, 38, 0.08);
-  border-radius: var(--radius-md, 6px);
+  border-radius: var(--radius-md);
 }
 .fpg__blocker-item {
   display: flex;
@@ -444,7 +444,7 @@ function cancelConfirm(): void {
   padding: 10px 12px;
   background: rgba(220, 38, 38, 0.06);
   border: 1px solid rgba(220, 38, 38, 0.12);
-  border-radius: var(--radius-md, 6px);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: #991b1b;
@@ -466,7 +466,6 @@ function cancelConfirm(): void {
   margin: 12px 0 0;
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 
 /* ── Confirm dialog ── */
@@ -475,7 +474,7 @@ function cancelConfirm(): void {
   padding: 16px;
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-2);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
 }
 .fpg__confirm-title {
   margin: 0 0 6px;
@@ -487,7 +486,7 @@ function cancelConfirm(): void {
   margin: 0 0 16px;
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 .fpg__confirm-actions {
   display: flex;

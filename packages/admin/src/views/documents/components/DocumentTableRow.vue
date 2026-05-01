@@ -61,16 +61,22 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
     ]"
   >
     <td class="doc-row__td-check">
-      <input
-        type="checkbox"
-        class="doc-row__checkbox"
-        :checked="selected"
-        :disabled="!isSelectable"
-        :aria-label="item.name"
-        @change="
-          $emit('select', item.id, ($event.target as HTMLInputElement).checked)
-        "
-      />
+      <label class="ui-checkbox-hit">
+        <input
+          type="checkbox"
+          class="doc-row__checkbox"
+          :checked="selected"
+          :disabled="!isSelectable"
+          :aria-label="item.name"
+          @change="
+            $emit(
+              'select',
+              item.id,
+              ($event.target as HTMLInputElement).checked,
+            )
+          "
+        />
+      </label>
     </td>
     <td>
       <div class="doc-row__name-cell">
@@ -100,7 +106,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
     <td class="doc-row__hide-md">{{ providerLabel }}</td>
 
     <td>
-      <Chip :tone="statusTone" size="sm" dot>{{ statusLabel }}</Chip>
+      <Chip :tone="statusTone" dot>{{ statusLabel }}</Chip>
     </td>
 
     <td class="doc-row__hide-md">
@@ -188,8 +194,13 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border-table-row);
   font-size: var(--font-size-base);
+  line-height: var(--leading-sm);
   color: var(--color-text-1);
   vertical-align: middle;
+}
+
+.doc-row:hover td {
+  background-color: var(--color-bg-overlay-hover);
 }
 
 .doc-row:last-child td {
@@ -228,7 +239,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
   border-radius: var(--radius-full);
   background: rgba(220, 38, 38, 0.1);
   color: var(--color-danger);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-extrabold);
   flex-shrink: 0;
 }
@@ -240,6 +251,9 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
 }
 
 .doc-row__case-link {
+  display: inline-block;
+  padding: 4px 0;
+  min-height: 24px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);
   text-decoration: none;
@@ -305,7 +319,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   padding: 2px 8px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition:
     background-color var(--transition-normal),

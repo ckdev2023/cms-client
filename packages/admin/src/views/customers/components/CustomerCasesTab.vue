@@ -183,7 +183,7 @@ function fmtUpdated(iso: string): string {
                 </div>
               </td>
               <td class="cases-tab__td cases-tab__td--status">
-                <Chip :tone="statusTone(c)" size="sm">
+                <Chip :tone="statusTone(c)">
                   {{ statusLabel(c) }}
                 </Chip>
               </td>
@@ -274,7 +274,7 @@ function fmtUpdated(iso: string): string {
 .cases-tab__th {
   padding: 12px 16px;
   text-align: left;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   background: var(--color-bg-3);
   white-space: nowrap;
@@ -338,7 +338,7 @@ function fmtUpdated(iso: string): string {
 }
 
 .cases-tab__td--id {
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
@@ -347,7 +347,7 @@ function fmtUpdated(iso: string): string {
   background: none;
   padding: 0;
   font: inherit;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   cursor: pointer;
   text-align: left;

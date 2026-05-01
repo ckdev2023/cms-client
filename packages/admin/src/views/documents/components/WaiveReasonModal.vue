@@ -174,7 +174,7 @@ defineEmits<{
 
 .waive-modal__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -229,7 +229,7 @@ defineEmits<{
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-base);
   color: var(--color-text-1);
@@ -249,7 +249,7 @@ defineEmits<{
   width: 100%;
   padding: 8px 12px;
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-base);
   color: var(--color-text-1);
@@ -270,7 +270,7 @@ defineEmits<{
 
 .waive-modal__hint {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: #dc2626;
   font-weight: var(--font-weight-semibold);
 }

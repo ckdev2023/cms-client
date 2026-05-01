@@ -182,7 +182,7 @@ async function handleSubmit() {
   background: rgb(3 105 161 / 10%);
   color: var(--color-primary-7);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
 }
@@ -190,15 +190,15 @@ async function handleSubmit() {
 .login-hero__title {
   margin: 0;
   font-size: clamp(34px, 4vw, 56px);
-  line-height: 1.02;
+  line-height: var(--leading-display);
   letter-spacing: var(--letter-spacing-tight);
 }
 
 .login-hero__subtitle {
   margin: 0;
   max-width: 560px;
-  font-size: 18px;
-  line-height: 1.6;
+  font-size: var(--font-size-xl);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-2);
 }
 
@@ -206,7 +206,7 @@ async function handleSubmit() {
   max-width: 520px;
   padding: 24px;
   border: 1px solid rgb(255 255 255 / 70%);
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   background: rgb(255 255 255 / 76%);
   box-shadow: var(--shadow-1);
   backdrop-filter: blur(16px);
@@ -221,7 +221,7 @@ async function handleSubmit() {
   margin: 0;
   padding-inline-start: 20px;
   color: var(--color-text-2);
-  line-height: 1.8;
+  line-height: var(--leading-relaxed);
 }
 
 .login-card {
@@ -245,7 +245,7 @@ async function handleSubmit() {
   margin: 0;
   color: var(--color-text-3);
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-caps);
   text-transform: uppercase;
 }
@@ -253,13 +253,13 @@ async function handleSubmit() {
 .login-card__title {
   margin: 0;
   font-size: 30px;
-  line-height: 1.1;
+  line-height: var(--leading-3xl);
 }
 
 .login-card__description {
   margin: 0;
   color: var(--color-text-2);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .login-form {
@@ -276,7 +276,7 @@ async function handleSubmit() {
 
 .login-field__label {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-2);
 }
 
@@ -325,7 +325,7 @@ async function handleSubmit() {
   color: var(--color-primary-7);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .login-form__submit {
@@ -338,7 +338,7 @@ async function handleSubmit() {
   border-radius: var(--radius-lg);
   background: var(--color-bg-3);
   color: var(--color-text-2);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 @media (max-width: 1023px) {

@@ -28,8 +28,7 @@
 .docs-tab__gate-desc {
   margin: 4px 0 0;
   font-size: var(--font-size-xs);
-  color: var(--color-warning-text, #b45309);
-  line-height: 1.5;
+  color: var(--color-warning-text);
 }
 .docs-tab__register-wrap {
   display: inline-flex;
@@ -57,10 +56,9 @@
 }
 
 .docs-tab__empty-desc {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
   max-width: 360px;
-  line-height: 1.5;
 }
 
 .docs-tab__empty-actions {
@@ -239,7 +237,7 @@
 .docs-tab__group-empty {
   padding: 20px;
   text-align: center;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 

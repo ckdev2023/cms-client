@@ -370,7 +370,7 @@ function handleRetry(): void {
 .customer-detail-view__tab.active {
   color: var(--color-primary-6);
   border-bottom-color: var(--color-primary-6);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
 }
 
 .customer-detail-view__panel {

@@ -156,7 +156,7 @@ function handleSave(): void {
   width: 100%;
   max-width: 480px;
   background: var(--color-bg-1, #fff);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
@@ -182,7 +182,7 @@ function handleSave(): void {
   cursor: pointer;
   padding: 4px;
   color: var(--color-text-3);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   &:hover {
     background: var(--color-bg-3);
   }
@@ -211,7 +211,7 @@ function handleSave(): void {
 .case-edit-modal__textarea {
   padding: 8px 12px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   font: inherit;
   font-size: var(--font-size-sm, 14px);
   color: var(--color-text-1);

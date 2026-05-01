@@ -80,7 +80,7 @@ void props;
 
 .document-list-state--error {
   background: var(--color-warning-bg, #fffbeb);
-  color: var(--color-warning-text, #b45309);
+  color: var(--color-warning-text);
   border: 1px solid var(--color-warning-border, #fde68a);
 }
 

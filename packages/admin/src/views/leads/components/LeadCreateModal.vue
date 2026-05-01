@@ -146,7 +146,7 @@ defineEmits<{
 
 .lead-modal__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }

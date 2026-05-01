@@ -235,7 +235,7 @@ const {
 .lead-detail-view__tab.active {
   color: var(--color-primary-6);
   border-bottom-color: var(--color-primary-6);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
 }
 
 .lead-detail-view__panel {
@@ -303,7 +303,7 @@ const {
 
 .lead-detail-view__dedup-title {
   margin: 0 0 8px;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: #92400e;
 }

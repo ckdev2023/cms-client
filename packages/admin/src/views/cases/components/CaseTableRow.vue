@@ -108,11 +108,10 @@ const isFailureStep = computed(
     <td class="case-row__hide-md">
       <div class="case-row__stage-cell">
         <div class="case-row__stage-row">
-          <Chip :tone="stageTone" size="sm">{{ stageLabel }}</Chip>
+          <Chip :tone="stageTone">{{ stageLabel }}</Chip>
           <Chip
             v-if="item.businessPhase"
             :tone="phaseTone"
-            size="sm"
             class="case-row__phase-chip"
           >
             {{ phaseLabel }}
@@ -173,13 +172,13 @@ const isFailureStep = computed(
     </td>
 
     <td class="case-row__hide-md">
-      <Chip :tone="validationTone" size="sm" dot>
+      <Chip :tone="validationTone" dot>
         {{ item.validationLabel }}
       </Chip>
     </td>
 
     <td class="case-row__hide-lg">
-      <Chip v-if="item.riskStatus !== 'normal'" :tone="riskTone" size="sm">
+      <Chip v-if="item.riskStatus !== 'normal'" :tone="riskTone">
         {{ riskLabel }}
       </Chip>
       <span v-else class="case-row__na">{{ riskLabel }}</span>
@@ -216,8 +215,13 @@ const isFailureStep = computed(
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border-table-row);
   font-size: var(--font-size-base);
+  line-height: var(--leading-sm);
   color: var(--color-text-1);
   vertical-align: middle;
+}
+
+.case-row:hover td {
+  background-color: var(--color-bg-overlay-hover);
 }
 
 .case-row:last-child td {
@@ -309,11 +313,11 @@ const isFailureStep = computed(
 
 .case-row__phase-chip {
   opacity: 0.85;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 .case-row__workflow-step {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);
   white-space: nowrap;

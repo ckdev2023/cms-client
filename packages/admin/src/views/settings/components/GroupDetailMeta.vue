@@ -74,7 +74,7 @@ function chipTone(): ChipTone {
           {{ t("settings.group.detail.status") }}
         </dt>
         <dd class="group-detail-meta__value">
-          <Chip :tone="chipTone()" size="sm" dot>
+          <Chip :tone="chipTone()" dot>
             {{ t(GROUP_STATUS_BADGE[group.status].label) }}
           </Chip>
         </dd>

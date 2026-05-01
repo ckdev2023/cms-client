@@ -83,7 +83,7 @@ const subtitle = computed(() =>
 .placeholder-meta {
   margin: 0;
   color: var(--color-text-2);
-  line-height: 1.7;
+  line-height: var(--leading-relaxed);
 }
 
 .placeholder-meta code {

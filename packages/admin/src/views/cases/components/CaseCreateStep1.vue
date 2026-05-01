@@ -39,7 +39,7 @@ defineProps<{
           <span class="tpl__name">{{
             resolveTemplateLabel(tpl.label, locale)
           }}</span>
-          <Chip size="sm" tone="primary">{{
+          <Chip tone="primary">{{
             t("cases.create.templateBadge." + tpl.badge)
           }}</Chip>
         </div>
@@ -126,8 +126,25 @@ defineProps<{
 
 .tpl.is-active {
   border-color: var(--color-primary-6);
-  background: rgba(3, 105, 161, 0.03);
-  box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.08);
+  background: var(--color-primary-6);
+  box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.18);
+}
+
+.tpl.is-active .tpl__name {
+  color: #fff;
+}
+
+.tpl.is-active .tpl__sub {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.tpl.is-active :deep(.ui-chip--primary),
+.tpl.is-active :deep(.ui-chip--success),
+.tpl.is-active :deep(.ui-chip--warning),
+.tpl.is-active :deep(.ui-chip--danger) {
+  color: #fff;
+  background-color: transparent;
+  border-color: rgba(255, 255, 255, 0.6);
 }
 
 .tpl:disabled {

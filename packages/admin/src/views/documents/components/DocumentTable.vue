@@ -31,7 +31,7 @@ defineEmits<{
     <thead>
       <tr>
         <th class="doc-table__th-check">
-          <label class="doc-table__check-label">
+          <label class="ui-checkbox-hit">
             <input
               type="checkbox"
               class="doc-table__checkbox"
@@ -104,13 +104,6 @@ defineEmits<{
 .doc-table__th-check {
   width: 44px;
   text-align: center;
-}
-
-.doc-table__check-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
 }
 
 .doc-table__checkbox {

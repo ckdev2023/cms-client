@@ -122,11 +122,7 @@ const showActionCards = computed(
             </p>
           </template>
         </div>
-        <Chip
-          v-if="conversion.dedupResult!.userAction"
-          tone="warning"
-          size="sm"
-        >
+        <Chip v-if="conversion.dedupResult!.userAction" tone="warning">
           {{ t("leads.detail.conversionTab.dedupConfirmed") }}
         </Chip>
       </div>
@@ -277,7 +273,7 @@ const showActionCards = computed(
 
 .dedup-hit__match {
   padding: 12px;
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   border: 1px solid #fde68a;
   background: var(--color-bg-1);
 }
@@ -342,7 +338,7 @@ const showActionCards = computed(
 .conversion-action__title {
   margin: 0;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 

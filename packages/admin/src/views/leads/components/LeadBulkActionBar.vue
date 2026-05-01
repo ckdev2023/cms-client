@@ -220,7 +220,7 @@ function applyExport() {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
 }
@@ -263,11 +263,11 @@ function applyExport() {
   appearance: none;
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 12px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   width: 160px;
@@ -278,11 +278,11 @@ function applyExport() {
   appearance: none;
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 12px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   width: 200px;
@@ -292,11 +292,11 @@ function applyExport() {
 .lead-bulk-bar__apply {
   border: 1px solid var(--color-border-2);
   background: var(--color-bg-overlay);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 16px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
   cursor: pointer;

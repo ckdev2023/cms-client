@@ -338,10 +338,10 @@ const summaryItems = computed(() => {
             })
           }}
         </span>
-        <Chip v-if="sourceContext.familyBulkMode" tone="primary" size="sm">
+        <Chip v-if="sourceContext.familyBulkMode" tone="primary">
           {{ t("cases.create.source.familyBulk") }}
         </Chip>
-        <Chip v-if="sourceContext.templateCode" tone="primary" size="sm">
+        <Chip v-if="sourceContext.templateCode" tone="primary">
           {{ t("cases.create.source.templateLocked") }}
         </Chip>
       </div>

@@ -66,12 +66,13 @@ export interface SubmitErrorInfo {
  */
 export function normalizeSubmitError(e: unknown): SubmitErrorInfo {
   if (e instanceof CaseRepositoryError) {
-    const message = e.serverErrorCode
-      ? `${e.serverErrorCode}: ${e.message}`
-      : e.message;
+    const code = e.serverErrorCode;
+    const raw = e.message;
+    const message =
+      code && !raw.startsWith(`${code}: `) ? `${code}: ${raw}` : raw;
     return {
       message,
-      code: e.serverErrorCode ?? undefined,
+      code: code ?? undefined,
       detail: e.detail ?? undefined,
     };
   }
@@ -107,23 +108,23 @@ async function submitPartiesAfterCreate(
   const warnings: string[] = [];
 
   if (primaryCustomerId) {
+    const input = buildPrimaryCasePartyInput(caseId, primaryCustomerId);
     try {
-      await repo.createCaseParty(
-        buildPrimaryCasePartyInput(caseId, primaryCustomerId),
-      );
+      await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `Primary party submit failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] Primary party submit failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
 
   for (const party of additionalParties) {
+    const input = buildRelatedCasePartyInput(caseId, party);
     try {
-      await repo.createCaseParty(buildRelatedCasePartyInput(caseId, party));
+      await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `Party "${party.name}" submit failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] Party "${party.name}" submit failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
@@ -172,14 +173,13 @@ async function submitBulkApplicantParty(
   applicant: CreateCaseRelatedParty,
 ): Promise<string[]> {
   if (!applicant.customerId) return [];
+  const input = buildPrimaryCasePartyInput(caseId, applicant.customerId);
   try {
-    await repo.createCaseParty(
-      buildPrimaryCasePartyInput(caseId, applicant.customerId),
-    );
+    await repo.createCaseParty(input);
     return [];
   } catch (e) {
     return [
-      `[${applicant.name}] Primary party failed: ${normalizeSubmitError(e).message}`,
+      `[caseId=${caseId}][partyType=${input.partyType}] [${applicant.name}] Primary party failed: ${normalizeSubmitError(e).message}`,
     ];
   }
 }
@@ -193,11 +193,12 @@ async function submitBulkSupporters(
 ): Promise<string[]> {
   const warnings: string[] = [];
   for (const supporter of supporters) {
+    const input = buildRelatedCasePartyInput(caseId, supporter);
     try {
-      await repo.createCaseParty(buildRelatedCasePartyInput(caseId, supporter));
+      await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }
@@ -205,16 +206,15 @@ async function submitBulkSupporters(
     (s) => s.customerId === primaryCustomerId,
   );
   if (primaryCustomerId && !alreadyIncluded) {
+    const input = buildRelatedCasePartyInput(caseId, {
+      customerId: primaryCustomerId,
+      role: "扶養者",
+    });
     try {
-      await repo.createCaseParty(
-        buildRelatedCasePartyInput(caseId, {
-          customerId: primaryCustomerId,
-          role: "扶養者",
-        }),
-      );
+      await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e).message}`,
       );
     }
   }

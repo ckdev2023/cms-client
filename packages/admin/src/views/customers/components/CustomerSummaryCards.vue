@@ -60,7 +60,7 @@ defineProps<{
 
 .customer-summary__subtitle {
   margin: 4px 0 0;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }
@@ -87,7 +87,7 @@ defineProps<{
   position: relative;
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
   min-height: 148px;
   padding: 20px;
@@ -140,21 +140,21 @@ defineProps<{
   position: relative;
   z-index: 1;
   margin-top: 18px;
-  font-size: 34px;
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-display-1);
+  font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
-  letter-spacing: -0.03em;
-  line-height: 1;
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--leading-display);
 }
 
 .customer-summary-card__hint {
   position: relative;
   z-index: 1;
   margin-top: 14px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .customer-summary-card--primary {
@@ -181,7 +181,7 @@ defineProps<{
 }
 
 .customer-summary-card--warning .customer-summary-card__label {
-  color: #b45309;
+  color: var(--color-warning-text);
 }
 
 .customer-summary-card--neutral {

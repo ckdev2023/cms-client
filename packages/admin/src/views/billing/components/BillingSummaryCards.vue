@@ -79,7 +79,7 @@ function formatJPY(value: number): string {
 .billing-summary-card {
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-1);
   padding: 16px 20px;
 }
@@ -114,11 +114,11 @@ function formatJPY(value: number): string {
 
 .billing-summary-card__value {
   margin-top: 8px;
-  font-size: 28px;
+  font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
   letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .billing-summary-card--danger .billing-summary-card__value {

@@ -4,7 +4,7 @@
 
 .surface-card {
   border: 1px solid var(--color-border-1);
-  border-radius: 24px;
+  border-radius: var(--radius-2xl);
   background: var(--color-bg-1);
   box-shadow: var(--shadow-1);
 }
@@ -43,6 +43,7 @@
   background: transparent;
   color: var(--color-text-2);
   padding: 8px 14px;
+  min-height: 32px;
   border-radius: var(--radius-full);
   font: inherit;
   font-size: var(--font-size-sm);
@@ -71,6 +72,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  min-height: 32px;
   border-radius: var(--radius-full);
   padding: 7px 12px;
   font: inherit;
@@ -89,13 +91,13 @@
 
 .section-title {
   margin: 0;
-  font-size: 18px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .section-subtitle {
   margin: 8px 0 0;
   color: var(--color-text-3);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }

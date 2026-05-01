@@ -18,6 +18,8 @@ import {
   taskRowTone,
   taskStatusLabel,
 } from "./model/taskWorkbenchViewHelpers";
+import { residenceLabelToCode } from "./model/residenceLabelToTypeCode";
+import { getCaseTypeI18nKey } from "../cases/constants";
 import { useTaskWorkbenchModel } from "./model/useTaskWorkbenchModel";
 import type { TaskWorkbenchView } from "./types";
 
@@ -29,6 +31,19 @@ const { t, locale } = useI18n();
 const model = useTaskWorkbenchModel({
   repo: createTaskRepository(),
 });
+
+/**
+ * 将 server payload 中的 ja-JP 在留资格标签反查为当前 locale 的翻译文案。
+ *
+ * @param raw - 原始在留资格标签字符串
+ * @returns 翻译后文案；未命中时返回 null
+ */
+function resolveVisaLabel(raw: string): string | null {
+  const code = residenceLabelToCode(raw);
+  if (!code) return null;
+  const key = getCaseTypeI18nKey(code);
+  return key ? t(key) : null;
+}
 
 const viewCards = computed(
   (): {
@@ -169,7 +184,9 @@ onMounted(() => {
               >
                 <td>
                   <div class="cell-stack">
-                    <strong>{{ reminderTitle(reminder, t) }}</strong>
+                    <strong>{{
+                      reminderTitle(reminder, t, resolveVisaLabel)
+                    }}</strong>
                     <small class="cell-id-hint" :title="reminder.id">
                       #{{ reminderShortId(reminder) }}
                     </small>
@@ -319,7 +336,7 @@ onMounted(() => {
 }
 
 .summary-card__value {
-  font-size: 28px;
+  font-size: var(--font-size-3xl);
   color: var(--color-text-1);
 }
 
@@ -328,7 +345,7 @@ onMounted(() => {
 .aside-list,
 .aside-meta {
   margin: 0;
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .content-grid {
@@ -367,6 +384,10 @@ onMounted(() => {
   text-align: left;
 }
 
+.data-table tbody tr:hover td {
+  background-color: var(--color-bg-overlay-hover);
+}
+
 .data-table th {
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
@@ -397,18 +418,18 @@ onMounted(() => {
 }
 
 .status-pill[data-tone="success"] {
-  color: #166534;
-  background: #dcfce7;
+  color: #fff;
+  background: #166534;
 }
 
 .status-pill[data-tone="warning"] {
-  color: #9a3412;
-  background: #ffedd5;
+  color: #fff;
+  background: #9a3412;
 }
 
 .status-pill[data-tone="danger"] {
-  color: #991b1b;
-  background: #fee2e2;
+  color: #fff;
+  background: #991b1b;
 }
 
 .aside-list {

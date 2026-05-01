@@ -34,7 +34,7 @@ defineEmits<{
     <thead>
       <tr>
         <th class="customer-table__th-check">
-          <label class="customer-table__check-label">
+          <label class="ui-checkbox-hit">
             <input
               type="checkbox"
               class="customer-table__checkbox"
@@ -153,13 +153,6 @@ defineEmits<{
   text-align: center;
 }
 
-.customer-table__check-label {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-}
-
 .customer-table__checkbox {
   accent-color: var(--color-primary-6);
   cursor: pointer;
@@ -223,7 +216,7 @@ defineEmits<{
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-3);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: var(--color-bg-1);
 }
 
@@ -246,7 +239,7 @@ defineEmits<{
   font-weight: var(--font-weight-extrabold);
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   transition:
     background-color var(--transition-normal),
     color var(--transition-normal);

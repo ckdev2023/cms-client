@@ -156,7 +156,7 @@ const primaryGroupDisplay = computed(() => {
           class="party"
         >
           {{ p.name }}
-          <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
+          <Chip>{{ resolveRoleLabel(p.role) }}</Chip>
           <div v-if="p.note" class="cc__muted">{{ p.note }}</div>
         </div>
       </div>
@@ -170,7 +170,7 @@ const primaryGroupDisplay = computed(() => {
           class="party"
         >
           {{ p.name }}
-          <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
+          <Chip>{{ resolveRoleLabel(p.role) }}</Chip>
           <div v-if="p.contact" class="cc__muted">{{ p.contact }}</div>
         </div>
       </div>
@@ -184,7 +184,7 @@ const primaryGroupDisplay = computed(() => {
     >
       <div>
         {{ p.name }}
-        <Chip size="sm">{{ resolveRoleLabel(p.role) }}</Chip>
+        <Chip>{{ resolveRoleLabel(p.role) }}</Chip>
         <span v-if="p.contact" class="cc__muted"> {{ p.contact }}</span>
       </div>
       <button
@@ -217,7 +217,7 @@ const primaryGroupDisplay = computed(() => {
         <ul class="req-list">
           <li v-for="item in sec.items" :key="item.id">
             {{ resolveTemplateLabel(item.label, locale) }}
-            <Chip v-if="item.required" size="sm" tone="warning">{{
+            <Chip v-if="item.required" tone="warning">{{
               t("cases.create.step2.requiredBadge")
             }}</Chip>
           </li>
@@ -242,7 +242,7 @@ const primaryGroupDisplay = computed(() => {
   justify-content: space-between;
   padding: 10px 16px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   margin-bottom: 8px;
 }
 
@@ -261,7 +261,7 @@ const primaryGroupDisplay = computed(() => {
   color: var(--color-text-3);
   font-size: var(--font-size-sm);
   border: 1px dashed var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
 }
 
 .req-title {
@@ -297,7 +297,7 @@ const primaryGroupDisplay = computed(() => {
   gap: 12px;
   padding: 12px 16px;
   border: 1px solid var(--color-danger-border, #fdd);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: var(--color-danger-bg, #fef2f2);
   color: var(--color-danger-text, #b91c1c);
   font-size: var(--font-size-sm);
@@ -306,7 +306,7 @@ const primaryGroupDisplay = computed(() => {
 .customer-empty {
   padding: 12px 16px;
   border: 1px dashed var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   text-align: center;
   color: var(--color-text-3);
   font-size: var(--font-size-sm);

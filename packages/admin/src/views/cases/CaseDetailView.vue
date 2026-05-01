@@ -176,16 +176,15 @@ function onPhaseSubmit(payload: {
         ]"
       >
         <template #badge>
-          <Chip :tone="badgeToTone(detail.statusBadge)" size="sm" dot>
+          <Chip :tone="badgeToTone(detail.statusBadge)" dot>
             {{ stageLabel }}
           </Chip>
-          <Chip :tone="phaseTone" size="sm" dot>
+          <Chip :tone="phaseTone" dot>
             {{ phaseLabel }}
           </Chip>
           <Chip
             v-if="isBmvCase && detail.workflowStep"
             :tone="detail.workflowStep.isFailureStep ? 'danger' : 'primary'"
-            size="sm"
             dot
           >
             {{ detail.workflowStep.parentStage }} →
@@ -541,7 +540,7 @@ function onPhaseSubmit(payload: {
 }
 
 .case-detail-view__meta-sep {
-  color: var(--color-border-1);
+  color: var(--color-text-3);
 }
 
 .case-detail-view__readonly-banner {
@@ -551,7 +550,7 @@ function onPhaseSubmit(payload: {
   padding: 12px 16px;
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
@@ -568,7 +567,7 @@ function onPhaseSubmit(payload: {
   padding: 12px 16px;
   background: rgba(220, 38, 38, 0.04);
   border: 1px solid rgba(220, 38, 38, 0.15);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: #991b1b;
@@ -614,15 +613,14 @@ function onPhaseSubmit(payload: {
 .case-detail-view__tab.active {
   color: var(--color-text-1);
   border-bottom-color: var(--color-text-1);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
 }
 
 .case-detail-view__counter {
   padding: 1px 7px;
   border-radius: var(--radius-full);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  line-height: 1.4;
   background: var(--color-text-1);
   color: #fff;
   &--warning {

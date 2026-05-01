@@ -136,7 +136,7 @@ function onInput(event: Event) {
 .ui-search--inline .ui-search__input {
   background-color: var(--color-bg-control);
   border: none;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 8px 12px 8px 36px;
   font-size: var(--font-size-base);
   width: min(360px, 100%);

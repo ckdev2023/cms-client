@@ -6,6 +6,8 @@ export type {
   PaymentRecord,
   PaymentRecordStatus,
 } from "./billingEntities";
+export type { PartyType } from "../case-parties/caseParties.types";
+import type { PartyType } from "../case-parties/caseParties.types";
 
 type OrganizationId = string;
 type UserId = string;
@@ -325,7 +327,7 @@ export type CaseParty = {
   id: CasePartyId;
   orgId: OrganizationId;
   caseId: CaseId;
-  partyType: string;
+  partyType: PartyType;
   customerId: CustomerId | null;
   contactPersonId: ContactPersonId | null;
   relationToCase: string | null;

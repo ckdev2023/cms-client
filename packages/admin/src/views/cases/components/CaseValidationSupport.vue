@@ -58,7 +58,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
             <div class="valsup__review-avatar">{{ entry.initials }}</div>
             <div class="valsup__review-info">
               <span class="valsup__review-name">{{ entry.name }}</span>
-              <Chip :tone="verdictTone(entry)" size="sm">
+              <Chip :tone="verdictTone(entry)">
                 {{ entry.verdict }}
               </Chip>
             </div>
@@ -153,7 +153,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
         <h2 class="valsup__title">
           {{ t("cases.detail.validation.postApproval.title") }}
         </h2>
-        <Chip tone="primary" size="sm">{{
+        <Chip tone="primary">{{
           t("cases.detail.validation.postApproval.stagingChip")
         }}</Chip>
       </div>
@@ -194,7 +194,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
 
 .valsup__review-card {
   padding: 12px 16px;
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-1);
   background: var(--color-bg-3);
 }
@@ -248,7 +248,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
 .valsup__review-reject {
   margin-top: 8px;
   padding: 8px 12px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: rgba(220, 38, 38, 0.04);
   border: 1px solid rgba(220, 38, 38, 0.1);
   font-size: var(--font-size-xs);
@@ -268,7 +268,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
   gap: 10px;
   margin-top: 12px;
   padding: 16px;
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--color-border-1);
   background: var(--color-bg-3);
 }

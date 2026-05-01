@@ -90,10 +90,7 @@ function copyPath(path: string) {
           :key="ri"
           class="doc-detail__review-item"
         >
-          <Chip
-            :tone="r.conclusion === 'approved' ? 'success' : 'danger'"
-            size="sm"
-          >
+          <Chip :tone="r.conclusion === 'approved' ? 'success' : 'danger'">
             {{ r.conclusionLabel }}
           </Chip>
           <span class="doc-detail__review-meta">
@@ -187,10 +184,10 @@ function copyPath(path: string) {
 .doc-detail__version-badge {
   display: inline-block;
   padding: 1px 6px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   background: var(--color-bg-3);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   color: var(--color-text-2);
 }
 
@@ -208,7 +205,7 @@ function copyPath(path: string) {
 }
 
 .doc-detail__version-ref {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-primary-6);
 }
 
@@ -219,7 +216,7 @@ function copyPath(path: string) {
   padding: 2px;
   cursor: pointer;
   color: var(--color-text-3);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   transition: color 0.15s;
 }
 

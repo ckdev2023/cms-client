@@ -51,10 +51,10 @@ defineEmits<{
     <div class="message-bubble__header">
       <span class="message-bubble__sender">{{ message.senderName }}</span>
       <span class="message-bubble__time">{{ message.createdAtLabel }}</span>
-      <Chip v-if="isInternalOnly" tone="neutral" size="sm">
+      <Chip v-if="isInternalOnly" tone="neutral">
         {{ t("conversations.messages.visibility.internal_only") }}
       </Chip>
-      <Chip v-if="isLinkKind" tone="primary" size="sm">
+      <Chip v-if="isLinkKind" tone="primary">
         {{ t(`conversations.messages.kind.${message.kind}`) }}
       </Chip>
     </div>
@@ -98,9 +98,8 @@ defineEmits<{
   gap: 4px;
   max-width: 75%;
   padding: 10px 14px;
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   font-size: 14px;
-  line-height: 1.5;
 }
 
 .message-bubble--user {
@@ -150,7 +149,7 @@ defineEmits<{
 
 .message-bubble__time {
   color: var(--color-text-3, #6b7280);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
 }
 
 .message-bubble__body {
@@ -167,7 +166,7 @@ defineEmits<{
   padding-top: 6px;
   border-top: 1px solid var(--color-border-1, #e5e7eb);
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3, #6b7280);
   font-style: italic;
 }

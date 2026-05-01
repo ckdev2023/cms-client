@@ -109,7 +109,7 @@ watchEffect(() => {
       <thead>
         <tr>
           <th class="billing-table__th billing-table__col--checkbox">
-            <label class="billing-table__checkbox-wrap">
+            <label class="ui-checkbox-hit">
               <input
                 ref="selectAllRef"
                 type="checkbox"
@@ -172,25 +172,27 @@ watchEffect(() => {
           ]"
         >
           <td class="billing-table__td billing-table__col--checkbox">
-            <input
-              type="checkbox"
-              class="billing-table__checkbox"
-              :class="{
-                'billing-table__checkbox--disabled': !isSelectable(row),
-              }"
-              :checked="selectedIds.has(row.id)"
-              :disabled="!isSelectable(row)"
-              :aria-label="
-                t('billing.list.columns.selectRow', { name: row.caseName })
-              "
-              @change="
-                $emit(
-                  'toggle-row',
-                  row.id,
-                  ($event.target as HTMLInputElement).checked,
-                )
-              "
-            />
+            <label class="ui-checkbox-hit">
+              <input
+                type="checkbox"
+                class="billing-table__checkbox"
+                :class="{
+                  'billing-table__checkbox--disabled': !isSelectable(row),
+                }"
+                :checked="selectedIds.has(row.id)"
+                :disabled="!isSelectable(row)"
+                :aria-label="
+                  t('billing.list.columns.selectRow', { name: row.caseName })
+                "
+                @change="
+                  $emit(
+                    'toggle-row',
+                    row.id,
+                    ($event.target as HTMLInputElement).checked,
+                  )
+                "
+              />
+            </label>
           </td>
 
           <!-- 案件名称 -->
@@ -213,7 +215,7 @@ watchEffect(() => {
           <td
             class="billing-table__td billing-table__col--hide-md billing-table__col--group"
           >
-            <Chip tone="neutral" size="sm">
+            <Chip tone="neutral">
               {{ formatGroupLabel(row.group) }}
             </Chip>
           </td>
@@ -282,7 +284,7 @@ watchEffect(() => {
 
           <!-- 回款状态 -->
           <td class="billing-table__td billing-table__col--status">
-            <Chip :tone="STATUS_TONE[row.status]" size="sm">
+            <Chip :tone="STATUS_TONE[row.status]">
               {{ t(STATUS_KEY[row.status]) }}
             </Chip>
           </td>
@@ -292,7 +294,7 @@ watchEffect(() => {
             class="billing-table__td billing-table__col--risk-ack billing-table__col--hide-sm"
           >
             <template v-if="row.status === 'overdue'">
-              <Chip v-if="row.billingRiskAcknowledged" tone="success" size="sm">
+              <Chip v-if="row.billingRiskAcknowledged" tone="success">
                 {{
                   t("billing.riskAck.chip.acknowledged", {
                     date: row.billingRiskAcknowledgedAt ?? "",
@@ -305,7 +307,7 @@ watchEffect(() => {
                 type="button"
                 @click="$emit('risk-ack', row.caseId)"
               >
-                <Chip tone="danger" size="sm" dot>
+                <Chip tone="danger" dot>
                   {{ t("billing.riskAck.chip.notAcknowledged") }}
                 </Chip>
               </button>
@@ -349,9 +351,13 @@ watchEffect(() => {
 .billing-table__td {
   padding: 12px 16px;
   font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-text-1);
   border-bottom: 1px solid var(--color-border-1);
   vertical-align: middle;
+}
+.billing-table__row:hover .billing-table__td {
+  background-color: var(--color-bg-overlay-hover);
 }
 .billing-table__row--overdue {
   background: rgba(220, 38, 38, 0.04);
@@ -359,12 +365,6 @@ watchEffect(() => {
 .billing-table__col--checkbox {
   width: 44px;
   text-align: center;
-}
-.billing-table__checkbox-wrap {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
 }
 .billing-table__checkbox {
   accent-color: var(--color-primary-6);
@@ -374,7 +374,8 @@ watchEffect(() => {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.billing-table__col--group {
+.billing-table__col--group,
+.billing-table__col--status {
   width: 100px;
 }
 .billing-table__col--amount {
@@ -382,9 +383,6 @@ watchEffect(() => {
   text-align: right;
   font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
-}
-.billing-table__col--status {
-  width: 100px;
 }
 .billing-table__col--risk-ack {
   width: 160px;
@@ -400,12 +398,16 @@ watchEffect(() => {
 }
 .billing-table__action-btn {
   all: unset;
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  box-sizing: border-box;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);
   cursor: pointer;
   padding: 4px 8px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   transition: background var(--transition-fast);
 }
 .billing-table__action-btn:hover {
@@ -444,7 +446,7 @@ watchEffect(() => {
   font-weight: var(--font-weight-semibold);
 }
 .billing-table__amount--warning {
-  color: #b45309;
+  color: var(--color-warning-text);
 }
 .billing-table__node-name {
   font-size: var(--font-size-sm);
@@ -456,17 +458,16 @@ watchEffect(() => {
 .billing-table__node-date,
 .billing-table__node-empty {
   font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
 }
 .billing-table__node-date {
   font-size: var(--font-size-xs);
-  color: var(--color-text-3);
 }
 .billing-table__node-date--overdue {
   color: #991b1b;
 }
 .billing-table__node-empty {
   font-size: var(--font-size-sm);
-  color: var(--color-text-3);
 }
 .billing-table__empty {
   padding: 64px 16px;

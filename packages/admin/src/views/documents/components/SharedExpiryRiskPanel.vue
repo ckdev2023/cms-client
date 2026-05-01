@@ -150,7 +150,7 @@ defineEmits<{
 
 .risk-panel__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -217,19 +217,18 @@ defineEmits<{
   border-radius: var(--radius-full);
   background: rgba(220, 38, 38, 0.1);
   color: var(--color-danger, #dc2626);
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
 }
 
 .risk-panel__version-info {
   margin: 0;
   padding: 12px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: rgba(220, 38, 38, 0.04);
   border-left: 3px solid var(--color-danger, #dc2626);
   font-size: var(--font-size-base);
   color: var(--color-text-1);
-  line-height: 1.5;
 }
 
 .risk-panel__case-list {
@@ -247,7 +246,7 @@ defineEmits<{
   justify-content: space-between;
   padding: 10px 12px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
 }
 
 .risk-panel__case-link {
@@ -269,12 +268,11 @@ defineEmits<{
 .risk-panel__suggested {
   margin: 0;
   padding: 12px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   background: rgba(59, 130, 246, 0.04);
   border-left: 3px solid var(--color-primary-6);
   font-size: var(--font-size-base);
   color: var(--color-text-1);
-  line-height: 1.5;
 }
 
 .risk-panel__footer {

@@ -115,19 +115,19 @@ const customerNumberDisplay = computed(() => {
         <h1 class="detail-header__name">{{ customer.displayName }}</h1>
 
         <div class="detail-header__chips">
-          <Chip size="sm">
+          <Chip>
             {{ t("customers.detail.header.number") }}
             <strong>{{ customerNumberDisplay }}</strong>
           </Chip>
-          <Chip size="sm">
+          <Chip>
             {{ t("customers.detail.header.group") }}
             <strong>{{ groupDisplay }}</strong>
           </Chip>
-          <Chip size="sm">
+          <Chip>
             {{ t("customers.detail.header.owner") }}
             <strong>{{ ownerDisplay }}</strong>
           </Chip>
-          <Chip size="sm">
+          <Chip>
             {{ t("customers.detail.header.lastContact") }}
             <strong>{{ customer.lastContactDate ?? "—" }}</strong>
           </Chip>
@@ -165,6 +165,8 @@ const customerNumberDisplay = computed(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  min-height: 32px;
+  padding: 4px 0;
   color: var(--color-primary-6);
   text-decoration: none;
   transition: color 0.15s;
@@ -220,7 +222,7 @@ const customerNumberDisplay = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
   flex-shrink: 0;
   border: 1px solid var(--color-border-1);
@@ -233,11 +235,11 @@ const customerNumberDisplay = computed(() => {
 
 .detail-header__name {
   margin: 0;
-  font-size: 24px;
-  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
   letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -252,7 +254,7 @@ const customerNumberDisplay = computed(() => {
 }
 
 .detail-header__chips strong {
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 </style>

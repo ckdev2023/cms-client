@@ -22,6 +22,7 @@ import { PermissionsService } from "../auth/permissions.service";
 import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CasePartiesService } from "./caseParties.service";
+import type { PartyType } from "./caseParties.types";
 
 type HttpRequest = {
   requestContext?: RequestContext;
@@ -130,7 +131,7 @@ export class CasePartiesController {
 
     return this.casePartiesService.create(ctx, {
       caseId,
-      partyType: requireString(body.partyType, "partyType"),
+      partyType: requireString(body.partyType, "partyType") as PartyType,
       customerId: parseOptionalNullableString(body.customerId, "customerId"),
       contactPersonId: parseOptionalNullableString(
         body.contactPersonId,
@@ -190,7 +191,7 @@ export class CasePartiesController {
     return this.casePartiesService.update(ctx, id, {
       partyType:
         body.partyType !== undefined
-          ? requireString(body.partyType, "partyType")
+          ? (requireString(body.partyType, "partyType") as PartyType)
           : undefined,
       customerId: parseOptionalNullableString(body.customerId, "customerId"),
       contactPersonId: parseOptionalNullableString(

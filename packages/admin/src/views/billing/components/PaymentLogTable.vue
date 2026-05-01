@@ -184,7 +184,7 @@ function isInactive(entry: PaymentLogEntry): boolean {
 
           <!-- 记录状态 -->
           <td class="payment-log__td payment-log__col--status">
-            <Chip :tone="RECORD_TONE[entry.recordStatus]" size="sm">
+            <Chip :tone="RECORD_TONE[entry.recordStatus]">
               {{ t(RECORD_KEY[entry.recordStatus]) }}
             </Chip>
           </td>
@@ -291,6 +291,10 @@ function isInactive(entry: PaymentLogEntry): boolean {
 }
 
 /* --- Row tints --- */
+
+.payment-log__row:hover .payment-log__td {
+  background-color: var(--color-bg-overlay-hover);
+}
 
 .payment-log__row--voided {
   background: rgba(220, 38, 38, 0.03);

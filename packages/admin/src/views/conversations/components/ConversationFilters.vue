@@ -81,16 +81,18 @@ const scopeOptions = computed(() => [
       </select>
 
       <label class="conv-filters__checkbox-label">
-        <input
-          type="checkbox"
-          :checked="unreadOnly"
-          @change="
-            $emit(
-              'update:unreadOnly',
-              ($event.target as HTMLInputElement).checked,
-            )
-          "
-        />
+        <span class="ui-checkbox-hit">
+          <input
+            type="checkbox"
+            :checked="unreadOnly"
+            @change="
+              $emit(
+                'update:unreadOnly',
+                ($event.target as HTMLInputElement).checked,
+              )
+            "
+          />
+        </span>
         {{ t("conversations.list.filters.unreadOnly") }}
       </label>
 
@@ -141,7 +143,7 @@ const scopeOptions = computed(() => [
 .conv-filters__select {
   padding: 6px 10px;
   border: 1px solid var(--color-border-1, #d1d5db);
-  border-radius: var(--radius-md, 8px);
+  border-radius: var(--radius-md);
   background: var(--color-bg-1, #fff);
   font-size: 14px;
   color: var(--color-text-1, #1f2937);
@@ -151,6 +153,7 @@ const scopeOptions = computed(() => [
   display: flex;
   align-items: center;
   gap: 6px;
+  min-height: 24px;
   cursor: pointer;
   user-select: none;
   font-size: 14px;
@@ -159,7 +162,7 @@ const scopeOptions = computed(() => [
 
 .conv-filters__summary {
   margin-left: auto;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3, #6b7280);
 }
 </style>

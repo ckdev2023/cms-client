@@ -171,7 +171,7 @@ const emit = defineEmits<{
   gap: 3px;
 }
 .reminder-fail__label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -184,7 +184,7 @@ const emit = defineEmits<{
   padding: 6px 10px;
   background: rgba(220, 38, 38, 0.04);
   border: 1px solid rgba(220, 38, 38, 0.1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
 }
 .reminder-fail__meta {
   display: flex;

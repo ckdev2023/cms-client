@@ -49,7 +49,7 @@ defineProps<{
   padding: 10px 16px;
   background: var(--color-bg-2, #fafafa);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }

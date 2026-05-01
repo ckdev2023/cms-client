@@ -64,7 +64,9 @@ function buildAvatarInitials(name: string): string {
 const resolvedUserInitials = computed(
   () => props.userInitials?.trim() || buildAvatarInitials(props.userName),
 );
-const accountSummary = computed(() => `${props.userName} (${props.userEmail})`);
+const accountSummary = computed(
+  () => `${resolvedUserInitials.value} ${props.userName} (${props.userEmail})`,
+);
 
 /**
  * 清理本地后台登录态，并跳回登录页显示退出提示。

@@ -72,6 +72,7 @@ const hasNext = computed(() => {
 
 .lead-pagination__btn {
   padding: 4px 12px;
+  min-height: 32px;
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-md);
   background: var(--color-bg-1);

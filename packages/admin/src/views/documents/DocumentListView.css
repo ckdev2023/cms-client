@@ -33,8 +33,7 @@
 .document-list-view__alert-desc {
   margin: 4px 0 0;
   font-size: var(--font-size-xs);
-  color: var(--color-warning-text, #b45309);
-  line-height: 1.5;
+  color: var(--color-warning-text);
 }
 .document-list-view__alert-row {
   display: flex;
@@ -64,7 +63,7 @@
   width: 40%;
   height: 100%;
   background: var(--color-primary, #3b82f6);
-  border-radius: 2px;
+  border-radius: var(--radius-sm);
   animation: doc-list-loading 1.2s ease-in-out infinite;
 }
 @keyframes doc-list-loading {

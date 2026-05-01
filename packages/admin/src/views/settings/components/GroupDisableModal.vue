@@ -159,14 +159,14 @@ const { t } = useI18n();
   margin: 0;
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .gdm-message--warning {
   padding: 12px 16px;
   background: rgba(245, 158, 11, 0.06);
   border: 1px solid rgba(245, 158, 11, 0.18);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   color: var(--color-text-1);
 }
 

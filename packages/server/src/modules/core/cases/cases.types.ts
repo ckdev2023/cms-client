@@ -349,32 +349,6 @@ export type CaseDetailAggregateDto = {
   failureCloseoutCheck?: _FailureCloseoutCheckResult | null;
 };
 
-/** 创建案件关联人请求参数。 */
-export type CasePartyCreateInput = {
-  caseId: string;
-  partyType: string;
-  customerId?: string | null;
-  contactPersonId?: string | null;
-  relationToCase?: string | null;
-  isPrimary?: boolean;
-};
-
-/** 更新案件关联人请求参数。 */
-export type CasePartyUpdateInput = {
-  partyType?: string;
-  customerId?: string | null;
-  contactPersonId?: string | null;
-  relationToCase?: string | null;
-  isPrimary?: boolean;
-};
-
-/** 关联人列表查询请求参数。 */
-export type CasePartyListInput = {
-  caseId?: string;
-  page?: number;
-  limit?: number;
-};
-
 /** 创建校验运行请求参数。 */
 export type ValidationRunCreateInput = {
   caseId: string;

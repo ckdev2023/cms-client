@@ -69,7 +69,7 @@ const { t } = useI18n();
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  border-radius: var(--radius-default, 10px);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
 }

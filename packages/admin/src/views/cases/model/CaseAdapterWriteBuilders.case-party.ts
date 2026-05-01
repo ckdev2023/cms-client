@@ -1,4 +1,4 @@
-import type { CasePartyCreateInput } from "./CaseAdapterTypes";
+import type { CasePartyCreateInput, PartyType } from "./CaseAdapterTypes";
 import {
   normalizeNullableString,
   omitUndefined,
@@ -35,7 +35,7 @@ export function buildCreateCasePartyPayload(
   });
 }
 
-const ROLE_TO_PARTY_TYPE: Record<string, string> = {
+const ROLE_TO_PARTY_TYPE: Record<string, PartyType> = {
   主申请人: "applicant",
   配偶: "family",
   子女: "family",
@@ -43,7 +43,7 @@ const ROLE_TO_PARTY_TYPE: Record<string, string> = {
   保证人: "supporter",
 };
 
-function resolvePartyType(role: string): string {
+function resolvePartyType(role: string): PartyType {
   return ROLE_TO_PARTY_TYPE[role] ?? "applicant";
 }
 

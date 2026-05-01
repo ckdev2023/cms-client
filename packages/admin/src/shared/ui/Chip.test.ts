@@ -33,10 +33,10 @@ describe("Chip", () => {
 
   it("applies size prop", () => {
     const w = mount(Chip, {
-      props: { size: "sm" },
+      props: { size: "micro" },
       slots: { default: "S" },
     });
-    expect(w.classes()).toContain("ui-chip--sm");
+    expect(w.classes()).toContain("ui-chip--micro");
   });
 
   it("shows dot indicator when dot is true", () => {
@@ -59,5 +59,15 @@ describe("Chip", () => {
   it("renders slot content", () => {
     const w = mount(Chip, { slots: { default: "Status" } });
     expect(w.text()).toBe("Status");
+  });
+
+  it("supports aria-selected attribute for primary active state", () => {
+    const w = mount(Chip, {
+      props: { tone: "primary" },
+      attrs: { "aria-selected": "true" },
+      slots: { default: "Active" },
+    });
+    expect(w.attributes("aria-selected")).toBe("true");
+    expect(w.classes()).toContain("ui-chip--primary");
   });
 });

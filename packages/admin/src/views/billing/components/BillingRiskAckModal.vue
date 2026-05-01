@@ -207,7 +207,7 @@ function handleClose() {
 
 .ra-header__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -217,7 +217,7 @@ function handleClose() {
   color: var(--color-text-3);
   cursor: pointer;
   padding: 4px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   transition: color var(--transition-fast);
 }
 
@@ -241,7 +241,7 @@ function handleClose() {
   font-size: var(--font-size-sm);
   color: #991b1b;
   background: rgba(220, 38, 38, 0.06);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);
   margin-bottom: 16px;
 }
@@ -272,7 +272,7 @@ function handleClose() {
   appearance: none;
   background: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 8px 12px;
   font: inherit;
   font-size: var(--font-size-sm);

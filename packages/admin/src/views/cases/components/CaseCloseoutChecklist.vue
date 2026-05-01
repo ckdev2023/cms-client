@@ -55,7 +55,7 @@ defineProps<{
   padding: 16px;
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg, 12px);
+  border-radius: var(--radius-lg);
 }
 
 .closeout__title {
@@ -67,7 +67,7 @@ defineProps<{
 
 .closeout__banner {
   padding: 6px 12px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   margin-bottom: 12px;
@@ -114,7 +114,7 @@ defineProps<{
   align-items: center;
   justify-content: center;
   font-size: 12px;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-semibold);
   border-radius: 50%;
   flex-shrink: 0;
 }

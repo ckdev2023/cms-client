@@ -61,6 +61,7 @@ const emit = defineEmits<{
   border: 0;
   background: transparent;
   color: var(--color-text-2);
+  min-height: 32px;
   padding: 8px 14px;
   border-radius: var(--radius-full);
   font: inherit;

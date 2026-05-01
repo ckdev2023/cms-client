@@ -167,7 +167,7 @@ defineEmits<{
 
 .ref-modal__title {
   margin: 0;
-  font-size: 17px;
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -231,7 +231,7 @@ defineEmits<{
   gap: 10px;
   padding: 12px;
   border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   cursor: pointer;
   transition:
     border-color var(--transition-normal),

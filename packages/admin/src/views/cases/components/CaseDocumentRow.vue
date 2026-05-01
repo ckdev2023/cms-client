@@ -190,7 +190,7 @@ function toggle() {
         </div>
       </div>
       <div class="doc-row__right">
-        <Chip :tone="chipTone(item)" size="sm" dot>
+        <Chip :tone="chipTone(item)" dot>
           {{ item.statusLabel }}
         </Chip>
       </div>
@@ -354,7 +354,7 @@ function toggle() {
 
 .doc-row__path {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-3);
   max-width: 300px;
   overflow: hidden;
@@ -365,7 +365,7 @@ function toggle() {
 
 .doc-row__ref {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-primary-6);
 }
 
@@ -392,7 +392,7 @@ function toggle() {
   border: none;
   background: none;
   font: inherit;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   text-decoration: underline;

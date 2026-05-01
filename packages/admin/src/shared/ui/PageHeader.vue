@@ -106,6 +106,9 @@ const { t } = useI18n();
 }
 
 .ui-page-header__crumb--link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   color: var(--color-primary-6);
   text-decoration: none;
 }
@@ -142,18 +145,17 @@ const { t } = useI18n();
 
 .ui-page-header__title {
   margin: 0;
-  font-size: 28px;
+  font-size: var(--font-size-3xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .ui-page-header__subtitle {
   margin: 0;
   font-size: var(--font-size-base);
   color: var(--color-text-3);
-  line-height: 1.5;
 }
 
 .ui-page-header__actions {

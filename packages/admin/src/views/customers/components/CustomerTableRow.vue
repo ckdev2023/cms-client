@@ -78,22 +78,24 @@ const createCaseHref = computed(() =>
     ]"
   >
     <td class="customer-row__check">
-      <input
-        type="checkbox"
-        class="customer-row__checkbox"
-        :checked="selected"
-        :disabled="isDraft || undefined"
-        :aria-label="
-          t('customers.list.selectRow', { name: customer.displayName })
-        "
-        @change="
-          $emit(
-            'select',
-            customer.id,
-            ($event.target as HTMLInputElement).checked,
-          )
-        "
-      />
+      <label class="ui-checkbox-hit">
+        <input
+          type="checkbox"
+          class="customer-row__checkbox"
+          :checked="selected"
+          :disabled="isDraft || undefined"
+          :aria-label="
+            t('customers.list.selectRow', { name: customer.displayName })
+          "
+          @change="
+            $emit(
+              'select',
+              customer.id,
+              ($event.target as HTMLInputElement).checked,
+            )
+          "
+        />
+      </label>
     </td>
 
     <td>
@@ -158,7 +160,7 @@ const createCaseHref = computed(() =>
     </td>
 
     <td class="customer-row__hide-lg">
-      <Chip size="sm">{{ groupDisplay }}</Chip>
+      <Chip>{{ groupDisplay }}</Chip>
     </td>
 
     <td class="customer-row__actions-cell">
@@ -211,9 +213,14 @@ const createCaseHref = computed(() =>
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border-table-row);
   font-size: var(--font-size-base);
+  line-height: var(--leading-sm);
   color: var(--color-text-1);
   vertical-align: middle;
   transition: background-color var(--transition-normal);
+}
+
+.customer-row:hover td {
+  background-color: var(--color-bg-overlay-hover);
 }
 
 .customer-row--highlighted td {
@@ -266,6 +273,9 @@ const createCaseHref = computed(() =>
 }
 
 .customer-row__name {
+  display: inline-block;
+  padding: 4px 0;
+  min-height: 24px;
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   text-decoration: none;
@@ -296,6 +306,8 @@ const createCaseHref = computed(() =>
 .customer-row__cases-link {
   display: inline-flex;
   justify-content: center;
+  padding: 4px 0;
+  min-height: 24px;
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);

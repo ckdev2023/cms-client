@@ -170,21 +170,21 @@ function statusTone(
       <div class="detail-header__info">
         <h1 class="detail-header__name">
           {{ lead.name }}
-          <Chip :tone="statusTone(lead.status)" size="sm">
+          <Chip :tone="statusTone(lead.status)">
             {{ getLeadStatusLabel(lead.status) }}
           </Chip>
         </h1>
 
         <div class="detail-header__chips">
-          <Chip size="sm">
+          <Chip>
             {{ t("leads.detail.header.id") }}
             <strong>{{ lead.id }}</strong>
           </Chip>
-          <Chip size="sm">
+          <Chip>
             {{ t("leads.detail.header.owner") }}
             <strong>{{ lead.ownerLabel }}</strong>
           </Chip>
-          <Chip size="sm">
+          <Chip>
             {{ t("leads.detail.header.group") }}
             <strong>{{ groupDisplay }}</strong>
           </Chip>
@@ -261,7 +261,7 @@ function statusTone(
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   font-size: var(--font-size-lg);
   flex-shrink: 0;
   border: 1px solid var(--color-border-1);
@@ -278,7 +278,7 @@ function statusTone(
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   letter-spacing: var(--letter-spacing-tight);
-  line-height: 1.3;
+  line-height: var(--leading-tight);
   display: flex;
   align-items: center;
   flex-wrap: wrap;
@@ -294,7 +294,7 @@ function statusTone(
 }
 
 .detail-header__chips strong {
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 </style>

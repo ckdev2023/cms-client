@@ -87,17 +87,17 @@ function formatDateTime(iso: string): string {
             {{ t("customers.detail.commsTab.title") }}
           </h3>
           <div class="comms-tab__stats">
-            <Chip size="sm">
+            <Chip>
               {{ t("customers.detail.commsTab.total", { count: totalCount }) }}
             </Chip>
-            <Chip size="sm">
+            <Chip>
               {{
                 t("customers.detail.commsTab.internalCount", {
                   count: internalCount,
                 })
               }}
             </Chip>
-            <Chip size="sm" tone="primary">
+            <Chip tone="primary">
               {{
                 t("customers.detail.commsTab.customerCount", {
                   count: customerCount,
@@ -148,8 +148,8 @@ function formatDateTime(iso: string): string {
           <div class="comms-tab__item-header">
             <span class="comms-tab__item-summary">{{ c.summary }}</span>
             <div class="comms-tab__item-meta">
-              <Chip size="sm">{{ getCommChannelLabel(c.type) }}</Chip>
-              <Chip size="sm" :tone="visibilityTone(c)">
+              <Chip>{{ getCommChannelLabel(c.type) }}</Chip>
+              <Chip :tone="visibilityTone(c)">
                 {{ visibilityLabel(c) }}
               </Chip>
             </div>
@@ -303,7 +303,7 @@ function formatDateTime(iso: string): string {
 
 .comms-tab__item-summary {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-black);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
@@ -318,7 +318,7 @@ function formatDateTime(iso: string): string {
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
 }
 
 .comms-tab__item-next {

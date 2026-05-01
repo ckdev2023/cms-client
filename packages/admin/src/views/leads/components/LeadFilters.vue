@@ -224,11 +224,11 @@ defineEmits<{
   appearance: none;
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 12px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   width: 160px;
@@ -247,7 +247,7 @@ defineEmits<{
 }
 
 .lead-filters__date-label {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   white-space: nowrap;
@@ -257,11 +257,11 @@ defineEmits<{
   appearance: none;
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-input);
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   padding: 6px 12px;
   height: 36px;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   width: 140px;
@@ -274,7 +274,7 @@ defineEmits<{
 }
 
 .lead-filters__date-sep {
-  font-size: 13px;
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 

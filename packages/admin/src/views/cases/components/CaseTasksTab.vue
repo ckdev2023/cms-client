@@ -226,8 +226,8 @@ function avatarBg(item: TaskItem): string {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
   border: 2px solid var(--color-border-2);
   border-radius: var(--radius-full);
@@ -262,10 +262,9 @@ function avatarBg(item: TaskItem): string {
 .tasks-tab__due {
   display: inline-block;
   padding: 3px 8px;
-  border-radius: var(--radius-default);
+  border-radius: var(--radius-md);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
-  line-height: 1.4;
   white-space: nowrap;
 }
 
@@ -293,8 +292,8 @@ function avatarBg(item: TaskItem): string {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: var(--font-weight-black);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
   color: #fff;
   flex-shrink: 0;
 }

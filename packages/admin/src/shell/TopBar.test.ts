@@ -100,10 +100,10 @@ describe("TopBar", () => {
     });
     expect(w.find(".topbar-avatar").text()).toBe("TK");
     expect(w.find(".topbar-avatar").attributes("aria-label")).toBe(
-      "Tanaka Ken (tanaka@example.com)",
+      "TK Tanaka Ken (tanaka@example.com)",
     );
     expect(w.find(".topbar-avatar").attributes("title")).toBe(
-      "Tanaka Ken (tanaka@example.com)",
+      "TK Tanaka Ken (tanaka@example.com)",
     );
   });
 
@@ -113,7 +113,7 @@ describe("TopBar", () => {
     });
     expect(w.find(".topbar-avatar").text()).toBe("LA");
     expect(w.find(".topbar-avatar").attributes("aria-label")).toBe(
-      "Local Admin (admin@local.test)",
+      "LA Local Admin (admin@local.test)",
     );
   });
 
