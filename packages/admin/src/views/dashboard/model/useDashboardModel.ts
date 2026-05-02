@@ -1,9 +1,8 @@
 import { computed, ref, watch, type Ref } from "vue";
 import { DashboardRepositoryError } from "./DashboardRepository";
 import {
-  DASHBOARD_GROUP_OPTIONS,
   DASHBOARD_SCOPE_OPTIONS,
-  type DashboardGroupFilter,
+  type DashboardGroupOption,
   type DashboardRepository,
   type DashboardScope,
   type DashboardSummaryData,
@@ -17,7 +16,8 @@ export type DashboardModelErrorCode = "unauthorized" | "requestFailed";
 
 interface DashboardModelState {
   scope: Ref<DashboardScope>;
-  selectedGroup: Ref<DashboardGroupFilter>;
+  selectedGroup: Ref<string | null>;
+  groupOptions: Ref<DashboardGroupOption[]>;
   timeWindow: Ref<DashboardTimeWindow>;
   data: Ref<DashboardSummaryData | null>;
   loading: Ref<boolean>;
@@ -38,7 +38,8 @@ function mapDashboardError(error: unknown): DashboardModelErrorCode {
 function createDashboardState(): DashboardModelState {
   return {
     scope: ref<DashboardScope>("mine"),
-    selectedGroup: ref<DashboardGroupFilter>("all"),
+    selectedGroup: ref<string | null>(null),
+    groupOptions: ref<DashboardGroupOption[]>([]),
     timeWindow: ref<DashboardTimeWindow>(7),
     data: ref<DashboardSummaryData | null>(null),
     loading: ref(false),
@@ -58,9 +59,15 @@ function createDashboardLoader(
     state.errorCode.value = null;
 
     try {
+      const groupId =
+        state.scope.value === "group" && state.selectedGroup.value
+          ? state.selectedGroup.value
+          : undefined;
+
       const nextData = await repository.getSummary({
         scope: state.scope.value,
         timeWindow: state.timeWindow.value,
+        groupId,
       });
 
       if (activeRequest !== requestVersion) return;
@@ -76,6 +83,25 @@ function createDashboardLoader(
   };
 }
 
+async function loadGroupOptions(
+  state: DashboardModelState,
+  repository: DashboardRepository,
+): Promise<void> {
+  try {
+    const groups = await repository.listGroups();
+    state.groupOptions.value = groups;
+
+    const primary = groups.find((g) => g.isPrimary);
+    if (primary) {
+      state.selectedGroup.value = primary.id;
+    } else if (groups.length > 0) {
+      state.selectedGroup.value = groups[0].id;
+    }
+  } catch {
+    state.groupOptions.value = [];
+  }
+}
+
 function createDashboardView(
   state: DashboardModelState,
   loadDashboard: () => Promise<void>,
@@ -85,19 +111,19 @@ function createDashboardView(
     selectedGroup: state.selectedGroup,
     timeWindow: state.timeWindow,
     scopeOptions: DASHBOARD_SCOPE_OPTIONS,
-    groupOptions: DASHBOARD_GROUP_OPTIONS,
+    groupOptions: computed(() => state.groupOptions.value),
     data: computed(() => state.data.value),
     summary: computed(() => state.data.value?.summary ?? null),
     panels: computed(() => state.data.value?.panels ?? null),
     loading: computed(() => state.loading.value),
     errorCode: computed(() => state.errorCode.value),
     hasData: computed(() => state.data.value !== null),
-    isGroupFilterDisabled: true,
-    groupFilterHintKey: "dashboard.filters.groupPending",
-    scopeSummaryKey: computed(() =>
-      state.scope.value === "group"
-        ? "dashboard.scopeSummary.groupFallback"
-        : `dashboard.scopeSummary.${state.scope.value}`,
+    isGroupFilterDisabled: computed(
+      () =>
+        state.scope.value !== "group" || state.groupOptions.value.length === 0,
+    ),
+    scopeSummaryKey: computed(
+      () => `dashboard.scopeSummary.${state.scope.value}`,
     ),
     retry(): Promise<void> {
       return loadDashboard();
@@ -121,8 +147,10 @@ export function useDashboardModel(input: {
   const state = createDashboardState();
   const loadDashboard = createDashboardLoader(state, input.repository);
 
+  void loadGroupOptions(state, input.repository);
+
   watch(
-    [state.scope, state.timeWindow],
+    [state.scope, state.timeWindow, state.selectedGroup],
     () => {
       void loadDashboard();
     },

@@ -10,6 +10,11 @@ import type { CustomerCreateFormErrorCode } from "../model/useCustomerCreateForm
 /** 新建客户弹窗：壳 + 状态信息 + 字段表单 + 操作按钮组合。 */
 const { t } = useI18n();
 
+const TITLE_KEY_BY_TYPE = {
+  individual: "customers.list.createModal.titleIndividual",
+  corporation: "customers.list.createModal.titleCorporation",
+} as const;
+
 type CustomerCreateModalProps = {
   open?: boolean;
   fields?: CustomerCreateFormFields;
@@ -51,6 +56,14 @@ const submitStateMessage = computed(() =>
   resolveStateMessage(props.submitErrorCode),
 );
 
+const headingKey = computed(() => {
+  const type = props.fields?.customerType;
+  if (type && type in TITLE_KEY_BY_TYPE) {
+    return TITLE_KEY_BY_TYPE[type as keyof typeof TITLE_KEY_BY_TYPE];
+  }
+  return "customers.list.createModal.title";
+});
+
 /**
  * 透传字段编辑事件，把字段名与最新值上抛给父组件统一处理。
  *
@@ -79,7 +92,7 @@ function onUpdateField(
       >
         <div class="customer-modal__header">
           <h3 class="customer-modal__title">
-            {{ t("customers.list.createModal.title") }}
+            {{ t(headingKey) }}
           </h3>
           <button
             class="customer-modal__close"

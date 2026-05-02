@@ -54,14 +54,14 @@ const tasksEnUS = {
     },
     aside: {
       title: "Workbench notes",
-      copy: "This page is wired to the real `GET /api/tasks` and `GET /api/reminders` endpoints; it is no longer a placeholder.",
+      copy: "This page is connected directly to your live task list and renewal reminder records — what you see here is real, ongoing office data, not a sample.",
       list: {
         item1:
-          "'Pending / Due today / Overdue' are grouped in real time based on task status and due date.",
+          "The four cards above (Pending / Due today / Overdue / Reminder log) sort tasks automatically by status and due date — no manual filtering needed.",
         item2:
-          "'Reminder log' shows renewal reminders' remindAt, send status, and payload summary.",
+          "Reminder log shows, for each renewal reminder, when it should fire, whether it has been sent, and which case and applicant it is about.",
         item3:
-          "Individual tasks support `/api/tasks/:id/complete` directly to mark them complete.",
+          "Press 'Mark complete' on any row, and the task is closed across the whole office system — dashboard counts and case progress update automatically.",
       },
     },
   },

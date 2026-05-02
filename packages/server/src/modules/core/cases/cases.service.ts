@@ -53,7 +53,10 @@ import {
   isBusinessPhase,
   PhaseTransitionError,
 } from "./businessPhase";
-import { checkFinalPaymentGuard } from "../billing/billingGuards";
+import {
+  checkFinalPaymentGuard,
+  syncBillingCacheForCase,
+} from "../billing/billingGuards";
 import { decideFinalPaymentGuard } from "./cases.types-final-payment";
 import { checkBmvCaseCreationGate } from "./cases.types-bmv-gate";
 import {
@@ -1375,56 +1378,64 @@ export class CasesService {
         input.caseTypeCode,
       );
       const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-      return await tenantDb.transaction(async (tx) => {
-        const inputWithOwner: CaseCreateInput = {
-          ...input,
-          ownerUserId: await this.resolveOwnerUserId(
-            tx,
-            input.ownerUserId,
-            ctx.userId,
-          ),
-        };
-        await this.assertCreateRefs(tx, inputWithOwner);
-        const { resolvedGroupId, isCrossGroup, customerGroupId } =
-          await this.resolveCreateGroup(tx, ctx, inputWithOwner);
-
-        const created = await this.insertCaseWithAutoNumber(tx, ctx, {
-          ...inputWithOwner,
-          groupId: resolvedGroupId,
-        });
-        await this.insertDocumentItems(
-          tx,
-          ctx.orgId,
-          created.id,
-          checklistItems,
-        );
-        await writeTimelineInTx(tx, ctx, {
-          entityType: "case",
-          entityId: created.id,
-          action: "case.created",
-          payload: {
-            caseTypeCode: created.caseTypeCode,
-            stage: created.stage,
-            status: created.status,
-          },
-        });
-
-        if (isCrossGroup) {
-          await writeCrossGroupTimeline(
-            tx,
-            ctx,
-            created.id,
-            customerGroupId,
-            resolvedGroupId,
-            input.crossGroupReason,
-          );
-        }
-
-        return created;
-      });
+      return await tenantDb.transaction((tx) =>
+        this.runCreateTransaction(tx, ctx, input, checklistItems),
+      );
     } catch (error) {
       CasesService.wrapCreateError(error, input);
     }
+  }
+
+  private async runCreateTransaction(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    input: CaseCreateInput,
+    checklistItems: Awaited<ReturnType<CasesService["resolveChecklistItems"]>>,
+  ): Promise<Case> {
+    const inputWithOwner: CaseCreateInput = {
+      ...input,
+      ownerUserId: await this.resolveOwnerUserId(
+        tx,
+        input.ownerUserId,
+        ctx.userId,
+      ),
+    };
+    await this.assertCreateRefs(tx, inputWithOwner);
+    const { resolvedGroupId, isCrossGroup, customerGroupId } =
+      await this.resolveCreateGroup(tx, ctx, inputWithOwner);
+
+    const created = await this.insertCaseWithAutoNumber(tx, ctx, {
+      ...inputWithOwner,
+      groupId: resolvedGroupId,
+    });
+    await this.insertDocumentItems(tx, ctx.orgId, created.id, checklistItems);
+    await writeTimelineInTx(tx, ctx, {
+      entityType: "case",
+      entityId: created.id,
+      action: "case.created",
+      payload: {
+        caseTypeCode: created.caseTypeCode,
+        stage: created.stage,
+        status: created.status,
+      },
+    });
+    await insertInitialBillingPlanFromQuote(
+      tx,
+      ctx,
+      created.id,
+      created.quotePrice,
+    );
+    if (isCrossGroup) {
+      await writeCrossGroupTimeline(
+        tx,
+        ctx,
+        created.id,
+        customerGroupId,
+        resolvedGroupId,
+        input.crossGroupReason,
+      );
+    }
+    return created;
   }
 
   // PG SQLSTATE → 人类可读原因；落在表内即视为客户输入类错误，统一映射为 400。
@@ -3266,6 +3277,73 @@ async function writeTimelineInTx(
       JSON.stringify(input.payload),
     ],
   );
+}
+
+/**
+ * BUG-181 修复：建案时若提供了 quotePrice，但当前 case 还没有任何
+ * billing_records 行，则同步插入一行案件费用 plan，避免 admin Billing tab
+ * 出现 `Total fees —` / `Outstanding ¥0` 与 `cases.quote_price` 强不一致。
+ *
+ * 幂等：若 case 已经存在任意 billing_records 行（例如 BMV signing_deposit
+ * 已先行写入），跳过插入；调用方仍可在后续手动追加 deposit/final 拆分。
+ *
+ * BUG-186 修复：`milestone_name` 不再写入本地化文案（`案件報酬`），改为写入
+ * 稳定的 i18n code `case_fee`。admin 渲染侧基于 code 走 `billing.milestone.case_fee`
+ * 字典完成 en/zh/ja 三语本地化；存量数据由 migration 041 回填 case_fee。
+ * 该 code 也刻意避开 deposit / final 关键词，不会触发
+ * `billingGuards.isDepositMilestone` / `isFinalPaymentMilestone`。
+ *
+ * @param tx 事务连接
+ * @param ctx 请求上下文
+ * @param caseId 新建案件 ID
+ * @param quotePrice 报价金额（null/undefined/<=0 时跳过）
+ */
+const INITIAL_QUOTE_BILLING_MILESTONE = "case_fee";
+
+async function insertInitialBillingPlanFromQuote(
+  tx: TenantDbTx,
+  ctx: RequestContext,
+  caseId: string,
+  quotePrice: number | null | undefined,
+): Promise<void> {
+  if (
+    quotePrice === null ||
+    quotePrice === undefined ||
+    !Number.isFinite(quotePrice) ||
+    quotePrice <= 0
+  ) {
+    return;
+  }
+
+  const existing = await tx.query<{ id: string }>(
+    `select id from billing_records where case_id = $1 limit 1`,
+    [caseId],
+  );
+  if (existing.rows.length > 0) return;
+
+  const result = await tx.query<{ id: string }>(
+    `insert into billing_records
+       (org_id, case_id, milestone_name, amount_due, status, gate_effect_mode)
+     values ($1, $2, $3, $4, 'due', 'warn')
+     returning id`,
+    [ctx.orgId, caseId, INITIAL_QUOTE_BILLING_MILESTONE, quotePrice],
+  );
+  const billingPlanId = result.rows.at(0)?.id;
+  if (!billingPlanId) return;
+
+  await writeTimelineInTx(tx, ctx, {
+    entityType: "billing_plan",
+    entityId: billingPlanId,
+    action: "billing_plan.created",
+    payload: {
+      caseId,
+      milestoneName: INITIAL_QUOTE_BILLING_MILESTONE,
+      amountDue: quotePrice,
+      source: "case_create_quote_price",
+    },
+  });
+
+  await syncBillingCacheForCase(tx, caseId);
 }
 
 async function writeCrossGroupTimeline(

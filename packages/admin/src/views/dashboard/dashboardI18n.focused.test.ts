@@ -25,7 +25,5 @@ describe("dashboard scope i18n", () => {
   it("uses group wording in english scope summaries", () => {
     expect(enUS.dashboard.scopeSummary.group).toContain("group");
     expect(enUS.dashboard.scopeSummary.group).not.toContain("team");
-    expect(enUS.dashboard.scopeSummary.groupFallback).toContain("group");
-    expect(enUS.dashboard.scopeSummary.groupFallback).not.toContain("team");
   });
 });

@@ -421,6 +421,7 @@ export function mapCustomerToSummaryDto(
 ): CustomerSummaryDto {
   return {
     id: customer.id,
+    type: customer.type,
     displayName: resolveDisplayName(customer.baseProfile),
     legalName: resolveLegalName(customer.baseProfile),
     furigana:

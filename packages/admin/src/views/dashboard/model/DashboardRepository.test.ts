@@ -298,4 +298,170 @@ describe("createDashboardRepository", () => {
       daysLeft: 3,
     });
   });
+
+  it("appends groupId to query string when provided", async () => {
+    const request = vi.fn().mockResolvedValue(
+      jsonResponse({
+        scope: "group",
+        timeWindow: 7,
+        summary: {
+          todayTasks: 2,
+          upcomingCases: 1,
+          pendingSubmissions: 0,
+          riskCases: 0,
+        },
+        panels: { todo: [], deadlines: [], submissions: [], risks: [] },
+      }),
+    );
+    const repo = createDashboardRepository({
+      request,
+      getToken: () => "t",
+    });
+
+    await repo.getSummary({
+      scope: "group",
+      timeWindow: 7,
+      groupId: "grp-abc",
+    });
+
+    expect(request).toHaveBeenCalledWith(
+      "/api/dashboard/summary?scope=group&timeWindow=7&groupId=grp-abc",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("omits groupId from query string when undefined", async () => {
+    const request = vi.fn().mockResolvedValue(
+      jsonResponse({
+        scope: "mine",
+        timeWindow: 7,
+        summary: {
+          todayTasks: 0,
+          upcomingCases: 0,
+          pendingSubmissions: 0,
+          riskCases: 0,
+        },
+        panels: { todo: [], deadlines: [], submissions: [], risks: [] },
+      }),
+    );
+    const repo = createDashboardRepository({ request });
+
+    await repo.getSummary({ scope: "mine", timeWindow: 7 });
+
+    const url = request.mock.calls[0]![0] as string;
+    expect(url).not.toContain("groupId");
+  });
+
+  // ---- listGroups --------------------------------------------------------
+
+  describe("listGroups", () => {
+    it("fetches groups from /api/dashboard/groups with bearer token", async () => {
+      const request = vi.fn().mockResolvedValue(
+        jsonResponse([
+          { id: "g1", name: "Tokyo 1", isPrimary: true },
+          { id: "g2", name: "Tokyo 2", isPrimary: false },
+        ]),
+      );
+      const repo = createDashboardRepository({
+        request,
+        getToken: () => "tok",
+      });
+
+      const groups = await repo.listGroups();
+
+      expect(request).toHaveBeenCalledWith("/api/dashboard/groups", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer tok",
+        },
+      });
+      expect(groups).toEqual([
+        { id: "g1", name: "Tokyo 1", isPrimary: true },
+        { id: "g2", name: "Tokyo 2", isPrimary: false },
+      ]);
+    });
+
+    it("uses custom groupsApiPath when provided", async () => {
+      const request = vi.fn().mockResolvedValue(jsonResponse([]));
+      const repo = createDashboardRepository({
+        request,
+        groupsApiPath: "/custom/groups",
+      });
+
+      await repo.listGroups();
+
+      expect(request).toHaveBeenCalledWith(
+        "/custom/groups",
+        expect.objectContaining({ method: "GET" }),
+      );
+    });
+
+    it("normalizes isPrimary to false when missing", async () => {
+      const request = vi
+        .fn()
+        .mockResolvedValue(jsonResponse([{ id: "g1", name: "Tokyo 1" }]));
+      const repo = createDashboardRepository({ request });
+
+      const groups = await repo.listGroups();
+
+      expect(groups).toEqual([{ id: "g1", name: "Tokyo 1", isPrimary: false }]);
+    });
+
+    it("throws INVALID_RESPONSE when payload is not an array", async () => {
+      const repo = createDashboardRepository({
+        request: vi.fn().mockResolvedValue(jsonResponse({ groups: [] })),
+      });
+
+      await expect(repo.listGroups()).rejects.toMatchObject({
+        name: "DashboardRepositoryError",
+        code: "INVALID_RESPONSE",
+      });
+    });
+
+    it("throws INVALID_RESPONSE when an item lacks required fields", async () => {
+      const repo = createDashboardRepository({
+        request: vi.fn().mockResolvedValue(jsonResponse([{ id: "g1" }])),
+      });
+
+      await expect(repo.listGroups()).rejects.toMatchObject({
+        code: "INVALID_RESPONSE",
+      });
+    });
+
+    it("throws UNAUTHORIZED on 401 response", async () => {
+      const repo = createDashboardRepository({
+        request: vi
+          .fn()
+          .mockResolvedValue(
+            jsonResponse({ message: "Unauthorized" }, { status: 401 }),
+          ),
+      });
+
+      await expect(repo.listGroups()).rejects.toMatchObject({
+        code: "UNAUTHORIZED",
+        status: 401,
+      });
+    });
+
+    it("throws NETWORK when fetch rejects", async () => {
+      const repo = createDashboardRepository({
+        request: vi.fn().mockRejectedValue(new TypeError("Failed to fetch")),
+      });
+
+      await expect(repo.listGroups()).rejects.toMatchObject({
+        code: "NETWORK",
+      });
+    });
+
+    it("returns empty array for empty server response", async () => {
+      const repo = createDashboardRepository({
+        request: vi.fn().mockResolvedValue(jsonResponse([])),
+      });
+
+      const groups = await repo.listGroups();
+
+      expect(groups).toEqual([]);
+    });
+  });
 });

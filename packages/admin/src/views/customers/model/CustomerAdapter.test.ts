@@ -17,6 +17,7 @@ import {
 } from "./CustomerAdapter";
 
 const CREATE_FIELDS: CustomerCreateFormFields = {
+  customerType: "individual",
   displayName: "张伟（就劳）",
   group: "tokyo-1",
   legalName: "张伟",
@@ -31,6 +32,7 @@ const CREATE_FIELDS: CustomerCreateFormFields = {
   sourceType: "REFERRAL",
   visaType: "engineer_specialist",
   referrerName: "田中先生",
+  representativeName: "",
   avatar: "avatar.png",
   note: "prefer wechat",
 };

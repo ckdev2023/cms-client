@@ -25,6 +25,67 @@
 
 ## 最新产出
 
+- 时间：2026-05-02（BUG-189 FIX-LANDED）
+  问题：[BUG-189] R20 走查新发现 P3——admin sidebar 站点标识 chip 在 zh-CN locale 下显示繁体 / 日文写法 `事務所管理`，应该使用简体 `事务所管理`（"務"→"务"）。en-US 此位置为 `Firm Ops`、ja-JP 为 `事務所管理`（与简体不同字形）。如何修复使三语 chip 各自符合本地化字形？
+  结论（TL;DR）：BUG-189 ✅ FIX-LANDED。① `packages/admin/src/i18n/messages/zh-CN.ts` 把 `shell.nav.brandChip` 从 `"事務所管理"` 改为简体 `"事务所管理"`；② ja-JP 保持 `事務所管理`（日文字形）、en-US 保持 `Firm Ops` 不动；③ `packages/admin/src/shell/SideNav.test.ts` 原先 `expect(text).toBe(brandChip)`（静态导入）耦合到 nav-config 静态值，现拆分为：`renders the brand chip` 走 `zhCN.shell.nav.brandChip`；新增 `[BUG-189] zh-CN brand chip uses simplified characters (no traditional 務)`、`[BUG-189] ja-JP / en-US brand chip remain in their own scripts` 两条 locale-aware 断言（共 +2 case，共计 45 tests pass）；④ `packages/admin/src/shell/nav-config.ts` 静态 `brandChip` 常量保留 `事務所管理`（仅作为历史 marker，不在 SideNav.vue 渲染路径上）；⑤ chrome-devtools-mcp 走查 R20 已完成 zh-CN / ja-JP / en-US 三语 sidebar 验收。
+  关键依据：
+  - packages/admin/src/i18n/messages/zh-CN.ts（`shell.nav.brandChip = "事务所管理"`）
+  - packages/admin/src/shell/SideNav.test.ts（locale-aware 断言 + BUG-189 regression）
+  - packages/admin/src/shell/SideNav.vue（`{{ t("shell.nav.brandChip") }}`，渲染路径未变）
+  - docs/gyoseishoshi_saas_md/_output/29-双层状态机自动化复盘走查Bug清单-第二十轮.md §7 BUG-189（原始发现）
+  影响面：
+  - admin sidebar 顶部 chip：zh-CN `事务所管理`、ja-JP `事務所管理`、en-US `Firm Ops`
+  - 不影响 ja-JP / en-US 显示；不影响其它使用 i18n 的页面
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/29-双层状态机自动化复盘走查Bug清单-第二十轮.md
+    位置：§0.2 BUG-189 行 + §7 详情 + §10 R21 建议第 1 项
+    Owner：研发
+    状态：待回灌（建议将 §0.2、§7、§10 BUG-189 相关行标为 ✅ FIX-LANDED）
+
+- 时间：2026-05-02（BUG-188 关闭决议 / 不在仓库范围）
+  问题：[BUG-188] R19 P3——Customer 创建弹窗 Date of birth picker 在 en-US / ja-JP 下显示残串：spinbutton label `年 年 / 月 月 / 日 日`、button `显示日期选择器`，以及 file input 默认 placeholder `未选择任何文件`。R19 reported 为 i18n 漏洞。R20 走查时是否仍属于 app bug？
+  结论（TL;DR）：BUG-188 ✅ 关闭，**不属于 app bug**。R20 走查代码层定位：`packages/admin/src/views/customers/components/AddCustomerDialog.vue` 使用的是浏览器原生 `<input type="date">` / `<input type="file">`，没有第三方 picker 库劫持。`年/月/日` spinbutton label、`显示日期选择器` button label、`未选择任何文件` 都来自 Chrome 浏览器内核自身（跟随 `chrome.exe --lang=...` / 系统 locale，不受应用 i18n 控制）。结论：要彻底解决得换成自研 picker 或 vendor lib（成本远高于 P3 收益），R20 起 BUG-188 不再列入 bug 清单，避免后续走查反复重发现。如果将来产品提出强约束三语字形一致，再开自研 picker 议题，单独评估。
+  关键依据：
+  - packages/admin/src/views/customers/components/AddCustomerDialog.vue（原生 `<input type="date">` / `<input type="file">`，无第三方 picker）
+  - docs/gyoseishoshi_saas_md/_output/28-双层状态机自动化复盘走查Bug清单-第十九轮.md §6 BUG-188（原始发现）
+  - docs/gyoseishoshi_saas_md/_output/29-双层状态机自动化复盘走查Bug清单-第二十轮.md §6 R20 重新认定（非 app bug）
+  影响面：
+  - 不改代码；仅在文档侧标记关闭，避免后续轮次走查反复发现
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/28-双层状态机自动化复盘走查Bug清单-第十九轮.md
+    位置：§0.2 BUG-188 行 + §6 详情
+    Owner：研发
+    状态：待回灌（建议将 §0.2、§6 BUG-188 行标为 🟡 关闭 / 非 app bug）
+
+- 时间：2026-05-02（BUG-186 FIX-LANDED）
+  问题：[BUG-186] R19 新发现 P1——Case Detail Billing tab 在 en-US / zh-CN 下 TYPE 列显示日文硬编码 `案件報酬`、STATUS 列显示日文 `応収`。R18 BUG-181 fix 的 `insertInitialBillingPlanFromQuote` 写入 `milestone_name='案件報酬'` + `status='due'` 时缺 i18n 化。如何修复使 admin Billing tab 在三语下各自显示对应本地化？
+  结论（TL;DR）：BUG-186 ✅ FIX-LANDED。按 R19 §2.3 A 方案（数据层固化为 i18n code）+ 渲染层兜底一并落地：① server `cases.service.ts` 把 `INITIAL_QUOTE_BILLING_MILESTONE` 从 `"案件報酬"` 改为稳定 i18n code `"case_fee"`（仍避开 deposit/final 关键词），后续新建案件 `billing_records.milestone_name = 'case_fee'`；② 新增 migration `041_rename_case_fee_milestone` 把存量 `案件報酬` 行回填为 `case_fee`，向下迁移提供反向回退；③ admin `BILLING_STATUSES` / `BillingStatusKey` 扩 `due` / `overdue`，对齐 server 原始 status 取值；④ admin 抽出 `billingMilestoneI18n.ts`（`resolveMilestoneI18nKey`），同时兼容新 code `case_fee` 与遗留 CJK 文案（`案件報酬` / `着手金` / `尾款` 等）反向映射到 `billing.milestone.<code>` 字典键；⑤ `CaseBillingTab.vue` TYPE 列通过 `paymentType(row)` 走 `t(row.typeI18nKey)`（未命中 fallback raw），STATUS 列已有 `getBillingStatusI18nKey` 链路复用，`STATUS_TONE` 扩 `due` / `overdue` chip 色调；⑥ i18n 资源三语补齐 `cases.constants.billingStatuses.due/overdue` + `billing.milestone.case_fee`；⑦ 新增 `CaseBillingTab.bug186.test.ts`（adapter + 三语渲染 + fallback 共 10 case），更新 `bug181` focused 断言、`constants.test`、`i18n-regression`、`casesI18n.focused`。`npm run fix` + `npm run guard` 全绿。
+  关键依据：
+  - packages/server/src/modules/core/cases/cases.service.ts（INITIAL_QUOTE_BILLING_MILESTONE = "case_fee"）
+  - packages/server/src/infra/db/migrations/041_rename_case_fee_milestone.up.sql / .down.sql
+  - packages/server/src/modules/core/cases/cases.service.bug181-quote-billing.focused.test.ts（断言更新为 `case_fee`）
+  - packages/admin/src/views/cases/model/billingMilestoneI18n.ts（新抽文件）
+  - packages/admin/src/views/cases/model/CaseAdapterValidationBilling.ts（populate typeI18nKey）
+  - packages/admin/src/views/cases/types-detail.ts（PaymentRow.typeI18nKey）
+  - packages/admin/src/views/cases/types.ts（BillingStatusKey 扩 due/overdue）
+  - packages/admin/src/views/cases/constants.ts（BILLING_STATUSES 扩 due/overdue）
+  - packages/admin/src/views/cases/components/CaseBillingTab.vue（paymentType + STATUS_TONE 扩）
+  - packages/admin/src/views/cases/components/CaseBillingTab.bug186.test.ts（新增）
+  - packages/admin/src/i18n/messages/cases/{en-US,zh-CN,ja-JP}.ts（billingStatuses.due/overdue）
+  - packages/admin/src/i18n/messages/billing/{en-US,zh-CN,ja-JP}.ts（milestone.case_fee）
+  - packages/admin/src/views/billing/model/BillingAdapters.ts（MILESTONE_NAME_TO_CODE 扩 case_fee / 案件報酬 / 案件报酬）
+  - docs/gyoseishoshi_saas_md/_output/28-双层状态机自动化复盘走查Bug清单-第十九轮.md §2 BUG-186（原始发现）
+  影响面：
+  - admin Case Detail Billing tab：`TYPE = Case fee / 案件报酬 / 案件報酬`、`STATUS = Outstanding / 应收 / 応収`（en/zh/ja）
+  - admin Billing 模块列表（`views/billing/`）：milestone 解析同时识别新 code 与遗留 CJK 文案
+  - server billing_records.milestone_name：新建案写 `case_fee`，migration 041 回填存量 `案件報酬` → `case_fee`
+  - billingGuards.isDepositMilestone / isFinalPaymentMilestone：`case_fee` 不会触发（保持语义不变）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/28-双层状态机自动化复盘走查Bug清单-第十九轮.md
+    位置：§0.2 BUG-186 行 + §2 BUG-186 详情 + §9 R20 建议第 2 项
+    Owner：研发
+    状态：待回灌（建议将 §0.2、§2、§9 BUG-186 相关行标为 ✅ FIX-LANDED）
+
 - 时间：2026-04-30（BUG-158 FIX-LANDED）
   问题：[BUG-158] R13 P0 阻塞——BMV 建案前置门禁数据缺失（`customers.base_profile.bmvProfile` 全 null），admin UI 完全无法建 BMV 经管签新案。如何修复使 BMV 客户详情页有承接入口、建案向导前置门禁可通过？
   结论（TL;DR）：BUG-158 ✅ FIX-LANDED。4 处关键改动：① server `normalizeCustomerBmvProfile` 在 `base_profile.bmvProfile` 为空时返回 `createDefaultCustomerBmvProfile()`（`intakeStatus: "not_started"`），使 `/api/customers` list/detail 始终下发非 null 的 `bmvProfile`；② admin `buildCustomerBmvIntakeCardViewModel` 在 profile 为 null 时返回 `not_started` 占位视图，不再 `return null`，BMV 承接卡片挂入 `CustomerDetailView` 主路径；③ 新增 `038_backfill_customer_bmv_profile.up.sql` 迁移为已有 BMV 案件的客户倒推四前提满足；④ `CaseCreateView.vue` 顶部 banner 增加"前往客户详情完成承接 →"恢复链路。`npm run fix` + `npm run guard` 全绿。
@@ -1174,3 +1235,5 @@
     位置：§0.3 表（每条行标 ✅ FIX-LANDED）+ §0.4 总计偏差数（全 9 条已闭环）+ §1 各 BUG 段尾部（FIX-LANDED 实测块）+ §4 待立项（全部标 ✅，仅留后续清理项）
     Owner：研发
     状态：已回灌（2026-05-01）
+
+- **2026-05-02 Dashboard Group 全闭环**：后端 `GET /api/dashboard/groups`（viewer 级）+ `scope=group` groupId 透传 + 前端动态 groupOptions 接入完成；`npm run fix && npm run guard` 全通过。计划文档：`dashboard_group_full_loop_c7dcfe19.plan.md`

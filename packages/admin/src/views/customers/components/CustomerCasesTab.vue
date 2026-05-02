@@ -8,6 +8,7 @@ import Chip from "../../../shared/ui/Chip.vue";
 import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
+import StageChip from "../../cases/components/StageChip.vue";
 import type { CaseFilter, CustomerCase } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
@@ -213,7 +214,9 @@ function looksLikeUuid(value: string): boolean {
                 {{ caseTypeLabel(c.type) }}
               </td>
               <td class="cases-tab__td cases-tab__td--stage">
-                <div>{{ c.stage || "—" }}</div>
+                <div>
+                  <StageChip :code="c.stage" precision="full" />
+                </div>
                 <div class="cases-tab__sub">
                   {{ t("customers.detail.casesTab.owner") }}{{ ownerLabel(c) }}
                 </div>

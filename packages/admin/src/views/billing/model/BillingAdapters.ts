@@ -44,11 +44,24 @@ export {
 
 // ─── Milestone name → code fallback mapping ────────────────────
 //
-// Server currently sends raw CJK milestone names (e.g. "尾款", "着手金").
-// Until the server exposes a stable `milestone_code` column, we reverse-map
-// known names to codes so the view layer can use i18n keys.
+// Server sends mixed milestone_name values:
+//   - New insert path (`insertInitialBillingPlanFromQuote` + migration 041)
+//     stores stable i18n codes like `case_fee`.
+//   - Legacy rows still carry CJK localized strings (`着手金` / `尾款` / ...).
+//
+// Both cases map to the same `billing.milestone.<code>` dictionary keys so the
+// view layer can emit localized labels via `t()`; unmapped values fall through
+// to the raw string and log a console warning.
 
 const MILESTONE_NAME_TO_CODE: Record<string, string> = {
+  case_fee: "case_fee",
+  down_payment: "down_payment",
+  final_payment: "final_payment",
+  balance: "balance",
+  interim_payment: "interim_payment",
+  installment: "installment",
+  案件報酬: "case_fee",
+  案件报酬: "case_fee",
   着手金: "down_payment",
   尾款: "final_payment",
   残金: "balance",

@@ -1,20 +1,19 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import {
   buildCaseScopeClause,
+  buildGroupClause,
   buildTaskScopeClause,
-  mapDeadlineItem,
-  mapRiskItem,
-  mapSubmissionItem,
-  mapTodoItem,
-  normalizeScope,
+  isManagerRole,
   readCount,
   type CountRow,
+  type DashboardGroupOption,
   type DashboardScope,
   type DashboardSummary,
+  type DashboardSummaryInput,
   type DashboardTimeWindow,
   type DashboardWorkItem,
   type DeadlineRow,
@@ -22,21 +21,25 @@ import {
   type SubmissionRow,
   type TodoRow,
 } from "./dashboard.shared";
-
-type DashboardQueryScope = Exclude<DashboardScope, "group">;
-
-type DashboardSummaryInput = {
-  scope: DashboardScope;
-  timeWindow: DashboardTimeWindow;
-  limit?: number;
-};
+import {
+  mapDeadlineItem,
+  mapRiskItem,
+  mapSubmissionItem,
+  mapTodoItem,
+} from "./dashboard.workItem";
+import {
+  findPrimaryGroupId,
+  isGroupMember,
+  loadOrgActiveGroups,
+  loadUserGroups,
+} from "./dashboard.groups";
 
 type DashboardLoadContext = {
   tx: TenantDbTx;
   orgId: string;
   userId: string;
-  requestedScope: DashboardScope;
-  queryScope: DashboardQueryScope;
+  scope: DashboardScope;
+  groupId: string | undefined;
   timeWindow: DashboardTimeWindow;
   limit: number;
 };
@@ -65,9 +68,64 @@ export class DashboardService {
     input: DashboardSummaryInput,
   ): Promise<DashboardSummary> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    return tenantDb.transaction((tx) =>
-      this.buildDashboardSummary(this.createLoadContext(tx, ctx, input)),
-    );
+    return tenantDb.transaction(async (tx) => {
+      const effectiveInput = await this.resolveEffectiveInput(tx, ctx, input);
+      return this.buildDashboardSummary(
+        this.createLoadContext(tx, ctx, effectiveInput),
+      );
+    });
+  }
+
+  /**
+   * 返回当前用户可见的 active group 列表。
+   * viewer/staff 仅看到自己所属 group；manager/owner 额外补全 org 内其他 active group。
+   * @param ctx 请求上下文。
+   * @returns group 选项列表。
+   */
+  async listVisibleGroups(
+    ctx: RequestContext,
+  ): Promise<DashboardGroupOption[]> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    return tenantDb.transaction(async (tx) => {
+      const myGroups = await loadUserGroups(tx, ctx.userId);
+      if (!isManagerRole(ctx.role)) return myGroups;
+
+      const myGroupIds = new Set(myGroups.map((g) => g.id));
+      const orgGroups = await loadOrgActiveGroups(tx);
+      const extras: DashboardGroupOption[] = orgGroups
+        .filter((g) => !myGroupIds.has(g.id))
+        .map((g) => ({
+          id: g.id,
+          name: g.name,
+          isPrimary: false,
+          isMember: false,
+        }));
+      return [...myGroups, ...extras];
+    });
+  }
+
+  private async resolveEffectiveInput(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    input: DashboardSummaryInput,
+  ): Promise<DashboardSummaryInput> {
+    if (input.scope !== "group") {
+      return { ...input, groupId: undefined };
+    }
+
+    if (input.groupId) {
+      const allowed = await isGroupMember(tx, ctx.userId, input.groupId);
+      if (!allowed) {
+        throw new BadRequestException("NO_GROUP_ACCESS");
+      }
+      return input;
+    }
+
+    const primaryGroupId = await findPrimaryGroupId(tx, ctx.userId);
+    if (!primaryGroupId) {
+      throw new BadRequestException("NO_PRIMARY_GROUP");
+    }
+    return { ...input, groupId: primaryGroupId };
   }
 
   private createLoadContext(
@@ -79,8 +137,8 @@ export class DashboardService {
       tx,
       orgId: ctx.orgId,
       userId: ctx.userId,
-      requestedScope: input.scope,
-      queryScope: normalizeScope(input.scope),
+      scope: input.scope,
+      groupId: input.groupId,
       timeWindow: input.timeWindow,
       limit: input.limit ?? 5,
     };
@@ -90,8 +148,11 @@ export class DashboardService {
     context: DashboardLoadContext,
   ): Promise<DashboardSummary> {
     return {
-      scope: context.requestedScope,
+      scope: context.scope,
       timeWindow: context.timeWindow,
+      ...(context.scope === "group" && context.groupId
+        ? { effectiveGroupId: context.groupId }
+        : {}),
       summary: await this.loadSummaryCounts(context),
       panels: await this.loadPanels(context),
     };
@@ -101,31 +162,10 @@ export class DashboardService {
     context: DashboardLoadContext,
   ): Promise<DashboardSummary["summary"]> {
     return {
-      todayTasks: await this.loadTodayTasksCount(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-      ),
-      upcomingCases: await this.loadUpcomingCasesCount(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-        context.timeWindow,
-      ),
-      pendingSubmissions: await this.loadPendingSubmissionsCount(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-      ),
-      riskCases: await this.loadRiskCasesCount(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-      ),
+      todayTasks: await this.loadTodayTasksCount(context),
+      upcomingCases: await this.loadUpcomingCasesCount(context),
+      pendingSubmissions: await this.loadPendingSubmissionsCount(context),
+      riskCases: await this.loadRiskCasesCount(context),
     };
   }
 
@@ -133,46 +173,20 @@ export class DashboardService {
     context: DashboardLoadContext,
   ): Promise<DashboardSummary["panels"]> {
     return {
-      todo: await this.loadTodoItems(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-        context.limit,
-      ),
-      deadlines: await this.loadDeadlineItems(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-        context.timeWindow,
-        context.limit,
-      ),
-      submissions: await this.loadSubmissionItems(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-        context.limit,
-      ),
-      risks: await this.loadRiskItems(
-        context.tx,
-        context.orgId,
-        context.queryScope,
-        context.userId,
-        context.limit,
-      ),
+      todo: await this.loadTodoItems(context),
+      deadlines: await this.loadDeadlineItems(context),
+      submissions: await this.loadSubmissionItems(context),
+      risks: await this.loadRiskItems(context),
     };
   }
 
   private async loadTodayTasksCount(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
+    context: DashboardLoadContext,
   ): Promise<number> {
+    const { tx, orgId, scope, userId, groupId } = context;
     const params: unknown[] = [orgId];
     const scopeClause = buildTaskScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<CountRow>(
       `select count(*)::text as count
        from tasks t
@@ -180,21 +194,20 @@ export class DashboardService {
        where t.org_id = $1
          and t.status in ('pending', 'in_progress')
          and (c.id is null or c.archived_at is null)
-         ${scopeClause}`,
+         ${scopeClause}
+         ${groupClause}`,
       params,
     );
     return readCount(result.rows);
   }
 
   private async loadUpcomingCasesCount(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
-    timeWindow: DashboardTimeWindow,
+    context: DashboardLoadContext,
   ): Promise<number> {
+    const { tx, orgId, scope, userId, groupId, timeWindow } = context;
     const params: unknown[] = [orgId, timeWindow];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<CountRow>(
       `select count(*)::text as count
        from cases c
@@ -202,40 +215,40 @@ export class DashboardService {
          and c.archived_at is null
          and c.due_at is not null
          and c.due_at <= now() + make_interval(days => $2::int)
-         ${scopeClause}`,
+         ${scopeClause}
+         ${groupClause}`,
       params,
     );
     return readCount(result.rows);
   }
 
   private async loadPendingSubmissionsCount(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
+    context: DashboardLoadContext,
   ): Promise<number> {
+    const { tx, orgId, scope, userId, groupId } = context;
     const params: unknown[] = [orgId];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<CountRow>(
       `select count(*)::text as count
        from cases c
        where c.org_id = $1
          and c.archived_at is null
          and coalesce(c.stage, c.status) = 'S6'
-         ${scopeClause}`,
+         ${scopeClause}
+         ${groupClause}`,
       params,
     );
     return readCount(result.rows);
   }
 
   private async loadRiskCasesCount(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
+    context: DashboardLoadContext,
   ): Promise<number> {
+    const { tx, orgId, scope, userId, groupId } = context;
     const params: unknown[] = [orgId];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<CountRow>(
       `with latest_validation as (
          select distinct on (vr.case_id)
@@ -255,21 +268,20 @@ export class DashboardService {
            or c.billing_unpaid_amount_cached::numeric > 0
            or lv.result_status = 'failed'
          )
-         ${scopeClause}`,
+         ${scopeClause}
+         ${groupClause}`,
       params,
     );
     return readCount(result.rows);
   }
 
   private async loadTodoItems(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
-    limit: number,
+    context: DashboardLoadContext,
   ): Promise<DashboardWorkItem[]> {
+    const { tx, orgId, scope, userId, groupId, limit } = context;
     const params: unknown[] = [orgId, limit];
     const scopeClause = buildTaskScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<TodoRow>(
       `select
          t.id,
@@ -288,6 +300,7 @@ export class DashboardService {
          and t.status in ('pending', 'in_progress')
          and (c.id is null or c.archived_at is null)
          ${scopeClause}
+         ${groupClause}
        order by
          case when t.priority = 'high' then 0 when t.priority = 'normal' then 1 else 2 end,
          t.due_at nulls last,
@@ -299,15 +312,12 @@ export class DashboardService {
   }
 
   private async loadDeadlineItems(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
-    timeWindow: DashboardTimeWindow,
-    limit: number,
+    context: DashboardLoadContext,
   ): Promise<DashboardWorkItem[]> {
+    const { tx, orgId, scope, userId, groupId, timeWindow, limit } = context;
     const params: unknown[] = [orgId, timeWindow, limit];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<DeadlineRow>(
       `select
          c.id,
@@ -324,6 +334,7 @@ export class DashboardService {
          and c.due_at is not null
          and c.due_at <= now() + make_interval(days => $2::int)
          ${scopeClause}
+         ${groupClause}
        order by c.due_at asc, c.updated_at desc
        limit $3`,
       params,
@@ -332,14 +343,12 @@ export class DashboardService {
   }
 
   private async loadSubmissionItems(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
-    limit: number,
+    context: DashboardLoadContext,
   ): Promise<DashboardWorkItem[]> {
+    const { tx, orgId, scope, userId, groupId, limit } = context;
     const params: unknown[] = [orgId, limit];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<SubmissionRow>(
       `with latest_validation as (
          select distinct on (vr.case_id)
@@ -373,6 +382,7 @@ export class DashboardService {
          and c.archived_at is null
          and coalesce(c.stage, c.status) = 'S6'
          ${scopeClause}
+         ${groupClause}
        order by c.due_at nulls last, c.updated_at desc
        limit $2`,
       params,
@@ -381,14 +391,12 @@ export class DashboardService {
   }
 
   private async loadRiskItems(
-    tx: TenantDbTx,
-    orgId: string,
-    scope: DashboardQueryScope,
-    userId: string,
-    limit: number,
+    context: DashboardLoadContext,
   ): Promise<DashboardWorkItem[]> {
+    const { tx, orgId, scope, userId, groupId, limit } = context;
     const params: unknown[] = [orgId, limit];
     const scopeClause = buildCaseScopeClause(scope, userId, params);
+    const groupClause = buildGroupClause(scope, groupId, params);
     const result = await tx.query<RiskRow>(
       `with latest_validation as (
          select distinct on (vr.case_id)
@@ -418,6 +426,7 @@ export class DashboardService {
            or lv.result_status = 'failed'
          )
          ${scopeClause}
+         ${groupClause}
        order by
          case when c.billing_unpaid_amount_cached::numeric > 0 then 0 when lv.result_status = 'failed' then 1 else 2 end,
          c.due_at nulls last,

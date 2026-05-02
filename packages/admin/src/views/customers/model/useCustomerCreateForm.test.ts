@@ -198,6 +198,43 @@ describe("useCustomerCreateForm", () => {
     );
   });
 
+  it("BUG-187: round-trips customerType + representativeName for corporation", async () => {
+    const repository = createRepository();
+    const model = useCustomerCreateForm({
+      repository,
+      duplicateCheckDebounceMs: 0,
+    });
+
+    model.fields.customerType = "corporation";
+    model.fields.legalName = "株式会社アクメ";
+    model.fields.kana = "アクメ";
+    model.fields.representativeName = "山田 太郎";
+    model.fields.group = "tokyo-1";
+    model.fields.phone = "03-1111-2222";
+
+    const created = await model.createCustomer();
+
+    expect(created).toEqual({ id: "cust-new" });
+    expect(repository.createCustomer).toHaveBeenCalledWith(
+      expect.objectContaining({
+        customerType: "corporation",
+        legalName: "株式会社アクメ",
+        kana: "アクメ",
+        representativeName: "山田 太郎",
+      }),
+    );
+  });
+
+  it("BUG-187: defaults customerType to individual on init and preserves on reset", () => {
+    const { fields, resetForm } = buildForm();
+    expect(fields.customerType).toBe("individual");
+    fields.customerType = "corporation";
+    fields.representativeName = "代表者";
+    resetForm();
+    expect(fields.customerType).toBe("individual");
+    expect(fields.representativeName).toBe("");
+  });
+
   it("round-trips empty optional fields without error", async () => {
     const repository = createRepository();
     const model = useCustomerCreateForm({

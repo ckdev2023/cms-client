@@ -58,9 +58,17 @@ describe("cases/constants — gates", () => {
 // ─── Billing statuses ───────────────────────────────────────────
 
 describe("cases/constants — billing statuses", () => {
-  it("covers paid, partial, unpaid, arrears, waived", () => {
+  it("covers paid, partial, unpaid, arrears, waived, due, overdue", () => {
     const keys = Object.keys(BILLING_STATUSES).sort();
-    expect(keys).toEqual(["arrears", "paid", "partial", "unpaid", "waived"]);
+    expect(keys).toEqual([
+      "arrears",
+      "due",
+      "overdue",
+      "paid",
+      "partial",
+      "unpaid",
+      "waived",
+    ]);
     for (const def of Object.values(BILLING_STATUSES)) {
       expect(def.label).toBeTruthy();
       expect(def.badge).toBeTruthy();

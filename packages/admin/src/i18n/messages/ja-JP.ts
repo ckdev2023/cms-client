@@ -1,4 +1,5 @@
 import customerDetail from "./customers/ja-JP";
+import customerList from "./customers/ja-JP-list";
 import billing from "./billing/ja-JP";
 import cases from "./cases/ja-JP";
 import conversations from "./conversations/ja-JP";
@@ -116,186 +117,7 @@ const jaJP = {
     },
   },
   customers: {
-    list: {
-      title: "顧客",
-      subtitle: "顧客プロフィール、連絡先、関連案件を管理します。",
-      placeholderMessage: "顧客一覧は準備中です。",
-      addCustomer: "顧客を追加",
-      summaryTitle: "顧客ワーク概要",
-      summarySubtitle:
-        "担当者が手持ちの顧客と案件の負荷を素早く把握できるサマリーカードです。",
-      summary: {
-        mine: {
-          label: "自分の顧客",
-          hint: "ログイン中のユーザーに割り当てられた顧客数です。今日フォローすべき対象を確認できます。",
-        },
-        group: {
-          label: "組の顧客",
-          hint: "組全体の顧客数です。割当や転派の判断材料として活用できます。",
-        },
-        active: {
-          label: "活動中案件あり",
-          hint: "進行中の案件がある顧客数です。直近の連絡や補件を優先確認できます。",
-        },
-        noActive: {
-          label: "活動中案件なし",
-          hint: "未起案または完了済みの顧客数です。再訪問・再契約推進の対象です。",
-        },
-      },
-      scopeLabel: "データ範囲",
-      scope: {
-        mine: "自分",
-        group: "所属組",
-        all: "全所（管理者）",
-      },
-      searchPlaceholder: "検索：顧客名 / フリガナ / 電話 / メール",
-      filters: {
-        groupAll: "所属グループ：全部",
-        ownerAll: "担当者：全部",
-        activeCasesAll: "活動中案件：全部",
-        activeCasesYes: "活動中案件あり",
-        activeCasesNo: "活動中案件なし",
-        reset: "リセット",
-      },
-      filterSummary: "現在の表示：{scope} · {count} 件",
-      columns: {
-        customer: "顧客",
-        furigana: "フリガナ",
-        cases: "案件",
-        lastContact: "最終連絡",
-        owner: "担当者",
-        referral: "紹介元",
-        group: "所属グループ",
-        actions: "操作",
-      },
-      selectAll: "すべて選択",
-      selectRow: "{name} を選択",
-      casesSummary: "累計 {total} · 活動中 {active}",
-      bulk: {
-        label: "一括操作",
-        selected: "{count} 件選択中",
-        clear: "クリア",
-        assignOwner: "担当者を割当",
-        selectOwner: "担当者を選択",
-        changeGroup: "グループを変更",
-        selectGroup: "グループを選択",
-        apply: "適用",
-      },
-      empty: {
-        title: "条件に一致する顧客がありません",
-        description:
-          "データ範囲を切り替えるか、検索条件をリセットしてください。",
-        cta: "最初の顧客を追加",
-      },
-      pagination: {
-        summary: "{start}〜{end} 件目（全 {total} 件）",
-        prev: "前へ",
-        next: "次へ",
-      },
-      actions: {
-        viewDetail: "顧客詳細を開く",
-        createCase: "この顧客で案件を開始",
-      },
-      toast: {
-        customerCreated: {
-          title: "顧客を作成しました",
-          description: "顧客ファイルを作成済みです。案件を開始できます",
-        },
-        draftSaved: {
-          title: "下書きを保存しました",
-          description: "顧客一覧の「続ける」から登録を完了できます",
-        },
-        draftLoaded: {
-          title: "下書きを読み込みました",
-          description: "入力を完了して顧客を作成してください",
-        },
-        bulkAssign: {
-          title: "一括割当（デモ）",
-          description: "{count} 件選択中、担当者：{owner}",
-        },
-        bulkGroup: {
-          title: "一括グループ変更（デモ）",
-          description: "{count} 件選択中、グループ：{group}（記録必須）",
-        },
-      },
-      draft: {
-        rowLabel: "下書き",
-        continue: "続ける",
-        remove: "削除",
-      },
-      createModal: {
-        title: "個人顧客を新規作成",
-        description:
-          "基本情報を入力して顧客を登録します。重複防止のため電話またはメールの入力が必要です。",
-        fields: {
-          displayName: "表示名（社内用）",
-          displayNamePlaceholder: "例：王伟（就労）",
-          group: "所属グループ",
-          groupPlaceholder: "グループを選択",
-          legalName: "氏名（法定）",
-          legalNamePlaceholder: "氏名を入力",
-          kana: "フリガナ",
-          kanaPlaceholder: "例：ワン ウェイ",
-          gender: "性別",
-          genderDefault: "指定なし",
-          genderMale: "男",
-          genderFemale: "女",
-          birthDate: "生年月日",
-          nationality: "国籍",
-          nationalityPlaceholder: "例：中国 / 日本",
-          phone: "電話",
-          phonePlaceholder: "携帯 / 固定電話",
-          phoneHint: "電話またはメールが必須です（重複防止・連絡用）",
-          email: "メール",
-          emailPlaceholder: "メールアドレス",
-          referrer: "紹介元 / 来源",
-          referrerPlaceholder: "例：紹介 / 広告",
-          location: "所在地",
-          locationNone: "—",
-          locationOverseas: "海外",
-          locationJapan: "日本国内",
-          sourceType: "流入経路",
-          sourceTypeNone: "—",
-          sourceTypeReferral: "紹介",
-          sourceTypeWeb: "ウェブ",
-          sourceTypeAds: "広告",
-          visaType: "在留資格",
-          visaTypeNone: "—",
-          visaTypeBusinessManager: "経営・管理",
-          visaTypeEngineerSpecialist: "技術・人文知識・国際業務",
-          visaTypeSkilledLabor: "技能",
-          visaTypeStudent: "留学",
-          visaTypeDependent: "家族滞在",
-          visaTypePermanentResident: "永住者",
-          visaTypeSpouseOfJpNational: "日本人の配偶者等",
-          visaTypeLongTermResident: "定住者",
-          visaTypeDesignatedActivities: "特定活動",
-          visaTypeOther: "その他",
-          referrerName: "紹介者名",
-          referrerNamePlaceholder: "例：田中様",
-          avatar: "アバター",
-          note: "備考（検索可）",
-          notePlaceholder: "例：引継ぎ事項、注意点...",
-        },
-        dedupe: {
-          title: "重複の可能性があります",
-          description:
-            "同一人物かどうか確認してください。保存前にグローバル検索で照合もできます。",
-        },
-        cancel: "キャンセル",
-        saveDraft: "下書き保存",
-        create: "顧客を作成",
-        state: {
-          checkingDuplicates: "重複顧客を確認中…",
-          unauthorized:
-            "顧客を作成する権限がありません。管理者にご連絡ください。",
-          validationError:
-            "入力内容に誤りがあります。各項目を確認してください。",
-          requestFailed:
-            "顧客の作成に失敗しました。しばらくしてから再試行してください。",
-        },
-      },
-    },
+    list: customerList,
     detail: customerDetail,
   },
   billing,
@@ -316,14 +138,6 @@ const jaJP = {
     filters: {
       scopeLabel: "表示範囲",
       groupLabel: "グループ絞り込み",
-      groupPending:
-        "グループ別の絞り込みはまだバックエンド未接続のため、現在は事務所全体の集計を表示します。",
-      groups: {
-        all: "全グループ",
-        tokyo1: "東京一組",
-        tokyo2: "東京二組",
-        osaka: "大阪組",
-      },
     },
     scope: {
       mine: "自分",
@@ -334,8 +148,6 @@ const jaJP = {
       mine: "自分が担当または関与している案件とタスクを表示します。カードと一覧が同時に更新されます。",
       group:
         "所属組の案件とタスクを表示します。今日の優先順位と期限圧力を一緒に調整できます。",
-      groupFallback:
-        "所属組ビューは接続済みですが、バックエンドの組別集計は未分割のため、当面は事務所全体の集計を表示します。",
       all: "事務所全体を表示します。対応事項、期限、提出待ち、リスク分布を素早く確認できます。",
     },
     state: {

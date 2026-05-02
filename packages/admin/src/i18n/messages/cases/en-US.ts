@@ -624,6 +624,8 @@ const casesEnUS = {
       unpaid: "Unpaid",
       arrears: "Arrears",
       waived: "Waived",
+      due: "Outstanding",
+      overdue: "Overdue",
     },
     logCategories: {
       all: "All",

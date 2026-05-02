@@ -3,12 +3,11 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
+import StageChip from "./StageChip.vue";
 import type { CaseListItem } from "../types";
 import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
 import { buildCaseDetailHref } from "../query";
 import {
-  getStageI18nKey,
-  getStageLabel,
   getPhaseI18nKey,
   getPhaseBadge,
   getCaseTypeI18nKey,
@@ -34,20 +33,6 @@ const owner = computed(() => {
     };
   }
   return resolveOwnerOption(props.item.ownerId, locale.value);
-});
-
-const stageLabel = computed(() => {
-  const key = getStageI18nKey(props.item.stageId);
-  return key ? t(key) : getStageLabel(props.item.stageId);
-});
-
-const stageTone = computed<ChipTone>(() => {
-  const s = props.item.stageId;
-  if (s === "S9") return "neutral";
-  if (s === "S5" || s === "S6" || s === "S3") return "warning";
-  if (s === "S4" || s === "S7" || s === "S8") return "primary";
-  if (s === "S2") return "success";
-  return "neutral";
 });
 
 const riskLabel = computed(() =>
@@ -108,7 +93,7 @@ const isFailureStep = computed(
     <td class="case-row__hide-md">
       <div class="case-row__stage-cell">
         <div class="case-row__stage-row">
-          <Chip :tone="stageTone">{{ stageLabel }}</Chip>
+          <StageChip :code="item.stageId" precision="full" />
           <Chip
             v-if="item.businessPhase"
             :tone="phaseTone"

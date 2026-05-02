@@ -160,6 +160,21 @@
   color: var(--color-text-3);
 }
 
+.customer-modal__type-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.customer-modal__type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-base);
+  color: var(--color-text-1);
+  cursor: pointer;
+}
+
 .customer-modal__footer {
   display: flex;
   align-items: center;

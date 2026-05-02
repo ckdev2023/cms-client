@@ -12,8 +12,14 @@ function formatDaysLeftLabel(daysLeft: number): string {
   return daysLeft <= 0 ? "已到期" : `剩余 ${String(daysLeft)} 天`;
 }
 
-function formatDateLabel(value: string | null | undefined): string | undefined {
-  if (!value) return undefined;
+function formatDateLabel(
+  value: string | Date | null | undefined,
+): string | undefined {
+  if (value === null || value === undefined) return undefined;
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) return undefined;
+    return value.toISOString().slice(0, 10);
+  }
   return value.slice(0, 10);
 }
 
@@ -51,7 +57,9 @@ function ownerMetaLabel(
   return ownerName ? `负责人：${ownerName}` : undefined;
 }
 
-function dueMetaLabel(dueAt: string | null | undefined): string | undefined {
+function dueMetaLabel(
+  dueAt: string | Date | null | undefined,
+): string | undefined {
   const label = formatDateLabel(dueAt);
   return label ? `期限：${label}` : undefined;
 }
@@ -71,7 +79,7 @@ function buildOwnerMetaKey(
 }
 
 function buildDueMetaKey(
-  dueAt: string | null | undefined,
+  dueAt: string | Date | null | undefined,
 ): DashboardMetaKey | undefined {
   const label = formatDateLabel(dueAt);
   return label ? { key: "due", params: { date: label } } : undefined;
@@ -162,6 +170,7 @@ export function mapDeadlineItem(row: DeadlineRow): DashboardWorkItem {
     route: `/cases/${row.id}`,
     daysLeft,
     statusLabelKey: isOverdue ? "overdue" : "daysLeft",
+    statusLabelParams: isOverdue ? undefined : { days: daysLeft },
     descKey: "deadline.currentStage",
     descParams: { status: row.status },
     actionKey: "viewCase",
@@ -258,10 +267,11 @@ type RiskDescriptor = {
 function describeRisk(row: RiskRow, unpaidAmount: number): RiskDescriptor {
   const hasUnpaid = Number.isFinite(unpaidAmount) && unpaidAmount > 0;
   if (hasUnpaid) {
+    const amountLabel = formatMoneyLabel(row.unpaid_amount);
     return {
-      desc: `待收金额 ${formatMoneyLabel(row.unpaid_amount)}，需尽快跟进收费。`,
+      desc: `待收金额 ${amountLabel}，需尽快跟进收费。`,
       descKey: "risk.unpaidAmount",
-      descParams: { amount: unpaidAmount },
+      descParams: { amount: amountLabel },
       statusLabel: "收费风险",
       statusLabelKey: "billingRisk",
       action: "查看收费",
@@ -322,7 +332,7 @@ export function mapRiskItem(row: RiskRow): DashboardWorkItem {
       buildOwnerMetaKey(row.owner_name),
       buildDueMetaKey(row.due_at),
       hasUnpaid
-        ? { key: "unpaid", params: { amount: unpaidAmount } }
+        ? { key: "unpaid", params: { amount: formatMoneyLabel(unpaidAmount) } }
         : undefined,
     ]),
   };

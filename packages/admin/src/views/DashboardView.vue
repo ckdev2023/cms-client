@@ -37,7 +37,6 @@ const {
   errorCode,
   hasData,
   isGroupFilterDisabled,
-  groupFilterHintKey,
   scopeSummaryKey,
   retry,
 } = dashboard;
@@ -119,14 +118,15 @@ watch(errorCode, (nextErrorCode) => {
             :aria-label="t('dashboard.filters.groupLabel')"
             :disabled="isGroupFilterDisabled"
           >
-            <option v-for="group in groupOptions" :key="group" :value="group">
-              {{ t(`dashboard.filters.groups.${group}`) }}
+            <option
+              v-for="group in groupOptions"
+              :key="group.id"
+              :value="group.id"
+            >
+              {{ group.name }}
             </option>
           </select>
         </div>
-        <p v-if="scope === 'group'" class="filter-hint">
-          {{ t(groupFilterHintKey) }}
-        </p>
       </div>
     </section>
 
@@ -226,13 +226,6 @@ watch(errorCode, (nextErrorCode) => {
   font: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-}
-
-.filter-hint {
-  margin: 0;
-  font-size: var(--font-size-sm);
-  line-height: var(--leading-relaxed);
-  color: var(--color-text-3);
 }
 
 .dashboard-feedback {

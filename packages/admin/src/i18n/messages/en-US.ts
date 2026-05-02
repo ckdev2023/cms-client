@@ -138,14 +138,6 @@ const enUS = {
     filters: {
       scopeLabel: "View scope",
       groupLabel: "Group filter",
-      groupPending:
-        "Group-level filtering is not connected yet, so the dashboard still shows firm-wide aggregates.",
-      groups: {
-        all: "All groups",
-        tokyo1: "Tokyo Team 1",
-        tokyo2: "Tokyo Team 2",
-        osaka: "Osaka Team",
-      },
     },
     scope: {
       mine: "Mine",
@@ -156,8 +148,6 @@ const enUS = {
       mine: "Showing the cases and tasks I own or participate in. Cards and lists update together.",
       group:
         "Showing the group's cases and tasks so we can plan today's priorities and deadline pressure together.",
-      groupFallback:
-        "The group scope is connected, but backend group-level data is not split yet, so firm-wide aggregates are shown for now.",
       all: "Showing the whole firm so you can quickly scan todos, deadlines, pending submissions, and risks.",
     },
     state: {

@@ -358,6 +358,10 @@ onMounted(() => {
   min-width: 0;
 }
 
+.panel-card--main :deep(.ui-card__header) {
+  padding: 14px 20px;
+}
+
 .state-block,
 .empty-row {
   padding: 24px;

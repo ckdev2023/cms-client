@@ -6,6 +6,7 @@ import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Chip, { type ChipTone } from "../../shared/ui/Chip.vue";
 import Button from "../../shared/ui/Button.vue";
+import StageChip from "./components/StageChip.vue";
 import CaseOverviewTab from "./components/CaseOverviewTab.vue";
 import CaseInfoTab from "./components/CaseInfoTab.vue";
 import CaseDocumentsTab from "./components/CaseDocumentsTab.vue";
@@ -176,9 +177,7 @@ function onPhaseSubmit(payload: {
         ]"
       >
         <template #badge>
-          <Chip :tone="badgeToTone(detail.statusBadge)" dot>
-            {{ stageLabel }}
-          </Chip>
+          <StageChip :code="detail.stageCode" precision="both" dot />
           <Chip :tone="phaseTone" dot>
             {{ phaseLabel }}
           </Chip>

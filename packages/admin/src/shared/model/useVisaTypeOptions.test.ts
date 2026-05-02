@@ -85,4 +85,22 @@ describe("resolveVisaTypeLabel", () => {
   it("returns dash when code is empty", () => {
     expect(resolveVisaTypeLabel("", "zh-CN")).toBe("—");
   });
+
+  // BUG-185：历史 curl 写入的 `BUSINESS_MANAGER` 大写枚举仍出现在客户详情；
+  // resolveVisaTypeLabel 必须 case-insensitive 命中目录，避免 raw enum 暴露给前端。
+  it("resolves uppercase legacy enum to localized label", () => {
+    expect(resolveVisaTypeLabel("BUSINESS_MANAGER", "en-US")).toBe(
+      "Business manager",
+    );
+    expect(resolveVisaTypeLabel("BUSINESS_MANAGER", "zh-CN")).toBe("经营管理");
+    expect(resolveVisaTypeLabel("BUSINESS_MANAGER", "ja-JP")).toBe(
+      "経営・管理",
+    );
+  });
+
+  it("trims surrounding whitespace before catalog lookup", () => {
+    expect(resolveVisaTypeLabel("  business_manager  ", "en-US")).toBe(
+      "Business manager",
+    );
+  });
 });

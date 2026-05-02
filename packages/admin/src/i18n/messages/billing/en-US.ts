@@ -206,6 +206,7 @@ const billingEnUS = {
     balance: "Balance",
     interim_payment: "Interim payment",
     installment: "Installment",
+    case_fee: "Case fee",
   },
 } as const;
 

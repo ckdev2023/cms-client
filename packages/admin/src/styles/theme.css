@@ -218,6 +218,32 @@ h4,
 }
 
 /* ===================================================================
+   Native <select> — custom chevron with consistent right inset so the
+   dropdown indicator never sits flush against the edge.
+
+   The chevron and its inline-end padding live on `select[class][class]`
+   (specificity 0,2,1) so they outweigh Vue scoped component classes
+   (`.cls[data-v-xxx]`, specificity 0,2,0). This is required because
+   many component selects use the `background:` shorthand to set their
+   background-color, which would otherwise reset background-image and
+   wipe out the chevron.
+   =================================================================== */
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+select[class][class] {
+  background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%235b6776' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 12px 12px;
+  padding-right: 36px;
+  padding-inline-end: 36px;
+}
+
+/* ===================================================================
    Checkbox Hit-Area Utility — 24×24 tap target with 16×16 visual.
    Wrap a bare <input type="checkbox"> in <label class="ui-checkbox-hit">.
    =================================================================== */

@@ -301,4 +301,24 @@ describe("CustomerBasicInfoTab", () => {
     const { wrapper: w } = factory(bmvCustomer);
     expect(w.find(".bmv-intake-card").exists()).toBe(false);
   });
+
+  // BUG-185：BMV 客户详情 Visa type 字段直接绑定 raw enum；en-US 下显示
+  // `BUSINESS_MANAGER`、`business_manager` 等 raw code 而非本地化标签。
+  // 修复后 readonly 文本框必须显示与下拉选项一致的本地化标签。
+  it("renders BMV visa type using localized label (BUG-185)", () => {
+    const { wrapper: w } = factory(bmvCustomer);
+    const input = w.find("#basicInfoVisaType").element as HTMLInputElement;
+    expect(input.value).toBe("Business manager");
+  });
+
+  it("resolves legacy uppercase BUSINESS_MANAGER to localized label (BUG-185)", () => {
+    const legacyBmv = {
+      ...bmvCustomer,
+      visaType: "BUSINESS_MANAGER",
+    };
+    setAppLocale("zh-CN");
+    const { wrapper: w } = factory(legacyBmv);
+    const input = w.find("#basicInfoVisaType").element as HTMLInputElement;
+    expect(input.value).toBe("经营管理");
+  });
 });

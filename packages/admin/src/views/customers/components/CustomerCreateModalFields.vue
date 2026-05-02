@@ -1,10 +1,22 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { CUSTOMER_TYPES, type CustomerType } from "../types-customer-fields";
 import type { CustomerCreateFormFields, SelectOption } from "../types";
 
-/** 新建客户弹窗内的 16 字段表单：与 a11y id/name/label 关联的唯一来源。 */
-const { t } = useI18n();
+/**
+ * 新建客户弹窗字段表单。
+ *
+ * BUG-187：根据 `customerType` 切换字段集合：
+ * - individual：保留原有 16 字段集合（性别、生年月日、国籍、签证类型等）。
+ * - corporation：仅展示法人相关字段（公司名 / 公司假名 / 代表者姓名 / 联系信息 / 备注），
+ *   隐藏个人专属字段，避免误填。
+ *
+ * BUG-188：原生 `<input type="date">` 的占位符与日历弹层文案默认跟随浏览器/系统语言，
+ * 在 en-US/ja-JP 下会泄漏 zh-CN 残串（"年/月/日"、"显示日期选择器"）。
+ * 显式把当前 i18n locale 透传到 `lang` 属性，让 Chromium 按应用语言渲染原生 picker 文案。
+ */
+const { t, locale } = useI18n();
 
 // prettier-ignore
 const VISA_LABEL: Record<string, string> = { business_manager:"visaTypeBusinessManager",engineer_specialist:"visaTypeEngineerSpecialist",skilled_labor:"visaTypeSkilledLabor",student:"visaTypeStudent",dependent:"visaTypeDependent",permanent_resident:"visaTypePermanentResident",spouse_of_jp_national:"visaTypeSpouseOfJpNational",long_term_resident:"visaTypeLongTermResident",designated_activities:"visaTypeDesignatedActivities",other:"visaTypeOther" };
@@ -28,16 +40,77 @@ type Props = {
 
 const props = defineProps<Props>();
 
-defineEmits<{
+const emit = defineEmits<{
   "update:field": [name: keyof CustomerCreateFormFields, value: string];
 }>();
 
+const customerType = computed<CustomerType>(
+  () => props.fields?.customerType ?? "individual",
+);
+
+const isIndividual = computed(() => customerType.value === "individual");
+const isCorporation = computed(() => customerType.value === "corporation");
+
+const legalNameLabel = computed(() =>
+  isCorporation.value ? t(`${p}.legalNameCorporation`) : t(`${p}.legalName`),
+);
+const legalNamePlaceholder = computed(() =>
+  isCorporation.value
+    ? t(`${p}.legalNameCorporationPlaceholder`)
+    : t(`${p}.legalNamePlaceholder`),
+);
+const kanaLabel = computed(() =>
+  isCorporation.value ? t(`${p}.kanaCorporation`) : t(`${p}.kana`),
+);
+const kanaPlaceholder = computed(() =>
+  isCorporation.value
+    ? t(`${p}.kanaCorporationPlaceholder`)
+    : t(`${p}.kanaPlaceholder`),
+);
+
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
+
+/**
+ * 处理客户类型 radio 切换。
+ *
+ * @param event - 原生 change 事件
+ */
+function onCustomerTypeChange(event: Event) {
+  const value = (event.target as HTMLInputElement).value;
+  if ((CUSTOMER_TYPES as readonly string[]).includes(value)) {
+    emit("update:field", "customerType", value);
+  }
+}
 </script>
 
 <template>
   <div class="customer-modal__fields">
+    <fieldset class="customer-modal__field">
+      <legend class="customer-modal__label">
+        {{ t("customers.list.createModal.customerType.label") }}
+        <span class="customer-modal__required">*</span>
+      </legend>
+      <div class="customer-modal__type-group" role="radiogroup">
+        <label
+          v-for="value in CUSTOMER_TYPES"
+          :key="value"
+          class="customer-modal__type-option"
+          :for="`customer-create-customerType-${value}`"
+        >
+          <input
+            :id="`customer-create-customerType-${value}`"
+            type="radio"
+            name="customerType"
+            :value="value"
+            :checked="customerType === value"
+            @change="onCustomerTypeChange"
+          />
+          {{ t(`customers.list.createModal.customerType.${value}`) }}
+        </label>
+      </div>
+    </fieldset>
+
     <div class="customer-modal__row">
       <div class="customer-modal__field">
         <label class="customer-modal__label" for="customer-create-displayName">
@@ -84,7 +157,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
     <div class="customer-modal__row">
       <div class="customer-modal__field">
         <label class="customer-modal__label" for="customer-create-legalName">
-          {{ t("customers.list.createModal.fields.legalName") }}
+          {{ legalNameLabel }}
           <span class="customer-modal__required">*</span>
         </label>
         <input
@@ -93,15 +166,13 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           type="text"
           class="customer-modal__input"
           :value="props.fields?.legalName"
-          :placeholder="
-            t('customers.list.createModal.fields.legalNamePlaceholder')
-          "
+          :placeholder="legalNamePlaceholder"
           @input="$emit('update:field', 'legalName', inputValue($event))"
         />
       </div>
       <div class="customer-modal__field">
         <label class="customer-modal__label" for="customer-create-kana">
-          {{ t("customers.list.createModal.fields.kana") }}
+          {{ kanaLabel }}
         </label>
         <input
           id="customer-create-kana"
@@ -109,13 +180,33 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           type="text"
           class="customer-modal__input"
           :value="props.fields?.kana"
-          :placeholder="t('customers.list.createModal.fields.kanaPlaceholder')"
+          :placeholder="kanaPlaceholder"
           @input="$emit('update:field', 'kana', inputValue($event))"
         />
       </div>
     </div>
 
-    <div class="customer-modal__row">
+    <div v-if="isCorporation" class="customer-modal__field">
+      <label
+        class="customer-modal__label"
+        for="customer-create-representativeName"
+      >
+        {{ t("customers.list.createModal.fields.representativeName") }}
+      </label>
+      <input
+        id="customer-create-representativeName"
+        name="representativeName"
+        type="text"
+        class="customer-modal__input"
+        :value="props.fields?.representativeName"
+        :placeholder="
+          t('customers.list.createModal.fields.representativeNamePlaceholder')
+        "
+        @input="$emit('update:field', 'representativeName', inputValue($event))"
+      />
+    </div>
+
+    <div v-if="isIndividual" class="customer-modal__row">
       <div class="customer-modal__field">
         <label class="customer-modal__label" for="customer-create-gender">
           {{ t("customers.list.createModal.fields.gender") }}
@@ -147,13 +238,14 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           name="birthDate"
           type="date"
           class="customer-modal__input"
+          :lang="locale"
           :value="props.fields?.birthDate"
           @input="$emit('update:field', 'birthDate', inputValue($event))"
         />
       </div>
     </div>
 
-    <div class="customer-modal__field">
+    <div v-if="isIndividual" class="customer-modal__field">
       <label class="customer-modal__label" for="customer-create-nationality">
         {{ t("customers.list.createModal.fields.nationality") }}
       </label>
@@ -247,7 +339,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
     </div>
 
     <div class="customer-modal__row">
-      <div class="customer-modal__field">
+      <div v-if="isIndividual" class="customer-modal__field">
         <label class="customer-modal__label" for="customer-create-visaType">
           {{ t("customers.list.createModal.fields.visaType") }}
         </label>

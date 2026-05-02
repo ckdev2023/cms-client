@@ -16,6 +16,9 @@ import {
   readNumber,
   readString,
 } from "./CaseAdapterShared";
+import { resolveMilestoneI18nKey } from "./billingMilestoneI18n";
+
+export { resolveMilestoneI18nKey } from "./billingMilestoneI18n";
 
 /**
  * 提取数组或 `{ items }` 形式。
@@ -247,6 +250,7 @@ function adaptBillingPlanToPaymentRow(value: unknown): PaymentRow | null {
   return {
     date: formatDate(dueDate),
     type: milestoneName || "収費ノード",
+    typeI18nKey: resolveMilestoneI18nKey(milestoneName),
     amount: amountDue > 0 ? `¥${amountDue.toLocaleString()}` : "¥0",
     status,
     statusLabel: BILLING_STATUS_LABELS[status] ?? status,

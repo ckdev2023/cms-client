@@ -295,10 +295,19 @@ function handleRemoveDraft(draftId: string) {
 /**
  * 更新弹窗表单中的单个字段。
  *
+ * BUG-187：`customerType` 字段是 union 字面量类型，需要单独窄化赋值；
+ * 其余字段统一按 string 写入。
+ *
  * @param name - 字段名
  * @param value - 字段值
  */
 function updateFormField(name: keyof CustomerCreateFormFields, value: string) {
+  if (name === "customerType") {
+    if (value === "individual" || value === "corporation") {
+      formFields.customerType = value;
+    }
+    return;
+  }
   formFields[name] = value;
 }
 

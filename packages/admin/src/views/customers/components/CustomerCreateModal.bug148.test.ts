@@ -5,6 +5,7 @@ import CustomerCreateModal from "./CustomerCreateModal.vue";
 import type { CustomerCreateFormFields } from "../types";
 
 const BLANK_FIELDS: CustomerCreateFormFields = {
+  customerType: "individual",
   displayName: "",
   group: "",
   legalName: "",
@@ -19,6 +20,7 @@ const BLANK_FIELDS: CustomerCreateFormFields = {
   sourceType: "",
   visaType: "",
   referrerName: "",
+  representativeName: "",
   avatar: "",
   note: "",
 };

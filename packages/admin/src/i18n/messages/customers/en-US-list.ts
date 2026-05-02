@@ -96,9 +96,16 @@ const customerList = {
   },
   draft: { rowLabel: "Draft", continue: "Continue", remove: "Remove" },
   createModal: {
-    title: "Create individual customer",
+    title: "Create customer",
+    titleIndividual: "Create individual customer",
+    titleCorporation: "Create corporate customer",
     description:
       "Fill in basic info to create a customer record. At least one of phone or email is required for deduplication.",
+    customerType: {
+      label: "Customer type",
+      individual: "Individual",
+      corporation: "Corporation",
+    },
     fields: {
       displayName: "Display name (internal)",
       displayNamePlaceholder: "e.g. Wang Wei (work visa)",
@@ -106,8 +113,14 @@ const customerList = {
       groupPlaceholder: "Select group",
       legalName: "Legal name",
       legalNamePlaceholder: "Enter full name",
+      legalNameCorporation: "Company legal name",
+      legalNameCorporationPlaceholder: "e.g. Acme Co., Ltd.",
       kana: "Furigana",
       kanaPlaceholder: "e.g. ワン ウェイ",
+      kanaCorporation: "Company kana",
+      kanaCorporationPlaceholder: "e.g. アクメ",
+      representativeName: "Representative name",
+      representativeNamePlaceholder: "e.g. Mr. Tanaka",
       gender: "Gender",
       genderDefault: "Any",
       genderMale: "Male",

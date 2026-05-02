@@ -56,6 +56,39 @@ void test("mapCustomerToSummaryDto maps stable admin-facing fields", () => {
   assert.equal(summary.bmvProfile.intakeStatus, "sign_pending");
 });
 
+void test("[BUG-183] mapCustomerToSummaryDto exposes top-level customer type for individual", () => {
+  const summary = mapCustomerToSummaryDto(customer);
+  assert.equal(
+    summary.type,
+    "individual",
+    "GET /api/customers 列表项必须暴露 type 顶层字段，否则 admin 无法区分 individual vs corporation",
+  );
+});
+
+void test("[BUG-183] mapCustomerToSummaryDto exposes top-level customer type for corporation", () => {
+  const corporateCustomer: Customer = {
+    ...customer,
+    id: "cust-corp-001",
+    type: "corporation",
+    baseProfile: {
+      ...customer.baseProfile,
+      displayName: "株式会社テスト",
+      legalName: "株式会社テスト",
+    },
+  };
+  const summary = mapCustomerToSummaryDto(corporateCustomer);
+  assert.equal(summary.type, "corporation");
+});
+
+void test("[BUG-183] mapCustomerToDetailDto inherits top-level customer type", () => {
+  const detail = mapCustomerToDetailDto(customer);
+  assert.equal(
+    detail.type,
+    "individual",
+    "GET /api/customers/:id 详情必须暴露 type 顶层字段（CustomerDetailDto extends CustomerSummaryDto 自动继承）",
+  );
+});
+
 void test("mapCustomerToDetailDto includes detail-only aggregates", () => {
   const detail = mapCustomerToDetailDto(customer, {
     totalCases: 2,

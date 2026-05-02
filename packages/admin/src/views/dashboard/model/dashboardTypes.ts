@@ -1,20 +1,10 @@
 export const DASHBOARD_SCOPE_OPTIONS = ["mine", "group", "all"] as const;
-export const DASHBOARD_GROUP_OPTIONS = [
-  "all",
-  "tokyo1",
-  "tokyo2",
-  "osaka",
-] as const;
 export const DASHBOARD_TIME_WINDOW_OPTIONS = [7, 30] as const;
 
 /**
  *
  */
 export type DashboardScope = (typeof DASHBOARD_SCOPE_OPTIONS)[number];
-/**
- *
- */
-export type DashboardGroupFilter = (typeof DASHBOARD_GROUP_OPTIONS)[number];
 /**
  *
  */
@@ -147,6 +137,18 @@ export interface DashboardSummaryData {
 }
 
 /**
+ * 仪表盘用的可见分组选项。
+ */
+export interface DashboardGroupOption {
+  /** 分组 ID。 */
+  id: string;
+  /** 显示名称。 */
+  name: string;
+  /** 是否为用户的主分组。 */
+  isPrimary: boolean;
+}
+
+/**
  *
  */
 export interface DashboardRepositoryInput {
@@ -158,6 +160,8 @@ export interface DashboardRepositoryInput {
    *
    */
   timeWindow: DashboardTimeWindow;
+  /** 当 scope 为 group 时发送的分组 ID。 */
+  groupId?: string;
 }
 
 /**
@@ -168,4 +172,6 @@ export interface DashboardRepository {
    *
    */
   getSummary(input: DashboardRepositoryInput): Promise<DashboardSummaryData>;
+  /** 获取当前用户可见的 active 分组列表。 */
+  listGroups(): Promise<DashboardGroupOption[]>;
 }

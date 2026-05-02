@@ -207,6 +207,7 @@ const billingJaJP = {
     balance: "残額",
     interim_payment: "中間金",
     installment: "分割払い",
+    case_fee: "案件報酬",
   },
 } as const;
 

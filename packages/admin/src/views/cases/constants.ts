@@ -245,6 +245,18 @@ export const BILLING_STATUSES: Record<BillingStatusKey, BillingStatusDef> = {
     i18nKey: "cases.constants.billingStatuses.waived",
     badge: "badge-gray",
   },
+  // BUG-186：server billing_records 原始 status 取值为 due / overdue，
+  // admin 需要对齐以便三语渲染；语义分别对应「应收（未到结算期）」与「已欠款」。
+  due: {
+    label: "应收",
+    i18nKey: "cases.constants.billingStatuses.due",
+    badge: "badge-orange",
+  },
+  overdue: {
+    label: "欠款",
+    i18nKey: "cases.constants.billingStatuses.overdue",
+    badge: "badge-red",
+  },
 };
 
 // ─── Log Categories ─────────────────────────────────────────────

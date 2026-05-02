@@ -140,12 +140,16 @@ export function getVisaTypeOptions(locale?: string): VisaTypeSelectOption[] {
 /**
  * 解析签证类型 code 为本地化展示文案。
  *
+ * 历史数据存在大写枚举（如早期 curl 写入的 `BUSINESS_MANAGER`），
+ * 与 BMV 派生 `visaPlan` 同字段共用入口；匹配时统一转小写以兜底。
+ *
  * @param code 签证类型 code 或自由文本
  * @param locale 目标显示语言
  * @returns 命中目录返回本地化标签；未命中返回原始值（fallback "—"）
  */
 export function resolveVisaTypeLabel(code: string, locale?: string): string {
   const target = normalizeVisaTypeLocale(locale);
-  const found = VISA_TYPE_CATALOG.find((entry) => entry.value === code);
+  const normalized = code?.trim().toLowerCase();
+  const found = VISA_TYPE_CATALOG.find((entry) => entry.value === normalized);
   return found ? found.labels[target] : String(code || "—");
 }

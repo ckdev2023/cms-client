@@ -27,6 +27,13 @@ function readCustomerCaseStatus(
 ): CustomerCase["status"] {
   const archivedAt = readNullableStringField(record, "archivedAt");
   if (typeof archivedAt === "string" && archivedAt.trim()) return "archived";
+  const stageValue = pickOptionalString(record, [
+    "stage",
+    "stageId",
+    "stageCode",
+    "workflowStage",
+  ]);
+  if (stageValue === "S9") return "archived";
   const rawStatus = pickOptionalString(record, ["status", "caseStatus"]);
   return rawStatus?.toLowerCase() === "archived" ? "archived" : "active";
 }

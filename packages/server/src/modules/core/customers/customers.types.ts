@@ -225,6 +225,15 @@ export type CustomerRelationDto = {
 /** 客户列表 DTO。 */
 export type CustomerSummaryDto = {
   id: string;
+  /**
+   * 客户类型（`"individual"` | `"corporation"`）。
+   *
+   * **BUG-183 修复（R18）**：顶层 DTO 必须 expose 此字段，否则 admin 列表/详情
+   * 无法在视觉上区分个人 vs 法人客户。来源为 `customers.type` 列，与
+   * `mapCustomerToCreateResponseDto.type` 字段对齐——CREATE/GET 响应在该字段
+   * 上保持同名同义。
+   */
+  type: string;
   displayName: string;
   legalName: string;
   furigana: string;

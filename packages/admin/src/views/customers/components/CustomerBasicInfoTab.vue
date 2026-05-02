@@ -7,6 +7,7 @@ import CustomerBmvIntakeCard from "./CustomerBmvIntakeCard.vue";
 import CustomerLocalizedFilePicker from "./CustomerLocalizedFilePicker.vue";
 import type { CustomerDetail } from "../types";
 import { CUSTOMER_VISA_TYPES } from "../types-customer-fields";
+import { resolveVisaTypeLabel } from "../../../shared/model/visaTypeOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import type { BasicInfoFormSnapshot } from "../model/useCustomerBasicInfoModel";
@@ -97,6 +98,12 @@ const visaOpts = computed(() =>
     value: v,
     label: t(`${fp}.${VISA_LABEL[v]}`),
   })),
+);
+// BUG-185：BMV 客户的 Visa type 字段绑定的是 raw enum（含历史 `BUSINESS_MANAGER`
+// 等大写值），直接显示会暴露内部 code；统一走 `resolveVisaTypeLabel` 兜底，
+// 命中目录则展示本地化标签，未命中保持原值（如 `new_1year` 等 BMV 专属 plan）。
+const bmvVisaTypeLabel = computed(() =>
+  resolveVisaTypeLabel(displayValues.value?.visaType ?? "", locale.value),
 );
 </script>
 
@@ -370,7 +377,7 @@ const visaOpts = computed(() =>
               id="basicInfoVisaType"
               :class="['basic-info__input', 'basic-info__input--readonly']"
               type="text"
-              :value="displayValues.visaType"
+              :value="bmvVisaTypeLabel"
               disabled
               aria-disabled="true"
             />

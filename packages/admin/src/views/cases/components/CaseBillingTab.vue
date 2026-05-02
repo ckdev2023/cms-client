@@ -20,6 +20,8 @@ const STATUS_TONE: Record<string, ChipTone> = {
   unpaid: "warning",
   arrears: "danger",
   waived: "neutral",
+  due: "warning",
+  overdue: "danger",
 };
 
 /**
@@ -44,6 +46,21 @@ function paymentLabel(row: PaymentRow): string {
     return t(key);
   }
   return row.statusLabel;
+}
+
+/**
+ * 获取 TYPE 列本地化标签；优先走 milestone i18n key（BUG-186），
+ * fallback 到 adapter 附带的原始值（avoid breaking backward compat）。
+ *
+ * @param row - 收款节点
+ * @returns 已本地化的 milestone 标签
+ */
+function paymentType(row: PaymentRow): string {
+  const key = row.typeI18nKey;
+  if (key && te(key)) {
+    return t(key);
+  }
+  return row.type;
 }
 </script>
 
@@ -129,7 +146,7 @@ function paymentLabel(row: PaymentRow): string {
               <td class="billing-tab__td billing-tab__td--bold">
                 {{ row.date }}
               </td>
-              <td class="billing-tab__td">{{ row.type }}</td>
+              <td class="billing-tab__td">{{ paymentType(row) }}</td>
               <td
                 class="billing-tab__td billing-tab__td--right billing-tab__td--bold"
               >

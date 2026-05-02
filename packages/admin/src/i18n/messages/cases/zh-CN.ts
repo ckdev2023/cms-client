@@ -602,6 +602,8 @@ const casesZhCN = {
       unpaid: "应收",
       arrears: "欠款",
       waived: "免除",
+      due: "应收",
+      overdue: "已逾期",
     },
     logCategories: {
       all: "全部",

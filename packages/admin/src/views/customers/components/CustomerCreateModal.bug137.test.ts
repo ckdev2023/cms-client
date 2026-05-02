@@ -6,6 +6,7 @@ import type { CustomerCreateFormFields } from "../types";
 import type { CustomerCreateFormErrorCode } from "../model/useCustomerCreateForm";
 
 const BLANK_FIELDS: CustomerCreateFormFields = {
+  customerType: "individual",
   displayName: "",
   group: "",
   legalName: "",
@@ -20,6 +21,7 @@ const BLANK_FIELDS: CustomerCreateFormFields = {
   sourceType: "",
   visaType: "",
   referrerName: "",
+  representativeName: "",
   avatar: "",
   note: "",
 };

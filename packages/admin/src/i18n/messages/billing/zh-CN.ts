@@ -205,6 +205,7 @@ const billingZhCN = {
     balance: "残金",
     interim_payment: "中间金",
     installment: "分期付款",
+    case_fee: "案件报酬",
   },
 } as const;
 

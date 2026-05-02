@@ -38,6 +38,7 @@ export type CustomerCreateFormErrorCode =
   | "requestFailed";
 
 const BLANK_FIELDS: CustomerCreateFormFields = {
+  customerType: "individual",
   displayName: "",
   group: "",
   legalName: "",
@@ -52,6 +53,7 @@ const BLANK_FIELDS: CustomerCreateFormFields = {
   sourceType: "",
   visaType: "",
   referrerName: "",
+  representativeName: "",
   avatar: "",
   note: "",
 };
@@ -73,6 +75,7 @@ function cloneFields(
   fields: CustomerCreateFormFields,
 ): CustomerCreateFormFields {
   return {
+    customerType: fields.customerType,
     displayName: fields.displayName,
     group: fields.group,
     legalName: fields.legalName,
@@ -87,6 +90,7 @@ function cloneFields(
     sourceType: fields.sourceType,
     visaType: fields.visaType,
     referrerName: fields.referrerName,
+    representativeName: fields.representativeName,
     avatar: fields.avatar,
     note: fields.note,
   };

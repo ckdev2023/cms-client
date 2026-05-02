@@ -621,6 +621,8 @@ const casesJaJP = {
       unpaid: "未収",
       arrears: "滞納",
       waived: "免除",
+      due: "応収",
+      overdue: "期限超過",
     },
     logCategories: {
       all: "全部",

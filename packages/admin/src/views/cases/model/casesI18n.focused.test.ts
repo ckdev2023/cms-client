@@ -410,7 +410,15 @@ describe("cases i18n — helper function fallback (p0-fe-013-03)", () => {
   });
 
   it("getBillingStatusI18nKey returns matching key for known statuses", () => {
-    const KEYS = ["paid", "partial", "unpaid", "arrears", "waived"] as const;
+    const KEYS = [
+      "paid",
+      "partial",
+      "unpaid",
+      "arrears",
+      "waived",
+      "due",
+      "overdue",
+    ] as const;
     for (const key of KEYS) {
       expect(getBillingStatusI18nKey(key)).toBe(BILLING_STATUSES[key].i18nKey);
     }

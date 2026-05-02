@@ -2,17 +2,15 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../i18n";
+import zhCN from "../i18n/messages/zh-CN";
+import jaJP from "../i18n/messages/ja-JP";
+import enUS from "../i18n/messages/en-US";
 import {
   ADMIN_SESSION_STORAGE_KEY,
   adminSessionController,
 } from "../auth/model/adminSession";
 import SideNav from "./SideNav.vue";
-import {
-  navGroups,
-  brandTitle,
-  brandChip,
-  getVisibleNavGroups,
-} from "./nav-config";
+import { navGroups, brandTitle, getVisibleNavGroups } from "./nav-config";
 
 const routerLinkStub = {
   props: ["to"],
@@ -123,7 +121,28 @@ describe("SideNav", () => {
 
   it("renders the brand chip", async () => {
     const w = await mountWithRouter();
-    expect(w.find(".sidenav-chip").text()).toBe(brandChip);
+    expect(w.find(".sidenav-chip").text()).toBe(zhCN.shell.nav.brandChip);
+  });
+
+  it("[BUG-189] zh-CN brand chip uses simplified characters (no traditional 務)", async () => {
+    const w = await mountWithRouter();
+    const chipText = w.find(".sidenav-chip").text();
+    expect(chipText).toBe("事务所管理");
+    expect(chipText).not.toContain("務");
+  });
+
+  it("[BUG-189] ja-JP / en-US brand chip remain in their own scripts", async () => {
+    setAppLocale("ja-JP");
+    const wJa = await mountWithRouter();
+    expect(wJa.find(".sidenav-chip").text()).toBe(jaJP.shell.nav.brandChip);
+    expect(wJa.find(".sidenav-chip").text()).toBe("事務所管理");
+
+    setAppLocale("en-US");
+    const wEn = await mountWithRouter();
+    expect(wEn.find(".sidenav-chip").text()).toBe(enUS.shell.nav.brandChip);
+    expect(wEn.find(".sidenav-chip").text()).toBe("Firm Ops");
+
+    setAppLocale("zh-CN");
   });
 
   it("renders brand title as a RouterLink to /", async () => {

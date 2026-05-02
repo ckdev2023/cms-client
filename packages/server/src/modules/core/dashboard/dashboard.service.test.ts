@@ -145,6 +145,42 @@ void test("DashboardService.getSummary maps summary counts and panel items", asy
   assert.equal(result.panels.submissions[0]?.statusLabel, "可提交");
   assert.equal(result.panels.risks[0]?.route, "/billing");
   assert.match(result.panels.risks[0]?.desc ?? "", /待收金额/);
+
+  const todoItem = result.panels.todo[0];
+  assert.equal(todoItem.statusLabelKey, "highPriority");
+  assert.equal(todoItem.descKey, "todo.statusPriority");
+  assert.deepEqual(todoItem.descParams, {
+    status: "pending",
+    priority: "high",
+  });
+  assert.equal(todoItem.actionKey, "viewCase");
+  assert.deepEqual(todoItem.metaKeys, [
+    { key: "case", params: { caseLabel: "CASE-001" } },
+    { key: "assignee", params: { name: "Tanaka" } },
+    { key: "due", params: { date: "2026-05-10" } },
+  ]);
+
+  const deadlineItem = result.panels.deadlines[0];
+  assert.equal(deadlineItem.statusLabelKey, "daysLeft");
+  assert.deepEqual(deadlineItem.statusLabelParams, { days: 3 });
+  assert.equal(deadlineItem.descKey, "deadline.currentStage");
+  assert.equal(deadlineItem.actionKey, "viewCase");
+
+  const submissionItem = result.panels.submissions[0];
+  assert.equal(submissionItem.statusLabelKey, "readyToSubmit");
+  assert.equal(submissionItem.descKey, "submission.approvedReady");
+  assert.equal(submissionItem.actionKey, "viewCase");
+
+  const riskItem = result.panels.risks[0];
+  assert.equal(riskItem.statusLabelKey, "billingRisk");
+  assert.equal(riskItem.descKey, "risk.unpaidAmount");
+  assert.deepEqual(riskItem.descParams, { amount: "¥12,000" });
+  assert.equal(riskItem.actionKey, "viewBilling");
+  assert.deepEqual(riskItem.metaKeys, [
+    { key: "owner", params: { name: "Yamada" } },
+    { key: "due", params: { date: "2026-05-08" } },
+    { key: "unpaid", params: { amount: "¥12,000" } },
+  ]);
 });
 
 void test("DashboardService.getSummary applies mine scope and time window params", async () => {
@@ -180,11 +216,17 @@ void test("DashboardService.getSummary applies mine scope and time window params
   assert.deepEqual(taskCount.params, [ORG_ID, USER_ID]);
 });
 
-void test("DashboardService.getSummary falls back group scope to all queries", async () => {
+void test("DashboardService.getSummary scope=group without groupId resolves primary group", async () => {
+  const PRIMARY_GROUP_ID = "00000000-0000-4000-8000-000000000088";
   const calls: { sql: string; params?: unknown[] }[] = [];
   const service = new DashboardService(
     makePool((sql, params) => {
       calls.push({ sql, params });
+      if (sql.includes("user_group_memberships") && sql.includes("order by")) {
+        return Promise.resolve({
+          rows: [{ group_id: PRIMARY_GROUP_ID }],
+        });
+      }
       return Promise.resolve({ rows: [{ count: "0" }] });
     }),
   );
@@ -195,13 +237,186 @@ void test("DashboardService.getSummary falls back group scope to all queries", a
   });
 
   assert.equal(result.scope, "group");
-  const filteredSql = calls
-    .filter(
-      (call) =>
-        call.sql.includes("from cases c") || call.sql.includes("from tasks t"),
-    )
-    .map((call) => call.sql)
-    .join("\n");
-  assert.equal(filteredSql.includes("owner_user_id = $"), false);
-  assert.equal(filteredSql.includes("assignee_user_id = $"), false);
+  assert.equal(result.effectiveGroupId, PRIMARY_GROUP_ID);
+  const caseSqls = calls.filter(
+    (call) =>
+      call.sql.includes("from cases c") || call.sql.includes("from tasks t"),
+  );
+  for (const call of caseSqls) {
+    assert.ok(call.sql.includes("group_id = $"));
+    assert.ok(call.params?.includes(PRIMARY_GROUP_ID));
+  }
+});
+
+void test("DashboardService.getSummary scope=group without groupId and no membership throws NO_PRIMARY_GROUP", async () => {
+  const service = new DashboardService(
+    makePool((sql) => {
+      if (sql.includes("user_group_memberships")) {
+        return Promise.resolve({ rows: [] });
+      }
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  await assert.rejects(
+    () => service.getSummary(makeCtx(), { scope: "group", timeWindow: 7 }),
+    (err: Error) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("NO_PRIMARY_GROUP"));
+      return true;
+    },
+  );
+});
+
+void test("DashboardService.getSummary scope=group with groupId verifies membership and applies group filter", async () => {
+  const GROUP_ID = "00000000-0000-4000-8000-000000000099";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const service = new DashboardService(
+    makePool((sql, params) => {
+      calls.push({ sql, params });
+      if (sql.includes("user_group_memberships") && sql.includes("exists")) {
+        return Promise.resolve({ rows: [{ exists: true }] });
+      }
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  const result = await service.getSummary(makeCtx(), {
+    scope: "group",
+    timeWindow: 7,
+    groupId: GROUP_ID,
+  });
+
+  assert.equal(result.scope, "group");
+  assert.equal(result.effectiveGroupId, GROUP_ID);
+  const caseSqls = calls.filter(
+    (call) =>
+      call.sql.includes("from cases c") || call.sql.includes("from tasks t"),
+  );
+  for (const call of caseSqls) {
+    assert.ok(call.sql.includes("group_id = $"));
+    assert.ok(call.params?.includes(GROUP_ID));
+  }
+});
+
+void test("DashboardService.getSummary scope=group with groupId and non-member throws NO_GROUP_ACCESS", async () => {
+  const GROUP_ID = "00000000-0000-4000-8000-000000000099";
+  const service = new DashboardService(
+    makePool((sql) => {
+      if (sql.includes("user_group_memberships") && sql.includes("exists")) {
+        return Promise.resolve({ rows: [{ exists: false }] });
+      }
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  await assert.rejects(
+    () =>
+      service.getSummary(makeCtx(), {
+        scope: "group",
+        timeWindow: 7,
+        groupId: GROUP_ID,
+      }),
+    (err: Error) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("NO_GROUP_ACCESS"));
+      return true;
+    },
+  );
+});
+
+void test("DashboardService.getSummary scope=mine ignores provided groupId", async () => {
+  const GROUP_ID = "00000000-0000-4000-8000-000000000099";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const service = new DashboardService(
+    makePool((sql, params) => {
+      calls.push({ sql, params });
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  const result = await service.getSummary(makeCtx(), {
+    scope: "mine",
+    timeWindow: 7,
+    groupId: GROUP_ID,
+  });
+
+  assert.equal(result.scope, "mine");
+  assert.equal(result.effectiveGroupId, undefined);
+  const allSqls = calls.map((c) => c.sql).join("\n");
+  assert.equal(allSqls.includes("user_group_memberships"), false);
+  for (const call of calls) {
+    if (call.params) {
+      assert.equal(call.params.includes(GROUP_ID), false);
+    }
+  }
+});
+
+void test("DashboardService.getSummary scope=group excludes cases with group_id IS NULL via equality filter", async () => {
+  const GROUP_ID = "00000000-0000-4000-8000-000000000099";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const service = new DashboardService(
+    makePool((sql, params) => {
+      calls.push({ sql, params });
+      if (sql.includes("user_group_memberships") && sql.includes("exists")) {
+        return Promise.resolve({ rows: [{ exists: true }] });
+      }
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  await service.getSummary(makeCtx(), {
+    scope: "group",
+    timeWindow: 7,
+    groupId: GROUP_ID,
+  });
+
+  const dataQueries = calls.filter(
+    (call) =>
+      !isTxSql(call.sql) &&
+      !call.sql.includes("exists(") &&
+      (call.sql.includes("from cases c") || call.sql.includes("from tasks t")),
+  );
+  assert.ok(
+    dataQueries.length >= 8,
+    `expected >=8 data queries (4 counts + 4 panels), got ${String(dataQueries.length)}`,
+  );
+  for (const call of dataQueries) {
+    assert.ok(
+      call.sql.includes("group_id = $"),
+      `data query missing strict group_id equality filter:\n${call.sql}`,
+    );
+    assert.ok(
+      !call.sql.includes("IS NOT DISTINCT FROM"),
+      "must use strict equality so rows with group_id IS NULL are excluded",
+    );
+    assert.ok(call.params?.includes(GROUP_ID));
+  }
+});
+
+void test("DashboardService.getSummary scope=all ignores provided groupId", async () => {
+  const GROUP_ID = "00000000-0000-4000-8000-000000000099";
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const service = new DashboardService(
+    makePool((sql, params) => {
+      calls.push({ sql, params });
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  const result = await service.getSummary(makeCtx(), {
+    scope: "all",
+    timeWindow: 7,
+    groupId: GROUP_ID,
+  });
+
+  assert.equal(result.scope, "all");
+  assert.equal(result.effectiveGroupId, undefined);
+  const allSqls = calls.map((c) => c.sql).join("\n");
+  assert.equal(allSqls.includes("user_group_memberships"), false);
+  for (const call of calls) {
+    if (call.params) {
+      assert.equal(call.params.includes(GROUP_ID), false);
+    }
+  }
 });

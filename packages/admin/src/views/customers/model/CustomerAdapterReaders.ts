@@ -20,7 +20,7 @@ import {
 } from "./CustomerAdapterShared";
 
 type CustomerMutationPayload = {
-  type: "individual";
+  type: "individual" | "corporation";
   baseProfile: Record<string, unknown>;
 };
 
@@ -77,12 +77,23 @@ export function buildCustomerListSearchParams(
 /**
  * 将新建表单字段映射为后端创建 payload。
  *
+ * BUG-187：根据 `customerType` 分流：
+ * - `individual` 走 `buildBaseProfile`，保留所有个人字段（gender/birthday/nationality/visaType）。
+ * - `corporation` 只携带法人相关字段（companyKana / representativeName），
+ *   省略个人专属 schema 以避免 server `validateBaseProfile` 抛错。
+ *
  * @param input - 新建客户表单字段
  * @returns 后端可接受的客户创建 payload
  */
 export function buildCreateCustomerPayload(
   input: CustomerCreateFormFields,
 ): CustomerMutationPayload {
+  if (input.customerType === "corporation") {
+    return {
+      type: "corporation",
+      baseProfile: buildCorporationBaseProfile(input),
+    };
+  }
   return {
     type: "individual",
     baseProfile: buildBaseProfile({
@@ -103,6 +114,31 @@ export function buildCreateCustomerPayload(
       avatar: input.avatar,
       note: input.note,
     }),
+  };
+}
+
+function trimToOptional(value: string): string | undefined {
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function buildCorporationBaseProfile(
+  input: CustomerCreateFormFields,
+): Record<string, unknown> {
+  return {
+    displayName: input.displayName.trim(),
+    legalName: input.legalName.trim(),
+    companyKana: input.kana.trim(),
+    representativeName: input.representativeName.trim(),
+    phone: input.phone.trim(),
+    email: input.email.trim(),
+    group: input.group.trim(),
+    referralSource: input.referrer.trim(),
+    location: trimToOptional(input.location),
+    sourceType: trimToOptional(input.sourceType),
+    referrerName: trimToOptional(input.referrerName),
+    avatar: input.avatar.trim(),
+    note: input.note.trim(),
   };
 }
 

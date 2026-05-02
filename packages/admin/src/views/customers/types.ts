@@ -386,10 +386,12 @@ export {
 export {
   CUSTOMER_LOCATIONS,
   CUSTOMER_SOURCE_TYPES,
+  CUSTOMER_TYPES,
   CUSTOMER_VISA_TYPES,
   type CustomerCreateFormFields,
   type CustomerLocation,
   type CustomerSourceType,
+  type CustomerType,
   type CustomerVisaType,
 } from "./types-customer-fields";
 

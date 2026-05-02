@@ -27,7 +27,7 @@ const zhCN = {
       asideLabel: "侧边栏导航",
       mainLabel: "主导航",
       closeNavigation: "关闭导航",
-      brandChip: "事務所管理",
+      brandChip: "事务所管理",
       groups: {
         workspace: "工作台",
         business: "业务",
@@ -219,9 +219,16 @@ const zhCN = {
         remove: "删除",
       },
       createModal: {
-        title: "新建个人客户",
+        title: "新建客户",
+        titleIndividual: "新建个人客户",
+        titleCorporation: "新建法人客户",
         description:
-          "请填写基础信息完成个人客户建档。电话/邮箱至少填一项用于去重，并保留国籍主数据。",
+          "请填写基础信息完成客户建档。电话/邮箱至少填一项用于去重。",
+        customerType: {
+          label: "客户类型",
+          individual: "个人",
+          corporation: "法人",
+        },
         fields: {
           displayName: "识别名（对内显示）",
           displayNamePlaceholder: "例如：王伟（就劳）",
@@ -229,8 +236,14 @@ const zhCN = {
           groupPlaceholder: "请选择 Group",
           legalName: "姓名（法定）",
           legalNamePlaceholder: "请输入姓名",
+          legalNameCorporation: "公司法定名称",
+          legalNameCorporationPlaceholder: "例如：株式会社アクメ",
           kana: "假名（片假名）",
           kanaPlaceholder: "例如：ワン ウェイ",
+          kanaCorporation: "公司假名",
+          kanaCorporationPlaceholder: "例如：アクメ",
+          representativeName: "代表者姓名",
+          representativeNamePlaceholder: "例如：田中先生",
           gender: "性別",
           genderDefault: "不限",
           genderMale: "男",
@@ -307,13 +320,6 @@ const zhCN = {
     filters: {
       scopeLabel: "查看范围",
       groupLabel: "组过滤",
-      groupPending: "组筛选尚未接入后端，当前仍展示全所聚合数据。",
-      groups: {
-        all: "全部 Group",
-        tokyo1: "东京一组",
-        tokyo2: "东京二组",
-        osaka: "大阪组",
-      },
     },
     scope: {
       mine: "我的",
@@ -323,8 +329,6 @@ const zhCN = {
     scopeSummary: {
       mine: "当前显示我负责或参与的案件与任务，卡片和列表会一起更新。",
       group: "当前显示本组的案件与任务，方便一起安排今日优先级与期限压力。",
-      groupFallback:
-        "本组视角已接线，但当前后端暂未细分组数据，因此先展示全所聚合结果。",
       all: "当前显示全所范围，适合快速查看待办、期限、待提交与风险分布。",
     },
     state: {

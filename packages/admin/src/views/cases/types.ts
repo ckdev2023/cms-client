@@ -328,7 +328,9 @@ export type BillingStatusKey =
   | "partial"
   | "unpaid"
   | "arrears"
-  | "waived";
+  | "waived"
+  | "due"
+  | "overdue";
 
 /**
  *

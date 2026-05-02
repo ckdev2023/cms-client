@@ -187,6 +187,8 @@ describe("billing status i18n keys (p0-fe-013-03)", () => {
     "unpaid",
     "arrears",
     "waived",
+    "due",
+    "overdue",
   ];
 
   it("every billing status has a non-empty i18nKey", () => {
@@ -344,6 +346,8 @@ describe("i18n-aware label helpers (p0-fe-013-03)", () => {
       "unpaid",
       "arrears",
       "waived",
+      "due",
+      "overdue",
     ];
     for (const k of keys) {
       expect(getBillingStatusI18nKey(k)).toBeTruthy();

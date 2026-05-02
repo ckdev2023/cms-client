@@ -362,6 +362,8 @@ export interface PaymentRow {
   note?: string;
   /** 金额是否带删除线（voided/reversed 行）。 */
   strikethrough?: boolean;
+  /** milestone 本地化 i18n key，例如 `billing.milestone.case_fee`；未命中映射时为 `undefined`。 */
+  typeI18nKey?: string;
 }
 
 /**
