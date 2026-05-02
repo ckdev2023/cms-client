@@ -258,6 +258,12 @@ const casesEnUS = {
       cancel: "Cancel",
       errorPrefix: "Transition failed",
       closeReasonLabel: "Close reason",
+      cancelReasonPresets: {
+        MID_CASE_WITHDRAWAL: "Mid-case withdrawal",
+        CLIENT_LOST_CONTACT: "Client lost contact",
+        SWITCHED_TO_OTHER_FIRM: "Switched to another firm",
+        OTHER: "Other",
+      },
     },
     terminalStage: {
       label: "Closed",

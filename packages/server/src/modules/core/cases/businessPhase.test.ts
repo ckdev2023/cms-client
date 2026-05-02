@@ -10,6 +10,7 @@ import {
   isTerminalPhase,
   assertPhaseTransition,
   PhaseTransitionError,
+  MANUAL_CANCEL_REASON_CODES,
 } from "./businessPhase";
 import { P0_STAGES } from "./cases.workflow-step";
 
@@ -159,6 +160,19 @@ void describe("assertPhaseTransition", () => {
       ["VISA_REJECTED", "CLOSED_FAILED"],
       ["RESIDENCE_PERIOD_RECORDED", "RENEWAL_REMINDER_SCHEDULED"],
       ["RENEWAL_REMINDER_SCHEDULED", "CLOSED_SUCCESS"],
+      // BUG-200: mid-cancel → CLOSED_FAILED for non-terminal, non-success-path phases
+      ["CONSULTING", "CLOSED_FAILED"],
+      ["CONTRACTED", "CLOSED_FAILED"],
+      ["WAITING_MATERIAL", "CLOSED_FAILED"],
+      ["MATERIAL_PREPARING", "CLOSED_FAILED"],
+      ["REVIEWING", "CLOSED_FAILED"],
+      ["APPLYING", "CLOSED_FAILED"],
+      ["UNDER_REVIEW", "CLOSED_FAILED"],
+      ["NEED_SUPPLEMENT", "CLOSED_FAILED"],
+      ["SUPPLEMENT_PROCESSING", "CLOSED_FAILED"],
+      ["WAITING_PAYMENT", "CLOSED_FAILED"],
+      ["COE_SENT", "CLOSED_FAILED"],
+      ["VISA_APPLYING", "CLOSED_FAILED"],
     ];
 
     for (const [from, to] of validPairs) {
@@ -249,6 +263,26 @@ void describe("assertPhaseTransition", () => {
     });
   });
 
+  void describe("BUG-200: success-path phases cannot mid-cancel", () => {
+    const successPathPhases: BusinessPhase[] = [
+      "APPROVED",
+      "SUCCESS",
+      "RESIDENCE_PERIOD_RECORDED",
+      "RENEWAL_REMINDER_SCHEDULED",
+    ];
+
+    for (const phase of successPathPhases) {
+      void test(`${phase} → CLOSED_FAILED throws`, () => {
+        assert.throws(
+          () => {
+            assertPhaseTransition(phase, "CLOSED_FAILED");
+          },
+          (err: unknown) => err instanceof PhaseTransitionError,
+        );
+      });
+    }
+  });
+
   void describe("unknown phases", () => {
     void test("unknown source throws with descriptive message", () => {
       assert.throws(
@@ -271,5 +305,23 @@ void describe("assertPhaseTransition", () => {
           err.message.includes("Unknown target phase"),
       );
     });
+  });
+});
+
+// ── 中途撤案原因码 ──
+
+void describe("MANUAL_CANCEL_REASON_CODES", () => {
+  void test("contains exactly 4 reason codes", () => {
+    assert.equal(MANUAL_CANCEL_REASON_CODES.length, 4);
+  });
+
+  void test("includes expected codes", () => {
+    const expected = [
+      "MID_CASE_WITHDRAWAL",
+      "CLIENT_LOST_CONTACT",
+      "SWITCHED_TO_OTHER_FIRM",
+      "OTHER",
+    ];
+    assert.deepEqual([...MANUAL_CANCEL_REASON_CODES], expected);
   });
 });

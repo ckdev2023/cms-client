@@ -249,6 +249,12 @@ const casesZhCN = {
       cancel: "取消",
       errorPrefix: "流转失败",
       closeReasonLabel: "关闭原因",
+      cancelReasonPresets: {
+        MID_CASE_WITHDRAWAL: "中途撤案",
+        CLIENT_LOST_CONTACT: "客户失联",
+        SWITCHED_TO_OTHER_FIRM: "改委托其他事务所",
+        OTHER: "其它",
+      },
     },
     terminalStage: {
       label: "已结案",

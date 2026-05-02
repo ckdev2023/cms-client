@@ -117,12 +117,39 @@ describe("PhaseTransitionPopover", () => {
     ).toBe(true);
   });
 
-  it("allows submit for CLOSED_FAILED when closeReason is filled", async () => {
+  it("allows submit for CLOSED_FAILED with preset chip", async () => {
     const wrapper = mountPopover({
       availableTargets: ["CLOSED_FAILED"],
     });
     const items = wrapper.findAll('[data-testid="phase-target-item"]');
     await items[0].trigger("click");
+
+    const chip = wrapper.find(
+      '[data-testid="cancel-preset-MID_CASE_WITHDRAWAL"]',
+    );
+    await chip.trigger("click");
+
+    const submitBtn = wrapper.findAll("button").at(-1)!;
+    await submitBtn.trigger("click");
+
+    expect(wrapper.emitted("submit")).toBeTruthy();
+    const payload = wrapper.emitted("submit")![0][0] as Record<string, unknown>;
+    expect(payload).toEqual({
+      toPhase: "CLOSED_FAILED",
+      closeReason: "中途撤案",
+      resultOutcome: "failure",
+    });
+  });
+
+  it("allows submit for CLOSED_FAILED with OTHER preset and free text", async () => {
+    const wrapper = mountPopover({
+      availableTargets: ["CLOSED_FAILED"],
+    });
+    const items = wrapper.findAll('[data-testid="phase-target-item"]');
+    await items[0].trigger("click");
+
+    const otherChip = wrapper.find('[data-testid="cancel-preset-OTHER"]');
+    await otherChip.trigger("click");
 
     const input = wrapper.find('[data-testid="close-reason-input"]');
     await input.setValue("BMV-VISA-REJECTED");
@@ -153,7 +180,7 @@ describe("PhaseTransitionPopover", () => {
     expect(wrapper.emitted("close")).toBeTruthy();
   });
 
-  it("shows close reason input only for CLOSED_FAILED", async () => {
+  it("shows cancel presets only for CLOSED_FAILED and input only after OTHER", async () => {
     const wrapper = mountPopover({
       availableTargets: ["APPROVED", "CLOSED_FAILED"],
     });
@@ -161,13 +188,21 @@ describe("PhaseTransitionPopover", () => {
     await wrapper
       .findAll('[data-testid="phase-target-item"]')[0]
       .trigger("click");
-    expect(wrapper.find('[data-testid="close-reason-input"]').exists()).toBe(
+    expect(wrapper.find('[data-testid="cancel-reason-presets"]').exists()).toBe(
       false,
     );
 
     await wrapper
       .findAll('[data-testid="phase-target-item"]')[1]
       .trigger("click");
+    expect(wrapper.find('[data-testid="cancel-reason-presets"]').exists()).toBe(
+      true,
+    );
+    expect(wrapper.find('[data-testid="close-reason-input"]').exists()).toBe(
+      false,
+    );
+
+    await wrapper.find('[data-testid="cancel-preset-OTHER"]').trigger("click");
     expect(wrapper.find('[data-testid="close-reason-input"]').exists()).toBe(
       true,
     );

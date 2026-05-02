@@ -71,6 +71,9 @@ describe("BUG-192: PhaseTransitionPopover state reset on menuOpen toggle", () =>
     const items = wrapper.findAll('[data-testid="phase-target-item"]');
     await items[2].trigger("click");
 
+    const otherChip = wrapper.find('[data-testid="cancel-preset-OTHER"]');
+    await otherChip.trigger("click");
+
     const input = wrapper.find('[data-testid="close-reason-input"]');
     await input.setValue("some-reason");
     expect((input.element as HTMLInputElement).value).toBe("some-reason");

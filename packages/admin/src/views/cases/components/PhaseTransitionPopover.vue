@@ -50,6 +50,7 @@ watch(
     if (!open) {
       selectedPhase.value = null;
       closeReason.value = "";
+      selectedPreset.value = null;
       validationError.value = null;
     }
   },
@@ -59,6 +60,30 @@ const needsCloseReason = computed(
   () => selectedPhase.value === "CLOSED_FAILED",
 );
 
+const cancelReasonPresets = [
+  "MID_CASE_WITHDRAWAL",
+  "CLIENT_LOST_CONTACT",
+  "SWITCHED_TO_OTHER_FIRM",
+  "OTHER",
+] as const;
+
+const selectedPreset = ref<string | null>(null);
+
+/**
+ * 选择撤案原因预设项，同步 closeReason。
+ *
+ * @param code - 预设原因代码
+ */
+function selectCancelPreset(code: string): void {
+  selectedPreset.value = code;
+  if (code === "OTHER") {
+    closeReason.value = "";
+  } else {
+    closeReason.value = t(`cases.detail.phaseMenu.cancelReasonPresets.${code}`);
+  }
+  validationError.value = null;
+}
+
 /**
  * 选中目标阶段并重置表单状态。
  *
@@ -67,6 +92,7 @@ const needsCloseReason = computed(
 function selectPhase(phase: string): void {
   selectedPhase.value = phase;
   closeReason.value = "";
+  selectedPreset.value = null;
   validationError.value = null;
 }
 
@@ -74,7 +100,15 @@ function selectPhase(phase: string): void {
 function handleSubmit(): void {
   if (!selectedPhase.value || props.submitting) return;
 
-  if (needsCloseReason.value && !closeReason.value.trim()) {
+  if (needsCloseReason.value && !selectedPreset.value) {
+    validationError.value = t("cases.detail.phaseMenu.closeReasonRequired");
+    return;
+  }
+  if (
+    needsCloseReason.value &&
+    selectedPreset.value === "OTHER" &&
+    !closeReason.value.trim()
+  ) {
     validationError.value = t("cases.detail.phaseMenu.closeReasonRequired");
     return;
   }
@@ -91,6 +125,7 @@ function handleSubmit(): void {
 function handleClose(): void {
   selectedPhase.value = null;
   closeReason.value = "";
+  selectedPreset.value = null;
   validationError.value = null;
   emit("close");
 }
@@ -176,7 +211,32 @@ function handleClose(): void {
           </ul>
 
           <div v-if="needsCloseReason" class="phase-popover__close-reason">
-            <label class="phase-popover__label">
+            <div
+              class="phase-popover__presets"
+              data-testid="cancel-reason-presets"
+            >
+              <button
+                v-for="code in cancelReasonPresets"
+                :key="code"
+                type="button"
+                :class="[
+                  'phase-popover__preset-chip',
+                  {
+                    'phase-popover__preset-chip--active':
+                      selectedPreset === code,
+                  },
+                ]"
+                :disabled="props.submitting"
+                :data-testid="`cancel-preset-${code}`"
+                @click="selectCancelPreset(code)"
+              >
+                {{ t(`cases.detail.phaseMenu.cancelReasonPresets.${code}`) }}
+              </button>
+            </div>
+            <label
+              v-if="selectedPreset === 'OTHER'"
+              class="phase-popover__label"
+            >
               {{ t("cases.detail.phaseMenu.closeReasonLabel") }}
               <input
                 type="text"
@@ -323,7 +383,40 @@ function handleClose(): void {
 .phase-popover__close-reason {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+}
+
+.phase-popover__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.phase-popover__preset-chip {
+  padding: 4px 12px;
+  border: 1px solid var(--color-border-1);
+  border-radius: 999px;
+  background: var(--color-bg-1, #fff);
+  font: inherit;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-2);
+  cursor: pointer;
+  transition: all 0.15s;
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary-6);
+    color: var(--color-primary-6);
+  }
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.phase-popover__preset-chip--active {
+  background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
+  border-color: var(--color-primary-6);
+  color: var(--color-primary-6);
+  font-weight: var(--font-weight-semibold, 600);
 }
 
 .phase-popover__label {

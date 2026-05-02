@@ -256,6 +256,12 @@ const casesJaJP = {
       cancel: "キャンセル",
       errorPrefix: "遷移に失敗しました",
       closeReasonLabel: "クローズ理由",
+      cancelReasonPresets: {
+        MID_CASE_WITHDRAWAL: "中途撤案",
+        CLIENT_LOST_CONTACT: "依頼者連絡不通",
+        SWITCHED_TO_OTHER_FIRM: "他事務所へ委任変更",
+        OTHER: "その他",
+      },
     },
     terminalStage: {
       label: "結案済み",
