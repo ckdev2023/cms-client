@@ -1,7 +1,7 @@
 const tasksJaJP = {
   workbench: {
     subtitle:
-      "タスクと更新リマインダーログを確認し、ダッシュボード CTA と Step 19-20 の業務面を引き継ぎます。",
+      "今日対応すべきタスクや期限切れ・更新リマインダーをまとめて確認できます。ダッシュボードの「未処理を見る」「リスク項目を修正」からもここに来られます。",
     refresh: "更新",
     reload: "再読み込み",
     loading: "読み込み中…",
@@ -13,7 +13,7 @@ const tasksJaJP = {
     views: {
       pending: {
         title: "未処理タスク",
-        hint: "pending / in_progress のタスクをまとめて確認します。",
+        hint: "未着手のタスクと対応中のタスクをまとめて確認します。",
         panelTitle: "未処理タスク",
       },
       today: {
@@ -49,11 +49,22 @@ const tasksJaJP = {
       headerActions: "操作",
       unassigned: "未割当",
       complete: "完了にする",
+      overdueBadge: "遅延",
+      overdueA11yLabel: "このタスクは期限を超過しています",
       empty:
         "現在のビューには該当タスクがありません。「リマインダーログ」に切り替えて更新リマインダーが生成されているか確認できます。",
     },
+    toast: {
+      completedTitle: "タスクを完了しました",
+      completedDescription:
+        "「{title}」を締め、ダッシュボードと案件進捗も同期更新されます。",
+      completedFallbackTitle: "タスク",
+      failedTitle: "タスク完了に失敗しました",
+      failedDescription:
+        "操作が反映されていません。再読み込み後に再試行してください。",
+    },
     aside: {
-      title: "業務面の説明",
+      title: "このページの使い方",
       copy: "このページは「タスク台帳」と「更新リマインダー台帳」に直接つながっており、表示されているのは事務所で実際に進行中のデータです。サンプルではありません。",
       list: {
         item1:

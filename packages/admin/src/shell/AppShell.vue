@@ -3,6 +3,7 @@ import {
   defineAsyncComponent,
   nextTick,
   onBeforeUnmount,
+  onMounted,
   ref,
   shallowRef,
   useSlots,
@@ -14,6 +15,9 @@ import { useI18n } from "vue-i18n";
 import { useRouter, type RouteLocationNormalized } from "vue-router";
 import SideNav from "./SideNav.vue";
 import TopBar from "./TopBar.vue";
+import GlobalSearchPalette from "./GlobalSearchPalette.vue";
+import { useGlobalSearch } from "./useGlobalSearch";
+import { useSearchRepository } from "../shared/model/useSearchRepository";
 
 /**
  * 后台通用应用外壳，负责组合顶栏、侧边栏与移动端导航遮罩。
@@ -31,6 +35,9 @@ const { t } = useI18n();
 const mainContentRef = ref<HTMLElement | null>(null);
 const isSkipLinkVisible = ref(false);
 const currentView = shallowRef<Component | null>(null);
+
+const searchRepo = useSearchRepository();
+const search = useGlobalSearch({ repo: searchRepo, router });
 
 /**
  * 根据路由名称与 params 生成渲染 key；query 变化不影响 key，避免无意义的重挂载。
@@ -131,6 +138,22 @@ const stopRouteSync = router.afterEach(async (to) => {
   });
 });
 
+/**
+ * 全局键盘快捷键处理：⌘K / Ctrl+K 打开搜索面板，IME 输入中忽略。
+ * @param e - 键盘事件
+ */
+function handleGlobalKeydown(e: KeyboardEvent): void {
+  if (e.isComposing) return;
+  if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+    e.preventDefault();
+    search.openPalette();
+  }
+}
+
+onMounted(() => {
+  document.addEventListener("keydown", handleGlobalKeydown);
+});
+
 watch(isMobileNavOpen, (open) => {
   document.body.style.overflow = open ? "hidden" : "";
 });
@@ -139,6 +162,7 @@ onBeforeUnmount(() => {
   if (typeof stopRouteSync === "function") {
     stopRouteSync();
   }
+  document.removeEventListener("keydown", handleGlobalKeydown);
   document.body.style.overflow = "";
 });
 </script>
@@ -159,6 +183,7 @@ onBeforeUnmount(() => {
       :user-initials="userInitials"
       :user-name="userName"
       @toggle-menu="openMobileNav"
+      @open-search-palette="search.openPalette"
     >
       <template v-if="slots['topbar-actions']" #actions>
         <slot name="topbar-actions" />
@@ -190,5 +215,18 @@ onBeforeUnmount(() => {
         <component :is="currentView" v-if="currentView" :key="currentViewKey" />
       </div>
     </main>
+
+    <GlobalSearchPalette
+      :open="search.open.value"
+      :groups="search.groups.value"
+      :flat-hits="search.hits.value"
+      :highlighted-index="search.highlightedIndex.value"
+      :loading="search.loading.value"
+      :query="search.query.value"
+      @update:open="(v) => (v ? search.openPalette() : search.closePalette())"
+      @update:query="(v) => (search.query.value = v)"
+      @move-highlight="search.moveHighlight"
+      @select="search.selectHit"
+    />
   </div>
 </template>

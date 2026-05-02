@@ -108,6 +108,7 @@ const EXPECTED_DETAIL = {
 const EXPECTED_AS_SUMMARY = {
   id: "g-1",
   name: "Team Alpha",
+  groupNo: "GRP-001",
   status: "active",
   createdAt: "2026-04-01T00:00:00.000Z",
   activeCaseCount: 3,

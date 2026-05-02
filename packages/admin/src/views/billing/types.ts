@@ -29,6 +29,7 @@ export type PaymentRecordStatus = "valid" | "voided" | "reversed";
  */
 export type CollectionSkipReasonCode =
   | "no-permission"
+  | "case-not-found"
   | "duplicate-task"
   | "not-overdue"
   | "no-assignee"
@@ -415,9 +416,9 @@ export interface RegisterPaymentFormFields {
  */
 export interface CollectionResultDetail {
   /**
-   *
+   * 案件编号；当案件已删 / 跨 org / 不存在时为 null。
    */
-  caseNo: string;
+  caseNo: string | null;
   /**
    *
    */

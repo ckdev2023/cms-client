@@ -35,6 +35,10 @@ export interface GroupSummary {
   /**
    *
    */
+  groupNo?: string;
+  /**
+   *
+   */
   status: GroupStatus;
   /**
    *

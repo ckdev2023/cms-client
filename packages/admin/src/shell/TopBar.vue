@@ -24,6 +24,7 @@ const props = withDefaults(
 
 defineEmits<{
   toggleMenu: [];
+  openSearchPalette: [];
 }>();
 
 const { locale, t } = useI18n();
@@ -36,8 +37,6 @@ const currentLocale = computed<AppLocale>({
   },
 });
 
-const globalSearchInputId = "topbar-global-search";
-const globalSearchStatusId = "topbar-global-search-status";
 const localeSelectId = "topbar-locale-select";
 const accountPanelId = "topbar-account-panel";
 const isAccountPanelOpen = ref(false);
@@ -105,20 +104,21 @@ function toggleAccountPanel(): void {
       </button>
 
       <div class="topbar-search" role="search">
-        <NavIcon name="search" />
-        <input
-          :id="globalSearchInputId"
-          name="globalSearch"
-          type="search"
-          :placeholder="t('shell.topbar.searchUnavailablePlaceholder')"
+        <button
+          type="button"
+          class="topbar-search-trigger"
+          aria-controls="global-search-palette"
+          aria-haspopup="dialog"
           :aria-label="t('shell.topbar.globalSearch')"
-          :aria-describedby="globalSearchStatusId"
-          disabled
-          aria-disabled="true"
-        />
-        <span :id="globalSearchStatusId" class="topbar-search-status">
-          {{ t("shell.topbar.comingSoon") }}
-        </span>
+          @click="$emit('openSearchPalette')"
+          @keydown.enter.prevent="$emit('openSearchPalette')"
+        >
+          <NavIcon name="search" />
+          <span class="topbar-search-placeholder">{{
+            t("shell.topbar.searchPlaceholder")
+          }}</span>
+          <kbd class="topbar-search-kbd">⌘K</kbd>
+        </button>
       </div>
 
       <div class="topbar-actions">

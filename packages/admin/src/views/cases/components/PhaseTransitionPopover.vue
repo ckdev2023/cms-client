@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 
@@ -8,6 +8,7 @@ const { t } = useI18n();
 
 interface PhaseTransitionPopoverProps {
   menuOpen?: boolean;
+  currentPhase?: string | null;
   availableTargets?: readonly string[];
   submitting?: boolean;
   errorMessage?: string | null;
@@ -15,9 +16,17 @@ interface PhaseTransitionPopoverProps {
 
 const props = withDefaults(defineProps<PhaseTransitionPopoverProps>(), {
   menuOpen: false,
+  currentPhase: null,
   availableTargets: () => [],
   submitting: false,
   errorMessage: null,
+});
+
+const currentPhaseLabel = computed(() => {
+  if (!props.currentPhase) return null;
+  return t("cases.detail.phaseMenu.currentPhaseLabel", {
+    phase: t("cases.constants.phases." + props.currentPhase),
+  });
 });
 
 const emit = defineEmits<{
@@ -34,6 +43,17 @@ const emit = defineEmits<{
 const selectedPhase = ref<string | null>(null);
 const closeReason = ref("");
 const validationError = ref<string | null>(null);
+
+watch(
+  () => props.menuOpen,
+  (open) => {
+    if (!open) {
+      selectedPhase.value = null;
+      closeReason.value = "";
+      validationError.value = null;
+    }
+  },
+);
 
 const needsCloseReason = computed(
   () => selectedPhase.value === "CLOSED_FAILED",
@@ -91,9 +111,18 @@ function handleClose(): void {
         data-testid="phase-transition-popover"
       >
         <header class="phase-popover__header">
-          <h3 class="phase-popover__title">
-            {{ t("cases.detail.phaseMenu.title") }}
-          </h3>
+          <div>
+            <h3 class="phase-popover__title">
+              {{ t("cases.detail.phaseMenu.title") }}
+            </h3>
+            <p
+              v-if="currentPhaseLabel"
+              class="phase-popover__subtitle"
+              data-testid="phase-current-label"
+            >
+              {{ currentPhaseLabel }}
+            </p>
+          </div>
           <button
             type="button"
             class="phase-popover__close-btn"
@@ -135,7 +164,14 @@ function handleClose(): void {
               data-testid="phase-target-item"
               @click="selectPhase(target)"
             >
-              {{ t("cases.constants.phases." + target) }}
+              {{
+                props.currentPhase
+                  ? t("cases.detail.phaseMenu.targetArrow", {
+                      from: t("cases.constants.phases." + props.currentPhase),
+                      to: t("cases.constants.phases." + target),
+                    })
+                  : t("cases.constants.phases." + target)
+              }}
             </li>
           </ul>
 
@@ -212,7 +248,7 @@ function handleClose(): void {
 
 .phase-popover__header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   padding: 20px 24px 0;
 }
@@ -222,6 +258,13 @@ function handleClose(): void {
   font-size: var(--font-size-lg, 18px);
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-text-1);
+}
+
+.phase-popover__subtitle {
+  margin: 4px 0 0;
+  font-size: var(--font-size-sm, 14px);
+  font-weight: var(--font-weight-normal, 400);
+  color: var(--color-text-3);
 }
 
 .phase-popover__close-btn {

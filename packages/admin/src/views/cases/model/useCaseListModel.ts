@@ -20,6 +20,7 @@ import {
 } from "../constants";
 import {
   buildCaseListQuery,
+  isValidStageId,
   parseCaseListQuery,
   type CaseListQueryParams,
 } from "../query";
@@ -112,6 +113,7 @@ function setupRouteSync(
   customerId: Ref<string | undefined>,
   routeQuery: Ref<LocationQuery>,
   replaceQuery: (query: Record<string, string | undefined>) => void,
+  onInvalidStage?: (raw: string) => void,
 ) {
   let skipRouteSync = false;
 
@@ -130,6 +132,7 @@ function setupRouteSync(
   );
 
   watch(routeQuery, (query) => {
+    detectInvalidStage(query, onInvalidStage);
     skipRouteSync = true;
     const next = parseCaseListQuery(query);
     filters.scope = next.scope;
@@ -163,6 +166,17 @@ function filtersToListParams(
     page,
     limit,
   };
+}
+
+function detectInvalidStage(
+  query: LocationQuery,
+  onInvalidStage?: (raw: string) => void,
+): void {
+  if (!onInvalidStage) return;
+  const raw = typeof query.stage === "string" ? query.stage : "";
+  if (raw && !isValidStageId(raw)) {
+    onInvalidStage(raw);
+  }
 }
 
 function createListState(parsed: ReturnType<typeof parseCaseListQuery>) {
@@ -356,6 +370,8 @@ export interface UseCaseListModelDeps {
    *
    */
   replaceQuery: (query: Record<string, string | undefined>) => void;
+  /** URL stage 参数非法时的回调（由视图层注入 toast 通知）。 */
+  onInvalidStage?: (rawValue: string) => void;
 }
 
 /**
@@ -368,6 +384,7 @@ export interface UseCaseListModelDeps {
  * @returns 筛选状态、过滤结果、加载状态与操作方法
  */
 export function useCaseListModel(deps: UseCaseListModelDeps) {
+  detectInvalidStage(deps.routeQuery.value, deps.onInvalidStage);
   const parsed = parseCaseListQuery(deps.routeQuery.value);
   const state = createListState(parsed);
   const fetchCases = createFetchCases({
@@ -395,6 +412,7 @@ export function useCaseListModel(deps: UseCaseListModelDeps) {
     state.customerId,
     deps.routeQuery,
     deps.replaceQuery,
+    deps.onInvalidStage,
   );
 
   void fetchCases();

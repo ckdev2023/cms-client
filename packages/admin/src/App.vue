@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import { RouterView, useRoute, useRouter } from "vue-router";
 import { getArcoLocale, type AppLocale } from "./i18n";
 import {
+  getAdminAccessToken,
   isAdminAuthenticated,
   useAdminSession,
 } from "./auth/model/adminSession";
@@ -17,6 +18,7 @@ import {
 import AppShell from "./shell/AppShell.vue";
 import Toast from "./shared/ui/Toast.vue";
 import { initToast } from "./shared/model/useToast";
+import { initSearchRepository } from "./shared/model/useSearchRepository";
 
 /**
  * 后台应用根组件，按路由元信息在登录页与管理外壳之间切换布局。
@@ -33,6 +35,7 @@ const userEmail = computed(
 const userInitials = computed(() => currentUser.value?.initials ?? "AD");
 const arcoLocale = computed(() => getArcoLocale(locale.value as AppLocale));
 initToast();
+initSearchRepository({ getToken: getAdminAccessToken });
 const orgSettings = initOrgSettings({
   initialStorageRoot: { rootLabel: null, rootPath: null },
 });

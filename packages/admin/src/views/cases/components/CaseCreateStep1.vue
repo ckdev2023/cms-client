@@ -39,7 +39,7 @@ defineProps<{
           <span class="tpl__name">{{
             resolveTemplateLabel(tpl.label, locale)
           }}</span>
-          <Chip tone="primary">{{
+          <Chip v-if="tpl.badge !== 'p1'" tone="primary">{{
             t("cases.create.templateBadge." + tpl.badge)
           }}</Chip>
         </div>

@@ -30,6 +30,7 @@ const casesJaJP = {
       clearCustomerFilter: "顧客フィルターをクリア",
       reset: "リセット",
     },
+    invalidStageWarning: "不正なステージ「{value}」は無視されました。",
     riskLabels: {
       normal: "正常",
       attention: "要注意",
@@ -248,6 +249,8 @@ const casesJaJP = {
     },
     phaseMenu: {
       title: "業務フェーズ遷移",
+      currentPhaseLabel: "現在：{phase}",
+      targetArrow: "{from} → {to}",
       closeReasonRequired: "失敗クローズには理由が必要です",
       submit: "遷移を確認",
       cancel: "キャンセル",
@@ -466,7 +469,7 @@ const casesJaJP = {
       },
       invoice: {
         title: "請求書情報",
-        placeholder: "現在のプロトタイプでは請求書詳細を表示していません。",
+        placeholder: "本バージョンでは請求書詳細に対応していません。",
       },
     },
     tasks: {
@@ -525,7 +528,7 @@ const casesJaJP = {
       evidenceLabel: "証憑",
       evidencePlaceholder: "添付ファイル名または説明（例：支払い誓約書.pdf）",
       evidenceHint:
-        "スクリーンショット、メール、支払い誓約書等の証拠資料をサポート（プロトタイプはテキストのみ）",
+        "スクリーンショット、メール、支払い誓約書等の証拠資料をサポート（現時点ではテキストのみ）",
       cancel: "キャンセル",
       confirm: "確認して提出を続行",
     },

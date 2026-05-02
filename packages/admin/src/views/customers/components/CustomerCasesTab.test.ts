@@ -236,6 +236,56 @@ describe("CustomerCasesTab", () => {
     expect(stageTd.text()).toContain("—");
   });
 
+  it("renders caseNumber instead of UUID in first column (BUG-190)", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "a63aa5f0-1111-2222-3333-444444444444",
+          caseNumber: "CASE-202605-0003",
+          name: "経営管理ビザ新規",
+          type: "business-management",
+          stage: "S2",
+          status: "active",
+          owner: "高桥健太",
+          createdAt: "2026-05-01",
+          updatedAt: "2026-05-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const idTd = wrapper.find(".cases-tab__td--id");
+    expect(idTd.text()).toBe("CASE-202605-0003");
+    expect(idTd.text()).not.toContain("a63aa5f0");
+    expect(idTd.attributes("title")).toBe(
+      "a63aa5f0-1111-2222-3333-444444444444",
+    );
+  });
+
+  it("falls back to id when caseNumber is absent (BUG-190)", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "case-no-number",
+          name: "Visa Update",
+          type: "work",
+          stage: "S1",
+          status: "active",
+          owner: "Owner",
+          createdAt: "2026-05-01",
+          updatedAt: "2026-05-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const idTd = wrapper.find(".cases-tab__td--id");
+    expect(idTd.text()).toBe("case-no-number");
+    expect(idTd.attributes("title")).toBe("case-no-number");
+  });
+
   it("navigates to case detail when clicking open", async () => {
     const repository = createRepository();
     const { wrapper, router } = await factory(repository);

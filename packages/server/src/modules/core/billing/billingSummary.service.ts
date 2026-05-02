@@ -78,7 +78,9 @@ export class BillingSummaryService {
           else 0 end
         ), 0) as overdue_amount
       from billing_records br
-      join cases c on c.id = br.case_id
+      join cases c
+        on c.id = br.case_id
+        and coalesce(c.metadata->>'_status', '') is distinct from 'deleted'
       left join customers cu on cu.id = c.customer_id
       left join lateral (
         select coalesce(sum(pr.amount_received), 0) as paid

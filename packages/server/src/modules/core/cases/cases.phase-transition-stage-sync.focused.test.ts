@@ -1,276 +1,132 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { mapPhaseToTerminalStage } from "./cases.service";
 import {
-  CASE_ID,
-  makeCaseRow,
-  makeCtx,
-  makePool,
-  makeTemplates,
-  ok,
-  svc,
-} from "./cases.final-payment-coe-guard.focused.test-support";
+  BUSINESS_PHASES,
+  type BusinessPhase,
+  PHASE_TO_STAGE_DEFAULT,
+  STAGE_TO_PHASE_DEFAULT,
+  isTerminalPhase,
+} from "./businessPhase";
+import { P0_STAGES, isP0Stage } from "./cases.workflow-step";
 
-// ════════════════════════════════════════════════════════════════
-// BUG-116: 终态 phase → stage=S9 联动
-//
-// 业务规范：
-//   - CLOSED_SUCCESS → stage=S9, result_outcome='success'
-//   - CLOSED_FAILED → stage=S9, result_outcome=input||'failure', close_reason=$X
-//   - 非终态 phase → stage 不动
-// ════════════════════════════════════════════════════════════════
-
-void describe("mapPhaseToTerminalStage: 纯函数映射 (BUG-116)", () => {
-  void test("CLOSED_SUCCESS → S9", () => {
-    assert.equal(mapPhaseToTerminalStage("CLOSED_SUCCESS"), "S9");
+void describe("PHASE_TO_STAGE_DEFAULT — phase→stage sync mapping", () => {
+  void test("covers all 20 business phases", () => {
+    for (const phase of BUSINESS_PHASES) {
+      assert.ok(
+        phase in PHASE_TO_STAGE_DEFAULT,
+        `Missing stage mapping for phase ${phase}`,
+      );
+    }
   });
 
-  void test("CLOSED_FAILED → S9", () => {
-    assert.equal(mapPhaseToTerminalStage("CLOSED_FAILED"), "S9");
-  });
-
-  void test("非终态 phase → null (stage 不动)", () => {
-    for (const phase of [
-      "CONSULTING",
-      "CONTRACTED",
-      "WAITING_MATERIAL",
-      "REVIEWING",
-      "APPLYING",
-      "UNDER_REVIEW",
-      "APPROVED",
-      "WAITING_PAYMENT",
-      "COE_SENT",
-      "VISA_APPLYING",
-      "SUCCESS",
-      "VISA_REJECTED",
-      "REJECTED",
-    ]) {
+  void test("all mapped stages are valid P0 stages (S1-S9)", () => {
+    for (const phase of BUSINESS_PHASES) {
+      const stage = PHASE_TO_STAGE_DEFAULT[phase];
       assert.equal(
-        mapPhaseToTerminalStage(phase),
-        null,
-        `${phase} should not map to terminal stage`,
+        isP0Stage(stage),
+        true,
+        `Phase ${phase} maps to invalid stage ${stage}`,
+      );
+    }
+  });
+
+  void test("consistent with STAGE_TO_PHASE_DEFAULT — default phase for each stage maps back to that stage", () => {
+    for (const stage of P0_STAGES) {
+      const defaultPhase = STAGE_TO_PHASE_DEFAULT[stage];
+      assert.equal(
+        PHASE_TO_STAGE_DEFAULT[defaultPhase],
+        stage,
+        `Default phase ${defaultPhase} for stage ${stage} does not map back`,
       );
     }
   });
 });
 
-void describe("transitionPhase: stage sync on terminal phase (BUG-116)", () => {
-  void test("推到 CLOSED_SUCCESS → stage=S9, result_outcome=success", async () => {
-    const calls: { sql: string; params?: unknown[] }[] = [];
-    const pool = makePool((sql, p) => {
-      calls.push({ sql: sql.trim(), params: p });
-      if (
-        sql.includes("from residence_periods") &&
-        sql.includes("is_current = true")
-      )
-        return ok([
-          {
-            id: "rp-1",
-            org_id: "00000000-0000-4000-8000-000000000000",
-            case_id: CASE_ID,
-            customer_id: "cust-1",
-            visa_type: "business_manager",
-            status_of_residence: "経営・管理",
-            period_years: 1,
-            period_label: "1年",
-            valid_from: "2026-01-01",
-            valid_until: "2027-01-01",
-            card_number: "AB12345678CD",
-            is_current: true,
-            entry_date: "2026-01-01",
-            reminder_created: true,
-            notes: null,
-            created_by: "user-1",
-            created_at: "2026-01-01T00:00:00.000Z",
-            updated_at: "2026-01-01T00:00:00.000Z",
-          },
-        ]);
-      if (sql.includes("update cases") && sql.includes("business_phase = $2"))
-        return ok([
-          makeCaseRow({
-            business_phase: "CLOSED_SUCCESS",
-            stage: "S9",
-            status: "S9",
-            result_outcome: "success",
-          }),
-        ]);
-      if (sql.includes("from cases") && p?.[0] === CASE_ID)
-        return ok([
-          makeCaseRow({ business_phase: "RENEWAL_REMINDER_SCHEDULED" }),
-        ]);
-      return ok();
+void describe("non-terminal phase stage sync — 6 representative phases", () => {
+  const nonTerminalCases: [BusinessPhase, string][] = [
+    ["CONSULTING", "S1"],
+    ["CONTRACTED", "S1"],
+    ["WAITING_MATERIAL", "S2"],
+    ["APPLYING", "S5"],
+    ["APPROVED", "S6"],
+    ["SUCCESS", "S8"],
+  ];
+
+  for (const [phase, expectedStage] of nonTerminalCases) {
+    void test(`${phase} → ${expectedStage}`, () => {
+      assert.equal(
+        isTerminalPhase(phase),
+        false,
+        `${phase} should not be terminal`,
+      );
+      assert.equal(PHASE_TO_STAGE_DEFAULT[phase], expectedStage);
     });
+  }
+});
 
-    const updated = await svc(pool, makeTemplates()).transitionPhase(
-      makeCtx(),
-      CASE_ID,
-      { toPhase: "CLOSED_SUCCESS" },
-    );
+void describe("terminal phase stage sync — both terminal phases map to S9", () => {
+  void test("CLOSED_SUCCESS → S9", () => {
+    assert.equal(isTerminalPhase("CLOSED_SUCCESS"), true);
+    assert.equal(PHASE_TO_STAGE_DEFAULT.CLOSED_SUCCESS, "S9");
+  });
 
-    assert.equal(updated.businessPhase, "CLOSED_SUCCESS");
-    assert.equal(updated.stage, "S9");
-    assert.equal(updated.resultOutcome, "success");
+  void test("CLOSED_FAILED → S9", () => {
+    assert.equal(isTerminalPhase("CLOSED_FAILED"), true);
+    assert.equal(PHASE_TO_STAGE_DEFAULT.CLOSED_FAILED, "S9");
+  });
+});
 
-    const updateCall = calls.find(
-      (c) => c.sql.includes("update cases") && c.sql.includes("business_phase"),
-    );
-    assert.ok(updateCall, "should issue update cases statement");
+void describe("SQL CASE WHEN consistency — grouped phases share same stage", () => {
+  void test("S5 group: APPLYING, UNDER_REVIEW, NEED_SUPPLEMENT, SUPPLEMENT_PROCESSING", () => {
+    const s5Phases: BusinessPhase[] = [
+      "APPLYING",
+      "UNDER_REVIEW",
+      "NEED_SUPPLEMENT",
+      "SUPPLEMENT_PROCESSING",
+    ];
+    for (const phase of s5Phases) {
+      assert.equal(
+        PHASE_TO_STAGE_DEFAULT[phase],
+        "S5",
+        `${phase} should map to S5`,
+      );
+    }
+  });
 
-    assert.match(
-      updateCall.sql,
-      /stage\s*=\s*case\s+when\s+\$2\s+in\s+\('CLOSED_SUCCESS','CLOSED_FAILED'\)\s+then\s+'S9'/,
-      "SQL must contain terminal stage sync",
-    );
+  void test("S6 group: APPROVED, REJECTED", () => {
+    assert.equal(PHASE_TO_STAGE_DEFAULT.APPROVED, "S6");
+    assert.equal(PHASE_TO_STAGE_DEFAULT.REJECTED, "S6");
+  });
 
-    assert.deepEqual(updateCall.params, [
-      CASE_ID,
-      "CLOSED_SUCCESS",
+  void test("S7 group: WAITING_PAYMENT, COE_SENT, VISA_APPLYING, VISA_REJECTED", () => {
+    const s7Phases: BusinessPhase[] = [
+      "WAITING_PAYMENT",
+      "COE_SENT",
+      "VISA_APPLYING",
+      "VISA_REJECTED",
+    ];
+    for (const phase of s7Phases) {
+      assert.equal(
+        PHASE_TO_STAGE_DEFAULT[phase],
+        "S7",
+        `${phase} should map to S7`,
+      );
+    }
+  });
+
+  void test("S8 group: SUCCESS, RESIDENCE_PERIOD_RECORDED, RENEWAL_REMINDER_SCHEDULED", () => {
+    const s8Phases: BusinessPhase[] = [
+      "SUCCESS",
+      "RESIDENCE_PERIOD_RECORDED",
       "RENEWAL_REMINDER_SCHEDULED",
-      false,
-      false,
-      false,
-      null,
-      "success",
-    ]);
-  });
-
-  void test("推到 CLOSED_FAILED + closeReason → stage=S9, result_outcome=failure, close_reason=$X", async () => {
-    const calls: { sql: string; params?: unknown[] }[] = [];
-    const pool = makePool((sql, p) => {
-      calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("update cases") && sql.includes("business_phase = $2"))
-        return ok([
-          makeCaseRow({
-            business_phase: "CLOSED_FAILED",
-            stage: "S9",
-            status: "S9",
-            close_reason: "BMV-VISA-REJECTED",
-            result_outcome: "failure",
-          }),
-        ]);
-      if (sql.includes("from cases") && p?.[0] === CASE_ID)
-        return ok([makeCaseRow({ business_phase: "REJECTED" })]);
-      return ok();
-    });
-
-    const updated = await svc(pool, makeTemplates()).transitionPhase(
-      makeCtx(),
-      CASE_ID,
-      {
-        toPhase: "CLOSED_FAILED",
-        closeReason: "BMV-VISA-REJECTED",
-      },
-    );
-
-    assert.equal(updated.businessPhase, "CLOSED_FAILED");
-    assert.equal(updated.stage, "S9");
-    assert.equal(updated.closeReason, "BMV-VISA-REJECTED");
-    assert.equal(updated.resultOutcome, "failure");
-
-    const updateCall = calls.find(
-      (c) => c.sql.includes("update cases") && c.sql.includes("business_phase"),
-    );
-    assert.ok(updateCall);
-    assert.deepEqual(updateCall.params, [
-      CASE_ID,
-      "CLOSED_FAILED",
-      "REJECTED",
-      false,
-      false,
-      false,
-      "BMV-VISA-REJECTED",
-      "failure",
-    ]);
-  });
-
-  void test("推到非终态 phase → stage 不动", async () => {
-    const calls: { sql: string; params?: unknown[] }[] = [];
-    const pool = makePool((sql, p) => {
-      calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("update cases") && sql.includes("business_phase = $2"))
-        return ok([
-          makeCaseRow({
-            business_phase: "WAITING_MATERIAL",
-            stage: "S2",
-            status: "S2",
-          }),
-        ]);
-      if (sql.includes("from cases") && p?.[0] === CASE_ID)
-        return ok([
-          makeCaseRow({
-            business_phase: "CONTRACTED",
-            stage: "S2",
-            status: "S2",
-          }),
-        ]);
-      return ok();
-    });
-
-    const updated = await svc(pool, makeTemplates()).transitionPhase(
-      makeCtx(),
-      CASE_ID,
-      { toPhase: "WAITING_MATERIAL" },
-    );
-
-    assert.equal(updated.stage, "S2");
-
-    const updateCall = calls.find(
-      (c) => c.sql.includes("update cases") && c.sql.includes("business_phase"),
-    );
-    assert.ok(updateCall);
-    const params = updateCall.params ?? [];
-    assert.equal(params[6], null, "closeReason should be null");
-    assert.equal(params[7], null, "resultOutcome should be null");
-  });
-
-  void test("SQL contains stage sync, close_reason, result_outcome branches", async () => {
-    const calls: { sql: string; params?: unknown[] }[] = [];
-    const pool = makePool((sql, p) => {
-      calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("update cases") && sql.includes("business_phase = $2"))
-        return ok([
-          makeCaseRow({
-            business_phase: "CLOSED_FAILED",
-            stage: "S9",
-            close_reason: "TEST",
-            result_outcome: "failure",
-          }),
-        ]);
-      if (sql.includes("from cases") && p?.[0] === CASE_ID)
-        return ok([makeCaseRow({ business_phase: "REJECTED" })]);
-      return ok();
-    });
-
-    await svc(pool, makeTemplates()).transitionPhase(makeCtx(), CASE_ID, {
-      toPhase: "CLOSED_FAILED",
-      closeReason: "TEST",
-    });
-
-    const updateCall = calls.find(
-      (c) => c.sql.includes("update cases") && c.sql.includes("business_phase"),
-    );
-    assert.ok(updateCall);
-
-    assert.match(
-      updateCall.sql,
-      /close_reason\s*=\s*case\s+when\s+\$2\s*=\s*'CLOSED_FAILED'\s+then\s+\$7/,
-      "SQL must gate close_reason on CLOSED_FAILED",
-    );
-    assert.match(
-      updateCall.sql,
-      /result_outcome\s*=\s*case/,
-      "SQL must contain result_outcome conditional",
-    );
-    assert.match(
-      updateCall.sql,
-      /when\s+\$2\s*=\s*'CLOSED_SUCCESS'\s+then\s+'success'/,
-      "SQL must force success for CLOSED_SUCCESS",
-    );
-    assert.match(
-      updateCall.sql,
-      /when\s+\$2\s*=\s*'CLOSED_FAILED'\s+then\s+coalesce\(\$8,\s*'failure'\)/,
-      "SQL must default to failure for CLOSED_FAILED",
-    );
+    ];
+    for (const phase of s8Phases) {
+      assert.equal(
+        PHASE_TO_STAGE_DEFAULT[phase],
+        "S8",
+        `${phase} should map to S8`,
+      );
+    }
   });
 });

@@ -9,6 +9,8 @@ import settings from "./settings/ja-JP";
 import tasks from "./tasks/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
 import dashboardWorkItem from "./dashboard-work-item/ja-JP";
+import { shellSearchJaJP } from "./shell-search/ja-JP";
+
 const jaJP = {
   shell: {
     skipToContent: "コンテンツへスキップ",
@@ -23,6 +25,7 @@ const jaJP = {
       createCase: "案件を新規作成",
       logout: "ログアウト",
     },
+    search: shellSearchJaJP,
     nav: {
       asideLabel: "サイドナビゲーション",
       mainLabel: "メインナビゲーション",

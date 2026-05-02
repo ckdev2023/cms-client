@@ -94,7 +94,7 @@ const customerDetail = {
   },
   bmvIntake: {
     ariaLabel: "经营管理签承接卡片",
-    eyebrow: "P1 承接",
+    eyebrow: "承接进行中",
     title: "经营管理签承接",
     nextStep: "下一步",
     gateHint: "建案门禁",

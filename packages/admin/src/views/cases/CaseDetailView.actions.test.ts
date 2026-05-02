@@ -1,143 +1,145 @@
-import { describe, it, expect, vi } from "vitest";
-import {
-  useCasePhaseTransitionMenu,
-  getAvailablePhaseTargets,
-  isTerminalPhase,
-} from "./model/useCasePhaseTransitionMenu";
-import { ref } from "vue";
-import type { CaseDetail } from "./types";
-import type { CaseRepository } from "./model/CaseRepository";
-import type { CaseUpdateInput } from "./model/CaseAdapterTypes";
-import { createMockDetail } from "./model/useCaseDetailModel.test-support";
+import { describe, it, expect } from "vitest";
+import { mount } from "@vue/test-utils";
+import { createI18n } from "vue-i18n";
+import CaseBillingTab from "./components/CaseBillingTab.vue";
+import CaseTasksTab from "./components/CaseTasksTab.vue";
+import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
+import type { CaseDetail, PaymentRow } from "./types-detail";
+import casesZhCN from "../../i18n/messages/cases/zh-CN";
 
-function makeStubRepo(overrides: Partial<CaseRepository> = {}): CaseRepository {
+const i18n = createI18n({
+  legacy: false,
+  locale: "zh-CN",
+  messages: { "zh-CN": { cases: casesZhCN } },
+});
+
+const CARD_STUB = {
+  template:
+    "<section><header><slot name='header' /></header><slot /><footer><slot name='footer' /></footer></section>",
+};
+const BUTTON_STUB = {
+  template: "<button @click='$emit(\"click\")'><slot /></button>",
+  emits: ["click"],
+};
+const CHIP_STUB = {
+  template: "<span class='chip'><slot /></span>",
+  props: ["tone", "size"],
+};
+
+const PAID_ROW: PaymentRow = {
+  date: "2026/04/01",
+  type: "着手金",
+  amount: "¥240,000",
+  status: "paid",
+  statusLabel: "已结清",
+};
+
+const UNPAID_ROW: PaymentRow = {
+  date: "2026/06/30",
+  type: "尾款",
+  amount: "¥240,000",
+  status: "unpaid",
+  statusLabel: "待收",
+};
+
+function buildDetail(
+  payments: PaymentRow[] = [PAID_ROW, UNPAID_ROW],
+): CaseDetail {
   return {
-    listCases: vi.fn(),
-    getSummaryCards: vi.fn(),
-    getDetail: vi.fn(),
-    getDetailAggregate: vi.fn(),
-    createCase: vi.fn(),
-    updateCase: vi.fn().mockResolvedValue({ id: "case-001" }),
-    transitionCase: vi.fn(),
-    acknowledgeBillingRisk: vi.fn(),
-    updatePostApprovalStage: vi.fn(),
-    transitionWorkflowStep: vi.fn(),
-    transitionPhase: vi.fn().mockResolvedValue({ id: "case-001" }),
-    deleteCase: vi.fn(),
-    getMessages: vi.fn(),
-    getLogEntries: vi.fn(),
-    getDocumentItems: vi.fn(),
-    getGeneratedDocuments: vi.fn(),
-    getValidationData: vi.fn(),
-    getBillingData: vi.fn(),
-    getBillingTabAggregate: vi.fn(),
-    getSubmissionPackages: vi.fn(),
-    getDoubleReviewEntries: vi.fn(),
-    getTasks: vi.fn(),
-    getDeadlines: vi.fn(),
-    createCaseParty: vi.fn(),
-    retryReminderCreation: vi.fn(),
-    ...overrides,
-  } as unknown as CaseRepository;
+    ...CASE_DETAIL_SAMPLES.work,
+    billing: {
+      total: "¥480,000",
+      received: "¥240,000",
+      outstanding: "¥240,000",
+      payments,
+    },
+  };
 }
 
-describe("CaseDetailView actions wiring", () => {
-  describe("status transition button", () => {
-    it("phase menu openMenu is callable and toggles menuOpen", () => {
-      const detail = ref<CaseDetail | null>(
-        createMockDetail({ businessPhase: "UNDER_REVIEW" }),
-      );
-      const repo = makeStubRepo();
-      const menu = useCasePhaseTransitionMenu({
-        detail,
-        repo,
-        getCaseId: () => "case-001",
-        onSuccess: vi.fn().mockResolvedValue(undefined),
-      });
+function mountBillingTab(readonly = false) {
+  return mount(CaseBillingTab, {
+    props: { detail: buildDetail(), readonly },
+    global: {
+      plugins: [i18n],
+      stubs: { Card: CARD_STUB, Button: BUTTON_STUB, Chip: CHIP_STUB },
+    },
+  });
+}
 
-      expect(menu.menuOpen.value).toBe(false);
-      menu.openMenu();
-      expect(menu.menuOpen.value).toBe(true);
-    });
+function mountTasksTab(readonly = false) {
+  return mount(CaseTasksTab, {
+    props: { detail: buildDetail(), readonly },
+    global: {
+      plugins: [i18n],
+      stubs: { Card: CARD_STUB },
+    },
+  });
+}
 
-    it("disables when no available targets (terminal phase)", () => {
-      const targets = getAvailablePhaseTargets("CLOSED_SUCCESS");
-      expect(targets.length).toBe(0);
-    });
-
-    it("performTransition sends closeReason for CLOSED_FAILED", async () => {
-      const detail = ref<CaseDetail | null>(
-        createMockDetail({ businessPhase: "REJECTED" }),
-      );
-      const repo = makeStubRepo();
-      const menu = useCasePhaseTransitionMenu({
-        detail,
-        repo,
-        getCaseId: () => "case-001",
-        onSuccess: vi.fn().mockResolvedValue(undefined),
-      });
-
-      const ok = await menu.performTransition("CLOSED_FAILED", {
-        closeReason: "BMV-VISA-REJECTED",
-        resultOutcome: "failure",
-      });
-      expect(ok).toBe(true);
-      expect(repo.transitionPhase).toHaveBeenCalledWith("case-001", {
-        toPhase: "CLOSED_FAILED",
-        closeReason: "BMV-VISA-REJECTED",
-        resultOutcome: "failure",
-      });
-    });
-
-    it("closeMenu resets menuOpen after performTransition succeeds", async () => {
-      const detail = ref<CaseDetail | null>(
-        createMockDetail({ businessPhase: "UNDER_REVIEW" }),
-      );
-      const repo = makeStubRepo();
-      const menu = useCasePhaseTransitionMenu({
-        detail,
-        repo,
-        getCaseId: () => "case-001",
-        onSuccess: vi.fn().mockResolvedValue(undefined),
-      });
-
-      menu.openMenu();
-      expect(menu.menuOpen.value).toBe(true);
-      await menu.performTransition("APPROVED");
-      expect(menu.menuOpen.value).toBe(false);
-    });
+describe("BUG-196 CaseBillingTab emits", () => {
+  it("header 'record payment' button emits open-collection (no row)", async () => {
+    const w = mountBillingTab(false);
+    const headerBtn = w.find("header button");
+    expect(headerBtn.exists()).toBe(true);
+    await headerBtn.trigger("click");
+    expect(w.emitted("open-collection")).toBeTruthy();
+    expect(w.emitted("open-collection")![0]).toEqual([]);
   });
 
-  describe("export zip button", () => {
-    it("export zip is a placeholder action (no crash on invocation)", () => {
-      const handler = vi.fn();
-      handler("ZIP export not ready");
-      expect(handler).toHaveBeenCalledWith("ZIP export not ready");
-    });
+  it("row 'view receipt' button emits view-receipt with row", async () => {
+    const w = mountBillingTab(false);
+    const receiptBtn = w
+      .findAll(".billing-tab__link")
+      .find((el) => el.text().includes("查看收据"));
+    expect(receiptBtn).toBeTruthy();
+    await receiptBtn!.trigger("click");
+    expect(w.emitted("view-receipt")).toBeTruthy();
+    expect(w.emitted("view-receipt")![0]).toEqual([PAID_ROW]);
   });
 
-  describe("edit info button", () => {
-    it("updateCase is called with edit fields", async () => {
-      const repo = makeStubRepo();
-      const input = {
-        caseName: "Updated Name",
-        agency: "Updated Agency",
-        memo: "A memo",
-      } as CaseUpdateInput;
-      await repo.updateCase("case-001", input);
-      expect(repo.updateCase).toHaveBeenCalledWith("case-001", input);
-    });
+  it("row 'record payment' button emits open-collection with row", async () => {
+    const w = mountBillingTab(false);
+    const payBtn = w
+      .findAll(".billing-tab__link")
+      .find((el) => el.text().includes("登记回款"));
+    expect(payBtn).toBeTruthy();
+    await payBtn!.trigger("click");
+    expect(w.emitted("open-collection")).toBeTruthy();
+    expect(w.emitted("open-collection")![0]).toEqual([UNPAID_ROW]);
   });
 
-  describe("terminal phase guard", () => {
-    it("CLOSED_SUCCESS is terminal", () => {
-      expect(isTerminalPhase("CLOSED_SUCCESS")).toBe(true);
-    });
-    it("CLOSED_FAILED is terminal", () => {
-      expect(isTerminalPhase("CLOSED_FAILED")).toBe(true);
-    });
-    it("UNDER_REVIEW is not terminal", () => {
-      expect(isTerminalPhase("UNDER_REVIEW")).toBe(false);
-    });
+  it("readonly mode hides record-payment buttons, no open-collection emits", () => {
+    const w = mountBillingTab(true);
+    expect(w.find("header button").exists()).toBe(false);
+    const inlinePayBtns = w
+      .findAll(".billing-tab__link")
+      .filter((el) => el.text().includes("登记回款"));
+    expect(inlinePayBtns.length).toBe(0);
+  });
+});
+
+describe("BUG-196 CaseTasksTab emits", () => {
+  it("header 'add task' button emits open-create-task", async () => {
+    const w = mountTasksTab(false);
+    const addBtn = w.find(".tasks-tab__add-link");
+    expect(addBtn.exists()).toBe(true);
+    await addBtn.trigger("click");
+    expect(w.emitted("open-create-task")).toBeTruthy();
+    expect(w.emitted("open-create-task")!.length).toBe(1);
+  });
+
+  it("footer inline 'add task' button emits open-create-task", async () => {
+    const w = mountTasksTab(false);
+    const inlineBtn = w.find(".tasks-tab__add-inline");
+    expect(inlineBtn.exists()).toBe(true);
+    await inlineBtn.trigger("click");
+    expect(w.emitted("open-create-task")).toBeTruthy();
+    expect(w.emitted("open-create-task")!.length).toBe(1);
+  });
+
+  it("readonly mode hides both add buttons", () => {
+    const w = mountTasksTab(true);
+    expect(w.find(".tasks-tab__add-link").exists()).toBe(false);
+    expect(w.find(".tasks-tab__add-inline").exists()).toBe(false);
   });
 });

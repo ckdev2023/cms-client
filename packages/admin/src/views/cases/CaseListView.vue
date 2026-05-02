@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from "../../shared/model/useToast";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
@@ -18,6 +19,7 @@ import { buildCaseCreateRoute } from "./query";
 const { t, locale } = useI18n();
 const route = useRoute();
 const router = useRouter();
+const toast = useToast();
 
 const repository = createCaseRepository();
 const ownerOptions = computed(() => getOwnerOptions(locale.value));
@@ -46,6 +48,12 @@ const {
       path: route.path,
       query: query as Record<string, string>,
     }),
+  onInvalidStage: (raw) => {
+    toast.add({
+      title: t("cases.list.invalidStageWarning", { value: raw }),
+      tone: "warning",
+    });
+  },
 });
 
 const paginationStart = computed(() => {

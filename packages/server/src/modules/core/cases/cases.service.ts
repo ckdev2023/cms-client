@@ -555,6 +555,19 @@ export const POST_APPROVAL_STAGES = new Set([
 
 export const CASE_COLS = `id, org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, opened_at, due_at, metadata, case_no, case_name, case_subtype, application_type, application_flow_type, visa_plan, post_approval_stage, coe_issued_at, coe_expiry_date, coe_sent_at, close_reason, supplement_count, company_id, priority, risk_level, assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date, archived_at, result_outcome, quote_price, deposit_paid_cached, final_payment_paid_cached, billing_unpaid_amount_cached, billing_risk_acknowledged_by, billing_risk_acknowledged_at, billing_risk_ack_reason_code, billing_risk_ack_reason_note, billing_risk_ack_evidence_url, overseas_visa_start_at, entry_confirmed_at, business_phase, current_workflow_step_code, created_at, updated_at`;
 
+const PHASE_TO_STAGE_SQL = `case
+  when $2 in ('CLOSED_SUCCESS','CLOSED_FAILED') then 'S9'
+  when $2 in ('CONSULTING','CONTRACTED') then 'S1'
+  when $2 = 'WAITING_MATERIAL' then 'S2'
+  when $2 = 'MATERIAL_PREPARING' then 'S3'
+  when $2 = 'REVIEWING' then 'S4'
+  when $2 in ('APPLYING','UNDER_REVIEW','NEED_SUPPLEMENT','SUPPLEMENT_PROCESSING') then 'S5'
+  when $2 in ('APPROVED','REJECTED') then 'S6'
+  when $2 in ('WAITING_PAYMENT','COE_SENT','VISA_APPLYING','VISA_REJECTED') then 'S7'
+  when $2 in ('SUCCESS','RESIDENCE_PERIOD_RECORDED','RENEWAL_REMINDER_SCHEDULED') then 'S8'
+  else stage
+end`;
+
 export const CASE_COLS_PREFIXED = CASE_COLS.split(", ")
   .map((col) => `cs.${col}`)
   .join(", ");
@@ -631,6 +644,12 @@ function buildCaseListFilterPrefixed(
       params.push(val);
       where.push(`${col} = $${String(params.length)}`);
     }
+  }
+
+  if (input.search) {
+    params.push(`%${input.search}%`);
+    const idx = `$${String(params.length)}`;
+    where.push(`(${p}case_name ilike ${idx} or ${p}case_no ilike ${idx})`);
   }
 
   if (input.visibility) {
@@ -1435,6 +1454,7 @@ export class CasesService {
         input.crossGroupReason,
       );
     }
+    await this.insertInitialTasks(tx, ctx, created);
     return created;
   }
 
@@ -2465,10 +2485,7 @@ export class CasesService {
     const result = await tx.query<CaseQueryRow>(
       `update cases
          set business_phase = $2,
-             stage = case
-               when $2 in ('CLOSED_SUCCESS','CLOSED_FAILED') then 'S9'
-               else stage
-             end,
+             stage = ${PHASE_TO_STAGE_SQL},
              close_reason = case when $2 = 'CLOSED_FAILED' then $7 else close_reason end,
              result_outcome = case
                when $2 = 'CLOSED_SUCCESS' then 'success'
@@ -2645,10 +2662,18 @@ export class CasesService {
     ctx: RequestContext,
     caseTypeCode: string,
   ): Promise<ChecklistItem[]> {
-    const resolved = await this.templatesResolver.resolve(ctx, {
+    let resolved = await this.templatesResolver.resolve(ctx, {
       kind: "document_checklist",
       key: caseTypeCode,
     });
+
+    if (resolved.mode !== "template" || !resolved.used) {
+      resolved = await this.templatesResolver.resolve(ctx, {
+        kind: "case_type",
+        key: caseTypeCode,
+      });
+    }
+
     if (resolved.mode !== "template" || !resolved.used) return [];
 
     const rawItems = Array.isArray(resolved.config.items)
@@ -3162,6 +3187,62 @@ export class CasesService {
           item.providedByRole ?? null,
         ],
       );
+    }
+  }
+
+  /** BUG-195: 建案时自动插入初始任务，确保负责人在首页待办能看到跟进提示。 */
+  private async insertInitialTasks(
+    tx: TenantDbTx,
+    ctx: RequestContext,
+    created: Case,
+  ): Promise<void> {
+    const seeds: {
+      title: string;
+      taskType: string;
+      priority: string;
+    }[] = [
+      {
+        title: "邀请客户上传基础资料",
+        taskType: "document_follow_up",
+        priority: "normal",
+      },
+      {
+        title: "确认客户初次面谈",
+        taskType: "client_contact",
+        priority: "normal",
+      },
+    ];
+
+    for (const seed of seeds) {
+      const result = await tx.query<{ id: string }>(
+        `insert into tasks
+           (org_id, case_id, title, task_type, assignee_user_id, priority, status, source_type, source_id)
+         values ($1, $2, $3, $4, $5, $6, 'pending', 'auto_create', $7)
+         returning id`,
+        [
+          ctx.orgId,
+          created.id,
+          seed.title,
+          seed.taskType,
+          created.ownerUserId,
+          seed.priority,
+          created.id,
+        ],
+      );
+      const taskId = result.rows.at(0)?.id;
+      if (taskId) {
+        await writeTimelineInTx(tx, ctx, {
+          entityType: "task",
+          entityId: taskId,
+          action: "task.created",
+          payload: {
+            caseId: created.id,
+            title: seed.title,
+            status: "pending",
+            source: "case_create_initial",
+          },
+        });
+      }
     }
   }
 

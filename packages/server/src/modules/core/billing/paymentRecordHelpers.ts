@@ -40,7 +40,9 @@ export const PAYMENT_RECORD_LIST_COLS = `pr.id, pr.org_id, pr.billing_record_id,
 
 export const PAYMENT_RECORD_LIST_FROM = `payment_records pr
   join billing_records br on br.id = pr.billing_record_id
-  join cases c on c.id = pr.case_id
+  join cases c
+    on c.id = pr.case_id
+    and coalesce(c.metadata->>'_status', '') is distinct from 'deleted'
   left join customers cu on cu.id = c.customer_id
   left join users recorded_user on recorded_user.id = pr.recorded_by
   left join users voided_user on voided_user.id = pr.voided_by`;

@@ -245,6 +245,8 @@ export interface CustomerCase {
    *
    */
   id: string;
+  /** 后端下发的业务编号（`caseNo`）；缺失时 UI 回落到 `id`。 */
+  caseNumber?: string;
   /**
    *
    */

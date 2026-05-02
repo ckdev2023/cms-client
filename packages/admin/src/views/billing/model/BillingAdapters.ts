@@ -175,30 +175,9 @@ export interface BillingMutationResult {
 
 // ─── DTO → view-model adapters ──────────────────────────────────
 
-function computeOverdueDays(dueDate: string | null): number | undefined {
-  if (!dueDate) return undefined;
-  try {
-    const due = new Date(dueDate);
-    if (Number.isNaN(due.getTime())) return undefined;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
-    const diff = Math.floor((today.getTime() - due.getTime()) / 86_400_000);
-    return diff > 0 ? diff : undefined;
-  } catch {
-    return undefined;
-  }
-}
+import { computeOverdueDays, formatDueDate } from "./BillingDateHelpers";
 
-function formatDueDate(dueDate: string | null): string {
-  if (!dueDate) return "";
-  try {
-    const d = new Date(dueDate);
-    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("ja-JP");
-  } catch {
-    return "";
-  }
-}
+export { computeOverdueDays, formatDueDate } from "./BillingDateHelpers";
 
 function buildNextNode(
   status: string,

@@ -131,6 +131,12 @@ const settingsEnUS = {
       description: 'Root directory updated to "{name}"',
     },
   },
+  aria: {
+    groupManagement: "Group management",
+    groupDetail: "Group detail",
+    visibilitySettings: "Visibility settings",
+    storageRoot: "Storage root settings",
+  },
   permission: {
     denied: "Access denied. Please contact an administrator.",
   },

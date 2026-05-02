@@ -10,6 +10,10 @@ defineProps<{
   readonly: boolean;
 }>();
 
+const emit = defineEmits<{
+  "open-create-task": [];
+}>();
+
 const DUE_COLOR_CLASS: Record<string, string> = {
   danger: "tasks-tab__due--danger",
   warning: "tasks-tab__due--warning",
@@ -48,7 +52,12 @@ function avatarBg(item: TaskItem): string {
     <Card padding="none">
       <template #header>
         <h2 class="tasks-tab__title">{{ t("cases.detail.tasks.title") }}</h2>
-        <button v-if="!readonly" class="tasks-tab__add-link" type="button">
+        <button
+          v-if="!readonly"
+          class="tasks-tab__add-link"
+          type="button"
+          @click="emit('open-create-task')"
+        >
           <svg
             width="16"
             height="16"
@@ -117,7 +126,11 @@ function avatarBg(item: TaskItem): string {
         </div>
 
         <div v-if="!readonly" class="tasks-tab__footer">
-          <button class="tasks-tab__add-inline" type="button">
+          <button
+            class="tasks-tab__add-inline"
+            type="button"
+            @click="emit('open-create-task')"
+          >
             <svg
               width="16"
               height="16"

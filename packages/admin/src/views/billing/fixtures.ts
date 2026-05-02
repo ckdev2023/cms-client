@@ -41,6 +41,7 @@ export const PAYMENT_RECORD_STATUS_OPTIONS: StatusOption[] = [
 
 export const COLLECTION_SKIP_REASON_OPTIONS: SelectOption[] = [
   { value: "no-permission", label: "无权限" },
+  { value: "case-not-found", label: "案件不存在或已删除" },
   {
     value: "duplicate-task",
     label: "已存在未完成催款任务（同案同节点同逾期周期）",

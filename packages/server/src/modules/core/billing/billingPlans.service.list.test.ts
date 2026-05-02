@@ -252,6 +252,23 @@ void test("count uses JOIN for filter compatibility", async () => {
   );
 });
 
+// ─── soft-deleted case exclusion ───────────────────────────────
+
+void test("list JOIN cases excludes soft-deleted cases (metadata._status='deleted')", async () => {
+  const { calls, pool } = makeCountPool();
+
+  await svc(pool).list(makeCtx(), {});
+
+  const cnt = findCount(calls);
+  assert.ok(cnt);
+  assert.ok(
+    cnt.sql.includes(
+      "coalesce(c.metadata->>'_status', '') is distinct from 'deleted'",
+    ),
+    "count JOIN cases must filter out soft-deleted cases",
+  );
+});
+
 // ─── pagination ────────────────────────────────────────────────
 
 void test("pagination passes limit and offset as last params", async () => {

@@ -66,6 +66,7 @@ const billingJaJP = {
       unit: "件",
       clear: "クリア",
       collect: "一括督促タスク作成",
+      emptyHint: "現在、延滞中の収費ノードがないため、一括催促はできません",
     },
     pagination: {
       summary: "{start}〜{end} 件目（全 {total} 件）",
@@ -99,6 +100,7 @@ const billingJaJP = {
   bulkCollect: {
     skipReason: {
       "no-permission": "案件の編集権限がありません",
+      "case-not-found": "案件が存在しないか削除されています",
       "duplicate-task": "未完了の督促タスクが既に存在します",
       "not-overdue": "期限超過の請求ノードがありません",
       "no-assignee": "案件に担当者が設定されていません",
@@ -111,6 +113,7 @@ const billingJaJP = {
       successLabel: "成功",
       skippedLabel: "スキップ",
       failedLabel: "失敗",
+      unknownCase: "案件情報が取得できません",
     },
   },
   paymentLog: {

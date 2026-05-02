@@ -162,6 +162,6 @@ describe("BillingFilters — BUG-134 group dropdown localization", () => {
     const zhAllOption = wrapperZh
       .findAll("select.billing-filters__select")[1]
       .findAll("option")[0];
-    expect(zhAllOption.text()).toBe("所有 Group");
+    expect(zhAllOption.text()).toBe("所有分组");
   });
 });

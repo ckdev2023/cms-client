@@ -75,18 +75,18 @@ describe("BUG-167 CaseBillingTab i18n: no Chinese leakage in en-US / ja-JP", () 
     expect(html).toContain("收费");
     expect(html).toContain("总费用");
     expect(html).toContain("已收金额");
-    expect(html).toContain("未收金额");
+    expect(html).toContain("待收金额");
     expect(html).toContain("日期");
     expect(html).toContain("类型");
     expect(html).toContain("金额");
     expect(html).toContain("状态");
     expect(html).toContain("操作");
     expect(html).toContain("发票信息");
-    expect(html).toContain("当前原型暂不展示发票详情。");
+    expect(html).toContain("本版本暂不支持发票详情。");
     expect(html).toContain("登记回款");
     expect(html).toContain("查看收据");
     expect(html).toContain("已结清");
-    expect(html).toContain("应收");
+    expect(html).toContain("待收");
   });
 
   it("en-US renders English copy and drops zh-CN literal labels", () => {
@@ -102,7 +102,7 @@ describe("BUG-167 CaseBillingTab i18n: no Chinese leakage in en-US / ja-JP", () 
     expect(html).toContain("Actions");
     expect(html).toContain("Invoice");
     expect(html).toContain(
-      "Invoice details are not shown in the current prototype.",
+      "Invoice details are not yet available in this release.",
     );
     expect(html).toContain("Record payment");
     expect(html).toContain("View receipt");
@@ -111,18 +111,18 @@ describe("BUG-167 CaseBillingTab i18n: no Chinese leakage in en-US / ja-JP", () 
     const ZH_LEAKS = [
       "总费用",
       "已收金额",
-      "未收金额",
+      "待收金额",
       "日期",
       "类型",
       "金额",
       "状态",
       "操作",
       "发票信息",
-      "当前原型暂不展示发票详情。",
+      "本版本暂不支持发票详情。",
       "登记回款",
       "查看收据",
       "已结清",
-      "应收",
+      "待收",
     ];
     for (const leak of ZH_LEAKS) {
       expect(html).not.toContain(leak);
@@ -141,16 +141,14 @@ describe("BUG-167 CaseBillingTab i18n: no Chinese leakage in en-US / ja-JP", () 
     expect(html).toContain("ステータス");
     expect(html).toContain("操作");
     expect(html).toContain("請求書情報");
-    expect(html).toContain(
-      "現在のプロトタイプでは請求書詳細を表示していません。",
-    );
+    expect(html).toContain("本バージョンでは請求書詳細に対応していません。");
     expect(html).toContain("入金登録");
     expect(html).toContain("領収書を見る");
     expect(html).not.toContain("总费用");
     expect(html).not.toContain("已收金额");
-    expect(html).not.toContain("未收金额");
+    expect(html).not.toContain("待收金额");
     expect(html).not.toContain("发票信息");
-    expect(html).not.toContain("当前原型暂不展示发票详情。");
+    expect(html).not.toContain("本版本暂不支持发票详情。");
     expect(html).not.toContain("登记回款");
     expect(html).not.toContain("查看收据");
   });

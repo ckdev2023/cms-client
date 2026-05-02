@@ -91,3 +91,17 @@
   - _output/00-outputs.md（`requirements.ir / ambiguities / boundary / traceability` 样例）
   Owner：产品/研发
   状态：已编译
+
+- 时间：2026-05-02
+  来源：R22 案件全流程审计 BUG-200
+  主题：是否引入「任意中间相位 → CLOSED_FAILED」中途撤案路径
+  要点：
+  - 当前 PHASE_TRANSITIONS 仅允许 REJECTED → CLOSED_FAILED 和 VISA_REJECTED → CLOSED_FAILED
+  - 审计发现：实际业务中客户可能在任意非终态阶段主动撤案（如 WAITING_MATERIAL、MATERIAL_PREPARING、REVIEWING 等）
+  - 需 PM 确认：是否为所有非终态 phase 增加 → CLOSED_FAILED 出边；若是，是否需要额外 guard（如撤案原因必填、关联账单处理规则）
+  - 变更影响：PHASE_TRANSITIONS 表、前端 PhaseTransitionPopover 可选目标列表、stage 同步逻辑
+  需要编译到：
+  - 04-核心流程与状态流转.md（phase 转换图扩展）
+  - 03-业务规则与不变量.md（撤案 guard 规则）
+  Owner：PM
+  状态：待决策

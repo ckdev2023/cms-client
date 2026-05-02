@@ -10,7 +10,8 @@ import {
 // prettier-ignore
 export const CUSTOMER_CASE_UPSTREAM_CONTRACT = ["id","caseName","caseTypeCode","stage","ownerUserId","createdAt","updatedAt"] as const;
 
-const CUSTOMER_CASE_NAME_FIELDS = ["name", "caseName", "title", "caseNo"];
+const CUSTOMER_CASE_NAME_FIELDS = ["name", "caseName", "title"];
+const CUSTOMER_CASE_NUMBER_FIELDS = ["caseNo", "caseNumber"];
 // prettier-ignore
 const CUSTOMER_CASE_TYPE_FIELDS = ["type","caseType","caseTypeCode","applicationType"];
 const CUSTOMER_CASE_STAGE_FIELDS = ["stage", "workflowStage", "statusLabel"];
@@ -84,8 +85,12 @@ function adaptCustomerCaseDto(value: unknown): CustomerCase | null {
   const id = readStringField(record, "id");
   if (!id) return null;
 
+  const caseNumber =
+    pickOptionalString(record, CUSTOMER_CASE_NUMBER_FIELDS) ?? undefined;
+
   return {
     id,
+    ...(caseNumber !== undefined ? { caseNumber } : {}),
     name: pickOptionalString(record, CUSTOMER_CASE_NAME_FIELDS) ?? id,
     type: pickOptionalString(record, CUSTOMER_CASE_TYPE_FIELDS) ?? "",
     stage: pickOptionalString(record, CUSTOMER_CASE_STAGE_FIELDS) ?? "",

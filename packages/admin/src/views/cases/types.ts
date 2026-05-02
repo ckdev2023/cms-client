@@ -435,6 +435,8 @@ export interface CaseOwnerOption {
    *
    */
   avatarClass: string;
+  /** 所属分组 ID；`null` 表示 Local Admin（无组归属，跨组豁免）。 */
+  group?: string | null;
 }
 
 /**

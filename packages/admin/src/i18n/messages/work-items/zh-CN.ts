@@ -100,7 +100,7 @@ const dashboardWorkItems = {
         meta: {
           caseId: "CASE-2398",
           risk: "欠款风险",
-          amount: "未收金额：JPY 180,000",
+          amount: "待收金额：JPY 180,000",
         },
         desc: "收费节点已到但仍未结清，需登记催款并暂停非必要推进。",
         statusLabel: "高风险",

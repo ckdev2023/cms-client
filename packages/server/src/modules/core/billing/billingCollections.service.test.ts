@@ -98,9 +98,17 @@ function svc(opts: {
   );
 }
 
-function stdPool(planOvr?: Record<string, unknown>) {
+function stdPool(
+  planOvr?: Record<string, unknown>,
+  caseNoLookup: string | null = "CAS-2026-0001",
+) {
   return pool((sql) => {
     if (sql.includes("set_config")) return OK;
+    if (sql.includes("select case_no from cases"))
+      return Promise.resolve({
+        rows: caseNoLookup === null ? [] : [{ case_no: caseNoLookup }],
+        rowCount: caseNoLookup === null ? 0 : 1,
+      });
     if (sql.includes("from billing_records") && sql.includes("due_date"))
       return Promise.resolve({
         rows: planOvr === undefined ? [] : [planRow(planOvr)],
@@ -162,14 +170,65 @@ void test("no-permission skip on ForbiddenException", async () => {
   assert.equal(r.details[0]?.reason, "no-permission");
 });
 
-void test("no-permission skip on NotFoundException", async () => {
+void test("case-not-found skip on NotFoundException (soft-deleted/cross-org/missing)", async () => {
   const s = svc({
     pool: stdPool(),
     cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
   });
   const r = await s.bulkCollect(ctx(), [CASE_1]);
   assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+});
+
+void test("case-not-found returns caseNo from upfront lookup (soft-deleted case still has case_no)", async () => {
+  const s = svc({
+    pool: stdPool(undefined, "CAS-2026-DELETED"),
+    cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+  assert.equal(
+    r.details[0]?.caseNo,
+    "CAS-2026-DELETED",
+    "drawer must show which case was skipped, even when soft-deleted",
+  );
+});
+
+void test("not-overdue skip returns caseNo (no longer null)", async () => {
+  const r = await svc({
+    pool: stdPool(undefined, "CAS-2026-NO-OVERDUE"),
+  }).bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "not-overdue");
+  assert.equal(r.details[0]?.caseNo, "CAS-2026-NO-OVERDUE");
+});
+
+void test("case truly absent (cross-org) returns null caseNo + case-not-found", async () => {
+  const s = svc({
+    pool: stdPool(undefined, null),
+    cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+  assert.equal(r.details[0]?.caseNo, null);
+});
+
+void test("ForbiddenException and NotFoundException map to distinct reason codes", async () => {
+  let n = 0;
+  const s = svc({
+    pool: stdPool(),
+    cases: {
+      assertCanEditCase: () => {
+        n++;
+        return n === 1
+          ? Promise.reject(new ForbiddenException())
+          : Promise.reject(new NotFoundException());
+      },
+    },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1, CASE_2]);
+  assert.equal(r.skipped, 2);
   assert.equal(r.details[0]?.reason, "no-permission");
+  assert.equal(r.details[1]?.reason, "case-not-found");
 });
 
 // ─── skip: not-overdue ──────────────────────────────────────────

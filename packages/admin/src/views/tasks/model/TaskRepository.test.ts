@@ -113,6 +113,62 @@ describe("createTaskRepository", () => {
     expect(result.items[0]?.recipientName).toBeNull();
   });
 
+  it("adapts caseNo, caseName, and assigneeName from list payload", async () => {
+    const request = createRequestStub({
+      items: [
+        {
+          id: "task-010",
+          title: "書類確認",
+          status: "pending",
+          priority: "normal",
+          taskType: "document_follow_up",
+          caseId: "case-010",
+          caseNo: "CASE-202604-0010",
+          caseName: "田中太郎・経営管理ビザ",
+          assigneeUserId: "user-010",
+          assigneeName: "佐藤花子",
+          createdAt: "2026-04-28T09:00:00.000Z",
+          updatedAt: "2026-04-28T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+    });
+
+    const repo = createTaskRepository({ request, getToken: () => "token-x" });
+    const result = await repo.listTasks();
+
+    expect(result.items[0]).toMatchObject({
+      caseNo: "CASE-202604-0010",
+      caseName: "田中太郎・経営管理ビザ",
+      assigneeName: "佐藤花子",
+    });
+  });
+
+  it("tolerates missing caseNo / caseName / assigneeName fields from /api/tasks", async () => {
+    const request = createRequestStub({
+      items: [
+        {
+          id: "task-011",
+          title: "確認タスク",
+          status: "pending",
+          priority: "normal",
+          taskType: "general",
+          caseId: null,
+          createdAt: "2026-04-28T09:00:00.000Z",
+          updatedAt: "2026-04-28T09:00:00.000Z",
+        },
+      ],
+      total: 1,
+    });
+
+    const repo = createTaskRepository({ request, getToken: () => "token-y" });
+    const result = await repo.listTasks();
+
+    expect(result.items[0]?.caseNo).toBeNull();
+    expect(result.items[0]?.caseName).toBeNull();
+    expect(result.items[0]?.assigneeName).toBeNull();
+  });
+
   it("completes a task via POST /api/tasks/:id/complete", async () => {
     const request = createRequestStub({
       id: "task-123",

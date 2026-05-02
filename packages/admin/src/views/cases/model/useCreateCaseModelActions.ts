@@ -208,6 +208,40 @@ export function createGroupInheritanceLabel(
   );
 }
 
+// ─── Group Override Computeds (BUG-203) ──────────────────────────
+
+/** 案件担当选项提供函数——用于查找当前 owner 的 group 归属。 */
+export interface OwnerOptionsDeps {
+  /**
+   *
+   */
+  ownerOptions: () => readonly { value: string; group?: string | null }[];
+}
+
+/**
+ * 构建 `isGroupOverridden` 与 `needsGroupOverrideReason` 计算属性。
+ * Local Admin（`group=null`）跨组时豁免填写理由。
+ *
+ * @param deps - 提供 ownerOptions 的依赖子集
+ * @param draft - 草稿状态，读取 `owner` / `group` / `inheritedGroup`
+ * @returns 包含 `isGroupOverridden` 与 `needsGroupOverrideReason` 的对象
+ */
+export function createGroupOverrideComputeds(
+  deps: OwnerOptionsDeps,
+  draft: CreateCaseDraftState,
+) {
+  const isGroupOverridden = computed(
+    () => draft.group !== draft.inheritedGroup,
+  );
+  const needsGroupOverrideReason = computed(() => {
+    if (!isGroupOverridden.value) return false;
+    return (
+      deps.ownerOptions().find((o) => o.value === draft.owner)?.group !== null
+    );
+  });
+  return { isGroupOverridden, needsGroupOverrideReason };
+}
+
 // ─── Simple Setters ─────────────────────────────────────────────
 
 /**

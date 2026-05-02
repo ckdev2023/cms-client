@@ -35,7 +35,10 @@ function chipTone(): ChipTone {
 </script>
 
 <template>
-  <section class="group-detail-meta" aria-label="Group detail">
+  <section
+    class="group-detail-meta"
+    :aria-label="t('settings.aria.groupDetail')"
+  >
     <div class="group-detail-meta__header">
       <h3 class="group-detail-meta__name">{{ group.name }}</h3>
       <div class="group-detail-meta__actions">

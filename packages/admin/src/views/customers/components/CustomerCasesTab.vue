@@ -197,7 +197,9 @@ function looksLikeUuid(value: string): boolean {
           </thead>
           <tbody>
             <tr v-for="c in filteredCases" :key="c.id" class="cases-tab__row">
-              <td class="cases-tab__td cases-tab__td--id">{{ c.id }}</td>
+              <td class="cases-tab__td cases-tab__td--id" :title="c.id">
+                {{ c.caseNumber ?? c.id }}
+              </td>
               <td class="cases-tab__td">
                 <button
                   type="button"

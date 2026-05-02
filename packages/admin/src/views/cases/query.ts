@@ -56,19 +56,21 @@ export {
 function firstString(value: LocationQuery[string]): string {
   return typeof value === "string" ? value : "";
 }
-
 function isValidScope(v: string): v is CaseScope {
   return (CASE_SCOPES as readonly string[]).includes(v);
 }
-
-function isValidStageId(v: string): v is CaseStageId {
+/**
+ * 判断字符串是否为合法的 `CaseStageId` 值。
+ *
+ * @param v - 待校验字符串
+ * @returns 是否属于 `CASE_STAGE_IDS`
+ */
+export function isValidStageId(v: string): v is CaseStageId {
   return (CASE_STAGE_IDS as readonly string[]).includes(v);
 }
-
 function isValidRisk(v: string): v is CaseRiskStatus {
   return (CASE_RISK_STATUSES as readonly string[]).includes(v);
 }
-
 function isValidValidation(v: string): v is CaseValidationStatus {
   return (CASE_VALIDATION_STATUSES as readonly string[]).includes(v);
 }

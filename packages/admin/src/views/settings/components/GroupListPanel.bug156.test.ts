@@ -22,6 +22,7 @@ const SAMPLE_GROUPS: GroupSummary[] = [
   {
     id: "g-1",
     name: "東京一組",
+    groupNo: "GRP-001",
     status: "active",
     createdAt: ISO_TIMESTAMP,
     activeCaseCount: 3,
@@ -98,5 +99,38 @@ describe("GroupListPanel BUG-156 createdAt formatting", () => {
 
     expect(rows).toHaveLength(2);
     expect(rows[1]!.text()).toContain("—");
+  });
+});
+
+describe("GroupListPanel BUG-208 groupNo slug display", () => {
+  beforeEach(() => {
+    setAppLocale("zh-CN");
+  });
+
+  it("renders groupNo as secondary slug when present", () => {
+    const wrapper = mountPanel();
+    const slugs = wrapper.findAll(".group-list-panel__group-slug");
+
+    expect(slugs).toHaveLength(1);
+    expect(slugs[0]!.text()).toBe("GRP-001");
+    expect(slugs[0]!.attributes("title")).toBe("GRP-001");
+  });
+
+  it("does not render slug element when groupNo is absent", () => {
+    const wrapper = mountPanel();
+    const rows = wrapper.findAll("tbody tr");
+
+    const secondRow = rows[1]!;
+    expect(secondRow.find(".group-list-panel__group-slug").exists()).toBe(
+      false,
+    );
+  });
+
+  it("always renders display name as primary text", () => {
+    const wrapper = mountPanel();
+    const names = wrapper.findAll(".group-list-panel__group-name");
+
+    expect(names[0]!.text()).toBe("東京一組");
+    expect(names[1]!.text()).toBe("東京二組");
   });
 });

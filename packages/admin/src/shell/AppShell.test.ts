@@ -3,12 +3,19 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../i18n";
 import AppShell from "./AppShell.vue";
+import {
+  initSearchRepository,
+  resetSearchRepository,
+} from "../shared/model/useSearchRepository";
 
 const stubs = {
   SideNav: { template: "<aside class='stub-sidenav' />" },
   TopBar: {
     template:
       "<header class='stub-topbar' @click=\"$emit('toggleMenu')\"><slot name='actions' /></header>",
+  },
+  GlobalSearchPalette: {
+    template: "<div class='stub-search-palette' />",
   },
 };
 
@@ -69,6 +76,11 @@ describe("AppShell", () => {
   beforeEach(() => {
     setAppLocale("zh-CN");
     casesMountCount = 0;
+    resetSearchRepository();
+    initSearchRepository({
+      getToken: () => "test-token",
+      request: vi.fn(),
+    });
   });
 
   it("renders the app-shell root element", async () => {
@@ -235,6 +247,45 @@ describe("AppShell", () => {
     await flushPromises();
     expect(w.find("main .stub-route-view--leads").exists()).toBe(true);
     expect(w.find("main .stub-route-view--cases").exists()).toBe(false);
+  });
+
+  it("renders GlobalSearchPalette component", async () => {
+    const { wrapper: w } = await mountShell();
+    expect(w.find(".stub-search-palette").exists()).toBe(true);
+  });
+
+  it("intercepts Cmd+K keydown to open the search palette", async () => {
+    await mountShell();
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      metaKey: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("intercepts Ctrl+K keydown to open the search palette", async () => {
+    await mountShell();
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      ctrlKey: true,
+      cancelable: true,
+    });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+
+  it("ignores Cmd+K during IME composing", async () => {
+    await mountShell();
+    const event = new KeyboardEvent("keydown", {
+      key: "k",
+      metaKey: true,
+      cancelable: true,
+    });
+    Object.defineProperty(event, "isComposing", { value: true });
+    document.dispatchEvent(event);
+    expect(event.defaultPrevented).toBe(false);
   });
 
   it("scrolls back to the top after navigation", async () => {

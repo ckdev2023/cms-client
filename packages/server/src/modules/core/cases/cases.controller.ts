@@ -215,6 +215,7 @@ export class CasesController {
       riskLevel: parseOptionalString(query.riskLevel, "riskLevel"),
       companyId: parseOptionalString(query.companyId, "companyId"),
       phase: parseOptionalString(query.phase, "phase"),
+      search: parseOptionalString(query.search, "search"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
       visibility: {

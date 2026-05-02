@@ -30,6 +30,7 @@ const casesZhCN = {
       clearCustomerFilter: "清除客户筛选",
       reset: "重置",
     },
+    invalidStageWarning: "无效的阶段「{value}」已被忽略。",
     riskLabels: {
       normal: "正常",
       attention: "需关注",
@@ -117,8 +118,8 @@ const casesZhCN = {
     },
     step3: {
       title: "分派与期限",
-      groupInherit: "Group 继承自主申请人：",
-      groupLabel: "Group",
+      groupInherit: "分组继承自主申请人：",
+      groupLabel: "分组",
       ownerLabel: "负责人",
       dueDateLabel: "截止日期",
       amountLabel: "收费金额（税込）",
@@ -201,8 +202,8 @@ const casesZhCN = {
         namePlaceholder: "客户姓名",
         role: "角色",
         rolePlaceholder: "请选择角色",
-        group: "所属 Group",
-        groupPlaceholder: "请选择 Group",
+        group: "所属分组",
+        groupPlaceholder: "请选择分组",
         phone: "电话",
         phonePlaceholder: "手机/座机",
         email: "邮箱",
@@ -241,6 +242,8 @@ const casesZhCN = {
     },
     phaseMenu: {
       title: "业务阶段流转",
+      currentPhaseLabel: "当前：{phase}",
+      targetArrow: "{from} → {to}",
       closeReasonRequired: "失败结案必须填写关闭原因",
       submit: "确认流转",
       cancel: "取消",
@@ -254,7 +257,7 @@ const casesZhCN = {
       success: "已结案，可导出 ZIP / 查看续签提醒。",
       failed: "已结案（失败），可查看关闭原因 / 退款待人工处理。",
     },
-    unpaidLabel: "未收: {amount}",
+    unpaidLabel: "待收：{amount}",
     arrearsYes: "有",
     arrearsNo: "无",
     readonlyBanner:
@@ -436,7 +439,7 @@ const casesZhCN = {
       stats: {
         total: "总费用",
         collected: "已收金额",
-        outstanding: "未收金额",
+        outstanding: "待收金额",
       },
       table: {
         date: "日期",
@@ -449,7 +452,7 @@ const casesZhCN = {
       },
       invoice: {
         title: "发票信息",
-        placeholder: "当前原型暂不展示发票详情。",
+        placeholder: "本版本暂不支持发票详情。",
       },
     },
     tasks: {
@@ -506,7 +509,7 @@ const casesZhCN = {
       evidenceLabel: "凭证",
       evidencePlaceholder: "附件名称或说明（如：客户付款承诺书.pdf）",
       evidenceHint:
-        "支持上传截图、邮件、付款承诺书等佐证材料（原型仅录入说明）",
+        "支持上传截图、邮件、付款承诺书等佐证材料（目前仅支持文字录入）",
       cancel: "取消",
       confirm: "确认并继续提交",
     },
@@ -599,7 +602,7 @@ const casesZhCN = {
     billingStatuses: {
       paid: "已结清",
       partial: "部分回款",
-      unpaid: "应收",
+      unpaid: "待收",
       arrears: "欠款",
       waived: "免除",
       due: "应收",

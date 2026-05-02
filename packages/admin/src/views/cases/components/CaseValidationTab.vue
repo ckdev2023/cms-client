@@ -76,7 +76,14 @@ function onNavigate(tab: CaseDetailTab | string) {
                 {{ t("cases.detail.validation.tab.gateCard.currentBlocker") }}
               </span>
             </div>
-            <Button v-if="!readonly" variant="filled" tone="primary" size="sm">
+            <Button
+              v-if="!readonly"
+              variant="filled"
+              tone="primary"
+              size="sm"
+              disabled
+              :title="t('common.comingSoon')"
+            >
               <svg
                 width="14"
                 height="14"
@@ -231,7 +238,12 @@ function onNavigate(tab: CaseDetailTab | string) {
             <h2 class="vt__title">
               {{ t("cases.detail.validation.tab.submissionPackages.title") }}
             </h2>
-            <Button v-if="!readonly" size="sm">
+            <Button
+              v-if="!readonly"
+              size="sm"
+              disabled
+              :title="t('common.comingSoon')"
+            >
               <svg
                 width="14"
                 height="14"

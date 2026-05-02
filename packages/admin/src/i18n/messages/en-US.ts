@@ -9,6 +9,7 @@ import settings from "./settings/en-US";
 import tasks from "./tasks/en-US";
 import dashboardWorkItems from "./work-items/en-US";
 import dashboardWorkItem from "./dashboard-work-item/en-US";
+import { shellSearchEnUS } from "./shell-search/en-US";
 
 const enUS = {
   shell: {
@@ -24,6 +25,7 @@ const enUS = {
       createCase: "New case",
       logout: "Sign out",
     },
+    search: shellSearchEnUS,
     nav: {
       asideLabel: "Sidebar navigation",
       mainLabel: "Main navigation",

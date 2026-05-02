@@ -78,6 +78,9 @@ function adaptTask(value: unknown): TaskRecord | null {
     sourceType: readNullableString(record, "sourceType"),
     sourceId: readNullableString(record, "sourceId"),
     completedAt: readNullableString(record, "completedAt"),
+    caseNo: readNullableString(record, "caseNo"),
+    caseName: readNullableString(record, "caseName"),
+    assigneeName: readNullableString(record, "assigneeName"),
     createdAt: readString(record, "createdAt"),
     updatedAt: readString(record, "updatedAt"),
   };

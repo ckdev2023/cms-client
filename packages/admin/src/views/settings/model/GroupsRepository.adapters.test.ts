@@ -53,6 +53,25 @@ describe("adaptGroupSummary", () => {
     });
   });
 
+  it("maps groupNo when present and non-empty", () => {
+    const result = adaptGroupSummary({
+      id: "g-1",
+      name: "Alpha",
+      groupNo: "GRP-001",
+      activeFlag: true,
+    });
+    expect(result).toMatchObject({ groupNo: "GRP-001" });
+  });
+
+  it("omits groupNo when null or empty string", () => {
+    expect(
+      adaptGroupSummary({ id: "g-1", name: "A", groupNo: null }),
+    ).not.toHaveProperty("groupNo");
+    expect(
+      adaptGroupSummary({ id: "g-1", name: "A", groupNo: "" }),
+    ).not.toHaveProperty("groupNo");
+  });
+
   it("adapts activeFlag=false to status=disabled", () => {
     expect(
       adaptGroupSummary({ id: "g-2", name: "Beta", activeFlag: false }),
@@ -126,10 +145,11 @@ describe("adaptDetailAsSummary", () => {
     expect(adaptDetailAsSummary(null)).toBeNull();
   });
 
-  it("adapts detail DTO to summary shape", () => {
+  it("adapts detail DTO to summary shape (includes groupNo)", () => {
     expect(adaptDetailAsSummary(DETAIL_DTO)).toEqual({
       id: "g-1",
       name: "Team Alpha",
+      groupNo: "GRP-001",
       status: "active",
       createdAt: "2026-04-01T00:00:00.000Z",
       activeCaseCount: 3,

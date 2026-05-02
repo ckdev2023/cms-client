@@ -202,6 +202,7 @@ export const SAMPLE_GROUPS: GroupSummary[] = [
   {
     id: "tokyo-1",
     name: "東京一組",
+    groupNo: "GRP-001",
     status: "active",
     createdAt: "2024-01-15",
     activeCaseCount: 12,
@@ -210,6 +211,7 @@ export const SAMPLE_GROUPS: GroupSummary[] = [
   {
     id: "tokyo-2",
     name: "東京二組",
+    groupNo: "GRP-002",
     status: "active",
     createdAt: "2024-03-01",
     activeCaseCount: 8,
@@ -218,6 +220,7 @@ export const SAMPLE_GROUPS: GroupSummary[] = [
   {
     id: "osaka",
     name: "大阪組",
+    groupNo: "GRP-003",
     status: "disabled",
     createdAt: "2024-02-10",
     activeCaseCount: 0,

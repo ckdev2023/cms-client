@@ -65,7 +65,10 @@ function fmtCreatedAt(iso: string | null | undefined): string {
 </script>
 
 <template>
-  <section class="group-list-panel" aria-label="Group management">
+  <section
+    class="group-list-panel"
+    :aria-label="t('settings.aria.groupManagement')"
+  >
     <!-- Empty state (no groups at all) -->
     <div v-if="isEmpty" class="group-list-panel__empty">
       <p class="group-list-panel__empty-title">
@@ -161,6 +164,12 @@ function fmtCreatedAt(iso: string | null | undefined): string {
           >
             <td class="group-list-panel__td">
               <span class="group-list-panel__group-name">{{ group.name }}</span>
+              <small
+                v-if="group.groupNo"
+                class="group-list-panel__group-slug"
+                :title="group.groupNo"
+                >{{ group.groupNo }}</small
+              >
             </td>
             <td class="group-list-panel__td">
               <Chip :tone="chipToneFor(group.status)" dot>
@@ -283,6 +292,14 @@ function fmtCreatedAt(iso: string | null | undefined): string {
 
 .group-list-panel__group-name {
   font-weight: var(--font-weight-extrabold);
+}
+
+.group-list-panel__group-slug {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal, 400);
+  color: var(--color-text-3);
 }
 
 /* --- Empty state --- */

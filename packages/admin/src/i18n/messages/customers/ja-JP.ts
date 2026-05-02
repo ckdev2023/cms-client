@@ -98,7 +98,7 @@ const customerDetail = {
   },
   bmvIntake: {
     ariaLabel: "経営管理ビザ承接カード",
-    eyebrow: "P1 取込",
+    eyebrow: "取込中",
     title: "経営管理ビザ承接",
     nextStep: "次の対応",
     gateHint: "起案ゲート",

@@ -223,6 +223,8 @@ export type CaseListInput = {
   companyId?: string;
   /** businessPhase 精确匹配过滤。 */
   phase?: string;
+  /** case_name / case_no 部分一致検索。 */
+  search?: string;
   page?: number;
   limit?: number;
   visibility?: CaseVisibilityFilter;

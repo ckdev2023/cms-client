@@ -132,6 +132,12 @@ const settingsJaJP = {
       description: "ルートディレクトリを「{name}」に更新しました",
     },
   },
+  aria: {
+    groupManagement: "グループ管理",
+    groupDetail: "グループ詳細",
+    visibilitySettings: "可視性設定",
+    storageRoot: "ストレージルート設定",
+  },
   permission: {
     denied: "アクセス権限がありません。管理者にお問い合わせください。",
   },

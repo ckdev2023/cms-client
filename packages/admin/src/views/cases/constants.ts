@@ -427,24 +427,35 @@ export const CASE_OWNER_OPTIONS: readonly CaseOwnerOption[] = [
     label: "Suzuki",
     initials: "S",
     avatarClass: "bg-sky-100 text-sky-700",
+    group: "tokyo-1",
   },
   {
     value: "tanaka",
     label: "Tanaka",
     initials: "T",
     avatarClass: "bg-emerald-100 text-emerald-700",
+    group: "tokyo-2",
   },
   {
     value: "li",
     label: "Li",
     initials: "L",
     avatarClass: "bg-violet-100 text-violet-700",
+    group: "tokyo-2",
   },
   {
     value: "sato",
     label: "Sato",
     initials: "Sa",
     avatarClass: "bg-amber-100 text-amber-700",
+    group: "osaka",
+  },
+  {
+    value: "admin-global",
+    label: "Global Admin",
+    initials: "GA",
+    avatarClass: "bg-rose-100 text-rose-700",
+    group: null,
   },
 ] as const;
 

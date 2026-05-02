@@ -214,11 +214,6 @@ export function reminderMeta(reminder: ReminderRecord, t: TaskI18nT): string {
     recipientLabel
       ? t("tasks.reminderMeta.recipient", { id: recipientLabel })
       : null,
-    reminder.dedupeKey
-      ? t("tasks.reminderMeta.dedupeKey", {
-          key: maskDedupeKeyUuid(reminder.dedupeKey),
-        })
-      : null,
   ].filter((value): value is string => Boolean(value));
 
   return segments.join(" · ") || t("tasks.reminderMeta.empty");
@@ -234,16 +229,41 @@ export function reminderShortId(reminder: ReminderRecord): string {
   return toShortUuid(reminder.id);
 }
 
+const ACTIVE_TASK_STATUSES_FOR_OVERDUE = new Set(["pending", "in_progress"]);
+
 /**
- * 计算任务行的语义色调。
+ * 判断任务是否处于"已逾期"状态：仅对仍在进行中的任务生效，
+ * `dueAt` 严格小于参考时刻视为已逾期。
  *
  * @param task - 任务记录。
- * @returns 供状态标签使用的色调标识。
+ * @param referenceTime - 用作判断的参考时刻（默认当前时间）。
+ * @returns `true` 表示该任务已超期未完成。
  */
-export function taskRowTone(task: TaskRecord): string {
+export function isTaskOverdue(
+  task: TaskRecord,
+  referenceTime: Date = new Date(),
+): boolean {
+  if (!ACTIVE_TASK_STATUSES_FOR_OVERDUE.has(task.status)) return false;
+  if (!task.dueAt) return false;
+  const due = new Date(task.dueAt);
+  if (Number.isNaN(due.getTime())) return false;
+  return due.getTime() < referenceTime.getTime();
+}
+
+/**
+ * 计算任务行状态药丸的语义色调，仅由 `status` 与"是否逾期"决定，
+ * 不再混入 `priority` 维度——优先级使用独立列展示。
+ *
+ * @param task - 任务记录。
+ * @param overdue - 该任务当前是否已逾期，由调用方传入以保持纯函数特性。
+ * @returns 供状态标签使用的色调标识，取值为
+ *   `success` / `danger` / `info` / `muted` / `neutral` 之一。
+ */
+export function taskRowTone(task: TaskRecord, overdue = false): string {
   if (task.status === "completed") return "success";
-  if (task.priority === "urgent") return "danger";
-  if (task.priority === "high") return "warning";
+  if (task.status === "cancelled") return "muted";
+  if (overdue) return "danger";
+  if (task.status === "in_progress") return "info";
   return "neutral";
 }
 

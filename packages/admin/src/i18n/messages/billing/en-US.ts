@@ -66,6 +66,7 @@ const billingEnUS = {
       unit: "items",
       clear: "Clear",
       collect: "Generate collection tasks",
+      emptyHint: "No overdue billing nodes — bulk collection is unavailable",
     },
     pagination: {
       summary: "Showing {start}–{end} of {total}",
@@ -98,6 +99,7 @@ const billingEnUS = {
   bulkCollect: {
     skipReason: {
       "no-permission": "No permission to edit case",
+      "case-not-found": "Case not found or deleted",
       "duplicate-task": "Collection task already exists",
       "not-overdue": "No overdue billing plan",
       "no-assignee": "No assignee on case",
@@ -110,6 +112,7 @@ const billingEnUS = {
       successLabel: "Succeeded",
       skippedLabel: "Skipped",
       failedLabel: "Failed",
+      unknownCase: "Case info unavailable",
     },
   },
   paymentLog: {

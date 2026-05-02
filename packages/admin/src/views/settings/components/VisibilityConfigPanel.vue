@@ -35,7 +35,10 @@ function onToggle(itemId: string, value: boolean) {
 </script>
 
 <template>
-  <section class="visibility-panel" aria-label="Visibility settings">
+  <section
+    class="visibility-panel"
+    :aria-label="t('settings.aria.visibilitySettings')"
+  >
     <div
       v-for="item in VISIBILITY_CONFIG_ITEMS"
       :key="item.id"

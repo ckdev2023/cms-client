@@ -113,6 +113,28 @@ void test("getSummary returns zeros when no billing records exist", async () => 
   assert.equal(result.overdueAmount, 0);
 });
 
+void test("getSummary JOIN cases excludes soft-deleted cases", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("set_config")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({ rows: [summaryRow()], rowCount: 1 });
+  });
+
+  await svc(pool).getSummary(makeCtx());
+
+  const main = captured.find((c) => c.sql.includes("total_due"));
+  assert.ok(main);
+  assert.ok(
+    main.sql.includes(
+      "coalesce(c.metadata->>'_status', '') is distinct from 'deleted'",
+    ),
+    "summary JOIN cases must filter out soft-deleted cases",
+  );
+});
+
 void test("getSummary applies status filter in SQL", async () => {
   const captured: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {

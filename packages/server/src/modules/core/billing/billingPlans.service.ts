@@ -78,7 +78,7 @@ export const BILLING_PLAN_LIST_COLS = `br.id, br.org_id, br.case_id, br.mileston
   owner.name as owner_display_name`;
 
 export const BILLING_PLAN_LIST_FROM = `${BILLING_TABLE} br
-  join cases c on c.id = br.case_id
+  join cases c on c.id = br.case_id and coalesce(c.metadata->>'_status', '') is distinct from 'deleted'
   left join customers cu on cu.id = c.customer_id
   left join users owner on owner.id = c.owner_user_id`;
 

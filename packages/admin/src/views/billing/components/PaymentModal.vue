@@ -152,10 +152,13 @@ function handleClose() {
                 <span class="pm-label__required">*</span>
               </label>
               <input
+                id="payment-amount"
+                name="amount"
                 v-model="modal.fields.value.amount"
                 type="number"
                 class="pm-input"
                 min="1"
+                :max="modal.selectedNode.value?.amount ?? undefined"
                 :placeholder="
                   t('billing.paymentModal.fields.amountPlaceholder')
                 "
@@ -175,6 +178,8 @@ function handleClose() {
                 <span class="pm-label__required">*</span>
               </label>
               <input
+                id="payment-date"
+                name="date"
                 v-model="modal.fields.value.date"
                 type="date"
                 class="pm-input"
@@ -187,6 +192,8 @@ function handleClose() {
                 t("billing.paymentModal.fields.node")
               }}</label>
               <select
+                id="payment-billingPlanId"
+                name="billingPlanId"
                 v-model="modal.fields.value.billingPlanId"
                 class="pm-input pm-input--select"
               >
@@ -200,8 +207,9 @@ function handleClose() {
                 >
                   {{ resolveMilestoneLabel(node.name, t) }} — ¥{{
                     node.amount.toLocaleString("ja-JP")
-                  }}
-                  ({{ node.dueDate }})
+                  }}<template v-if="node.dueDate">
+                    ({{ node.dueDate }})</template
+                  >
                 </option>
               </select>
               <div
@@ -218,6 +226,8 @@ function handleClose() {
                 t("billing.paymentModal.fields.receipt")
               }}</label>
               <input
+                id="payment-receipt"
+                name="receipt"
                 v-model="modal.fields.value.receipt"
                 type="text"
                 class="pm-input"
@@ -236,6 +246,8 @@ function handleClose() {
                 t("billing.paymentModal.fields.note")
               }}</label>
               <textarea
+                id="payment-note"
+                name="note"
                 v-model="modal.fields.value.note"
                 class="pm-input pm-input--textarea"
                 rows="2"

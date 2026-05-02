@@ -1,7 +1,7 @@
 const tasksEnUS = {
   workbench: {
     subtitle:
-      "Review the task pool and renewal reminder log; this is the workbench picked up from the dashboard CTA and Step 19-20.",
+      "All your pending tasks, due-today items, overdue follow-ups, and renewal reminders in one place. The dashboard 'View to-dos' and 'Fix risk items' links bring you here.",
     refresh: "Refresh",
     reload: "Retry",
     loading: "Loading…",
@@ -13,7 +13,7 @@ const tasksEnUS = {
     views: {
       pending: {
         title: "Pending tasks",
-        hint: "Review pending and in-progress tasks together.",
+        hint: "See tasks that are not started yet and currently in progress in one list.",
         panelTitle: "Pending tasks",
       },
       today: {
@@ -49,11 +49,22 @@ const tasksEnUS = {
       headerActions: "Actions",
       unassigned: "Unassigned",
       complete: "Mark complete",
+      overdueBadge: "Overdue",
+      overdueA11yLabel: "This task is overdue",
       empty:
         "No tasks match this view. Switch to the reminder log to confirm renewal reminders have been generated.",
     },
+    toast: {
+      completedTitle: "Task completed",
+      completedDescription:
+        "'{title}' has been closed; dashboard counts and case progress will update accordingly.",
+      completedFallbackTitle: "Task",
+      failedTitle: "Could not complete task",
+      failedDescription:
+        "The action did not go through. Please refresh and try again.",
+    },
     aside: {
-      title: "Workbench notes",
+      title: "How to use this page",
       copy: "This page is connected directly to your live task list and renewal reminder records — what you see here is real, ongoing office data, not a sample.",
       list: {
         item1:

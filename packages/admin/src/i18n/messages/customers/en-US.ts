@@ -99,7 +99,7 @@ const customerDetail = {
   },
   bmvIntake: {
     ariaLabel: "BMV intake card",
-    eyebrow: "P1 intake",
+    eyebrow: "Intake in progress",
     title: "BMV intake",
     nextStep: "Next step",
     gateHint: "Case gate",

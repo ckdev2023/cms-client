@@ -51,6 +51,18 @@ export interface TaskRecord {
    */
   completedAt: string | null;
   /**
+   * 服务端 join `cases.case_no` 解析出的案件编号，缺失时为 `null`。
+   */
+  caseNo: string | null;
+  /**
+   * 服务端 join `cases.case_name` 解析出的案件名称，缺失时为 `null`。
+   */
+  caseName: string | null;
+  /**
+   * 服务端 join `users.name` 解析出的担当者显示名，缺失时为 `null`。
+   */
+  assigneeName: string | null;
+  /**
    *
    */
   createdAt: string;

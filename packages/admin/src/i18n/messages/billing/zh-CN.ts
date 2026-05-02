@@ -12,8 +12,8 @@ const billingZhCN = {
     filters: {
       statusAll: "所有回款状态",
       statusAriaLabel: "筛选回款状态",
-      groupAll: "所有 Group",
-      groupAriaLabel: "筛选所属 Group",
+      groupAll: "所有分组",
+      groupAriaLabel: "筛选所属分组",
       ownerAll: "所有负责人",
       ownerAriaLabel: "筛选负责人",
       reset: "重置",
@@ -22,7 +22,7 @@ const billingZhCN = {
     summary: {
       totalDue: "总应收 (JPY)",
       totalReceived: "总已收 (JPY)",
-      totalOutstanding: "总未收 (JPY)",
+      totalOutstanding: "总待收金额 (JPY)",
       overdueAmount: "逾期欠款 (JPY)",
     },
     columns: {
@@ -30,10 +30,10 @@ const billingZhCN = {
       selectRow: "选择 {name}",
       caseName: "案件名称",
       client: "客户",
-      group: "所属 Group",
+      group: "所属分组",
       amountDue: "应收(¥)",
       amountReceived: "已收(¥)",
-      amountOutstanding: "未收(¥)",
+      amountOutstanding: "待收 (¥)",
       nextNode: "下一收款节点",
       status: "回款状态",
       actions: "操作",
@@ -66,6 +66,7 @@ const billingZhCN = {
       unit: "条",
       clear: "清除",
       collect: "批量生成催款任务",
+      emptyHint: "当前没有逾期节点，无法发起批量催款",
     },
     pagination: {
       summary: "显示 {start} - {end} 条，共 {total} 条",
@@ -98,6 +99,7 @@ const billingZhCN = {
   bulkCollect: {
     skipReason: {
       "no-permission": "无权限编辑该案件",
+      "case-not-found": "案件不存在或已删除",
       "duplicate-task": "已存在未完成催款任务",
       "not-overdue": "无逾期收费节点",
       "no-assignee": "案件未分配负责人",
@@ -110,6 +112,7 @@ const billingZhCN = {
       successLabel: "成功",
       skippedLabel: "跳过",
       failedLabel: "失败",
+      unknownCase: "案件信息缺失",
     },
   },
   paymentLog: {

@@ -7,23 +7,21 @@ import Chip from "../../../shared/ui/Chip.vue";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 import { resolveMilestoneLabel } from "../model/BillingAdapters";
 
-/**
- * 案件收费表格，展示 8 列数据 + checkbox 选择列。
- *
- * 仅逾期行可勾选；全选/indeterminate 由父组件通过 props 驱动。
- */
+/** 案件收费表格，仅逾期行可勾选，全选与 indeterminate 由父组件驱动。 */
 const props = withDefaults(
   defineProps<{
     rows?: CaseBillingRow[];
     selectedIds?: Set<string>;
     isAllSelected?: boolean;
     isIndeterminate?: boolean;
+    selectableCount?: number;
   }>(),
   {
     rows: () => [],
     selectedIds: () => new Set<string>(),
     isAllSelected: false,
     isIndeterminate: false,
+    selectableCount: 0,
   },
 );
 
@@ -50,41 +48,18 @@ const STATUS_KEY: Record<BillingStatus, string> = {
   paid: "billing.list.status.paid",
 };
 
-/**
- * 解析单元格 Group 显示文案：先走运行期 `/api/groups` 别名表，再回落
- * `useGroupOptions` 静态 catalog；UUID 未命中时返回 `—` 占位以防直显裸 ID。
- *
- * @param value - row.group 字段值（可能是 catalog code、DB UUID 或 server name）
- * @returns 经过本地化与停用后缀处理的展示字符串
- */
-function formatGroupLabel(value: string): string {
+const formatGroupLabel = (value: string): string => {
   if (!value) return "—";
   return resolveGroupLabel(
     value,
     t("shared.group.disabledSuffix"),
     locale.value,
   );
-}
+};
 
-/**
- * 判断行是否可勾选（仅逾期行可选）。
- *
- * @param row - 案件收费行
- * @returns 是否可勾选
- */
-function isSelectable(row: CaseBillingRow): boolean {
-  return row.status === "overdue";
-}
+const isSelectable = (row: CaseBillingRow): boolean => row.status === "overdue";
 
-/**
- * 格式化日元金额。
- *
- * @param v - 金额数值
- * @returns 格式化后的字符串
- */
-function fmtAmount(v: number): string {
-  return v.toLocaleString("ja-JP");
-}
+const fmtAmount = (v: number): string => v.toLocaleString("ja-JP");
 
 const selectAllRef = ref<HTMLInputElement>();
 
@@ -106,229 +81,240 @@ watchEffect(() => {
       </p>
     </div>
 
-    <table v-else class="billing-table__grid">
-      <thead>
-        <tr>
-          <th class="billing-table__th billing-table__col--checkbox">
-            <label class="ui-checkbox-hit">
-              <input
-                ref="selectAllRef"
-                type="checkbox"
-                class="billing-table__checkbox"
-                :checked="isAllSelected"
-                :aria-label="t('billing.list.columns.selectAll')"
-                @change="
-                  $emit(
-                    'toggle-all',
-                    ($event.target as HTMLInputElement).checked,
-                  )
-                "
-              />
-            </label>
-          </th>
-          <th class="billing-table__th">
-            {{ t("billing.list.columns.caseName") }}
-          </th>
-          <th class="billing-table__th billing-table__col--hide-sm">
-            {{ t("billing.list.columns.client") }}
-          </th>
-          <th
-            class="billing-table__th billing-table__col--hide-md billing-table__col--group"
-          >
-            {{ t("billing.list.columns.group") }}
-          </th>
-          <th class="billing-table__th billing-table__col--amount">
-            {{ t("billing.list.columns.amountDue") }}
-          </th>
-          <th class="billing-table__th billing-table__col--amount">
-            {{ t("billing.list.columns.amountReceived") }}
-          </th>
-          <th class="billing-table__th billing-table__col--amount">
-            {{ t("billing.list.columns.amountOutstanding") }}
-          </th>
-          <th class="billing-table__th billing-table__col--hide-sm">
-            {{ t("billing.list.columns.nextNode") }}
-          </th>
-          <th class="billing-table__th billing-table__col--status">
-            {{ t("billing.list.columns.status") }}
-          </th>
-          <th
-            class="billing-table__th billing-table__col--risk-ack billing-table__col--hide-sm"
-          >
-            {{ t("billing.riskAck.modal.title") }}
-          </th>
-          <th class="billing-table__th billing-table__col--actions">
-            {{ t("billing.list.columns.actions") }}
-          </th>
-        </tr>
-      </thead>
+    <template v-else>
+      <div v-if="selectableCount === 0" class="bulk-empty-hint" role="note">
+        {{ t("billing.list.bulk.emptyHint") }}
+      </div>
 
-      <tbody>
-        <tr
-          v-for="row in rows"
-          :key="row.id"
-          :class="[
-            'billing-table__row',
-            { 'billing-table__row--overdue': row.status === 'overdue' },
-          ]"
-        >
-          <td class="billing-table__td billing-table__col--checkbox">
-            <label class="ui-checkbox-hit">
-              <input
-                type="checkbox"
-                class="billing-table__checkbox"
-                :class="{
-                  'billing-table__checkbox--disabled': !isSelectable(row),
-                }"
-                :checked="selectedIds.has(row.id)"
-                :disabled="!isSelectable(row)"
-                :aria-label="
-                  t('billing.list.columns.selectRow', { name: row.caseName })
-                "
-                @change="
-                  $emit(
-                    'toggle-row',
-                    row.id,
-                    ($event.target as HTMLInputElement).checked,
-                  )
-                "
-              />
-            </label>
-          </td>
-
-          <!-- 案件名称 -->
-          <td class="billing-table__td">
-            <div class="billing-table__case-name">{{ row.caseName }}</div>
-            <div class="billing-table__case-no">{{ row.caseNo }}</div>
-          </td>
-
-          <!-- 客户 -->
-          <td class="billing-table__td billing-table__col--hide-sm">
-            <div class="billing-table__client-name">
-              {{ row.client.name }}
-            </div>
-            <div class="billing-table__client-type">
-              {{ row.client.type }}
-            </div>
-          </td>
-
-          <!-- 所属 Group -->
-          <td
-            class="billing-table__td billing-table__col--hide-md billing-table__col--group"
-          >
-            <Chip tone="neutral">
-              {{ formatGroupLabel(row.group) }}
-            </Chip>
-          </td>
-
-          <!-- 应收 -->
-          <td class="billing-table__td billing-table__col--amount">
-            {{ fmtAmount(row.amountDue) }}
-          </td>
-
-          <!-- 已收 -->
-          <td
-            :class="[
-              'billing-table__td billing-table__col--amount',
-              row.amountReceived > 0
-                ? 'billing-table__amount--positive'
-                : 'billing-table__amount--zero',
-            ]"
-          >
-            {{ fmtAmount(row.amountReceived) }}
-          </td>
-
-          <!-- 未收 -->
-          <td
-            :class="[
-              'billing-table__td billing-table__col--amount',
-              row.amountOutstanding === 0
-                ? 'billing-table__amount--zero'
-                : row.status === 'overdue'
-                  ? 'billing-table__amount--danger'
-                  : 'billing-table__amount--warning',
-            ]"
-          >
-            {{ fmtAmount(row.amountOutstanding) }}
-          </td>
-
-          <!-- 下一收款节点 -->
-          <td class="billing-table__td billing-table__col--hide-sm">
-            <template v-if="row.nextNode">
-              <div
-                :class="[
-                  'billing-table__node-name',
-                  {
-                    'billing-table__node-name--overdue':
-                      row.status === 'overdue',
-                  },
-                ]"
-              >
-                {{ resolveMilestoneLabel(row.nextNode.name, t) }}
-              </div>
-              <div
-                :class="[
-                  'billing-table__node-date',
-                  {
-                    'billing-table__node-date--overdue':
-                      row.status === 'overdue',
-                  },
-                ]"
-              >
-                {{ row.nextNode.dueDate }}
-              </div>
-            </template>
-            <div v-else class="billing-table__node-empty">
-              {{ t("billing.list.nodeEmpty") }}
-            </div>
-          </td>
-
-          <!-- 回款状态 -->
-          <td class="billing-table__td billing-table__col--status">
-            <Chip :tone="STATUS_TONE[row.status]">
-              {{ t(STATUS_KEY[row.status]) }}
-            </Chip>
-          </td>
-
-          <!-- 风险確認 -->
-          <td
-            class="billing-table__td billing-table__col--risk-ack billing-table__col--hide-sm"
-          >
-            <template v-if="row.status === 'overdue'">
-              <Chip v-if="row.billingRiskAcknowledged" tone="success">
-                {{
-                  t("billing.riskAck.chip.acknowledged", {
-                    date: row.billingRiskAcknowledgedAt ?? "",
-                  })
-                }}
-              </Chip>
-              <button
-                v-else
-                class="billing-table__risk-ack-btn"
-                type="button"
-                @click="$emit('risk-ack', row.caseId)"
-              >
-                <Chip tone="danger" dot>
-                  {{ t("billing.riskAck.chip.notAcknowledged") }}
-                </Chip>
-              </button>
-            </template>
-          </td>
-
-          <!-- 操作 -->
-          <td class="billing-table__td billing-table__col--actions">
-            <button
-              v-if="row.status !== 'paid'"
-              class="billing-table__action-btn"
-              type="button"
-              @click="$emit('register-payment', row.caseId, row.id)"
+      <table class="billing-table__grid">
+        <thead>
+          <tr>
+            <th class="billing-table__th billing-table__col--checkbox">
+              <label class="ui-checkbox-hit">
+                <input
+                  ref="selectAllRef"
+                  type="checkbox"
+                  class="billing-table__checkbox"
+                  :checked="isAllSelected"
+                  :aria-label="t('billing.list.columns.selectAll')"
+                  :title="
+                    selectableCount === 0
+                      ? t('billing.list.bulk.emptyHint')
+                      : undefined
+                  "
+                  @change="
+                    $emit(
+                      'toggle-all',
+                      ($event.target as HTMLInputElement).checked,
+                    )
+                  "
+                />
+              </label>
+            </th>
+            <th class="billing-table__th">
+              {{ t("billing.list.columns.caseName") }}
+            </th>
+            <th class="billing-table__th billing-table__col--hide-sm">
+              {{ t("billing.list.columns.client") }}
+            </th>
+            <th
+              class="billing-table__th billing-table__col--hide-md billing-table__col--group"
             >
-              {{ t("billing.list.actions.registerPayment") }}
-            </button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+              {{ t("billing.list.columns.group") }}
+            </th>
+            <th class="billing-table__th billing-table__col--amount">
+              {{ t("billing.list.columns.amountDue") }}
+            </th>
+            <th class="billing-table__th billing-table__col--amount">
+              {{ t("billing.list.columns.amountReceived") }}
+            </th>
+            <th class="billing-table__th billing-table__col--amount">
+              {{ t("billing.list.columns.amountOutstanding") }}
+            </th>
+            <th class="billing-table__th billing-table__col--hide-sm">
+              {{ t("billing.list.columns.nextNode") }}
+            </th>
+            <th class="billing-table__th billing-table__col--status">
+              {{ t("billing.list.columns.status") }}
+            </th>
+            <th
+              class="billing-table__th billing-table__col--risk-ack billing-table__col--hide-sm"
+            >
+              {{ t("billing.riskAck.modal.title") }}
+            </th>
+            <th class="billing-table__th billing-table__col--actions">
+              {{ t("billing.list.columns.actions") }}
+            </th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr
+            v-for="row in rows"
+            :key="row.id"
+            :class="[
+              'billing-table__row',
+              { 'billing-table__row--overdue': row.status === 'overdue' },
+            ]"
+          >
+            <td class="billing-table__td billing-table__col--checkbox">
+              <label class="ui-checkbox-hit">
+                <input
+                  type="checkbox"
+                  class="billing-table__checkbox"
+                  :class="{
+                    'billing-table__checkbox--disabled': !isSelectable(row),
+                  }"
+                  :checked="selectedIds.has(row.id)"
+                  :disabled="!isSelectable(row)"
+                  :aria-label="
+                    t('billing.list.columns.selectRow', { name: row.caseName })
+                  "
+                  @change="
+                    $emit(
+                      'toggle-row',
+                      row.id,
+                      ($event.target as HTMLInputElement).checked,
+                    )
+                  "
+                />
+              </label>
+            </td>
+
+            <!-- 案件名称 -->
+            <td class="billing-table__td">
+              <div class="billing-table__case-name">{{ row.caseName }}</div>
+              <div class="billing-table__case-no">{{ row.caseNo }}</div>
+            </td>
+
+            <!-- 客户 -->
+            <td class="billing-table__td billing-table__col--hide-sm">
+              <div class="billing-table__client-name">
+                {{ row.client.name }}
+              </div>
+              <div class="billing-table__client-type">
+                {{ row.client.type }}
+              </div>
+            </td>
+
+            <!-- 所属 Group -->
+            <td
+              class="billing-table__td billing-table__col--hide-md billing-table__col--group"
+            >
+              <Chip tone="neutral">
+                {{ formatGroupLabel(row.group) }}
+              </Chip>
+            </td>
+
+            <!-- 应收 -->
+            <td class="billing-table__td billing-table__col--amount">
+              {{ fmtAmount(row.amountDue) }}
+            </td>
+
+            <!-- 已收 -->
+            <td
+              :class="[
+                'billing-table__td billing-table__col--amount',
+                row.amountReceived > 0
+                  ? 'billing-table__amount--positive'
+                  : 'billing-table__amount--zero',
+              ]"
+            >
+              {{ fmtAmount(row.amountReceived) }}
+            </td>
+
+            <!-- 未收 -->
+            <td
+              :class="[
+                'billing-table__td billing-table__col--amount',
+                row.amountOutstanding === 0
+                  ? 'billing-table__amount--zero'
+                  : row.status === 'overdue'
+                    ? 'billing-table__amount--danger'
+                    : 'billing-table__amount--warning',
+              ]"
+            >
+              {{ fmtAmount(row.amountOutstanding) }}
+            </td>
+
+            <!-- 下一收款节点 -->
+            <td class="billing-table__td billing-table__col--hide-sm">
+              <template v-if="row.nextNode">
+                <div
+                  :class="[
+                    'billing-table__node-name',
+                    {
+                      'billing-table__node-name--overdue':
+                        row.status === 'overdue',
+                    },
+                  ]"
+                >
+                  {{ resolveMilestoneLabel(row.nextNode.name, t) }}
+                </div>
+                <div
+                  :class="[
+                    'billing-table__node-date',
+                    {
+                      'billing-table__node-date--overdue':
+                        row.status === 'overdue',
+                    },
+                  ]"
+                >
+                  {{ row.nextNode.dueDate }}
+                </div>
+              </template>
+              <div v-else class="billing-table__node-empty">
+                {{ t("billing.list.nodeEmpty") }}
+              </div>
+            </td>
+
+            <!-- 回款状态 -->
+            <td class="billing-table__td billing-table__col--status">
+              <Chip :tone="STATUS_TONE[row.status]">
+                {{ t(STATUS_KEY[row.status]) }}
+              </Chip>
+            </td>
+
+            <!-- 风险確認 -->
+            <td
+              class="billing-table__td billing-table__col--risk-ack billing-table__col--hide-sm"
+            >
+              <template v-if="row.status === 'overdue'">
+                <Chip v-if="row.billingRiskAcknowledged" tone="success">
+                  {{
+                    t("billing.riskAck.chip.acknowledged", {
+                      date: row.billingRiskAcknowledgedAt ?? "",
+                    })
+                  }}
+                </Chip>
+                <button
+                  v-else
+                  class="billing-table__risk-ack-btn"
+                  type="button"
+                  @click="$emit('risk-ack', row.caseId)"
+                >
+                  <Chip tone="danger" dot>
+                    {{ t("billing.riskAck.chip.notAcknowledged") }}
+                  </Chip>
+                </button>
+              </template>
+            </td>
+
+            <!-- 操作 -->
+            <td class="billing-table__td billing-table__col--actions">
+              <button
+                v-if="row.status !== 'paid'"
+                class="billing-table__action-btn"
+                type="button"
+                @click="$emit('register-payment', row.caseId, row.id)"
+              >
+                {{ t("billing.list.actions.registerPayment") }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </template>
   </div>
 </template>
 
@@ -366,6 +352,17 @@ watchEffect(() => {
 .billing-table__col--checkbox {
   width: 44px;
   text-align: center;
+}
+.bulk-empty-hint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
+  background: var(--color-bg-overlay-hover, rgba(0, 0, 0, 0.02));
+  border-bottom: 1px solid var(--color-border-1);
 }
 .billing-table__checkbox {
   accent-color: var(--color-primary-6);

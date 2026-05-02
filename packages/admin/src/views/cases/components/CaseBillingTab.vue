@@ -12,6 +12,11 @@ defineProps<{
   readonly: boolean;
 }>();
 
+const emit = defineEmits<{
+  "open-collection": [row?: PaymentRow];
+  "view-receipt": [row: PaymentRow];
+}>();
+
 const { t, te } = useI18n();
 
 const STATUS_TONE: Record<string, ChipTone> = {
@@ -71,7 +76,13 @@ function paymentType(row: PaymentRow): string {
         <h2 class="billing-tab__title">
           {{ t("cases.detail.billing.title") }}
         </h2>
-        <Button v-if="!readonly" variant="filled" tone="primary" size="sm">
+        <Button
+          v-if="!readonly"
+          variant="filled"
+          tone="primary"
+          size="sm"
+          @click="emit('open-collection')"
+        >
           <svg
             width="14"
             height="14"
@@ -162,6 +173,7 @@ function paymentType(row: PaymentRow): string {
                   v-if="row.status === 'paid'"
                   class="billing-tab__link"
                   type="button"
+                  @click="emit('view-receipt', row)"
                 >
                   {{ t("cases.detail.billing.table.viewReceipt") }}
                 </button>
@@ -169,6 +181,7 @@ function paymentType(row: PaymentRow): string {
                   v-else-if="!readonly"
                   class="billing-tab__link"
                   type="button"
+                  @click="emit('open-collection', row)"
                 >
                   {{ t("cases.detail.billing.table.recordPayment") }}
                 </button>

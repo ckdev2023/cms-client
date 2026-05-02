@@ -4,15 +4,17 @@ import { useI18n } from "vue-i18n";
 import Button from "../../shared/ui/Button.vue";
 import Card from "../../shared/ui/Card.vue";
 import PageHeader from "../../shared/ui/PageHeader.vue";
+import WorkbenchNotes from "./components/WorkbenchNotes.vue";
+import { useToast } from "../../shared/model/useToast";
 import { createTaskRepository } from "./model/TaskRepository";
 import {
   canComplete,
   formatDateTime,
   formatUpdatedAt,
+  isTaskOverdue,
   priorityLabel,
   reminderMeta,
   reminderRowTone,
-  reminderShortId,
   reminderStatusLabel,
   reminderTitle,
   taskRowTone,
@@ -21,16 +23,29 @@ import {
 import { residenceLabelToCode } from "./model/residenceLabelToTypeCode";
 import { getCaseTypeI18nKey } from "../cases/constants";
 import { useTaskWorkbenchModel } from "./model/useTaskWorkbenchModel";
-import type { TaskWorkbenchView } from "./types";
+import { createTaskWorkbenchToastNotifier } from "./model/useTaskWorkbenchToast";
+import type { TaskRecord, TaskWorkbenchView } from "./types";
 
 /**
  * 任务与提醒工作台页面，集中展示待办任务、逾期任务与提醒日志。
  */
 const { t, locale } = useI18n();
+const toast = useToast();
 
 const model = useTaskWorkbenchModel({
   repo: createTaskRepository(),
+  notifyComplete: createTaskWorkbenchToastNotifier(toast, t),
 });
+
+/**
+ * 判断给定任务是否处于"已逾期"状态，供模板中行级样式与角标渲染复用。
+ *
+ * @param task - 待判断的任务记录。
+ * @returns 任务已逾期时返回 `true`。
+ */
+function isOverdueRow(task: TaskRecord): boolean {
+  return isTaskOverdue(task);
+}
 
 /**
  * 将 server payload 中的 ja-JP 在留资格标签反查为当前 locale 的翻译文案。
@@ -94,7 +109,9 @@ const panelCountLabel = computed(() => {
   const visible = isReminders
     ? model.reminderLog.value.length
     : model.currentTasks.value.length;
-  const total = isReminders ? model.reminderTotal.value : model.taskTotal.value;
+  // 分母用 panelTotal（即 counts[activeView]），保持与顶部 KPI 卡片同语义；
+  // 不要回退成 taskTotal/reminderTotal，那是服务端原始 total（含已完成/已取消）。
+  const total = model.panelTotal.value;
   return t("tasks.workbench.panelCount", { visible, total });
 });
 
@@ -115,6 +132,9 @@ onMounted(() => {
       ]"
     >
       <template #actions>
+        <span class="updated-at">
+          {{ formatUpdatedAt(model.lastUpdatedAt.value, locale, t) }}
+        </span>
         <Button
           :loading="model.loading.value"
           @click="void model.fetchWorkbench()"
@@ -140,6 +160,8 @@ onMounted(() => {
       </button>
     </div>
 
+    <WorkbenchNotes />
+
     <Card
       v-if="model.error.value"
       :title="t('tasks.workbench.errorTitle')"
@@ -153,144 +175,139 @@ onMounted(() => {
       </div>
     </Card>
 
-    <div class="content-grid">
-      <Card
-        :title="panelTitle"
-        padding="none"
-        class="panel-card panel-card--main"
-      >
-        <template #extra>
-          <span class="panel-meta">{{ panelCountLabel }}</span>
-        </template>
+    <Card
+      :title="panelTitle"
+      padding="none"
+      class="panel-card panel-card--main"
+    >
+      <template #extra>
+        <span class="panel-meta">{{ panelCountLabel }}</span>
+      </template>
 
-        <div v-if="model.loading.value" class="state-block">
-          {{ t("tasks.workbench.loading") }}
-        </div>
+      <div v-if="model.loading.value" class="state-block">
+        {{ t("tasks.workbench.loading") }}
+      </div>
 
-        <div v-else-if="model.activeView.value === 'reminders'">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t("tasks.workbench.reminderTable.headerTitle") }}</th>
-                <th>{{ t("tasks.workbench.reminderTable.headerTime") }}</th>
-                <th>{{ t("tasks.workbench.reminderTable.headerStatus") }}</th>
-                <th>{{ t("tasks.workbench.reminderTable.headerMeta") }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="reminder in model.reminderLog.value"
-                :key="reminder.id"
-              >
-                <td>
-                  <div class="cell-stack">
-                    <strong>{{
-                      reminderTitle(reminder, t, resolveVisaLabel)
-                    }}</strong>
-                    <small class="cell-id-hint" :title="reminder.id">
-                      #{{ reminderShortId(reminder) }}
-                    </small>
-                  </div>
-                </td>
-                <td>{{ formatDateTime(reminder.remindAt, locale) }}</td>
-                <td>
+      <div v-else-if="model.activeView.value === 'reminders'">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ t("tasks.workbench.reminderTable.headerTitle") }}</th>
+              <th>{{ t("tasks.workbench.reminderTable.headerTime") }}</th>
+              <th>{{ t("tasks.workbench.reminderTable.headerStatus") }}</th>
+              <th>{{ t("tasks.workbench.reminderTable.headerMeta") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="reminder in model.reminderLog.value" :key="reminder.id">
+              <td>
+                <div class="cell-stack" :title="reminder.id">
+                  <strong>{{
+                    reminderTitle(reminder, t, resolveVisaLabel)
+                  }}</strong>
+                </div>
+              </td>
+              <td>{{ formatDateTime(reminder.remindAt, locale) }}</td>
+              <td>
+                <span
+                  class="status-pill"
+                  :data-tone="reminderRowTone(reminder)"
+                >
+                  {{ reminderStatusLabel(reminder.sendStatus, t) }}
+                </span>
+              </td>
+              <td>{{ reminderMeta(reminder, t) }}</td>
+            </tr>
+            <tr v-if="model.reminderLog.value.length === 0">
+              <td colspan="4" class="empty-row">
+                {{ t("tasks.workbench.reminderTable.empty") }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div v-else>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>{{ t("tasks.workbench.taskTable.headerTask") }}</th>
+              <th>{{ t("tasks.workbench.taskTable.headerCase") }}</th>
+              <th>{{ t("tasks.workbench.taskTable.headerDue") }}</th>
+              <th>{{ t("tasks.workbench.taskTable.headerStatus") }}</th>
+              <th>{{ t("tasks.workbench.taskTable.headerPriority") }}</th>
+              <th>{{ t("tasks.workbench.taskTable.headerActions") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="task in model.currentTasks.value"
+              :key="task.id"
+              :class="{ 'task-row--overdue': isOverdueRow(task) }"
+              :data-overdue="isOverdueRow(task) ? 'true' : null"
+            >
+              <td>
+                <div class="cell-stack">
+                  <strong>{{ task.title }}</strong>
+                  <span class="cell-meta">{{
+                    task.description || task.taskType
+                  }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="cell-stack">
+                  <strong>{{
+                    task.caseName ||
+                    task.caseNo ||
+                    t("tasks.workbench.placeholder")
+                  }}</strong>
+                  <span class="cell-meta">{{
+                    task.assigneeName ||
+                    t("tasks.workbench.taskTable.unassigned")
+                  }}</span>
+                </div>
+              </td>
+              <td>{{ formatDateTime(task.dueAt, locale) }}</td>
+              <td>
+                <div class="status-cell">
                   <span
                     class="status-pill"
-                    :data-tone="reminderRowTone(reminder)"
+                    :data-tone="taskRowTone(task, isOverdueRow(task))"
                   >
-                    {{ reminderStatusLabel(reminder.sendStatus, t) }}
-                  </span>
-                </td>
-                <td>{{ reminderMeta(reminder, t) }}</td>
-              </tr>
-              <tr v-if="model.reminderLog.value.length === 0">
-                <td colspan="4" class="empty-row">
-                  {{ t("tasks.workbench.reminderTable.empty") }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <div v-else>
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>{{ t("tasks.workbench.taskTable.headerTask") }}</th>
-                <th>{{ t("tasks.workbench.taskTable.headerCase") }}</th>
-                <th>{{ t("tasks.workbench.taskTable.headerDue") }}</th>
-                <th>{{ t("tasks.workbench.taskTable.headerStatus") }}</th>
-                <th>{{ t("tasks.workbench.taskTable.headerPriority") }}</th>
-                <th>{{ t("tasks.workbench.taskTable.headerActions") }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="task in model.currentTasks.value" :key="task.id">
-                <td>
-                  <div class="cell-stack">
-                    <strong>{{ task.title }}</strong>
-                    <span class="cell-meta">{{
-                      task.description || task.taskType
-                    }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div class="cell-stack">
-                    <span>{{
-                      task.caseId || t("tasks.workbench.placeholder")
-                    }}</span>
-                    <span class="cell-meta">{{
-                      task.assigneeUserId ||
-                      t("tasks.workbench.taskTable.unassigned")
-                    }}</span>
-                  </div>
-                </td>
-                <td>{{ formatDateTime(task.dueAt, locale) }}</td>
-                <td>
-                  <span class="status-pill" :data-tone="taskRowTone(task)">
                     {{ taskStatusLabel(task.status, t) }}
                   </span>
-                </td>
-                <td>{{ priorityLabel(task.priority, t) }}</td>
-                <td>
-                  <Button
-                    size="sm"
-                    :disabled="!canComplete(task)"
-                    :loading="model.completingId.value === task.id"
-                    @click="void model.completeTask(task.id)"
+                  <span
+                    v-if="isOverdueRow(task)"
+                    class="overdue-badge"
+                    :aria-label="
+                      t('tasks.workbench.taskTable.overdueA11yLabel')
+                    "
                   >
-                    {{ t("tasks.workbench.taskTable.complete") }}
-                  </Button>
-                </td>
-              </tr>
-              <tr v-if="model.currentTasks.value.length === 0">
-                <td colspan="6" class="empty-row">
-                  {{ t("tasks.workbench.taskTable.empty") }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </Card>
-
-      <Card
-        :title="t('tasks.workbench.aside.title')"
-        padding="md"
-        class="panel-card"
-      >
-        <div class="aside-stack">
-          <p class="aside-copy">{{ t("tasks.workbench.aside.copy") }}</p>
-          <ul class="aside-list">
-            <li>{{ t("tasks.workbench.aside.list.item1") }}</li>
-            <li>{{ t("tasks.workbench.aside.list.item2") }}</li>
-            <li>{{ t("tasks.workbench.aside.list.item3") }}</li>
-          </ul>
-          <p class="aside-meta">
-            {{ formatUpdatedAt(model.lastUpdatedAt.value, locale, t) }}
-          </p>
-        </div>
-      </Card>
-    </div>
+                    {{ t("tasks.workbench.taskTable.overdueBadge") }}
+                  </span>
+                </div>
+              </td>
+              <td>{{ priorityLabel(task.priority, t) }}</td>
+              <td>
+                <Button
+                  size="sm"
+                  :disabled="!canComplete(task)"
+                  :loading="model.completingId.value === task.id"
+                  @click="void model.completeTask(task.id)"
+                >
+                  {{ t("tasks.workbench.taskTable.complete") }}
+                </Button>
+              </td>
+            </tr>
+            <tr v-if="model.currentTasks.value.length === 0">
+              <td colspan="6" class="empty-row">
+                {{ t("tasks.workbench.taskTable.empty") }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </Card>
   </div>
 </template>
 
@@ -326,8 +343,7 @@ onMounted(() => {
 .summary-card__title,
 .summary-card__hint,
 .panel-meta,
-.cell-meta,
-.aside-meta {
+.cell-meta {
   color: var(--color-text-3);
 }
 
@@ -340,18 +356,14 @@ onMounted(() => {
   color: var(--color-text-1);
 }
 
-.summary-card__hint,
-.aside-copy,
-.aside-list,
-.aside-meta {
+.summary-card__hint {
   margin: 0;
   line-height: var(--leading-relaxed);
 }
 
-.content-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
-  gap: 20px;
+.updated-at {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
 }
 
 .panel-card--main {
@@ -398,17 +410,16 @@ onMounted(() => {
   background: var(--color-bg-2);
 }
 
-.cell-stack,
-.aside-stack {
+.cell-stack {
   display: grid;
   gap: 6px;
 }
 
-.cell-id-hint {
-  font-family: var(--font-family-mono, monospace);
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  letter-spacing: 0.04em;
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .status-pill {
@@ -436,14 +447,31 @@ onMounted(() => {
   background: #991b1b;
 }
 
-.aside-list {
-  padding-left: 20px;
+.status-pill[data-tone="info"] {
+  color: #fff;
+  background: #1d4ed8;
 }
 
-@media (max-width: 1080px) {
-  .content-grid {
-    grid-template-columns: 1fr;
-  }
+.status-pill[data-tone="muted"] {
+  color: var(--color-text-3);
+  background: var(--color-bg-2);
+}
+
+.overdue-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: #991b1b;
+  background: #fee2e2;
+  border: 1px solid #fecaca;
+  letter-spacing: 0.02em;
+}
+
+.task-row--overdue td:first-child {
+  box-shadow: inset 3px 0 0 0 #991b1b;
 }
 
 @media (max-width: 720px) {

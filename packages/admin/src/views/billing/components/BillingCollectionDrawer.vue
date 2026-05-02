@@ -107,11 +107,13 @@ function skipReasonLabel(detail: CollectionResultDetail): string {
                 data-section="success"
               >
                 <li
-                  v-for="d in successDetails"
-                  :key="'s-' + d.caseNo"
+                  v-for="(d, index) in successDetails"
+                  :key="'s-' + (d.taskId ?? d.caseNo ?? index)"
                   class="drawer__item drawer__item--success"
                 >
-                  <span class="drawer__case-no">{{ d.caseNo }}</span>
+                  <span class="drawer__case-no">{{
+                    d.caseNo ?? t("billing.bulkCollect.drawer.unknownCase")
+                  }}</span>
                   <span v-if="d.taskId" class="drawer__task-id">{{
                     d.taskId
                   }}</span>
@@ -124,11 +126,13 @@ function skipReasonLabel(detail: CollectionResultDetail): string {
                 data-section="skipped"
               >
                 <li
-                  v-for="d in skippedDetails"
-                  :key="'k-' + d.caseNo"
+                  v-for="(d, index) in skippedDetails"
+                  :key="'k-' + (d.caseNo ?? d.reason ?? '') + '-' + index"
                   class="drawer__item drawer__item--skip"
                 >
-                  <span class="drawer__case-no">{{ d.caseNo }}</span>
+                  <span class="drawer__case-no">{{
+                    d.caseNo ?? t("billing.bulkCollect.drawer.unknownCase")
+                  }}</span>
                   <span class="drawer__reason">{{ skipReasonLabel(d) }}</span>
                 </li>
               </ul>
@@ -139,11 +143,13 @@ function skipReasonLabel(detail: CollectionResultDetail): string {
                 data-section="failed"
               >
                 <li
-                  v-for="d in failedDetails"
-                  :key="'f-' + d.caseNo"
+                  v-for="(d, index) in failedDetails"
+                  :key="'f-' + (d.caseNo ?? d.reason ?? '') + '-' + index"
                   class="drawer__item drawer__item--fail"
                 >
-                  <span class="drawer__case-no">{{ d.caseNo }}</span>
+                  <span class="drawer__case-no">{{
+                    d.caseNo ?? t("billing.bulkCollect.drawer.unknownCase")
+                  }}</span>
                   <span class="drawer__reason">{{ skipReasonLabel(d) }}</span>
                 </li>
               </ul>

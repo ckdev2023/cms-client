@@ -75,6 +75,8 @@ import { LeadsAdminController } from "./modules/core/leads/leads.admin.controlle
 import { LeadsAdminService } from "./modules/core/leads/leads.admin.service";
 import { ConversationsAdminController } from "./modules/core/conversations/conversations.admin.controller";
 import { ConversationsAdminService } from "./modules/core/conversations/conversations.admin.service";
+import { SearchController } from "./modules/core/search/search.controller";
+import { SearchService } from "./modules/core/search/search.service";
 import { MessagesAdminController } from "./modules/core/conversations/messages.admin.controller";
 import { MessagesAdminService } from "./modules/core/conversations/messages.admin.service";
 import { ConversationsController } from "./modules/portal/conversations/conversations.controller";
@@ -139,6 +141,7 @@ import {
     LeadsAdminController,
     ConversationsAdminController,
     MessagesAdminController,
+    SearchController,
     ConversationsController,
     MessagesController,
     UserDocumentsController,
@@ -190,6 +193,7 @@ import {
     LeadsAdminService,
     ConversationsAdminService,
     MessagesAdminService,
+    SearchService,
     ConversationsService,
     MessagesService,
     UserDocumentsService,

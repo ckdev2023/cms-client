@@ -113,6 +113,31 @@ void test("list returns items and total by billingPlanId", async () => {
   assert.equal(countCall.params[2], "valid");
 });
 
+void test("list JOIN cases excludes soft-deleted cases", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await new PaymentRecordsService(pool).list(makeCtx("viewer"), {
+    page: 1,
+    limit: 10,
+  });
+
+  const countCall = calls.find((call) => call.sql.includes("count(*)"));
+  assert.ok(countCall);
+  assert.ok(
+    countCall.sql.includes(
+      "coalesce(c.metadata->>'_status', '') is distinct from 'deleted'",
+    ),
+    "payment_records list JOIN cases must filter out soft-deleted cases",
+  );
+});
+
 void test("list succeeds without billingPlanId or caseId (org-wide)", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {

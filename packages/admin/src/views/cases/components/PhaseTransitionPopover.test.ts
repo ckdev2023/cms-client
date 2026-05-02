@@ -23,6 +23,7 @@ function mountPopover(
   return mount(PhaseTransitionPopover, {
     props: {
       menuOpen: true,
+      currentPhase: "UNDER_REVIEW",
       availableTargets: ["APPROVED", "REJECTED", "NEED_SUPPLEMENT"],
       submitting: false,
       errorMessage: null,
@@ -44,20 +45,36 @@ function mountPopover(
 }
 
 describe("PhaseTransitionPopover", () => {
-  it("renders available targets with translated phase names", () => {
+  it("renders available targets with arrow format including current phase", () => {
     const wrapper = mountPopover();
     const items = wrapper.findAll('[data-testid="phase-target-item"]');
     expect(items).toHaveLength(3);
-    expect(items[0].text()).toBe("已批准");
-    expect(items[1].text()).toBe("已拒否");
-    expect(items[2].text()).toBe("需要补充");
+    expect(items[0].text()).toBe("审查中（入管） → 已批准");
+    expect(items[1].text()).toBe("审查中（入管） → 已拒否");
+    expect(items[2].text()).toBe("审查中（入管） → 需要补充");
   });
 
-  it("renders ja-JP translations", () => {
+  it("renders ja-JP translations with arrow format", () => {
     const wrapper = mountPopover({}, "ja-JP");
     const items = wrapper.findAll('[data-testid="phase-target-item"]');
     expect(items).toHaveLength(3);
-    expect(items[0].text()).toBe("許可済み");
+    expect(items[0].text()).toBe("審査中（入管） → 許可済み");
+  });
+
+  it("renders current phase subtitle", () => {
+    const wrapper = mountPopover();
+    const subtitle = wrapper.find('[data-testid="phase-current-label"]');
+    expect(subtitle.exists()).toBe(true);
+    expect(subtitle.text()).toBe("当前：审查中（入管）");
+  });
+
+  it("falls back to target-only labels when currentPhase is null", () => {
+    const wrapper = mountPopover({ currentPhase: null });
+    const items = wrapper.findAll('[data-testid="phase-target-item"]');
+    expect(items[0].text()).toBe("已批准");
+    expect(wrapper.find('[data-testid="phase-current-label"]').exists()).toBe(
+      false,
+    );
   });
 
   it("does not render when menuOpen is false", () => {

@@ -3,6 +3,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
+import { useToast } from "../../shared/model/useToast";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Chip, { type ChipTone } from "../../shared/ui/Chip.vue";
 import Button from "../../shared/ui/Button.vue";
@@ -39,6 +40,7 @@ import { formatCaseIdentity } from "./caseIdentity";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t } = useI18n();
+const toast = useToast();
 const route = useRoute();
 const router = useRouter();
 
@@ -132,16 +134,12 @@ async function onSaveCaseEdit(fields: {
   if (ok) editModalOpen.value = false;
 }
 
-/** 导出 ZIP（stub — 功能尚未上线）。 */
+/** 导出 ZIP（stub — 功能尚未上線）。 */
 function onExportZip(): void {
-  writeFeedback.value = {
-    submitting: false,
-    errorMessage: null,
-    errorI18nKey: null,
-    serverErrorCode: null,
-    isGateBlock: false,
-  };
-  alert(t("cases.detail.actions.exportZipNotReady"));
+  toast.add({
+    title: t("cases.detail.actions.exportZipNotReady"),
+    tone: "info",
+  });
 }
 
 /**
@@ -161,6 +159,21 @@ function onPhaseSubmit(payload: {
     closeReason: payload.closeReason,
     resultOutcome: payload.resultOutcome,
   });
+}
+
+/** 跳转到收费页面，打开回款登记。 */
+function onOpenCollection(): void {
+  router.push({ path: "/billing", query: { case: caseId.value } });
+}
+
+/** 跳转到收费页面，查看收据。 */
+function onViewReceipt(): void {
+  router.push({ path: "/billing", query: { case: caseId.value } });
+}
+
+/** 跳转到任务页面，新建任务。 */
+function onOpenCreateTask(): void {
+  router.push({ path: "/tasks", query: { case: caseId.value } });
 }
 </script>
 
@@ -441,6 +454,7 @@ function onPhaseSubmit(payload: {
           v-else-if="activeTab === 'tasks'"
           :detail="detail"
           :readonly="isReadonly"
+          @open-create-task="onOpenCreateTask"
         />
         <CaseMessagesTab
           v-else-if="activeTab === 'messages'"
@@ -463,6 +477,8 @@ function onPhaseSubmit(payload: {
           v-else-if="activeTab === 'billing'"
           :detail="detail"
           :readonly="isReadonly"
+          @open-collection="onOpenCollection"
+          @view-receipt="onViewReceipt"
         />
       </section>
 
@@ -484,6 +500,7 @@ function onPhaseSubmit(payload: {
 
       <PhaseTransitionPopover
         :menu-open="phaseMenu.menuOpen.value"
+        :current-phase="detail?.businessPhase ?? null"
         :available-targets="phaseMenu.availableTargets.value"
         :submitting="phaseMenu.submitting.value"
         :error-message="phaseMenu.errorMessage.value"

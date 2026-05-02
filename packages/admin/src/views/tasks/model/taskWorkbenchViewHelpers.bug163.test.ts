@@ -92,7 +92,7 @@ describe("BUG-163 reminder reference resolution", () => {
   it("composes meta with human-friendly references", () => {
     const reminder = createReminder();
     expect(reminderMeta(reminder, t)).toBe(
-      "Case CASE-202604-0011 · Recipient Local Admin · Dedupe case:residence_expiry:180",
+      "Case CASE-202604-0011 · Recipient Local Admin",
     );
   });
 
@@ -106,14 +106,45 @@ describe("BUG-163 reminder reference resolution", () => {
     const meta = reminderMeta(reminder, t);
     expect(meta).not.toContain("df9d1e84-fd62-4687");
     expect(meta).not.toContain("0000-4000-8000-000000000011");
-    expect(meta).toBe(
-      "Case df9d1e84 · Recipient 00000000 · Dedupe case:residence_expiry:180",
-    );
+    expect(meta).toBe("Case df9d1e84 · Recipient 00000000");
   });
 
   it("returns 8-char short id for the cell-meta hint", () => {
     const reminder = createReminder();
     expect(reminderShortId(reminder)).toBe("eefe7803");
+  });
+});
+
+describe("BUG-193 reminderMeta drops dedupeKey segment", () => {
+  it("excludes dedupeKey when present, keeps case and recipient", () => {
+    const reminder = createReminder({
+      dedupeKey: "case:residence_expiry:180",
+    });
+    const meta = reminderMeta(reminder, t);
+    expect(meta).toBe("Case CASE-202604-0011 · Recipient Local Admin");
+    expect(meta).not.toContain("dedupeKey");
+    expect(meta).not.toContain("Dedupe");
+    expect(meta).not.toContain("residence_expiry");
+  });
+
+  it("excludes dedupeKey with UUID, keeps case and recipient", () => {
+    const reminder = createReminder({
+      dedupeKey: "residence_period:e00ea5d2-210a-4f65-a205-5d4e0da4cc7d",
+    });
+    const meta = reminderMeta(reminder, t);
+    expect(meta).toBe("Case CASE-202604-0011 · Recipient Local Admin");
+    expect(meta).not.toContain("e00ea5d2");
+  });
+
+  it("returns empty placeholder when only dedupeKey present", () => {
+    const reminder = createReminder({
+      caseNo: null,
+      caseId: null,
+      recipientName: null,
+      recipientId: null,
+      dedupeKey: "case:residence_expiry:180",
+    });
+    expect(reminderMeta(reminder, t)).toBe("—");
   });
 });
 
@@ -144,25 +175,13 @@ describe("BUG-171 dedupeKey UUID masking", () => {
     );
   });
 
-  it("reminderMeta masks UUID dedupeKey (BUG-171)", () => {
-    const t = (
-      key: string,
-      named?: Record<string, string | number>,
-    ): string => {
-      if (key === "tasks.reminderMeta.case") return `Case ${String(named?.id)}`;
-      if (key === "tasks.reminderMeta.recipient")
-        return `Recipient ${String(named?.id)}`;
-      if (key === "tasks.reminderMeta.dedupeKey")
-        return `Dedupe ${String(named?.key)}`;
-      if (key === "tasks.reminderMeta.empty") return "—";
-      return key;
-    };
-
+  it("reminderMeta excludes dedupeKey segment (BUG-193, supersedes BUG-171)", () => {
     const reminder = createReminder({
       dedupeKey: "residence_period:e00ea5d2-210a-4f65-a205-5d4e0da4cc7d",
     });
     const meta = reminderMeta(reminder, t);
-    expect(meta).toContain("Dedupe residence_period:e00ea5d2");
-    expect(meta).not.toContain("210a-4f65");
+    expect(meta).not.toContain("Dedupe");
+    expect(meta).not.toContain("residence_period");
+    expect(meta).toBe("Case CASE-202604-0011 · Recipient Local Admin");
   });
 });

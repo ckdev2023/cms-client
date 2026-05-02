@@ -32,7 +32,7 @@ function onFieldInput(key: string, value: string) {
 </script>
 
 <template>
-  <section class="storage-panel" aria-label="Storage root settings">
+  <section class="storage-panel" :aria-label="t('settings.aria.storageRoot')">
     <!-- Not-configured warning -->
     <div v-if="!isConfigured" class="storage-panel__warning" role="alert">
       <svg

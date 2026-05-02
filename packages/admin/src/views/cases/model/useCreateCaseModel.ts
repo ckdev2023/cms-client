@@ -82,6 +82,7 @@ export interface UseCreateCaseModelDeps {
 import {
   buildCaseTitle,
   createGroupInheritanceLabel,
+  createGroupOverrideComputeds,
   resolveGroupInheritanceLabel,
   hasAnySourceContext,
   resolveInitialTemplateId,
@@ -176,9 +177,7 @@ function createTemplateDerived(
       ? draft.caseTitle
       : derivedTitle.value,
   );
-  const isGroupOverridden = computed(
-    () => draft.group !== draft.inheritedGroup,
-  );
+  const groupOverride = createGroupOverrideComputeds(deps, draft);
   return {
     currentTemplate,
     templateLabel,
@@ -188,8 +187,7 @@ function createTemplateDerived(
     applicationTypes,
     derivedTitle,
     effectiveTitle,
-    isGroupOverridden,
-    needsGroupOverrideReason: computed(() => isGroupOverridden.value),
+    ...groupOverride,
     groupInheritanceLabel: createGroupInheritanceLabel(deps, draft),
     hasSourceContext: computed(() => hasAnySourceContext(deps.sourceContext)),
   };

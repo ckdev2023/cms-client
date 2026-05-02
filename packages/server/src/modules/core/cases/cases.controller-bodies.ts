@@ -102,6 +102,7 @@ export type ListCasesQuery = {
   riskLevel?: unknown;
   companyId?: unknown;
   phase?: unknown;
+  search?: unknown;
   page?: unknown;
   limit?: unknown;
   view?: unknown;

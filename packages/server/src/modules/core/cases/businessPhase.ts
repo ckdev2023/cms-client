@@ -1,3 +1,6 @@
+// TODO(BUG-200): PM 待决策 — 是否为所有非终态 phase 增加 → CLOSED_FAILED 中途撤案路径。
+// 决策前不修改 PHASE_TRANSITIONS 表。追踪：_raw/00-inbox.md 2026-05-02 条目。
+
 /**
  * 双层状态机 — businessPhase 业务维度。
  *
@@ -90,6 +93,32 @@ export const STAGE_TO_PHASE_DEFAULT: Readonly<Record<P0Stage, BusinessPhase>> =
     S7: "WAITING_PAYMENT",
     S8: "SUCCESS",
     S9: "CLOSED_SUCCESS",
+  };
+
+// ── Phase → P0 Stage 映射（phase 转换时同步 stage 用） ──
+
+export const PHASE_TO_STAGE_DEFAULT: Readonly<Record<BusinessPhase, P0Stage>> =
+  {
+    CONSULTING: "S1",
+    CONTRACTED: "S1",
+    WAITING_MATERIAL: "S2",
+    MATERIAL_PREPARING: "S3",
+    REVIEWING: "S4",
+    APPLYING: "S5",
+    UNDER_REVIEW: "S5",
+    NEED_SUPPLEMENT: "S5",
+    SUPPLEMENT_PROCESSING: "S5",
+    APPROVED: "S6",
+    REJECTED: "S6",
+    WAITING_PAYMENT: "S7",
+    COE_SENT: "S7",
+    VISA_APPLYING: "S7",
+    VISA_REJECTED: "S7",
+    SUCCESS: "S8",
+    RESIDENCE_PERIOD_RECORDED: "S8",
+    RENEWAL_REMINDER_SCHEDULED: "S8",
+    CLOSED_SUCCESS: "S9",
+    CLOSED_FAILED: "S9",
   };
 
 // ── 终态判定 ──

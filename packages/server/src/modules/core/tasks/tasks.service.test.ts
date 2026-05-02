@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
-import { TasksService, mapTaskRow } from "./tasks.service";
+import { TasksService, mapTaskRow, mapTaskListRow } from "./tasks.service";
 import type { RequestContext } from "../tenancy/requestContext";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -33,6 +33,16 @@ function makeTaskRow(overrides: Record<string, unknown> = {}) {
     completed_at: null,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
+    ...overrides,
+  };
+}
+
+function makeTaskListRow(overrides: Record<string, unknown> = {}) {
+  return {
+    ...makeTaskRow(),
+    case_no: "COE-2026-05-001",
+    case_name: "田中太郎 COE申請",
+    assignee_name: "佐藤花子",
     ...overrides,
   };
 }
@@ -175,7 +185,10 @@ void test("TasksService.list returns items and total", async () => {
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
     }
-    return Promise.resolve({ rows: [makeTaskRow()], rowCount: 1 });
+    return Promise.resolve({
+      rows: [makeTaskListRow()],
+      rowCount: 1,
+    });
   });
 
   const result = await svc(pool, makeTimeline()).list(makeCtx("viewer"));
@@ -201,9 +214,9 @@ void test("TasksService.list filters by caseId/assigneeUserId/status", async () 
 
   const countSql = calls.find((call) => call.sql.includes("count(*)"));
   assert.ok(countSql);
-  assert.ok(countSql.sql.includes("case_id = $"));
-  assert.ok(countSql.sql.includes("assignee_user_id = $"));
-  assert.ok(countSql.sql.includes("status = $"));
+  assert.ok(countSql.sql.includes("t.case_id = $"));
+  assert.ok(countSql.sql.includes("t.assignee_user_id = $"));
+  assert.ok(countSql.sql.includes("t.status = $"));
 });
 
 void test("TasksService.update updates fields, advances to in_progress and writes timeline", async () => {
@@ -365,4 +378,61 @@ void test("TasksService.cancel sets status and writes timeline", async () => {
     (tl.writes[0] as Record<string, unknown>).action,
     "task.cancelled",
   );
+});
+
+void test("mapTaskListRow maps joined row with caseNo/caseName/assigneeName", () => {
+  const item = mapTaskListRow(makeTaskListRow());
+  assert.equal(item.id, TASK_ID);
+  assert.equal(item.caseNo, "COE-2026-05-001");
+  assert.equal(item.caseName, "田中太郎 COE申請");
+  assert.equal(item.assigneeName, "佐藤花子");
+  assert.equal(item.caseId, CASE_ID);
+  assert.equal(item.taskType, "submission");
+});
+
+void test("mapTaskListRow handles null join fields", () => {
+  const item = mapTaskListRow(
+    makeTaskListRow({
+      case_id: null,
+      case_no: null,
+      case_name: null,
+      assignee_user_id: null,
+      assignee_name: null,
+    }),
+  );
+  assert.equal(item.caseNo, null);
+  assert.equal(item.caseName, null);
+  assert.equal(item.assigneeName, null);
+  assert.equal(item.caseId, null);
+});
+
+void test("TasksService.list SQL joins cases and users tables", async () => {
+  const calls: string[] = [];
+  const pool = makePool((sql) => {
+    calls.push(sql.trim());
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [makeTaskListRow()], rowCount: 1 });
+  });
+
+  const result = await svc(pool, makeTimeline()).list(makeCtx("viewer"));
+
+  const listSql = calls.find(
+    (s) => !s.includes("count(*)") && s.includes("from tasks"),
+  );
+  assert.ok(listSql, "list query should exist");
+  assert.ok(listSql.includes("left join cases c"), "should join cases");
+  assert.ok(listSql.includes("left join users u"), "should join users");
+  assert.ok(listSql.includes("c.case_no"), "should select case_no");
+  assert.ok(listSql.includes("c.case_name"), "should select case_name");
+  assert.ok(
+    listSql.includes("u.name as assignee_name"),
+    "should select assignee_name",
+  );
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].caseNo, "COE-2026-05-001");
+  assert.equal(result.items[0].caseName, "田中太郎 COE申請");
+  assert.equal(result.items[0].assigneeName, "佐藤花子");
 });

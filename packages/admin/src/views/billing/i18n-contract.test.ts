@@ -69,6 +69,7 @@ describe("billing i18n required key groups", () => {
 
   const BULK_COLLECT_SKIP_REASON_KEYS = [
     "bulkCollect.skipReason.no-permission",
+    "bulkCollect.skipReason.case-not-found",
     "bulkCollect.skipReason.duplicate-task",
     "bulkCollect.skipReason.not-overdue",
     "bulkCollect.skipReason.no-assignee",
@@ -79,6 +80,7 @@ describe("billing i18n required key groups", () => {
     "bulkCollect.drawer.title",
     "bulkCollect.drawer.empty",
     "bulkCollect.drawer.details",
+    "bulkCollect.drawer.unknownCase",
   ];
 
   const PAYMENT_LOG_TOAST_KEYS = [

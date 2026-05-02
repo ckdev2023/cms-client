@@ -11,7 +11,7 @@ defineProps<{
   readonly: boolean;
 }>();
 
-const emit = defineEmits<{
+defineEmits<{
   (e: "open-risk-modal"): void;
 }>();
 
@@ -43,9 +43,14 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
         <h2 class="valsup__title">
           {{ t("cases.detail.validation.reviewer.title") }}
         </h2>
-        <Button v-if="!readonly" size="sm" pill>{{
-          t("cases.detail.validation.reviewer.startCta")
-        }}</Button>
+        <Button
+          v-if="!readonly"
+          size="sm"
+          pill
+          disabled
+          :title="t('common.comingSoon')"
+          >{{ t("cases.detail.validation.reviewer.startCta") }}</Button
+        >
       </template>
 
       <div v-if="detail.doubleReview.length > 0" class="valsup__reviews">
@@ -137,7 +142,8 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
           v-if="!readonly"
           size="sm"
           pill
-          @click="emit('open-risk-modal')"
+          disabled
+          :title="t('common.comingSoon')"
         >
           {{ t("cases.detail.validation.risk.simulateCta") }}
         </Button>

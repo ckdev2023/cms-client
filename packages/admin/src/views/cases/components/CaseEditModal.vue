@@ -87,6 +87,8 @@ function handleSave(): void {
               t("cases.detail.editModal.fields.caseName")
             }}</span>
             <input
+              id="case-edit-caseName"
+              name="caseName"
               type="text"
               class="case-edit-modal__input"
               :value="localCaseName"
@@ -100,6 +102,8 @@ function handleSave(): void {
               t("cases.detail.editModal.fields.agency")
             }}</span>
             <input
+              id="case-edit-agency"
+              name="agency"
               type="text"
               class="case-edit-modal__input"
               :value="localAgency"
@@ -113,6 +117,8 @@ function handleSave(): void {
               t("cases.detail.editModal.fields.memo")
             }}</span>
             <textarea
+              id="case-edit-memo"
+              name="memo"
               class="case-edit-modal__textarea"
               rows="4"
               :value="localMemo"

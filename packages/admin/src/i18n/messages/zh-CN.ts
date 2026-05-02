@@ -8,6 +8,7 @@ import settings from "./settings/zh-CN";
 import tasks from "./tasks/zh-CN";
 import dashboardWorkItems from "./work-items/zh-CN";
 import dashboardWorkItem from "./dashboard-work-item/zh-CN";
+import { shellSearchZhCN } from "./shell-search/zh-CN";
 
 const zhCN = {
   shell: {
@@ -23,6 +24,7 @@ const zhCN = {
       createCase: "新建案件",
       logout: "退出登录",
     },
+    search: shellSearchZhCN,
     nav: {
       asideLabel: "侧边栏导航",
       mainLabel: "主导航",
@@ -232,8 +234,8 @@ const zhCN = {
         fields: {
           displayName: "识别名（对内显示）",
           displayNamePlaceholder: "例如：王伟（就劳）",
-          group: "所属 Group",
-          groupPlaceholder: "请选择 Group",
+          group: "所属分组",
+          groupPlaceholder: "请选择分组",
           legalName: "姓名（法定）",
           legalNamePlaceholder: "请输入姓名",
           legalNameCorporation: "公司法定名称",

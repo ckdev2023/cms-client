@@ -31,6 +31,7 @@ const casesEnUS = {
       clearCustomerFilter: "Clear customer filter",
       reset: "Reset",
     },
+    invalidStageWarning: 'Invalid stage "{value}" was ignored.',
     riskLabels: {
       normal: "Normal",
       attention: "Needs attention",
@@ -250,6 +251,8 @@ const casesEnUS = {
     },
     phaseMenu: {
       title: "Phase transition",
+      currentPhaseLabel: "Current: {phase}",
+      targetArrow: "{from} → {to}",
       closeReasonRequired: "Close reason is required for failure closeout",
       submit: "Confirm transition",
       cancel: "Cancel",
@@ -468,7 +471,7 @@ const casesEnUS = {
       },
       invoice: {
         title: "Invoice",
-        placeholder: "Invoice details are not shown in the current prototype.",
+        placeholder: "Invoice details are not yet available in this release.",
       },
     },
     tasks: {
@@ -528,7 +531,7 @@ const casesEnUS = {
       evidencePlaceholder:
         "Attachment name or description (e.g. payment_commitment.pdf)",
       evidenceHint:
-        "Supports screenshots, emails, payment commitment letters, etc. (prototype: text only)",
+        "Supports screenshots, emails, payment commitment letters, etc. (text only for now)",
       cancel: "Cancel",
       confirm: "Confirm & continue submission",
     },

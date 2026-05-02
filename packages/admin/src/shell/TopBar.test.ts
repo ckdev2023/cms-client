@@ -45,21 +45,19 @@ describe("TopBar", () => {
     expect(header.classes()).toContain("topbar");
   });
 
-  it("renders disabled search input with explicit coming-soon status", () => {
+  it("renders search trigger button with palette aria-controls", () => {
     const w = mount(TopBar, {
       global: { plugins: [i18n, makeRouter()], stubs },
     });
-    const input = w.find('input[type="search"]');
-    expect(input.exists()).toBe(true);
-    expect(input.attributes("aria-label")).toBeTruthy();
-    expect(input.attributes("name")).toBe("globalSearch");
-    expect(input.attributes("id")).toBe("topbar-global-search");
-    expect(input.attributes("placeholder")).toBe("全局搜索功能建设中");
-    expect(input.attributes("aria-describedby")).toBe(
-      "topbar-global-search-status",
+    const trigger = w.find(".topbar-search-trigger");
+    expect(trigger.exists()).toBe(true);
+    expect(trigger.element.tagName).toBe("BUTTON");
+    expect(trigger.attributes("aria-controls")).toBe("global-search-palette");
+    expect(trigger.attributes("aria-haspopup")).toBe("dialog");
+    expect(trigger.attributes("aria-label")).toBe("全局搜索");
+    expect(trigger.find(".topbar-search-placeholder").text()).toBe(
+      "搜索：客户 / 案件 / 资料 / 文书...",
     );
-    expect(input.attributes("aria-disabled")).toBe("true");
-    expect((input.element as HTMLInputElement).disabled).toBe(true);
   });
 
   it("renders search area with role=search", () => {
@@ -70,14 +68,29 @@ describe("TopBar", () => {
     expect(search.exists()).toBe(true);
   });
 
-  it("renders coming-soon status instead of a keyboard shortcut", () => {
+  it("renders keyboard shortcut hint in the search trigger", () => {
     const w = mount(TopBar, {
       global: { plugins: [i18n, makeRouter()], stubs },
     });
-    const status = w.find(".topbar-search-status");
-    expect(status.exists()).toBe(true);
-    expect(status.attributes("id")).toBe("topbar-global-search-status");
-    expect(status.text()).toBe("建设中");
+    const kbd = w.find(".topbar-search-kbd");
+    expect(kbd.exists()).toBe(true);
+    expect(kbd.text()).toBe("⌘K");
+  });
+
+  it("emits openSearchPalette when search trigger is clicked", async () => {
+    const w = mount(TopBar, {
+      global: { plugins: [i18n, makeRouter()], stubs },
+    });
+    await w.find(".topbar-search-trigger").trigger("click");
+    expect(w.emitted("openSearchPalette")).toHaveLength(1);
+  });
+
+  it("emits openSearchPalette when Enter is pressed on the search trigger", async () => {
+    const w = mount(TopBar, {
+      global: { plugins: [i18n, makeRouter()], stubs },
+    });
+    await w.find(".topbar-search-trigger").trigger("keydown.enter");
+    expect(w.emitted("openSearchPalette")).toHaveLength(1);
   });
 
   it("renders mobile menu trigger", () => {
@@ -181,10 +194,9 @@ describe("TopBar", () => {
     expect(w.find(".topbar-menu-btn").attributes("aria-label")).toBe(
       "ナビゲーションを開く",
     );
-    expect(w.find('input[type="search"]').attributes("placeholder")).toBe(
-      "グローバル検索は準備中です",
+    expect(w.find(".topbar-search-placeholder").text()).toBe(
+      "検索: 顧客 / 案件 / 資料 / 書類...",
     );
-    expect(w.find(".topbar-search-status").text()).toBe("準備中");
     expect(w.findAll(".topbar-action")[0]?.text()).toBe("相談を新規作成");
     expect(w.findAll(".topbar-action")[2]?.text()).toBe("ログアウト");
   });

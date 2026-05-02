@@ -66,6 +66,9 @@ const paymentLog = useBillingPaymentLog({
 });
 
 const selection = useBillingSelection();
+const selectableCount = computed(
+  () => selection.selectableRows(listData.rows.value).length,
+);
 const allSelected = computed(() =>
   selection.isAllSelected(listData.rows.value),
 );
@@ -301,6 +304,7 @@ function handlePaymentLogPageChange(page: number) {
           :selected-ids="selection.selectedIds.value"
           :is-all-selected="allSelected"
           :is-indeterminate="indeterminate"
+          :selectable-count="selectableCount"
           @toggle-row="selection.toggleRow"
           @toggle-all="handleToggleAll"
           @register-payment="openPaymentModal"

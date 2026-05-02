@@ -23,6 +23,7 @@ type BillingPlanOverdueRow = {
 
 export type CollectionSkipReasonCode =
   | "no-permission"
+  | "case-not-found"
   | "duplicate-task"
   | "not-overdue"
   | "no-assignee"
@@ -77,16 +78,27 @@ export class BillingCollectionsService {
     ctx: RequestContext,
     caseId: string,
   ): Promise<CollectionResultDetail> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+
+    // 提前查 case_no（含软删/已归档），保证后续所有早返回都能在 drawer 明细里
+    // 显示「哪个案件被跳过」，而不是一串 null。RLS 仍约束跨 org 访问。
+    const caseNoResult = await tenantDb.query<{ case_no: string | null }>(
+      `select case_no from cases where id = $1 limit 1`,
+      [caseId],
+    );
+    const caseNo = caseNoResult.rows.at(0)?.case_no ?? null;
+
     try {
       await this.casesService.assertCanEditCase(ctx, caseId);
     } catch (e) {
-      if (e instanceof ForbiddenException || e instanceof NotFoundException) {
-        return { caseNo: null, result: "skipped", reason: "no-permission" };
+      if (e instanceof NotFoundException) {
+        return { caseNo, result: "skipped", reason: "case-not-found" };
+      }
+      if (e instanceof ForbiddenException) {
+        return { caseNo, result: "skipped", reason: "no-permission" };
       }
       throw e;
     }
-
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
 
     const planResult = await tenantDb.query<BillingPlanOverdueRow>(
       `select br.id, br.case_id, br.milestone_name,
@@ -103,10 +115,8 @@ export class BillingCollectionsService {
 
     const plan = planResult.rows.at(0);
     if (!plan) {
-      return { caseNo: null, result: "skipped", reason: "not-overdue" };
+      return { caseNo, result: "skipped", reason: "not-overdue" };
     }
-
-    const caseNo = plan.case_no;
 
     const dupResult = await tenantDb.query<{ id: string }>(
       `select id from tasks

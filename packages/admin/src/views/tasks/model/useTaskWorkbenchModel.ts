@@ -54,6 +54,18 @@ function isOverdue(task: TaskRecord, dayStart: number): boolean {
 }
 
 /**
+ * 任务工作台完成任务时通过 notifier 透传给视图层的事件载荷。
+ */
+export interface TaskWorkbenchCompleteEvent {
+  /** 事件类型：`success` 表示已完成、`error` 表示完成失败。 */
+  kind: "success" | "error";
+  /** 触发事件的任务 id。 */
+  taskId: string;
+  /** 服务端返回的最新任务（成功时存在）。 */
+  task?: TaskRecord;
+}
+
+/**
  * 任务工作台模型的外部依赖。
  */
 export interface TaskWorkbenchModelDeps {
@@ -61,6 +73,11 @@ export interface TaskWorkbenchModelDeps {
   repo: TaskRepository;
   /** 当前时间提供器，便于测试中固定时间。 */
   now?: () => Date;
+  /**
+   * 任务完成动作的反馈通知器，由视图层注入（默认空函数）。
+   * 用于驱动 toast / 埋点等副作用，model 自身保持纯净。
+   */
+  notifyComplete?: (event: TaskWorkbenchCompleteEvent) => void;
 }
 
 function createTaskWorkbenchState() {
@@ -70,6 +87,7 @@ function createTaskWorkbenchState() {
     loading: ref(false),
     error: ref<string | null>(null),
     completingId: ref<string | null>(null),
+    lastCompletedTask: ref<TaskRecord | null>(null),
     activeView: ref<TaskWorkbenchView>("pending"),
     taskTotal: ref(0),
     reminderTotal: ref(0),
@@ -107,8 +125,9 @@ function createTaskWorkbenchCollections(
     overdue: overdueTasks.value.length,
     reminders: reminderLog.value.length,
   }));
+  const panelTotal = computed(() => counts.value[state.activeView.value]);
 
-  return { counts, currentTasks, reminderLog };
+  return { counts, currentTasks, reminderLog, panelTotal };
 }
 
 function createFetchWorkbench(
@@ -139,19 +158,31 @@ function createFetchWorkbench(
   };
 }
 
-function createCompleteTask(state: TaskWorkbenchState, repo: TaskRepository) {
+function createCompleteTask(
+  state: TaskWorkbenchState,
+  repo: TaskRepository,
+  now: () => Date,
+  notifyComplete: (event: TaskWorkbenchCompleteEvent) => void,
+) {
   return async (id: string): Promise<void> => {
-    if (!id.trim() || state.completingId.value) return;
+    const trimmedId = id.trim();
+    if (!trimmedId || state.completingId.value) return;
 
-    state.completingId.value = id;
+    state.completingId.value = trimmedId;
     state.error.value = null;
     try {
-      const updated = await repo.completeTask(id);
+      const updated = await repo.completeTask(trimmedId);
       state.tasks.value = sortTasks(
-        state.tasks.value.map((task) => (task.id === id ? updated : task)),
+        state.tasks.value.map((task) =>
+          task.id === trimmedId ? updated : task,
+        ),
       );
+      state.lastCompletedTask.value = updated;
+      state.lastUpdatedAt.value = now().toISOString();
+      notifyComplete({ kind: "success", taskId: trimmedId, task: updated });
     } catch {
       state.error.value = "任务完成操作失败，请稍后重试。";
+      notifyComplete({ kind: "error", taskId: trimmedId });
     } finally {
       state.completingId.value = null;
     }
@@ -161,15 +192,15 @@ function createCompleteTask(state: TaskWorkbenchState, repo: TaskRepository) {
 /**
  * 创建任务与提醒工作台的视图模型。
  *
- * @param deps - 工作台所需的仓储和时间依赖。
+ * @param deps - 工作台所需的仓储、时间与通知器依赖。
  * @returns 暴露给页面使用的状态、派生数据和交互方法。
  */
 export function useTaskWorkbenchModel(deps: TaskWorkbenchModelDeps) {
-  const { repo, now = () => new Date() } = deps;
+  const { repo, now = () => new Date(), notifyComplete = () => {} } = deps;
   const state = createTaskWorkbenchState();
   const collections = createTaskWorkbenchCollections(state, now);
   const fetchWorkbench = createFetchWorkbench(state, repo, now);
-  const completeTask = createCompleteTask(state, repo);
+  const completeTask = createCompleteTask(state, repo, now, notifyComplete);
   const setActiveView = (view: TaskWorkbenchView): void => {
     state.activeView.value = view;
   };

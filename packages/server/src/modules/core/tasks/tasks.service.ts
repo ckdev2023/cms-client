@@ -34,6 +34,18 @@ export type TaskQueryRow = {
   updated_at: unknown;
 };
 
+export type TaskListQueryRow = TaskQueryRow & {
+  case_no: string | null;
+  case_name: string | null;
+  assignee_name: string | null;
+};
+
+export type TaskListItem = Task & {
+  caseNo: string | null;
+  caseName: string | null;
+  assigneeName: string | null;
+};
+
 export type TaskCreateInput = {
   caseId?: string | null;
   title: string;
@@ -81,6 +93,8 @@ type ResolvedTaskUpdate = {
 };
 
 const TASK_COLS = `id, org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id, completed_at, created_at, updated_at`;
+
+const TASK_LIST_SELECT = `t.id, t.org_id, t.case_id, t.title, t.description, t.task_type, t.assignee_user_id, t.priority, t.due_at, t.status, t.source_type, t.source_id, t.completed_at, t.created_at, t.updated_at, c.case_no as case_no, c.case_name as case_name, u.name as assignee_name`;
 const VALID_TASK_TYPES = new Set([
   "general",
   "document_follow_up",
@@ -114,6 +128,15 @@ export function mapTaskRow(row: TaskQueryRow): Task {
     completedAt: toTimestampStringOrNull(row.completed_at),
     createdAt: requireTimestampString(row.created_at, "created_at"),
     updatedAt: requireTimestampString(row.updated_at, "updated_at"),
+  };
+}
+
+export function mapTaskListRow(row: TaskListQueryRow): TaskListItem {
+  return {
+    ...mapTaskRow(row),
+    caseNo: row.case_no ?? null,
+    caseName: row.case_name ?? null,
+    assigneeName: row.assignee_name ?? null,
   };
 }
 
@@ -189,7 +212,7 @@ export class TasksService {
   async list(
     ctx: RequestContext,
     input: TaskListInput = {},
-  ): Promise<{ items: Task[]; total: number }> {
+  ): Promise<{ items: TaskListItem[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
@@ -198,9 +221,9 @@ export class TasksService {
     const where: string[] = [];
     const params: unknown[] = [];
     const filters: [string, string | undefined][] = [
-      ["case_id", input.caseId],
-      ["assignee_user_id", input.assigneeUserId],
-      ["status", input.status],
+      ["t.case_id", input.caseId],
+      ["t.assignee_user_id", input.assigneeUserId],
+      ["t.status", input.status],
     ];
     for (const [column, value] of filters) {
       if (!value) continue;
@@ -210,20 +233,24 @@ export class TasksService {
 
     const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
     const countResult = await tenantDb.query<{ count: string }>(
-      `select count(*) as count from tasks ${whereClause}`,
+      `select count(*) as count from tasks t ${whereClause}`,
       params,
     );
     const total = Number.parseInt(countResult.rows[0]?.count ?? "0", 10);
 
     const listParams = [...params, limit, offset];
-    const result = await tenantDb.query<TaskQueryRow>(
-      `select ${TASK_COLS} from tasks ${whereClause}
-       order by created_at desc, id desc
+    const result = await tenantDb.query<TaskListQueryRow>(
+      `select ${TASK_LIST_SELECT}
+       from tasks t
+       left join cases c on c.id = t.case_id and c.org_id = t.org_id
+       left join users u on u.id = t.assignee_user_id and u.org_id = t.org_id
+       ${whereClause}
+       order by t.created_at desc, t.id desc
        limit $${String(listParams.length - 1)} offset $${String(listParams.length)}`,
       listParams,
     );
 
-    return { items: result.rows.map(mapTaskRow), total };
+    return { items: result.rows.map(mapTaskListRow), total };
   }
 
   // eslint-disable-next-line max-lines-per-function
@@ -450,7 +477,6 @@ function validateTimestamp(
 function isTerminalStatus(status: string): boolean {
   return status === "completed" || status === "cancelled";
 }
-
 function validateMutableStatusTransition(from: string, to: string): void {
   if (from === to) return;
   if (to === "completed" || to === "cancelled") {
@@ -463,7 +489,6 @@ function validateMutableStatusTransition(from: string, to: string): void {
     `Transition from '${from}' to '${to}' is not allowed`,
   );
 }
-
 function validateTerminalTransition(
   from: string,
   to: "completed" | "cancelled",

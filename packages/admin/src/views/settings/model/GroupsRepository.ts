@@ -143,8 +143,12 @@ export function adaptGroupSummary(v: unknown): GroupSummary | null {
   if (!isRecord(v)) return null;
   if (typeof v.id !== "string" || typeof v.name !== "string") return null;
 
+  const groupNo =
+    typeof v.groupNo === "string" && v.groupNo ? v.groupNo : undefined;
+
   return {
     ...baseSummary(v),
+    ...(groupNo !== undefined ? { groupNo } : {}),
     activeCaseCount: Number(v.activeCaseCount ?? 0),
     memberCount: Number(v.memberCount ?? 0),
   };
@@ -189,9 +193,12 @@ export function adaptDetailAsSummary(v: unknown): GroupSummary | null {
 
   const rawLen = Array.isArray(v.members) ? v.members.length : 0;
   const refs = extractRefs(v);
+  const groupNo =
+    typeof v.groupNo === "string" && v.groupNo ? v.groupNo : undefined;
 
   return {
     ...baseSummary(v),
+    ...(groupNo !== undefined ? { groupNo } : {}),
     activeCaseCount: countCases(refs, v),
     memberCount: refs ? rawLen : Number(v.memberCount ?? 0),
   };
