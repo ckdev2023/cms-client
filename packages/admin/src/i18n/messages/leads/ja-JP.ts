@@ -59,6 +59,7 @@ const leadsJaJP = {
     },
     pagination: {
       summary: "{start} – {end} 件表示（全 {total} 件）",
+      empty: "データがありません",
       prev: "前へ",
       next: "次へ",
     },

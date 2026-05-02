@@ -255,6 +255,20 @@ const casesZhCN = {
         SWITCHED_TO_OTHER_FIRM: "改委托其他事务所",
         OTHER: "其它",
       },
+      errors: {
+        CASE_POST_APPROVAL_BILLING_BLOCKED:
+          "收费计划未完成，无法推进下签后阶段",
+        CASE_CLOSE_REASON_REQUIRED: "失败结案需提供关闭原因",
+        CASE_TRANSITION_NOT_ALLOWED: "当前阶段不允许此流转",
+        CASE_TRANSITION_CONFLICT: "阶段已被其他操作变更，请刷新后重试",
+        CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
+          "存在未确认的收费风险，请先确认风险",
+        CASE_BILLING_RISK_ACK_FAILED: "收费风险确认失败",
+        CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
+          "下签后存在未确认的收费风险",
+        CASE_S9_READONLY: "案件已归档，无法操作",
+        CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED: "失败结案需提供归因信息",
+      },
     },
     terminalStage: {
       label: "已结案",

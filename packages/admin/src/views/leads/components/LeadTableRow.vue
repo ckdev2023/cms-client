@@ -67,6 +67,7 @@ const groupLabel = computed(() =>
       <label class="ui-checkbox-hit">
         <input
           type="checkbox"
+          name="leadRowSelect"
           class="lead-row__checkbox"
           :checked="selected"
           :aria-label="t('leads.list.columns.selectRow', { name: lead.name })"

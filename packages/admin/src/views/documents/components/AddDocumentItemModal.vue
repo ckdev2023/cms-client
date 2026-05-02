@@ -64,6 +64,8 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               <span class="adim__required">*</span>
             </label>
             <input
+              id="doc-addItem-name"
+              name="docAddItemName"
               type="text"
               class="adim__input"
               :value="name"
@@ -78,6 +80,8 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               <span class="adim__required">*</span>
             </label>
             <select
+              id="doc-addItem-ownerSide"
+              name="docAddItemOwnerSide"
               class="adim__input adim__select"
               :value="ownerSide"
               @change="
@@ -101,6 +105,8 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               {{ t("documents.addItem.fields.dueAt") }}
             </label>
             <input
+              id="doc-addItem-dueAt"
+              name="docAddItemDueAt"
               type="date"
               class="adim__input"
               :value="dueAt"
@@ -116,6 +122,8 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               {{ t("documents.addItem.fields.note") }}
             </label>
             <textarea
+              id="doc-addItem-note"
+              name="docAddItemNote"
               class="adim__textarea"
               :value="note"
               :placeholder="t('documents.addItem.fields.notePlaceholder')"

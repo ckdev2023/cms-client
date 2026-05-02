@@ -205,7 +205,7 @@
 | 复现 | 案件在 WAITING_MATERIAL / MATERIAL_PREPARING / REVIEWING / APPLYING / NEED_SUPPLEMENT / SUPPLEMENT_PROCESSING 任意中间相位时，无法直接转 CLOSED_FAILED；CLOSED_FAILED 仅可从 REJECTED / VISA_REJECTED 到达 |
 | 期望 | 行政书士业务现实是「客户中途撤案 / 客户决定不办理」是高频场景；应允许任意非终态相位向 CLOSED_FAILED 转，配合强制 `closeReason` 必填和"中途撤案/客户失联/客户改委托其他事务所"的预设理由 |
 | 等级 | **P2 — 业务路径缺失** |
-| 状态 | 新发现 / 未 land（需要 PM 确认是否要补；列入 BUG-200 待 confirm） |
+| 状态 | ✅ LANDED — PM 拍板"是"后实施。`PHASE_TRANSITIONS` 全 11 个非终态 phase 追加 `CLOSED_FAILED` 出边；`MANUAL_CANCEL_REASON_CODES` 4 码（MID_CASE_WITHDRAWAL / CLIENT_LOST_CONTACT / SWITCHED_TO_OTHER_FIRM / OTHER）；`PhaseTransitionPopover.vue` 预设 chips + OTHER 自由文本；3 server tests + 8 admin tests 全 PASS |
 
 ---
 
@@ -291,4 +291,54 @@
 4. **P1 BUG-194 / BUG-195** 自动生成资料清单 / 任务：成对修复（涉及 `cases.service.ts: createCase` 同一个分支）
 5. **P1 BUG-196** Billing/Tasks Tab dead buttons：把 `Drawer/Modal` 通过 `defineEmits` 串到 CaseDetailView
 6. **P2/P3** 集中作为 R23 文案/UX 批次提交
+
+---
+
+## 8. Land 状态（2026-05-02）
+
+> Guard 结果：`npm run fix` + `npm run guard` 全绿（admin 3348 PASS / server integration 31 PASS / 0 FAIL）
+>
+> HEAD commit：`089f2eb`（R22 bug 批次修复均合入此 commit 及前序 commit）
+
+| BUG ID | 等级 | 摘要 | Land 状态 | R23 验证 | 主要改动文件 | 防回归测试 |
+|---|---|---|---|---|---|---|
+| BUG-191 | P0 | 双层状态机 phase→stage 不同步 | ✅ LANDED | ✅ PASS | `cases.service.ts` (executePhaseTransitionUpdate SQL)、`businessPhase.ts` (PHASE_TO_STAGE_DEFAULT) | `cases.phase-transition-stage-sync.focused.test.ts` |
+| BUG-192 | P0 | PhaseTransitionPopover 选中状态泄漏 | ✅ LANDED | ✅ PASS | `PhaseTransitionPopover.vue` (watch menuOpen → reset) | `PhaseTransitionPopover.bug192.test.ts` |
+| BUG-193 | P1 | 案件列表 search 参数不生效 | ✅ LANDED | ✅ PASS | `cases.controller.ts`、`cases.controller-bodies.ts`、`cases.types.ts`、`cases.service.ts` (buildCaseListFilterPrefixed)、`search.controller.ts`、`search.service.ts` | `cases.controller.list-search.test.ts`、`search.controller.test.ts`、`search.service.test.ts` |
+| BUG-194 | P1 | Step3 自动生成资料清单不生效 | ✅ LANDED | ⚠️ CONDITIONAL | `cases.service.ts` (resolveChecklistItems + runCreateTransaction)、`bmvTemplateConfig.ts` | `cases.service.create-checklist-tasks.focused.test.ts` |
+| BUG-195 | P1 | Step3 自动创建初始任务不生效 | ✅ LANDED | ✅ PASS | `cases.service.ts` (insertInitialTasks)、`tasks.service.ts` | `cases.service.create-initial-tasks.bug195.test.ts` |
+| BUG-196 | P1 | Billing/Tasks Tab 4 个 dead button | ✅ LANDED | ✅ PASS | `CaseBillingTab.vue` (defineEmits)、`CaseTasksTab.vue` (defineEmits)、`CaseDetailView.vue` (接住 emits) | `CaseDetailView.actions.test.ts` |
+| BUG-197 | P2 | Export ZIP 用原生 alert | ✅ LANDED | ✅ PASS | `CaseDetailView.vue` (alert → useToast) | `CaseDetailView.actions.test.ts` |
+| BUG-198 | P2 | Validation Tab 多个按钮无 handler | ✅ LANDED | ✅ PASS | `CaseValidationTab.vue`、`CaseValidationSupport.vue` (disabled + tooltip) | — (UI 占位，无逻辑分支) |
+| BUG-199 | P2 | PhaseTransitionPopover 缺当前→目标对照 | ✅ LANDED | ✅ PASS | `PhaseTransitionPopover.vue` (currentPhase prop + header sub-title) | `PhaseTransitionPopover.test.ts` |
+| BUG-200 | P2 | 中途撤案路径缺失 | ✅ LANDED | ✅ PASS | `businessPhase.ts` (PHASE_TRANSITIONS 全非终态→CLOSED_FAILED + MANUAL_CANCEL_REASON_CODES)、`PhaseTransitionPopover.vue` (cancelReasonPresets chips)、`i18n/{zh-CN,ja-JP,en-US}/cases.ts` (cancelReasonPresets 三语) | `cases.bug200-mid-cancel.focused.test.ts`、`PhaseTransitionPopover.bug200.test.ts` |
+| BUG-201 | P3 | Step1 标题被覆盖 | ✅ LANDED | ✅ PASS | `useCreateCaseModel.ts` (titleDirty flag)、`CaseCreateStep1.vue` | `useCreateCaseModel.title-dirty.test.ts` |
+| BUG-202 | P3 | stage URL deeplink 非法值静默忽略 | ✅ LANDED | ✅ PASS | `useCaseListModel.ts` (isValidStageId check + toast)、`query.ts` | `useCaseListModel.invalidStage.test.ts` |
+| BUG-203 | P3 | Local Admin 触发跨组校验 | ✅ LANDED | ✅ PASS | `useCreateCaseModel.ts` (ownerGroup===null 豁免)、`useCreateCaseModelActions.ts` | `useCreateCaseModel.local-admin-cross-group.test.ts` |
+| BUG-204 | P3 | PaymentModal 金额 max 反向 | ✅ LANDED | ✅ PASS | `PaymentModal.vue` (:max="node.amount") | `PaymentModal.bug204.test.ts` |
+| BUG-205 | P3 | form-field a11y 缺 id/name | ✅ LANDED | ✅ PASS | `CaseEditModal.vue`、`PaymentModal.vue` (补 id/name) | `PaymentModal.bug205.test.ts` |
+
+### 8.1 统计
+
+| 状态 | 数量 | 明细 |
+|---|---|---|
+| ✅ LANDED | 15 | BUG-191~205 全部 |
+| 📌 DEFERRED | 0 | — |
+| 合计 | 15 | 2 P0 + 4 P1 + 4 P2 + 5 P3 |
+
+### 8.2 R23 回归走查结果（2026-05-02 完成）
+
+> R23 走查文档：`33-案件全流程chrome-devtools-mcp深度审计-第二轮.md`
+> R23 截屏目录：`audit-cases-mcp-r2/`
+
+- **14/15 PASS**：BUG-191~193, 195~200, 201~205 全部在真实浏览器中通过回归验证（含 R22-B 批 BUG-200）
+- **1 CONDITIONAL**：BUG-194（代码修复正确，dev DB 缺模板种子数据导致运行时 document_items=0）
+- **0 FAIL**：无新增回归缺陷
+- **BUG-200**：✅ LANDED + ✅ PASS（R22-B 批落地，WAITING_MATERIAL → CLOSED_FAILED 预设 chip 提交验证通过）
+
+### 8.3 遗留建议
+
+1. ~~BUG-200 PM 决策闭环后补 transition 路径 + 单测~~ → ✅ 已落地（全非终态→CLOSED_FAILED + 预设撤案原因 4 码 + 前端 chips + 3 server tests + 8 admin tests）
+2. BUG-194 需补 dev DB 种子脚本中经营管理（认定 4 个月）的 document_checklist 模板数据
+3. 全局搜索（BUG-193 关联的 search 模块）需覆盖 `applicant_name` join 路径的性能回归
 

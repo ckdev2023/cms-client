@@ -101,6 +101,8 @@ defineEmits<{
               <span class="review-modal__required">*</span>
             </label>
             <textarea
+              id="doc-review-rejectReason"
+              name="docReviewRejectReason"
               class="review-modal__textarea"
               :value="rejectReason"
               :placeholder="t('documents.review.rejectReasonPlaceholder')"

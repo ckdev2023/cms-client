@@ -504,6 +504,7 @@ function onOpenCreateTask(): void {
         :available-targets="phaseMenu.availableTargets.value"
         :submitting="phaseMenu.submitting.value"
         :error-message="phaseMenu.errorMessage.value"
+        :error-code="phaseMenu.errorCode.value"
         @close="phaseMenu.closeMenu()"
         @submit="onPhaseSubmit"
       />

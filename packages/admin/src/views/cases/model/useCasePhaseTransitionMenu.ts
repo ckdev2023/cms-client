@@ -4,56 +4,12 @@ import type { BusinessPhaseId } from "../constantsBusinessPhase";
 import { BUSINESS_PHASES } from "../constantsBusinessPhase";
 import type { CaseRepository } from "./CaseRepository";
 import { CaseRepositoryError } from "./CaseRepository";
+import { getAvailablePhaseTargets } from "./businessPhaseTransitions";
 
-const PHASE_TRANSITIONS: Readonly<Record<string, readonly string[]>> = {
-  CONSULTING: ["CONTRACTED"],
-  CONTRACTED: ["WAITING_MATERIAL"],
-  WAITING_MATERIAL: ["MATERIAL_PREPARING"],
-  MATERIAL_PREPARING: ["REVIEWING"],
-  REVIEWING: ["APPLYING"],
-  APPLYING: ["UNDER_REVIEW"],
-  UNDER_REVIEW: ["APPROVED", "REJECTED", "NEED_SUPPLEMENT"],
-  NEED_SUPPLEMENT: ["SUPPLEMENT_PROCESSING"],
-  SUPPLEMENT_PROCESSING: ["UNDER_REVIEW"],
-  APPROVED: ["WAITING_PAYMENT"],
-  REJECTED: ["CLOSED_FAILED"],
-  WAITING_PAYMENT: ["COE_SENT"],
-  COE_SENT: ["VISA_APPLYING"],
-  VISA_APPLYING: ["SUCCESS", "VISA_REJECTED"],
-  SUCCESS: ["RESIDENCE_PERIOD_RECORDED"],
-  VISA_REJECTED: ["CLOSED_FAILED"],
-  RESIDENCE_PERIOD_RECORDED: ["RENEWAL_REMINDER_SCHEDULED"],
-  RENEWAL_REMINDER_SCHEDULED: ["CLOSED_SUCCESS"],
-  CLOSED_SUCCESS: [],
-  CLOSED_FAILED: [],
-};
-
-const TERMINAL_PHASES: ReadonlySet<string> = new Set([
-  "CLOSED_SUCCESS",
-  "CLOSED_FAILED",
-]);
-
-/**
- * 判断业务阶段是否为终态。
- *
- * @param phase - 业务阶段代码
- * @returns 是否为终态（CLOSED_SUCCESS 或 CLOSED_FAILED）
- */
-export function isTerminalPhase(phase: string): boolean {
-  return TERMINAL_PHASES.has(phase);
-}
-
-/**
- * 取得当前阶段可推进的目标阶段列表。
- *
- * @param currentPhase - 当前业务阶段代码
- * @returns 可达目标阶段数组，未知阶段返回空数组
- */
-export function getAvailablePhaseTargets(
-  currentPhase: string,
-): readonly string[] {
-  return PHASE_TRANSITIONS[currentPhase] ?? [];
-}
+export {
+  getAvailablePhaseTargets,
+  isTerminalPhase,
+} from "./businessPhaseTransitions";
 
 /**
  * 判断字符串是否为合法的业务阶段代码。
@@ -86,6 +42,10 @@ export interface PhaseTransitionMenuState {
    */
   errorMessage: Ref<string | null>;
   /**
+   * 服务端返回的错误码（如 `CASE_TRANSITION_NOT_ALLOWED`），用于 i18n 映射。
+   */
+  errorCode: Ref<string | null>;
+  /**
    *
    */
   openMenu: () => void;
@@ -109,11 +69,26 @@ interface PhaseTransitionMenuInput {
   onSuccess: () => Promise<void>;
 }
 
-function extractErrorMessage(e: unknown): string {
+/**
+ * 从异常中提取服务端错误码与原始消息。
+ *
+ * @param e - 捕获到的异常对象
+ * @returns 错误码与原始消息
+ */
+export function extractErrorCode(e: unknown): {
+  code: string | null;
+  raw: string;
+} {
   if (e instanceof CaseRepositoryError) {
-    return e.serverErrorCode ?? e.message;
+    return {
+      code: e.serverErrorCode ?? null,
+      raw: e.message,
+    };
   }
-  return e instanceof Error ? e.message : String(e);
+  return {
+    code: null,
+    raw: e instanceof Error ? e.message : String(e),
+  };
 }
 
 async function doPerformTransition(
@@ -121,6 +96,7 @@ async function doPerformTransition(
   state: {
     submitting: Ref<boolean>;
     errorMessage: Ref<string | null>;
+    errorCode: Ref<string | null>;
     menuOpen: Ref<boolean>;
   },
   toPhase: string,
@@ -129,6 +105,7 @@ async function doPerformTransition(
   if (state.submitting.value) return false;
   state.submitting.value = true;
   state.errorMessage.value = null;
+  state.errorCode.value = null;
   try {
     await input.repo.transitionPhase(input.getCaseId(), {
       toPhase,
@@ -139,7 +116,9 @@ async function doPerformTransition(
     await input.onSuccess();
     return true;
   } catch (e) {
-    state.errorMessage.value = extractErrorMessage(e);
+    const extracted = extractErrorCode(e);
+    state.errorCode.value = extracted.code;
+    state.errorMessage.value = extracted.raw;
     return false;
   } finally {
     state.submitting.value = false;
@@ -162,6 +141,7 @@ export function useCasePhaseTransitionMenu(
   const menuOpen = ref(false);
   const submitting = ref(false);
   const errorMessage = ref<string | null>(null);
+  const errorCode = ref<string | null>(null);
 
   const availableTargets = computed<readonly string[]>(() => {
     const phase = input.detail.value?.businessPhase;
@@ -169,15 +149,17 @@ export function useCasePhaseTransitionMenu(
     return getAvailablePhaseTargets(phase);
   });
 
-  const state = { submitting, errorMessage, menuOpen };
+  const state = { submitting, errorMessage, errorCode, menuOpen };
 
   return {
     menuOpen,
     availableTargets,
     submitting,
     errorMessage,
+    errorCode,
     openMenu: () => {
       errorMessage.value = null;
+      errorCode.value = null;
       menuOpen.value = true;
     },
     closeMenu: () => {

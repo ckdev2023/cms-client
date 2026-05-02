@@ -69,6 +69,7 @@ watch(
   >
     <input
       :id="inputId"
+      :name="inputId"
       ref="inputRef"
       class="basic-info__file-input"
       type="file"

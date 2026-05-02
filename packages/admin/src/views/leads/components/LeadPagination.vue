@@ -28,7 +28,12 @@ const hasNext = computed(() => {
 <template>
   <div class="lead-pagination">
     <div class="lead-pagination__summary">
-      {{ t("leads.list.pagination.summary", { start, end, total }) }}
+      <template v-if="total === 0">
+        {{ t("leads.list.pagination.empty") }}
+      </template>
+      <template v-else>
+        {{ t("leads.list.pagination.summary", { start, end, total }) }}
+      </template>
     </div>
     <div class="lead-pagination__buttons">
       <button

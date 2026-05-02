@@ -91,6 +91,8 @@ function fmtCreatedAt(iso: string | null | undefined): string {
     <template v-else>
       <div class="group-list-panel__toolbar">
         <select
+          id="settings-group-statusFilter"
+          name="settingsGroupStatusFilter"
           class="group-list-panel__filter"
           :value="props.statusFilter"
           :aria-label="t('settings.group.filter.all')"

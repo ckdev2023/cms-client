@@ -64,6 +64,8 @@ defineEmits<{
       </div>
 
       <SearchField
+        id="lead-filter-search"
+        name="leadSearch"
         :model-value="search ?? ''"
         :placeholder="t('leads.list.searchPlaceholder')"
         variant="inline"

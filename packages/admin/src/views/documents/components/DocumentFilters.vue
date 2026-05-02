@@ -38,6 +38,8 @@ defineEmits<{
   <section class="doc-filters">
     <div class="doc-filters__row">
       <SearchField
+        id="doc-filter-search"
+        name="docSearch"
         class="doc-filters__search"
         :model-value="search ?? ''"
         :placeholder="t('documents.list.searchPlaceholder')"
@@ -48,6 +50,8 @@ defineEmits<{
 
     <div class="doc-filters__selects">
       <select
+        id="doc-filter-status"
+        name="docFilterStatus"
         class="doc-filters__select"
         :value="status ?? ''"
         @change="
@@ -67,6 +71,8 @@ defineEmits<{
       </select>
 
       <select
+        id="doc-filter-case"
+        name="docFilterCase"
         class="doc-filters__select doc-filters__select--case"
         :value="caseId ?? ''"
         @change="
@@ -80,6 +86,8 @@ defineEmits<{
       </select>
 
       <select
+        id="doc-filter-provider"
+        name="docFilterProvider"
         class="doc-filters__select"
         :value="provider ?? ''"
         @change="

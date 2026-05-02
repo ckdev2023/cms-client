@@ -119,6 +119,8 @@ function createRepository(
   };
 }
 
+let activeWrapper: ReturnType<typeof mount> | null = null;
+
 async function mountView(customerId = "cust-001") {
   const router = createRouter({
     history: createMemoryHistory(),
@@ -144,6 +146,7 @@ async function mountView(customerId = "cust-001") {
   });
 
   await flushPromises();
+  activeWrapper = wrapper;
   return { wrapper, router };
 }
 
@@ -152,7 +155,12 @@ describe("CustomerDetailView", () => {
     setAppLocale("en-US");
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    if (activeWrapper) {
+      activeWrapper.unmount();
+      activeWrapper = null;
+    }
+    await flushPromises();
     mockedRepository.current = null;
     document.body.innerHTML = "";
   });

@@ -76,6 +76,8 @@ defineEmits<{
               <span class="waive-modal__required">*</span>
             </label>
             <select
+              id="doc-waive-reasonCode"
+              name="docWaiveReasonCode"
               class="waive-modal__select"
               :value="reasonCode"
               @change="
@@ -105,6 +107,8 @@ defineEmits<{
               <span v-if="noteRequired" class="waive-modal__required">*</span>
             </label>
             <textarea
+              id="doc-waive-reasonNote"
+              name="docWaiveReasonNote"
               class="waive-modal__textarea"
               :value="reasonNote"
               :placeholder="t('documents.waive.reasonNotePlaceholder')"

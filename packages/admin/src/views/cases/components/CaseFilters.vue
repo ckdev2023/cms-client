@@ -82,6 +82,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
       />
 
       <SearchField
+        id="case-filter-search"
+        name="caseSearch"
         class="case-filters__search"
         :model-value="search"
         :placeholder="t('cases.list.searchPlaceholder')"
@@ -106,6 +108,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
 
     <div class="case-filters__selects">
       <select
+        id="case-filter-stage"
+        name="caseFilterStage"
         class="case-filters__select"
         :value="stage"
         @change="
@@ -122,6 +126,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
       </select>
 
       <select
+        id="case-filter-owner"
+        name="caseFilterOwner"
         class="case-filters__select"
         :value="owner"
         @change="
@@ -142,6 +148,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
       </select>
 
       <select
+        id="case-filter-group"
+        name="caseFilterGroup"
         class="case-filters__select"
         :value="group"
         @change="
@@ -162,6 +170,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
       </select>
 
       <select
+        id="case-filter-risk"
+        name="caseFilterRisk"
         class="case-filters__select"
         :value="risk"
         @change="
@@ -178,6 +188,8 @@ const validationLabels = computed<Record<string, string>>(() => ({
       </select>
 
       <select
+        id="case-filter-validation"
+        name="caseFilterValidation"
         class="case-filters__select"
         :value="validation"
         @change="

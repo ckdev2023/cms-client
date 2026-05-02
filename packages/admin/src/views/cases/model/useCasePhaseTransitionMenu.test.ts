@@ -111,6 +111,7 @@ describe("getAvailablePhaseTargets", () => {
       "APPROVED",
       "REJECTED",
       "NEED_SUPPLEMENT",
+      "CLOSED_FAILED",
     ]);
   });
 
@@ -168,6 +169,7 @@ describe("useCasePhaseTransitionMenu", () => {
       "APPROVED",
       "REJECTED",
       "NEED_SUPPLEMENT",
+      "CLOSED_FAILED",
     ]);
   });
 

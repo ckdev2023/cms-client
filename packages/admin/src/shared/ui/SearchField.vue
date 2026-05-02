@@ -15,6 +15,8 @@ const props = withDefaults(
     placeholder?: string;
     variant?: SearchFieldVariant;
     label?: string;
+    id?: string;
+    name?: string;
   }>(),
   {
     modelValue: "",
@@ -57,6 +59,8 @@ function onInput(event: Event) {
     <input
       type="search"
       class="ui-search__input"
+      :id="props.id"
+      :name="props.name"
       :value="props.modelValue"
       :placeholder="props.placeholder"
       :aria-label="props.label ?? props.placeholder"

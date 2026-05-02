@@ -72,6 +72,8 @@ defineEmits<{
       </div>
 
       <SearchField
+        id="customer-filter-search"
+        name="customerSearch"
         class="customer-filters__search"
         :model-value="search ?? ''"
         :placeholder="t('customers.list.searchPlaceholder')"
@@ -82,6 +84,8 @@ defineEmits<{
 
     <div class="customer-filters__selects">
       <select
+        id="customer-filter-group"
+        name="customerFilterGroup"
         class="customer-filters__select"
         :disabled="optionsLoading && (groupOptions?.length ?? 0) === 0"
         :aria-busy="optionsLoading && (groupOptions?.length ?? 0) === 0"
@@ -113,6 +117,8 @@ defineEmits<{
       </select>
 
       <select
+        id="customer-filter-owner"
+        name="customerFilterOwner"
         class="customer-filters__select"
         :disabled="optionsLoading && (ownerOptions?.length ?? 0) === 0"
         :aria-busy="optionsLoading && (ownerOptions?.length ?? 0) === 0"
@@ -144,6 +150,8 @@ defineEmits<{
       </select>
 
       <select
+        id="customer-filter-activeCases"
+        name="customerFilterActiveCases"
         class="customer-filters__select"
         :value="activeCasesFilter ?? ''"
         @change="

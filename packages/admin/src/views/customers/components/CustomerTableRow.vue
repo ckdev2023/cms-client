@@ -81,6 +81,7 @@ const createCaseHref = computed(() =>
       <label class="ui-checkbox-hit">
         <input
           type="checkbox"
+          name="customerRowSelect"
           class="customer-row__checkbox"
           :checked="selected"
           :disabled="isDraft || undefined"

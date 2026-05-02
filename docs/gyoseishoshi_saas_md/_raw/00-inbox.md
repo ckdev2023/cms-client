@@ -105,3 +105,35 @@
   - 03-业务规则与不变量.md（撤案 guard 规则）
   Owner：PM
   状态：待决策
+
+  ---
+  **PM 决策 Gate（BUG-200 — 中途撤案路径）**
+  以下 3 项全部答复后方可开始编码，请在各项 `[ ]` 处标记选择。
+
+  **Q1. 出边范围：是否为所有非终态 phase 增加 → CLOSED_FAILED？**
+  - [x] 是（推荐）——为以下 11 个非终态 phase 各追加 `CLOSED_FAILED` 出边：
+    `CONSULTING / CONTRACTED / WAITING_MATERIAL / MATERIAL_PREPARING / REVIEWING / APPLYING / UNDER_REVIEW / NEED_SUPPLEMENT / SUPPLEMENT_PROCESSING / WAITING_PAYMENT / COE_SENT`
+    （不含成功链路 phase：`APPROVED / SUCCESS / RESIDENCE_PERIOD_RECORDED / RENEWAL_REMINDER_SCHEDULED`；
+     `REJECTED / VISA_REJECTED` 已有 → CLOSED_FAILED）
+  - [ ] 否——仅保留现状（REJECTED / VISA_REJECTED → CLOSED_FAILED）
+  - [ ] 其它（请说明）：
+
+  **Q2. 撤案原因：是否枚举化预设？**
+  - [x] 是（推荐）——预设 4 项 reason code + 自由文本兜底：
+    | code | 中文 | 日文 | 英文 |
+    |---|---|---|---|
+    | `MID_CASE_WITHDRAWAL` | 中途撤案 | 途中撤回 | Mid-case withdrawal |
+    | `CLIENT_LOST_CONTACT` | 客户失联 | 連絡不通 | Client lost contact |
+    | `SWITCHED_TO_OTHER_FIRM` | 改委托其他事务所 | 他事務所へ変更 | Switched to other firm |
+    | `OTHER` | 其它（需填写文本） | その他（要入力） | Other (text required) |
+  - [ ] 否——仅自由文本，不做枚举
+  - [ ] 其它（请说明）：
+
+  **Q3. 账单 guard：中途撤案是否需要前置账单门禁？**
+  - [x] 否、跳过（推荐）——`assertCoeSendBillingGate` 仅约束 `COE_SENT` 正常结案路径，
+    中途撤案属于异常终止，不再追加额外账单门禁
+  - [ ] 是——撤案前必须确认账单已结清（请说明具体规则）：
+  - [ ] 其它（请说明）：
+
+  > 默认选项已用 `[x]` 标记。如 PM 同意推荐方案，确认即可；如有调整请修改标记并补充说明。
+  > 三项全部确认后，将此条目状态改为 `已决策`，随后启动 BUG-200 编码。

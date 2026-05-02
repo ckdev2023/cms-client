@@ -1,0 +1,2 @@
+-- noop: data backfill is not reversible — original (wrong) stage values are not preserved.
+-- To investigate pre-migration state, query case_stage_histories or restore from backup.

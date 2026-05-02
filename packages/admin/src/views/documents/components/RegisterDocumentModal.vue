@@ -60,6 +60,8 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               <span class="rdm__required">*</span>
             </label>
             <select
+              id="doc-register-case"
+              name="docRegisterCase"
               class="rdm__input rdm__select"
               :value="form.caseId"
               @change="$emit('update:field', 'caseId', selectValue($event))"
@@ -83,6 +85,8 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               <span class="rdm__required">*</span>
             </label>
             <select
+              id="doc-register-docItem"
+              name="docRegisterDocItem"
               class="rdm__input rdm__select"
               :value="form.docItemId"
               :disabled="!form.caseId"
@@ -114,6 +118,8 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               <span class="rdm__required">*</span>
             </label>
             <input
+              id="doc-register-relativePath"
+              name="docRegisterRelativePath"
               type="text"
               :class="[
                 'rdm__input',
@@ -137,6 +143,8 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("documents.register.fields.fileName") }}
             </label>
             <input
+              id="doc-register-fileName"
+              name="docRegisterFileName"
               type="text"
               class="rdm__input"
               :value="form.fileName"
@@ -153,6 +161,8 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("documents.register.fields.version") }}
             </label>
             <input
+              id="doc-register-version"
+              name="docRegisterVersion"
               type="text"
               class="rdm__input rdm__input--readonly"
               :value="versionLabel"

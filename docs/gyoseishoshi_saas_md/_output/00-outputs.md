@@ -25,6 +25,64 @@
 
 ## 最新产出
 
+- 时间：2026-05-02（R25 chrome-devtools-mcp 案件详情深度审计 第四轮）
+  问题：用户 R25 任务"使用 chrome-devtools-mcp 走查案件详情里面的所有 UI 问题和业务逻辑"——聚焦 admin `/cases/:id` 详情页，覆盖头部、10 个 tab、3 个 modal、状态流转 popover 与三语 i18n 一致性，找 R22/R23/R24 都没看到的纯详情页内部缺陷。
+  结论（TL;DR）：R25 共发现 14 条新 bug（P1 6 / P2 4 / P3 4），主要分布于：① **4 个死按钮**（BUG-214 文書 tab "生成文書"、BUG-215 期限 tab "添加期限"、BUG-217 沟通记录 tab "记录留痕"、BUG-218 任务 tab "新增任务" 跳转死循环）；② **3 处 i18n 拼写/漏译**（BUG-212 `common.comingSoon` 实际不存在应为 `shell.comingSoon` 4 处按钮 hover 暴露 raw key、BUG-221 ja-JP 字典 `cases.constants.logCategories.all = "全部"` 漏译应为"すべて"、BUG-214/215 整组件 hardcode 中日文混杂）；③ **2 处工程数据泄漏到业务用户**（BUG-213 基础信息 tab "案件编号" 显示 UUID 不是 `CASE-...`，"案件类型" / "申请类型" 显示原始 enum `biz_mgmt_cert_4m` / `certification` 没走已存在的 `cases.constants.caseTypes.*` / `applicationTypes.*` 字典；BUG-219/220 日志 tab `case_party.created` event_type / `案件创建：biz_mgmt_cert_4m` 直显未 i18n）；④ **1 处终态权限失守**（BUG-216 终态案件 header "编辑信息" / "状态流转" 按钮无 `:disabled="isReadonly"` 守门，点 "状态流转" 弹空 popover、点 "编辑信息" 弹完全可编辑 modal——与页面 readonly banner 矛盾）；⑤ **3 处 UX 文案 / 空状态**（BUG-222 概览侧边栏 "案件团队" / "近期动态" 空数据时无 placeholder 文案、BUG-223 "已归档（已归档）" 重复文案、BUG-224 编辑 modal 仅 3 字段）；⑥ **1 处业务一致性**（BUG-225 phase=WAITING_PAYMENT 的 case 允许 billing_records 为空，"等待尾款"语义被掏空）。同轮还回归确认 R24 BUG-208（admin↔server PHASE_TRANSITIONS）✅ 已 LANDED + R24 BUG-211（ja-JP "校験"→"検証"）✅ 已 LANDED；BUG-191/192/199/205 R23 LANDED 项 R25 仍 PASS。整轮 0 个 5xx / 0 console error。R25 走查教训：4 个死按钮归纳为"UI 入口先行、handler 没接"模式，2 个 i18n 拼写错误归纳为"i18n key 静态检查缺失"，建议加 lint：① 禁 `<button>` 不带 @click/:disabled；② 三语字典 key 集合一致性 + 静态 t() 调用检查；③ `.vue` template 禁汉字硬编码；④ 抽 `useCaseDetailGuard` composable 统一 readonly/terminal 守门。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/35-案件详情chrome-devtools-mcp深度审计-第四轮.md（R25 完整报告，含 8 节、§0.2 BUG-212~225 完整表）
+  - docs/gyoseishoshi_saas_md/_output/audit-cases-mcp-r4/（13 张取证截屏，覆盖 BUG-212~225）
+  - packages/admin/src/views/cases/components/CaseValidationTab.vue L83-86 / L243-246（BUG-212 `:title="t('common.comingSoon')"` 拼错位置）
+  - packages/admin/src/views/cases/components/CaseValidationSupport.vue L49-52 / L144-147（BUG-212 同样问题）
+  - packages/admin/src/views/cases/components/CaseInfoTab.vue L71/L84/L98（BUG-213 字段值未走 i18n）
+  - packages/admin/src/i18n/messages/cases/ja-JP.ts L727 / L729 / L80-84（caseTypes / applicationTypes 字典已存在，view 未调用）
+  - packages/admin/src/views/cases/components/CaseFormsTab.vue 整个文件（BUG-214 缺 useI18n + 7 处硬编码 + 0 个 @click）
+  - packages/admin/src/views/cases/components/CaseDeadlinesTab.vue L70/L85/L123-126/L134/L148/L150/L177（BUG-215 中日文混杂 + 0 个 @click）
+  - packages/admin/src/views/cases/components/CaseMessagesTab.vue L104-106（BUG-217 publish 按钮无 @click）
+  - packages/admin/src/views/cases/components/CaseTasksTab.vue L59 / L132 emit + CaseDetailView.vue 路由实现（BUG-218 跳转 /tasks 死循环）
+  - packages/admin/src/views/cases/CaseDetailView.vue L273（编辑信息）/ L309-313（状态流转）/ L353-355（readonly banner）（BUG-216 + BUG-223）
+  - packages/admin/src/views/cases/components/CaseLogTab.vue L106 + ja-JP/en-US/zh-CN.ts logCategories（BUG-219/220/221）
+  - packages/admin/src/views/cases/model/businessPhaseTransitions.ts（R24 BUG-208 LANDED 证据，admin 副本与 server 完全对齐）
+  影响面：
+  - 案件详情页 4 个核心写操作按钮（生成文書 / 添加期限 / 记录留痕 / 新增任务）UI 入口完全失效 —— 沟通记录 / 期限管理 / 文書生成 / 任务创建 这 4 类 P0 业务功能在 admin UI 上不可用 —— BUG-214/215/217/218 P1
+  - 终态案件权限失守：用户可能误改归档案件 —— BUG-216 P1
+  - 多处 i18n key 错误 / 漏翻 / 字段值未本地化 —— BUG-212/213/214/215/219/220/221 跨 P1~P2
+  - admin/server 两类 enum（caseType / applicationType）字典已建好但 view 没调用 —— BUG-213 修复成本极低
+  - "WAITING_PAYMENT 必须有 billing 记录" 业务约束在 server 缺失 —— BUG-225 P3
+  - **测试方法学层面**：14 条 bug 中 11 条是单元测试无法覆盖（死按钮无 emit / i18n 字典拼写错误 / 整组件未 useI18n / readonly 守门散布），需补 lint 规则 + render-snapshot 三语对比 + composable 守门 contract test
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：追加 R25 BUG-212~225 列表 + 4 个工程债务模式
+    Owner：研发 / QA
+    状态：待回灌（建议在下次 sprint planning 提 BUG-212 / BUG-213 / BUG-216 / BUG-217 / BUG-218 五条 P1 优先排期，配套加 i18n key 静态检查 lint）
+
+- 时间：2026-05-02（R24 chrome-devtools-mcp 案件全流程深度审计 第三轮）
+  问题：用户 R24 任务"chrome-devtools-mcp 测试案件的所有的流程"——在 R22 / R23 已覆盖的主链路之外，深挖回退分支（NEED_SUPPLEMENT/SUPPLEMENT_PROCESSING）、终态归档路径、admin↔server 协议同步、a11y、i18n、历史 backfill。R24 是否能找到 R22 / R23 没看见的新缺陷？
+  结论（TL;DR）：R24 共发现 1 P0 + 1 P1 + 1 P2 + 3 P3 共 6 条新 bug，并**证伪了 R23 BUG-200 ✅ PASS**。① **BUG-208 (P0)**：admin `useCasePhaseTransitionMenu.ts: PHASE_TRANSITIONS` 与 server `businessPhase.ts: PHASE_TRANSITIONS` 失同步——12 个非终态 phase 中 11 个 admin 缺 `CLOSED_FAILED` 出边，R22 BUG-200 中途撤案路径在 admin UI 上 100% 不可触发；用 API PoC `POST /api/cases/.../phase-transition {toPhase:'CLOSED_FAILED', ...}` 直接证明 server 接受、UI 死路；② **BUG-207 (P1)**：phase→stage backfill 缺失——R22 BUG-191 修复仅走新流转 SQL 路径，未补迁移回填，dev DB 中 9 条历史 case 含 R22 自己创建的 CASE-202605-0003 仍存在 `(stage, businessPhase)` 错位（如 `(S1, WAITING_PAYMENT)` 期望 S7、`(S1, SUCCESS)` 期望 S8）；③ **BUG-209 (P2)**：phase 流转失败时 server 错误码（`CASE_POST_APPROVAL_BILLING_BLOCKED`）直接渲染到 UI，未 i18n；④ **BUG-206 (P3)**：a11y form 字段 `id/name` 缺失 R23 修复范围不完整，列表 / Customers / Documents / Leads / Settings 多处仍违规（DevTools console 持续报 issue）；⑤ **BUG-210 (P3)**：Leads 0 条时分页文案显示 `1 - 0 条`；⑥ **BUG-211 (P3)**：日语 i18n `校験実行` 与同页 `検証...` 用字不一致。R22/R23 LANDED 项 R24 仍 PASS，仅 BUG-194 仍 CONDITIONAL（dev DB 模板种子未补）。整轮 0 个 5xx / 0 console error。R24 走查产出"测试盲区教训"：R23 把 BUG-200 标 ✅ PASS 是基于"代码审查 + 单测 PASS"——但 8 个 admin 单测都直接给 popover 注入 `availableTargets=['CLOSED_FAILED']`，绕过了 `useCasePhaseTransitionMenu` 的 `getAvailablePhaseTargets()` 真实查询，无法发现 admin 副本失同步；建议后续抽公共 `businessPhase` 模块给前后端共享，从结构上消除"两套副本"。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/34-案件全流程chrome-devtools-mcp深度审计-第三轮.md（R24 完整报告，含 §1.1 完整对比表 18 个 phase 的 admin↔server 差异）
+  - docs/gyoseishoshi_saas_md/_output/audit-cases-mcp-r3/（7 张取证截屏，覆盖 BUG-206/207/208/209）
+  - packages/admin/src/views/cases/model/useCasePhaseTransitionMenu.ts L8-29（admin 副本，11 个 phase 缺 CLOSED_FAILED）
+  - packages/server/src/modules/core/cases/businessPhase.ts L55-78（server 权威 PHASE_TRANSITIONS）
+  - packages/server/src/modules/core/cases/businessPhase.ts L112-134（PHASE_TO_STAGE_DEFAULT，BUG-207 期望映射）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.vue L259-266（BUG-209 error banner 渲染位置）
+  - 走查 PoC：CASE-202604-0007 phase=CONSULTING → POST `{toPhase:'CLOSED_FAILED', closeReason:'R24 audit', resultOutcome:'failure'}` → 201 + stage→S9，admin UI popover 始终不显示该选项
+  影响面：
+  - 案件全生命周期 admin UI 中途撤案路径（11 个非终态 phase 均不可达 CLOSED_FAILED）—— BUG-208 P0
+  - 案件列表 / 详情 header / Customer Detail 案件列表的 stage label 显示一致性 —— BUG-207 P1（9 条脏数据）
+  - 案件详情 phase 流转 popover 错误提示 —— BUG-209 P2
+  - admin 全站 form 控件 a11y 合规 —— BUG-206 P3（多页面）
+  - 列表页空状态文案、日语字形统一 —— BUG-210 / 211 P3
+  - **测试方法学层面**：单元测试无法覆盖"admin↔server 协议一致性"这类约束，需补端到端断言或共享 source-of-truth 模块
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/32-案件全流程chrome-devtools-mcp深度审计-第一轮.md（R22）
+    位置：§8 Land 状态表 BUG-200 行 + §8.2 R23 回归走查结果
+    Owner：研发 / QA
+    状态：待回灌（建议把 BUG-200 R23 ✅ PASS 改为 ⚠️ FALSIFIED，并指向 R24 BUG-208；R24 报告本身已自洽）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/33-案件全流程chrome-devtools-mcp深度审计-第二轮.md（R23）
+    位置：§0.2 表 BUG-200 行 + §1 BUG-200 详情 + §4 遗留与建议
+    Owner：研发 / QA
+    状态：待回灌（建议把 R23 BUG-200 ✅ PASS 标记为 ⚠️ FALSIFIED-BY-R24，并交叉链接到 BUG-208）
+
 - 时间：2026-05-02（BUG-189 FIX-LANDED）
   问题：[BUG-189] R20 走查新发现 P3——admin sidebar 站点标识 chip 在 zh-CN locale 下显示繁体 / 日文写法 `事務所管理`，应该使用简体 `事务所管理`（"務"→"务"）。en-US 此位置为 `Firm Ops`、ja-JP 为 `事務所管理`（与简体不同字形）。如何修复使三语 chip 各自符合本地化字形？
   结论（TL;DR）：BUG-189 ✅ FIX-LANDED。① `packages/admin/src/i18n/messages/zh-CN.ts` 把 `shell.nav.brandChip` 从 `"事務所管理"` 改为简体 `"事务所管理"`；② ja-JP 保持 `事務所管理`（日文字形）、en-US 保持 `Firm Ops` 不动；③ `packages/admin/src/shell/SideNav.test.ts` 原先 `expect(text).toBe(brandChip)`（静态导入）耦合到 nav-config 静态值，现拆分为：`renders the brand chip` 走 `zhCN.shell.nav.brandChip`；新增 `[BUG-189] zh-CN brand chip uses simplified characters (no traditional 務)`、`[BUG-189] ja-JP / en-US brand chip remain in their own scripts` 两条 locale-aware 断言（共 +2 case，共计 45 tests pass）；④ `packages/admin/src/shell/nav-config.ts` 静态 `brandChip` 常量保留 `事務所管理`（仅作为历史 marker，不在 SideNav.vue 渲染路径上）；⑤ chrome-devtools-mcp 走查 R20 已完成 zh-CN / ja-JP / en-US 三语 sidebar 验收。
@@ -1237,3 +1295,98 @@
     状态：已回灌（2026-05-01）
 
 - **2026-05-02 Dashboard Group 全闭环**：后端 `GET /api/dashboard/groups`（viewer 级）+ `scope=group` groupId 透传 + 前端动态 groupOptions 接入完成；`npm run fix && npm run guard` 全通过。计划文档：`dashboard_group_full_loop_c7dcfe19.plan.md`
+
+- 时间：2026-05-02（R22 案件全流程 chrome-devtools-mcp 深度审计 — 15 条 Bug 批量修复 LANDED）
+  问题：R22 以 chrome-devtools-mcp 真浏览器深度审计案件全生命周期（创建→受理→阶段切换→任务联动→计费→归档/失败），发现 2 P0 + 4 P1 + 4 P2 + 5 P3 = 15 条 Bug。如何批量修复并确保守门全绿？
+  结论（TL;DR）：15/15 条全部 ✅ LANDED（含 R22-B 批 BUG-200 中途撤案路径），`npm run fix` + `npm run guard` 全绿。核心修复：① P0 BUG-191 双层状态机 phase→stage 同步——`executePhaseTransitionUpdate` SQL 扩展 `PHASE_TO_STAGE_DEFAULT` 映射，6 条非终态 phase 的 stage 跟随推进；② P0 BUG-192 PhaseTransitionPopover 选中状态泄漏——watch menuOpen reset selectedPhase/closeReason/validationError；③ P1 BUG-193 案件列表 search 参数——服务端 `ListCasesQuery` 新增 search 字段 + `buildCaseListFilterPrefixed` ILIKE 匹配 case_name/case_no + 全局搜索模块新增；④ P1 BUG-194/195 自动生成资料清单/初始任务——`runCreateTransaction` 末尾调用 resolveChecklistItems + insertInitialTasks；⑤ P1 BUG-196 Billing/Tasks Tab dead button——defineEmits + CaseDetailView 接住事件；⑥ P2 BUG-197/198/199 alert→toast + disabled+tooltip + PhaseTransitionPopover currentPhase 对照；⑦ P2 BUG-200 中途撤案——PHASE_TRANSITIONS 全非终态→CLOSED_FAILED + MANUAL_CANCEL_REASON_CODES 4 码 + PhaseTransitionPopover 预设 chips + 3 server tests + 8 admin tests；⑧ P3 BUG-201/202/203/204/205 titleDirty flag + stage 非法值 toast + Local Admin 跨组豁免 + PaymentModal max + form-field a11y id/name。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/32-案件全流程chrome-devtools-mcp深度审计-第一轮.md（原始审计清单 + §8 Land 状态表）
+  - packages/server/src/modules/core/cases/cases.service.ts（BUG-191 executePhaseTransitionUpdate + BUG-193 buildCaseListFilterPrefixed + BUG-194 resolveChecklistItems + BUG-195 insertInitialTasks）
+  - packages/server/src/modules/core/cases/businessPhase.ts（BUG-191 PHASE_TO_STAGE_DEFAULT + BUG-200 PHASE_TRANSITIONS 全非终态→CLOSED_FAILED + MANUAL_CANCEL_REASON_CODES）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.vue（BUG-192 watch reset + BUG-199 currentPhase 对照 + BUG-200 cancelReasonPresets chips）
+  - packages/admin/src/views/cases/components/CaseBillingTab.vue（BUG-196 defineEmits）
+  - packages/admin/src/views/cases/components/CaseTasksTab.vue（BUG-196 defineEmits）
+  - packages/admin/src/views/cases/CaseDetailView.vue（BUG-196 事件接收 + BUG-197 alert→toast）
+  - packages/admin/src/views/cases/model/useCreateCaseModel.ts（BUG-201 titleDirty + BUG-203 Local Admin 豁免）
+  - packages/admin/src/views/cases/model/useCaseListModel.ts（BUG-202 isValidStageId + toast）
+  - packages/admin/src/views/billing/components/PaymentModal.vue（BUG-204 max + BUG-205 id/name）
+  影响面：
+  - server 案件状态机：phase→stage 同步闭环，6 条非终态 phase 的 stage 正确跟随
+  - server 案件搜索：search 参数前后端协议对齐，ILIKE 匹配 case_name/case_no
+  - server 案件创建：自动生成资料清单 + 初始任务，建案自动化主路径恢复
+  - admin 案件详情页：Billing/Tasks Tab 按钮可交互、Export ZIP 用 toast、Validation Tab 按钮 disabled+tooltip
+  - admin PhaseTransitionPopover：无 stale-submit 风险、当前→目标对照
+  - admin 建案向导：Step1 标题 dirty flag 保护、Local Admin 跨组豁免、stage 非法值友好 toast
+  - admin PaymentModal：金额 max 正确、form-field a11y 补齐
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/32-案件全流程chrome-devtools-mcp深度审计-第一轮.md
+    位置：§8 Land 状态表（新增）
+    Owner：研发
+    状态：已回灌（2026-05-02）
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md
+    位置：§3.0F 状态机冻结声明（追加 PHASE_TO_STAGE_DEFAULT 映射表 + phase→stage 同步规则）
+    Owner：研发
+    状态：待回灌（下一轮优先）
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：BUG-200 PM 决策项
+    Owner：产品
+    状态：已落地（PM 拍板"是"，BUG-200 ✅ LANDED）
+
+- 时间：2026-05-02（BUG-200 FIX-LANDED — R22-B 批中途撤案路径）
+  问题：[BUG-200] R22 P2——案件中途撤案路径缺失。`PHASE_TRANSITIONS` 仅允许 REJECTED / VISA_REJECTED → CLOSED_FAILED，不支持任意非终态 phase 走中途撤案。行政书士业务现实是客户中途撤案/失联/改委托是高频场景。
+  结论（TL;DR）：BUG-200 ✅ FIX-LANDED。PM 拍板"是"后实施 4 处改动：① `businessPhase.ts` `PHASE_TRANSITIONS` 给 12 个非终态 phase（CONSULTING~VISA_APPLYING，不含 APPROVED 以后的成功链路）追加 `CLOSED_FAILED` 出边；新增 `MANUAL_CANCEL_REASON_CODES = ["MID_CASE_WITHDRAWAL","CLIENT_LOST_CONTACT","SWITCHED_TO_OTHER_FIRM","OTHER"]`；② `PhaseTransitionPopover.vue` 在 `needsCloseReason` 块新增 4 个 preset chips，chip 点击写入 `closeReason.value`；选 OTHER 时要求文本输入非空；watch menuOpen 时 reset selectedPreset；③ i18n `{zh-CN,ja-JP,en-US}/cases.ts` 追加 `cancelReasonPresets` 4 码三语翻译；④ `cases.service.ts` `assertCloseReasonForFailedPhase` 已有基建（R22 原 REJECTED/VISA_REJECTED 路径），新增的 12 条出边自动命中。测试：`cases.bug200-mid-cancel.focused.test.ts`（3 tests：缺 closeReason → 400 / 带 closeReason → stage=S9,phase=CLOSED_FAILED,result_outcome='failure' / timeline payload 正确）+ `PhaseTransitionPopover.bug200.test.ts`（8 tests：4 preset 各自 payload / OTHER 空文本阻拦 / OTHER 自由文本 / 切换 preset / 选 preset 清 validation error / 非 CLOSED_FAILED 不含 closeReason）。Guard 全绿。
+  关键依据：
+  - packages/server/src/modules/core/cases/businessPhase.ts（PHASE_TRANSITIONS 12 条非终态→CLOSED_FAILED + MANUAL_CANCEL_REASON_CODES 4 码）
+  - packages/server/src/modules/core/cases/cases.service.ts（assertCloseReasonForFailedPhase 门禁）
+  - packages/server/src/modules/core/cases/cases.bug200-mid-cancel.focused.test.ts（3 tests）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.vue（cancelReasonPresets chips + selectedPreset + watch reset）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.bug200.test.ts（8 tests）
+  - packages/admin/src/i18n/messages/cases/{zh-CN,ja-JP,en-US}.ts（cancelReasonPresets 三语）
+  - docs/gyoseishoshi_saas_md/_output/32-案件全流程chrome-devtools-mcp深度审计-第一轮.md §8 BUG-200（✅ LANDED）
+  影响面：
+  - server 案件状态机：全非终态 phase 可走 → CLOSED_FAILED（带 closeReason 必填门禁）
+  - admin PhaseTransitionPopover：CLOSED_FAILED 选中后显示预设撤案原因 chips + OTHER 自由文本
+  - admin i18n：三语 cancelReasonPresets 4 码
+  - 不影响成功链路（APPROVED → WAITING_PAYMENT → COE_SENT → ...）：成功链路不追加 CLOSED_FAILED 出边
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/32-案件全流程chrome-devtools-mcp深度审计-第一轮.md
+    位置：§8 BUG-200 行（📌 DEFERRED → ✅ LANDED）+ §8.1 统计（15/15）+ §8.2 R23 结果（含 BUG-200）
+    Owner：研发
+    状态：已回灌（2026-05-02）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/33-案件全流程chrome-devtools-mcp深度审计-第二轮.md
+    位置：§0.2 BUG-200 行追加（✅ PASS）+ §0.3 统计更新（14 PASS / 0 DEFERRED）+ §1 BUG-200 走查详情追加 + §4 遗留建议更新
+    Owner：研发
+    状态：已回灌（2026-05-02）
+
+- 时间：2026-05-02（R24 案件全流程 chrome-devtools-mcp 深度审计第三轮 — 7 条 Bug 批量修复 LANDED）
+  问题：R24 以 chrome-devtools-mcp 真浏览器深度审计发现 1 P0 + 1 P1 + 1 P2 + 3 P3 共 6 条新 Bug（含证伪 R23 BUG-200 ✅ PASS），另有 BUG-194 dev DB 模板种子补齐。如何批量修复并确保守门全绿？
+  结论（TL;DR）：7/7 条全部 ✅ LANDED。核心修复：① **P0 BUG-208** admin↔server `PHASE_TRANSITIONS` 失同步——三层防御：抽 admin SSoT 文件 `businessPhaseTransitions.ts` 逐字镜像 server 表（含 11 条 CLOSED_FAILED 出边）、跨包一致性测试 `businessPhase.admin-consistency.test.ts`（`expect(admin).toEqual(server)` 深度比较）、popover 单测真实化（驱动 `useCasePhaseTransitionMenu` 真实查询 transition map，不再注入 `availableTargets`）+ 全 phase 矩阵断言 `useCasePhaseTransitionMenu.transitions.test.ts`；② **P1 BUG-207** phase→stage 历史脏数据回填——migration `042_phase_stage_consistency_backfill` 按 `PHASE_TO_STAGE_DEFAULT` 全量一致性回填 + focused test 9 条脏数据归位 + 幂等断言；③ **P2 BUG-209** phase 流转 server error code 三语 i18n——`extractErrorCode` + `t()` fallback + 9 错误码三语 key + 单测覆盖；④ **P3 BUG-206** 多页 form 字段补 `id/name`——Cases/Customers/Documents/Leads/Settings 6 类页面一次性补齐 + a11y audit test；⑤ **P3 BUG-210** Leads 空列表分页文案——`total===0` 分支 + 三语 empty key + 单测；⑥ **P3 BUG-211** 日语 `校験` → `検証` 4 处替换统一；⑦ **BUG-194** dev DB seed 补经営管理認定 4 個月 `document_checklist` 模板。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/34-案件全流程chrome-devtools-mcp深度审計-第三轮.md（R24 完整审计报告 §7 落库建议）
+  - packages/admin/src/views/cases/model/businessPhaseTransitions.ts（BUG-208 admin SSoT，镜像 server PHASE_TRANSITIONS）
+  - packages/server/src/modules/core/cases/businessPhase.admin-consistency.test.ts（BUG-208 跨包一致性守门）
+  - packages/admin/src/views/cases/model/useCasePhaseTransitionMenu.transitions.test.ts（BUG-208 全 phase 矩阵断言）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.bug200.test.ts（BUG-208 popover 单测真实化）
+  - packages/server/src/infra/db/migrations/042_phase_stage_consistency_backfill.up.sql（BUG-207 回填 migration）
+  - packages/server/src/modules/core/cases/cases.bug207-phase-stage-backfill.focused.test.ts（BUG-207 focused test）
+  - packages/admin/src/views/cases/model/useCasePhaseTransitionMenu.error-i18n.test.ts（BUG-209 错误码 i18n 测试）
+  - packages/admin/src/views/cases/components/PhaseTransitionPopover.vue（BUG-209 i18n template）
+  - packages/admin/src/i18n/messages/cases/{zh-CN,en-US,ja-JP}.ts（BUG-209 error i18n + BUG-211 校験→検証）
+  - packages/admin/src/views/__a11y__/form-field-id-name.audit.test.ts（BUG-206 a11y audit）
+  - packages/admin/src/views/leads/components/LeadPagination.vue（BUG-210）
+  - packages/admin/src/views/leads/components/LeadPagination.bug210.test.ts（BUG-210 单测）
+  - packages/server/src/scripts/seedDevData.ts（BUG-194 dev DB seed 模板补齐）
+  影响面：
+  - server 案件状态机：admin↔server PHASE_TRANSITIONS 一致性有跨包测试守门，任一边 drift 即 red
+  - server 案件 DB：历史 9 条 phase→stage 脏数据通过 migration 042 回填归位
+  - admin PhaseTransitionPopover：11 个非终态 phase 均可在 UI 上触发 → CLOSED_FAILED（R22 BUG-200 中途撤案路径真正可用）
+  - admin phase 流转 error：error banner 显示三语本地化文案而非 raw ALL_CAPS server code
+  - admin 全站 a11y：Cases/Customers/Documents/Leads/Settings 全部 form 控件补齐 `id`/`name`
+  - admin Leads 分页：0 条时显示"暂无数据"
+  - admin ja-JP：`校験` 统一为 `検証`
+  - dev DB seed：经営管理認定 4 個月 `document_checklist` 模板已补，BUG-194 从 CONDITIONAL 升级为 LANDED
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/34-案件全流程chrome-devtools-mcp深度審計-第三轮.md
+    位置：§7 落库建议每条尾部（追加 ✅ LANDED 标记）
+    Owner：研发
+    状态：已回灌（2026-05-02）

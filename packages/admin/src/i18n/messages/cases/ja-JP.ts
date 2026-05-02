@@ -262,6 +262,23 @@ const casesJaJP = {
         SWITCHED_TO_OTHER_FIRM: "他事務所へ委任変更",
         OTHER: "その他",
       },
+      errors: {
+        CASE_POST_APPROVAL_BILLING_BLOCKED:
+          "請求計画が未完了のため、許可後フェーズへ進めません",
+        CASE_CLOSE_REASON_REQUIRED: "失敗クローズにはクローズ理由が必要です",
+        CASE_TRANSITION_NOT_ALLOWED:
+          "現在のフェーズからこの遷移は許可されていません",
+        CASE_TRANSITION_CONFLICT:
+          "フェーズが別の操作で変更されました。画面を更新して再試行してください",
+        CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
+          "未確認の請求リスクがあります。先にリスクを確認してください",
+        CASE_BILLING_RISK_ACK_FAILED: "請求リスクの確認に失敗しました",
+        CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
+          "許可後フェーズに未確認の請求リスクがあります",
+        CASE_S9_READONLY: "案件はアーカイブ済みで操作できません",
+        CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
+          "失敗クローズには帰属情報が必要です",
+      },
     },
     terminalStage: {
       label: "結案済み",
@@ -800,7 +817,7 @@ const casesJaJP = {
       billingRecord: "請求",
       paymentRecord: "入金",
       reviewRecord: "復核",
-      validationRun: "校験",
+      validationRun: "検証",
       submissionPackage: "提出パッケージ",
       generatedDocument: "文書",
       reminder: "リマインダー",
@@ -821,9 +838,9 @@ const casesJaJP = {
     },
   },
   validation: {
-    refReport: "詳細は校験レポートを参照",
+    refReport: "詳細は検証レポートを参照",
     lastFailed:
-      "前回の校験で不合格項目が検出されました。修正後に再校験を実行してください。",
+      "前回の検証で不合格項目が検出されました。修正後に再検証を実行してください。",
   },
   deadlines: {
     types: {
@@ -848,7 +865,7 @@ const casesJaJP = {
   },
   coach: {
     docManagement: "資料管理",
-    runValidation: "校験実行",
+    runValidation: "検証実行",
   },
 } as const;
 

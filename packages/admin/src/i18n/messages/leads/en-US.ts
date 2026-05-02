@@ -59,6 +59,7 @@ const leadsEnUS = {
     },
     pagination: {
       summary: "Showing {start} – {end} of {total}",
+      empty: "No data",
       prev: "Previous",
       next: "Next",
     },

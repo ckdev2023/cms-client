@@ -70,6 +70,7 @@ function onFieldInput(key: string, value: string) {
           </label>
           <input
             :id="`sr-${field.key}`"
+            :name="field.key"
             type="text"
             class="storage-panel__input"
             :class="{ 'storage-panel__input--mono': field.key === 'rootPath' }"

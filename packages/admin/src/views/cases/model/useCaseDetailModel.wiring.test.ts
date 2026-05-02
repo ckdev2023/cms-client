@@ -309,7 +309,10 @@ describe("phaseMenu wiring (BUG-123)", () => {
 
   it("phaseMenu.availableTargets derived from detail businessPhase", async () => {
     const { model } = await createModel();
-    expect(model.phaseMenu.availableTargets.value).toEqual(["REVIEWING"]);
+    expect(model.phaseMenu.availableTargets.value).toEqual([
+      "REVIEWING",
+      "CLOSED_FAILED",
+    ]);
   });
 
   it("phaseMenu.performTransition calls repo.transitionPhase", async () => {

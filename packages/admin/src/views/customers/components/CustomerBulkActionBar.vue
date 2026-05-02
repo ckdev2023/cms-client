@@ -71,7 +71,9 @@ function applyGroup() {
           {{ t("customers.list.bulk.assignOwner") }}
         </span>
         <select
+          id="customer-bulk-assignOwner"
           v-model="ownerValue"
+          name="customerBulkOwner"
           class="customer-bulk-bar__select"
           :disabled="loading"
         >
@@ -99,7 +101,9 @@ function applyGroup() {
           {{ t("customers.list.bulk.changeGroup") }}
         </span>
         <select
+          id="customer-bulk-changeGroup"
           v-model="groupValue"
+          name="customerBulkGroup"
           class="customer-bulk-bar__select"
           :disabled="loading"
         >

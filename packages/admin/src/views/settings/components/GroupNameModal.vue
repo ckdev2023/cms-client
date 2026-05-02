@@ -83,6 +83,7 @@ function confirmLabelKey(): string {
           </label>
           <input
             id="groupNameInput"
+            name="groupName"
             type="text"
             class="gnm-input"
             :value="inputValue"

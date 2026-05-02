@@ -63,6 +63,7 @@ const form = reactive(props.followupForm);
             <select
               id="fuChannel"
               v-model="form.channel"
+              name="fuChannel"
               class="followup-form__input followup-form__select"
             >
               <option value="" disabled>
@@ -80,6 +81,7 @@ const form = reactive(props.followupForm);
             <input
               id="fuNextFollowUp"
               v-model="form.nextFollowUp"
+              name="fuNextFollowUp"
               type="datetime-local"
               class="followup-form__input"
             />
@@ -93,6 +95,7 @@ const form = reactive(props.followupForm);
           <textarea
             id="fuSummary"
             v-model="form.summary"
+            name="fuSummary"
             class="followup-form__input followup-form__textarea"
             rows="2"
             :placeholder="t('leads.detail.followupsTab.summaryPlaceholder')"
@@ -106,6 +109,7 @@ const form = reactive(props.followupForm);
             <input
               id="fuConclusion"
               v-model="form.conclusion"
+              name="fuConclusion"
               type="text"
               class="followup-form__input"
               :placeholder="
@@ -120,6 +124,7 @@ const form = reactive(props.followupForm);
             <input
               id="fuNextAction"
               v-model="form.nextAction"
+              name="fuNextAction"
               type="text"
               class="followup-form__input"
               :placeholder="

@@ -264,6 +264,24 @@ const casesEnUS = {
         SWITCHED_TO_OTHER_FIRM: "Switched to another firm",
         OTHER: "Other",
       },
+      errors: {
+        CASE_POST_APPROVAL_BILLING_BLOCKED:
+          "Billing plan incomplete; cannot proceed to post-approval phase",
+        CASE_CLOSE_REASON_REQUIRED:
+          "Close reason is required for failure closeout",
+        CASE_TRANSITION_NOT_ALLOWED:
+          "This transition is not allowed from the current phase",
+        CASE_TRANSITION_CONFLICT:
+          "Phase has been changed by another operation; please refresh and retry",
+        CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
+          "Unacknowledged billing risk; please confirm the risk first",
+        CASE_BILLING_RISK_ACK_FAILED: "Billing risk acknowledgment failed",
+        CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
+          "Unacknowledged billing risk in post-approval phase",
+        CASE_S9_READONLY: "Case is archived and read-only",
+        CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
+          "Attribution is required for failure closeout",
+      },
     },
     terminalStage: {
       label: "Closed",

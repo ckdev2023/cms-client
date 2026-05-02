@@ -59,6 +59,7 @@ const leadsZhCN = {
     },
     pagination: {
       summary: "显示 {start} - {end} 条，共 {total} 条",
+      empty: "暂无数据",
       prev: "上一页",
       next: "下一页",
     },

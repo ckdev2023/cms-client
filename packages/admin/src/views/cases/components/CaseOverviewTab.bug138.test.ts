@@ -75,12 +75,12 @@ describe("CaseOverviewTab BUG-138 — 下一关键动作按钮 label 走 i18n", 
       );
     });
 
-    it("ja-JP: docManagement → 資料管理 / runValidation → 校験実行", () => {
+    it("ja-JP: docManagement → 資料管理 / runValidation → 検証実行", () => {
       expect(resolveCoachLabel("cases.coach.docManagement", "ja-JP")).toBe(
         "資料管理",
       );
       expect(resolveCoachLabel("cases.coach.runValidation", "ja-JP")).toBe(
-        "校験実行",
+        "検証実行",
       );
     });
   });

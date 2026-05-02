@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 
 /** 业务阶段流转弹窗：选择目标阶段并提交流转请求。 */
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 interface PhaseTransitionPopoverProps {
   menuOpen?: boolean;
@@ -12,6 +12,7 @@ interface PhaseTransitionPopoverProps {
   availableTargets?: readonly string[];
   submitting?: boolean;
   errorMessage?: string | null;
+  errorCode?: string | null;
 }
 
 const props = withDefaults(defineProps<PhaseTransitionPopoverProps>(), {
@@ -20,6 +21,17 @@ const props = withDefaults(defineProps<PhaseTransitionPopoverProps>(), {
   availableTargets: () => [],
   submitting: false,
   errorMessage: null,
+  errorCode: null,
+});
+
+const localizedError = computed(() => {
+  if (!props.errorCode && !props.errorMessage) return null;
+  if (props.errorCode) {
+    const key = `cases.detail.phaseMenu.errors.${props.errorCode}`;
+    if (te(key)) return t(key);
+    return `[${props.errorCode}] ${props.errorMessage ?? ""}`;
+  }
+  return props.errorMessage;
 });
 
 const currentPhaseLabel = computed(() => {
@@ -257,12 +269,12 @@ function handleClose(): void {
           </div>
 
           <p
-            v-if="props.errorMessage"
+            v-if="localizedError"
             class="phase-popover__error"
             data-testid="phase-transition-error"
           >
             {{ t("cases.detail.phaseMenu.errorPrefix") }}:
-            {{ props.errorMessage }}
+            {{ localizedError }}
           </p>
         </div>
 

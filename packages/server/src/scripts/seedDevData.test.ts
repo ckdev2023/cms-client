@@ -39,6 +39,14 @@ void test("seedDevData.ts is importable as valid TypeScript", () => {
     source.includes("INSERT INTO document_requirement_file_refs"),
     "must seed document_requirement_file_refs",
   );
+  assert.ok(
+    source.includes("INSERT INTO template_versions"),
+    "must seed template_versions (BUG-194)",
+  );
+  assert.ok(
+    source.includes("INSERT INTO template_releases"),
+    "must seed template_releases (BUG-194)",
+  );
 });
 
 void test("seed IDs are valid UUIDs", () => {
@@ -48,6 +56,7 @@ void test("seed IDs are valid UUIDs", () => {
     "00000000-0000-4000-a000-000000000001",
     "00000000-0000-4000-a000-000000000010",
     "00000000-0000-4000-a000-000000000011",
+    "00000000-0000-4000-a000-000000000012",
     "00000000-0000-4000-a000-000000000100",
     "00000000-0000-4000-a000-000000000101",
     "00000000-0000-4000-a000-000000000102",
@@ -57,6 +66,8 @@ void test("seed IDs are valid UUIDs", () => {
     "00000000-0000-4000-a000-000000000200",
     "00000000-0000-4000-a000-000000000300",
     "00000000-0000-4000-a000-000000000400",
+    "00000000-0000-4000-a000-000000000500",
+    "00000000-0000-4000-a000-000000000501",
   ];
   for (const id of ids) {
     assert.ok(uuidRe.test(id), `Invalid UUID: ${id}`);
@@ -113,9 +124,40 @@ void test("seed script includes cross_case_link ref_mode", () => {
   );
 });
 
+void test("BUG-194: seed includes BMV case with business_manager_visa type", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevData.ts",
+  );
+  const source = fs.readFileSync(scriptPath, "utf8");
+  assert.ok(
+    source.includes("business_manager_visa"),
+    "must include business_manager_visa case_type_code",
+  );
+  assert.ok(source.includes("CASE-DEV-003"), "must include BMV case number");
+});
+
+void test("BUG-194: seed includes document_checklist template with rollout=all", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevData.ts",
+  );
+  const source = fs.readFileSync(scriptPath, "utf8");
+  assert.ok(
+    source.includes("document_checklist"),
+    "template kind must be document_checklist",
+  );
+  assert.ok(
+    source.includes("requirementBlueprint"),
+    "template config must include requirementBlueprint",
+  );
+  assert.ok(source.includes('"type":"all"'), "rollout must be type=all");
+});
+
 void test("INSERT table sequence includes all required entities", () => {
   const calls: QueryCall[] = [
     { sql: "INSERT INTO customers ..." },
+    { sql: "INSERT INTO cases ..." },
     { sql: "INSERT INTO cases ..." },
     { sql: "INSERT INTO cases ..." },
     { sql: "INSERT INTO document_items ..." },
@@ -127,6 +169,8 @@ void test("INSERT table sequence includes all required entities", () => {
     { sql: "INSERT INTO document_assets ..." },
     { sql: "INSERT INTO document_files ..." },
     { sql: "INSERT INTO document_requirement_file_refs ..." },
+    { sql: "INSERT INTO template_versions ..." },
+    { sql: "INSERT INTO template_releases ..." },
   ];
   const tables = collectInsertTables(calls);
   assert.ok(tables.includes("customers"));
@@ -135,4 +179,6 @@ void test("INSERT table sequence includes all required entities", () => {
   assert.ok(tables.includes("document_assets"));
   assert.ok(tables.includes("document_files"));
   assert.ok(tables.includes("document_requirement_file_refs"));
+  assert.ok(tables.includes("template_versions"));
+  assert.ok(tables.includes("template_releases"));
 });

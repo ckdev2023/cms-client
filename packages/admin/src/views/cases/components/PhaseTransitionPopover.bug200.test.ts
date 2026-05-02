@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import PhaseTransitionPopover from "./PhaseTransitionPopover.vue";
+import { getAvailablePhaseTargets } from "../model/businessPhaseTransitions";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../i18n/messages/cases/en-US";
@@ -20,12 +21,15 @@ function makeI18n() {
   });
 }
 
+const DEFAULT_PHASE = "WAITING_MATERIAL";
+
 function mountPopover(props: Record<string, unknown> = {}) {
+  const currentPhase = (props.currentPhase as string) ?? DEFAULT_PHASE;
   return mount(PhaseTransitionPopover, {
     props: {
       menuOpen: true,
-      currentPhase: "WAITING_MATERIAL",
-      availableTargets: ["MATERIAL_PREPARING", "CLOSED_FAILED"],
+      currentPhase,
+      availableTargets: getAvailablePhaseTargets(currentPhase),
       submitting: false,
       errorMessage: null,
       ...props,
