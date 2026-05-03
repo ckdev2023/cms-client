@@ -186,9 +186,16 @@ function hasForms(detail: CaseDetail): boolean {
   gap: 20px;
 }
 
+/* Card padding="none" 让分区/行自管理内边距；这里把头部内边距对齐
+   分区水平内边距 20px，避免标题与按钮贴卡片边、垂直方向呼吸感不足。 */
+.forms-tab :deep(.ui-card__header) {
+  padding: 14px 20px;
+}
+
 .forms-tab__title {
   margin: 0;
   font-size: 15px;
+  line-height: 1.4;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

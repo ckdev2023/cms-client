@@ -3,14 +3,19 @@ import { ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 
-/** 案件信息编辑弹窗：编辑案件名称、事务所、备注。 */
+/** 案件编辑弹窗：修改案件名、期限、风险等级等核心字段。 */
 const { t } = useI18n();
 
 interface CaseEditModalProps {
   open?: boolean;
   caseName?: string;
-  agency?: string;
-  memo?: string;
+  dueAt?: string;
+  acceptedAt?: string;
+  riskLevel?: string;
+  ownerUserId?: string;
+  assistantUserId?: string;
+  groupId?: string;
+  priority?: string;
   submitting?: boolean;
 }
 
@@ -18,30 +23,56 @@ const props = defineProps<CaseEditModalProps>();
 
 const emit = defineEmits<{
   close: [];
-  save: [fields: { caseName: string; agency: string; memo: string }];
+  save: [
+    fields: {
+      caseName: string;
+      dueAt: string;
+      acceptedAt: string;
+      riskLevel: string;
+      ownerUserId: string;
+      assistantUserId: string;
+      groupId: string;
+      priority: string;
+    },
+  ];
 }>();
 
 const localCaseName = ref(props.caseName ?? "");
-const localAgency = ref(props.agency ?? "");
-const localMemo = ref(props.memo ?? "");
+const localDueAt = ref(props.dueAt ?? "");
+const localAcceptedAt = ref(props.acceptedAt ?? "");
+const localRiskLevel = ref(props.riskLevel ?? "");
+const localOwnerUserId = ref(props.ownerUserId ?? "");
+const localAssistantUserId = ref(props.assistantUserId ?? "");
+const localGroupId = ref(props.groupId ?? "");
+const localPriority = ref(props.priority ?? "");
 
 watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
       localCaseName.value = props.caseName ?? "";
-      localAgency.value = props.agency ?? "";
-      localMemo.value = props.memo ?? "";
+      localDueAt.value = props.dueAt ?? "";
+      localAcceptedAt.value = props.acceptedAt ?? "";
+      localRiskLevel.value = props.riskLevel ?? "";
+      localOwnerUserId.value = props.ownerUserId ?? "";
+      localAssistantUserId.value = props.assistantUserId ?? "";
+      localGroupId.value = props.groupId ?? "";
+      localPriority.value = props.priority ?? "";
     }
   },
 );
 
-/** 提交编辑表单。 */
+/** 校验并提交编辑表单。 */
 function handleSave(): void {
   emit("save", {
     caseName: localCaseName.value.trim(),
-    agency: localAgency.value.trim(),
-    memo: localMemo.value.trim(),
+    dueAt: localDueAt.value.trim(),
+    acceptedAt: localAcceptedAt.value.trim(),
+    riskLevel: localRiskLevel.value.trim(),
+    ownerUserId: localOwnerUserId.value.trim(),
+    assistantUserId: localAssistantUserId.value.trim(),
+    groupId: localGroupId.value.trim(),
+    priority: localPriority.value.trim(),
   });
 }
 </script>
@@ -97,33 +128,122 @@ function handleSave(): void {
             />
           </label>
 
+          <div class="case-edit-modal__row">
+            <label class="case-edit-modal__field">
+              <span class="case-edit-modal__label">{{
+                t("cases.detail.editModal.fields.dueAt")
+              }}</span>
+              <input
+                id="case-edit-dueAt"
+                name="dueAt"
+                type="date"
+                class="case-edit-modal__input"
+                :value="localDueAt"
+                :disabled="props.submitting"
+                @input="localDueAt = ($event.target as HTMLInputElement).value"
+              />
+            </label>
+
+            <label class="case-edit-modal__field">
+              <span class="case-edit-modal__label">{{
+                t("cases.detail.editModal.fields.acceptedAt")
+              }}</span>
+              <input
+                id="case-edit-acceptedAt"
+                name="acceptedAt"
+                type="date"
+                class="case-edit-modal__input"
+                :value="localAcceptedAt"
+                :disabled="props.submitting"
+                @input="
+                  localAcceptedAt = ($event.target as HTMLInputElement).value
+                "
+              />
+            </label>
+          </div>
+
+          <div class="case-edit-modal__row">
+            <label class="case-edit-modal__field">
+              <span class="case-edit-modal__label">{{
+                t("cases.detail.editModal.fields.priority")
+              }}</span>
+              <input
+                id="case-edit-priority"
+                name="priority"
+                type="text"
+                class="case-edit-modal__input"
+                :value="localPriority"
+                :disabled="props.submitting"
+                @input="
+                  localPriority = ($event.target as HTMLInputElement).value
+                "
+              />
+            </label>
+
+            <label class="case-edit-modal__field">
+              <span class="case-edit-modal__label">{{
+                t("cases.detail.editModal.fields.riskLevel")
+              }}</span>
+              <input
+                id="case-edit-riskLevel"
+                name="riskLevel"
+                type="text"
+                class="case-edit-modal__input"
+                :value="localRiskLevel"
+                :disabled="props.submitting"
+                @input="
+                  localRiskLevel = ($event.target as HTMLInputElement).value
+                "
+              />
+            </label>
+          </div>
+
           <label class="case-edit-modal__field">
             <span class="case-edit-modal__label">{{
-              t("cases.detail.editModal.fields.agency")
+              t("cases.detail.editModal.fields.ownerUserId")
             }}</span>
             <input
-              id="case-edit-agency"
-              name="agency"
+              id="case-edit-ownerUserId"
+              name="ownerUserId"
               type="text"
               class="case-edit-modal__input"
-              :value="localAgency"
+              :value="localOwnerUserId"
               :disabled="props.submitting"
-              @input="localAgency = ($event.target as HTMLInputElement).value"
+              @input="
+                localOwnerUserId = ($event.target as HTMLInputElement).value
+              "
             />
           </label>
 
           <label class="case-edit-modal__field">
             <span class="case-edit-modal__label">{{
-              t("cases.detail.editModal.fields.memo")
+              t("cases.detail.editModal.fields.assistantUserId")
             }}</span>
-            <textarea
-              id="case-edit-memo"
-              name="memo"
-              class="case-edit-modal__textarea"
-              rows="4"
-              :value="localMemo"
+            <input
+              id="case-edit-assistantUserId"
+              name="assistantUserId"
+              type="text"
+              class="case-edit-modal__input"
+              :value="localAssistantUserId"
               :disabled="props.submitting"
-              @input="localMemo = ($event.target as HTMLTextAreaElement).value"
+              @input="
+                localAssistantUserId = ($event.target as HTMLInputElement).value
+              "
+            />
+          </label>
+
+          <label class="case-edit-modal__field">
+            <span class="case-edit-modal__label">{{
+              t("cases.detail.editModal.fields.groupId")
+            }}</span>
+            <input
+              id="case-edit-groupId"
+              name="groupId"
+              type="text"
+              class="case-edit-modal__input"
+              :value="localGroupId"
+              :disabled="props.submitting"
+              @input="localGroupId = ($event.target as HTMLInputElement).value"
             />
           </label>
         </div>
@@ -160,7 +280,9 @@ function handleSave(): void {
 
 .case-edit-modal {
   width: 100%;
-  max-width: 480px;
+  max-width: 560px;
+  max-height: 90vh;
+  overflow-y: auto;
   background: var(--color-bg-1, #fff);
   border-radius: var(--radius-lg);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
@@ -201,6 +323,12 @@ function handleSave(): void {
   gap: 16px;
 }
 
+.case-edit-modal__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .case-edit-modal__field {
   display: flex;
   flex-direction: column;
@@ -213,8 +341,7 @@ function handleSave(): void {
   color: var(--color-text-2);
 }
 
-.case-edit-modal__input,
-.case-edit-modal__textarea {
+.case-edit-modal__input {
   padding: 8px 12px;
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-md);
@@ -231,11 +358,6 @@ function handleSave(): void {
     opacity: 0.6;
     cursor: not-allowed;
   }
-}
-
-.case-edit-modal__textarea {
-  resize: vertical;
-  min-height: 80px;
 }
 
 .case-edit-modal__footer {

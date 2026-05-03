@@ -38,6 +38,7 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   CASE_WF_STEP_BILLING_GATE_BLOCKED: "wfStepBillingGateBlocked",
   CASE_WF_STEP_NOT_ALLOWED: "wfStepNotAllowed",
   CASE_REMINDER_CREATION_FAILED: "reminderCreationFailed",
+  CASE_WAITING_PAYMENT_BILLING_REQUIRED: "waitingPaymentBillingRequired",
 };
 
 /**
@@ -73,6 +74,7 @@ export function isGateBlockError(serverErrorCode: string | undefined): boolean {
     serverErrorCode === "CASE_POST_APPROVAL_BILLING_BLOCKED" ||
     serverErrorCode === "CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED" ||
     serverErrorCode === "CASE_SUCCESS_CLOSEOUT_BLOCKED" ||
-    serverErrorCode === "CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED"
+    serverErrorCode === "CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED" ||
+    serverErrorCode === "CASE_WAITING_PAYMENT_BILLING_REQUIRED"
   );
 }

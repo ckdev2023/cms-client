@@ -241,8 +241,13 @@ const casesJaJP = {
       title: "案件情報を編集",
       fields: {
         caseName: "案件名",
-        agency: "管轄機関",
-        memo: "メモ",
+        dueAt: "提出期限",
+        acceptedAt: "受理日",
+        riskLevel: "リスクレベル",
+        ownerUserId: "担当者",
+        assistantUserId: "副担当者",
+        groupId: "グループ",
+        priority: "優先度",
       },
       cancel: "キャンセル",
       save: "保存",
@@ -278,6 +283,8 @@ const casesJaJP = {
         CASE_S9_READONLY: "案件はアーカイブ済みで操作できません",
         CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
           "失敗クローズには帰属情報が必要です",
+        CASE_WAITING_PAYMENT_BILLING_REQUIRED:
+          "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください",
       },
     },
     terminalStage: {
@@ -500,6 +507,43 @@ const casesJaJP = {
       addTask: "タスクを追加",
       addInline: "新しいタスクを追加…",
       empty: "タスクがありません",
+      createModal: {
+        title: "タスク新規作成",
+        fields: {
+          title: "タスク名",
+          description: "説明",
+          priority: "優先度",
+          dueAt: "期日",
+          assignee: "担当者",
+          assigneePlaceholder: "ユーザー ID または氏名を入力",
+        },
+        validation: {
+          titleRequired: "タスク名を入力してください",
+        },
+        priorities: {
+          low: "低",
+          normal: "通常",
+          high: "高",
+          urgent: "緊急",
+        },
+        cancel: "キャンセル",
+        submit: "作成",
+      },
+    },
+    forms: {
+      generateModal: {
+        title: "書類生成",
+        fields: {
+          templateId: "テンプレート",
+          templatePlaceholder: "テンプレートなし（プレースホルダー処理）",
+          docTitle: "書類タイトル",
+          docTitlePlaceholder: "例: 申請理由書",
+          outputFormat: "出力形式",
+        },
+        cancel: "キャンセル",
+        submitting: "生成中…",
+        submit: "生成",
+      },
     },
     documents: {
       empty: {
@@ -801,6 +845,8 @@ const casesJaJP = {
       "現在のステップではこのワークフロー遷移は許可されていません。",
     reminderCreationFailed:
       "更新リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
+    waitingPaymentBillingRequired:
+      "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください。",
   },
   log: {
     category: {
@@ -861,6 +907,27 @@ const casesJaJP = {
       overdue: "{days}日超過",
       today: "本日",
       daysLeft: "あと{days}日",
+    },
+    createModal: {
+      title: "期限追加",
+      fields: {
+        targetType: "対象タイプ",
+        remindAt: "通知日",
+        kind: "期限種別",
+        memo: "メモ",
+        memoPlaceholder: "補足説明（任意）",
+      },
+      targetTypes: {
+        case: "案件の期限",
+        case_party_residence: "在留関連の期限",
+      },
+      kinds: {
+        residence_expiry: "在留期間満了",
+        renewal_reminder: "更新リマインド",
+        custom: "カスタム",
+      },
+      cancel: "キャンセル",
+      submit: "追加",
     },
   },
   coach: {

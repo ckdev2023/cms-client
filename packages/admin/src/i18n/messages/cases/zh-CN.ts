@@ -234,8 +234,13 @@ const casesZhCN = {
       title: "编辑案件信息",
       fields: {
         caseName: "案件名称",
-        agency: "管辖机构",
-        memo: "备注",
+        dueAt: "目标提交日期",
+        acceptedAt: "受理日期",
+        riskLevel: "风险等级",
+        ownerUserId: "负责人",
+        assistantUserId: "协办人",
+        groupId: "分组",
+        priority: "优先级",
       },
       cancel: "取消",
       save: "保存",
@@ -268,6 +273,8 @@ const casesZhCN = {
           "下签后存在未确认的收费风险",
         CASE_S9_READONLY: "案件已归档，无法操作",
         CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED: "失败结案需提供归因信息",
+        CASE_WAITING_PAYMENT_BILLING_REQUIRED:
+          "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段",
       },
     },
     terminalStage: {
@@ -480,6 +487,43 @@ const casesZhCN = {
       addTask: "新增任务",
       addInline: "添加新任务…",
       empty: "暂无待办任务",
+      createModal: {
+        title: "新增任务",
+        fields: {
+          title: "任务标题",
+          description: "描述",
+          priority: "优先级",
+          dueAt: "截止日期",
+          assignee: "负责人",
+          assigneePlaceholder: "输入用户 ID 或姓名",
+        },
+        validation: {
+          titleRequired: "请输入任务标题",
+        },
+        priorities: {
+          low: "低",
+          normal: "普通",
+          high: "高",
+          urgent: "紧急",
+        },
+        cancel: "取消",
+        submit: "创建",
+      },
+    },
+    forms: {
+      generateModal: {
+        title: "生成文書",
+        fields: {
+          templateId: "文書模板",
+          templatePlaceholder: "暂无模板（走占位流程）",
+          docTitle: "文書标题",
+          docTitlePlaceholder: "例如：申请理由书",
+          outputFormat: "输出格式",
+        },
+        cancel: "取消",
+        submitting: "生成中…",
+        submit: "生成",
+      },
     },
     documents: {
       empty: {
@@ -762,6 +806,8 @@ const casesZhCN = {
     wfStepBillingGateBlocked: "尾款未结清，不能发送 COE。请先完成尾款收取。",
     wfStepNotAllowed: "当前步骤不允许此业务子步骤流转。",
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
+    waitingPaymentBillingRequired:
+      "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段。",
   },
   log: {
     category: {
@@ -821,6 +867,27 @@ const casesZhCN = {
       overdue: "{days}日超期",
       today: "今日",
       daysLeft: "剩余{days}日",
+    },
+    createModal: {
+      title: "添加期限",
+      fields: {
+        targetType: "对象类型",
+        remindAt: "提醒日期",
+        kind: "期限类型",
+        memo: "备注",
+        memoPlaceholder: "补充说明（可选）",
+      },
+      targetTypes: {
+        case: "案件期限",
+        case_party_residence: "在留关联期限",
+      },
+      kinds: {
+        residence_expiry: "在留期间到期",
+        renewal_reminder: "续签提醒",
+        custom: "自定义",
+      },
+      cancel: "取消",
+      submit: "提交",
     },
   },
   coach: {

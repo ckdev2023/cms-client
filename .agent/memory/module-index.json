@@ -1,0 +1,610 @@
+{
+  "$schema_version": "0.1",
+  "generated_at": "2026-05-02",
+  "scope": "incremental-survey-v1",
+  "notes": "First-pass module index. Confidence is per entry. Only directory presence and package.json fields verified; no semantic deep-dive yet.",
+  "workspaces": {
+    "manager": "npm",
+    "lockfile": "package-lock.json",
+    "packages_glob": "packages/*",
+    "confidence": "High"
+  },
+  "packages": [
+    {
+      "id": "admin",
+      "path": "packages/admin",
+      "name": "@cms/admin",
+      "kind": "web-frontend",
+      "stack": ["vue3", "vite", "pinia", "vue-router", "vue-i18n", "arco-design"],
+      "entry": "src/main.ts",
+      "test_runner": "vitest",
+      "guard": ["check:deps", "typecheck", "lint", "test", "build", "jsdoc:lang:check"],
+      "confidence": "High"
+    },
+    {
+      "id": "mobile",
+      "path": "packages/mobile",
+      "name": "mobile",
+      "kind": "react-native-app",
+      "stack": ["expo", "react-native", "tamagui", "zustand", "react-navigation"],
+      "entry": "App.tsx -> src/app/App.tsx",
+      "test_runner": "jest",
+      "guard": ["lint", "typecheck", "arch:check", "feature:check", "lock:check", "secrets:check", "test"],
+      "layering": ["app", "features", "domain", "data", "infra", "shared"],
+      "confidence": "High"
+    },
+    {
+      "id": "server",
+      "path": "packages/server",
+      "name": "server",
+      "kind": "backend-api",
+      "stack": ["nestjs", "drizzle-orm", "postgres", "redis", "express", "rxjs"],
+      "entry": "src/main.ts",
+      "worker_entry": "src/worker.ts",
+      "test_runner": "node-test",
+      "integration_test_runner": "node-test + docker-compose pg",
+      "guard": ["lint", "typecheck", "arch:check", "db:migrations:check", "db:drizzle:check", "lock:check", "secrets:check", "test", "test:integration-pg:ci"],
+      "confidence": "High"
+    },
+    {
+      "id": "prototype",
+      "path": "packages/prototype",
+      "name": "prototype",
+      "kind": "static-prototype",
+      "confidence": "Medium",
+      "notes": "Only directory listing inspected; build/runtime usage not verified."
+    }
+  ],
+  "admin_modules": [
+    { "id": "admin.shell", "path": "packages/admin/src/shell", "role": "app-shell+nav+global-search", "confidence": "High" },
+    { "id": "admin.shared", "path": "packages/admin/src/shared", "role": "cross-feature-utilities", "subdirs": ["api", "model", "ui"], "confidence": "High" },
+    { "id": "admin.router", "path": "packages/admin/src/router", "role": "routing+auth-guard", "confidence": "High" },
+    { "id": "admin.auth", "path": "packages/admin/src/auth", "role": "admin-session+login", "confidence": "High" },
+    { "id": "admin.store", "path": "packages/admin/src/store", "role": "pinia-root", "confidence": "High" },
+    { "id": "admin.i18n", "path": "packages/admin/src/i18n", "role": "vue-i18n-messages", "confidence": "High" },
+    { "id": "admin.views.cases", "path": "packages/admin/src/views/cases", "role": "feature-cases", "confidence": "High", "size_signal": "very-large" },
+    { "id": "admin.views.customers", "path": "packages/admin/src/views/customers", "role": "feature-customers", "confidence": "High" },
+    { "id": "admin.views.billing", "path": "packages/admin/src/views/billing", "role": "feature-billing", "confidence": "High" },
+    { "id": "admin.views.documents", "path": "packages/admin/src/views/documents", "role": "feature-documents", "confidence": "High" },
+    { "id": "admin.views.leads", "path": "packages/admin/src/views/leads", "role": "feature-leads", "confidence": "High" },
+    { "id": "admin.views.conversations", "path": "packages/admin/src/views/conversations", "role": "feature-conversations", "confidence": "High" },
+    { "id": "admin.views.tasks", "path": "packages/admin/src/views/tasks", "role": "feature-tasks", "confidence": "High" },
+    { "id": "admin.views.dashboard", "path": "packages/admin/src/views/dashboard", "role": "feature-dashboard", "confidence": "High" },
+    { "id": "admin.views.settings", "path": "packages/admin/src/views/settings", "role": "feature-settings", "confidence": "High" },
+    { "id": "admin.views.auth", "path": "packages/admin/src/views/auth", "role": "feature-login-view", "confidence": "High" }
+  ],
+  "mobile_modules": [
+    { "id": "mobile.app", "path": "packages/mobile/src/app", "role": "container+navigation+providers", "confidence": "High" },
+    { "id": "mobile.shared", "path": "packages/mobile/src/shared", "role": "ui-primitives+errors+http-error", "confidence": "High" },
+    { "id": "mobile.infra", "path": "packages/mobile/src/infra", "role": "http+log+storage", "confidence": "High" },
+    { "id": "mobile.domain", "path": "packages/mobile/src/domain", "role": "pure-domain-types-and-repo-interfaces", "subdomains": ["auth", "billing", "case", "documents", "home", "inbox", "profile", "reminder"], "confidence": "High" },
+    { "id": "mobile.data", "path": "packages/mobile/src/data", "role": "repo-implementations+http-api", "subdomains": ["auth", "case", "documents", "home", "inbox", "profile"], "confidence": "High" },
+    { "id": "mobile.features.auth", "path": "packages/mobile/src/features/auth", "confidence": "High" },
+    { "id": "mobile.features.case", "path": "packages/mobile/src/features/case", "confidence": "High" },
+    { "id": "mobile.features.documents", "path": "packages/mobile/src/features/documents", "confidence": "High" },
+    { "id": "mobile.features.home", "path": "packages/mobile/src/features/home", "confidence": "High" },
+    { "id": "mobile.features.inbox", "path": "packages/mobile/src/features/inbox", "confidence": "High" },
+    { "id": "mobile.features.profile", "path": "packages/mobile/src/features/profile", "confidence": "High" }
+  ],
+  "server_modules": {
+    "core": [
+      "auth", "billing", "case-parties", "cases", "communication-logs", "companies",
+      "contact-persons", "conversations", "customers", "dashboard",
+      "document-assets", "document-files", "document-items", "document-requirement-file-refs",
+      "generated-documents", "groups", "jobs", "leads", "model", "organizations",
+      "reminders", "residence-periods", "review-records", "search", "submission-packages",
+      "tasks", "tenancy", "timeline", "validation-runs"
+    ],
+    "portal": ["app-users", "auth", "conversations", "intake", "leads", "messages", "user-documents", "model"],
+    "feature_flags": ["feature-flags"],
+    "templates": ["templates"],
+    "custom": ["custom/tenant-a"],
+    "infra": ["db", "redis", "storage", "queue", "notification", "translation", "utils"],
+    "config": ["config/env"],
+    "confidence": "High",
+    "notes": "Names mirror directory structure under packages/server/src/modules and packages/server/src/infra."
+  },
+  "shared_infrastructure": [
+    { "id": "root.scripts.guard", "path": "package.json#scripts.guard", "role": "aggregate-guard-across-workspaces", "confidence": "High" },
+    { "id": "root.scripts.fix", "path": "package.json#scripts.fix", "role": "aggregate-format+lint-fix", "confidence": "High" },
+    { "id": "root.husky", "path": ".husky/", "role": "git-hooks-via-husky", "confidence": "High" },
+    { "id": "root.lint-staged", "path": "package.json#lint-staged", "role": "pre-commit-formatters", "confidence": "High" },
+    { "id": "root.commitlint", "path": "commitlint.config.cjs", "role": "conventional-commits", "confidence": "High" },
+    { "id": "scripts.local", "path": "scripts/local", "role": "compose-up/down+dev-bootstrap", "confidence": "High" },
+    { "id": "scripts.batch-exit-matrix", "path": "scripts/batch-exit-matrix.sh", "role": "batch-exit-matrix-runner", "confidence": "Medium" },
+    { "id": "scripts.ai", "path": "scripts/ai", "role": "ai-preflight-tools", "confidence": "Medium" },
+    { "id": "depcruise.admin", "path": "packages/admin/.dependency-cruiser.js", "role": "arch-guard", "confidence": "High" },
+    { "id": "depcruise.mobile", "path": "packages/mobile/.dependency-cruiser.js", "role": "arch-guard", "confidence": "High" },
+    { "id": "depcruise.server", "path": "packages/server/.dependency-cruiser.cjs", "role": "arch-guard", "confidence": "High" },
+    { "id": "feature.boundary.script", "path": "packages/mobile/scripts/checkFeatureBoundaries.cjs", "role": "feature-isolation-guard", "confidence": "High" }
+  ],
+  "test_systems": [
+    { "package": "admin", "framework": "vitest", "config": "packages/admin/vitest.config.ts", "setup": "packages/admin/vitest.setup.ts", "test_count": 359, "confidence": "High" },
+    { "package": "mobile", "framework": "jest+jest-expo", "config": "packages/mobile/jest.config.js", "setup": "packages/mobile/jest.setup.ts", "test_count": 5, "confidence": "High" },
+    { "package": "server.unit", "framework": "node:test+tsx", "pattern": "src/**/*.test.ts", "test_count": 216, "confidence": "High" },
+    { "package": "server.integration", "framework": "node:test+tsx+docker-compose-pg", "pattern": "tests/integration-pg/**/*.test.ts", "test_count": 4, "confidence": "High" }
+  ],
+  "open_questions_ref": ".agent/analysis/06-open-questions.md",
+  "risk_hotspots_ref": ".agent/analysis/04-risk-hotspots.md",
+  "backlog_ref": ".agent/analysis/backlog.md",
+  "analysis_artifacts": [
+    { "id": "00.repo-survey", "path": ".agent/analysis/00-repo-survey.md", "phase": "v1", "confidence": "High" },
+    { "id": "02.cases-service-anatomy", "path": ".agent/analysis/02-cases-service-anatomy.md", "phase": "B-001", "confidence": "High" },
+    { "id": "03.dependency-graph", "path": ".agent/analysis/03-dependency-graph.md", "phase": "B-002", "confidence": "High", "tool": "dependency-cruiser" },
+    { "id": "05.server-module-grouping", "path": ".agent/analysis/05-server-module-grouping.md", "phase": "B-003", "confidence": "High" },
+    { "id": "07.schema-migration-matrix", "path": ".agent/analysis/07-schema-migration-matrix.md", "phase": "B-004", "confidence": "High" },
+    { "id": "08.admin-architecture", "path": ".agent/analysis/08-admin-architecture.md", "phase": "B-005", "confidence": "High" },
+    { "id": "09.mobile-architecture-rules", "path": ".agent/analysis/09-mobile-architecture-rules.md", "phase": "B-006", "confidence": "High" },
+    { "id": "10.core-vs-portal", "path": ".agent/analysis/10-core-vs-portal.md", "phase": "B-007", "confidence": "High" },
+    { "id": "11.i18n-contract", "path": ".agent/analysis/11-i18n-contract.md", "phase": "B-009", "confidence": "High" },
+    { "id": "12.test-taxonomy", "path": ".agent/analysis/12-test-taxonomy.md", "phase": "B-010", "confidence": "High" },
+    { "id": "13.knowledge-base-map", "path": ".agent/analysis/13-knowledge-base-map.md", "phase": "B-014", "confidence": "High" },
+    { "id": "14.feature-flags-fanout", "path": ".agent/analysis/14-feature-flags-fanout.md", "phase": "B-015", "confidence": "High" },
+    { "id": "15.integration-test-health", "path": ".agent/analysis/15-integration-test-health.md", "phase": "B-016", "confidence": "Medium-High" }
+  ],
+  "facts_v2": {
+    "server_dependency_graph": {
+      "modules": 432,
+      "circular_edges": 0,
+      "violations": 0,
+      "top_fan_in": [
+        { "file": "src/modules/core/cases/cases.service.ts", "fan_in": 45 },
+        { "file": "src/modules/core/auth/auth.decorators.ts", "fan_in": 43 },
+        { "file": "src/modules/core/tenancy/tenantDb.ts", "fan_in": 43 },
+        { "file": "src/modules/core/cases/cases.types.ts", "fan_in": 27 },
+        { "file": "src/modules/core/timeline/timeline.service.ts", "fan_in": 24 },
+        { "file": "src/modules/core/cases/cases.template-bmv.ts", "fan_in": 23 },
+        { "file": "src/modules/core/auth/permissions.service.ts", "fan_in": 19 }
+      ],
+      "top_fan_out": [
+        { "file": "src/app.module.ts", "fan_out": 89 },
+        { "file": "src/modules/core/cases/cases.service.ts", "fan_out": 22 },
+        { "file": "src/worker.ts", "fan_out": 15 }
+      ],
+      "confidence": "High"
+    },
+    "admin_dependency_graph": { "modules": 752, "circular_edges": 0, "violations": 0, "confidence": "High" },
+    "mobile_dependency_graph": { "modules": 86, "circular_edges": 0, "violations": 0, "confidence": "High" },
+    "server_assembly": {
+      "controllers_total": 40,
+      "services_total_estimate": 37,
+      "global_guard": "AuthGuard (APP_GUARD)",
+      "global_interceptor": "RequestContextInterceptor (APP_INTERCEPTOR)",
+      "secondary_guard": "AppUserAuthGuard (per-method @UseGuards)",
+      "rbac_roles_hierarchy": ["viewer", "staff", "manager"],
+      "controller_groups": {
+        "core": 30,
+        "core_portal_admin_mirror": 3,
+        "portal": 7,
+        "feature_flags": 1,
+        "templates": 1,
+        "health": "1 (path TBD, see OQ-24)"
+      },
+      "confidence": "High"
+    },
+    "schema_vs_migrations": {
+      "drizzle_pgtable_count": 22,
+      "migration_files_count": 42,
+      "business_tables_in_migrations_only": [
+        "timeline_logs", "reminders", "feature_flags",
+        "template_versions", "template_releases",
+        "jobs",
+        "app_users", "leads", "conversations", "messages", "user_documents", "intake_forms",
+        "tasks", "billing_records", "payment_records",
+        "lead_followups", "lead_logs"
+      ],
+      "rls_waves": [
+        { "migration": "002_rls", "tables": 7, "force": false },
+        { "migration": "004_templates_rls", "tables": 2, "force": false },
+        { "migration": "006_jobs_rls", "tables": 1, "force": false },
+        { "migration": "008_portal_rls", "tables": 4, "force": true },
+        { "migration": "010_core_entities_rls", "tables": 9, "force": true },
+        { "migration": "019_truth_tables_rls", "tables": 5, "force": true },
+        { "migration": "015_case_stage_history", "tables": 1, "force": true, "single_point": true },
+        { "migration": "022_groups_and_case_group", "tables": 2, "force": true, "single_point": true },
+        { "migration": "027_leads_p0", "tables": 2, "force": true, "single_point": true }
+      ],
+      "soft_delete_tables": ["companies", "contact_persons"],
+      "rls_unverified_tables": ["app_users", "intake_forms", "case_templates"],
+      "confidence": "High"
+    },
+    "cases_service_clusters": {
+      "file": "src/modules/core/cases/cases.service.ts",
+      "lines": 3456,
+      "method_count": 82,
+      "clusters": [
+        "CRUD", "Stage Transitions", "BMV Logic", "Billing Integration",
+        "Documents", "Reminders", "Templates", "Read Models",
+        "RBAC", "Validation", "Submission", "Misc"
+      ],
+      "confidence": "High"
+    },
+    "admin_architecture": {
+      "top_level_dirs": ["auth", "i18n", "router", "shell", "shared", "views"],
+      "missing_dirs": ["features", "domain", "data", "infra"],
+      "shared_subdirs": { "api": 2, "model": 10, "ui": 13 },
+      "views_features": ["auth", "billing", "cases", "conversations", "customers", "dashboard", "documents", "leads", "settings", "tasks"],
+      "depcruiser_rules": {
+        "total": 11,
+        "active": ["no-circular", "shared-no-local-outside-shared", "billing-no-cases"],
+        "dormant_due_to_missing_dirs": [
+          "features-no-data-or-infra", "features-no-cross-dependency",
+          "domain-no-local-outside-domain-or-shared", "domain-no-shared-ui", "domain-no-npm",
+          "infra-no-app-or-features-or-domain-or-data",
+          "data-no-app-or-features", "data-no-shared-ui"
+        ]
+      },
+      "vitest_architecture_guards": {
+        "file": "src/repositoryRuntime.architecture-guard.test.ts",
+        "static_import_scans": [
+          { "from": "views/billing", "forbidden_to": "views/cases" },
+          { "from": "shared/api", "forbidden_to": "views" }
+        ],
+        "runtime_contracts": [
+          { "wrapper": "CaseRepositorySupport", "apiPath": "/api/cases", "writeErrorCode": "CASE_WRITE_ERROR", "errorName": "CaseRepositoryError" },
+          { "wrapper": "BillingRepositorySupport", "apiPath": "/api", "writeErrorCode": "BILLING_WRITE_ERROR", "errorName": "BillingRepositoryError" },
+          { "wrapper": "shared/api/repositoryRuntime", "apiPath_default": null, "getToken_default": null }
+        ]
+      },
+      "actual_cross_view_imports": [
+        { "from": "views/customers/CustomerDetailView.vue", "to": "views/cases/query", "symbols": ["buildCaseCreateRoute", "CaseCreateQueryParams"] },
+        { "from": "views/tasks/TaskListView.vue", "to": "views/cases/constants", "symbols": ["getCaseTypeI18nKey"] },
+        { "from": "views/leads/LeadDetailView.vue", "to": "views/conversations/ConversationDetailView.vue", "symbols": ["default"] },
+        { "from": "views/dashboard/QuickActionsPanel.vue", "to": "views/cases/query", "symbols": ["buildCaseCreateRoute"] }
+      ],
+      "cross_module_gates_test": {
+        "file": "src/views/crossModuleGates.test.ts",
+        "covers": ["documents↔shared.useOrgSettings", "cases.constants↔shared.useGroupOptions", "customers.model↔shared.useGroupOptions", "customers.bmv-gate", "leads↔shared.resolveGroupLabel", "shared.ALL_OPTIONS integrity"]
+      },
+      "confidence": "High"
+    },
+    "mobile_architecture": {
+      "top_level_dirs": ["app", "features", "domain", "data", "infra", "shared"],
+      "features": ["auth", "case", "documents", "home", "inbox", "profile"],
+      "domain": ["auth", "billing", "case", "documents", "home", "inbox", "profile", "reminder"],
+      "data": ["auth", "case", "documents", "home", "inbox", "profile"],
+      "infra": ["http", "log", "storage"],
+      "shared": ["errors", "http", "ui"],
+      "domain_only_entities": ["billing", "reminder"],
+      "tsconfig_aliases": ["@app", "@features", "@domain", "@data", "@infra", "@shared"],
+      "depcruiser_rules_active": [
+        "no-circular", "features-no-data-or-infra",
+        "domain-no-local-outside-domain-or-shared", "domain-no-shared-ui", "domain-no-npm",
+        "shared-no-local-outside-shared", "shared-no-npm",
+        "infra-no-app-or-features-or-domain-or-data",
+        "data-no-app-or-features", "data-no-shared-ui"
+      ],
+      "feature_boundary_check": {
+        "script": "scripts/checkFeatureBoundaries.cjs",
+        "method": "TS AST module-specifier scan + path.resolve",
+        "public_export_convention": "@features/<name>/public",
+        "feature_public_dirs_present": []
+      },
+      "guard_chain": ["lint", "typecheck", "arch:check", "feature:check", "lock:check", "secrets:check", "test"],
+      "vs_admin": {
+        "active_rules_count": "10 vs 3 (admin)",
+        "domain_no_npm_severity": "error vs warn (admin)",
+        "shared_no_npm": "present vs absent (admin)",
+        "feature_cross_check": "present vs absent (admin)"
+      },
+      "confidence": "High"
+    },
+    "core_vs_portal": {
+      "core_controllers_total": 31,
+      "portal_controllers_total": 7,
+      "require_roles_distribution": { "staff": 85, "viewer": 46, "manager": 23, "total": 154 },
+      "core_path_prefixes_admin_marked": ["admin/leads", "admin/conversations", "admin/conversations/:conversationId/messages"],
+      "portal_path_prefixes": ["app-auth", "app-users", "intake-forms", "user-documents", "conversations", "messages", "leads"],
+      "name_overlaps_core_vs_portal": ["leads", "conversations", "messages"],
+      "guard_model": {
+        "global_guard": "AuthGuard via APP_GUARD",
+        "secondary_guard": "AppUserAuthGuard via @UseGuards (per-method)",
+        "short_circuit": "AppUserAuthGuard returns true if req.requestContext already set (admin already passed)",
+        "portal_double_decorator_pattern": "@Public() + @UseGuards(AppUserAuthGuard)"
+      },
+      "dual_tenant_endpoints": [
+        { "controller": "modules/portal/leads/leads.controller.ts", "endpoints": ["GET /leads"], "behavior": "Branches on req.requestContext: admin → leadsAdminService.list; app-user → leadsService.list (own only)" },
+        { "controller": "modules/portal/leads/leads.controller.ts", "endpoints": ["POST /leads/:id/assign", "POST /leads/:id/convert"], "behavior": "@RequireRoles(staff) — admin only via portal path" }
+      ],
+      "portal_method_decorator_count": {
+        "app-auth": { "appUser": 1, "publicOnly": 3, "requireRoles": 0 },
+        "app-users": { "appUser": 2, "publicOnly": 1, "requireRoles": 0 },
+        "conversations": { "appUser": 4, "publicOnly": 0, "requireRoles": 0 },
+        "intake-forms": { "appUser": 5, "publicOnly": 0, "requireRoles": 0 },
+        "leads": { "appUser": 4, "publicOnly": 0, "requireRoles": 2 },
+        "messages": { "appUser": 3, "publicOnly": 0, "requireRoles": 0 },
+        "user-documents": { "appUser": 5, "publicOnly": 0, "requireRoles": 0 }
+      },
+      "confidence": "High"
+    },
+    "templates_cases_coupling": {
+      "pattern": "Port-Adapter via Symbol token + minimal interface",
+      "port_host_file": "modules/core/cases/cases.service.ts",
+      "port_lines": { "interface": "135-150", "token": 153 },
+      "container_binding": { "file": "app.module.ts", "lines": "217-218", "form": "{ provide: TEMPLATES_RESOLVER, useExisting: TemplatesService }" },
+      "consumers": [
+        { "file": "modules/core/cases/cases.service.ts", "inject_line": 1375, "call_sites": 4 },
+        { "file": "modules/core/submission-packages/submissionPackages.service.ts", "inject_line": 254, "call_sites": 1, "imports_from_cases": true }
+      ],
+      "kinds_used": ["case_type", "document_checklist", "state_flow"],
+      "call_sites_detail": [
+        { "file": "cases.service.ts", "line": 2665, "method": "resolveChecklistItems", "kind": "document_checklist" },
+        { "file": "cases.service.ts", "line": 2671, "method": "resolveChecklistItems", "kind": "case_type", "note": "fallback" },
+        { "file": "cases.service.ts", "line": 2721, "method": "validateTransition", "kind": "state_flow" },
+        { "file": "cases.service.ts", "line": 3042, "method": "isReviewRequired", "kind": "case_type" },
+        { "file": "submissionPackages.service.ts", "line": 809, "method": "isReviewRequired", "kind": "case_type", "note": "duplicates cases.isReviewRequired" }
+      ],
+      "blueprint_source_file": "modules/core/cases/cases.template-bmv.ts",
+      "blueprint_role": "seed/createVersion source; not on request path",
+      "templates_to_cases_imports": "none",
+      "duplicate_logic": [
+        { "method": "isReviewRequired", "locations": ["cases.service.ts:3038", "submissionPackages.service.ts:804"] }
+      ],
+      "confidence": "High"
+    },
+    "i18n_contract": {
+      "locales": ["zh-CN", "en-US", "ja-JP"],
+      "default_fallback_const": "DEFAULT_LOCALE",
+      "message_groups_total": 12,
+      "groups_with_parity_test": ["billing", "customers", "conversations", "leads", "settings"],
+      "groups_without_parity_test": ["cases", "dashboard-work-item", "documents", "shell-search", "tasks", "work-items"],
+      "test_files": [
+        ".../i18n/i18n-no-untranslated-group.test.ts",
+        ".../views/billing/i18n-contract.test.ts",
+        ".../views/customers/i18n-contract.test.ts",
+        ".../views/conversations/i18n-contract.test.ts",
+        ".../views/leads/i18n-contract.test.ts",
+        ".../views/settings/i18n-contract.test.ts"
+      ],
+      "patterns": {
+        "cross_locale_key_parity": "collectLeafKeys + expect(zhKeys).toEqual(enKeys)",
+        "required_key_whitelist": "resolveKey + toBeTruthy / toEqual([])",
+        "string_type_check_only_in": ["billing", "conversations"],
+        "regex_regression": "/\\bGroup\\b/ scan over zh-CN + ja-JP leaf values"
+      },
+      "helpers_duplication": { "collectLeafKeys": 5, "resolveKey": 4 },
+      "required_key_counts": {
+        "billing": 35,
+        "customers": "FIELD(29) + LOG_TAB(22) + SUMMARY(6) + TAB(5) + BMV_INTAKE(11) = 73",
+        "conversations": "MESSAGE_KIND(5) + VISIBILITY(2) + LIST_STATUS(2) + ERROR(6) = 15",
+        "leads": "STATUS(6) + DETAIL_TAB(5) + LOG_TAB(5) = 16",
+        "settings": "SUBNAV(4) + GROUP_COLUMN(5) + VISIBILITY(5) = 14"
+      },
+      "server_to_admin_code_map": {
+        "pattern": "server writes stable i18n code; admin adapter resolves to i18n key",
+        "evidence_files": [
+          "modules/core/cases/cases.types.ts:11 (write path error codes)",
+          "modules/core/cases/cases.types-generated-docs.ts:101",
+          "modules/core/cases/cases.service.ts:3371-3407 (case_fee milestone)",
+          "modules/core/documents.types.ts:22",
+          "modules/core/groups/groups.types.ts:4",
+          "modules/core/dashboard/dashboard.shared.ts:15"
+        ],
+        "guard_test_examples": ["CaseBillingTab.bug186.test.ts:resolveMilestoneI18nKey"],
+        "centralized_map_present": false,
+        "risk": "no systematic N:1 reconciliation between server code set and admin i18n key set"
+      },
+      "mobile_i18n_present": false,
+      "confidence": "High"
+    },
+    "test_taxonomy": {
+      "runners": {
+        "admin": { "runner": "vitest", "files": 366, "import_match": 366 },
+        "server": { "runner": "node:test", "files_src": 216, "files_integration_pg": 2, "import_match": 216 },
+        "mobile": { "runner": "jest", "files": 15, "lib": "@testing-library/react-native" }
+      },
+      "top_dirs": {
+        "admin": [
+          { "path": "views/cases/model", "count": 112 },
+          { "path": "views/customers/model", "count": 41 },
+          { "path": "views/cases", "count": 37 },
+          { "path": "views/cases/components", "count": 26 },
+          { "path": "views/customers/components", "count": 18 },
+          { "path": "views/documents/model", "count": 13 },
+          { "path": "views/billing/model", "count": 13 }
+        ],
+        "server": [
+          { "path": "modules/core/cases", "count": 68 },
+          { "path": "modules/core/customers", "count": 22 },
+          { "path": "modules/core/billing", "count": 13 },
+          { "path": "modules/core/residence-periods", "count": 12 },
+          { "path": "modules/core/auth", "count": 7 }
+        ]
+      },
+      "naming_markers_substring": {
+        "bug":        { "admin": 51, "server": 14, "mobile": 0 },
+        "focused":    { "admin": 50, "server": 53, "mobile": 0 },
+        "regression": { "admin": 8,  "server": 13, "mobile": 0 },
+        "contract":   { "admin": 21, "server": 4,  "mobile": 0 },
+        "i18n":       { "admin": 15, "server": 0,  "mobile": 0 },
+        "adapter":    { "admin": 62, "server": 3,  "mobile": 0 },
+        "seam":       { "admin": 7,  "server": 0,  "mobile": 0 },
+        "smoke":      { "admin": 0,  "server": 2,  "mobile": 0, "integration_pg": 1 },
+        "e2e":        { "admin": 3,  "server": 0,  "mobile": 0 },
+        "deeplink":   { "admin": 2,  "server": 0,  "mobile": 0 },
+        "architecture": { "admin": 1, "server": 0, "mobile": 0 },
+        "security":   { "admin": 0,  "server": 2,  "mobile": 0 },
+        "boundary":   { "admin": 0,  "server": 0,  "mobile": 0 },
+        "invariant":  { "admin": 0,  "server": 0,  "mobile": 0 },
+        "ownership":  { "admin": 0,  "server": 0,  "mobile": 0 }
+      },
+      "bug_id_overlap": {
+        "admin_unique": 49,
+        "server_unique": 14,
+        "intersection": ["159", "200"],
+        "intersection_count": 2,
+        "admin_only_count": 47,
+        "server_only_count": 12
+      },
+      "focused_distribution": {
+        "admin": { "views/cases/model": 37, "views/cases": 5, "views/documents": 4, "views/customers/model": 2, "views/dashboard": 1, "views/cases/components": 1 },
+        "server": { "modules/core/cases": 32, "modules/core/residence-periods": 7, "modules/core/customers": 5, "modules/core/submission-packages": 3, "modules/core/document-items": 2, "other": 4 }
+      },
+      "test_ownership_md": {
+        "locations": ["packages/admin/src/views/cases/TEST-OWNERSHIP.md"],
+        "lines": 118,
+        "frozen_anchors": 11,
+        "matrix_rows": 38,
+        "principles": [
+          "Each layer tests only its own public API",
+          "No duplicate coverage",
+          "Composables inject stubs/mocks (no real HTTP/adapter)",
+          "Fixture tests verify data shape only"
+        ],
+        "modules_without_equivalent_doc": ["customers", "billing", "documents", "leads", "conversations", "tasks", "settings", "shell", "router", "dashboard"]
+      },
+      "guard_tests_inventory": {
+        "admin_runtime_arch": [
+          "src/repositoryRuntime.architecture-guard.test.ts",
+          "src/views/crossModuleGates.test.ts",
+          "src/router/authGuard.test.ts"
+        ],
+        "admin_business_gates": [
+          "views/cases/model/useCaseDetailWriteActions.coe-residence-reminder.guards-residence.focused.test.ts",
+          "views/cases/model/useCaseDetailWriteActions.survey-quote.guards-bmv.focused.test.ts",
+          "views/cases/model/p1-qa-button-guard-matrix.focused.test.ts",
+          "views/cases/model/useCaseDetailGuard.test.ts"
+        ],
+        "server_business_gates": [
+          "modules/core/cases/cases.coe-block-guard.focused.test.ts",
+          "modules/core/cases/cases.final-payment-coe-guard.focused.test.ts",
+          "modules/core/cases/cases.final-payment-coe-guard.flow.focused.test.ts",
+          "modules/core/submission-packages/submissionPackages.chain-guards.focused.test.ts"
+        ],
+        "server_auth": [
+          "modules/portal/auth/appUserAuth.guard.test.ts",
+          "modules/core/auth/auth.guard.test.ts"
+        ]
+      },
+      "smoke_tests": [
+        "packages/server/tests/integration-pg/dtoSmoke.test.ts",
+        "packages/server/src/modules/portal/user-documents/userDocuments.http-smoke.test.ts",
+        "packages/server/src/modules/core/document-files/documentFiles.http-smoke.test.ts"
+      ],
+      "p1_regression_batches": {
+        "server": [
+          "cases.regression-p1-coe-visa-residence.test.ts",
+          "cases.regression-p1-coe-visa-residence.closeout.test.ts",
+          "cases.regression-p1-coe-visa-residence.read-model.test.ts",
+          "cases.regression-p1-questionnaire-supplement.test.ts",
+          "cases.regression-p1-questionnaire-supplement.contracts.test.ts",
+          "cases.regression-p1-reminder-closeout.test.ts"
+        ],
+        "admin_equivalent_named": []
+      },
+      "confidence": "High"
+    },
+    "large_files_over_500": {
+      "rule_source": "AGENTS.md / core-operating-rule.mdc",
+      "admin": [
+        { "lines": 2780, "path": "views/cases/fixtures-detail.ts",            "kind": "fixture" },
+        { "lines": 1500, "path": "views/cases/types-detail.ts",               "kind": "types" },
+        { "lines":  984, "path": "i18n/messages/cases/en-US.ts",              "kind": "i18n" },
+        { "lines":  982, "path": "i18n/messages/cases/ja-JP.ts",              "kind": "i18n" },
+        { "lines":  941, "path": "i18n/messages/cases/zh-CN.ts",              "kind": "i18n" },
+        { "lines":  848, "path": "views/cases/CaseDetailView.vue",            "kind": "component", "violates_agents_md": true },
+        { "lines":  648, "path": "views/documents/model/DocumentRepositoryTypes.ts", "kind": "types" },
+        { "lines":  577, "path": "views/cases/components/CaseOverviewTab.vue",       "kind": "component", "violates_agents_md": true },
+        { "lines":  552, "path": "views/cases/model/CaseRepository.ts",       "kind": "model" },
+        { "lines":  544, "path": "views/cases/constants.ts",                  "kind": "constants" },
+        { "lines":  515, "path": "views/cases/types.ts",                      "kind": "types" },
+        { "lines":  512, "path": "views/cases/components/CaseMessagesTab.vue", "kind": "component", "violates_agents_md": true },
+        { "lines":  510, "path": "views/cases/model/CaseAdapterDetailContracts.ts", "kind": "adapter" }
+      ],
+      "server": [
+        { "lines": 3456, "path": "modules/core/cases/cases.service.ts",                       "kind": "service" },
+        { "lines": 1244, "path": "infra/db/drizzle/schema.ts",                                "kind": "schema" },
+        { "lines":  931, "path": "modules/core/submission-packages/submissionPackages.service.ts", "kind": "service" },
+        { "lines":  667, "path": "modules/core/residence-periods/residencePeriods.service.ts", "kind": "service" },
+        { "lines":  516, "path": "modules/templates/templates.service.ts",                    "kind": "service" }
+      ],
+      "mobile": []
+    },
+    "lockfiles": {
+      "tracked_by_git": ["package-lock.json", "packages/mobile/package-lock.json"],
+      "rule_violation": "AGENTS.md requires single package-lock.json",
+      "lock_check_scripts_scope": "mobile lock:check scans only repo root for forbidden lockfiles; mobile sub-lock bypasses gate",
+      "mobile_sub_lock_size_bytes": 331721,
+      "confidence": "High"
+    },
+    "typescript_versions": {
+      "admin": "~6.0.2",
+      "server": "~5.9.2",
+      "mobile": "~5.9.2",
+      "root_package_json": "n/a",
+      "confidence": "High"
+    },
+    "prototype_refs_in_src": {
+      "total": 1,
+      "matches": [
+        { "file": "packages/admin/src/styles/theme.css", "line": 5, "kind": "comment", "snippet": "Source: packages/prototype/admin/shared/styles/tokens.css" }
+      ],
+      "ts_imports": 0,
+      "verdict": "no runtime coupling; prototype is purely a design reference",
+      "confidence": "High"
+    },
+    "knowledge_base_topology": {
+      "agents_md_lines": 45,
+      "augment_rule_paths": [".augment/rules/core-operating-rule.mdc", ".cursor/rules/core-operating-rule.mdc", ".trae/rules/core-operating-rule.mdc"],
+      "business_authority_root": "docs/gyoseishoshi_saas_md/",
+      "layers": ["entry", "term", "spec", "maintenance"],
+      "spec_files_p0": ["00-开始这里.md", "01-产品定位与业务概述.md", "02-版本范围与优先级.md", "02-产品全景图.md", "03-业务规则与不变量.md", "04-核心流程与状态流转.md", "05-信息架构与页面地图.md", "06-页面规格/", "07-数据模型设计.md", "08-术语表.md", "09-结构化总索引与交叉映射.md", "99-文档维护与版本记录.md"],
+      "spec_files_p1": ["01-经营管理签扩展范围与落地计划.md", "02-经营管理签技术落地清单.md", "03-经营管理签高仿真原型需求门禁/", "04-页面规格-客户经营管理签签约前承接.md"],
+      "page_spec_modules_count": 11,
+      "single_strongest_authority": "03-业务规则与不变量.md",
+      "process_master": "docs/事务所流程/事务所流程.master.json",
+      "raw_inbox": "docs/gyoseishoshi_saas_md/_raw/00-inbox.md",
+      "output_archive": "docs/gyoseishoshi_saas_md/_output/00-outputs.md",
+      "output_audit_doc_count_approx": 35,
+      "confidence": "High"
+    },
+    "feature_flags_fanout": {
+      "module_path": "packages/server/src/modules/feature-flags",
+      "service_methods": ["list", "get", "resolve", "upsert"],
+      "controller_routes": ["list", "get", "resolve", "upsert"],
+      "production_consumers": [
+        { "file": "modules/core/customers/customers.controller.ts", "method": "assertBmvEnabled", "line": 416, "key": "bmv" }
+      ],
+      "consumer_count": 1,
+      "flag_keys_used": ["bmv"],
+      "admin_refs": 0,
+      "mobile_refs": 0,
+      "table_in_drizzle_schema": false,
+      "abstraction_pattern": "direct class injection (no Symbol/token like TEMPLATES_RESOLVER)",
+      "confidence": "High"
+    },
+    "integration_test_health": {
+      "test_files": [
+        "packages/server/tests/integration-pg/dtoSmoke.test.ts",
+        "packages/server/tests/integration-pg/caseParties.bug177.pg.test.ts"
+      ],
+      "test_count": 2,
+      "src_unit_test_count": 216,
+      "ratio_integration_to_unit": 0.0093,
+      "container": {
+        "image": "postgres:16-alpine",
+        "port_mapping": "5499:5432",
+        "tmpfs": "/var/lib/postgresql/data",
+        "healthcheck": "pg_isready every 2s, 15 retries"
+      },
+      "setup_module_lines": 82,
+      "setup_exports": ["getTestPool", "closeTestPool", "migrateAndSeed", "truncateAllBusinessTables"],
+      "guard_position": "last (after unit test); spins docker up/down per ci run",
+      "strengths": [
+        "production SQL constants imported (no copy)",
+        "tmpfs ephemeral",
+        "truncate beforeEach for isolation",
+        "shared runMigrationsLib with prod"
+      ],
+      "gaps": [
+        "coverage <1 %",
+        "no RLS end-to-end test",
+        "no concurrency test",
+        "only 1 of 9 backfill migrations has integration test (039)",
+        "hardcoded port 5499",
+        "ci script does not dump logs on failure"
+      ],
+      "confidence": "Medium-High"
+    }
+  }
+}

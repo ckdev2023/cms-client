@@ -237,6 +237,14 @@ const jaJP = {
         action: "一括完了",
         emptyMessage:
           "本日の対応はありません。全案件一覧へ進み、次の優先事項を確認してください。",
+        items: {
+          missingDocs:
+            "経営管理ビザ 4 か月認定証明の補完資料を本日 15:00 までに送信してください。",
+          receiptUpload:
+            "顧客 A の在留資格認定証明書が届きました。受領書をアップロードしてください。",
+          billingReview:
+            "案件 B の請求確認がオーナーの確認待ちです。今夜の照合に間に合うよう進めてください。",
+        },
       },
       deadlines: {
         tag: "Deadlines",
@@ -246,6 +254,12 @@ const jaJP = {
         action: "期限接近案件を見る",
         emptyMessage:
           "この期間内に期限超過または期限接近の案件はありません。30日表示へ切り替えて確認できます。",
+        items: {
+          overdueCases:
+            "2 件の案件が提出期限を超過しています。まず不足資料とリスク確認をチェックしてください。",
+          upcomingCases:
+            "今後 7 日以内に予約提出または補正が必要な案件が 5 件あります。",
+        },
       },
       pendingSubmission: {
         tag: "Submission",
@@ -255,6 +269,11 @@ const jaJP = {
         action: "確認・提出へ進む",
         emptyMessage:
           "提出待ち案件はありません。案件一覧に戻って前段工程を進めてください。",
+        items: {
+          businessManager: "会社設立後の経営管理ビザ初回申請資料が揃いました。",
+          engineerRenewal:
+            "技術・人文知識・国際業務の更新案件は費用確認が完了し、最終確認に進めます。",
+        },
       },
       risks: {
         tag: "Risks",
@@ -264,6 +283,12 @@ const jaJP = {
         action: "リスク項目を修正",
         emptyMessage:
           "現在の表示範囲にリスク案件はありません。期限と提出待ちの状況を引き続き確認してください。",
+        items: {
+          fundSource:
+            "経営管理ビザの資金出所説明が不完全です。送金経路を補足してください。",
+          contractVersion:
+            "顧客 C の雇用契約書バージョンが一致しません。最終署名版を確認してください。",
+        },
       },
     },
     visibility: {

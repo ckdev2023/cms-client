@@ -125,11 +125,16 @@ const editSaving = ref(false);
 
 async function onSaveCaseEdit(fields: {
   caseName: string;
-  agency: string;
-  memo: string;
+  dueAt: string;
+  acceptedAt: string;
+  riskLevel: string;
+  ownerUserId: string;
+  assistantUserId: string;
+  groupId: string;
+  priority: string;
 }): Promise<void> {
   editSaving.value = true;
-  const ok = await updateCaseFields(fields);
+  const ok = await updateCaseFields({ ...fields });
   editSaving.value = false;
   if (ok) editModalOpen.value = false;
 }
@@ -491,8 +496,9 @@ function onOpenCreateTask(): void {
       <CaseEditModal
         :open="editModalOpen"
         :case-name="detail.title"
-        :agency="detail.agency"
-        :memo="''"
+        :due-at="detail.targetDate"
+        :accepted-at="detail.acceptedDate"
+        :group-id="detail.groupId"
         :submitting="editSaving"
         @close="editModalOpen = false"
         @save="onSaveCaseEdit"

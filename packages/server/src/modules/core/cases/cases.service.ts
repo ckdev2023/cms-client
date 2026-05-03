@@ -2401,6 +2401,7 @@ export class CasesService {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
       await this.assertCoeSendBillingGate(tx, current, toPhase);
+      await this.assertWaitingPaymentBillingGate(tx, current, toPhase);
       const updated = await this.executePhaseTransitionUpdate(
         tx,
         id,
@@ -2538,6 +2539,32 @@ export class CasesService {
   ): Promise<void> {
     if (toPhase !== "COE_SENT") return;
     await this.runCoeSendBillingGate(tx, current);
+  }
+
+  /**
+   * businessPhase 维度推进到 WAITING_PAYMENT 时的收费记录守卫。
+   *
+   * 触发条件：仅当 toPhase === WAITING_PAYMENT 时执行；其他 phase 立即放行。
+   * 检查 billing_records 是否存在该 case 的至少 1 条 status=due 记录。
+   */
+  private async assertWaitingPaymentBillingGate(
+    tx: TenantDbTx,
+    current: Case,
+    toPhase: string,
+  ): Promise<void> {
+    if (toPhase !== "WAITING_PAYMENT") return;
+    const result = await tx.query<Record<string, unknown>>(
+      `select 1 from billing_records
+       where case_id = $1 and status = 'due'
+       limit 1`,
+      [current.id],
+    );
+    if (result.rows.length === 0) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.WAITING_PAYMENT_BILLING_REQUIRED +
+          `: At least one billing record with status=due is required before transitioning to WAITING_PAYMENT.`,
+      );
+    }
   }
 
   private async assertClosedSuccessGate(

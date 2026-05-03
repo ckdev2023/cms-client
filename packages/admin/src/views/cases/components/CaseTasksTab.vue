@@ -177,9 +177,16 @@ function avatarBg(item: TaskItem): string {
   gap: 20px;
 }
 
+/* Card padding="none" 让任务行自管理内边距；这里把头部内边距对齐
+   任务行的 14px 20px，避免标题与按钮贴边、垂直方向呼吸感不足。 */
+.tasks-tab :deep(.ui-card__header) {
+  padding: 14px 20px;
+}
+
 .tasks-tab__title {
   margin: 0;
   font-size: 15px;
+  line-height: 1.4;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

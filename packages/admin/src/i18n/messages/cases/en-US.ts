@@ -243,8 +243,13 @@ const casesEnUS = {
       title: "Edit case info",
       fields: {
         caseName: "Case name",
-        agency: "Agency",
-        memo: "Memo",
+        dueAt: "Due date",
+        acceptedAt: "Accepted date",
+        riskLevel: "Risk level",
+        ownerUserId: "Owner",
+        assistantUserId: "Assistant",
+        groupId: "Group",
+        priority: "Priority",
       },
       cancel: "Cancel",
       save: "Save",
@@ -281,6 +286,8 @@ const casesEnUS = {
         CASE_S9_READONLY: "Case is archived and read-only",
         CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED:
           "Attribution is required for failure closeout",
+        CASE_WAITING_PAYMENT_BILLING_REQUIRED:
+          "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment",
       },
     },
     terminalStage: {
@@ -503,6 +510,43 @@ const casesEnUS = {
       addTask: "Add task",
       addInline: "Add a new task…",
       empty: "No tasks yet",
+      createModal: {
+        title: "Create task",
+        fields: {
+          title: "Task title",
+          description: "Description",
+          priority: "Priority",
+          dueAt: "Due date",
+          assignee: "Assignee",
+          assigneePlaceholder: "Enter user ID or name",
+        },
+        validation: {
+          titleRequired: "Task title is required",
+        },
+        priorities: {
+          low: "Low",
+          normal: "Normal",
+          high: "High",
+          urgent: "Urgent",
+        },
+        cancel: "Cancel",
+        submit: "Create",
+      },
+    },
+    forms: {
+      generateModal: {
+        title: "Generate document",
+        fields: {
+          templateId: "Template",
+          templatePlaceholder: "No template available (placeholder flow)",
+          docTitle: "Document title",
+          docTitlePlaceholder: "e.g. Application statement",
+          outputFormat: "Output format",
+        },
+        cancel: "Cancel",
+        submitting: "Generating…",
+        submit: "Generate",
+      },
     },
     documents: {
       empty: {
@@ -803,6 +847,8 @@ const casesEnUS = {
       "This workflow step transition is not allowed from the current step.",
     reminderCreationFailed:
       "Failed to create renewal reminders. Please try again later.",
+    waitingPaymentBillingRequired:
+      "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment.",
   },
   log: {
     category: {
@@ -863,6 +909,27 @@ const casesEnUS = {
       overdue: "{days} days overdue",
       today: "Today",
       daysLeft: "{days} days left",
+    },
+    createModal: {
+      title: "Add deadline",
+      fields: {
+        targetType: "Target type",
+        remindAt: "Remind at",
+        kind: "Deadline type",
+        memo: "Memo",
+        memoPlaceholder: "Optional notes",
+      },
+      targetTypes: {
+        case: "Case deadline",
+        case_party_residence: "Residence-related deadline",
+      },
+      kinds: {
+        residence_expiry: "Residence expiry",
+        renewal_reminder: "Renewal reminder",
+        custom: "Custom",
+      },
+      cancel: "Cancel",
+      submit: "Submit",
     },
   },
   coach: {
