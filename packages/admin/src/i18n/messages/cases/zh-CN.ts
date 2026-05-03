@@ -224,6 +224,7 @@ const casesZhCN = {
     },
   },
   detail: {
+    readonlyHint: "案件已归档，所有操作均为只读",
     actions: {
       editInfo: "编辑信息",
       exportZip: "导出 ZIP",
@@ -511,6 +512,13 @@ const casesZhCN = {
       },
     },
     forms: {
+      title: "文書管理",
+      generateAction: "生成文書",
+      kickerTemplates: "可用模板",
+      kickerGenerated: "已生成文書",
+      exportAction: "导出",
+      versionHistoryAction: "版本历史",
+      empty: "暂无可用文書模板或生成记录",
       generateModal: {
         title: "生成文書",
         fields: {
@@ -634,7 +642,16 @@ const casesZhCN = {
       },
     },
   },
+  common: {
+    comingSoon: "建设中",
+    notSet: "—",
+  },
   constants: {
+    applicationTypes: {
+      certification: "认定",
+      change_of_status: "变更",
+      renewal: "更新",
+    },
     stages: {
       S1: "刚开始办案",
       S2: "资料收集中",
@@ -842,6 +859,30 @@ const casesZhCN = {
       phaseChange: "业务阶段变更：{from} → {to}",
       commLogCreated: "沟通记录追加：{suffix}",
       commLogUpdated: "沟通记录更新",
+      casePartyCreated: "添加关联人：{suffix}",
+      casePartyUpdated: "关联人信息更新",
+      casePartyDeleted: "关联人删除",
+      documentItemCreated: "资料项添加：{suffix}",
+      documentItemUpdated: "资料项更新",
+      documentFileCreated: "上传文件：{suffix}",
+      documentFileUpdated: "文件更新",
+      taskCreated: "任务创建：{suffix}",
+      taskUpdated: "任务更新",
+      taskCompleted: "任务完成",
+      billingRecordCreated: "收费记录添加：{suffix}",
+      billingRecordUpdated: "收费记录更新",
+      paymentRecordCreated: "入金记录添加：{suffix}",
+      paymentRecordUpdated: "入金记录更新",
+      reviewRecordCreated: "复核已发起",
+      reviewRecordApproved: "复核通过",
+      reviewRecordRejected: "复核驳回：{suffix}",
+      validationRunCreated: "提交前检查已运行",
+      validationRunPassed: "提交前检查通过",
+      validationRunFailed: "提交前检查未通过",
+      submissionPackageCreated: "提交包已创建",
+      submissionPackageUpdated: "提交包已更新",
+      generatedDocumentCreated: "文書生成：{suffix}",
+      reminderCreated: "提醒创建：{suffix}",
     },
   },
   validation: {
@@ -849,6 +890,16 @@ const casesZhCN = {
     lastFailed: "上次检查有未通过项，请修改后重新检查。",
   },
   deadlines: {
+    summary: {
+      title: "关键期限",
+      addDeadline: "添加期限",
+      residenceEmpty: "尚未录入在留期间",
+      reminderEmpty: "尚未设置续签提醒",
+      reminderSettingLabel: "到期前提醒设定",
+      cardLabel: "卡:",
+      entryDateLabel: "入境日:",
+      expiryDateLabel: "满了日:",
+    },
     types: {
       case: "案件期限",
       customer: "客户关联期限",

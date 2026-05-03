@@ -18,6 +18,7 @@
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
 import type { LogEntry, MessageItem } from "../types-detail";
+import { buildCaseTimelineMessageResult } from "./CaseCommsTimelineBuilders";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -269,84 +270,6 @@ function resolveObjectTypeKey(action: string): string {
   if (dot < 0) return action;
   const prefix = action.slice(0, dot);
   return OBJECT_TYPE_KEYS[prefix] ?? prefix;
-}
-
-interface TimelineMessageResult {
-  key: string;
-  params?: Record<string, string>;
-}
-
-function pickSuffix(payload: Record<string, unknown>, keys: string[]): string {
-  return pickOptionalString(payload, keys) ?? "";
-}
-
-type TimelineMessageBuilder = (
-  p: Record<string, unknown>,
-) => TimelineMessageResult;
-
-function buildStageChangeResult(
-  p: Record<string, unknown>,
-): TimelineMessageResult {
-  const from = pickOptionalString(p, ["from", "fromStage"]) ?? "";
-  const to = pickOptionalString(p, ["to", "toStage"]) ?? "";
-  return { key: "cases.log.timeline.stageChange", params: { from, to } };
-}
-
-const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
-  "case.created": (p) => ({
-    key: "cases.log.timeline.caseCreated",
-    params: { suffix: pickSuffix(p, ["caseTypeCode", "case_type_code"]) },
-  }),
-  "case.updated": () => ({ key: "cases.log.timeline.caseUpdated" }),
-  "case.deleted": () => ({ key: "cases.log.timeline.caseDeleted" }),
-  "case.status_changed": buildStageChangeResult,
-  "case.stage_changed": buildStageChangeResult,
-  "case.billing_risk_acknowledged": (p) => ({
-    key: "cases.log.timeline.billingRiskAck",
-    params: { suffix: pickSuffix(p, ["reasonCode", "reason_code"]) },
-  }),
-  "case.post_approval_stage_changed": (p) => ({
-    key: "cases.log.timeline.postApprovalStageChange",
-    params: { suffix: pickSuffix(p, ["stage", "toStage"]) },
-  }),
-  "case.cross_group_created": (p) => ({
-    key: "cases.log.timeline.crossGroupCreated",
-    params: { suffix: pickSuffix(p, ["reason"]) },
-  }),
-  "case.group_transferred": (p) => ({
-    key: "cases.log.timeline.groupTransferred",
-    params: {
-      from: pickOptionalString(p, ["fromGroupName", "fromGroup"]) ?? "",
-      to: pickOptionalString(p, ["toGroupName", "toGroup"]) ?? "",
-      reason: pickOptionalString(p, ["reason"]) ?? "",
-    },
-  }),
-  "case.phase_transitioned": (p) => {
-    const fromPhase = pickOptionalString(p, ["from", "fromPhase"]) ?? "";
-    const toPhase = pickOptionalString(p, ["to", "toPhase"]) ?? "";
-    return {
-      key: "cases.log.timeline.phaseChange",
-      params: {
-        fromPhaseKey: fromPhase ? `cases.constants.phases.${fromPhase}` : "",
-        toPhaseKey: toPhase ? `cases.constants.phases.${toPhase}` : "",
-      },
-    };
-  },
-  "communication_log.created": (p) => ({
-    key: "cases.log.timeline.commLogCreated",
-    params: { suffix: pickSuffix(p, ["channelType", "channel_type"]) },
-  }),
-  "communication_log.updated": () => ({
-    key: "cases.log.timeline.commLogUpdated",
-  }),
-};
-
-function buildCaseTimelineMessageResult(
-  action: string,
-  payload: Record<string, unknown>,
-): TimelineMessageResult {
-  const builder = TIMELINE_MESSAGE_BUILDERS[action];
-  return builder ? builder(payload) : { key: action };
 }
 
 /**

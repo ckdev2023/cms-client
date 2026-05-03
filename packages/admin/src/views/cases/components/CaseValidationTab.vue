@@ -82,7 +82,7 @@ function onNavigate(tab: CaseDetailTab | string) {
               tone="primary"
               size="sm"
               disabled
-              :title="t('common.comingSoon')"
+              :title="t('shell.topbar.comingSoon')"
             >
               <svg
                 width="14"
@@ -242,7 +242,7 @@ function onNavigate(tab: CaseDetailTab | string) {
               v-if="!readonly"
               size="sm"
               disabled
-              :title="t('common.comingSoon')"
+              :title="t('shell.topbar.comingSoon')"
             >
               <svg
                 width="14"

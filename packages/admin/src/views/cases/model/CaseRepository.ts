@@ -12,22 +12,7 @@ import type {
   ValidationData,
 } from "../types-detail";
 import {
-  adaptCaseDetailAggregate,
-  adaptCaseListResult,
-  adaptCaseMutationResult,
   adaptCaseSummaryCards,
-  adaptCaseTransitionResult,
-  adaptDeleteCaseResult,
-  buildBillingRiskAckPayload,
-  buildCaseDetailPath,
-  buildCaseListSearchParams,
-  buildCasePartiesApiPath,
-  buildCreateCasePayload,
-  buildCreateCasePartyPayload,
-  buildPostApprovalPayload,
-  buildTransitionPayload,
-  buildUpdateCasePayload,
-  buildWorkflowStepTransitionPayload,
   type CaseBillingRiskAckInput,
   type CaseCreateInput,
   type CaseDetailAggregate,
@@ -43,10 +28,23 @@ import {
 import {
   CaseRepositoryError,
   createRuntime,
-  requestAndAdapt,
   type CaseRepositoryFactoryInput,
-  type CaseRepositoryRuntime,
 } from "./CaseRepositorySupport";
+import {
+  createAcknowledgeBillingRisk,
+  createCreateCase,
+  createCreateCaseParty,
+  createDeleteCase,
+  createGetDetail,
+  createGetDetailAggregate,
+  createListCases,
+  createRetryReminderCreation,
+  createTransitionCase,
+  createTransitionPhase,
+  createTransitionWorkflowStep,
+  createUpdateCase,
+  createUpdatePostApprovalStage,
+} from "./CaseRepositoryFactories";
 import {
   createGetBillingTabAggregate,
   createGetDeadlines,
@@ -60,6 +58,15 @@ import {
   createGetValidationData,
   createGetBillingData,
 } from "./CaseRepositoryReadSide";
+import {
+  createCreateCommunicationLog,
+  createCreateGeneratedDocument,
+  createCreateReminder,
+  type WriteResultWithId,
+} from "./CaseRepositoryWriteSide";
+import type { CommunicationLogCreateInput } from "./CaseAdapterMessageWriteBuilders";
+import type { GeneratedDocumentCreateInput } from "./CaseAdapterGeneratedDocumentWriteBuilders";
+import type { ReminderCreateInput } from "./CaseAdapterReminderWriteBuilders";
 
 // ─── Responsibility Boundary ────────────────────────────────────
 // CaseRepository is request-orchestration only:
@@ -231,198 +238,38 @@ export interface CaseRepository {
    * 数据源：`POST /api/cases/:id/retry-reminder-creation`。
    */
   retryReminderCreation(caseId: string): Promise<CaseMutationResult>;
+
+  /**
+   * 创建沟通记录。
+   * 数据源：`POST /api/communication-logs`。
+   *
+   * UI `channelChoice` (`internal` / `client_visible` / `phone` / `meeting`)
+   * 由 `CaseAdapterMessageWriteBuilders` 映射为 server `channelType + visibleToClient`。
+   */
+  createCommunicationLog(
+    input: CommunicationLogCreateInput,
+  ): Promise<WriteResultWithId>;
+
+  /**
+   * 创建生成文書。
+   * 数据源：`POST /api/generated-documents`。
+   */
+  createGeneratedDocument(
+    input: GeneratedDocumentCreateInput,
+  ): Promise<WriteResultWithId>;
+
+  /**
+   * 创建期限/提醒。
+   * 数据源：`POST /api/reminders`。
+   *
+   * UI `kind` (`residence_expiry` / `renewal_reminder` / `custom`) 通过
+   * `CaseAdapterReminderWriteBuilders` 落入 `payloadSnapshot.kind`，
+   * 配合 `targetType` 决定提醒挂在 case 还是 case_party_residence。
+   */
+  createReminder(input: ReminderCreateInput): Promise<WriteResultWithId>;
 }
 
 export { CaseRepositoryError };
-
-function createListCases(runtime: CaseRepositoryRuntime) {
-  return async (params: CaseListParams): Promise<CaseListResult> => {
-    const query = buildCaseListSearchParams(params).toString();
-    const url = query ? `${runtime.apiPath}?${query}` : runtime.apiPath;
-    return requestAndAdapt({
-      runtime,
-      url,
-      method: "GET",
-      adapt: adaptCaseListResult,
-      errorMessage: "Invalid case list response",
-    });
-  };
-}
-
-function createGetDetail(runtime: CaseRepositoryRuntime) {
-  return async (id: string): Promise<CaseDetail | null> => {
-    const aggregate = await createGetDetailAggregate(runtime)(id);
-    return aggregate?.detail ?? null;
-  };
-}
-
-function createGetDetailAggregate(runtime: CaseRepositoryRuntime) {
-  return async (id: string): Promise<CaseDetailAggregate | null> => {
-    const normalizedId = id.trim();
-    if (!normalizedId) return null;
-
-    return requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, normalizedId)}/aggregate`,
-      method: "GET",
-      adapt: adaptCaseDetailAggregate,
-      errorMessage: "Invalid case detail aggregate response",
-    });
-  };
-}
-
-function createCreateCase(runtime: CaseRepositoryRuntime) {
-  return async (input: CaseCreateInput): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: runtime.apiPath,
-      method: "POST",
-      body: buildCreateCasePayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid create case response",
-    });
-}
-
-function createUpdateCase(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: CaseUpdateInput,
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: buildCaseDetailPath(runtime.apiPath, id),
-      method: "PATCH",
-      body: buildUpdateCasePayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid update case response",
-    });
-}
-
-function createTransitionCase(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: CaseTransitionInput,
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, id)}/transition`,
-      method: "POST",
-      body: buildTransitionPayload(input),
-      adapt: adaptCaseTransitionResult,
-      errorMessage: "Invalid case transition response",
-    });
-}
-
-function createTransitionPhase(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: {
-      toPhase: string;
-      closeReason?: string;
-      resultOutcome?: string;
-    },
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, id)}/phase-transition`,
-      method: "POST",
-      body: input,
-      adapt: adaptCaseTransitionResult,
-      errorMessage: "Invalid phase transition response",
-    });
-}
-
-function createAcknowledgeBillingRisk(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: CaseBillingRiskAckInput,
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, id)}/billing-risk-ack`,
-      method: "POST",
-      body: buildBillingRiskAckPayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid billing risk acknowledgment response",
-    });
-}
-
-function createUpdatePostApprovalStage(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: CasePostApprovalInput,
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, id)}/post-approval-stage`,
-      method: "POST",
-      body: buildPostApprovalPayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid post-approval stage response",
-    });
-}
-
-function createTransitionWorkflowStep(runtime: CaseRepositoryRuntime) {
-  return async (
-    id: string,
-    input: CaseWorkflowStepTransitionInput,
-  ): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: `${buildCaseDetailPath(runtime.apiPath, id)}/workflow-step-transition`,
-      method: "POST",
-      body: buildWorkflowStepTransitionPayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid workflow step transition response",
-    });
-}
-
-function createDeleteCase(runtime: CaseRepositoryRuntime) {
-  return async (id: string): Promise<void> => {
-    await requestAndAdapt({
-      runtime,
-      url: buildCaseDetailPath(runtime.apiPath, id),
-      method: "DELETE",
-      adapt: adaptDeleteCaseResult,
-      errorMessage: "Invalid delete case response",
-    });
-  };
-}
-
-// ─── Case Parties (p0-fe-008-01) ─────────────────────────────────
-
-function createCreateCaseParty(runtime: CaseRepositoryRuntime) {
-  return async (input: CasePartyCreateInput): Promise<CaseMutationResult> =>
-    requestAndAdapt({
-      runtime,
-      url: buildCasePartiesApiPath(runtime.apiPath),
-      method: "POST",
-      body: buildCreateCasePartyPayload(input),
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Invalid create case party response",
-    });
-}
-
-// ─── Retry Reminder Creation (p1-fe-005-01) ──────────────────────
-
-function createRetryReminderCreation(runtime: CaseRepositoryRuntime) {
-  return async (caseId: string): Promise<CaseMutationResult> => {
-    const normalizedId = caseId.trim();
-    if (!normalizedId) {
-      throw new CaseRepositoryError({
-        code: "VALIDATION_ERROR",
-        message: "Missing case ID",
-      });
-    }
-    return requestAndAdapt({
-      runtime,
-      url: `${runtime.apiPath}/${normalizedId}/retry-reminder-creation`,
-      method: "POST",
-      adapt: adaptCaseMutationResult,
-      errorMessage: "Failed to retry reminder creation",
-    });
-  };
-}
 
 /**
  * 创建基于 HTTP 请求的真实 CaseRepository。
@@ -467,5 +314,8 @@ export function createCaseRepository(
     getDeadlines: createGetDeadlines(runtime),
     createCaseParty: createCreateCaseParty(runtime),
     retryReminderCreation: createRetryReminderCreation(runtime),
+    createCommunicationLog: createCreateCommunicationLog(runtime),
+    createGeneratedDocument: createCreateGeneratedDocument(runtime),
+    createReminder: createCreateReminder(runtime),
   };
 }

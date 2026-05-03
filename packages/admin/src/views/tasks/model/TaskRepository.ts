@@ -12,6 +12,10 @@ import {
   type TaskRepositoryFactoryInput,
   type TaskRepositoryRuntime,
 } from "./TaskRepositorySupport";
+import {
+  buildCreateTaskPayload,
+  type TaskCreateInput,
+} from "./TaskWriteBuilders";
 
 /**
  * 任务与提醒工作台依赖的仓储接口。
@@ -25,6 +29,13 @@ export interface TaskRepository {
   ): Promise<ListResult<ReminderRecord>>;
   /** 将指定任务标记为已完成。 */
   completeTask(id: string): Promise<TaskRecord>;
+  /**
+   * 创建任务。
+   * 数据源：`POST /api/tasks`。
+   *
+   * 标题为空（trim 后无内容）时本地抛出 `VALIDATION_ERROR`，不发起请求。
+   */
+  createTask(input: TaskCreateInput): Promise<TaskRecord>;
 }
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -185,6 +196,27 @@ function createCompleteTask(runtime: TaskRepositoryRuntime) {
   };
 }
 
+function createCreateTask(runtime: TaskRepositoryRuntime) {
+  return async (input: TaskCreateInput): Promise<TaskRecord> => {
+    if (!input.title || !input.title.trim()) {
+      throw new TaskRepositoryError({
+        code: "VALIDATION_ERROR",
+        errorName: "TaskRepositoryError",
+        message: "Task title is required",
+      });
+    }
+
+    return requestAndAdapt({
+      runtime,
+      url: runtime.apiPath,
+      method: "POST",
+      body: buildCreateTaskPayload(input),
+      adapt: adaptTask,
+      errorMessage: "Invalid create task response",
+    });
+  };
+}
+
 /**
  * 创建任务工作台使用的仓储实例。
  *
@@ -200,5 +232,6 @@ export function createTaskRepository(
     listTasks: createListTasks(runtime),
     listReminders: createListReminders(runtime),
     completeTask: createCompleteTask(runtime),
+    createTask: createCreateTask(runtime),
   };
 }

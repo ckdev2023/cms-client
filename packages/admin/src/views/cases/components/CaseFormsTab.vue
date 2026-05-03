@@ -1,12 +1,19 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import type { CaseDetail, FormGenerated } from "../types-detail";
 
 /** 文書管理 Tab：展示可用模板列表与已生成文書记录。 */
+const { t } = useI18n();
+
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
+}>();
+
+const emit = defineEmits<{
+  (e: "open-generate-modal"): void;
 }>();
 
 const TONE_ICON_CLASS: Record<string, string> = {
@@ -41,8 +48,16 @@ function hasForms(detail: CaseDetail): boolean {
   <div class="forms-tab">
     <Card padding="none">
       <template #header>
-        <h2 class="forms-tab__title">文書管理</h2>
-        <Button v-if="!readonly" variant="filled" tone="primary" size="sm">
+        <h2 class="forms-tab__title">
+          {{ t("cases.detail.forms.title") }}
+        </h2>
+        <Button
+          v-if="!readonly"
+          variant="filled"
+          tone="primary"
+          size="sm"
+          @click="emit('open-generate-modal')"
+        >
           <svg
             width="14"
             height="14"
@@ -56,7 +71,7 @@ function hasForms(detail: CaseDetail): boolean {
           >
             <path d="M12 4v16m8-8H4" />
           </svg>
-          生成文書
+          {{ t("cases.detail.forms.generateAction") }}
         </Button>
       </template>
 
@@ -66,7 +81,9 @@ function hasForms(detail: CaseDetail): boolean {
           v-if="detail.forms.templates.length > 0"
           class="forms-tab__section"
         >
-          <div class="forms-tab__kicker">可用模板</div>
+          <div class="forms-tab__kicker">
+            {{ t("cases.detail.forms.kickerTemplates") }}
+          </div>
           <div
             v-for="(tpl, i) in detail.forms.templates"
             :key="`tpl-${i}`"
@@ -105,7 +122,9 @@ function hasForms(detail: CaseDetail): boolean {
           v-if="detail.forms.generated.length > 0"
           class="forms-tab__section forms-tab__section--border"
         >
-          <div class="forms-tab__kicker">已生成文書</div>
+          <div class="forms-tab__kicker">
+            {{ t("cases.detail.forms.kickerGenerated") }}
+          </div>
           <div
             v-for="(doc, i) in detail.forms.generated"
             :key="`gen-${i}`"
@@ -148,10 +167,10 @@ function hasForms(detail: CaseDetail): boolean {
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
-                导出
+                {{ t("cases.detail.forms.exportAction") }}
               </Button>
               <button class="forms-tab__link-btn" type="button">
-                版本历史
+                {{ t("cases.detail.forms.versionHistoryAction") }}
               </button>
             </div>
           </div>
@@ -174,7 +193,7 @@ function hasForms(detail: CaseDetail): boolean {
             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
           />
         </svg>
-        <p>暂无可用文書模板或生成记录</p>
+        <p>{{ t("cases.detail.forms.empty") }}</p>
       </div>
     </Card>
   </div>

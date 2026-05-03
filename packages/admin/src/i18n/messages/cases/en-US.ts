@@ -233,6 +233,7 @@ const casesEnUS = {
     },
   },
   detail: {
+    readonlyHint: "Case is archived; all actions are read-only",
     actions: {
       editInfo: "Edit info",
       exportZip: "Export ZIP",
@@ -511,7 +512,7 @@ const casesEnUS = {
       addInline: "Add a new task…",
       empty: "No tasks yet",
       createModal: {
-        title: "Create task",
+        title: "Add Task",
         fields: {
           title: "Task title",
           description: "Description",
@@ -534,6 +535,13 @@ const casesEnUS = {
       },
     },
     forms: {
+      title: "Document Management",
+      generateAction: "Generate Document",
+      kickerTemplates: "Available templates",
+      kickerGenerated: "Generated documents",
+      exportAction: "Download",
+      versionHistoryAction: "Version history",
+      empty: "No templates or generated documents available",
       generateModal: {
         title: "Generate document",
         fields: {
@@ -660,7 +668,16 @@ const casesEnUS = {
       },
     },
   },
+  common: {
+    comingSoon: "Coming soon",
+    notSet: "—",
+  },
   constants: {
+    applicationTypes: {
+      certification: "Certification",
+      change_of_status: "Change of status",
+      renewal: "Renewal",
+    },
     stages: {
       S1: "Case opened",
       S2: "Collecting documents",
@@ -883,6 +900,30 @@ const casesEnUS = {
       phaseChange: "Phase change: {from} → {to}",
       commLogCreated: "Communication log added: {suffix}",
       commLogUpdated: "Communication log updated",
+      casePartyCreated: "Related party added: {suffix}",
+      casePartyUpdated: "Related party updated",
+      casePartyDeleted: "Related party deleted",
+      documentItemCreated: "Document item added: {suffix}",
+      documentItemUpdated: "Document item updated",
+      documentFileCreated: "File uploaded: {suffix}",
+      documentFileUpdated: "File updated",
+      taskCreated: "Task created: {suffix}",
+      taskUpdated: "Task updated",
+      taskCompleted: "Task completed",
+      billingRecordCreated: "Billing record added: {suffix}",
+      billingRecordUpdated: "Billing record updated",
+      paymentRecordCreated: "Payment record added: {suffix}",
+      paymentRecordUpdated: "Payment record updated",
+      reviewRecordCreated: "Review started",
+      reviewRecordApproved: "Review approved",
+      reviewRecordRejected: "Review rejected: {suffix}",
+      validationRunCreated: "Pre-submission check run",
+      validationRunPassed: "Validation passed",
+      validationRunFailed: "Validation failed",
+      submissionPackageCreated: "Submission package created",
+      submissionPackageUpdated: "Submission package updated",
+      generatedDocumentCreated: "Document generated: {suffix}",
+      reminderCreated: "Reminder created: {suffix}",
     },
   },
   validation: {
@@ -891,6 +932,16 @@ const casesEnUS = {
       "Blocking items were found in the previous validation. Please fix them and re-run.",
   },
   deadlines: {
+    summary: {
+      title: "Key Deadlines",
+      addDeadline: "Add deadline",
+      residenceEmpty: "Residence period not yet recorded",
+      reminderEmpty: "No renewal reminders configured",
+      reminderSettingLabel: "Pre-expiry reminder settings",
+      cardLabel: "Card:",
+      entryDateLabel: "Entry date:",
+      expiryDateLabel: "Expiry:",
+    },
     types: {
       case: "Case deadline",
       customer: "Customer-related deadline",

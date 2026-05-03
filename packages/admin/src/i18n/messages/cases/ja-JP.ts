@@ -231,6 +231,7 @@ const casesJaJP = {
     },
   },
   detail: {
+    readonlyHint: "案件はアーカイブ済みのため、すべての操作が読み取り専用です",
     actions: {
       editInfo: "情報を編集",
       exportZip: "ZIP エクスポート",
@@ -508,7 +509,7 @@ const casesJaJP = {
       addInline: "新しいタスクを追加…",
       empty: "タスクがありません",
       createModal: {
-        title: "タスク新規作成",
+        title: "タスクを追加",
         fields: {
           title: "タスク名",
           description: "説明",
@@ -531,6 +532,13 @@ const casesJaJP = {
       },
     },
     forms: {
+      title: "文書管理",
+      generateAction: "文書を生成",
+      kickerTemplates: "利用可能なテンプレート",
+      kickerGenerated: "生成済み文書",
+      exportAction: "エクスポート",
+      versionHistoryAction: "バージョン履歴",
+      empty: "利用可能なテンプレートまたは生成記録がありません",
       generateModal: {
         title: "書類生成",
         fields: {
@@ -656,7 +664,16 @@ const casesJaJP = {
       },
     },
   },
+  common: {
+    comingSoon: "準備中",
+    notSet: "—",
+  },
   constants: {
+    applicationTypes: {
+      certification: "認定",
+      change_of_status: "変更",
+      renewal: "更新",
+    },
     stages: {
       S1: "案件開始",
       S2: "資料収集中",
@@ -881,6 +898,30 @@ const casesJaJP = {
       phaseChange: "業務フェーズ変更：{from} → {to}",
       commLogCreated: "沟通記録追加：{suffix}",
       commLogUpdated: "沟通記録更新",
+      casePartyCreated: "関連人追加：{suffix}",
+      casePartyUpdated: "関連人情報更新",
+      casePartyDeleted: "関連人削除",
+      documentItemCreated: "資料項目追加：{suffix}",
+      documentItemUpdated: "資料項目更新",
+      documentFileCreated: "ファイルアップロード：{suffix}",
+      documentFileUpdated: "ファイル更新",
+      taskCreated: "タスク作成：{suffix}",
+      taskUpdated: "タスク更新",
+      taskCompleted: "タスク完了",
+      billingRecordCreated: "請求記録追加：{suffix}",
+      billingRecordUpdated: "請求記録更新",
+      paymentRecordCreated: "入金記録追加：{suffix}",
+      paymentRecordUpdated: "入金記録更新",
+      reviewRecordCreated: "復核を開始",
+      reviewRecordApproved: "復核承認",
+      reviewRecordRejected: "復核却下：{suffix}",
+      validationRunCreated: "提出前チェック実行",
+      validationRunPassed: "検証合格",
+      validationRunFailed: "検証不合格",
+      submissionPackageCreated: "提出パッケージ作成",
+      submissionPackageUpdated: "提出パッケージ更新",
+      generatedDocumentCreated: "書類生成：{suffix}",
+      reminderCreated: "リマインダー作成：{suffix}",
     },
   },
   validation: {
@@ -889,6 +930,16 @@ const casesJaJP = {
       "前回の検証で不合格項目が検出されました。修正後に再検証を実行してください。",
   },
   deadlines: {
+    summary: {
+      title: "重要な期限",
+      addDeadline: "期限を追加",
+      residenceEmpty: "在留期間が未登録です",
+      reminderEmpty: "更新リマインダーが未設定です",
+      reminderSettingLabel: "満了前リマインダー設定",
+      cardLabel: "カード:",
+      entryDateLabel: "入国日:",
+      expiryDateLabel: "満了日:",
+    },
     types: {
       case: "案件期限",
       customer: "顧客関連期限",

@@ -12,6 +12,10 @@ defineProps<{
   readonly: boolean;
 }>();
 
+const emit = defineEmits<{
+  (e: "open-create-deadline"): void;
+}>();
+
 const SEVERITY_COLOR: Record<string, string> = {
   danger: "var(--color-danger)",
   warning: "#f59e0b",
@@ -67,8 +71,14 @@ function chipClass(item: DeadlineItem): string {
   <div class="deadlines-tab">
     <Card padding="lg">
       <template #header>
-        <h2 class="deadlines-tab__title">关键期限</h2>
-        <Button v-if="!readonly" size="sm">
+        <h2 class="deadlines-tab__title">
+          {{ t("cases.deadlines.summary.title") }}
+        </h2>
+        <Button
+          v-if="!readonly"
+          size="sm"
+          @click="emit('open-create-deadline')"
+        >
           <svg
             width="14"
             height="14"
@@ -82,7 +92,7 @@ function chipClass(item: DeadlineItem): string {
           >
             <path d="M12 4v16m8-8H4" />
           </svg>
-          添加期限
+          {{ t("cases.deadlines.summary.addDeadline") }}
         </Button>
       </template>
 
@@ -120,10 +130,12 @@ function chipClass(item: DeadlineItem): string {
             class="deadlines-tab__summary-details"
           >
             <span v-if="detail.residencePeriod.cardNumber">
-              カード: {{ detail.residencePeriod.cardNumber }}
+              {{ t("cases.deadlines.summary.cardLabel") }}
+              {{ detail.residencePeriod.cardNumber }}
             </span>
             <span v-if="detail.residencePeriod.entryDate">
-              入国日: {{ detail.residencePeriod.entryDate }}
+              {{ t("cases.deadlines.summary.entryDateLabel") }}
+              {{ detail.residencePeriod.entryDate }}
             </span>
           </div>
           <span class="deadlines-tab__summary-meta">{{
@@ -131,7 +143,7 @@ function chipClass(item: DeadlineItem): string {
           }}</span>
         </div>
         <div v-else class="deadlines-tab__summary-placeholder">
-          尚未录入在留期间
+          {{ t("cases.deadlines.summary.residenceEmpty") }}
         </div>
 
         <!-- ── Reminder Schedule Panel ──────────────────────── -->
@@ -145,9 +157,12 @@ function chipClass(item: DeadlineItem): string {
             {{ detail.reminderSchedule.statusLabel }}
           </span>
           <div class="deadlines-tab__summary-body">
-            <span class="deadlines-tab__summary-label">到期前提醒设定</span>
+            <span class="deadlines-tab__summary-label">
+              {{ t("cases.deadlines.summary.reminderSettingLabel") }}
+            </span>
             <span class="deadlines-tab__summary-value">
-              满了日: {{ detail.reminderSchedule.reminderDate }}
+              {{ t("cases.deadlines.summary.expiryDateLabel") }}
+              {{ detail.reminderSchedule.reminderDate }}
             </span>
           </div>
           <div
@@ -174,7 +189,7 @@ function chipClass(item: DeadlineItem): string {
           }}</span>
         </div>
         <div v-else class="deadlines-tab__summary-placeholder">
-          尚未设置续签提醒
+          {{ t("cases.deadlines.summary.reminderEmpty") }}
         </div>
       </div>
 

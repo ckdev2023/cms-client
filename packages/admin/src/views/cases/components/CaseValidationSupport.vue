@@ -48,7 +48,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
           size="sm"
           pill
           disabled
-          :title="t('common.comingSoon')"
+          :title="t('shell.topbar.comingSoon')"
           >{{ t("cases.detail.validation.reviewer.startCta") }}</Button
         >
       </template>
@@ -143,7 +143,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
           size="sm"
           pill
           disabled
-          :title="t('common.comingSoon')"
+          :title="t('shell.topbar.comingSoon')"
         >
           {{ t("cases.detail.validation.risk.simulateCta") }}
         </Button>

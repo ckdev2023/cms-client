@@ -144,6 +144,9 @@ const REPOSITORY_REQUIRED_METHODS = [
   "getDeadlines",
   "createCaseParty",
   "retryReminderCreation",
+  "createCommunicationLog",
+  "createGeneratedDocument",
+  "createReminder",
 ] as const;
 
 describe("CaseRepository interface surface (p0-fe-002f-04)", () => {

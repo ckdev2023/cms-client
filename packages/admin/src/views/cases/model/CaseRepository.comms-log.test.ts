@@ -135,7 +135,10 @@ describe("CaseRepository messages/log (p0-fe-002e-01)", () => {
     expect(entries).toHaveLength(2);
     expect(entries[0].type).toBe("operation");
     expect(entries[0].text).toBe("cases.log.timeline.caseCreated");
-    expect(entries[0].textParams).toEqual({ suffix: "business_manager" });
+    expect(entries[0].textParams).toEqual({
+      suffix: "business_manager",
+      suffixKey: "cases.constants.caseTypes.business_manager",
+    });
     expect(entries[0].category).toBe("cases.log.category.operation");
     expect(entries[1].type).toBe("status");
     expect(entries[1].text).toBe("cases.log.timeline.stageChange");

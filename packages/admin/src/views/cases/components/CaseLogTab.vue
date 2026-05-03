@@ -9,7 +9,7 @@ import { LOG_CATEGORIES } from "../constants";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 日志 Tab：展示案件日志时间线与分类筛选。 */
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 
 const props = defineProps<{
   detail: CaseDetail;
@@ -61,23 +61,58 @@ function formatEntryTime(raw: string, loc: string): string {
 }
 
 /**
- * 解析时间线文本——对 `fromPhaseKey` / `toPhaseKey` 进行二次翻译后再插值。
+ * 解析时间线文本——对 `fromPhaseKey` / `toPhaseKey` / `suffixKey` 进行二次翻译后再插值。
  *
  * Adapter 层返回的 params 中包含「待翻译的 i18n key」（如 `cases.phases.APPROVED`），
  * 视图层需要先把这些 key 翻译成当前 locale 下的文案，再传给外层 `t()` 做最终插值。
+ * 当 `suffixKey` 指向的 key 不存在时，回退为 `suffix` 原值；当主 key 缺失时，
+ * 回退到 `params.fallback` 或保留原 key。
  *
  * @param entry - 日志条目
  * @returns 翻译后的时间线文本
  */
 function resolveTimelineText(entry: LogEntry): string {
-  const params: Record<string, unknown> = { ...(entry.textParams ?? {}) };
-  if (typeof params.fromPhaseKey === "string" && params.fromPhaseKey) {
-    params.from = t(params.fromPhaseKey);
+  const params = resolveTimelineParams(entry.textParams);
+  if (te(entry.text)) return t(entry.text, params);
+  if (typeof params.fallback === "string" && params.fallback) {
+    return params.fallback;
   }
-  if (typeof params.toPhaseKey === "string" && params.toPhaseKey) {
-    params.to = t(params.toPhaseKey);
+  return entry.text;
+}
+
+/**
+ * 拷贝 textParams 并就地替换 `*Key` 字段为已翻译值。
+ * @param raw - adapter 透传的原始 params
+ * @returns 已翻译的参数对象
+ */
+function resolveTimelineParams(
+  raw: Record<string, unknown> | undefined,
+): Record<string, unknown> {
+  const params: Record<string, unknown> = { ...(raw ?? {}) };
+  resolveKeyParam(params, "fromPhaseKey", "from");
+  resolveKeyParam(params, "toPhaseKey", "to");
+  resolveKeyParam(params, "suffixKey", "suffix");
+  return params;
+}
+
+/**
+ * 若 `keyField` 指向的 i18n key 存在则翻译并写入 `outField`，否则保留 `outField` 现值。
+ * @param params - 待原地修改的 params 对象
+ * @param keyField - 存放 i18n key 的字段名
+ * @param outField - 接收翻译结果的字段名
+ */
+function resolveKeyParam(
+  params: Record<string, unknown>,
+  keyField: string,
+  outField: string,
+): void {
+  const key = params[keyField];
+  if (typeof key !== "string" || !key) return;
+  if (te(key)) {
+    params[outField] = t(key);
+  } else if (params[outField] == null) {
+    params[outField] = key;
   }
-  return t(entry.text, params);
 }
 </script>
 

@@ -9,7 +9,7 @@ import {
 } from "../model/CaseAdapterDetailContracts";
 
 /** 基本信息 Tab：展示案件属性、相关方与只读字段状态。 */
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 const props = defineProps<{
   detail: CaseDetail;
@@ -19,6 +19,36 @@ const props = defineProps<{
 const isBmvCase = computed(
   () => props.detail.workflowStep != null || props.detail.visaPlan != null,
 );
+
+const caseIdDisplay = computed(
+  () => props.detail.caseNo || props.detail.id || "—",
+);
+
+const caseTypeDisplay = computed(() =>
+  translateEnumOrFallback("cases.constants.caseTypes", props.detail.caseType),
+);
+
+const applicationTypeDisplay = computed(() =>
+  translateEnumOrFallback(
+    "cases.constants.applicationTypes",
+    props.detail.applicationType,
+  ),
+);
+
+/**
+ * 在指定的 i18n 命名空间下查找枚举翻译，缺失时回退为原始值或 "—"。
+ * @param ns - i18n key 前缀
+ * @param value - 枚举原始值
+ * @returns 翻译文本或回退展示
+ */
+function translateEnumOrFallback(
+  ns: string,
+  value: string | null | undefined,
+): string {
+  if (!value) return "—";
+  const key = `${ns}.${value}`;
+  return te(key) ? t(key) : value;
+}
 
 /**
  * P0 阶段所有 info tab 属性字段均为 display-only。
@@ -68,7 +98,7 @@ void _contractGuard;
                 t("cases.detail.info.fields.caseId")
               }}</label>
               <span class="info-tab__value info-tab__value--disabled">
-                {{ detail.id || "—" }}
+                {{ caseIdDisplay }}
               </span>
             </div>
             <div class="info-tab__field">
@@ -81,7 +111,7 @@ void _contractGuard;
                   'info-tab__value--disabled': isFieldDisabled('caseType'),
                 }"
               >
-                {{ detail.caseType || "—" }}
+                {{ caseTypeDisplay }}
               </span>
             </div>
             <div class="info-tab__field">
@@ -95,7 +125,7 @@ void _contractGuard;
                     isFieldDisabled('applicationType'),
                 }"
               >
-                {{ detail.applicationType || "—" }}
+                {{ applicationTypeDisplay }}
               </span>
             </div>
             <div class="info-tab__field">

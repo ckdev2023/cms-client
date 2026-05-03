@@ -306,7 +306,10 @@ describe("adaptCaseLogDto", () => {
     expect(result).not.toBeNull();
     expect(result!.type).toBe("operation");
     expect(result!.text).toBe("cases.log.timeline.caseCreated");
-    expect(result!.textParams).toEqual({ suffix: "business_manager" });
+    expect(result!.textParams).toEqual({
+      suffix: "business_manager",
+      suffixKey: "cases.constants.caseTypes.business_manager",
+    });
     expect(result!.category).toBe("cases.log.category.operation");
     expect(result!.categoryChip).toBe("chip-muted");
     expect(result!.objectType).toBe("cases.log.objectType.case");
@@ -405,7 +408,8 @@ describe("adaptCaseLogDto", () => {
       action: "some.custom_action",
       payload: {},
     });
-    expect(result!.text).toBe("some.custom_action");
+    expect(result!.text).toBe("cases.log.timeline.some_custom_action");
+    expect(result!.textParams).toEqual({ fallback: "some.custom_action" });
     expect(result!.objectType).toBe("some");
   });
 

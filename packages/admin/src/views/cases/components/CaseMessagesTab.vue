@@ -5,6 +5,7 @@ import Card from "../../../shared/ui/Card.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, MessageTypeKey } from "../types-detail";
 import { MESSAGE_FILTERS } from "../constants";
+import type { MessageChannelChoice } from "../model/CaseAdapterMessageWriteBuilders";
 
 /** 沟通记录 Tab：消息时间线、撰写区与类型筛选面板。 */
 const { t } = useI18n();
@@ -13,16 +14,35 @@ const props = defineProps<{
   readonly: boolean;
 }>();
 
+const emit = defineEmits<{
+  (
+    e: "publish-message",
+    payload: { content: string; channelChoice: MessageChannelChoice },
+  ): void;
+}>();
+
+const composerText = ref("");
+const channelChoice = ref<MessageChannelChoice>("internal");
+const canPublish = computed(() => composerText.value.trim().length > 0);
+
+/** 发布当前撰写区内容并清空。 */
+function handlePublish(): void {
+  if (!canPublish.value) return;
+  emit("publish-message", {
+    content: composerText.value,
+    channelChoice: channelChoice.value,
+  });
+  composerText.value = "";
+}
+
 const conversationsHref = computed(
   () => `#/conversations?caseId=${props.detail.id}`,
 );
 
 const activeFilter = ref<"all" | MessageTypeKey>("all");
 
-const CHIP_TONE_MAP: Record<
-  string,
-  "neutral" | "primary" | "success" | "warning"
-> = {
+type ChipTone = "neutral" | "primary" | "success" | "warning";
+const CHIP_TONE_MAP: Record<string, ChipTone> = {
   internal: "success",
   client_visible: "warning",
   phone: "primary",
@@ -39,8 +59,7 @@ const AVATAR_BG: Record<string, string> = {
 
 /**
  * 根据头像色调键返回背景色。
- *
- * @param style - 头像样式标识
+ * @param style - 头像色调键
  * @returns CSS 背景色值
  */
 function avatarBg(style: string): string {
@@ -49,8 +68,7 @@ function avatarBg(style: string): string {
 
 /**
  * 根据头像色调键返回前景色。
- *
- * @param style - 头像样式标识
+ * @param style - 头像色调键
  * @returns CSS 前景色值
  */
 function avatarColor(style: string): string {
@@ -84,8 +102,10 @@ function avatarColor(style: string): string {
       <div class="messages-tab__main">
         <Card v-if="!readonly" padding="md">
           <textarea
+            v-model="composerText"
             class="messages-tab__composer"
             rows="3"
+            data-testid="messages-composer"
             :placeholder="t('cases.detail.messages.composerPlaceholder')"
           />
           <p class="messages-tab__composer-hint">
@@ -93,15 +113,31 @@ function avatarColor(style: string): string {
           </p>
           <div class="messages-tab__composer-footer">
             <div class="messages-tab__composer-right">
-              <select class="messages-tab__type-select">
-                <option>{{ t("cases.detail.messages.typeInternal") }}</option>
-                <option>
+              <select
+                v-model="channelChoice"
+                class="messages-tab__type-select"
+                data-testid="messages-channel-select"
+              >
+                <option value="internal">
+                  {{ t("cases.detail.messages.typeInternal") }}
+                </option>
+                <option value="client_visible">
                   {{ t("cases.detail.messages.typeClientVisible") }}
                 </option>
-                <option>{{ t("cases.detail.messages.typePhone") }}</option>
-                <option>{{ t("cases.detail.messages.typeMeeting") }}</option>
+                <option value="phone">
+                  {{ t("cases.detail.messages.typePhone") }}
+                </option>
+                <option value="meeting">
+                  {{ t("cases.detail.messages.typeMeeting") }}
+                </option>
               </select>
-              <button class="messages-tab__publish-btn" type="button">
+              <button
+                class="messages-tab__publish-btn"
+                type="button"
+                data-testid="messages-publish-btn"
+                :disabled="!canPublish"
+                @click="handlePublish"
+              >
                 {{ t("cases.detail.messages.publish") }}
               </button>
             </div>
