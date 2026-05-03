@@ -444,6 +444,11 @@ export type CommunicationLog = {
   createdAt: string;
 };
 
+/** CommunicationLog list 端点返回：基础字段 + 创建者显示名。 */
+export type CommunicationLogListItem = CommunicationLog & {
+  createdByDisplayName: string | null;
+};
+
 /**
  * TimelineLog 核心对象（统一审计/时间线）。
  */

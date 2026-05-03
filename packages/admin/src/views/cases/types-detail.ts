@@ -10,6 +10,21 @@ import type {
 export type { CaseRoleKey, CaseSampleKey } from "./types";
 
 /**
+ * 顾客多语言名称（R27-S）。
+ *
+ * 来源：server deepLink 中 `customerNameZh` / `customerNameJa` / `customerNameEn`。
+ * 缺失时各字段为空字符串；view 层按 `locale` 取值后 fallback 到 `detail.client`。
+ */
+export interface CustomerLocalizedNames {
+  /** 中文名。 */
+  zh: string;
+  /** 日文名。 */
+  ja: string;
+  /** 英文名。 */
+  en: string;
+}
+
+/**
  *
  */
 export interface ProviderProgress {
@@ -17,6 +32,14 @@ export interface ProviderProgress {
    *
    */
   label: string;
+  /**
+   * 国际化键：`cases.detail.providers.${providerRole}`
+   */
+  labelKey: string;
+  /**
+   * 原始 providerRole enum 值，未知时为 `"unspecified"`
+   */
+  providerRole: string;
   /**
    *
    */
@@ -270,15 +293,16 @@ export interface DocumentItem {
   /**
    *
    */
-  statusLabel: string;
+  /** i18n key — view 层必须用 t() 翻译 */
+  statusLabelKey: string;
   /**
    *
    */
   canWaive?: boolean;
   /** 本地归档相对路径；`null` 或 `undefined` 表示"未登记"。 */
   relativePath?: string | null;
-  /** 引用来源标记（"本资料项登记" / "引用自：{来源}"）。 */
-  referenceLabel?: string | null;
+  /** i18n key — 引用来源标记；view 层必须用 t() 翻译 */
+  referenceLabelKey?: string | null;
   /** 引用此版本的案件数（> 1 时展示多案件引用提示）。 */
   referenceCount?: number;
   /** 附件版本历史。 */
@@ -698,18 +722,20 @@ export interface MessageItem {
    *
    */
   type: MessageTypeKey;
+  /** i18n key — view 层必须用 t() 翻译。 */
+  typeLabelKey: string;
   /**
-   *
+   * @deprecated T2.6 完成后删除，改用 typeLabelKey + t()。
    */
   typeLabel: string;
   /**
    *
    */
   body: string;
-  /**
-   *
-   */
+  /** 已格式化的展示时间（locale 敏感）。 */
   time: string;
+  /** 原始 ISO 8601 时间戳；adapter 未传 locale 时可能为 undefined。 */
+  timeIso?: string;
   /**
    *
    */
@@ -1239,6 +1265,31 @@ export interface CaseDetail {
   /**
    *
    */
+  priority: string;
+  /**
+   *
+   */
+  riskLevel: string;
+  /**
+   *
+   */
+  ownerUserId: string;
+  /**
+   *
+   */
+  assistantUserId: string;
+  /**
+   *
+   */
+  jurisdictionAuthority: string;
+  /**
+   *
+   */
+  remark: string;
+
+  /**
+   *
+   */
   providerProgress: ProviderProgress[];
   /**
    *
@@ -1381,6 +1432,20 @@ export interface CaseDetail {
   supplementRound?: SupplementRoundInfo | null;
   /** 提醒创建失败信息（仅 BMV 案件有在留期间且提醒失败时有值）。 */
   reminderFailure?: ReminderFailureInfo | null;
+
+  // ─── Terminal / Closeout 概要（R28-E） ───────────────────────────
+
+  /** 结案原因文本（free-text，由 transition 时提供）。 */
+  closeReason?: string | null;
+  /** 归档时间（格式化后）。 */
+  closedAt?: string | null;
+  /** 归档操作人显示名（暂回退至 owner，后续由 stage_history 补充）。 */
+  closedBy?: string | null;
+
+  // ─── R27-S 顾客名多语言（I3） ─────────────────────────────────
+
+  /** 顾客多语言名称；server deepLink 未提供时为 null。 */
+  customerLocalizedNames?: CustomerLocalizedNames | null;
 }
 
 /**

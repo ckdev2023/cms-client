@@ -15,6 +15,7 @@ import {
 
 import { RequireRoles } from "../auth/auth.decorators";
 import type { RequestContext } from "../tenancy/requestContext";
+import { isUuid } from "../tenancy/uuid";
 import { RemindersService } from "./reminders.service";
 
 type HttpRequest = {
@@ -135,11 +136,27 @@ export class RemindersController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const targetId = requireString(body.targetId, "targetId");
+    if (!isUuid(targetId)) {
+      throw new BadRequestException({
+        errorCode: "REMINDER_INVALID_TARGET_ID",
+        message: "targetId must be a valid UUID",
+      });
+    }
+
+    const caseId = parseOptionalString(body.caseId, "caseId");
+    if (caseId !== undefined && !isUuid(caseId)) {
+      throw new BadRequestException({
+        errorCode: "REMINDER_INVALID_CASE_ID",
+        message: "caseId must be a valid UUID",
+      });
+    }
+
     return this.remindersService.create(ctx, {
       targetType: requireString(body.targetType, "targetType"),
-      targetId: requireString(body.targetId, "targetId"),
+      targetId,
       remindAt: parseISODate(body.remindAt, "remindAt"),
-      caseId: parseOptionalString(body.caseId, "caseId"),
+      caseId,
       recipientType: parseOptionalString(body.recipientType, "recipientType"),
       recipientId: parseOptionalString(body.recipientId, "recipientId"),
       channel: parseOptionalString(body.channel, "channel"),

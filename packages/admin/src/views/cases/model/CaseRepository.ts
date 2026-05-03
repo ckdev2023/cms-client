@@ -59,14 +59,17 @@ import {
   createGetBillingData,
 } from "./CaseRepositoryReadSide";
 import {
+  createCompleteTask,
   createCreateCommunicationLog,
   createCreateGeneratedDocument,
   createCreateReminder,
+  createCreateTask,
   type WriteResultWithId,
 } from "./CaseRepositoryWriteSide";
 import type { CommunicationLogCreateInput } from "./CaseAdapterMessageWriteBuilders";
 import type { GeneratedDocumentCreateInput } from "./CaseAdapterGeneratedDocumentWriteBuilders";
 import type { ReminderCreateInput } from "./CaseAdapterReminderWriteBuilders";
+import type { TaskCreateInput } from "./CaseAdapterTaskWriteBuilders";
 
 // ─── Responsibility Boundary ────────────────────────────────────
 // CaseRepository is request-orchestration only:
@@ -160,7 +163,7 @@ export interface CaseRepository {
    * 通过独立 CaseCommsLogsAdapter 获取沟通记录（messages tab）。
    * 数据源：`GET /api/communication-logs?caseId=xxx`，不经由 detail aggregate 主链。
    */
-  getMessages(caseId: string): Promise<MessageItem[]>;
+  getMessages(caseId: string, locale?: string): Promise<MessageItem[]>;
 
   /**
    * 通过独立 CaseCommsLogsAdapter 获取操作日志（log tab）。
@@ -178,7 +181,7 @@ export interface CaseRepository {
    * 获取生成文书列表（forms tab）。
    * 数据源：`GET /api/generated-documents?caseId=xxx`，不经由 detail aggregate 主链。
    */
-  getGeneratedDocuments(caseId: string): Promise<FormsData>;
+  getGeneratedDocuments(caseId: string, locale?: string): Promise<FormsData>;
 
   /**
    * 获取校验运行列表并适配为门禁视图模型（validation tab）。
@@ -267,6 +270,18 @@ export interface CaseRepository {
    * 配合 `targetType` 决定提醒挂在 case 还是 case_party_residence。
    */
   createReminder(input: ReminderCreateInput): Promise<WriteResultWithId>;
+
+  /**
+   * 创建任务。
+   * 数据源：`POST /api/tasks`。
+   */
+  createTask(input: TaskCreateInput): Promise<WriteResultWithId>;
+
+  /**
+   * 将任务标记为完成。
+   * 数据源：`POST /api/tasks/:id/complete`。
+   */
+  completeTask(taskId: string): Promise<WriteResultWithId>;
 }
 
 export { CaseRepositoryError };
@@ -317,5 +332,7 @@ export function createCaseRepository(
     createCommunicationLog: createCreateCommunicationLog(runtime),
     createGeneratedDocument: createCreateGeneratedDocument(runtime),
     createReminder: createCreateReminder(runtime),
+    createTask: createCreateTask(runtime),
+    completeTask: createCompleteTask(runtime),
   };
 }

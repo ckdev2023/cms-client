@@ -67,7 +67,7 @@ describe("adaptCaseMessageDto", () => {
     contentSummary: "Discussed document requirements",
     fullContent: "Full transcript here",
     visibleToClient: false,
-    createdBy: "Tanaka Yuki",
+    createdByDisplayName: "Tanaka Yuki",
     followUpRequired: false,
     followUpDueAt: null,
     createdAt: "2026-03-15T10:00:00.000Z",
@@ -162,7 +162,7 @@ describe("adaptCaseMessageDto", () => {
       channel_type: "meeting",
       content_summary: "Meeting notes",
       created_at: "2026-03-16T10:00:00.000Z",
-      created_by: "Admin",
+      created_by_display_name: "Admin",
       visible_to_client: true,
       follow_up_required: false,
     };
@@ -188,10 +188,10 @@ describe("adaptCaseMessageDto", () => {
     ).toBeNull();
   });
 
-  it("defaults author to System when createdBy is missing", () => {
+  it("defaults author to System when no display name field present", () => {
     const result = adaptCaseMessageDto({
       ...baseCommLog,
-      createdBy: null,
+      createdByDisplayName: undefined,
     });
     expect(result!.author).toBe("System");
   });
@@ -207,7 +207,7 @@ describe("adaptCaseMessageListResult", () => {
     channelType: "phone",
     contentSummary: "Test",
     createdAt: "2026-03-15T10:00:00.000Z",
-    createdBy: "User",
+    createdByDisplayName: "User",
     visibleToClient: false,
     followUpRequired: false,
   };
@@ -373,7 +373,6 @@ describe("adaptCaseLogDto", () => {
       reason: "Transfer",
     });
   });
-
   it("adapts communication_log actions with i18n keys", () => {
     const created = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -381,7 +380,9 @@ describe("adaptCaseLogDto", () => {
       payload: { channelType: "phone" },
     })!;
     expect(created.text).toBe("cases.log.timeline.commLogCreated");
-    expect(created.textParams).toEqual({ suffix: "phone" });
+    const p = created.textParams!;
+    expect(p).toHaveProperty("suffix", "phone");
+    expect(p).toHaveProperty("suffixKey", "cases.detail.messages.types.phone");
     expect(created.objectType).toBe("cases.log.objectType.communicationLog");
     const updated = adaptCaseLogDto({
       ...baseTimelineLog,

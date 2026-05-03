@@ -77,6 +77,8 @@ import { ConversationsAdminController } from "./modules/core/conversations/conve
 import { ConversationsAdminService } from "./modules/core/conversations/conversations.admin.service";
 import { SearchController } from "./modules/core/search/search.controller";
 import { SearchService } from "./modules/core/search/search.service";
+import { UsersController } from "./modules/core/users/users.controller";
+import { UsersService } from "./modules/core/users/users.service";
 import { MessagesAdminController } from "./modules/core/conversations/messages.admin.controller";
 import { MessagesAdminService } from "./modules/core/conversations/messages.admin.service";
 import { ConversationsController } from "./modules/portal/conversations/conversations.controller";
@@ -142,6 +144,7 @@ import {
     ConversationsAdminController,
     MessagesAdminController,
     SearchController,
+    UsersController,
     ConversationsController,
     MessagesController,
     UserDocumentsController,
@@ -194,6 +197,7 @@ import {
     ConversationsAdminService,
     MessagesAdminService,
     SearchService,
+    UsersService,
     ConversationsService,
     MessagesService,
     UserDocumentsService,

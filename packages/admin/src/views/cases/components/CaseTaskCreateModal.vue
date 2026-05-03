@@ -1,14 +1,18 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import UserPicker from "../../../shared/ui/UserPicker.vue";
+import type { TaskPriorityChoice } from "../model/CaseAdapterTaskWriteBuilders";
 
-/** 任务新建弹窗：在案件详情页内创建新任务。 */
+/** 任务新建弹窗：在案件详情内创建关联任务（替代跳转 /tasks 死循环）。 */
 const { t } = useI18n();
 
 interface CaseTaskCreateModalProps {
   open?: boolean;
+  caseId?: string;
   submitting?: boolean;
+  errorMessageKey?: string | null;
 }
 
 const props = defineProps<CaseTaskCreateModalProps>();
@@ -16,23 +20,26 @@ const props = defineProps<CaseTaskCreateModalProps>();
 const emit = defineEmits<{
   close: [];
   submit: [
-    fields: {
+    payload: {
       title: string;
-      description: string;
-      priority: string;
-      dueAt: string;
-      assigneeUserId: string;
+      description?: string;
+      priority: TaskPriorityChoice;
+      dueAt?: string;
+      assigneeUserId?: string;
     },
   ];
 }>();
 
-const PRIORITIES = ["low", "normal", "high", "urgent"] as const;
+const PRIORITIES: TaskPriorityChoice[] = ["low", "normal", "high", "urgent"];
+
+const backdropRef = ref<HTMLElement | null>(null);
 
 const localTitle = ref("");
 const localDescription = ref("");
-const localPriority = ref<string>("normal");
+const localPriority = ref<TaskPriorityChoice>("normal");
 const localDueAt = ref("");
-const localAssigneeUserId = ref("");
+const localAssignee = ref("");
+
 const titleError = ref(false);
 
 watch(
@@ -43,26 +50,29 @@ watch(
       localDescription.value = "";
       localPriority.value = "normal";
       localDueAt.value = "";
-      localAssigneeUserId.value = "";
+      localAssignee.value = "";
       titleError.value = false;
+      nextTick(() => backdropRef.value?.focus());
     }
   },
 );
 
-/** 提交任务表单。 */
+/** 提交任务表单，校验标题必填后 emit 载荷。 */
 function handleSubmit(): void {
-  const title = localTitle.value.trim();
-  if (!title) {
+  if (!localTitle.value.trim()) {
     titleError.value = true;
     return;
   }
-  titleError.value = false;
   emit("submit", {
-    title,
-    description: localDescription.value.trim(),
+    title: localTitle.value.trim(),
+    ...(localDescription.value.trim()
+      ? { description: localDescription.value.trim() }
+      : {}),
     priority: localPriority.value,
-    dueAt: localDueAt.value,
-    assigneeUserId: localAssigneeUserId.value.trim(),
+    ...(localDueAt.value ? { dueAt: localDueAt.value } : {}),
+    ...(localAssignee.value.trim()
+      ? { assigneeUserId: localAssignee.value.trim() }
+      : {}),
   });
 }
 </script>
@@ -71,18 +81,22 @@ function handleSubmit(): void {
   <Teleport to="body">
     <div
       v-if="props.open"
+      ref="backdropRef"
       class="task-create-modal-backdrop"
       data-testid="task-create-modal-backdrop"
+      tabindex="-1"
       @click.self="!props.submitting && emit('close')"
+      @keydown.esc.stop.prevent="!props.submitting && emit('close')"
     >
       <div
         class="task-create-modal"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="case-task-create-title"
         data-testid="task-create-modal"
       >
         <header class="task-create-modal__header">
-          <h2 class="task-create-modal__title">
+          <h2 id="case-task-create-title" class="task-create-modal__title">
             {{ t("cases.detail.tasks.createModal.title") }}
           </h2>
           <button
@@ -109,22 +123,18 @@ function handleSubmit(): void {
 
         <div class="task-create-modal__body">
           <label class="task-create-modal__field" for="task-create-title">
-            <span class="task-create-modal__label">
-              {{ t("cases.detail.tasks.createModal.fields.title") }}
-              <span class="task-create-modal__required" aria-hidden="true"
-                >*</span
-              >
-            </span>
+            <span class="task-create-modal__label">{{
+              t("cases.detail.tasks.createModal.fields.title")
+            }}</span>
             <input
               id="task-create-title"
               name="title"
               type="text"
-              :class="[
-                'task-create-modal__input',
-                { 'task-create-modal__input--error': titleError },
-              ]"
+              class="task-create-modal__input"
+              :class="{ 'task-create-modal__input--error': titleError }"
               :value="localTitle"
               :disabled="props.submitting"
+              data-testid="task-title-input"
               @input="
                 localTitle = ($event.target as HTMLInputElement).value;
                 titleError = false;
@@ -146,6 +156,7 @@ function handleSubmit(): void {
               rows="3"
               :value="localDescription"
               :disabled="props.submitting"
+              data-testid="task-description-input"
               @input="
                 localDescription = ($event.target as HTMLTextAreaElement).value
               "
@@ -162,8 +173,10 @@ function handleSubmit(): void {
               class="task-create-modal__select"
               :value="localPriority"
               :disabled="props.submitting"
+              data-testid="task-priority-select"
               @change="
-                localPriority = ($event.target as HTMLSelectElement).value
+                localPriority = ($event.target as HTMLSelectElement)
+                  .value as TaskPriorityChoice
               "
             >
               <option v-for="p in PRIORITIES" :key="p" :value="p">
@@ -183,6 +196,7 @@ function handleSubmit(): void {
               class="task-create-modal__input"
               :value="localDueAt"
               :disabled="props.submitting"
+              data-testid="task-due-at-input"
               @input="localDueAt = ($event.target as HTMLInputElement).value"
             />
           </label>
@@ -194,21 +208,26 @@ function handleSubmit(): void {
             <span class="task-create-modal__label">{{
               t("cases.detail.tasks.createModal.fields.assignee")
             }}</span>
-            <input
+            <UserPicker
               id="task-create-assigneeUserId"
               name="assigneeUserId"
-              type="text"
-              class="task-create-modal__input"
+              v-model="localAssignee"
+              :disabled="props.submitting"
               :placeholder="
                 t('cases.detail.tasks.createModal.fields.assigneePlaceholder')
               "
-              :value="localAssigneeUserId"
-              :disabled="props.submitting"
-              @input="
-                localAssigneeUserId = ($event.target as HTMLInputElement).value
-              "
+              data-testid="task-assignee-input"
             />
           </label>
+        </div>
+
+        <div
+          v-if="props.errorMessageKey"
+          role="alert"
+          class="task-create-modal__server-error"
+          data-testid="task-create-server-error"
+        >
+          {{ t(props.errorMessageKey) }}
         </div>
 
         <footer class="task-create-modal__footer">
@@ -220,6 +239,7 @@ function handleSubmit(): void {
             tone="primary"
             size="sm"
             :disabled="props.submitting"
+            data-testid="task-submit-btn"
             @click="handleSubmit"
           >
             {{ t("cases.detail.tasks.createModal.submit") }}
@@ -296,13 +316,9 @@ function handleSubmit(): void {
   color: var(--color-text-2);
 }
 
-.task-create-modal__required {
-  color: var(--color-danger, #dc2626);
-}
-
 .task-create-modal__input,
-.task-create-modal__textarea,
-.task-create-modal__select {
+.task-create-modal__select,
+.task-create-modal__textarea {
   padding: 8px 12px;
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-md);
@@ -333,6 +349,16 @@ function handleSubmit(): void {
 .task-create-modal__error {
   font-size: var(--font-size-xs, 12px);
   color: var(--color-danger, #dc2626);
+}
+
+.task-create-modal__server-error {
+  margin: 0 24px;
+  padding: 10px 14px;
+  font-size: var(--font-size-sm, 14px);
+  color: var(--color-danger, #dc2626);
+  background: var(--color-danger-bg, #fef2f2);
+  border: 1px solid var(--color-danger-border, #fecaca);
+  border-radius: var(--radius-md);
 }
 
 .task-create-modal__footer {

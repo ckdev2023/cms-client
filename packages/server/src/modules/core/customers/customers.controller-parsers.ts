@@ -2,6 +2,7 @@ import { BadRequestException } from "@nestjs/common";
 import type {
   CustomerActiveCasesFilter,
   CustomerListScope,
+  CustomerLocalizedNames,
 } from "./customers.types";
 
 /**
@@ -186,4 +187,52 @@ export function parseStringArray(value: unknown, field: string): string[] {
   if (items.length === 0)
     throw new BadRequestException(`${field} must contain at least one id`);
   return [...new Set(items)];
+}
+
+const VALID_LOCALES = ["zh", "ja", "en"] as const;
+
+function parseLocaleField(
+  raw: Record<string, unknown>,
+  locale: string,
+): string | null | undefined {
+  const v = raw[locale];
+  if (v === undefined) return undefined;
+  if (v === null) return null;
+  if (typeof v !== "string")
+    throw new BadRequestException(`Invalid localizedNames.${locale}`);
+  return v.trim() || null;
+}
+
+function parseDefaultLocale(value: unknown): "zh" | "ja" | "en" | null {
+  if (value === null) return null;
+  if (
+    typeof value === "string" &&
+    (VALID_LOCALES as readonly string[]).includes(value)
+  ) {
+    return value as "zh" | "ja" | "en";
+  }
+  throw new BadRequestException("Invalid localizedNames.defaultLocale");
+}
+
+/**
+ * 解析客户多语言名称输入。
+ * @param value - 原始输入。
+ * @returns 解析后的多语言名称或 undefined。
+ */
+export function parseLocalizedNames(
+  value: unknown,
+): CustomerLocalizedNames | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value !== "object" || Array.isArray(value))
+    throw new BadRequestException("Invalid localizedNames");
+  const raw = value as Record<string, unknown>;
+  const result: CustomerLocalizedNames = {};
+  for (const locale of VALID_LOCALES) {
+    const parsed = parseLocaleField(raw, locale);
+    if (parsed !== undefined) result[locale] = parsed;
+  }
+  if (raw.defaultLocale !== undefined) {
+    result.defaultLocale = parseDefaultLocale(raw.defaultLocale);
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
 }

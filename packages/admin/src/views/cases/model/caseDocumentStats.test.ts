@@ -20,7 +20,7 @@ import {
 // ─── Helpers ────────────────────────────────────────────────────
 
 function makeItem(status: string, name = "doc"): DocumentItem {
-  return { name, meta: "", status, statusLabel: "" };
+  return { name, meta: "", status, statusLabelKey: "" };
 }
 
 function makeGroup(

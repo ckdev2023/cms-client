@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
@@ -6,7 +7,7 @@ import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, DoubleReviewEntry } from "../types-detail";
 
 /** 提交前检查与审核复核支持面板。 */
-defineProps<{
+const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
 }>();
@@ -33,6 +34,45 @@ const VERDICT_TONE: Record<string, ChipTone> = {
 function verdictTone(entry: DoubleReviewEntry): ChipTone {
   return VERDICT_TONE[entry.verdictBadge] ?? "neutral";
 }
+
+const POST_SUBMISSION_PHASES = new Set([
+  "UNDER_REVIEW",
+  "NEED_SUPPLEMENT",
+  "SUPPLEMENT_PROCESSING",
+]);
+
+const AWAITING_COE_PHASES = new Set([
+  "APPROVED",
+  "REJECTED",
+  "WAITING_PAYMENT",
+]);
+
+const AWAITING_VISA_STAMP_PHASES = new Set([
+  "COE_SENT",
+  "VISA_APPLYING",
+  "VISA_REJECTED",
+]);
+
+const COMPLETED_PHASES = new Set([
+  "SUCCESS",
+  "ENTRY_SUCCESS",
+  "RESIDENCE_PERIOD_RECORDED",
+  "RENEWAL_REMINDER_SCHEDULED",
+  "CLOSED_SUCCESS",
+  "CLOSED_FAILED",
+]);
+
+/**
+ * 根据 businessPhase 和 stageCode 选择下签后文案 i18n key 后缀。
+ */
+const coeNoteKeySuffix = computed<string>(() => {
+  const phase = props.detail.businessPhase;
+  if (COMPLETED_PHASES.has(phase)) return "noteCompleted";
+  if (AWAITING_VISA_STAMP_PHASES.has(phase)) return "noteAwaitingVisaStamp";
+  if (AWAITING_COE_PHASES.has(phase)) return "noteAwaitingCoe";
+  if (POST_SUBMISSION_PHASES.has(phase)) return "notePostSubmission";
+  return "notePreSubmission";
+});
 </script>
 
 <template>
@@ -81,7 +121,26 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
         </div>
       </div>
       <div v-else class="valsup__empty">
-        {{ t("cases.detail.validation.reviewer.empty") }}
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          class="valsup__empty-icon"
+        >
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </svg>
+        <p class="valsup__empty-text">
+          {{ t("cases.detail.validation.reviewer.empty") }}
+        </p>
       </div>
     </Card>
 
@@ -137,6 +196,21 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
       </template>
 
       <div v-else class="valsup__risk-empty">
+        <svg
+          width="32"
+          height="32"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          class="valsup__empty-icon"
+        >
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <polyline points="9 12 11 14 15 10" />
+        </svg>
         <p>{{ t("cases.detail.validation.risk.empty") }}</p>
         <Button
           v-if="!readonly"
@@ -164,7 +238,7 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
         }}</Chip>
       </div>
       <p class="valsup__post-note">
-        {{ t("cases.detail.validation.postApproval.note") }}
+        {{ t(`cases.detail.validation.postApproval.${coeNoteKeySuffix}`) }}
       </p>
     </Card>
   </div>
@@ -301,8 +375,8 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 24px 16px;
+  gap: 10px;
+  padding: 32px 16px;
 }
 
 .valsup__risk-empty p {
@@ -339,9 +413,23 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
 /* ── Empty ─────────────────────────────────────────────── */
 
 .valsup__empty {
-  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 32px 16px;
   text-align: center;
-  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+
+.valsup__empty-icon {
+  color: var(--color-text-3);
+  opacity: 0.5;
+}
+
+.valsup__empty-text {
+  margin: 0;
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }

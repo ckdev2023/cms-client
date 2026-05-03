@@ -49,7 +49,6 @@ const CHIP_TONE_MAP: Record<string, ChipTone> = {
   meeting: "primary",
   auto_email: "neutral",
 };
-
 const AVATAR_BG: Record<string, string> = {
   primary: "var(--color-primary-6)",
   success: "var(--color-success, #22c55e)",
@@ -58,8 +57,8 @@ const AVATAR_BG: Record<string, string> = {
 };
 
 /**
- * 根据头像色调键返回背景色。
- * @param style - 头像色调键
+ * 头像背景色。
+ * @param style - 色调键
  * @returns CSS 背景色值
  */
 function avatarBg(style: string): string {
@@ -67,8 +66,8 @@ function avatarBg(style: string): string {
 }
 
 /**
- * 根据头像色调键返回前景色。
- * @param style - 头像色调键
+ * 头像前景色。
+ * @param style - 色调键
  * @returns CSS 前景色值
  */
 function avatarColor(style: string): string {
@@ -102,6 +101,8 @@ function avatarColor(style: string): string {
       <div class="messages-tab__main">
         <Card v-if="!readonly" padding="md">
           <textarea
+            id="messages-composerText"
+            name="composerText"
             v-model="composerText"
             class="messages-tab__composer"
             rows="3"
@@ -114,6 +115,8 @@ function avatarColor(style: string): string {
           <div class="messages-tab__composer-footer">
             <div class="messages-tab__composer-right">
               <select
+                id="messages-channelChoice"
+                name="channelChoice"
                 v-model="channelChoice"
                 class="messages-tab__type-select"
                 data-testid="messages-channel-select"
@@ -166,7 +169,7 @@ function avatarColor(style: string): string {
                 </span>
                 <span class="messages-tab__author-name">{{ msg.author }}</span>
                 <Chip :tone="CHIP_TONE_MAP[msg.type] ?? 'neutral'">
-                  {{ msg.typeLabel }}
+                  {{ t(msg.typeLabelKey) }}
                 </Chip>
               </div>
               <span class="messages-tab__msg-time">{{ msg.time }}</span>
@@ -219,6 +222,7 @@ function avatarColor(style: string): string {
               class="messages-tab__filter-item"
             >
               <input
+                :id="`msgFilter-${f.key}`"
                 type="radio"
                 name="msgFilter"
                 :value="f.key"
@@ -293,7 +297,6 @@ function avatarColor(style: string): string {
   gap: 16px;
   align-content: start;
 }
-
 .messages-tab__composer {
   width: 100%;
   padding: 10px 12px;
@@ -353,7 +356,6 @@ function avatarColor(style: string): string {
     background: var(--color-primary-hover, #025a8c);
   }
 }
-
 .messages-tab__msg-header {
   display: flex;
   align-items: flex-start;
@@ -438,7 +440,6 @@ function avatarColor(style: string): string {
     color: var(--color-primary-6);
   }
 }
-
 .messages-tab__filter-title {
   margin: 0;
   font-size: 15px;
@@ -483,12 +484,11 @@ function avatarColor(style: string): string {
 .messages-tab__filter-label {
   font-size: var(--font-size-sm);
   color: var(--color-text-2);
+  &--active {
+    font-weight: var(--font-weight-bold);
+    color: var(--color-text-1);
+  }
 }
-.messages-tab__filter-label--active {
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-1);
-}
-
 .messages-tab__empty {
   margin: 0;
   padding: 48px 24px;

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../../shared/model/useToast";
@@ -20,11 +20,15 @@ import CaseValidationTab from "./components/CaseValidationTab.vue";
 import CaseBillingTab from "./components/CaseBillingTab.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
 import CaseEditModal from "./components/CaseEditModal.vue";
+import CaseDeadlineCreateModal from "./components/CaseDeadlineCreateModal.vue";
+import CaseFormGenerateModal from "./components/CaseFormGenerateModal.vue";
+import CaseTaskCreateModal from "./components/CaseTaskCreateModal.vue";
 import PhaseTransitionPopover from "./components/PhaseTransitionPopover.vue";
 import {
   useCaseDetailModel,
   type TabCounter,
 } from "./model/useCaseDetailModel";
+import { resolveLocalizedCustomerName } from "./model/CaseAdapterCustomerLocale";
 import {
   buildCaseDetailQuery,
   buildCaseListHref,
@@ -37,9 +41,11 @@ import {
   getStageI18nKey,
 } from "./constants";
 import { formatCaseIdentity } from "./caseIdentity";
+import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
+const tabRefs = ref<HTMLElement[]>([]);
 const toast = useToast();
 const route = useRoute();
 const router = useRouter();
@@ -68,6 +74,7 @@ const {
   showRiskModal,
   isBmvCase,
   writeFeedback,
+  clearWriteFeedback,
   switchTab,
   openRiskModal,
   closeRiskModal,
@@ -75,13 +82,49 @@ const {
   retryReminderCreation,
   failureClose,
   updateCaseFields,
+  publishMessage,
+  createReminder,
+  createGeneratedDocument,
+  createTask,
+  completeTask,
   phaseMenu,
   isTerminalPhase: isTerminal,
 } = useCaseDetailModel(caseId, {
   routeTab,
+  locale,
   onTabChange: (tab) =>
     router.replace({ query: buildCaseDetailQuery({ tab }) }),
 });
+
+const guard = useCaseDetailGuard(detail);
+
+const clientDisplayName = computed(() => {
+  const d = detail.value;
+  if (!d) return "";
+  return resolveLocalizedCustomerName(
+    d.customerLocalizedNames,
+    d.client,
+    locale.value,
+  );
+});
+
+watch(writeFeedback, (fb) => {
+  if (fb.errorI18nKey && !fb.isGateBlock) {
+    toast.add({ title: t(fb.errorI18nKey), tone: "error" });
+  }
+});
+
+watch(
+  [() => detail.value, activeTab],
+  () => {
+    if (!detail.value) return;
+    if (!guard.isTabAccessible(activeTab.value)) {
+      switchTab("log");
+      router.replace({ query: buildCaseDetailQuery({ tab: "log" }) });
+    }
+  },
+  { immediate: true },
+);
 
 /**
  * 将状态徽标映射为 `Chip` 组件使用的 tone。
@@ -90,6 +133,62 @@ const {
  */
 function badgeToTone(badge: string): ChipTone {
   return (BADGE_TONE_MAP[badge] ?? "neutral") as ChipTone;
+}
+
+/**
+ * 处理 tab 键盘导航（ArrowLeft/Right/Home/End），跳过终态下不可访问的 tab。
+ * @param event - 键盘事件
+ */
+function onTabKeydown(event: KeyboardEvent): void {
+  const idx = tabs.findIndex((t) => t.key === activeTab.value);
+  let targetIdx = -1;
+
+  switch (event.key) {
+    case "ArrowRight":
+      targetIdx = findNextAccessibleTab(idx, 1);
+      break;
+    case "ArrowLeft":
+      targetIdx = findNextAccessibleTab(idx, -1);
+      break;
+    case "Home":
+      targetIdx = findNextAccessibleTab(-1, 1);
+      break;
+    case "End":
+      targetIdx = findNextAccessibleTab(tabs.length, -1);
+      break;
+    default:
+      return;
+  }
+  if (targetIdx < 0) return;
+  event.preventDefault();
+  switchTab(tabs[targetIdx].key);
+  tabRefs.value[targetIdx]?.focus();
+}
+
+/**
+ * 从指定索引出发，按方向查找下一个可访问的 tab 索引。
+ *
+ * @param fromIdx - 起始索引
+ * @param direction - 搜索方向（1 向右，-1 向左）
+ * @returns 可访问的 tab 索引，找不到时返回 -1
+ */
+function findNextAccessibleTab(fromIdx: number, direction: 1 | -1): number {
+  const len = tabs.length;
+  for (let i = 1; i <= len; i++) {
+    const candidate = (fromIdx + direction * i + len) % len;
+    if (guard.isTabAccessible(tabs[candidate].key)) return candidate;
+  }
+  return -1;
+}
+
+/**
+ * 点击 tab 时守门：不可访问的 tab 不切换。
+ *
+ * @param tabKey - 目标 tab 键名
+ */
+function onTabClick(tabKey: (typeof tabs)[number]["key"]): void {
+  if (!guard.isTabAccessible(tabKey)) return;
+  switchTab(tabKey);
 }
 
 const phaseTone = computed<ChipTone>(() => {
@@ -132,19 +231,13 @@ async function onSaveCaseEdit(fields: {
   assistantUserId: string;
   groupId: string;
   priority: string;
+  jurisdictionAuthority: string;
+  remark: string;
 }): Promise<void> {
   editSaving.value = true;
   const ok = await updateCaseFields({ ...fields });
   editSaving.value = false;
   if (ok) editModalOpen.value = false;
-}
-
-/** 导出 ZIP（stub — 功能尚未上線）。 */
-function onExportZip(): void {
-  toast.add({
-    title: t("cases.detail.actions.exportZipNotReady"),
-    tone: "info",
-  });
 }
 
 /**
@@ -176,9 +269,105 @@ function onViewReceipt(): void {
   router.push({ path: "/billing", query: { case: caseId.value } });
 }
 
-/** 跳转到任务页面，新建任务。 */
-function onOpenCreateTask(): void {
-  router.push({ path: "/tasks", query: { case: caseId.value } });
+const taskModalOpen = ref(false);
+const taskModalSubmitting = ref(false);
+
+/** 打开创建任务弹窗（替代原 router.push 到 /tasks 的死循环）。 */
+function openCreateTaskModal(): void {
+  taskModalOpen.value = true;
+}
+
+/**
+ * 提交任务创建表单。
+ *
+ * @param payload - 任务创建数据
+ * @param payload.title - 任务标题
+ * @param payload.description - 任务描述
+ * @param payload.priority - 优先级
+ * @param payload.dueAt - 截止日期
+ * @param payload.assigneeUserId - 负责人 ID
+ */
+async function onTaskSubmit(payload: {
+  title: string;
+  description?: string;
+  priority: import("./model/CaseAdapterTaskWriteBuilders").TaskPriorityChoice;
+  dueAt?: string;
+  assigneeUserId?: string;
+}): Promise<void> {
+  taskModalSubmitting.value = true;
+  const ok = await createTask(payload);
+  taskModalSubmitting.value = false;
+  if (ok) taskModalOpen.value = false;
+}
+
+/**
+ * 发布沟通记录。
+ *
+ * @param payload - 消息载荷
+ * @param payload.content - 内容
+ * @param payload.channelChoice - 渠道
+ */
+function onPublishMessage(payload: {
+  content: string;
+  channelChoice: import("./model/CaseAdapterMessageWriteBuilders").MessageChannelChoice;
+}): void {
+  void publishMessage(payload);
+}
+
+const deadlineModalOpen = ref(false);
+const deadlineModalSubmitting = ref(false);
+
+/** 打开创建期限弹窗。 */
+function openCreateDeadlineModal(): void {
+  deadlineModalOpen.value = true;
+}
+
+/**
+ * 提交期限创建表单。
+ *
+ * @param payload - 期限表单数据
+ * @param payload.targetType - 目标类型
+ * @param payload.remindAt - 提醒日期
+ * @param payload.kind - 期限分类
+ * @param payload.memo - 备注
+ */
+async function onDeadlineSubmit(payload: {
+  targetType: "case" | "case_party_residence";
+  remindAt: string;
+  kind: import("./model/CaseAdapterReminderWriteBuilders").DeadlineKindChoice;
+  memo: string;
+}): Promise<void> {
+  deadlineModalSubmitting.value = true;
+  const ok = await createReminder(payload);
+  deadlineModalSubmitting.value = false;
+  if (ok) deadlineModalOpen.value = false;
+}
+
+const formGenModalOpen = ref(false);
+const formGenModalSubmitting = ref(false);
+
+/** 打开生成文书弹窗。 */
+function openGenerateFormModal(): void {
+  formGenModalOpen.value = true;
+}
+
+/**
+ * 提交文书生成表单。
+ *
+ * @param payload - 文书生成数据
+ * @param payload.title - 标题
+ * @param payload.templateId - 模板 ID
+ * @param payload.outputFormat - 输出格式
+ */
+async function onFormGenSubmit(payload: {
+  title: string;
+  templateId: string | null;
+  outputFormat: string;
+}): Promise<void> {
+  formGenModalSubmitting.value = true;
+  const ok = await createGeneratedDocument(payload);
+  formGenModalSubmitting.value = false;
+  if (ok) formGenModalOpen.value = false;
 }
 </script>
 
@@ -230,7 +419,7 @@ function onOpenCreateTask(): void {
                 :href="buildCustomerDetailHref(detail.customerId)"
                 class="case-detail-view__meta-link"
               >
-                {{ detail.client }}
+                {{ clientDisplayName }}
               </a>
             </span>
             <span class="case-detail-view__meta-sep" aria-hidden="true">|</span>
@@ -275,7 +464,16 @@ function onOpenCreateTask(): void {
         </template>
 
         <template #actions>
-          <Button size="sm" @click="editModalOpen = true">
+          <Button
+            size="sm"
+            :disabled="!guard.canEdit.value"
+            :title="
+              guard.canEdit.value
+                ? undefined
+                : t('cases.detail.actions.editInfoDisabledTooltip')
+            "
+            @click="guard.canEdit.value && (editModalOpen = true)"
+          >
             <svg
               width="16"
               height="16"
@@ -293,7 +491,11 @@ function onOpenCreateTask(): void {
             </svg>
             {{ t("cases.detail.actions.editInfo") }}
           </Button>
-          <Button size="sm" @click="onExportZip">
+          <Button
+            size="sm"
+            :disabled="true"
+            :title="t('cases.detail.actions.exportZipNotReady')"
+          >
             <svg
               width="16"
               height="16"
@@ -315,7 +517,13 @@ function onOpenCreateTask(): void {
             variant="filled"
             tone="primary"
             size="sm"
-            @click="phaseMenu.openMenu()"
+            :disabled="!guard.canTransition.value"
+            :title="
+              guard.canTransition.value
+                ? undefined
+                : t('cases.detail.actions.statusTransitionDisabledTooltip')
+            "
+            @click="guard.canTransition.value && phaseMenu.openMenu()"
           >
             {{ t("cases.detail.actions.statusTransition") }}
             <svg
@@ -392,13 +600,31 @@ function onOpenCreateTask(): void {
         <button
           v-for="tab in tabs"
           :key="tab.key"
+          ref="tabRefs"
           type="button"
           role="tab"
           :id="`caseTab-${tab.key}`"
           :aria-controls="`casePanel-${tab.key}`"
-          :class="['case-detail-view__tab', { active: activeTab === tab.key }]"
+          :class="[
+            'case-detail-view__tab',
+            { active: activeTab === tab.key },
+            {
+              'case-detail-view__tab--disabled': !guard.isTabAccessible(
+                tab.key,
+              ),
+            },
+          ]"
           :aria-selected="activeTab === tab.key"
-          @click="switchTab(tab.key)"
+          :aria-disabled="!guard.isTabAccessible(tab.key) || undefined"
+          :tabindex="
+            !guard.isTabAccessible(tab.key)
+              ? -1
+              : tab.key === activeTab
+                ? 0
+                : -1
+          "
+          @click="onTabClick(tab.key)"
+          @keydown="onTabKeydown($event)"
         >
           {{ t(tab.i18nKey) }}
           <span
@@ -430,6 +656,7 @@ function onOpenCreateTask(): void {
           :write-feedback="writeFeedback"
           :readonly="isReadonly"
           :is-terminal="isTerminal"
+          :can-run-validation="false"
           @switch-tab="switchTab"
           @advance-to-coe="transitionWorkflowStep('COE_SENT')"
           @retry-reminder="retryReminderCreation()"
@@ -449,22 +676,26 @@ function onOpenCreateTask(): void {
           v-else-if="activeTab === 'deadlines'"
           :detail="detail"
           :readonly="isReadonly"
+          @open-create-deadline="openCreateDeadlineModal"
         />
         <CaseFormsTab
           v-else-if="activeTab === 'forms'"
           :detail="detail"
           :readonly="isReadonly"
+          @open-generate-modal="openGenerateFormModal"
         />
         <CaseTasksTab
           v-else-if="activeTab === 'tasks'"
           :detail="detail"
           :readonly="isReadonly"
-          @open-create-task="onOpenCreateTask"
+          @open-create-task="openCreateTaskModal"
+          @complete-task="completeTask"
         />
         <CaseMessagesTab
           v-else-if="activeTab === 'messages'"
           :detail="detail"
           :readonly="isReadonly"
+          @publish-message="onPublishMessage"
         />
         <CaseLogTab
           v-else-if="activeTab === 'log'"
@@ -499,9 +730,47 @@ function onOpenCreateTask(): void {
         :due-at="detail.targetDate"
         :accepted-at="detail.acceptedDate"
         :group-id="detail.groupId"
+        :priority="detail.priority"
+        :risk-level="detail.riskLevel"
+        :owner-user-id="detail.ownerUserId"
+        :assistant-user-id="detail.assistantUserId"
+        :jurisdiction-authority="detail.jurisdictionAuthority"
+        :remark="detail.remark"
         :submitting="editSaving"
         @close="editModalOpen = false"
         @save="onSaveCaseEdit"
+      />
+
+      <CaseDeadlineCreateModal
+        :open="deadlineModalOpen"
+        :case-id="caseId"
+        :submitting="deadlineModalSubmitting"
+        :error-message-key="writeFeedback.errorI18nKey"
+        @close="
+          deadlineModalOpen = false;
+          clearWriteFeedback();
+        "
+        @submit="onDeadlineSubmit"
+      />
+
+      <CaseFormGenerateModal
+        :open="formGenModalOpen"
+        :case-name="detail.title"
+        :submitting="formGenModalSubmitting"
+        @close="formGenModalOpen = false"
+        @submit="onFormGenSubmit"
+      />
+
+      <CaseTaskCreateModal
+        :open="taskModalOpen"
+        :case-id="caseId"
+        :submitting="taskModalSubmitting"
+        :error-message-key="writeFeedback.errorI18nKey"
+        @close="
+          taskModalOpen = false;
+          clearWriteFeedback();
+        "
+        @submit="onTaskSubmit"
       />
 
       <PhaseTransitionPopover
@@ -629,8 +898,14 @@ function onOpenCreateTask(): void {
     border-color 0.15s;
 }
 
-.case-detail-view__tab:hover {
+.case-detail-view__tab:hover:not(.case-detail-view__tab--disabled) {
   color: var(--color-text-1);
+}
+
+.case-detail-view__tab--disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .case-detail-view__tab.active {

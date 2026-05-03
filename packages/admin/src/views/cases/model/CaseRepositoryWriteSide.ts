@@ -25,6 +25,11 @@ import {
   type ReminderCreateInput,
 } from "./CaseAdapterReminderWriteBuilders";
 import {
+  buildCreateTaskPayload,
+  buildTasksPostUrl,
+  type TaskCreateInput,
+} from "./CaseAdapterTaskWriteBuilders";
+import {
   requestAndAdapt,
   type CaseRepositoryRuntime,
 } from "./CaseRepositorySupport";
@@ -108,5 +113,44 @@ export function createCreateReminder(runtime: CaseRepositoryRuntime) {
       body: buildCreateReminderPayload(input),
       adapt: adaptWriteResult,
       errorMessage: "Invalid create reminder response",
+    });
+}
+
+/**
+ * 创建 `createTask` 写入函数。
+ *
+ * @param runtime - 案件仓储运行时
+ * @returns 发起 `POST /tasks` 的函数
+ */
+export function createCreateTask(runtime: CaseRepositoryRuntime) {
+  return async (input: TaskCreateInput): Promise<WriteResultWithId> =>
+    requestAndAdapt({
+      runtime,
+      url: buildTasksPostUrl(runtime.apiPath),
+      method: "POST",
+      body: buildCreateTaskPayload(input),
+      adapt: adaptWriteResult,
+      errorMessage: "Invalid create task response",
+    });
+}
+
+function buildTaskCompleteUrl(casesApiPath: string, taskId: string): string {
+  return casesApiPath.replace(/\/cases\/?$/, "") + `/tasks/${taskId}/complete`;
+}
+
+/**
+ * 创建 `completeTask` 写入函数。
+ *
+ * @param runtime - 案件仓储运行时
+ * @returns 发起 `POST /tasks/:id/complete` 的函数
+ */
+export function createCompleteTask(runtime: CaseRepositoryRuntime) {
+  return async (taskId: string): Promise<WriteResultWithId> =>
+    requestAndAdapt({
+      runtime,
+      url: buildTaskCompleteUrl(runtime.apiPath, taskId),
+      method: "POST",
+      adapt: adaptWriteResult,
+      errorMessage: "Invalid complete task response",
     });
 }

@@ -9,6 +9,9 @@ import {
   resolveWriteErrorI18nKey,
   isGateBlockError,
 } from "./CaseWriteErrorMapping";
+import type { MessageChannelChoice } from "./CaseAdapterMessageWriteBuilders";
+import type { DeadlineKindChoice } from "./CaseAdapterReminderWriteBuilders";
+import type { TaskPriorityChoice } from "./CaseAdapterTaskWriteBuilders";
 
 /**
  * 写操作反馈状态——在 UI 层展示操作结果或门禁阻断提示。
@@ -225,7 +228,125 @@ function doFailureClose(
   );
 }
 
+function doPublishMessage(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  payload: { content: string; channelChoice: MessageChannelChoice },
+): Promise<boolean> {
+  return run(() =>
+    deps.repo
+      .createCommunicationLog({
+        caseId: deps.getCaseId(),
+        content: payload.content,
+        channelChoice: payload.channelChoice,
+      })
+      .then(() => undefined),
+  );
+}
+
+function doCreateReminder(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  payload: {
+    targetType: "case" | "case_party_residence";
+    remindAt: string;
+    kind: DeadlineKindChoice;
+    memo: string;
+  },
+): Promise<boolean> {
+  return run(() =>
+    deps.repo
+      .createReminder({
+        caseId: deps.getCaseId(),
+        targetType: payload.targetType,
+        targetId: deps.getCaseId(),
+        remindAt: payload.remindAt,
+        kind: payload.kind,
+        memo: payload.memo,
+      })
+      .then(() => undefined),
+  );
+}
+
+function doCreateGeneratedDocument(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  payload: { title: string; templateId: string | null; outputFormat: string },
+): Promise<boolean> {
+  return run(() =>
+    deps.repo
+      .createGeneratedDocument({
+        caseId: deps.getCaseId(),
+        title: payload.title,
+        templateId: payload.templateId,
+        outputFormat: payload.outputFormat,
+      })
+      .then(() => undefined),
+  );
+}
+
+function doCreateTask(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  payload: {
+    title: string;
+    description?: string;
+    priority: TaskPriorityChoice;
+    dueAt?: string;
+    assigneeUserId?: string;
+  },
+): Promise<boolean> {
+  return run(() =>
+    deps.repo
+      .createTask({
+        caseId: deps.getCaseId(),
+        title: payload.title,
+        description: payload.description,
+        priority: payload.priority,
+        dueAt: payload.dueAt,
+        assigneeUserId: payload.assigneeUserId,
+      })
+      .then(() => undefined),
+  );
+}
+
+function doCompleteTask(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  taskId: string,
+): Promise<boolean> {
+  return run(() => deps.repo.completeTask(taskId).then(() => undefined));
+}
+
 // ─── Factory ─────────────────────────────────────────────────────
+
+function buildChildWriteActions(core: ActionCoreDeps, run: RunFn) {
+  return {
+    publishMessage: (payload: {
+      content: string;
+      channelChoice: MessageChannelChoice;
+    }) => doPublishMessage(core, run, payload),
+    createReminder: (payload: {
+      targetType: "case" | "case_party_residence";
+      remindAt: string;
+      kind: DeadlineKindChoice;
+      memo: string;
+    }) => doCreateReminder(core, run, payload),
+    createGeneratedDocument: (payload: {
+      title: string;
+      templateId: string | null;
+      outputFormat: string;
+    }) => doCreateGeneratedDocument(core, run, payload),
+    createTask: (payload: {
+      title: string;
+      description?: string;
+      priority: TaskPriorityChoice;
+      dueAt?: string;
+      assigneeUserId?: string;
+    }) => doCreateTask(core, run, payload),
+    completeTask: (taskId: string) => doCompleteTask(core, run, taskId),
+  };
+}
 
 /**
  * 创建写操作编排器——管理 feedback 状态并暴露各种 write action。
@@ -290,5 +411,6 @@ export function createWriteActions(deps: {
     retryReminderCreation: () => doRetryReminderCreation(core, runAction),
     failureClose: (closeReason?: string) =>
       doFailureClose(core, runAction, closeReason),
+    ...buildChildWriteActions(core, runAction),
   };
 }

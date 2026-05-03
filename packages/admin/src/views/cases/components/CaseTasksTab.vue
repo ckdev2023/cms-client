@@ -12,7 +12,18 @@ defineProps<{
 
 const emit = defineEmits<{
   "open-create-task": [];
+  "complete-task": [taskId: string];
 }>();
+
+/**
+ * 切换任务完成状态：已完成时忽略，否则向父组件发出 complete-task 事件。
+ *
+ * @param task - 目标任务条目
+ */
+function onToggle(task: TaskItem): void {
+  if (task.done) return;
+  emit("complete-task", task.id);
+}
 
 const DUE_COLOR_CLASS: Record<string, string> = {
   danger: "tasks-tab__due--danger",
@@ -78,7 +89,8 @@ function avatarBg(item: TaskItem): string {
       <template v-if="detail.tasks.length > 0">
         <div v-for="task in detail.tasks" :key="task.id" class="tasks-tab__row">
           <div class="tasks-tab__row-left">
-            <span
+            <button
+              type="button"
               :class="[
                 'tasks-tab__checkbox',
                 { 'tasks-tab__checkbox--done': task.done },
@@ -86,6 +98,8 @@ function avatarBg(item: TaskItem): string {
               role="checkbox"
               :aria-checked="task.done"
               :aria-label="task.label"
+              :disabled="readonly || task.done"
+              @click="onToggle(task)"
             >
               <svg
                 v-if="task.done"
@@ -101,7 +115,7 @@ function avatarBg(item: TaskItem): string {
               >
                 <path d="M5 13l4 4L19 7" />
               </svg>
-            </span>
+            </button>
             <span
               :class="[
                 'tasks-tab__label',
@@ -249,12 +263,19 @@ function avatarBg(item: TaskItem): string {
   width: 24px;
   height: 24px;
   flex-shrink: 0;
+  padding: 0;
   border: 2px solid var(--color-border-2);
   border-radius: var(--radius-full);
   background: var(--color-bg-1);
+  cursor: pointer;
+  font: inherit;
   transition:
     background-color 0.15s,
     border-color 0.15s;
+}
+
+.tasks-tab__checkbox:disabled {
+  cursor: default;
 }
 
 .tasks-tab__checkbox--done {

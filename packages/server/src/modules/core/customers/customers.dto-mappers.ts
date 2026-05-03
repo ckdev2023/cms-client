@@ -1,5 +1,6 @@
 import { normalizeObject } from "../../../infra/utils/normalize";
 import type { ContactPerson, Customer } from "../model/coreEntities";
+import { resolveLocalizedNamesFromProfile } from "./customers.localized-names";
 import {
   CUSTOMER_BMV_QUESTIONNAIRE_STATUSES,
   CUSTOMER_BMV_QUOTE_STATUSES,
@@ -424,6 +425,7 @@ export function mapCustomerToSummaryDto(
     type: customer.type,
     displayName: resolveDisplayName(customer.baseProfile),
     legalName: resolveLegalName(customer.baseProfile),
+    localizedNames: resolveLocalizedNamesFromProfile(customer.baseProfile),
     furigana:
       pickOptionalString(customer.baseProfile, CUSTOMER_KANA_FIELDS) ?? "",
     customerNumber: resolveCustomerNumber(customer),

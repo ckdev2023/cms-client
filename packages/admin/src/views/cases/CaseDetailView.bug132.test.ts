@@ -140,7 +140,7 @@ describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", ()
     it("zh-CN: 已归档 占位被翻译填充", () => {
       const detail = createMockDetail({ stage: "S9", stageCode: "S9" });
       expect(buildReadonlyBannerFromDetail(detail, "zh-CN")).toBe(
-        "此案件已归档（已归档），所有字段为只读。仅日志 Tab 保持可访问。",
+        "此案件处于「已归档」状态，全字段只读，状态变更与编辑已禁用。",
       );
     });
 

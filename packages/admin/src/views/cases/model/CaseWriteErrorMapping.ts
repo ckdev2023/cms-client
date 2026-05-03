@@ -39,6 +39,16 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   CASE_WF_STEP_NOT_ALLOWED: "wfStepNotAllowed",
   CASE_REMINDER_CREATION_FAILED: "reminderCreationFailed",
   CASE_WAITING_PAYMENT_BILLING_REQUIRED: "waitingPaymentBillingRequired",
+  TASK_INVALID_ASSIGNEE_ID: "taskInvalidAssigneeId",
+  TASK_CREATE_FAILED: "taskCreateFailed",
+  TASK_ASSIGNEE_NOT_FOUND: "taskAssigneeNotFound",
+  REMINDER_INVALID_CASE_ID: "reminderInvalidCaseId",
+  REMINDER_CREATE_FAILED: "reminderCreateFailed",
+  REMINDER_REF_NOT_FOUND: "reminderRefNotFound",
+  REMINDER_VALIDATION_FAILED: "reminderValidationFailed",
+  TASK_INVALID_PRIORITY: "taskInvalidPriority",
+  TASK_COMPLETE_FAILED: "taskCompleteFailed",
+  TASK_NOT_FOUND: "taskNotFound",
 };
 
 /**

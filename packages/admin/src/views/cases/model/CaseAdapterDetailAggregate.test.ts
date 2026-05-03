@@ -148,6 +148,7 @@ describe("aggregate contract freeze", () => {
     expect(CASE_DETAIL_DEEP_LINK_FIELDS).toEqual([
       "customerId",
       "customerName",
+      "customerLocalizedNames",
       "groupId",
       "groupName",
       "ownerUserId",

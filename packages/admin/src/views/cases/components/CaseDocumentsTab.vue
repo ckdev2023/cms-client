@@ -101,6 +101,11 @@ const groupStats = computed(() =>
       </div>
     </div>
 
+    <!-- Readonly notice for terminal cases -->
+    <div v-if="readonly" class="docs-tab__readonly-notice" role="status">
+      {{ t("cases.detail.documents.readonlyNotice") }}
+    </div>
+
     <!-- Empty state -->
     <Card v-if="isEmpty" padding="md">
       <div class="docs-tab__empty">
@@ -167,7 +172,7 @@ const groupStats = computed(() =>
             :key="i"
             class="docs-tab__progress-row"
           >
-            <span class="docs-tab__progress-label">{{ p.label }}</span>
+            <span class="docs-tab__progress-label">{{ t(p.labelKey) }}</span>
             <div class="docs-tab__progress-bar">
               <div
                 class="docs-tab__progress-bar-fill"
@@ -187,38 +192,45 @@ const groupStats = computed(() =>
       <Card padding="none">
         <template #header>
           <div class="docs-tab__card-header">
-            <div>
+            <div class="docs-tab__card-header-top">
               <h2 class="docs-tab__section-title">
                 {{ t("cases.detail.documents.section.title") }}
               </h2>
-              <div class="docs-tab__global-progress">
-                <div class="docs-tab__global-progress-track">
-                  <div
-                    class="docs-tab__global-progress-fill"
-                    :style="{ width: `${overallRate.percent}%` }"
-                  />
-                </div>
-                <span class="docs-tab__global-progress-label">
-                  {{ overallRate.label }}（{{ overallRate.percent }}%）
-                </span>
-              </div>
-            </div>
-            <div v-if="!readonly" class="docs-tab__header-actions">
-              <span
-                class="docs-tab__register-wrap"
-                :title="
-                  isStorageRootConfigured
-                    ? undefined
-                    : t('documents.storageGate.buttonTooltip')
-                "
-              >
-                <Button
-                  variant="filled"
-                  tone="primary"
-                  size="sm"
-                  :disabled="!isStorageRootConfigured"
-                  @click="handleRegisterClick(detail.id)"
+              <div v-if="!readonly" class="docs-tab__header-actions">
+                <span
+                  class="docs-tab__register-wrap"
+                  :title="
+                    isStorageRootConfigured
+                      ? undefined
+                      : t('documents.storageGate.buttonTooltip')
+                  "
                 >
+                  <Button
+                    variant="filled"
+                    tone="primary"
+                    size="sm"
+                    :disabled="!isStorageRootConfigured"
+                    @click="handleRegisterClick(detail.id)"
+                  >
+                    <svg
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                      />
+                    </svg>
+                    {{ t("cases.detail.documents.section.registerCta") }}
+                  </Button>
+                </span>
+                <Button size="sm" @click="handleAddItemClick(detail.id)">
                   <svg
                     width="14"
                     height="14"
@@ -230,29 +242,22 @@ const groupStats = computed(() =>
                     stroke-linejoin="round"
                     aria-hidden="true"
                   >
-                    <path
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
+                    <path d="M12 4v16m8-8H4" />
                   </svg>
-                  {{ t("cases.detail.documents.section.registerCta") }}
+                  {{ t("cases.detail.documents.section.addCta") }}
                 </Button>
+              </div>
+            </div>
+            <div class="docs-tab__global-progress">
+              <div class="docs-tab__global-progress-track">
+                <div
+                  class="docs-tab__global-progress-fill"
+                  :style="{ width: `${overallRate.percent}%` }"
+                />
+              </div>
+              <span class="docs-tab__global-progress-label">
+                {{ overallRate.label }}（{{ overallRate.percent }}%）
               </span>
-              <Button size="sm" @click="handleAddItemClick(detail.id)">
-                <svg
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M12 4v16m8-8H4" />
-                </svg>
-                {{ t("cases.detail.documents.section.addCta") }}
-              </Button>
             </div>
           </div>
         </template>

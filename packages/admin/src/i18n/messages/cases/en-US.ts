@@ -233,12 +233,16 @@ const casesEnUS = {
     },
   },
   detail: {
+    wip: "Coming soon",
     readonlyHint: "Case is archived; all actions are read-only",
     actions: {
       editInfo: "Edit info",
       exportZip: "Export ZIP",
       statusTransition: "Status transition",
       exportZipNotReady: "ZIP export is not yet available.",
+      editInfoDisabledTooltip: "Case is archived and cannot be edited",
+      statusTransitionDisabledTooltip:
+        "Case is archived and status cannot be changed",
     },
     editModal: {
       title: "Edit case info",
@@ -251,9 +255,22 @@ const casesEnUS = {
         assistantUserId: "Assistant",
         groupId: "Group",
         priority: "Priority",
+        jurisdictionAuthority: "Jurisdiction authority",
+        remark: "Remark",
       },
       cancel: "Cancel",
       save: "Save",
+      priorityOptions: {
+        low: "Low",
+        normal: "Normal",
+        high: "High",
+        urgent: "Urgent",
+      },
+      riskOptions: {
+        normal: "Normal",
+        attention: "Needs attention",
+        high: "High risk",
+      },
     },
     phaseMenu: {
       title: "Phase transition",
@@ -297,14 +314,31 @@ const casesEnUS = {
     terminalNextAction: {
       success:
         "Case closed successfully. You may export ZIP or review renewal reminders.",
-      failed:
-        "Case closed (failed). Review close reason; refund requires manual handling.",
+      failed: "Case closed (failed). Review close reason and billing details.",
+    },
+    terminalActions: {
+      viewCloseReason: "View close reason",
+      viewResult: "View closing record",
+      handleRefund: "Handle refund",
+      viewBilling: "View billing details",
+      refundWip: "Refund feature coming soon",
+    },
+    closeReasonModal: {
+      titleSuccess: "Closing Record",
+      titleFailure: "Close Reason",
+      closedAt: "Archived at",
+      closedBy: "Archived by",
+      failureReasonTitle: "Failure Closeout Details",
+      closeReasonText: "Notes",
+      successTitle: "Success Closeout Conditions",
+      noDetail: "No detailed closeout information available.",
+      close: "Close",
     },
     unpaidLabel: "Unpaid: {amount}",
     arrearsYes: "Yes",
     arrearsNo: "No",
     readonlyBanner:
-      "This case is archived ({stage}). All fields are read-only. Only the Log tab remains accessible.",
+      'This case is in "{stage}" status. All fields are read-only; status transitions and edits are disabled.',
     failurePathBanner:
       "This case is on a failure closeout path. Review the overview tab for details and next steps.",
     loading: "Loading case details…",
@@ -324,18 +358,27 @@ const casesEnUS = {
       provider: {
         kicker: "By provider completion",
         title: "Document collection by group",
+        empty: "No group progress data available",
       },
       nextAction: {
         title: "Next key action",
       },
+      billingGuard: {
+        waitingPaymentEmpty:
+          "Please add at least one billing record in the Billing tab before proceeding to Waiting Payment phase",
+      },
       timeline: {
         title: "Recent activity",
+        empty: "No recent activity",
         viewAll: "View full log →",
       },
       sidebar: {
         phaseTitle: "Business phase",
         riskTitle: "Blockers & risk summary",
         teamTitle: "Case team",
+        teamEmpty: "No team members",
+        teamRoleOwner: "Owner",
+        teamRoleAssistant: "Assistant",
         validationTitle: "Pre-submission check",
         validationAction: "View validation & packages",
       },
@@ -461,6 +504,14 @@ const casesEnUS = {
         },
       },
     },
+    providers: {
+      applicant: "Applicant",
+      office: "Office",
+      employer: "Employer",
+      agent: "Agent",
+      unknown: "Unknown",
+      unspecified: "Unspecified",
+    },
     info: {
       cardTitle: "Case attributes",
       fields: {
@@ -557,6 +608,21 @@ const casesEnUS = {
       },
     },
     documents: {
+      docStatus: {
+        pending: "Pending",
+        waitingUpload: "Waiting upload",
+        uploadedReviewing: "Under review",
+        approved: "Approved",
+        revisionRequired: "Revision required",
+        waived: "Waived",
+        expired: "Expired",
+        notSent: "Not sent",
+        rejected: "Rejected",
+        unknown: "Unknown",
+      },
+      referenceCount: "{count} cases referencing this version",
+      referenceSelf: "Registered in this item",
+      referenceFrom: "Referenced from: {source}",
       empty: {
         title: "No documents registered yet",
         desc: 'This case has no document requirements. Use "Register documents" or "Add manually" to start building the document checklist.',
@@ -572,6 +638,7 @@ const casesEnUS = {
         kicker: "By provider completion",
         title: "Document collection by group",
       },
+      readonlyNotice: "Case is archived. The document checklist is read-only.",
       groupEmpty: "No document items in this group",
     },
     log: {
@@ -594,6 +661,14 @@ const casesEnUS = {
       filterTitle: "Filter",
       filterReset: "Reset",
       viewConversations: "View related conversations",
+      types: {
+        internal: "Internal notes",
+        client_visible: "Client-visible notes",
+        phone: "Phone logs",
+        meeting: "In-person meetings",
+        auto_email: "Auto emails",
+        other: "Other",
+      },
     },
     riskModal: {
       title: "Arrears risk confirmation",
@@ -634,7 +709,16 @@ const casesEnUS = {
         kicker: "Post-Approval",
         title: "COE / Overseas Visa / Re-entry Result",
         stagingChip: "Case has not reached this stage",
-        note: "This case is still in the pre-submission or supplement stage, so COE dispatch, overseas visa stamping, and re-entry results are not shown here. Switch to the relevant sample to see the full flow.",
+        notePreSubmission:
+          "This case is still in the pre-submission or supplement stage, so COE dispatch, overseas visa stamping, and re-entry results are not shown here. Switch to the relevant sample to see the full flow.",
+        notePostSubmission:
+          "The case has been submitted to the immigration bureau and is awaiting review results. Post-approval steps (COE dispatch, visa stamping, etc.) will follow.",
+        noteAwaitingCoe:
+          "The case has been approved. COE (Certificate of Eligibility) will be dispatched after final payment is cleared.",
+        noteAwaitingVisaStamp:
+          "COE has been dispatched. The applicant is processing the overseas visa stamp and awaiting entry confirmation.",
+        noteCompleted:
+          "Post-approval flow is complete. Entry has been confirmed or the case is archived.",
       },
       tab: {
         gateCard: {
@@ -866,6 +950,22 @@ const casesEnUS = {
       "Failed to create renewal reminders. Please try again later.",
     waitingPaymentBillingRequired:
       "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment.",
+    taskInvalidAssigneeId:
+      "Assignee ID is invalid. Please select a valid assignee.",
+    taskCreateFailed: "Failed to create task. Please try again later.",
+    taskAssigneeNotFound:
+      "The specified assignee does not exist. Please select another.",
+    reminderInvalidCaseId: "Case ID is invalid. Cannot create reminder.",
+    reminderCreateFailed:
+      "Failed to create deadline reminder. Please try again later.",
+    reminderRefNotFound:
+      "The case or entity linked to this reminder does not exist. Please verify and try again.",
+    reminderValidationFailed:
+      "Reminder validation failed. Please check your input and try again.",
+    taskInvalidPriority:
+      "Task priority is invalid. Please select a valid priority.",
+    taskCompleteFailed: "Failed to complete the task. Please try again later.",
+    taskNotFound: "The specified task does not exist or has been deleted.",
   },
   log: {
     category: {
@@ -986,6 +1086,14 @@ const casesEnUS = {
   coach: {
     docManagement: "Document management",
     runValidation: "Run validation",
+    registerFinalPayment: "Register final payment",
+    sendCollectionReminder: "Send collection reminder",
+    viewSubmissionStatus: "View submission status",
+    checkMessages: "Check messages",
+    setDeadline: "Set deadline",
+    checkTasks: "Check tasks",
+    checkBilling: "Check billing",
+    viewLog: "View log",
   },
 } as const;
 

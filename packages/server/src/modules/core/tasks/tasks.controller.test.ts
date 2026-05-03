@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
 import type { Task } from "../model/coreEntities";
 import { TasksController } from "./tasks.controller";
@@ -214,4 +214,105 @@ void test("TasksController cancel validates context and forwards id", async () =
   const res = await controller.cancel(req as never, TASK_ID);
   assert.equal(res.status, "cancelled");
   assert.equal(cancelledId, TASK_ID);
+});
+
+void test("TasksController create rejects non-UUID assigneeUserId with TASK_INVALID_ASSIGNEE_ID", async () => {
+  const service = {
+    create: () => Promise.resolve(mockTask),
+  } as unknown as TasksService;
+  const controller = new TasksController(service);
+
+  await assert.rejects(
+    () =>
+      controller.create(
+        req as never,
+        {
+          title: "Test",
+          assigneeUserId: "not-a-uuid",
+        } as never,
+      ),
+    (err: unknown) => {
+      assert.ok(err instanceof BadRequestException);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.errorCode, "TASK_INVALID_ASSIGNEE_ID");
+      return true;
+    },
+  );
+
+  await assert.rejects(
+    () =>
+      controller.create(
+        req as never,
+        {
+          title: "Test",
+          assigneeUserId: "suzuki",
+        } as never,
+      ),
+    (err: unknown) => {
+      assert.ok(err instanceof BadRequestException);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.errorCode, "TASK_INVALID_ASSIGNEE_ID");
+      return true;
+    },
+  );
+});
+
+void test("TasksController create allows null assigneeUserId", async () => {
+  let calledInput: Record<string, unknown> | undefined;
+  const service = {
+    create: (_ctx: unknown, input: Record<string, unknown>) => {
+      calledInput = input;
+      return Promise.resolve(mockTask);
+    },
+  } as unknown as TasksService;
+  const controller = new TasksController(service);
+
+  await controller.create(
+    req as never,
+    {
+      title: "Test",
+      assigneeUserId: null,
+    } as never,
+  );
+  assert.equal(calledInput?.assigneeUserId, null);
+});
+
+void test("TasksController create allows valid UUID assigneeUserId", async () => {
+  let calledInput: Record<string, unknown> | undefined;
+  const service = {
+    create: (_ctx: unknown, input: Record<string, unknown>) => {
+      calledInput = input;
+      return Promise.resolve(mockTask);
+    },
+  } as unknown as TasksService;
+  const controller = new TasksController(service);
+
+  await controller.create(
+    req as never,
+    {
+      title: "Test",
+      assigneeUserId: USER_ID,
+    } as never,
+  );
+  assert.equal(calledInput?.assigneeUserId, USER_ID);
+});
+
+void test("TasksController update rejects non-UUID assigneeUserId with TASK_INVALID_ASSIGNEE_ID", async () => {
+  const service = {
+    update: () => Promise.resolve(mockTask),
+  } as unknown as TasksService;
+  const controller = new TasksController(service);
+
+  await assert.rejects(
+    () =>
+      controller.update(req as never, TASK_ID, {
+        assigneeUserId: "not-a-uuid",
+      } as never),
+    (err: unknown) => {
+      assert.ok(err instanceof BadRequestException);
+      const body = err.getResponse() as Record<string, unknown>;
+      assert.equal(body.errorCode, "TASK_INVALID_ASSIGNEE_ID");
+      return true;
+    },
+  );
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import type { DeadlineKindChoice } from "../model/CaseAdapterReminderWriteBuilders";
@@ -11,6 +11,7 @@ interface CaseDeadlineCreateModalProps {
   open?: boolean;
   caseId?: string;
   submitting?: boolean;
+  errorMessageKey?: string | null;
 }
 
 const props = defineProps<CaseDeadlineCreateModalProps>();
@@ -34,6 +35,8 @@ const KINDS: DeadlineKindChoice[] = [
   "custom",
 ];
 
+const backdropRef = ref<HTMLElement | null>(null);
+
 const localTargetType = ref<"case" | "case_party_residence">("case");
 const localRemindAt = ref("");
 const localKind = ref<DeadlineKindChoice>("custom");
@@ -47,6 +50,7 @@ watch(
       localRemindAt.value = "";
       localKind.value = "custom";
       localMemo.value = "";
+      nextTick(() => backdropRef.value?.focus());
     }
   },
 );
@@ -67,18 +71,22 @@ function handleSubmit(): void {
   <Teleport to="body">
     <div
       v-if="props.open"
+      ref="backdropRef"
       class="deadline-modal-backdrop"
       data-testid="deadline-create-modal-backdrop"
+      tabindex="-1"
       @click.self="!props.submitting && emit('close')"
+      @keydown.esc.stop.prevent="!props.submitting && emit('close')"
     >
       <div
         class="deadline-modal"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="case-deadline-create-title"
         data-testid="deadline-create-modal"
       >
         <header class="deadline-modal__header">
-          <h2 class="deadline-modal__title">
+          <h2 id="case-deadline-create-title" class="deadline-modal__title">
             {{ t("cases.deadlines.createModal.title") }}
           </h2>
           <button
@@ -104,11 +112,13 @@ function handleSubmit(): void {
         </header>
 
         <div class="deadline-modal__body">
-          <label class="deadline-modal__field">
+          <label class="deadline-modal__field" for="deadline-targetType">
             <span class="deadline-modal__label">{{
               t("cases.deadlines.createModal.fields.targetType")
             }}</span>
             <select
+              id="deadline-targetType"
+              name="targetType"
               class="deadline-modal__select"
               :value="localTargetType"
               :disabled="props.submitting"
@@ -124,11 +134,13 @@ function handleSubmit(): void {
             </select>
           </label>
 
-          <label class="deadline-modal__field">
+          <label class="deadline-modal__field" for="deadline-remindAt">
             <span class="deadline-modal__label">{{
               t("cases.deadlines.createModal.fields.remindAt")
             }}</span>
             <input
+              id="deadline-remindAt"
+              name="remindAt"
               type="date"
               class="deadline-modal__input"
               :value="localRemindAt"
@@ -138,11 +150,13 @@ function handleSubmit(): void {
             />
           </label>
 
-          <label class="deadline-modal__field">
+          <label class="deadline-modal__field" for="deadline-kind">
             <span class="deadline-modal__label">{{
               t("cases.deadlines.createModal.fields.kind")
             }}</span>
             <select
+              id="deadline-kind"
+              name="kind"
               class="deadline-modal__select"
               :value="localKind"
               :disabled="props.submitting"
@@ -158,11 +172,13 @@ function handleSubmit(): void {
             </select>
           </label>
 
-          <label class="deadline-modal__field">
+          <label class="deadline-modal__field" for="deadline-memo">
             <span class="deadline-modal__label">{{
               t("cases.deadlines.createModal.fields.memo")
             }}</span>
             <textarea
+              id="deadline-memo"
+              name="memo"
               class="deadline-modal__textarea"
               rows="3"
               :value="localMemo"
@@ -174,6 +190,15 @@ function handleSubmit(): void {
               @input="localMemo = ($event.target as HTMLTextAreaElement).value"
             />
           </label>
+        </div>
+
+        <div
+          v-if="props.errorMessageKey"
+          role="alert"
+          class="deadline-modal__error-bar"
+          data-testid="deadline-error-bar"
+        >
+          {{ t(props.errorMessageKey) }}
         </div>
 
         <footer class="deadline-modal__footer">
@@ -286,6 +311,15 @@ function handleSubmit(): void {
 .deadline-modal__textarea {
   resize: vertical;
   min-height: 60px;
+}
+
+.deadline-modal__error-bar {
+  margin: 0 24px;
+  padding: 8px 12px;
+  border-radius: var(--radius-md);
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger, #dc2626);
+  font-size: var(--font-size-sm, 14px);
 }
 
 .deadline-modal__footer {

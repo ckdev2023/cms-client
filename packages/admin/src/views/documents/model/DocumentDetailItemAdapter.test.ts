@@ -115,10 +115,10 @@ describe("toCaseDetailItem", () => {
     const result = toCaseDetailItem(BASE_LIST_ITEM);
     expect(result.name).toBe("護照写し");
     expect(result.status).toBe("pending");
-    expect(result.statusLabel).toBe("documents.status.pending");
+    expect(result.statusLabelKey).toBe("documents.status.pending");
     expect(result.meta).toBe("2026-05-10 · 経管签新規");
     expect(result.relativePath).toBeNull();
-    expect(result.referenceLabel).toBeNull();
+    expect(result.referenceLabelKey).toBeNull();
     expect(result.referenceCount).toBe(1);
   });
 
@@ -174,7 +174,7 @@ describe("toCaseDetailItem", () => {
   it("builds referenceLabel when referenceCount > 1", () => {
     const item = { ...BASE_LIST_ITEM, referenceCount: 3 };
     const result = toCaseDetailItem(item);
-    expect(result.referenceLabel).toBe("3 件で共有");
+    expect(result.referenceLabelKey).toBe("3 件で共有");
   });
 
   it("handles item without dueDate in meta", () => {

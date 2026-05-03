@@ -161,7 +161,7 @@ const commLog = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   channelType: "phone",
   contentSummary: "電話でフォロー",
   createdAt: "2026-04-10T10:00:00.000Z",
-  createdBy: "Tanaka Yuki",
+  createdByDisplayName: "Tanaka Yuki",
   visibleToClient: false,
   followUpRequired: false,
   ...o,

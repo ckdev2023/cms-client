@@ -69,6 +69,67 @@ describe("useCaseDetailGuard", () => {
     });
   });
 
+  describe("isTabAccessible — terminal tab gating", () => {
+    it("active case: all tabs accessible", () => {
+      const { guard } = createGuard({
+        readonly: false,
+        businessPhase: "MATERIAL_PREPARING",
+      });
+      expect(guard.isTabAccessible("overview")).toBe(true);
+      expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("tasks")).toBe(true);
+      expect(guard.isTabAccessible("documents")).toBe(true);
+      expect(guard.isTabAccessible("billing")).toBe(true);
+      expect(guard.isTabAccessible("messages")).toBe(true);
+      expect(guard.isTabAccessible("validation")).toBe(true);
+      expect(guard.isTabAccessible("info")).toBe(true);
+      expect(guard.isTabAccessible("forms")).toBe(true);
+      expect(guard.isTabAccessible("deadlines")).toBe(true);
+    });
+
+    it("terminal case (CLOSED_SUCCESS): only log and overview accessible", () => {
+      const { guard } = createGuard({
+        readonly: true,
+        businessPhase: "CLOSED_SUCCESS",
+      });
+      expect(guard.isTabAccessible("overview")).toBe(true);
+      expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("tasks")).toBe(false);
+      expect(guard.isTabAccessible("documents")).toBe(false);
+      expect(guard.isTabAccessible("billing")).toBe(false);
+      expect(guard.isTabAccessible("messages")).toBe(false);
+      expect(guard.isTabAccessible("validation")).toBe(false);
+      expect(guard.isTabAccessible("info")).toBe(false);
+      expect(guard.isTabAccessible("forms")).toBe(false);
+      expect(guard.isTabAccessible("deadlines")).toBe(false);
+    });
+
+    it("terminal case (CLOSED_FAILED): only log and overview accessible", () => {
+      const { guard } = createGuard({
+        readonly: true,
+        businessPhase: "CLOSED_FAILED",
+      });
+      expect(guard.isTabAccessible("overview")).toBe(true);
+      expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("tasks")).toBe(false);
+    });
+
+    it("reactively updates when phase changes to terminal", () => {
+      const { guard, detail } = createGuard({
+        readonly: false,
+        businessPhase: "REVIEWING",
+      });
+      expect(guard.isTabAccessible("tasks")).toBe(true);
+
+      detail.value = createMockDetail({
+        readonly: true,
+        businessPhase: "CLOSED_SUCCESS",
+      });
+      expect(guard.isTabAccessible("tasks")).toBe(false);
+      expect(guard.isTabAccessible("log")).toBe(true);
+    });
+  });
+
   describe("reactivity", () => {
     it("tracks detail changes from active to readonly", () => {
       const { guard, detail } = createGuard({

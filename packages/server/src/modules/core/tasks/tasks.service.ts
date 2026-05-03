@@ -15,6 +15,18 @@ import {
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import {
+  validateMutableStatusTransition,
+  validatePriority,
+  validateTaskStatus,
+  validateTaskType,
+  validateTerminalTransition,
+  validateTimestamp,
+  validateTitle,
+  wrapTaskCreateError,
+} from "./tasks.errors";
+
+export { TASK_WRITE_ERROR_CODES } from "./tasks.errors";
 
 export type TaskQueryRow = {
   id: string;
@@ -95,21 +107,6 @@ type ResolvedTaskUpdate = {
 const TASK_COLS = `id, org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id, completed_at, created_at, updated_at`;
 
 const TASK_LIST_SELECT = `t.id, t.org_id, t.case_id, t.title, t.description, t.task_type, t.assignee_user_id, t.priority, t.due_at, t.status, t.source_type, t.source_id, t.completed_at, t.created_at, t.updated_at, c.case_no as case_no, c.case_name as case_name, u.name as assignee_name`;
-const VALID_TASK_TYPES = new Set([
-  "general",
-  "document_follow_up",
-  "client_contact",
-  "submission",
-  "review",
-  "collection",
-]);
-const VALID_PRIORITIES = new Set(["low", "normal", "high", "urgent"]);
-const VALID_STATUSES = new Set([
-  "pending",
-  "in_progress",
-  "completed",
-  "cancelled",
-]);
 
 export function mapTaskRow(row: TaskQueryRow): Task {
   return {
@@ -157,46 +154,51 @@ export class TasksService {
     validateTimestamp(input.dueAt, "dueAt");
 
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    if (input.caseId)
-      await this.assertBelongsToOrg(tenantDb, "cases", input.caseId);
-    if (input.assigneeUserId) {
-      await this.assertBelongsToOrg(tenantDb, "users", input.assigneeUserId);
-    }
 
-    const result = await tenantDb.query<TaskQueryRow>(
-      `insert into tasks (org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id)
+    try {
+      if (input.caseId)
+        await this.assertBelongsToOrg(tenantDb, "cases", input.caseId);
+      if (input.assigneeUserId) {
+        await this.assertBelongsToOrg(tenantDb, "users", input.assigneeUserId);
+      }
+
+      const result = await tenantDb.query<TaskQueryRow>(
+        `insert into tasks (org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id)
        values ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
        returning ${TASK_COLS}`,
-      [
-        ctx.orgId,
-        input.caseId ?? null,
-        input.title,
-        input.description ?? null,
-        input.taskType ?? "general",
-        input.assigneeUserId ?? null,
-        input.priority ?? "normal",
-        input.dueAt ?? null,
-        input.sourceType ?? null,
-        input.sourceId ?? null,
-      ],
-    );
+        [
+          ctx.orgId,
+          input.caseId ?? null,
+          input.title,
+          input.description ?? null,
+          input.taskType ?? "general",
+          input.assigneeUserId ?? null,
+          input.priority ?? "normal",
+          input.dueAt ?? null,
+          input.sourceType ?? null,
+          input.sourceId ?? null,
+        ],
+      );
 
-    const row = result.rows.at(0);
-    if (!row) throw new BadRequestException("Failed to create task");
-    const task = mapTaskRow(row);
+      const row = result.rows.at(0);
+      if (!row) throw new BadRequestException("Failed to create task");
+      const task = mapTaskRow(row);
 
-    await this.timelineService.write(ctx, {
-      entityType: "task",
-      entityId: task.id,
-      action: "task.created",
-      payload: {
-        caseId: task.caseId,
-        title: task.title,
-        status: task.status,
-      },
-    });
+      await this.timelineService.write(ctx, {
+        entityType: "task",
+        entityId: task.id,
+        action: "task.created",
+        payload: {
+          caseId: task.caseId,
+          title: task.title,
+          status: task.status,
+        },
+      });
 
-    return task;
+      return task;
+    } catch (error) {
+      return wrapTaskCreateError(error);
+    }
   }
 
   async get(ctx: RequestContext, id: string): Promise<Task | null> {
@@ -434,67 +436,6 @@ function resolveTaskUpdate(
   };
 }
 
-function validateTitle(title: string): void {
-  if (title.trim().length === 0) {
-    throw new BadRequestException("title is required");
-  }
-}
-
-function validateTaskType(taskType: string): void {
-  if (!VALID_TASK_TYPES.has(taskType)) {
-    throw new BadRequestException(
-      `Invalid taskType: ${taskType}. Must be one of: ${[...VALID_TASK_TYPES].join(", ")}`,
-    );
-  }
-}
-
-function validatePriority(priority: string): void {
-  if (!VALID_PRIORITIES.has(priority)) {
-    throw new BadRequestException(
-      `Invalid priority: ${priority}. Must be one of: ${[...VALID_PRIORITIES].join(", ")}`,
-    );
-  }
-}
-
-function validateTaskStatus(status: string): void {
-  if (!VALID_STATUSES.has(status)) {
-    throw new BadRequestException(
-      `Invalid status: ${status}. Must be one of: ${[...VALID_STATUSES].join(", ")}`,
-    );
-  }
-}
-
-function validateTimestamp(
-  value: string | null | undefined,
-  field: string,
-): void {
-  if (value === undefined || value === null) return;
-  if (Number.isNaN(new Date(value).getTime())) {
-    throw new BadRequestException(`Invalid ${field}`);
-  }
-}
-
 function isTerminalStatus(status: string): boolean {
   return status === "completed" || status === "cancelled";
-}
-function validateMutableStatusTransition(from: string, to: string): void {
-  if (from === to) return;
-  if (to === "completed" || to === "cancelled") {
-    throw new BadRequestException(
-      "Use complete/cancel endpoints for terminal task transitions",
-    );
-  }
-  if (from === "pending" && to === "in_progress") return;
-  throw new BadRequestException(
-    `Transition from '${from}' to '${to}' is not allowed`,
-  );
-}
-function validateTerminalTransition(
-  from: string,
-  to: "completed" | "cancelled",
-): void {
-  if (from === "pending" || from === "in_progress") return;
-  throw new BadRequestException(
-    `Transition from '${from}' to '${to}' is not allowed`,
-  );
 }

@@ -102,7 +102,8 @@ const hasExpandableContent = computed(() => {
 });
 
 const hasRefLabel = computed(
-  () => props.item.referenceLabel != null && props.item.referenceLabel !== "",
+  () =>
+    props.item.referenceLabelKey != null && props.item.referenceLabelKey !== "",
 );
 
 const showRefCount = computed(() => (props.item.referenceCount ?? 0) > 1);
@@ -182,16 +183,21 @@ function toggle() {
             {{ item.relativePath }}
           </div>
           <div v-if="hasRefLabel" class="doc-row__ref">
-            {{ item.referenceLabel }}
+            {{ t(item.referenceLabelKey!) }}
             <span v-if="showRefCount" class="doc-row__ref-count">
-              · 当前 {{ item.referenceCount }} 个案件引用此版本
+              ·
+              {{
+                t("cases.detail.documents.referenceCount", {
+                  count: item.referenceCount,
+                })
+              }}
             </span>
           </div>
         </div>
       </div>
       <div class="doc-row__right">
         <Chip :tone="chipTone(item)" dot>
-          {{ item.statusLabel }}
+          {{ t(item.statusLabelKey) }}
         </Chip>
       </div>
     </div>

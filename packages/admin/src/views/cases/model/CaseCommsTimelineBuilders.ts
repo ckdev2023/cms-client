@@ -53,6 +53,15 @@ function buildStageChangeResult(
   };
 }
 
+const COMM_LOG_CHANNEL_I18N: Record<string, string> = {
+  phone: "cases.detail.messages.types.phone",
+  meeting: "cases.detail.messages.types.meeting",
+  email: "cases.detail.messages.types.auto_email",
+  internal: "cases.detail.messages.types.internal",
+  client_visible: "cases.detail.messages.types.client_visible",
+  other: "cases.detail.messages.types.other",
+};
+
 const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "case.created": (p) => {
     const suffix = pickFirst(p, ["caseTypeCode", "case_type_code"]);
@@ -99,10 +108,19 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       },
     };
   },
-  "communication_log.created": (p) => ({
-    key: "cases.log.timeline.commLogCreated",
-    params: { suffix: pickFirst(p, ["channelType", "channel_type"]) },
-  }),
+  "communication_log.created": (p) => {
+    const rawChannel = pickFirst(p, ["channelType", "channel_type"]);
+    return {
+      key: "cases.log.timeline.commLogCreated",
+      params: {
+        suffix: rawChannel,
+        suffixKey: rawChannel
+          ? (COMM_LOG_CHANNEL_I18N[rawChannel] ??
+            "cases.detail.messages.types.other")
+          : "",
+      },
+    };
+  },
   "communication_log.updated": () => ({
     key: "cases.log.timeline.commLogUpdated",
   }),

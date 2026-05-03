@@ -1,5 +1,4 @@
 import { describe, expect, it } from "vitest";
-
 import { type CaseRepository, createCaseRepository } from "./CaseRepository";
 
 import {
@@ -147,6 +146,8 @@ const REPOSITORY_REQUIRED_METHODS = [
   "createCommunicationLog",
   "createGeneratedDocument",
   "createReminder",
+  "createTask",
+  "completeTask",
 ] as const;
 
 describe("CaseRepository interface surface (p0-fe-002f-04)", () => {
@@ -449,8 +450,7 @@ describe("cross-consumer surface stability (p0-fe-002f-04)", () => {
     const item: CaseListItem = {} as CaseListItem;
     const items: CaseListItem[] = [item];
     const _cards: CaseSummaryCardData[] = adaptCaseSummaryCards(items);
-    void _cards;
-    expect(true).toBe(true);
+    expect(_cards).toBeDefined();
   });
 
   it("CaseDetail type is consistent between getDetail and getDetailAggregate.detail", () => {

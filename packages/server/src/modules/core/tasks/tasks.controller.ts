@@ -15,6 +15,7 @@ import {
 
 import { RequireRoles } from "../auth/auth.decorators";
 import type { RequestContext } from "../tenancy/requestContext";
+import { isUuid } from "../tenancy/uuid";
 import { TasksService } from "./tasks.service";
 
 type HttpRequest = {
@@ -124,15 +125,27 @@ export class TasksController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const assigneeUserId = parseOptionalNullableString(
+      body.assigneeUserId,
+      "assigneeUserId",
+    );
+    if (
+      assigneeUserId !== null &&
+      assigneeUserId !== undefined &&
+      !isUuid(assigneeUserId)
+    ) {
+      throw new BadRequestException({
+        errorCode: "TASK_INVALID_ASSIGNEE_ID",
+        message: "assigneeUserId must be a valid UUID",
+      });
+    }
+
     return this.tasksService.create(ctx, {
       caseId: parseOptionalNullableString(body.caseId, "caseId"),
       title: requireString(body.title, "title"),
       description: parseOptionalNullableString(body.description, "description"),
       taskType: parseOptionalString(body.taskType, "taskType"),
-      assigneeUserId: parseOptionalNullableString(
-        body.assigneeUserId,
-        "assigneeUserId",
-      ),
+      assigneeUserId,
       priority: parseOptionalString(body.priority, "priority"),
       dueAt: parseOptionalNullableISODate(body.dueAt, "dueAt"),
       sourceType: parseOptionalNullableString(body.sourceType, "sourceType"),
@@ -195,6 +208,21 @@ export class TasksController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
+    const updateAssigneeUserId = parseOptionalNullableString(
+      body.assigneeUserId,
+      "assigneeUserId",
+    );
+    if (
+      updateAssigneeUserId !== null &&
+      updateAssigneeUserId !== undefined &&
+      !isUuid(updateAssigneeUserId)
+    ) {
+      throw new BadRequestException({
+        errorCode: "TASK_INVALID_ASSIGNEE_ID",
+        message: "assigneeUserId must be a valid UUID",
+      });
+    }
+
     return this.tasksService.update(ctx, id, {
       caseId: parseOptionalNullableString(body.caseId, "caseId"),
       title:
@@ -203,10 +231,7 @@ export class TasksController {
           : undefined,
       description: parseOptionalNullableString(body.description, "description"),
       taskType: parseOptionalString(body.taskType, "taskType"),
-      assigneeUserId: parseOptionalNullableString(
-        body.assigneeUserId,
-        "assigneeUserId",
-      ),
+      assigneeUserId: updateAssigneeUserId,
       priority: parseOptionalString(body.priority, "priority"),
       dueAt: parseOptionalNullableISODate(body.dueAt, "dueAt"),
       status: parseOptionalString(body.status, "status"),

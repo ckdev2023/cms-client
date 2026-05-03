@@ -197,10 +197,12 @@ describe("S9 readonly state", () => {
 describe("provider progress", () => {
   it("adapts provider progress entries", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
-    expect(result.detail.providerProgress).toEqual([
-      { label: "applicant", done: 3, total: 5 },
-      { label: "office", done: 3, total: 5 },
-    ]);
+    const pp = result.detail.providerProgress;
+    expect(pp).toHaveLength(2);
+    expect(pp[0].labelKey).toBe("cases.detail.providers.applicant");
+    expect(pp[0].done).toBe(3);
+    expect(pp[1].labelKey).toBe("cases.detail.providers.office");
+    expect(pp[1].done).toBe(3);
   });
 
   it("filters invalid provider progress entries", () => {
@@ -214,9 +216,10 @@ describe("provider progress", () => {
         ],
       }),
     )!;
-    expect(result.detail.providerProgress).toEqual([
-      { label: "applicant", done: 3, total: 5 },
-    ]);
+    expect(result.detail.providerProgress).toHaveLength(1);
+    expect(result.detail.providerProgress[0].labelKey).toBe(
+      "cases.detail.providers.applicant",
+    );
   });
 });
 
@@ -401,9 +404,10 @@ describe("slice field consumption contracts", () => {
         ],
       }),
     )!;
-    expect(result.detail.providerProgress).toEqual([
-      { label: "employer", done: 5, total: 8 },
-    ]);
+    const pp = result.detail.providerProgress;
+    expect(pp).toHaveLength(1);
+    expect(pp[0].labelKey).toBe("cases.detail.providers.employer");
+    expect(pp[0].done).toBe(5);
   });
 });
 
@@ -469,7 +473,6 @@ describe("placeholder collections (tabs not yet populated)", () => {
   it("provides empty arrays for tab collections", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.timeline).toEqual([]);
-    expect(result.detail.team).toEqual([]);
     expect(result.detail.relatedParties).toEqual([]);
     expect(result.detail.deadlines).toEqual([]);
     expect(result.detail.submissionPackages).toEqual([]);

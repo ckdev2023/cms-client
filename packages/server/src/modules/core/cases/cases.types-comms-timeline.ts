@@ -39,6 +39,7 @@ export type CaseCommunicationLogDto = {
   fullContent: string | null;
   visibleToClient: boolean;
   createdBy: string | null;
+  createdByDisplayName: string | null;
   followUpRequired: boolean;
   followUpDueAt: string | null;
   createdAt: string;

@@ -13,6 +13,13 @@ const BUTTON_STUB = {
   props: ["variant", "tone", "size", "disabled"],
 };
 
+const USER_PICKER_STUB = {
+  template:
+    '<input :id="id" :name="name" :value="modelValue" :disabled="disabled" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+  props: ["modelValue", "disabled", "id", "name", "placeholder"],
+  emits: ["update:modelValue"],
+};
+
 function makeI18n(locale = "zh-CN") {
   return createI18n({
     legacy: false,
@@ -29,7 +36,11 @@ function mountModal(overrides: Record<string, unknown> = {}, locale = "zh-CN") {
   return mount(CaseTaskCreateModal, {
     global: {
       plugins: [makeI18n(locale)],
-      stubs: { Teleport: true, Button: BUTTON_STUB },
+      stubs: {
+        Teleport: true,
+        Button: BUTTON_STUB,
+        UserPicker: USER_PICKER_STUB,
+      },
     },
     props: {
       open: true,

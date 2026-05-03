@@ -1,4 +1,4 @@
-import { and, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, sql } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
 import {
   BadRequestException,
@@ -8,8 +8,11 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
-import { communicationLogs } from "../../../infra/db/drizzle/schema";
-import type { CommunicationLog } from "../model/coreEntities";
+import { communicationLogs, users } from "../../../infra/db/drizzle/schema";
+import type {
+  CommunicationLog,
+  CommunicationLogListItem,
+} from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDrizzleRepository } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -137,7 +140,7 @@ export class CommunicationLogsService {
   async list(
     ctx: RequestContext,
     input: CommunicationLogListInput = {},
-  ): Promise<{ items: CommunicationLog[]; total: number }> {
+  ): Promise<{ items: CommunicationLogListItem[]; total: number }> {
     const tenantRepo = this.createTenantRepository(ctx);
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
@@ -156,8 +159,30 @@ export class CommunicationLogsService {
         .limit(limit)
         .offset(offset);
 
+      const creatorIds = [
+        ...new Set(
+          result
+            .map((r) => r.createdBy)
+            .filter((id): id is string => id !== null),
+        ),
+      ];
+      const creatorMap = new Map<string, string>();
+      if (creatorIds.length > 0) {
+        const creators = await db
+          .select({ id: users.id, name: users.name })
+          .from(users)
+          .where(inArray(users.id, creatorIds));
+        for (const c of creators) {
+          creatorMap.set(c.id, c.name);
+        }
+      }
+
       return {
-        items: result.map((row) => mapCommunicationLogRecord(row)),
+        items: result.map((row) => ({
+          ...mapCommunicationLogRecord(row),
+          createdByDisplayName:
+            (row.createdBy && creatorMap.get(row.createdBy)) ?? null,
+        })),
         total: Number.parseInt(countResult.count, 10),
       };
     });

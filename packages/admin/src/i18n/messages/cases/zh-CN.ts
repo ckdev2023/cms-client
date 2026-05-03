@@ -224,12 +224,15 @@ const casesZhCN = {
     },
   },
   detail: {
+    wip: "建设中",
     readonlyHint: "案件已归档，所有操作均为只读",
     actions: {
       editInfo: "编辑信息",
       exportZip: "导出 ZIP",
       statusTransition: "状态流转",
       exportZipNotReady: "ZIP 导出功能尚未上线，敬请期待。",
+      editInfoDisabledTooltip: "案件已归档，无法编辑",
+      statusTransitionDisabledTooltip: "案件已归档，无法流转状态",
     },
     editModal: {
       title: "编辑案件信息",
@@ -242,9 +245,22 @@ const casesZhCN = {
         assistantUserId: "协办人",
         groupId: "分组",
         priority: "优先级",
+        jurisdictionAuthority: "管辖入管局",
+        remark: "备注",
       },
       cancel: "取消",
       save: "保存",
+      priorityOptions: {
+        low: "低",
+        normal: "普通",
+        high: "高",
+        urgent: "紧急",
+      },
+      riskOptions: {
+        normal: "正常",
+        attention: "需关注",
+        high: "高风险",
+      },
     },
     phaseMenu: {
       title: "业务阶段流转",
@@ -283,13 +299,31 @@ const casesZhCN = {
     },
     terminalNextAction: {
       success: "已结案，可导出 ZIP / 查看续签提醒。",
-      failed: "已结案（失败），可查看关闭原因 / 退款待人工处理。",
+      failed: "已结案（失败），可查看关闭原因与收费明细。",
+    },
+    terminalActions: {
+      viewCloseReason: "查看关闭原因",
+      viewResult: "查看结案记录",
+      handleRefund: "处理退款",
+      viewBilling: "查看收费详情",
+      refundWip: "退款功能建设中",
+    },
+    closeReasonModal: {
+      titleSuccess: "结案记录",
+      titleFailure: "关闭原因",
+      closedAt: "归档时间",
+      closedBy: "操作人",
+      failureReasonTitle: "失败结案详情",
+      closeReasonText: "备注",
+      successTitle: "成功结案条件",
+      noDetail: "暂无详细结案信息。",
+      close: "关闭",
     },
     unpaidLabel: "待收：{amount}",
     arrearsYes: "有",
     arrearsNo: "无",
     readonlyBanner:
-      "此案件已归档（{stage}），所有字段为只读。仅日志 Tab 保持可访问。",
+      "此案件处于「{stage}」状态，全字段只读，状态变更与编辑已禁用。",
     failurePathBanner:
       "此案件处于失败结案路径，请在概览 Tab 查看详情与下一步操作。",
     loading: "正在加载案件详情…",
@@ -309,18 +343,27 @@ const casesZhCN = {
       provider: {
         kicker: "按提供方完成率",
         title: "资料收集分组进度",
+        empty: "暂无分组进度数据",
       },
       nextAction: {
         title: "下一关键动作",
       },
+      billingGuard: {
+        waitingPaymentEmpty:
+          "需先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段",
+      },
       timeline: {
         title: "近期动态",
+        empty: "暂无近期动态",
         viewAll: "查看完整日志 →",
       },
       sidebar: {
         phaseTitle: "业务阶段",
         riskTitle: "阻断与风险摘要",
         teamTitle: "案件团队",
+        teamEmpty: "暂无团队成员",
+        teamRoleOwner: "负责人",
+        teamRoleAssistant: "协办人",
         validationTitle: "提交前校验",
         validationAction: "查看校验与提交包",
       },
@@ -438,6 +481,14 @@ const casesZhCN = {
         },
       },
     },
+    providers: {
+      applicant: "申请人",
+      office: "事务所",
+      employer: "雇主",
+      agent: "代理人",
+      unknown: "未知",
+      unspecified: "未指定",
+    },
     info: {
       cardTitle: "案件属性",
       fields: {
@@ -512,19 +563,19 @@ const casesZhCN = {
       },
     },
     forms: {
-      title: "文書管理",
-      generateAction: "生成文書",
+      title: "文书管理",
+      generateAction: "生成文书",
       kickerTemplates: "可用模板",
-      kickerGenerated: "已生成文書",
+      kickerGenerated: "已生成文书",
       exportAction: "导出",
       versionHistoryAction: "版本历史",
-      empty: "暂无可用文書模板或生成记录",
+      empty: "暂无可用文书模板或生成记录",
       generateModal: {
-        title: "生成文書",
+        title: "生成文书",
         fields: {
-          templateId: "文書模板",
+          templateId: "文书模板",
           templatePlaceholder: "暂无模板（走占位流程）",
-          docTitle: "文書标题",
+          docTitle: "文书标题",
           docTitlePlaceholder: "例如：申请理由书",
           outputFormat: "输出格式",
         },
@@ -534,6 +585,21 @@ const casesZhCN = {
       },
     },
     documents: {
+      docStatus: {
+        pending: "未发送",
+        waitingUpload: "等待上传",
+        uploadedReviewing: "审核中",
+        approved: "已通过",
+        revisionRequired: "需修正",
+        waived: "已免除",
+        expired: "已过期",
+        notSent: "未发送",
+        rejected: "已退回",
+        unknown: "未知",
+      },
+      referenceCount: "当前 {count} 个案件引用此版本",
+      referenceSelf: "本资料项登记",
+      referenceFrom: "引用自：{source}",
       empty: {
         title: "暂无资料登记",
         desc: "该案件尚未添加任何资料需求。请通过「登记资料」或「手动添加」开始建立资料清单。",
@@ -549,6 +615,7 @@ const casesZhCN = {
         kicker: "按提供方完成率",
         title: "资料收集分组进度",
       },
+      readonlyNotice: "案件已归档，资料清单为只读。",
       groupEmpty: "该分组暂无资料项",
     },
     log: {
@@ -570,6 +637,14 @@ const casesZhCN = {
       filterTitle: "过滤筛选",
       filterReset: "重置",
       viewConversations: "查看关联会话",
+      types: {
+        internal: "内部记录",
+        client_visible: "客户可见记录",
+        phone: "电话记录",
+        meeting: "线下会议",
+        auto_email: "自动邮件",
+        other: "其他",
+      },
     },
     riskModal: {
       title: "欠款风险确认",
@@ -608,7 +683,15 @@ const casesZhCN = {
         kicker: "下签后处理",
         title: "COE / 海外贴签 / 返签结果",
         stagingChip: "当前案件未到该阶段",
-        note: "当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE 发送、海外贴签和返签结果。切换到相应样例后可查看完整流程。",
+        notePreSubmission:
+          "当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE 发送、海外贴签和返签结果。切换到相应样例后可查看完整流程。",
+        notePostSubmission:
+          "案件已提交至入管局，正在等待审查结果。下签后将进入 COE 发送、海外贴签等后续流程。",
+        noteAwaitingCoe:
+          "案件已获批准，正在等待尾款结清后发送 COE（在留资格认定证明书）。",
+        noteAwaitingVisaStamp:
+          "COE 已发送，申请人正在海外办理签证贴签手续，等待入境确认。",
+        noteCompleted: "下签后流程已完成，入境已确认或案件已归档。",
       },
       tab: {
         gateCard: {
@@ -825,6 +908,16 @@ const casesZhCN = {
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
     waitingPaymentBillingRequired:
       "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段。",
+    taskInvalidAssigneeId: "负责人 ID 格式无效，请选择有效的负责人。",
+    taskCreateFailed: "任务创建失败，请稍后重试。",
+    taskAssigneeNotFound: "指定的负责人不存在，请重新选择。",
+    reminderInvalidCaseId: "案件 ID 格式无效，无法创建提醒。",
+    reminderCreateFailed: "期限提醒创建失败，请稍后重试。",
+    reminderRefNotFound: "提醒关联的案件或对象不存在，请确认后重试。",
+    reminderValidationFailed: "提醒参数校验失败，请检查输入后重试。",
+    taskInvalidPriority: "任务优先级不合法，请选择有效的优先级。",
+    taskCompleteFailed: "任务完成操作失败，请稍后重试。",
+    taskNotFound: "指定的任务不存在或已被删除。",
   },
   log: {
     category: {
@@ -881,7 +974,7 @@ const casesZhCN = {
       validationRunFailed: "提交前检查未通过",
       submissionPackageCreated: "提交包已创建",
       submissionPackageUpdated: "提交包已更新",
-      generatedDocumentCreated: "文書生成：{suffix}",
+      generatedDocumentCreated: "文书生成：{suffix}",
       reminderCreated: "提醒创建：{suffix}",
     },
   },
@@ -944,6 +1037,14 @@ const casesZhCN = {
   coach: {
     docManagement: "资料管理",
     runValidation: "执行检查",
+    registerFinalPayment: "登记尾款",
+    sendCollectionReminder: "发送催款提醒",
+    viewSubmissionStatus: "查看提交状态",
+    checkMessages: "查看沟通记录",
+    setDeadline: "设置期限",
+    checkTasks: "查看任务",
+    checkBilling: "查看账单",
+    viewLog: "查看日志",
   },
 } as const;
 

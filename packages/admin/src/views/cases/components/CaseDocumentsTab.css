@@ -3,6 +3,19 @@
   gap: 20px;
 }
 
+.docs-tab__readonly-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-3);
+}
+
 .docs-tab__storage-gate {
   display: flex;
   align-items: flex-start;
@@ -134,11 +147,19 @@
 
 .docs-tab__card-header {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
   gap: 12px;
   width: 100%;
+  padding: 16px 20px;
+}
+
+.docs-tab__card-header-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 32px;
 }
 
 .docs-tab__section-title {
@@ -146,13 +167,13 @@
   font-size: 15px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
+  line-height: 1.4;
 }
 
 .docs-tab__global-progress {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-top: 8px;
 }
 
 .docs-tab__global-progress-track {

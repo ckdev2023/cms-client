@@ -24,7 +24,7 @@ const commLog = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   channelType: "phone",
   contentSummary: "電話でフォロー",
   createdAt: "2026-04-10T10:00:00.000Z",
-  createdBy: "Tanaka Yuki",
+  createdByDisplayName: "Tanaka Yuki",
   visibleToClient: false,
   followUpRequired: false,
   ...o,
@@ -134,17 +134,19 @@ describe("messages tab display values (p0-fe-006c-03)", () => {
   });
 
   it("avatar initials from multi-word name: first + last", () => {
-    const m = adaptCaseMessageDto(commLog({ createdBy: "Tanaka Yuki" }))!;
+    const m = adaptCaseMessageDto(
+      commLog({ createdByDisplayName: "Tanaka Yuki" }),
+    )!;
     expect(m.avatar).toBe("TY");
   });
 
   it("avatar initials from single-word name: first 2 chars", () => {
-    const m = adaptCaseMessageDto(commLog({ createdBy: "Admin" }))!;
+    const m = adaptCaseMessageDto(commLog({ createdByDisplayName: "Admin" }))!;
     expect(m.avatar).toBe("AD");
   });
 
   it("missing author defaults to System with SY initials", () => {
-    const m = adaptCaseMessageDto(commLog({ createdBy: null }))!;
+    const m = adaptCaseMessageDto(commLog({ createdByDisplayName: null }))!;
     expect(m.author).toBe("System");
     expect(m.avatar).toBe("SY");
   });

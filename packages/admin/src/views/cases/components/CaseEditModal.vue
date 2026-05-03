@@ -1,10 +1,16 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import UserPicker from "../../../shared/ui/UserPicker.vue";
+import {
+  getActiveGroupOptions,
+  resolveGroupValue,
+  resolveGroupLabel,
+} from "../../../shared/model/useGroupOptions";
 
 /** 案件编辑弹窗：修改案件名、期限、风险等级等核心字段。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface CaseEditModalProps {
   open?: boolean;
@@ -16,6 +22,8 @@ interface CaseEditModalProps {
   assistantUserId?: string;
   groupId?: string;
   priority?: string;
+  jurisdictionAuthority?: string;
+  remark?: string;
   submitting?: boolean;
 }
 
@@ -33,9 +41,24 @@ const emit = defineEmits<{
       assistantUserId: string;
       groupId: string;
       priority: string;
+      jurisdictionAuthority: string;
+      remark: string;
     },
   ];
 }>();
+
+/**
+ * 将 props.groupId（可能是 UUID）解析为 catalog value。
+ *
+ * @param raw - 原始 groupId 字符串（UUID 或 catalog key）
+ * @returns 匹配到的 catalog value，或原值兜底
+ */
+function resolveInitialGroupId(raw?: string): string {
+  if (!raw) return "";
+  return resolveGroupValue(raw) ?? raw;
+}
+
+const backdropRef = ref<HTMLElement | null>(null);
 
 const localCaseName = ref(props.caseName ?? "");
 const localDueAt = ref(props.dueAt ?? "");
@@ -43,8 +66,10 @@ const localAcceptedAt = ref(props.acceptedAt ?? "");
 const localRiskLevel = ref(props.riskLevel ?? "");
 const localOwnerUserId = ref(props.ownerUserId ?? "");
 const localAssistantUserId = ref(props.assistantUserId ?? "");
-const localGroupId = ref(props.groupId ?? "");
+const localGroupId = ref(resolveInitialGroupId(props.groupId));
 const localPriority = ref(props.priority ?? "");
+const localJurisdictionAuthority = ref(props.jurisdictionAuthority ?? "");
+const localRemark = ref(props.remark ?? "");
 
 watch(
   () => props.open,
@@ -56,10 +81,27 @@ watch(
       localRiskLevel.value = props.riskLevel ?? "";
       localOwnerUserId.value = props.ownerUserId ?? "";
       localAssistantUserId.value = props.assistantUserId ?? "";
-      localGroupId.value = props.groupId ?? "";
+      localGroupId.value = resolveInitialGroupId(props.groupId);
       localPriority.value = props.priority ?? "";
+      localJurisdictionAuthority.value = props.jurisdictionAuthority ?? "";
+      localRemark.value = props.remark ?? "";
+      nextTick(() => backdropRef.value?.focus());
     }
   },
+);
+
+const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+
+const hasGroupFallback = computed(() => {
+  const v = localGroupId.value.trim();
+  if (!v) return false;
+  return !groupOptions.value.some((o) => o.value === v);
+});
+
+const groupFallbackLabel = computed(() =>
+  hasGroupFallback.value
+    ? resolveGroupLabel(props.groupId ?? "", undefined, locale.value)
+    : "",
 );
 
 /** 校验并提交编辑表单。 */
@@ -73,6 +115,8 @@ function handleSave(): void {
     assistantUserId: localAssistantUserId.value.trim(),
     groupId: localGroupId.value.trim(),
     priority: localPriority.value.trim(),
+    jurisdictionAuthority: localJurisdictionAuthority.value.trim(),
+    remark: localRemark.value.trim(),
   });
 }
 </script>
@@ -81,13 +125,21 @@ function handleSave(): void {
   <Teleport to="body">
     <div
       v-if="props.open"
+      ref="backdropRef"
       class="case-edit-modal-backdrop"
       data-testid="case-edit-modal-backdrop"
+      tabindex="-1"
       @click.self="!props.submitting && emit('close')"
+      @keydown.esc.stop.prevent="!props.submitting && emit('close')"
     >
-      <div class="case-edit-modal" role="dialog" aria-modal="true">
+      <div
+        class="case-edit-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="case-edit-modal-title"
+      >
         <header class="case-edit-modal__header">
-          <h2 class="case-edit-modal__title">
+          <h2 id="case-edit-modal-title" class="case-edit-modal__title">
             {{ t("cases.detail.editModal.title") }}
           </h2>
           <button
@@ -167,34 +219,57 @@ function handleSave(): void {
               <span class="case-edit-modal__label">{{
                 t("cases.detail.editModal.fields.priority")
               }}</span>
-              <input
+              <select
                 id="case-edit-priority"
                 name="priority"
-                type="text"
                 class="case-edit-modal__input"
                 :value="localPriority"
                 :disabled="props.submitting"
-                @input="
-                  localPriority = ($event.target as HTMLInputElement).value
+                @change="
+                  localPriority = ($event.target as HTMLSelectElement).value
                 "
-              />
+              >
+                <option value="">--</option>
+                <option value="low">
+                  {{ t("cases.detail.editModal.priorityOptions.low") }}
+                </option>
+                <option value="normal">
+                  {{ t("cases.detail.editModal.priorityOptions.normal") }}
+                </option>
+                <option value="high">
+                  {{ t("cases.detail.editModal.priorityOptions.high") }}
+                </option>
+                <option value="urgent">
+                  {{ t("cases.detail.editModal.priorityOptions.urgent") }}
+                </option>
+              </select>
             </label>
 
             <label class="case-edit-modal__field">
               <span class="case-edit-modal__label">{{
                 t("cases.detail.editModal.fields.riskLevel")
               }}</span>
-              <input
+              <select
                 id="case-edit-riskLevel"
                 name="riskLevel"
-                type="text"
                 class="case-edit-modal__input"
                 :value="localRiskLevel"
                 :disabled="props.submitting"
-                @input="
-                  localRiskLevel = ($event.target as HTMLInputElement).value
+                @change="
+                  localRiskLevel = ($event.target as HTMLSelectElement).value
                 "
-              />
+              >
+                <option value="">--</option>
+                <option value="normal">
+                  {{ t("cases.detail.editModal.riskOptions.normal") }}
+                </option>
+                <option value="attention">
+                  {{ t("cases.detail.editModal.riskOptions.attention") }}
+                </option>
+                <option value="high">
+                  {{ t("cases.detail.editModal.riskOptions.high") }}
+                </option>
+              </select>
             </label>
           </div>
 
@@ -202,16 +277,13 @@ function handleSave(): void {
             <span class="case-edit-modal__label">{{
               t("cases.detail.editModal.fields.ownerUserId")
             }}</span>
-            <input
+            <UserPicker
               id="case-edit-ownerUserId"
               name="ownerUserId"
-              type="text"
               class="case-edit-modal__input"
-              :value="localOwnerUserId"
+              :model-value="localOwnerUserId"
               :disabled="props.submitting"
-              @input="
-                localOwnerUserId = ($event.target as HTMLInputElement).value
-              "
+              @update:model-value="localOwnerUserId = $event"
             />
           </label>
 
@@ -219,16 +291,13 @@ function handleSave(): void {
             <span class="case-edit-modal__label">{{
               t("cases.detail.editModal.fields.assistantUserId")
             }}</span>
-            <input
+            <UserPicker
               id="case-edit-assistantUserId"
               name="assistantUserId"
-              type="text"
               class="case-edit-modal__input"
-              :value="localAssistantUserId"
+              :model-value="localAssistantUserId"
               :disabled="props.submitting"
-              @input="
-                localAssistantUserId = ($event.target as HTMLInputElement).value
-              "
+              @update:model-value="localAssistantUserId = $event"
             />
           </label>
 
@@ -236,14 +305,61 @@ function handleSave(): void {
             <span class="case-edit-modal__label">{{
               t("cases.detail.editModal.fields.groupId")
             }}</span>
-            <input
+            <select
               id="case-edit-groupId"
               name="groupId"
-              type="text"
               class="case-edit-modal__input"
               :value="localGroupId"
               :disabled="props.submitting"
-              @input="localGroupId = ($event.target as HTMLInputElement).value"
+              @change="
+                localGroupId = ($event.target as HTMLSelectElement).value
+              "
+            >
+              <option value="">--</option>
+              <option v-if="hasGroupFallback" :value="localGroupId">
+                {{ groupFallbackLabel }}
+              </option>
+              <option
+                v-for="opt in groupOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </option>
+            </select>
+          </label>
+
+          <label class="case-edit-modal__field">
+            <span class="case-edit-modal__label">{{
+              t("cases.detail.editModal.fields.jurisdictionAuthority")
+            }}</span>
+            <input
+              id="case-edit-jurisdictionAuthority"
+              name="jurisdictionAuthority"
+              type="text"
+              class="case-edit-modal__input"
+              :value="localJurisdictionAuthority"
+              :disabled="props.submitting"
+              @input="
+                localJurisdictionAuthority = ($event.target as HTMLInputElement)
+                  .value
+              "
+            />
+          </label>
+
+          <label class="case-edit-modal__field">
+            <span class="case-edit-modal__label">{{
+              t("cases.detail.editModal.fields.remark")
+            }}</span>
+            <textarea
+              id="case-edit-remark"
+              name="remark"
+              class="case-edit-modal__input case-edit-modal__textarea"
+              :value="localRemark"
+              :disabled="props.submitting"
+              @input="
+                localRemark = ($event.target as HTMLTextAreaElement).value
+              "
             />
           </label>
         </div>
@@ -358,6 +474,11 @@ function handleSave(): void {
     opacity: 0.6;
     cursor: not-allowed;
   }
+}
+
+.case-edit-modal__textarea {
+  resize: vertical;
+  min-height: 72px;
 }
 
 .case-edit-modal__footer {

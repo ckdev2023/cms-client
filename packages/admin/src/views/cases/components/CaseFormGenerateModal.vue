@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 
@@ -21,6 +21,8 @@ const emit = defineEmits<{
   ];
 }>();
 
+const backdropRef = ref<HTMLElement | null>(null);
+
 const localTitle = ref("");
 const localOutputFormat = ref("pdf");
 
@@ -30,6 +32,7 @@ watch(
     if (isOpen) {
       localTitle.value = props.caseName ?? "";
       localOutputFormat.value = "pdf";
+      nextTick(() => backdropRef.value?.focus());
     }
   },
   { immediate: true },
@@ -58,18 +61,22 @@ function handleSubmit(): void {
   <Teleport to="body">
     <div
       v-if="props.open"
+      ref="backdropRef"
       class="form-gen-modal-backdrop"
       data-testid="form-generate-modal-backdrop"
+      tabindex="-1"
       @click.self="!props.submitting && emit('close')"
+      @keydown.esc.stop.prevent="!props.submitting && emit('close')"
     >
       <div
         class="form-gen-modal"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="case-form-generate-title"
         data-testid="form-generate-modal"
       >
         <header class="form-gen-modal__header">
-          <h2 class="form-gen-modal__title">
+          <h2 id="case-form-generate-title" class="form-gen-modal__title">
             {{ t("cases.detail.forms.generateModal.title") }}
           </h2>
           <button
@@ -95,11 +102,13 @@ function handleSubmit(): void {
         </header>
 
         <div class="form-gen-modal__body">
-          <label class="form-gen-modal__field">
+          <label class="form-gen-modal__field" for="form-gen-templateId">
             <span class="form-gen-modal__label">
               {{ t("cases.detail.forms.generateModal.fields.templateId") }}
             </span>
             <select
+              id="form-gen-templateId"
+              name="templateId"
               class="form-gen-modal__select"
               disabled
               data-testid="form-gen-template-select"
@@ -114,11 +123,13 @@ function handleSubmit(): void {
             </select>
           </label>
 
-          <label class="form-gen-modal__field">
+          <label class="form-gen-modal__field" for="form-gen-docTitle">
             <span class="form-gen-modal__label">
               {{ t("cases.detail.forms.generateModal.fields.docTitle") }}
             </span>
             <input
+              id="form-gen-docTitle"
+              name="docTitle"
               type="text"
               class="form-gen-modal__input"
               :placeholder="
@@ -131,11 +142,13 @@ function handleSubmit(): void {
             />
           </label>
 
-          <label class="form-gen-modal__field">
+          <label class="form-gen-modal__field" for="form-gen-outputFormat">
             <span class="form-gen-modal__label">
               {{ t("cases.detail.forms.generateModal.fields.outputFormat") }}
             </span>
             <select
+              id="form-gen-outputFormat"
+              name="outputFormat"
               class="form-gen-modal__select"
               :value="localOutputFormat"
               :disabled="props.submitting"

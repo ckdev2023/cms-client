@@ -512,4 +512,5 @@ export type {
   SupplementRoundInfo,
   SupplementRoundStatusKey,
   ReminderFailureInfo,
+  CustomerLocalizedNames,
 } from "./types-detail";

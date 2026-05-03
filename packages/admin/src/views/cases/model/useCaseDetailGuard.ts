@@ -1,6 +1,26 @@
 import { computed, type Ref } from "vue";
-import type { CaseDetail } from "../types";
+import type { CaseDetail, CaseDetailTab } from "../types";
 import { isTerminalPhase } from "./businessPhaseTransitions";
+
+const TERMINAL_ACCESSIBLE_TABS: ReadonlySet<CaseDetailTab> = new Set([
+  "log",
+  "overview",
+]);
+
+/**
+ * 终态案件下判断指定 tab 是否可访问。
+ *
+ * @param tabKey - tab 键名
+ * @param terminal - 是否处于终态
+ * @returns 终态下仅 log / overview 可访问；非终态全部可访问
+ */
+export function isTabAccessibleInTerminal(
+  tabKey: CaseDetailTab,
+  terminal: boolean,
+): boolean {
+  if (!terminal) return true;
+  return TERMINAL_ACCESSIBLE_TABS.has(tabKey);
+}
 
 /**
  * 案件详情页统一权限守门 composable。
@@ -24,6 +44,16 @@ export function useCaseDetailGuard(detail: Ref<CaseDetail | null>) {
   const canAddDeadline = computed(() => !isReadonly.value);
   const canGenerateForm = computed(() => !isReadonly.value);
 
+  /**
+   * 判断指定 tab 在当前案件状态下是否可访问。
+   *
+   * @param tabKey - tab 键名
+   * @returns 终态下仅 log / overview 可访问；非终态全部可访问
+   */
+  function isTabAccessible(tabKey: CaseDetailTab): boolean {
+    return isTabAccessibleInTerminal(tabKey, isTerminal.value);
+  }
+
   return {
     isReadonly,
     isTerminal,
@@ -33,5 +63,6 @@ export function useCaseDetailGuard(detail: Ref<CaseDetail | null>) {
     canPublishMessage,
     canAddDeadline,
     canGenerateForm,
+    isTabAccessible,
   };
 }

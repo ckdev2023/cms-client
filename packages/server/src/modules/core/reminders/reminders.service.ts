@@ -191,25 +191,30 @@ export class RemindersService {
       }
     }
 
-    const result = await tenantDb.query<ReminderQueryRow>(
-      `
+    let result: { rows: ReminderQueryRow[] };
+    try {
+      result = await tenantDb.query<ReminderQueryRow>(
+        `
         insert into reminders (org_id, case_id, target_type, target_id, remind_at, recipient_type, recipient_id, channel, dedupe_key, send_status, payload_snapshot)
         values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10::jsonb)
         returning ${REMINDER_COLS}
       `,
-      [
-        ctx.orgId,
-        input.caseId ?? null,
-        input.targetType,
-        input.targetId,
-        input.remindAt,
-        input.recipientType ?? "user",
-        input.recipientId ?? null,
-        input.channel ?? "in_app",
-        input.dedupeKey ?? null,
-        JSON.stringify(input.payloadSnapshot ?? null),
-      ],
-    );
+        [
+          ctx.orgId,
+          input.caseId ?? null,
+          input.targetType,
+          input.targetId,
+          input.remindAt,
+          input.recipientType ?? "user",
+          input.recipientId ?? null,
+          input.channel ?? "in_app",
+          input.dedupeKey ?? null,
+          JSON.stringify(input.payloadSnapshot ?? null),
+        ],
+      );
+    } catch (err: unknown) {
+      wrapReminderCreateError(err);
+    }
 
     const row = result.rows.at(0);
     if (!row) throw new BadRequestException("Failed to create reminder");
@@ -403,4 +408,36 @@ export class RemindersService {
     );
     return result.rows.map(mapReminderRow);
   }
+}
+
+const PG_CLIENT_ERROR_LABELS: Readonly<Record<string, string>> = {
+  "23502": "not null violation",
+  "22P02": "invalid input format",
+};
+
+function extractPgCode(err: unknown): string | undefined {
+  if (typeof err === "object" && err !== null && "code" in err) {
+    const code = (err as { code: unknown }).code;
+    return typeof code === "string" ? code : undefined;
+  }
+  return undefined;
+}
+
+function wrapReminderCreateError(err: unknown): never {
+  const pgCode = extractPgCode(err);
+  if (pgCode === "23503") {
+    throw new BadRequestException({
+      errorCode: "REMINDER_REF_NOT_FOUND",
+      message: "Referenced record not found",
+    });
+  }
+  if (pgCode === "23502" || pgCode === "22P02") {
+    const column = (err as { column?: string }).column ?? null;
+    throw new BadRequestException({
+      errorCode: "REMINDER_VALIDATION_FAILED",
+      detail: { source: "pg", pgCode, column },
+      message: `Reminder validation failed: ${PG_CLIENT_ERROR_LABELS[pgCode]}`,
+    });
+  }
+  throw err;
 }

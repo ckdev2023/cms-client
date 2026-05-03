@@ -25,6 +25,7 @@ import {
   parseActiveCases,
   parseContacts,
   parseLimit,
+  parseLocalizedNames,
   parseObject,
   parseOptionalNumber,
   parseOptionalTrimmedString,
@@ -41,11 +42,13 @@ type CreateCustomerBody = {
   type: unknown;
   baseProfile?: unknown;
   contacts?: unknown;
+  localizedNames?: unknown;
 };
 type UpdateCustomerBody = {
   type?: unknown;
   baseProfile?: unknown;
   contacts?: unknown;
+  localizedNames?: unknown;
 };
 type ListCustomersQuery = {
   page?: unknown;
@@ -125,6 +128,7 @@ export class CustomersController {
       type: parseType(body.type),
       baseProfile: parseObject(body.baseProfile),
       contacts: parseContacts(body.contacts),
+      localizedNames: parseLocalizedNames(body.localizedNames),
     });
     return mapCustomerToCreateResponseDto(customer);
   }
@@ -394,6 +398,7 @@ export class CustomersController {
       type: body.type !== undefined ? parseType(body.type) : undefined,
       baseProfile: parseObject(body.baseProfile),
       contacts: parseContacts(body.contacts),
+      localizedNames: parseLocalizedNames(body.localizedNames),
     });
   }
 

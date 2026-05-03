@@ -23,6 +23,7 @@ function createWiredRepository(detail: CaseDetail): CaseRepository {
         avatarStyle: "primary",
         author: "Tanaka",
         type: "phone" as const,
+        typeLabelKey: "cases.detail.messages.types.phone",
         typeLabel: "電話記録",
         body: "Follow up call",
         time: "2026-03-15",
@@ -33,6 +34,7 @@ function createWiredRepository(detail: CaseDetail): CaseRepository {
         avatarStyle: "primary",
         author: "Admin",
         type: "internal" as const,
+        typeLabelKey: "cases.detail.messages.types.internal",
         typeLabel: "内部備註",
         body: "Note",
         time: "2026-03-16",
@@ -126,7 +128,7 @@ describe("messages/log tab wiring (p0-fe-006c-01)", () => {
     useCaseDetailModel(ref("CASE-001"), { repo });
     await flushFetch();
     await flushFetch();
-    expect(repo.getMessages).toHaveBeenCalledWith("CASE-001");
+    expect(repo.getMessages).toHaveBeenCalledWith("CASE-001", undefined);
   });
 
   it("calls getLogEntries with the current caseId", async () => {

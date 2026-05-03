@@ -60,7 +60,7 @@ const EMPTY_BILLING: BillingData = {
  * @returns 读取沟通记录的异步函数
  */
 export function createGetMessages(runtime: CaseRepositoryRuntime) {
-  return async (caseId: string): Promise<MessageItem[]> => {
+  return async (caseId: string, locale?: string): Promise<MessageItem[]> => {
     const normalizedId = caseId.trim();
     if (!normalizedId) return [];
 
@@ -68,7 +68,7 @@ export function createGetMessages(runtime: CaseRepositoryRuntime) {
       runtime,
       url: buildCaseMessagesUrl(runtime.apiPath, normalizedId),
       method: "GET",
-      adapt: adaptCaseMessageListResult,
+      adapt: (value) => adaptCaseMessageListResult(value, locale),
       errorMessage: "Invalid communication logs response",
     });
   };
@@ -124,7 +124,7 @@ export function createGetDocumentItems(runtime: CaseRepositoryRuntime) {
  */
 export function createGetGeneratedDocuments(runtime: CaseRepositoryRuntime) {
   const emptyForms: FormsData = { templates: [], generated: [] };
-  return async (caseId: string): Promise<FormsData> => {
+  return async (caseId: string, locale?: string): Promise<FormsData> => {
     const normalizedId = caseId.trim();
     if (!normalizedId) return emptyForms;
 
@@ -132,7 +132,7 @@ export function createGetGeneratedDocuments(runtime: CaseRepositoryRuntime) {
       runtime,
       url: buildCaseGeneratedDocumentsUrl(runtime.apiPath, normalizedId),
       method: "GET",
-      adapt: (value) => adaptCaseFormsData(value) ?? emptyForms,
+      adapt: (value) => adaptCaseFormsData(value, locale) ?? emptyForms,
       errorMessage: "Invalid generated documents response",
     });
   };

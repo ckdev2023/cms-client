@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 
@@ -52,6 +52,8 @@ const emit = defineEmits<{
   ];
 }>();
 
+const backdropRef = ref<HTMLElement | null>(null);
+
 const selectedPhase = ref<string | null>(null);
 const closeReason = ref("");
 const validationError = ref<string | null>(null);
@@ -59,7 +61,9 @@ const validationError = ref<string | null>(null);
 watch(
   () => props.menuOpen,
   (open) => {
-    if (!open) {
+    if (open) {
+      nextTick(() => backdropRef.value?.focus());
+    } else {
       selectedPhase.value = null;
       closeReason.value = "";
       selectedPreset.value = null;
@@ -147,9 +151,12 @@ function handleClose(): void {
   <Teleport to="body">
     <div
       v-if="props.menuOpen"
+      ref="backdropRef"
       class="phase-popover-backdrop"
       data-testid="phase-transition-popover-backdrop"
+      tabindex="-1"
       @click.self="!props.submitting && handleClose()"
+      @keydown.esc.stop.prevent="!props.submitting && handleClose()"
     >
       <div
         class="phase-popover"
@@ -251,6 +258,8 @@ function handleClose(): void {
             >
               {{ t("cases.detail.phaseMenu.closeReasonLabel") }}
               <input
+                id="phase-closeReason"
+                name="closeReason"
                 type="text"
                 class="phase-popover__input"
                 :value="closeReason"

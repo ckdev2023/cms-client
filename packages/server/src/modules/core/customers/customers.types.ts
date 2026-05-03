@@ -236,6 +236,7 @@ export type CustomerSummaryDto = {
   type: string;
   displayName: string;
   legalName: string;
+  localizedNames: CustomerLocalizedNames;
   furigana: string;
   customerNumber: string;
   phone: string;
@@ -296,12 +297,26 @@ export type CustomerDtoAggregates = {
 export type CustomerRelationSource = ContactPerson;
 
 /**
+ * 客户多语言名称（三语 + 默认语言标识）。
+ *
+ * 字段与 `baseProfile` 中 `name_cn`/`name_jp`/`name_en` 双向同步；
+ * 当 Migration 044 落地后，将优先从独立列读取。
+ */
+export type CustomerLocalizedNames = {
+  zh?: string | null;
+  ja?: string | null;
+  en?: string | null;
+  defaultLocale?: "zh" | "ja" | "en" | null;
+};
+
+/**
  * 创建客户请求参数。
  */
 export type CustomerCreateInput = {
   type: string;
   baseProfile?: Record<string, unknown>;
   contacts?: Record<string, unknown>[];
+  localizedNames?: CustomerLocalizedNames;
 };
 
 /**
@@ -311,6 +326,7 @@ export type CustomerUpdateInput = {
   type?: string;
   baseProfile?: Record<string, unknown>;
   contacts?: Record<string, unknown>[];
+  localizedNames?: CustomerLocalizedNames;
 };
 
 /**

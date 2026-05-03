@@ -1,6 +1,6 @@
 /* eslint-disable max-lines */
 // ─── Detail Aggregate Contracts (p0-fe-002c) ─────────────────────
-import type { CaseDetail } from "../types";
+import type { CaseDetail, CustomerLocalizedNames } from "../types";
 
 // ─── Aggregate Slice Contract (frozen by p0-fe-002c-01) ─────────
 // Server CaseDetailAggregateDto 的顶层键名。
@@ -30,6 +30,7 @@ export const AGGREGATE_SLICE_KEYS = [
 export const CASE_DETAIL_DEEP_LINK_FIELDS = [
   "customerId",
   "customerName",
+  "customerLocalizedNames",
   "groupId",
   "groupName",
   "ownerUserId",
@@ -161,6 +162,12 @@ export const CASE_DETAIL_HEADER_FIELDS = [
   "applicationType",
   "acceptedDate",
   "targetDate",
+  "priority",
+  "riskLevel",
+  "ownerUserId",
+  "assistantUserId",
+  "jurisdictionAuthority",
+  "remark",
 ] as const;
 
 // ─── Header / Overview / Info Main-Chain Field Groups ──────────────
@@ -483,6 +490,8 @@ export interface CaseDetailAggregate {
    *
    */
   customerName: string;
+  /** 顾客多语言名称（R27-S）。 */
+  customerLocalizedNames: CustomerLocalizedNames;
   /**
    *
    */

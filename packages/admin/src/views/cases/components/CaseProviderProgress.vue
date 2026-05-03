@@ -4,7 +4,7 @@ import Card from "../../../shared/ui/Card.vue";
 import type { ProviderProgress } from "../types-detail";
 
 /** 提供方进度卡片：展示每个提供方的完成度。 */
-const { t } = useI18n();
+const { t, te } = useI18n();
 
 defineProps<{ items: ProviderProgress[] }>();
 
@@ -28,9 +28,16 @@ function progressPercent(p: ProviderProgress): number {
         t("cases.detail.overview.provider.title")
       }}</span>
     </div>
-    <div class="prov__list">
+    <div v-if="items.length === 0" class="prov__empty">
+      {{ t("cases.detail.overview.provider.empty") }}
+    </div>
+    <div v-else class="prov__list">
       <div v-for="(p, i) in items" :key="i" class="prov__row">
-        <span class="prov__label">{{ p.label }}</span>
+        <span class="prov__label">{{
+          te(p.labelKey)
+            ? t(p.labelKey)
+            : p.label || t("cases.detail.providers.unspecified")
+        }}</span>
         <div class="prov__bar">
           <div
             class="prov__bar-fill"
@@ -61,6 +68,11 @@ function progressPercent(p: ProviderProgress): number {
   font-size: 15px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
+}
+.prov__empty {
+  padding: 12px 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
 }
 .prov__list {
   display: flex;

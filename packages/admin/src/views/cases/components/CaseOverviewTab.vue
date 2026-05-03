@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
@@ -13,11 +13,13 @@ import CaseFinalPaymentCoeGate from "./CaseFinalPaymentCoeGate.vue";
 import CaseSupplementRoundPanel from "./CaseSupplementRoundPanel.vue";
 import CaseReminderFailureBanner from "./CaseReminderFailureBanner.vue";
 import CaseFailureCloseoutBanner from "./CaseFailureCloseoutBanner.vue";
+import CaseCloseReasonModal from "./CaseCloseReasonModal.vue";
 import { getStageI18nKey } from "../constants";
 import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail } from "../types-detail";
 import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
+import { resolveLocalizedCustomerName } from "../model/CaseAdapterCustomerLocale";
 
 /** 概览 Tab：展示案件摘要卡片、提供方进度、下一步动作、近期动态与侧边栏。 */
 const { t, locale } = useI18n();
@@ -26,6 +28,7 @@ const props = defineProps<{
   writeFeedback?: WriteActionFeedback;
   readonly?: boolean;
   isTerminal?: boolean;
+  canRunValidation?: boolean;
 }>();
 
 const stageValue = computed(() => {
@@ -33,10 +36,24 @@ const stageValue = computed(() => {
   return key ? t(key) : props.detail.stage;
 });
 
+const isWaitingPaymentNoBilling = computed(
+  () =>
+    props.detail.businessPhase === "WAITING_PAYMENT" &&
+    props.detail.billing.payments.length === 0,
+);
+
 const resolvedGroupName = computed(() => {
   if (!props.detail.groupName) return undefined;
   return resolveGroupLabel(props.detail.groupName, undefined, locale.value);
 });
+
+const localizedClientName = computed(() =>
+  resolveLocalizedCustomerName(
+    props.detail.customerLocalizedNames,
+    props.detail.client,
+    locale.value,
+  ),
+);
 
 const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
@@ -44,6 +61,8 @@ const emit = defineEmits<{
   (e: "retryReminder"): void;
   (e: "failureClose"): void;
 }>();
+
+const closeReasonModalOpen = ref(false);
 
 /**
  * 将时间线颜色键映射为实际颜色值。
@@ -67,7 +86,7 @@ function timelineColor(color: string): string {
     <CaseCustomerBackLink
       v-if="detail.customerId"
       :customer-id="detail.customerId"
-      :client="detail.client"
+      :client="localizedClientName"
       :group-name="resolvedGroupName"
     />
 
@@ -191,6 +210,30 @@ function timelineColor(color: string): string {
               ? t(detail.billingMetaKey, detail.billingMetaParams ?? {})
               : detail.billingMeta
           }}</span>
+          <div
+            v-if="isWaitingPaymentNoBilling"
+            class="overview-tab__billing-warning"
+            data-testid="waiting-payment-no-billing-warning"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span>{{
+              t("cases.detail.overview.billingGuard.waitingPaymentEmpty")
+            }}</span>
+          </div>
         </div>
       </Card>
     </div>
@@ -238,7 +281,7 @@ function timelineColor(color: string): string {
       v-if="detail.failureCloseout"
       :closeout="detail.failureCloseout"
       :customer-id="detail.customerId"
-      :client-name="detail.client"
+      :client-name="localizedClientName"
       :readonly="readonly ?? detail.readonly"
       :write-feedback="writeFeedback"
       @close-case="emit('failureClose')"
@@ -288,6 +331,44 @@ function timelineColor(color: string): string {
               {{ detail.nextAction }}
             </p>
             <div
+              v-if="props.isTerminal"
+              class="overview-tab__next-action-buttons"
+              data-testid="terminal-next-action-buttons"
+            >
+              <Button
+                size="sm"
+                data-testid="terminal-view-close-reason"
+                @click="closeReasonModalOpen = true"
+              >
+                {{
+                  t(
+                    detail.businessPhase === "CLOSED_SUCCESS"
+                      ? "cases.detail.terminalActions.viewResult"
+                      : "cases.detail.terminalActions.viewCloseReason",
+                  )
+                }}
+              </Button>
+              <Button
+                size="sm"
+                data-testid="terminal-view-billing"
+                :disabled="detail.businessPhase !== 'CLOSED_SUCCESS'"
+                :title="
+                  detail.businessPhase !== 'CLOSED_SUCCESS'
+                    ? t('cases.detail.terminalActions.refundWip')
+                    : undefined
+                "
+                @click="emit('switchTab', 'billing')"
+              >
+                {{
+                  t(
+                    detail.businessPhase === "CLOSED_SUCCESS"
+                      ? "cases.detail.terminalActions.viewBilling"
+                      : "cases.detail.terminalActions.handleRefund",
+                  )
+                }}
+              </Button>
+            </div>
+            <div
               v-if="!props.isTerminal"
               class="overview-tab__next-action-buttons"
             >
@@ -306,6 +387,10 @@ function timelineColor(color: string): string {
               </Button>
               <Button
                 size="sm"
+                :disabled="!props.canRunValidation"
+                :title="
+                  props.canRunValidation ? undefined : t('cases.detail.wip')
+                "
                 @click="
                   emit(
                     'switchTab',
@@ -321,7 +406,13 @@ function timelineColor(color: string): string {
 
         <!-- Timeline -->
         <Card :title="t('cases.detail.overview.timeline.title')" padding="md">
-          <div class="overview-tab__timeline">
+          <div
+            v-if="detail.timeline.length === 0"
+            class="overview-tab__timeline-empty"
+          >
+            {{ t("cases.detail.overview.timeline.empty") }}
+          </div>
+          <div v-else class="overview-tab__timeline">
             <div
               v-for="(entry, i) in detail.timeline"
               :key="i"
@@ -354,6 +445,17 @@ function timelineColor(color: string): string {
         @switch-tab="(tab) => emit('switchTab', tab)"
       />
     </div>
+
+    <CaseCloseReasonModal
+      :open="closeReasonModalOpen"
+      :failure-closeout="detail.failureCloseout"
+      :success-closeout="detail.successCloseout"
+      :close-reason="detail.closeReason"
+      :closed-at="detail.closedAt"
+      :closed-by="detail.closedBy"
+      :business-phase="detail.businessPhase"
+      @close="closeReasonModalOpen = false"
+    />
   </div>
 </template>
 
@@ -447,6 +549,26 @@ function timelineColor(color: string): string {
   color: var(--color-text-3);
 }
 
+.overview-tab__billing-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 6px 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: #92400e;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: var(--radius-md);
+  line-height: var(--leading-snug, 1.375);
+}
+.overview-tab__billing-warning svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #f59e0b;
+}
+
 .overview-tab__progress-row {
   display: flex;
   align-items: center;
@@ -526,6 +648,11 @@ function timelineColor(color: string): string {
   gap: 10px;
 }
 
+.overview-tab__timeline-empty {
+  padding: 12px 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
+}
 .overview-tab__timeline {
   position: relative;
   margin-left: 12px;

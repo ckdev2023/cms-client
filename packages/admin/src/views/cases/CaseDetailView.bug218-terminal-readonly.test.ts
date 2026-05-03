@@ -5,6 +5,7 @@ import { createI18n, useI18n } from "vue-i18n";
 import UiBtn from "../../shared/ui/Button.vue";
 import { createMockDetail } from "./model/useCaseDetailModel.test-support";
 import { isTerminalPhase } from "./model/useCasePhaseTransitionMenu";
+import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import casesZhCN from "../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../i18n/messages/cases/en-US";
@@ -174,5 +175,59 @@ describe("BUG-218: terminal readonly — edit & transition buttons disabled", ()
       await w.find('[data-testid="status-transition-btn"]').trigger("click");
       expect(w.find('[data-testid="phase-menu-count"]').text()).toBe("1");
     });
+  });
+});
+
+describe("BUG-216: useCaseDetailGuard blocks header in terminal phase", () => {
+  it("terminal phase → canEdit=false, canTransition=false", () => {
+    const detail = ref(
+      createMockDetail({
+        businessPhase: "CLOSED_SUCCESS",
+        stageCode: "S9",
+        readonly: true,
+      }),
+    );
+    const guard = useCaseDetailGuard(detail);
+    expect(guard.canEdit.value).toBe(false);
+    expect(guard.canTransition.value).toBe(false);
+    expect(guard.isReadonly.value).toBe(true);
+    expect(guard.isTerminal.value).toBe(true);
+  });
+
+  it("active phase → canEdit=true, canTransition=true", () => {
+    const detail = ref(
+      createMockDetail({
+        businessPhase: "UNDER_REVIEW",
+        readonly: false,
+      }),
+    );
+    const guard = useCaseDetailGuard(detail);
+    expect(guard.canEdit.value).toBe(true);
+    expect(guard.canTransition.value).toBe(true);
+    expect(guard.isReadonly.value).toBe(false);
+    expect(guard.isTerminal.value).toBe(false);
+  });
+
+  it("null detail → canEdit=true (guard defaults to editable)", () => {
+    const detail = ref(null);
+    const guard = useCaseDetailGuard(detail);
+    expect(guard.canEdit.value).toBe(true);
+    expect(guard.canTransition.value).toBe(true);
+    expect(guard.isReadonly.value).toBe(false);
+  });
+
+  it("guard tooltip i18n keys exist in all 3 locales", () => {
+    const keys = [
+      "cases.detail.actions.editInfoDisabledTooltip",
+      "cases.detail.actions.statusTransitionDisabledTooltip",
+    ];
+    for (const locale of ["zh-CN", "ja-JP", "en-US"] as const) {
+      const i18n = makeI18n(locale);
+      for (const key of keys) {
+        const translated = i18n.global.t(key);
+        expect(translated, `${locale}/${key}`).not.toBe(key);
+        expect(translated.length).toBeGreaterThan(0);
+      }
+    }
   });
 });

@@ -10,6 +10,7 @@
 
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
+import { resolveLocalizedCustomerName } from "./CaseAdapterCustomerLocale";
 import {
   CASE_DETAIL_HEADER_FIELDS,
   CASE_DETAIL_HEADER_MAIN_CHAIN_GROUP_KEYS,
@@ -317,5 +318,101 @@ describe("billing group", () => {
     expect(result.detail.billingAmount).toBe("—");
     expect(result.detail.billingMeta).toBe("");
     expect(result.detail.billingStatusKey).toBe("paid");
+  });
+});
+
+// ─── customerLocalizedNames (R27-S) ──────────────────────────────
+
+describe("customerLocalizedNames", () => {
+  it("maps localized names from deepLink", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate({
+        deepLink: {
+          ...MOCK_DEEP_LINK,
+          customerNameZh: "张伟",
+          customerNameJa: "田中太郎",
+          customerNameEn: "John Doe",
+        },
+      }),
+    )!;
+    expect(result.customerLocalizedNames).toEqual({
+      zh: "张伟",
+      ja: "田中太郎",
+      en: "John Doe",
+    });
+    expect(result.detail.customerLocalizedNames).toEqual({
+      zh: "张伟",
+      ja: "田中太郎",
+      en: "John Doe",
+    });
+  });
+
+  it("defaults localized names to empty strings when deepLink is null", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate({ deepLink: null }),
+    )!;
+    expect(result.customerLocalizedNames).toEqual({
+      zh: "",
+      ja: "",
+      en: "",
+    });
+  });
+
+  it("defaults localized names to empty strings when fields are missing", () => {
+    const result = adaptCaseDetailAggregate(buildAggregate())!;
+    expect(result.customerLocalizedNames).toEqual({
+      zh: "",
+      ja: "",
+      en: "",
+    });
+  });
+});
+
+// ─── resolveLocalizedCustomerName (R27-S) ────────────────────────
+
+describe("resolveLocalizedCustomerName", () => {
+  const names = { zh: "张伟", ja: "田中太郎", en: "John Doe" };
+
+  it("picks zh for zh-CN locale", () => {
+    expect(resolveLocalizedCustomerName(names, "fallback", "zh-CN")).toBe(
+      "张伟",
+    );
+  });
+
+  it("picks ja for ja-JP locale", () => {
+    expect(resolveLocalizedCustomerName(names, "fallback", "ja-JP")).toBe(
+      "田中太郎",
+    );
+  });
+
+  it("picks en for en-US locale", () => {
+    expect(resolveLocalizedCustomerName(names, "fallback", "en-US")).toBe(
+      "John Doe",
+    );
+  });
+
+  it("falls back when locale name is empty", () => {
+    const partial = { zh: "张伟", ja: "", en: "" };
+    expect(resolveLocalizedCustomerName(partial, "default", "ja-JP")).toBe(
+      "default",
+    );
+  });
+
+  it("falls back when names is null", () => {
+    expect(resolveLocalizedCustomerName(null, "fallback", "zh-CN")).toBe(
+      "fallback",
+    );
+  });
+
+  it("falls back when names is undefined", () => {
+    expect(resolveLocalizedCustomerName(undefined, "fallback", "ja-JP")).toBe(
+      "fallback",
+    );
+  });
+
+  it("falls back for unknown locale", () => {
+    expect(resolveLocalizedCustomerName(names, "fallback", "ko-KR")).toBe(
+      "fallback",
+    );
   });
 });

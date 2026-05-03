@@ -313,6 +313,9 @@ export function mapCaseRow(row: CaseQueryRow): Case {
 
 type CaseListSummaryRow = CaseQueryRow & {
   customer_name: string | null;
+  customer_name_zh: string | null;
+  customer_name_ja: string | null;
+  customer_name_en: string | null;
   group_name: string | null;
   owner_display_name: string | null;
   assistant_display_name: string | null;
@@ -583,6 +586,9 @@ export const SUMMARY_JOINS = `
 
 export const SUMMARY_EXTRA_COLS = `
   ${CUSTOMER_NAME_EXPR} as customer_name,
+  nullif(trim(cu.base_profile->>'name_cn'), '') as customer_name_zh,
+  nullif(trim(cu.base_profile->>'name_jp'), '') as customer_name_ja,
+  nullif(trim(cu.base_profile->>'name_en'), '') as customer_name_en,
   g.name as group_name,
   owner_u.name as owner_display_name,
   asst_u.name as assistant_display_name
@@ -1128,6 +1134,9 @@ function deriveDeepLink(
   return {
     customerId: caseEntity.customerId,
     customerName: caseRow.customer_name ?? "",
+    customerNameZh: caseRow.customer_name_zh ?? "",
+    customerNameJa: caseRow.customer_name_ja ?? "",
+    customerNameEn: caseRow.customer_name_en ?? "",
     groupId: caseEntity.groupId,
     groupName: caseRow.group_name,
     ownerUserId: caseEntity.ownerUserId,

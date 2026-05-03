@@ -113,29 +113,31 @@ describe("documents tab summary display (p0-fe-006b-03)", () => {
     expect(result[0].count).toBe("3 件");
   });
 
-  it("statusLabel maps all known statuses to Japanese labels", () => {
+  it("statusLabelKey maps all known statuses to i18n keys", () => {
     const statusMap: Record<string, string> = {
-      pending: "未送信",
-      waiting_upload: "登記待ち",
-      uploaded_reviewing: "審査中",
-      approved: "承認済み",
-      revision_required: "要修正",
-      waived: "免除",
-      expired: "期限切れ",
+      pending: "cases.detail.documents.docStatus.pending",
+      waiting_upload: "cases.detail.documents.docStatus.waitingUpload",
+      uploaded_reviewing: "cases.detail.documents.docStatus.uploadedReviewing",
+      approved: "cases.detail.documents.docStatus.approved",
+      revision_required: "cases.detail.documents.docStatus.revisionRequired",
+      waived: "cases.detail.documents.docStatus.waived",
+      expired: "cases.detail.documents.docStatus.expired",
     };
     for (const [status, label] of Object.entries(statusMap)) {
       const result = adaptCaseDocumentGroups({
         items: [docItem({ status })],
       })!;
-      expect(result[0].items[0].statusLabel).toBe(label);
+      expect(result[0].items[0].statusLabelKey).toBe(label);
     }
   });
 
-  it("unknown status falls back to raw status string", () => {
+  it("unknown status falls back to unknown i18n key", () => {
     const result = adaptCaseDocumentGroups({
       items: [docItem({ status: "custom_status" })],
     })!;
-    expect(result[0].items[0].statusLabel).toBe("custom_status");
+    expect(result[0].items[0].statusLabelKey).toBe(
+      "cases.detail.documents.docStatus.unknown",
+    );
   });
 
   it("meta includes checklist code when present", () => {

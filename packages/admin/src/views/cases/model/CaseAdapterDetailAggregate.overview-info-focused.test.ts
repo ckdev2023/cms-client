@@ -156,11 +156,15 @@ describe("overview tab field display (p0-fe-006a-03)", () => {
     expect(result.detail.providerProgress).toHaveLength(2);
     expect(result.detail.providerProgress[0]).toEqual({
       label: "applicant",
+      labelKey: "cases.detail.providers.applicant",
+      providerRole: "applicant",
       done: 4,
       total: 6,
     });
     expect(result.detail.providerProgress[1]).toEqual({
       label: "office",
+      labelKey: "cases.detail.providers.office",
+      providerRole: "office",
       done: 4,
       total: 6,
     });
@@ -229,8 +233,16 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
     expect(result.detail.risk.reviewStatus).toBe("approved");
   });
 
-  it("team is empty placeholder array", () => {
-    expect(result.detail.team).toEqual([]);
+  it("team is populated from deep link owner and assistant", () => {
+    expect(result.detail.team).toHaveLength(2);
+    expect(result.detail.team[0].name).toBe("山田次郎");
+    expect(result.detail.team[0].role).toBe(
+      "cases.detail.overview.sidebar.teamRoleOwner",
+    );
+    expect(result.detail.team[1].name).toBe("鈴木三郎");
+    expect(result.detail.team[1].role).toBe(
+      "cases.detail.overview.sidebar.teamRoleAssistant",
+    );
   });
 
   const result = adaptCaseDetailAggregate(buildFull())!;

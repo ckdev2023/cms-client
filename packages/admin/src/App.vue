@@ -15,6 +15,11 @@ import {
   clearGroupAliases,
   registerGroupAliases,
 } from "./shared/model/useGroupOptions";
+import {
+  clearUserAliases,
+  registerUserAliases,
+} from "./shared/model/useOrgUserOptions";
+import { createUsersRepository } from "./shared/model/UsersRepository";
 import AppShell from "./shell/AppShell.vue";
 import Toast from "./shared/ui/Toast.vue";
 import { initToast } from "./shared/model/useToast";
@@ -41,6 +46,9 @@ const orgSettings = initOrgSettings({
 });
 const orgSettingsRepository = createOrgSettingsRepository();
 const groupsRepository = createGroupsRepository();
+const usersRepository = createUsersRepository({
+  getToken: getAdminAccessToken,
+});
 
 let sessionCheckTimer: number | null = null;
 
@@ -98,6 +106,21 @@ async function refreshGroupAliases(): Promise<void> {
   }
 }
 
+async function refreshUserAliases(): Promise<void> {
+  if (!isAuthenticated.value) {
+    clearUserAliases();
+    return;
+  }
+  try {
+    const users = await usersRepository.listUsers();
+    registerUserAliases(
+      users.map((u) => ({ id: u.id, displayName: u.displayName })),
+    );
+  } catch {
+    // 拉取失败时保持已注册别名不变；resolveUserLabel 会回落到占位符 "—"。
+  }
+}
+
 watch(() => route.fullPath, redirectToLoginForExpiredSession, {
   immediate: true,
 });
@@ -108,10 +131,12 @@ watch(
     if (!authenticated) {
       orgSettings.storageRoot.value = { rootLabel: null, rootPath: null };
       clearGroupAliases();
+      clearUserAliases();
       return;
     }
     void refreshOrgSettings();
     void refreshGroupAliases();
+    void refreshUserAliases();
   },
   { immediate: true },
 );

@@ -42,6 +42,7 @@ import {
   readNumber,
   readString,
 } from "./CaseAdapterShared";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 // ─── Type re-exports ────────────────────────────────────────────
 
@@ -111,14 +112,16 @@ const OWNER_SIDE_LABELS: Record<string, string> = {
   office: "事務所準備",
 };
 
-const DOC_STATUS_LABELS: Record<string, string> = {
-  pending: "未送信",
-  waiting_upload: "登記待ち",
-  uploaded_reviewing: "審査中",
-  approved: "承認済み",
-  revision_required: "要修正",
-  waived: "免除",
-  expired: "期限切れ",
+const DOC_STATUS_LABEL_KEYS: Record<string, string> = {
+  pending: "cases.detail.documents.docStatus.pending",
+  waiting_upload: "cases.detail.documents.docStatus.waitingUpload",
+  uploaded_reviewing: "cases.detail.documents.docStatus.uploadedReviewing",
+  approved: "cases.detail.documents.docStatus.approved",
+  revision_required: "cases.detail.documents.docStatus.revisionRequired",
+  waived: "cases.detail.documents.docStatus.waived",
+  expired: "cases.detail.documents.docStatus.expired",
+  not_sent: "cases.detail.documents.docStatus.notSent",
+  rejected: "cases.detail.documents.docStatus.rejected",
 };
 
 const REMIND_ELIGIBLE = new Set([
@@ -161,7 +164,9 @@ function adaptDocumentItemDto(value: unknown): DocumentItem | null {
     name,
     meta: metaParts.join(" · "),
     status,
-    statusLabel: DOC_STATUS_LABELS[status] ?? status,
+    statusLabelKey:
+      DOC_STATUS_LABEL_KEYS[status] ??
+      "cases.detail.documents.docStatus.unknown",
     canWaive: WAIVE_ELIGIBLE.has(status),
     actions: deriveDocumentActions(status),
   };
@@ -216,7 +221,10 @@ const GEN_DOC_STATUS_TONES: Record<string, string> = {
   exported: "primary",
 };
 
-function adaptGeneratedDocumentDto(value: unknown): FormGenerated | null {
+function adaptGeneratedDocumentDto(
+  value: unknown,
+  locale?: string,
+): FormGenerated | null {
   const r = asRecord(value);
   if (!r) return null;
   const title = readString(r, "title");
@@ -232,7 +240,12 @@ function adaptGeneratedDocumentDto(value: unknown): FormGenerated | null {
   if (outputFormat) metaParts.push(outputFormat.toUpperCase());
   if (versionNo > 0) metaParts.push(`v${versionNo}`);
   if (generatedBy) metaParts.push(generatedBy);
-  if (generatedAt) metaParts.push(formatDate(generatedAt));
+  if (generatedAt) {
+    const formatted = locale
+      ? formatDateTime(generatedAt, locale)
+      : formatDate(generatedAt);
+    if (formatted) metaParts.push(formatted);
+  }
 
   return {
     name: title,
@@ -248,14 +261,18 @@ function adaptGeneratedDocumentDto(value: unknown): FormGenerated | null {
  * P0 阶段 `templates` 始终为空（模板系统在 P1 落地）。
  *
  * @param value - 原始 JSON（`{ items: [...], total }` 或数组）
+ * @param locale - BCP 47 locale；传入时 generatedAt 按 `formatDateTime` 输出日期+时间，不传时回退 `formatDate`（仅日期）
  * @returns 文书数据，格式无效时返回 `null`
  */
-export function adaptCaseFormsData(value: unknown): FormsData | null {
+export function adaptCaseFormsData(
+  value: unknown,
+  locale?: string,
+): FormsData | null {
   const items = readArrayOrItems(value);
   if (!items) return null;
 
   const generated = items
-    .map(adaptGeneratedDocumentDto)
+    .map((item) => adaptGeneratedDocumentDto(item, locale))
     .filter((item): item is FormGenerated => item !== null);
 
   return { templates: [], generated };

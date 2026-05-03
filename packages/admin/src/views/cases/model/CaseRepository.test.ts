@@ -165,8 +165,8 @@ describe("CaseRepository", () => {
     expect(aggregate!.detail.progressCount).toBe("6/10");
     expect(aggregate!.customerName).toBe("张伟");
     expect(aggregate!.ownerDisplayName).toBe("担当太郎");
-    expect(aggregate!.detail.providerProgress).toEqual([
-      { label: "applicant", done: 3, total: 5 },
+    expect(aggregate!.detail.providerProgress).toMatchObject([
+      { labelKey: "cases.detail.providers.applicant", done: 3, total: 5 },
     ]);
   });
 

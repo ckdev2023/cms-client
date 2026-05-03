@@ -69,6 +69,7 @@ function onClose() {
               </label>
               <textarea
                 id="riskReason"
+                name="reason"
                 v-model="reason"
                 class="risk-modal__textarea"
                 :placeholder="t('cases.detail.riskModal.reasonPlaceholder')"
@@ -81,6 +82,7 @@ function onClose() {
               </label>
               <input
                 id="riskPerson"
+                name="person"
                 v-model="person"
                 class="risk-modal__input"
                 type="text"
@@ -93,6 +95,7 @@ function onClose() {
               </label>
               <input
                 id="riskEvidence"
+                name="evidence"
                 v-model="evidence"
                 class="risk-modal__input"
                 type="text"

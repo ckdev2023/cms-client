@@ -5,6 +5,7 @@ import type { CaseRepository } from "./CaseRepository";
 import { createCaseRepository } from "./CaseRepository";
 import { resolveDetailTab } from "../query";
 import { createWriteActions } from "./useCaseDetailWriteActions";
+import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
 import {
   useCasePhaseTransitionMenu,
   isTerminalPhase,
@@ -130,6 +131,7 @@ function createDetailState(initialTab: string | undefined) {
 async function loadTabData(
   repo: CaseRepository,
   caseId: string,
+  locale?: string,
 ): Promise<DetailTabDataBundle> {
   const [
     documents,
@@ -144,12 +146,12 @@ async function loadTabData(
     deadlines,
   ] = await Promise.all([
     repo.getDocumentItems(caseId).catch(() => []),
-    repo.getGeneratedDocuments(caseId).catch(() => EMPTY_FORMS),
+    repo.getGeneratedDocuments(caseId, locale).catch(() => EMPTY_FORMS),
     repo.getValidationData(caseId).catch(() => EMPTY_VALIDATION),
     repo.getBillingData(caseId).catch(() => EMPTY_BILLING),
     repo.getSubmissionPackages(caseId).catch(() => []),
     repo.getDoubleReviewEntries(caseId).catch(() => []),
-    repo.getMessages(caseId).catch(() => []),
+    repo.getMessages(caseId, locale).catch(() => []),
     repo.getLogEntries(caseId).catch(() => []),
     repo.getTasks(caseId).catch(() => []),
     repo.getDeadlines(caseId).catch(() => []),
@@ -176,15 +178,22 @@ function createDetailLoader(input: {
   customerId: Ref<string>;
   loading: Ref<boolean>;
   error: Ref<string | null>;
+  locale?: Ref<string>;
 }) {
   let fetchGeneration = 0;
 
   async function fetchTabData(gen: number): Promise<void> {
-    const tabData = await loadTabData(input.repo, input.caseId.value).catch(
-      () => null,
-    );
+    const tabData = await loadTabData(
+      input.repo,
+      input.caseId.value,
+      input.locale?.value,
+    ).catch(() => null);
     if (gen !== fetchGeneration || !input.detail.value || !tabData) return;
-    input.detail.value = { ...input.detail.value, ...tabData };
+    input.detail.value = {
+      ...input.detail.value,
+      ...tabData,
+      timeline: buildOverviewTimelineFromLog(tabData.logEntries),
+    };
   }
 
   async function fetchDetail(): Promise<void> {
@@ -243,6 +252,7 @@ interface UseCaseDetailModelDeps {
   routeTab?: Ref<string | undefined>;
   initialTab?: string;
   onTabChange?: (tab: CaseDetailTab) => void;
+  locale?: Ref<string>;
 }
 
 function setupDetailLifecycle(
@@ -304,6 +314,11 @@ function createDetailModelResult(input: {
     updateCaseFields: input.writeActions.updateCaseFields,
     retryReminderCreation: input.writeActions.retryReminderCreation,
     failureClose: input.writeActions.failureClose,
+    publishMessage: input.writeActions.publishMessage,
+    createReminder: input.writeActions.createReminder,
+    createGeneratedDocument: input.writeActions.createGeneratedDocument,
+    createTask: input.writeActions.createTask,
+    completeTask: input.writeActions.completeTask,
 
     phaseMenu: input.phaseMenu,
     isTerminalPhase: input.isTerminalPhaseComputed,
@@ -340,6 +355,7 @@ export function useCaseDetailModel(
     customerId: state.customerId,
     loading: state.loading,
     error: state.error,
+    locale: deps.locale,
   });
   const riskModal = createRiskModalController();
   const switchTab = createTabSwitcher(state.activeTab, deps.onTabChange);

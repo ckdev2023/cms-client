@@ -218,11 +218,15 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
     expect(result.detail.providerProgress).toHaveLength(3);
     expect(result.detail.providerProgress[0]).toEqual({
       label: "applicant",
+      labelKey: "cases.detail.providers.applicant",
+      providerRole: "applicant",
       done: 6,
       total: 10,
     });
     expect(result.detail.providerProgress[2]).toEqual({
       label: "employer",
+      labelKey: "cases.detail.providers.employer",
+      providerRole: "employer",
       done: 1,
       total: 2,
     });
@@ -268,9 +272,8 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
     }
   });
 
-  it("placeholder tab collections remain empty", () => {
+  it("placeholder tab collections remain empty (except team)", () => {
     expect(result.detail.timeline).toEqual([]);
-    expect(result.detail.team).toEqual([]);
     expect(result.detail.relatedParties).toEqual([]);
     expect(result.detail.deadlines).toEqual([]);
     expect(result.detail.submissionPackages).toEqual([]);

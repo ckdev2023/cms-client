@@ -5,6 +5,7 @@ import type {
 } from "./CaseAdapterDetailContracts";
 import { buildP1Fields, EMPTY_LISTS } from "./CaseAdapterDetailAggregateP1";
 import { CASE_DETAIL_TAB_COUNTS_KEYS } from "./CaseAdapterDetailContracts";
+import { nextActionsForPhase } from "./CaseAdapterPhaseActions";
 import {
   asRecord,
   formatDate,
@@ -17,6 +18,7 @@ import {
   resolveStageId,
   resolveStageLabel,
 } from "./CaseAdapterShared";
+import { buildCustomerLocalizedNames } from "./CaseAdapterCustomerLocale";
 
 // ─── Aggregate Slices (p0-fe-002c-01) ────────────────────────────
 // 与 server CaseDetailAggregateDto 的 8 个顶层键一一对应。
@@ -60,13 +62,29 @@ function parseAggregateSlices(
   };
 }
 
+const KNOWN_PROVIDER_ROLES = new Set([
+  "applicant",
+  "office",
+  "employer",
+  "agent",
+  "unknown",
+]);
+
+function resolveProviderRole(raw: string): string {
+  return raw !== "" && KNOWN_PROVIDER_ROLES.has(raw) ? raw : "unspecified";
+}
+
 function adaptProviderProgress(raw: unknown[]) {
   return raw
     .map((p) => {
       const pr = asRecord(p);
       if (!pr) return null;
+      const rawRole = readString(pr, "providerRole");
+      const role = resolveProviderRole(rawRole);
       return {
-        label: readString(pr, "providerRole"),
+        label: rawRole,
+        labelKey: `cases.detail.providers.${role}`,
+        providerRole: role,
         done: readNumber(pr, "done"),
         total: readNumber(pr, "total"),
       };
@@ -169,6 +187,7 @@ function buildDeepLinkFields(dl: Record<string, unknown> | null) {
   return {
     customerId: dl ? readString(dl, "customerId") : "",
     customerName: dl ? readString(dl, "customerName") : "",
+    customerLocalizedNames: buildCustomerLocalizedNames(dl),
     groupId: dl ? readNullableString(dl, "groupId") : null,
     groupName: dl ? readNullableString(dl, "groupName") : null,
     ownerUserId: dl ? readString(dl, "ownerUserId") : "",
@@ -311,7 +330,65 @@ function buildDetailHeader(
     businessPhase: readString(caseRecord, "businessPhase"),
     acceptedDate: formatDate(readNullableString(caseRecord, "acceptedAt")),
     targetDate: formatDate(dueAt),
+    priority: readString(caseRecord, "priority"),
+    riskLevel: readString(caseRecord, "riskLevel"),
+    ownerUserId: dlStr(deepLink, "ownerUserId"),
+    assistantUserId: dlStr(deepLink, "assistantUserId"),
+    jurisdictionAuthority: readString(caseRecord, "jurisdictionAuthority"),
+    remark: readString(caseRecord, "remark"),
+    customerLocalizedNames: buildCustomerLocalizedNames(deepLink),
   };
+}
+
+// ─── Team from deep-link (R27-R) ─────────────────────────────────
+
+const TEAM_GRADIENT_OWNER = "from-[var(--primary)] to-[var(--primary-hover)]";
+const TEAM_GRADIENT_ASSISTANT = "from-[var(--success)] to-[#28a745]";
+
+function deriveInitials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase() || "??";
+}
+
+/**
+ * deep-link 数据中提取 owner / assistant 组装为 TeamMember 列表。
+ *
+ * @param dl - deep-link 原始数据对象，为 null 时返回空数组。
+ * @returns 提取到的团队成员列表。
+ */
+export function buildTeamFromDeepLink(
+  dl: Record<string, unknown> | null,
+): import("../types-detail").TeamMember[] {
+  if (!dl) return [];
+  const ownerName = readString(dl, "ownerDisplayName");
+  const assistantName = readNullableString(dl, "assistantDisplayName");
+
+  const members: import("../types-detail").TeamMember[] = [];
+
+  if (ownerName) {
+    members.push({
+      initials: deriveInitials(ownerName),
+      name: ownerName,
+      role: "cases.detail.overview.sidebar.teamRoleOwner",
+      subtitle: "",
+      gradient: TEAM_GRADIENT_OWNER,
+    });
+  }
+
+  if (assistantName) {
+    members.push({
+      initials: deriveInitials(assistantName),
+      name: assistantName,
+      role: "cases.detail.overview.sidebar.teamRoleAssistant",
+      subtitle: "",
+      gradient: TEAM_GRADIENT_ASSISTANT,
+    });
+  }
+
+  return members;
 }
 
 // ─── Public adapter ──────────────────────────────────────────────
@@ -352,16 +429,10 @@ export function adaptCaseDetailAggregate(
     ),
     nextAction: "",
     validationHint: buildValidationHint(m.blockingCount, m.warningCount),
-    overviewActions: {
-      primary: {
-        label: "cases.coach.docManagement",
-        tab: "documents" as const,
-      },
-      secondary: {
-        label: "cases.coach.runValidation",
-        tab: "validation" as const,
-      },
-    },
+    overviewActions: nextActionsForPhase(
+      readString(caseRecord, "businessPhase"),
+      stageId,
+    ),
     billing: buildBillingBlock(m.quotePrice, m.unpaidAmount, m.totalReceived),
     validation: buildValidationBlock(latestValidation),
     riskConfirmationRecord: buildRiskConfirmation(
@@ -370,6 +441,7 @@ export function adaptCaseDetailAggregate(
       m.unpaidAmount,
     ),
     ...EMPTY_LISTS,
+    team: buildTeamFromDeepLink(deepLink),
     ...buildP1Fields(
       caseRecord,
       slices,
@@ -377,6 +449,11 @@ export function adaptCaseDetailAggregate(
       slices.failureCloseoutCheck,
       stageId,
     ),
+    closeReason: readNullableString(caseRecord, "closeReason"),
+    closedAt: formatDate(readNullableString(caseRecord, "archivedAt")),
+    closedBy: deepLink
+      ? readNullableString(deepLink, "ownerDisplayName")
+      : null,
   };
 
   return {

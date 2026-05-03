@@ -231,12 +231,16 @@ const casesJaJP = {
     },
   },
   detail: {
+    wip: "準備中",
     readonlyHint: "案件はアーカイブ済みのため、すべての操作が読み取り専用です",
     actions: {
       editInfo: "情報を編集",
       exportZip: "ZIP エクスポート",
       statusTransition: "ステータス遷移",
       exportZipNotReady: "ZIP エクスポート機能は準備中です。",
+      editInfoDisabledTooltip: "案件はアーカイブ済みのため編集できません",
+      statusTransitionDisabledTooltip:
+        "案件はアーカイブ済みのためステータス遷移できません",
     },
     editModal: {
       title: "案件情報を編集",
@@ -249,9 +253,22 @@ const casesJaJP = {
         assistantUserId: "副担当者",
         groupId: "グループ",
         priority: "優先度",
+        jurisdictionAuthority: "管轄入管局",
+        remark: "備考",
       },
       cancel: "キャンセル",
       save: "保存",
+      priorityOptions: {
+        low: "低",
+        normal: "通常",
+        high: "高",
+        urgent: "緊急",
+      },
+      riskOptions: {
+        normal: "正常",
+        attention: "要注意",
+        high: "高リスク",
+      },
     },
     phaseMenu: {
       title: "業務フェーズ遷移",
@@ -293,14 +310,31 @@ const casesJaJP = {
     },
     terminalNextAction: {
       success: "結案済み — ZIP エクスポート / 更新リマインダーを確認できます。",
-      failed:
-        "結案済み（失敗） — クローズ理由を確認 / 返金は手動対応が必要です。",
+      failed: "結案済み（失敗） — クローズ理由と請求明細を確認できます。",
+    },
+    terminalActions: {
+      viewCloseReason: "クローズ理由を見る",
+      viewResult: "結案記録を見る",
+      handleRefund: "返金を処理",
+      viewBilling: "請求詳細を見る",
+      refundWip: "返金機能は準備中です",
+    },
+    closeReasonModal: {
+      titleSuccess: "結案記録",
+      titleFailure: "クローズ理由",
+      closedAt: "アーカイブ日時",
+      closedBy: "操作者",
+      failureReasonTitle: "失敗クローズ詳細",
+      closeReasonText: "備考",
+      successTitle: "成功結案条件",
+      noDetail: "結案の詳細情報はありません。",
+      close: "閉じる",
     },
     unpaidLabel: "未収: {amount}",
     arrearsYes: "あり",
     arrearsNo: "なし",
     readonlyBanner:
-      "この案件はアーカイブ済み（{stage}）です。全フィールドが読み取り専用です。日志タブのみアクセス可能です。",
+      "この案件は「{stage}」状態です。全フィールドが読み取り専用で、ステータス遷移・編集は無効です。",
     failurePathBanner:
       "この案件は失敗クローズアウト経路にあります。概要タブで詳細と次のステップを確認してください。",
     loading: "案件詳細を読み込み中…",
@@ -320,18 +354,27 @@ const casesJaJP = {
       provider: {
         kicker: "提供者別完成率",
         title: "書類収集グループ別進捗",
+        empty: "グループ進捗データがありません",
       },
       nextAction: {
         title: "次の重要アクション",
       },
+      billingGuard: {
+        waitingPaymentEmpty:
+          "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください",
+      },
       timeline: {
         title: "最近のアクティビティ",
+        empty: "最近のアクティビティはありません",
         viewAll: "ログ全体を見る →",
       },
       sidebar: {
         phaseTitle: "業務フェーズ",
         riskTitle: "ブロック項目とリスク概要",
         teamTitle: "案件チーム",
+        teamEmpty: "チームメンバーなし",
+        teamRoleOwner: "担当者",
+        teamRoleAssistant: "アシスタント",
         validationTitle: "提出前チェック",
         validationAction: "検証と提出パッケージを見る",
       },
@@ -458,6 +501,14 @@ const casesJaJP = {
         },
       },
     },
+    providers: {
+      applicant: "申請者",
+      office: "事務所",
+      employer: "雇用主",
+      agent: "代理人",
+      unknown: "不明",
+      unspecified: "未指定",
+    },
     info: {
       cardTitle: "案件属性",
       fields: {
@@ -554,6 +605,21 @@ const casesJaJP = {
       },
     },
     documents: {
+      docStatus: {
+        pending: "未送信",
+        waitingUpload: "登録待ち",
+        uploadedReviewing: "審査中",
+        approved: "承認済み",
+        revisionRequired: "要修正",
+        waived: "免除",
+        expired: "期限切れ",
+        notSent: "未送信",
+        rejected: "却下",
+        unknown: "不明",
+      },
+      referenceCount: "現在 {count} 件の案件がこのバージョンを参照中",
+      referenceSelf: "本書類項目で登録",
+      referenceFrom: "参照元：{source}",
       empty: {
         title: "書類登録なし",
         desc: "この案件にはまだ書類の登録がありません。「書類登録」または「手動追加」で書類チェックリストを作成してください。",
@@ -569,6 +635,8 @@ const casesJaJP = {
         kicker: "提供者別完成率",
         title: "書類収集グループ別進捗",
       },
+      readonlyNotice:
+        "案件はアーカイブ済みです。書類チェックリストは読み取り専用です。",
       groupEmpty: "このグループには書類項目がありません",
     },
     log: {
@@ -591,6 +659,14 @@ const casesJaJP = {
       filterTitle: "フィルター",
       filterReset: "リセット",
       viewConversations: "関連する会話を表示",
+      types: {
+        internal: "内部メモ",
+        client_visible: "顧客公開記録",
+        phone: "電話記録",
+        meeting: "対面会議",
+        auto_email: "自動メール",
+        other: "その他",
+      },
     },
     riskModal: {
       title: "未収リスク確認",
@@ -630,7 +706,16 @@ const casesJaJP = {
         kicker: "許可後処理",
         title: "COE / 海外ビザ貼付 / 再入国結果",
         stagingChip: "この案件はまだ当該段階に達していません",
-        note: "この案件はまだ提出前または補正処理段階にあるため、COE 送付・海外ビザ貼付・再入国結果はここに表示されません。該当するサンプルに切り替えると完全なフローを確認できます。",
+        notePreSubmission:
+          "この案件はまだ提出前または補正処理段階にあるため、COE 送付・海外ビザ貼付・再入国結果はここに表示されません。該当するサンプルに切り替えると完全なフローを確認できます。",
+        notePostSubmission:
+          "案件は入管局に提出済みです。審査結果を待っています。許可後に COE 送付・海外ビザ貼付等の後続処理に進みます。",
+        noteAwaitingCoe:
+          "案件は許可済みです。残金精算後に COE（在留資格認定証明書）を送付します。",
+        noteAwaitingVisaStamp:
+          "COE は送付済みです。申請者は海外でビザ貼付手続き中です。入国確認を待っています。",
+        noteCompleted:
+          "許可後のフローは完了しました。入国確認済みまたはアーカイブ済みです。",
       },
       tab: {
         gateCard: {
@@ -712,7 +797,7 @@ const casesJaJP = {
       overdue: "期限超過",
     },
     logCategories: {
-      all: "全部",
+      all: "すべて",
       operation: "操作ログ",
       review: "審査ログ",
       status: "ステータス変更ログ",
@@ -864,6 +949,25 @@ const casesJaJP = {
       "更新リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
     waitingPaymentBillingRequired:
       "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください。",
+    taskInvalidAssigneeId:
+      "担当者 ID の形式が無効です。有効な担当者を選択してください。",
+    taskCreateFailed:
+      "タスクの作成に失敗しました。しばらくしてから再試行してください。",
+    taskAssigneeNotFound:
+      "指定された担当者が存在しません。再度選択してください。",
+    reminderInvalidCaseId:
+      "案件 ID の形式が無効です。リマインダーを作成できません。",
+    reminderCreateFailed:
+      "期限リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
+    reminderRefNotFound:
+      "リマインダーに関連する案件またはオブジェクトが存在しません。確認してから再試行してください。",
+    reminderValidationFailed:
+      "リマインダーのパラメータ検証に失敗しました。入力内容を確認して再試行してください。",
+    taskInvalidPriority:
+      "タスクの優先度が不正です。有効な優先度を選択してください。",
+    taskCompleteFailed:
+      "タスクの完了に失敗しました。しばらくしてから再試行してください。",
+    taskNotFound: "指定されたタスクが存在しないか、削除されています。",
   },
   log: {
     category: {
@@ -873,7 +977,7 @@ const casesJaJP = {
     },
     objectType: {
       case: "案件",
-      communicationLog: "沟通記録",
+      communicationLog: "連絡記録",
       documentItem: "資料",
       documentFile: "ファイル",
       task: "タスク",
@@ -896,8 +1000,8 @@ const casesJaJP = {
       crossGroupCreated: "越境建案：{suffix}",
       groupTransferred: "案件転組：{from} → {to}（{reason}）",
       phaseChange: "業務フェーズ変更：{from} → {to}",
-      commLogCreated: "沟通記録追加：{suffix}",
-      commLogUpdated: "沟通記録更新",
+      commLogCreated: "連絡記録追加：{suffix}",
+      commLogUpdated: "連絡記録更新",
       casePartyCreated: "関連人追加：{suffix}",
       casePartyUpdated: "関連人情報更新",
       casePartyDeleted: "関連人削除",
@@ -984,6 +1088,14 @@ const casesJaJP = {
   coach: {
     docManagement: "資料管理",
     runValidation: "検証実行",
+    registerFinalPayment: "最終入金登録",
+    sendCollectionReminder: "督促リマインダー送信",
+    viewSubmissionStatus: "提出状況確認",
+    checkMessages: "メッセージ確認",
+    setDeadline: "期限設定",
+    checkTasks: "タスク確認",
+    checkBilling: "請求確認",
+    viewLog: "ログ確認",
   },
 } as const;
 

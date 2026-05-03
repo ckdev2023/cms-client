@@ -116,7 +116,10 @@ function teamGradient(member: TeamMember): string {
           {{ t("cases.detail.overview.sidebar.teamTitle") }}
         </h3>
       </template>
-      <div class="overview-sidebar__team-list">
+      <div v-if="detail.team.length === 0" class="overview-sidebar__team-empty">
+        {{ t("cases.detail.overview.sidebar.teamEmpty") }}
+      </div>
+      <div v-else class="overview-sidebar__team-list">
         <div
           v-for="(member, i) in detail.team"
           :key="i"
@@ -134,7 +137,7 @@ function teamGradient(member: TeamMember): string {
               <span
                 v-if="member.role"
                 class="overview-sidebar__team-role-chip"
-                >{{ member.role }}</span
+                >{{ t(member.role) }}</span
               >
             </div>
             <div class="overview-sidebar__team-subtitle">
@@ -253,6 +256,12 @@ function teamGradient(member: TeamMember): string {
   font-size: 15px;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
+}
+
+.overview-sidebar__team-empty {
+  padding: 12px 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
 }
 
 .overview-sidebar__team-list {

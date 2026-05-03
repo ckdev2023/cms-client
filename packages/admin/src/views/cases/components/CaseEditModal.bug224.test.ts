@@ -6,13 +6,21 @@
 // Does NOT test: CaseDetailView 整体挂载、updateCaseFields 链路。
 // ────────────────────────────────────────────────────────────────
 
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseEditModal from "./CaseEditModal.vue";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../i18n/messages/cases/en-US";
+import {
+  registerUserAliases,
+  clearUserAliases,
+} from "../../../shared/model/useOrgUserOptions";
+import {
+  registerGroupAliases,
+  clearGroupAliases,
+} from "../../../shared/model/useGroupOptions";
 
 const BUTTON_STUB = {
   template:
@@ -56,12 +64,27 @@ const ALL_FIELD_IDS = [
   "case-edit-assistantUserId",
   "case-edit-groupId",
   "case-edit-priority",
+  "case-edit-jurisdictionAuthority",
+  "case-edit-remark",
 ] as const;
 
 const REMOVED_FIELD_IDS = ["case-edit-agency", "case-edit-memo"] as const;
 
+beforeEach(() => {
+  registerUserAliases([
+    { id: "user-001", displayName: "User 001" },
+    { id: "user-002", displayName: "User 002" },
+  ]);
+  registerGroupAliases([{ id: "osaka-uuid", name: "大阪組" }]);
+});
+
+afterEach(() => {
+  clearUserAliases();
+  clearGroupAliases();
+});
+
 describe("CaseEditModal (BUG-224)", () => {
-  it("renders all 8 server-supported fields when open", () => {
+  it("renders all 10 server-supported fields when open", () => {
     const w = mountModal();
     for (const id of ALL_FIELD_IDS) {
       expect(w.find(`#${id}`).exists(), `expected #${id} to exist`).toBe(true);
@@ -90,13 +113,13 @@ describe("CaseEditModal (BUG-224)", () => {
     expect((input.element as HTMLInputElement).value).toBe("テスト案件");
   });
 
-  it("pre-fills groupId from prop", () => {
-    const w = mountModal({ groupId: "tokyo" });
-    const input = w.find("#case-edit-groupId");
-    expect((input.element as HTMLInputElement).value).toBe("tokyo");
+  it("pre-fills groupId from prop (resolved to catalog value)", () => {
+    const w = mountModal({ groupId: "tokyo-1" });
+    const el = w.find("#case-edit-groupId");
+    expect((el.element as HTMLSelectElement).value).toBe("tokyo-1");
   });
 
-  it("emits save with all 8 fields in payload", async () => {
+  it("emits save with all 10 fields in payload", async () => {
     const w = mountModal();
 
     await w.find("#case-edit-caseName").setValue("新案件名");
@@ -105,8 +128,12 @@ describe("CaseEditModal (BUG-224)", () => {
     await w.find("#case-edit-riskLevel").setValue("high");
     await w.find("#case-edit-ownerUserId").setValue("user-001");
     await w.find("#case-edit-assistantUserId").setValue("user-002");
-    await w.find("#case-edit-groupId").setValue("osaka");
-    await w.find("#case-edit-priority").setValue("urgent");
+    await w.find("#case-edit-groupId").setValue("tokyo-1");
+    await w.find("#case-edit-priority").setValue("high");
+    await w
+      .find("#case-edit-jurisdictionAuthority")
+      .setValue("tokyo-immigration");
+    await w.find("#case-edit-remark").setValue("test remark");
 
     const buttons = w.findAll("button");
     const saveBtn = buttons.find(
@@ -127,8 +154,10 @@ describe("CaseEditModal (BUG-224)", () => {
       riskLevel: "high",
       ownerUserId: "user-001",
       assistantUserId: "user-002",
-      groupId: "osaka",
-      priority: "urgent",
+      groupId: "tokyo-1",
+      priority: "high",
+      jurisdictionAuthority: "tokyo-immigration",
+      remark: "test remark",
     });
   });
 
@@ -145,17 +174,17 @@ describe("CaseEditModal (BUG-224)", () => {
     expect("memo" in payload).toBe(false);
   });
 
-  it("trims whitespace in emitted values", async () => {
+  it("trims whitespace in emitted text field values", async () => {
     const w = mountModal();
     await w.find("#case-edit-caseName").setValue("  spaced  ");
-    await w.find("#case-edit-ownerUserId").setValue("  user-001  ");
+    await w.find("#case-edit-jurisdictionAuthority").setValue("  tokyo  ");
 
     const saveBtn = w.findAll("button").find((b) => b.text().includes("保存"));
     await saveBtn!.trigger("click");
 
     const payload = w.emitted("save")![0][0] as Record<string, string>;
     expect(payload.caseName).toBe("spaced");
-    expect(payload.ownerUserId).toBe("user-001");
+    expect(payload.jurisdictionAuthority).toBe("tokyo");
   });
 
   it("disables all inputs while submitting", () => {
@@ -173,7 +202,7 @@ describe("CaseEditModal (BUG-224)", () => {
         const labels = w
           .findAll(".case-edit-modal__label")
           .map((l) => l.text());
-        expect(labels.length).toBe(8);
+        expect(labels.length).toBe(10);
         for (const label of labels) {
           expect(label.length).toBeGreaterThan(0);
           expect(label).not.toContain("cases.detail.editModal.fields.");

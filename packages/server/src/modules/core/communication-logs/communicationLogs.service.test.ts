@@ -307,6 +307,12 @@ void test("CommunicationLogsService.list returns items and applies relation filt
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
     }
+    if (sql.includes("from users")) {
+      return Promise.resolve({
+        rows: [{ id: USER_ID, name: "Local Admin" }],
+        rowCount: 1,
+      });
+    }
     return Promise.resolve({ rows: [makeLogRow()], rowCount: 1 });
   });
 
@@ -318,11 +324,32 @@ void test("CommunicationLogsService.list returns items and applies relation filt
 
   assert.equal(result.total, 1);
   assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].createdByDisplayName, "Local Admin");
   const countSql = calls.find((call) => call.sql.includes("count(*)"));
   assert.ok(countSql);
   assert.ok(countSql.sql.includes("case_id = $"));
   assert.ok(countSql.sql.includes("customer_id = $"));
   assert.ok(countSql.sql.includes("company_id = $"));
+});
+
+void test("CommunicationLogsService.list returns null createdByDisplayName when createdBy is null", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("count(*)")) {
+      return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+    }
+    return Promise.resolve({
+      rows: [makeLogRow({ created_by: null })],
+      rowCount: 1,
+    });
+  });
+
+  const result = await service(pool, makeTimeline()).list(makeCtx("viewer"), {
+    caseId: CASE_ID,
+  });
+
+  assert.equal(result.items.length, 1);
+  assert.equal(result.items[0].createdByDisplayName, null);
+  assert.equal(result.items[0].createdBy, null);
 });
 
 void test("CommunicationLogsService.update updates row and writes case timeline", async () => {

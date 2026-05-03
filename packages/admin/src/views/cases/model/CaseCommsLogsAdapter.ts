@@ -17,7 +17,8 @@
  */
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
-import type { LogEntry, MessageItem } from "../types-detail";
+import type { LogEntry, MessageItem, TimelineEntry } from "../types-detail";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { buildCaseTimelineMessageResult } from "./CaseCommsTimelineBuilders";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -58,10 +59,24 @@ const CHANNEL_FIELDS = ["channelType", "channel_type"];
 const SUMMARY_FIELDS = ["contentSummary", "content_summary", "subject"];
 const DETAIL_FIELDS = ["fullContent", "full_content"];
 const CREATED_AT_FIELDS = ["createdAt", "created_at"];
-const CREATED_BY_FIELDS = ["createdBy", "created_by"];
+const CREATED_BY_DISPLAY_FIELDS = [
+  "createdByDisplayName",
+  "created_by_display_name",
+  "createdByName",
+  "created_by_name",
+];
 const FOLLOW_UP_DUE_FIELDS = ["followUpDueAt", "follow_up_due_at"];
 
-const MESSAGE_TYPE_LABELS: Record<MessageTypeKey, string> = {
+const MESSAGE_TYPE_I18N_KEYS: Record<MessageTypeKey, string> = {
+  internal: "cases.detail.messages.types.internal",
+  client_visible: "cases.detail.messages.types.client_visible",
+  phone: "cases.detail.messages.types.phone",
+  meeting: "cases.detail.messages.types.meeting",
+  auto_email: "cases.detail.messages.types.auto_email",
+};
+
+/** @deprecated T2.6 完成後削除 — view 層が typeLabelKey + t() に切替え次第不要。 */
+const MESSAGE_TYPE_DISPLAY_LABELS: Record<MessageTypeKey, string> = {
   internal: "内部备注",
   client_visible: "客户可见",
   phone: "電話記録",
@@ -116,13 +131,32 @@ export function resolveMessageType(
   return visibleToClient === true ? "client_visible" : "internal";
 }
 
+function resolveFollowUpAction(
+  record: Record<string, unknown>,
+): string | undefined {
+  const followUpRequired =
+    record.followUpRequired === true || record.follow_up_required === true;
+  return followUpRequired
+    ? (pickOptionalString(record, FOLLOW_UP_DUE_FIELDS) ?? "跟進待")
+    : undefined;
+}
+
+function resolveDisplayTime(iso: string, locale: string | undefined): string {
+  if (!locale) return iso;
+  return formatDateTime(iso, locale) || iso;
+}
+
 /**
  * 适配单条沟通记录 DTO 为案件消息模型。
  *
  * @param value - 后端 /api/communication-logs 返回的单条记录
+ * @param locale - BCP 47 locale；传入时 `time` 为格式化后的展示时间，不传时回退为原始 ISO
  * @returns 适配成功后的 MessageItem；无法识别时返回 null
  */
-export function adaptCaseMessageDto(value: unknown): MessageItem | null {
+export function adaptCaseMessageDto(
+  value: unknown,
+  locale?: string,
+): MessageItem | null {
   const record = asRecord(value);
   if (!record) return null;
 
@@ -135,17 +169,12 @@ export function adaptCaseMessageDto(value: unknown): MessageItem | null {
     channelType,
     record.visibleToClient ?? record.visible_to_client,
   );
-  const author = pickOptionalString(record, CREATED_BY_FIELDS) ?? "System";
+  const author =
+    pickOptionalString(record, CREATED_BY_DISPLAY_FIELDS) ?? "System";
   const body =
     pickOptionalString(record, SUMMARY_FIELDS) ??
     pickOptionalString(record, DETAIL_FIELDS) ??
     "";
-
-  const followUpRequired =
-    record.followUpRequired === true || record.follow_up_required === true;
-  const actionLabel = followUpRequired
-    ? (pickOptionalString(record, FOLLOW_UP_DUE_FIELDS) ?? "跟進待")
-    : undefined;
 
   return {
     id,
@@ -153,10 +182,12 @@ export function adaptCaseMessageDto(value: unknown): MessageItem | null {
     avatarStyle: deriveAvatarStyle(author),
     author,
     type,
-    typeLabel: MESSAGE_TYPE_LABELS[type],
+    typeLabelKey: MESSAGE_TYPE_I18N_KEYS[type],
+    typeLabel: MESSAGE_TYPE_DISPLAY_LABELS[type],
     body,
-    time: createdAt,
-    actionLabel,
+    time: resolveDisplayTime(createdAt, locale),
+    timeIso: createdAt,
+    actionLabel: resolveFollowUpAction(record),
   };
 }
 
@@ -164,16 +195,18 @@ export function adaptCaseMessageDto(value: unknown): MessageItem | null {
  * 适配沟通记录列表响应为消息数组。
  *
  * @param value - 后端返回的沟通记录列表（数组或带 items 的分页对象）
+ * @param locale - BCP 47 locale；传入时 `time` 为格式化后的展示时间，不传时回退为原始 ISO
  * @returns 适配后的消息数组；无法识别时返回 null
  */
 export function adaptCaseMessageListResult(
   value: unknown,
+  locale?: string,
 ): MessageItem[] | null {
   const items = readArrayOrItems(value);
   if (!items) return null;
 
   const adapted = items
-    .map((item) => adaptCaseMessageDto(item))
+    .map((item) => adaptCaseMessageDto(item, locale))
     .filter((item): item is MessageItem => item !== null);
   return adapted.length === items.length ? adapted : null;
 }
@@ -320,6 +353,44 @@ export function adaptCaseLogListResult(value: unknown): LogEntry[] | null {
     .map((item) => adaptCaseLogDto(item))
     .filter((item): item is LogEntry => item !== null);
   return adapted;
+}
+
+// ────────────────────────────────────────────────────────────────
+// LogEntry → Overview TimelineEntry (D1)
+// ────────────────────────────────────────────────────────────────
+
+const OVERVIEW_TIMELINE_COLOR_MAP: Record<string, string> = {
+  status: "var(--primary)",
+  review: "var(--warning)",
+  operation: "var(--muted)",
+};
+const OVERVIEW_TIMELINE_COLOR_FALLBACK = "var(--muted)";
+
+/**
+ * 从 LogEntry 列表导出概览 timeline 摘要。
+ *
+ * @param entries - adaptCaseLogListResult 输出的日志条目
+ * @param limit - 最多返回条数（默认 5）
+ * @returns 按时间倒序排列、截取前 N 条的 TimelineEntry 数组
+ */
+export function buildOverviewTimelineFromLog(
+  entries: readonly LogEntry[],
+  limit = 5,
+): TimelineEntry[] {
+  const sorted = [...entries].sort((a, b) => {
+    if (a.time > b.time) return -1;
+    if (a.time < b.time) return 1;
+    return 0;
+  });
+
+  const top = sorted.slice(0, limit);
+
+  return top.map((e) => ({
+    color:
+      OVERVIEW_TIMELINE_COLOR_MAP[e.type] ?? OVERVIEW_TIMELINE_COLOR_FALLBACK,
+    text: e.text,
+    meta: e.time,
+  }));
 }
 
 // ────────────────────────────────────────────────────────────────

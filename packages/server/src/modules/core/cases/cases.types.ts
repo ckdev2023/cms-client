@@ -328,6 +328,9 @@ export type { CaseBillingSummary } from "./cases.types-billing";
 export type CaseDeepLinkContext = {
   customerId: string;
   customerName: string;
+  customerNameZh: string;
+  customerNameJa: string;
+  customerNameEn: string;
   groupId: string | null;
   groupName: string | null;
   ownerUserId: string;

@@ -237,11 +237,13 @@ describe("adaptCaseDocumentGroups", () => {
     expect(result![1].count).toBe("1 件");
   });
 
-  it("maps status to Japanese label", () => {
+  it("maps status to i18n key", () => {
     const result = adaptCaseDocumentGroups({
       items: [item({ status: "approved" })],
     });
-    expect(result![0].items[0].statusLabel).toBe("承認済み");
+    expect(result![0].items[0].statusLabelKey).toBe(
+      "cases.detail.documents.docStatus.approved",
+    );
   });
 
   it("derives actions from status", () => {
@@ -369,5 +371,49 @@ describe("adaptCaseFormsData", () => {
   it("accepts raw array", () => {
     const result = adaptCaseFormsData([genDoc()]);
     expect(result!.generated).toHaveLength(1);
+  });
+
+  it("without locale, meta uses formatDate (date-only ja-JP fallback)", () => {
+    const result = adaptCaseFormsData({ items: [genDoc()] });
+    const meta = result!.generated[0].meta;
+    expect(meta).toContain("2026");
+    expect(meta).not.toContain(":");
+  });
+
+  it("with locale, meta uses formatDateTime (date+time locale-aware)", () => {
+    const result = adaptCaseFormsData(
+      { items: [genDoc({ generatedAt: "2026-04-10T14:30:00.000Z" })] },
+      "zh-CN",
+    );
+    const meta = result!.generated[0].meta;
+    expect(meta).toContain("2026");
+    expect(meta).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("with ja-JP locale, meta includes time component", () => {
+    const result = adaptCaseFormsData(
+      { items: [genDoc({ generatedAt: "2026-04-10T14:30:00.000Z" })] },
+      "ja-JP",
+    );
+    const meta = result!.generated[0].meta;
+    expect(meta).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("with en-US locale, meta includes time component", () => {
+    const result = adaptCaseFormsData(
+      { items: [genDoc({ generatedAt: "2026-04-10T14:30:00.000Z" })] },
+      "en-US",
+    );
+    const meta = result!.generated[0].meta;
+    expect(meta).toContain("2026");
+    expect(meta).toMatch(/\d{2}:\d{2}/);
+  });
+
+  it("null generatedAt omits date from meta regardless of locale", () => {
+    const result = adaptCaseFormsData(
+      { items: [genDoc({ generatedAt: null })] },
+      "zh-CN",
+    );
+    expect(result!.generated[0].meta).toBe("PDF · v1 · 担当太郎");
   });
 });

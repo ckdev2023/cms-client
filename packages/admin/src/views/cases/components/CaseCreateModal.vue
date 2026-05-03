@@ -43,10 +43,13 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
       <div
         class="ccm"
         role="dialog"
-        :aria-label="t('cases.create.modal.dialogLabel')"
+        aria-modal="true"
+        aria-labelledby="case-create-modal-title"
       >
         <div class="ccm__header">
-          <h3 class="ccm__title">{{ t("cases.create.modal.title") }}</h3>
+          <h3 id="case-create-modal-title" class="ccm__title">
+            {{ t("cases.create.modal.title") }}
+          </h3>
           <button class="ccm__close" type="button" @click="$emit('close')">
             <svg
               width="20"

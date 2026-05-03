@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { UnauthorizedException } from "@nestjs/common";
 
-import type { CommunicationLog } from "../model/coreEntities";
+import type {
+  CommunicationLog,
+  CommunicationLogListItem,
+} from "../model/coreEntities";
 import { CommunicationLogsController } from "./communicationLogs.controller";
 import { CommunicationLogsService } from "./communicationLogs.service";
 
@@ -33,6 +36,11 @@ const mockLog: CommunicationLog = {
   followUpRequired: true,
   followUpDueAt: "2026-04-01T00:00:00.000Z",
   createdAt: "2026-03-01T00:00:00.000Z",
+};
+
+const mockListItem: CommunicationLogListItem = {
+  ...mockLog,
+  createdByDisplayName: "Local Admin",
 };
 
 void test("CommunicationLogsController create validates input and requires context", async () => {
@@ -103,7 +111,7 @@ void test("CommunicationLogsController list parses query", async () => {
   const service = {
     list: (_ctx: unknown, query: Record<string, unknown>) => {
       calledQuery = query;
-      return Promise.resolve({ items: [mockLog], total: 1 });
+      return Promise.resolve({ items: [mockListItem], total: 1 });
     },
   } as unknown as CommunicationLogsService;
   const controller = new CommunicationLogsController(service);
@@ -129,6 +137,7 @@ void test("CommunicationLogsController list parses query", async () => {
     limit: "20",
   });
   assert.equal(res.total, 1);
+  assert.equal(res.items[0].createdByDisplayName, "Local Admin");
   assert.deepEqual(calledQuery, {
     caseId: CASE_ID,
     customerId: CUSTOMER_ID,

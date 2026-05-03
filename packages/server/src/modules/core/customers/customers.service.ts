@@ -49,6 +49,7 @@ import {
   normalizeDistinctIds,
   validateBaseProfile,
 } from "./customers.utils";
+import { mergeLocalizedNamesIntoProfile } from "./customers.localized-names";
 import type {
   CustomerBmvView,
   CustomerCreateInput,
@@ -72,6 +73,7 @@ export type {
   CustomerDuplicateField,
   CustomerListInput,
   CustomerListScope,
+  CustomerLocalizedNames,
   CustomerQueryRow,
   CustomerUpdateInput,
 } from "./customers.types";
@@ -107,10 +109,11 @@ export class CustomersService {
     input: CustomerCreateInput,
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const baseProfile = validateBaseProfile(
-      input.type,
+    const mergedProfile = mergeLocalizedNamesIntoProfile(
       input.baseProfile ?? {},
+      input.localizedNames,
     );
+    const baseProfile = validateBaseProfile(input.type, mergedProfile);
     const contacts = input.contacts ?? [];
     const customer = await tenantDb.transaction((tx) =>
       createCustomerWithNumbering(tx, {
@@ -423,10 +426,11 @@ export class CustomersService {
     const current = await getCustomerEntity(ctx, id, this.pool);
     if (!current) throw new NotFoundException("Customer not found or deleted");
     const nextType = input.type ?? current.type;
-    const nextBaseProfile = validateBaseProfile(nextType, {
-      ...current.baseProfile,
-      ...(input.baseProfile ?? {}),
-    });
+    const mergedProfile = mergeLocalizedNamesIntoProfile(
+      { ...current.baseProfile, ...(input.baseProfile ?? {}) },
+      input.localizedNames,
+    );
+    const nextBaseProfile = validateBaseProfile(nextType, mergedProfile);
     const nextContacts = input.contacts ?? current.contacts;
     const result = await tenantDb.query<CustomerQueryRow>(
       `update customers set type = $2, base_profile = $3::jsonb,

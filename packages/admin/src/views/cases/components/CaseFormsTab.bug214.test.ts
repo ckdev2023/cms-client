@@ -42,18 +42,18 @@ function mountTab(
 
 const HARDCODED_ZH_ONLY = [
   "可用模板",
-  "已生成文書",
+  "已生成文书",
   "导出",
   "版本历史",
-  "暂无可用文書模板或生成记录",
+  "暂无可用文书模板或生成记录",
 ];
 
 describe("BUG-214 CaseFormsTab i18n", () => {
   it("zh-CN renders expected i18n text, not raw keys", () => {
     const w = mountTab("zh-CN", casesZhCN);
     const text = w.text();
-    expect(text).toContain("文書管理");
-    expect(text).toContain("生成文書");
+    expect(text).toContain("文书管理");
+    expect(text).toContain("生成文书");
     expect(text).not.toContain("cases.detail.forms.title");
   });
 
@@ -80,7 +80,7 @@ describe("BUG-214 CaseFormsTab i18n", () => {
   it("generate button emits open-generate-modal on click", async () => {
     const w = mountTab();
     const buttons = w.findAll("button");
-    const genBtn = buttons.find((b) => b.text().includes("生成文書"));
+    const genBtn = buttons.find((b) => b.text().includes("生成文书"));
     expect(genBtn).toBeTruthy();
     await genBtn!.trigger("click");
     expect(w.emitted("open-generate-modal")).toBeTruthy();
@@ -89,7 +89,7 @@ describe("BUG-214 CaseFormsTab i18n", () => {
   it("generate button is hidden in readonly mode", () => {
     const w = mountTab("zh-CN", casesZhCN, true);
     const buttons = w.findAll("button");
-    const genBtn = buttons.find((b) => b.text().includes("生成文書"));
+    const genBtn = buttons.find((b) => b.text().includes("生成文书"));
     expect(genBtn).toBeUndefined();
   });
 
@@ -103,7 +103,7 @@ describe("BUG-214 CaseFormsTab i18n", () => {
       {
         locale: "zh-CN",
         messages: casesZhCN,
-        expected: "暂无可用文書模板或生成记录",
+        expected: "暂无可用文书模板或生成记录",
       },
       {
         locale: "ja-JP",
