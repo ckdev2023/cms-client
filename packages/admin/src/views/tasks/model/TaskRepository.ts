@@ -108,6 +108,7 @@ function adaptReminder(value: unknown): ReminderRecord | null {
     id,
     caseId: readNullableString(record, "caseId"),
     caseNo: readNullableString(record, "caseNo"),
+    caseTitle: readNullableString(record, "caseTitle"),
     targetType: readString(record, "targetType") || "case",
     targetId: readString(record, "targetId"),
     remindAt,

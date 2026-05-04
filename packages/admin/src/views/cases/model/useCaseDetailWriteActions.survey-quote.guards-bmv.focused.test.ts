@@ -225,6 +225,7 @@ describe("isBmvCase composable computed (p1-fe-003-03)", () => {
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [],
     forms: { templates: [], generated: [] },

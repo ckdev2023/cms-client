@@ -1,5 +1,6 @@
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { describe, expect, it } from "vitest";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import {
   SAMPLE_BMV_AGGREGATE_POST_APPROVAL,
   SAMPLE_BMV_AGGREGATE_SIGNED,
@@ -19,6 +20,8 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
   it("returns not_started empty state when bmvProfile is null", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-001"]!,
+      undefined,
+      "ja-JP",
     );
     expect(viewModel).not.toBeNull();
     expect(viewModel).toMatchObject({
@@ -49,12 +52,14 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
       note: null,
       canTransitionToCase: false,
     });
-    expect(viewModel!.timeline.every((t) => t.value === "—")).toBe(true);
+    expect(viewModel!.timeline.every((t) => t.value === "")).toBe(true);
   });
 
   it("derives stage, next step, gate hint and timeline from bmvProfile", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+      undefined,
+      "ja-JP",
     );
 
     expect(viewModel).toMatchObject({
@@ -83,8 +88,10 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
       ],
       note: "待签约后即可进入建案。",
     });
-    expect(viewModel?.timeline[0]?.value).toBe("2026-04-01 09:00");
-    expect(viewModel?.timeline[4]?.value).toBe("—");
+    expect(viewModel?.timeline[0]?.value).toBe(
+      formatDateTime("2026-04-01T09:00:00+09:00", "ja-JP"),
+    );
+    expect(viewModel?.timeline[4]?.value).toBe("");
   });
 
   it("switches to ready state after signing", () => {
@@ -95,7 +102,11 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     customer.bmvProfile.signedAt = "2026-04-10T10:45:00+09:00";
     customer.bmvProfile.intakeStatus = "ready_for_case_creation";
 
-    const viewModel = buildCustomerBmvIntakeCardViewModel(customer);
+    const viewModel = buildCustomerBmvIntakeCardViewModel(
+      customer,
+      undefined,
+      "ja-JP",
+    );
     expect(viewModel?.stage).toEqual({
       labelKey: "customers.detail.bmvIntake.stage.ready_for_case_creation",
       tone: "success",
@@ -106,10 +117,12 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     expect(viewModel?.gateHintKey).toBe(
       "customers.detail.bmvIntake.gateHintValue.ready",
     );
-    expect(viewModel?.timeline[4]?.value).toBe("2026-04-10 10:45");
+    expect(viewModel?.timeline[4]?.value).toBe(
+      formatDateTime("2026-04-10T10:45:00+09:00", "ja-JP"),
+    );
   });
 
-  it("keeps UTC timeline timestamps explicit with a timezone suffix", () => {
+  it("formats timeline timestamps consistently across locales (no raw ISO or UTC suffix)", () => {
     const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
     if (!customer.bmvProfile) throw new Error("Expected BMV profile");
 
@@ -118,14 +131,29 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     customer.bmvProfile.signedAt = "2026-04-28T03:15:00+00:00";
     customer.bmvProfile.intakeStatus = "ready_for_case_creation";
 
-    const viewModel = buildCustomerBmvIntakeCardViewModel(customer);
-    expect(viewModel?.timeline[3]?.value).toBe("2026-04-27 06:07 (UTC)");
-    expect(viewModel?.timeline[4]?.value).toBe("2026-04-28 03:15 (UTC)");
+    for (const locale of ["ja-JP", "zh-CN", "en-US"] as const) {
+      const viewModel = buildCustomerBmvIntakeCardViewModel(
+        customer,
+        undefined,
+        locale,
+      );
+      const confirmed = viewModel?.timeline[3]?.value ?? "";
+      const signed = viewModel?.timeline[4]?.value ?? "";
+
+      expect(confirmed).toBe(formatDateTime("2026-04-27T06:07:00Z", locale));
+      expect(signed).toBe(formatDateTime("2026-04-28T03:15:00+00:00", locale));
+      expect(confirmed).not.toContain("(UTC)");
+      expect(signed).not.toContain("(UTC)");
+      expect(confirmed).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(signed).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    }
   });
 
   it("defaults aggregate sections to empty when no aggregate provided", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+      undefined,
+      "ja-JP",
     );
     expect(viewModel?.quoteHistory).toEqual([]);
     expect(viewModel?.surveyDataSummary).toBeNull();
@@ -142,6 +170,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       customer,
       SAMPLE_BMV_AGGREGATE_SIGNED,
+      "ja-JP",
     );
     expect(viewModel?.quoteHistory).toHaveLength(2);
     expect(viewModel?.quoteHistory[0]).toMatchObject({
@@ -166,6 +195,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       customer,
       SAMPLE_BMV_AGGREGATE_SIGNED,
+      "ja-JP",
     );
     expect(viewModel?.surveyDataSummary).toBeDefined();
     expect(viewModel?.surveyDataSummary?.fieldCount).toBe(24);
@@ -184,6 +214,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       customer,
       SAMPLE_BMV_AGGREGATE_WITH_CASE,
+      "ja-JP",
     );
     expect(viewModel?.linkedCase).toBeDefined();
     expect(viewModel?.linkedCase?.caseId).toBe("CASE-2026-0601");
@@ -199,6 +230,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       customer,
       SAMPLE_BMV_AGGREGATE_POST_APPROVAL,
+      "ja-JP",
     );
     expect(viewModel?.linkedCase?.postApprovalStage).toBe("COE 発行待ち");
     expect(viewModel?.linkedCase?.coeStatus).toBe("pending");
@@ -212,6 +244,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       customer,
       SAMPLE_BMV_AGGREGATE_POST_APPROVAL,
+      "ja-JP",
     );
     expect(viewModel?.reminders).toHaveLength(2);
     expect(viewModel?.reminders[0]).toMatchObject({
@@ -224,6 +257,8 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
   it("sets canTransitionToCase true only when signed and ready", () => {
     const pending = buildCustomerBmvIntakeCardViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+      undefined,
+      "ja-JP",
     );
     expect(pending?.canTransitionToCase).toBe(false);
 
@@ -231,7 +266,11 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
     customer.bmvProfile!.signStatus = "signed";
     customer.bmvProfile!.intakeStatus = "ready_for_case_creation";
 
-    const ready = buildCustomerBmvIntakeCardViewModel(customer);
+    const ready = buildCustomerBmvIntakeCardViewModel(
+      customer,
+      undefined,
+      "ja-JP",
+    );
     expect(ready?.canTransitionToCase).toBe(true);
   });
 });
@@ -239,7 +278,11 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
 describe("useCustomerBmvIntakeCardModel", () => {
   it("exposes a computed intake card view model", () => {
     const customer = computed(() => SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
-    const { intakeCard } = useCustomerBmvIntakeCardModel({ customer });
+    const locale = ref("ja-JP");
+    const { intakeCard } = useCustomerBmvIntakeCardModel({
+      customer,
+      locale,
+    });
 
     expect(intakeCard.value?.stage.labelKey).toBe(
       "customers.detail.bmvIntake.stage.sign_pending",
@@ -254,9 +297,11 @@ describe("useCustomerBmvIntakeCardModel", () => {
       return c;
     });
     const aggregate = computed(() => SAMPLE_BMV_AGGREGATE_SIGNED);
+    const locale = ref("ja-JP");
     const { intakeCard } = useCustomerBmvIntakeCardModel({
       customer,
       aggregate,
+      locale,
     });
 
     expect(intakeCard.value?.quoteHistory).toHaveLength(2);

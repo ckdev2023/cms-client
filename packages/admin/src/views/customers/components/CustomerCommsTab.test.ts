@@ -43,6 +43,29 @@ describe("CustomerCommsTab", () => {
     expect(wrapper.text()).toContain("Client-visible");
   });
 
+  it.each([
+    { locale: "zh-CN", notExpected: "2026-04-01T10:00:00" },
+    { locale: "en-US", notExpected: "2026-04-01T10:00:00" },
+    { locale: "ja-JP", notExpected: "2026-04-01T10:00:00" },
+  ])(
+    "formats datetime via shared formatter ($locale)",
+    async ({ locale, notExpected }) => {
+      setAppLocale(locale);
+      const repository = createRepository();
+      const wrapper = mount(CustomerCommsTab, {
+        props: { customerId: "cust-001", repository },
+        global: { plugins: [i18n] },
+      });
+
+      await flushPromises();
+
+      const text = wrapper.text();
+      expect(text).not.toContain(notExpected);
+      expect(text).not.toContain("T10:00:00");
+      expect(text).toContain("2026");
+    },
+  );
+
   it("renders request failed state and retries", async () => {
     const repository = createRepository({
       listComms: vi

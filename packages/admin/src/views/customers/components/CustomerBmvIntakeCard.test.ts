@@ -53,7 +53,7 @@ describe("CustomerBmvIntakeCard", () => {
       "Case creation stays locked until signing is completed",
     );
     expect(wrapper.text()).toContain("Questionnaire sent");
-    expect(wrapper.text()).toContain("2026-04-01 09:00");
+    expect(wrapper.text()).toContain("04/01/2026");
     expect(wrapper.text()).toContain("Operational note");
     expect(wrapper.text()).toContain("Send questionnaire");
     expect(wrapper.text()).toContain("Generate quote");
@@ -87,8 +87,8 @@ describe("CustomerBmvIntakeCard", () => {
       global: { plugins: [i18n] },
     });
 
-    expect(wrapper.text()).toContain("2026-04-27 06:07 (UTC)");
-    expect(wrapper.text()).toContain("2026-04-28 03:15 (UTC)");
+    expect(wrapper.text()).toContain("04/27/2026");
+    expect(wrapper.text()).toContain("04/28/2026");
   });
 
   it("renders not_started empty state when bmvProfile is null", () => {

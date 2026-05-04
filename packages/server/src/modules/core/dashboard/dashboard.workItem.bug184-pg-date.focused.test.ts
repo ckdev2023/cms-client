@@ -32,7 +32,7 @@ import type {
 } from "./dashboard.shared";
 
 const ISO = "2026-08-31T00:00:00.000Z";
-const ISO_DATE = "2026-08-31";
+const ISO_DATE = "2026/08/31";
 
 function findDueMetaKey(metaKeys: { key: string }[] | undefined) {
   return metaKeys?.find((m) => m.key === "due") as

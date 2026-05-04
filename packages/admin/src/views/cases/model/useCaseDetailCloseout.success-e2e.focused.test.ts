@@ -119,6 +119,7 @@ describe("success closeout end-to-end via useCaseDetailModel (p1-qa-001-03)", ()
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [],
     forms: { templates: [], generated: [] },

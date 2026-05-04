@@ -1,6 +1,10 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { nextTick } from "vue";
-import { flushPromises } from "@vue/test-utils";
+import { flushPromises, mount } from "@vue/test-utils";
+import { i18n, setAppLocale } from "../../i18n";
+import documentsZhCN from "../../i18n/messages/documents/zh-CN";
+import documentsEnUS from "../../i18n/messages/documents/en-US";
+import documentsJaJP from "../../i18n/messages/documents/ja-JP";
 import { useDocumentFilters } from "./model/useDocumentFilters";
 import {
   useDocumentListModel,
@@ -404,5 +408,82 @@ describe("DocumentListView wiring — watch(apiParams) simulation", () => {
       page: 1,
       limit: DEFAULT_PAGE_SIZE,
     });
+  });
+});
+
+describe("DocumentListView — storageGate alert inline link", () => {
+  const routerLinkStub = {
+    props: ["to"],
+    template: '<a class="router-link" :href="String(to)"><slot /></a>',
+  };
+
+  function mountAlertFragment(locale: "zh-CN" | "en-US" | "ja-JP") {
+    setAppLocale(locale);
+    return mount(
+      {
+        template: `
+          <i18n-t
+            keypath="documents.storageGate.description"
+            tag="p"
+          >
+            <template #link>
+              <RouterLink
+                to="/settings?tab=storage-root"
+              >
+                {{ $t("documents.storageGate.settingsLinkText") }}
+              </RouterLink>
+            </template>
+          </i18n-t>
+        `,
+      },
+      {
+        global: {
+          plugins: [i18n],
+          stubs: { RouterLink: routerLinkStub },
+        },
+      },
+    );
+  }
+
+  it("i18n description keys contain {link} placeholder in all locales", () => {
+    expect(documentsZhCN.storageGate.description).toContain("{link}");
+    expect(documentsEnUS.storageGate.description).toContain("{link}");
+    expect(documentsJaJP.storageGate.description).toContain("{link}");
+  });
+
+  it("i18n settingsLinkText keys exist in all locales", () => {
+    expect(documentsZhCN.storageGate.settingsLinkText).toBeTruthy();
+    expect(documentsEnUS.storageGate.settingsLinkText).toBeTruthy();
+    expect(documentsJaJP.storageGate.settingsLinkText).toBeTruthy();
+  });
+
+  it("renders a link to /settings in zh-CN", () => {
+    const wrapper = mountAlertFragment("zh-CN");
+    const link = wrapper.find("a.router-link");
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toContain("/settings");
+    expect(link.text()).toBe("前往「系统设置」");
+  });
+
+  it("renders a link to /settings in en-US", () => {
+    const wrapper = mountAlertFragment("en-US");
+    const link = wrapper.find("a.router-link");
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toContain("/settings");
+    expect(link.text()).toBe("configure it in System Settings");
+  });
+
+  it("renders a link to /settings in ja-JP", () => {
+    const wrapper = mountAlertFragment("ja-JP");
+    const link = wrapper.find("a.router-link");
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toContain("/settings");
+    expect(link.text()).toBe("「システム設定」");
+  });
+
+  it("link href includes tab=storage-root query", () => {
+    const wrapper = mountAlertFragment("zh-CN");
+    const link = wrapper.find("a.router-link");
+    expect(link.attributes("href")).toBe("/settings?tab=storage-root");
   });
 });

@@ -428,6 +428,12 @@ export interface GateItem {
    *
    */
   title: string;
+  /** i18n key — 优先于 title；view 层存在时用 t(titleKey, titleParams) 渲染。 */
+  titleKey?: string;
+  /**
+   *
+   */
+  titleParams?: Record<string, unknown>;
   /**
    *
    */
@@ -436,6 +442,12 @@ export interface GateItem {
    *
    */
   note?: string;
+  /** i18n key — 优先于 note；view 层存在时用 t(noteKey, noteParams) 渲染。 */
+  noteKey?: string;
+  /**
+   *
+   */
+  noteParams?: Record<string, unknown>;
   /**
    *
    */
@@ -1355,6 +1367,8 @@ export interface CaseDetail {
    *
    */
   doubleReview: DoubleReviewEntry[];
+  /** 事务所是否启用双人复核策略。 */
+  reviewEnabled: boolean;
   /**
    *
    */

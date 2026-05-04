@@ -1,4 +1,4 @@
-import { ref, computed, type Ref } from "vue";
+import { ref, computed, watch, isRef, type Ref } from "vue";
 import type { UseOrgSettingsReturn } from "../../../shared/model/useOrgSettings";
 import type {
   SettingsPanel,
@@ -8,7 +8,7 @@ import type {
   GroupStats,
   OrgSettings,
 } from "../types";
-import { DEFAULT_PANEL } from "../fixtures";
+import { resolveSettingsPanel } from "../query";
 import {
   createToastController,
   createGroupNameModal,
@@ -81,6 +81,10 @@ export interface UseSettingsPageDeps {
    *
    */
   groupsRepository?: GroupsRepository;
+  /**
+   *
+   */
+  routeTab?: Ref<string | undefined>;
 }
 
 // ---------------------------------------------------------------------------
@@ -246,6 +250,29 @@ function buildOpenDisableModal(
 }
 
 // ---------------------------------------------------------------------------
+// Route-tab → activePanel binding
+// ---------------------------------------------------------------------------
+
+function createActivePanel(routeTab?: Ref<string | undefined>) {
+  const initialPanel = resolveSettingsPanel(
+    isRef(routeTab) ? routeTab.value : undefined,
+  );
+  const activePanel = ref<SettingsPanel>(initialPanel);
+
+  if (routeTab) {
+    watch(
+      routeTab,
+      (next) => {
+        activePanel.value = resolveSettingsPanel(next);
+      },
+      { flush: "sync" },
+    );
+  }
+
+  return activePanel;
+}
+
+// ---------------------------------------------------------------------------
 // Main composable
 // ---------------------------------------------------------------------------
 
@@ -260,7 +287,7 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     typeof deps.isAdmin === "boolean"
       ? computed(() => deps.isAdmin as boolean)
       : deps.isAdmin;
-  const activePanel = ref<SettingsPanel>(DEFAULT_PANEL);
+  const activePanel = createActivePanel(deps.routeTab);
   const gl = createGroupList(deps);
   const toast = createToastController({
     duration: deps.toastDuration,

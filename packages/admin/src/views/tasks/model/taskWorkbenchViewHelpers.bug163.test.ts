@@ -6,6 +6,7 @@ import {
   reminderMeta,
   reminderRecipientLabel,
   reminderShortId,
+  reminderTitle,
 } from "./taskWorkbenchViewHelpers";
 
 function createReminder(
@@ -15,6 +16,7 @@ function createReminder(
     id: "eefe7803-a4a8-4f38-870b-b6ebd12b3e97",
     caseId: "df9d1e84-fd62-4687-9297-decd8848412f",
     caseNo: "CASE-202604-0011",
+    caseTitle: "田中太郎 経営管理ビザ",
     targetType: "case",
     targetId: "df9d1e84-fd62-4687-9297-decd8848412f",
     remindAt: "2026-05-01T00:00:00.000Z",
@@ -40,6 +42,10 @@ const t = (key: string, named?: Record<string, string | number>): string => {
   if (key === "tasks.reminderMeta.dedupeKey")
     return `Dedupe ${String(named?.key)}`;
   if (key === "tasks.reminderMeta.empty") return "—";
+  if (key === "tasks.reminderTitle.case")
+    return `Case ${String(named?.caseNo)} · ${String(named?.title)}`;
+  if (key === "tasks.reminderTitle.fallback")
+    return `${String(named?.type)} · ${String(named?.id)}`;
   return key;
 };
 
@@ -183,5 +189,71 @@ describe("BUG-171 dedupeKey UUID masking", () => {
     expect(meta).not.toContain("Dedupe");
     expect(meta).not.toContain("residence_period");
     expect(meta).toBe("Case CASE-202604-0011 · Recipient Local Admin");
+  });
+});
+
+describe("R32-D reminderTitle case-type short-circuit", () => {
+  it("returns case title when targetType is case and caseNo present", () => {
+    const reminder = createReminder({
+      targetType: "case",
+      caseNo: "CASE-202604-0011",
+      caseTitle: "田中太郎 経営管理ビザ",
+      payloadSnapshot: null,
+    });
+    expect(reminderTitle(reminder, t)).toBe(
+      "Case CASE-202604-0011 · 田中太郎 経営管理ビザ",
+    );
+  });
+
+  it("uses empty string when caseTitle is null", () => {
+    const reminder = createReminder({
+      targetType: "case",
+      caseNo: "CASE-202604-0011",
+      caseTitle: null,
+      payloadSnapshot: null,
+    });
+    expect(reminderTitle(reminder, t)).toBe("Case CASE-202604-0011 · ");
+  });
+
+  it("falls back to generic fallback when caseNo is missing", () => {
+    const reminder = createReminder({
+      targetType: "case",
+      caseNo: null,
+      caseTitle: "田中太郎 経営管理ビザ",
+      payloadSnapshot: null,
+    });
+    expect(reminderTitle(reminder, t)).toBe(
+      "case · df9d1e84-fd62-4687-9297-decd8848412f",
+    );
+  });
+
+  it("prefers payload.label over case branch", () => {
+    const reminder = createReminder({
+      targetType: "case",
+      caseNo: "CASE-202604-0011",
+      caseTitle: "田中太郎 経営管理ビザ",
+      payloadSnapshot: { label: "Custom label from payload" },
+    });
+    expect(reminderTitle(reminder, t)).toBe("Custom label from payload");
+  });
+
+  it("prefers daysBefore branch over case branch", () => {
+    const tWithDays = (
+      key: string,
+      named?: Record<string, string | number>,
+    ): string => {
+      if (key === "tasks.reminderTitle.daysBeforeNoVisa")
+        return `Renewal reminder ${String(named?.days)} days before expiry`;
+      return t(key, named);
+    };
+    const reminder = createReminder({
+      targetType: "case",
+      caseNo: "CASE-202604-0011",
+      caseTitle: "田中太郎 経営管理ビザ",
+      payloadSnapshot: { daysBefore: 30 },
+    });
+    const result = reminderTitle(reminder, tWithDays);
+    expect(result).toContain("30");
+    expect(result).not.toContain("CASE-202604-0011");
   });
 });

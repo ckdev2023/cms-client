@@ -63,6 +63,7 @@ function makeDetail(overrides: Partial<CaseDetail> = {}): CaseDetail {
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [],
     forms: { templates: [], generated: [] },

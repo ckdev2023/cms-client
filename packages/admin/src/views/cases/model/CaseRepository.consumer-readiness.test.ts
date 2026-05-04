@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { type CaseRepository, createCaseRepository } from "./CaseRepository";
-
 import {
   type CaseListParams,
   type CaseListResult,
@@ -148,6 +147,7 @@ const REPOSITORY_REQUIRED_METHODS = [
   "createReminder",
   "createTask",
   "completeTask",
+  "createSubmissionPackage",
 ] as const;
 
 describe("CaseRepository interface surface (p0-fe-002f-04)", () => {

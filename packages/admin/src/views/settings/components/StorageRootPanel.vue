@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { STORAGE_ROOT_FIELDS, PATH_STRATEGY_TEXT_KEY } from "../fixtures";
 import type { OrgSettings } from "../types";
 
@@ -17,7 +18,7 @@ const emit = defineEmits<{
   save: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 /**
  * 根据字段 key 派发对应的输入变更事件。
@@ -135,7 +136,7 @@ function onFieldInput(key: string, value: string) {
               {{ t("settings.storageRoot.updatedAt") }}
             </dt>
             <dd class="storage-panel__meta-value">
-              {{ storageRoot.updatedAt }}
+              {{ formatDateTime(storageRoot.updatedAt, locale) }}
             </dd>
           </div>
         </dl>

@@ -26,7 +26,7 @@ const emit = defineEmits<{
   (e: "transition-to-case"): void;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const customerRef = computed(() => props.customer);
 const aggregateRef = computed(
   () => props.aggregate ?? null,
@@ -34,6 +34,7 @@ const aggregateRef = computed(
 const { intakeCard } = useCustomerBmvIntakeCardModel({
   customer: customerRef,
   aggregate: aggregateRef,
+  locale,
 });
 const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
   {
@@ -482,7 +483,6 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
   display: flex;
   justify-content: flex-end;
 }
-
 @media (max-width: 767px) {
   .bmv-intake-card__header,
   .bmv-intake-card__step,

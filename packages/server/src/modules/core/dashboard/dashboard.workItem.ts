@@ -16,11 +16,12 @@ function formatDateLabel(
   value: string | Date | null | undefined,
 ): string | undefined {
   if (value === null || value === undefined) return undefined;
-  if (value instanceof Date) {
-    if (Number.isNaN(value.getTime())) return undefined;
-    return value.toISOString().slice(0, 10);
-  }
-  return value.slice(0, 10);
+  const d = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(d.getTime())) return undefined;
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${String(y)}/${m}/${day}`;
 }
 
 function formatMoneyLabel(value: string | number): string {

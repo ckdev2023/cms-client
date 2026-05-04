@@ -25,6 +25,7 @@ function buildDetail(phase: string): CaseDetail {
     ...CASE_DETAIL_SAMPLES.work,
     businessPhase: phase,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
   };
 }

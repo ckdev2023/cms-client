@@ -11,6 +11,7 @@ function createReminder(
     id: "eefe7803-a4a8-4f38-870b-b6ebd12b3e97",
     caseId: "df9d1e84-fd62-4687-9297-decd8848412f",
     caseNo: "CASE-202604-0011",
+    caseTitle: "田中太郎 経営管理ビザ",
     targetType: "case",
     targetId: "df9d1e84-fd62-4687-9297-decd8848412f",
     remindAt: "2026-05-01T00:00:00.000Z",

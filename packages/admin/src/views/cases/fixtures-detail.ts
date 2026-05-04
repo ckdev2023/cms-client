@@ -322,6 +322,7 @@ function buildWorkSample(): CaseDetail {
         rejectReason: "源泉徴収票年份有误，需确认后重新提交",
       },
     ],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [
       {
@@ -1061,6 +1062,7 @@ function buildFamilySample(): CaseDetail {
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [
       {
@@ -1539,6 +1541,7 @@ function buildGateFailSample(): CaseDetail {
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [
       {
@@ -1960,6 +1963,7 @@ function buildArrearsSample(): CaseDetail {
         rejectReason: null,
       },
     ],
+    reviewEnabled: false,
     riskConfirmationRecord: {
       confirmedBy: "Manager",
       reason: "客户承诺本周内付清尾款，因期限紧迫优先提交",
@@ -2388,6 +2392,7 @@ function buildCorrectionSample(): CaseDetail {
         rejectReason: null,
       },
     ],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [
       {
@@ -2783,6 +2788,7 @@ function buildArchivedSample(): CaseDetail {
         rejectReason: null,
       },
     ],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [
       {

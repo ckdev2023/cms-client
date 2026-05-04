@@ -76,6 +76,7 @@ const BASE_DETAIL: CaseDetail = {
   submissionPackages: [],
   correctionPackage: null,
   doubleReview: [],
+  reviewEnabled: false,
   riskConfirmationRecord: null,
   documents: [],
   forms: { templates: [], generated: [] },

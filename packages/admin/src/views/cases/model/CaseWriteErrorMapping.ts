@@ -50,6 +50,19 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   TASK_INVALID_PRIORITY: "taskInvalidPriority",
   TASK_COMPLETE_FAILED: "taskCompleteFailed",
   TASK_NOT_FOUND: "taskNotFound",
+  SP_CASE_NOT_FOUND: "spCaseNotFound",
+  SP_NOT_FOUND: "spNotFound",
+  SP_CASE_STAGE_INVALID: "spCaseStageInvalid",
+  SP_SUPPLEMENT_REQUIRES_RELATED: "spSupplementRequiresRelated",
+  SP_INITIAL_NO_RELATED: "spInitialNoRelated",
+  SP_RELATED_NOT_FOUND: "spRelatedNotFound",
+  SP_RELATED_NOT_LATEST: "spRelatedNotLatest",
+  SP_RELATED_ALREADY_BRANCHED: "spRelatedAlreadyBranched",
+  SP_CHAIN_DEPTH_EXCEEDED: "spChainDepthExceeded",
+  SP_INVALID_SUBMISSION_KIND: "spInvalidSubmissionKind",
+  SP_INVALID_ITEM_TYPE: "spInvalidItemType",
+  SP_DUPLICATE_ITEM: "spDuplicateItem",
+  SP_MISSING_MINIMUM_FIELDS: "spMissingMinimumFields",
 };
 
 /**

@@ -142,10 +142,10 @@ export interface DocumentSummaryCardData {
    *
    */
   value: number;
-  /**
-   *
-   */
+  /** 统计卡片标签的 i18n key。 */
   labelKey: string;
+  /** 统计口径提示的 i18n key（可选）。 */
+  tooltipKey?: string;
 }
 
 // ─── List Item (cross-case list) ─────────────────────────────────

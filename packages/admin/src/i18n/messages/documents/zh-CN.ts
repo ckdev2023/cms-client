@@ -9,13 +9,14 @@ const documentsZhCN = {
     searchPlaceholder: "搜索：资料名 / 案件编号 / 案件名称",
     summary: {
       pendingReview: "待审核",
-      missing: "缺件",
+      missing: "缺件 / 待登记",
       expired: "过期",
       sharedExpiryRisk: "共享版本过期风险",
     },
     summaryHint: {
       pendingReview: "待审核",
-      missing: "缺件",
+      missing: "缺件 / 待登记",
+      missingTooltip: "包含状态：缺件、已驳回；不含已上传待审核",
       expired: "过期",
       sharedExpiryRisk: "共享版本过期风险",
     },
@@ -92,7 +93,8 @@ const documentsZhCN = {
   storageGate: {
     title: "本地资料根目录未配置",
     description:
-      "尚未设置本地归档根目录。请联系管理员先在「系统设置」中完成配置，之后才能登记资料。",
+      "尚未设置本地归档根目录。请联系管理员先{link}完成配置，之后才能登记资料。",
+    settingsLinkText: "前往「系统设置」",
     buttonTooltip: "请先在「系统设置」中配置本地资料根目录",
   },
   register: {

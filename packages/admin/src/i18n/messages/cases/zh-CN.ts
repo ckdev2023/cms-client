@@ -675,11 +675,12 @@ const casesZhCN = {
         startCta: "发起复核",
         empty: "暂无复核记录",
         rejectReasonLabel: "驳回原因：",
+        disabledByPolicy: "事务所未启用双人复核",
       },
       risk: {
         title: "欠款风险确认记录",
         empty: "当前无欠款风险确认",
-        simulateCta: "模拟欠款确认",
+        registerRiskAckCta: "登记欠款风险确认",
         rows: {
           confirmedBy: "确认人",
           reason: "原因",
@@ -809,8 +810,8 @@ const casesZhCN = {
       unpaidTotal: "待收金额",
     },
     tabCounters: {
-      blocking: "卡点{count}",
-      pending: "待办{count}",
+      blocking: "卡点 {count}",
+      pending: "待办 {count}",
     },
     phases: {
       CONSULTING: "咨询中",
@@ -856,11 +857,11 @@ const casesZhCN = {
       work: "工作签证",
       bmv: "经营管理签",
       biz_mgmt: "经营管理签",
-      biz_mgmt_4m: "经营管理（认定4个月）",
-      biz_mgmt_1y: "经营管理（认定1年）",
-      biz_mgmt_cert_4m: "经营管理（认定4个月）",
-      biz_mgmt_cert_1y: "经营管理（认定1年）",
-      biz_mgmt_renewal: "经营管理（更新）",
+      biz_mgmt_4m: "经营管理签 · 认定 4 个月",
+      biz_mgmt_1y: "经营管理签 · 认定 1 年",
+      biz_mgmt_cert_4m: "经营管理签 · 认定 4 个月",
+      biz_mgmt_cert_1y: "经营管理签 · 认定 1 年",
+      biz_mgmt_renewal: "经营管理签 · 更新",
       hum: "技人国（认定）",
       hum_renewal: "技人国（更新）",
       eng_humanities_intl_cert: "技人国（认定）",
@@ -930,6 +931,19 @@ const casesZhCN = {
     taskInvalidPriority: "任务优先级不合法，请选择有效的优先级。",
     taskCompleteFailed: "任务完成操作失败，请稍后重试。",
     taskNotFound: "指定的任务不存在或已被删除。",
+    spCaseNotFound: "关联案件不存在，无法创建提交包。",
+    spNotFound: "提交包不存在或已被删除。",
+    spCaseStageInvalid: "当前案件阶段不允许创建提交包。",
+    spSupplementRequiresRelated: "补正提出必须关联一个已有提交包。",
+    spInitialNoRelated: "初回提出不应关联已有提交包。",
+    spRelatedNotFound: "关联的提交包不存在。",
+    spRelatedNotLatest: "关联的提交包不是最新版本，请刷新后重试。",
+    spRelatedAlreadyBranched: "关联的提交包已有补正分支。",
+    spChainDepthExceeded: "补正链层级超限。",
+    spInvalidSubmissionKind: "提交类型不合法。",
+    spInvalidItemType: "提交包项类型不合法。",
+    spDuplicateItem: "提交包内存在重复项。",
+    spMissingMinimumFields: "提交包缺少必要字段，请检查后重试。",
   },
   log: {
     category: {
@@ -993,6 +1007,8 @@ const casesZhCN = {
   validation: {
     refReport: "详细请参阅检查报告",
     lastFailed: "上次检查有未通过项，请修改后重新检查。",
+    blockingSummary: "{count} 项阻断未处理",
+    warningSummary: "{count} 项警告未处理",
   },
   deadlines: {
     summary: {

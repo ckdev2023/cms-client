@@ -34,7 +34,12 @@ defineProps<{
           {{ t(`documents.list.summary.${card.key}`) }}
         </div>
         <div class="doc-summary-card__value">{{ card.value }}</div>
-        <div class="doc-summary-card__hint">{{ t(card.labelKey) }}</div>
+        <div
+          class="doc-summary-card__hint"
+          :title="card.tooltipKey ? t(card.tooltipKey) : undefined"
+        >
+          {{ t(card.labelKey) }}
+        </div>
       </div>
     </div>
   </section>

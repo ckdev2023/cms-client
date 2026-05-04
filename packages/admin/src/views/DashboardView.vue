@@ -37,6 +37,7 @@ const {
   errorCode,
   hasData,
   isGroupFilterDisabled,
+  isGroupTabDisabled,
   scopeSummaryKey,
   retry,
 } = dashboard;
@@ -51,6 +52,10 @@ const feedbackMessage = computed(() => {
 
   if (errorCode.value === "unauthorized") {
     return t("dashboard.state.unauthorized");
+  }
+
+  if (errorCode.value === "noGroupAccess") {
+    return t("dashboard.state.noGroupAccess");
   }
 
   if (errorCode.value === "requestFailed") {
@@ -106,6 +111,12 @@ watch(errorCode, (nextErrorCode) => {
               type="button"
               role="tab"
               :aria-selected="scope === s"
+              :disabled="s === 'group' && isGroupTabDisabled"
+              :title="
+                s === 'group' && isGroupTabDisabled
+                  ? t('dashboard.scope.groupNotMember')
+                  : undefined
+              "
               @click="scope = s"
             >
               {{ t(`dashboard.scope.${s}`) }}
@@ -144,7 +155,12 @@ watch(errorCode, (nextErrorCode) => {
       :aria-live="errorCode ? 'assertive' : 'polite'"
     >
       <span>{{ feedbackMessage }}</span>
-      <button v-if="errorCode" class="mini-btn" type="button" @click="retry()">
+      <button
+        v-if="errorCode && errorCode !== 'noGroupAccess'"
+        class="mini-btn"
+        type="button"
+        @click="retry()"
+      >
         {{ t("dashboard.state.retry") }}
       </button>
     </div>

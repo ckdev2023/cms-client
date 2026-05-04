@@ -18,7 +18,7 @@ export { isTerminalPhase } from "./useCasePhaseTransitionMenu";
  * Tab 标签上的计数器信息。
  */
 export interface TabCounter {
-  /** fallback 显示文案（如 "8/16" 或 "卡点2"）。 */
+  /** fallback 显示文案（如 "8/16" 或 "卡点 2"）。 */
   label: string;
   /** 语义色调。 */
   tone: "default" | "warning" | "danger";
@@ -71,7 +71,7 @@ function deriveTabCounters(
   const blockingCount = d.validation.blocking.length;
   if (blockingCount > 0) {
     result.validation = {
-      label: `卡点${blockingCount}`,
+      label: `卡点 ${blockingCount}`,
       i18nKey: "cases.constants.tabCounters.blocking",
       i18nParams: { count: blockingCount },
       tone: "danger",
@@ -81,7 +81,7 @@ function deriveTabCounters(
   const pendingTasks = d.tasks.filter((tk) => !tk.done).length;
   if (pendingTasks > 0) {
     result.tasks = {
-      label: `待办${pendingTasks}`,
+      label: `待办 ${pendingTasks}`,
       i18nKey: "cases.constants.tabCounters.pending",
       i18nParams: { count: pendingTasks },
       tone: "warning",
@@ -314,6 +314,7 @@ function createDetailModelResult(input: {
     updateCaseFields: input.writeActions.updateCaseFields,
     retryReminderCreation: input.writeActions.retryReminderCreation,
     failureClose: input.writeActions.failureClose,
+    createSubmissionPackage: input.writeActions.createSubmissionPackage,
     publishMessage: input.writeActions.publishMessage,
     createReminder: input.writeActions.createReminder,
     createGeneratedDocument: input.writeActions.createGeneratedDocument,

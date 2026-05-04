@@ -11,6 +11,7 @@ import type { CommFilter, CustomerComm } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { getCommChannelLabel } from "../types";
 import { useCustomerCommsModel } from "../model/useCustomerCommsModel";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 沟通记录 Tab：展示按可见范围筛选的沟通时间线，保留"记录沟通"入口占位。 */
 const props = defineProps<{
@@ -18,7 +19,7 @@ const props = defineProps<{
   repository: Pick<CustomerRepository, "listComms">;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const customerIdRef = computed(() => props.customerId);
 const {
@@ -67,14 +68,13 @@ function visibilityLabel(c: CustomerComm) {
 }
 
 /**
- * 格式化 ISO 日期时间为可读格式。
+ * 格式化 ISO 日期时间为本地展示文本。
  *
- * @param iso ISO 格式字符串
- * @returns 格式化后的日期时间
+ * @param iso - ISO 日期时间字符串
+ * @returns 格式化后的日期时间文本
  */
-function formatDateTime(iso: string): string {
-  if (!iso) return "—";
-  return iso.replace("T", " ");
+function fmtDateTime(iso: string): string {
+  return formatDateTime(iso, locale.value) || "—";
 }
 </script>
 
@@ -161,7 +161,7 @@ function formatDateTime(iso: string): string {
           <div class="comms-tab__item-footer">
             <span class="comms-tab__item-actor">{{ c.actor }}</span>
             <span class="comms-tab__item-time">
-              {{ formatDateTime(c.occurredAt) }}
+              {{ fmtDateTime(c.occurredAt) }}
             </span>
           </div>
         </article>

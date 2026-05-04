@@ -151,6 +151,7 @@ export const EMPTY_LISTS = {
   submissionPackages: [] as never[],
   correctionPackage: null,
   doubleReview: [] as never[],
+  reviewEnabled: false,
   documents: [] as never[],
   forms: { templates: [] as never[], generated: [] as never[] },
   tasks: [] as never[],

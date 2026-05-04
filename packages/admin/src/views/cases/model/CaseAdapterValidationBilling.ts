@@ -199,15 +199,19 @@ export function adaptCaseValidationData(value: unknown): ValidationData | null {
   if (blocking.length === 0 && readNumber(latest, "blockingCount") > 0) {
     blocking.push({
       gate: "A",
-      title: `${readNumber(latest, "blockingCount")} 件の阻断項目`,
-      note: "cases.validation.refReport",
+      title: "",
+      titleKey: "cases.validation.blockingSummary",
+      titleParams: { count: readNumber(latest, "blockingCount") },
+      noteKey: "cases.validation.refReport",
     });
   }
   if (warnings.length === 0 && readNumber(latest, "warningCount") > 0) {
     warnings.push({
       gate: "B",
-      title: `${readNumber(latest, "warningCount")} 件の警告項目`,
-      note: "cases.validation.refReport",
+      title: "",
+      titleKey: "cases.validation.warningSummary",
+      titleParams: { count: readNumber(latest, "warningCount") },
+      noteKey: "cases.validation.refReport",
     });
   }
 
@@ -241,7 +245,6 @@ const PAYMENT_ROW_KIND_TYPE_LABELS: Record<PaymentRowKind, string> = {
 function adaptBillingPlanToPaymentRow(value: unknown): PaymentRow | null {
   const r = asRecord(value);
   if (!r) return null;
-
   const amountDue = readNumber(r, "amountDue");
   const status = readString(r, "status") || "due";
   const dueDate = readNullableString(r, "dueDate");
@@ -434,7 +437,6 @@ export function adaptCaseSubmissionPackages(
 ): SubmissionPackage[] | null {
   const items = readArrayOrItems(value);
   if (!items) return null;
-
   return items
     .map(adaptSubmissionPackageDto)
     .filter((pkg): pkg is SubmissionPackage => pkg !== null);
@@ -462,7 +464,6 @@ function adaptReviewRecordDto(value: unknown): DoubleReviewEntry | null {
   if (!r) return null;
   const id = readString(r, "id");
   if (!id) return null;
-
   const decision = readString(r, "decision");
   const reviewerName =
     readNullableString(r, "reviewerDisplayName") ??
@@ -483,17 +484,16 @@ function adaptReviewRecordDto(value: unknown): DoubleReviewEntry | null {
 }
 
 /**
- * 适配复核记录列表。
+ * 适配复核记录列表。格式无效时返回 `null`。
  *
- * @param value - `/api/review-records?caseId=xxx` 返回的原始 JSON
- * @returns 复核记录列表，格式无效时返回 `null`
+ * @param value - 原始 JSON
+ * @returns 复核记录列表
  */
 export function adaptCaseDoubleReviewEntries(
   value: unknown,
 ): DoubleReviewEntry[] | null {
   const items = readArrayOrItems(value);
   if (!items) return null;
-
   return items
     .map(adaptReviewRecordDto)
     .filter((entry): entry is DoubleReviewEntry => entry !== null);

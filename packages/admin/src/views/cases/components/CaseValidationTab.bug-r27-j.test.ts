@@ -24,6 +24,7 @@ function buildDetail(overrides: Partial<CaseDetail>): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     ...overrides,
   };

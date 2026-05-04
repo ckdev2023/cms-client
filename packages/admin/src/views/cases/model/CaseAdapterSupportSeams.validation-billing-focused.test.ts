@@ -150,11 +150,15 @@ describe("validation tab summary display (p0-fe-006b-03)", () => {
       ],
     })!;
     expect(result.blocking).toHaveLength(1);
-    expect(result.blocking[0].title).toContain("5");
-    expect(result.blocking[0].title).toContain("阻断");
+    expect(result.blocking[0].titleKey).toBe(
+      "cases.validation.blockingSummary",
+    );
+    expect(result.blocking[0].titleParams).toEqual({ count: 5 });
+    expect(result.blocking[0].noteKey).toBe("cases.validation.refReport");
     expect(result.warnings).toHaveLength(1);
-    expect(result.warnings[0].title).toContain("3");
-    expect(result.warnings[0].title).toContain("警告");
+    expect(result.warnings[0].titleKey).toBe("cases.validation.warningSummary");
+    expect(result.warnings[0].titleParams).toEqual({ count: 3 });
+    expect(result.warnings[0].noteKey).toBe("cases.validation.refReport");
   });
 
   it("retriggerNote present only for failed status", () => {

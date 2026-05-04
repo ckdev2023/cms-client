@@ -138,6 +138,10 @@ function buildTaskCompleteUrl(casesApiPath: string, taskId: string): string {
   return casesApiPath.replace(/\/cases\/?$/, "") + `/tasks/${taskId}/complete`;
 }
 
+function buildSubmissionPackagesPostUrl(casesApiPath: string): string {
+  return casesApiPath.replace(/\/cases\/?$/, "") + "/submission-packages";
+}
+
 /**
  * 创建 `completeTask` 写入函数。
  *
@@ -152,5 +156,68 @@ export function createCompleteTask(runtime: CaseRepositoryRuntime) {
       method: "POST",
       adapt: adaptWriteResult,
       errorMessage: "Invalid complete task response",
+    });
+}
+
+/**
+ * 新建提交包的输入。
+ * P0 最小集：`caseId` + `items` 必填，其余字段由后端门禁兜底。
+ */
+export interface SubmissionPackageCreateInput {
+  /**
+   *
+   */
+  caseId: string;
+  /**
+   *
+   */
+  submissionKind?: "initial" | "supplement";
+  /**
+   *
+   */
+  validationRunId?: string | null;
+  /**
+   *
+   */
+  reviewRecordId?: string | null;
+  /**
+   *
+   */
+  items: Array<{
+    itemType: string;
+    refId: string;
+    snapshotPayload?: Record<string, unknown> | null;
+  }>;
+}
+
+function buildCreateSubmissionPackagePayload(
+  input: SubmissionPackageCreateInput,
+): Record<string, unknown> {
+  return {
+    caseId: input.caseId,
+    submissionKind: input.submissionKind ?? "initial",
+    validationRunId: input.validationRunId,
+    reviewRecordId: input.reviewRecordId,
+    items: input.items,
+  };
+}
+
+/**
+ * 创建 `createSubmissionPackage` 写入函数。
+ *
+ * @param runtime - 案件仓储运行时
+ * @returns 发起 `POST /submission-packages` 的函数
+ */
+export function createCreateSubmissionPackage(runtime: CaseRepositoryRuntime) {
+  return async (
+    input: SubmissionPackageCreateInput,
+  ): Promise<WriteResultWithId> =>
+    requestAndAdapt({
+      runtime,
+      url: buildSubmissionPackagesPostUrl(runtime.apiPath),
+      method: "POST",
+      body: buildCreateSubmissionPackagePayload(input),
+      adapt: adaptWriteResult,
+      errorMessage: "Invalid create submission package response",
     });
 }

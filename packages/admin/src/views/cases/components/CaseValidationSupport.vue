@@ -10,10 +10,12 @@ import type { CaseDetail, DoubleReviewEntry } from "../types-detail";
 const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
+  reviewLoading?: boolean;
 }>();
 
 defineEmits<{
   (e: "open-risk-modal"): void;
+  (e: "start-review"): void;
 }>();
 
 const { t } = useI18n();
@@ -87,8 +89,13 @@ const coeNoteKeySuffix = computed<string>(() => {
           v-if="!readonly"
           size="sm"
           pill
-          disabled
-          :title="t('shell.topbar.comingSoon')"
+          :disabled="!detail.reviewEnabled || reviewLoading"
+          :title="
+            detail.reviewEnabled
+              ? undefined
+              : t('cases.detail.validation.reviewer.disabledByPolicy')
+          "
+          @click="detail.reviewEnabled && $emit('start-review')"
           >{{ t("cases.detail.validation.reviewer.startCta") }}</Button
         >
       </template>
@@ -216,10 +223,9 @@ const coeNoteKeySuffix = computed<string>(() => {
           v-if="!readonly"
           size="sm"
           pill
-          disabled
-          :title="t('shell.topbar.comingSoon')"
+          @click="$emit('open-risk-modal')"
         >
-          {{ t("cases.detail.validation.risk.simulateCta") }}
+          {{ t("cases.detail.validation.risk.registerRiskAckCta") }}
         </Button>
       </div>
     </Card>

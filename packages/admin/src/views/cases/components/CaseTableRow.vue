@@ -70,6 +70,36 @@ const typeLabel = computed(() => {
   return translated !== key ? translated : code;
 });
 
+/**
+ * 名称为空时使用申请人与类型拼接兜底显示名。
+ *
+ * @param applicant - 申请人
+ * @param typeLabel - 签证类型标签
+ * @param caseNo - 案件编号
+ * @param id - 案件 ID
+ * @returns 兜底显示名
+ */
+function buildFallbackName(
+  applicant: string | undefined,
+  typeLabel: string,
+  caseNo: string | undefined,
+  id: string,
+): string {
+  const app = applicant?.trim();
+  const label = typeLabel !== "—" ? typeLabel : "";
+  if (app && label) return `${app} · ${label}`;
+  if (app) return app;
+  if (label) return label;
+  return caseNo || id;
+}
+
+const displayName = computed(() => {
+  const { name, caseNo, id } = props.item;
+  const isFallback = name === caseNo || name?.trim() === id;
+  if (!isFallback && name?.trim()) return name;
+  return buildFallbackName(props.item.applicant, typeLabel.value, caseNo, id);
+});
+
 const identityMeta = computed(() => props.item.caseNo || props.item.id);
 
 const FAILURE_STEP_CODES = new Set(["VISA_REJECTED"]);
@@ -85,7 +115,7 @@ const isFailureStep = computed(
   <tr class="case-row">
     <td>
       <div class="case-row__identity" :title="item.id">
-        <a class="case-row__name" :href="detailHref">{{ item.name }}</a>
+        <a class="case-row__name" :href="detailHref">{{ displayName }}</a>
         <span class="case-row__meta">{{ identityMeta }}</span>
       </div>
     </td>

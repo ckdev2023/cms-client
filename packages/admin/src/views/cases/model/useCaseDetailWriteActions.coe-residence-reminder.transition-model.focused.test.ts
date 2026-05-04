@@ -199,6 +199,7 @@ describe("useCaseDetailModel COE/residence/reminder fields (p1-fe-004-03)", () =
     submissionPackages: [],
     correctionPackage: null,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
     documents: [],
     forms: { templates: [], generated: [] },

@@ -63,7 +63,9 @@ import {
   createCreateCommunicationLog,
   createCreateGeneratedDocument,
   createCreateReminder,
+  createCreateSubmissionPackage,
   createCreateTask,
+  type SubmissionPackageCreateInput,
   type WriteResultWithId,
 } from "./CaseRepositoryWriteSide";
 import type { CommunicationLogCreateInput } from "./CaseAdapterMessageWriteBuilders";
@@ -282,6 +284,15 @@ export interface CaseRepository {
    * 数据源：`POST /api/tasks/:id/complete`。
    */
   completeTask(taskId: string): Promise<WriteResultWithId>;
+
+  /**
+   * 新建提交包。
+   * 数据源：`POST /api/submission-packages`。
+   * 前置门禁（校验通过、复核通过等）由后端兜底。
+   */
+  createSubmissionPackage(
+    input: SubmissionPackageCreateInput,
+  ): Promise<WriteResultWithId>;
 }
 
 export { CaseRepositoryError };
@@ -334,5 +345,6 @@ export function createCaseRepository(
     createReminder: createCreateReminder(runtime),
     createTask: createCreateTask(runtime),
     completeTask: createCompleteTask(runtime),
+    createSubmissionPackage: createCreateSubmissionPackage(runtime),
   };
 }

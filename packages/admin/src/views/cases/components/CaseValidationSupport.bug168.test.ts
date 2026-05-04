@@ -57,6 +57,7 @@ function buildDetailEmpty(): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
     doubleReview: [],
+    reviewEnabled: false,
     riskConfirmationRecord: null,
   };
 }
@@ -93,7 +94,7 @@ const ZH_LABELS = [
   "确认时间",
   "涉及金额",
   "当前无欠款风险确认",
-  "模拟欠款确认",
+  "登记欠款风险确认",
   "下签后处理",
   "当前案件未到该阶段",
 ];
@@ -115,7 +116,7 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     const html = mountComponent("zh-CN", buildDetailEmpty()).html();
     expect(html).toContain("暂无复核记录");
     expect(html).toContain("当前无欠款风险确认");
-    expect(html).toContain("模拟欠款确认");
+    expect(html).toContain("登记欠款风险确认");
   });
 
   it("en-US renders English copy with review + risk data", () => {
@@ -137,7 +138,7 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     const html = mountComponent("en-US", buildDetailEmpty()).html();
     expect(html).toContain("No review records yet");
     expect(html).toContain("No arrears risk confirmation");
-    expect(html).toContain("Simulate Risk Confirmation");
+    expect(html).toContain("Acknowledge billing risk");
   });
 
   it("en-US contains no Chinese-only labels", () => {
@@ -168,7 +169,7 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     const html = mountComponent("ja-JP", buildDetailEmpty()).html();
     expect(html).toContain("レビュー記録がありません");
     expect(html).toContain("未収リスク確認がありません");
-    expect(html).toContain("未収確認をシミュレート");
+    expect(html).toContain("料金リスクを登録");
   });
 
   it("ja-JP contains no Chinese-only labels", () => {
@@ -180,13 +181,13 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     }
   });
 
-  it("readonly mode hides startCta and simulateCta across locales", () => {
+  it("readonly mode hides startCta and registerRiskAckCta across locales", () => {
     const htmlEn = mountComponent("en-US", buildDetailEmpty(), true).html();
     expect(htmlEn).not.toContain("Start Review");
-    expect(htmlEn).not.toContain("Simulate Risk Confirmation");
+    expect(htmlEn).not.toContain("Acknowledge billing risk");
 
     const htmlJa = mountComponent("ja-JP", buildDetailEmpty(), true).html();
     expect(htmlJa).not.toContain("レビューを開始");
-    expect(htmlJa).not.toContain("未収確認をシミュレート");
+    expect(htmlJa).not.toContain("料金リスクを登録");
   });
 });

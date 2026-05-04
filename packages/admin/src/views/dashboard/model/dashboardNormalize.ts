@@ -287,6 +287,7 @@ export function normalizeDashboardGroupOption(
     id,
     name,
     isPrimary: candidate.isPrimary === true,
+    isMember: candidate.isMember === true,
   };
 }
 

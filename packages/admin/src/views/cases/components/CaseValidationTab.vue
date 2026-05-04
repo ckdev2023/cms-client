@@ -12,11 +12,18 @@ import type { CaseDetailTab } from "../types";
 defineProps<{
   detail: CaseDetail;
   readonly: boolean;
+  rerunLoading?: boolean;
+  rerunError?: string | null;
+  createSpLoading?: boolean;
+  reviewLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "switch-tab", tab: CaseDetailTab): void;
   (e: "open-risk-modal"): void;
+  (e: "rerun-validation"): void;
+  (e: "create-submission-package"): void;
+  (e: "start-review"): void;
 }>();
 
 const { t } = useI18n();
@@ -81,8 +88,9 @@ function onNavigate(tab: CaseDetailTab | string) {
               variant="filled"
               tone="primary"
               size="sm"
-              disabled
-              :title="t('shell.topbar.comingSoon')"
+              :disabled="rerunLoading"
+              :aria-busy="rerunLoading"
+              @click="emit('rerun-validation')"
             >
               <svg
                 width="14"
@@ -122,7 +130,13 @@ function onNavigate(tab: CaseDetailTab | string) {
               >
                 <div class="vt__item-row">
                   <div class="vt__item-main">
-                    <div class="vt__item-title">{{ item.title }}</div>
+                    <div class="vt__item-title">
+                      {{
+                        item.titleKey
+                          ? t(item.titleKey, item.titleParams ?? {})
+                          : item.title
+                      }}
+                    </div>
                     <div v-if="item.fix" class="vt__item-desc">
                       {{
                         t(
@@ -173,12 +187,20 @@ function onNavigate(tab: CaseDetailTab | string) {
                 :key="`w-${i}`"
                 :class="['vt__item', itemClass(item)]"
               >
-                <div class="vt__item-title">{{ item.title }}</div>
-                <div v-if="item.note" class="vt__item-desc">
+                <div class="vt__item-title">
                   {{
-                    t("cases.detail.validation.tab.gateCard.suggestion", {
-                      note: item.note,
-                    })
+                    item.titleKey
+                      ? t(item.titleKey, item.titleParams ?? {})
+                      : item.title
+                  }}
+                </div>
+                <div v-if="item.noteKey || item.note" class="vt__item-desc">
+                  {{
+                    item.noteKey
+                      ? t(item.noteKey, item.noteParams ?? {})
+                      : t("cases.detail.validation.tab.gateCard.suggestion", {
+                          note: item.note,
+                        })
                   }}
                 </div>
               </div>
@@ -225,7 +247,7 @@ function onNavigate(tab: CaseDetailTab | string) {
 
           <template #footer>
             <div v-if="detail.validation.retriggerNote" class="vt__retrigger">
-              {{ detail.validation.retriggerNote }}
+              {{ t(detail.validation.retriggerNote) }}
             </div>
           </template>
         </Card>
@@ -241,8 +263,9 @@ function onNavigate(tab: CaseDetailTab | string) {
             <Button
               v-if="!readonly"
               size="sm"
-              disabled
-              :title="t('shell.topbar.comingSoon')"
+              :disabled="createSpLoading"
+              :aria-busy="createSpLoading"
+              @click="emit('create-submission-package')"
             >
               <svg
                 width="14"
@@ -350,7 +373,9 @@ function onNavigate(tab: CaseDetailTab | string) {
     <CaseValidationSupport
       :detail="detail"
       :readonly="readonly"
+      :review-loading="reviewLoading"
       @open-risk-modal="emit('open-risk-modal')"
+      @start-review="emit('start-review')"
     />
   </div>
 </template>

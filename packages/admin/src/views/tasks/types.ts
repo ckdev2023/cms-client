@@ -89,6 +89,10 @@ export interface ReminderRecord {
    */
   caseNo: string | null;
   /**
+   * 服务端 join `cases.title` 解析出的案件标题，缺失时为 `null`（R32-D）。
+   */
+  caseTitle: string | null;
+  /**
    *
    */
   targetType: string;

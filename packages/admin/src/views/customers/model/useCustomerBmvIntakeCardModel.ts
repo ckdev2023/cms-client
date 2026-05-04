@@ -1,4 +1,5 @@
 import { computed, type Ref } from "vue";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CustomerDetail } from "../types";
 import type {
@@ -214,33 +215,8 @@ export interface CustomerBmvIntakeCardViewModel {
 type UseCustomerBmvIntakeCardModelInput = {
   customer: Ref<CustomerDetail | null>;
   aggregate?: Ref<CustomerBmvAggregate | null>;
+  locale: Ref<string>;
 };
-
-/**
- * 提取需要显式展示的 UTC 时区后缀，避免卡片把 UTC 时间误认为本地时间。
- *
- * @param value 原始 ISO 时间字符串
- * @returns 若为 UTC 时间则返回 ` (UTC)`，否则返回空字符串
- */
-function readUtcSuffix(value: string): string {
-  return /(Z|[+-]00:00)$/i.test(value) ? " (UTC)" : "";
-}
-
-/**
- * 将 ISO 日期时间格式化为卡片可读文本；当原始值为 UTC 时显式附带时区标记。
- *
- * @param value ISO 时间字符串或 null
- * @returns 格式化后的展示文案
- */
-function formatDateTime(value: string | null): string {
-  const normalized = String(value ?? "").trim();
-  if (!normalized) return "—";
-  const base = normalized
-    .replace("T", " ")
-    .replace(/(Z|[+-][0-9]{2}:[0-9]{2})$/, "")
-    .slice(0, 16);
-  return `${base}${readUtcSuffix(normalized)}`;
-}
 
 function intakeStageTone(profile: CustomerBmvProfile): ChipTone {
   switch (profile.intakeStatus) {
@@ -303,22 +279,24 @@ function resolveGateHintKey(profile: CustomerBmvProfile): LabelKey {
 
 function buildQuoteHistoryItems(
   history: BmvQuoteVersion[],
+  locale: string,
 ): CustomerBmvQuoteHistoryItemViewModel[] {
   return history.map((v) => ({
     id: v.id,
     versionLabel: `v${v.version}`,
     amount: v.amount,
-    createdAt: formatDateTime(v.createdAt),
+    createdAt: formatDateTime(v.createdAt, locale),
     isCurrent: v.isCurrent,
   }));
 }
 
 function buildSurveyDataViewModel(
   summary: BmvSurveyDataSummary | null,
+  locale: string,
 ): CustomerBmvSurveyDataViewModel | null {
   if (!summary) return null;
   return {
-    completedAt: formatDateTime(summary.completedAt),
+    completedAt: formatDateTime(summary.completedAt, locale),
     fieldCount: summary.fieldCount,
     highlightFields: summary.highlightFields,
   };
@@ -326,6 +304,7 @@ function buildSurveyDataViewModel(
 
 function buildLinkedCaseViewModel(
   linked: BmvLinkedCaseSummary | null,
+  locale: string,
 ): CustomerBmvLinkedCaseViewModel | null {
   if (!linked) return null;
   return {
@@ -334,20 +313,23 @@ function buildLinkedCaseViewModel(
     stage: linked.stage,
     postApprovalStage: linked.postApprovalStage,
     coeStatus: linked.coeStatus,
-    coeIssuedAt: linked.coeIssuedAt ? formatDateTime(linked.coeIssuedAt) : null,
+    coeIssuedAt: linked.coeIssuedAt
+      ? formatDateTime(linked.coeIssuedAt, locale)
+      : null,
     coeExpiresAt: linked.coeExpiresAt
-      ? formatDateTime(linked.coeExpiresAt)
+      ? formatDateTime(linked.coeExpiresAt, locale)
       : null,
   };
 }
 
 function buildReminderItems(
   reminders: BmvReminderSummary[],
+  locale: string,
 ): CustomerBmvReminderItemViewModel[] {
   return reminders.map((r) => ({
     id: r.id,
     type: r.type,
-    dueAt: formatDateTime(r.dueAt),
+    dueAt: formatDateTime(r.dueAt, locale),
     status: r.status,
   }));
 }
@@ -376,27 +358,28 @@ function buildStepStatuses(
 
 function buildTimelineItems(
   profile: CustomerBmvProfile,
+  locale: string,
 ): CustomerBmvIntakeCardTimelineItemViewModel[] {
   return [
     {
       labelKey: "customers.detail.bmvIntake.timeline.questionnaireSentAt",
-      value: formatDateTime(profile.questionnaireSentAt),
+      value: formatDateTime(profile.questionnaireSentAt, locale),
     },
     {
       labelKey: "customers.detail.bmvIntake.timeline.questionnaireReturnedAt",
-      value: formatDateTime(profile.questionnaireReturnedAt),
+      value: formatDateTime(profile.questionnaireReturnedAt, locale),
     },
     {
       labelKey: "customers.detail.bmvIntake.timeline.quoteGeneratedAt",
-      value: formatDateTime(profile.quoteGeneratedAt),
+      value: formatDateTime(profile.quoteGeneratedAt, locale),
     },
     {
       labelKey: "customers.detail.bmvIntake.timeline.quoteConfirmedAt",
-      value: formatDateTime(profile.quoteConfirmedAt),
+      value: formatDateTime(profile.quoteConfirmedAt, locale),
     },
     {
       labelKey: "customers.detail.bmvIntake.timeline.signedAt",
-      value: formatDateTime(profile.signedAt),
+      value: formatDateTime(profile.signedAt, locale),
     },
   ];
 }
@@ -423,14 +406,17 @@ const DEFAULT_NOT_STARTED_BMV_PROFILE: CustomerBmvProfile = {
  *
  * @param customer - 客户详情；为 null 时返回 null。
  * @param aggregate - 可选的 BMV 聚合数据（来自 GET /admin/customers/:id/bmv）。
+ * @param locale - 当前语言区域（日期格式化用）。
  * @returns 可直接供视图渲染的承接卡片展示态；客户为 null 时返回 null。
  */
 export function buildCustomerBmvIntakeCardViewModel(
   customer: CustomerDetail | null,
   aggregate?: CustomerBmvAggregate | null,
+  locale: string = "ja-JP",
 ): CustomerBmvIntakeCardViewModel | null {
   if (!customer) return null;
   const profile = customer.bmvProfile ?? DEFAULT_NOT_STARTED_BMV_PROFILE;
+  const agg = resolveAggregateSlices(aggregate);
 
   return {
     stage: {
@@ -440,17 +426,24 @@ export function buildCustomerBmvIntakeCardViewModel(
     nextStepKey: resolveNextStepKey(profile),
     gateHintKey: resolveGateHintKey(profile),
     stepStatuses: buildStepStatuses(profile),
-    timeline: buildTimelineItems(profile),
+    timeline: buildTimelineItems(profile, locale),
     note: profile.note,
-    quoteHistory: buildQuoteHistoryItems(aggregate?.quoteHistory ?? []),
-    surveyDataSummary: buildSurveyDataViewModel(
-      aggregate?.surveyDataSummary ?? null,
-    ),
-    linkedCase: buildLinkedCaseViewModel(aggregate?.linkedCase ?? null),
-    reminders: buildReminderItems(aggregate?.reminders ?? []),
+    quoteHistory: buildQuoteHistoryItems(agg.quoteHistory, locale),
+    surveyDataSummary: buildSurveyDataViewModel(agg.surveyDataSummary, locale),
+    linkedCase: buildLinkedCaseViewModel(agg.linkedCase, locale),
+    reminders: buildReminderItems(agg.reminders, locale),
     canTransitionToCase:
       profile.signStatus === "signed" &&
       profile.intakeStatus === "ready_for_case_creation",
+  };
+}
+
+function resolveAggregateSlices(aggregate?: CustomerBmvAggregate | null) {
+  return {
+    quoteHistory: aggregate?.quoteHistory ?? [],
+    surveyDataSummary: aggregate?.surveyDataSummary ?? null,
+    linkedCase: aggregate?.linkedCase ?? null,
+    reminders: aggregate?.reminders ?? [],
   };
 }
 
@@ -467,6 +460,7 @@ export function useCustomerBmvIntakeCardModel(
     buildCustomerBmvIntakeCardViewModel(
       input.customer.value,
       input.aggregate?.value,
+      input.locale.value,
     ),
   );
 

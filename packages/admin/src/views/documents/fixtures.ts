@@ -48,6 +48,7 @@ export function deriveDocumentSummaryCards(
       variant: "warning",
       value: missing,
       labelKey: "documents.list.summaryHint.missing",
+      tooltipKey: "documents.list.summaryHint.missingTooltip",
     },
     {
       key: "expired",

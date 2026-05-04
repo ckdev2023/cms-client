@@ -157,7 +157,7 @@ void test("DashboardService.getSummary maps summary counts and panel items", asy
   assert.deepEqual(todoItem.metaKeys, [
     { key: "case", params: { caseLabel: "CASE-001" } },
     { key: "assignee", params: { name: "Tanaka" } },
-    { key: "due", params: { date: "2026-05-10" } },
+    { key: "due", params: { date: "2026/05/10" } },
   ]);
 
   const deadlineItem = result.panels.deadlines[0];
@@ -178,7 +178,7 @@ void test("DashboardService.getSummary maps summary counts and panel items", asy
   assert.equal(riskItem.actionKey, "viewBilling");
   assert.deepEqual(riskItem.metaKeys, [
     { key: "owner", params: { name: "Yamada" } },
-    { key: "due", params: { date: "2026-05-08" } },
+    { key: "due", params: { date: "2026/05/08" } },
     { key: "unpaid", params: { amount: "¥12,000" } },
   ]);
 });

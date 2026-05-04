@@ -12,7 +12,11 @@ import {
 /**
  * 视图层可识别的仪表盘错误码。
  */
-export type DashboardModelErrorCode = "unauthorized" | "requestFailed";
+export type DashboardModelErrorCode =
+  | "unauthorized"
+  | "requestFailed"
+  | "noGroupAccess"
+  | "noPrimaryGroup";
 
 interface DashboardModelState {
   scope: Ref<DashboardScope>;
@@ -25,11 +29,10 @@ interface DashboardModelState {
 }
 
 function mapDashboardError(error: unknown): DashboardModelErrorCode {
-  if (
-    error instanceof DashboardRepositoryError &&
-    error.code === "UNAUTHORIZED"
-  ) {
-    return "unauthorized";
+  if (error instanceof DashboardRepositoryError) {
+    if (error.code === "UNAUTHORIZED") return "unauthorized";
+    if (error.message === "NO_GROUP_ACCESS") return "noGroupAccess";
+    if (error.message === "NO_PRIMARY_GROUP") return "noPrimaryGroup";
   }
 
   return "requestFailed";
@@ -74,6 +77,7 @@ function createDashboardLoader(
       state.data.value = nextData;
     } catch (error) {
       if (activeRequest !== requestVersion) return;
+      state.data.value = null;
       state.errorCode.value = mapDashboardError(error);
     } finally {
       if (activeRequest === requestVersion) {
@@ -91,14 +95,14 @@ async function loadGroupOptions(
     const groups = await repository.listGroups();
     state.groupOptions.value = groups;
 
-    const primary = groups.find((g) => g.isPrimary);
-    if (primary) {
-      state.selectedGroup.value = primary.id;
-    } else if (groups.length > 0) {
-      state.selectedGroup.value = groups[0].id;
-    }
+    const memberGroups = groups.filter((g) => g.isMember);
+    const primary =
+      memberGroups.find((g) => g.isPrimary) ?? memberGroups[0] ?? null;
+
+    state.selectedGroup.value = primary?.id ?? null;
   } catch {
     state.groupOptions.value = [];
+    state.errorCode.value = "requestFailed";
   }
 }
 
@@ -121,6 +125,11 @@ function createDashboardView(
     isGroupFilterDisabled: computed(
       () =>
         state.scope.value !== "group" || state.groupOptions.value.length === 0,
+    ),
+    isGroupTabDisabled: computed(
+      () =>
+        state.groupOptions.value.length === 0 ||
+        state.groupOptions.value.every((g) => !g.isMember),
     ),
     scopeSummaryKey: computed(
       () => `dashboard.scopeSummary.${state.scope.value}`,

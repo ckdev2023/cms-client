@@ -702,11 +702,12 @@ const casesEnUS = {
         startCta: "Start Review",
         empty: "No review records yet",
         rejectReasonLabel: "Rejection reason:",
+        disabledByPolicy: "Two-person review is not enabled for this office",
       },
       risk: {
         title: "Arrears Risk Confirmation Log",
         empty: "No arrears risk confirmation",
-        simulateCta: "Simulate Risk Confirmation",
+        registerRiskAckCta: "Acknowledge billing risk",
         rows: {
           confirmedBy: "Confirmed by",
           reason: "Reason",
@@ -884,11 +885,11 @@ const casesEnUS = {
       work: "Work Visa",
       bmv: "Business Manager Visa",
       biz_mgmt: "Business Manager Visa",
-      biz_mgmt_4m: "BMV (CoE 4-month)",
-      biz_mgmt_1y: "BMV (CoE 1-year)",
-      biz_mgmt_cert_4m: "BMV (CoE 4-month)",
-      biz_mgmt_cert_1y: "BMV (CoE 1-year)",
-      biz_mgmt_renewal: "BMV (Renewal)",
+      biz_mgmt_4m: "BMV · CoE 4-month",
+      biz_mgmt_1y: "BMV · CoE 1-year",
+      biz_mgmt_cert_4m: "BMV · CoE 4-month",
+      biz_mgmt_cert_1y: "BMV · CoE 1-year",
+      biz_mgmt_renewal: "BMV · Renewal",
       hum: "Engineer/Specialist (CoE)",
       hum_renewal: "Engineer/Specialist (Renewal)",
       eng_humanities_intl_cert: "Engineer/Specialist (CoE)",
@@ -979,6 +980,26 @@ const casesEnUS = {
       "Task priority is invalid. Please select a valid priority.",
     taskCompleteFailed: "Failed to complete the task. Please try again later.",
     taskNotFound: "The specified task does not exist or has been deleted.",
+    spCaseNotFound:
+      "Associated case not found. Cannot create submission package.",
+    spNotFound: "Submission package not found or has been deleted.",
+    spCaseStageInvalid:
+      "Current case stage does not allow creating a submission package.",
+    spSupplementRequiresRelated:
+      "Supplementary submission must reference an existing package.",
+    spInitialNoRelated:
+      "Initial submission should not reference an existing package.",
+    spRelatedNotFound: "Referenced submission package not found.",
+    spRelatedNotLatest:
+      "Referenced submission package is not the latest version. Please refresh and try again.",
+    spRelatedAlreadyBranched:
+      "Referenced submission package already has a supplementary branch.",
+    spChainDepthExceeded: "Supplementary chain depth limit exceeded.",
+    spInvalidSubmissionKind: "Invalid submission kind.",
+    spInvalidItemType: "Invalid submission package item type.",
+    spDuplicateItem: "Duplicate items found in submission package.",
+    spMissingMinimumFields:
+      "Submission package is missing required fields. Please check and try again.",
   },
   log: {
     category: {
@@ -1043,6 +1064,8 @@ const casesEnUS = {
     refReport: "See the validation report for details",
     lastFailed:
       "Blocking items were found in the previous validation. Please fix them and re-run.",
+    blockingSummary: "{count} blocking items",
+    warningSummary: "{count} warning items",
   },
   deadlines: {
     summary: {

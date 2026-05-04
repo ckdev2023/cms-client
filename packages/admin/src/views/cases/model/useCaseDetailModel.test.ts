@@ -312,7 +312,7 @@ describe("useCaseDetailModel", () => {
     it("shows validation blocking count when present", async () => {
       const { model } = await createModel();
       expect(model.tabCounters.value.validation).toBeDefined();
-      expect(model.tabCounters.value.validation!.label).toBe("卡点2");
+      expect(model.tabCounters.value.validation!.label).toBe("卡点 2");
       expect(model.tabCounters.value.validation!.tone).toBe("danger");
     });
 
@@ -328,7 +328,7 @@ describe("useCaseDetailModel", () => {
       const { model } = await createModel();
       expect(model.tabCounters.value.tasks).toBeDefined();
       expect(model.tabCounters.value.tasks!.tone).toBe("warning");
-      expect(model.tabCounters.value.tasks!.label).toMatch(/^待办\d+$/);
+      expect(model.tabCounters.value.tasks!.label).toMatch(/^待办 \d+$/);
     });
 
     it("omits tasks counter when all done (archived)", async () => {

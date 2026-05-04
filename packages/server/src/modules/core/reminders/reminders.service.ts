@@ -38,6 +38,7 @@ export type ReminderQueryRow = {
  */
 export type ReminderListJoinRow = ReminderQueryRow & {
   case_no: string | null;
+  case_title: string | null;
   recipient_name: string | null;
 };
 
@@ -46,6 +47,7 @@ export type ReminderListJoinRow = ReminderQueryRow & {
  */
 export type ReminderListItem = Reminder & {
   caseNo: string | null;
+  caseTitle: string | null;
   recipientName: string | null;
 };
 
@@ -133,6 +135,7 @@ const REMINDER_LIST_SELECT = `
   r.recipient_type, r.recipient_id, r.channel, r.dedupe_key, r.send_status,
   r.retry_count, r.sent_at, r.payload_snapshot, r.created_at, r.updated_at,
   c.case_no as case_no,
+  c.case_name as case_title,
   u.name as recipient_name
 `;
 
@@ -146,6 +149,7 @@ export function mapReminderListRow(row: ReminderListJoinRow): ReminderListItem {
   return {
     ...mapReminderRow(row),
     caseNo: row.case_no ?? null,
+    caseTitle: row.case_title ?? null,
     recipientName: row.recipient_name ?? null,
   };
 }

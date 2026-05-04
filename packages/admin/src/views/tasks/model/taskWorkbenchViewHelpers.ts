@@ -118,28 +118,44 @@ export function reminderTitle(
     return payload.label.trim();
   }
 
-  const daysBefore = payload.daysBefore;
-  const statusOfResidence = payload.statusOfResidence;
-  if (typeof daysBefore === "number") {
-    if (typeof statusOfResidence === "string" && statusOfResidence.trim()) {
-      const rawVisa = statusOfResidence.trim();
-      const visaLabel = resolveVisaLabel?.(rawVisa) ?? rawVisa;
-      return t("tasks.reminderTitle.daysBefore", {
-        visa: `${visaLabel} · `,
-        days: daysBefore,
-      });
-    }
-    return t("tasks.reminderTitle.daysBeforeNoVisa", { days: daysBefore });
-  }
+  const daysBeforeTitle = resolveDaysBeforeTitle(payload, t, resolveVisaLabel);
+  if (daysBeforeTitle) return daysBeforeTitle;
 
   if (payload.pendingCoeDate === true) {
     return t("tasks.reminderTitle.pendingCoeDate");
+  }
+
+  if (reminder.targetType === "case" && reminder.caseNo) {
+    return t("tasks.reminderTitle.case", {
+      caseNo: reminder.caseNo,
+      title: reminder.caseTitle ?? "",
+    });
   }
 
   return t("tasks.reminderTitle.fallback", {
     type: reminder.targetType,
     id: reminder.targetId,
   });
+}
+
+function resolveDaysBeforeTitle(
+  payload: Record<string, unknown>,
+  t: TaskI18nT,
+  resolveVisaLabel?: VisaLabelResolver,
+): string | null {
+  const daysBefore = payload.daysBefore;
+  if (typeof daysBefore !== "number") return null;
+
+  const statusOfResidence = payload.statusOfResidence;
+  if (typeof statusOfResidence === "string" && statusOfResidence.trim()) {
+    const rawVisa = statusOfResidence.trim();
+    const visaLabel = resolveVisaLabel?.(rawVisa) ?? rawVisa;
+    return t("tasks.reminderTitle.daysBefore", {
+      visa: `${visaLabel} · `,
+      days: daysBefore,
+    });
+  }
+  return t("tasks.reminderTitle.daysBeforeNoVisa", { days: daysBefore });
 }
 
 const SHORT_UUID_LENGTH = 8;

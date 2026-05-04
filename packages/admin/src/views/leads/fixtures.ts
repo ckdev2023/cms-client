@@ -6,6 +6,7 @@ import type {
 } from "./types";
 import { getCurrentLocale, type AppLocale } from "../../i18n";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { BUSINESS_TYPE_OPTIONS_I18N } from "../../i18n/messages/_shared/businessTypes";
 
 /* ------------------------------------------------------------------ */
 /*  参照选项                                                           */
@@ -34,20 +35,11 @@ export const OWNER_OPTIONS: OwnerOption[] = [
   },
 ];
 
-export const BUSINESS_TYPE_OPTIONS: SelectOption[] = [
-  {
-    value: "highly-skilled",
-    label: "leads.options.businessType.highlySkilled",
-  },
-  { value: "work-visa", label: "leads.options.businessType.workVisa" },
-  { value: "family-stay", label: "leads.options.businessType.familyStay" },
-  {
-    value: "business-manager",
-    label: "leads.options.businessType.businessManager",
-  },
-  { value: "permanent", label: "leads.options.businessType.permanent" },
-  { value: "other", label: "leads.options.businessType.other" },
-];
+export const BUSINESS_TYPE_OPTIONS: SelectOption[] =
+  BUSINESS_TYPE_OPTIONS_I18N.map((o) => ({
+    value: o.value,
+    label: o.labelKey,
+  }));
 
 export const LEAD_SOURCE_OPTIONS: SelectOption[] = [
   { value: "web", label: "leads.options.source.web" },
@@ -156,8 +148,8 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
     name: "田中 太郎",
     phone: "070-5555-6666",
     email: "tanaka.t@email.com",
-    businessType: "business-manager",
-    businessTypeLabel: "设立法人",
+    businessType: "business-management-visa",
+    businessTypeLabel: "经营管理",
     source: "walkin",
     sourceLabel: "来访",
     referrer: "",

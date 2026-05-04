@@ -35,8 +35,8 @@ function createGroupOptions(
   overrides: Partial<DashboardGroupOption>[] = [],
 ): DashboardGroupOption[] {
   const defaults: DashboardGroupOption[] = [
-    { id: "g-tokyo1", name: "Tokyo 1", isPrimary: true },
-    { id: "g-osaka", name: "Osaka", isPrimary: false },
+    { id: "g-tokyo1", name: "Tokyo 1", isPrimary: true, isMember: true },
+    { id: "g-osaka", name: "Osaka", isPrimary: false, isMember: true },
   ];
   if (overrides.length === 0) return defaults;
   return overrides.map((o, i) => ({ ...defaults[i % defaults.length], ...o }));
@@ -90,8 +90,8 @@ describe("useDashboardModel", () => {
   it("falls back to first option when no primary exists", async () => {
     const repository = stubRepo({
       listGroups: vi.fn().mockResolvedValue([
-        { id: "g-a", name: "A", isPrimary: false },
-        { id: "g-b", name: "B", isPrimary: false },
+        { id: "g-a", name: "A", isPrimary: false, isMember: true },
+        { id: "g-b", name: "B", isPrimary: false, isMember: true },
       ]),
     });
 
@@ -113,7 +113,7 @@ describe("useDashboardModel", () => {
     expect(model.groupOptions.value).toHaveLength(0);
   });
 
-  it("tolerates listGroups failure gracefully", async () => {
+  it("tolerates listGroups failure gracefully and reports errorCode", async () => {
     const repository = stubRepo({
       listGroups: vi.fn().mockRejectedValue(new Error("network")),
     });
@@ -123,7 +123,7 @@ describe("useDashboardModel", () => {
 
     expect(model.groupOptions.value).toHaveLength(0);
     expect(model.selectedGroup.value).toBeNull();
-    expect(model.summary.value?.todayTasks).toBe(6);
+    expect(model.errorCode.value).toBe("requestFailed");
   });
 
   it("reloads when scope and timeWindow change", async () => {
@@ -351,5 +351,149 @@ describe("useDashboardModel", () => {
     await flushPromises();
 
     expect(model.scopeSummaryKey.value).toBe("dashboard.scopeSummary.mine");
+  });
+
+  it("clears data when getSummary fails", async () => {
+    const repository = stubRepo();
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.hasData.value).toBe(true);
+
+    (repository.getSummary as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("server error"),
+    );
+    model.scope.value = "all";
+    await nextTick();
+    await flushPromises();
+
+    expect(model.data.value).toBeNull();
+    expect(model.hasData.value).toBe(false);
+    expect(model.errorCode.value).toBe("requestFailed");
+  });
+
+  it("selects primary isMember group as default", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockResolvedValue([
+        { id: "g-vis", name: "Visible", isPrimary: true, isMember: false },
+        { id: "g-own", name: "Own", isPrimary: false, isMember: true },
+      ]),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.selectedGroup.value).toBe("g-own");
+  });
+
+  it("prefers isPrimary+isMember over first isMember", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockResolvedValue([
+        { id: "g-a", name: "A", isPrimary: false, isMember: true },
+        { id: "g-b", name: "B", isPrimary: true, isMember: true },
+      ]),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.selectedGroup.value).toBe("g-b");
+  });
+
+  it("keeps selectedGroup null when all groups have isMember=false", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockResolvedValue([
+        { id: "g-a", name: "A", isPrimary: true, isMember: false },
+        { id: "g-b", name: "B", isPrimary: false, isMember: false },
+      ]),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.selectedGroup.value).toBeNull();
+  });
+
+  it("isGroupTabDisabled is true when all groups have isMember=false", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockResolvedValue([
+        { id: "g-a", name: "A", isPrimary: true, isMember: false },
+        { id: "g-b", name: "B", isPrimary: false, isMember: false },
+      ]),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.isGroupTabDisabled.value).toBe(true);
+  });
+
+  it("isGroupTabDisabled is false when at least one group has isMember=true", async () => {
+    const repository = stubRepo();
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.isGroupTabDisabled.value).toBe(false);
+  });
+
+  it("isGroupTabDisabled is true when groupOptions are empty", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockResolvedValue([]),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.isGroupTabDisabled.value).toBe(true);
+  });
+
+  it("maps noGroupAccess errorCode from DashboardRepositoryError", async () => {
+    const repository = stubRepo({
+      getSummary: vi.fn().mockRejectedValue(
+        new DashboardRepositoryError({
+          code: "BAD_RESPONSE",
+          message: "NO_GROUP_ACCESS",
+          status: 403,
+        }),
+      ),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.errorCode.value).toBe("noGroupAccess");
+    expect(model.data.value).toBeNull();
+  });
+
+  it("maps noPrimaryGroup errorCode from DashboardRepositoryError", async () => {
+    const repository = stubRepo({
+      getSummary: vi.fn().mockRejectedValue(
+        new DashboardRepositoryError({
+          code: "BAD_RESPONSE",
+          message: "NO_PRIMARY_GROUP",
+          status: 400,
+        }),
+      ),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.errorCode.value).toBe("noPrimaryGroup");
+    expect(model.data.value).toBeNull();
+  });
+
+  it("loadGroupOptions failure sets errorCode to requestFailed", async () => {
+    const repository = stubRepo({
+      listGroups: vi.fn().mockRejectedValue(new Error("fail")),
+    });
+
+    const model = useDashboardModel({ repository });
+    await flushPromises();
+
+    expect(model.groupOptions.value).toHaveLength(0);
+    expect(model.errorCode.value).toBe("requestFailed");
   });
 });

@@ -33,6 +33,7 @@ function createReminder(
     id: "rem-001",
     caseId: "case-001",
     caseNo: "CASE-202604-0011",
+    caseTitle: null,
     targetType: "customer",
     targetId: "customer-001",
     remindAt: "2026-04-30T00:00:00.000Z",

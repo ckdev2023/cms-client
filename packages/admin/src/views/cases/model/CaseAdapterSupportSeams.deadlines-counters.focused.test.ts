@@ -192,6 +192,7 @@ const BASE_DETAIL: CaseDetail = {
   submissionPackages: [],
   correctionPackage: null,
   doubleReview: [],
+  reviewEnabled: false,
   riskConfirmationRecord: null,
   documents: [],
   forms: { templates: [], generated: [] },
@@ -305,7 +306,7 @@ describe("tasks/deadlines tab counter derivation on refresh (p0-fe-006d-03)", ()
     const model = useCaseDetailModel(ref("CASE-TC"), { repo });
     await flushAll();
     expect(model.tabCounters.value.tasks).toBeDefined();
-    expect(model.tabCounters.value.tasks!.label).toBe("待办2");
+    expect(model.tabCounters.value.tasks!.label).toBe("待办 2");
     expect(model.tabCounters.value.tasks!.tone).toBe("warning");
   });
 
@@ -400,6 +401,6 @@ describe("tasks/deadlines tab counter derivation on refresh (p0-fe-006d-03)", ()
     await model.refetch();
     await flushAll();
     expect(model.tabCounters.value.tasks).toBeDefined();
-    expect(model.tabCounters.value.tasks!.label).toBe("待办1");
+    expect(model.tabCounters.value.tasks!.label).toBe("待办 1");
   });
 });

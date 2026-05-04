@@ -9,16 +9,21 @@ describe("dashboard scope i18n", () => {
       mine: "Mine",
       group: "My group",
       all: "All firm",
+      groupNotMember:
+        "You are not a member of any group and cannot view group data",
     });
     expect(zhCN.dashboard.scope).toEqual({
       mine: "我的",
       group: "本组",
       all: "全所",
+      groupNotMember: "您未加入任何分组，无法查看本组数据",
     });
     expect(jaJP.dashboard.scope).toEqual({
       mine: "自分",
       group: "所属組",
       all: "事務所全体",
+      groupNotMember:
+        "どのグループにも所属していないため、グループデータを表示できません",
     });
   });
 

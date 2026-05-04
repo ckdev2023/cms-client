@@ -699,11 +699,12 @@ const casesJaJP = {
         startCta: "レビューを開始",
         empty: "レビュー記録がありません",
         rejectReasonLabel: "却下理由：",
+        disabledByPolicy: "事務所で二人レビューが有効化されていません",
       },
       risk: {
         title: "未収リスク確認記録",
         empty: "未収リスク確認がありません",
-        simulateCta: "未収確認をシミュレート",
+        registerRiskAckCta: "料金リスクを登録",
         rows: {
           confirmedBy: "確認者",
           reason: "理由",
@@ -834,8 +835,8 @@ const casesJaJP = {
       unpaidTotal: "未収金額",
     },
     tabCounters: {
-      blocking: "ブロック{count}",
-      pending: "未完了{count}",
+      blocking: "ブロック {count}",
+      pending: "未完了 {count}",
     },
     phases: {
       CONSULTING: "相談中",
@@ -881,11 +882,11 @@ const casesJaJP = {
       work: "就労ビザ",
       bmv: "経営管理ビザ",
       biz_mgmt: "経営管理ビザ",
-      biz_mgmt_4m: "経営管理（認定4ヶ月）",
-      biz_mgmt_1y: "経営管理（認定1年）",
-      biz_mgmt_cert_4m: "経営管理（認定4ヶ月）",
-      biz_mgmt_cert_1y: "経営管理（認定1年）",
-      biz_mgmt_renewal: "経営管理（更新）",
+      biz_mgmt_4m: "経営管理ビザ · 在留 4 ヶ月",
+      biz_mgmt_1y: "経営管理ビザ · 在留 1 年",
+      biz_mgmt_cert_4m: "経営管理ビザ · 在留 4 ヶ月",
+      biz_mgmt_cert_1y: "経営管理ビザ · 在留 1 年",
+      biz_mgmt_renewal: "経営管理ビザ · 更新",
       hum: "技人国（認定）",
       hum_renewal: "技人国（更新）",
       eng_humanities_intl_cert: "技人国（認定）",
@@ -981,6 +982,25 @@ const casesJaJP = {
     taskCompleteFailed:
       "タスクの完了に失敗しました。しばらくしてから再試行してください。",
     taskNotFound: "指定されたタスクが存在しないか、削除されています。",
+    spCaseNotFound:
+      "関連する案件が見つかりません。提出パッケージを作成できません。",
+    spNotFound: "提出パッケージが存在しないか、削除されています。",
+    spCaseStageInvalid:
+      "現在の案件ステージでは提出パッケージを作成できません。",
+    spSupplementRequiresRelated:
+      "補正提出は既存の提出パッケージへの参照が必要です。",
+    spInitialNoRelated: "初回提出は既存の提出パッケージを参照できません。",
+    spRelatedNotFound: "参照先の提出パッケージが見つかりません。",
+    spRelatedNotLatest:
+      "参照先の提出パッケージが最新版ではありません。更新してから再試行してください。",
+    spRelatedAlreadyBranched:
+      "参照先の提出パッケージにはすでに補正ブランチがあります。",
+    spChainDepthExceeded: "補正チェーンの深さ制限を超えました。",
+    spInvalidSubmissionKind: "提出種類が不正です。",
+    spInvalidItemType: "提出パッケージ項目タイプが不正です。",
+    spDuplicateItem: "提出パッケージ内に重複した項目があります。",
+    spMissingMinimumFields:
+      "提出パッケージの必須フィールドが不足しています。確認して再試行してください。",
   },
   log: {
     category: {
@@ -1045,6 +1065,8 @@ const casesJaJP = {
     refReport: "詳細は検証レポートを参照",
     lastFailed:
       "前回の検証で不合格項目が検出されました。修正後に再検証を実行してください。",
+    blockingSummary: "{count} 件の阻断項目",
+    warningSummary: "{count} 件の警告項目",
   },
   deadlines: {
     summary: {

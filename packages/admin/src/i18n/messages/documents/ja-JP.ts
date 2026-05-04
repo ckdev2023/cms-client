@@ -12,13 +12,15 @@ const documentsJaJP = {
     searchPlaceholder: "検索：資料名 / 案件番号 / 案件名",
     summary: {
       pendingReview: "審査待ち",
-      missing: "不足",
+      missing: "不足・未登録",
       expired: "期限切れ",
       sharedExpiryRisk: "共有バージョン期限切れリスク",
     },
     summaryHint: {
       pendingReview: "審査待ち",
-      missing: "不足",
+      missing: "不足・未登録",
+      missingTooltip:
+        "含まれるステータス：未提出・差し戻し；審査待ちは含みません",
       expired: "期限切れ",
       sharedExpiryRisk: "共有バージョン期限切れリスク",
     },
@@ -100,7 +102,8 @@ const documentsJaJP = {
   storageGate: {
     title: "ローカル保管ルートが未設定です",
     description:
-      "ローカル保管先のルートディレクトリがまだ設定されていません。管理者に「システム設定」での設定を依頼してから、資料を登録してください。",
+      "ローカル保管先のルートディレクトリがまだ設定されていません。管理者に{link}での設定を依頼してから、資料を登録してください。",
+    settingsLinkText: "「システム設定」",
     buttonTooltip: "先に「システム設定」でローカル保管ルートを設定してください",
   },
   register: {

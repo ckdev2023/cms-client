@@ -96,6 +96,7 @@ const tasksZhCN = {
     daysBefore: "{visa}到期前 {days} 天提醒",
     daysBeforeNoVisa: "到期前 {days} 天提醒",
     pendingCoeDate: "等待 COE 日期回填的续签提醒",
+    case: "案件 {caseNo} · {title}",
     fallback: "{type} · {id}",
   },
   reminderMeta: {

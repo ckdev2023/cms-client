@@ -98,6 +98,7 @@ const tasksEnUS = {
     daysBefore: "{visa}Renewal reminder {days} days before expiry",
     daysBeforeNoVisa: "Renewal reminder {days} days before expiry",
     pendingCoeDate: "Renewal reminder waiting for COE date",
+    case: "Case {caseNo} · {title}",
     fallback: "{type} · {id}",
   },
   reminderMeta: {

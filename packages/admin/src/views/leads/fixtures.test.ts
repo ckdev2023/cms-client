@@ -96,11 +96,22 @@ describe("leads/fixtures", () => {
       }
     });
 
-    it("BUSINESS_TYPE_OPTIONS has 6 business types with i18n keys", () => {
-      expect(BUSINESS_TYPE_OPTIONS).toHaveLength(6);
+    it("BUSINESS_TYPE_OPTIONS has 7 business types with i18n keys", () => {
+      expect(BUSINESS_TYPE_OPTIONS).toHaveLength(7);
       for (const opt of BUSINESS_TYPE_OPTIONS) {
         expect(opt.label).toMatch(/^leads\.options\.businessType\./);
       }
+    });
+
+    it("BUSINESS_TYPE_OPTIONS includes business-management-visa and company-setup", () => {
+      const values = BUSINESS_TYPE_OPTIONS.map((o) => o.value);
+      expect(values).toContain("business-management-visa");
+      expect(values).toContain("company-setup");
+    });
+
+    it("BUSINESS_TYPE_OPTIONS does NOT contain the deprecated business-manager value", () => {
+      const values = BUSINESS_TYPE_OPTIONS.map((o) => o.value);
+      expect(values).not.toContain("business-manager");
     });
 
     it("LEAD_SOURCE_OPTIONS has 5 sources with i18n keys", () => {

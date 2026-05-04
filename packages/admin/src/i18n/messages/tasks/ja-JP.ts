@@ -98,6 +98,7 @@ const tasksJaJP = {
     daysBefore: "{visa}期限の {days} 日前リマインダー",
     daysBeforeNoVisa: "期限の {days} 日前リマインダー",
     pendingCoeDate: "COE 日付の入力待ち更新リマインダー",
+    case: "案件 {caseNo} · {title}",
     fallback: "{type} · {id}",
   },
   reminderMeta: {

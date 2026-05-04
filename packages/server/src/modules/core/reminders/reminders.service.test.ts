@@ -41,6 +41,7 @@ function makeReminderListRow(overrides: Record<string, unknown> = {}) {
   return {
     ...makeReminderRow(),
     case_no: "CASE-202604-0011",
+    case_title: "田中太郎 経営管理ビザ申請",
     recipient_name: "Local Admin",
     ...overrides,
   };
@@ -224,21 +225,29 @@ void test("RemindersService.list joins cases/users and exposes caseNo + recipien
     listCall.sql.includes("left join users u on u.id = r.recipient_id"),
   );
   assert.ok(listCall.sql.includes("c.case_no as case_no"));
+  assert.ok(listCall.sql.includes("c.case_name as case_title"));
   assert.ok(listCall.sql.includes("u.name as recipient_name"));
 
   assert.equal(result.items.length, 1);
   assert.equal(result.items[0]?.caseNo, "CASE-202604-0011");
+  assert.equal(result.items[0]?.caseTitle, "田中太郎 経営管理ビザ申請");
   assert.equal(result.items[0]?.recipientName, "Local Admin");
 });
 
 // ── list returns null caseNo / recipientName when joined rows missing ──
-void test("RemindersService.list tolerates missing case_no / recipient_name", async () => {
+void test("RemindersService.list tolerates missing case_no / case_title / recipient_name", async () => {
   const pool = makePool((sql) => {
     if (sql.includes("count(*)")) {
       return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
     }
     return Promise.resolve({
-      rows: [makeReminderListRow({ case_no: null, recipient_name: null })],
+      rows: [
+        makeReminderListRow({
+          case_no: null,
+          case_title: null,
+          recipient_name: null,
+        }),
+      ],
       rowCount: 1,
     });
   });
@@ -247,6 +256,7 @@ void test("RemindersService.list tolerates missing case_no / recipient_name", as
   const result = await svc.list(makeCtx("viewer"));
 
   assert.equal(result.items[0]?.caseNo, null);
+  assert.equal(result.items[0]?.caseTitle, null);
   assert.equal(result.items[0]?.recipientName, null);
 });
 

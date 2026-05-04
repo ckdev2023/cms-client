@@ -358,8 +358,8 @@ describe("createDashboardRepository", () => {
     it("fetches groups from /api/dashboard/groups with bearer token", async () => {
       const request = vi.fn().mockResolvedValue(
         jsonResponse([
-          { id: "g1", name: "Tokyo 1", isPrimary: true },
-          { id: "g2", name: "Tokyo 2", isPrimary: false },
+          { id: "g1", name: "Tokyo 1", isPrimary: true, isMember: true },
+          { id: "g2", name: "Tokyo 2", isPrimary: false, isMember: true },
         ]),
       );
       const repo = createDashboardRepository({
@@ -377,8 +377,8 @@ describe("createDashboardRepository", () => {
         },
       });
       expect(groups).toEqual([
-        { id: "g1", name: "Tokyo 1", isPrimary: true },
-        { id: "g2", name: "Tokyo 2", isPrimary: false },
+        { id: "g1", name: "Tokyo 1", isPrimary: true, isMember: true },
+        { id: "g2", name: "Tokyo 2", isPrimary: false, isMember: true },
       ]);
     });
 
@@ -397,7 +397,7 @@ describe("createDashboardRepository", () => {
       );
     });
 
-    it("normalizes isPrimary to false when missing", async () => {
+    it("normalizes isPrimary and isMember to false when missing", async () => {
       const request = vi
         .fn()
         .mockResolvedValue(jsonResponse([{ id: "g1", name: "Tokyo 1" }]));
@@ -405,7 +405,26 @@ describe("createDashboardRepository", () => {
 
       const groups = await repo.listGroups();
 
-      expect(groups).toEqual([{ id: "g1", name: "Tokyo 1", isPrimary: false }]);
+      expect(groups).toEqual([
+        { id: "g1", name: "Tokyo 1", isPrimary: false, isMember: false },
+      ]);
+    });
+
+    it("preserves isMember=true from server response", async () => {
+      const request = vi.fn().mockResolvedValue(
+        jsonResponse([
+          { id: "g1", name: "Tokyo 1", isPrimary: false, isMember: true },
+          { id: "g2", name: "Tokyo 2", isPrimary: true, isMember: false },
+        ]),
+      );
+      const repo = createDashboardRepository({ request });
+
+      const groups = await repo.listGroups();
+
+      expect(groups).toEqual([
+        { id: "g1", name: "Tokyo 1", isPrimary: false, isMember: true },
+        { id: "g2", name: "Tokyo 2", isPrimary: true, isMember: false },
+      ]);
     });
 
     it("throws INVALID_RESPONSE when payload is not an array", async () => {

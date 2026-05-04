@@ -183,27 +183,27 @@ describe("CaseLogTab BUG-219: unhandled actions must not display raw action stri
 });
 
 describe("CaseLogTab BUG-220: case.created must translate caseTypeCode enum", () => {
-  it("zh-CN translates biz_mgmt_cert_4m to 经营管理（认定4个月）", () => {
+  it("zh-CN translates biz_mgmt_cert_4m to 经营管理签 · 认定 4 个月", () => {
     const w = mountTab([buildEntry()], "zh-CN");
     const texts = getEntryTexts(w.html());
     expect(texts).toHaveLength(1);
-    expect(texts[0]).toContain("经营管理（认定4个月）");
+    expect(texts[0]).toContain("经营管理签 · 认定 4 个月");
     expect(texts[0]).not.toContain("biz_mgmt_cert_4m");
   });
 
-  it("ja-JP translates biz_mgmt_cert_4m to 経営管理（認定4ヶ月）", () => {
+  it("ja-JP translates biz_mgmt_cert_4m to 経営管理ビザ · 在留 4 ヶ月", () => {
     const w = mountTab([buildEntry()], "ja-JP");
     const texts = getEntryTexts(w.html());
     expect(texts).toHaveLength(1);
-    expect(texts[0]).toContain("経営管理（認定4ヶ月）");
+    expect(texts[0]).toContain("経営管理ビザ · 在留 4 ヶ月");
     expect(texts[0]).not.toContain("biz_mgmt_cert_4m");
   });
 
-  it("en-US translates biz_mgmt_cert_4m to BMV (CoE 4-month)", () => {
+  it("en-US translates biz_mgmt_cert_4m to BMV · CoE 4-month", () => {
     const w = mountTab([buildEntry()], "en-US");
     const texts = getEntryTexts(w.html());
     expect(texts).toHaveLength(1);
-    expect(texts[0]).toContain("BMV (CoE 4-month)");
+    expect(texts[0]).toContain("BMV · CoE 4-month");
     expect(texts[0]).not.toContain("biz_mgmt_cert_4m");
   });
 

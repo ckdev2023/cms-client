@@ -75,7 +75,6 @@ const indeterminate = computed(() => isIndeterminate(displayItems.value));
 
 /**
  * 全选切换。
- *
  * @param checked - 勾选状态
  */
 function handleSelectAll(checked: boolean) {
@@ -84,7 +83,6 @@ function handleSelectAll(checked: boolean) {
 
 /**
  * 获取已选中项。
- *
  * @returns 已选中的资料列表
  */
 function getSelectedItems() {
@@ -93,7 +91,6 @@ function getSelectedItems() {
 
 /**
  * API 错误 toast 通知。
- *
  * @param error - 发生的错误
  */
 function handleApiError(error: unknown) {
@@ -323,9 +320,20 @@ void failedIds;
         <p class="document-list-view__alert-title">
           {{ t("documents.storageGate.title") }}
         </p>
-        <p class="document-list-view__alert-desc">
-          {{ t("documents.storageGate.description") }}
-        </p>
+        <i18n-t
+          keypath="documents.storageGate.description"
+          tag="p"
+          class="document-list-view__alert-desc"
+        >
+          <template #link>
+            <RouterLink
+              to="/settings?tab=storage-root"
+              class="document-list-view__settings-link"
+            >
+              {{ t("documents.storageGate.settingsLinkText") }}
+            </RouterLink>
+          </template>
+        </i18n-t>
       </div>
     </div>
 

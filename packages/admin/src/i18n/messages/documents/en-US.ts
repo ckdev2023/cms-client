@@ -12,13 +12,15 @@ const documentsEnUS = {
     searchPlaceholder: "Search: document name / case ID / case name",
     summary: {
       pendingReview: "Pending review",
-      missing: "Missing",
+      missing: "Missing or Pending",
       expired: "Expired",
       sharedExpiryRisk: "Shared version expiry risk",
     },
     summaryHint: {
       pendingReview: "Pending review",
-      missing: "Missing",
+      missing: "Missing or Pending",
+      missingTooltip:
+        "Includes statuses: pending, rejected; excludes uploaded pending review",
       expired: "Expired",
       sharedExpiryRisk: "Shared version expiry risk",
     },
@@ -96,7 +98,8 @@ const documentsEnUS = {
   storageGate: {
     title: "Storage root not configured",
     description:
-      "The local archive root directory has not been set up yet. Please ask an administrator to configure it in System Settings before registering documents.",
+      "The local archive root directory has not been set up yet. Please ask an administrator to {link} before registering documents.",
+    settingsLinkText: "configure it in System Settings",
     buttonTooltip: "Configure the storage root in System Settings first",
   },
   register: {

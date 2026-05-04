@@ -186,19 +186,19 @@ export function resolveValidationStatus(
 }
 
 /**
- * 将 ISO 日期字符串格式化为 ja-JP 本地化显示。
+ * 将 ISO 日期字符串格式化为零填充 slash 格式 `YYYY/MM/DD`。
  *
  * @param isoString - ISO 时间戳或 `null`
  * @returns 格式化日期或 `""`
  */
 export function formatDate(isoString: string | null): string {
   if (!isoString) return "";
-  try {
-    const d = new Date(isoString);
-    return Number.isNaN(d.getTime()) ? "" : d.toLocaleDateString("ja-JP");
-  } catch {
-    return "";
-  }
+  const d = new Date(isoString);
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}/${m}/${day}`;
 }
 
 /**

@@ -327,6 +327,7 @@ const zhCN = {
       mine: "我的",
       group: "本组",
       all: "全所",
+      groupNotMember: "您未加入任何分组，无法查看本组数据",
     },
     scopeSummary: {
       mine: "当前显示我负责或参与的案件与任务，卡片和列表会一起更新。",
@@ -338,6 +339,7 @@ const zhCN = {
       refreshing: "正在刷新仪表盘数据…",
       unauthorized: "当前登录态无法访问仪表盘，请重新登录后重试。",
       requestFailed: "仪表盘数据加载失败，请稍后重试。",
+      noGroupAccess: "您未加入任何分组，无法查看本组数据。",
       retry: "重新加载",
     },
     quickActions: {

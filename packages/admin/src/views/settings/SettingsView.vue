@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
+import { useRoute } from "vue-router";
 import { useOrgSettings } from "../../shared/model/useOrgSettings";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import GroupListPanel from "./components/GroupListPanel.vue";
@@ -25,7 +26,12 @@ import {
 
 /** 系统设置页入口，编排子导航切换与三个配置面板。 */
 const { t } = useI18n();
+const route = useRoute();
 const orgSettingsController = useOrgSettings();
+const routeTab = computed(() => {
+  const q = route?.query;
+  return typeof q?.tab === "string" ? q.tab : undefined;
+});
 
 const page = useSettingsPage({
   initialGroups: SAMPLE_GROUPS,
@@ -36,6 +42,7 @@ const page = useSettingsPage({
   groupsRepository: createGroupsRepository(),
   orgSettingsController,
   isAdmin: ref(true),
+  routeTab,
 });
 </script>
 

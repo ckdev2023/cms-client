@@ -145,6 +145,8 @@ const enUS = {
       mine: "Mine",
       group: "My group",
       all: "All firm",
+      groupNotMember:
+        "You are not a member of any group and cannot view group data",
     },
     scopeSummary: {
       mine: "Showing the cases and tasks I own or participate in. Cards and lists update together.",
@@ -158,6 +160,8 @@ const enUS = {
       unauthorized:
         "Your current session cannot access the dashboard. Please sign in again and retry.",
       requestFailed: "Dashboard data failed to load. Please try again later.",
+      noGroupAccess:
+        "You are not a member of any group and cannot view group data.",
       retry: "Retry",
     },
     quickActions: {

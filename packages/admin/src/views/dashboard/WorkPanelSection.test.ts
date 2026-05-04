@@ -42,7 +42,7 @@ function createPanels(
         daysLeft: 4,
         metaKeys: [
           { key: "owner", params: { name: "佐藤" } },
-          { key: "due", params: { date: "2026-04-20" } },
+          { key: "due", params: { date: "2026/04/20" } },
         ],
         statusLabelKey: "daysLeft",
         statusLabelParams: { days: 4 },

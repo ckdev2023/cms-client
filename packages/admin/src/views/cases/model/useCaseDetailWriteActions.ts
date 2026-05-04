@@ -12,6 +12,7 @@ import {
 import type { MessageChannelChoice } from "./CaseAdapterMessageWriteBuilders";
 import type { DeadlineKindChoice } from "./CaseAdapterReminderWriteBuilders";
 import type { TaskPriorityChoice } from "./CaseAdapterTaskWriteBuilders";
+import type { SubmissionPackageCreateInput } from "./CaseRepositoryWriteSide";
 
 /**
  * 写操作反馈状态——在 UI 层展示操作结果或门禁阻断提示。
@@ -318,6 +319,18 @@ function doCompleteTask(
   return run(() => deps.repo.completeTask(taskId).then(() => undefined));
 }
 
+function doCreateSubmissionPackage(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  input: Omit<SubmissionPackageCreateInput, "caseId">,
+): Promise<boolean> {
+  return run(() =>
+    deps.repo
+      .createSubmissionPackage({ ...input, caseId: deps.getCaseId() })
+      .then(() => undefined),
+  );
+}
+
 // ─── Factory ─────────────────────────────────────────────────────
 
 function buildChildWriteActions(core: ActionCoreDeps, run: RunFn) {
@@ -411,6 +424,9 @@ export function createWriteActions(deps: {
     retryReminderCreation: () => doRetryReminderCreation(core, runAction),
     failureClose: (closeReason?: string) =>
       doFailureClose(core, runAction, closeReason),
+    createSubmissionPackage: (
+      input: Omit<SubmissionPackageCreateInput, "caseId">,
+    ) => doCreateSubmissionPackage(core, runAction, input),
     ...buildChildWriteActions(core, runAction),
   };
 }

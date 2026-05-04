@@ -146,6 +146,8 @@ export interface DashboardGroupOption {
   name: string;
   /** 是否为用户的主分组。 */
   isPrimary: boolean;
+  /** true=用户实际加入；false=manager/owner 因角色可见但未加入。 */
+  isMember: boolean;
 }
 
 /**

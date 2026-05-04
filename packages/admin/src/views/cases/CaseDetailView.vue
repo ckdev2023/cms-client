@@ -42,6 +42,7 @@ import {
 } from "./constants";
 import { formatCaseIdentity } from "./caseIdentity";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
+import { useCaseValidationActions } from "./model/useCaseValidationActions";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
@@ -89,11 +90,26 @@ const {
   completeTask,
   phaseMenu,
   isTerminalPhase: isTerminal,
+  refetch,
 } = useCaseDetailModel(caseId, {
   routeTab,
   locale,
   onTabChange: (tab) =>
     router.replace({ query: buildCaseDetailQuery({ tab }) }),
+});
+
+const validationActions = useCaseValidationActions({
+  caseId,
+  onRerunSuccess: () => void refetch(),
+  onCreateSpSuccess: () => {
+    void refetch();
+    switchTab("validation");
+  },
+  onReviewRequestSuccess: () => void refetch(),
+  onRiskAckSuccess: () => {
+    closeRiskModal();
+    void refetch();
+  },
 });
 
 const guard = useCaseDetailGuard(detail);
@@ -107,6 +123,31 @@ const clientDisplayName = computed(() => {
     locale.value,
   );
 });
+
+/**
+ * 风险确认后触发计费风险承认。
+ *
+ * @param payload - 风险确认参数
+ * @param payload.reason - 理由
+ * @param payload.person - 确认人
+ * @param payload.evidence - 证据链接
+ */
+function onRiskConfirm(payload: {
+  reason: string;
+  person: string;
+  evidence: string;
+}): void {
+  void validationActions.acknowledgeBillingRisk(payload);
+}
+
+watch(
+  () => validationActions.riskAckErrorI18nKey.value,
+  (key) => {
+    if (key) {
+      toast.add({ title: t(key), tone: "error" });
+    }
+  },
+);
 
 watch(writeFeedback, (fb) => {
   if (fb.errorI18nKey && !fb.isGateBlock) {
@@ -706,8 +747,15 @@ async function onFormGenSubmit(payload: {
           v-else-if="activeTab === 'validation'"
           :detail="detail"
           :readonly="isReadonly"
+          :rerun-loading="validationActions.rerunLoading.value"
+          :rerun-error="validationActions.rerunError.value"
+          :create-sp-loading="validationActions.createSpLoading.value"
+          :review-loading="validationActions.reviewLoading.value"
           @switch-tab="switchTab"
           @open-risk-modal="openRiskModal"
+          @rerun-validation="validationActions.rerunValidation"
+          @create-submission-package="validationActions.createSubmissionPackage"
+          @start-review="validationActions.createReviewRequest"
         />
         <CaseBillingTab
           v-else-if="activeTab === 'billing'"
@@ -721,7 +769,7 @@ async function onFormGenSubmit(payload: {
       <CaseRiskConfirmModal
         :visible="showRiskModal"
         @close="closeRiskModal"
-        @confirm="closeRiskModal"
+        @confirm="onRiskConfirm"
       />
 
       <CaseEditModal

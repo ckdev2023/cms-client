@@ -4,6 +4,7 @@ import type { PaymentLogEntry, PaymentRecordStatus } from "../types";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import { resolveMilestoneLabel } from "../model/BillingAdapters";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /**
  * 回款流水表格：8 列（金额/日期/案件/节点/凭证/状态/操作人/备注）+ 操作列。
@@ -26,7 +27,7 @@ defineEmits<{
   "reverse-payment": [id: string];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const RECORD_TONE: Record<PaymentRecordStatus, ChipTone> = {
   valid: "success",
@@ -145,7 +146,7 @@ function isInactive(entry: PaymentLogEntry): boolean {
               { 'payment-log__td--muted': isInactive(entry) },
             ]"
           >
-            {{ entry.date }}
+            {{ formatDateTime(entry.date, locale) }}
           </td>
 
           <!-- 关联案件 -->

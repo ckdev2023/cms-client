@@ -5,6 +5,7 @@ import { parseRole, type Role } from "./roles";
 
 const DEFAULT_LOCAL_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const DEFAULT_LOCAL_USER_ID = "00000000-0000-4000-8000-000000000011";
+const DEFAULT_LOCAL_GROUP_ID = "00000000-0000-4000-8000-000000000020";
 const DEFAULT_LOCAL_ORG_NAME = "Local Demo Office";
 const DEFAULT_LOCAL_USER_NAME = "Local Admin";
 const DEFAULT_LOCAL_USER_EMAIL = "admin@local.test";
@@ -118,6 +119,9 @@ export async function bootstrapLocalAdmin(
 
     const organization = await upsertOrganization(client, input);
     const user = await upsertAdminUser(client, input, organization.id);
+    const groupId = await upsertDefaultGroup(client, organization.id);
+    await upsertDefaultMembership(client, user.id, groupId);
+    await upsertDefaultStorageRoot(client, organization.id);
 
     await client.query("COMMIT");
 
@@ -196,6 +200,76 @@ async function upsertAdminUser(
     ...row,
     email: normalizeEmail(row.email),
   };
+}
+
+async function upsertDefaultGroup(
+  client: PoolClient,
+  orgId: string,
+): Promise<string> {
+  const result = await client.query<{ id: string }>(
+    `
+      insert into groups (id, org_id, name, active_flag)
+      values ($1, $2, $3, true)
+      on conflict (id) do update
+      set name = excluded.name,
+          active_flag = true,
+          updated_at = now()
+      returning id
+    `,
+    [DEFAULT_LOCAL_GROUP_ID, orgId, "Local Default Group"],
+  );
+
+  const row = result.rows.at(0);
+  if (!row) throw new Error("Failed to initialize local default group");
+  return row.id;
+}
+
+async function upsertDefaultMembership(
+  client: PoolClient,
+  userId: string,
+  groupId: string,
+): Promise<void> {
+  await client.query(
+    `
+      insert into user_group_memberships
+        (user_id, group_id, is_primary_group, active_flag, joined_at)
+      values ($1, $2, true, true, now())
+      on conflict (user_id, group_id) where active_flag = true do update
+      set is_primary_group = true,
+          active_flag = true
+    `,
+    [userId, groupId],
+  );
+}
+
+async function upsertDefaultStorageRoot(
+  client: PoolClient,
+  orgId: string,
+): Promise<void> {
+  const rootPath = `/data/cms/${orgId}/files`;
+  const rootLabel = "本地资料根目录";
+
+  await client.query(
+    `
+      update organizations
+      set settings = jsonb_set(
+        jsonb_set(
+          coalesce(settings, '{}'::jsonb),
+          '{storageRoot,rootPath}',
+          to_jsonb($2::text),
+          true
+        ),
+        '{storageRoot,rootLabel}',
+        to_jsonb($3::text),
+        true
+      ),
+      updated_at = now()
+      where id = $1
+        and (settings->'storageRoot'->>'rootPath' is null
+             or settings->'storageRoot'->>'rootPath' = '')
+    `,
+    [orgId, rootPath, rootLabel],
+  );
 }
 
 function readDbUrl(env: NodeJS.ProcessEnv): string {
