@@ -67,6 +67,7 @@ describe("adaptCaseTaskList", () => {
     description: null,
     taskType: "document_follow_up",
     assigneeUserId: "user-1",
+    assigneeName: "佐藤花子",
     priority: "normal",
     dueAt: "2026-06-01T00:00:00.000Z",
     status: "pending",
@@ -97,7 +98,7 @@ describe("adaptCaseTaskList", () => {
     expect(t.label).toBe("パスポート確認");
     expect(t.done).toBe(false);
     expect(t.status).toBe("pending");
-    expect(t.assignee).toBe("U");
+    expect(t.assignee).toBe("佐");
     expect(t.color).toBe("primary");
   });
 
@@ -137,9 +138,35 @@ describe("adaptCaseTaskList", () => {
     ).toBe("success");
   });
 
-  it("shows — when assigneeUserId is null", () => {
+  it("shows — when assigneeUserId is null and no assigneeName", () => {
     const result = adaptCaseTaskList({
-      items: [taskDto({ assigneeUserId: null })],
+      items: [taskDto({ assigneeUserId: null, assigneeName: null })],
+    });
+    expect(result![0].assignee).toBe("—");
+  });
+
+  it("uses assigneeName first char when present (R30-F)", () => {
+    const result = adaptCaseTaskList({
+      items: [taskDto({ assigneeName: "Tanaka Yuki" })],
+    });
+    expect(result![0].assignee).toBe("T");
+  });
+
+  it("falls back to — when assigneeName is null even with UUID (R30-F)", () => {
+    const result = adaptCaseTaskList({
+      items: [
+        taskDto({
+          assigneeUserId: "00000000-0000-4000-8000-000000000011",
+          assigneeName: null,
+        }),
+      ],
+    });
+    expect(result![0].assignee).toBe("—");
+  });
+
+  it("falls back to — when assigneeName is whitespace-only (R30-F)", () => {
+    const result = adaptCaseTaskList({
+      items: [taskDto({ assigneeName: "   ", assigneeUserId: "user-1" })],
     });
     expect(result![0].assignee).toBe("—");
   });

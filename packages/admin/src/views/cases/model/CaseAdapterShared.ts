@@ -200,3 +200,23 @@ export function formatDate(isoString: string | null): string {
     return "";
   }
 }
+
+/**
+ * ISO 日期字符串 → `YYYY-MM-DD`（HTML date input 用）。
+ *
+ * @param isoString - ISO 时间戳或 `null`
+ * @returns `YYYY-MM-DD` 或 `""`
+ */
+export function toDateInputValue(isoString: string | null): string {
+  if (!isoString) return "";
+  try {
+    const d = new Date(isoString);
+    if (Number.isNaN(d.getTime())) return "";
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  } catch {
+    return "";
+  }
+}

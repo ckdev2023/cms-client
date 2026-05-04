@@ -1,7 +1,7 @@
 /**
  * 沟通记录写入请求体构造器 — UI 消息类型 → server channelType + visibleToClient 映射。
  *
- * UI 4 种选项对应 server `channelType`（phone/email/meeting/line/wechat/other）
+ * UI 4 种选项对应 server `channelType`（phone/meeting/internal_note/client_note）
  * 和 `visibleToClient` 的组合。后续若产品扩展 line/wechat/email 仅需在此处追加。
  */
 
@@ -44,8 +44,8 @@ const CHANNEL_MAP: Record<
   MessageChannelChoice,
   { channelType: string; visibleToClient: boolean }
 > = {
-  internal: { channelType: "other", visibleToClient: false },
-  client_visible: { channelType: "other", visibleToClient: true },
+  internal: { channelType: "internal_note", visibleToClient: false },
+  client_visible: { channelType: "client_note", visibleToClient: true },
   phone: { channelType: "phone", visibleToClient: false },
   meeting: { channelType: "meeting", visibleToClient: false },
 };

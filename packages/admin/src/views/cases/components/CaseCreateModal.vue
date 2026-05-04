@@ -50,7 +50,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <h3 id="case-create-modal-title" class="ccm__title">
             {{ t("cases.create.modal.title") }}
           </h3>
-          <button class="ccm__close" type="button" @click="$emit('close')">
+          <button
+            class="ccm__close"
+            type="button"
+            :aria-label="t('cases.common.close')"
+            @click="$emit('close')"
+          >
             <svg
               width="20"
               height="20"
@@ -60,6 +65,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               stroke-width="2"
               stroke-linecap="round"
               stroke-linejoin="round"
+              aria-hidden="true"
             >
               <path d="M6 18L18 6M6 6l12 12" />
             </svg>

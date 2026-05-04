@@ -2,7 +2,11 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { buildOverviewTimelineFromLog } from "../model/CaseCommsLogsAdapter";
-import type { LogEntry } from "../types-detail";
+import {
+  resolveTimelineText,
+  type I18nAccessor,
+} from "../model/CaseTimelineTextResolver";
+import type { LogEntry, TimelineEntry } from "../types-detail";
 import { createI18n } from "vue-i18n";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../i18n/messages/cases/ja-JP";
@@ -18,6 +22,15 @@ type Locale = "zh-CN" | "ja-JP" | "en-US";
 
 function makeI18n(locale: Locale) {
   return createI18n({ legacy: false, locale, messages: FULL_MESSAGES });
+}
+
+function i18nAccessor(locale: Locale): I18nAccessor {
+  const i18n = makeI18n(locale);
+  return {
+    t: (key: string, params?: Record<string, unknown>) =>
+      i18n.global.t(key, params ?? {}),
+    te: (key: string) => i18n.global.te(key),
+  };
 }
 
 function makeLogEntry(overrides: Partial<LogEntry> = {}): LogEntry {
@@ -170,9 +183,14 @@ describe("R27-K regression: CaseOverviewTab recent-activity timeline", () => {
       expect(vueSrc).toContain("timelineColor(entry.color)");
     });
 
-    it("renders entry.text and entry.meta", () => {
-      expect(vueSrc).toContain("{{ entry.text }}");
-      expect(vueSrc).toContain("{{ entry.meta }}");
+    it("timeline text goes through resolveText (no raw i18n key)", () => {
+      expect(vueSrc).toContain("resolveText(entry)");
+      expect(vueSrc).not.toContain("{{ entry.text }}");
+    });
+
+    it("timeline meta goes through formatEntryTime (no raw ISO)", () => {
+      expect(vueSrc).toContain("formatEntryTime(entry.meta, locale)");
+      expect(vueSrc).not.toContain("{{ entry.meta }}");
     });
 
     it("'view all' button emits switchTab('log')", () => {
@@ -197,5 +215,68 @@ describe("R27-K regression: CaseOverviewTab recent-activity timeline", () => {
         });
       }
     }
+  });
+
+  describe("overview timeline resolves i18n — phaseChange & commLogCreated", () => {
+    function buildTimelineEntry(overrides: Partial<LogEntry>): TimelineEntry {
+      return buildOverviewTimelineFromLog([makeLogEntry(overrides)])[0];
+    }
+
+    describe("phaseChange entry resolves across 3 locales", () => {
+      const entry = buildTimelineEntry({
+        type: "status",
+        text: "cases.log.timeline.phaseChange",
+        textParams: {
+          fromPhaseKey: "cases.constants.phases.IN_PROGRESS",
+          toPhaseKey: "cases.constants.phases.WAITING_PAYMENT",
+        },
+        time: "2026-05-01T12:00:00Z",
+      });
+
+      for (const locale of ["zh-CN", "ja-JP", "en-US"] as const) {
+        it(`${locale}: resolved text does not contain raw i18n key prefix`, () => {
+          const resolved = resolveTimelineText(entry, i18nAccessor(locale));
+          expect(resolved).not.toContain("cases.log.timeline.");
+        });
+      }
+    });
+
+    describe("commLogCreated entry resolves across 3 locales", () => {
+      const entry = buildTimelineEntry({
+        type: "operation",
+        text: "cases.log.timeline.commLogCreated",
+        textParams: {
+          suffix: "phone",
+          suffixKey: "cases.detail.messages.types.phone",
+        },
+        time: "2026-05-01T14:00:00Z",
+      });
+
+      for (const locale of ["zh-CN", "ja-JP", "en-US"] as const) {
+        it(`${locale}: resolved text does not contain raw i18n key prefix`, () => {
+          const resolved = resolveTimelineText(entry, i18nAccessor(locale));
+          expect(resolved).not.toContain("cases.log.timeline.");
+        });
+      }
+    });
+
+    it("buildOverviewTimelineFromLog passes through textParams", () => {
+      const params = {
+        fromPhaseKey: "cases.constants.phases.IN_PROGRESS",
+        toPhaseKey: "cases.constants.phases.WAITING_PAYMENT",
+      };
+      const entry = buildTimelineEntry({
+        text: "cases.log.timeline.phaseChange",
+        textParams: params,
+      });
+      expect(entry.textParams).toEqual(params);
+    });
+
+    it("meta stays as raw ISO (view layer formats it)", () => {
+      const entry = buildTimelineEntry({
+        time: "2026-05-01T12:00:00Z",
+      });
+      expect(entry.meta).toBe("2026-05-01T12:00:00Z");
+    });
   });
 });

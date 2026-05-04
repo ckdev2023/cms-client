@@ -17,6 +17,7 @@ import {
   resolveStageBadge,
   resolveStageId,
   resolveStageLabel,
+  toDateInputValue,
 } from "./CaseAdapterShared";
 import { buildCustomerLocalizedNames } from "./CaseAdapterCustomerLocale";
 
@@ -329,7 +330,11 @@ function buildDetailHeader(
     applicationType: readString(caseRecord, "applicationType"),
     businessPhase: readString(caseRecord, "businessPhase"),
     acceptedDate: formatDate(readNullableString(caseRecord, "acceptedAt")),
+    acceptedDateInput: toDateInputValue(
+      readNullableString(caseRecord, "acceptedAt"),
+    ),
     targetDate: formatDate(dueAt),
+    targetDateInput: toDateInputValue(dueAt),
     priority: readString(caseRecord, "priority"),
     riskLevel: readString(caseRecord, "riskLevel"),
     ownerUserId: dlStr(deepLink, "ownerUserId"),
@@ -391,6 +396,16 @@ export function buildTeamFromDeepLink(
   return members;
 }
 
+function resolveClosedAt(
+  caseRecord: Record<string, unknown>,
+  stageId: CaseStageId,
+): string {
+  const archived = readNullableString(caseRecord, "archivedAt");
+  const fallback =
+    stageId === "S9" ? readNullableString(caseRecord, "updatedAt") : null;
+  return formatDate(archived ?? fallback);
+}
+
 // ─── Public adapter ──────────────────────────────────────────────
 
 /**
@@ -450,7 +465,7 @@ export function adaptCaseDetailAggregate(
       stageId,
     ),
     closeReason: readNullableString(caseRecord, "closeReason"),
-    closedAt: formatDate(readNullableString(caseRecord, "archivedAt")),
+    closedAt: resolveClosedAt(caseRecord, stageId),
     closedBy: deepLink
       ? readNullableString(deepLink, "ownerDisplayName")
       : null,

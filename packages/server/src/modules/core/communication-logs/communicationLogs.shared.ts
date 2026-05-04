@@ -114,6 +114,8 @@ const VALID_CHANNEL_TYPES = new Set([
   "line",
   "wechat",
   "other",
+  "internal_note",
+  "client_note",
 ]);
 const VALID_DIRECTIONS = new Set(["inbound", "outbound"]);
 

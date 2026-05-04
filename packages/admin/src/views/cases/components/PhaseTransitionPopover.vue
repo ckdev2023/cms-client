@@ -162,11 +162,12 @@ function handleClose(): void {
         class="phase-popover"
         role="dialog"
         aria-modal="true"
+        aria-labelledby="phase-popover-title"
         data-testid="phase-transition-popover"
       >
         <header class="phase-popover__header">
           <div>
-            <h3 class="phase-popover__title">
+            <h3 id="phase-popover-title" class="phase-popover__title">
               {{ t("cases.detail.phaseMenu.title") }}
             </h3>
             <p
@@ -180,6 +181,7 @@ function handleClose(): void {
           <button
             type="button"
             class="phase-popover__close-btn"
+            :aria-label="t('cases.common.close')"
             :disabled="props.submitting"
             @click="handleClose"
           >
@@ -207,16 +209,21 @@ function handleClose(): void {
             {{ t("cases.detail.phaseMenu.title") }}
           </div>
 
-          <ul v-else class="phase-popover__list">
+          <ul v-else class="phase-popover__list" role="listbox">
             <li
               v-for="target in props.availableTargets"
               :key="target"
+              role="option"
+              tabindex="0"
+              :aria-selected="selectedPhase === target"
               :class="[
                 'phase-popover__item',
                 { 'phase-popover__item--selected': selectedPhase === target },
               ]"
               data-testid="phase-target-item"
               @click="selectPhase(target)"
+              @keydown.enter.prevent="selectPhase(target)"
+              @keydown.space.prevent="selectPhase(target)"
             >
               {{
                 props.currentPhase
@@ -393,12 +400,14 @@ function handleClose(): void {
   &:hover {
     background: var(--color-bg-3);
   }
-}
-
-.phase-popover__item--selected {
-  background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
-  color: var(--color-primary-6);
-  font-weight: var(--font-weight-semibold, 600);
+  &:focus-visible {
+    outline: 2px solid var(--color-primary-6, #3b82f6);
+  }
+  &--selected {
+    background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
+    color: var(--color-primary-6);
+    font-weight: var(--font-weight-semibold, 600);
+  }
 }
 
 .phase-popover__close-reason {
@@ -431,13 +440,12 @@ function handleClose(): void {
     opacity: 0.6;
     cursor: not-allowed;
   }
-}
-
-.phase-popover__preset-chip--active {
-  background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
-  border-color: var(--color-primary-6);
-  color: var(--color-primary-6);
-  font-weight: var(--font-weight-semibold, 600);
+  &--active {
+    background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
+    border-color: var(--color-primary-6);
+    color: var(--color-primary-6);
+    font-weight: var(--font-weight-semibold, 600);
+  }
 }
 
 .phase-popover__label {

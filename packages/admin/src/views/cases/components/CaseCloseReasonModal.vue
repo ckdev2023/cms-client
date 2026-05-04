@@ -85,7 +85,7 @@ const isSuccess = computed(() => props.businessPhase === "CLOSED_SUCCESS");
           <button
             type="button"
             class="close-reason-modal__close-btn"
-            :aria-label="t('cases.detail.closeReasonModal.close')"
+            :aria-label="t('cases.common.close')"
             @click="emit('close')"
           >
             <svg
@@ -119,7 +119,7 @@ const isSuccess = computed(() => props.businessPhase === "CLOSED_SUCCESS");
 
           <!-- Failure Closeout Detail -->
           <section
-            v-if="!isSuccess && props.failureCloseout"
+            v-if="!isSuccess && (props.failureCloseout || props.closeReason)"
             class="close-reason-modal__section"
             data-testid="close-reason-modal-failure"
           >
@@ -127,7 +127,10 @@ const isSuccess = computed(() => props.businessPhase === "CLOSED_SUCCESS");
               {{ t("cases.detail.closeReasonModal.failureReasonTitle") }}
             </h3>
             <dl class="close-reason-modal__detail-list">
-              <div class="close-reason-modal__detail-row">
+              <div
+                v-if="props.failureCloseout"
+                class="close-reason-modal__detail-row"
+              >
                 <dt>
                   {{ t("cases.detail.overview.failureCloseout.reasonLabel") }}
                 </dt>
@@ -188,11 +191,11 @@ const isSuccess = computed(() => props.businessPhase === "CLOSED_SUCCESS");
           <p
             v-if="
               (isSuccess && !props.successCloseout) ||
-              (!isSuccess && !props.failureCloseout)
+              (!isSuccess && !props.failureCloseout && !props.closeReason)
             "
             class="close-reason-modal__empty"
           >
-            {{ t("cases.detail.closeReasonModal.noDetail") }}
+            {{ t("cases.detail.closeReasonModal.noCloseReasonRecorded") }}
           </p>
         </div>
 

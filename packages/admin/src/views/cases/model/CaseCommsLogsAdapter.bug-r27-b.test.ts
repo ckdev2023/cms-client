@@ -46,6 +46,22 @@ describe("CaseCommsLogsAdapter — R27-B typeLabelKey i18n keys", () => {
     expect(result!.typeLabelKey).toBe("cases.detail.messages.types.auto_email");
   });
 
+  it("internal_note → cases.detail.messages.types.internal", () => {
+    const result = adaptCaseMessageDto(makeLog("internal_note", false));
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe("internal");
+    expect(result!.typeLabelKey).toBe("cases.detail.messages.types.internal");
+  });
+
+  it("client_note → cases.detail.messages.types.client_visible", () => {
+    const result = adaptCaseMessageDto(makeLog("client_note", false));
+    expect(result).not.toBeNull();
+    expect(result!.type).toBe("client_visible");
+    expect(result!.typeLabelKey).toBe(
+      "cases.detail.messages.types.client_visible",
+    );
+  });
+
   it("typeLabelKey matches pattern cases.detail.messages.types.<type>", () => {
     const types = [
       { channel: "wechat", visible: false, expected: "internal" },
@@ -53,6 +69,8 @@ describe("CaseCommsLogsAdapter — R27-B typeLabelKey i18n keys", () => {
       { channel: "phone", visible: false, expected: "phone" },
       { channel: "meeting", visible: true, expected: "meeting" },
       { channel: "email", visible: false, expected: "auto_email" },
+      { channel: "internal_note", visible: false, expected: "internal" },
+      { channel: "client_note", visible: false, expected: "client_visible" },
     ] as const;
 
     for (const { channel, visible, expected } of types) {
@@ -96,6 +114,26 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
     expect(result.params?.suffixKey).toBe(
       "cases.detail.messages.types.auto_email",
     );
+  });
+
+  it("channel 'internal_note' → suffixKey resolves to messages.types.internal_note", () => {
+    const result = buildCaseTimelineMessageResult("communication_log.created", {
+      channelType: "internal_note",
+    });
+    expect(result.params).toEqual({
+      suffix: "internal_note",
+      suffixKey: "cases.detail.messages.types.internal_note",
+    });
+  });
+
+  it("channel 'client_note' → suffixKey resolves to messages.types.client_note", () => {
+    const result = buildCaseTimelineMessageResult("communication_log.created", {
+      channelType: "client_note",
+    });
+    expect(result.params).toEqual({
+      suffix: "client_note",
+      suffixKey: "cases.detail.messages.types.client_note",
+    });
   });
 
   it("channel 'other' → suffixKey resolves to messages.types.other", () => {

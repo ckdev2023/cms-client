@@ -3,6 +3,7 @@ import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import UserPicker from "../../../shared/ui/UserPicker.vue";
+import DateInput from "../../../shared/ui/DateInput.vue";
 import type { TaskPriorityChoice } from "../model/CaseAdapterTaskWriteBuilders";
 
 /** 任务新建弹窗：在案件详情内创建关联任务（替代跳转 /tasks 死循环）。 */
@@ -102,6 +103,7 @@ function handleSubmit(): void {
           <button
             type="button"
             class="task-create-modal__close"
+            :aria-label="t('cases.common.close')"
             :disabled="props.submitting"
             @click="emit('close')"
           >
@@ -189,15 +191,14 @@ function handleSubmit(): void {
             <span class="task-create-modal__label">{{
               t("cases.detail.tasks.createModal.fields.dueAt")
             }}</span>
-            <input
+            <DateInput
               id="task-create-dueAt"
               name="dueAt"
-              type="date"
               class="task-create-modal__input"
-              :value="localDueAt"
+              :model-value="localDueAt"
               :disabled="props.submitting"
               data-testid="task-due-at-input"
-              @input="localDueAt = ($event.target as HTMLInputElement).value"
+              @update:model-value="localDueAt = $event"
             />
           </label>
 

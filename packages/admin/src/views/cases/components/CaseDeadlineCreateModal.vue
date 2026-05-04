@@ -2,6 +2,7 @@
 import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import DateInput from "../../../shared/ui/DateInput.vue";
 import type { DeadlineKindChoice } from "../model/CaseAdapterReminderWriteBuilders";
 
 /** 期限新建弹窗：创建案件关联的提醒/期限。 */
@@ -92,6 +93,7 @@ function handleSubmit(): void {
           <button
             type="button"
             class="deadline-modal__close"
+            :aria-label="t('cases.common.close')"
             :disabled="props.submitting"
             @click="emit('close')"
           >
@@ -138,15 +140,14 @@ function handleSubmit(): void {
             <span class="deadline-modal__label">{{
               t("cases.deadlines.createModal.fields.remindAt")
             }}</span>
-            <input
+            <DateInput
               id="deadline-remindAt"
               name="remindAt"
-              type="date"
               class="deadline-modal__input"
-              :value="localRemindAt"
+              :model-value="localRemindAt"
               :disabled="props.submitting"
               data-testid="deadline-remind-at"
-              @input="localRemindAt = ($event.target as HTMLInputElement).value"
+              @update:model-value="localRemindAt = $event"
             />
           </label>
 

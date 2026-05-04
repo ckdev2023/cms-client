@@ -727,8 +727,8 @@ async function onFormGenSubmit(payload: {
       <CaseEditModal
         :open="editModalOpen"
         :case-name="detail.title"
-        :due-at="detail.targetDate"
-        :accepted-at="detail.acceptedDate"
+        :due-at="detail.targetDateInput"
+        :accepted-at="detail.acceptedDateInput"
         :group-id="detail.groupId"
         :priority="detail.priority"
         :risk-level="detail.riskLevel"

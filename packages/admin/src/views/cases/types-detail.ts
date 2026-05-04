@@ -103,6 +103,10 @@ export interface TimelineEntry {
   /**
    *
    */
+  textParams?: Record<string, unknown>;
+  /**
+   *
+   */
   meta: string;
 }
 
@@ -1257,10 +1261,14 @@ export interface CaseDetail {
    *
    */
   acceptedDate: string;
+  /** `YYYY-MM-DD` 格式，供 date input 回填。 */
+  acceptedDateInput: string;
   /**
    *
    */
   targetDate: string;
+  /** `YYYY-MM-DD` 格式，供 date input 回填。 */
+  targetDateInput: string;
 
   /**
    *

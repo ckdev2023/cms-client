@@ -81,10 +81,11 @@ describe("buildOverviewTimelineFromLog", () => {
     expect(result[0].color).toBe("var(--muted)");
   });
 
-  it("preserves text (i18n key) and uses time as meta", () => {
+  it("preserves text (i18n key), textParams, and uses time as meta", () => {
     const entries = [
       makeLogEntry({
         text: "cases.log.timeline.stageChange",
+        textParams: { from: "S1", to: "S2" },
         time: "2026-04-15T09:30:00Z",
       }),
     ];
@@ -92,7 +93,14 @@ describe("buildOverviewTimelineFromLog", () => {
     const result = buildOverviewTimelineFromLog(entries);
 
     expect(result[0].text).toBe("cases.log.timeline.stageChange");
+    expect(result[0].textParams).toEqual({ from: "S1", to: "S2" });
     expect(result[0].meta).toBe("2026-04-15T09:30:00Z");
+  });
+
+  it("textParams is undefined when source entry has none", () => {
+    const entries = [makeLogEntry({ time: "2026-04-15T09:30:00Z" })];
+    const result = buildOverviewTimelineFromLog(entries);
+    expect(result[0].textParams).toBeUndefined();
   });
 
   it("does not mutate the original array", () => {

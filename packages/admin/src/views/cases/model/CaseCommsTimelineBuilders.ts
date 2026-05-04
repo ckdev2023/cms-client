@@ -59,6 +59,8 @@ const COMM_LOG_CHANNEL_I18N: Record<string, string> = {
   email: "cases.detail.messages.types.auto_email",
   internal: "cases.detail.messages.types.internal",
   client_visible: "cases.detail.messages.types.client_visible",
+  internal_note: "cases.detail.messages.types.internal_note",
+  client_note: "cases.detail.messages.types.client_note",
   other: "cases.detail.messages.types.other",
 };
 

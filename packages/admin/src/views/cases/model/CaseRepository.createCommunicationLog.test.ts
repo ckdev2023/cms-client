@@ -33,13 +33,13 @@ describe("CaseRepository.createCommunicationLog", () => {
 
     const sentBody = JSON.parse(opts.body as string) as Record<string, unknown>;
     expect(sentBody.caseId).toBe("case-123");
-    expect(sentBody.channelType).toBe("other");
+    expect(sentBody.channelType).toBe("internal_note");
     expect(sentBody.visibleToClient).toBe(false);
     expect(sentBody.direction).toBe("outbound");
     expect(sentBody.contentSummary).toBe("テスト内容");
   });
 
-  it("maps client_visible choice to channelType=other, visibleToClient=true", async () => {
+  it("maps client_visible choice to channelType=client_note, visibleToClient=true", async () => {
     const request = mockFetch(201, { id: "log-002" });
     const repo = createCaseRepository({
       request,
@@ -56,7 +56,7 @@ describe("CaseRepository.createCommunicationLog", () => {
     const sentBody = JSON.parse(
       (request.mock.calls[0] as [string, RequestInit])[1].body as string,
     ) as Record<string, unknown>;
-    expect(sentBody.channelType).toBe("other");
+    expect(sentBody.channelType).toBe("client_note");
     expect(sentBody.visibleToClient).toBe(true);
   });
 

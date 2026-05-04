@@ -332,6 +332,7 @@ const casesEnUS = {
       closeReasonText: "Notes",
       successTitle: "Success Closeout Conditions",
       noDetail: "No detailed closeout information available.",
+      noCloseReasonRecorded: "No close reason was recorded.",
       close: "Close",
     },
     unpaidLabel: "Unpaid: {amount}",
@@ -664,6 +665,8 @@ const casesEnUS = {
       types: {
         internal: "Internal notes",
         client_visible: "Client-visible notes",
+        internal_note: "Internal notes",
+        client_note: "Client-visible notes",
         phone: "Phone logs",
         meeting: "In-person meetings",
         auto_email: "Auto emails",
@@ -755,6 +758,7 @@ const casesEnUS = {
   common: {
     comingSoon: "Coming soon",
     notSet: "—",
+    close: "Close",
   },
   constants: {
     applicationTypes: {

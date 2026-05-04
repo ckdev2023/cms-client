@@ -317,6 +317,7 @@ const casesZhCN = {
       closeReasonText: "备注",
       successTitle: "成功结案条件",
       noDetail: "暂无详细结案信息。",
+      noCloseReasonRecorded: "未记录关闭原因。",
       close: "关闭",
     },
     unpaidLabel: "待收：{amount}",
@@ -640,6 +641,8 @@ const casesZhCN = {
       types: {
         internal: "内部记录",
         client_visible: "客户可见记录",
+        internal_note: "内部记录",
+        client_note: "客户可见记录",
         phone: "电话记录",
         meeting: "线下会议",
         auto_email: "自动邮件",
@@ -728,6 +731,7 @@ const casesZhCN = {
   common: {
     comingSoon: "建设中",
     notSet: "—",
+    close: "关闭",
   },
   constants: {
     applicationTypes: {

@@ -82,6 +82,7 @@ function handleSubmit(): void {
           <button
             type="button"
             class="form-gen-modal__close"
+            :aria-label="t('cases.common.close')"
             :disabled="props.submitting"
             @click="emit('close')"
           >

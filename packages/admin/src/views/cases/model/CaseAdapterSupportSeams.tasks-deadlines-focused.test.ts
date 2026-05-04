@@ -31,6 +31,7 @@ const taskDto = (overrides: R = {}): R => ({
   description: null,
   taskType: "document_follow_up",
   assigneeUserId: "user-1",
+  assigneeName: "佐藤花子",
   priority: "normal",
   dueAt: "2026-06-01T00:00:00.000Z",
   status: "pending",
@@ -126,16 +127,28 @@ describe("tasks tab summary display (p0-fe-006d-03)", () => {
     expect(result[0].label).toBe("住民票取得");
   });
 
-  it("assignee shows first-char uppercase of userId", () => {
+  it("assignee shows first-char uppercase of assigneeName (R30-F)", () => {
     const result = adaptCaseTaskList({
-      items: [taskDto({ assigneeUserId: "tanaka" })],
+      items: [taskDto({ assigneeName: "Tanaka Yuki" })],
     })!;
     expect(result[0].assignee).toBe("T");
   });
 
-  it("assignee shows — when assigneeUserId is null", () => {
+  it("assignee shows — when no assigneeName and no userId (R30-F)", () => {
     const result = adaptCaseTaskList({
-      items: [taskDto({ assigneeUserId: null })],
+      items: [taskDto({ assigneeUserId: null, assigneeName: null })],
+    })!;
+    expect(result[0].assignee).toBe("—");
+  });
+
+  it("assignee shows — when UUID-only, no display name (R30-F)", () => {
+    const result = adaptCaseTaskList({
+      items: [
+        taskDto({
+          assigneeUserId: "00000000-0000-4000-8000-000000000011",
+          assigneeName: null,
+        }),
+      ],
     })!;
     expect(result[0].assignee).toBe("—");
   });

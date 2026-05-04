@@ -198,6 +198,7 @@ const documentsEnUS = {
       note: "Note",
       notePlaceholder: "Enter a note…",
     },
+    closeAriaLabel: "Close",
     cancel: "Cancel",
     confirm: "Add item",
     toastTitle: "Document item added",

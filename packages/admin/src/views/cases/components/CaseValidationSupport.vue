@@ -233,7 +233,7 @@ const coeNoteKeySuffix = computed<string>(() => {
         <h2 class="valsup__title">
           {{ t("cases.detail.validation.postApproval.title") }}
         </h2>
-        <Chip tone="primary">{{
+        <Chip v-if="coeNoteKeySuffix === 'notePreSubmission'" tone="primary">{{
           t("cases.detail.validation.postApproval.stagingChip")
         }}</Chip>
       </div>

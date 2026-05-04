@@ -201,6 +201,7 @@ const documentsJaJP = {
       note: "備考",
       notePlaceholder: "備考を入力してください…",
     },
+    closeAriaLabel: "閉じる",
     cancel: "キャンセル",
     confirm: "追加する",
     toastTitle: "資料項目を追加しました",

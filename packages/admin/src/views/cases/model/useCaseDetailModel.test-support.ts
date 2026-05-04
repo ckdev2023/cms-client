@@ -32,6 +32,8 @@ const BASE_DETAIL: CaseDetail = {
   businessPhase: "MATERIAL_PREPARING",
   acceptedDate: "2026-01-15",
   targetDate: "2026-06-01",
+  acceptedDateInput: "2026-01-15",
+  targetDateInput: "2026-06-01",
   priority: "normal",
   riskLevel: "low",
   ownerUserId: "user-1",

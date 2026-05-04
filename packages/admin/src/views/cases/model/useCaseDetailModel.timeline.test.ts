@@ -78,6 +78,7 @@ describe("buildOverviewTimelineFromLog (pure)", () => {
       {
         color: "var(--primary)",
         text: "cases.log.timeline.stageChange",
+        textParams: { suffix: "work" },
         meta: "2026-04-01T12:00:00Z",
       },
     ]);
@@ -179,11 +180,13 @@ describe("useCaseDetailModel timeline derivation (D2)", () => {
     expect(tl[0]).toEqual({
       color: "var(--primary)",
       text: "cases.log.timeline.stageChange",
+      textParams: { suffix: "work" },
       meta: "2026-04-01T12:00:00Z",
     });
     expect(tl[1]).toEqual({
       color: "var(--muted)",
       text: "cases.log.timeline.caseCreated",
+      textParams: { suffix: "work" },
       meta: "2026-03-15T10:00:00Z",
     });
   });

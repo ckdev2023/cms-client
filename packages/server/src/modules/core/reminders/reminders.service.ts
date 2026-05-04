@@ -195,8 +195,8 @@ export class RemindersService {
     try {
       result = await tenantDb.query<ReminderQueryRow>(
         `
-        insert into reminders (org_id, case_id, target_type, target_id, remind_at, recipient_type, recipient_id, channel, dedupe_key, send_status, payload_snapshot)
-        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', $10::jsonb)
+        insert into reminders (org_id, case_id, target_type, target_id, remind_at, recipient_type, recipient_id, channel, dedupe_key, send_status, status, payload_snapshot)
+        values ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending', 'pending', $10::jsonb)
         returning ${REMINDER_COLS}
       `,
         [

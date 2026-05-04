@@ -155,9 +155,17 @@ describe("info tab field values (p0-fe-006a-02)", () => {
     expect(result.detail.acceptedDate).toContain("2026");
   });
 
+  it("acceptedDateInput maps to YYYY-MM-DD for date input (R30-K)", () => {
+    expect(result.detail.acceptedDateInput).toBe("2026-04-01");
+  });
+
   it("targetDate maps from caseRecord.dueAt (formatted)", () => {
     expect(result.detail.targetDate).not.toBe("");
     expect(result.detail.targetDate).toContain("2026");
+  });
+
+  it("targetDateInput maps to YYYY-MM-DD for date input (R30-K)", () => {
+    expect(result.detail.targetDateInput).toBe("2026-09-01");
   });
 
   it("agency defaults to empty string (no server field)", () => {
@@ -186,8 +194,16 @@ describe("info tab empty state degradation (p0-fe-006a-02)", () => {
     expect(result.detail.acceptedDate).toBe("");
   });
 
+  it("acceptedDateInput defaults to empty string (R30-K)", () => {
+    expect(result.detail.acceptedDateInput).toBe("");
+  });
+
   it("targetDate defaults to empty string when dueAt is null", () => {
     expect(result.detail.targetDate).toBe("");
+  });
+
+  it("targetDateInput defaults to empty string (R30-K)", () => {
+    expect(result.detail.targetDateInput).toBe("");
   });
 
   it("agency defaults to empty string", () => {

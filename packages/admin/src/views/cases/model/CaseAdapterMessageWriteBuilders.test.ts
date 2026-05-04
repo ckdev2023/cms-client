@@ -13,23 +13,23 @@ describe("buildCreateCommunicationLogPayload", () => {
     content: "メモ内容",
   };
 
-  it("internal → channelType=other, visibleToClient=false", () => {
+  it("internal → channelType=internal_note, visibleToClient=false", () => {
     const payload = buildCreateCommunicationLogPayload(BASE);
     expect(payload).toEqual({
       caseId: "case-001",
-      channelType: "other",
+      channelType: "internal_note",
       visibleToClient: false,
       direction: "outbound",
       contentSummary: "メモ内容",
     });
   });
 
-  it("client_visible → channelType=other, visibleToClient=true", () => {
+  it("client_visible → channelType=client_note, visibleToClient=true", () => {
     const payload = buildCreateCommunicationLogPayload({
       ...BASE,
       channelChoice: "client_visible",
     });
-    expect(payload.channelType).toBe("other");
+    expect(payload.channelType).toBe("client_note");
     expect(payload.visibleToClient).toBe(true);
   });
 

@@ -328,6 +328,7 @@ const casesJaJP = {
       closeReasonText: "備考",
       successTitle: "成功結案条件",
       noDetail: "結案の詳細情報はありません。",
+      noCloseReasonRecorded: "クローズ理由は記録されていません。",
       close: "閉じる",
     },
     unpaidLabel: "未収: {amount}",
@@ -662,6 +663,8 @@ const casesJaJP = {
       types: {
         internal: "内部メモ",
         client_visible: "顧客公開記録",
+        internal_note: "内部メモ",
+        client_note: "顧客公開記録",
         phone: "電話記録",
         meeting: "対面会議",
         auto_email: "自動メール",
@@ -752,6 +755,7 @@ const casesJaJP = {
   common: {
     comingSoon: "準備中",
     notSet: "—",
+    close: "閉じる",
   },
   constants: {
     applicationTypes: {

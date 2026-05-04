@@ -1,0 +1,1 @@
+ALTER TABLE reminders ALTER COLUMN status DROP DEFAULT;

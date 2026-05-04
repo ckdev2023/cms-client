@@ -20,9 +20,15 @@ import type { CaseDetailTab } from "../types";
 import type { CaseDetail } from "../types-detail";
 import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
 import { resolveLocalizedCustomerName } from "../model/CaseAdapterCustomerLocale";
+import {
+  resolveTimelineText,
+  type I18nAccessor,
+} from "../model/CaseTimelineTextResolver";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
+import type { TimelineEntry } from "../types-detail";
 
 /** 概览 Tab：展示案件摘要卡片、提供方进度、下一步动作、近期动态与侧边栏。 */
-const { t, locale } = useI18n();
+const { t, te, locale } = useI18n();
 const props = defineProps<{
   detail: CaseDetail;
   writeFeedback?: WriteActionFeedback;
@@ -78,6 +84,30 @@ function timelineColor(color: string): string {
     border: "var(--color-border-2)",
   };
   return map[color] ?? "var(--color-border-2)";
+}
+
+const i18nAccessor: I18nAccessor = { t, te };
+
+/**
+ * 解析概览时间线条目的文案（委托共享 resolver）。
+ *
+ * @param entry - 时间线条目
+ * @returns 翻译后的展示文本
+ */
+function resolveText(entry: TimelineEntry): string {
+  return resolveTimelineText(entry, i18nAccessor);
+}
+
+/**
+ * 格式化时间戳：成功则返回 locale 格式化结果，失败回退原值。
+ *
+ * @param raw - 原始时间戳字符串
+ * @param loc - BCP 47 locale 标识符
+ * @returns 格式化后的日期时间
+ */
+function formatEntryTime(raw: string, loc: string): string {
+  if (!raw) return "";
+  return formatDateTime(raw, loc) || raw;
 }
 </script>
 
@@ -423,8 +453,12 @@ function timelineColor(color: string): string {
                 :style="{ backgroundColor: timelineColor(entry.color) }"
               />
               <div>
-                <div class="overview-tab__timeline-text">{{ entry.text }}</div>
-                <div class="overview-tab__timeline-meta">{{ entry.meta }}</div>
+                <div class="overview-tab__timeline-text">
+                  {{ resolveText(entry) }}
+                </div>
+                <div class="overview-tab__timeline-meta">
+                  {{ formatEntryTime(entry.meta, locale) }}
+                </div>
               </div>
             </div>
           </div>

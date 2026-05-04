@@ -109,7 +109,6 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     expect(html).toContain("确认时间");
     expect(html).toContain("涉及金额");
     expect(html).toContain("下签后处理");
-    expect(html).toContain("当前案件未到该阶段");
   });
 
   it("zh-CN empty state renders correct labels", () => {
@@ -132,7 +131,6 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     expect(html).toContain("Amount involved");
     expect(html).toContain("Post-Approval");
     expect(html).toContain("COE / Overseas Visa / Re-entry Result");
-    expect(html).toContain("Case has not reached this stage");
   });
 
   it("en-US empty state renders correct English labels", () => {
@@ -164,7 +162,6 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     expect(html).toContain("関連金額");
     expect(html).toContain("許可後処理");
     expect(html).toContain("COE / 海外ビザ貼付 / 再入国結果");
-    expect(html).toContain("この案件はまだ当該段階に達していません");
   });
 
   it("ja-JP empty state renders correct Japanese labels", () => {

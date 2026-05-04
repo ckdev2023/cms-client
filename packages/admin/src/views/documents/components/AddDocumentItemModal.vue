@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import type { DocumentProviderType } from "../types";
@@ -7,7 +8,7 @@ import { DOCUMENT_PROVIDER_IDS, DOCUMENT_PROVIDERS } from "../constants";
 /** 手动添加资料项弹窗：输入名称、提供方、截止日与备注后调用后端创建资料项。 */
 const { t } = useI18n();
 
-defineProps<{
+const props = defineProps<{
   open: boolean;
   name: string;
   ownerSide: DocumentProviderType | "";
@@ -17,7 +18,7 @@ defineProps<{
   submitting: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   close: [];
   "update:name": [value: string];
   "update:ownerSide": [value: DocumentProviderType | ""];
@@ -26,21 +27,46 @@ defineEmits<{
   submit: [];
 }>();
 
+const backdropRef = ref<HTMLElement | null>(null);
+
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) nextTick(() => backdropRef.value?.focus());
+  },
+);
+
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="adim-backdrop" @click.self="$emit('close')">
+    <div
+      v-if="open"
+      ref="backdropRef"
+      class="adim-backdrop"
+      data-testid="adim-backdrop"
+      tabindex="-1"
+      @click.self="emit('close')"
+      @keydown.esc.stop.prevent="emit('close')"
+    >
       <div
         class="adim"
         role="dialog"
-        :aria-label="t('documents.addItem.title')"
+        aria-modal="true"
+        aria-labelledby="adim-title"
       >
         <div class="adim__header">
-          <h3 class="adim__title">{{ t("documents.addItem.title") }}</h3>
-          <button class="adim__close" type="button" @click="$emit('close')">
+          <h3 id="adim-title" class="adim__title">
+            {{ t("documents.addItem.title") }}
+          </h3>
+          <button
+            class="adim__close"
+            type="button"
+            :aria-label="t('documents.addItem.closeAriaLabel')"
+            @click="emit('close')"
+          >
             <svg
               width="20"
               height="20"
@@ -70,7 +96,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               class="adim__input"
               :value="name"
               :placeholder="t('documents.addItem.fields.namePlaceholder')"
-              @input="$emit('update:name', inputValue($event))"
+              @input="emit('update:name', inputValue($event))"
             />
           </div>
 
@@ -85,7 +111,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               class="adim__input adim__select"
               :value="ownerSide"
               @change="
-                $emit(
+                emit(
                   'update:ownerSide',
                   selectValue($event) as DocumentProviderType,
                 )
@@ -110,7 +136,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               type="date"
               class="adim__input"
               :value="dueAt"
-              @input="$emit('update:dueAt', inputValue($event))"
+              @input="emit('update:dueAt', inputValue($event))"
             />
             <p class="adim__hint">
               {{ t("documents.addItem.fields.dueAtHint") }}
@@ -129,7 +155,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
               :placeholder="t('documents.addItem.fields.notePlaceholder')"
               rows="3"
               @input="
-                $emit(
+                emit(
                   'update:note',
                   ($event.target as HTMLTextAreaElement).value,
                 )
@@ -139,14 +165,14 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
         </div>
 
         <div class="adim__footer">
-          <Button variant="outlined" @click="$emit('close')">
+          <Button variant="outlined" @click="emit('close')">
             {{ t("documents.addItem.cancel") }}
           </Button>
           <Button
             variant="filled"
             tone="primary"
             :disabled="!canSubmit || submitting"
-            @click="$emit('submit')"
+            @click="emit('submit')"
           >
             {{ t("documents.addItem.confirm") }}
           </Button>

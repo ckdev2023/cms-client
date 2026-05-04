@@ -356,6 +356,21 @@ function deriveDueColor(dueAt: string | null, done: boolean): string {
   }
 }
 
+const ASSIGNEE_DISPLAY_FIELDS = [
+  "assigneeName",
+  "assignee_name",
+  "assigneeDisplayName",
+  "assignee_display_name",
+] as const;
+
+function resolveAssigneeLabel(r: Record<string, unknown>): string {
+  for (const key of ASSIGNEE_DISPLAY_FIELDS) {
+    const v = readNullableString(r, key);
+    if (v && v.trim().length > 0) return v.trim().charAt(0).toUpperCase();
+  }
+  return "—";
+}
+
 function adaptTaskDto(value: unknown): TaskItem | null {
   const r = asRecord(value);
   if (!r) return null;
@@ -367,7 +382,6 @@ function adaptTaskDto(value: unknown): TaskItem | null {
   const done = TASK_DONE_STATUSES.has(status);
   const dueAt = readNullableString(r, "dueAt");
   const priority = readString(r, "priority") || "normal";
-  const assigneeUserId = readNullableString(r, "assigneeUserId");
 
   return {
     id,
@@ -375,7 +389,7 @@ function adaptTaskDto(value: unknown): TaskItem | null {
     done,
     status,
     due: dueAt ? formatDate(dueAt) : "",
-    assignee: assigneeUserId ? assigneeUserId.charAt(0).toUpperCase() : "—",
+    assignee: resolveAssigneeLabel(r),
     color: PRIORITY_COLOR[priority] ?? "primary",
     dueColor: deriveDueColor(dueAt, done),
   };

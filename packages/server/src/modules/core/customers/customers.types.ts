@@ -297,10 +297,11 @@ export type CustomerDtoAggregates = {
 export type CustomerRelationSource = ContactPerson;
 
 /**
- * 客户多语言名称（三语 + 默认语言标识）。
+ * 客户多语言名称（三語 + デフォルト言語識別子）。
  *
- * 字段与 `baseProfile` 中 `name_cn`/`name_jp`/`name_en` 双向同步；
- * 当 Migration 044 落地后，将优先从独立列读取。
+ * 唯一のデータソースは `baseProfile` JSONB 内の
+ * `name_cn` / `name_jp` / `name_en` / `name_default_locale`。
+ * 独立カラムは Migration 046 で削除済み。
  */
 export type CustomerLocalizedNames = {
   zh?: string | null;

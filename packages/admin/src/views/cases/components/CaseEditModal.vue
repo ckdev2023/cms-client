@@ -3,6 +3,7 @@ import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import UserPicker from "../../../shared/ui/UserPicker.vue";
+import DateInput from "../../../shared/ui/DateInput.vue";
 import {
   getActiveGroupOptions,
   resolveGroupValue,
@@ -145,6 +146,7 @@ function handleSave(): void {
           <button
             type="button"
             class="case-edit-modal__close"
+            :aria-label="t('cases.common.close')"
             :disabled="props.submitting"
             @click="emit('close')"
           >
@@ -185,14 +187,13 @@ function handleSave(): void {
               <span class="case-edit-modal__label">{{
                 t("cases.detail.editModal.fields.dueAt")
               }}</span>
-              <input
+              <DateInput
                 id="case-edit-dueAt"
                 name="dueAt"
-                type="date"
                 class="case-edit-modal__input"
-                :value="localDueAt"
+                :model-value="localDueAt"
                 :disabled="props.submitting"
-                @input="localDueAt = ($event.target as HTMLInputElement).value"
+                @update:model-value="localDueAt = $event"
               />
             </label>
 
@@ -200,16 +201,13 @@ function handleSave(): void {
               <span class="case-edit-modal__label">{{
                 t("cases.detail.editModal.fields.acceptedAt")
               }}</span>
-              <input
+              <DateInput
                 id="case-edit-acceptedAt"
                 name="acceptedAt"
-                type="date"
                 class="case-edit-modal__input"
-                :value="localAcceptedAt"
+                :model-value="localAcceptedAt"
                 :disabled="props.submitting"
-                @input="
-                  localAcceptedAt = ($event.target as HTMLInputElement).value
-                "
+                @update:model-value="localAcceptedAt = $event"
               />
             </label>
           </div>

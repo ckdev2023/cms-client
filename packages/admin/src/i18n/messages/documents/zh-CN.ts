@@ -193,6 +193,7 @@ const documentsZhCN = {
       note: "备注",
       notePlaceholder: "请输入备注…",
     },
+    closeAriaLabel: "关闭",
     cancel: "取消",
     confirm: "添加",
     toastTitle: "资料项已添加",

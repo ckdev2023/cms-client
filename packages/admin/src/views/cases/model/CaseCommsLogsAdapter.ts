@@ -128,6 +128,8 @@ export function resolveMessageType(
   if (normalized === "phone") return "phone";
   if (normalized === "meeting") return "meeting";
   if (normalized === "email") return "auto_email";
+  if (normalized === "internal_note") return "internal";
+  if (normalized === "client_note") return "client_visible";
   return visibleToClient === true ? "client_visible" : "internal";
 }
 
@@ -389,6 +391,7 @@ export function buildOverviewTimelineFromLog(
     color:
       OVERVIEW_TIMELINE_COLOR_MAP[e.type] ?? OVERVIEW_TIMELINE_COLOR_FALLBACK,
     text: e.text,
+    textParams: e.textParams,
     meta: e.time,
   }));
 }
