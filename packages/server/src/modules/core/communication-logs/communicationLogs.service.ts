@@ -18,6 +18,7 @@ import { createTenantDrizzleRepository } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 import {
   mapCommunicationLogRecord,
+  rejectSystemOnlyChannelType,
   resolveCommunicationLogUpdate,
   validateChannelType,
   validateDirection,
@@ -72,6 +73,7 @@ export class CommunicationLogsService {
       input.companyId ?? null,
     );
     validateChannelType(input.channelType);
+    rejectSystemOnlyChannelType(input.channelType);
     validateDirection(input.direction ?? "inbound");
     validateTimestamp(input.followUpDueAt, "followUpDueAt");
 
@@ -207,6 +209,7 @@ export class CommunicationLogsService {
     const next = resolveCommunicationLogUpdate(current, input);
     validateRelationPresence(next.caseId, next.customerId, next.companyId);
     validateChannelType(next.channelType);
+    rejectSystemOnlyChannelType(next.channelType);
     validateDirection(next.direction);
     validateTimestamp(next.followUpDueAt, "followUpDueAt");
 

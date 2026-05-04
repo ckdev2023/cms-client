@@ -2058,7 +2058,11 @@ export class CasesService {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
       const result = await tx.query<CaseQueryRow>(
-        `update cases set stage = $2, status = $2, close_reason = coalesce($4, close_reason), business_phase = $5, updated_at = now()
+        `update cases set stage = $2, status = $2,
+           close_reason = coalesce($4, close_reason),
+           business_phase = $5,
+           archived_at = case when $2 = 'S9' then coalesce(archived_at, now()) else archived_at end,
+           updated_at = now()
          where id = $1 and coalesce(stage, status) = $3
            and coalesce(metadata->>'_status','') is distinct from 'deleted'
          returning ${CASE_COLS}`,
@@ -2496,12 +2500,14 @@ export class CasesService {
       `update cases
          set business_phase = $2,
              stage = ${PHASE_TO_STAGE_SQL},
+             status = ${PHASE_TO_STAGE_SQL},
              close_reason = case when $2 = 'CLOSED_FAILED' then $7 else close_reason end,
              result_outcome = case
                when $2 = 'CLOSED_SUCCESS' then 'success'
                when $2 = 'CLOSED_FAILED' then coalesce($8, 'failure')
                else result_outcome
              end,
+             archived_at = case when $2 in ('CLOSED_SUCCESS','CLOSED_FAILED') then coalesce(archived_at, now()) else archived_at end,
              coe_sent_at = case when $4::boolean then now() else coe_sent_at end,
              overseas_visa_start_at = case when $5::boolean then now() else overseas_visa_start_at end,
              entry_confirmed_at = case when $6::boolean then now() else entry_confirmed_at end,
@@ -2790,6 +2796,20 @@ export class CasesService {
     to: string,
     closeReason?: string | null,
   ): Promise<void> {
+    if (to === "S5" || to === "S6" || to === "S7") {
+      await this.assertBillingRecordExists(ctx, c);
+    }
+
+    await this.dispatchGateCheck(ctx, c, from, to, closeReason);
+  }
+
+  private async dispatchGateCheck(
+    ctx: RequestContext,
+    c: Case,
+    from: string,
+    to: string,
+    closeReason?: string | null,
+  ): Promise<void> {
     if (from === "S3" && to === "S4") {
       await this.validateReadyForDocumentPreparation(ctx, c);
       return;
@@ -2813,6 +2833,24 @@ export class CasesService {
     if (from === "S8" && to === "S9") {
       await this.validateSuccessCloseout(ctx, c, closeReason);
       return;
+    }
+  }
+
+  private async assertBillingRecordExists(
+    ctx: RequestContext,
+    c: Case,
+  ): Promise<void> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<{ id: string }>(
+      `select id from billing_records
+       where case_id = $1 limit 1`,
+      [c.id],
+    );
+    if (!result.rows.at(0)) {
+      throw new BadRequestException(
+        CASE_WRITE_ERROR_CODES.STAGE_BILLING_RECORD_REQUIRED +
+          ": At least one billing record is required before advancing to S5/S6/S7",
+      );
     }
   }
 

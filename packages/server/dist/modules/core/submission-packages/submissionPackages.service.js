@@ -1,0 +1,754 @@
+/* eslint-disable complexity, jsdoc/require-description, jsdoc/require-param-description, jsdoc/require-returns, max-lines, max-lines-per-function */
+var __decorate =
+  (this && this.__decorate) ||
+  function (decorators, target, key, desc) {
+    var c = arguments.length,
+      r =
+        c < 3
+          ? target
+          : desc === null
+            ? (desc = Object.getOwnPropertyDescriptor(target, key))
+            : desc,
+      d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
+      r = Reflect.decorate(decorators, target, key, desc);
+    else
+      for (var i = decorators.length - 1; i >= 0; i--)
+        if ((d = decorators[i]))
+          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return (c > 3 && r && Object.defineProperty(target, key, r), r);
+  };
+var __metadata =
+  (this && this.__metadata) ||
+  function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
+      return Reflect.metadata(k, v);
+  };
+var __param =
+  (this && this.__param) ||
+  function (paramIndex, decorator) {
+    return function (target, key) {
+      decorator(target, key, paramIndex);
+    };
+  };
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import { CasesService, TEMPLATES_RESOLVER } from "../cases/cases.service";
+import { createTenantDb } from "../tenancy/tenantDb";
+import { TimelineService } from "../timeline/timeline.service";
+const SUBMISSION_PACKAGE_COLS =
+  "id, org_id, case_id, submission_no, submission_kind, submitted_at, validation_run_id, review_record_id, authority_name, acceptance_no, receipt_storage_type, receipt_relative_path_or_key, related_submission_id, created_by, created_at";
+const SUBMISSION_PACKAGE_ITEM_COLS =
+  "id, submission_package_id, item_type, ref_id, snapshot_payload, created_at";
+const ALLOWED_ITEM_TYPES = new Set([
+  "document_requirement",
+  "document_file_version",
+  "generated_document_version",
+  "field_snapshot",
+]);
+const ALLOWED_SUBMISSION_KINDS = new Set(["initial", "supplement"]);
+const MAX_SUPPLEMENT_CHAIN_DEPTH = 10;
+function toTimestampString(value) {
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  throw new BadRequestException("Invalid timestamp value");
+}
+function normalizeSnapshotPayload(value) {
+  if (!value) return null;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+  if (typeof value === "object" && !Array.isArray(value)) {
+    return value;
+  }
+  return null;
+}
+/**
+ *
+ * @param row
+ */
+export function mapSubmissionPackageRow(row) {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    caseId: row.case_id,
+    submissionNo: Number(row.submission_no),
+    submissionKind: row.submission_kind,
+    submittedAt: toTimestampString(row.submitted_at),
+    validationRunId: row.validation_run_id,
+    reviewRecordId: row.review_record_id,
+    authorityName: row.authority_name,
+    acceptanceNo: row.acceptance_no,
+    receiptStorageType: row.receipt_storage_type,
+    receiptRelativePathOrKey: row.receipt_relative_path_or_key,
+    relatedSubmissionId: row.related_submission_id,
+    createdBy: row.created_by,
+    createdAt: toTimestampString(row.created_at),
+  };
+}
+/**
+ *
+ * @param row
+ */
+export function mapSubmissionPackageItemRow(row) {
+  return {
+    id: row.id,
+    submissionPackageId: row.submission_package_id,
+    itemType: row.item_type,
+    refId: row.ref_id,
+    snapshotPayload: normalizeSnapshotPayload(row.snapshot_payload),
+    createdAt: toTimestampString(row.created_at),
+  };
+}
+function requireValidSubmissionKind(kind) {
+  if (!ALLOWED_SUBMISSION_KINDS.has(kind)) {
+    throw new BadRequestException(
+      "submissionKind must be 'initial' or 'supplement'",
+    );
+  }
+}
+function requireValidItems(items) {
+  if (items.length === 0) {
+    throw new BadRequestException("items must not be empty");
+  }
+  const seen = new Set();
+  for (const item of items) {
+    if (!ALLOWED_ITEM_TYPES.has(item.itemType)) {
+      throw new BadRequestException(
+        `Unsupported submission package itemType: ${item.itemType}`,
+      );
+    }
+    const dedupeKey = `${item.itemType}:${item.refId}`;
+    if (seen.has(dedupeKey)) {
+      throw new BadRequestException(
+        "Duplicate submission package item is not allowed",
+      );
+    }
+    seen.add(dedupeKey);
+    if (item.itemType === "field_snapshot" && !item.snapshotPayload) {
+      throw new BadRequestException("field_snapshot requires snapshotPayload");
+    }
+  }
+}
+function requireSubmissionMinimumFields(input) {
+  if (!input.submittedAt) {
+    throw new BadRequestException(
+      "submittedAt is required for submission package",
+    );
+  }
+  if (
+    typeof input.authorityName !== "string" ||
+    input.authorityName.trim().length === 0
+  ) {
+    throw new BadRequestException(
+      "authorityName is required for submission package",
+    );
+  }
+}
+/**
+ *
+ */
+let SubmissionPackagesService = class SubmissionPackagesService {
+  pool;
+  timelineService;
+  casesService;
+  templatesResolver;
+  /**
+   *
+   * @param pool
+   * @param timelineService
+   * @param casesService
+   * @param templatesResolver
+   */
+  constructor(pool, timelineService, casesService, templatesResolver) {
+    this.pool = pool;
+    this.timelineService = timelineService;
+    this.casesService = casesService;
+    this.templatesResolver = templatesResolver;
+  }
+  /**
+   *
+   * @param ctx
+   * @param input
+   */
+  async create(ctx, input) {
+    const submissionKind = input.submissionKind ?? "initial";
+    requireValidSubmissionKind(submissionKind);
+    requireValidItems(input.items);
+    requireSubmissionMinimumFields(input);
+    if (submissionKind === "supplement" && !input.relatedSubmissionId) {
+      throw new BadRequestException(
+        "relatedSubmissionId is required for supplement package",
+      );
+    }
+    if (submissionKind === "initial" && input.relatedSubmissionId) {
+      throw new BadRequestException(
+        "initial package cannot set relatedSubmissionId",
+      );
+    }
+    const currentCase = await this.casesService.get(ctx, input.caseId);
+    if (!currentCase) {
+      throw new NotFoundException("Case not found");
+    }
+    const currentCaseStage = currentCase.stage ?? currentCase.status;
+    if (currentCaseStage !== "S6" && currentCaseStage !== "S7") {
+      throw new BadRequestException(
+        "Submission package can only be created when case is in S6 or S7",
+      );
+    }
+    const reviewRequired = await this.isReviewRequired(
+      ctx,
+      currentCase.caseTypeCode,
+      currentCase.id,
+    );
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const created = await tenantDb.transaction(async (tx) => {
+      await this.assertCaseExists(tx, ctx.orgId, input.caseId);
+      if (input.relatedSubmissionId) {
+        await this.assertRelatedSubmission(
+          tx,
+          ctx.orgId,
+          input.caseId,
+          input.relatedSubmissionId,
+        );
+      }
+      const gateContext = await this.resolveSubmissionGateContext(
+        tx,
+        ctx.orgId,
+        input.caseId,
+        input.validationRunId ?? null,
+        input.reviewRecordId ?? null,
+        reviewRequired,
+      );
+      const submissionNo = await this.getNextSubmissionNo(
+        tx,
+        ctx.orgId,
+        input.caseId,
+      );
+      const packageResult = await tx.query(
+        `
+          insert into submission_packages (
+            org_id, case_id, submission_no, submission_kind, submitted_at,
+            validation_run_id, review_record_id, authority_name, acceptance_no,
+            receipt_storage_type, receipt_relative_path_or_key, related_submission_id, created_by
+          )
+          values ($1, $2, $3, $4, coalesce($5::timestamptz, now()), $6, $7, $8, $9, $10, $11, $12, $13)
+          returning ${SUBMISSION_PACKAGE_COLS}
+        `,
+        [
+          ctx.orgId,
+          input.caseId,
+          submissionNo,
+          submissionKind,
+          input.submittedAt ?? null,
+          gateContext.validationRunId,
+          gateContext.reviewRecordId,
+          input.authorityName ?? null,
+          input.acceptanceNo ?? null,
+          input.receiptStorageType ?? null,
+          input.receiptRelativePathOrKey ?? null,
+          input.relatedSubmissionId ?? null,
+          ctx.userId,
+        ],
+      );
+      const packageRow = packageResult.rows.at(0);
+      if (!packageRow)
+        throw new BadRequestException("Failed to create submission package");
+      const createdPackage = mapSubmissionPackageRow(packageRow);
+      const items = [];
+      for (const item of input.items) {
+        const snapshotPayload = await this.buildSnapshotPayload(
+          tx,
+          ctx.orgId,
+          input.caseId,
+          item,
+        );
+        const itemResult = await tx.query(
+          `
+            insert into submission_package_items (
+              submission_package_id, item_type, ref_id, snapshot_payload
+            )
+            values ($1, $2, $3, $4::jsonb)
+            returning ${SUBMISSION_PACKAGE_ITEM_COLS}
+          `,
+          [
+            createdPackage.id,
+            item.itemType,
+            item.refId,
+            JSON.stringify(snapshotPayload),
+          ],
+        );
+        const createdItem = itemResult.rows.at(0);
+        if (!createdItem) {
+          throw new BadRequestException(
+            "Failed to create submission package item",
+          );
+        }
+        items.push(mapSubmissionPackageItemRow(createdItem));
+      }
+      return { ...createdPackage, items };
+    });
+    if (submissionKind === "supplement") {
+      await this.casesService.incrementSupplementCount(ctx, created.caseId);
+    }
+    await this.timelineService.write(ctx, {
+      entityType: "case",
+      entityId: created.caseId,
+      action: "submission_package.created",
+      payload: {
+        submissionPackageId: created.id,
+        submissionNo: created.submissionNo,
+        submissionKind: created.submissionKind,
+        itemCount: created.items.length,
+      },
+    });
+    if (currentCaseStage === "S6") {
+      await this.transitionCaseToSubmitted(ctx, created.caseId);
+    }
+    return created;
+  }
+  async transitionCaseToSubmitted(ctx, caseId) {
+    try {
+      await this.casesService.transition(ctx, caseId, { toStage: "S7" });
+    } catch (error) {
+      const reloadedCase = await this.casesService.get(ctx, caseId);
+      if ((reloadedCase?.stage ?? reloadedCase?.status) === "S7") {
+        return;
+      }
+      throw error;
+    }
+  }
+  /**
+   *
+   * @param ctx
+   * @param input
+   */
+  async list(ctx, input = {}) {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
+    const page = Math.max(input.page ?? 1, 1);
+    const offset = (page - 1) * limit;
+    const where = ["org_id = $1"];
+    const params = [ctx.orgId];
+    if (input.caseId) {
+      params.push(input.caseId);
+      where.push(`case_id = $${String(params.length)}`);
+    }
+    const countResult = await tenantDb.query(
+      `select count(*)::text as count from submission_packages where ${where.join(" and ")}`,
+      params,
+    );
+    const listParams = [...params, limit, offset];
+    const listResult = await tenantDb.query(
+      `
+        select ${SUBMISSION_PACKAGE_COLS}
+        from submission_packages
+        where ${where.join(" and ")}
+        order by submitted_at desc, submission_no desc
+        limit $${String(params.length + 1)}
+        offset $${String(params.length + 2)}
+      `,
+      listParams,
+    );
+    return {
+      items: listResult.rows.map(mapSubmissionPackageRow),
+      total: Number(countResult.rows.at(0)?.count ?? "0"),
+    };
+  }
+  /**
+   *
+   * @param ctx
+   * @param id
+   */
+  async get(ctx, id) {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const packageResult = await tenantDb.query(
+      `
+        select ${SUBMISSION_PACKAGE_COLS}
+        from submission_packages
+        where id = $1 and org_id = $2
+        limit 1
+      `,
+      [id, ctx.orgId],
+    );
+    const packageRow = packageResult.rows.at(0);
+    if (!packageRow) return null;
+    const itemResult = await tenantDb.query(
+      `
+        select spi.${SUBMISSION_PACKAGE_ITEM_COLS}
+        from submission_package_items spi
+        join submission_packages sp on sp.id = spi.submission_package_id
+        where spi.submission_package_id = $1 and sp.org_id = $2
+        order by spi.created_at asc, spi.id asc
+      `,
+      [id, ctx.orgId],
+    );
+    return {
+      ...mapSubmissionPackageRow(packageRow),
+      items: itemResult.rows.map(mapSubmissionPackageItemRow),
+    };
+  }
+  async assertCaseExists(tx, orgId, caseId) {
+    const result = await tx.query(
+      `select id from cases where id = $1 and org_id = $2 limit 1`,
+      [caseId, orgId],
+    );
+    if ((result.rowCount ?? 0) === 0) {
+      throw new BadRequestException("Case not found in current organization");
+    }
+  }
+  async assertRelatedSubmission(tx, orgId, caseId, relatedSubmissionId) {
+    const result = await tx.query(
+      `
+        select id
+        from submission_packages
+        where id = $1 and org_id = $2 and case_id = $3
+        limit 1
+      `,
+      [relatedSubmissionId, orgId, caseId],
+    );
+    if ((result.rowCount ?? 0) === 0) {
+      throw new BadRequestException(
+        "relatedSubmissionId does not belong to current case",
+      );
+    }
+    await this.assertRelatedIsLatest(tx, orgId, caseId, relatedSubmissionId);
+    await this.assertNoBranchFromRelated(
+      tx,
+      orgId,
+      caseId,
+      relatedSubmissionId,
+    );
+    await this.assertChainDepthWithinLimit(
+      tx,
+      orgId,
+      caseId,
+      relatedSubmissionId,
+    );
+  }
+  /**
+   * 补正包必须指向当前案件最新的提交包，保证链路线性。
+   * @param tx
+   * @param orgId
+   * @param caseId
+   * @param relatedSubmissionId
+   */
+  async assertRelatedIsLatest(tx, orgId, caseId, relatedSubmissionId) {
+    const latestResult = await tx.query(
+      `
+        select id
+        from submission_packages
+        where org_id = $1 and case_id = $2
+        order by submission_no desc
+        limit 1
+      `,
+      [orgId, caseId],
+    );
+    const latestId = latestResult.rows.at(0)?.id;
+    if (latestId && latestId !== relatedSubmissionId) {
+      throw new BadRequestException(
+        "Supplement must reference the latest submission package for this case (SP_RELATED_NOT_LATEST)",
+      );
+    }
+  }
+  /**
+   * 同一提交包不允许被多个补正包引用（防止链路分叉）。
+   * @param tx
+   * @param orgId
+   * @param caseId
+   * @param relatedSubmissionId
+   */
+  async assertNoBranchFromRelated(tx, orgId, caseId, relatedSubmissionId) {
+    const branchResult = await tx.query(
+      `
+        select id
+        from submission_packages
+        where org_id = $1 and case_id = $2 and related_submission_id = $3
+        limit 1
+      `,
+      [orgId, caseId, relatedSubmissionId],
+    );
+    if ((branchResult.rowCount ?? 0) > 0) {
+      throw new BadRequestException(
+        "Another supplement already references this submission package; chain branching is not allowed (SP_RELATED_ALREADY_BRANCHED)",
+      );
+    }
+  }
+  async assertChainDepthWithinLimit(tx, orgId, caseId, relatedSubmissionId) {
+    let depth = 1;
+    let currentId = relatedSubmissionId;
+    const visited = new Set();
+    while (currentId) {
+      if (visited.has(currentId)) {
+        throw new BadRequestException(
+          "Cycle detected in related_submission_id chain (SP_CHAIN_DEPTH_EXCEEDED)",
+        );
+      }
+      visited.add(currentId);
+      if (depth >= MAX_SUPPLEMENT_CHAIN_DEPTH) {
+        throw new BadRequestException(
+          `Supplement chain depth exceeds maximum of ${String(MAX_SUPPLEMENT_CHAIN_DEPTH)} (SP_CHAIN_DEPTH_EXCEEDED)`,
+        );
+      }
+      currentId = await this.getParentSubmissionId(
+        tx,
+        orgId,
+        caseId,
+        currentId,
+      );
+      depth += 1;
+    }
+  }
+  async getParentSubmissionId(tx, orgId, caseId, packageId) {
+    const result = await tx.query(
+      `
+        select related_submission_id
+        from submission_packages
+        where id = $1 and org_id = $2 and case_id = $3
+        limit 1
+      `,
+      [packageId, orgId, caseId],
+    );
+    return result.rows.at(0)?.related_submission_id ?? null;
+  }
+  async getNextSubmissionNo(tx, orgId, caseId) {
+    const result = await tx.query(
+      `
+        select coalesce(max(submission_no), 0) + 1 as next_submission_no
+        from submission_packages
+        where org_id = $1 and case_id = $2
+      `,
+      [orgId, caseId],
+    );
+    return Number(result.rows.at(0)?.next_submission_no ?? "1");
+  }
+  async resolveSubmissionGateContext(
+    tx,
+    orgId,
+    caseId,
+    validationRunId,
+    reviewRecordId,
+    reviewRequired,
+  ) {
+    const validationRunResult = await tx.query(
+      `
+        select id, result_status
+        from validation_runs
+        where org_id = $1 and case_id = $2
+        order by executed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [orgId, caseId],
+    );
+    const latestValidationRun = validationRunResult.rows.at(0);
+    if (!latestValidationRun) {
+      throw new BadRequestException(
+        "Gate-C requires a latest validation run before creating a submission package",
+      );
+    }
+    if (latestValidationRun.result_status !== "passed") {
+      throw new BadRequestException(
+        "Gate-C requires the latest validation run to be passed",
+      );
+    }
+    if (validationRunId && validationRunId !== latestValidationRun.id) {
+      throw new BadRequestException(
+        "Submission package must reference the latest passed validation run",
+      );
+    }
+    if (!reviewRequired && !reviewRecordId) {
+      return { validationRunId: latestValidationRun.id, reviewRecordId: null };
+    }
+    if (!reviewRequired && reviewRecordId) {
+      const specifiedReviewRecord = await this.getReviewRecordById(
+        tx,
+        orgId,
+        caseId,
+        reviewRecordId,
+      );
+      if (specifiedReviewRecord.validation_run_id !== latestValidationRun.id) {
+        throw new BadRequestException(
+          "reviewRecordId must belong to the latest passed validation run",
+        );
+      }
+      if (specifiedReviewRecord.decision !== "approved") {
+        throw new BadRequestException(
+          "reviewRecordId must reference an approved review record",
+        );
+      }
+      return {
+        validationRunId: latestValidationRun.id,
+        reviewRecordId: specifiedReviewRecord.id,
+      };
+    }
+    const latestReviewRecordResult = await tx.query(
+      `
+        select id, validation_run_id, decision
+        from review_records
+        where org_id = $1
+          and case_id = $2
+          and validation_run_id = $3
+        order by reviewed_at desc nulls last, created_at desc, id desc
+        limit 1
+      `,
+      [orgId, caseId, latestValidationRun.id],
+    );
+    const latestReviewRecord = latestReviewRecordResult.rows.at(0);
+    if (latestReviewRecord?.decision !== "approved") {
+      throw new BadRequestException(
+        "Gate-C requires the latest review record to be approved when review_required_flag is enabled",
+      );
+    }
+    if (reviewRecordId && reviewRecordId !== latestReviewRecord.id) {
+      throw new BadRequestException(
+        "Submission package must reference the latest approved review record",
+      );
+    }
+    return {
+      validationRunId: latestValidationRun.id,
+      reviewRecordId: latestReviewRecord.id,
+    };
+  }
+  async getReviewRecordById(tx, orgId, caseId, reviewRecordId) {
+    const result = await tx.query(
+      `
+        select id, validation_run_id, decision
+        from review_records
+        where id = $1 and org_id = $2 and case_id = $3
+        limit 1
+      `,
+      [reviewRecordId, orgId, caseId],
+    );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException(
+        "reviewRecordId does not belong to current case",
+      );
+    }
+    return row;
+  }
+  async isReviewRequired(ctx, caseTypeCode, caseId) {
+    const resolved = await this.templatesResolver.resolve(ctx, {
+      kind: "case_type",
+      key: caseTypeCode,
+      entityId: caseId,
+    });
+    return (
+      resolved.mode === "template" &&
+      resolved.used &&
+      resolved.config.review_required_flag === true
+    );
+  }
+  async buildSnapshotPayload(tx, orgId, caseId, item) {
+    if (item.snapshotPayload) return item.snapshotPayload;
+    if (item.itemType === "field_snapshot") {
+      throw new BadRequestException("field_snapshot requires snapshotPayload");
+    }
+    if (item.itemType === "document_requirement") {
+      const result = await tx.query(
+        `
+          select id, checklist_item_code, name, status, category, survey_data
+          from document_items
+          where id = $1 and org_id = $2 and case_id = $3
+          limit 1
+        `,
+        [item.refId, orgId, caseId],
+      );
+      const row = result.rows.at(0);
+      if (!row)
+        throw new BadRequestException(
+          "Document requirement not found for current case",
+        );
+      const snapshot = {
+        id: row.id,
+        checklistItemCode: row.checklist_item_code,
+        name: row.name,
+        status: row.status,
+      };
+      if (row.category) snapshot.category = row.category;
+      if (row.survey_data)
+        snapshot.surveyData = normalizeSnapshotPayload(row.survey_data);
+      return snapshot;
+    }
+    if (item.itemType === "document_file_version") {
+      const result = await tx.query(
+        `
+          select df.id, df.requirement_id, df.file_name, df.version_no, df.hash_value
+          from document_files df
+          join document_items di on di.id = df.requirement_id
+          where df.id = $1 and df.org_id = $2 and di.case_id = $3
+          limit 1
+        `,
+        [item.refId, orgId, caseId],
+      );
+      const row = result.rows.at(0);
+      if (!row)
+        throw new BadRequestException(
+          "Document file version not found for current case",
+        );
+      return {
+        id: row.id,
+        requirementId: row.requirement_id,
+        fileName: row.file_name,
+        versionNo: row.version_no,
+        hashValue: row.hash_value,
+      };
+    }
+    if (item.itemType === "generated_document_version") {
+      const result = await tx.query(
+        `
+          select id, title, version_no, output_format, status
+          from generated_documents
+          where id = $1 and org_id = $2 and case_id = $3
+          limit 1
+        `,
+        [item.refId, orgId, caseId],
+      );
+      const row = result.rows.at(0);
+      if (!row) {
+        throw new BadRequestException(
+          "Generated document version not found for current case",
+        );
+      }
+      return {
+        id: row.id,
+        title: row.title,
+        versionNo: row.version_no,
+        outputFormat: row.output_format,
+        status: row.status,
+      };
+    }
+    throw new NotFoundException("Unsupported submission package item type");
+  }
+};
+SubmissionPackagesService = __decorate(
+  [
+    Injectable(),
+    __param(0, Inject(Pool)),
+    __param(1, Inject(TimelineService)),
+    __param(2, Inject(CasesService)),
+    __param(3, Inject(TEMPLATES_RESOLVER)),
+    __metadata("design:paramtypes", [
+      Pool,
+      TimelineService,
+      CasesService,
+      Object,
+    ]),
+  ],
+  SubmissionPackagesService,
+);
+export { SubmissionPackagesService };
+//# sourceMappingURL=submissionPackages.service.js.map

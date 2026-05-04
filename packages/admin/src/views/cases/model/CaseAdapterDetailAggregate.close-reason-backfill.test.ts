@@ -1,6 +1,6 @@
 // ── Test Ownership ──────────────────────────────────────────────
-// Owner: R30-N — close reason modal data backfill.
-// Covers: closedAt fallback to updatedAt for S9 cases,
+// Owner: R30-N / R31-L — close reason modal data backfill.
+// Covers: closedAt bound to archivedAt only (no fallback),
 //   closeReason passthrough, closedBy from deepLink.
 // Does NOT test: modal rendering, failure closeout derivation,
 //   or phase transition logic.
@@ -87,19 +87,17 @@ describe("R30-N: close reason modal data backfill", () => {
       expect(result.detail.closedAt).not.toBe("—");
     });
 
-    it("falls back to updatedAt when archivedAt is null at S9", () => {
+    it("returns empty when archivedAt is null at S9 (R31-L: no updatedAt fallback)", () => {
       const result = adaptCaseDetailAggregate(
         buildAggregate({
           archivedAt: null,
           updatedAt: "2026-04-20T10:30:00.000Z",
         }),
       )!;
-      expect(result.detail.closedAt).toContain("2026");
-      expect(result.detail.closedAt).not.toBe("");
-      expect(result.detail.closedAt).not.toBe("—");
+      expect(result.detail.closedAt).toBe("");
     });
 
-    it("does not use updatedAt fallback for non-S9 cases", () => {
+    it("returns empty for non-S9 cases when archivedAt is null", () => {
       const result = adaptCaseDetailAggregate(
         buildAggregate({
           stage: "S5",

@@ -34,6 +34,7 @@ function buildTaskItem(
   return {
     id: id ?? `task-${taskSequence}`,
     status: status ?? (overrides.done ? "completed" : "pending"),
+    assigneeFullName: "",
     ...rest,
   };
 }

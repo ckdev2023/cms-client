@@ -1,0 +1,13 @@
+# 实际密钥文件
+.env
+.env.*
+!.env.example
+
+# 运行时数据（host bind mount）
+data/
+
+# 备份输出
+backup/
+
+# 临时构建产物
+*.log

@@ -1,0 +1,60 @@
+# Caddyfile —— 单客户测试环境
+#
+# 行为：
+#   - 自动申请并续期 Let's Encrypt 证书（{$DOMAIN} 必须是公网可解析的域名）
+#   - /api/* 反代到 api 容器（去掉 /api 前缀；与 admin Vite dev 行为一致）
+#   - 其余路径作为 SPA 静态资源（找不到时回退到 index.html）
+#   - gzip 压缩
+#
+# 仅本机/办公室访问场景：把 {$DOMAIN} 留空或设成 :80，会跑 HTTP 模式。
+# 推荐生产仍走 HTTPS（即使是测试环境，cookie/CORS 都假设 https）。
+{
+	# 全局选项：邮箱用于 Let's Encrypt 提醒（可选；建议在 .env 设置 ACME_EMAIL）
+	email {$ACME_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	# 结构化 access log → stdout（json）→ docker json-file driver 持久化
+	# 每行一个 JSON 对象，含 ts/method/uri/status/size/duration/remote_ip 等
+	# 用 release/scripts/logs.sh 或 jq 过滤
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+
+	# 健康检查不写 access log（外部探活每 15s/30s 一条会刷屏）
+	@health path /health /health/*
+	log_skip @health
+
+	# 安全 HTTP 头（与 server 端 helmet 互补；这里负责传输层）
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-Frame-Options "DENY"
+		# 由 server 端管 CSP，这里不强加，避免双写冲突
+	}
+
+	# 反代 API。handle_path 会把 /api 前缀剥掉再转发（与 vite.config.ts 的 rewrite 一致）
+	# X-Forwarded-For / -Proto / -Host Caddy 默认会传，无需手写
+	handle_path /api/* {
+		reverse_proxy api:3300 {
+			header_up X-Real-IP {remote_host}
+		}
+	}
+
+	# 健康检查直通（方便外部探活，无需走 /api）
+	handle /health* {
+		reverse_proxy api:3300
+	}
+
+	# SPA 静态资源
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

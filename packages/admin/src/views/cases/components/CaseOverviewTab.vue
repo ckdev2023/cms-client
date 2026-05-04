@@ -48,6 +48,14 @@ const isWaitingPaymentNoBilling = computed(
     props.detail.billing.payments.length === 0,
 );
 
+const isNoBillingRecordWarning = computed(() => {
+  const stage = props.detail.stageCode;
+  return (
+    (stage === "S3" || stage === "S4") &&
+    props.detail.billing.payments.length === 0
+  );
+});
+
 const resolvedGroupName = computed(() => {
   if (!props.detail.groupName) return undefined;
   return resolveGroupLabel(props.detail.groupName, undefined, locale.value);
@@ -262,6 +270,30 @@ function formatEntryTime(raw: string, loc: string): string {
             </svg>
             <span>{{
               t("cases.detail.overview.billingGuard.waitingPaymentEmpty")
+            }}</span>
+          </div>
+          <div
+            v-if="isNoBillingRecordWarning"
+            class="overview-tab__billing-warning overview-tab__billing-warning--soft"
+            data-testid="no-billing-record-warning"
+          >
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
+            </svg>
+            <span>{{
+              t("cases.detail.overview.billingGuard.noBillingRecord")
             }}</span>
           </div>
         </div>
@@ -601,6 +633,15 @@ function formatEntryTime(raw: string, loc: string): string {
   flex-shrink: 0;
   margin-top: 1px;
   color: #f59e0b;
+}
+.overview-tab__billing-warning--soft {
+  color: var(--color-text-3);
+  background: var(--color-bg-3);
+  border-color: var(--color-border-2);
+  font-weight: var(--font-weight-regular, 400);
+}
+.overview-tab__billing-warning--soft svg {
+  color: var(--color-text-3);
 }
 
 .overview-tab__progress-row {

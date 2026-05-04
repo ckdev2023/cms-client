@@ -396,14 +396,8 @@ export function buildTeamFromDeepLink(
   return members;
 }
 
-function resolveClosedAt(
-  caseRecord: Record<string, unknown>,
-  stageId: CaseStageId,
-): string {
-  const archived = readNullableString(caseRecord, "archivedAt");
-  const fallback =
-    stageId === "S9" ? readNullableString(caseRecord, "updatedAt") : null;
-  return formatDate(archived ?? fallback);
+function resolveClosedAt(caseRecord: Record<string, unknown>): string {
+  return readNullableString(caseRecord, "archivedAt") ?? "";
 }
 
 // ─── Public adapter ──────────────────────────────────────────────
@@ -465,7 +459,7 @@ export function adaptCaseDetailAggregate(
       stageId,
     ),
     closeReason: readNullableString(caseRecord, "closeReason"),
-    closedAt: resolveClosedAt(caseRecord, stageId),
+    closedAt: resolveClosedAt(caseRecord),
     closedBy: deepLink
       ? readNullableString(deepLink, "ownerDisplayName")
       : null,

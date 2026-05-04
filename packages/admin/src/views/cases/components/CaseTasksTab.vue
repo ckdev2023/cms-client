@@ -132,7 +132,7 @@ function avatarBg(item: TaskItem): string {
             <span
               class="tasks-tab__avatar"
               :style="{ backgroundColor: avatarBg(task) }"
-              :title="task.assignee"
+              :title="task.assigneeFullName"
             >
               {{ task.assignee }}
             </span>

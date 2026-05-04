@@ -100,8 +100,22 @@ const ok = (rows: unknown[] = [], rowCount = rows.length) =>
 const isTxSql = (s: string) =>
   /^(begin|commit|rollback|select set_config)/.test(s.trim().toLowerCase());
 
+const BILLING_EXISTENCE_SQL = "from billing_records";
+const BILLING_EXISTENCE_LIMIT = "limit 1";
+function isBillingExistenceCheck(sql: string): boolean {
+  return (
+    sql.includes(BILLING_EXISTENCE_SQL) &&
+    sql.includes(BILLING_EXISTENCE_LIMIT) &&
+    !sql.includes("status =") &&
+    !sql.includes("status in") &&
+    !sql.includes("milestone_name")
+  );
+}
+
 /**
  * mock Pool：自动透传事务控制 SQL。
+ * R31-K billing gate 存在性检查默认返回 stub 记录（绝大多数测试需要通过该门禁）。
+ * 需要显式测试 billing 空场景的用例，使用 makePoolNoBilling。
  * @param qf 业务 SQL 处理函数
  * @returns mock Pool 实例
  */
@@ -109,7 +123,11 @@ function makePool(qf: QueryFn) {
   return {
     connect: () =>
       Promise.resolve({
-        query: (s: string, p?: unknown[]) => (isTxSql(s) ? ok() : qf(s, p)),
+        query: (s: string, p?: unknown[]) => {
+          if (isTxSql(s)) return ok();
+          if (isBillingExistenceCheck(s)) return ok([{ id: "br-auto-stub" }]);
+          return qf(s, p);
+        },
         release: () => undefined,
       }),
   };

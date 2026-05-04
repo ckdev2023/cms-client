@@ -78,7 +78,6 @@ describe("computeItemsCompletionRate", () => {
       collected: 0,
       total: 0,
       percent: 0,
-      label: "无必需资料",
     });
   });
 
@@ -92,7 +91,8 @@ describe("computeItemsCompletionRate", () => {
     expect(rate.total).toBe(2);
     expect(rate.collected).toBe(1);
     expect(rate.percent).toBe(50);
-    expect(rate.label).toBe("1 / 2 完成");
+    expect(rate.collected).toBe(1);
+    expect(rate.total).toBe(2);
   });
 
   it("returns 100% when all non-waived items are approved", () => {
@@ -114,11 +114,11 @@ describe("computeItemsCompletionRate", () => {
     expect(rate.collected).toBe(0);
   });
 
-  it('returns "无必需资料" when all items are waived', () => {
+  it("returns total=0 when all items are waived", () => {
     const items = [makeItem("waived"), makeItem("waived")];
     const rate = computeItemsCompletionRate(items);
     expect(rate.total).toBe(0);
-    expect(rate.label).toBe("无必需资料");
+    expect(rate.collected).toBe(0);
   });
 
   it("rounds percentage correctly", () => {
@@ -153,7 +153,7 @@ describe("computeProviderStat", () => {
     const group = makeGroup("空分组", []);
     const stat = computeProviderStat(group);
     expect(stat.total).toBe(0);
-    expect(stat.label).toBe("无必需资料");
+    expect(stat.collected).toBe(0);
   });
 });
 
@@ -206,7 +206,7 @@ describe("computeCaseDocumentCompletionRate", () => {
   it("returns 0/0 for empty groups", () => {
     const rate = computeCaseDocumentCompletionRate([]);
     expect(rate.total).toBe(0);
-    expect(rate.label).toBe("无必需资料");
+    expect(rate.collected).toBe(0);
   });
 
   it("returns 0/0 when all items across groups are waived", () => {

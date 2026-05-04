@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useAdminSession } from "../../auth/model/adminSession";
 import PageHeader from "../../shared/ui/PageHeader.vue";
@@ -29,9 +30,12 @@ import { useBillingSelection } from "./model/useBillingSelection";
 import { useBillingBulkActions } from "./model/useBillingBulkActions";
 import { useRiskAckLog } from "./model/useRiskAckLog";
 import { useBillingToast } from "./model/useBillingToast";
+import { useBillingDeepLink } from "./model/useBillingDeepLink";
 
 /** 收费列表页总装层，装配摘要卡、筛选、表格、批量催款、回款流水、弹窗、toast。 */
 
+const route = useRoute();
+const router = useRouter();
 const { t, locale } = useI18n();
 const adminSession = useAdminSession();
 const isManager = computed(() => adminSession.isAdmin.value);
@@ -144,6 +148,20 @@ function openPaymentModal(caseId: string, billingPlanId?: string) {
   paymentDefaultBillingPlanId.value = billingPlanId ?? "";
   paymentModalOpen.value = true;
 }
+
+const deepLinkCaseQuery = computed(() => {
+  const q = route.query.case;
+  return typeof q === "string" ? q : "";
+});
+
+useBillingDeepLink({
+  caseQuery: deepLinkCaseQuery,
+  search: filters.search,
+  openPaymentModal,
+  clearQuery: () => {
+    router.replace({ path: "/billing" });
+  },
+});
 
 /** 关闭回款弹窗并清除 caseId。 */
 function closePaymentModal() {

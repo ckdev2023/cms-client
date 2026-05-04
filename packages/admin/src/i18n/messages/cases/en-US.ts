@@ -267,6 +267,7 @@ const casesEnUS = {
         urgent: "Urgent",
       },
       riskOptions: {
+        low: "Low",
         normal: "Normal",
         attention: "Needs attention",
         high: "High risk",
@@ -367,6 +368,8 @@ const casesEnUS = {
       billingGuard: {
         waitingPaymentEmpty:
           "Please add at least one billing record in the Billing tab before proceeding to Waiting Payment phase",
+        noBillingRecord:
+          "No billing records registered. Consider adding records in the Billing tab.",
       },
       timeline: {
         title: "Recent activity",
@@ -571,7 +574,7 @@ const casesEnUS = {
           priority: "Priority",
           dueAt: "Due date",
           assignee: "Assignee",
-          assigneePlaceholder: "Enter user ID or name",
+          assigneePlaceholder: "— Select assignee —",
         },
         validation: {
           titleRequired: "Task title is required",
@@ -638,6 +641,10 @@ const casesEnUS = {
       provider: {
         kicker: "By provider completion",
         title: "Document collection by group",
+      },
+      completion: {
+        label: "{collected} / {total} completed",
+        empty: "No required documents",
       },
       readonlyNotice: "Case is archived. The document checklist is read-only.",
       groupEmpty: "No document items in this group",
@@ -954,6 +961,8 @@ const casesEnUS = {
       "Failed to create renewal reminders. Please try again later.",
     waitingPaymentBillingRequired:
       "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment.",
+    stageBillingRecordRequired:
+      "No billing records found. Please add at least one billing record in the Billing tab before advancing the stage.",
     taskInvalidAssigneeId:
       "Assignee ID is invalid. Please select a valid assignee.",
     taskCreateFailed: "Failed to create task. Please try again later.",

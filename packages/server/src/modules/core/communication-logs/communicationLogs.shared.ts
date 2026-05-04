@@ -116,7 +116,10 @@ const VALID_CHANNEL_TYPES = new Set([
   "other",
   "internal_note",
   "client_note",
+  "auto_email",
 ]);
+
+const SYSTEM_ONLY_CHANNEL_TYPES = new Set(["auto_email"]);
 const VALID_DIRECTIONS = new Set(["inbound", "outbound"]);
 
 /**
@@ -280,6 +283,19 @@ export function validateDirection(direction: string): void {
   if (!VALID_DIRECTIONS.has(direction)) {
     throw new BadRequestException(
       `Invalid direction: ${direction}. Must be one of: ${[...VALID_DIRECTIONS].join(", ")}`,
+    );
+  }
+}
+
+/**
+ * `auto_email` 仅由系统事件触发器写入，admin API 不得手动创建或更新为此类型。
+ *
+ * @param channelType Communication channel value.
+ */
+export function rejectSystemOnlyChannelType(channelType: string): void {
+  if (SYSTEM_ONLY_CHANNEL_TYPES.has(channelType)) {
+    throw new BadRequestException(
+      `channelType "${channelType}" is reserved for system use and cannot be set via admin API`,
     );
   }
 }

@@ -1,0 +1,9 @@
+"use strict";
+/**
+ * Tenant-A 特有导出格式。
+ *
+ * 说明：
+ * - 当前暂无特有导出逻辑，此文件为目录骨架占位
+ * - 后续识别到特有导出格式时在此实现
+ */
+//# sourceMappingURL=exporters.js.map

@@ -1,0 +1,97 @@
+# 可选 overlay：Loki + Promtail + Grafana
+#
+# 启用：
+#   cd release
+#   docker compose \
+#     -f compose/docker-compose.prod.yml \
+#     -f compose/docker-compose.logs.yml \
+#     --env-file .env up -d
+#
+# 关闭：
+#   docker compose \
+#     -f compose/docker-compose.prod.yml \
+#     -f compose/docker-compose.logs.yml \
+#     --env-file .env down loki promtail grafana
+#
+# 资源占用：约 300-500MB 内存。单客户测试期足够。
+#
+# Grafana 默认不暴露公网，只监听 127.0.0.1:3000。要从办公室访问请用：
+#   ssh -L 3000:127.0.0.1:3000 user@server   # 隧道到本地
+# 或者把 ports 改成 "3000:3000" 暴露公网（注意改默认密码！）
+
+services:
+  loki:
+    image: grafana/loki:3.2.0
+    restart: unless-stopped
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ../observability/loki/loki-config.yaml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    expose:
+      - "3100"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3100/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    labels:
+      cms.role: "loki"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  promtail:
+    image: grafana/promtail:3.2.0
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/config.yaml
+    depends_on:
+      loki:
+        condition: service_healthy
+    volumes:
+      - ../observability/promtail/promtail-config.yaml:/etc/promtail/config.yaml:ro
+      # 读取 docker socket 来发现容器
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 读取 docker 容器日志（json-file driver 落盘位置）
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    labels:
+      cms.role: "promtail"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    restart: unless-stopped
+    depends_on:
+      loki:
+        condition: service_healthy
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:?GRAFANA_ADMIN_PASSWORD required when enabling logs overlay}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # 让 Grafana 在反代后面也能正确生成链接（如启用反代）
+      GF_SERVER_ROOT_URL: ${GRAFANA_ROOT_URL:-http://127.0.0.1:3000}
+    volumes:
+      - ../observability/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - grafana_data:/var/lib/grafana
+    # 默认只监听 127.0.0.1，避免公网暴露 Grafana
+    # 如要远程访问，建议 ssh tunnel 或 Tailscale；不建议直接 ports: "3000:3000"
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    labels:
+      cms.role: "grafana"
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "3"
+
+volumes:
+  loki_data:
+  grafana_data:

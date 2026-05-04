@@ -1,0 +1,1 @@
+{"version":3,"file":"uuid.js","sourceRoot":"","sources":["../../../../src/modules/core/tenancy/uuid.ts"],"names":[],"mappings":"AAAA,4DAA4D;AAC5D,MAAM,UAAU,GACd,4EAA4E,CAAC;AAE/E;;;;;GAKG;AACH,MAAM,UAAU,MAAM,CAAC,KAAa;IAClC,OAAO,UAAU,CAAC,IAAI,CAAC,KAAK,CAAC,CAAC;AAChC,CAAC"}

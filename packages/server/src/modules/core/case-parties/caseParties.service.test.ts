@@ -88,13 +88,15 @@ void test("mapCasePartyRow handles null optional fields", () => {
 
 // ── create ──
 
-void test("CasePartiesService.create inserts row and writes both timelines", async () => {
+void test("CasePartiesService.create inserts row and writes both timelines with partyName from customer", async () => {
   const tl = makeTimeline();
   const pool = makePool((sql) => {
     if (sql.includes("select id from cases"))
       return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
     if (sql.includes("insert into case_parties"))
       return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
+    if (sql.includes("from customers"))
+      return Promise.resolve({ rows: [{ name: "田中太郎" }], rowCount: 1 });
     return Promise.resolve({ rows: [], rowCount: 0 });
   });
 
@@ -112,14 +114,79 @@ void test("CasePartiesService.create inserts row and writes both timelines", asy
     entityType: "case_party",
     entityId: PARTY_ID,
     action: "case_party.created",
-    payload: { caseId: CASE_ID, partyType: "spouse" },
+    payload: { caseId: CASE_ID, partyType: "spouse", partyName: "田中太郎" },
   });
   assert.deepEqual(tl.writes[1], {
     entityType: "case",
     entityId: CASE_ID,
     action: "case_party.created",
-    payload: { casePartyId: PARTY_ID, partyType: "spouse" },
+    payload: {
+      casePartyId: PARTY_ID,
+      partyType: "spouse",
+      partyName: "田中太郎",
+    },
   });
+});
+
+void test("CasePartiesService.create resolves partyName from contactPerson when present", async () => {
+  const tl = makeTimeline();
+  const contactRow = {
+    ...sampleRow,
+    customer_id: null,
+    contact_person_id: "cp-1",
+  };
+  const pool = makePool((sql) => {
+    if (sql.includes("select id from cases"))
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    if (sql.includes("insert into case_parties"))
+      return Promise.resolve({ rows: [contactRow], rowCount: 1 });
+    if (sql.includes("from contact_persons"))
+      return Promise.resolve({ rows: [{ name: "佐藤花子" }], rowCount: 1 });
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc(pool, tl).create(makeCtx(), {
+    caseId: CASE_ID,
+    partyType: "spouse",
+    contactPersonId: "cp-1",
+  });
+
+  assert.equal(tl.writes.length, 2);
+  assert.equal(
+    (tl.writes[0] as { payload: { partyName: string } }).payload.partyName,
+    "佐藤花子",
+  );
+  assert.equal(
+    (tl.writes[1] as { payload: { partyName: string } }).payload.partyName,
+    "佐藤花子",
+  );
+});
+
+void test("CasePartiesService.create writes partyName as null when name not resolvable", async () => {
+  const tl = makeTimeline();
+  const pool = makePool((sql) => {
+    if (sql.includes("select id from cases"))
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    if (sql.includes("insert into case_parties"))
+      return Promise.resolve({ rows: [sampleRow], rowCount: 1 });
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc(pool, tl).create(makeCtx(), {
+    caseId: CASE_ID,
+    partyType: "spouse",
+    customerId: "cust-1",
+  });
+
+  assert.equal(tl.writes.length, 2);
+  assert.equal(
+    (tl.writes[0] as { payload: { partyName: unknown } }).payload.partyName,
+    null,
+  );
+  assert.equal(
+    (tl.writes[1] as { payload: { partyName: unknown } }).payload.partyName,
+    null,
+  );
 });
 
 void test("CasePartiesService.create throws when both customerId and contactPersonId missing", async () => {

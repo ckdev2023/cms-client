@@ -28,11 +28,25 @@ const ok = (rows: unknown[] = [], rowCount = rows.length) =>
 const isTxSql = (s: string) =>
   /^(begin|commit|rollback|select set_config)/.test(s.trim().toLowerCase());
 
+function isBillingExistenceCheck(sql: string): boolean {
+  return (
+    sql.includes("from billing_records") &&
+    sql.includes("limit 1") &&
+    !sql.includes("status =") &&
+    !sql.includes("status in") &&
+    !sql.includes("milestone_name")
+  );
+}
+
 function makePool(qf: QueryFn) {
   return {
     connect: () =>
       Promise.resolve({
-        query: (s: string, p?: unknown[]) => (isTxSql(s) ? ok() : qf(s, p)),
+        query: (s: string, p?: unknown[]) => {
+          if (isTxSql(s)) return ok();
+          if (isBillingExistenceCheck(s)) return ok([{ id: "br-auto-stub" }]);
+          return qf(s, p);
+        },
         release: () => undefined,
       }),
   };

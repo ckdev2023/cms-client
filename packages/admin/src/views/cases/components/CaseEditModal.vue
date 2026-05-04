@@ -258,6 +258,9 @@ function handleSave(): void {
                 "
               >
                 <option value="">--</option>
+                <option value="low">
+                  {{ t("cases.detail.editModal.riskOptions.low") }}
+                </option>
                 <option value="normal">
                   {{ t("cases.detail.editModal.riskOptions.normal") }}
                 </option>

@@ -1,0 +1,371 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { ForbiddenException, NotFoundException } from "@nestjs/common";
+import { BillingCollectionsService } from "./billingCollections.service";
+const ORG_ID = "00000000-0000-4000-8000-000000000001";
+const ORG_B = "00000000-0000-4000-8000-000000000002";
+const USER_ID = "00000000-0000-4000-8000-000000000010";
+const CASE_1 = "case-001";
+const CASE_2 = "case-002";
+const OWNER = "00000000-0000-4000-8000-000000000020";
+const PLAN = "plan-001";
+const TASK = "task-001";
+function ctx(orgId = ORG_ID, role = "staff") {
+  return { orgId, userId: USER_ID, role };
+}
+function pool(qfn) {
+  const c = { query: qfn, release: () => undefined };
+  return { connect: () => Promise.resolve(c) };
+}
+const OK = Promise.resolve({ rows: [], rowCount: 0 });
+function planRow(o = {}) {
+  return {
+    id: PLAN,
+    case_id: CASE_1,
+    milestone_name: "着手金",
+    owner_user_id: OWNER,
+    case_no: "CAS-2026-0001",
+    ...o,
+  };
+}
+function stubTask(o = {}) {
+  return {
+    id: TASK,
+    orgId: ORG_ID,
+    caseId: CASE_1,
+    title: "催款",
+    description: null,
+    taskType: "collection",
+    assigneeUserId: OWNER,
+    priority: "high",
+    dueAt: new Date().toISOString(),
+    status: "pending",
+    sourceType: "billing_plan",
+    sourceId: PLAN,
+    completedAt: null,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    ...o,
+  };
+}
+function tl() {
+  const w = [];
+  return {
+    svc: {
+      write: (_c, i) => {
+        w.push(i);
+        return Promise.resolve();
+      },
+    },
+    w,
+  };
+}
+function svc(opts) {
+  const t = opts.timeline ?? tl();
+  return new BillingCollectionsService(
+    opts.pool,
+    {
+      assertCanEditCase:
+        opts.cases?.assertCanEditCase ?? (() => Promise.resolve()),
+    },
+    {
+      create: opts.tasks?.create ?? (() => Promise.resolve(stubTask())),
+    },
+    t.svc,
+  );
+}
+function stdPool(planOvr, caseNoLookup = "CAS-2026-0001") {
+  return pool((sql) => {
+    if (sql.includes("set_config")) return OK;
+    if (sql.includes("select case_no from cases"))
+      return Promise.resolve({
+        rows: caseNoLookup === null ? [] : [{ case_no: caseNoLookup }],
+        rowCount: caseNoLookup === null ? 0 : 1,
+      });
+    if (sql.includes("from billing_records") && sql.includes("due_date"))
+      return Promise.resolve({
+        rows: planOvr === undefined ? [] : [planRow(planOvr)],
+        rowCount: planOvr === undefined ? 0 : 1,
+      });
+    if (sql.includes("from tasks")) return OK;
+    return OK;
+  });
+}
+// ─── success ────────────────────────────────────────────────────
+void test("full success: creates task and writes timeline", async () => {
+  const inputs = [];
+  const t = tl();
+  const s = svc({
+    pool: stdPool({}),
+    tasks: {
+      create: (_c, i) => {
+        inputs.push(i);
+        return Promise.resolve(stubTask());
+      },
+    },
+    timeline: t,
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.success, 1);
+  assert.equal(r.skipped, 0);
+  assert.equal(r.failed, 0);
+  assert.equal(r.details[0]?.result, "success");
+  assert.equal(r.details[0]?.taskId, TASK);
+  assert.equal(r.details[0]?.caseNo, "CAS-2026-0001");
+  const ti = inputs[0];
+  assert.equal(ti.taskType, "collection");
+  assert.equal(ti.sourceType, "billing_plan");
+  assert.equal(ti.sourceId, PLAN);
+  assert.equal(ti.priority, "high");
+  assert.equal(ti.assigneeUserId, OWNER);
+  const tle = t.w[0];
+  assert.equal(tle.entityType, "case");
+  assert.equal(tle.entityId, CASE_1);
+  assert.equal(tle.action, "case.collection_task_created");
+});
+// ─── skip: no-permission ────────────────────────────────────────
+void test("no-permission skip on ForbiddenException", async () => {
+  const s = svc({
+    pool: stdPool(),
+    cases: {
+      assertCanEditCase: () => Promise.reject(new ForbiddenException()),
+    },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "no-permission");
+});
+void test("case-not-found skip on NotFoundException (soft-deleted/cross-org/missing)", async () => {
+  const s = svc({
+    pool: stdPool(),
+    cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+});
+void test("case-not-found returns caseNo from upfront lookup (soft-deleted case still has case_no)", async () => {
+  const s = svc({
+    pool: stdPool(undefined, "CAS-2026-DELETED"),
+    cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+  assert.equal(
+    r.details[0]?.caseNo,
+    "CAS-2026-DELETED",
+    "drawer must show which case was skipped, even when soft-deleted",
+  );
+});
+void test("not-overdue skip returns caseNo (no longer null)", async () => {
+  const r = await svc({
+    pool: stdPool(undefined, "CAS-2026-NO-OVERDUE"),
+  }).bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "not-overdue");
+  assert.equal(r.details[0]?.caseNo, "CAS-2026-NO-OVERDUE");
+});
+void test("case truly absent (cross-org) returns null caseNo + case-not-found", async () => {
+  const s = svc({
+    pool: stdPool(undefined, null),
+    cases: { assertCanEditCase: () => Promise.reject(new NotFoundException()) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.details[0]?.reason, "case-not-found");
+  assert.equal(r.details[0]?.caseNo, null);
+});
+void test("ForbiddenException and NotFoundException map to distinct reason codes", async () => {
+  let n = 0;
+  const s = svc({
+    pool: stdPool(),
+    cases: {
+      assertCanEditCase: () => {
+        n++;
+        return n === 1
+          ? Promise.reject(new ForbiddenException())
+          : Promise.reject(new NotFoundException());
+      },
+    },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1, CASE_2]);
+  assert.equal(r.skipped, 2);
+  assert.equal(r.details[0]?.reason, "no-permission");
+  assert.equal(r.details[1]?.reason, "case-not-found");
+});
+// ─── skip: not-overdue ──────────────────────────────────────────
+void test("not-overdue when no overdue plans", async () => {
+  const r = await svc({ pool: stdPool() }).bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "not-overdue");
+});
+// ─── skip: duplicate-task ───────────────────────────────────────
+void test("duplicate-task when existing collection task found", async () => {
+  const p = pool((sql) => {
+    if (sql.includes("set_config")) return OK;
+    if (sql.includes("from billing_records"))
+      return Promise.resolve({ rows: [planRow()], rowCount: 1 });
+    if (sql.includes("from tasks") && sql.includes("collection"))
+      return Promise.resolve({ rows: [{ id: "dup" }], rowCount: 1 });
+    return OK;
+  });
+  const r = await svc({ pool: p }).bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "duplicate-task");
+});
+// ─── skip: no-assignee ──────────────────────────────────────────
+void test("no-assignee when owner_user_id is null", async () => {
+  const r = await svc({ pool: stdPool({ owner_user_id: null }) }).bulkCollect(
+    ctx(),
+    [CASE_1],
+  );
+  assert.equal(r.skipped, 1);
+  assert.equal(r.details[0]?.reason, "no-assignee");
+});
+// ─── failed: system-error ───────────────────────────────────────
+void test("system-error when tasksService.create throws", async () => {
+  const s = svc({
+    pool: stdPool({}),
+    tasks: { create: () => Promise.reject(new Error("boom")) },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1]);
+  assert.equal(r.failed, 1);
+  assert.equal(r.details[0]?.result, "failed");
+  assert.equal(r.details[0]?.reason, "system-error");
+});
+// ─── isolation: system-error on one case doesn't break others ───
+void test("system-error isolation: one failure does not affect others", async () => {
+  let n = 0;
+  const s = svc({
+    pool: stdPool({}),
+    tasks: {
+      create: () => {
+        n++;
+        if (n === 1) return Promise.reject(new Error("first"));
+        return Promise.resolve(stubTask({ id: "ok" }));
+      },
+    },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1, CASE_2]);
+  assert.equal(r.failed, 1);
+  assert.equal(r.success, 1);
+  assert.equal(r.details[0]?.result, "failed");
+  assert.equal(r.details[1]?.result, "success");
+});
+// ─── partial success ────────────────────────────────────────────
+void test("partial success with mixed skip reasons", async () => {
+  let i = 0;
+  const s = svc({
+    pool: stdPool({}),
+    cases: {
+      assertCanEditCase: (_c, id) => {
+        i++;
+        return id === CASE_1
+          ? Promise.resolve()
+          : Promise.reject(new ForbiddenException());
+      },
+    },
+  });
+  const r = await s.bulkCollect(ctx(), [CASE_1, CASE_2]);
+  assert.equal(r.success, 1);
+  assert.equal(r.skipped, 1);
+  assert.ok(i >= 2);
+});
+// ─── fingerprint SQL shape ──────────────────────────────────────
+void test("fingerprint SQL includes task_type='collection' and source_type='billing_plan'", async () => {
+  const sqls = [];
+  const p = pool((sql) => {
+    sqls.push(sql);
+    if (sql.includes("set_config")) return OK;
+    if (sql.includes("billing_records"))
+      return Promise.resolve({ rows: [planRow()], rowCount: 1 });
+    return OK;
+  });
+  await svc({ pool: p }).bulkCollect(ctx(), [CASE_1]);
+  const q = sqls.find(
+    (s) => s.includes("from tasks") && s.includes("source_type"),
+  );
+  assert.ok(q);
+  assert.ok(q.includes("task_type = 'collection'"));
+  assert.ok(q.includes("source_type = 'billing_plan'"));
+});
+// ─── cross-org isolation ────────────────────────────────────────
+void test("cross-org isolation: separate set_config per org", async () => {
+  const cfgs = [];
+  const p = pool((sql, params) => {
+    if (sql.includes("set_config") && sql.includes("app.org_id"))
+      cfgs.push(String(params?.[0]));
+    if (sql.includes("billing_records")) return OK;
+    return OK;
+  });
+  const s = svc({ pool: p });
+  await s.bulkCollect(ctx(ORG_ID), [CASE_1]);
+  await s.bulkCollect(ctx(ORG_B), [CASE_2]);
+  assert.ok(cfgs.includes(ORG_ID));
+  assert.ok(cfgs.includes(ORG_B));
+});
+// ─── overdue plan SQL shape ─────────────────────────────────────
+void test("overdue plan query filters by status, due_date < now(), limit 1, order asc", async () => {
+  const sqls = [];
+  const p = pool((sql) => {
+    sqls.push(sql);
+    if (sql.includes("set_config")) return OK;
+    if (sql.includes("billing_records")) return OK;
+    return OK;
+  });
+  await svc({ pool: p }).bulkCollect(ctx(), [CASE_1]);
+  const q = sqls.find((s) => s.includes("from billing_records"));
+  assert.ok(q);
+  assert.ok(q.includes("'due', 'partial', 'overdue'"));
+  assert.ok(q.includes("due_date < now()"));
+  assert.ok(q.includes("order by br.due_date asc"));
+  assert.ok(q.includes("limit 1"));
+});
+// ─── dueAt = now + 1 day ────────────────────────────────────────
+void test("task dueAt ≈ now + 1 day", async () => {
+  const inputs = [];
+  const before = Date.now();
+  const s = svc({
+    pool: stdPool({}),
+    tasks: {
+      create: (_c, i) => {
+        inputs.push(i);
+        return Promise.resolve(stubTask());
+      },
+    },
+  });
+  await s.bulkCollect(ctx(), [CASE_1]);
+  const after = Date.now();
+  const d = new Date(inputs[0]?.dueAt).getTime();
+  const day = 86400000;
+  assert.ok(d >= before + day - 1000);
+  assert.ok(d <= after + day + 1000);
+});
+// ─── title with/without milestone ───────────────────────────────
+void test("task title includes milestone name", async () => {
+  const inputs = [];
+  const s = svc({
+    pool: stdPool({ milestone_name: "契約金" }),
+    tasks: {
+      create: (_c, i) => {
+        inputs.push(i);
+        return Promise.resolve(stubTask());
+      },
+    },
+  });
+  await s.bulkCollect(ctx(), [CASE_1]);
+  assert.ok(String(inputs[0]?.title).includes("契約金"));
+});
+void test("task title uses fallback when milestone_name null", async () => {
+  const inputs = [];
+  const s = svc({
+    pool: stdPool({ milestone_name: null }),
+    tasks: {
+      create: (_c, i) => {
+        inputs.push(i);
+        return Promise.resolve(stubTask());
+      },
+    },
+  });
+  await s.bulkCollect(ctx(), [CASE_1]);
+  assert.ok(String(inputs[0]?.title).includes("収費ノード"));
+});
+//# sourceMappingURL=billingCollections.service.test.js.map

@@ -9,6 +9,7 @@ import { Pool } from "pg";
 
 import type { CaseParty } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
+import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 import { VALID_PARTY_TYPES, type PartyType } from "./caseParties.types";
@@ -168,19 +169,43 @@ export class CasePartiesService {
     return mapCasePartyRow(row);
   }
 
+  private async resolvePartyName(
+    ctx: RequestContext,
+    party: CaseParty,
+  ): Promise<string | null> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    if (party.contactPersonId) {
+      const r = await tenantDb.query<{ name: string }>(
+        `select name from contact_persons where id = $1 limit 1`,
+        [party.contactPersonId],
+      );
+      if (r.rows[0]?.name) return r.rows[0].name;
+    }
+    if (party.customerId) {
+      const r = await tenantDb.query<{ name: string }>(
+        `select ${customerNameExpr("cu")} as name from customers cu where cu.id = $1 limit 1`,
+        [party.customerId],
+      );
+      if (r.rows[0]?.name) return r.rows[0].name;
+    }
+    return null;
+  }
+
   private async writeCreateTimelines(
     ctx: RequestContext,
     party: CaseParty,
+    partyName: string | null,
   ): Promise<void> {
     await this.timelineService.write(ctx, {
       entityType: "case_party",
       entityId: party.id,
       action: "case_party.created",
-      payload: { caseId: party.caseId, partyType: party.partyType },
+      payload: { caseId: party.caseId, partyType: party.partyType, partyName },
     });
     await this.writeCaseTimeline(ctx, party.caseId, "case_party.created", {
       casePartyId: party.id,
       partyType: party.partyType,
+      partyName,
     });
   }
 
@@ -197,7 +222,8 @@ export class CasePartiesService {
     this.validateCreateInput(input);
     const isPrimary = input.isPrimary ?? false;
     const party = await this.insertCaseParty(ctx, input, isPrimary);
-    await this.writeCreateTimelines(ctx, party);
+    const partyName = await this.resolvePartyName(ctx, party);
+    await this.writeCreateTimelines(ctx, party, partyName);
 
     return party;
   }

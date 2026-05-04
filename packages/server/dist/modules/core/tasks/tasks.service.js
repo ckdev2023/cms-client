@@ -1,0 +1,356 @@
+var __decorate =
+  (this && this.__decorate) ||
+  function (decorators, target, key, desc) {
+    var c = arguments.length,
+      r =
+        c < 3
+          ? target
+          : desc === null
+            ? (desc = Object.getOwnPropertyDescriptor(target, key))
+            : desc,
+      d;
+    if (typeof Reflect === "object" && typeof Reflect.decorate === "function")
+      r = Reflect.decorate(decorators, target, key, desc);
+    else
+      for (var i = decorators.length - 1; i >= 0; i--)
+        if ((d = decorators[i]))
+          r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
+    return (c > 3 && r && Object.defineProperty(target, key, r), r);
+  };
+var __metadata =
+  (this && this.__metadata) ||
+  function (k, v) {
+    if (typeof Reflect === "object" && typeof Reflect.metadata === "function")
+      return Reflect.metadata(k, v);
+  };
+var __param =
+  (this && this.__param) ||
+  function (paramIndex, decorator) {
+    return function (target, key) {
+      decorator(target, key, paramIndex);
+    };
+  };
+var TasksService_1;
+/* eslint-disable jsdoc/require-jsdoc */
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
+import { Pool } from "pg";
+import {
+  requireTimestampString,
+  toTimestampStringOrNull,
+} from "../model/timestamps";
+import { createTenantDb } from "../tenancy/tenantDb";
+import { TimelineService } from "../timeline/timeline.service";
+import {
+  validateMutableStatusTransition,
+  validatePriority,
+  validateTaskStatus,
+  validateTaskType,
+  validateTerminalTransition,
+  validateTimestamp,
+  validateTitle,
+  wrapTaskCreateError,
+} from "./tasks.errors";
+export { TASK_WRITE_ERROR_CODES } from "./tasks.errors";
+const TASK_COLS = `id, org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id, completed_at, created_at, updated_at`;
+const TASK_LIST_SELECT = `t.id, t.org_id, t.case_id, t.title, t.description, t.task_type, t.assignee_user_id, t.priority, t.due_at, t.status, t.source_type, t.source_id, t.completed_at, t.created_at, t.updated_at, c.case_no as case_no, c.case_name as case_name, u.name as assignee_name`;
+export function mapTaskRow(row) {
+  return {
+    id: row.id,
+    orgId: row.org_id,
+    caseId: row.case_id,
+    title: row.title,
+    description: row.description,
+    taskType: row.task_type,
+    assigneeUserId: row.assignee_user_id,
+    priority: row.priority,
+    dueAt: toTimestampStringOrNull(row.due_at),
+    status: row.status,
+    sourceType: row.source_type,
+    sourceId: row.source_id,
+    completedAt: toTimestampStringOrNull(row.completed_at),
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    updatedAt: requireTimestampString(row.updated_at, "updated_at"),
+  };
+}
+export function mapTaskListRow(row) {
+  return {
+    ...mapTaskRow(row),
+    caseNo: row.case_no ?? null,
+    caseName: row.case_name ?? null,
+    assigneeName: row.assignee_name ?? null,
+  };
+}
+let TasksService = class TasksService {
+  static {
+    TasksService_1 = this;
+  }
+  pool;
+  timelineService;
+  static ALLOWED_ASSERT_TABLES = new Set(["cases", "users"]);
+  constructor(pool, timelineService) {
+    this.pool = pool;
+    this.timelineService = timelineService;
+  }
+  // eslint-disable-next-line complexity
+  async create(ctx, input) {
+    validateTitle(input.title);
+    validateTaskType(input.taskType ?? "general");
+    validatePriority(input.priority ?? "normal");
+    validateTimestamp(input.dueAt, "dueAt");
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    try {
+      if (input.caseId)
+        await this.assertBelongsToOrg(tenantDb, "cases", input.caseId);
+      if (input.assigneeUserId) {
+        await this.assertBelongsToOrg(tenantDb, "users", input.assigneeUserId);
+      }
+      const result = await tenantDb.query(
+        `insert into tasks (org_id, case_id, title, description, task_type, assignee_user_id, priority, due_at, status, source_type, source_id)
+       values ($1, $2, $3, $4, $5, $6, $7, $8, 'pending', $9, $10)
+       returning ${TASK_COLS}`,
+        [
+          ctx.orgId,
+          input.caseId ?? null,
+          input.title,
+          input.description ?? null,
+          input.taskType ?? "general",
+          input.assigneeUserId ?? null,
+          input.priority ?? "normal",
+          input.dueAt ?? null,
+          input.sourceType ?? null,
+          input.sourceId ?? null,
+        ],
+      );
+      const row = result.rows.at(0);
+      if (!row) throw new BadRequestException("Failed to create task");
+      const task = mapTaskRow(row);
+      await this.timelineService.write(ctx, {
+        entityType: "task",
+        entityId: task.id,
+        action: "task.created",
+        payload: {
+          caseId: task.caseId,
+          title: task.title,
+          status: task.status,
+        },
+      });
+      return task;
+    } catch (error) {
+      return wrapTaskCreateError(error);
+    }
+  }
+  async get(ctx, id) {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query(
+      `select ${TASK_COLS} from tasks where id = $1 limit 1`,
+      [id],
+    );
+    const row = result.rows.at(0);
+    return row ? mapTaskRow(row) : null;
+  }
+  async list(ctx, input = {}) {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const limit = Math.min(Math.max(input.limit ?? 20, 1), 200);
+    const page = Math.max(input.page ?? 1, 1);
+    const offset = (page - 1) * limit;
+    const where = [];
+    const params = [];
+    const filters = [
+      ["t.case_id", input.caseId],
+      ["t.assignee_user_id", input.assigneeUserId],
+      ["t.status", input.status],
+    ];
+    for (const [column, value] of filters) {
+      if (!value) continue;
+      params.push(value);
+      where.push(`${column} = $${String(params.length)}`);
+    }
+    const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
+    const countResult = await tenantDb.query(
+      `select count(*) as count from tasks t ${whereClause}`,
+      params,
+    );
+    const total = Number.parseInt(countResult.rows[0]?.count ?? "0", 10);
+    const listParams = [...params, limit, offset];
+    const result = await tenantDb.query(
+      `select ${TASK_LIST_SELECT}
+       from tasks t
+       left join cases c on c.id = t.case_id and c.org_id = t.org_id
+       left join users u on u.id = t.assignee_user_id and u.org_id = t.org_id
+       ${whereClause}
+       order by t.created_at desc, t.id desc
+       limit $${String(listParams.length - 1)} offset $${String(listParams.length)}`,
+      listParams,
+    );
+    return { items: result.rows.map(mapTaskListRow), total };
+  }
+  // eslint-disable-next-line max-lines-per-function
+  async update(ctx, id, input) {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Task not found");
+    if (isTerminalStatus(current.status)) {
+      throw new BadRequestException("Terminal tasks cannot be updated");
+    }
+    const next = resolveTaskUpdate(current, input);
+    validateTitle(next.title);
+    validateTaskType(next.taskType);
+    validatePriority(next.priority);
+    validateTaskStatus(next.status);
+    validateTimestamp(next.dueAt, "dueAt");
+    validateMutableStatusTransition(current.status, next.status);
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    if (next.caseId)
+      await this.assertBelongsToOrg(tenantDb, "cases", next.caseId);
+    if (next.assigneeUserId) {
+      await this.assertBelongsToOrg(tenantDb, "users", next.assigneeUserId);
+    }
+    const result = await tenantDb.query(
+      `update tasks
+       set case_id = $2,
+           title = $3,
+           description = $4,
+           task_type = $5,
+           assignee_user_id = $6,
+           priority = $7,
+           due_at = $8,
+           status = $9,
+           source_type = $10,
+           source_id = $11,
+           updated_at = now()
+       where id = $1
+       returning ${TASK_COLS}`,
+      [
+        id,
+        next.caseId,
+        next.title,
+        next.description,
+        next.taskType,
+        next.assigneeUserId,
+        next.priority,
+        next.dueAt,
+        next.status,
+        next.sourceType,
+        next.sourceId,
+      ],
+    );
+    const row = result.rows.at(0);
+    if (!row) throw new BadRequestException("Failed to update task");
+    const updated = mapTaskRow(row);
+    await this.timelineService.write(ctx, {
+      entityType: "task",
+      entityId: updated.id,
+      action: "task.updated",
+      payload: { before: current, after: updated },
+    });
+    return updated;
+  }
+  async complete(ctx, id) {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Task not found");
+    validateTerminalTransition(current.status, "completed");
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query(
+      `update tasks
+       set status = 'completed', completed_at = now(), updated_at = now()
+       where id = $1 and status = $2
+       returning ${TASK_COLS}`,
+      [id, current.status],
+    );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException(
+        `Transition conflict: task status has already changed from '${current.status}'`,
+      );
+    }
+    const updated = mapTaskRow(row);
+    await this.timelineService.write(ctx, {
+      entityType: "task",
+      entityId: updated.id,
+      action: "task.completed",
+      payload: {
+        previousStatus: current.status,
+        completedAt: updated.completedAt,
+      },
+    });
+    return updated;
+  }
+  async cancel(ctx, id) {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Task not found");
+    validateTerminalTransition(current.status, "cancelled");
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query(
+      `update tasks
+       set status = 'cancelled', updated_at = now()
+       where id = $1 and status = $2
+       returning ${TASK_COLS}`,
+      [id, current.status],
+    );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException(
+        `Transition conflict: task status has already changed from '${current.status}'`,
+      );
+    }
+    const updated = mapTaskRow(row);
+    await this.timelineService.write(ctx, {
+      entityType: "task",
+      entityId: updated.id,
+      action: "task.cancelled",
+      payload: { previousStatus: current.status },
+    });
+    return updated;
+  }
+  async assertBelongsToOrg(tenantDb, table, id) {
+    if (!TasksService_1.ALLOWED_ASSERT_TABLES.has(table)) {
+      throw new Error(`assertBelongsToOrg: disallowed table "${table}"`);
+    }
+    const result = await tenantDb.query(
+      `select id from ${table} where id = $1 limit 1`,
+      [id],
+    );
+    if (result.rows.length === 0) {
+      throw new BadRequestException(
+        `Referenced ${table} record not found in current organization`,
+      );
+    }
+  }
+};
+TasksService = TasksService_1 = __decorate(
+  [
+    Injectable(),
+    __param(0, Inject(Pool)),
+    __param(1, Inject(TimelineService)),
+    __metadata("design:paramtypes", [Pool, TimelineService]),
+  ],
+  TasksService,
+);
+export { TasksService };
+function resolveTaskUpdate(current, input) {
+  return {
+    caseId: input.caseId !== undefined ? input.caseId : current.caseId,
+    title: input.title ?? current.title,
+    description:
+      input.description !== undefined ? input.description : current.description,
+    taskType: input.taskType ?? current.taskType,
+    assigneeUserId:
+      input.assigneeUserId !== undefined
+        ? input.assigneeUserId
+        : current.assigneeUserId,
+    priority: input.priority ?? current.priority,
+    dueAt: input.dueAt !== undefined ? input.dueAt : current.dueAt,
+    status: input.status ?? current.status,
+    sourceType:
+      input.sourceType !== undefined ? input.sourceType : current.sourceType,
+    sourceId: input.sourceId !== undefined ? input.sourceId : current.sourceId,
+  };
+}
+function isTerminalStatus(status) {
+  return status === "completed" || status === "cancelled";
+}
+//# sourceMappingURL=tasks.service.js.map

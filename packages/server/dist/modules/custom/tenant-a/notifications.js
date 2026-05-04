@@ -1,0 +1,9 @@
+"use strict";
+/**
+ * Tenant-A 特有通知规则。
+ *
+ * 说明：
+ * - 当前暂无特有通知逻辑，此文件为目录骨架占位
+ * - 后续识别到特有通知规则时在此实现
+ */
+//# sourceMappingURL=notifications.js.map

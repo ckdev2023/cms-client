@@ -257,6 +257,7 @@ const casesZhCN = {
         urgent: "紧急",
       },
       riskOptions: {
+        low: "低风险",
         normal: "正常",
         attention: "需关注",
         high: "高风险",
@@ -352,6 +353,7 @@ const casesZhCN = {
       billingGuard: {
         waitingPaymentEmpty:
           "需先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段",
+        noBillingRecord: "财务状况未登记，建议在收费 Tab 补录",
       },
       timeline: {
         title: "近期动态",
@@ -548,7 +550,7 @@ const casesZhCN = {
           priority: "优先级",
           dueAt: "截止日期",
           assignee: "负责人",
-          assigneePlaceholder: "输入用户 ID 或姓名",
+          assigneePlaceholder: "— 选择承办人 —",
         },
         validation: {
           titleRequired: "请输入任务标题",
@@ -615,6 +617,10 @@ const casesZhCN = {
       provider: {
         kicker: "按提供方完成率",
         title: "资料收集分组进度",
+      },
+      completion: {
+        label: "{collected} / {total} 完成",
+        empty: "无必需资料",
       },
       readonlyNotice: "案件已归档，资料清单为只读。",
       groupEmpty: "该分组暂无资料项",
@@ -912,6 +918,8 @@ const casesZhCN = {
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
     waitingPaymentBillingRequired:
       "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段。",
+    stageBillingRecordRequired:
+      "财务状况未登记，请先在收费 Tab 补录至少一条收费记录后再推进阶段。",
     taskInvalidAssigneeId: "负责人 ID 格式无效，请选择有效的负责人。",
     taskCreateFailed: "任务创建失败，请稍后重试。",
     taskAssigneeNotFound: "指定的负责人不存在，请重新选择。",

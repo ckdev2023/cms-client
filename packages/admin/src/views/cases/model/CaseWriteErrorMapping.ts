@@ -39,6 +39,7 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   CASE_WF_STEP_NOT_ALLOWED: "wfStepNotAllowed",
   CASE_REMINDER_CREATION_FAILED: "reminderCreationFailed",
   CASE_WAITING_PAYMENT_BILLING_REQUIRED: "waitingPaymentBillingRequired",
+  CASE_STAGE_BILLING_RECORD_REQUIRED: "stageBillingRecordRequired",
   TASK_INVALID_ASSIGNEE_ID: "taskInvalidAssigneeId",
   TASK_CREATE_FAILED: "taskCreateFailed",
   TASK_ASSIGNEE_NOT_FOUND: "taskAssigneeNotFound",

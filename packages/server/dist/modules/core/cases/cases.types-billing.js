@@ -1,0 +1,21 @@
+// 案件视角 Billing 读写契约（billing-plans / payment-records / guards / risk-ack）。
+// P0 边界：gate_effect_mode HTTP 层 off|warn；P1 解锁 block（DB CHECK 已就绪）。
+// P1 追加可选属性叠加，不删除/改名现有属性。
+// ─── 错误码 ────────────────────────────────────────────────────
+export const BILLING_ERROR_CODES = {
+  BP_CASE_NOT_FOUND: "BP_CASE_NOT_FOUND",
+  BP_NOT_FOUND: "BP_NOT_FOUND",
+  BP_CASE_S9_READONLY: "BP_CASE_S9_READONLY",
+  BP_INVALID_AMOUNT: "BP_INVALID_AMOUNT",
+  BP_INVALID_GATE_MODE: "BP_INVALID_GATE_MODE",
+  BP_ALREADY_PAID: "BP_ALREADY_PAID",
+  BP_TRANSITION_NOT_ALLOWED: "BP_TRANSITION_NOT_ALLOWED",
+  PR_BILLING_PLAN_NOT_FOUND: "PR_BILLING_PLAN_NOT_FOUND",
+  PR_NOT_FOUND: "PR_NOT_FOUND",
+  PR_INVALID_AMOUNT: "PR_INVALID_AMOUNT",
+  PR_INVALID_PAYMENT_METHOD: "PR_INVALID_PAYMENT_METHOD",
+  PR_VOID_NOT_VALID: "PR_VOID_NOT_VALID",
+  PR_VOID_REQUIRES_MANAGER: "PR_VOID_REQUIRES_MANAGER",
+  PR_VOID_REASON_REQUIRED: "PR_VOID_REASON_REQUIRED",
+};
+//# sourceMappingURL=cases.types-billing.js.map

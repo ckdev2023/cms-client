@@ -265,6 +265,7 @@ const casesJaJP = {
         urgent: "緊急",
       },
       riskOptions: {
+        low: "低リスク",
         normal: "正常",
         attention: "要注意",
         high: "高リスク",
@@ -363,6 +364,8 @@ const casesJaJP = {
       billingGuard: {
         waitingPaymentEmpty:
           "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください",
+        noBillingRecord:
+          "請求情報が未登録です。請求タブでの登録をお勧めします。",
       },
       timeline: {
         title: "最近のアクティビティ",
@@ -568,7 +571,7 @@ const casesJaJP = {
           priority: "優先度",
           dueAt: "期日",
           assignee: "担当者",
-          assigneePlaceholder: "ユーザー ID または氏名を入力",
+          assigneePlaceholder: "— 担当者を選択 —",
         },
         validation: {
           titleRequired: "タスク名を入力してください",
@@ -635,6 +638,10 @@ const casesJaJP = {
       provider: {
         kicker: "提供者別完成率",
         title: "書類収集グループ別進捗",
+      },
+      completion: {
+        label: "{collected} / {total} 完了",
+        empty: "必須書類なし",
       },
       readonlyNotice:
         "案件はアーカイブ済みです。書類チェックリストは読み取り専用です。",
@@ -953,6 +960,8 @@ const casesJaJP = {
       "更新リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
     waitingPaymentBillingRequired:
       "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください。",
+    stageBillingRecordRequired:
+      "請求情報が未登録です。請求タブで少なくとも1件の請求レコードを追加してからステージを進めてください。",
     taskInvalidAssigneeId:
       "担当者 ID の形式が無効です。有効な担当者を選択してください。",
     taskCreateFailed:

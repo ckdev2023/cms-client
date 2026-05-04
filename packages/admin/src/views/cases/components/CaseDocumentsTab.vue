@@ -256,7 +256,14 @@ const groupStats = computed(() =>
                 />
               </div>
               <span class="docs-tab__global-progress-label">
-                {{ overallRate.label }}（{{ overallRate.percent }}%）
+                {{
+                  overallRate.total === 0
+                    ? t("cases.detail.documents.completion.empty")
+                    : t("cases.detail.documents.completion.label", {
+                        collected: overallRate.collected,
+                        total: overallRate.total,
+                      })
+                }}（{{ overallRate.percent }}%）
               </span>
             </div>
           </div>
@@ -270,7 +277,14 @@ const groupStats = computed(() =>
           <div class="docs-tab__group-header">
             <div class="docs-tab__group-header-row">
               <span class="docs-tab__group-title">{{ group.group }}</span>
-              <span class="docs-tab__group-count">{{ stat.label }}</span>
+              <span class="docs-tab__group-count">{{
+                stat.total === 0
+                  ? t("cases.detail.documents.completion.empty")
+                  : t("cases.detail.documents.completion.label", {
+                      collected: stat.collected,
+                      total: stat.total,
+                    })
+              }}</span>
             </div>
             <div class="docs-tab__group-bar">
               <div

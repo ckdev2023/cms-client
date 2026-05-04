@@ -371,6 +371,14 @@ function resolveAssigneeLabel(r: Record<string, unknown>): string {
   return "—";
 }
 
+function resolveAssigneeFullName(r: Record<string, unknown>): string {
+  for (const key of ASSIGNEE_DISPLAY_FIELDS) {
+    const v = readNullableString(r, key);
+    if (v && v.trim().length > 0) return v.trim();
+  }
+  return "";
+}
+
 function adaptTaskDto(value: unknown): TaskItem | null {
   const r = asRecord(value);
   if (!r) return null;
@@ -390,6 +398,7 @@ function adaptTaskDto(value: unknown): TaskItem | null {
     status,
     due: dueAt ? formatDate(dueAt) : "",
     assignee: resolveAssigneeLabel(r),
+    assigneeFullName: resolveAssigneeFullName(r),
     color: PRIORITY_COLOR[priority] ?? "primary",
     dueColor: deriveDueColor(dueAt, done),
   };

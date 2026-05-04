@@ -1,0 +1,1 @@
+{"version":3,"file":"featureFlags.model.js","sourceRoot":"","sources":["../../../src/modules/feature-flags/featureFlags.model.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,WAAW,EAAE,MAAM,2BAA2B,CAAC;AAkCxD;;;;;;GAMG;AACH,MAAM,UAAU,yBAAyB,CACvC,OAA2B,EAC3B,QAA4B;IAE5B,OAAO,WAAW,CAAC,OAAO,EAAE,QAAQ,CAAC,CAAC;AACxC,CAAC"}

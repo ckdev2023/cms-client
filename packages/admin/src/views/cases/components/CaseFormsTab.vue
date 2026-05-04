@@ -169,7 +169,12 @@ function hasForms(detail: CaseDetail): boolean {
                 </svg>
                 {{ t("cases.detail.forms.exportAction") }}
               </Button>
-              <button class="forms-tab__link-btn" type="button">
+              <button
+                class="forms-tab__link-btn"
+                type="button"
+                disabled
+                :title="t('shell.topbar.comingSoon')"
+              >
                 {{ t("cases.detail.forms.versionHistoryAction") }}
               </button>
             </div>
@@ -295,8 +300,14 @@ function hasForms(detail: CaseDetail): boolean {
   white-space: nowrap;
 }
 
-.forms-tab__link-btn:hover {
+.forms-tab__link-btn:hover:not(:disabled) {
   text-decoration: underline;
+}
+
+.forms-tab__link-btn:disabled {
+  color: var(--color-text-3);
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 /* ── Icon tones ───────────────────────────────────────── */

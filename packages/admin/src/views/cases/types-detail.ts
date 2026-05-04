@@ -679,9 +679,13 @@ export interface TaskItem {
    */
   due: string;
   /**
-   *
+   * 首字母头像（大写首字符或 "—"）。
    */
   assignee: string;
+  /**
+   * 负责人全名；用于 tooltip / title 属性。
+   */
+  assigneeFullName: string;
   /**
    *
    */

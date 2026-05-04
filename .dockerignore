@@ -1,0 +1,60 @@
+# Build context 排除（仓库根）
+# Dockerfile 在 release/docker/，build context 是仓库根。
+# 这个文件防止把 node_modules / 构建产物 / 各种本地文件打进 image 层。
+
+**/node_modules
+**/dist
+**/coverage
+**/.next
+**/.turbo
+**/.cache
+**/lcov.info
+
+.git
+.gitignore
+.gitattributes
+.github
+.husky
+
+# IDE / 工具
+.cursor
+.augment
+.trae
+.vscode
+.idea
+.agent
+.agents
+
+# 文档与设计稿（部署不需要）
+docs
+design
+roles
+# prototype 整个 package 是 HTML 原型，部署不用，但 package.json 必须保留
+# （npm workspaces 在 install 阶段需要看到所有 workspace 的 manifest）
+packages/prototype/**
+!packages/prototype/package.json
+
+# 本地脚本/配置
+.env
+.env.*
+!.env.example
+docker-compose.yml
+release/data
+release/backup
+release/.env
+
+# 测试相关（运行时不需要）
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/tests
+**/__tests__
+
+# 平台垃圾
+.DS_Store
+**/.DS_Store
+
+# 锁的镜像里只需要 package-lock.json（保留）
+yarn.lock
+pnpm-lock.yaml
+bun.lockb

@@ -2,10 +2,11 @@
 import { ref, watch, nextTick, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import type { FailureCloseoutInfo, SuccessCloseoutInfo } from "../types-detail";
 
 /** 结案原因弹窗：展示案件归档详情（失败/成功结案信息）。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 interface CaseCloseReasonModalProps {
   open?: boolean;
@@ -109,7 +110,7 @@ const isSuccess = computed(() => props.businessPhase === "CLOSED_SUCCESS");
           <dl class="close-reason-modal__meta">
             <div class="close-reason-modal__meta-item">
               <dt>{{ t("cases.detail.closeReasonModal.closedAt") }}</dt>
-              <dd>{{ props.closedAt || "—" }}</dd>
+              <dd>{{ formatDateTime(props.closedAt, locale) || "—" }}</dd>
             </div>
             <div class="close-reason-modal__meta-item">
               <dt>{{ t("cases.detail.closeReasonModal.closedBy") }}</dt>

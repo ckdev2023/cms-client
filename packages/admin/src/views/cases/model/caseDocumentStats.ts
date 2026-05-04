@@ -20,10 +20,6 @@ export interface ProviderCompletionStat {
    *
    */
   percent: number;
-  /**
-   *
-   */
-  label: string;
 }
 
 /**
@@ -42,10 +38,6 @@ export interface CaseDocumentCompletionRate {
    *
    */
   percent: number;
-  /**
-   *
-   */
-  label: string;
 }
 
 const COLLECTED_STATUS = "approved";
@@ -85,16 +77,11 @@ export function computeItemsCompletionRate(
   const collected = items.filter(isDocumentCollected).length;
 
   if (total <= 0) {
-    return { collected: 0, total: 0, percent: 0, label: "无必需资料" };
+    return { collected: 0, total: 0, percent: 0 };
   }
 
   const percent = Math.round((collected / total) * 100);
-  return {
-    collected,
-    total,
-    percent,
-    label: `${collected} / ${total} 完成`,
-  };
+  return { collected, total, percent };
 }
 
 /**
@@ -112,7 +99,6 @@ export function computeProviderStat(
     collected: rate.collected,
     total: rate.total,
     percent: rate.percent,
-    label: rate.label,
   };
 }
 

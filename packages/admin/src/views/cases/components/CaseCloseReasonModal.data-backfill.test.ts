@@ -117,14 +117,41 @@ describe("CaseCloseReasonModal data backfill (R30-N)", () => {
     });
   });
 
-  describe("closedAt display", () => {
-    it("shows closedAt when provided", () => {
+  describe("closedAt display (R31-D: formatDateTime)", () => {
+    it("formats ISO closedAt via formatDateTime for zh-CN", () => {
       const w = mountModal({
-        closedAt: "2026/04/20 10:30",
+        closedAt: "2026-04-20T10:30:00.000Z",
         closeReason: "テスト",
       });
       const metaItems = w.findAll(".close-reason-modal__meta-item dd");
-      expect(metaItems[0].text()).toBe("2026/04/20 10:30");
+      const text = metaItems[0].text();
+      expect(text).toContain("2026");
+      expect(text).toContain("04");
+      expect(text).toContain("20");
+    });
+
+    it("formats ISO closedAt for en-US locale", () => {
+      const w = mountModal(
+        { closedAt: "2026-04-20T10:30:00.000Z", closeReason: "test" },
+        "en-US",
+      );
+      const metaItems = w.findAll(".close-reason-modal__meta-item dd");
+      const text = metaItems[0].text();
+      expect(text).toContain("2026");
+      expect(text).toContain("04");
+      expect(text).toContain("20");
+    });
+
+    it("formats ISO closedAt for ja-JP locale", () => {
+      const w = mountModal(
+        { closedAt: "2026-04-20T10:30:00.000Z", closeReason: "テスト" },
+        "ja-JP",
+      );
+      const metaItems = w.findAll(".close-reason-modal__meta-item dd");
+      const text = metaItems[0].text();
+      expect(text).toContain("2026");
+      expect(text).toContain("04");
+      expect(text).toContain("20");
     });
 
     it("shows dash when closedAt is null", () => {

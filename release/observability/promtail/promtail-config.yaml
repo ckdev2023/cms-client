@@ -1,0 +1,45 @@
+# Promtail 配置 —— 通过 docker socket 自动发现并采集所有容器日志
+# 给容器加上的 cms.role label 会自动转成 Loki 标签，方便筛选
+
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 10s
+        # 只采集本 compose project 的容器（避免抓宿主机其他容器）
+        filters:
+          - name: label
+            values: ["com.docker.compose.project"]
+
+    relabel_configs:
+      # docker compose project（部署目录名）
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_project"]
+        target_label: project
+
+      # docker compose service 名（postgres / api / worker / web ...）
+      - source_labels: ["__meta_docker_container_label_com_docker_compose_service"]
+        target_label: service
+
+      # 自定义 cms.role label（与 service 通常一致，但显式标注便于查询）
+      - source_labels: ["__meta_docker_container_label_cms_role"]
+        target_label: role
+
+      # 容器名
+      - source_labels: ["__meta_docker_container_name"]
+        regex: "/(.*)"
+        target_label: container
+
+      # 容器 ID 用作 path（Promtail docker SD 需要）
+      - source_labels: ["__meta_docker_container_id"]
+        target_label: __path__
+        replacement: /var/lib/docker/containers/$1/$1-json.log

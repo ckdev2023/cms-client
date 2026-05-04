@@ -1,0 +1,223 @@
+import crypto from "node:crypto";
+import { isUuid } from "./uuid";
+const REQUEST_AUTH_JWT_EXPIRY_SECONDS = 60 * 60 * 12;
+/**
+ * 读取请求鉴权 JWT 密钥。
+ *
+ * - 生产环境必须显式提供 `AUTH_JWT_SECRET`
+ * - 开发/测试环境允许回退到不安全默认值，便于本地联调
+ *
+ * @returns JWT 密钥
+ */
+export function readRequestAuthJwtSecret() {
+  const secret = process.env.AUTH_JWT_SECRET;
+  if (!secret || secret.length === 0) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error(
+        "AUTH_JWT_SECRET is required in production — refusing to start with insecure default",
+      );
+    }
+    // eslint-disable-next-line no-console
+    console.warn(
+      "[SECURITY] AUTH_JWT_SECRET not set — using insecure default. Do NOT use in production.",
+    );
+    return "dev-secret-change-me";
+  }
+  return secret;
+}
+/**
+ * 从请求头解析 RequestContext。
+ *
+ * 约束：
+ * - 目前使用 header 传递身份信息，后续可替换为 JWT/session
+ *
+ * @param headers 请求头
+ * @returns 上下文或 null
+ */
+export function parseRequestContext(headers) {
+  const orgId =
+    typeof headers["x-org-id"] === "string" ? headers["x-org-id"] : null;
+  const userId =
+    typeof headers["x-user-id"] === "string" ? headers["x-user-id"] : null;
+  const groupId =
+    typeof headers["x-group-id"] === "string" ? headers["x-group-id"] : null;
+  const role = headers["x-role"];
+  return { orgId, userId, groupId, role };
+}
+let _cachedAuthConfig = null;
+/**
+ * 从环境变量读取鉴权配置（模块级缓存，进程内只解析一次）。
+ *
+ * @returns 鉴权配置
+ */
+export function readAuthConfigFromEnv() {
+  if (_cachedAuthConfig) return _cachedAuthConfig;
+  const jwtSecret = readRequestAuthJwtSecret();
+  // P8: 生产环境要求 JWT 密钥至少 32 字符（256 bit）
+  if (process.env.NODE_ENV === "production" && jwtSecret.length < 32) {
+    throw new Error(
+      "AUTH_JWT_SECRET must be at least 32 characters in production",
+    );
+  }
+  const allowRaw = process.env.AUTH_ALLOW_INSECURE_HEADERS;
+  const allowInsecureHeaders =
+    allowRaw === "1" || allowRaw === "true" || allowRaw === "yes";
+  _cachedAuthConfig = { jwtSecret, allowInsecureHeaders };
+  return _cachedAuthConfig;
+}
+/**
+ * 仅用于测试：重置 AuthConfig 缓存。
+ *
+ * @internal
+ */
+export function _resetAuthConfigCacheForTest() {
+  _cachedAuthConfig = null;
+}
+/**
+ * 从请求头提取并校验鉴权输入。
+ *
+ * 支持：
+ * - Authorization: Bearer <JWT>（HS256）
+ * - 开发兜底：当 allowInsecureHeaders=true 时允许 x-org-id/x-user-id
+ *
+ * @param headers 请求头
+ * @param config 鉴权配置
+ * @returns 鉴权输入或 null
+ */
+export function parseVerifiedRequestAuthInputFromHeaders(headers, config) {
+  if (!headers) return null;
+  const authHeader =
+    typeof headers.authorization === "string"
+      ? headers.authorization
+      : typeof headers.Authorization === "string"
+        ? headers.Authorization
+        : null;
+  if (authHeader) {
+    const token = parseBearerToken(authHeader);
+    if (!token) return null;
+    return verifyHs256Jwt(token, config.jwtSecret);
+  }
+  if (!config.allowInsecureHeaders) return null;
+  const parsed = parseRequestContext(headers);
+  if (!parsed.orgId || !parsed.userId) return null;
+  if (!isUuid(parsed.orgId) || !isUuid(parsed.userId)) return null;
+  return {
+    orgId: parsed.orgId,
+    userId: parsed.userId,
+    ...(parsed.groupId ? { groupId: parsed.groupId } : {}),
+  };
+}
+function parseBearerToken(value) {
+  const trimmed = value.trim();
+  const prefix = "Bearer ";
+  if (!trimmed.startsWith(prefix)) return null;
+  const token = trimmed.slice(prefix.length).trim();
+  return token.length > 0 ? token : null;
+}
+function verifyHs256Jwt(token, secret) {
+  const parts = parseJwtParts(token);
+  if (!parts) return null;
+  const header = decodeBase64UrlJsonObject(parts.headerB64);
+  if (!header) return null;
+  if (header.alg !== "HS256") return null;
+  const signingInput = `${parts.headerB64}.${parts.payloadB64}`;
+  if (!verifyHs256Signature(signingInput, secret, parts.sigB64)) return null;
+  const payload = decodeBase64UrlJsonObject(parts.payloadB64);
+  if (!payload) return null;
+  return extractAuthInputFromPayload(payload);
+}
+/**
+ * 签发请求鉴权 JWT。
+ *
+ * payload 中只写入请求鉴权所需的 `orgId` / `userId`，角色仍以后端 DB 为准。
+ *
+ * @param input 请求鉴权输入
+ * @param secret JWT 密钥
+ * @returns JWT token
+ */
+export function signRequestAuthToken(input, secret) {
+  const header = { alg: "HS256", typ: "JWT" };
+  const now = Math.floor(Date.now() / 1000);
+  const payload = {
+    orgId: input.orgId,
+    userId: input.userId,
+    ...(input.groupId ? { groupId: input.groupId } : {}),
+    iat: now,
+    exp: now + REQUEST_AUTH_JWT_EXPIRY_SECONDS,
+  };
+  const headerB64 = toBase64Url(JSON.stringify(header));
+  const payloadB64 = toBase64Url(JSON.stringify(payload));
+  const sigB64 = crypto
+    .createHmac("sha256", secret)
+    .update(`${headerB64}.${payloadB64}`)
+    .digest("base64url");
+  return `${headerB64}.${payloadB64}.${sigB64}`;
+}
+function parseJwtParts(token) {
+  const parts = token.split(".");
+  if (parts.length !== 3) return null;
+  const [headerB64, payloadB64, sigB64] = parts;
+  if (!headerB64 || !payloadB64 || !sigB64) return null;
+  return { headerB64, payloadB64, sigB64 };
+}
+function decodeBase64UrlJsonObject(value) {
+  const json = base64UrlDecodeToString(value);
+  if (!json) return null;
+  let parsed;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+    return null;
+  return parsed;
+}
+function verifyHs256Signature(signingInput, secret, sigB64) {
+  const expectedSig = crypto
+    .createHmac("sha256", secret)
+    .update(signingInput)
+    .digest("base64url");
+  return timingSafeEqualString(expectedSig, sigB64);
+}
+/**
+ * 从 JWT payload 提取鉴权输入，并校验有效性。
+ *
+ * @param payload JWT payload
+ * @returns 鉴权输入或 null
+ */
+// eslint-disable-next-line complexity
+export function extractAuthInputFromPayload(payload) {
+  const orgId = typeof payload.orgId === "string" ? payload.orgId : null;
+  const userId = typeof payload.userId === "string" ? payload.userId : null;
+  const exp = typeof payload.exp === "number" ? payload.exp : null;
+  const nbf = typeof payload.nbf === "number" ? payload.nbf : null;
+  if (!orgId || !userId || !isUuid(orgId) || !isUuid(userId)) return null;
+  if (!exp || !Number.isFinite(exp)) return null;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (nowSec >= exp) return null;
+  // nbf（Not Before）：若 token 声明了此字段，当前时间必须已过 nbf
+  if (nbf !== null && Number.isFinite(nbf) && nowSec < nbf) return null;
+  return { orgId, userId };
+}
+function base64UrlDecodeToString(value) {
+  try {
+    return Buffer.from(value, "base64url").toString("utf8");
+  } catch {
+    return null;
+  }
+}
+function timingSafeEqualString(a, b) {
+  try {
+    const aBuf = Buffer.from(a);
+    const bBuf = Buffer.from(b);
+    if (aBuf.length !== bBuf.length) return false;
+    return crypto.timingSafeEqual(aBuf, bBuf);
+  } catch {
+    return false;
+  }
+}
+function toBase64Url(value) {
+  return Buffer.from(value).toString("base64url");
+}
+//# sourceMappingURL=requestContext.js.map

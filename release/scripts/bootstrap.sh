@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+#
+# 第一次上线：构建镜像 → 启动数据库 → 跑迁移 → 启动全部服务
+#
+# 用法：
+#   cd release
+#   bash scripts/bootstrap.sh
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+RELEASE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+COMPOSE_FILE="$RELEASE_DIR/compose/docker-compose.prod.yml"
+ENV_FILE="$RELEASE_DIR/.env"
+
+cd "$RELEASE_DIR"
+
+if [[ ! -f "$ENV_FILE" ]]; then
+  echo "[bootstrap] 缺少 .env，请先："
+  echo "  cp .env.example .env && vi .env"
+  exit 1
+fi
+
+# 校验关键变量
+# shellcheck disable=SC1090
+set -a; source "$ENV_FILE"; set +a
+: "${DOMAIN:?DOMAIN 必填}"
+: "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必填}"
+: "${CORS_ORIGINS:?CORS_ORIGINS 必填}"
+
+if [[ "$POSTGRES_PASSWORD" == "CHANGE_ME_TO_A_STRONG_PASSWORD" ]]; then
+  echo "[bootstrap] POSTGRES_PASSWORD 还是默认值，请改成强密码后再跑。"
+  exit 1
+fi
+
+mkdir -p data/storage backup
+
+echo "[bootstrap] 构建镜像（首次较慢，~3-5 分钟）"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" build
+
+echo "[bootstrap] 启动 postgres / redis"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d postgres redis
+
+echo "[bootstrap] 等待数据库就绪..."
+until docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T postgres \
+        pg_isready -U "${POSTGRES_USER:-cms}" -d "${POSTGRES_DB:-cms}" >/dev/null 2>&1; do
+  sleep 2
+done
+
+echo "[bootstrap] 执行数据库迁移"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" run --rm migrate
+
+echo "[bootstrap] 启动 api / worker / web"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d api worker web
+
+echo ""
+echo "[bootstrap] 完成。"
+echo ""
+echo "  访问地址 : https://${DOMAIN}"
+echo "  健康检查 : https://${DOMAIN}/health/deps"
+echo ""
+echo "[bootstrap] 下一步：创建初始管理员账号。"
+echo "  仓库里 src/scripts/initLocalAdmin.ts 是 local 用的弱密码版本，"
+echo "  生产请直接进 PG 手动 INSERT，或用 src/scripts/seedDevData.ts 后立即改密码。"
+echo ""
+echo "  示例（仅参考，实际请按 src/scripts 下的脚本与你的 user 表 schema 操作）："
+echo "    docker compose -f compose/docker-compose.prod.yml --env-file .env exec api \\"
+echo "      node --import tsx src/scripts/initLocalAdmin.ts"
+echo ""
+echo "[bootstrap] 强烈建议立刻：bash scripts/backup.sh 跑一次备份并验证可恢复。"

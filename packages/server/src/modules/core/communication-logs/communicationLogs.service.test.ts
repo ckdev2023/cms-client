@@ -241,6 +241,24 @@ void test("CommunicationLogsService.create requires one relation id", async () =
   );
 });
 
+void test("CommunicationLogsService.create rejects auto_email channel type", async () => {
+  await assert.rejects(
+    () =>
+      service(
+        makePool(() => Promise.resolve({ rows: [], rowCount: 0 })),
+        makeTimeline(),
+      ).create(makeCtx(), {
+        caseId: CASE_ID,
+        channelType: "auto_email",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("reserved for system use"));
+      return true;
+    },
+  );
+});
+
 void test("CommunicationLogsService.create validates enums and org isolation", async () => {
   await assert.rejects(
     () =>
@@ -387,6 +405,27 @@ void test("CommunicationLogsService.update updates row and writes case timeline"
     "communication_log",
   );
   assert.equal((tl.writes[1] as { entityType: string }).entityType, "case");
+});
+
+void test("CommunicationLogsService.update rejects auto_email channel type", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from communication_logs") && params?.[0] === LOG_ID) {
+      return Promise.resolve({ rows: [makeLogRow()], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await assert.rejects(
+    () =>
+      service(pool, makeTimeline()).update(makeCtx(), LOG_ID, {
+        channelType: "auto_email",
+      }),
+    (err) => {
+      assert.ok(err instanceof Error);
+      assert.ok(err.message.includes("reserved for system use"));
+      return true;
+    },
+  );
 });
 
 void test("CommunicationLogsService.update rejects removing all relations", async () => {
