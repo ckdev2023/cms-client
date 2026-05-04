@@ -56,7 +56,14 @@ function teamGradient(member: TeamMember): string {
               {{ detail.risk.blockingCount }}
             </div>
             <div class="overview-sidebar__risk-detail">
-              {{ detail.risk.blockingDetail }}
+              {{
+                detail.risk.blockingDetailLoc
+                  ? t(
+                      detail.risk.blockingDetailLoc.key,
+                      detail.risk.blockingDetailLoc.params ?? {},
+                    )
+                  : detail.risk.blockingDetail
+              }}
             </div>
           </div>
         </div>
@@ -99,7 +106,11 @@ function teamGradient(member: TeamMember): string {
           />
           <div>
             <div class="overview-sidebar__risk-title">
-              {{ detail.risk.lastValidation }}
+              {{
+                detail.risk.lastValidationLoc
+                  ? t(detail.risk.lastValidationLoc.key)
+                  : detail.risk.lastValidation
+              }}
             </div>
             <div class="overview-sidebar__risk-detail">
               {{ detail.risk.reviewStatus }}
@@ -171,7 +182,14 @@ function teamGradient(member: TeamMember): string {
         </h3>
       </div>
       <p class="overview-sidebar__validation-hint-text">
-        {{ detail.validationHint }}
+        {{
+          detail.validationHintLoc
+            ? t(
+                detail.validationHintLoc.key,
+                detail.validationHintLoc.params ?? {},
+              )
+            : detail.validationHint
+        }}
       </p>
       <Button
         variant="filled"

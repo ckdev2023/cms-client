@@ -177,7 +177,7 @@ function buildBadResponseError(
       readMessageFromBody(body) ??
       (response.status === 401
         ? "Lead access denied"
-        : `Lead request failed with status ${response.status}`),
+        : `Lead request failed with status ${response.status}`), // i18n-skip
   });
 }
 

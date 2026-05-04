@@ -183,7 +183,7 @@ export async function requestAdminLogin(
         readMessageFromBody(body) ??
         (response.status === 401
           ? "Invalid email or password"
-          : `Login request failed with status ${response.status}`),
+          : `Login request failed with status ${response.status}`), // i18n-skip
     });
   }
 

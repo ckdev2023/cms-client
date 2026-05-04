@@ -376,6 +376,19 @@ const casesEnUS = {
         empty: "No recent activity",
         viewAll: "View full log →",
       },
+      risk: {
+        blockingDetail: "{count} blocking item(s)",
+        lastValidation: {
+          passed: "Passed",
+          failed: "Failed",
+          pending: "Pending",
+        },
+      },
+      validationHint: {
+        blockingWarning: "{b} blocking, {w} warning",
+        warningOnly: "{w} warning",
+      },
+      deadlineMeta: "Due: {date}",
       sidebar: {
         phaseTitle: "Business phase",
         riskTitle: "Blockers & risk summary",

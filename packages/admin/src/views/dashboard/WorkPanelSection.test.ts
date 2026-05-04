@@ -25,7 +25,7 @@ function createPanels(
         ],
         statusLabelKey: "inProgress",
         descKey: "todo.statusPriority",
-        descParams: { status: "active", priority: "high" },
+        descParams: { status: "in_progress", priority: "high" },
         actionKey: "viewCase",
       },
     ],

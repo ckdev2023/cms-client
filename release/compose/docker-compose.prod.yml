@@ -118,6 +118,7 @@ services:
       PORT: "3300"
       DB_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cms}
       REDIS_URL: redis://redis:6379
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET is required and must be >= 32 chars in production}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
       STORAGE_LOCAL_DIR: /data/storage
       STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-}
@@ -147,6 +148,19 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DB_URL: postgres://${POSTGRES_USER:-cms}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-cms}
+      REDIS_URL: redis://redis:6379
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:?AUTH_JWT_SECRET is required and must be >= 32 chars in production}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-local}
+      STORAGE_LOCAL_DIR: /data/storage
+      STORAGE_S3_BUCKET: ${STORAGE_S3_BUCKET:-}
+      STORAGE_S3_REGION: ${STORAGE_S3_REGION:-}
+      STORAGE_S3_ENDPOINT: ${STORAGE_S3_ENDPOINT:-}
+      TRANSLATION_PROVIDER: ${TRANSLATION_PROVIDER:-passthrough}
+      TRANSLATION_API_KEY: ${TRANSLATION_API_KEY:-}
+      WORKER_LOCK_TTL_SECONDS: ${WORKER_LOCK_TTL_SECONDS:-600}
     command: ["node", "--import", "tsx", "src/worker.ts"]
     labels:
       cms.role: "worker"

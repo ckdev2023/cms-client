@@ -15,7 +15,11 @@ const BASE_DETAIL: CaseDetail = {
   stageMeta: "Stage S3",
   statusBadge: "active",
   deadline: "2026-06-01",
-  deadlineMeta: "Due: 2026-06-01",
+  deadlineMeta: "",
+  deadlineMetaLoc: {
+    key: "cases.detail.overview.deadlineMeta",
+    params: { date: "2026-06-01" },
+  },
   deadlineDanger: false,
   progressPercent: 50,
   progressCount: "8/16",
@@ -43,7 +47,11 @@ const BASE_DETAIL: CaseDetail = {
   providerProgress: [],
   risk: {
     blockingCount: "2",
-    blockingDetail: "2 blocking issues",
+    blockingDetail: "",
+    blockingDetailLoc: {
+      key: "cases.detail.overview.risk.blockingDetail",
+      params: { count: 2 },
+    },
     arrearsStatus: "cases.detail.arrearsNo",
     arrearsDetail: "",
     deadlineAlert: "",
@@ -52,7 +60,11 @@ const BASE_DETAIL: CaseDetail = {
     reviewStatus: "",
   },
   nextAction: "",
-  validationHint: "2 blocking",
+  validationHint: "",
+  validationHintLoc: {
+    key: "cases.detail.overview.validationHint.blockingWarning",
+    params: { b: 2, w: 0 },
+  },
   overviewActions: {
     primary: { label: "cases.coach.docManagement", tab: "documents" },
     secondary: { label: "cases.coach.runValidation", tab: "validation" },

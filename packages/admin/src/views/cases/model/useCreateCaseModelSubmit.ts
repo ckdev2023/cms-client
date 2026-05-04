@@ -113,7 +113,7 @@ async function submitPartiesAfterCreate(
       await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[caseId=${caseId}][partyType=${input.partyType}] Primary party submit failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] Primary party submit failed: ${normalizeSubmitError(e).message}`, // i18n-skip
       );
     }
   }
@@ -124,7 +124,7 @@ async function submitPartiesAfterCreate(
       await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[caseId=${caseId}][partyType=${input.partyType}] Party "${party.name}" submit failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] Party "${party.name}" submit failed: ${normalizeSubmitError(e).message}`, // i18n-skip
       );
     }
   }
@@ -179,7 +179,7 @@ async function submitBulkApplicantParty(
     return [];
   } catch (e) {
     return [
-      `[caseId=${caseId}][partyType=${input.partyType}] [${applicant.name}] Primary party failed: ${normalizeSubmitError(e).message}`,
+      `[caseId=${caseId}][partyType=${input.partyType}] [${applicant.name}] Primary party failed: ${normalizeSubmitError(e).message}`, // i18n-skip
     ];
   }
 }
@@ -198,7 +198,7 @@ async function submitBulkSupporters(
       await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Supporter "${supporter.name}" failed: ${normalizeSubmitError(e).message}`, // i18n-skip
       );
     }
   }
@@ -214,7 +214,7 @@ async function submitBulkSupporters(
       await repo.createCaseParty(input);
     } catch (e) {
       warnings.push(
-        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e).message}`,
+        `[caseId=${caseId}][partyType=${input.partyType}] [${applicantName}] Primary-as-supporter failed: ${normalizeSubmitError(e).message}`, // i18n-skip
       );
     }
   }
@@ -291,7 +291,7 @@ async function submitFamilyBulkCases(
     );
     if (entry.caseResult && !firstResult) firstResult = entry.caseResult;
     if (entry.error)
-      allWarnings.push(`Case for "${applicant.name}" failed: ${entry.error}`);
+      allWarnings.push(`Case for "${applicant.name}" failed: ${entry.error}`); // i18n-skip
     allWarnings.push(...entry.partyWarnings);
     bulkResults.push(entry);
   }

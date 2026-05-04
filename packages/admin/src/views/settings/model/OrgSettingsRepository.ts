@@ -152,7 +152,7 @@ async function requestAndAdapt(
   const body = text.trim() ? (JSON.parse(text) as unknown) : null;
   if (!response.ok) {
     throw new OrgSettingsRepositoryError(
-      `Org settings request failed with status ${response.status}`,
+      `Org settings request failed with status ${response.status}`, // i18n-skip
       response.status,
     );
   }

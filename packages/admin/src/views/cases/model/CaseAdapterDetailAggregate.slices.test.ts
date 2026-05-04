@@ -1,11 +1,5 @@
-// ── Test Ownership ──────────────────────────────────────────────
 // Owner: detail aggregate DTO slice degradation, S9 readonly,
-//   risk / validation / billing / provider progress blocks.
-// Contract freeze, header mapping, deep-link fields
-//   → CaseAdapterDetailAggregate.test.ts
-// Does NOT test: list mappers, mutation results, write builders,
-//   or repository orchestration.
-// ────────────────────────────────────────────────────────────────
+// risk / validation / billing / provider progress blocks.
 
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
@@ -14,8 +8,6 @@ import {
   LATEST_VALIDATION_SLICE_CONSUMED_FIELDS,
   PROVIDER_PROGRESS_ENTRY_CONSUMED_FIELDS,
 } from "./CaseAdapterDetailContracts";
-
-// ─── Shared fixtures ─────────────────────────────────────────────
 
 const MOCK_CASE_ROW = {
   id: "case-001",
@@ -103,8 +95,6 @@ function buildAggregate(overrides: Record<string, unknown> = {}) {
   };
 }
 
-// ─── Slice graceful degradation ──────────────────────────────────
-
 describe("slice graceful degradation", () => {
   it("handles missing counts gracefully", () => {
     const result = adaptCaseDetailAggregate(buildAggregate({ counts: null }))!;
@@ -158,8 +148,6 @@ describe("slice graceful degradation", () => {
   });
 });
 
-// ─── S9 read-only state ──────────────────────────────────────────
-
 describe("S9 readonly state", () => {
   it("marks S9 as readonly with badge-gray", () => {
     const result = adaptCaseDetailAggregate(
@@ -192,8 +180,6 @@ describe("S9 readonly state", () => {
   });
 });
 
-// ─── Provider progress ───────────────────────────────────────────
-
 describe("provider progress", () => {
   it("adapts provider progress entries", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
@@ -223,8 +209,6 @@ describe("provider progress", () => {
   });
 });
 
-// ─── Risk block ──────────────────────────────────────────────────
-
 describe("risk block", () => {
   it("builds risk block with blocking issues", () => {
     const result = adaptCaseDetailAggregate(
@@ -233,7 +217,11 @@ describe("risk block", () => {
       }),
     )!;
     expect(result.detail.risk.blockingCount).toBe("3");
-    expect(result.detail.risk.blockingDetail).toBe("3 blocking issues");
+    expect(result.detail.risk.blockingDetail).toBe("");
+    expect(result.detail.risk.blockingDetailLoc?.key).toBe(
+      "cases.detail.overview.risk.blockingDetail",
+    );
+    expect(result.detail.risk.blockingDetailLoc?.params).toEqual({ count: 3 });
   });
 
   it("builds risk block with no blocking issues", () => {
@@ -255,11 +243,12 @@ describe("risk block", () => {
 
   it("populates lastValidation status from latestValidation", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
-    expect(result.detail.risk.lastValidation).toBe("passed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.passed",
+    );
   });
 });
-
-// ─── Validation hint ─────────────────────────────────────────────
 
 describe("validation hint", () => {
   it("shows blocking and warning counts", () => {
@@ -272,7 +261,11 @@ describe("validation hint", () => {
         },
       }),
     )!;
-    expect(result.detail.validationHint).toBe("2 blocking, 3 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.blockingWarning",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ b: 2, w: 3 });
   });
 
   it("shows only warnings when no blocking", () => {
@@ -285,7 +278,11 @@ describe("validation hint", () => {
         },
       }),
     )!;
-    expect(result.detail.validationHint).toBe("5 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.warningOnly",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ w: 5 });
   });
 
   it("shows empty when no issues", () => {
@@ -391,9 +388,16 @@ describe("slice field consumption contracts", () => {
     const result = adaptCaseDetailAggregate(
       buildAggregate({ latestValidation }),
     )!;
-    expect(result.detail.risk.lastValidation).toBe("failed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.failed",
+    );
     expect(result.detail.validation.lastTime).not.toBe("");
-    expect(result.detail.validationHint).toBe("1 blocking, 2 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.blockingWarning",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ b: 1, w: 2 });
   });
 
   it("adapter reads all provider progress entry consumed fields", () => {

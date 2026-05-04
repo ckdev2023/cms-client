@@ -204,12 +204,19 @@ describe("S9 readonly — overview tab (p0-fe-006a-03)", () => {
 
   it("risk block still populated in S9", () => {
     expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
-    expect(result.detail.risk.lastValidation).toBe("passed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.passed",
+    );
     expect(result.detail.risk.reviewStatus).toBe("approved");
   });
 
   it("validationHint still shown in S9", () => {
-    expect(result.detail.validationHint).toBe("3 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.warningOnly",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ w: 3 });
   });
 
   it("provider progress still rendered in S9", () => {

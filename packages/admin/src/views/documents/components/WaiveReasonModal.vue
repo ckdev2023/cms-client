@@ -71,7 +71,7 @@ defineEmits<{
           </div>
 
           <div class="waive-modal__field">
-            <label class="waive-modal__label">
+            <label class="waive-modal__label" for="doc-waive-reasonCode">
               {{ t("documents.waive.reasonCodeLabel") }}
               <span class="waive-modal__required">*</span>
             </label>
@@ -102,7 +102,7 @@ defineEmits<{
           </div>
 
           <div class="waive-modal__field">
-            <label class="waive-modal__label">
+            <label class="waive-modal__label" for="doc-waive-reasonNote">
               {{ t("documents.waive.reasonNoteLabel") }}
               <span v-if="noteRequired" class="waive-modal__required">*</span>
             </label>

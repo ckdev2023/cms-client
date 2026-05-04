@@ -129,7 +129,7 @@ export function mapTodoItem(row: TodoRow): DashboardWorkItem {
       row.assignee_name ? `执行人：${row.assignee_name}` : undefined,
       dueMetaLabel(row.due_at),
     ]),
-    desc: `状态：${row.status} · 优先级：${row.priority}`,
+    desc: `状态：${row.status} · 优先级：${row.priority}`, // i18n-skip
     status: tone,
     statusLabel: TODO_STATUS_LABEL[tone],
     action: row.case_id ? "查看案件" : "查看任务",
@@ -164,7 +164,7 @@ export function mapDeadlineItem(row: DeadlineRow): DashboardWorkItem {
     id: row.id,
     title: caseTitle(row),
     meta: compact([ownerMetaLabel(row.owner_name), dueMetaLabel(row.due_at)]),
-    desc: `当前阶段：${row.status}`,
+    desc: `当前阶段：${row.status}`, // i18n-skip
     status: tone,
     statusLabel: formatDaysLeftLabel(daysLeft),
     action: "查看案件",

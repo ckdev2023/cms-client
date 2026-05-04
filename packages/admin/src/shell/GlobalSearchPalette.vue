@@ -161,6 +161,8 @@ onBeforeUnmount(() => {
           <div class="search-palette-header">
             <NavIcon name="search" />
             <input
+              id="global-search-input"
+              name="globalSearch"
               ref="inputRef"
               type="search"
               class="search-palette-input"

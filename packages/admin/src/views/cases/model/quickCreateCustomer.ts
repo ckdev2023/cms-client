@@ -116,14 +116,14 @@ export async function defaultQuickCreateCustomer(
     });
   } catch (e) {
     throw new Error(
-      `Quick-create customer request failed: ${e instanceof Error ? e.message : String(e)}`,
+      `Quick-create customer request failed: ${e instanceof Error ? e.message : String(e)}`, // i18n-skip
     );
   }
   const body = await readQuickCreateBody(response);
   if (!response.ok) {
     throw new Error(
       readQuickCreateMessage(body) ??
-        `Quick-create customer failed with status ${response.status}`,
+        `Quick-create customer failed with status ${response.status}`, // i18n-skip
     );
   }
   const record =

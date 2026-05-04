@@ -102,11 +102,12 @@ async function handleSubmit() {
         <p v-if="sessionNotice" class="login-form__notice" role="status">
           {{ sessionNotice }}
         </p>
-        <label class="login-field">
+        <label class="login-field" for="login-email">
           <span class="login-field__label">{{
             t("auth.login.emailLabel")
           }}</span>
           <input
+            id="login-email"
             v-model="fields.email"
             class="login-field__control"
             type="email"
@@ -117,11 +118,12 @@ async function handleSubmit() {
           />
         </label>
 
-        <label class="login-field">
+        <label class="login-field" for="login-password">
           <span class="login-field__label">{{
             t("auth.login.passwordLabel")
           }}</span>
           <input
+            id="login-password"
             v-model="fields.password"
             class="login-field__control"
             type="password"

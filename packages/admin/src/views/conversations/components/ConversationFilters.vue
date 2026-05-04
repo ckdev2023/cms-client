@@ -49,6 +49,8 @@ const scopeOptions = computed(() => [
       />
 
       <SearchField
+        id="conv-filter-search"
+        name="convSearch"
         class="conv-filters__search"
         :model-value="search"
         :placeholder="t('conversations.list.searchPlaceholder')"
@@ -59,6 +61,8 @@ const scopeOptions = computed(() => [
 
     <div class="conv-filters__row conv-filters__row--secondary">
       <select
+        id="conv-filter-status"
+        name="convStatus"
         class="conv-filters__select"
         :value="status"
         @change="
@@ -83,6 +87,8 @@ const scopeOptions = computed(() => [
       <label class="conv-filters__checkbox-label">
         <span class="ui-checkbox-hit">
           <input
+            id="conv-filter-unreadOnly"
+            name="unreadOnly"
             type="checkbox"
             :checked="unreadOnly"
             @change="

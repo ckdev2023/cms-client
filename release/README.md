@@ -52,17 +52,26 @@ cd /opt/cms
 # 2. 准备配置
 cd release
 cp .env.example .env
-vi .env       # 至少填 DOMAIN / POSTGRES_PASSWORD / CORS_ORIGINS / ACME_EMAIL
 
-# 3. 一键 bootstrap
+# 3. 用强随机值替换两个密码（务必用 hex，不能用 base64——会含 / + = 破坏 DB_URL）
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(openssl rand -hex 24)|" .env
+sed -i "s|^AUTH_JWT_SECRET=.*|AUTH_JWT_SECRET=$(openssl rand -hex 32)|" .env
+
+# 4. 编辑 .env，填剩余必填项
+vi .env       # 至少填 DOMAIN / ACME_EMAIL / CORS_ORIGINS
+
+# 5. 一键 bootstrap（会校验所有必填项，不齐会拒绝跑）
 bash scripts/bootstrap.sh
 
-# 4. 创建初始管理员（见下节）
+# 6. 创建初始管理员（见下节）
 
-# 5. 验证
+# 7. 验证
 curl https://demo.example.com/health/deps
 # {"ok":true}
 ```
+
+> **必填变量速查**：`DOMAIN`、`ACME_EMAIL`、`POSTGRES_PASSWORD`（hex）、`AUTH_JWT_SECRET`（hex，≥32 字符）、`CORS_ORIGINS`。
+> `bootstrap.sh` 会逐项校验，缺/弱/含特殊字符都会立刻报错退出，不会留下半残状态。
 
 ### 创建初始管理员（重要）
 

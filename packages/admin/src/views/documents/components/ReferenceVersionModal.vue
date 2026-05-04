@@ -92,6 +92,7 @@ defineEmits<{
             >
               <input
                 type="radio"
+                name="referenceVersion"
                 class="ref-modal__radio"
                 :checked="selectedId === candidate.id"
                 :value="candidate.id"

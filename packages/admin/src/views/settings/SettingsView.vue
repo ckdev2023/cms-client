@@ -71,6 +71,9 @@ const page = useSettingsPage({
             'settings-view__subnav-btn--active':
               page.activePanel.value === item.id,
           }"
+          :aria-current="
+            page.activePanel.value === item.id ? 'page' : undefined
+          "
           @click="page.switchPanel(item.id)"
         >
           {{ t(item.labelKey) }}

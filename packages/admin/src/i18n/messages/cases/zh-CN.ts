@@ -360,6 +360,19 @@ const casesZhCN = {
         empty: "暂无近期动态",
         viewAll: "查看完整日志 →",
       },
+      risk: {
+        blockingDetail: "{count} 项阻断",
+        lastValidation: {
+          passed: "校验通过",
+          failed: "未通过",
+          pending: "待执行",
+        },
+      },
+      validationHint: {
+        blockingWarning: "阻断 {b} 项 · 警告 {w} 项",
+        warningOnly: "{w} 项警告",
+      },
+      deadlineMeta: "期限：{date}",
       sidebar: {
         phaseTitle: "业务阶段",
         riskTitle: "阻断与风险摘要",

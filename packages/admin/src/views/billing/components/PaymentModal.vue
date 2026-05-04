@@ -147,7 +147,7 @@ function handleClose() {
           <div v-else class="pm-fields">
             <!-- 金额 -->
             <div class="pm-field">
-              <label class="pm-label">
+              <label class="pm-label" for="payment-amount">
                 {{ t("billing.paymentModal.fields.amount") }}
                 <span class="pm-label__required">*</span>
               </label>
@@ -173,7 +173,7 @@ function handleClose() {
 
             <!-- 日期 -->
             <div class="pm-field">
-              <label class="pm-label">
+              <label class="pm-label" for="payment-date">
                 {{ t("billing.paymentModal.fields.date") }}
                 <span class="pm-label__required">*</span>
               </label>
@@ -188,7 +188,7 @@ function handleClose() {
 
             <!-- 关联收费节点 -->
             <div class="pm-field">
-              <label class="pm-label">{{
+              <label class="pm-label" for="payment-billingPlanId">{{
                 t("billing.paymentModal.fields.node")
               }}</label>
               <select
@@ -222,7 +222,7 @@ function handleClose() {
 
             <!-- 付款凭证 -->
             <div class="pm-field">
-              <label class="pm-label">{{
+              <label class="pm-label" for="payment-receipt">{{
                 t("billing.paymentModal.fields.receipt")
               }}</label>
               <input
@@ -242,7 +242,7 @@ function handleClose() {
 
             <!-- 备注 -->
             <div class="pm-field">
-              <label class="pm-label">{{
+              <label class="pm-label" for="payment-note">{{
                 t("billing.paymentModal.fields.note")
               }}</label>
               <textarea

@@ -166,7 +166,11 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
 
   it("header deadline fields", () => {
     expect(result.detail.deadline).not.toBe("");
-    expect(result.detail.deadlineMeta).toContain("Due:");
+    expect(result.detail.deadlineMeta).toBe("");
+    expect(result.detail.deadlineMetaLoc?.key).toBe(
+      "cases.detail.overview.deadlineMeta",
+    );
+    expect(result.detail.deadlineMetaLoc?.params?.date).not.toBe("");
     expect(result.detail.targetDate).not.toBe("");
     expect(result.detail.deadlineDanger).toBe(false);
     expect(result.detail.acceptedDate).not.toBe("");
@@ -186,15 +190,26 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
 
   it("risk block populated from validation + billing", () => {
     expect(result.detail.risk.blockingCount).toBe("2");
-    expect(result.detail.risk.blockingDetail).toBe("2 blocking issues");
+    expect(result.detail.risk.blockingDetail).toBe("");
+    expect(result.detail.risk.blockingDetailLoc?.key).toBe(
+      "cases.detail.overview.risk.blockingDetail",
+    );
+    expect(result.detail.risk.blockingDetailLoc?.params).toEqual({ count: 2 });
     expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
     expect(result.detail.risk.arrearsDetail).toContain("100,000");
-    expect(result.detail.risk.lastValidation).toBe("failed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.failed",
+    );
     expect(result.detail.risk.reviewStatus).toBe("rejected");
   });
 
   it("validation hint and block", () => {
-    expect(result.detail.validationHint).toBe("2 blocking, 3 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.blockingWarning",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ b: 2, w: 3 });
     expect(result.detail.validation.lastTime).not.toBe("");
   });
 

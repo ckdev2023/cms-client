@@ -160,7 +160,7 @@ function buildBadResponseError(
       readMessageFromBody(body) ??
       (response.status === 401
         ? "Dashboard access denied"
-        : `Dashboard request failed with status ${response.status}`),
+        : `Dashboard request failed with status ${response.status}`), // i18n-skip
   });
 }
 

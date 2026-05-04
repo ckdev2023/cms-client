@@ -37,6 +37,7 @@ defineEmits<{
           <label class="ui-checkbox-hit">
             <input
               type="checkbox"
+              name="customerSelectAll"
               class="customer-table__checkbox"
               :checked="allSelected"
               :indeterminate="indeterminate"
@@ -79,7 +80,12 @@ defineEmits<{
       >
         <td class="customer-table__th-check">
           <label class="ui-checkbox-hit">
-            <input type="checkbox" disabled class="customer-table__checkbox" />
+            <input
+              type="checkbox"
+              name="customerRowSelect"
+              disabled
+              class="customer-table__checkbox"
+            />
           </label>
         </td>
         <td colspan="7" class="customer-table__draft-cell">

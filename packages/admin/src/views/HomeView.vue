@@ -43,7 +43,11 @@ const { t } = useI18n();
       </Card>
 
       <Card :title="t('foundation.searchField')">
-        <SearchField :placeholder="t('foundation.searchPlaceholder')" />
+        <SearchField
+          id="home-search"
+          name="homeSearch"
+          :placeholder="t('foundation.searchPlaceholder')"
+        />
       </Card>
     </div>
   </div>

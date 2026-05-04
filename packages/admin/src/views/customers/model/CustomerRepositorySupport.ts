@@ -194,7 +194,7 @@ function buildBadResponseError(
       readMessageFromBody(body) ??
       (response.status === 401
         ? "Customer access denied"
-        : `Customer request failed with status ${response.status}`),
+        : `Customer request failed with status ${response.status}`), // i18n-skip
     serverErrorCode: extractServerErrorCode(body),
     serverBlockers: extractServerBlockers(body),
   });

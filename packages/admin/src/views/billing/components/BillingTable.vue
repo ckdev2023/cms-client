@@ -94,6 +94,7 @@ watchEffect(() => {
                 <input
                   ref="selectAllRef"
                   type="checkbox"
+                  name="billingSelectAll"
                   class="billing-table__checkbox"
                   :checked="isAllSelected"
                   :aria-label="t('billing.list.columns.selectAll')"
@@ -161,6 +162,7 @@ watchEffect(() => {
               <label class="ui-checkbox-hit">
                 <input
                   type="checkbox"
+                  name="billingRowSelect"
                   class="billing-table__checkbox"
                   :class="{
                     'billing-table__checkbox--disabled': !isSelectable(row),

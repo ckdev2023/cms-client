@@ -62,6 +62,8 @@ defineEmits<{
       />
 
       <SearchField
+        id="billing-filter-search"
+        name="billingSearch"
         :model-value="props.search"
         :placeholder="t('billing.list.searchPlaceholder')"
         variant="inline"
@@ -71,6 +73,8 @@ defineEmits<{
 
     <div class="billing-filters__selects">
       <select
+        id="billing-filter-status"
+        name="billingStatus"
         class="billing-filters__select"
         :value="props.statusFilter"
         :aria-label="t('billing.list.filters.statusAriaLabel')"
@@ -92,6 +96,8 @@ defineEmits<{
       </select>
 
       <select
+        id="billing-filter-group"
+        name="billingGroup"
         class="billing-filters__select"
         :value="props.groupFilter"
         :aria-label="t('billing.list.filters.groupAriaLabel')"
@@ -113,6 +119,8 @@ defineEmits<{
       </select>
 
       <select
+        id="billing-filter-owner"
+        name="billingOwner"
         class="billing-filters__select"
         :value="props.ownerFilter"
         :aria-label="t('billing.list.filters.ownerAriaLabel')"

@@ -10,6 +10,20 @@ import type {
 export type { CaseRoleKey, CaseSampleKey } from "./types";
 
 /**
+ * adapter 层面向 UI 的可翻译文本结构，替代裸 `key + params` 散落字段。
+ */
+export interface LocalizableText {
+  /**
+   *
+   */
+  key: string;
+  /**
+   *
+   */
+  params?: Record<string, unknown>;
+}
+
+/**
  * 顾客多语言名称（R27-S）。
  *
  * 来源：server deepLink 中 `customerNameZh` / `customerNameJa` / `customerNameEn`。
@@ -82,6 +96,10 @@ export interface RiskBlock {
    *
    */
   lastValidation: string;
+  /** i18n — view 层用 `t(loc.key, loc.params)` 渲染阻断明细。 */
+  blockingDetailLoc?: LocalizableText;
+  /** i18n — view 层用 `t(loc.key)` 渲染最近校验状态。 */
+  lastValidationLoc?: LocalizableText;
   /**
    *
    */
@@ -1209,6 +1227,8 @@ export interface CaseDetail {
    *
    */
   deadlineMeta: string;
+  /** i18n — view 层用 `t(loc.key, loc.params)` 渲染期限元信息。 */
+  deadlineMetaLoc?: LocalizableText;
   /**
    *
    */
@@ -1327,6 +1347,8 @@ export interface CaseDetail {
    *
    */
   validationHint: string;
+  /** i18n — view 层用 `t(loc.key, loc.params)` 渲染校验提示。 */
+  validationHintLoc?: LocalizableText;
   /**
    *
    */

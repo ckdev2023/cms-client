@@ -26,10 +26,31 @@ fi
 set -a; source "$ENV_FILE"; set +a
 : "${DOMAIN:?DOMAIN 必填}"
 : "${POSTGRES_PASSWORD:?POSTGRES_PASSWORD 必填}"
+: "${AUTH_JWT_SECRET:?AUTH_JWT_SECRET 必填，server 在 production 下硬要求；用 openssl rand -hex 32 生成}"
 : "${CORS_ORIGINS:?CORS_ORIGINS 必填}"
 
 if [[ "$POSTGRES_PASSWORD" == "CHANGE_ME_TO_A_STRONG_PASSWORD" ]]; then
   echo "[bootstrap] POSTGRES_PASSWORD 还是默认值，请改成强密码后再跑。"
+  echo "  生成命令：openssl rand -hex 24"
+  exit 1
+fi
+
+# DB_URL 用密码拼接，必须是 URL-safe（不含 / + = @ ? # 等）
+if [[ "$POSTGRES_PASSWORD" =~ [\/\+\=\@\?\#\&] ]]; then
+  echo "[bootstrap] POSTGRES_PASSWORD 含 URL 特殊字符（/ + = @ ? # &），会破坏 DB_URL 解析。"
+  echo "  请重新生成：openssl rand -hex 24"
+  exit 1
+fi
+
+if [[ "$AUTH_JWT_SECRET" == "CHANGE_ME_TO_A_STRONG_64HEX_SECRET" ]]; then
+  echo "[bootstrap] AUTH_JWT_SECRET 还是默认值，请改成强随机串。"
+  echo "  生成命令：openssl rand -hex 32"
+  exit 1
+fi
+
+if [[ "${#AUTH_JWT_SECRET}" -lt 32 ]]; then
+  echo "[bootstrap] AUTH_JWT_SECRET 长度 ${#AUTH_JWT_SECRET} < 32 字符，server 会拒绝启动。"
+  echo "  生成命令：openssl rand -hex 32"
   exit 1
 fi
 

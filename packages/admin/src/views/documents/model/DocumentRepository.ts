@@ -154,7 +154,7 @@ async function fetchDocumentItems(
   if (!response.ok) {
     throw new DocumentRepositoryError({
       code: "BAD_RESPONSE",
-      message: `Document API returned HTTP ${response.status}`,
+      message: `Document API returned HTTP ${response.status}`, // i18n-skip
       status: response.status,
     });
   }

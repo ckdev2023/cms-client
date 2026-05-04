@@ -34,6 +34,7 @@ defineEmits<{
           <label class="ui-checkbox-hit">
             <input
               type="checkbox"
+              name="docSelectAll"
               class="doc-table__checkbox"
               :checked="allSelected"
               :indeterminate="indeterminate"

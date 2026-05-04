@@ -37,6 +37,7 @@ defineEmits<{
           <label class="ui-checkbox-hit">
             <input
               type="checkbox"
+              name="leadSelectAll"
               class="lead-table__checkbox"
               :checked="allSelected"
               :indeterminate="indeterminate"
@@ -73,7 +74,12 @@ defineEmits<{
       >
         <td class="lead-table__th-check">
           <label class="ui-checkbox-hit">
-            <input type="checkbox" disabled class="lead-table__checkbox" />
+            <input
+              type="checkbox"
+              name="leadRowSelect"
+              disabled
+              class="lead-table__checkbox"
+            />
           </label>
         </td>
         <td colspan="5" class="lead-table__draft-cell">

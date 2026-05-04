@@ -272,7 +272,7 @@ async function fetchJson(
     const msg =
       isRecord(body) && typeof body.message === "string"
         ? body.message
-        : `Groups request failed with status ${response.status}`;
+        : `Groups request failed with status ${response.status}`; // i18n-skip
     throw new GroupsRepositoryError(msg, response.status);
   }
   return body;
@@ -291,7 +291,7 @@ async function doListGroups(
   runtime: ResolvedRuntime,
   status?: GroupStatusFilter,
 ): Promise<GroupSummary[]> {
-  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  const qs = status ? `?status=${encodeURIComponent(status)}` : ""; // i18n-skip
   const body = await fetchJson(runtime, qs, { method: "GET" });
 
   if (!isRecord(body) || !Array.isArray(body.items)) {

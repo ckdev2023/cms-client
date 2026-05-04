@@ -238,7 +238,11 @@ describe("deadline group", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.deadline).not.toBe("");
     expect(result.detail.targetDate).not.toBe("");
-    expect(result.detail.deadlineMeta).toContain("Due:");
+    expect(result.detail.deadlineMeta).toBe("");
+    expect(result.detail.deadlineMetaLoc?.key).toBe(
+      "cases.detail.overview.deadlineMeta",
+    );
+    expect(result.detail.deadlineMetaLoc?.params?.date).not.toBe("");
   });
 
   it("maps deadline fields as empty when dueAt is null", () => {
@@ -247,6 +251,7 @@ describe("deadline group", () => {
     )!;
     expect(result.detail.deadline).toBe("");
     expect(result.detail.deadlineMeta).toBe("");
+    expect(result.detail.deadlineMetaLoc).toBeUndefined();
     expect(result.detail.targetDate).toBe("");
   });
 

@@ -138,6 +138,8 @@ function handleBatchCreate(): void {
       </div>
       <div class="contacts-tab__toolbar">
         <SearchField
+          id="contacts-tab-search"
+          name="contactSearch"
           variant="inline"
           :model-value="searchQuery"
           :placeholder="t('customers.detail.contactsTab.searchPlaceholder')"

@@ -44,6 +44,26 @@ function navigateTo(route?: RouteLocationRaw): void {
   void router.push(route);
 }
 
+/**
+ * 对工作项描述做二次翻译：当 descKey 为 todo.statusPriority 时，
+ * 将 raw enum 的 status/priority 先通过 tasks 字典翻译再插值。
+ *
+ * @param item 仪表盘工作项。
+ * @returns 翻译后的描述文本。
+ */
+function descTranslate(item: DashboardWorkItem): string {
+  if (!item.descKey) return item.desc ?? "";
+  if (item.descKey === "todo.statusPriority" && item.descParams) {
+    const status = String(item.descParams.status ?? "");
+    const priority = String(item.descParams.priority ?? "");
+    return t("dashboard.workItem.desc.todo.statusPriority", {
+      status: status ? t(`tasks.taskStatus.${status}`) : status,
+      priority: priority ? t(`tasks.priority.${priority}`) : priority,
+    });
+  }
+  return t(`dashboard.workItem.desc.${item.descKey}`, item.descParams ?? {});
+}
+
 const resolvedPanels = computed<ResolvedPanel[]>(() =>
   panelDefinitions.map((panel) => ({
     ...panel,
@@ -113,14 +133,7 @@ const resolvedPanels = computed<ResolvedPanel[]>(() =>
               </span>
             </div>
             <p class="work-item-desc">
-              {{
-                item.descKey
-                  ? t(
-                      "dashboard.workItem.desc." + item.descKey,
-                      item.descParams ?? {},
-                    )
-                  : item.desc
-              }}
+              {{ descTranslate(item) }}
             </p>
             <div class="work-item-actions">
               <button

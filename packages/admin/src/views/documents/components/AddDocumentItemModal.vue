@@ -85,7 +85,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
 
         <div class="adim__body">
           <div class="adim__field">
-            <label class="adim__label">
+            <label class="adim__label" for="doc-addItem-name">
               {{ t("documents.addItem.fields.name") }}
               <span class="adim__required">*</span>
             </label>
@@ -101,7 +101,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           </div>
 
           <div class="adim__field">
-            <label class="adim__label">
+            <label class="adim__label" for="doc-addItem-ownerSide">
               {{ t("documents.addItem.fields.ownerSide") }}
               <span class="adim__required">*</span>
             </label>
@@ -127,7 +127,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           </div>
 
           <div class="adim__field">
-            <label class="adim__label">
+            <label class="adim__label" for="doc-addItem-dueAt">
               {{ t("documents.addItem.fields.dueAt") }}
             </label>
             <input
@@ -144,7 +144,7 @@ const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
           </div>
 
           <div class="adim__field">
-            <label class="adim__label">
+            <label class="adim__label" for="doc-addItem-note">
               {{ t("documents.addItem.fields.note") }}
             </label>
             <textarea

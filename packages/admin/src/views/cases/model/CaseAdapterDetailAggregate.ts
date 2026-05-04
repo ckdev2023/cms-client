@@ -131,17 +131,24 @@ function buildRiskBlock(
   latestValidation: Record<string, unknown> | null,
   latestReview: Record<string, unknown> | null,
 ) {
+  const vs = latestValidation ? readString(latestValidation, "status") : "";
+  const bKey = "cases.detail.overview.risk.blockingDetail";
   return {
     blockingCount: blockingCount > 0 ? String(blockingCount) : "0",
-    blockingDetail: blockingCount > 0 ? `${blockingCount} blocking issues` : "",
+    blockingDetail: "",
+    blockingDetailLoc:
+      blockingCount > 0
+        ? { key: bKey, params: { count: blockingCount } }
+        : undefined,
     arrearsStatus:
       unpaidAmount > 0 ? "cases.detail.arrearsYes" : "cases.detail.arrearsNo",
     arrearsDetail: unpaidAmount > 0 ? `¥${unpaidAmount.toLocaleString()}` : "",
     deadlineAlert: "",
     deadlineAlertDetail: "",
-    lastValidation: latestValidation
-      ? readString(latestValidation, "status")
-      : "",
+    lastValidation: "",
+    lastValidationLoc: vs
+      ? { key: `cases.detail.overview.risk.lastValidation.${vs}` }
+      : undefined,
     reviewStatus: latestReview ? readString(latestReview, "decision") : "",
   };
 }
@@ -176,10 +183,21 @@ function buildRiskConfirmation(
 }
 
 function buildValidationHint(blockingCount: number, warningCount: number) {
-  if (blockingCount > 0)
-    return `${blockingCount} blocking, ${warningCount} warning`;
-  if (warningCount > 0) return `${warningCount} warning`;
-  return "";
+  if (blockingCount > 0) {
+    return {
+      text: "",
+      key: "cases.detail.overview.validationHint.blockingWarning",
+      params: { b: blockingCount, w: warningCount },
+    };
+  }
+  if (warningCount > 0) {
+    return {
+      text: "",
+      key: "cases.detail.overview.validationHint.warningOnly",
+      params: { w: warningCount },
+    };
+  }
+  return { text: "", key: "", params: undefined };
 }
 
 // ─── Deep-link fields (p0-fe-002c-03) ────────────────────────────
@@ -299,6 +317,8 @@ function buildDetailHeader(
   caseRecord: Record<string, unknown>,
   deepLink: Record<string, unknown> | null,
 ) {
+  const dKey = "cases.detail.overview.deadlineMeta";
+  const fDue = dueAt ? formatDate(dueAt) : "";
   return {
     id,
     caseNo: extractCaseNo(caseRecord),
@@ -311,7 +331,8 @@ function buildDetailHeader(
     stageMeta: stageId,
     statusBadge: resolveStageBadge(stageId),
     deadline: formatDate(dueAt),
-    deadlineMeta: dueAt ? `Due: ${formatDate(dueAt)}` : "",
+    deadlineMeta: "",
+    deadlineMetaLoc: dueAt ? { key: dKey, params: { date: fDue } } : undefined,
     deadlineDanger: isDeadlineDanger(dueAt),
     progressPercent: m.progressPercent,
     progressCount: `${m.docDone}/${m.docTotal}`,
@@ -400,34 +421,17 @@ function resolveClosedAt(caseRecord: Record<string, unknown>): string {
   return readNullableString(caseRecord, "archivedAt") ?? "";
 }
 
-// ─── Public adapter ──────────────────────────────────────────────
+// ─── Detail assembly (extracted to stay under max-lines-per-function) ─────
 
-/**
- * 将聚合 DTO 适配为客户端详情模型。
- *
- * 覆盖 server `CaseDetailAggregateDto` 全部 8 个 slice。
- * header / overview / info / read-only 主链已稳定；
- * tabs 内部列表仍以 `EMPTY_LISTS` 占位，跟随后续批次各自落地。
- *
- * @param value - `GET /cases/:id/aggregate` 返回的原始 JSON
- * @returns 类型化的详情聚合，格式无效时返回 `null`
- */
-export function adaptCaseDetailAggregate(
-  value: unknown,
-): CaseDetailAggregate | null {
-  const record = asRecord(value);
-  if (!record) return null;
-  const slices = parseAggregateSlices(record);
-  if (!slices) return null;
-
+function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
   const { caseRecord, deepLink, billing, latestValidation, latestReview } =
     slices;
   const id = readString(caseRecord, "id");
   const stageId = resolveStageId(readString(caseRecord, "stage"));
   const dueAt = readNullableString(caseRecord, "dueAt");
-  const m = deriveCaseMetrics(slices);
+  const vh = buildValidationHint(m.blockingCount, m.warningCount);
 
-  const detail = {
+  return {
     ...buildDetailHeader(id, stageId, dueAt, m, caseRecord, deepLink),
     providerProgress: adaptProviderProgress(slices.providerProgressRaw),
     risk: buildRiskBlock(
@@ -437,7 +441,8 @@ export function adaptCaseDetailAggregate(
       latestReview,
     ),
     nextAction: "",
-    validationHint: buildValidationHint(m.blockingCount, m.warningCount),
+    validationHint: "",
+    validationHintLoc: vh.key ? { key: vh.key, params: vh.params } : undefined,
     overviewActions: nextActionsForPhase(
       readString(caseRecord, "businessPhase"),
       stageId,
@@ -464,10 +469,27 @@ export function adaptCaseDetailAggregate(
       ? readNullableString(deepLink, "ownerDisplayName")
       : null,
   };
+}
+
+// ─── Public adapter ──────────────────────────────────────────────
+
+/**
+ * 将聚合 DTO 适配为客户端详情模型。
+ *
+ * @param value - `GET /cases/:id/aggregate` 返回的原始 JSON
+ * @returns 类型化的详情聚合，格式无效时返回 `null`
+ */
+export function adaptCaseDetailAggregate(
+  value: unknown,
+): CaseDetailAggregate | null {
+  const record = asRecord(value);
+  if (!record) return null;
+  const slices = parseAggregateSlices(record);
+  if (!slices) return null;
 
   return {
-    detail,
+    detail: assembleDetail(slices, deriveCaseMetrics(slices)),
     tabCounts: buildTabCounts(slices.counts),
-    ...buildDeepLinkFields(deepLink),
+    ...buildDeepLinkFields(slices.deepLink),
   };
 }

@@ -1,13 +1,8 @@
-// ── Test Ownership ──────────────────────────────────────────────
 // Owner: p0-fe-006a-03 — overview/info tabs focused tests
-//   Locks field display values, null/empty degradation, and readonly
-//   behaviour as consumed by CaseOverviewTab.vue, CaseOverviewSidebar.vue,
-//   and CaseInfoTab.vue.
-// Does NOT test: frozen key-set snapshots (→ overview-contract / info-contract),
-//   per-slice degradation (→ slices.test), per-group mapping (→ main-chain.test),
-//   structural key-set integrity (→ focused.test), adapter internals,
-//   list mappers, write builders, or repository orchestration.
-// ────────────────────────────────────────────────────────────────
+// Locks field display values, null/empty degradation, and readonly.
+// Does NOT test: frozen key-set snapshots, per-slice degradation,
+// per-group mapping, structural key-set integrity, list mappers,
+// write builders, or repository orchestration.
 
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
@@ -135,10 +130,14 @@ describe("overview tab field display (p0-fe-006a-03)", () => {
     expect(result.detail.stageMeta).toBe("S3");
   });
 
-  it("deadline card shows formatted date with Due: prefix meta", () => {
+  it("deadline card shows formatted date with i18n deadlineMeta key", () => {
     expect(result.detail.deadline).not.toBe("");
     expect(result.detail.deadline).toContain("2026");
-    expect(result.detail.deadlineMeta).toContain("Due:");
+    expect(result.detail.deadlineMeta).toBe("");
+    expect(result.detail.deadlineMetaLoc?.key).toBe(
+      "cases.detail.overview.deadlineMeta",
+    );
+    expect(result.detail.deadlineMetaLoc?.params?.date).not.toBe("");
     expect(result.detail.deadlineDanger).toBe(false);
   });
 
@@ -199,14 +198,18 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
     expect(result.detail.risk.blockingDetail).toBe("");
   });
 
-  it("risk block with blocking issues shows count and detail text", () => {
+  it("risk block with blocking issues shows count and i18n key", () => {
     const result = adaptCaseDetailAggregate(
       buildFull({
         latestValidation: { ...VALIDATION_FULL, blockingCount: 4 },
       }),
     )!;
     expect(result.detail.risk.blockingCount).toBe("4");
-    expect(result.detail.risk.blockingDetail).toBe("4 blocking issues");
+    expect(result.detail.risk.blockingDetail).toBe("");
+    expect(result.detail.risk.blockingDetailLoc?.key).toBe(
+      "cases.detail.overview.risk.blockingDetail",
+    );
+    expect(result.detail.risk.blockingDetailLoc?.params).toEqual({ count: 4 });
   });
 
   it("arrears shows あり with yen amount when unpaid > 0", () => {
@@ -223,9 +226,12 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
     expect(result.detail.risk.arrearsDetail).toBe("");
   });
 
-  it("lastValidation status forwarded from latestValidation.status", () => {
+  it("lastValidation status forwarded as i18n key", () => {
     const result = adaptCaseDetailAggregate(buildFull())!;
-    expect(result.detail.risk.lastValidation).toBe("passed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.passed",
+    );
   });
 
   it("reviewStatus forwarded from latestReview.decision", () => {
@@ -248,7 +254,11 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
   const result = adaptCaseDetailAggregate(buildFull())!;
 
   it("validationHint shows only warnings when no blocking", () => {
-    expect(result.detail.validationHint).toBe("3 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.warningOnly",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ w: 3 });
   });
 
   it("validationHint shows both when blocking + warning present", () => {
@@ -261,7 +271,11 @@ describe("overview sidebar field display (p0-fe-006a-03)", () => {
         },
       }),
     )!;
-    expect(r.detail.validationHint).toBe("1 blocking, 2 warning");
+    expect(r.detail.validationHint).toBe("");
+    expect(r.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.blockingWarning",
+    );
+    expect(r.detail.validationHintLoc?.params).toEqual({ b: 1, w: 2 });
   });
 });
 

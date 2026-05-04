@@ -194,12 +194,19 @@ describe("S9 read-only comprehensive state (p0-fe-002c-04)", () => {
   it("risk block still populated in S9", () => {
     expect(result.detail.risk.blockingCount).toBe("2");
     expect(result.detail.risk.arrearsStatus).toBe("cases.detail.arrearsYes");
-    expect(result.detail.risk.lastValidation).toBe("failed");
+    expect(result.detail.risk.lastValidation).toBe("");
+    expect(result.detail.risk.lastValidationLoc?.key).toBe(
+      "cases.detail.overview.risk.lastValidation.failed",
+    );
     expect(result.detail.risk.reviewStatus).toBe("rejected");
   });
 
   it("validation hint still shown in S9", () => {
-    expect(result.detail.validationHint).toBe("2 blocking, 3 warning");
+    expect(result.detail.validationHint).toBe("");
+    expect(result.detail.validationHintLoc?.key).toBe(
+      "cases.detail.overview.validationHint.blockingWarning",
+    );
+    expect(result.detail.validationHintLoc?.params).toEqual({ b: 2, w: 3 });
   });
 
   it("risk confirmation still rendered in S9", () => {

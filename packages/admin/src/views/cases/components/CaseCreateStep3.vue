@@ -145,6 +145,7 @@ onMounted(async () => {
       <label class="check-item ui-checkbox-hit">
         <input
           type="checkbox"
+          name="autoChecklist"
           :checked="props.model.draft.autoChecklist"
           @change="
             props.model.setAutoChecklist(
@@ -157,6 +158,7 @@ onMounted(async () => {
       <label class="check-item ui-checkbox-hit">
         <input
           type="checkbox"
+          name="autoTasks"
           :checked="props.model.draft.autoTasks"
           @change="
             props.model.setAutoTasks(

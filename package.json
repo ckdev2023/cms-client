@@ -39,7 +39,9 @@
     "server:test:integration-pg:up": "npm --workspace server run test:integration-pg:up",
     "server:test:integration-pg:down": "npm --workspace server run test:integration-pg:down",
     "server:guard": "npm --workspace server run guard",
-    "guard": "npm run mobile:guard && npm run admin:guard && npm run server:guard",
+    "lint:i18n": "node scripts/lint-i18n-hardcode.mjs",
+    "lint:a11y": "node scripts/lint-a11y-baseline.mjs",
+    "guard": "npm run lint:i18n && npm run lint:a11y && npm run mobile:guard && npm run admin:guard && npm run server:guard",
     "fix": "npm run mobile:fix && npm run admin:fix && npm --workspace server run fix",
     "batch:exit": "bash ./scripts/batch-exit-matrix.sh",
     "prepare": "husky"

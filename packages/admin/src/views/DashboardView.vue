@@ -123,6 +123,7 @@ watch(errorCode, (nextErrorCode) => {
             </button>
           </div>
           <select
+            id="dashboard-groupFilter"
             v-model="selectedGroup"
             class="filter-select"
             name="groupFilter"

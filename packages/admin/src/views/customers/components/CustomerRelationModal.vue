@@ -58,11 +58,13 @@ const relationTypeOptions = computed(() =>
         </div>
 
         <div class="crm-body">
-          <label class="crm-field">
+          <label class="crm-field" for="crm-name">
             <span class="crm-label">{{
               t("customers.detail.contactsTab.form.nameLabel")
             }}</span>
             <input
+              id="crm-name"
+              name="relationName"
               class="crm-input"
               :value="form.name"
               :placeholder="
@@ -79,11 +81,13 @@ const relationTypeOptions = computed(() =>
             />
           </label>
 
-          <label class="crm-field">
+          <label class="crm-field" for="crm-relationType">
             <span class="crm-label">{{
               t("customers.detail.contactsTab.form.relationTypeLabel")
             }}</span>
             <select
+              id="crm-relationType"
+              name="relationType"
               class="crm-input"
               :value="form.relationType"
               @change="
@@ -104,11 +108,13 @@ const relationTypeOptions = computed(() =>
             </select>
           </label>
 
-          <label class="crm-field">
+          <label class="crm-field" for="crm-roleTitle">
             <span class="crm-label">{{
               t("customers.detail.contactsTab.form.roleTitleLabel")
             }}</span>
             <input
+              id="crm-roleTitle"
+              name="roleTitle"
               class="crm-input"
               :value="form.roleTitle"
               :placeholder="
@@ -125,11 +131,13 @@ const relationTypeOptions = computed(() =>
             />
           </label>
 
-          <label class="crm-field">
+          <label class="crm-field" for="crm-phone">
             <span class="crm-label">{{
               t("customers.detail.contactsTab.form.phoneLabel")
             }}</span>
             <input
+              id="crm-phone"
+              name="phone"
               class="crm-input"
               :value="form.phone"
               @input="
@@ -143,11 +151,13 @@ const relationTypeOptions = computed(() =>
             />
           </label>
 
-          <label class="crm-field">
+          <label class="crm-field" for="crm-email">
             <span class="crm-label">{{
               t("customers.detail.contactsTab.form.emailLabel")
             }}</span>
             <input
+              id="crm-email"
+              name="email"
               class="crm-input"
               :value="form.email"
               @input="

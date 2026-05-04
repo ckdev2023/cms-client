@@ -214,7 +214,7 @@ export function useCustomerDropdownData(
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
+        throw new Error(`HTTP ${response.status}`); // i18n-skip
       }
 
       const body: unknown = await response.json();

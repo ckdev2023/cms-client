@@ -372,6 +372,19 @@ const casesJaJP = {
         empty: "最近のアクティビティはありません",
         viewAll: "ログ全体を見る →",
       },
+      risk: {
+        blockingDetail: "{count} 件のブロッカー",
+        lastValidation: {
+          passed: "合格",
+          failed: "不合格",
+          pending: "未実行",
+        },
+      },
+      validationHint: {
+        blockingWarning: "ブロッカー {b} 件 · 警告 {w} 件",
+        warningOnly: "警告 {w} 件",
+      },
+      deadlineMeta: "期限：{date}",
       sidebar: {
         phaseTitle: "業務フェーズ",
         riskTitle: "ブロック項目とリスク概要",

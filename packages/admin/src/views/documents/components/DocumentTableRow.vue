@@ -64,6 +64,7 @@ const isSelectable = computed(() => isSelectableForBatch(props.item.status));
       <label class="ui-checkbox-hit">
         <input
           type="checkbox"
+          name="docRowSelect"
           class="doc-row__checkbox"
           :checked="selected"
           :disabled="!isSelectable"

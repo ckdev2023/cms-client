@@ -103,7 +103,7 @@ export function buildLeadLogsPath(apiPath: string, leadId: string): string {
  * @returns 完整路径
  */
 export function buildLeadStatusPath(apiPath: string, leadId: string): string {
-  return `${apiPath}/${encodeURIComponent(leadId)}/status`;
+  return `${apiPath}/${encodeURIComponent(leadId)}/status`; // i18n-skip
 }
 
 /**

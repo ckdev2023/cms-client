@@ -106,11 +106,13 @@ function handleClose() {
 
           <div class="ra-fields">
             <div class="ra-field">
-              <label class="ra-label">
+              <label class="ra-label" for="risk-ack-reasonCode">
                 {{ t("billing.riskAck.modal.title") }}
                 <span class="ra-label__required">*</span>
               </label>
               <select
+                id="risk-ack-reasonCode"
+                name="reasonCode"
                 v-model="reasonCode"
                 class="ra-input ra-input--select"
                 data-testid="risk-ack-reason-code"
@@ -123,13 +125,15 @@ function handleClose() {
             </div>
 
             <div class="ra-field">
-              <label class="ra-label">
+              <label class="ra-label" for="risk-ack-reasonNote">
                 {{ t("billing.riskAck.reasonNote.placeholder") }}
                 <span v-if="reasonCode === 'other'" class="ra-label__required"
                   >*</span
                 >
               </label>
               <textarea
+                id="risk-ack-reasonNote"
+                name="reasonNote"
                 v-model="reasonNote"
                 class="ra-input ra-input--textarea"
                 rows="3"
@@ -138,10 +142,12 @@ function handleClose() {
             </div>
 
             <div class="ra-field">
-              <label class="ra-label">{{
+              <label class="ra-label" for="risk-ack-evidenceUrl">{{
                 t("billing.riskAck.evidenceUrl.placeholder")
               }}</label>
               <input
+                id="risk-ack-evidenceUrl"
+                name="evidenceUrl"
                 v-model="evidenceUrl"
                 type="url"
                 class="ra-input"

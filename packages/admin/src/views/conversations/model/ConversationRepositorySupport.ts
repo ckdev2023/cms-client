@@ -177,7 +177,7 @@ function buildBadResponseError(
       readMessageFromBody(body) ??
       (response.status === 401
         ? "Conversation access denied"
-        : `Conversation request failed with status ${response.status}`),
+        : `Conversation request failed with status ${response.status}`), // i18n-skip
   });
 }
 

@@ -145,6 +145,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoDisplayName"
+            name="displayName"
             :class="inputCls"
             type="text"
             :value="displayValues.displayName"
@@ -159,6 +160,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoLegalName"
+            name="legalName"
             :class="inputCls"
             type="text"
             :value="displayValues.legalName"
@@ -173,6 +175,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoFurigana"
+            name="furigana"
             :class="inputCls"
             type="text"
             :value="displayValues.furigana"
@@ -187,6 +190,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoNationality"
+            name="nationality"
             :class="inputCls"
             type="text"
             :value="displayValues.nationality"
@@ -201,6 +205,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <select
             id="basicInfoGender"
+            name="gender"
             :class="selectCls"
             :value="displayValues.gender"
             :disabled="!isEditing"
@@ -224,6 +229,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoBirthDate"
+            name="birthDate"
             :class="inputCls"
             :type="isEditing ? 'date' : 'text'"
             :value="displayValues.birthDate"
@@ -239,6 +245,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoPhone"
+            name="phone"
             :class="inputCls"
             type="tel"
             inputmode="tel"
@@ -254,6 +261,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoEmail"
+            name="email"
             :class="inputCls"
             type="email"
             inputmode="email"
@@ -269,6 +277,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <select
             id="basicInfoGroup"
+            name="group"
             :class="selectCls"
             :value="displayValues.group"
             :disabled="!isEditing"
@@ -290,6 +299,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <select
             id="basicInfoOwner"
+            name="owner"
             :class="selectCls"
             :value="displayValues.owner"
             :disabled="!isEditing"
@@ -311,6 +321,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoReferralSource"
+            name="referralSource"
             :class="inputCls"
             type="text"
             :value="displayValues.referralSource"
@@ -325,6 +336,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <select
             id="basicInfoLocation"
+            name="location"
             :class="selectCls"
             :value="displayValues.location"
             :disabled="!isEditing"
@@ -348,6 +360,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <select
             id="basicInfoSourceType"
+            name="sourceType"
             :class="selectCls"
             :value="displayValues.sourceType"
             :disabled="!isEditing"
@@ -375,6 +388,7 @@ const bmvVisaTypeLabel = computed(() =>
           <template v-if="isBmvCustomer">
             <input
               id="basicInfoVisaType"
+              name="visaType"
               :class="['basic-info__input', 'basic-info__input--readonly']"
               type="text"
               :value="bmvVisaTypeLabel"
@@ -388,6 +402,7 @@ const bmvVisaTypeLabel = computed(() =>
           <select
             v-else
             id="basicInfoVisaType"
+            name="visaType"
             :class="selectCls"
             :value="displayValues.visaType"
             :disabled="!isEditing"
@@ -408,6 +423,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoReferrerName"
+            name="referrerName"
             :class="inputCls"
             type="text"
             :value="displayValues.referrerName"
@@ -435,6 +451,7 @@ const bmvVisaTypeLabel = computed(() =>
           }}</label>
           <input
             id="basicInfoNote"
+            name="note"
             :class="inputCls"
             type="text"
             :value="displayValues.note"

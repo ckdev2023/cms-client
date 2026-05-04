@@ -55,7 +55,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
         <div class="rdm__body">
           <div class="rdm__field">
-            <label class="rdm__label">
+            <label class="rdm__label" for="doc-register-case">
               {{ t("documents.register.fields.case") }}
               <span class="rdm__required">*</span>
             </label>
@@ -80,7 +80,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           </div>
 
           <div class="rdm__field">
-            <label class="rdm__label">
+            <label class="rdm__label" for="doc-register-docItem">
               {{ t("documents.register.fields.docItem") }}
               <span class="rdm__required">*</span>
             </label>
@@ -113,7 +113,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           </div>
 
           <div class="rdm__field">
-            <label class="rdm__label">
+            <label class="rdm__label" for="doc-register-relativePath">
               {{ t("documents.register.fields.relativePath") }}
               <span class="rdm__required">*</span>
             </label>
@@ -139,7 +139,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           </div>
 
           <div class="rdm__field">
-            <label class="rdm__label">
+            <label class="rdm__label" for="doc-register-fileName">
               {{ t("documents.register.fields.fileName") }}
             </label>
             <input
@@ -157,7 +157,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           </div>
 
           <div class="rdm__field">
-            <label class="rdm__label">
+            <label class="rdm__label" for="doc-register-version">
               {{ t("documents.register.fields.version") }}
             </label>
             <input
