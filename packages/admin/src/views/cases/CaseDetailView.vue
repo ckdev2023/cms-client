@@ -73,6 +73,7 @@ const {
   enrichedDetail,
   formTemplates,
   notFound,
+  notFoundReason,
   isReadonly,
   tabCounters,
   loading,
@@ -864,7 +865,13 @@ async function onFormGenSubmit(payload: {
     </div>
 
     <div v-else-if="notFound" class="case-detail-view__not-found">
-      <p>{{ t("cases.detail.notFound.message", { id: caseId }) }}</p>
+      <p>
+        {{
+          t(`cases.detail.notFound.${notFoundReason ?? "notFound"}.message`, {
+            id: caseId,
+          })
+        }}
+      </p>
       <a :href="buildCaseListHref()">{{
         t("cases.detail.notFound.backLink")
       }}</a>
@@ -875,6 +882,7 @@ async function onFormGenSubmit(payload: {
 <style scoped>
 .case-detail-view {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 20px;
 }
 
@@ -950,6 +958,7 @@ async function onFormGenSubmit(payload: {
   gap: 10px 20px;
   border-bottom: 1px solid var(--color-border-1);
   overflow-x: auto;
+  min-width: 0;
 }
 
 .case-detail-view__tab {
@@ -1008,6 +1017,7 @@ async function onFormGenSubmit(payload: {
 .case-detail-view__panel {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .case-detail-view__loading {

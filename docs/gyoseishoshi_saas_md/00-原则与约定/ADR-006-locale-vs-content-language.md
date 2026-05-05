@@ -52,3 +52,22 @@ R39-A 缺陷的根因是 `CaseDetailView` 将 vue-i18n 的 `locale` ref（`zh-CN
 - 前端查询模板时不再因 locale 不匹配而返回空列表。
 - server 端防御层消除了 locale 格式误传导致的静默失败。
 - 开发者在新增涉及 `language` 字段的 API 时，需遵循本 ADR 的 alpha-2 约定。
+
+---
+
+## 补遗（R41-B）：`ParseUUIDPipe` 不应限定 version
+
+| 属性     | 值                        |
+| -------- | ------------------------- |
+| 追加日期 | 2026-05-05                |
+| 触发缺陷 | R41-B（P3）               |
+
+### 背景
+
+`cases.controller.ts` 中 `UuidParam` 曾使用 `new ParseUUIDPipe({ version: "4" })`，仅允许 v4 UUID。nil UUID（`00000000-0000-0000-0000-000000000000`，version=0）等合法 UUID 被 pipe 拒为 400，破坏了"合法 UUID 但不存在 → 404"的语义（R39-E 已确立该语义）。
+
+### 规则
+
+- `@Param('id')` 装饰器默认使用 `new ParseUUIDPipe()`（不指定 `version`），仅校验格式合法性。
+- UUID 是否对应真实资源的判断交给 service 层：service 查不到 → 抛 `NotFoundException` → 404。
+- 仅在有明确业务理由（如某个字段约定只存 v4）时，才可指定 `version`，并在代码注释中说明理由。

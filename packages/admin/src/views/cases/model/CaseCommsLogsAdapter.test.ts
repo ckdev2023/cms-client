@@ -8,10 +8,6 @@ import {
   resolveLogCategory,
 } from "./CaseCommsLogsAdapter";
 
-// ────────────────────────────────────────────────────────────────
-// resolveMessageType
-// ────────────────────────────────────────────────────────────────
-
 describe("resolveMessageType", () => {
   it("maps phone channel to phone", () => {
     expect(resolveMessageType("phone", false)).toBe("phone");
@@ -51,10 +47,6 @@ describe("resolveMessageType", () => {
     expect(resolveMessageType("Email", false)).toBe("auto_email");
   });
 });
-
-// ────────────────────────────────────────────────────────────────
-// adaptCaseMessageDto
-// ────────────────────────────────────────────────────────────────
 
 describe("adaptCaseMessageDto", () => {
   const baseCommLog = {
@@ -197,10 +189,6 @@ describe("adaptCaseMessageDto", () => {
   });
 });
 
-// ────────────────────────────────────────────────────────────────
-// adaptCaseMessageListResult
-// ────────────────────────────────────────────────────────────────
-
 describe("adaptCaseMessageListResult", () => {
   const validComm = {
     id: "comm-1",
@@ -307,6 +295,7 @@ describe("adaptCaseLogDto", () => {
     expect(result!.type).toBe("operation");
     expect(result!.text).toBe("cases.log.timeline.caseCreated");
     expect(result!.textParams).toEqual({
+      colonSuffix: "：business_manager",
       suffix: "business_manager",
       suffixKey: "cases.constants.caseTypes.business_manager",
     });
@@ -337,7 +326,10 @@ describe("adaptCaseLogDto", () => {
       payload: { reasonCode: "deposit_pending" },
     })!;
     expect(brk.text).toBe("cases.log.timeline.billingRiskAck");
-    expect(brk.textParams).toEqual({ suffix: "deposit_pending" });
+    expect(brk.textParams).toEqual({
+      colonSuffix: "：deposit_pending",
+      suffix: "deposit_pending",
+    });
 
     const pa = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -345,7 +337,10 @@ describe("adaptCaseLogDto", () => {
       payload: { stage: "coe_sent" },
     })!;
     expect(pa.text).toBe("cases.log.timeline.postApprovalStageChange");
-    expect(pa.textParams).toEqual({ suffix: "coe_sent" });
+    expect(pa.textParams).toEqual({
+      colonSuffix: "：coe_sent",
+      suffix: "coe_sent",
+    });
 
     const cg = adaptCaseLogDto({
       ...baseTimelineLog,
@@ -353,7 +348,10 @@ describe("adaptCaseLogDto", () => {
       payload: { reason: "Client relocated" },
     })!;
     expect(cg.text).toBe("cases.log.timeline.crossGroupCreated");
-    expect(cg.textParams).toEqual({ suffix: "Client relocated" });
+    expect(cg.textParams).toEqual({
+      colonSuffix: "：Client relocated",
+      suffix: "Client relocated",
+    });
   });
 
   it("adapts case.group_transferred with i18n key and params", () => {

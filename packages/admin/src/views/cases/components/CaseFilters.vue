@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import SegmentedControl from "../../../shared/ui/SegmentedControl.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
@@ -58,6 +58,8 @@ const scopeOptions = computed(() => [
   { label: t("cases.list.scope.all"), value: "all" as const },
 ]);
 
+const filtersExpanded = ref(false);
+
 const riskLabels = computed<Record<string, string>>(() => ({
   normal: t("cases.list.riskLabels.normal"),
   attention: t("cases.list.riskLabels.attention"),
@@ -106,7 +108,33 @@ const validationLabels = computed<Record<string, string>>(() => ({
       </Chip>
     </div>
 
-    <div class="case-filters__selects">
+    <Button
+      class="case-filters__toggle"
+      variant="outlined"
+      size="sm"
+      :aria-expanded="filtersExpanded"
+      @click="filtersExpanded = !filtersExpanded"
+    >
+      {{ t("cases.list.filters.toggle") }}
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </Button>
+
+    <div
+      class="case-filters__selects"
+      :class="{ 'case-filters__selects--open': filtersExpanded }"
+    >
       <select
         id="case-filter-stage"
         name="caseFilterStage"
@@ -271,6 +299,25 @@ const validationLabels = computed<Record<string, string>>(() => ({
 
 .case-filters__customer-clear:hover {
   opacity: 1;
+}
+
+.case-filters__toggle {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .case-filters__toggle {
+    display: inline-flex;
+    align-self: flex-start;
+  }
+
+  .case-filters__selects {
+    display: none;
+  }
+
+  .case-filters__selects--open {
+    display: flex;
+  }
 }
 
 .case-filters__selects {

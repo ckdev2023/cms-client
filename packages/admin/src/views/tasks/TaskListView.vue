@@ -474,7 +474,7 @@ onMounted(() => {
   box-shadow: inset 3px 0 0 0 var(--color-danger-text);
 }
 
-@media (max-width: 720px) {
+@media (max-width: 767px) {
   .state-block--error {
     align-items: flex-start;
     flex-direction: column;
@@ -483,6 +483,11 @@ onMounted(() => {
   .data-table {
     display: block;
     overflow-x: auto;
+  }
+
+  .tasks-view :deep(.ui-page-header__actions) {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>

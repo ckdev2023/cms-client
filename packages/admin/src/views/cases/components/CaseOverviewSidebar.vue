@@ -74,10 +74,21 @@ function teamGradient(member: TeamMember): string {
           />
           <div>
             <div class="overview-sidebar__risk-title">
-              {{ t(detail.risk.arrearsStatus) }}
+              {{
+                detail.risk.arrearsStatusLoc
+                  ? t(detail.risk.arrearsStatusLoc.key)
+                  : t(detail.risk.arrearsStatus)
+              }}
             </div>
             <div class="overview-sidebar__risk-detail">
-              {{ detail.risk.arrearsDetail }}
+              {{
+                detail.risk.arrearsDetailLoc
+                  ? t(
+                      detail.risk.arrearsDetailLoc.key,
+                      detail.risk.arrearsDetailLoc.params ?? {},
+                    )
+                  : detail.risk.arrearsDetail
+              }}
             </div>
           </div>
         </div>
@@ -92,9 +103,19 @@ function teamGradient(member: TeamMember): string {
           />
           <div>
             <div class="overview-sidebar__risk-title">
-              {{ detail.risk.deadlineAlert }}
+              {{
+                detail.risk.deadlineAlertLoc
+                  ? t(
+                      detail.risk.deadlineAlertLoc.key,
+                      detail.risk.deadlineAlertLoc.params ?? {},
+                    )
+                  : detail.risk.deadlineAlert
+              }}
             </div>
-            <div class="overview-sidebar__risk-detail">
+            <div
+              v-if="detail.risk.deadlineAlertDetail"
+              class="overview-sidebar__risk-detail"
+            >
               {{ detail.risk.deadlineAlertDetail }}
             </div>
           </div>
@@ -256,15 +277,17 @@ function teamGradient(member: TeamMember): string {
 }
 
 .overview-sidebar__risk-title {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: 1.35;
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .overview-sidebar__risk-detail {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
   color: var(--color-text-3);
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 /* ── Team ──────────────────────────────────────────────── */

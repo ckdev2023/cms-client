@@ -312,4 +312,24 @@ defineEmits<{
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }
+
+@media (max-width: 767px) {
+  .lead-filters__select {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 120px;
+  }
+  .lead-filters__date-group {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+  .lead-filters__date-label {
+    flex-basis: 100%;
+  }
+  .lead-filters__date-input {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 120px;
+  }
+}
 </style>

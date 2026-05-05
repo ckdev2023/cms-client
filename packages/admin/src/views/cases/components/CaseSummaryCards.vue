@@ -39,6 +39,14 @@ const { t } = useI18n();
   .case-summary-cards {
     grid-template-columns: repeat(2, 1fr);
   }
+
+  .case-summary-cards__item {
+    padding: 16px 20px;
+  }
+
+  .case-summary-cards__value {
+    font-size: var(--font-size-2xl);
+  }
 }
 
 .case-summary-cards__item {

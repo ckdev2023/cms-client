@@ -29,6 +29,7 @@ function buildEntry(overrides: Partial<LogEntry> = {}): LogEntry {
     textParams: {
       suffix: "biz_mgmt_cert_4m",
       suffixKey: "cases.constants.caseTypes.biz_mgmt_cert_4m",
+      colonSuffix: "：biz_mgmt_cert_4m",
     },
     category: "cases.log.category.operation",
     categoryChip: "chip-muted",
@@ -127,7 +128,7 @@ describe("CaseLogTab BUG-219: unhandled actions must not display raw action stri
               act.slice(1)
             );
           })}`,
-        textParams: { suffix: "test" },
+        textParams: { suffix: "test", colonSuffix: "：test" },
       });
       const w = mountTab([entry], "zh-CN");
       expect(w.html()).toContain(zhContains);
@@ -146,7 +147,7 @@ describe("CaseLogTab BUG-219: unhandled actions must not display raw action stri
               act.slice(1)
             );
           })}`,
-        textParams: { suffix: "test" },
+        textParams: { suffix: "test", colonSuffix: "：test" },
       });
       const w = mountTab([entry], "ja-JP");
       expect(w.html()).toContain(jaContains);
@@ -165,7 +166,7 @@ describe("CaseLogTab BUG-219: unhandled actions must not display raw action stri
               act.slice(1)
             );
           })}`,
-        textParams: { suffix: "test" },
+        textParams: { suffix: "test", colonSuffix: "：test" },
       });
       const w = mountTab([entry], "en-US");
       expect(w.html()).toContain(enContains);
@@ -214,6 +215,7 @@ describe("CaseLogTab BUG-220: case.created must translate caseTypeCode enum", ()
       textParams: {
         suffix: "unknown_type_xyz",
         suffixKey: "cases.constants.caseTypes.unknown_type_xyz",
+        colonSuffix: "：unknown_type_xyz",
       },
     });
     const w = mountTab([entry], "zh-CN");

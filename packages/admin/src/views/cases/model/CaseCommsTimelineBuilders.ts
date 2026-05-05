@@ -75,6 +75,7 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       key: "cases.log.timeline.caseCreated",
       params: {
         suffix,
+        colonSuffix: formatColonSuffix(suffix),
         suffixKey: suffix ? `cases.constants.caseTypes.${suffix}` : "",
       },
     };
@@ -83,18 +84,27 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "case.deleted": () => ({ key: "cases.log.timeline.caseDeleted" }),
   "case.status_changed": buildStageChangeResult,
   "case.stage_changed": buildStageChangeResult,
-  "case.billing_risk_acknowledged": (p) => ({
-    key: "cases.log.timeline.billingRiskAck",
-    params: { suffix: pickFirst(p, ["reasonCode", "reason_code"]) },
-  }),
-  "case.post_approval_stage_changed": (p) => ({
-    key: "cases.log.timeline.postApprovalStageChange",
-    params: { suffix: pickFirst(p, ["stage", "toStage"]) },
-  }),
-  "case.cross_group_created": (p) => ({
-    key: "cases.log.timeline.crossGroupCreated",
-    params: { suffix: pickFirst(p, ["reason"]) },
-  }),
+  "case.billing_risk_acknowledged": (p) => {
+    const suffix = pickFirst(p, ["reasonCode", "reason_code"]);
+    return {
+      key: "cases.log.timeline.billingRiskAck",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "case.post_approval_stage_changed": (p) => {
+    const suffix = pickFirst(p, ["stage", "toStage"]);
+    return {
+      key: "cases.log.timeline.postApprovalStageChange",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "case.cross_group_created": (p) => {
+    const suffix = pickFirst(p, ["reason"]);
+    return {
+      key: "cases.log.timeline.crossGroupCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "case.group_transferred": (p) => ({
     key: "cases.log.timeline.groupTransferred",
     params: {
@@ -120,6 +130,7 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       key: "cases.log.timeline.commLogCreated",
       params: {
         suffix: rawChannel,
+        colonSuffix: formatColonSuffix(rawChannel),
         suffixKey: rawChannel
           ? (COMM_LOG_CHANNEL_I18N[rawChannel] ??
             "cases.detail.messages.types.other")
@@ -130,43 +141,61 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "communication_log.updated": () => ({
     key: "cases.log.timeline.commLogUpdated",
   }),
-  "case_party.created": (p) => ({
-    key: "cases.log.timeline.casePartyCreated",
-    params: { suffix: pickFirst(p, ["partyName", "name"]) },
-  }),
+  "case_party.created": (p) => {
+    const suffix = pickFirst(p, ["partyName", "name"]);
+    return {
+      key: "cases.log.timeline.casePartyCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "case_party.updated": () => ({ key: "cases.log.timeline.casePartyUpdated" }),
   "case_party.deleted": () => ({ key: "cases.log.timeline.casePartyDeleted" }),
-  "document_item.created": (p) => ({
-    key: "cases.log.timeline.documentItemCreated",
-    params: { suffix: pickFirst(p, ["itemName", "title", "name"]) },
-  }),
+  "document_item.created": (p) => {
+    const suffix = pickFirst(p, ["itemName", "title", "name"]);
+    return {
+      key: "cases.log.timeline.documentItemCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "document_item.updated": () => ({
     key: "cases.log.timeline.documentItemUpdated",
   }),
-  "document_file.created": (p) => ({
-    key: "cases.log.timeline.documentFileCreated",
-    params: { suffix: pickFirst(p, ["fileName", "name"]) },
-  }),
+  "document_file.created": (p) => {
+    const suffix = pickFirst(p, ["fileName", "name"]);
+    return {
+      key: "cases.log.timeline.documentFileCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "document_file.updated": () => ({
     key: "cases.log.timeline.documentFileUpdated",
   }),
-  "task.created": (p) => ({
-    key: "cases.log.timeline.taskCreated",
-    params: { suffix: pickFirst(p, ["title", "name"]) },
-  }),
+  "task.created": (p) => {
+    const suffix = pickFirst(p, ["title", "name"]);
+    return {
+      key: "cases.log.timeline.taskCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "task.updated": () => ({ key: "cases.log.timeline.taskUpdated" }),
   "task.completed": () => ({ key: "cases.log.timeline.taskCompleted" }),
-  "billing_record.created": (p) => ({
-    key: "cases.log.timeline.billingRecordCreated",
-    params: { suffix: pickFirst(p, ["amount", "amountLabel"]) },
-  }),
+  "billing_record.created": (p) => {
+    const suffix = pickFirst(p, ["amount", "amountLabel"]);
+    return {
+      key: "cases.log.timeline.billingRecordCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "billing_record.updated": () => ({
     key: "cases.log.timeline.billingRecordUpdated",
   }),
-  "payment_record.created": (p) => ({
-    key: "cases.log.timeline.paymentRecordCreated",
-    params: { suffix: pickFirst(p, ["amount", "amountLabel"]) },
-  }),
+  "payment_record.created": (p) => {
+    const suffix = pickFirst(p, ["amount", "amountLabel"]);
+    return {
+      key: "cases.log.timeline.paymentRecordCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "payment_record.updated": () => ({
     key: "cases.log.timeline.paymentRecordUpdated",
   }),
@@ -176,10 +205,13 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "review_record.approved": () => ({
     key: "cases.log.timeline.reviewRecordApproved",
   }),
-  "review_record.rejected": (p) => ({
-    key: "cases.log.timeline.reviewRecordRejected",
-    params: { suffix: pickFirst(p, ["reason"]) },
-  }),
+  "review_record.rejected": (p) => {
+    const suffix = pickFirst(p, ["reason"]);
+    return {
+      key: "cases.log.timeline.reviewRecordRejected",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "validation_run.created": () => ({
     key: "cases.log.timeline.validationRunCreated",
   }),
@@ -231,10 +263,13 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       params: { suffix, colonSuffix: formatColonSuffix(suffix) },
     };
   },
-  "reminder.created": (p) => ({
-    key: "cases.log.timeline.reminderCreated",
-    params: { suffix: pickFirst(p, ["label", "kind", "title"]) },
-  }),
+  "reminder.created": (p) => {
+    const suffix = pickFirst(p, ["label", "kind", "title"]);
+    return {
+      key: "cases.log.timeline.reminderCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "case.transitioned": (p) => {
     const base = buildStageChangeResult(p);
     const phase = pickFirst(p, ["businessPhase", "business_phase"]);
@@ -243,10 +278,13 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       params: { ...base.params, phase },
     };
   },
-  "residence_period.created": (p) => ({
-    key: "cases.log.timeline.residencePeriodCreated",
-    params: { suffix: pickFirst(p, ["kind", "type"]) },
-  }),
+  "residence_period.created": (p) => {
+    const suffix = pickFirst(p, ["kind", "type"]);
+    return {
+      key: "cases.log.timeline.residencePeriodCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
 };
 
 /**

@@ -86,7 +86,10 @@ describe("log tab timeline display (p0-fe-006c-03)", () => {
       }),
     )!;
     expect(e.text).toBe("cases.log.timeline.billingRiskAck");
-    expect(e.textParams).toEqual({ suffix: "deposit_pending" });
+    expect(e.textParams).toEqual({
+      suffix: "deposit_pending",
+      colonSuffix: "：deposit_pending",
+    });
   });
 
   it("group transferred returns i18n key with from/to/reason params", () => {

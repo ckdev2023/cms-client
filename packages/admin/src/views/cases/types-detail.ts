@@ -100,6 +100,12 @@ export interface RiskBlock {
   blockingDetailLoc?: LocalizableText;
   /** i18n — view 层用 `t(loc.key)` 渲染最近校验状态。 */
   lastValidationLoc?: LocalizableText;
+  /** i18n — view 层用 `t(loc.key, loc.params)` 渲染期限提醒。 */
+  deadlineAlertLoc?: LocalizableText;
+  /** i18n — view 层用 `t(loc.key)` 渲染欠款状态文案。 */
+  arrearsStatusLoc?: LocalizableText;
+  /** i18n — view 层用 `t(loc.key, loc.params)` 渲染欠款金额详情。 */
+  arrearsDetailLoc?: LocalizableText;
   /**
    *
    */

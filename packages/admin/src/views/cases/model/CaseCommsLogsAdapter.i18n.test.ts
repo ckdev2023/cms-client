@@ -29,7 +29,7 @@ describe("CaseCommsLogsAdapter i18n key resolution", () => {
   it.each([
     ["zh-CN", "案件创建：bmv", "操作日志", "案件"],
     ["ja-JP", "案件作成：bmv", "操作ログ", "案件"],
-    ["en-US", "Case created: bmv", "Operation", "Case"],
+    ["en-US", "Case created：bmv", "Operation", "Case"],
   ] as const)(
     "case.created resolves correctly in %s",
     (locale, expectedText, expectedCategory, expectedObjType) => {
@@ -68,7 +68,7 @@ describe("CaseCommsLogsAdapter i18n key resolution", () => {
   it.each([
     ["zh-CN", "未收款风险确认：deposit_pending"],
     ["ja-JP", "未収金リスク確認：deposit_pending"],
-    ["en-US", "Unpaid risk acknowledged: deposit_pending"],
+    ["en-US", "Unpaid risk acknowledged：deposit_pending"],
   ] as const)(
     "case.billing_risk_acknowledged resolves in %s",
     (locale, expectedText) => {

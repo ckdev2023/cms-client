@@ -30,6 +30,7 @@ const jaJP = {
       asideLabel: "サイドナビゲーション",
       mainLabel: "メインナビゲーション",
       closeNavigation: "ナビゲーションを閉じる",
+      closeBackdrop: "ナビゲーション遮蔽を閉じる",
       brandChip: "事務所管理",
       groups: {
         workspace: "ワークスペース",

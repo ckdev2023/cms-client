@@ -282,5 +282,9 @@ function navigateTo(route?: RouteLocationRaw): void {
   .summary-grid {
     grid-template-columns: 1fr;
   }
+
+  .summary-card-orb {
+    right: 8px;
+  }
 }
 </style>

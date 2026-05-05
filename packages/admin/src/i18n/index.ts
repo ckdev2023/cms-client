@@ -35,6 +35,14 @@ export const i18n = createI18n({
   locale: initialLocale,
   fallbackLocale: DEFAULT_LOCALE,
   messages,
+  missing: import.meta.env.DEV
+    ? (_locale, key) => {
+        if (key === "") {
+          // eslint-disable-next-line no-console
+          console.warn("[i18n] empty key", new Error().stack);
+        }
+      }
+    : undefined,
 });
 
 syncDocumentLanguage(

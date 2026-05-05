@@ -227,6 +227,7 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                 :href="doc.fileUrl"
                 download
                 data-testid="download-link"
+                :aria-label="t('cases.detail.forms.downloadAction')"
               >
                 <svg
                   width="14"
@@ -243,7 +244,9 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
-                {{ t("cases.detail.forms.downloadAction") }}
+                <span class="forms-tab__btn-label">{{
+                  t("cases.detail.forms.downloadAction")
+                }}</span>
               </a>
               <Button
                 v-if="doc.backendStatus === 'draft' && !readonly"
@@ -263,6 +266,11 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                 size="sm"
                 pill
                 data-testid="export-btn"
+                :aria-label="
+                  doc.backendStatus === 'exported'
+                    ? t('cases.detail.forms.exportAgainAction')
+                    : t('cases.detail.forms.exportAction')
+                "
                 @click="emit('export', doc.id)"
               >
                 <svg
@@ -280,11 +288,11 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
-                {{
+                <span class="forms-tab__btn-label">{{
                   doc.backendStatus === "exported"
                     ? t("cases.detail.forms.exportAgainAction")
                     : t("cases.detail.forms.exportAction")
-                }}
+                }}</span>
               </Button>
               <button
                 class="forms-tab__link-btn"
@@ -327,8 +335,6 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   gap: 20px;
 }
 
-/* Card padding="none" 让分区/行自管理内边距；这里把头部内边距对齐
-   分区水平内边距 20px，避免标题与按钮贴卡片边、垂直方向呼吸感不足。 */
 .forms-tab :deep(.ui-card__header) {
   padding: 14px 20px;
 }
@@ -340,8 +346,6 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
-
-/* ── Sections ─────────────────────────────────────────── */
 
 .forms-tab__section {
   padding: 0 20px 12px;
@@ -443,21 +447,37 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
 }
 
 /* ── Icon tones ───────────────────────────────────────── */
-
 .forms-tab__icon--success {
   color: var(--color-success, #22c55e);
 }
-
 .forms-tab__icon--warning {
   color: #f59e0b;
 }
-
 .forms-tab__icon--primary {
   color: var(--color-primary-6);
 }
-
 .forms-tab__icon--muted {
   color: var(--color-text-3);
+}
+
+@media (max-width: 767px) {
+  .forms-tab__row {
+    flex-wrap: wrap;
+  }
+  .forms-tab__row-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .forms-tab__btn-label {
+    display: none;
+  }
+  .forms-tab__row-actions .forms-tab__link-btn {
+    font-size: 0;
+  }
+  .forms-tab__row-actions .forms-tab__link-btn::before {
+    content: "⏱";
+    font-size: var(--font-size-sm);
+  }
 }
 
 /* ── Empty state ──────────────────────────────────────── */

@@ -64,7 +64,14 @@ export function resolveTimelineParams(
   resolveKeyParam(params, "fromPhaseKey", "from", i18n);
   resolveKeyParam(params, "toPhaseKey", "to", i18n);
   resolveKeyParam(params, "suffixKey", "suffix", i18n);
+  if (typeof params.suffix === "string" && "colonSuffix" in params) {
+    params.colonSuffix = formatColonSuffix(params.suffix);
+  }
   return params;
+}
+
+function formatColonSuffix(s: string): string {
+  return s ? `\uff1a${s}` : "";
 }
 
 function resolveKeyParam(

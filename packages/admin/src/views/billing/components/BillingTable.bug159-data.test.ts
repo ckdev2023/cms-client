@@ -55,7 +55,7 @@ function mountTable(rows: CaseBillingRow[]) {
 }
 
 function readGroupCellText(wrapper: ReturnType<typeof mountTable>): string {
-  const groupCell = wrapper.find("tbody td.billing-table__col--group .ui-chip");
+  const groupCell = wrapper.find("tbody td.bt__col--group .ui-chip");
   expect(groupCell.exists()).toBe(true);
   return groupCell.text();
 }

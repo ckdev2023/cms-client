@@ -193,6 +193,7 @@ describe("log tab empty state (p0-fe-006c-03)", () => {
     expect(result![0].textParams).toEqual({
       suffix: "business_manager",
       suffixKey: "cases.constants.caseTypes.business_manager",
+      colonSuffix: "：business_manager",
     });
     expect(result![1].text).toBe("cases.log.timeline.caseUpdated");
   });

@@ -10,6 +10,7 @@ import {
   normalizeLocale,
   persistLocale,
   readStoredLocale,
+  syncDocumentLanguage,
 } from "./locale";
 
 function createStorage(seed?: Record<string, string>) {
@@ -80,6 +81,42 @@ describe("locale helpers", () => {
     const storage = createStorage();
     persistLocale("zh-CN", storage);
     expect(storage.getItem(LOCALE_STORAGE_KEY)).toBe("zh-CN");
+  });
+});
+
+describe("syncDocumentLanguage", () => {
+  function createDoc() {
+    const attrs = new Map<string, string>();
+    return {
+      documentElement: {
+        setAttribute(name: string, value: string) {
+          attrs.set(name, value);
+        },
+      },
+      attrs,
+    };
+  }
+
+  it("sets lang to BCP-47 short code", () => {
+    const doc = createDoc();
+    syncDocumentLanguage("ja-JP", doc);
+    expect(doc.attrs.get("lang")).toBe("ja");
+
+    syncDocumentLanguage("zh-CN", doc);
+    expect(doc.attrs.get("lang")).toBe("zh");
+
+    syncDocumentLanguage("en-US", doc);
+    expect(doc.attrs.get("lang")).toBe("en");
+  });
+
+  it("preserves full locale in data-locale attribute", () => {
+    const doc = createDoc();
+    syncDocumentLanguage("ja-JP", doc);
+    expect(doc.attrs.get("data-locale")).toBe("ja-JP");
+  });
+
+  it("does not throw when doc is undefined", () => {
+    expect(() => syncDocumentLanguage("zh-CN", undefined)).not.toThrow();
   });
 });
 

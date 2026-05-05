@@ -29,6 +29,7 @@ const zhCN = {
       asideLabel: "侧边栏导航",
       mainLabel: "主导航",
       closeNavigation: "关闭导航",
+      closeBackdrop: "关闭导航遮罩",
       brandChip: "事务所管理",
       groups: {
         workspace: "工作台",

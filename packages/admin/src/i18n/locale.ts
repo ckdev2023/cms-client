@@ -115,8 +115,16 @@ export function persistLocale(
   }
 }
 
+const LOCALE_TO_LANG: Record<AppLocale, string> = {
+  "ja-JP": "ja",
+  "zh-CN": "zh",
+  "en-US": "en",
+};
+
 /**
  * 同步当前语言到文档根节点，便于屏幕阅读器和浏览器识别。
+ * `lang` 属性使用 BCP-47 短码以获得更好的浏览器兼容性（如 date input），
+ * `data-locale` 保留完整应用语言码供内部消费。
  *
  * @param locale 当前应用语言
  * @param doc 可注入的文档对象，便于测试
@@ -125,5 +133,8 @@ export function syncDocumentLanguage(
   locale: AppLocale,
   doc?: Pick<Document, "documentElement">,
 ): void {
-  doc?.documentElement?.setAttribute("lang", locale);
+  const el = doc?.documentElement;
+  if (!el) return;
+  el.setAttribute("lang", LOCALE_TO_LANG[locale] ?? locale);
+  el.setAttribute("data-locale", locale);
 }

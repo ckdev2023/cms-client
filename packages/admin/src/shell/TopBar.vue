@@ -153,7 +153,11 @@ function toggleAccountPanel(): void {
           >
             {{ t("shell.topbar.createCase") }}
           </button>
-          <button class="topbar-action" type="button" @click="handleLogout">
+          <button
+            class="topbar-action topbar-action--logout"
+            type="button"
+            @click="handleLogout"
+          >
             {{ t("shell.topbar.logout") }}
           </button>
         </template>
@@ -182,6 +186,25 @@ function toggleAccountPanel(): void {
         >
           <p class="topbar-account-name">{{ props.userName }}</p>
           <p class="topbar-account-email">{{ props.userEmail }}</p>
+          <div class="topbar-account-actions">
+            <button
+              class="topbar-account-action"
+              type="button"
+              @click="
+                router.push('/leads?action=new');
+                isAccountPanelOpen = false;
+              "
+            >
+              {{ t("shell.topbar.createLead") }}
+            </button>
+            <button
+              class="topbar-account-action"
+              type="button"
+              @click="handleLogout"
+            >
+              {{ t("shell.topbar.logout") }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -317,6 +317,52 @@
   font-size: var(--font-size-xs);
 }
 
+.topbar-account-actions {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border-1);
+}
+
+.topbar-account-action {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--color-text-1);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: start;
+  cursor: pointer;
+}
+
+.topbar-account-action:hover {
+  background: var(--color-bg-3);
+}
+
+@media (max-width: 767px) {
+  .topbar-action--pill,
+  .topbar-action--logout,
+  .topbar-locale-select {
+    display: none;
+  }
+
+  .topbar-account-actions {
+    display: flex;
+  }
+
+  .mobile-nav-panel {
+    width: 100vw;
+    border-inline-end: 0;
+  }
+}
+
 .sidenav {
   background: var(--color-bg-1);
 }
@@ -475,7 +521,7 @@
   height: 100%;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .topbar-action--pill {
     display: inline-flex;
   }

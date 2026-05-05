@@ -46,7 +46,7 @@ import type {
   ListCasesQuery,
 } from "./cases.controller-bodies";
 
-const UuidParam = () => Param("id", new ParseUUIDPipe({ version: "4" }));
+const UuidParam = () => Param("id", new ParseUUIDPipe());
 
 /**
  * UpdateCaseBody → CaseUpdateInput 変換。

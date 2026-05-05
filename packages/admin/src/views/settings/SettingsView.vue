@@ -200,7 +200,7 @@ const page = useSettingsPage({
 
 .settings-view__body {
   display: grid;
-  grid-template-columns: 220px 1fr;
+  grid-template-columns: 220px minmax(0, 1fr);
   gap: 24px;
   min-height: 480px;
 }
@@ -266,7 +266,7 @@ const page = useSettingsPage({
 }
 
 .settings-view__group-layout--with-detail {
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: minmax(0, 1fr) 340px;
 }
 
 .settings-view__group-detail {
@@ -281,5 +281,42 @@ const page = useSettingsPage({
   margin: 0;
   border: none;
   border-top: 1px solid var(--color-border-1);
+}
+
+@media (max-width: 767px) {
+  .settings-view__body {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    min-height: auto;
+  }
+
+  .settings-view__subnav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 4px;
+    padding: 8px;
+  }
+
+  .settings-view__subnav-btn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    width: auto;
+    padding: 8px 12px;
+  }
+
+  .settings-view__content {
+    padding: 16px;
+  }
+
+  .settings-view__group-layout--with-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .settings-view__group-detail {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 16px;
+    border-top: 1px solid var(--color-border-1);
+  }
 }
 </style>

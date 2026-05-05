@@ -127,6 +127,7 @@ const { t } = useI18n();
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
+  min-width: 0;
 }
 
 .ui-page-header__left {
@@ -163,5 +164,21 @@ const { t } = useI18n();
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+}
+
+@media (max-width: 767px) {
+  .ui-page-header__row {
+    flex-wrap: wrap;
+  }
+
+  .ui-page-header__title {
+    font-size: var(--font-size-2xl);
+  }
+
+  .ui-page-header__actions {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 }
 </style>

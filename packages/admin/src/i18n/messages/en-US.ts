@@ -30,6 +30,7 @@ const enUS = {
       asideLabel: "Sidebar navigation",
       mainLabel: "Main navigation",
       closeNavigation: "Close navigation",
+      closeBackdrop: "Close navigation backdrop",
       brandChip: "Firm Ops",
       groups: {
         workspace: "Workspace",

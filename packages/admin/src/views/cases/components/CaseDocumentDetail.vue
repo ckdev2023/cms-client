@@ -1,8 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { DocumentItem } from "../types-detail";
 
-/** 文書展开详情：版本历史、审核记录、催办时间线。 */
+/** 文书展开详情：版本历史、审核记录、催办时间线。 */
+const { t } = useI18n();
 
 defineProps<{
   item: DocumentItem;
@@ -49,7 +51,7 @@ function copyPath(path: string) {
               <button
                 type="button"
                 class="doc-detail__copy-btn"
-                title="复制路径"
+                :title="t('cases.detail.documents.copyPath')"
                 @click.stop="copyPath(v.relativePath)"
               >
                 <svg

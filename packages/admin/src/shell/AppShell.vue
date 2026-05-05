@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
       <button
         class="mobile-nav-backdrop"
         type="button"
-        aria-label="关闭导航遮罩"
+        :aria-label="t('shell.nav.closeBackdrop')"
         @click="closeMobileNav"
       />
       <div class="mobile-nav-panel">

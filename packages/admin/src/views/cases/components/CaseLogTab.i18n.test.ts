@@ -92,7 +92,7 @@ describe("CaseLogTab i18n: locale switching renders correct text", () => {
     const entry = buildEntry({
       type: "operation",
       text: "cases.log.timeline.caseCreated",
-      textParams: { suffix: "bmv" },
+      textParams: { suffix: "bmv", colonSuffix: "：bmv" },
       category: "cases.log.category.operation",
       categoryChip: "chip-muted",
       objectType: "cases.log.objectType.communicationLog",
@@ -107,7 +107,7 @@ describe("CaseLogTab i18n: locale switching renders correct text", () => {
 
     expect(zh).toContain("案件创建：bmv");
     expect(ja).toContain("案件作成：bmv");
-    expect(en).toContain("Case created: bmv");
+    expect(en).toContain("Case created：bmv");
   });
 
   it("category filter buttons render translated labels", () => {

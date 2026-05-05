@@ -18,18 +18,32 @@ import {
 export type { WriteActionFeedback } from "./useCaseDetailWriteActions";
 export type { RefetchTag } from "./useCaseDetailRefetchTags";
 export { isTerminalPhase } from "./useCasePhaseTransitionMenu";
+export type { NotFoundReason } from "./useCaseDetailErrorStatus";
+import {
+  extractErrorStatus,
+  deriveNotFoundReason,
+  type NotFoundReason,
+} from "./useCaseDetailErrorStatus";
 
 /**
- * Tab 标签上的计数器信息。
+ *
  */
 export interface TabCounter {
-  /** fallback 显示文案（如 "8/16" 或 "卡点 2"）。 */
+  /**
+   *
+   */
   label: string;
-  /** 语义色调。 */
+  /**
+   *
+   */
   tone: "default" | "warning" | "danger";
-  /** i18n key — 供 `t(counter.i18nKey, counter.i18nParams)` 翻译。 */
+  /**
+   *
+   */
   i18nKey?: string;
-  /** i18n 插值参数。 */
+  /**
+   *
+   */
   i18nParams?: Record<string, unknown>;
 }
 
@@ -113,11 +127,19 @@ function createDetailState(initialTab: string | undefined) {
   const detail = ref<CaseDetail | null>(null);
   const loading = ref(false);
   const error = ref<string | null>(null);
+  const errorStatus = ref<number | null>(null);
   const customerId = ref("");
   const notFound = computed(() => !loading.value && detail.value === null);
   const isReadonly = computed(() => detail.value?.readonly ?? false);
   const tabCounters = computed<Partial<Record<CaseDetailTab, TabCounter>>>(
     () => (detail.value ? deriveTabCounters(detail.value) : {}),
+  );
+  const notFoundReason = computed<NotFoundReason>(() =>
+    deriveNotFoundReason(
+      loading.value,
+      detail.value !== null,
+      errorStatus.value,
+    ),
   );
 
   return {
@@ -125,8 +147,10 @@ function createDetailState(initialTab: string | undefined) {
     detail,
     loading,
     error,
+    errorStatus,
     customerId,
     notFound,
+    notFoundReason,
     isReadonly,
     tabs: CASE_DETAIL_TABS,
     tabCounters,
@@ -215,6 +239,7 @@ interface DetailLoaderInput {
   customerId: Ref<string>;
   loading: Ref<boolean>;
   error: Ref<string | null>;
+  errorStatus: Ref<number | null>;
   locale?: Ref<string>;
 }
 
@@ -250,6 +275,7 @@ function createDetailLoader(input: DetailLoaderInput) {
     const gen = ++fetchGeneration;
     input.loading.value = true;
     input.error.value = null;
+    input.errorStatus.value = null;
     try {
       const result = await input.repo.getDetailAggregate(input.caseId.value);
       if (gen !== fetchGeneration) return;
@@ -258,6 +284,7 @@ function createDetailLoader(input: DetailLoaderInput) {
     } catch (e) {
       if (gen !== fetchGeneration) return;
       input.error.value = e instanceof Error ? e.message : String(e);
+      input.errorStatus.value = extractErrorStatus(e);
       input.detail.value = null;
       input.customerId.value = "";
     } finally {
@@ -276,28 +303,14 @@ function createDetailLoader(input: DetailLoaderInput) {
   return { fetchDetail, fetchPartial };
 }
 
-function syncRouteTab(
-  routeTab: Ref<string | undefined> | undefined,
-  activeTab: Ref<CaseDetailTab>,
-): void {
-  if (!routeTab) return;
-  watch(routeTab, (raw) => {
-    const resolved = resolveDetailTab(raw);
-    if (activeTab.value !== resolved) {
-      activeTab.value = resolved;
-    }
-  });
-}
-
 function createRiskModalController() {
   const showRiskModal = ref(false);
-  function openRiskModal(): void {
+  const openRiskModal = (): void => {
     showRiskModal.value = true;
-  }
-  function closeRiskModal(): void {
+  };
+  const closeRiskModal = (): void => {
     showRiskModal.value = false;
-  }
-
+  };
   return { showRiskModal, openRiskModal, closeRiskModal };
 }
 
@@ -306,22 +319,21 @@ interface UseCaseDetailModelDeps {
   routeTab?: Ref<string | undefined>;
   initialTab?: string;
   onTabChange?: (tab: CaseDetailTab) => void;
-  /**
-   * 文書テンプレート取得時のコンテンツ言語フィルタ（ISO 639-1 alpha-2: `ja` / `zh` / `en`）。
-   * UI locale（`zh-CN` / `ja-JP` / `en-US`）を直接渡さないこと。
-   */
   templateLanguage?: Ref<string>;
 }
 
 function createFormTemplatesSlice(
   repo: CaseRepository,
   detail: Ref<CaseDetail | null>,
+  isReadonly: Ref<boolean>,
   templateLanguage?: Ref<string>,
 ) {
-  const caseType = computed(() => detail.value?.caseType ?? "");
+  const effectiveCaseType = computed(() =>
+    isReadonly.value ? "" : (detail.value?.caseType ?? ""),
+  );
   const { templates: formTemplates } = useCaseFormTemplates({
     repo,
-    caseType,
+    caseType: effectiveCaseType,
     language: templateLanguage,
   });
 
@@ -343,7 +355,12 @@ function setupDetailLifecycle(
   watch(caseId, () => {
     void fetchDetail();
   });
-  syncRouteTab(routeTab, activeTab);
+  if (routeTab) {
+    watch(routeTab, (raw) => {
+      const resolved = resolveDetailTab(raw);
+      if (activeTab.value !== resolved) activeTab.value = resolved;
+    });
+  }
 }
 
 function createTabSwitcher(
@@ -372,10 +389,6 @@ function createDetailModelResult(input: {
       input.state.detail.value?.workflowStep != null ||
       input.state.detail.value?.visaPlan != null,
   );
-  const isTerminalPhaseComputed = computed(() =>
-    isTerminalPhase(input.state.detail.value?.businessPhase ?? ""),
-  );
-
   return {
     activeTab: input.state.activeTab,
     tabs: input.state.tabs,
@@ -383,6 +396,7 @@ function createDetailModelResult(input: {
     enrichedDetail: input.enrichedDetail,
     formTemplates: input.formTemplates,
     notFound: input.state.notFound,
+    notFoundReason: input.state.notFoundReason,
     isReadonly: input.state.isReadonly,
     tabCounters: input.state.tabCounters,
     customerId: input.state.customerId,
@@ -414,28 +428,18 @@ function createDetailModelResult(input: {
     completeTask: input.writeActions.completeTask,
 
     phaseMenu: input.phaseMenu,
-    isTerminalPhase: isTerminalPhaseComputed,
+    isTerminalPhase: computed(() =>
+      isTerminalPhase(input.state.detail.value?.businessPhase ?? ""),
+    ),
   };
 }
 
 /**
  * 案件详情页状态编排。
  *
- * 依赖注入真实 CaseRepository（默认 `createCaseRepository()`），
- * 通过 `getDetailAggregate` 异步加载案件详情与 deep-link 字段。
- *
  * @param caseId - 路由传入的案件 ID（响应式）
  * @param deps - 可选依赖注入
- * @param deps.repo - 案件数据仓库实例（默认真实 HTTP 仓储）
- * @param deps.routeTab - 响应式路由 tab 值（由 view 层从 route.query.tab 传入）;
- *   当 URL 因浏览器前进/后退或外部导航变更时，model 自动同步 activeTab，
- *   而不回调 onTabChange（URL 已是真相源）。
- * @param deps.initialTab - 初始激活 tab（测试用；若同时提供 routeTab，以 routeTab 优先）
- * @param deps.onTabChange - tab 切换后回调（由 view 层提供，用于同步 URL query）;
- *   仅在 UI 主动切换 tab 时触发，route 变更驱动的同步不会触发。
- * @param deps.templateLanguage - 文書模板的内容语言（ISO 639-1 alpha-2）;
- *   不可直接传入 vue-i18n 的 locale ref。省略时不做模板语言过滤。
- * @returns 详情页状态：案件数据、tab、readonly、counters、customerId 等
+ * @returns 详情页状态
  */
 export function useCaseDetailModel(
   caseId: Ref<string>,
@@ -450,6 +454,7 @@ export function useCaseDetailModel(
     customerId: state.customerId,
     loading: state.loading,
     error: state.error,
+    errorStatus: state.errorStatus,
     locale: deps.templateLanguage,
   });
   const riskModal = createRiskModalController();
@@ -469,6 +474,7 @@ export function useCaseDetailModel(
   const { formTemplates, enrichedDetail } = createFormTemplatesSlice(
     repo,
     state.detail,
+    state.isReadonly,
     deps.templateLanguage,
   );
 

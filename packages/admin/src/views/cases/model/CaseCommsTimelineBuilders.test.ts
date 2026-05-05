@@ -30,7 +30,10 @@ describe("CaseCommsTimelineBuilders", () => {
         { kind: "initial" },
       );
       expect(result.key).toBe("cases.log.timeline.residencePeriodCreated");
-      expect(result.params).toEqual({ suffix: "initial" });
+      expect(result.params).toEqual({
+        suffix: "initial",
+        colonSuffix: "：initial",
+      });
     });
 
     it("falls back to type field", () => {
@@ -38,7 +41,10 @@ describe("CaseCommsTimelineBuilders", () => {
         "residence_period.created",
         { type: "renewal" },
       );
-      expect(result.params).toEqual({ suffix: "renewal" });
+      expect(result.params).toEqual({
+        suffix: "renewal",
+        colonSuffix: "：renewal",
+      });
     });
 
     it("defaults to empty string when no kind/type", () => {
@@ -46,7 +52,7 @@ describe("CaseCommsTimelineBuilders", () => {
         "residence_period.created",
         {},
       );
-      expect(result.params).toEqual({ suffix: "" });
+      expect(result.params).toEqual({ suffix: "", colonSuffix: "" });
     });
   });
 

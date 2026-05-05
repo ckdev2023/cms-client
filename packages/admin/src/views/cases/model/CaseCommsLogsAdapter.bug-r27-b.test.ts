@@ -95,6 +95,7 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
     expect(result.params).toEqual({
       suffix: "phone",
       suffixKey: "cases.detail.messages.types.phone",
+      colonSuffix: "：phone",
     });
   });
 
@@ -123,6 +124,7 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
     expect(result.params).toEqual({
       suffix: "internal_note",
       suffixKey: "cases.detail.messages.types.internal_note",
+      colonSuffix: "：internal_note",
     });
   });
 
@@ -133,6 +135,7 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
     expect(result.params).toEqual({
       suffix: "client_note",
       suffixKey: "cases.detail.messages.types.client_note",
+      colonSuffix: "：client_note",
     });
   });
 
@@ -143,6 +146,7 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
     expect(result.params).toEqual({
       suffix: "other",
       suffixKey: "cases.detail.messages.types.other",
+      colonSuffix: "：other",
     });
   });
 
@@ -158,6 +162,10 @@ describe("R27-B: communication_log.created timeline suffixKey i18n fallback", ()
       "communication_log.created",
       {},
     );
-    expect(result.params).toEqual({ suffix: "", suffixKey: "" });
+    expect(result.params).toEqual({
+      suffix: "",
+      suffixKey: "",
+      colonSuffix: "",
+    });
   });
 });

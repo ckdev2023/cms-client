@@ -25,6 +25,29 @@
 
 ## 最新产出
 
+- 时间：2026-05-05（ADR-009 + R-H5-2 走查）
+  问题：S1~S7 H5 响应式修复后，是否达到 R-H5-1 走查的 P0 修复目标？需要沉淀什么决策？
+  结论（TL;DR）：ADR-009 已沉淀 5 条决策（mobile-first 基线 / minmax(0, fr) / ResponsiveTable / contract test 守门 / i18n attribute 禁 CJK 硬编码）。R-H5-2 复跑走查：18 条中 14 条 FIXED、4 条 IMPROVED/OPEN（S7 残留）、1 条 OPEN（settings 双列布局）。横向溢出 = 0 的页面从 0/10 升至 7/10，console warning 从 16 条降至 0，CJK 硬编码 aria-label 从 2 处降至 0。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/00-原则与约定/ADR-009-h5-responsive-strategy.md（5 条决策）
+  - docs/gyoseishoshi_saas_md/_output/55-H5响应式走查-第二轮.md（R-H5-2 完整报告）
+  - docs/gyoseishoshi_saas_md/_output/54-H5响应式走查-第一轮.md（R-H5-1 基线）
+  - packages/admin/src/static-checks/h5-overflow.contract.test.ts（grid + table 守门）
+  - packages/admin/src/styles/breakpoints.css（4 档断点 token）
+  - packages/admin/src/shared/ui/ResponsiveTable.vue（桌面 table / 移动 stacked 卡片）
+  - .cursor/plans/h5_responsive_fix_plan_94634db4.plan.md（S1~S8 执行计划）
+  影响面：
+  - admin 全站 H5 适配：7/10 核心页面 0 溢出
+  - admin styles：4 档断点 token 体系
+  - admin shared/ui：ResponsiveTable 共享组件
+  - admin i18n：aria-label CJK 扫描规则 + html lang 跟随 locale
+  - 工程守门：h5-overflow.contract.test.ts（grid 裸 fr + table 裸 table）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/00-原则与约定/ADR-009-h5-responsive-strategy.md
+    位置：全文（新建）
+    Owner：研发
+    状态：已回灌（2026-05-05）
+
 - 时间：2026-05-02（R25 chrome-devtools-mcp 案件详情深度审计 第四轮）
   问题：用户 R25 任务"使用 chrome-devtools-mcp 走查案件详情里面的所有 UI 问题和业务逻辑"——聚焦 admin `/cases/:id` 详情页，覆盖头部、10 个 tab、3 个 modal、状态流转 popover 与三语 i18n 一致性，找 R22/R23/R24 都没看到的纯详情页内部缺陷。
   结论（TL;DR）：R25 共发现 14 条新 bug（P1 6 / P2 4 / P3 4），主要分布于：① **4 个死按钮**（BUG-214 文書 tab "生成文書"、BUG-215 期限 tab "添加期限"、BUG-217 沟通记录 tab "记录留痕"、BUG-218 任务 tab "新增任务" 跳转死循环）；② **3 处 i18n 拼写/漏译**（BUG-212 `common.comingSoon` 实际不存在应为 `shell.comingSoon` 4 处按钮 hover 暴露 raw key、BUG-221 ja-JP 字典 `cases.constants.logCategories.all = "全部"` 漏译应为"すべて"、BUG-214/215 整组件 hardcode 中日文混杂）；③ **2 处工程数据泄漏到业务用户**（BUG-213 基础信息 tab "案件编号" 显示 UUID 不是 `CASE-...`，"案件类型" / "申请类型" 显示原始 enum `biz_mgmt_cert_4m` / `certification` 没走已存在的 `cases.constants.caseTypes.*` / `applicationTypes.*` 字典；BUG-219/220 日志 tab `case_party.created` event_type / `案件创建：biz_mgmt_cert_4m` 直显未 i18n）；④ **1 处终态权限失守**（BUG-216 终态案件 header "编辑信息" / "状态流转" 按钮无 `:disabled="isReadonly"` 守门，点 "状态流转" 弹空 popover、点 "编辑信息" 弹完全可编辑 modal——与页面 readonly banner 矛盾）；⑤ **3 处 UX 文案 / 空状态**（BUG-222 概览侧边栏 "案件团队" / "近期动态" 空数据时无 placeholder 文案、BUG-223 "已归档（已归档）" 重复文案、BUG-224 编辑 modal 仅 3 字段）；⑥ **1 处业务一致性**（BUG-225 phase=WAITING_PAYMENT 的 case 允许 billing_records 为空，"等待尾款"语义被掏空）。同轮还回归确认 R24 BUG-208（admin↔server PHASE_TRANSITIONS）✅ 已 LANDED + R24 BUG-211（ja-JP "校験"→"検証"）✅ 已 LANDED；BUG-191/192/199/205 R23 LANDED 项 R25 仍 PASS。整轮 0 个 5xx / 0 console error。R25 走查教训：4 个死按钮归纳为"UI 入口先行、handler 没接"模式，2 个 i18n 拼写错误归纳为"i18n key 静态检查缺失"，建议加 lint：① 禁 `<button>` 不带 @click/:disabled；② 三语字典 key 集合一致性 + 静态 t() 调用检查；③ `.vue` template 禁汉字硬编码；④ 抽 `useCaseDetailGuard` composable 统一 readonly/terminal 守门。
