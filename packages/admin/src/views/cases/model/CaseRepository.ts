@@ -305,7 +305,6 @@ export interface CaseRepository {
   listDocumentTemplates(params: {
     caseType: string;
     language?: string;
-    translate?: (key: string) => string;
   }): Promise<FormTemplate[]>;
 
   /**

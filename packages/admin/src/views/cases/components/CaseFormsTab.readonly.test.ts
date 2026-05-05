@@ -42,6 +42,9 @@ function makeI18n() {
                 final: "已定稿",
                 exported: "已导出",
               },
+              docType: {
+                application_form: "申请书",
+              },
               placeholderBadge: "占位 URL · P1 落地",
               downloadAction: "下载文件",
               metaApprovedAt: "{action}：{name} · {time}",
@@ -58,8 +61,12 @@ function buildTemplate(overrides: Partial<FormTemplate> = {}): FormTemplate {
   return {
     id: "tpl-1",
     name: "申請理由書テンプレート",
-    meta: "PDF · 理由書",
+    meta: "application_form · ja · v1",
     actionLabel: "選択して生成",
+    docTypeKey: "cases.detail.forms.docType.application_form",
+    docTypeRaw: "application_form",
+    language: "ja",
+    versionNo: 1,
     ...overrides,
   };
 }
@@ -113,20 +120,15 @@ describe("CaseFormsTab S9 readonly — write actions hidden", () => {
     expect(genBtn).toBeUndefined();
   });
 
-  it("readonly=true: template row generate button is not rendered", () => {
+  it("readonly=true: template section is not rendered at all", () => {
     const detail = buildDetail(
       [buildTemplate(), buildTemplate({ id: "tpl-2", name: "雇用理由書" })],
-      [],
+      [buildGeneratedDoc({ backendStatus: "draft" })],
     );
     const w = mountTab(detail, true);
 
-    const templateSection = w.findAll(".forms-tab__row");
-    for (const row of templateSection) {
-      const btn = row
-        .findAll("button")
-        .find((b) => b.text().includes("選択して生成"));
-      expect(btn).toBeUndefined();
-    }
+    const kickers = w.findAll(".forms-tab__kicker").map((el) => el.text());
+    expect(kickers).not.toContain("可用模板");
   });
 
   it("readonly=true: finalize button is not rendered for draft docs", () => {
@@ -241,7 +243,7 @@ describe("CaseFormsTab S9 readonly — read-only content still visible", () => {
     expect(link.attributes("href")).toBe("https://cdn.example.com/doc.pdf");
   });
 
-  it("readonly=true: template names are still listed", () => {
+  it("readonly=true: only templates, no generated → empty state shown", () => {
     const detail = buildDetail(
       [
         buildTemplate({ name: "申請理由書テンプレート" }),
@@ -251,8 +253,85 @@ describe("CaseFormsTab S9 readonly — read-only content still visible", () => {
     );
     const w = mountTab(detail, true);
 
-    const names = w.findAll(".forms-tab__name");
-    expect(names.map((n) => n.text())).toContain("申請理由書テンプレート");
-    expect(names.map((n) => n.text())).toContain("雇用理由書テンプレート");
+    expect(w.find(".forms-tab__empty").exists()).toBe(true);
+    expect(w.findAll(".forms-tab__name").length).toBe(0);
+  });
+});
+
+describe("CaseFormsTab R40-B — lazy docType translation via t()", () => {
+  it("template meta renders translated docType when docTypeKey resolves", () => {
+    const detail = buildDetail(
+      [
+        buildTemplate({
+          docTypeKey: "cases.detail.forms.docType.application_form",
+          docTypeRaw: "application_form",
+          language: "ja",
+          versionNo: 1,
+        }),
+      ],
+      [buildGeneratedDoc()],
+    );
+    const w = mountTab(detail, false);
+
+    const meta = w.find(".forms-tab__meta");
+    expect(meta.text()).toContain("申请书");
+    expect(meta.text()).toContain("ja");
+    expect(meta.text()).toContain("v1");
+  });
+
+  it("template meta falls back to raw key when docTypeKey is unresolved", () => {
+    const detail = buildDetail(
+      [
+        buildTemplate({
+          docTypeKey: "cases.detail.forms.docType.unknown_type",
+          docTypeRaw: "unknown_type",
+          language: "en",
+          versionNo: undefined,
+        }),
+      ],
+      [buildGeneratedDoc()],
+    );
+    const w = mountTab(detail, false);
+
+    const meta = w.find(".forms-tab__meta");
+    expect(meta.text()).toContain("cases.detail.forms.docType.unknown_type");
+    expect(meta.text()).toContain("en");
+    expect(meta.text()).not.toContain("v");
+  });
+
+  it("template meta shows only docTypeRaw when docTypeKey is absent", () => {
+    const detail = buildDetail(
+      [
+        buildTemplate({
+          docTypeKey: undefined,
+          docTypeRaw: "raw_doc_type",
+          language: undefined,
+          versionNo: undefined,
+        }),
+      ],
+      [buildGeneratedDoc()],
+    );
+    const w = mountTab(detail, false);
+
+    const meta = w.find(".forms-tab__meta");
+    expect(meta.text()).toContain("raw_doc_type");
+  });
+
+  it("template meta is empty when all structured fields are absent", () => {
+    const detail = buildDetail(
+      [
+        buildTemplate({
+          docTypeKey: undefined,
+          docTypeRaw: undefined,
+          language: undefined,
+          versionNo: undefined,
+        }),
+      ],
+      [buildGeneratedDoc()],
+    );
+    const w = mountTab(detail, false);
+
+    const meta = w.find(".forms-tab__meta");
+    expect(meta.text().trim()).toBe("");
   });
 });

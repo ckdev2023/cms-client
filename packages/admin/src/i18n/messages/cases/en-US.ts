@@ -117,7 +117,12 @@ const casesEnUS = {
       relatedEmpty: "No related parties",
       relatedAdd: "Add related party",
       documentPreview: "Document checklist preview",
+      documentPreviewHint:
+        "Generated from the selected template — used for pre-check & submission audit",
+      documentPreviewSummary: "{total} items · {required} required",
+      documentPreviewEmpty: "Pick a case template in Step 1 first",
       requiredBadge: "Required",
+      optionalBadge: "Optional",
     },
     step3: {
       title: "Assignment & deadlines",
@@ -1103,6 +1108,7 @@ const casesEnUS = {
       validationRunCreated: "Pre-submission check run",
       validationRunPassed: "Validation passed",
       validationRunFailed: "Validation failed",
+      validationRunExecuted: "Pre-submission check executed",
       submissionPackageCreated: "Submission package created",
       submissionPackageUpdated: "Submission package updated",
       generatedDocumentCreated: "Document generated{colonSuffix}",

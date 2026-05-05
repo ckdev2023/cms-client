@@ -60,6 +60,53 @@ const primaryGroupDisplay = computed(() => {
   if (!group) return "";
   return resolveGroupLabel(group, undefined, locale.value);
 });
+
+type SectionIcon = "applicant" | "supporter" | "office" | "folder";
+
+/**
+ * 资料清单子分组图标语义：按 zh 标题关键字推断，三语共用。
+ *
+ * - 主申请人 → applicant
+ * - 扶养者/保证人/雇主/sponsor → supporter
+ * - 事务所内部/office → office
+ * - 兜底 → folder
+ *
+ * @param zhTitle - 子分组的中文标题（来自模板 i18n label.zh）
+ * @returns 图标 token，决定 `<svg>` 选择与背景色
+ */
+function resolveSectionIcon(zhTitle: string): SectionIcon {
+  if (/主申请人|申请人/.test(zhTitle)) return "applicant";
+  if (/扶养者|保证人|雇主|担保|sponsor/i.test(zhTitle)) return "supporter";
+  if (/事务所|内部|office/i.test(zhTitle)) return "office";
+  return "folder";
+}
+
+/** 资料清单整体统计：用于头部 summary chip。 */
+const requirementSummary = computed(() => {
+  const tpl = props.model.currentTemplate.value;
+  if (!tpl) return { total: 0, required: 0, sections: 0 };
+  let total = 0;
+  let required = 0;
+  for (const sec of tpl.sections) {
+    total += sec.items.length;
+    for (const it of sec.items) if (it.required) required += 1;
+  }
+  return { total, required, sections: tpl.sections.length };
+});
+
+/**
+ * 单个子分组的统计（已选模板下 items 中的必须项数量）。
+ *
+ * @param items - 子分组下的资料项列表
+ * @returns 必须项的数量
+ */
+function sectionRequiredCount(
+  items: ReadonlyArray<{ required: boolean }>,
+): number {
+  let count = 0;
+  for (const it of items) if (it.required) count += 1;
+  return count;
+}
 </script>
 
 <template>
@@ -208,24 +255,171 @@ const primaryGroupDisplay = computed(() => {
       {{ t("cases.create.step2.relatedAdd") }}
     </Button>
 
-    <h3 class="cc__subtitle" style="margin-top: 24px">
-      {{ t("cases.create.step2.documentPreview") }}
-    </h3>
-    <div v-if="model.currentTemplate.value">
-      <div v-for="(sec, si) in model.currentTemplate.value.sections" :key="si">
-        <div class="req-title">
-          {{ resolveTemplateLabel(sec.title, locale) }}
+    <section class="preview" data-testid="document-preview">
+      <header class="preview__header">
+        <div class="preview__heading">
+          <h3 class="preview__title">
+            {{ t("cases.create.step2.documentPreview") }}
+          </h3>
+          <p class="preview__hint">
+            {{ t("cases.create.step2.documentPreviewHint") }}
+          </p>
         </div>
-        <ul class="req-list">
-          <li v-for="item in sec.items" :key="item.id">
-            {{ resolveTemplateLabel(item.label, locale) }}
-            <Chip v-if="item.required" tone="warning">{{
-              t("cases.create.step2.requiredBadge")
-            }}</Chip>
-          </li>
-        </ul>
+        <Chip
+          v-if="requirementSummary.total > 0"
+          tone="primary"
+          size="md"
+          data-testid="document-preview-summary"
+        >
+          {{
+            t("cases.create.step2.documentPreviewSummary", {
+              total: requirementSummary.total,
+              required: requirementSummary.required,
+            })
+          }}
+        </Chip>
+      </header>
+
+      <div v-if="model.currentTemplate.value" class="preview__sections">
+        <article
+          v-for="(sec, si) in model.currentTemplate.value.sections"
+          :key="si"
+          class="preview-card"
+        >
+          <header class="preview-card__header">
+            <span
+              class="preview-card__icon"
+              :data-icon="resolveSectionIcon(sec.title.zh)"
+              aria-hidden="true"
+            >
+              <svg
+                v-if="resolveSectionIcon(sec.title.zh) === 'applicant'"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="12" cy="8" r="4" />
+                <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
+              </svg>
+              <svg
+                v-else-if="resolveSectionIcon(sec.title.zh) === 'supporter'"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <circle cx="9" cy="8" r="3.2" />
+                <circle cx="17" cy="9.5" r="2.6" />
+                <path d="M2.5 20c0-3.4 3-5.8 6.5-5.8s6.5 2.4 6.5 5.8" />
+                <path d="M15 20c0-2.6 2-4.6 5-4.6" />
+              </svg>
+              <svg
+                v-else-if="resolveSectionIcon(sec.title.zh) === 'office'"
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <rect x="3" y="7" width="18" height="13" rx="2" />
+                <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+                <path d="M3 13h18" />
+              </svg>
+              <svg
+                v-else
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path
+                  d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
+                />
+              </svg>
+            </span>
+            <h4 class="preview-card__title">
+              {{ resolveTemplateLabel(sec.title, locale) }}
+            </h4>
+            <span class="preview-card__count">
+              {{ sec.items.length }}
+              <span class="preview-card__count-sep">·</span>
+              <span class="preview-card__count-required">{{
+                sectionRequiredCount(sec.items)
+              }}</span>
+            </span>
+          </header>
+          <ul class="preview-card__list">
+            <li
+              v-for="item in sec.items"
+              :key="item.id"
+              class="preview-item"
+              :data-required="item.required"
+            >
+              <span class="preview-item__bullet" aria-hidden="true">
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
+                  <path d="M5 12.5l4 4L19 7" />
+                </svg>
+              </span>
+              <span class="preview-item__body">
+                <span class="preview-item__label">{{
+                  resolveTemplateLabel(item.label, locale)
+                }}</span>
+                <span
+                  v-if="item.conditionalTag"
+                  class="preview-item__condition"
+                >
+                  {{ item.conditionalTag }}
+                </span>
+              </span>
+              <Chip
+                v-if="item.required"
+                tone="warning"
+                size="micro"
+                class="preview-item__chip"
+              >
+                {{ t("cases.create.step2.requiredBadge") }}
+              </Chip>
+              <Chip
+                v-else
+                tone="neutral"
+                size="micro"
+                class="preview-item__chip"
+              >
+                {{ t("cases.create.step2.optionalBadge") }}
+              </Chip>
+            </li>
+          </ul>
+        </article>
       </div>
-    </div>
+      <div v-else class="preview__empty">
+        {{ t("cases.create.step2.documentPreviewEmpty") }}
+      </div>
+    </section>
   </div>
 </template>
 
@@ -264,27 +458,6 @@ const primaryGroupDisplay = computed(() => {
   font-size: var(--font-size-sm);
   border: 1px dashed var(--color-border-1);
   border-radius: var(--radius-md);
-}
-
-.req-title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-2);
-  margin-top: 12px;
-}
-
-.req-list {
-  margin: 6px 0 0;
-  padding: 0 0 0 20px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-2);
-}
-
-.req-list li {
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 .customer-loading {

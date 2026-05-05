@@ -363,7 +363,6 @@ export function createListDocumentTemplates(runtime: CaseRepositoryRuntime) {
   return async (params: {
     caseType: string;
     language?: string;
-    translate?: (key: string) => string;
   }): Promise<FormTemplate[]> => {
     if (!params.caseType.trim()) return [];
 
@@ -371,8 +370,7 @@ export function createListDocumentTemplates(runtime: CaseRepositoryRuntime) {
       runtime,
       url: buildCaseDocumentTemplatesUrl(runtime.apiPath, params),
       method: "GET",
-      adapt: (value) =>
-        adaptDocumentTemplateList(value, params.translate) ?? [],
+      adapt: (value) => adaptDocumentTemplateList(value) ?? [],
       errorMessage: "Invalid document templates response",
     });
   };

@@ -57,10 +57,14 @@ function chipTone(item: FormGenerated): ChipTone {
  * 判断当前案件是否有模板或已生成文書。
  *
  * @param detail - 案件详情数据
+ * @param isReadonly - 是否只读模式
  * @returns 是否包含文書数据
  */
-function hasForms(detail: CaseDetail): boolean {
-  return detail.forms.templates.length > 0 || detail.forms.generated.length > 0;
+function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
+  return (
+    (!isReadonly && detail.forms.templates.length > 0) ||
+    detail.forms.generated.length > 0
+  );
 }
 </script>
 
@@ -95,10 +99,10 @@ function hasForms(detail: CaseDetail): boolean {
         </Button>
       </template>
 
-      <template v-if="hasForms(detail)">
+      <template v-if="hasForms(detail, readonly)">
         <!-- Templates -->
         <div
-          v-if="detail.forms.templates.length > 0"
+          v-if="detail.forms.templates.length > 0 && !readonly"
           class="forms-tab__section"
         >
           <div class="forms-tab__kicker">
@@ -128,7 +132,18 @@ function hasForms(detail: CaseDetail): boolean {
               </svg>
               <div>
                 <div class="forms-tab__name">{{ tpl.name }}</div>
-                <div class="forms-tab__meta">{{ tpl.meta }}</div>
+                <div class="forms-tab__meta">
+                  <template v-if="tpl.docTypeKey">{{
+                    t(tpl.docTypeKey)
+                  }}</template>
+                  <template v-else-if="tpl.docTypeRaw">{{
+                    tpl.docTypeRaw
+                  }}</template>
+                  <template v-if="tpl.language"> · {{ tpl.language }}</template>
+                  <template v-if="tpl.versionNo && tpl.versionNo > 0">
+                    · v{{ tpl.versionNo }}</template
+                  >
+                </div>
               </div>
             </div>
             <Button

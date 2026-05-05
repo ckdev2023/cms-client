@@ -106,6 +106,11 @@ describe("BUG-219: adapter produces i18n keys for all known event types", () => 
       expectedKey: "cases.log.timeline.validationRunFailed",
     },
     {
+      action: "validation_run.executed",
+      payload: { resultStatus: "passed" },
+      expectedKey: "cases.log.timeline.validationRunPassed",
+    },
+    {
       action: "submission_package.created",
       expectedKey: "cases.log.timeline.submissionPackageCreated",
     },

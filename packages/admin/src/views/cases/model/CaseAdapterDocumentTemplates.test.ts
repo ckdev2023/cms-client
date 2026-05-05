@@ -107,27 +107,38 @@ describe("adaptDocumentTemplateList — empty state", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  adaptDocumentTemplateList — shape mapping
+//  adaptDocumentTemplateList — shape mapping (R40-B structured fields)
 // ═══════════════════════════════════════════════════════════════════
 
 describe("adaptDocumentTemplateList — shape mapping", () => {
-  it("maps id, templateName → name, docType+language+versionNo → meta", () => {
+  it("maps id, templateName → name; populates structured docType/language/versionNo fields", () => {
     const result = adaptDocumentTemplateList({ items: [tplItem()] })!;
     expect(result).toHaveLength(1);
     const t = result[0];
     expect(t.id).toBe("tpl-001");
     expect(t.name).toBe("在留資格認定証明書交付申請書");
-    expect(t.meta).toContain("application_form");
-    expect(t.meta).toContain("ja");
-    expect(t.meta).toContain("v1");
+    expect(t.docTypeKey).toBe("cases.detail.forms.docType.application_form");
+    expect(t.docTypeRaw).toBe("application_form");
+    expect(t.language).toBe("ja");
+    expect(t.versionNo).toBe(1);
     expect(t.actionLabel).toBe("生成");
   });
 
-  it("meta omits missing optional parts", () => {
+  it("meta fallback contains raw parts joined by ' · '", () => {
+    const result = adaptDocumentTemplateList({ items: [tplItem()] })!;
+    expect(result[0].meta).toBe("application_form · ja · v1");
+  });
+
+  it("structured fields are undefined when source values are empty/zero", () => {
     const result = adaptDocumentTemplateList({
       items: [tplItem({ docType: "", language: "", versionNo: 0 })],
     })!;
-    expect(result[0].meta).toBe("");
+    const t = result[0];
+    expect(t.docTypeKey).toBeUndefined();
+    expect(t.docTypeRaw).toBeUndefined();
+    expect(t.language).toBeUndefined();
+    expect(t.versionNo).toBeUndefined();
+    expect(t.meta).toBe("");
   });
 
   it("accepts raw array input (no wrapper object)", () => {
@@ -148,35 +159,33 @@ describe("adaptDocumentTemplateList — shape mapping", () => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  adaptDocumentTemplateList — docType i18n translation
+//  adaptDocumentTemplateList — docTypeKey i18n (R40-B lazy translation)
 // ═══════════════════════════════════════════════════════════════════
 
-describe("adaptDocumentTemplateList — docType i18n", () => {
-  const mockT = (key: string): string => {
-    const map: Record<string, string> = {
-      "cases.detail.forms.docType.application_form": "申請書",
-      "cases.detail.forms.docType.reason_statement": "申請理由書",
-    };
-    return map[key] ?? key;
-  };
-
-  it("translates known docType when t is provided", () => {
-    const result = adaptDocumentTemplateList({ items: [tplItem()] }, mockT)!;
-    expect(result[0].meta).toContain("申請書");
-    expect(result[0].meta).not.toContain("application_form");
-  });
-
-  it("falls back to raw docType when t returns the key unchanged", () => {
-    const result = adaptDocumentTemplateList(
-      { items: [tplItem({ docType: "unknown_type" })] },
-      mockT,
-    )!;
-    expect(result[0].meta).toContain("unknown_type");
-  });
-
-  it("uses raw docType when t is not provided", () => {
+describe("adaptDocumentTemplateList — docTypeKey i18n (R40-B)", () => {
+  it("populates docTypeKey for known docType so view layer can call t()", () => {
     const result = adaptDocumentTemplateList({ items: [tplItem()] })!;
-    expect(result[0].meta).toContain("application_form");
+    expect(result[0].docTypeKey).toBe(
+      "cases.detail.forms.docType.application_form",
+    );
+  });
+
+  it("docTypeKey is undefined when docType is empty", () => {
+    const result = adaptDocumentTemplateList({
+      items: [tplItem({ docType: "" })],
+    })!;
+    expect(result[0].docTypeKey).toBeUndefined();
+    expect(result[0].docTypeRaw).toBeUndefined();
+  });
+
+  it("docTypeRaw preserves the raw backend value for fallback", () => {
+    const result = adaptDocumentTemplateList({
+      items: [tplItem({ docType: "unknown_type" })],
+    })!;
+    expect(result[0].docTypeRaw).toBe("unknown_type");
+    expect(result[0].docTypeKey).toBe(
+      "cases.detail.forms.docType.unknown_type",
+    );
   });
 });
 

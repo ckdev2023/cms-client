@@ -14,14 +14,12 @@ import type { CaseRepository } from "./CaseRepository";
  * @param deps.language - 文書模板的内容语言（ISO 639-1 alpha-2: `ja` / `zh` / `en`）；
  *   不是 UI locale（`zh-CN` / `ja-JP` / `en-US`），不可直接传入 vue-i18n 的 locale ref。
  *   省略时不做语言过滤，返回当前 caseType 下全部可用模板。
- * @param deps.translate - 可选翻译函数；提供时 docType 走 i18n 映射
  * @returns `templates` ref 与手动 `refresh` 函数
  */
 export function useCaseFormTemplates(deps: {
   repo: CaseRepository;
   caseType: Ref<string>;
   language?: Ref<string | undefined>;
-  translate?: (key: string) => string;
 }) {
   const templates = ref<FormTemplate[]>([]);
   const loading = ref(false);
@@ -41,7 +39,6 @@ export function useCaseFormTemplates(deps: {
       const result = await deps.repo.listDocumentTemplates({
         caseType: ct,
         language: deps.language?.value,
-        translate: deps.translate,
       });
       if (gen !== generation) return;
       templates.value = result;

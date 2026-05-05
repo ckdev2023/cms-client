@@ -327,7 +327,16 @@ describe("CaseDetailView wiring contract — formTemplates (R37-A)", () => {
   it("model 加载后 repo.listDocumentTemplates 被调用且 formTemplates 反映返回值", async () => {
     const { repo, listDocumentTemplates } = createFullRepoStub();
     const mockTemplates = [
-      { id: "tpl-1", name: "事業計画書", meta: "BMV", actionLabel: "生成" },
+      {
+        id: "tpl-1",
+        name: "事業計画書",
+        meta: "business_plan · ja · v1",
+        actionLabel: "生成",
+        docTypeKey: "cases.detail.forms.docType.business_plan",
+        docTypeRaw: "business_plan",
+        language: "ja",
+        versionNo: 1,
+      },
     ];
     listDocumentTemplates.mockResolvedValue(mockTemplates);
 
@@ -341,7 +350,16 @@ describe("CaseDetailView wiring contract — formTemplates (R37-A)", () => {
   it("enrichedDetail.forms.templates 包含 formTemplates 数据", async () => {
     const { repo, listDocumentTemplates } = createFullRepoStub();
     const mockTemplates = [
-      { id: "tpl-2", name: "会社概要", meta: "BMV", actionLabel: "生成" },
+      {
+        id: "tpl-2",
+        name: "会社概要",
+        meta: "company_overview · ja · v1",
+        actionLabel: "生成",
+        docTypeKey: "cases.detail.forms.docType.company_overview",
+        docTypeRaw: "company_overview",
+        language: "ja",
+        versionNo: 1,
+      },
     ];
     listDocumentTemplates.mockResolvedValue(mockTemplates);
 

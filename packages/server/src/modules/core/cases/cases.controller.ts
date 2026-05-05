@@ -8,6 +8,7 @@ import {
   Inject,
   NotFoundException,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -44,6 +45,8 @@ import type {
   PhaseTransitionBody,
   ListCasesQuery,
 } from "./cases.controller-bodies";
+
+const UuidParam = () => Param("id", new ParseUUIDPipe({ version: "4" }));
 
 /**
  * UpdateCaseBody → CaseUpdateInput 変換。
@@ -241,7 +244,7 @@ export class CasesController {
   @Get(":id/billing-tab-aggregate")
   async getBillingTabAggregate(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
   ) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
@@ -256,7 +259,7 @@ export class CasesController {
    */
   @RequireRoles("viewer")
   @Get(":id/aggregate")
-  async getAggregate(@Req() req: HttpRequest, @Param("id") id: string) {
+  async getAggregate(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
@@ -285,7 +288,7 @@ export class CasesController {
    */
   @RequireRoles("viewer")
   @Get(":id")
-  async get(@Req() req: HttpRequest, @Param("id") id: string) {
+  async get(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
@@ -317,7 +320,7 @@ export class CasesController {
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: UpdateCaseBody,
   ) {
     const ctx = req.requestContext;
@@ -339,7 +342,7 @@ export class CasesController {
   @Post(":id/transition")
   async transition(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: TransitionBody,
   ) {
     const ctx = req.requestContext;
@@ -365,7 +368,7 @@ export class CasesController {
   @Post(":id/phase-transition")
   async phaseTransition(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: PhaseTransitionBody,
   ) {
     const ctx = req.requestContext;
@@ -394,7 +397,7 @@ export class CasesController {
   @Post(":id/billing-risk-ack")
   async acknowledgeBillingRisk(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: BillingRiskAckBody,
   ) {
     const ctx = req.requestContext;
@@ -420,7 +423,7 @@ export class CasesController {
   @Post(":id/post-approval-stage")
   async updatePostApprovalStage(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: PostApprovalStageBody,
   ) {
     const ctx = req.requestContext;
@@ -444,7 +447,7 @@ export class CasesController {
   @Post(":id/workflow-step-transition")
   async transitionWorkflowStep(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: WorkflowStepTransitionBody,
   ) {
     const ctx = req.requestContext;
@@ -465,7 +468,7 @@ export class CasesController {
    */
   @RequireRoles("manager")
   @Delete(":id")
-  async delete(@Req() req: HttpRequest, @Param("id") id: string) {
+  async delete(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 

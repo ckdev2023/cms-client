@@ -42,6 +42,12 @@ describe("CaseRepository.listDocumentTemplates", () => {
     expect(result).toHaveLength(2);
     expect(result[0].id).toBe("tpl-001");
     expect(result[0].name).toBe("在留資格認定申請書");
+    expect(result[0].docTypeKey).toBe(
+      "cases.detail.forms.docType.application_form",
+    );
+    expect(result[0].docTypeRaw).toBe("application_form");
+    expect(result[0].language).toBe("ja");
+    expect(result[0].versionNo).toBe(1);
     expect(result[0].meta).toContain("application_form");
     expect(result[1].id).toBe("tpl-002");
     expect(result[1].meta).toContain("v2");

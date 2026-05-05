@@ -661,13 +661,21 @@ export interface FormTemplate {
    */
   name: string;
   /**
-   *
+   * 兜底用メタ文字列（構造化フィールドが利用できない場合のフォールバック）。
    */
   meta: string;
   /**
    *
    */
   actionLabel: string;
+  /** i18n key — `cases.detail.forms.docType.<rawDocType>`；view 層で `t()` 翻訳。 */
+  docTypeKey?: string;
+  /** 後端原始 docType 文字列（i18n 未命中時のフォールバック）。 */
+  docTypeRaw?: string;
+  /** テンプレートの言語コード（ISO 639-1）。 */
+  language?: string;
+  /** テンプレートのバージョン番号。 */
+  versionNo?: number;
 }
 
 /**

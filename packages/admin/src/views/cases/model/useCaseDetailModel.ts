@@ -311,21 +311,18 @@ interface UseCaseDetailModelDeps {
    * UI locale（`zh-CN` / `ja-JP` / `en-US`）を直接渡さないこと。
    */
   templateLanguage?: Ref<string>;
-  translate?: (key: string) => string;
 }
 
 function createFormTemplatesSlice(
   repo: CaseRepository,
   detail: Ref<CaseDetail | null>,
   templateLanguage?: Ref<string>,
-  translate?: (key: string) => string,
 ) {
   const caseType = computed(() => detail.value?.caseType ?? "");
   const { templates: formTemplates } = useCaseFormTemplates({
     repo,
     caseType,
     language: templateLanguage,
-    translate,
   });
 
   const enrichedDetail = computed<CaseDetail | null>(() => {
@@ -473,7 +470,6 @@ export function useCaseDetailModel(
     repo,
     state.detail,
     deps.templateLanguage,
-    deps.translate,
   );
 
   const phaseMenu = useCasePhaseTransitionMenu({

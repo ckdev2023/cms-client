@@ -13,20 +13,7 @@ function readArrayOrItems(value: unknown): unknown[] | null {
 
 const DOC_TYPE_I18N_PREFIX = "cases.detail.forms.docType.";
 
-function translateDocType(
-  docType: string,
-  t?: (key: string) => string,
-): string {
-  if (!t) return docType;
-  const key = `${DOC_TYPE_I18N_PREFIX}${docType}`;
-  const translated = t(key);
-  return translated !== key ? translated : docType;
-}
-
-function adaptDocumentTemplateDto(
-  value: unknown,
-  t?: (key: string) => string,
-): FormTemplate | null {
+function adaptDocumentTemplateDto(value: unknown): FormTemplate | null {
   const r = asRecord(value);
   if (!r) return null;
   const id = readString(r, "id");
@@ -38,7 +25,7 @@ function adaptDocumentTemplateDto(
   const versionNo = readNumber(r, "versionNo");
 
   const metaParts: string[] = [];
-  if (docType) metaParts.push(translateDocType(docType, t));
+  if (docType) metaParts.push(docType);
   if (language) metaParts.push(language);
   if (versionNo > 0) metaParts.push(`v${versionNo}`);
 
@@ -47,6 +34,10 @@ function adaptDocumentTemplateDto(
     name: templateName,
     meta: metaParts.join(" · "),
     actionLabel: "生成",
+    docTypeKey: docType ? `${DOC_TYPE_I18N_PREFIX}${docType}` : undefined,
+    docTypeRaw: docType || undefined,
+    language: language || undefined,
+    versionNo: versionNo > 0 ? versionNo : undefined,
   };
 }
 
@@ -54,18 +45,16 @@ function adaptDocumentTemplateDto(
  * 适配 `/api/document-templates?caseType=xxx` 返回值为文書模板列表。
  *
  * @param value - 原始 JSON（`{ items: [...] }` 或数组）
- * @param t - 可选翻译函数；提供时 docType 走 i18n 映射，未命中 fallback raw
  * @returns 模板列表，格式无效时返回 `null`
  */
 export function adaptDocumentTemplateList(
   value: unknown,
-  t?: (key: string) => string,
 ): FormTemplate[] | null {
   const items = readArrayOrItems(value);
   if (!items) return null;
 
   return items
-    .map((item) => adaptDocumentTemplateDto(item, t))
+    .map((item) => adaptDocumentTemplateDto(item))
     .filter((item): item is FormTemplate => item !== null);
 }
 

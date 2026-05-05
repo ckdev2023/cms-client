@@ -138,4 +138,28 @@ describe("useCaseFormTemplates", () => {
     await refresh();
     expect(templates.value[0]?.id).toBe("t2");
   });
+
+  it("docTypeKey field remains stable across re-fetches (data layer not coupled to i18n)", async () => {
+    const tpl: FormTemplate = {
+      id: "t1",
+      name: "テスト",
+      meta: "application_form · ja · v1",
+      actionLabel: "生成",
+      docTypeKey: "cases.detail.forms.docType.application_form",
+      docTypeRaw: "application_form",
+      language: "ja",
+      versionNo: 1,
+    };
+    const repo = stubRepo(() => Promise.resolve([tpl]));
+    const caseType = ref("family_stay");
+
+    const { templates, refresh } = useCaseFormTemplates({ repo, caseType });
+
+    await vi.waitFor(() =>
+      expect(templates.value[0]?.docTypeKey).toBe(tpl.docTypeKey),
+    );
+
+    await refresh();
+    expect(templates.value[0]?.docTypeKey).toBe(tpl.docTypeKey);
+  });
 });

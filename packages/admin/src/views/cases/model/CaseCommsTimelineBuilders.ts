@@ -189,6 +189,14 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "validation_run.failed": () => ({
     key: "cases.log.timeline.validationRunFailed",
   }),
+  "validation_run.executed": (p) => {
+    const status = pickFirst(p, ["resultStatus", "result_status"]);
+    if (status === "passed")
+      return { key: "cases.log.timeline.validationRunPassed" };
+    if (status === "failed")
+      return { key: "cases.log.timeline.validationRunFailed" };
+    return { key: "cases.log.timeline.validationRunExecuted" };
+  },
   "submission_package.created": () => ({
     key: "cases.log.timeline.submissionPackageCreated",
   }),

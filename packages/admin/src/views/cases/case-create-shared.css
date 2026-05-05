@@ -284,3 +284,209 @@
 .bmv-intake-card--highlight {
   animation: bmv-intake-highlight 1.2s ease-out forwards;
 }
+
+/* ===================================================================
+   Case Create Step2 — Document Checklist Preview
+   Shared (non-scoped) so the .vue file stays under max-lines guard.
+   Targets DOM rendered by CaseCreateStep2.vue under the
+   `<section class="preview">` block. Tokens come from theme.css.
+   =================================================================== */
+
+.preview {
+  margin-top: 32px;
+  padding-top: 20px;
+  border-top: 1px solid var(--color-border-1);
+}
+
+.preview__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.preview__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.preview__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+}
+
+.preview__hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
+  color: var(--color-text-3);
+}
+
+.preview__sections {
+  display: grid;
+  gap: 12px;
+}
+
+.preview__empty {
+  padding: 16px;
+  border: 1px dashed var(--color-border-1);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-2);
+  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.preview-card {
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg-elevated);
+  overflow: hidden;
+}
+
+.preview-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--color-bg-2);
+  border-bottom: 1px solid var(--color-border-1);
+}
+
+.preview-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-light);
+  color: var(--color-primary-7);
+  flex-shrink: 0;
+}
+
+.preview-card__icon[data-icon="supporter"] {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--color-success-text-strong);
+}
+
+.preview-card__icon[data-icon="office"] {
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--color-warning-text-strong);
+}
+
+.preview-card__title {
+  flex: 1;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-1);
+  letter-spacing: var(--letter-spacing-normal);
+  min-width: 0;
+}
+
+.preview-card__count {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border-1);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-2);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.preview-card__count-sep {
+  color: var(--color-text-3);
+  margin: 0 1px;
+}
+
+.preview-card__count-required {
+  color: var(--color-warning-text-strong);
+}
+
+.preview-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 6px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2px;
+}
+
+@media (min-width: 720px) {
+  .preview-card__list {
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 8px;
+  }
+}
+
+.preview-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  transition: background-color var(--transition-normal);
+}
+
+.preview-item:hover {
+  background: var(--color-bg-overlay);
+}
+
+.preview-item__bullet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: var(--color-bg-3);
+  color: var(--color-text-3);
+  flex-shrink: 0;
+  transition:
+    background-color var(--transition-normal),
+    color var(--transition-normal);
+}
+
+.preview-item[data-required="true"] .preview-item__bullet {
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--color-warning-text-strong);
+}
+
+.preview-item__body {
+  flex: 1;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+}
+
+.preview-item__label {
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-1);
+  font-weight: var(--font-weight-medium);
+  word-break: break-word;
+}
+
+.preview-item__condition {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+
+.preview-item__chip {
+  flex-shrink: 0;
+}

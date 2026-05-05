@@ -99,7 +99,6 @@ const {
   refetch,
 } = useCaseDetailModel(caseId, {
   routeTab,
-  translate: t,
   onTabChange: (tab) =>
     router.replace({ query: buildCaseDetailQuery({ tab }) }),
 });
