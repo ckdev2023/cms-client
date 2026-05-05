@@ -63,7 +63,9 @@ function getEntryTexts(html: string): string[] {
   const matches = html.matchAll(
     /<p[^>]*class="log-tab__entry-text"[^>]*>([\s\S]*?)<\/p>/g,
   );
-  return Array.from(matches, (m) => m[1].trim());
+  return Array.from(matches, (m) =>
+    m[1].replace(/<!--[\s\S]*?-->/g, "").trim(),
+  );
 }
 
 describe("CaseLogTab BUG-219: unhandled actions must not display raw action strings", () => {

@@ -48,7 +48,10 @@ function makeLogEntry(overrides: Partial<LogEntry> = {}): LogEntry {
   };
 }
 
-const vueSrc = readFileSync(resolve(__dirname, "CaseOverviewTab.vue"), "utf-8");
+const vueSrc = readFileSync(
+  resolve(__dirname, "CaseOverviewTimeline.vue"),
+  "utf-8",
+);
 
 describe("R27-K regression: CaseOverviewTab recent-activity timeline", () => {
   describe("empty logEntries → timeline renders empty state", () => {
@@ -56,8 +59,8 @@ describe("R27-K regression: CaseOverviewTab recent-activity timeline", () => {
       expect(buildOverviewTimelineFromLog([])).toEqual([]);
     });
 
-    it("template shows empty message when detail.timeline.length === 0", () => {
-      expect(vueSrc).toContain('v-if="detail.timeline.length === 0"');
+    it("template shows empty message when timeline.length === 0", () => {
+      expect(vueSrc).toContain('v-if="timeline.length === 0"');
       expect(vueSrc).toContain("overview-tab__timeline-empty");
     });
 
@@ -175,8 +178,8 @@ describe("R27-K regression: CaseOverviewTab recent-activity timeline", () => {
   });
 
   describe("component template wiring", () => {
-    it("iterates over detail.timeline with v-for", () => {
-      expect(vueSrc).toContain('v-for="(entry, i) in detail.timeline"');
+    it("iterates over timeline with v-for", () => {
+      expect(vueSrc).toContain('v-for="(entry, i) in timeline"');
     });
 
     it("renders timeline dot with timelineColor(entry.color)", () => {

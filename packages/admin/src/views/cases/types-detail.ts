@@ -109,6 +109,12 @@ export interface RiskBlock {
 /**
  *
  */
+/** timeline 事件轨道类型——概览双轨渲染使用。 */
+export type TimelineTrack = "business_phase" | "stage" | "other";
+
+/**
+ *
+ */
 export interface TimelineEntry {
   /**
    *
@@ -126,6 +132,10 @@ export interface TimelineEntry {
    *
    */
   meta: string;
+  /** 数据修复 / 合成标记；值为 `"data_repair"` 时 UI 显示灰色 chip。 */
+  synthesized?: string;
+  /** 事件轨道——`business_phase` / `stage` / `other`；概览双轨渲染使用。 */
+  track?: TimelineTrack;
 }
 
 /**
@@ -824,6 +834,10 @@ export interface LogEntry {
    *
    */
   dotColor: string;
+  /** 数据修复 / 合成标记；值为 `"data_repair"` 时 UI 显示灰色 chip。 */
+  synthesized?: string;
+  /** 事件轨道——`business_phase` / `stage` / `other`。 */
+  track?: TimelineTrack;
 }
 
 /**
@@ -1176,6 +1190,44 @@ export interface ReminderSchedule {
 }
 
 /**
+ * 阶段流转门禁原因——popover 用 `t(key, params)` 渲染 disabled tooltip。
+ */
+export interface TransitionGuardReason {
+  /** 国际化键。 */
+  key: string;
+  /** 国际化插值参数。 */
+  params?: Record<string, unknown>;
+}
+
+/**
+ * 案件类型流程特征——基于 caseTypeCode 解析，控制 COE、尾款门禁、
+ * 问卷报价等 section 的条件渲染。
+ */
+export interface CaseTypeFlowProfile {
+  /** 是否走 COE / 海外贴签 / 返签流程（仅 BMV 认定类）。 */
+  hasCoeFlow: boolean;
+  /** 是否有尾款门禁（BMV 全系列）。 */
+  hasFinalPaymentGate: boolean;
+  /** 是否有问卷回收与报价确认流程（BMV 全系列）。 */
+  hasSurveyQuote: boolean;
+}
+
+/**
+ * adapter 暴露的标题兜底原料——view 层结合 i18n 翻译 caseTypeCode 后
+ * 调用 `buildFallbackName` / `isFallbackTitle` 生成一致的 heading。
+ */
+export interface TitleFallbackParts {
+  /** 申请人名称。 */
+  applicant: string;
+  /** 案件类型代码（view 层需通过 getCaseTypeI18nKey + t() 翻译）。 */
+  caseTypeCode: string;
+  /** 案件业务编号。 */
+  caseNo: string | undefined;
+  /** 案件 UUID。 */
+  id: string;
+}
+
+/**
  *
  */
 export interface CaseDetail {
@@ -1191,6 +1243,8 @@ export interface CaseDetail {
    *
    */
   title: string;
+  /** 标题兜底原料——详情 heading 需与列表行保持一致口径。 */
+  titleFallbackParts: TitleFallbackParts;
   /**
    *
    */
@@ -1428,6 +1482,11 @@ export interface CaseDetail {
    */
   reminderSchedule?: ReminderSchedule | null;
 
+  // ─── 案件类型流程特征 ────────────────────────────────────────────
+
+  /** 基于 caseTypeCode 解析的流程特征集合；未提供时各标志视为 false。 */
+  flowProfile?: CaseTypeFlowProfile;
+
   // ─── P1 BMV 专属读模型字段 ──────────────────────────────────────
 
   /** 当前业务子步骤摘要（仅 BMV 案件有值）。 */
@@ -1494,6 +1553,11 @@ export interface CaseDetail {
 
   /** 顾客多语言名称；server deepLink 未提供时为 null。 */
   customerLocalizedNames?: CustomerLocalizedNames | null;
+
+  // ─── Transition Guards (R35-E) ─────────────────────────────────
+
+  /** 目标阶段 → 门禁原因；popover 据此 disable 不可选项。 */
+  transitionGuards?: Record<string, TransitionGuardReason>;
 }
 
 /**

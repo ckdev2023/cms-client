@@ -452,7 +452,7 @@ watchEffect(() => {
   font-size: var(--font-size-sm);
 }
 .billing-table__node-name--overdue {
-  color: #991b1b;
+  color: var(--color-danger-text);
   font-weight: var(--font-weight-extrabold);
 }
 .billing-table__node-date,
@@ -464,7 +464,7 @@ watchEffect(() => {
   font-size: var(--font-size-xs);
 }
 .billing-table__node-date--overdue {
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .billing-table__node-empty {
   font-size: var(--font-size-sm);
@@ -474,7 +474,8 @@ watchEffect(() => {
   text-align: center;
 }
 .billing-table__empty-title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   margin: 0 0 4px;

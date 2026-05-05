@@ -352,7 +352,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
   border: 1px solid #fde68a;
   background: #fffbeb;
   margin-bottom: 20px;
-  color: #92400e;
+  color: var(--color-warning-text);
   font-size: var(--font-size-sm);
 }
 

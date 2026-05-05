@@ -65,7 +65,8 @@ function progressPercent(p: ProviderProgress): number {
   letter-spacing: 0.04em;
 }
 .prov__title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

@@ -104,13 +104,14 @@ const emit = defineEmits<{
 
 .success__title {
   font-size: var(--font-size-xl);
+  line-height: var(--leading-xl);
   font-weight: var(--font-weight-semibold);
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .success__desc {
   font-size: var(--font-size-sm);
-  color: #166534;
+  color: var(--color-success-text);
   margin-top: 4px;
 }
 
@@ -130,13 +131,14 @@ const emit = defineEmits<{
 
 .submit-error__title {
   font-size: var(--font-size-xl);
+  line-height: var(--leading-xl);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .submit-error__desc {
   font-size: var(--font-size-sm);
-  color: #991b1b;
+  color: var(--color-danger-text);
   margin-top: 4px;
 }
 

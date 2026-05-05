@@ -214,7 +214,8 @@ function paymentType(row: PaymentRow): string {
 
 .billing-tab__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -268,7 +269,8 @@ function paymentType(row: PaymentRow): string {
 }
 
 .billing-tab__stat-value {
-  font-size: 20px;
+  font-size: var(--font-size-2xl);
+  line-height: var(--leading-2xl);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
   letter-spacing: -0.02em;

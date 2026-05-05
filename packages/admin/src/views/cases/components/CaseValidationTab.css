@@ -26,7 +26,8 @@
 }
 .vt__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -46,15 +47,15 @@
 }
 .vt__chip--danger {
   background: rgba(220, 38, 38, 0.08);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .vt__chip--warning {
   background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 .vt__chip--info {
-  background: rgba(59, 130, 246, 0.08);
-  color: #1d4ed8;
+  background: rgba(2, 132, 199, 0.1);
+  color: var(--color-info-text);
 }
 
 .vt__group {

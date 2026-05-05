@@ -137,7 +137,7 @@ function capitalize(s: string): string {
 }
 .sq-section__badge--warning {
   background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 .sq-section__badge--success {
   background: rgba(16, 185, 129, 0.1);

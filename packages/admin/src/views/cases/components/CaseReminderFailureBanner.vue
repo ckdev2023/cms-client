@@ -136,7 +136,7 @@ const emit = defineEmits<{
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .reminder-fail__header-text {
   display: flex;
@@ -145,18 +145,20 @@ const emit = defineEmits<{
   flex-wrap: wrap;
 }
 .reminder-fail__title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 .reminder-fail__attempt-badge {
   display: inline-flex;
-  padding: 1px 6px;
-  font-size: 10px;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-full);
   background: rgba(220, 38, 38, 0.08);
-  color: #991b1b;
+  color: var(--color-danger-text);
   border: 1px solid rgba(220, 38, 38, 0.15);
 }
 
@@ -180,7 +182,7 @@ const emit = defineEmits<{
 .reminder-fail__reason {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
   padding: 6px 10px;
   background: rgba(220, 38, 38, 0.04);
   border: 1px solid rgba(220, 38, 38, 0.1);

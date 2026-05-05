@@ -9,33 +9,44 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 describe("BUG-236: CaseOverviewTab terminal action buttons", () => {
-  const src = readFileSync(
+  const nextActionSrc = readFileSync(
+    resolve(__dirname, "components/CaseOverviewNextAction.vue"),
+    "utf-8",
+  );
+  const overviewSrc = readFileSync(
     resolve(__dirname, "components/CaseOverviewTab.vue"),
     "utf-8",
   );
 
   it("template contains terminal action buttons section", () => {
-    expect(src).toContain('data-testid="terminal-next-action-buttons"');
+    expect(nextActionSrc).toContain(
+      'data-testid="terminal-next-action-buttons"',
+    );
   });
 
   it("has a viewCloseReason / viewResult button that opens close reason modal", () => {
-    expect(src).toContain('data-testid="terminal-view-close-reason"');
-    expect(src).toContain("closeReasonModalOpen = true");
+    expect(nextActionSrc).toContain('data-testid="terminal-view-close-reason"');
+    expect(nextActionSrc).toContain("emit('openCloseReason')");
+    expect(overviewSrc).toContain("closeReasonModalOpen = true");
   });
 
   it("has a handleRefund / viewBilling button wired to switchTab('billing')", () => {
-    expect(src).toContain('data-testid="terminal-view-billing"');
-    expect(src).toContain("emit('switchTab', 'billing')");
+    expect(nextActionSrc).toContain('data-testid="terminal-view-billing"');
+    expect(nextActionSrc).toContain("emit('switchTab', 'billing')");
   });
 
   it("uses correct i18n keys for CLOSED_SUCCESS actions", () => {
-    expect(src).toContain("cases.detail.terminalActions.viewResult");
-    expect(src).toContain("cases.detail.terminalActions.viewBilling");
+    expect(nextActionSrc).toContain("cases.detail.terminalActions.viewResult");
+    expect(nextActionSrc).toContain("cases.detail.terminalActions.viewBilling");
   });
 
   it("uses correct i18n keys for CLOSED_FAILED actions", () => {
-    expect(src).toContain("cases.detail.terminalActions.viewCloseReason");
-    expect(src).toContain("cases.detail.terminalActions.handleRefund");
+    expect(nextActionSrc).toContain(
+      "cases.detail.terminalActions.viewCloseReason",
+    );
+    expect(nextActionSrc).toContain(
+      "cases.detail.terminalActions.handleRefund",
+    );
   });
 });
 

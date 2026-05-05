@@ -172,7 +172,7 @@ defineProps<{
 }
 
 .customer-summary-card--info .customer-summary-card__label {
-  color: #2563eb;
+  color: var(--color-info-text);
 }
 
 .customer-summary-card--warning {

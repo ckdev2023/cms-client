@@ -261,10 +261,11 @@ onMounted(() => {
 .conv-detail__closed-banner {
   padding: 12px 16px;
   background: var(--color-warning-bg, #fffbeb);
-  color: var(--color-warning-text, #92400e);
+  color: var(--color-warning-text);
   border: 1px solid var(--color-warning-border, #fcd34d);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 
 .conv-detail__sidebar {
@@ -297,7 +298,7 @@ onMounted(() => {
 }
 
 .conv-detail__meta-item a {
-  color: var(--color-primary-6, #2563eb);
+  color: var(--color-primary-6);
   text-decoration: none;
 }
 
@@ -339,8 +340,8 @@ onMounted(() => {
 
 .conv-detail__composer-input:focus {
   outline: none;
-  border-color: var(--color-primary-6, #2563eb);
-  box-shadow: 0 0 0 2px var(--color-primary-1, #dbeafe);
+  border-color: var(--color-primary-6);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
 }
 
 .conv-detail__composer-footer {

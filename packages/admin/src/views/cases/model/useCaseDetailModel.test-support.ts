@@ -7,6 +7,12 @@ import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
 const BASE_DETAIL: CaseDetail = {
   id: "CASE-001",
   title: "テスト案件",
+  titleFallbackParts: {
+    applicant: "テスト太郎",
+    caseTypeCode: "work_visa_renewal",
+    caseNo: "CASE-001",
+    id: "CASE-001",
+  },
   client: "テスト太郎",
   owner: "担当者A",
   agency: "",

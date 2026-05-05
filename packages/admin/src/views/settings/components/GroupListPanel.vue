@@ -322,7 +322,8 @@ function fmtCreatedAt(iso: string | null | undefined): string {
 
 .group-list-panel__empty-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }

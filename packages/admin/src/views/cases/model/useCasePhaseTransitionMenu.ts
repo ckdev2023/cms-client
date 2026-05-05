@@ -1,5 +1,6 @@
 import { ref, computed, type Ref } from "vue";
 import type { CaseDetail } from "../types";
+import type { TransitionGuardReason } from "../types-detail";
 import type { BusinessPhaseId } from "../constantsBusinessPhase";
 import { BUSINESS_PHASES } from "../constantsBusinessPhase";
 import type { CaseRepository } from "./CaseRepository";
@@ -22,6 +23,18 @@ export function isValidBusinessPhase(v: string): v is BusinessPhaseId {
 }
 
 /**
+ * 流转目标选项——携带门禁 disable 状态与原因。
+ */
+export interface PhaseTransitionOption {
+  /** 目标阶段代码。 */
+  phase: string;
+  /** 是否因门禁而不可选。 */
+  disabled: boolean;
+  /** 门禁原因（disabled=true 时有值）。 */
+  disabledReasonLoc?: TransitionGuardReason;
+}
+
+/**
  * 阶段流转菜单的响应式状态。
  */
 export interface PhaseTransitionMenuState {
@@ -33,6 +46,8 @@ export interface PhaseTransitionMenuState {
    *
    */
   availableTargets: Ref<readonly string[]>;
+  /** 携带门禁状态的选项列表。 */
+  availableOptions: Ref<readonly PhaseTransitionOption[]>;
   /**
    *
    */
@@ -149,11 +164,25 @@ export function useCasePhaseTransitionMenu(
     return getAvailablePhaseTargets(phase);
   });
 
+  const availableOptions = computed<readonly PhaseTransitionOption[]>(() => {
+    const targets = availableTargets.value;
+    const guards = input.detail.value?.transitionGuards ?? {};
+    return targets.map((phase) => {
+      const guard = guards[phase];
+      return {
+        phase,
+        disabled: guard != null,
+        disabledReasonLoc: guard ?? undefined,
+      };
+    });
+  });
+
   const state = { submitting, errorMessage, errorCode, menuOpen };
 
   return {
     menuOpen,
     availableTargets,
+    availableOptions,
     submitting,
     errorMessage,
     errorCode,

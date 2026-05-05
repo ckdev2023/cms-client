@@ -17,7 +17,12 @@
  */
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
-import type { LogEntry, MessageItem, TimelineEntry } from "../types-detail";
+import type {
+  LogEntry,
+  MessageItem,
+  TimelineEntry,
+  TimelineTrack,
+} from "../types-detail";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { buildCaseTimelineMessageResult } from "./CaseCommsTimelineBuilders";
 
@@ -252,6 +257,7 @@ const DOT_COLOR_MAP: Record<Exclude<LogCategoryKey, "all">, string> = {
 const STATUS_CHANGE_ACTIONS = new Set([
   "case.status_changed",
   "case.stage_changed",
+  "case.transitioned",
   "case.phase_transitioned",
   "case.billing_risk_acknowledged",
   "case.post_approval_stage_changed",
@@ -282,6 +288,26 @@ export function resolveLogCategory(
   if (STATUS_CHANGE_ACTIONS.has(action)) return "status";
   if (REVIEW_ACTIONS.has(action)) return "review";
   return "operation";
+}
+
+const PHASE_TRACK_ACTIONS = new Set(["case.phase_transitioned"]);
+
+const STAGE_TRACK_ACTIONS = new Set([
+  "case.status_changed",
+  "case.stage_changed",
+  "case.transitioned",
+]);
+
+/**
+ * 按 action 判定时间线行所属轨道。
+ *
+ * @param action - 时间线动作标识
+ * @returns 轨道区分
+ */
+export function resolveTimelineTrack(action: string): TimelineTrack {
+  if (PHASE_TRACK_ACTIONS.has(action)) return "business_phase";
+  if (STAGE_TRACK_ACTIONS.has(action)) return "stage";
+  return "other";
 }
 
 const OBJECT_TYPE_KEYS: Record<string, string> = {
@@ -326,6 +352,8 @@ export function adaptCaseLogDto(value: unknown): LogEntry | null {
   const actor = resolveTimelineActor(record);
   const payload = readPayloadRecord(record.payload);
   const msg = buildCaseTimelineMessageResult(action, payload);
+  const synthesized = normalizeOptionalString(payload.synthesized);
+  const track = resolveTimelineTrack(action);
 
   return {
     type: category,
@@ -338,6 +366,8 @@ export function adaptCaseLogDto(value: unknown): LogEntry | null {
     objectType: resolveObjectTypeKey(action),
     time: createdAt,
     dotColor: DOT_COLOR_MAP[category],
+    ...(synthesized ? { synthesized } : {}),
+    track,
   };
 }
 
@@ -393,6 +423,8 @@ export function buildOverviewTimelineFromLog(
     text: e.text,
     textParams: e.textParams,
     meta: e.time,
+    ...(e.synthesized ? { synthesized: e.synthesized } : {}),
+    track: e.track,
   }));
 }
 

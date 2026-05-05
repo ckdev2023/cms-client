@@ -20,11 +20,10 @@ import {
   toDateInputValue,
 } from "./CaseAdapterShared";
 import { buildCustomerLocalizedNames } from "./CaseAdapterCustomerLocale";
+import { buildTeamFromDeepLink } from "./CaseAdapterTeam";
+import { buildTransitionGuards } from "./CaseAdapterTransitionGuards";
 
 // ─── Aggregate Slices (p0-fe-002c-01) ────────────────────────────
-// 与 server CaseDetailAggregateDto 的 8 个顶层键一一对应。
-// latestSubmission / latestReview 本阶段仅读取概要信息用于
-// overview 区域提示，不提前填充完整的 validation / review tabs。
 
 interface AggregateSlices {
   caseRecord: Record<string, unknown>;
@@ -94,7 +93,6 @@ function adaptProviderProgress(raw: unknown[]) {
 }
 
 // ─── Tab Counts (p0-fe-002c-02) ──────────────────────────────────
-
 const EMPTY_TAB_COUNTS: CaseDetailTabCounts = {
   documentItemsTotal: 0,
   documentItemsDone: 0,
@@ -124,31 +122,47 @@ function buildTabCounts(
 }
 
 // ─── Risk / Billing / Validation blocks ──────────────────────────
-
 function buildRiskBlock(
   blockingCount: number,
   unpaidAmount: number,
   latestValidation: Record<string, unknown> | null,
   latestReview: Record<string, unknown> | null,
+  dueAt: string | null,
 ) {
   const vs = latestValidation ? readString(latestValidation, "status") : "";
   const bKey = "cases.detail.overview.risk.blockingDetail";
+  const arrearsKey =
+    unpaidAmount > 0 ? "cases.detail.arrearsYes" : "cases.detail.arrearsNo";
+  const fDue = dueAt ? formatDate(dueAt) : "";
   return {
     blockingCount: blockingCount > 0 ? String(blockingCount) : "0",
     blockingDetail: "",
     blockingDetailLoc:
       blockingCount > 0
         ? { key: bKey, params: { count: blockingCount } }
-        : undefined,
-    arrearsStatus:
-      unpaidAmount > 0 ? "cases.detail.arrearsYes" : "cases.detail.arrearsNo",
+        : { key: "cases.detail.overview.risk.noBlocking" },
+    arrearsStatus: arrearsKey,
+    arrearsStatusLoc: { key: arrearsKey },
     arrearsDetail: unpaidAmount > 0 ? `¥${unpaidAmount.toLocaleString()}` : "",
+    arrearsDetailLoc:
+      unpaidAmount > 0
+        ? {
+            key: "cases.detail.overview.risk.arrearsAmount",
+            params: { amount: `¥${unpaidAmount.toLocaleString()}` },
+          }
+        : undefined,
     deadlineAlert: "",
     deadlineAlertDetail: "",
+    deadlineAlertLoc: dueAt
+      ? {
+          key: "cases.detail.overview.risk.deadlineAlert",
+          params: { date: fDue },
+        }
+      : { key: "cases.detail.overview.risk.noDeadline" },
     lastValidation: "",
     lastValidationLoc: vs
       ? { key: `cases.detail.overview.risk.lastValidation.${vs}` }
-      : undefined,
+      : { key: "cases.detail.overview.risk.notValidated" },
     reviewStatus: latestReview ? readString(latestReview, "decision") : "",
   };
 }
@@ -201,7 +215,6 @@ function buildValidationHint(blockingCount: number, warningCount: number) {
 }
 
 // ─── Deep-link fields (p0-fe-002c-03) ────────────────────────────
-
 function buildDeepLinkFields(dl: Record<string, unknown> | null) {
   return {
     customerId: dl ? readString(dl, "customerId") : "",
@@ -219,7 +232,6 @@ function buildDeepLinkFields(dl: Record<string, unknown> | null) {
 }
 
 // ─── Derived Metrics ─────────────────────────────────────────────
-
 interface DerivedMetrics {
   docTotal: number;
   docDone: number;
@@ -267,22 +279,12 @@ function deriveCaseMetrics(slices: AggregateSlices): DerivedMetrics {
 }
 
 // ─── Detail Header (p0-fe-002c-02) ──────────────────────────────
-
 function resolveTitle(caseRecord: Record<string, unknown>, id: string) {
   return (
     readString(caseRecord, "caseName") || readString(caseRecord, "caseNo") || id
   );
 }
 
-/**
- * 从 case slice 抽取业务编号 `caseNo`，去除两侧空白并把空白值视为缺失。
- *
- * BUG-128 / BUG-130：detail header 必须暴露原始业务编号给面包屑/列表行使用，
- * 不可与 `id` (UUID) 合并；`detail.id` 仍保留 UUID 用于 hover/复制等场景。
- *
- * @param caseRecord - case slice 记录
- * @returns 业务编号字符串；缺失或空白时返回 `undefined`
- */
 function extractCaseNo(
   caseRecord: Record<string, unknown>,
 ): string | undefined {
@@ -309,6 +311,31 @@ function buildValidationBlock(lv: Record<string, unknown> | null) {
   };
 }
 
+function buildTitleFallbackParts(
+  id: string,
+  caseNo: string | undefined,
+  caseRecord: Record<string, unknown>,
+  deepLink: Record<string, unknown> | null,
+) {
+  return {
+    applicant: dlStr(deepLink, "customerName"),
+    caseTypeCode: readString(caseRecord, "caseTypeCode"),
+    caseNo,
+    id,
+  };
+}
+
+function buildHeaderBillingMeta(m: DerivedMetrics) {
+  return {
+    billingAmount: m.quotePrice ? `¥${m.quotePrice.toLocaleString()}` : "—",
+    billingMeta: formatYen(m.unpaidAmount) || "",
+    billingMetaKey: m.unpaidAmount > 0 ? "cases.detail.unpaidLabel" : "",
+    billingMetaParams:
+      m.unpaidAmount > 0 ? { amount: formatYen(m.unpaidAmount) } : undefined,
+    billingStatusKey: m.unpaidAmount > 0 ? "unpaid" : "paid",
+  };
+}
+
 function buildDetailHeader(
   id: string,
   stageId: CaseStageId,
@@ -319,10 +346,17 @@ function buildDetailHeader(
 ) {
   const dKey = "cases.detail.overview.deadlineMeta";
   const fDue = dueAt ? formatDate(dueAt) : "";
+  const caseNo = extractCaseNo(caseRecord);
   return {
     id,
-    caseNo: extractCaseNo(caseRecord),
+    caseNo,
     title: resolveTitle(caseRecord, id),
+    titleFallbackParts: buildTitleFallbackParts(
+      id,
+      caseNo,
+      caseRecord,
+      deepLink,
+    ),
     client: dlStr(deepLink, "customerName"),
     owner: dlStr(deepLink, "ownerDisplayName"),
     agency: "",
@@ -336,12 +370,7 @@ function buildDetailHeader(
     deadlineDanger: isDeadlineDanger(dueAt),
     progressPercent: m.progressPercent,
     progressCount: `${m.docDone}/${m.docTotal}`,
-    billingAmount: m.quotePrice ? `¥${m.quotePrice.toLocaleString()}` : "—",
-    billingMeta: formatYen(m.unpaidAmount) || "",
-    billingMetaKey: m.unpaidAmount > 0 ? "cases.detail.unpaidLabel" : "",
-    billingMetaParams:
-      m.unpaidAmount > 0 ? { amount: formatYen(m.unpaidAmount) } : undefined,
-    billingStatusKey: m.unpaidAmount > 0 ? "unpaid" : "paid",
+    ...buildHeaderBillingMeta(m),
     docsCounter: `${m.docDone}/${m.docTotal}`,
     readonly: stageId === "S9",
     customerId: dlStr(deepLink, "customerId"),
@@ -366,63 +395,37 @@ function buildDetailHeader(
   };
 }
 
-// ─── Team from deep-link (R27-R) ─────────────────────────────────
-
-const TEAM_GRADIENT_OWNER = "from-[var(--primary)] to-[var(--primary-hover)]";
-const TEAM_GRADIENT_ASSISTANT = "from-[var(--success)] to-[#28a745]";
-
-function deriveInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase() || "??";
-}
-
-/**
- * deep-link 数据中提取 owner / assistant 组装为 TeamMember 列表。
- *
- * @param dl - deep-link 原始数据对象，为 null 时返回空数组。
- * @returns 提取到的团队成员列表。
- */
-export function buildTeamFromDeepLink(
-  dl: Record<string, unknown> | null,
-): import("../types-detail").TeamMember[] {
-  if (!dl) return [];
-  const ownerName = readString(dl, "ownerDisplayName");
-  const assistantName = readNullableString(dl, "assistantDisplayName");
-
-  const members: import("../types-detail").TeamMember[] = [];
-
-  if (ownerName) {
-    members.push({
-      initials: deriveInitials(ownerName),
-      name: ownerName,
-      role: "cases.detail.overview.sidebar.teamRoleOwner",
-      subtitle: "",
-      gradient: TEAM_GRADIENT_OWNER,
-    });
-  }
-
-  if (assistantName) {
-    members.push({
-      initials: deriveInitials(assistantName),
-      name: assistantName,
-      role: "cases.detail.overview.sidebar.teamRoleAssistant",
-      subtitle: "",
-      gradient: TEAM_GRADIENT_ASSISTANT,
-    });
-  }
-
-  return members;
-}
-
 function resolveClosedAt(caseRecord: Record<string, unknown>): string {
   return readNullableString(caseRecord, "archivedAt") ?? "";
 }
 
-// ─── Detail assembly (extracted to stay under max-lines-per-function) ─────
+function buildP1WithGuards(
+  caseRecord: Record<string, unknown>,
+  slices: AggregateSlices,
+  m: DerivedMetrics,
+  stageId: CaseStageId,
+) {
+  const p1 = buildP1Fields(
+    caseRecord,
+    slices,
+    m,
+    slices.failureCloseoutCheck,
+    stageId,
+  );
+  const isBmv = p1.workflowStep != null || p1.visaPlan != null;
+  const bp = readString(caseRecord, "businessPhase");
+  return {
+    ...p1,
+    transitionGuards: buildTransitionGuards(
+      bp,
+      m.unpaidAmount,
+      m.billingRiskAck,
+      isBmv,
+    ),
+  };
+}
 
+// ─── Detail assembly ─────────────────────────────────────────────
 function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
   const { caseRecord, deepLink, billing, latestValidation, latestReview } =
     slices;
@@ -430,7 +433,6 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
   const stageId = resolveStageId(readString(caseRecord, "stage"));
   const dueAt = readNullableString(caseRecord, "dueAt");
   const vh = buildValidationHint(m.blockingCount, m.warningCount);
-
   return {
     ...buildDetailHeader(id, stageId, dueAt, m, caseRecord, deepLink),
     providerProgress: adaptProviderProgress(slices.providerProgressRaw),
@@ -439,6 +441,7 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
       m.unpaidAmount,
       latestValidation,
       latestReview,
+      dueAt,
     ),
     nextAction: "",
     validationHint: "",
@@ -456,13 +459,7 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
     ),
     ...EMPTY_LISTS,
     team: buildTeamFromDeepLink(deepLink),
-    ...buildP1Fields(
-      caseRecord,
-      slices,
-      m,
-      slices.failureCloseoutCheck,
-      stageId,
-    ),
+    ...buildP1WithGuards(caseRecord, slices, m, stageId),
     closeReason: readNullableString(caseRecord, "closeReason"),
     closedAt: resolveClosedAt(caseRecord),
     closedBy: deepLink
@@ -472,7 +469,6 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
 }
 
 // ─── Public adapter ──────────────────────────────────────────────
-
 /**
  * 将聚合 DTO 适配为客户端详情模型。
  *
@@ -493,3 +489,6 @@ export function adaptCaseDetailAggregate(
     ...buildDeepLinkFields(slices.deepLink),
   };
 }
+
+export { buildTeamFromDeepLink } from "./CaseAdapterTeam";
+export { buildTransitionGuards } from "./CaseAdapterTransitionGuards";

@@ -240,12 +240,11 @@ function chipClass(item: DeadlineItem): string {
 
 .deadlines-tab__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
-
-/* ── Summaries ─────────────────────────────────────────── */
 
 .deadlines-tab__summaries {
   display: grid;
@@ -298,7 +297,7 @@ function chipClass(item: DeadlineItem): string {
 
 .deadlines-tab__summary-chip--warning {
   background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .deadlines-tab__summary-chip--primary {
@@ -427,7 +426,8 @@ function chipClass(item: DeadlineItem): string {
 }
 
 .deadlines-tab__item-title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -483,7 +483,7 @@ function chipClass(item: DeadlineItem): string {
 
 .deadlines-tab__remaining--warning {
   background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .deadlines-tab__remaining--primary {

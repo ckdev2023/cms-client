@@ -365,7 +365,7 @@ function handleClose() {
 .pm-body__error {
   padding: 12px 16px;
   font-size: var(--font-size-sm);
-  color: #991b1b;
+  color: var(--color-danger-text);
   background: rgba(220, 38, 38, 0.06);
   border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);
@@ -420,7 +420,7 @@ function handleClose() {
 
 .pm-field__warning {
   font-size: var(--font-size-xs);
-  color: #92400e;
+  color: var(--color-warning-text);
   background: rgba(245, 158, 11, 0.1);
   border-radius: var(--radius-md);
   padding: 8px 12px;
@@ -430,7 +430,7 @@ function handleClose() {
 
 .pm-field__error {
   font-size: var(--font-size-xs);
-  color: #991b1b;
+  color: var(--color-danger-text);
   margin-top: 4px;
   font-weight: var(--font-weight-semibold);
 }

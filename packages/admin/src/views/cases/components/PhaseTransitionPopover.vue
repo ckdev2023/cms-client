@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
+import type { TransitionGuardReason } from "../types-detail";
 import Button from "../../../shared/ui/Button.vue";
+import {
+  CANCEL_REASON_PRESETS,
+  isTargetDisabled as _isDisabled,
+  guardTooltip as _guardTooltip,
+} from "./phaseTransitionPopoverHelpers";
 
 /** 业务阶段流转弹窗：选择目标阶段并提交流转请求。 */
 const { t, te } = useI18n();
@@ -10,6 +16,7 @@ interface PhaseTransitionPopoverProps {
   menuOpen?: boolean;
   currentPhase?: string | null;
   availableTargets?: readonly string[];
+  transitionGuards?: Record<string, TransitionGuardReason>;
   submitting?: boolean;
   errorMessage?: string | null;
   errorCode?: string | null;
@@ -19,10 +26,30 @@ const props = withDefaults(defineProps<PhaseTransitionPopoverProps>(), {
   menuOpen: false,
   currentPhase: null,
   availableTargets: () => [],
+  transitionGuards: () => ({}),
   submitting: false,
   errorMessage: null,
   errorCode: null,
 });
+
+/**
+ * 目标阶段是否被门禁阻断。
+ *
+ * @param target - 目标阶段代码
+ * @returns 是否被阻断
+ */
+function isDisabled(target: string): boolean {
+  return _isDisabled(props.transitionGuards, target);
+}
+/**
+ * 返回门禁阻断的翻译文案。
+ *
+ * @param target - 目标阶段代码
+ * @returns 翻译后的提示文案
+ */
+function tooltip(target: string): string | undefined {
+  return _guardTooltip(props.transitionGuards, target, t);
+}
 
 const localizedError = computed(() => {
   if (!props.errorCode && !props.errorMessage) return null;
@@ -76,13 +103,6 @@ const needsCloseReason = computed(
   () => selectedPhase.value === "CLOSED_FAILED",
 );
 
-const cancelReasonPresets = [
-  "MID_CASE_WITHDRAWAL",
-  "CLIENT_LOST_CONTACT",
-  "SWITCHED_TO_OTHER_FIRM",
-  "OTHER",
-] as const;
-
 const selectedPreset = ref<string | null>(null);
 
 /**
@@ -106,6 +126,7 @@ function selectCancelPreset(code: string): void {
  * @param phase - 目标阶段代码
  */
 function selectPhase(phase: string): void {
+  if (isDisabled(phase)) return;
   selectedPhase.value = phase;
   closeReason.value = "";
   selectedPreset.value = null;
@@ -115,6 +136,7 @@ function selectPhase(phase: string): void {
 /** 校验并提交阶段流转。 */
 function handleSubmit(): void {
   if (!selectedPhase.value || props.submitting) return;
+  if (isDisabled(selectedPhase.value)) return;
 
   if (needsCloseReason.value && !selectedPreset.value) {
     validationError.value = t("cases.detail.phaseMenu.closeReasonRequired");
@@ -214,11 +236,14 @@ function handleClose(): void {
               v-for="target in props.availableTargets"
               :key="target"
               role="option"
-              tabindex="0"
+              :tabindex="isDisabled(target) ? -1 : 0"
               :aria-selected="selectedPhase === target"
+              :aria-disabled="isDisabled(target) || undefined"
+              :title="tooltip(target)"
               :class="[
                 'phase-popover__item',
                 { 'phase-popover__item--selected': selectedPhase === target },
+                { 'phase-popover__item--disabled': isDisabled(target) },
               ]"
               data-testid="phase-target-item"
               @click="selectPhase(target)"
@@ -233,6 +258,13 @@ function handleClose(): void {
                     })
                   : t("cases.constants.phases." + target)
               }}
+              <span
+                v-if="isDisabled(target)"
+                class="phase-popover__guard-hint"
+                data-testid="phase-guard-hint"
+              >
+                {{ tooltip(target) }}
+              </span>
             </li>
           </ul>
 
@@ -242,7 +274,7 @@ function handleClose(): void {
               data-testid="cancel-reason-presets"
             >
               <button
-                v-for="code in cancelReasonPresets"
+                v-for="code in CANCEL_REASON_PRESETS"
                 :key="code"
                 type="button"
                 :class="[
@@ -313,188 +345,4 @@ function handleClose(): void {
   </Teleport>
 </template>
 
-<style scoped>
-.phase-popover-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.phase-popover {
-  width: 100%;
-  max-width: 400px;
-  background: var(--color-bg-1, #fff);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-  display: flex;
-  flex-direction: column;
-}
-
-.phase-popover__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  padding: 20px 24px 0;
-}
-
-.phase-popover__title {
-  margin: 0;
-  font-size: var(--font-size-lg, 18px);
-  font-weight: var(--font-weight-bold, 700);
-  color: var(--color-text-1);
-}
-
-.phase-popover__subtitle {
-  margin: 4px 0 0;
-  font-size: var(--font-size-sm, 14px);
-  font-weight: var(--font-weight-normal, 400);
-  color: var(--color-text-3);
-}
-
-.phase-popover__close-btn {
-  border: none;
-  background: none;
-  cursor: pointer;
-  padding: 4px;
-  color: var(--color-text-3);
-  border-radius: var(--radius-md);
-  &:hover {
-    background: var(--color-bg-3);
-  }
-}
-
-.phase-popover__body {
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.phase-popover__empty {
-  color: var(--color-text-3);
-  font-size: var(--font-size-sm, 14px);
-  text-align: center;
-  padding: 12px 0;
-}
-
-.phase-popover__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.phase-popover__item {
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm, 14px);
-  color: var(--color-text-1);
-  cursor: pointer;
-  transition: background 0.15s;
-  &:hover {
-    background: var(--color-bg-3);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--color-primary-6, #3b82f6);
-  }
-  &--selected {
-    background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
-    color: var(--color-primary-6);
-    font-weight: var(--font-weight-semibold, 600);
-  }
-}
-
-.phase-popover__close-reason {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.phase-popover__presets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.phase-popover__preset-chip {
-  padding: 4px 12px;
-  border: 1px solid var(--color-border-1);
-  border-radius: 999px;
-  background: var(--color-bg-1, #fff);
-  font: inherit;
-  font-size: var(--font-size-xs, 12px);
-  color: var(--color-text-2);
-  cursor: pointer;
-  transition: all 0.15s;
-  &:hover:not(:disabled) {
-    border-color: var(--color-primary-6);
-    color: var(--color-primary-6);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-  &--active {
-    background: rgba(var(--color-primary-6-rgb, 59 130 246), 0.1);
-    border-color: var(--color-primary-6);
-    color: var(--color-primary-6);
-    font-weight: var(--font-weight-semibold, 600);
-  }
-}
-
-.phase-popover__label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: var(--font-size-sm, 14px);
-  font-weight: var(--font-weight-semibold, 600);
-  color: var(--color-text-2);
-}
-
-.phase-popover__input {
-  padding: 8px 12px;
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-md);
-  font: inherit;
-  font-size: var(--font-size-sm, 14px);
-  color: var(--color-text-1);
-  background: var(--color-bg-1, #fff);
-  &:focus {
-    outline: none;
-    border-color: var(--color-primary-6);
-    box-shadow: 0 0 0 2px rgba(var(--color-primary-6-rgb, 59 130 246), 0.15);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-}
-
-.phase-popover__validation-error {
-  margin: 0;
-  font-size: var(--font-size-xs, 12px);
-  color: var(--color-danger, #dc2626);
-}
-
-.phase-popover__error {
-  margin: 0;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  background: rgba(220, 38, 38, 0.06);
-  font-size: var(--font-size-sm, 14px);
-  color: #991b1b;
-}
-
-.phase-popover__footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding: 0 24px 20px;
-}
-</style>
+<style scoped src="./PhaseTransitionPopover.css"></style>

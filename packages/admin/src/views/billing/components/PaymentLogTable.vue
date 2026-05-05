@@ -397,11 +397,11 @@ function isInactive(entry: PaymentLogEntry): boolean {
 }
 
 .payment-log__action--void:hover {
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .payment-log__action--reverse:hover {
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .payment-log__action-sep {
@@ -417,7 +417,8 @@ function isInactive(entry: PaymentLogEntry): boolean {
 }
 
 .payment-log__empty-title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   margin: 0 0 4px;

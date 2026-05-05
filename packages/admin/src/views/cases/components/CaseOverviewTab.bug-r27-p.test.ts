@@ -25,7 +25,10 @@ function makeI18n(locale: Locale) {
 }
 
 describe("R27-P: terminal refund button placeholder", () => {
-  const src = readFileSync(resolve(__dirname, "CaseOverviewTab.vue"), "utf-8");
+  const src = readFileSync(
+    resolve(__dirname, "CaseOverviewNextAction.vue"),
+    "utf-8",
+  );
 
   it("refund button is disabled when businessPhase !== CLOSED_SUCCESS", () => {
     expect(src).toContain(

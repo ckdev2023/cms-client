@@ -39,6 +39,7 @@ const CHIP_TONE_MAP: Record<string, ChipTone> = {
  * @returns 对应的背景颜色值。
  */
 function dotBg(entry: LogEntry): string {
+  if (entry.synthesized) return "var(--color-border-2)";
   return entry.dotColor || "var(--color-border-2)";
 }
 
@@ -108,7 +109,10 @@ function resolveEntryText(entry: LogEntry): string {
         <div
           v-for="(entry, i) in filteredEntries"
           :key="i"
-          class="log-tab__entry"
+          :class="[
+            'log-tab__entry',
+            { 'log-tab__entry--synthesized': !!entry.synthesized },
+          ]"
         >
           <span
             class="log-tab__dot"
@@ -124,6 +128,15 @@ function resolveEntryText(entry: LogEntry): string {
                 <div class="log-tab__entry-info">
                   <p class="log-tab__entry-text">
                     {{ resolveEntryText(entry) }}
+                    <Chip
+                      v-if="entry.synthesized"
+                      tone="neutral"
+                      size="micro"
+                      class="log-tab__synthesized-chip"
+                      data-testid="log-synthesized-chip"
+                    >
+                      {{ t("cases.log.timeline.synthesizedHint") }}
+                    </Chip>
                   </p>
                   <div class="log-tab__entry-meta">
                     <Chip :tone="chipTone(entry)">
@@ -184,7 +197,8 @@ function resolveEntryText(entry: LogEntry): string {
 
 .log-tab__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -327,6 +341,18 @@ function resolveEntryText(entry: LogEntry): string {
   color: var(--color-text-3);
   white-space: nowrap;
   flex-shrink: 0;
+}
+
+/* ── Synthesized / data-repair visual distinction ─────── */
+
+.log-tab__entry--synthesized {
+  opacity: 0.7;
+  background-color: var(--color-bg-2, #fbfbfd);
+}
+
+.log-tab__synthesized-chip {
+  margin-left: 6px;
+  vertical-align: middle;
 }
 
 /* ── Empty state ─────────────────────────────────────── */

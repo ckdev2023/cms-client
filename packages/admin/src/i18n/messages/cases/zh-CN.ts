@@ -294,6 +294,10 @@ const casesZhCN = {
         CASE_WAITING_PAYMENT_BILLING_REQUIRED:
           "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段",
       },
+      guards: {
+        successCloseoutBlocked:
+          "存在 {amount} 未收余款且未登记欠款风险确认，请先到「提交前检查」登记或到「收费」结清尾款",
+      },
     },
     terminalStage: {
       label: "已结案",
@@ -352,7 +356,7 @@ const casesZhCN = {
       },
       billingGuard: {
         waitingPaymentEmpty:
-          "需先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段",
+          "该案已进入待尾款阶段，但尚未登记任何回款。请到「收费」Tab 登记尾款",
         noBillingRecord: "财务状况未登记，建议在收费 Tab 补录",
       },
       timeline: {
@@ -1015,6 +1019,11 @@ const casesZhCN = {
       submissionPackageUpdated: "提交包已更新",
       generatedDocumentCreated: "文书生成：{suffix}",
       reminderCreated: "提醒创建：{suffix}",
+      caseTransitioned: "案件流转：{from} → {to}（{phase}）",
+      residencePeriodCreated: "在留期间登记：{suffix}",
+      synthesizedHint: "数据修复",
+      trackBusinessPhase: "业务阶段",
+      trackStage: "办案阶段",
     },
   },
   validation: {

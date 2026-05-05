@@ -59,6 +59,12 @@ function buildWorkSample(): CaseDetail {
   return {
     id: "CAS-2026-0142",
     title: "就労ビザ更新（技術・人文知識・国際業務）",
+    titleFallbackParts: {
+      applicant: "株式会社BlueWave",
+      caseTypeCode: "work_visa_renewal",
+      caseNo: "CASE-0142",
+      id: "CAS-2026-0142",
+    },
     client: "株式会社BlueWave",
     owner: "Suzuki",
     agency: "东京入国管理局（品川）",
@@ -862,6 +868,12 @@ function buildFamilySample(): CaseDetail {
   return {
     id: "CAS-2026-0156",
     title: "家族滞在（认定）- 陈 麗華",
+    titleFallbackParts: {
+      applicant: "陈 麗華",
+      caseTypeCode: "family_stay",
+      caseNo: "CASE-0156",
+      id: "CAS-2026-0156",
+    },
     client: "陈 麗華",
     owner: "Tanaka",
     agency: "东京入国管理局（品川）",
@@ -1316,6 +1328,12 @@ function buildGateFailSample(): CaseDetail {
   return {
     id: "CAS-2026-0117",
     title: "特定技能（认定）- Global Tech KK",
+    titleFallbackParts: {
+      applicant: "Global Tech KK",
+      caseTypeCode: "specific_skills",
+      caseNo: "CASE-0117",
+      id: "CAS-2026-0117",
+    },
     client: "Global Tech KK",
     owner: "Tom",
     agency: "大阪入国管理局",
@@ -1745,6 +1763,12 @@ function buildArrearsSample(): CaseDetail {
   return {
     id: "CAS-2026-0099",
     title: "高度人才（更新）- 田中建设株式会社",
+    titleFallbackParts: {
+      applicant: "田中建设株式会社",
+      caseTypeCode: "highly_skilled",
+      caseNo: "CASE-0099",
+      id: "CAS-2026-0099",
+    },
     client: "田中建设株式会社",
     owner: "Rina",
     agency: "东京入国管理局（品川）",
@@ -2170,6 +2194,12 @@ function buildCorrectionSample(): CaseDetail {
   return {
     id: "CAS-2026-0132",
     title: "家族滞在（更新）- Chen Li（配偶）",
+    titleFallbackParts: {
+      applicant: "Chen Li",
+      caseTypeCode: "family_stay",
+      caseNo: "CASE-0132",
+      id: "CAS-2026-0132",
+    },
     client: "Chen Li",
     owner: "Aki",
     agency: "东京入国管理局（品川）",
@@ -2583,6 +2613,12 @@ function buildArchivedSample(): CaseDetail {
   return {
     id: "CAS-2025-0891",
     title: "就労ビザ更新（技人国）- 山田 太郎",
+    titleFallbackParts: {
+      applicant: "株式会社ABC",
+      caseTypeCode: "work_visa_renewal",
+      caseNo: "CASE-0891",
+      id: "CAS-2025-0891",
+    },
     client: "株式会社ABC",
     owner: "Suzuki",
     agency: "东京入国管理局（品川）",

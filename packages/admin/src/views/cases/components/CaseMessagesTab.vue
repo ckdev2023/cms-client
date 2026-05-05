@@ -442,8 +442,8 @@ function avatarColor(style: string): string {
 }
 .messages-tab__filter-title {
   margin: 0;
-  font-size: 15px;
-  font-weight: var(--font-weight-bold);
+  font: var(--font-weight-bold) var(--font-size-md) / var(--leading-md)
+    var(--font-family);
   color: var(--color-text-1);
 }
 .messages-tab__filter-reset {

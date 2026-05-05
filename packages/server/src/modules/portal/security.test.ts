@@ -144,10 +144,10 @@ void test("P1-4: UserDocumentsController.remove checks ownership", () => {
 /* ================================================================ */
 
 void test("P2: CasesService has ALLOWED_ASSERT_TABLES whitelist", () => {
-  const src = readSource("../core/cases/cases.service.ts");
+  const src = readSource("../core/cases/cases.service.refs-resolver.ts");
   assert.ok(
     src.includes("ALLOWED_ASSERT_TABLES"),
-    "CasesService must define ALLOWED_ASSERT_TABLES whitelist",
+    "CasesService refs-resolver must define ALLOWED_ASSERT_TABLES whitelist",
   );
   assert.ok(
     src.includes('"customers"') && src.includes('"users"'),
@@ -156,7 +156,7 @@ void test("P2: CasesService has ALLOWED_ASSERT_TABLES whitelist", () => {
 });
 
 void test("P2: assertBelongsToOrg validates table against whitelist", () => {
-  const src = readSource("../core/cases/cases.service.ts");
+  const src = readSource("../core/cases/cases.service.refs-resolver.ts");
   const fnSection = src.slice(src.indexOf("assertBelongsToOrg("));
   assert.ok(
     fnSection.includes("ALLOWED_ASSERT_TABLES.has(table)"),

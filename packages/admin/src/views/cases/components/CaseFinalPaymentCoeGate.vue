@@ -322,7 +322,8 @@ function cancelConfirm(): void {
   color: var(--color-text-2);
 }
 .fpg__title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -342,7 +343,7 @@ function cancelConfirm(): void {
 }
 .fpg__gate-badge--blocked {
   background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  color: var(--color-danger-text);
   border: 1px solid rgba(220, 38, 38, 0.18);
 }
 
@@ -395,12 +396,12 @@ function cancelConfirm(): void {
 .fpg__status-text--warning {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 .fpg__status-text--danger {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .fpg__outstanding-amount {
   font-size: var(--font-size-xs);
@@ -428,7 +429,7 @@ function cancelConfirm(): void {
   gap: 8px;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .fpg__blocker-item svg {
   flex-shrink: 0;
@@ -447,7 +448,7 @@ function cancelConfirm(): void {
   border-radius: var(--radius-md);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .fpg__error-banner svg {
   flex-shrink: 0;
@@ -478,7 +479,8 @@ function cancelConfirm(): void {
 }
 .fpg__confirm-title {
   margin: 0 0 6px;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

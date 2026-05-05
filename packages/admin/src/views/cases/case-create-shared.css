@@ -1,13 +1,15 @@
 .cc__title {
   margin: 0 0 16px;
   font-size: var(--font-size-xl);
+  line-height: var(--leading-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
 
 .cc__subtitle {
   margin: 20px 0 8px;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -201,7 +203,7 @@
 }
 
 .cc__footer-gate-warn {
-  color: #92400e;
+  color: var(--color-warning-text);
   font-weight: var(--font-weight-bold);
 }
 
@@ -218,18 +220,18 @@
   gap: 8px;
   margin-bottom: 8px;
   font-size: var(--font-size-base);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .cc__gate-banner-icon {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
   line-height: var(--leading-display);
 }
 
 .cc__gate-banner-desc {
   margin: 0 0 12px;
   font-size: var(--font-size-sm);
-  color: #78350f;
+  color: var(--color-warning-text-strong);
 }
 
 .cc__gate-banner-list {
@@ -241,7 +243,7 @@
 .cc__gate-banner-item {
   margin-bottom: 6px;
   font-size: var(--font-size-sm);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .cc__gate-banner-recovery {

@@ -304,8 +304,9 @@ const {
 .lead-detail-view__dedup-title {
   margin: 0 0 8px;
   font-size: var(--font-size-xl);
+  line-height: var(--leading-xl);
   font-weight: var(--font-weight-semibold);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .lead-detail-view__dedup-desc {

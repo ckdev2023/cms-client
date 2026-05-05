@@ -271,7 +271,8 @@ function teamGradient(member: TeamMember): string {
 
 .overview-sidebar__section-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -330,8 +331,9 @@ function teamGradient(member: TeamMember): string {
 
 .overview-sidebar__team-role-chip {
   display: inline-flex;
-  padding: 1px 6px;
-  font-size: 10px;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-full);
   background: var(--color-bg-3);
@@ -367,7 +369,8 @@ function teamGradient(member: TeamMember): string {
 
 .overview-sidebar__validation-hint-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

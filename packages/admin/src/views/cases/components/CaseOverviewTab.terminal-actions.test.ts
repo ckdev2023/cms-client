@@ -18,7 +18,10 @@ function makeI18n(locale: Locale) {
   return createI18n({ legacy: false, locale, messages: FULL_MESSAGES });
 }
 
-const src = readFileSync(resolve(__dirname, "CaseOverviewTab.vue"), "utf-8");
+const src = readFileSync(
+  resolve(__dirname, "CaseOverviewNextAction.vue"),
+  "utf-8",
+);
 
 describe("CaseOverviewTab terminal-actions", () => {
   describe("terminal-view-billing button (refund / billing)", () => {

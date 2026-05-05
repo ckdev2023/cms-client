@@ -205,7 +205,8 @@ function toneClass(tone: string): string {
   color: var(--color-text-2);
 }
 .supplement-panel__title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -236,12 +237,12 @@ function toneClass(tone: string): string {
 }
 .supplement-panel__status-badge--danger {
   background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  color: var(--color-danger-text);
   border: 1px solid rgba(220, 38, 38, 0.18);
 }
 .supplement-panel__status-badge--warning {
   background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: var(--color-warning-text);
   border: 1px solid rgba(245, 158, 11, 0.18);
 }
 .supplement-panel__status-badge--primary {
@@ -318,12 +319,13 @@ function toneClass(tone: string): string {
 .supplement-panel__urgent-tag {
   display: inline-flex;
   margin-left: 6px;
-  padding: 1px 6px;
-  font-size: 10px;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-full);
   background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  color: var(--color-danger-text);
   vertical-align: middle;
 }
 

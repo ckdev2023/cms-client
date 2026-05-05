@@ -169,7 +169,8 @@ defineProps<{
 }
 
 .tpl__name {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }

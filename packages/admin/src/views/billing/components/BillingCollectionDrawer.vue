@@ -258,12 +258,12 @@ function skipReasonLabel(detail: CollectionResultDetail): string {
 
 .drawer__badge--skip {
   background: var(--color-orange-bg, #fffbeb);
-  color: var(--color-orange-text, #92400e);
+  color: var(--color-warning-text);
 }
 
 .drawer__badge--fail {
   background: var(--color-red-bg, #fef2f2);
-  color: var(--color-red-text, #991b1b);
+  color: var(--color-danger-text);
 }
 
 .drawer__list {
@@ -290,11 +290,11 @@ function skipReasonLabel(detail: CollectionResultDetail): string {
 }
 
 .drawer__item--skip {
-  color: var(--color-orange-text, #92400e);
+  color: var(--color-warning-text);
 }
 
 .drawer__item--fail {
-  color: var(--color-red-text, #991b1b);
+  color: var(--color-danger-text);
 }
 
 .drawer__case-no {

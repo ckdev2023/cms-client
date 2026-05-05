@@ -70,7 +70,7 @@ const { t } = useI18n();
 }
 
 .case-summary-cards__item--info .case-summary-cards__value {
-  color: var(--color-info, #0284c7);
+  color: var(--color-info-text);
 }
 
 .case-summary-cards__item--warning .case-summary-cards__value {

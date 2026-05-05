@@ -138,6 +138,7 @@ export const CASE_DETAIL_TAB_COUNTS_KEYS = [
 export const CASE_DETAIL_HEADER_FIELDS = [
   "id",
   "title",
+  "titleFallbackParts",
   "client",
   "owner",
   "agency",

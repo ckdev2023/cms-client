@@ -23,8 +23,16 @@ body,
   --color-warning-vivid: #ff9500;
   --color-danger: #dc2626;
   --color-danger-vivid: #ff3b30;
+  --color-success-text: #166534;
+  --color-success-text-strong: #14532d;
   --color-warning-text: #92400e;
   --color-warning-text-strong: #78350f;
+  --color-danger-text: #991b1b;
+  --color-danger-text-strong: #7f1d1d;
+  --color-info: #0284c7;
+  --color-info-6: #0284c7;
+  --color-info-text: #075985;
+  --color-info-text-strong: #0c4a6e;
 
   /* --- Color: Text --- */
   --color-text-1: #0f172a;

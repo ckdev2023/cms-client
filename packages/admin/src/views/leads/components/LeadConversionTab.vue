@@ -262,13 +262,13 @@ const showActionCards = computed(
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .dedup-hit__message {
   margin: 4px 0 0;
   font-size: var(--font-size-xs);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .dedup-hit__match {

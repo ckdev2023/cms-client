@@ -198,9 +198,10 @@ function reasonI18nKey(code: string | null): string | null {
 
 .fc-banner__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .fc-banner__subtitle {
@@ -241,7 +242,7 @@ function reasonI18nKey(code: string | null): string | null {
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-bold);
   background: rgba(220, 38, 38, 0.08);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .fc-banner__status-chip {
@@ -254,7 +255,7 @@ function reasonI18nKey(code: string | null): string | null {
 
 .fc-banner__status-chip--ready {
   background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .fc-banner__status-chip--pending {
@@ -276,7 +277,7 @@ function reasonI18nKey(code: string | null): string | null {
   border: 1px solid rgba(220, 38, 38, 0.12);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .fc-banner__actions {

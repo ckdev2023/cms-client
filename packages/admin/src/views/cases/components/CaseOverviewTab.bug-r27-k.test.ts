@@ -25,7 +25,10 @@ function makeI18n(locale: Locale) {
 }
 
 describe("R27-K: overview runValidation button disabled sync", () => {
-  const src = readFileSync(resolve(__dirname, "CaseOverviewTab.vue"), "utf-8");
+  const src = readFileSync(
+    resolve(__dirname, "CaseOverviewNextAction.vue"),
+    "utf-8",
+  );
 
   it("canRunValidation prop is declared", () => {
     expect(src).toContain("canRunValidation");

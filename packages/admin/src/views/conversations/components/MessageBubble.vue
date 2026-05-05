@@ -158,7 +158,7 @@ defineEmits<{
 }
 
 .message-bubble__link-placeholder {
-  color: var(--color-primary-6, #2563eb);
+  color: var(--color-primary-6);
   font-style: italic;
 }
 
@@ -172,7 +172,7 @@ defineEmits<{
 }
 
 .message-bubble__translation-hint {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-text-3, #6b7280);
   font-style: italic;
 }
@@ -181,21 +181,21 @@ defineEmits<{
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: var(--color-danger, #ef4444);
 }
 
 .message-bubble__retry-btn {
   background: none;
   border: none;
-  color: var(--color-primary-6, #2563eb);
+  color: var(--color-primary-6);
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   text-decoration: underline;
   padding: 0;
 }
 
 .message-bubble__retry-btn:hover {
-  color: var(--color-primary-7, #1d4ed8);
+  color: var(--color-primary-7);
 }
 </style>

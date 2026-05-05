@@ -308,6 +308,10 @@ const casesEnUS = {
         CASE_WAITING_PAYMENT_BILLING_REQUIRED:
           "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment",
       },
+      guards: {
+        successCloseoutBlocked:
+          "Outstanding balance of {amount} with unacknowledged billing risk. Please register in Pre-submission Check or settle in Billing",
+      },
     },
     terminalStage: {
       label: "Closed",
@@ -367,7 +371,7 @@ const casesEnUS = {
       },
       billingGuard: {
         waitingPaymentEmpty:
-          "Please add at least one billing record in the Billing tab before proceeding to Waiting Payment phase",
+          "This case has entered the Waiting Payment phase but no payment has been recorded yet. Please register payments in the Billing tab",
         noBillingRecord:
           "No billing records registered. Consider adding records in the Billing tab.",
       },
@@ -1071,6 +1075,11 @@ const casesEnUS = {
       submissionPackageUpdated: "Submission package updated",
       generatedDocumentCreated: "Document generated: {suffix}",
       reminderCreated: "Reminder created: {suffix}",
+      caseTransitioned: "Case transitioned: {from} → {to} ({phase})",
+      residencePeriodCreated: "Residence period recorded: {suffix}",
+      synthesizedHint: "Data repair",
+      trackBusinessPhase: "Business phase",
+      trackStage: "Management stage",
     },
   },
   validation: {

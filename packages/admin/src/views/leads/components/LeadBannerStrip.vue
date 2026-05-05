@@ -82,7 +82,7 @@ const { t } = useI18n();
 
 .banner--warning {
   background: #fffbeb;
-  color: #92400e;
+  color: var(--color-warning-text);
   border: 1px solid #fde68a;
 }
 

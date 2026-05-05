@@ -109,7 +109,7 @@ withDefaults(
 .ui-chip--success {
   background-color: rgba(22, 163, 74, 0.08);
   border-color: rgba(22, 163, 74, 0.18);
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 /* --- Tone: warning --- */
@@ -117,7 +117,7 @@ withDefaults(
 .ui-chip--warning {
   background-color: rgba(245, 158, 11, 0.08);
   border-color: rgba(245, 158, 11, 0.18);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 /* --- Tone: danger --- */
@@ -125,6 +125,6 @@ withDefaults(
 .ui-chip--danger {
   background-color: rgba(220, 38, 38, 0.07);
   border-color: rgba(220, 38, 38, 0.18);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 </style>

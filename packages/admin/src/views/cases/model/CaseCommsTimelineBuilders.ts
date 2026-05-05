@@ -199,6 +199,18 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
     key: "cases.log.timeline.reminderCreated",
     params: { suffix: pickFirst(p, ["label", "kind", "title"]) },
   }),
+  "case.transitioned": (p) => {
+    const base = buildStageChangeResult(p);
+    const phase = pickFirst(p, ["businessPhase", "business_phase"]);
+    return {
+      key: "cases.log.timeline.caseTransitioned",
+      params: { ...base.params, phase },
+    };
+  },
+  "residence_period.created": (p) => ({
+    key: "cases.log.timeline.residencePeriodCreated",
+    params: { suffix: pickFirst(p, ["kind", "type"]) },
+  }),
 };
 
 /**

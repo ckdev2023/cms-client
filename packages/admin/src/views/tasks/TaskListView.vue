@@ -434,7 +434,7 @@ onMounted(() => {
 
 .status-pill[data-tone="success"] {
   color: #fff;
-  background: #166534;
+  background: var(--color-success-text);
 }
 
 .status-pill[data-tone="warning"] {
@@ -444,7 +444,7 @@ onMounted(() => {
 
 .status-pill[data-tone="danger"] {
   color: #fff;
-  background: #991b1b;
+  background: var(--color-danger-text);
 }
 
 .status-pill[data-tone="info"] {
@@ -464,14 +464,14 @@ onMounted(() => {
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  color: #991b1b;
+  color: var(--color-danger-text);
   background: #fee2e2;
   border: 1px solid #fecaca;
   letter-spacing: 0.02em;
 }
 
 .task-row--overdue td:first-child {
-  box-shadow: inset 3px 0 0 0 #991b1b;
+  box-shadow: inset 3px 0 0 0 var(--color-danger-text);
 }
 
 @media (max-width: 720px) {

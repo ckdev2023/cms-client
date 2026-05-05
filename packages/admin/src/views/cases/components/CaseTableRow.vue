@@ -13,6 +13,7 @@ import {
   getCaseTypeI18nKey,
   BADGE_TONE_MAP,
 } from "../constants";
+import { buildFallbackName, isFallbackTitle } from "../model/caseTitleFallback";
 
 /** 案件列表行：展示案件摘要信息和操作入口。 */
 const { t, locale } = useI18n();
@@ -70,33 +71,9 @@ const typeLabel = computed(() => {
   return translated !== key ? translated : code;
 });
 
-/**
- * 名称为空时使用申请人与类型拼接兜底显示名。
- *
- * @param applicant - 申请人
- * @param typeLabel - 签证类型标签
- * @param caseNo - 案件编号
- * @param id - 案件 ID
- * @returns 兜底显示名
- */
-function buildFallbackName(
-  applicant: string | undefined,
-  typeLabel: string,
-  caseNo: string | undefined,
-  id: string,
-): string {
-  const app = applicant?.trim();
-  const label = typeLabel !== "—" ? typeLabel : "";
-  if (app && label) return `${app} · ${label}`;
-  if (app) return app;
-  if (label) return label;
-  return caseNo || id;
-}
-
 const displayName = computed(() => {
   const { name, caseNo, id } = props.item;
-  const isFallback = name === caseNo || name?.trim() === id;
-  if (!isFallback && name?.trim()) return name;
+  if (!isFallbackTitle(name, caseNo, id)) return name;
   return buildFallbackName(props.item.applicant, typeLabel.value, caseNo, id);
 });
 
@@ -342,7 +319,7 @@ const isFailureStep = computed(
 }
 
 .case-row__workflow-step--danger {
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .case-row__na {

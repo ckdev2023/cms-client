@@ -182,7 +182,7 @@ function onFieldInput(key: string, value: string) {
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-warning-title, #92400e);
+  color: var(--color-warning-text);
 }
 
 .storage-panel__warning-desc {

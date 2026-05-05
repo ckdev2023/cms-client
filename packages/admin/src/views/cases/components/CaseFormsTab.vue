@@ -218,8 +218,8 @@ function hasForms(detail: CaseDetail): boolean {
 
 .forms-tab__title {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }

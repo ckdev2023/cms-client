@@ -80,7 +80,7 @@ defineProps<{
 
 .closeout__banner--blocked {
   background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .closeout__list {

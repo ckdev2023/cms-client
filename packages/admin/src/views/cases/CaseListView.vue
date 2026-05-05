@@ -192,7 +192,7 @@ const paginationEnd = computed(() => {
   flex: 1;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-danger-text, #991b1b);
+  color: var(--color-danger-text);
 }
 
 .case-list-view__loading {

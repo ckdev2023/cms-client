@@ -199,8 +199,8 @@ function avatarBg(item: TaskItem): string {
 
 .tasks-tab__title {
   margin: 0;
-  font-size: 15px;
-  line-height: 1.4;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -316,7 +316,7 @@ function avatarBg(item: TaskItem): string {
 
 .tasks-tab__due--warning {
   background: rgba(245, 158, 11, 0.08);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .tasks-tab__due--muted {

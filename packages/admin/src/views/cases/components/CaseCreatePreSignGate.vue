@@ -131,12 +131,12 @@ const emit = defineEmits<{
 
 .psg__icon--passed {
   background: rgba(22, 163, 74, 0.1);
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .psg__icon--blocked {
   background: rgba(245, 158, 11, 0.1);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .psg__title-group {
@@ -146,7 +146,8 @@ const emit = defineEmits<{
 
 .psg__title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -158,11 +159,11 @@ const emit = defineEmits<{
 }
 
 .psg__status--passed {
-  color: #166534;
+  color: var(--color-success-text);
 }
 
 .psg__status--blocked {
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .psg__desc {
@@ -204,7 +205,7 @@ const emit = defineEmits<{
 .psg__blocker-label {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: #92400e;
+  color: var(--color-warning-text);
 }
 
 .psg__blocker-recovery {

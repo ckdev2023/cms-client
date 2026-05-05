@@ -36,7 +36,7 @@
   margin: 0;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-warning-title, #92400e);
+  color: var(--color-warning-text);
 }
 .docs-tab__gate-desc {
   margin: 4px 0 0;
@@ -96,7 +96,8 @@
 }
 
 .docs-tab__progress-title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -164,10 +165,10 @@
 
 .docs-tab__section-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
-  line-height: 1.4;
 }
 
 .docs-tab__global-progress {

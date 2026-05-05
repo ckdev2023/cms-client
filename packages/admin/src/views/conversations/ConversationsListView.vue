@@ -413,7 +413,8 @@ onMounted(() => {
 }
 
 .conv-list-view__empty h3 {
-  font-size: 16px;
+  font-size: var(--font-size-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--font-weight-medium, 500);
   color: var(--color-text-2, #4b5563);
   margin-bottom: 8px;

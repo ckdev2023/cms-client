@@ -261,7 +261,7 @@ watch(errorCode, (nextErrorCode) => {
 .dashboard-feedback[data-tone="danger"] {
   border-color: rgba(220, 38, 38, 0.16);
   background: rgba(254, 242, 242, 0.9);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 /* ── Responsive ────────────────────────────────────── */

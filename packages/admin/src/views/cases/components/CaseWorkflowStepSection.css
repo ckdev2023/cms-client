@@ -13,7 +13,8 @@
   color: var(--color-text-2);
 }
 .wf-section__title {
-  font-size: 15px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -53,7 +54,7 @@
 }
 .wf-section__current-badge--failed {
   background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  color: var(--color-danger-text);
   border-color: rgba(220, 38, 38, 0.18);
 }
 .wf-section__current-badge-icon {
@@ -120,7 +121,8 @@
 }
 .wf-section__stage-active-indicator {
   padding: 1px 6px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-full);
   background: rgba(var(--color-primary-rgb, 3, 105, 161), 0.1);
@@ -206,13 +208,14 @@
   opacity: 0.65;
 }
 .wf-section__step--failed .wf-section__step-label {
-  color: #991b1b;
+  color: var(--color-danger-text);
   font-weight: var(--font-weight-bold);
 }
 .wf-section__step-badge {
   flex-shrink: 0;
   padding: 1px 6px;
-  font-size: 10px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   border-radius: var(--radius-full);
   white-space: nowrap;
@@ -232,7 +235,7 @@
 }
 .wf-section__step-badge--failed {
   background: rgba(220, 38, 38, 0.1);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 .wf-section__supplement-count {
   flex-shrink: 0;
@@ -240,15 +243,15 @@
   align-items: center;
   justify-content: center;
   min-width: 22px;
-  height: 18px;
-  padding: 0 5px;
-  font-size: 10px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-semibold);
   border-radius: var(--radius-full);
   background: rgba(245, 158, 11, 0.12);
-  color: #92400e;
+  color: var(--color-warning-text);
   border: 1px solid rgba(245, 158, 11, 0.2);
-  line-height: var(--leading-display);
 }
 .wf-section__pulse-dot {
   display: block;

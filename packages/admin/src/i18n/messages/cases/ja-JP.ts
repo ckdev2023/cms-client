@@ -305,6 +305,10 @@ const casesJaJP = {
         CASE_WAITING_PAYMENT_BILLING_REQUIRED:
           "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください",
       },
+      guards: {
+        successCloseoutBlocked:
+          "未収残高 {amount} があり、請求リスク確認が未登録です。「提出前チェック」で登録するか、「請求」で残金を精算してください",
+      },
     },
     terminalStage: {
       label: "結案済み",
@@ -363,7 +367,7 @@ const casesJaJP = {
       },
       billingGuard: {
         waitingPaymentEmpty:
-          "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください",
+          "当該案件は入金待ちフェーズに入りましたが、入金記録がまだ登録されていません。「請求」タブで入金を登録してください",
         noBillingRecord:
           "請求情報が未登録です。請求タブでの登録をお勧めします。",
       },
@@ -1072,6 +1076,11 @@ const casesJaJP = {
       submissionPackageUpdated: "提出パッケージ更新",
       generatedDocumentCreated: "書類生成：{suffix}",
       reminderCreated: "リマインダー作成：{suffix}",
+      caseTransitioned: "案件遷移：{from} → {to}（{phase}）",
+      residencePeriodCreated: "在留期間登録：{suffix}",
+      synthesizedHint: "データ修復",
+      trackBusinessPhase: "業務フェーズ",
+      trackStage: "管理ステージ",
     },
   },
   validation: {

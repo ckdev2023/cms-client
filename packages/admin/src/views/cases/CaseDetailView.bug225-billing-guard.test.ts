@@ -9,7 +9,7 @@ import { resolve } from "node:path";
 import { createMockDetail } from "./model/useCaseDetailModel.test-support";
 
 describe("BUG-225: WAITING_PAYMENT billing guard", () => {
-  describe("isWaitingPaymentNoBilling detection logic", () => {
+  describe("isWaitingPaymentNoCollection detection logic", () => {
     it("true when businessPhase=WAITING_PAYMENT and payments empty", () => {
       const detail = createMockDetail({
         businessPhase: "WAITING_PAYMENT",
@@ -67,9 +67,9 @@ describe("BUG-225: WAITING_PAYMENT billing guard", () => {
     });
   });
 
-  describe("CaseOverviewTab template guard presence", () => {
+  describe("CaseOverviewStatCards template guard presence", () => {
     const src = readFileSync(
-      resolve(__dirname, "components/CaseOverviewTab.vue"),
+      resolve(__dirname, "components/CaseOverviewStatCards.vue"),
       "utf-8",
     );
 
@@ -83,8 +83,8 @@ describe("BUG-225: WAITING_PAYMENT billing guard", () => {
       );
     });
 
-    it("guards on isWaitingPaymentNoBilling", () => {
-      expect(src).toContain("isWaitingPaymentNoBilling");
+    it("guards on isWaitingPaymentNoCollection", () => {
+      expect(src).toContain("isWaitingPaymentNoCollection");
     });
   });
 

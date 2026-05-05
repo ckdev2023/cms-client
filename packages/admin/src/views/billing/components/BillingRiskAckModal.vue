@@ -245,7 +245,7 @@ function handleClose() {
 .ra-body__error {
   padding: 12px 16px;
   font-size: var(--font-size-sm);
-  color: #991b1b;
+  color: var(--color-danger-text);
   background: rgba(220, 38, 38, 0.06);
   border-radius: var(--radius-md);
   font-weight: var(--font-weight-semibold);

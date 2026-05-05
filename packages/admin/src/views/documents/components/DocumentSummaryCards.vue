@@ -163,7 +163,7 @@ defineProps<{
 }
 
 .doc-summary-card--info .doc-summary-card__label {
-  color: #2563eb;
+  color: var(--color-info-text);
 }
 
 .doc-summary-card--warning {

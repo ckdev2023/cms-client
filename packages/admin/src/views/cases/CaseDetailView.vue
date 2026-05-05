@@ -41,6 +41,8 @@ import {
   getStageI18nKey,
 } from "./constants";
 import { formatCaseIdentity } from "./caseIdentity";
+import { getCaseTypeI18nKey } from "./constants";
+import { buildFallbackName, isFallbackTitle } from "./model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
 
@@ -243,6 +245,17 @@ const phaseLabel = computed(() => {
   return key ? t(key) : detail.value.businessPhase;
 });
 
+const displayTitle = computed(() => {
+  const d = detail.value;
+  if (!d) return "";
+  const fp = d.titleFallbackParts;
+  if (!isFallbackTitle(d.title, fp.caseNo, fp.id)) return d.title;
+  const typeKey = getCaseTypeI18nKey(fp.caseTypeCode);
+  const typeLabel = typeKey ? t(typeKey) : "";
+  const translated = typeLabel && typeLabel !== typeKey ? typeLabel : "";
+  return buildFallbackName(fp.applicant, translated, fp.caseNo, fp.id);
+});
+
 const stageLabel = computed(() => {
   if (!detail.value) return "";
   const key = getStageI18nKey(detail.value.stageCode);
@@ -416,7 +429,7 @@ async function onFormGenSubmit(payload: {
   <div class="case-detail-view">
     <template v-if="detail">
       <PageHeader
-        :title="detail.title"
+        :title="displayTitle"
         :breadcrumbs="[
           { label: t('shell.nav.items.dashboard'), href: '#/' },
           { label: t('shell.nav.groups.business') },
@@ -825,6 +838,7 @@ async function onFormGenSubmit(payload: {
         :menu-open="phaseMenu.menuOpen.value"
         :current-phase="detail?.businessPhase ?? null"
         :available-targets="phaseMenu.availableTargets.value"
+        :transition-guards="detail?.transitionGuards ?? {}"
         :submitting="phaseMenu.submitting.value"
         :error-message="phaseMenu.errorMessage.value"
         :error-code="phaseMenu.errorCode.value"
@@ -910,7 +924,7 @@ async function onFormGenSubmit(payload: {
   border-radius: var(--radius-lg);
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
-  color: #991b1b;
+  color: var(--color-danger-text);
 }
 
 .case-detail-view__failure-banner svg {
@@ -971,11 +985,11 @@ async function onFormGenSubmit(payload: {
   color: #fff;
   &--warning {
     background: rgba(245, 158, 11, 0.16);
-    color: #92400e;
+    color: var(--color-warning-text);
   }
   &--danger {
     background: rgba(220, 38, 38, 0.1);
-    color: #991b1b;
+    color: var(--color-danger-text);
   }
 }
 
