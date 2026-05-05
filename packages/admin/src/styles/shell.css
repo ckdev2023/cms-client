@@ -537,6 +537,19 @@
   .topbar-actions {
     margin-inline-start: auto;
   }
+
+  /*
+   * 移动端 / 平板宽度下，AD 头像不再是顶栏最右侧元素（搜索框 order:10 后置），
+   * 若沿用 inset-inline-end:0 锚定头像，下拉面板会超出视口左边界。
+   * 改为相对视口右侧固定定位，避免左侧溢出（截图修复）。
+   */
+  .topbar-account-panel {
+    position: fixed;
+    inset-block-start: calc(var(--shell-topbar-height) + 8px);
+    inset-inline-end: 16px;
+    inset-inline-start: auto;
+    max-width: calc(100vw - 32px);
+  }
 }
 
 /* Arco Design overrides — unify border-radius with design tokens */
