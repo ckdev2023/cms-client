@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch, nextTick } from "vue";
+import { ref, watch, nextTick, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
+import type { FormTemplate } from "../types-detail";
 
 /** 生成文書弹窗：选择模板、填写标题和输出格式后提交生成。 */
 const { t } = useI18n();
@@ -10,6 +11,8 @@ interface CaseFormGenerateModalProps {
   open?: boolean;
   caseName?: string;
   submitting?: boolean;
+  templates?: FormTemplate[];
+  initialTemplateId?: string | null;
 }
 
 const props = defineProps<CaseFormGenerateModalProps>();
@@ -25,6 +28,10 @@ const backdropRef = ref<HTMLElement | null>(null);
 
 const localTitle = ref("");
 const localOutputFormat = ref("pdf");
+const localTemplateId = ref<string | null>(null);
+
+const resolvedTemplates = computed(() => props.templates ?? []);
+const hasTemplates = computed(() => resolvedTemplates.value.length > 0);
 
 watch(
   () => props.open,
@@ -32,6 +39,7 @@ watch(
     if (isOpen) {
       localTitle.value = props.caseName ?? "";
       localOutputFormat.value = "pdf";
+      localTemplateId.value = props.initialTemplateId ?? null;
       nextTick(() => backdropRef.value?.focus());
     }
   },
@@ -39,8 +47,9 @@ watch(
 );
 
 /**
- * 判断是否可以提交。
- * @returns 标题非空且非提交中时返回 true
+ * 提交可用性判定。
+ *
+ * @returns 标题非空且未提交中时为 `true`
  */
 function canSubmit(): boolean {
   return localTitle.value.trim().length > 0 && !props.submitting;
@@ -51,7 +60,7 @@ function handleSubmit(): void {
   if (!canSubmit()) return;
   emit("submit", {
     title: localTitle.value.trim(),
-    templateId: null,
+    templateId: localTemplateId.value,
     outputFormat: localOutputFormat.value,
   });
 }
@@ -111,17 +120,37 @@ function handleSubmit(): void {
               id="form-gen-templateId"
               name="templateId"
               class="form-gen-modal__select"
-              disabled
+              :disabled="props.submitting"
+              :value="localTemplateId ?? ''"
               data-testid="form-gen-template-select"
+              @change="
+                localTemplateId =
+                  ($event.target as HTMLSelectElement).value || null
+              "
             >
               <option value="">
                 {{
-                  t(
-                    "cases.detail.forms.generateModal.fields.templatePlaceholder",
-                  )
+                  hasTemplates
+                    ? t(
+                        "cases.detail.forms.generateModal.fields.templatePlaceholder",
+                      )
+                    : t("cases.detail.forms.generateModal.fields.templateEmpty")
                 }}
               </option>
+              <option
+                v-for="tpl in resolvedTemplates"
+                :key="tpl.id"
+                :value="tpl.id"
+              >
+                {{ tpl.name }}
+              </option>
             </select>
+            <p
+              class="form-gen-modal__hint"
+              data-testid="form-gen-optional-hint"
+            >
+              {{ t("cases.detail.forms.generateModal.fields.optionalHint") }}
+            </p>
           </label>
 
           <label class="form-gen-modal__field" for="form-gen-docTitle">
@@ -272,6 +301,12 @@ function handleSubmit(): void {
     opacity: 0.6;
     cursor: not-allowed;
   }
+}
+
+.form-gen-modal__hint {
+  margin: 2px 0 0;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-3);
 }
 
 .form-gen-modal__footer {

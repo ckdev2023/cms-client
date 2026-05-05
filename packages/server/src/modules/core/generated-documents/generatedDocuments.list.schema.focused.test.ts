@@ -156,3 +156,100 @@ void test("insertAndReturn (via create) selects u.name, not u.display_name", asy
     "INSERT CTE must NOT reference u.display_name",
   );
 });
+
+// ─── update (finalize) SQL schema assertions ─────────────────────
+
+void test("update (draft→final) SQL sets status and approved_by columns", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
+
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("from generated_documents") && sql.includes("limit 1")) {
+      return ok([makeGdRow({ status: "draft" })]);
+    }
+    if (sql.includes("gen_u.name")) {
+      return ok([makeGdRow({ status: "final" })]);
+    }
+    if (sql.includes("update generated_documents")) return ok([], 1);
+    return ok([]);
+  });
+
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await svc.update(ctx(), GD_ID, { status: "final" });
+
+  const updateCall = captured.find((c) =>
+    c.sql.includes("update generated_documents"),
+  );
+  assert.ok(updateCall, "finalize must emit UPDATE");
+  assert.ok(updateCall.sql.includes("status"), "UPDATE must set status column");
+  assert.ok(
+    updateCall.sql.includes("approved_by"),
+    "UPDATE must set approved_by on draft→final",
+  );
+  assert.ok(
+    updateCall.sql.includes("approved_at"),
+    "UPDATE must set approved_at on draft→final",
+  );
+});
+
+void test("update (final→exported) SQL sets status and file_url columns", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
+
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("from generated_documents") && sql.includes("limit 1")) {
+      return ok([makeGdRow({ status: "final" })]);
+    }
+    if (sql.includes("gen_u.name")) {
+      return ok([makeGdRow({ status: "exported" })]);
+    }
+    if (sql.includes("update generated_documents")) return ok([], 1);
+    return ok([]);
+  });
+
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await svc.update(ctx(), GD_ID, {
+    status: "exported",
+    fileUrl: "placeholder://test.pdf",
+  });
+
+  const updateCall = captured.find((c) =>
+    c.sql.includes("update generated_documents"),
+  );
+  assert.ok(updateCall, "export must emit UPDATE");
+  assert.ok(updateCall.sql.includes("status"), "UPDATE must set status column");
+  assert.ok(
+    updateCall.sql.includes("file_url"),
+    "UPDATE must set file_url column on export",
+  );
+});
+
+void test("update (getDto after finalize) returns DTO with approved_by fields", async () => {
+  let getDtoCallCount = 0;
+  const pool = makePool((sql) => {
+    if (sql.includes("gen_u.name")) {
+      getDtoCallCount++;
+      return ok([
+        makeGdRow({
+          status: "final",
+          approved_by: USER_ID,
+          approved_at: "2026-01-02T00:00:00.000Z",
+          approved_by_display_name: "Admin User",
+        }),
+      ]);
+    }
+    if (sql.includes("from generated_documents") && sql.includes("limit 1")) {
+      return ok([makeGdRow({ status: "draft" })]);
+    }
+    if (sql.includes("update generated_documents")) return ok([], 1);
+    return ok([]);
+  });
+
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  const dto = await svc.update(ctx(), GD_ID, { status: "final" });
+
+  assert.ok(getDtoCallCount > 0, "must call getDto after update");
+  assert.equal(dto.approvedBy, USER_ID);
+  assert.equal(dto.approvedAt, "2026-01-02T00:00:00.000Z");
+  assert.equal(dto.approvedByDisplayName, "Admin User");
+});

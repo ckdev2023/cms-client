@@ -1,14 +1,4 @@
-// ── Test Ownership ──────────────────────────────────────────────
 // Owner: p0-fe-006b-03 — documents/forms/submission/review tabs focused tests
-//   Locks empty-state degradation, summary display values, and key
-//   action-button gate semantics as consumed by tab Vue components.
-// Does NOT test: adapter internal helpers (→ CaseAdapterSupportSeams.test),
-//   URL builders (→ CaseAdapterSupportSeams.test), seam registry
-//   (→ CaseAdapterSupportSeams.test), aggregate-level hints
-//   (→ overview-info-focused.test), list mappers, write builders,
-//   or repository orchestration.
-// ────────────────────────────────────────────────────────────────
-
 import { describe, expect, it } from "vitest";
 import {
   adaptCaseDocumentGroups,
@@ -17,25 +7,17 @@ import {
   adaptCaseDoubleReviewEntries,
 } from "./CaseAdapterSupportSeams";
 
-// ═══════════════════════════════════════════════════════════════════
-//  SHARED FIXTURES
-// ═══════════════════════════════════════════════════════════════════
-
-const docItem = (
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> => ({
+const docItem = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: "di-f01",
   name: "パスポート写し",
   status: "pending",
   ownerSide: "applicant",
   checklistItemCode: "DOC-001",
   dueAt: null,
-  ...overrides,
+  ...o,
 });
 
-const genDoc = (
-  overrides: Record<string, unknown> = {},
-): Record<string, unknown> => ({
+const genDoc = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: "gd-f01",
   caseId: "case-f01",
   templateId: null,
@@ -50,12 +32,8 @@ const genDoc = (
   approvedByDisplayName: null,
   generatedAt: "2026-04-10T00:00:00.000Z",
   approvedAt: null,
-  ...overrides,
+  ...o,
 });
-
-// ═══════════════════════════════════════════════════════════════════
-//  DOCUMENTS TAB — empty state
-// ═══════════════════════════════════════════════════════════════════
 
 describe("documents tab empty state (p0-fe-006b-03)", () => {
   it("null/undefined input → tab shows placeholder (adapter returns null)", () => {
@@ -83,8 +61,6 @@ describe("documents tab empty state (p0-fe-006b-03)", () => {
     expect(result![0].items).toHaveLength(1);
   });
 });
-
-// ─── Documents tab — summary display ────────────────────────────
 
 describe("documents tab summary display (p0-fe-006b-03)", () => {
   it("group label uses Japanese provider name", () => {
@@ -162,24 +138,19 @@ describe("documents tab summary display (p0-fe-006b-03)", () => {
   });
 });
 
-// ─── Documents tab — action button gates ────────────────────────
-
 describe("documents tab action button gates (p0-fe-006b-03)", () => {
-  function actionsForStatus(status: string) {
+  function actionsForStatus(
+    status: string,
+    extra: Record<string, unknown> = {},
+  ) {
     const result = adaptCaseDocumentGroups({
-      items: [docItem({ status })],
+      items: [docItem({ status, ...extra })],
     })!;
     return result[0].items[0].actions!;
   }
 
-  it("pending: canRemind + canWaive + canRegister, no approve/reject", () => {
-    const a = actionsForStatus("pending");
-    expect(a.canApprove).toBe(false);
-    expect(a.canReject).toBe(false);
-    expect(a.canRemind).toBe(true);
-    expect(a.canWaive).toBe(true);
-    expect(a.canRegister).toBe(true);
-  });
+  // pending+standard / pending+questionnaire follow-up gate scenarios:
+  // see CaseAdapterSupportSeams.followup-guard.test.ts
 
   it("waiting_upload: canRemind + canWaive + canRegister, no approve/reject", () => {
     const a = actionsForStatus("waiting_upload");
@@ -199,13 +170,15 @@ describe("documents tab action button gates (p0-fe-006b-03)", () => {
     expect(a.canRegister).toBe(false);
   });
 
-  it("approved: no actions available", () => {
-    const a = actionsForStatus("approved");
-    expect(a.canApprove).toBe(false);
-    expect(a.canReject).toBe(false);
-    expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(false);
-    expect(a.canRegister).toBe(false);
+  it("approved/waived/expired/unknown: all gates closed", () => {
+    for (const status of ["approved", "waived", "expired", "unknown_status"]) {
+      const a = actionsForStatus(status);
+      expect(a.canApprove).toBe(false);
+      expect(a.canReject).toBe(false);
+      expect(a.canRemind).toBe(false);
+      expect(a.canWaive).toBe(false);
+      expect(a.canRegister).toBe(false);
+    }
   });
 
   it("revision_required: canRemind + canRegister, no approve/reject/waive", () => {
@@ -216,38 +189,7 @@ describe("documents tab action button gates (p0-fe-006b-03)", () => {
     expect(a.canWaive).toBe(false);
     expect(a.canRegister).toBe(true);
   });
-
-  it("waived: no actions available", () => {
-    const a = actionsForStatus("waived");
-    expect(a.canApprove).toBe(false);
-    expect(a.canReject).toBe(false);
-    expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(false);
-    expect(a.canRegister).toBe(false);
-  });
-
-  it("expired: no actions available", () => {
-    const a = actionsForStatus("expired");
-    expect(a.canApprove).toBe(false);
-    expect(a.canReject).toBe(false);
-    expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(false);
-    expect(a.canRegister).toBe(false);
-  });
-
-  it("unknown status: all gates closed", () => {
-    const a = actionsForStatus("unknown_status");
-    expect(a.canApprove).toBe(false);
-    expect(a.canReject).toBe(false);
-    expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(false);
-    expect(a.canRegister).toBe(false);
-  });
 });
-
-// ═══════════════════════════════════════════════════════════════════
-//  FORMS TAB — empty state
-// ═══════════════════════════════════════════════════════════════════
 
 describe("forms tab empty state (p0-fe-006b-03)", () => {
   it("null/undefined input → tab shows placeholder (adapter returns null)", () => {
@@ -314,15 +256,15 @@ describe("forms tab summary display (p0-fe-006b-03)", () => {
     expect(result.generated[0].tone).toBe("muted");
   });
 
-  it("statusLabel maps to Japanese labels", () => {
-    const labelMap: Record<string, string> = {
-      draft: "下書き",
-      final: "確定済み",
-      exported: "出力済み",
+  it("backendStatus maps known statuses correctly", () => {
+    const statusMap: Record<string, string> = {
+      draft: "draft",
+      final: "final",
+      exported: "exported",
     };
-    for (const [status, label] of Object.entries(labelMap)) {
+    for (const [status, expected] of Object.entries(statusMap)) {
       const result = adaptCaseFormsData({ items: [genDoc({ status })] })!;
-      expect(result.generated[0].statusLabel).toBe(label);
+      expect(result.generated[0].backendStatus).toBe(expected);
     }
   });
 
@@ -348,11 +290,42 @@ describe("forms tab summary display (p0-fe-006b-03)", () => {
       "書類C",
     ]);
   });
-});
 
-// ═══════════════════════════════════════════════════════════════════
-//  SUBMISSION PACKAGES — empty state & summary
-// ═══════════════════════════════════════════════════════════════════
+  it("fileUrl exposed as-is; null preserved; isPlaceholderFile derives from prefix", () => {
+    const real = adaptCaseFormsData({
+      items: [genDoc({ fileUrl: "https://cdn.example.com/doc.pdf" })],
+    })!;
+    expect(real.generated[0].fileUrl).toBe("https://cdn.example.com/doc.pdf");
+    expect(real.generated[0].isPlaceholderFile).toBe(false);
+
+    const ph = adaptCaseFormsData({
+      items: [genDoc({ fileUrl: "placeholder://gd-f01" })],
+    })!;
+    expect(ph.generated[0].isPlaceholderFile).toBe(true);
+
+    const nil = adaptCaseFormsData({ items: [genDoc({ fileUrl: null })] })!;
+    expect(nil.generated[0].fileUrl).toBeNull();
+    expect(nil.generated[0].isPlaceholderFile).toBe(false);
+  });
+
+  it("approvedBy/approvedAt exposed and formatted; null preserved", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "final",
+          approvedByDisplayName: "鈴木花子",
+          approvedAt: "2026-04-15T14:30:00.000Z",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].approvedBy).toBe("鈴木花子");
+    expect(result.generated[0].approvedAt).toContain("2026");
+
+    const nilResult = adaptCaseFormsData({ items: [genDoc()] })!;
+    expect(nilResult.generated[0].approvedBy).toBeNull();
+    expect(nilResult.generated[0].approvedAt).toBeNull();
+  });
+});
 
 const spItem = (o: Record<string, unknown> = {}): Record<string, unknown> => ({
   id: "sp-f01",
@@ -430,10 +403,6 @@ describe("submission packages summary display (p0-fe-006b-03)", () => {
     expect(result.every((p) => p.locked)).toBe(true);
   });
 });
-
-// ═══════════════════════════════════════════════════════════════════
-//  DOUBLE REVIEW — empty state & verdict gates
-// ═══════════════════════════════════════════════════════════════════
 
 describe("double review empty state (p0-fe-006b-03)", () => {
   it("null/undefined → adapter returns null", () => {

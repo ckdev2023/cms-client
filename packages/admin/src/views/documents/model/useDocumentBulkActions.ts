@@ -1,5 +1,6 @@
 import { ref, computed, type Ref } from "vue";
 import type { DocumentListItem } from "../types";
+import { isFollowUpAllowed } from "../constants";
 import type {
   DocumentRepository,
   WaiveParams,
@@ -39,7 +40,10 @@ export interface BulkActionsDeps {
   /**
    *
    */
-  getSelectedItems: () => Pick<DocumentListItem, "id" | "status">[];
+  getSelectedItems: () => Pick<
+    DocumentListItem,
+    "id" | "status" | "backendStatus" | "category"
+  >[];
   /**
    *
    */
@@ -109,9 +113,16 @@ function setupSelectionComputeds(
   deps: Pick<BulkActionsDeps, "getSelectedItems">,
 ) {
   const selectedRemindable = computed(() =>
-    deps
-      .getSelectedItems()
-      .filter((i) => i.status === "pending" || i.status === "rejected"),
+    deps.getSelectedItems().filter((i) => {
+      const backend =
+        i.backendStatus ??
+        (i.status === "pending"
+          ? "waiting_upload"
+          : i.status === "rejected"
+            ? "revision_required"
+            : i.status);
+      return isFollowUpAllowed(backend, i.category);
+    }),
   );
   const selectedApprovable = computed(() =>
     deps.getSelectedItems().filter((i) => i.status === "uploaded_reviewing"),

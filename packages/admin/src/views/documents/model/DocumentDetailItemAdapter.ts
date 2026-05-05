@@ -11,6 +11,7 @@ import {
   DOCUMENT_STATUSES,
   LEGACY_STATUS_MAP,
   STATUS_TRANSITIONS,
+  isFollowUpAllowed,
 } from "../constants";
 
 /**
@@ -35,17 +36,44 @@ export interface DetailItemEnrichment {
 // ─── Forward: DocumentListItem → DocumentItem ────────────────────
 
 /**
+ * `deriveActions` 的可选上下文：当 `DocumentListItem` 携带后端原始状态与
+ * 类别时，传入以便"催办"按钮的可见性与服务端 `followUp` 守卫精确对齐。
+ */
+export interface DeriveActionsContext {
+  /** 后端原始状态（如 `waiting_upload` / `revision_required` / `pending`）。 */
+  backendStatus?: string | null;
+  /** 资料项类别（如 `standard` / `questionnaire`）。 */
+  category?: string | null;
+}
+
+/**
  * 根据资料项状态推导行内操作按钮的可见性。
  *
+ * `canRemind` 必须与服务端 `followUp(...)` 守卫保持一致：
+ * - 当上下文提供 `backendStatus` 时，使用 `isFollowUpAllowed`（精确判断）。
+ * - 否则回退到归一化状态推断（`pending` 视作 `waiting_upload`，
+ *   `rejected` 视作 `revision_required`），以兼容尚未携带原始状态的旧调用。
+ *
  * @param status - 前端归一化状态
+ * @param ctx - 可选上下文（后端原始状态 + 资料类别），用于精确判断
  * @returns 行内动作可见性标志
  */
-export function deriveActions(status: DocumentItemStatus): DocumentItemActions {
+export function deriveActions(
+  status: DocumentItemStatus,
+  ctx?: DeriveActionsContext,
+): DocumentItemActions {
   const transitions = STATUS_TRANSITIONS[status] ?? [];
+  const remindBackend =
+    ctx?.backendStatus ??
+    (status === "pending"
+      ? "waiting_upload"
+      : status === "rejected"
+        ? "revision_required"
+        : status);
   return {
     canApprove: status === "uploaded_reviewing",
     canReject: status === "uploaded_reviewing",
-    canRemind: status === "pending" || status === "rejected",
+    canRemind: isFollowUpAllowed(remindBackend, ctx?.category ?? undefined),
     canWaive: transitions.includes("waived"),
     canRegister:
       status === "pending" || status === "rejected" || status === "expired",
@@ -81,19 +109,26 @@ export function toCaseDetailItem(
   enrichment?: DetailItemEnrichment,
 ): DocumentItem {
   const statusDef = DOCUMENT_STATUSES[item.status];
+  const ctx: DeriveActionsContext = {
+    backendStatus: item.backendStatus,
+    category: item.category,
+  };
+  const actions = deriveActions(item.status, ctx);
   return {
     name: item.name,
     meta: buildMeta(item),
     status: item.status,
     statusLabelKey: statusDef?.labelKey ?? item.status,
-    canWaive: deriveActions(item.status).canWaive,
+    canWaive: actions.canWaive,
     relativePath: item.relativePath,
     referenceLabelKey: buildReferenceLabel(item),
     referenceCount: item.referenceCount,
     versions: enrichment?.versions ?? [],
     reviews: enrichment?.reviews ?? [],
     reminders: enrichment?.reminders ?? [],
-    actions: deriveActions(item.status),
+    actions,
+    backendStatus: item.backendStatus,
+    category: item.category,
   };
 }
 

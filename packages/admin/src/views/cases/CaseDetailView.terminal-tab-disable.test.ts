@@ -24,8 +24,8 @@ describe("isTabAccessibleInTerminal (pure function)", () => {
     }
   });
 
-  it.each(["log", "overview"] as CaseDetailTab[])(
-    "终态下 %s 可访问",
+  it.each(["log", "overview", "forms", "documents"] as CaseDetailTab[])(
+    "終態下 %s 可访问",
     (tabKey) => {
       expect(isTabAccessibleInTerminal(tabKey, true)).toBe(true);
     },
@@ -33,14 +33,12 @@ describe("isTabAccessibleInTerminal (pure function)", () => {
 
   it.each([
     "validation",
-    "documents",
     "tasks",
     "info",
-    "forms",
     "deadlines",
     "billing",
     "messages",
-  ] as CaseDetailTab[])("终态下 %s 不可访问", (tabKey) => {
+  ] as CaseDetailTab[])("終態下 %s 不可访问", (tabKey) => {
     expect(isTabAccessibleInTerminal(tabKey, true)).toBe(false);
   });
 });

@@ -33,6 +33,7 @@ import type {
   DocumentItemActions,
   FormsData,
   FormGenerated,
+  GeneratedDocumentBackendStatus,
   TaskItem,
 } from "../types-detail";
 import {
@@ -43,6 +44,7 @@ import {
   readString,
 } from "./CaseAdapterShared";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import { isFollowUpAllowed } from "../../documents/constants";
 
 // ─── Type re-exports ────────────────────────────────────────────
 
@@ -55,7 +57,12 @@ export type {
   DocumentItemActions,
 } from "../types-detail";
 
-export type { FormTemplate, FormGenerated, FormsData } from "../types-detail";
+export type {
+  FormTemplate,
+  FormGenerated,
+  FormsData,
+  GeneratedDocumentBackendStatus,
+} from "../types-detail";
 
 export type {
   GateItem,
@@ -124,11 +131,6 @@ const DOC_STATUS_LABEL_KEYS: Record<string, string> = {
   rejected: "cases.detail.documents.docStatus.rejected",
 };
 
-const REMIND_ELIGIBLE = new Set([
-  "pending",
-  "waiting_upload",
-  "revision_required",
-]);
 const WAIVE_ELIGIBLE = new Set(["pending", "waiting_upload"]);
 const REGISTER_ELIGIBLE = new Set([
   "pending",
@@ -136,11 +138,14 @@ const REGISTER_ELIGIBLE = new Set([
   "revision_required",
 ]);
 
-function deriveDocumentActions(status: string): DocumentItemActions {
+function deriveDocumentActions(
+  status: string,
+  category?: string | null,
+): DocumentItemActions {
   return {
     canApprove: status === "uploaded_reviewing",
     canReject: status === "uploaded_reviewing",
-    canRemind: REMIND_ELIGIBLE.has(status),
+    canRemind: isFollowUpAllowed(status, category ?? undefined),
     canWaive: WAIVE_ELIGIBLE.has(status),
     canRegister: REGISTER_ELIGIBLE.has(status),
   };
@@ -153,6 +158,7 @@ function adaptDocumentItemDto(value: unknown): DocumentItem | null {
   if (!name) return null;
 
   const status = readString(r, "status");
+  const category = readNullableString(r, "category");
   const dueAt = readNullableString(r, "dueAt");
   const checklistCode = readString(r, "checklistItemCode");
 
@@ -168,7 +174,9 @@ function adaptDocumentItemDto(value: unknown): DocumentItem | null {
       DOC_STATUS_LABEL_KEYS[status] ??
       "cases.detail.documents.docStatus.unknown",
     canWaive: WAIVE_ELIGIBLE.has(status),
-    actions: deriveDocumentActions(status),
+    actions: deriveDocumentActions(status, category),
+    backendStatus: status,
+    category: category ?? undefined,
   };
 }
 
@@ -209,17 +217,50 @@ export function adaptCaseDocumentGroups(
 
 // ─── Forms adapter (p0-fe-006b-01) ──────────────────────────────
 
-const GEN_DOC_STATUS_LABELS: Record<string, string> = {
-  draft: "下書き",
-  final: "確定済み",
-  exported: "出力済み",
-};
-
 const GEN_DOC_STATUS_TONES: Record<string, string> = {
   draft: "muted",
   final: "success",
   exported: "primary",
 };
+
+const VALID_BACKEND_STATUSES = new Set<GeneratedDocumentBackendStatus>([
+  "draft",
+  "final",
+  "exported",
+]);
+
+function resolveBackendStatus(raw: string): GeneratedDocumentBackendStatus {
+  return VALID_BACKEND_STATUSES.has(raw as GeneratedDocumentBackendStatus)
+    ? (raw as GeneratedDocumentBackendStatus)
+    : "draft";
+}
+
+function formatDateOrDateTime(
+  iso: string | null,
+  locale?: string,
+): string | null {
+  if (!iso) return null;
+  const formatted = locale ? formatDateTime(iso, locale) : formatDate(iso);
+  return formatted || null;
+}
+
+function buildGeneratedDocMeta(
+  r: Record<string, unknown>,
+  locale?: string,
+): string {
+  const outputFormat = readString(r, "outputFormat");
+  const versionNo = readNumber(r, "versionNo");
+  const generatedAt = readNullableString(r, "generatedAt");
+  const generatedBy = readNullableString(r, "generatedByDisplayName");
+
+  const parts: string[] = [];
+  if (outputFormat) parts.push(outputFormat.toUpperCase());
+  if (versionNo > 0) parts.push(`v${versionNo}`);
+  if (generatedBy) parts.push(generatedBy);
+  const datePart = formatDateOrDateTime(generatedAt, locale);
+  if (datePart) parts.push(datePart);
+  return parts.join(" · ");
+}
 
 function adaptGeneratedDocumentDto(
   value: unknown,
@@ -227,31 +268,26 @@ function adaptGeneratedDocumentDto(
 ): FormGenerated | null {
   const r = asRecord(value);
   if (!r) return null;
+  const id = readString(r, "id");
   const title = readString(r, "title");
   if (!title) return null;
 
   const status = readString(r, "status");
-  const outputFormat = readString(r, "outputFormat");
-  const versionNo = readNumber(r, "versionNo");
-  const generatedAt = readNullableString(r, "generatedAt");
-  const generatedBy = readNullableString(r, "generatedByDisplayName");
-
-  const metaParts: string[] = [];
-  if (outputFormat) metaParts.push(outputFormat.toUpperCase());
-  if (versionNo > 0) metaParts.push(`v${versionNo}`);
-  if (generatedBy) metaParts.push(generatedBy);
-  if (generatedAt) {
-    const formatted = locale
-      ? formatDateTime(generatedAt, locale)
-      : formatDate(generatedAt);
-    if (formatted) metaParts.push(formatted);
-  }
+  const fileUrl = readNullableString(r, "fileUrl");
 
   return {
+    id: id || "",
     name: title,
-    meta: metaParts.join(" · "),
+    meta: buildGeneratedDocMeta(r, locale),
     tone: GEN_DOC_STATUS_TONES[status] ?? "muted",
-    statusLabel: GEN_DOC_STATUS_LABELS[status] ?? status,
+    backendStatus: resolveBackendStatus(status),
+    fileUrl,
+    isPlaceholderFile: fileUrl?.startsWith("placeholder://") ?? false,
+    approvedBy: readNullableString(r, "approvedByDisplayName"),
+    approvedAt: formatDateOrDateTime(
+      readNullableString(r, "approvedAt"),
+      locale,
+    ),
   };
 }
 
@@ -277,6 +313,14 @@ export function adaptCaseFormsData(
 
   return { templates: [], generated };
 }
+
+// ─── Document templates adapter ─────────────────────────────────
+// 实现已迁移至 CaseAdapterDocumentTemplates.ts 以遵守 max-lines 约束。
+
+export {
+  adaptDocumentTemplateList,
+  buildCaseDocumentTemplatesUrl,
+} from "./CaseAdapterDocumentTemplates";
 
 // ─── URL builders (p0-fe-006b-01) ───────────────────────────────
 

@@ -102,10 +102,8 @@ function buildActiveRepo() {
 describe("H2: terminal tab guard — click blocking", () => {
   const INACCESSIBLE_TABS: CaseDetailTab[] = [
     "validation",
-    "documents",
     "tasks",
     "info",
-    "forms",
     "deadlines",
     "billing",
     "messages",
@@ -146,6 +144,25 @@ describe("H2: terminal tab guard — click blocking", () => {
       }
 
       expect(model.activeTab.value).toBe("overview");
+    },
+  );
+
+  it.each(["forms", "documents"] as CaseDetailTab[])(
+    "onTabClick('%s') on archived case: guard allows switch (readonly)",
+    async (tabKey) => {
+      const repo = buildTerminalRepo();
+      const model = useCaseDetailModel(ref("CASE-ARCHIVED"), {
+        repo,
+        initialTab: "overview",
+      });
+      await flushFetch();
+
+      const guard = useCaseDetailGuard(model.detail);
+      if (guard.isTabAccessible(tabKey)) {
+        model.switchTab(tabKey);
+      }
+
+      expect(model.activeTab.value).toBe(tabKey);
     },
   );
 
@@ -224,10 +241,8 @@ describe("H2: terminal tab guard — ?tab=tasks deep-link redirect", () => {
 
   it.each([
     "validation",
-    "documents",
     "tasks",
     "info",
-    "forms",
     "deadlines",
     "billing",
     "messages",
@@ -248,6 +263,26 @@ describe("H2: terminal tab guard — ?tab=tasks deep-link redirect", () => {
       }
 
       expect(model.activeTab.value).toBe("log");
+    },
+  );
+
+  it.each(["forms", "documents"] as CaseDetailTab[])(
+    "archived case with initialTab='%s': stays (readonly accessible)",
+    async (tabKey) => {
+      const repo = buildTerminalRepo();
+      const model = useCaseDetailModel(ref("CASE-ARCHIVED"), {
+        repo,
+        initialTab: tabKey,
+      });
+      await flushFetch();
+
+      const guard = useCaseDetailGuard(model.detail);
+
+      if (!guard.isTabAccessible(model.activeTab.value)) {
+        model.switchTab("log");
+      }
+
+      expect(model.activeTab.value).toBe(tabKey);
     },
   );
 

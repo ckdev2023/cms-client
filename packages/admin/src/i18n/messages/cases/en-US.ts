@@ -611,14 +611,29 @@ const casesEnUS = {
       generateAction: "Generate Document",
       kickerTemplates: "Available templates",
       kickerGenerated: "Generated documents",
+      finalizeAction: "Finalize",
+      finalizeConfirm: "Confirm finalization? This document will be locked.",
       exportAction: "Download",
+      exportAgainAction: "Download again",
       versionHistoryAction: "Version history",
+      status: {
+        draft: "Draft",
+        final: "Finalized",
+        exported: "Exported",
+      },
+      placeholderBadge: "Placeholder URL · P1",
+      downloadAction: "Download file",
+      metaApprovedAt: "{action}: {name} · {time}",
       empty: "No templates or generated documents available",
       generateModal: {
         title: "Generate document",
         fields: {
           templateId: "Template",
-          templatePlaceholder: "No template available (placeholder flow)",
+          templatePlaceholder:
+            "Select a template (leave empty to create blank draft)",
+          templateEmpty:
+            "No templates configured yet — a blank draft will be created",
+          optionalHint: "Submitting without a template creates a blank draft",
           docTitle: "Document title",
           docTitlePlaceholder: "e.g. Application statement",
           outputFormat: "Output format",
@@ -626,6 +641,14 @@ const casesEnUS = {
         cancel: "Cancel",
         submitting: "Generating…",
         submit: "Generate",
+      },
+      docType: {
+        reason_statement: "Reason Statement",
+        employment_summary: "Employment Summary",
+        business_plan: "Business Plan",
+        company_overview: "Company Overview",
+        supporting_document: "Supporting Document",
+        application_form: "Application Form",
       },
     },
     documents: {
@@ -1017,6 +1040,15 @@ const casesEnUS = {
     spDuplicateItem: "Duplicate items found in submission package.",
     spMissingMinimumFields:
       "Submission package is missing required fields. Please check and try again.",
+    gdCaseNotFound: "The case associated with this document was not found.",
+    gdCaseS9Readonly:
+      "The case is archived. Generated documents cannot be modified.",
+    gdNotFound: "Generated document not found.",
+    gdInvalidStatus: "Invalid document status.",
+    gdInvalidTransition:
+      "This status transition is not allowed (e.g. exported → draft).",
+    gdInvalidOutputFormat: "Unsupported output format.",
+    gdTitleRequired: "Document title is required.",
   },
   log: {
     category: {
@@ -1073,7 +1105,10 @@ const casesEnUS = {
       validationRunFailed: "Validation failed",
       submissionPackageCreated: "Submission package created",
       submissionPackageUpdated: "Submission package updated",
-      generatedDocumentCreated: "Document generated: {suffix}",
+      generatedDocumentCreated: "Document generated{colonSuffix}",
+      generatedDocumentUpdated: "Document updated{colonSuffix}",
+      generatedDocumentFinalized: "Document finalized{colonSuffix}",
+      generatedDocumentExported: "Document exported{colonSuffix}",
       reminderCreated: "Reminder created: {suffix}",
       caseTransitioned: "Case transitioned: {from} → {to} ({phase})",
       residencePeriodCreated: "Residence period recorded: {suffix}",

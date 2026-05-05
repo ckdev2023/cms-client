@@ -338,6 +338,19 @@ docker compose -f compose/docker-compose.prod.yml -f compose/docker-compose.logs
 - [ ] 跑 `bash scripts/log-export.sh`，得到 `backup/logs/<service>-<ts>.log.gz`
 - [ ] cron 配好（备份 + 日志归档），外部探活配好
 
+## Fresh-install 验证（release 出包前必跑）
+
+```bash
+cd packages/server && npm run db:seed-dev:smoke
+```
+
+用 `BEGIN` + `ROLLBACK` 包裹跑一遍完整 seed 链路，验证所有 step 不抛错。
+依赖真实 DB 连接（`DATABASE_URL`），不纳入 `npm run guard`，仅在 release 前与 CI 中执行。
+
+## 迁移注意事项
+
+- **048_document_templates 落地后**：必须重跑 `npm run seed:dev` 以补齐 BMV（経営管理）案件类型的文书模板 seed 数据。
+
 ## 已知限制 / 待办
 
 - **生产用 tsx 直跑 ts 而非 node 跑 dist**：因为 `src` 里相对 import 没带 `.js` 后缀，`npm run server:build` 出来的 dist 用 native node ESM 跑会 `ERR_MODULE_NOT_FOUND`（实测）。后续若 src 修复，把 `release/docker/server.Dockerfile` 末尾的 `CMD` 改回 `["node","dist/main.js"]` 即可。

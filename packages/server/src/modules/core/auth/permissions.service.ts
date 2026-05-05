@@ -240,13 +240,26 @@ export class PermissionsService {
   }
 
   /**
+   * 判断当前用户是否可定稿案件文书（manager+ 或案件主办人）。
+   *
+   * @param userId 当前用户 ID。
+   * @param userRole 当前用户角色。
+   * @param caseRow 案件实体。
+   * @returns 是否允许定稿。
+   */
+  canFinalizeCase(userId: string, userRole: Role, caseRow: Case): boolean {
+    if (hasRequiredRole(userRole, ["manager"])) return true;
+    return caseRow.ownerUserId === userId;
+  }
+
+  /**
    * 判断当前用户是否可编辑客户。
    *
-   * @param userId 当前用户 ID
-   * @param userRole 当前用户角色
-   * @param userGroupId 当前用户组 ID
-   * @param customerRow 客户实体
-   * @returns 是否允许编辑
+   * @param userId 当前用户 ID。
+   * @param userRole 当前用户角色。
+   * @param userGroupId 当前用户组 ID。
+   * @param customerRow 客户实体。
+   * @returns 是否允许编辑。
    */
   canEditCustomer(
     userId: string,

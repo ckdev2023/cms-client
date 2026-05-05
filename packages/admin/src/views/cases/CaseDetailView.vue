@@ -70,6 +70,8 @@ const {
   activeTab,
   tabs,
   detail,
+  enrichedDetail,
+  formTemplates,
   notFound,
   isReadonly,
   tabCounters,
@@ -88,6 +90,8 @@ const {
   publishMessage,
   createReminder,
   createGeneratedDocument,
+  finalizeGeneratedDocument,
+  exportGeneratedDocument,
   createTask,
   completeTask,
   phaseMenu,
@@ -95,7 +99,7 @@ const {
   refetch,
 } = useCaseDetailModel(caseId, {
   routeTab,
-  locale,
+  translate: t,
   onTabChange: (tab) =>
     router.replace({ query: buildCaseDetailQuery({ tab }) }),
 });
@@ -399,9 +403,14 @@ async function onDeadlineSubmit(payload: {
 
 const formGenModalOpen = ref(false);
 const formGenModalSubmitting = ref(false);
+const formGenInitialTemplateId = ref<string | null>(null);
 
-/** 打开生成文书弹窗。 */
-function openGenerateFormModal(): void {
+/**
+ * 打开生成文书弹窗。
+ * @param templateId 预选模板 ID
+ */
+function openGenerateFormModal(templateId?: string): void {
+  formGenInitialTemplateId.value = templateId ?? null;
   formGenModalOpen.value = true;
 }
 
@@ -734,9 +743,11 @@ async function onFormGenSubmit(payload: {
         />
         <CaseFormsTab
           v-else-if="activeTab === 'forms'"
-          :detail="detail"
+          :detail="enrichedDetail ?? detail"
           :readonly="isReadonly"
           @open-generate-modal="openGenerateFormModal"
+          @finalize="finalizeGeneratedDocument"
+          @export="exportGeneratedDocument"
         />
         <CaseTasksTab
           v-else-if="activeTab === 'tasks'"
@@ -817,6 +828,8 @@ async function onFormGenSubmit(payload: {
       <CaseFormGenerateModal
         :open="formGenModalOpen"
         :case-name="detail.title"
+        :templates="formTemplates"
+        :initial-template-id="formGenInitialTemplateId"
         :submitting="formGenModalSubmitting"
         @close="formGenModalOpen = false"
         @submit="onFormGenSubmit"

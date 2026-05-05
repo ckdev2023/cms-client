@@ -6,6 +6,7 @@ import assert from "node:assert/strict";
 import {
   BadRequestException,
   ForbiddenException,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 
@@ -404,7 +405,7 @@ void test("§6 getAggregate: real perms deny non-participant viewer", async () =
   );
 });
 
-void test("§6 getAggregate: not found → BadRequest", async () => {
+void test("§6 getAggregate: not found → NotFoundException (404)", async () => {
   const ctrl = new CasesController(
     {
       getDetailAggregate: () => Promise.resolve(null),
@@ -413,6 +414,6 @@ void test("§6 getAggregate: not found → BadRequest", async () => {
   );
   await assert.rejects(
     () => ctrl.getAggregate(reqCtx("viewer") as never, "x"),
-    BadRequestException,
+    NotFoundException,
   );
 });

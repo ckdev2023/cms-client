@@ -75,6 +75,8 @@ export interface DocumentItemDtoLike {
   lastFollowUpAt: string | null;
   /** 跨案件引用计数（后端 list 派生字段提供时使用，缺省回退到 1）。 */
   referenceCount?: number;
+  /** 资料项类别（`standard` / `questionnaire` / 等），影响行内动作守卫。 */
+  category?: string;
 }
 
 /** 案件摘要 → 用于补齐 `DocumentListItem.caseName`。 */
@@ -181,6 +183,8 @@ export function adaptDocumentItem(
     relativePath: null,
     sharedExpiryRisk: referenceCount > 1 && status === "expired",
     referenceCount,
+    backendStatus: row.status,
+    category: row.category,
   };
 }
 

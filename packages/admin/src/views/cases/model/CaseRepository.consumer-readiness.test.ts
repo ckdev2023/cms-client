@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, expect, it } from "vitest";
 import { type CaseRepository, createCaseRepository } from "./CaseRepository";
 import {
@@ -29,10 +30,12 @@ import {
 import type { CaseListItem, CaseSummaryCardData, CaseDetail } from "../types";
 import type {
   DocumentGroup,
+  FormTemplate,
   FormsData,
   MessageItem,
   LogEntry,
 } from "../types-detail";
+import type { WriteResultWithId } from "./CaseRepositoryWriteSide";
 
 type _ListCasesReturn = ReturnType<CaseRepository["listCases"]>;
 type _AssertListReturnsResult =
@@ -90,6 +93,22 @@ type _AssertFormsReturn =
     : "getGeneratedDocuments must return Promise<FormsData>";
 const _assertFormsResult: _AssertFormsReturn = true;
 
+const _assertTemplatesResult: ReturnType<
+  CaseRepository["listDocumentTemplates"]
+> extends Promise<FormTemplate[]>
+  ? true
+  : never = true;
+const _assertFinalizeResult: ReturnType<
+  CaseRepository["finalizeGeneratedDocument"]
+> extends Promise<WriteResultWithId>
+  ? true
+  : never = true;
+const _assertExportResult: ReturnType<
+  CaseRepository["exportGeneratedDocument"]
+> extends Promise<WriteResultWithId>
+  ? true
+  : never = true;
+
 type _SummaryCardsParam = Parameters<CaseRepository["getSummaryCards"]>[0];
 type _AssertSummaryTakesItems = CaseListItem[] extends _SummaryCardsParam
   ? true
@@ -112,6 +131,9 @@ void [
   _assertLogResult,
   _assertDocsResult,
   _assertFormsResult,
+  _assertTemplatesResult,
+  _assertFinalizeResult,
+  _assertExportResult,
   _assertSummaryParam,
   _assertSummaryReturn,
 ];
@@ -148,6 +170,9 @@ const REPOSITORY_REQUIRED_METHODS = [
   "createTask",
   "completeTask",
   "createSubmissionPackage",
+  "listDocumentTemplates",
+  "finalizeGeneratedDocument",
+  "exportGeneratedDocument",
 ] as const;
 
 describe("CaseRepository interface surface (p0-fe-002f-04)", () => {
@@ -388,6 +413,13 @@ describe("p0-fe-007 consumer readiness — detail tabs (p0-fe-002f-04)", () => {
     const repo = createCaseRepository({ request: fetch, getToken: () => "t" });
     expect(typeof repo.getDocumentItems).toBe("function");
     expect(typeof repo.getGeneratedDocuments).toBe("function");
+  });
+
+  it("document templates, finalize, and export available via repository methods", () => {
+    const repo = createCaseRepository({ request: fetch, getToken: () => "t" });
+    expect(typeof repo.listDocumentTemplates).toBe("function");
+    expect(typeof repo.finalizeGeneratedDocument).toBe("function");
+    expect(typeof repo.exportGeneratedDocument).toBe("function");
   });
 
   it("validation/billing/submission/review available via dedicated repository methods (p0-fe-006b-02)", () => {

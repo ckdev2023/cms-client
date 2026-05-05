@@ -70,7 +70,20 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
       relativePath: null,
       sharedExpiryRisk: false,
       referenceCount: 1,
+      backendStatus: "pending",
+      category: undefined,
     });
+  });
+
+  it("preserves backend status and category when present (used by canRemind guard)", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, status: "waiting_upload", category: "questionnaire" },
+      () => "x",
+      NOW,
+    );
+    expect(item.status).toBe("pending");
+    expect(item.backendStatus).toBe("waiting_upload");
+    expect(item.category).toBe("questionnaire");
   });
 
   it("falls back to caseId when caseName is missing", () => {

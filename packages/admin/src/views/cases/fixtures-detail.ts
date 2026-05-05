@@ -717,11 +717,13 @@ function buildWorkSample(): CaseDetail {
     forms: {
       templates: [
         {
+          id: "tpl-001",
           name: "在留資格変更・更新許可申請書",
           meta: "入管局指定様式 · PDF/Excel",
           actionLabel: "生成",
         },
         {
+          id: "tpl-002",
           name: "雇用理由書テンプレート",
           meta: "事務所内テンプレート · Word",
           actionLabel: "生成",
@@ -729,16 +731,26 @@ function buildWorkSample(): CaseDetail {
       ],
       generated: [
         {
+          id: "gd-001",
           name: "在留資格変更・更新許可申請書_CAS-2026-0142.pdf",
           meta: "v2 · 生成于 2026/04/06 14:20 · Suzuki",
           tone: "success",
-          statusLabel: "最終版",
+          backendStatus: "final",
+          fileUrl: null,
+          isPlaceholderFile: false,
+          approvedBy: "Suzuki",
+          approvedAt: "2026/04/06 14:20",
         },
         {
+          id: "gd-002",
           name: "雇用理由書_CAS-2026-0142_draft.docx",
           meta: "v1 · 生成于 2026/04/04 10:05 · Tanaka",
           tone: "warning",
-          statusLabel: "草案",
+          backendStatus: "draft",
+          fileUrl: null,
+          isPlaceholderFile: false,
+          approvedBy: null,
+          approvedAt: null,
         },
       ],
     },
@@ -1226,6 +1238,7 @@ function buildFamilySample(): CaseDetail {
     forms: {
       templates: [
         {
+          id: "tpl-003",
           name: "在留資格認定証明書交付申請書",
           meta: "入管局指定様式 · PDF",
           actionLabel: "生成",
@@ -2097,6 +2110,7 @@ function buildArrearsSample(): CaseDetail {
     forms: {
       templates: [
         {
+          id: "tpl-004",
           name: "在留資格変更・更新許可申請書",
           meta: "入管局指定様式 · PDF/Excel",
           actionLabel: "生成",
@@ -2104,10 +2118,15 @@ function buildArrearsSample(): CaseDetail {
       ],
       generated: [
         {
+          id: "gd-003",
           name: "在留資格変更・更新許可申請書_CAS-2026-0099.pdf",
           meta: "v1 · 生成于 2026/03/28 09:15 · Manager",
           tone: "success",
-          statusLabel: "最終版",
+          backendStatus: "exported",
+          fileUrl: "placeholder://gd-003",
+          isPlaceholderFile: true,
+          approvedBy: "Manager",
+          approvedAt: "2026/03/28 09:30",
         },
       ],
     },

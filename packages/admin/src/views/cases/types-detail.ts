@@ -345,6 +345,13 @@ export interface DocumentItem {
   reminders?: DocumentReminderRecord[];
   /** 行内操作按钮可见标志。 */
   actions?: DocumentItemActions;
+  /**
+   * 后端原始状态（保留 `waiting_upload` / `revision_required` 等服务端枚举），
+   * 用于行内动作守卫的精确判断；前端展示仍用上面的归一化 `status`。
+   */
+  backendStatus?: string;
+  /** 资料项类别（`standard` / `questionnaire` 等），影响"催办"等守卫。 */
+  category?: string;
 }
 
 /**
@@ -640,10 +647,15 @@ export interface RiskConfirmationRecord {
   amount: string;
 }
 
+/** 生成文書の後端ステータス（三態）。 */
+export type GeneratedDocumentBackendStatus = "draft" | "final" | "exported";
+
 /**
  *
  */
 export interface FormTemplate {
+  /** server 側レコード ID。 */
+  id: string;
   /**
    *
    */
@@ -662,6 +674,8 @@ export interface FormTemplate {
  *
  */
 export interface FormGenerated {
+  /** server 側レコード ID。 */
+  id: string;
   /**
    *
    */
@@ -674,10 +688,16 @@ export interface FormGenerated {
    *
    */
   tone: string;
-  /**
-   *
-   */
-  statusLabel: string;
+  /** 後端ステータス — finalize / export ボタン判定用。 */
+  backendStatus: GeneratedDocumentBackendStatus;
+  /** 生成ファイルの URL（`null` = 未生成）。 */
+  fileUrl: string | null;
+  /** `fileUrl` が `placeholder://` プレフィックスか（P1 落地前の仮 URL）。 */
+  isPlaceholderFile: boolean;
+  /** 確定/出力操作者の表示名。 */
+  approvedBy: string | null;
+  /** 確定/出力日時（フォーマット済み表示用文字列）。 */
+  approvedAt: string | null;
 }
 
 /**

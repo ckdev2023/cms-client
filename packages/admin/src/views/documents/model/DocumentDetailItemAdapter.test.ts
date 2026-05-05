@@ -51,7 +51,7 @@ const BASE_FILE_DTO: DocumentFileDto = {
 // ─── deriveActions ───────────────────────────────────────────────
 
 describe("deriveActions", () => {
-  it("pending → canRemind + canWaive + canRegister + canReference", () => {
+  it("pending (no ctx, fallback to waiting_upload) → canRemind + canWaive + canRegister + canReference", () => {
     const a = deriveActions("pending");
     expect(a.canApprove).toBe(false);
     expect(a.canReject).toBe(false);
@@ -81,7 +81,7 @@ describe("deriveActions", () => {
     expect(a.canReference).toBe(false);
   });
 
-  it("rejected → canRemind + canWaive + canRegister + canReference", () => {
+  it("rejected (no ctx, fallback to revision_required) → canRemind + canWaive + canRegister + canReference", () => {
     const a = deriveActions("rejected");
     expect(a.canRemind).toBe(true);
     expect(a.canWaive).toBe(true);
@@ -105,6 +105,44 @@ describe("deriveActions", () => {
     expect(a.canWaive).toBe(false);
     expect(a.canRegister).toBe(false);
     expect(a.canReference).toBe(false);
+  });
+
+  // ── Bug fix: align canRemind with server `followUp` guard ──
+  it("pending + backendStatus=pending + category=standard → canRemind=false (server rejects)", () => {
+    const a = deriveActions("pending", {
+      backendStatus: "pending",
+      category: "standard",
+    });
+    expect(a.canRemind).toBe(false);
+  });
+
+  it("pending + backendStatus=pending + category=questionnaire → canRemind=true (server allows)", () => {
+    const a = deriveActions("pending", {
+      backendStatus: "pending",
+      category: "questionnaire",
+    });
+    expect(a.canRemind).toBe(true);
+  });
+
+  it("pending + backendStatus=waiting_upload → canRemind=true regardless of category", () => {
+    expect(
+      deriveActions("pending", {
+        backendStatus: "waiting_upload",
+        category: "standard",
+      }).canRemind,
+    ).toBe(true);
+    expect(
+      deriveActions("pending", {
+        backendStatus: "waiting_upload",
+      }).canRemind,
+    ).toBe(true);
+  });
+
+  it("rejected + backendStatus=revision_required → canRemind=true", () => {
+    const a = deriveActions("rejected", {
+      backendStatus: "revision_required",
+    });
+    expect(a.canRemind).toBe(true);
   });
 });
 
@@ -169,6 +207,35 @@ describe("toCaseDetailItem", () => {
     const result = toCaseDetailItem(BASE_LIST_ITEM);
     expect(result.actions?.canRemind).toBe(true);
     expect(result.actions?.canApprove).toBe(false);
+  });
+
+  it("threads backendStatus + category from list item, blocks canRemind for pending+standard", () => {
+    const result = toCaseDetailItem({
+      ...BASE_LIST_ITEM,
+      backendStatus: "pending",
+      category: "standard",
+    });
+    expect(result.actions?.canRemind).toBe(false);
+    expect(result.backendStatus).toBe("pending");
+    expect(result.category).toBe("standard");
+  });
+
+  it("allows canRemind when backendStatus=pending + category=questionnaire", () => {
+    const result = toCaseDetailItem({
+      ...BASE_LIST_ITEM,
+      backendStatus: "pending",
+      category: "questionnaire",
+    });
+    expect(result.actions?.canRemind).toBe(true);
+  });
+
+  it("allows canRemind when backendStatus=waiting_upload regardless of category", () => {
+    const result = toCaseDetailItem({
+      ...BASE_LIST_ITEM,
+      backendStatus: "waiting_upload",
+      category: "standard",
+    });
+    expect(result.actions?.canRemind).toBe(true);
   });
 
   it("builds referenceLabel when referenceCount > 1", () => {

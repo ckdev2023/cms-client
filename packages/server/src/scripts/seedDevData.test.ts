@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import type { PoolClient, QueryResult } from "pg";
+
+import { buildSeedSteps, DOC_TEMPLATE_SEEDS } from "./seedDevData";
 
 type QueryCall = { sql: string; params?: unknown[] };
 
@@ -181,4 +184,133 @@ void test("INSERT table sequence includes all required entities", () => {
   assert.ok(tables.includes("document_requirement_file_refs"));
   assert.ok(tables.includes("template_versions"));
   assert.ok(tables.includes("template_releases"));
+});
+
+// ---------------------------------------------------------------------------
+// SQL-level smoke: run all seed step functions against a mock PoolClient
+// ---------------------------------------------------------------------------
+
+function createMockClient(): {
+  client: PoolClient;
+  queries: QueryCall[];
+} {
+  const queries: QueryCall[] = [];
+  const client = {
+    query: (sql: string, params?: unknown[]): Promise<QueryResult> => {
+      queries.push({ sql, params });
+      return Promise.resolve({
+        rows: [],
+        rowCount: 0,
+        command: "",
+        oid: 0,
+        fields: [],
+      });
+    },
+  } as unknown as PoolClient;
+  return { client, queries };
+}
+
+void test("SQL-level smoke: all seed steps execute and produce parameterized INSERTs", async () => {
+  const steps = buildSeedSteps();
+  assert.equal(steps.length, 8, "must have exactly 8 seed steps");
+
+  const { client, queries } = createMockClient();
+
+  for (const [, fn] of steps) {
+    await fn(client);
+  }
+
+  const insertQueries = queries.filter((q) => /INSERT INTO/i.test(q.sql));
+  assert.ok(insertQueries.length > 0, "must produce INSERT queries");
+
+  const expectedTables = [
+    "customers",
+    "cases",
+    "document_items",
+    "document_assets",
+    "document_files",
+    "document_requirement_file_refs",
+    "template_versions",
+    "template_releases",
+    "document_templates",
+  ];
+  const seenTables = new Set(
+    insertQueries
+      .map((q) => {
+        const m = /INSERT INTO (\w+)/i.exec(q.sql);
+        return m ? m[1] : null;
+      })
+      .filter((t): t is string => t !== null),
+  );
+
+  for (const table of expectedTables) {
+    assert.ok(seenTables.has(table), `must insert into ${table}`);
+  }
+
+  for (const q of insertQueries) {
+    assert.ok(
+      q.params !== undefined && q.params.length > 0,
+      `INSERT must use params: ${q.sql.slice(0, 50)}`,
+    );
+    assert.ok(
+      /\$\d+/.test(q.sql),
+      `INSERT must use $N placeholders: ${q.sql.slice(0, 50)}`,
+    );
+  }
+});
+
+void test("SQL-level smoke: every INSERT uses ON CONFLICT (idempotent)", async () => {
+  const steps = buildSeedSteps();
+  const { client, queries } = createMockClient();
+
+  for (const [, fn] of steps) {
+    await fn(client);
+  }
+
+  const insertQueries = queries.filter((q) => /INSERT INTO/i.test(q.sql));
+  for (const q of insertQueries) {
+    assert.ok(
+      /ON CONFLICT/i.test(q.sql),
+      `INSERT must have ON CONFLICT: ${q.sql.slice(0, 60)}`,
+    );
+  }
+});
+
+void test("SQL-level smoke: step labels match expected sequence", () => {
+  const steps = buildSeedSteps();
+  const labels = steps.map(([label]) => label);
+  assert.deepStrictEqual(labels, [
+    "customer",
+    "cases",
+    "documentItems",
+    "documentAsset",
+    "documentFile",
+    "crossCaseLink",
+    "documentChecklistTemplate",
+    "documentTemplates",
+  ]);
+});
+
+void test("SQL-level smoke: DOC_TEMPLATE_SEEDS count matches document_templates INSERTs", async () => {
+  assert.ok(DOC_TEMPLATE_SEEDS.length > 0, "must not be empty");
+  assert.equal(
+    DOC_TEMPLATE_SEEDS.length,
+    12,
+    "expected 12 document template seeds",
+  );
+
+  const steps = buildSeedSteps();
+  const { client, queries } = createMockClient();
+  for (const [, fn] of steps) {
+    await fn(client);
+  }
+
+  const dtInserts = queries.filter((q) =>
+    /INSERT INTO document_templates/i.test(q.sql),
+  );
+  assert.equal(
+    dtInserts.length,
+    DOC_TEMPLATE_SEEDS.length,
+    "document_templates INSERT count must match DOC_TEMPLATE_SEEDS length",
+  );
 });

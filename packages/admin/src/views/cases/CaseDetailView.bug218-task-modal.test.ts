@@ -59,11 +59,14 @@ function createRepoWithTaskStub() {
 
 describe("BUG-218: createTask wiring contract", () => {
   it("createTask 调用 repo.createTask 并传入正确参数", async () => {
-    const { repo, createTask, getDetailAggregate } = createRepoWithTaskStub();
+    const { repo, createTask } = createRepoWithTaskStub();
     const model = useCaseDetailModel(ref("CASE-T1"), { repo });
     await flushFetch();
 
-    const callCountBefore = getDetailAggregate.mock.calls.length;
+    const tasksCallsBefore = (repo.getTasks as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    const logCallsBefore = (repo.getLogEntries as ReturnType<typeof vi.fn>).mock
+      .calls.length;
 
     await model.createTask({
       title: "Review documents",
@@ -82,9 +85,12 @@ describe("BUG-218: createTask wiring contract", () => {
       dueAt: "2026-06-15T00:00:00.000Z",
     });
 
-    expect(getDetailAggregate.mock.calls.length).toBeGreaterThan(
-      callCountBefore,
-    );
+    expect(
+      (repo.getTasks as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(tasksCallsBefore);
+    expect(
+      (repo.getLogEntries as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(logCallsBefore);
   });
 
   it("createTask readonly 时不调用 repo", async () => {

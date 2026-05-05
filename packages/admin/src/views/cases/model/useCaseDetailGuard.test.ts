@@ -87,30 +87,32 @@ describe("useCaseDetailGuard", () => {
       expect(guard.isTabAccessible("deadlines")).toBe(true);
     });
 
-    it("terminal case (CLOSED_SUCCESS): only log and overview accessible", () => {
+    it("terminal case (CLOSED_SUCCESS): log, overview, forms, documents accessible", () => {
       const { guard } = createGuard({
         readonly: true,
         businessPhase: "CLOSED_SUCCESS",
       });
       expect(guard.isTabAccessible("overview")).toBe(true);
       expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("forms")).toBe(true);
+      expect(guard.isTabAccessible("documents")).toBe(true);
       expect(guard.isTabAccessible("tasks")).toBe(false);
-      expect(guard.isTabAccessible("documents")).toBe(false);
       expect(guard.isTabAccessible("billing")).toBe(false);
       expect(guard.isTabAccessible("messages")).toBe(false);
       expect(guard.isTabAccessible("validation")).toBe(false);
       expect(guard.isTabAccessible("info")).toBe(false);
-      expect(guard.isTabAccessible("forms")).toBe(false);
       expect(guard.isTabAccessible("deadlines")).toBe(false);
     });
 
-    it("terminal case (CLOSED_FAILED): only log and overview accessible", () => {
+    it("terminal case (CLOSED_FAILED): log, overview, forms, documents accessible", () => {
       const { guard } = createGuard({
         readonly: true,
         businessPhase: "CLOSED_FAILED",
       });
       expect(guard.isTabAccessible("overview")).toBe(true);
       expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("forms")).toBe(true);
+      expect(guard.isTabAccessible("documents")).toBe(true);
       expect(guard.isTabAccessible("tasks")).toBe(false);
     });
 
@@ -120,6 +122,7 @@ describe("useCaseDetailGuard", () => {
         businessPhase: "REVIEWING",
       });
       expect(guard.isTabAccessible("tasks")).toBe(true);
+      expect(guard.isTabAccessible("forms")).toBe(true);
 
       detail.value = createMockDetail({
         readonly: true,
@@ -127,6 +130,8 @@ describe("useCaseDetailGuard", () => {
       });
       expect(guard.isTabAccessible("tasks")).toBe(false);
       expect(guard.isTabAccessible("log")).toBe(true);
+      expect(guard.isTabAccessible("forms")).toBe(true);
+      expect(guard.isTabAccessible("documents")).toBe(true);
     });
   });
 

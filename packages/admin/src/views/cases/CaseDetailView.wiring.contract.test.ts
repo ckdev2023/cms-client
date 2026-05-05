@@ -30,6 +30,11 @@ function createFullRepoStub() {
   const createCommunicationLog = vi.fn().mockResolvedValue({ id: "log-1" });
   const createReminder = vi.fn().mockResolvedValue({ id: "rem-1" });
   const createGeneratedDocument = vi.fn().mockResolvedValue({ id: "doc-1" });
+  const finalizeGeneratedDocument = vi
+    .fn()
+    .mockResolvedValue({ id: "doc-fin" });
+  const exportGeneratedDocument = vi.fn().mockResolvedValue({ id: "doc-exp" });
+  const listDocumentTemplates = vi.fn().mockResolvedValue([]);
   const getDetailAggregate = vi.fn().mockResolvedValue(buildActiveAggregate());
 
   const repo = {
@@ -59,6 +64,9 @@ function createFullRepoStub() {
     createCommunicationLog,
     createReminder,
     createGeneratedDocument,
+    finalizeGeneratedDocument,
+    exportGeneratedDocument,
+    listDocumentTemplates,
   } as unknown as CaseRepository;
 
   return {
@@ -66,18 +74,23 @@ function createFullRepoStub() {
     createCommunicationLog,
     createReminder,
     createGeneratedDocument,
+    finalizeGeneratedDocument,
+    exportGeneratedDocument,
+    listDocumentTemplates,
     getDetailAggregate,
   };
 }
 
 describe("CaseDetailView wiring contract — publishMessage (BUG-226)", () => {
   it("publishMessage 调用 repo.createCommunicationLog 并传入正确参数", async () => {
-    const { repo, createCommunicationLog, getDetailAggregate } =
-      createFullRepoStub();
+    const { repo, createCommunicationLog } = createFullRepoStub();
     const model = useCaseDetailModel(ref("CASE-W1"), { repo });
     await flushFetch();
 
-    const callCountBefore = getDetailAggregate.mock.calls.length;
+    const msgCallsBefore = (repo.getMessages as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+    const logCallsBefore = (repo.getLogEntries as ReturnType<typeof vi.fn>).mock
+      .calls.length;
 
     await model.publishMessage({
       content: "hello",
@@ -92,9 +105,12 @@ describe("CaseDetailView wiring contract — publishMessage (BUG-226)", () => {
       channelChoice: "internal",
     });
 
-    expect(getDetailAggregate.mock.calls.length).toBeGreaterThan(
-      callCountBefore,
-    );
+    expect(
+      (repo.getMessages as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(msgCallsBefore);
+    expect(
+      (repo.getLogEntries as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(logCallsBefore);
   });
 
   it("publishMessage readonly 时不调用 repo", async () => {
@@ -166,6 +182,94 @@ describe("CaseDetailView wiring contract — createGeneratedDocument (BUG-228)",
   });
 });
 
+describe("CaseDetailView wiring contract — finalizeGeneratedDocument", () => {
+  it("finalizeGeneratedDocument 调用 repo.finalizeGeneratedDocument 并 refetch forms + logEntries", async () => {
+    const { repo, finalizeGeneratedDocument } = createFullRepoStub();
+    const model = useCaseDetailModel(ref("CASE-W1"), { repo });
+    await flushFetch();
+
+    const formsCallsBefore = (
+      repo.getGeneratedDocuments as ReturnType<typeof vi.fn>
+    ).mock.calls.length;
+    const logCallsBefore = (repo.getLogEntries as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+
+    await model.finalizeGeneratedDocument("doc-123");
+    await flushFetch();
+
+    expect(finalizeGeneratedDocument).toHaveBeenCalledTimes(1);
+    expect(finalizeGeneratedDocument).toHaveBeenCalledWith("doc-123");
+
+    expect(
+      (repo.getGeneratedDocuments as ReturnType<typeof vi.fn>).mock.calls
+        .length,
+    ).toBeGreaterThan(formsCallsBefore);
+    expect(
+      (repo.getLogEntries as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(logCallsBefore);
+  });
+
+  it("finalizeGeneratedDocument readonly 时不调用 repo", async () => {
+    const { repo, finalizeGeneratedDocument } = createFullRepoStub();
+    (repo.getDetailAggregate as ReturnType<typeof vi.fn>).mockResolvedValue(
+      createMockAggregate(createMockDetail({ readonly: true }), {
+        tabCounts: { ...ZERO_TAB_COUNTS },
+      }),
+    );
+    const model = useCaseDetailModel(ref("CASE-RO"), { repo });
+    await flushFetch();
+
+    const ok = await model.finalizeGeneratedDocument("doc-x");
+
+    expect(ok).toBe(false);
+    expect(finalizeGeneratedDocument).not.toHaveBeenCalled();
+  });
+});
+
+describe("CaseDetailView wiring contract — exportGeneratedDocument", () => {
+  it("exportGeneratedDocument 调用 repo.exportGeneratedDocument 并 refetch forms + logEntries", async () => {
+    const { repo, exportGeneratedDocument } = createFullRepoStub();
+    const model = useCaseDetailModel(ref("CASE-W1"), { repo });
+    await flushFetch();
+
+    const formsCallsBefore = (
+      repo.getGeneratedDocuments as ReturnType<typeof vi.fn>
+    ).mock.calls.length;
+    const logCallsBefore = (repo.getLogEntries as ReturnType<typeof vi.fn>).mock
+      .calls.length;
+
+    await model.exportGeneratedDocument("doc-456");
+    await flushFetch();
+
+    expect(exportGeneratedDocument).toHaveBeenCalledTimes(1);
+    expect(exportGeneratedDocument).toHaveBeenCalledWith("doc-456");
+
+    expect(
+      (repo.getGeneratedDocuments as ReturnType<typeof vi.fn>).mock.calls
+        .length,
+    ).toBeGreaterThan(formsCallsBefore);
+    expect(
+      (repo.getLogEntries as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(logCallsBefore);
+  });
+
+  it("exportGeneratedDocument readonly 时不调用 repo", async () => {
+    const { repo, exportGeneratedDocument } = createFullRepoStub();
+    (repo.getDetailAggregate as ReturnType<typeof vi.fn>).mockResolvedValue(
+      createMockAggregate(createMockDetail({ readonly: true }), {
+        tabCounts: { ...ZERO_TAB_COUNTS },
+      }),
+    );
+    const model = useCaseDetailModel(ref("CASE-RO"), { repo });
+    await flushFetch();
+
+    const ok = await model.exportGeneratedDocument("doc-y");
+
+    expect(ok).toBe(false);
+    expect(exportGeneratedDocument).not.toHaveBeenCalled();
+  });
+});
+
 describe("CaseDetailView template static wiring scan", () => {
   const templatePath = resolve(__dirname, "CaseDetailView.vue");
   const src = readFileSync(templatePath, "utf-8");
@@ -177,6 +281,8 @@ describe("CaseDetailView template static wiring scan", () => {
     { component: "CaseMessagesTab", event: "publish-message" },
     { component: "CaseDeadlinesTab", event: "open-create-deadline" },
     { component: "CaseFormsTab", event: "open-generate-modal" },
+    { component: "CaseFormsTab", event: "finalize" },
+    { component: "CaseFormsTab", event: "export" },
     { component: "CaseTasksTab", event: "open-create-task" },
   ];
 
@@ -193,6 +299,70 @@ describe("CaseDetailView template static wiring scan", () => {
       ).toContain(`@${event}`);
     });
   }
+
+  const REQUIRED_PROPS: Array<{
+    component: string;
+    prop: string;
+  }> = [
+    { component: "CaseFormGenerateModal", prop: ":templates" },
+    { component: "CaseFormGenerateModal", prop: ":initial-template-id" },
+  ];
+
+  for (const { component, prop } of REQUIRED_PROPS) {
+    it(`<${component}> 模板上必须传递 ${prop}`, () => {
+      const componentBlock = extractComponentBlock(src, component);
+      expect(
+        componentBlock,
+        `<${component}> not found in CaseDetailView template`,
+      ).toBeTruthy();
+      expect(
+        componentBlock,
+        `<${component}> missing ${prop} binding`,
+      ).toContain(prop);
+    });
+  }
+});
+
+describe("CaseDetailView wiring contract — formTemplates (R37-A)", () => {
+  it("model 加载后 repo.listDocumentTemplates 被调用且 formTemplates 反映返回值", async () => {
+    const { repo, listDocumentTemplates } = createFullRepoStub();
+    const mockTemplates = [
+      { id: "tpl-1", name: "事業計画書", meta: "BMV", actionLabel: "生成" },
+    ];
+    listDocumentTemplates.mockResolvedValue(mockTemplates);
+
+    const model = useCaseDetailModel(ref("CASE-W1"), { repo });
+    await flushFetch();
+
+    expect(listDocumentTemplates).toHaveBeenCalled();
+    expect(model.formTemplates.value).toEqual(mockTemplates);
+  });
+
+  it("enrichedDetail.forms.templates 包含 formTemplates 数据", async () => {
+    const { repo, listDocumentTemplates } = createFullRepoStub();
+    const mockTemplates = [
+      { id: "tpl-2", name: "会社概要", meta: "BMV", actionLabel: "生成" },
+    ];
+    listDocumentTemplates.mockResolvedValue(mockTemplates);
+
+    const model = useCaseDetailModel(ref("CASE-W1"), { repo });
+    await flushFetch();
+
+    expect(model.enrichedDetail.value).not.toBeNull();
+    expect(model.enrichedDetail.value!.forms.templates).toEqual(mockTemplates);
+  });
+
+  it("detail 为 null 时 enrichedDetail 也为 null", async () => {
+    const { repo } = createFullRepoStub();
+    (repo.getDetailAggregate as ReturnType<typeof vi.fn>).mockResolvedValue(
+      null,
+    );
+
+    const model = useCaseDetailModel(ref("CASE-NONE"), { repo });
+    await flushFetch();
+
+    expect(model.enrichedDetail.value).toBeNull();
+  });
 });
 
 function extractComponentBlock(

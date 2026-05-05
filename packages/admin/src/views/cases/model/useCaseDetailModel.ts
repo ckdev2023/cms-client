@@ -1,17 +1,22 @@
 import { ref, computed, watch, type Ref } from "vue";
 import type { CaseDetail, CaseDetailTab } from "../types";
+import type { FormTemplate } from "../types-detail";
 import { CASE_DETAIL_TABS } from "../constants";
 import type { CaseRepository } from "./CaseRepository";
 import { createCaseRepository } from "./CaseRepository";
 import { resolveDetailTab } from "../query";
 import { createWriteActions } from "./useCaseDetailWriteActions";
+import type { RefetchTag } from "./useCaseDetailRefetchTags";
+import { ALL_TAB_TAGS } from "./useCaseDetailRefetchTags";
 import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
+import { useCaseFormTemplates } from "./useCaseFormTemplates";
 import {
   useCasePhaseTransitionMenu,
   isTerminalPhase,
   type PhaseTransitionMenuState,
 } from "./useCasePhaseTransitionMenu";
 export type { WriteActionFeedback } from "./useCaseDetailWriteActions";
+export type { RefetchTag } from "./useCaseDetailRefetchTags";
 export { isTerminalPhase } from "./useCasePhaseTransitionMenu";
 
 /**
@@ -128,50 +133,82 @@ function createDetailState(initialTab: string | undefined) {
   };
 }
 
+type TabFetchEntry = [
+  keyof DetailTabDataBundle,
+  RefetchTag,
+  () => Promise<DetailTabDataBundle[keyof DetailTabDataBundle]>,
+];
+
+function buildTabFetchEntries(
+  repo: CaseRepository,
+  caseId: string,
+  locale: string | undefined,
+): TabFetchEntry[] {
+  return [
+    [
+      "documents",
+      "documents",
+      () => repo.getDocumentItems(caseId).catch(() => []),
+    ],
+    [
+      "forms",
+      "forms",
+      () => repo.getGeneratedDocuments(caseId, locale).catch(() => EMPTY_FORMS),
+    ],
+    [
+      "validation",
+      "validation",
+      () => repo.getValidationData(caseId).catch(() => EMPTY_VALIDATION),
+    ],
+    [
+      "billing",
+      "billing",
+      () => repo.getBillingData(caseId).catch(() => EMPTY_BILLING),
+    ],
+    [
+      "submissionPackages",
+      "submissionPackages",
+      () => repo.getSubmissionPackages(caseId).catch(() => []),
+    ],
+    [
+      "doubleReview",
+      "doubleReview",
+      () => repo.getDoubleReviewEntries(caseId).catch(() => []),
+    ],
+    [
+      "messages",
+      "messages",
+      () => repo.getMessages(caseId, locale).catch(() => []),
+    ],
+    [
+      "logEntries",
+      "logEntries",
+      () => repo.getLogEntries(caseId).catch(() => []),
+    ],
+    ["tasks", "tasks", () => repo.getTasks(caseId).catch(() => [])],
+    ["deadlines", "deadlines", () => repo.getDeadlines(caseId).catch(() => [])],
+  ];
+}
+
 async function loadTabData(
   repo: CaseRepository,
   caseId: string,
   locale?: string,
-): Promise<DetailTabDataBundle> {
-  const [
-    documents,
-    forms,
-    validation,
-    billing,
-    submissionPackages,
-    doubleReview,
-    messages,
-    logEntries,
-    tasks,
-    deadlines,
-  ] = await Promise.all([
-    repo.getDocumentItems(caseId).catch(() => []),
-    repo.getGeneratedDocuments(caseId, locale).catch(() => EMPTY_FORMS),
-    repo.getValidationData(caseId).catch(() => EMPTY_VALIDATION),
-    repo.getBillingData(caseId).catch(() => EMPTY_BILLING),
-    repo.getSubmissionPackages(caseId).catch(() => []),
-    repo.getDoubleReviewEntries(caseId).catch(() => []),
-    repo.getMessages(caseId, locale).catch(() => []),
-    repo.getLogEntries(caseId).catch(() => []),
-    repo.getTasks(caseId).catch(() => []),
-    repo.getDeadlines(caseId).catch(() => []),
-  ]);
-
-  return {
-    documents,
-    forms,
-    validation,
-    billing,
-    submissionPackages,
-    doubleReview,
-    messages,
-    logEntries,
-    tasks,
-    deadlines,
-  };
+  tags?: ReadonlySet<RefetchTag>,
+): Promise<Partial<DetailTabDataBundle>> {
+  const active = tags ?? ALL_TAB_TAGS;
+  const entries = buildTabFetchEntries(repo, caseId, locale).filter(([, tag]) =>
+    active.has(tag),
+  );
+  const values = await Promise.all(entries.map(([, , fn]) => fn()));
+  const result: Partial<DetailTabDataBundle> = {};
+  entries.forEach(([key], i) => {
+    (result as Record<string, unknown>)[key] = values[i];
+  });
+  return result;
 }
 
-function createDetailLoader(input: {
+interface DetailLoaderInput {
   caseId: Ref<string>;
   repo: CaseRepository;
   detail: Ref<CaseDetail | null>;
@@ -179,21 +216,34 @@ function createDetailLoader(input: {
   loading: Ref<boolean>;
   error: Ref<string | null>;
   locale?: Ref<string>;
-}) {
+}
+
+function applyTabData(
+  detail: CaseDetail,
+  tabData: Partial<DetailTabDataBundle>,
+): CaseDetail {
+  const merged = { ...detail, ...tabData };
+  if (tabData.logEntries) {
+    merged.timeline = buildOverviewTimelineFromLog(tabData.logEntries);
+  }
+  return merged;
+}
+
+function createDetailLoader(input: DetailLoaderInput) {
   let fetchGeneration = 0;
 
-  async function fetchTabData(gen: number): Promise<void> {
+  async function fetchTabData(
+    gen: number,
+    tags?: ReadonlySet<RefetchTag>,
+  ): Promise<void> {
     const tabData = await loadTabData(
       input.repo,
       input.caseId.value,
       input.locale?.value,
+      tags,
     ).catch(() => null);
     if (gen !== fetchGeneration || !input.detail.value || !tabData) return;
-    input.detail.value = {
-      ...input.detail.value,
-      ...tabData,
-      timeline: buildOverviewTimelineFromLog(tabData.logEntries),
-    };
+    input.detail.value = applyTabData(input.detail.value, tabData);
   }
 
   async function fetchDetail(): Promise<void> {
@@ -213,13 +263,17 @@ function createDetailLoader(input: {
     } finally {
       if (gen === fetchGeneration) input.loading.value = false;
     }
-
     if (gen === fetchGeneration && input.detail.value) {
       await fetchTabData(gen);
     }
   }
 
-  return { fetchDetail };
+  async function fetchPartial(tags: ReadonlySet<RefetchTag>): Promise<void> {
+    if (tags.has("detail")) return fetchDetail();
+    await fetchTabData(fetchGeneration, tags);
+  }
+
+  return { fetchDetail, fetchPartial };
 }
 
 function syncRouteTab(
@@ -252,7 +306,35 @@ interface UseCaseDetailModelDeps {
   routeTab?: Ref<string | undefined>;
   initialTab?: string;
   onTabChange?: (tab: CaseDetailTab) => void;
-  locale?: Ref<string>;
+  /**
+   * 文書テンプレート取得時のコンテンツ言語フィルタ（ISO 639-1 alpha-2: `ja` / `zh` / `en`）。
+   * UI locale（`zh-CN` / `ja-JP` / `en-US`）を直接渡さないこと。
+   */
+  templateLanguage?: Ref<string>;
+  translate?: (key: string) => string;
+}
+
+function createFormTemplatesSlice(
+  repo: CaseRepository,
+  detail: Ref<CaseDetail | null>,
+  templateLanguage?: Ref<string>,
+  translate?: (key: string) => string,
+) {
+  const caseType = computed(() => detail.value?.caseType ?? "");
+  const { templates: formTemplates } = useCaseFormTemplates({
+    repo,
+    caseType,
+    language: templateLanguage,
+    translate,
+  });
+
+  const enrichedDetail = computed<CaseDetail | null>(() => {
+    const d = detail.value;
+    if (!d) return null;
+    return { ...d, forms: { ...d.forms, templates: formTemplates.value } };
+  });
+
+  return { formTemplates, enrichedDetail };
 }
 
 function setupDetailLifecycle(
@@ -284,14 +366,25 @@ function createDetailModelResult(input: {
   switchTab: (tab: CaseDetailTab) => void;
   refetch: () => Promise<void>;
   writeActions: DetailWriteActions;
-  isBmvCase: Ref<boolean>;
   phaseMenu: PhaseTransitionMenuState;
-  isTerminalPhaseComputed: Ref<boolean>;
+  formTemplates: Ref<FormTemplate[]>;
+  enrichedDetail: Ref<CaseDetail | null>;
 }) {
+  const isBmvCase = computed(
+    () =>
+      input.state.detail.value?.workflowStep != null ||
+      input.state.detail.value?.visaPlan != null,
+  );
+  const isTerminalPhaseComputed = computed(() =>
+    isTerminalPhase(input.state.detail.value?.businessPhase ?? ""),
+  );
+
   return {
     activeTab: input.state.activeTab,
     tabs: input.state.tabs,
     detail: input.state.detail,
+    enrichedDetail: input.enrichedDetail,
+    formTemplates: input.formTemplates,
     notFound: input.state.notFound,
     isReadonly: input.state.isReadonly,
     tabCounters: input.state.tabCounters,
@@ -306,7 +399,7 @@ function createDetailModelResult(input: {
 
     writeFeedback: input.writeActions.writeFeedback,
     clearWriteFeedback: input.writeActions.clearWriteFeedback,
-    isBmvCase: input.isBmvCase,
+    isBmvCase,
     transitionStage: input.writeActions.transitionStage,
     transitionWorkflowStep: input.writeActions.transitionWorkflowStep,
     advancePostApprovalStage: input.writeActions.advancePostApprovalStage,
@@ -318,11 +411,13 @@ function createDetailModelResult(input: {
     publishMessage: input.writeActions.publishMessage,
     createReminder: input.writeActions.createReminder,
     createGeneratedDocument: input.writeActions.createGeneratedDocument,
+    finalizeGeneratedDocument: input.writeActions.finalizeGeneratedDocument,
+    exportGeneratedDocument: input.writeActions.exportGeneratedDocument,
     createTask: input.writeActions.createTask,
     completeTask: input.writeActions.completeTask,
 
     phaseMenu: input.phaseMenu,
-    isTerminalPhase: input.isTerminalPhaseComputed,
+    isTerminalPhase: isTerminalPhaseComputed,
   };
 }
 
@@ -341,6 +436,8 @@ function createDetailModelResult(input: {
  * @param deps.initialTab - 初始激活 tab（测试用；若同时提供 routeTab，以 routeTab 优先）
  * @param deps.onTabChange - tab 切换后回调（由 view 层提供，用于同步 URL query）;
  *   仅在 UI 主动切换 tab 时触发，route 变更驱动的同步不会触发。
+ * @param deps.templateLanguage - 文書模板的内容语言（ISO 639-1 alpha-2）;
+ *   不可直接传入 vue-i18n 的 locale ref。省略时不做模板语言过滤。
  * @returns 详情页状态：案件数据、tab、readonly、counters、customerId 等
  */
 export function useCaseDetailModel(
@@ -349,14 +446,14 @@ export function useCaseDetailModel(
 ) {
   const repo = deps.repo ?? createCaseRepository();
   const state = createDetailState(deps.routeTab?.value ?? deps.initialTab);
-  const { fetchDetail } = createDetailLoader({
+  const { fetchDetail, fetchPartial } = createDetailLoader({
     caseId,
     repo,
     detail: state.detail,
     customerId: state.customerId,
     loading: state.loading,
     error: state.error,
-    locale: deps.locale,
+    locale: deps.templateLanguage,
   });
   const riskModal = createRiskModalController();
   const switchTab = createTabSwitcher(state.activeTab, deps.onTabChange);
@@ -368,14 +465,15 @@ export function useCaseDetailModel(
     getCaseId: () => caseId.value,
     getReadonly: () => state.isReadonly.value,
     onSuccess: fetchDetail,
+    onPartialSuccess: fetchPartial,
     onRiskModalClose: () => riskModal.closeRiskModal(),
   });
 
-  /** 当前案件是否为 BMV（经营管理签）案件。 */
-  const isBmvCase = computed(
-    () =>
-      state.detail.value?.workflowStep != null ||
-      state.detail.value?.visaPlan != null,
+  const { formTemplates, enrichedDetail } = createFormTemplatesSlice(
+    repo,
+    state.detail,
+    deps.templateLanguage,
+    deps.translate,
   );
 
   const phaseMenu = useCasePhaseTransitionMenu({
@@ -385,10 +483,6 @@ export function useCaseDetailModel(
     onSuccess: fetchDetail,
   });
 
-  const isTerminalPhaseComputed = computed(() =>
-    isTerminalPhase(state.detail.value?.businessPhase ?? ""),
-  );
-
   void fetchDetail();
 
   return createDetailModelResult({
@@ -397,8 +491,8 @@ export function useCaseDetailModel(
     switchTab,
     refetch: fetchDetail,
     writeActions,
-    isBmvCase,
     phaseMenu,
-    isTerminalPhaseComputed,
+    formTemplates,
+    enrichedDetail,
   });
 }

@@ -109,6 +109,26 @@ export type SubmissionPackage = {
 };
 
 /**
+ * P0 DocumentTemplate（文書模板 — 案件文書生成时引用的模板定义）。
+ */
+export type DocumentTemplate = {
+  id: string;
+  orgId: string;
+  templateName: string;
+  caseType: string;
+  docType: string;
+  language: string;
+  versionNo: number;
+  contentBody: string;
+  variablesSchema: Record<string, unknown>;
+  activeFlag: boolean;
+  createdBy: string | null;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/**
  * P0 GeneratedDocument（生成文书 — 文書 tab 消费）。
  */
 export type GeneratedDocument = {

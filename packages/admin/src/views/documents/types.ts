@@ -196,6 +196,13 @@ export interface DocumentListItem {
   sharedExpiryRisk: boolean;
   /** 引用该版本的案件数（> 1 时显示多案件引用提示）。 */
   referenceCount: number;
+  /**
+   * 后端原始状态（保留 `waiting_upload` / `revision_required` 等服务端枚举），
+   * 用于行内动作守卫与服务端口径精确对齐（避免前端 lossy 映射后误判）。
+   */
+  backendStatus?: string;
+  /** 资料项类别（`"standard"` / `"questionnaire"` 等），影响"催办"等守卫。 */
+  category?: string;
 }
 
 // ─── Review & Actions ────────────────────────────────────────────

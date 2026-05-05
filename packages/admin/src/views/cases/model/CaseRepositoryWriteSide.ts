@@ -221,3 +221,61 @@ export function createCreateSubmissionPackage(runtime: CaseRepositoryRuntime) {
       errorMessage: "Invalid create submission package response",
     });
 }
+
+// ─── Generated Document State Transitions ────────────────────────
+
+function buildGeneratedDocumentFinalizeUrl(
+  casesApiPath: string,
+  docId: string,
+): string {
+  return (
+    casesApiPath.replace(/\/cases\/?$/, "") +
+    `/generated-documents/${encodeURIComponent(docId)}/finalize`
+  );
+}
+
+function buildGeneratedDocumentExportUrl(
+  casesApiPath: string,
+  docId: string,
+): string {
+  return (
+    casesApiPath.replace(/\/cases\/?$/, "") +
+    `/generated-documents/${encodeURIComponent(docId)}/export`
+  );
+}
+
+/**
+ * 创建 `finalizeGeneratedDocument` 写入函数。
+ *
+ * @param runtime - 案件仓储运行时
+ * @returns 发起 `POST /generated-documents/:id/finalize` 的函数
+ */
+export function createFinalizeGeneratedDocument(
+  runtime: CaseRepositoryRuntime,
+) {
+  return async (docId: string): Promise<WriteResultWithId> =>
+    requestAndAdapt({
+      runtime,
+      url: buildGeneratedDocumentFinalizeUrl(runtime.apiPath, docId),
+      method: "POST",
+      adapt: adaptWriteResult,
+      errorMessage: "Invalid finalize generated document response",
+    });
+}
+
+/**
+ * 创建 `exportGeneratedDocument` 写入函数。
+ *
+ * @param runtime - 案件仓储运行时
+ * @returns 发起 `POST /generated-documents/:id/export` 的函数
+ */
+export function createExportGeneratedDocument(runtime: CaseRepositoryRuntime) {
+  return async (docId: string): Promise<WriteResultWithId> =>
+    requestAndAdapt({
+      runtime,
+      url: buildGeneratedDocumentExportUrl(runtime.apiPath, docId),
+      method: "POST",
+      adapt: adaptWriteResult,
+      errorMessage: "Invalid export generated document response",
+    });
+}

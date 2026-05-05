@@ -204,6 +204,90 @@ export class GeneratedDocumentsController {
     });
   }
 
+  /**
+   * 定稿生成文書（须主办人或 manager 权限，非 S9）。
+   *
+   * @param req HTTP 请求对象。
+   * @param id 生成文書 ID。
+   * @returns 更新后的 DTO。
+   */
+  @RequireRoles("staff")
+  @Post(":id/finalize")
+  async finalize(@Req() req: HttpRequest, @Param("id") id: string) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const existing = await this.generatedDocumentsService.get(ctx, id);
+    if (!existing) throw new NotFoundException("Generated document not found");
+
+    const parentCase = await this.assertCanEditParentCaseAndReturn(
+      ctx,
+      existing.caseId,
+    );
+    if (
+      !this.permissionsService.canFinalizeCase(ctx.userId, ctx.role, parentCase)
+    ) {
+      throw new ForbiddenException(
+        "Only the case owner or a manager can finalize generated documents",
+      );
+    }
+
+    const dto = await this.generatedDocumentsService.update(
+      ctx,
+      id,
+      { status: "final" },
+      { skipTimelineWrite: true },
+    );
+
+    if (existing.status !== "final") {
+      await this.generatedDocumentsService.writeTimeline(ctx, {
+        caseId: existing.caseId,
+        generatedDocumentId: id,
+        action: "generated_document.finalized",
+        extra: { title: existing.title },
+      });
+    }
+
+    return dto;
+  }
+
+  /**
+   * 导出生成文書（每次留痕，fileUrl 写占位 URL）。
+   *
+   * @param req HTTP 请求对象。
+   * @param id 生成文書 ID。
+   * @returns 更新后的 DTO。
+   */
+  @RequireRoles("staff")
+  @Post(":id/export")
+  async export(@Req() req: HttpRequest, @Param("id") id: string) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const existing = await this.generatedDocumentsService.get(ctx, id);
+    if (!existing) throw new NotFoundException("Generated document not found");
+
+    await this.assertCanEditParentCase(ctx, existing.caseId);
+
+    const placeholderFileUrl = `placeholder://generated-documents/${id}.${existing.outputFormat}`;
+
+    const dto = await this.generatedDocumentsService.update(
+      ctx,
+      id,
+      { status: "exported", fileUrl: placeholderFileUrl },
+      { skipTimelineWrite: true },
+    );
+
+    await this.generatedDocumentsService.writeTimeline(ctx, {
+      caseId: existing.caseId,
+      generatedDocumentId: id,
+      action: "generated_document.exported",
+      extra: { title: existing.title, fileUrl: placeholderFileUrl },
+    });
+
+    return dto;
+  }
+
   private async assertCanViewParentCase(
     ctx: RequestContext,
     caseId: string,
@@ -233,6 +317,13 @@ export class GeneratedDocumentsController {
     ctx: RequestContext,
     caseId: string,
   ): Promise<void> {
+    await this.assertCanEditParentCaseAndReturn(ctx, caseId);
+  }
+
+  private async assertCanEditParentCaseAndReturn(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<import("../model/coreEntities").Case> {
     const caseEntity = await this.casesService.get(ctx, caseId);
     if (!caseEntity) {
       throw new NotFoundException(
@@ -259,5 +350,6 @@ export class GeneratedDocumentsController {
         "Insufficient permissions to edit this case's generated documents",
       );
     }
+    return caseEntity;
   }
 }

@@ -261,7 +261,7 @@ export class CasesController {
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
     const aggregate = await this.casesService.getDetailAggregate(ctx, id);
-    if (!aggregate) throw new BadRequestException("Case not found");
+    if (!aggregate) throw new NotFoundException("Case not found");
 
     if (
       !this.permissionsService.canViewCase(

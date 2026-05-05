@@ -63,6 +63,13 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   SP_INVALID_ITEM_TYPE: "spInvalidItemType",
   SP_DUPLICATE_ITEM: "spDuplicateItem",
   SP_MISSING_MINIMUM_FIELDS: "spMissingMinimumFields",
+  GD_CASE_NOT_FOUND: "gdCaseNotFound",
+  GD_CASE_S9_READONLY: "gdCaseS9Readonly",
+  GD_NOT_FOUND: "gdNotFound",
+  GD_INVALID_STATUS: "gdInvalidStatus",
+  GD_INVALID_TRANSITION: "gdInvalidTransition",
+  GD_INVALID_OUTPUT_FORMAT: "gdInvalidOutputFormat",
+  GD_TITLE_REQUIRED: "gdTitleRequired",
 };
 
 /**

@@ -26,6 +26,20 @@ const DOC_FILE_ID = "00000000-0000-4000-a000-000000000200";
 const DOC_ASSET_ID = "00000000-0000-4000-a000-000000000300";
 const DOC_REF_ID = "00000000-0000-4000-a000-000000000400";
 
+const DOC_TPL_FAMILY_STAY_1 = "00000000-0000-4000-a000-000000000600";
+const DOC_TPL_FAMILY_STAY_2 = "00000000-0000-4000-a000-000000000601";
+const DOC_TPL_FAMILY_STAY_3 = "00000000-0000-4000-a000-000000000602";
+const DOC_TPL_ENGINEER_1 = "00000000-0000-4000-a000-000000000610";
+const DOC_TPL_ENGINEER_2 = "00000000-0000-4000-a000-000000000611";
+const DOC_TPL_ENGINEER_3 = "00000000-0000-4000-a000-000000000612";
+
+const DOC_TPL_BMV_PLAN_1 = "00000000-0000-4000-a000-000000000620";
+const DOC_TPL_BMV_PLAN_2 = "00000000-0000-4000-a000-000000000621";
+const DOC_TPL_BMV_PLAN_3 = "00000000-0000-4000-a000-000000000622";
+const DOC_TPL_BMV_OVERVIEW_1 = "00000000-0000-4000-a000-000000000623";
+const DOC_TPL_BMV_OVERVIEW_2 = "00000000-0000-4000-a000-000000000624";
+const DOC_TPL_BMV_OVERVIEW_3 = "00000000-0000-4000-a000-000000000625";
+
 async function seedCustomer(client: PoolClient) {
   await client.query(
     `INSERT INTO customers (id, org_id, type, base_profile, contacts)
@@ -176,13 +190,22 @@ async function seedDocumentFile(client: PoolClient) {
     `INSERT INTO document_files (
        id, org_id, requirement_id, file_name, file_type,
        version_no, uploaded_by, review_status, storage_type,
-       relative_path, asset_id, expiry_date
+       relative_path, file_url, asset_id, expiry_date
      )
      VALUES ($1,$2,$3,'passport_scan.pdf','application/pdf',
              1,$4,'approved','local_server',
-             '/dev-seed/passport_scan.pdf',$5,'2027-03-31')
+             '/dev-seed/passport_scan.pdf',
+             $6,
+             $5,'2027-03-31')
      ON CONFLICT (id) DO NOTHING`,
-    [DOC_FILE_ID, SEED_ORG_ID, DOC_ITEM_APPROVED, SEED_USER_ID, DOC_ASSET_ID],
+    [
+      DOC_FILE_ID,
+      SEED_ORG_ID,
+      DOC_ITEM_APPROVED,
+      SEED_USER_ID,
+      DOC_ASSET_ID,
+      `placeholder://document-files/${DOC_FILE_ID}.pdf`,
+    ],
   );
 }
 
@@ -233,6 +256,113 @@ async function seedDocumentChecklistTemplate(client: PoolClient) {
   );
 }
 
+type DocTemplateSeed = {
+  id: string;
+  caseType: string;
+  templateName: string;
+  docType: string;
+};
+
+const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
+  // 家族滞在 — 三种 caseTypeCode 别名
+  {
+    id: DOC_TPL_FAMILY_STAY_1,
+    caseType: "family_stay",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_FAMILY_STAY_2,
+    caseType: "family",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_FAMILY_STAY_3,
+    caseType: "dependent_visa",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  // 技人国 — 三種 caseTypeCode 別名
+  {
+    id: DOC_TPL_ENGINEER_1,
+    caseType: "engineer_humanities_intl_visa",
+    templateName: "雇用契約書サマリ",
+    docType: "employment_summary",
+  },
+  {
+    id: DOC_TPL_ENGINEER_2,
+    caseType: "hum",
+    templateName: "雇用契約書サマリ",
+    docType: "employment_summary",
+  },
+  {
+    id: DOC_TPL_ENGINEER_3,
+    caseType: "engineer_visa",
+    templateName: "雇用契約書サマリ",
+    docType: "employment_summary",
+  },
+  // 経営管理 — 三種 caseTypeCode 別名 × 事業計画書 + 会社概要
+  {
+    id: DOC_TPL_BMV_PLAN_1,
+    caseType: "biz_mgmt",
+    templateName: "事業計画書",
+    docType: "business_plan",
+  },
+  {
+    id: DOC_TPL_BMV_PLAN_2,
+    caseType: "biz_mgmt_4m",
+    templateName: "事業計画書",
+    docType: "business_plan",
+  },
+  {
+    id: DOC_TPL_BMV_PLAN_3,
+    caseType: "biz_mgmt_cert_4m",
+    templateName: "事業計画書",
+    docType: "business_plan",
+  },
+  {
+    id: DOC_TPL_BMV_OVERVIEW_1,
+    caseType: "biz_mgmt",
+    templateName: "会社概要",
+    docType: "company_overview",
+  },
+  {
+    id: DOC_TPL_BMV_OVERVIEW_2,
+    caseType: "biz_mgmt_4m",
+    templateName: "会社概要",
+    docType: "company_overview",
+  },
+  {
+    id: DOC_TPL_BMV_OVERVIEW_3,
+    caseType: "biz_mgmt_cert_4m",
+    templateName: "会社概要",
+    docType: "company_overview",
+  },
+];
+
+async function seedDocumentTemplates(client: PoolClient) {
+  for (const tpl of DOC_TEMPLATE_SEEDS) {
+    await client.query(
+      `INSERT INTO document_templates (
+         id, org_id, template_name, case_type, doc_type, language,
+         version_no, content_body, variables_schema, active_flag,
+         created_by, updated_by
+       )
+       VALUES ($1,$2,$3,$4,$5,'ja',1,'','{}'::jsonb,true,$6,$6)
+       ON CONFLICT (id) DO NOTHING`,
+      [
+        tpl.id,
+        SEED_ORG_ID,
+        tpl.templateName,
+        tpl.caseType,
+        tpl.docType,
+        SEED_USER_ID,
+      ],
+    );
+  }
+}
+
 async function seedCrossCaseLink(client: PoolClient) {
   await client.query(
     `INSERT INTO document_requirement_file_refs (
@@ -245,28 +375,71 @@ async function seedCrossCaseLink(client: PoolClient) {
   );
 }
 
+/**
+ *
+ */
+export type SeedStep = [string, (c: PoolClient) => Promise<void>];
+
+/**
+ *
+ */
+/**
+ * seed 全量步骤定义（按依赖顺序排列）。
+ *
+ * @returns 步骤数组，每项为 `[label, fn]`
+ */
+export function buildSeedSteps(): SeedStep[] {
+  return [
+    ["customer", seedCustomer],
+    ["cases", seedCases],
+    ["documentItems", seedDocumentItems],
+    ["documentAsset", seedDocumentAsset],
+    ["documentFile", seedDocumentFile],
+    ["crossCaseLink", seedCrossCaseLink],
+    ["documentChecklistTemplate", seedDocumentChecklistTemplate],
+    ["documentTemplates", seedDocumentTemplates],
+  ];
+}
+
+export { DOC_TEMPLATE_SEEDS };
+
 async function main() {
+  const smokeMode = process.env.SEED_SMOKE === "1";
   const input = readLocalAdminBootstrapInput();
   const pool = createPgPool(input.dbUrl);
 
+  const steps = buildSeedSteps();
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    await seedCustomer(client);
-    await seedCases(client);
-    await seedDocumentItems(client);
-    await seedDocumentAsset(client);
-    await seedDocumentFile(client);
-    await seedCrossCaseLink(client);
-    await seedDocumentChecklistTemplate(client);
+    for (const [label, fn] of steps) {
+      try {
+        await fn(client);
+      } catch (cause) {
+        const detail = cause instanceof Error ? cause.message : String(cause);
+        await client.query("ROLLBACK");
+        throw new Error(
+          `[CRITICAL] seed rolled back at step "${label}": ${detail}`,
+        );
+      }
+    }
 
-    await client.query("COMMIT");
-    process.stdout.write(
-      "[seed-dev] done — 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template\n",
-    );
+    if (smokeMode) {
+      await client.query("ROLLBACK");
+      process.stdout.write(
+        `[seed-dev:smoke] all ${String(steps.length)} steps OK — rolled back\n`,
+      );
+    } else {
+      await client.query("COMMIT");
+      process.stdout.write(
+        `[seed-dev] done — 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates\n`,
+      );
+    }
   } catch (error) {
-    await client.query("ROLLBACK");
+    if (!(error instanceof Error && error.message.startsWith("[CRITICAL]"))) {
+      await client.query("ROLLBACK");
+    }
     throw error;
   } finally {
     client.release();
@@ -274,8 +447,11 @@ async function main() {
   }
 }
 
-await main().catch((error: unknown) => {
-  const message = error instanceof Error ? error.message : String(error);
-  process.stderr.write(`[seed-dev] failed: ${message}\n`);
-  process.exitCode = 1;
-});
+const isDirectRun = process.argv[1]?.endsWith("seedDevData.ts") ?? false;
+if (isDirectRun) {
+  await main().catch((error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error);
+    process.stderr.write(`[seed-dev] failed: ${message}\n`);
+    process.exitCode = 1;
+  });
+}

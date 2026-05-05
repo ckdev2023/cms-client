@@ -3,6 +3,7 @@ import type {
   DeadlineItem,
   DocumentGroup,
   DoubleReviewEntry,
+  FormTemplate,
   FormsData,
   LogEntry,
   MessageItem,
@@ -21,9 +22,11 @@ import {
   adaptCaseSubmissionPackages,
   adaptCaseTaskList,
   adaptCaseValidationData,
+  adaptDocumentTemplateList,
   buildCaseBillingPlansUrl,
   buildCaseBillingTabAggregateUrl,
   buildCaseDocumentItemsUrl,
+  buildCaseDocumentTemplatesUrl,
   buildCaseGeneratedDocumentsUrl,
   buildCaseLogEntriesUrl,
   buildCaseMessagesUrl,
@@ -346,6 +349,31 @@ export function createGetDeadlines(runtime: CaseRepositoryRuntime) {
       method: "GET",
       adapt: (value) => adaptCaseDeadlineList(value) ?? [],
       errorMessage: "Invalid reminders response",
+    });
+  };
+}
+
+/**
+ * 创建获取文書模板列表的读侧请求函数。
+ *
+ * @param runtime - 仓储运行时上下文
+ * @returns 读取文書模板列表的异步函数
+ */
+export function createListDocumentTemplates(runtime: CaseRepositoryRuntime) {
+  return async (params: {
+    caseType: string;
+    language?: string;
+    translate?: (key: string) => string;
+  }): Promise<FormTemplate[]> => {
+    if (!params.caseType.trim()) return [];
+
+    return requestAndAdapt({
+      runtime,
+      url: buildCaseDocumentTemplatesUrl(runtime.apiPath, params),
+      method: "GET",
+      adapt: (value) =>
+        adaptDocumentTemplateList(value, params.translate) ?? [],
+      errorMessage: "Invalid document templates response",
     });
   };
 }

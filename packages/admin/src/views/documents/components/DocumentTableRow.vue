@@ -7,6 +7,7 @@ import {
   DOCUMENT_STATUS_TONE,
   getProviderLabelKey,
   getStatusLabelKey,
+  isFollowUpAllowed,
 } from "../constants";
 import { isSelectableForBatch } from "../validation";
 import { buildCaseDetailHref } from "../../cases/query";
@@ -28,9 +29,16 @@ defineEmits<{
 }>();
 
 const canReview = computed(() => props.item.status === "uploaded_reviewing");
-const canRemind = computed(
-  () => props.item.status === "pending" || props.item.status === "rejected",
-);
+const canRemind = computed(() => {
+  const backend =
+    props.item.backendStatus ??
+    (props.item.status === "pending"
+      ? "waiting_upload"
+      : props.item.status === "rejected"
+        ? "revision_required"
+        : props.item.status);
+  return isFollowUpAllowed(backend, props.item.category);
+});
 const isWaived = computed(() => props.item.status === "waived");
 const isExpired = computed(() => props.item.status === "expired");
 

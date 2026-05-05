@@ -22,33 +22,19 @@ import {
 const VALID_STATUSES = new Set(["draft", "final", "exported"]);
 const VALID_OUTPUT_FORMATS = new Set(["pdf", "docx", "xlsx"]);
 
-const GD_COLS = [
-  "gd.id",
-  "gd.org_id",
-  "gd.case_id",
-  "gd.template_id",
-  "gd.title",
-  "gd.version_no",
-  "gd.output_format",
-  "gd.file_url",
-  "gd.status",
-  "gd.generated_by",
-  "gd.approved_by",
-  "gd.generated_at",
-  "gd.approved_at",
-].join(", ");
+const STATUS_TRANSITIONS: Record<string, Set<string>> = {
+  draft: new Set(["draft", "final"]),
+  final: new Set(["final", "exported"]),
+  exported: new Set(["exported"]),
+};
 
 export const GD_DTO_SELECT = `
-  ${GD_COLS},
+  gd.id, gd.org_id, gd.case_id, gd.template_id, gd.title, gd.version_no, gd.output_format, gd.file_url, gd.status, gd.generated_by, gd.approved_by, gd.generated_at, gd.approved_at,
   gen_u.name as generated_by_display_name,
   apr_u.name as approved_by_display_name
 `;
 
-export const GD_DTO_JOINS = `
-  from generated_documents gd
-  left join users gen_u on gen_u.id = gd.generated_by
-  left join users apr_u on apr_u.id = gd.approved_by
-`;
+export const GD_DTO_JOINS = ` from generated_documents gd left join users gen_u on gen_u.id = gd.generated_by left join users apr_u on apr_u.id = gd.approved_by`;
 
 type GeneratedDocumentRow = {
   id: string;
@@ -65,21 +51,18 @@ type GeneratedDocumentRow = {
   generated_at: unknown;
   approved_at: unknown;
 };
-
 type GeneratedDocumentDtoRow = GeneratedDocumentRow & {
   generated_by_display_name: string | null;
   approved_by_display_name: string | null;
 };
 
-/**
- * 生成文书 CRUD 服务。
- */
+/** 生成文书 CRUD 服务。 */
 @Injectable()
 export class GeneratedDocumentsService {
   /**
-   * 构造函数。
-   * @param pool 数据库连接池。
-   * @param timelineService 时间线服务。
+   * 注入依赖。
+   * @param pool 连接池。
+   * @param timelineService 时间线。
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
@@ -87,10 +70,11 @@ export class GeneratedDocumentsService {
   ) {}
 
   /**
-   * 按主键获取生成文书实体。
-   * @param ctx 当前请求上下文。
-   * @param id 生成文书 ID。
-   * @returns 生成文书实体或 null。
+   * 按主键获取生成文書实体。
+   *
+   * @param ctx 请求上下文。
+   * @param id 文書 ID。
+   * @returns 实体或 null。
    */
   async get(
     ctx: RequestContext,
@@ -98,14 +82,7 @@ export class GeneratedDocumentsService {
   ): Promise<GeneratedDocument | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<GeneratedDocumentRow>(
-      `
-        select id, org_id, case_id, template_id, title, version_no,
-               output_format, file_url, status, generated_by, approved_by,
-               generated_at, approved_at
-        from generated_documents
-        where id = $1 and org_id = $2
-        limit 1
-      `,
+      `select id, org_id, case_id, template_id, title, version_no, output_format, file_url, status, generated_by, approved_by, generated_at, approved_at from generated_documents where id = $1 and org_id = $2 limit 1`,
       [id, ctx.orgId],
     );
     const row = result.rows.at(0);
@@ -113,9 +90,10 @@ export class GeneratedDocumentsService {
   }
 
   /**
-   * 按主键获取生成文书 DTO（含展示名）。
-   * @param ctx 当前请求上下文。
-   * @param id 生成文书 ID。
+   * 按主键获取 DTO（含展示名）。
+   *
+   * @param ctx 请求上下文。
+   * @param id 文書 ID。
    * @returns DTO 或 null。
    */
   async getDto(
@@ -132,8 +110,9 @@ export class GeneratedDocumentsService {
   }
 
   /**
-   * 分页列出指定案件的生成文书。
-   * @param ctx 当前请求上下文。
+   * 分页列出指定案件的生成文書。
+   *
+   * @param ctx 请求上下文。
    * @param input 查询参数。
    * @returns 分页结果。
    */
@@ -184,14 +163,12 @@ export class GeneratedDocumentsService {
   ): Promise<GeneratedDocumentDto> {
     validateCreateInput(input);
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
     const versionNo = await this.nextVersionNo(
       tenantDb,
       ctx.orgId,
       input.caseId,
       input.templateId ?? null,
     );
-
     const dto = await this.insertAndReturn(ctx, input, versionNo);
 
     await this.timelineService.write(ctx, {
@@ -214,12 +191,15 @@ export class GeneratedDocumentsService {
    * @param ctx 当前请求上下文。
    * @param id 生成文书 ID。
    * @param input 更新参数。
+   * @param options 可选行为控制。
+   * @param options.skipTimelineWrite 为 true 时跳过 `.updated` timeline 写入。
    * @returns 更新后的 DTO。
    */
   async update(
     ctx: RequestContext,
     id: string,
     input: GeneratedDocumentUpdateInput,
+    options?: { skipTimelineWrite?: boolean },
   ): Promise<GeneratedDocumentDto> {
     const existing = await this.get(ctx, id);
     if (!existing) {
@@ -242,12 +222,14 @@ export class GeneratedDocumentsService {
 
     const dto = await this.requireDto(ctx, id);
 
-    await this.timelineService.write(ctx, {
-      entityType: "case",
-      entityId: existing.caseId,
-      action: "generated_document.updated",
-      payload: { generatedDocumentId: id, changes: input },
-    });
+    if (!options?.skipTimelineWrite) {
+      await this.timelineService.write(ctx, {
+        entityType: "case",
+        entityId: existing.caseId,
+        action: "generated_document.updated",
+        payload: { generatedDocumentId: id, changes: input },
+      });
+    }
 
     return dto;
   }
@@ -318,17 +300,45 @@ export class GeneratedDocumentsService {
     const params: unknown[] = templateId
       ? [orgId, caseId, templateId]
       : [orgId, caseId];
-
     const result = await tenantDb.query<{ max_ver: number | null }>(
       `select max(version_no) as max_ver from generated_documents where org_id = $1 and case_id = $2 ${templateFilter}`,
       params,
     );
     return (result.rows.at(0)?.max_ver ?? 0) + 1;
   }
+
+  /**
+   * 写入生成文書专用 timeline 条目。
+   *
+   * @param ctx 请求上下文。
+   * @param input timeline 内容。
+   * @param input.caseId 父案件 ID。
+   * @param input.generatedDocumentId 生成文書 ID。
+   * @param input.action timeline 动作标识。
+   * @param input.extra 附加载荷。
+   */
+  async writeTimeline(
+    ctx: RequestContext,
+    input: {
+      caseId: string;
+      generatedDocumentId: string;
+      action: string;
+      extra?: Record<string, unknown>;
+    },
+  ): Promise<void> {
+    await this.timelineService.write(ctx, {
+      entityType: "case",
+      entityId: input.caseId,
+      action: input.action,
+      payload: {
+        generatedDocumentId: input.generatedDocumentId,
+        ...input.extra,
+      },
+    });
+  }
 }
 
 // ─── Pure helpers ────────────────────────────────────────────────
-
 function validateCreateInput(input: GeneratedDocumentCreateInput): void {
   if (!input.title || input.title.trim().length === 0) {
     throw new BadRequestException(
@@ -347,6 +357,15 @@ function validateCreateInput(input: GeneratedDocumentCreateInput): void {
     throw new BadRequestException(
       GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_STATUS +
         ": status must be draft, final, or exported",
+    );
+  }
+}
+
+function assertStatusTransition(current: string, target: string): void {
+  if (!STATUS_TRANSITIONS[current].has(target)) {
+    throw new BadRequestException(
+      GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION +
+        `: cannot transition from '${current}' to '${target}'`,
     );
   }
 }
@@ -412,6 +431,7 @@ function buildUpdateSets(
           ": status must be draft, final, or exported",
       );
     }
+    assertStatusTransition(existing.status, input.status);
     params.push(input.status);
     sets.push(`status = $${String(params.length)}`);
 
@@ -429,11 +449,6 @@ function buildUpdateSets(
   return { sets, params };
 }
 
-/**
- * 将数据库行映射为生成文书实体。
- * @param row 数据库查询行。
- * @returns 领域层实体。
- */
 function mapRow(row: GeneratedDocumentRow): GeneratedDocument {
   return {
     id: row.id,
@@ -452,11 +467,6 @@ function mapRow(row: GeneratedDocumentRow): GeneratedDocument {
   };
 }
 
-/**
- * 将数据库行映射为生成文书 DTO。
- * @param row 数据库查询行（含 join 展示名）。
- * @returns DTO。
- */
 function mapDtoRow(row: GeneratedDocumentDtoRow): GeneratedDocumentDto {
   return {
     id: row.id,
@@ -482,9 +492,8 @@ function tsString(value: unknown, field: string): string {
   throw new Error(`Invalid timestamp: ${field}`);
 }
 
-function tsStringOrNull(value: unknown): string | null {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  return null;
+function tsStringOrNull(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "string") return v;
+  return v instanceof Date ? v.toISOString() : null;
 }

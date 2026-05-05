@@ -87,10 +87,10 @@ describe("BUG-214 CaseFormGenerateModal", () => {
     expect(w.emitted("close")).toBeTruthy();
   });
 
-  it("template select is disabled (placeholder flow)", () => {
+  it("template select is enabled even without templates (R39-D)", () => {
     const w = mountModal();
     const select = w.find("[data-testid='form-gen-template-select']");
-    expect(select.attributes("disabled")).toBeDefined();
+    expect(select.attributes("disabled")).toBeUndefined();
   });
 
   it("submit is disabled when submitting=true", () => {

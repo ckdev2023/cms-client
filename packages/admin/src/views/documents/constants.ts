@@ -151,6 +151,41 @@ export function getStatusTone(rawStatus: string): DocumentStatusTone {
   return DOCUMENT_STATUS_TONE[canonical] ?? "neutral";
 }
 
+// ─── Follow-up (催办) eligibility ────────────────────────────────
+
+/**
+ * 服务端 `documentItems.followUp` 允许的资料项后端原始状态白名单。
+ *
+ * 与 `packages/server/src/modules/core/document-items/documentItems.service.ts`
+ * `followUp` 的 `allowedStatuses` 必须保持一致，否则前端会渲染出
+ * 必然 400 的"催办"按钮。
+ */
+const FOLLOW_UP_ALLOWED_BACKEND_STATUSES: ReadonlySet<string> = new Set([
+  "waiting_upload",
+  "revision_required",
+]);
+
+/**
+ * 判断"催办"按钮是否应可见。
+ *
+ * 等价于服务端 `followUp(...)` 守卫：
+ * - 后端状态属于 {waiting_upload, revision_required} 一律允许。
+ * - 后端状态为 `pending` 时，仅当资料项为 `category === "questionnaire"`
+ *   时允许（问卷类资料的初始 pending 即为"等待客户填写"）。
+ *
+ * @param backendStatus - 后端原始 `document_items.status`
+ * @param category - 资料项类别（`"standard"` / `"questionnaire"` / 等）
+ * @returns 是否允许催办
+ */
+export function isFollowUpAllowed(
+  backendStatus: string,
+  category?: string | null,
+): boolean {
+  if (FOLLOW_UP_ALLOWED_BACKEND_STATUSES.has(backendStatus)) return true;
+  if (backendStatus === "pending" && category === "questionnaire") return true;
+  return false;
+}
+
 // ─── Status sort priority (§3.1) ────────────────────────────────
 
 /**

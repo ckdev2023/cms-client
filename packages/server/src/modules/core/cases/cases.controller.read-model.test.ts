@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  BadRequestException,
   ForbiddenException,
+  NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
 
@@ -200,7 +200,7 @@ void test("getAggregate returns aggregate DTO", async () => {
   );
 });
 
-void test("getAggregate throws when case not found", async () => {
+void test("getAggregate throws NotFoundException when case not found", async () => {
   const service = {
     getDetailAggregate: () => Promise.resolve(null),
   } as unknown as CasesService;
@@ -208,7 +208,7 @@ void test("getAggregate throws when case not found", async () => {
   const controller = new CasesController(service, makePermissions());
   await assert.rejects(
     () => controller.getAggregate(viewerCtxReq as never, "missing"),
-    BadRequestException,
+    NotFoundException,
   );
 });
 

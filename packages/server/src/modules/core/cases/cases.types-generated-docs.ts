@@ -14,6 +14,8 @@
 //   GET  /api/generated-documents/:id
 //   POST /api/generated-documents
 //   PATCH /api/generated-documents/:id
+//   POST /api/generated-documents/:id/finalize
+//   POST /api/generated-documents/:id/export
 // ────────────────────────────────────────────────────────────────
 
 /** 生成文书状态枚举 — 对齐 validation gate 检查。 */
@@ -104,6 +106,7 @@ export const GENERATED_DOCUMENT_ERROR_CODES = {
   GD_CASE_S9_READONLY: "GD_CASE_S9_READONLY",
   GD_NOT_FOUND: "GD_NOT_FOUND",
   GD_INVALID_STATUS: "GD_INVALID_STATUS",
+  GD_INVALID_TRANSITION: "GD_INVALID_TRANSITION",
   GD_INVALID_OUTPUT_FORMAT: "GD_INVALID_OUTPUT_FORMAT",
   GD_TITLE_REQUIRED: "GD_TITLE_REQUIRED",
 } as const;

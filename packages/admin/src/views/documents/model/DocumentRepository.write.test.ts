@@ -121,6 +121,62 @@ describe("DocumentRepository.followUp", () => {
     expect(capturedUrl).toBe("/api/document-items/doc-1/follow-up");
     expect(result.lastFollowUpAt).toBe("2026-04-29T10:00:00Z");
   });
+
+  it("preserves server's human-readable message on 400 (NestJS-shaped error body)", async () => {
+    const repository = createDefaultRepo((input) => {
+      if (String(input).includes("/follow-up")) {
+        return jsonResponse(
+          {
+            message:
+              "Cannot follow up on a document item with status 'pending'",
+            error: "Bad Request",
+            statusCode: 400,
+          },
+          { status: 400 },
+        );
+      }
+      return jsonResponse({ items: [] });
+    });
+    await expect(repository.followUp("doc-1")).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining(
+        "Cannot follow up on a document item with status 'pending'",
+      ),
+    });
+  });
+
+  it("falls back to generic message when server provides no message", async () => {
+    const repository = createDefaultRepo((input) => {
+      if (String(input).includes("/follow-up")) {
+        return jsonResponse({}, { status: 400 });
+      }
+      return jsonResponse({ items: [] });
+    });
+    await expect(repository.followUp("doc-1")).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining("validation error"),
+    });
+  });
+
+  it("joins NestJS validation pipe message arrays", async () => {
+    const repository = createDefaultRepo((input) => {
+      if (String(input).includes("/follow-up")) {
+        return jsonResponse(
+          {
+            message: ["field1 is required", "field2 must be a string"],
+            error: "Bad Request",
+            statusCode: 400,
+          },
+          { status: 400 },
+        );
+      }
+      return jsonResponse({ items: [] });
+    });
+    await expect(repository.followUp("doc-1")).rejects.toMatchObject({
+      code: "VALIDATION",
+      message: expect.stringContaining("field1 is required"),
+    });
+  });
 });
 
 // ─── waive ───────────────────────────────────────────────────────

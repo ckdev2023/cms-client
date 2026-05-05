@@ -13,6 +13,17 @@ import type { MessageChannelChoice } from "./CaseAdapterMessageWriteBuilders";
 import type { DeadlineKindChoice } from "./CaseAdapterReminderWriteBuilders";
 import type { TaskPriorityChoice } from "./CaseAdapterTaskWriteBuilders";
 import type { SubmissionPackageCreateInput } from "./CaseRepositoryWriteSide";
+import type { RefetchTag } from "./useCaseDetailRefetchTags";
+import {
+  TAGS_DETAIL,
+  TAGS_FORMS,
+  TAGS_MESSAGES,
+  TAGS_DEADLINES,
+  TAGS_TASKS,
+  TAGS_SUBMISSIONS,
+} from "./useCaseDetailRefetchTags";
+
+export type { RefetchTag } from "./useCaseDetailRefetchTags";
 
 /**
  * 写操作反馈状态——在 UI 层展示操作结果或门禁阻断提示。
@@ -68,7 +79,10 @@ function createErrorFeedback(e: unknown): WriteActionFeedback {
 
 // ─── Action Delegates ────────────────────────────────────────────
 
-type RunFn = (action: () => Promise<void>) => Promise<boolean>;
+type RunFn = (
+  action: () => Promise<void>,
+  tags?: ReadonlySet<RefetchTag>,
+) => Promise<boolean>;
 
 /** 写操作代理函数的最小依赖。 */
 interface ActionCoreDeps {
@@ -93,13 +107,15 @@ function doTransitionStage(
   toStage: string,
   closeReason?: string,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .transitionCase(deps.getCaseId(), {
-        toStage,
-        closeReason: closeReason ?? undefined,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .transitionCase(deps.getCaseId(), {
+          toStage,
+          closeReason: closeReason ?? undefined,
+        })
+        .then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -116,10 +132,12 @@ function doTransitionWorkflowStep(
   run: RunFn,
   toStepCode: string,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .transitionWorkflowStep(deps.getCaseId(), { toStepCode })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .transitionWorkflowStep(deps.getCaseId(), { toStepCode })
+        .then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -136,10 +154,12 @@ function doAdvancePostApproval(
   run: RunFn,
   stage: string,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .updatePostApprovalStage(deps.getCaseId(), { stage })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .updatePostApprovalStage(deps.getCaseId(), { stage })
+        .then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -169,7 +189,7 @@ function doAckBillingRisk(
       evidenceUrl,
     });
     onClose();
-  });
+  }, TAGS_DETAIL);
 }
 
 /**
@@ -185,8 +205,9 @@ function doUpdateCaseFields(
   run: RunFn,
   fields: Record<string, unknown>,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo.updateCase(deps.getCaseId(), fields).then(() => undefined),
+  return run(
+    () => deps.repo.updateCase(deps.getCaseId(), fields).then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -201,8 +222,10 @@ function doRetryReminderCreation(
   deps: ActionCoreDeps,
   run: RunFn,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo.retryReminderCreation(deps.getCaseId()).then(() => undefined),
+  return run(
+    () =>
+      deps.repo.retryReminderCreation(deps.getCaseId()).then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -219,13 +242,15 @@ function doFailureClose(
   run: RunFn,
   closeReason?: string,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .transitionCase(deps.getCaseId(), {
-        toStage: "S9",
-        closeReason: closeReason ?? undefined,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .transitionCase(deps.getCaseId(), {
+          toStage: "S9",
+          closeReason: closeReason ?? undefined,
+        })
+        .then(() => undefined),
+    TAGS_DETAIL,
   );
 }
 
@@ -234,14 +259,16 @@ function doPublishMessage(
   run: RunFn,
   payload: { content: string; channelChoice: MessageChannelChoice },
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .createCommunicationLog({
-        caseId: deps.getCaseId(),
-        content: payload.content,
-        channelChoice: payload.channelChoice,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .createCommunicationLog({
+          caseId: deps.getCaseId(),
+          content: payload.content,
+          channelChoice: payload.channelChoice,
+        })
+        .then(() => undefined),
+    TAGS_MESSAGES,
   );
 }
 
@@ -255,17 +282,19 @@ function doCreateReminder(
     memo: string;
   },
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .createReminder({
-        caseId: deps.getCaseId(),
-        targetType: payload.targetType,
-        targetId: deps.getCaseId(),
-        remindAt: payload.remindAt,
-        kind: payload.kind,
-        memo: payload.memo,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .createReminder({
+          caseId: deps.getCaseId(),
+          targetType: payload.targetType,
+          targetId: deps.getCaseId(),
+          remindAt: payload.remindAt,
+          kind: payload.kind,
+          memo: payload.memo,
+        })
+        .then(() => undefined),
+    TAGS_DEADLINES,
   );
 }
 
@@ -274,15 +303,39 @@ function doCreateGeneratedDocument(
   run: RunFn,
   payload: { title: string; templateId: string | null; outputFormat: string },
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .createGeneratedDocument({
-        caseId: deps.getCaseId(),
-        title: payload.title,
-        templateId: payload.templateId,
-        outputFormat: payload.outputFormat,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .createGeneratedDocument({
+          caseId: deps.getCaseId(),
+          title: payload.title,
+          templateId: payload.templateId,
+          outputFormat: payload.outputFormat,
+        })
+        .then(() => undefined),
+    TAGS_FORMS,
+  );
+}
+
+function doFinalizeGeneratedDocument(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  docId: string,
+): Promise<boolean> {
+  return run(
+    () => deps.repo.finalizeGeneratedDocument(docId).then(() => undefined),
+    TAGS_FORMS,
+  );
+}
+
+function doExportGeneratedDocument(
+  deps: ActionCoreDeps,
+  run: RunFn,
+  docId: string,
+): Promise<boolean> {
+  return run(
+    () => deps.repo.exportGeneratedDocument(docId).then(() => undefined),
+    TAGS_FORMS,
   );
 }
 
@@ -297,17 +350,19 @@ function doCreateTask(
     assigneeUserId?: string;
   },
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .createTask({
-        caseId: deps.getCaseId(),
-        title: payload.title,
-        description: payload.description,
-        priority: payload.priority,
-        dueAt: payload.dueAt,
-        assigneeUserId: payload.assigneeUserId,
-      })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .createTask({
+          caseId: deps.getCaseId(),
+          title: payload.title,
+          description: payload.description,
+          priority: payload.priority,
+          dueAt: payload.dueAt,
+          assigneeUserId: payload.assigneeUserId,
+        })
+        .then(() => undefined),
+    TAGS_TASKS,
   );
 }
 
@@ -316,7 +371,10 @@ function doCompleteTask(
   run: RunFn,
   taskId: string,
 ): Promise<boolean> {
-  return run(() => deps.repo.completeTask(taskId).then(() => undefined));
+  return run(
+    () => deps.repo.completeTask(taskId).then(() => undefined),
+    TAGS_TASKS,
+  );
 }
 
 function doCreateSubmissionPackage(
@@ -324,17 +382,74 @@ function doCreateSubmissionPackage(
   run: RunFn,
   input: Omit<SubmissionPackageCreateInput, "caseId">,
 ): Promise<boolean> {
-  return run(() =>
-    deps.repo
-      .createSubmissionPackage({ ...input, caseId: deps.getCaseId() })
-      .then(() => undefined),
+  return run(
+    () =>
+      deps.repo
+        .createSubmissionPackage({ ...input, caseId: deps.getCaseId() })
+        .then(() => undefined),
+    TAGS_SUBMISSIONS,
   );
 }
 
 // ─── Factory ─────────────────────────────────────────────────────
 
-function buildChildWriteActions(core: ActionCoreDeps, run: RunFn) {
+interface WriteActionDeps {
+  repo: CaseRepository;
+  getCaseId: () => string;
+  getReadonly: () => boolean;
+  onSuccess: () => Promise<void>;
+  onPartialSuccess?: (tags: ReadonlySet<RefetchTag>) => Promise<void>;
+  onRiskModalClose: () => void;
+}
+
+function createRunAction(
+  deps: WriteActionDeps,
+  writeFeedback: { value: WriteActionFeedback },
+): RunFn {
+  return async (
+    action: () => Promise<void>,
+    tags?: ReadonlySet<RefetchTag>,
+  ): Promise<boolean> => {
+    if (deps.getReadonly() || writeFeedback.value.submitting) return false;
+    writeFeedback.value = createSubmittingFeedback();
+    try {
+      await action();
+      writeFeedback.value = { ...EMPTY_FEEDBACK };
+      if (tags && deps.onPartialSuccess) {
+        await deps.onPartialSuccess(tags);
+      } else {
+        await deps.onSuccess();
+      }
+      return true;
+    } catch (e) {
+      writeFeedback.value = createErrorFeedback(e);
+      return false;
+    }
+  };
+}
+
+function buildAllWriteActions(
+  core: ActionCoreDeps,
+  run: RunFn,
+  onRiskModalClose: () => void,
+) {
   return {
+    transitionStage: (s: string, r?: string) =>
+      doTransitionStage(core, run, s, r),
+    transitionWorkflowStep: (c: string) =>
+      doTransitionWorkflowStep(core, run, c),
+    advancePostApprovalStage: (s: string) =>
+      doAdvancePostApproval(core, run, s),
+    acknowledgeBillingRisk: (code: string, note?: string, url?: string) =>
+      doAckBillingRisk(core, run, code, note, url, onRiskModalClose),
+    updateCaseFields: (fields: Record<string, unknown>) =>
+      doUpdateCaseFields(core, run, fields),
+    retryReminderCreation: () => doRetryReminderCreation(core, run),
+    failureClose: (closeReason?: string) =>
+      doFailureClose(core, run, closeReason),
+    createSubmissionPackage: (
+      input: Omit<SubmissionPackageCreateInput, "caseId">,
+    ) => doCreateSubmissionPackage(core, run, input),
     publishMessage: (payload: {
       content: string;
       channelChoice: MessageChannelChoice;
@@ -350,6 +465,10 @@ function buildChildWriteActions(core: ActionCoreDeps, run: RunFn) {
       templateId: string | null;
       outputFormat: string;
     }) => doCreateGeneratedDocument(core, run, payload),
+    finalizeGeneratedDocument: (docId: string) =>
+      doFinalizeGeneratedDocument(core, run, docId),
+    exportGeneratedDocument: (docId: string) =>
+      doExportGeneratedDocument(core, run, docId),
     createTask: (payload: {
       title: string;
       description?: string;
@@ -364,69 +483,18 @@ function buildChildWriteActions(core: ActionCoreDeps, run: RunFn) {
 /**
  * 创建写操作编排器——管理 feedback 状态并暴露各种 write action。
  *
- * @param deps - 依赖注入
- * @param deps.repo - 案件仓储实例
- * @param deps.getCaseId - 获取当前案件 ID 的函数
- * @param deps.getReadonly - 获取当前是否只读的函数
- * @param deps.onSuccess - 写操作成功后的回调（通常 refetch detail）
- * @param deps.onRiskModalClose - 收费风险确认成功后关闭弹窗的回调
+ * @param deps - 依赖注入（repo / onSuccess / onPartialSuccess 等）
  * @returns 写操作 feedback ref 和各种 write action 方法
  */
-export function createWriteActions(deps: {
-  repo: CaseRepository;
-  getCaseId: () => string;
-  getReadonly: () => boolean;
-  onSuccess: () => Promise<void>;
-  onRiskModalClose: () => void;
-}) {
+export function createWriteActions(deps: WriteActionDeps) {
   const writeFeedback = ref<WriteActionFeedback>({ ...EMPTY_FEEDBACK });
-
-  /** 清除反馈状态。 */
-  function clearWriteFeedback(): void {
-    writeFeedback.value = { ...EMPTY_FEEDBACK };
-  }
-
-  /**
-   * 通用写操作执行器——包装 submitting / success / error 生命周期。
-   *
-   * @param action - 实际写操作
-   * @returns 操作是否成功
-   */
-  async function runAction(action: () => Promise<void>): Promise<boolean> {
-    if (deps.getReadonly() || writeFeedback.value.submitting) return false;
-    writeFeedback.value = createSubmittingFeedback();
-    try {
-      await action();
-      writeFeedback.value = { ...EMPTY_FEEDBACK };
-      await deps.onSuccess();
-      return true;
-    } catch (e) {
-      writeFeedback.value = createErrorFeedback(e);
-      return false;
-    }
-  }
-
+  const runAction = createRunAction(deps, writeFeedback);
   const core: ActionCoreDeps = { repo: deps.repo, getCaseId: deps.getCaseId };
-
   return {
     writeFeedback,
-    clearWriteFeedback,
-    transitionStage: (s: string, r?: string) =>
-      doTransitionStage(core, runAction, s, r),
-    transitionWorkflowStep: (c: string) =>
-      doTransitionWorkflowStep(core, runAction, c),
-    advancePostApprovalStage: (s: string) =>
-      doAdvancePostApproval(core, runAction, s),
-    acknowledgeBillingRisk: (code: string, note?: string, url?: string) =>
-      doAckBillingRisk(core, runAction, code, note, url, deps.onRiskModalClose),
-    updateCaseFields: (fields: Record<string, unknown>) =>
-      doUpdateCaseFields(core, runAction, fields),
-    retryReminderCreation: () => doRetryReminderCreation(core, runAction),
-    failureClose: (closeReason?: string) =>
-      doFailureClose(core, runAction, closeReason),
-    createSubmissionPackage: (
-      input: Omit<SubmissionPackageCreateInput, "caseId">,
-    ) => doCreateSubmissionPackage(core, runAction, input),
-    ...buildChildWriteActions(core, runAction),
+    clearWriteFeedback(): void {
+      writeFeedback.value = { ...EMPTY_FEEDBACK };
+    },
+    ...buildAllWriteActions(core, runAction, deps.onRiskModalClose),
   };
 }

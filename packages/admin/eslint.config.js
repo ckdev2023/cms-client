@@ -114,6 +114,40 @@ export default [
     },
   },
   {
+    files: ["src/views/cases/**/*.{ts,tsx,vue}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/CaseTimelineBuilders", "**/CaseTimelineBuilders.ts"],
+              message:
+                "CaseTimelineBuilders は廃止済み。CaseCommsTimelineBuilders を使用してください（ADR-007）。",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/views/cases/**/*.{ts,tsx,vue}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/CaseTimelineBuilders", "**/CaseTimelineBuilders.ts"],
+              message:
+                "CaseTimelineBuilders は削除済み。CaseCommsTimelineBuilders を使用してください（ADR-007）",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["**/*.{test,spec}.{ts,tsx}"],
     rules: {
       "max-lines-per-function": "off",

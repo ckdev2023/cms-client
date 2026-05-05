@@ -363,7 +363,7 @@ describe("adaptCaseFormsData", () => {
     const g = result!.generated[0];
     expect(g.name).toBe("在留資格認定証明書");
     expect(g.tone).toBe("muted");
-    expect(g.statusLabel).toBe("下書き");
+    expect(g.backendStatus).toBe("draft");
     expect(g.meta).toContain("PDF");
     expect(g.meta).toContain("v1");
     expect(g.meta).toContain("担当太郎");

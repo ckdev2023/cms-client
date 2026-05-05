@@ -4,6 +4,7 @@ import type {
   DeadlineItem,
   DocumentGroup,
   DoubleReviewEntry,
+  FormTemplate,
   FormsData,
   LogEntry,
   MessageItem,
@@ -57,6 +58,7 @@ import {
   createGetTasks,
   createGetValidationData,
   createGetBillingData,
+  createListDocumentTemplates,
 } from "./CaseRepositoryReadSide";
 import {
   createCompleteTask,
@@ -65,6 +67,8 @@ import {
   createCreateReminder,
   createCreateSubmissionPackage,
   createCreateTask,
+  createFinalizeGeneratedDocument,
+  createExportGeneratedDocument,
   type SubmissionPackageCreateInput,
   type WriteResultWithId,
 } from "./CaseRepositoryWriteSide";
@@ -293,6 +297,28 @@ export interface CaseRepository {
   createSubmissionPackage(
     input: SubmissionPackageCreateInput,
   ): Promise<WriteResultWithId>;
+
+  /**
+   * 获取文書模板列表。
+   * 数据源：`GET /api/document-templates?caseType=xxx`。
+   */
+  listDocumentTemplates(params: {
+    caseType: string;
+    language?: string;
+    translate?: (key: string) => string;
+  }): Promise<FormTemplate[]>;
+
+  /**
+   * 将生成文書定稿。
+   * 数据源：`POST /api/generated-documents/:id/finalize`。
+   */
+  finalizeGeneratedDocument(id: string): Promise<WriteResultWithId>;
+
+  /**
+   * 导出生成文書。
+   * 数据源：`POST /api/generated-documents/:id/export`。
+   */
+  exportGeneratedDocument(id: string): Promise<WriteResultWithId>;
 }
 
 export { CaseRepositoryError };
@@ -342,9 +368,12 @@ export function createCaseRepository(
     retryReminderCreation: createRetryReminderCreation(runtime),
     createCommunicationLog: createCreateCommunicationLog(runtime),
     createGeneratedDocument: createCreateGeneratedDocument(runtime),
+    finalizeGeneratedDocument: createFinalizeGeneratedDocument(runtime),
+    exportGeneratedDocument: createExportGeneratedDocument(runtime),
     createReminder: createCreateReminder(runtime),
     createTask: createCreateTask(runtime),
     completeTask: createCompleteTask(runtime),
     createSubmissionPackage: createCreateSubmissionPackage(runtime),
+    listDocumentTemplates: createListDocumentTemplates(runtime),
   };
 }

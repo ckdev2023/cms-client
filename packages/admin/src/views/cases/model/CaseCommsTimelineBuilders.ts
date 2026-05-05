@@ -41,6 +41,10 @@ function pickFirst(
   return "";
 }
 
+function formatColonSuffix(suffix: string): string {
+  return suffix ? `：${suffix}` : "";
+}
+
 function buildStageChangeResult(
   p: Record<string, unknown>,
 ): TimelineMessageResult {
@@ -191,10 +195,34 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "submission_package.updated": () => ({
     key: "cases.log.timeline.submissionPackageUpdated",
   }),
-  "generated_document.created": (p) => ({
-    key: "cases.log.timeline.generatedDocumentCreated",
-    params: { suffix: pickFirst(p, ["title", "name"]) },
-  }),
+  "generated_document.created": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentCreated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "generated_document.updated": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentUpdated",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "generated_document.finalized": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentFinalized",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "generated_document.exported": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentExported",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "reminder.created": (p) => ({
     key: "cases.log.timeline.reminderCreated",
     params: { suffix: pickFirst(p, ["label", "kind", "title"]) },

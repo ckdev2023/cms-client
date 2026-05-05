@@ -4,9 +4,12 @@ import { useDocumentBulkActions } from "./useDocumentBulkActions";
 import type { BulkActionResult } from "./useDocumentBulkActions";
 import type { DocumentRepository } from "./DocumentRepositoryTypes";
 
-function makeItem(
-  overrides: Partial<Pick<DocumentListItem, "id" | "status">> = {},
-): Pick<DocumentListItem, "id" | "status"> {
+type SelectableItem = Pick<
+  DocumentListItem,
+  "id" | "status" | "backendStatus" | "category"
+>;
+
+function makeItem(overrides: Partial<SelectableItem> = {}): SelectableItem {
   return { id: "doc-1", status: "pending", ...overrides };
 }
 
@@ -21,7 +24,7 @@ function stubRepository(): Pick<
   };
 }
 
-function createWithItems(items: Pick<DocumentListItem, "id" | "status">[]) {
+function createWithItems(items: SelectableItem[]) {
   const clearSelection = vi.fn();
   const onSuccess = vi.fn<(result: BulkActionResult) => void>();
   const onError = vi.fn();
@@ -39,12 +42,12 @@ function createWithItems(items: Pick<DocumentListItem, "id" | "status">[]) {
 // ─── canRemind ───────────────────────────────────────────────────
 
 describe("useDocumentBulkActions — canRemind", () => {
-  it("true when pending items selected", () => {
+  it("true when pending items selected (legacy: no backendStatus, fallback to waiting_upload)", () => {
     const { bulk } = createWithItems([makeItem({ status: "pending" })]);
     expect(bulk.canRemind.value).toBe(true);
   });
 
-  it("true when rejected items selected", () => {
+  it("true when rejected items selected (legacy: no backendStatus, fallback to revision_required)", () => {
     const { bulk } = createWithItems([makeItem({ status: "rejected" })]);
     expect(bulk.canRemind.value).toBe(true);
   });
@@ -59,6 +62,35 @@ describe("useDocumentBulkActions — canRemind", () => {
   it("false when no items selected", () => {
     const { bulk } = createWithItems([]);
     expect(bulk.canRemind.value).toBe(false);
+  });
+
+  it("false when all selected items are pending+standard (server rejects)", () => {
+    const { bulk } = createWithItems([
+      makeItem({
+        status: "pending",
+        backendStatus: "pending",
+        category: "standard",
+      }),
+    ]);
+    expect(bulk.canRemind.value).toBe(false);
+  });
+
+  it("true when at least one selected item is pending+questionnaire", () => {
+    const { bulk } = createWithItems([
+      makeItem({
+        id: "doc-1",
+        status: "pending",
+        backendStatus: "pending",
+        category: "standard",
+      }),
+      makeItem({
+        id: "doc-2",
+        status: "pending",
+        backendStatus: "pending",
+        category: "questionnaire",
+      }),
+    ]);
+    expect(bulk.canRemind.value).toBe(true);
   });
 });
 

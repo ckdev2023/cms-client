@@ -21,6 +21,7 @@
     "db:migrate": "tsx --env-file=.env src/infra/db/runMigrations.ts migrate",
     "db:init-local-admin": "tsx --env-file=.env src/scripts/initLocalAdmin.ts",
     "db:seed-dev": "tsx --env-file=.env src/scripts/seedDevData.ts",
+    "db:seed-dev:smoke": "SEED_SMOKE=1 tsx --env-file=.env src/scripts/seedDevData.ts",
     "db:rollback": "tsx --env-file=.env src/infra/db/runMigrations.ts rollback",
     "db:migrations:check": "tsx --env-file=.env src/infra/db/runMigrations.ts check",
     "db:migrations:drift": "tsx --env-file=.env scripts/check-migration-drift.ts",

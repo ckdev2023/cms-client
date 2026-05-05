@@ -59,16 +59,42 @@ function extractServerCode(body: unknown): string | undefined {
   return typeof r.code === "string" ? r.code : undefined;
 }
 
+/**
+ * 从服务端错误响应体中提取人类可读的 `message`。
+ *
+ * NestJS 默认错误响应形如 `{ message: string | string[], error, statusCode }`，
+ * 用于让上层 toast 直接展示业务可读错误（例如
+ * "Cannot follow up on a document item with status 'pending'"），
+ * 避免被泛化为 `{context}: validation error`。
+ *
+ * @param body - 服务端响应体（已解析的 JSON）
+ * @returns 抽取后的人类可读消息；不可读时返回 `undefined`
+ */
+function extractServerMessage(body: unknown): string | undefined {
+  if (!body || typeof body !== "object") return undefined;
+  const r = body as Record<string, unknown>;
+  const msg = r.message;
+  if (typeof msg === "string" && msg.trim() !== "") return msg;
+  if (Array.isArray(msg)) {
+    const joined = msg.filter((m) => typeof m === "string").join("; ");
+    return joined !== "" ? joined : undefined;
+  }
+  return undefined;
+}
+
 function handleWriteErrorResponse(
   response: Response,
   body: unknown,
   context: string,
 ): never {
   const serverCode = extractServerCode(body);
+  const serverMessage = extractServerMessage(body);
+  const withCtx = (fallback: string) =>
+    serverMessage ? `${context}: ${serverMessage}` : `${context}: ${fallback}`;
   if (response.status === 401 || response.status === 403) {
     throw new DocumentRepositoryError({
       code: "UNAUTHORIZED",
-      message: `${context}: authentication required`,
+      message: withCtx("authentication required"),
       status: response.status,
       serverCode,
     });
@@ -76,7 +102,7 @@ function handleWriteErrorResponse(
   if (response.status === 409) {
     throw new DocumentRepositoryError({
       code: "CONFLICT",
-      message: `${context}: conflict`,
+      message: withCtx("conflict"),
       status: response.status,
       serverCode,
     });
@@ -84,7 +110,7 @@ function handleWriteErrorResponse(
   if (serverCode?.includes("S9_READONLY")) {
     throw new DocumentRepositoryError({
       code: "S9_READONLY",
-      message: `${context}: case is archived (S9)`,
+      message: withCtx("case is archived (S9)"),
       status: response.status,
       serverCode,
     });
@@ -92,14 +118,14 @@ function handleWriteErrorResponse(
   if (response.status === 400) {
     throw new DocumentRepositoryError({
       code: "VALIDATION",
-      message: `${context}: validation error`,
+      message: withCtx("validation error"),
       status: response.status,
       serverCode,
     });
   }
   throw new DocumentRepositoryError({
     code: "BAD_RESPONSE",
-    message: `${context}: HTTP ${response.status}`,
+    message: withCtx(`HTTP ${response.status}`),
     status: response.status,
     serverCode,
   });

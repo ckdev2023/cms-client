@@ -217,21 +217,21 @@ describe("CaseDetailView tablist — guard-aware keyboard nav (terminal)", () =>
     }
   });
 
-  it("终态下仅 overview / log 可访问", () => {
+  it("终态下仅 overview / documents / forms / log 可访问", () => {
     const accessible = TAB_KEYS.filter((k) =>
       isTabAccessibleInTerminal(k, true),
     );
-    expect(accessible).toEqual(["overview", "log"]);
+    expect(accessible).toEqual(["overview", "documents", "forms", "log"]);
   });
 
-  it("终态 ArrowRight 从 overview(0) 跳过 1-8 直达 log(9)", () => {
+  it("终态 ArrowRight 从 overview(0) 到 documents(2)", () => {
     const idx = findNextAccessibleTab(
       CASE_DETAIL_TABS,
       0,
       1,
       isAccessibleTerminal,
     );
-    expect(CASE_DETAIL_TABS[idx].key).toBe("log");
+    expect(CASE_DETAIL_TABS[idx].key).toBe("documents");
   });
 
   it("终态 ArrowRight 从 log(9) wrap 回 overview(0)", () => {
@@ -244,14 +244,14 @@ describe("CaseDetailView tablist — guard-aware keyboard nav (terminal)", () =>
     expect(CASE_DETAIL_TABS[idx].key).toBe("overview");
   });
 
-  it("终态 ArrowLeft 从 log(9) 跳过 8-1 直达 overview(0)", () => {
+  it("终态 ArrowLeft 从 log(9) 到 forms(5)", () => {
     const idx = findNextAccessibleTab(
       CASE_DETAIL_TABS,
       9,
       -1,
       isAccessibleTerminal,
     );
-    expect(CASE_DETAIL_TABS[idx].key).toBe("overview");
+    expect(CASE_DETAIL_TABS[idx].key).toBe("forms");
   });
 
   it("终态 ArrowLeft 从 overview(0) wrap 回 log(9)", () => {

@@ -2,6 +2,8 @@
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
+import Chip from "../../../shared/ui/Chip.vue";
+import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, FormGenerated } from "../types-detail";
 
 /** 文書管理 Tab：展示可用模板列表与已生成文書记录。 */
@@ -13,7 +15,9 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: "open-generate-modal"): void;
+  (e: "open-generate-modal", templateId?: string): void;
+  (e: "finalize", docId: string): void;
+  (e: "export", docId: string): void;
 }>();
 
 const TONE_ICON_CLASS: Record<string, string> = {
@@ -31,6 +35,22 @@ const TONE_ICON_CLASS: Record<string, string> = {
  */
 function iconClass(item: FormGenerated): string {
   return TONE_ICON_CLASS[item.tone] ?? "forms-tab__icon--muted";
+}
+
+const TONE_TO_CHIP: Record<string, ChipTone> = {
+  success: "success",
+  primary: "primary",
+  muted: "neutral",
+};
+
+/**
+ * 将生成文書的 tone 映射为 Chip 组件色调。
+ *
+ * @param item - 生成文書条目
+ * @returns Chip 色调
+ */
+function chipTone(item: FormGenerated): ChipTone {
+  return TONE_TO_CHIP[item.tone] ?? "neutral";
 }
 
 /**
@@ -111,7 +131,12 @@ function hasForms(detail: CaseDetail): boolean {
                 <div class="forms-tab__meta">{{ tpl.meta }}</div>
               </div>
             </div>
-            <Button v-if="!readonly" size="sm" pill>
+            <Button
+              v-if="!readonly"
+              size="sm"
+              pill
+              @click="emit('open-generate-modal', tpl.id)"
+            >
               {{ tpl.actionLabel }}
             </Button>
           </div>
@@ -147,11 +172,47 @@ function hasForms(detail: CaseDetail): boolean {
               </svg>
               <div>
                 <div class="forms-tab__name">{{ doc.name }}</div>
-                <div class="forms-tab__meta">{{ doc.meta }}</div>
+                <div class="forms-tab__meta">
+                  {{ doc.meta }}
+                  <template v-if="doc.approvedBy || doc.approvedAt">
+                    &nbsp;·
+                    {{
+                      t("cases.detail.forms.metaApprovedAt", {
+                        action: t(
+                          `cases.detail.forms.status.${doc.backendStatus}`,
+                        ),
+                        name: doc.approvedBy ?? "",
+                        time: doc.approvedAt ?? "",
+                      })
+                    }}
+                  </template>
+                </div>
               </div>
+              <Chip :tone="chipTone(doc)" size="micro">
+                {{ t(`cases.detail.forms.status.${doc.backendStatus}`) }}
+              </Chip>
             </div>
             <div class="forms-tab__row-actions">
-              <Button size="sm" pill>
+              <Chip
+                v-if="doc.backendStatus === 'exported' && doc.isPlaceholderFile"
+                tone="neutral"
+                size="micro"
+                data-testid="placeholder-badge"
+                :title="t('cases.detail.forms.placeholderBadge')"
+              >
+                {{ t("cases.detail.forms.placeholderBadge") }}
+              </Chip>
+              <a
+                v-if="
+                  doc.backendStatus === 'exported' &&
+                  !doc.isPlaceholderFile &&
+                  doc.fileUrl
+                "
+                class="forms-tab__download-link"
+                :href="doc.fileUrl"
+                download
+                data-testid="download-link"
+              >
                 <svg
                   width="14"
                   height="14"
@@ -167,7 +228,48 @@ function hasForms(detail: CaseDetail): boolean {
                     d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
                   />
                 </svg>
-                {{ t("cases.detail.forms.exportAction") }}
+                {{ t("cases.detail.forms.downloadAction") }}
+              </a>
+              <Button
+                v-if="doc.backendStatus === 'draft' && !readonly"
+                size="sm"
+                pill
+                data-testid="finalize-btn"
+                @click="emit('finalize', doc.id)"
+              >
+                {{ t("cases.detail.forms.finalizeAction") }}
+              </Button>
+              <Button
+                v-if="
+                  (doc.backendStatus === 'final' ||
+                    doc.backendStatus === 'exported') &&
+                  !readonly
+                "
+                size="sm"
+                pill
+                data-testid="export-btn"
+                @click="emit('export', doc.id)"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                  />
+                </svg>
+                {{
+                  doc.backendStatus === "exported"
+                    ? t("cases.detail.forms.exportAgainAction")
+                    : t("cases.detail.forms.exportAction")
+                }}
               </Button>
               <button
                 class="forms-tab__link-btn"
@@ -286,6 +388,21 @@ function hasForms(detail: CaseDetail): boolean {
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
+}
+
+.forms-tab__download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.forms-tab__download-link:hover {
+  text-decoration: underline;
 }
 
 .forms-tab__link-btn {
