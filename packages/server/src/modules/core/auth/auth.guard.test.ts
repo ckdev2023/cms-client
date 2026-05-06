@@ -29,14 +29,34 @@ function createExecutionContext(req: unknown): ExecutionContext {
   } as unknown as ExecutionContext;
 }
 
+const TEST_ROLE_ID = "00000000-0000-4000-8000-0000000000aa";
+
 function createPoolStub(
-  userRow: { id: string; role: string; status: string } | null,
+  userRow: {
+    id: string;
+    role: string;
+    role_id?: string | null;
+    status: string;
+  } | null,
 ): Pool {
+  const effectiveRoleId =
+    userRow?.role_id !== undefined ? userRow.role_id : TEST_ROLE_ID;
+  const userRowForQuery = userRow
+    ? { id: userRow.id, role_id: effectiveRoleId, status: userRow.status }
+    : null;
+
   const client = {
     query: (sql: string, params?: unknown[]) => {
       void params;
-      if (sql.includes("select id, role, status from users")) {
-        return Promise.resolve({ rows: userRow ? [userRow] : [] });
+      if (sql.includes("select id, role_id, status from users")) {
+        return Promise.resolve({
+          rows: userRowForQuery ? [userRowForQuery] : [],
+        });
+      }
+      if (sql.includes("select code from roles")) {
+        return Promise.resolve({
+          rows: effectiveRoleId && userRow ? [{ code: userRow.role }] : [],
+        });
       }
       return Promise.resolve({ rows: [] });
     },

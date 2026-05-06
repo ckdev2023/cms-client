@@ -1,3 +1,5 @@
+import { resolveUserLabel } from "./useOrgUserOptions";
+
 type OwnerLocale = "zh-CN" | "en-US" | "ja-JP";
 
 interface OwnerCatalogEntry {
@@ -238,4 +240,186 @@ export function resolveOwnerValue(idOrLabel: string): string | null {
   return (
     OWNER_CATALOG.find((owner) => matchesOwner(owner, idOrLabel))?.value ?? null
   );
+}
+
+/** 来自 `/api/users` 的最小输入。 */
+interface ApiOwnerInput {
+  /** 用户主键 UUID。 */
+  id: string;
+  /** 显示名。 */
+  displayName: string;
+}
+
+const API_OWNER_AVATAR_PALETTE = [
+  "bg-sky-100 text-sky-700",
+  "bg-emerald-100 text-emerald-700",
+  "bg-violet-100 text-violet-700",
+  "bg-amber-100 text-amber-700",
+  "bg-rose-100 text-rose-700",
+  "bg-slate-100 text-slate-700",
+] as const;
+
+function hashStringToIndex(value: string, modulo: number): number {
+  let hash = 0;
+  for (let i = 0; i < value.length; i++) {
+    hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
+  }
+  return modulo > 0 ? hash % modulo : 0;
+}
+
+function deriveInitialsFromName(name: string): string {
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+  const words = trimmed.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) {
+    return (
+      words
+        .map((segment) => segment[0]?.toUpperCase() ?? "")
+        .join("")
+        .slice(0, 2) || trimmed.slice(0, 2).toUpperCase()
+    );
+  }
+  return trimmed.slice(0, 2).toUpperCase();
+}
+
+/**
+ * 把 `/api/users` 注册的 `{ id, displayName }` 适配为
+ * `OwnerSelectOption`（含 initials / avatarClass）。
+ *
+ * R2-A-1: 负责人下拉的 `value` 必须使用真实 UUID，否则 server 端
+ * UUID 列 cast 失败（500）。avatarClass 由 id 哈希派生，保证同一
+ * 用户色块稳定一致。
+ *
+ * @param input - 后端返回的最小用户对象
+ * @returns 含 initials / avatarClass 的负责人选项
+ */
+export function toApiOwnerOption(input: ApiOwnerInput): OwnerSelectOption {
+  const trimmedName = input.displayName?.trim() ?? "";
+  const fallbackName = trimmedName || input.id;
+  const avatarClass =
+    API_OWNER_AVATAR_PALETTE[
+      hashStringToIndex(input.id, API_OWNER_AVATAR_PALETTE.length)
+    ] ?? API_OWNER_AVATAR_PALETTE[0];
+  return {
+    value: input.id,
+    label: fallbackName,
+    initials: deriveInitialsFromName(trimmedName),
+    avatarClass: avatarClass ?? "bg-slate-100 text-slate-700",
+  };
+}
+
+const NIL_UUID = "00000000-0000-0000-0000-000000000000";
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UNKNOWN_OWNER_AVATAR_CLASS = "bg-slate-100 text-slate-700";
+const UNKNOWN_OWNER_INITIALS = "—";
+
+function looksLikeUuid(value: string): boolean {
+  return UUID_PATTERN.test(value.trim());
+}
+
+function isNilUuid(value: string): boolean {
+  return value.trim().toLowerCase() === NIL_UUID;
+}
+
+/**
+ * H-9: 负责人展示文案的回落标签。
+ *
+ * 调用方（页面/组件）传入已 i18n 化的占位符，避免在 `shared/model`
+ * 直接依赖 `vue-i18n`。
+ */
+export interface OwnerDisplayFallbacks {
+  /** 空值 / nil UUID 时显示。 */
+  unassigned: string;
+  /** UUID 形态但既不在 catalog 又不在 `/api/users` 别名表时显示。 */
+  unknown: string;
+}
+
+/**
+ * 优先级解析负责人展示文案：
+ *
+ * 1. 空 / nil UUID → `fallbacks.unassigned`
+ * 2. 静态 fixture catalog 命中（短码 / 任一本地化标签）→ catalog 标签
+ * 3. 运行期 `/api/users` 别名表命中 → 后端 displayName
+ * 4. UUID 形态但无任何匹配 → `fallbacks.unknown`
+ * 5. 其它（已是字面量标签）→ 原样返回
+ *
+ * H-9: 修复列表/详情 owner 字段直接渲染原始 UUID 或 `?` 的体验问题。
+ *
+ * @param idOrLabel - 负责人 UUID / 短码 / 字面量标签
+ * @param fallbacks - 占位符（已经过 i18n）
+ * @param locale - 用于 catalog 本地化的 locale
+ * @returns 用户可读的负责人展示文案
+ */
+export function resolveOwnerDisplayLabel(
+  idOrLabel: string | null | undefined,
+  fallbacks: OwnerDisplayFallbacks,
+  locale?: string,
+): string {
+  const trimmed = (idOrLabel ?? "").trim();
+  if (!trimmed) return fallbacks.unassigned;
+  if (isNilUuid(trimmed)) return fallbacks.unassigned;
+
+  const catalog = resolveOwnerOption(trimmed, locale);
+  if (catalog) return catalog.label;
+
+  const alias = resolveUserLabel(trimmed);
+  if (alias && alias !== "—" && alias !== trimmed) return alias;
+
+  if (looksLikeUuid(trimmed)) return fallbacks.unknown;
+
+  return trimmed;
+}
+
+/**
+ * 与 `resolveOwnerDisplayLabel` 相同的优先级链，但同时返回头像
+ * `initials` 与 `avatarClass`，供列表 / 头部 chip 直接渲染。
+ *
+ * H-9: 列表行 `LeadTableRow` 与详情头部 `LeadDetailHeader` 共用同一
+ * 解析链，避免渲染层各自拼装时漏掉某一档回退。
+ *
+ * @param idOrLabel - 负责人 UUID / 短码 / 字面量标签
+ * @param locale - 用于 catalog 本地化的 locale
+ * @param fallbacks - 占位符（已经过 i18n）
+ * @returns 含 label / initials / avatarClass 的负责人展示选项
+ */
+export function resolveOwnerDisplayOption(
+  idOrLabel: string | null | undefined,
+  locale: string | undefined,
+  fallbacks: OwnerDisplayFallbacks,
+): OwnerSelectOption {
+  const trimmed = (idOrLabel ?? "").trim();
+
+  if (!trimmed || isNilUuid(trimmed)) {
+    return {
+      value: trimmed,
+      label: fallbacks.unassigned,
+      initials: UNKNOWN_OWNER_INITIALS,
+      avatarClass: UNKNOWN_OWNER_AVATAR_CLASS,
+    };
+  }
+
+  const catalog = resolveOwnerOption(trimmed, locale);
+  if (catalog) return catalog;
+
+  const alias = resolveUserLabel(trimmed);
+  if (alias && alias !== "—" && alias !== trimmed) {
+    return toApiOwnerOption({ id: trimmed, displayName: alias });
+  }
+
+  if (looksLikeUuid(trimmed)) {
+    return {
+      value: trimmed,
+      label: fallbacks.unknown,
+      initials: UNKNOWN_OWNER_INITIALS,
+      avatarClass: UNKNOWN_OWNER_AVATAR_CLASS,
+    };
+  }
+
+  return {
+    value: trimmed,
+    label: trimmed,
+    initials: deriveInitialsFromName(trimmed),
+    avatarClass: UNKNOWN_OWNER_AVATAR_CLASS,
+  };
 }

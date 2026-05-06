@@ -15,7 +15,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
 import { CasesService } from "../cases/cases.service";
 import { VALIDATION_SUBMISSION_ERROR_CODES } from "../cases/cases.types";
@@ -137,7 +138,7 @@ export class SubmissionPackagesController {
    * @param req
    * @param body
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(
     @Req() req: HttpRequest,
@@ -196,7 +197,7 @@ export class SubmissionPackagesController {
    * @param req
    * @param query
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(
     @Req() req: HttpRequest,
@@ -226,7 +227,7 @@ export class SubmissionPackagesController {
    * @param req
    * @param id
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

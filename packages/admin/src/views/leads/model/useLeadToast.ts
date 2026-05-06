@@ -1,4 +1,8 @@
-import { ref } from "vue";
+import {
+  createToastController,
+  useToast,
+  type UseToastReturn,
+} from "../../../shared/model/useToast";
 
 /**
  *
@@ -18,44 +22,50 @@ const DEFAULT_DURATION = 3000;
 
 /**
  * 线索列表页 toast 状态管理。
+ * 内部委托给 shared/model/useToast 全局队列（带 role/aria-live），
+ * 保留原有 show/hide API 以兼容现有调用方。
  *
  * @param options - 可选配置
  * @param options.duration - 自动隐藏延迟（ms）
- * @param options.setTimeoutFn - 可注入的 setTimeout 实现，便于测试
- * @param options.clearTimeoutFn - 可注入的 clearTimeout 实现，便于测试
+ * @param options.controller - 可注入的 Toast 控制器（测试用）
  * @returns toast 状态与触发方法
  */
 export function useLeadToast(options?: {
   duration?: number;
-  setTimeoutFn?: typeof setTimeout;
-  clearTimeoutFn?: typeof clearTimeout;
+  controller?: UseToastReturn;
 }) {
   const duration = options?.duration ?? DEFAULT_DURATION;
-  const _setTimeout = options?.setTimeoutFn ?? setTimeout;
-  const _clearTimeout = options?.clearTimeoutFn ?? clearTimeout;
+  const ctrl: UseToastReturn =
+    options?.controller ?? tryGetGlobalToast() ?? createToastController();
 
-  const visible = ref(false);
-  const title = ref("");
-  const description = ref("");
-
-  let timer: ReturnType<typeof setTimeout> | null = null;
+  let currentId: string | null = null;
 
   function show(payload: ToastPayload) {
-    if (timer) _clearTimeout(timer);
-    title.value = payload.title;
-    description.value = payload.description;
-    visible.value = true;
-    timer = _setTimeout(() => {
-      visible.value = false;
-      timer = null;
-    }, duration);
+    if (currentId) {
+      ctrl.dismiss(currentId);
+    }
+    currentId = ctrl.add({
+      title: payload.title,
+      description: payload.description,
+      tone: "success",
+      durationMs: duration,
+    });
   }
 
   function hide() {
-    if (timer) _clearTimeout(timer);
-    visible.value = false;
-    timer = null;
+    if (currentId) {
+      ctrl.dismiss(currentId);
+      currentId = null;
+    }
   }
 
-  return { visible, title, description, show, hide };
+  return { show, hide };
+}
+
+function tryGetGlobalToast(): UseToastReturn | null {
+  try {
+    return useToast();
+  } catch {
+    return null;
+  }
 }

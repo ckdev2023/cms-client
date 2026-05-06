@@ -1,20 +1,34 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Inject,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
   Req,
-  UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
+import { optUuid, reqUuid } from "../shared/uuid-parsers";
+import { LeadsAdminService } from "./leads.admin.service";
+import {
+  requireCtx,
+  parsePage,
+  parseLimit,
+  optStr,
+  reqStr,
+  optNum,
+  parseScope,
+  strArr,
+  optBool,
+  parseLocalizedNames,
+} from "./leads.admin.parsers";
+
 import type { RequestContext } from "../tenancy/requestContext";
-import { LeadsAdminService, type LeadListScope } from "./leads.admin.service";
 
 type HttpRequest = { requestContext?: RequestContext };
 
@@ -64,76 +78,35 @@ type BulkStatusBody = {
   lostReason?: unknown;
 };
 type BulkTagsBody = { leadIds?: unknown; tags?: unknown };
+type CreateLeadBody = {
+  name?: unknown;
+  phone?: unknown;
+  email?: unknown;
+  sourceChannel?: unknown;
+  referrer?: unknown;
+  intendedCaseType?: unknown;
+  groupId?: unknown;
+  ownerUserId?: unknown;
+  nextAction?: unknown;
+  nextFollowUpAt?: unknown;
+  quoteAmount?: unknown;
+  note?: unknown;
+  language?: unknown;
+};
+type ConvertCustomerBody = {
+  customerId?: unknown;
+  localizedNames?: unknown;
+  confirmDedup?: unknown;
+};
+type ConvertCaseBody = {
+  caseTypeCode?: unknown;
+  ownerUserId?: unknown;
+  groupId?: unknown;
+};
 type BulkExportBody = { leadIds?: unknown };
 type DedupQuery = { phone?: unknown; email?: unknown };
 
-// ── Parsers ──
-
-function requireCtx(req: HttpRequest): RequestContext {
-  const ctx = req.requestContext;
-  if (!ctx) throw new UnauthorizedException("Missing request context");
-  return ctx;
-}
-
-function parsePage(v: unknown): number | undefined {
-  if (v === undefined) return undefined;
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid page");
-  const i = Math.floor(n);
-  if (i < 1) throw new BadRequestException("Invalid page");
-  return i;
-}
-
-function parseLimit(v: unknown): number | undefined {
-  if (v === undefined) return undefined;
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new BadRequestException("Invalid limit");
-  const i = Math.floor(n);
-  if (i < 1 || i > 200) throw new BadRequestException("Invalid limit");
-  return i;
-}
-
-function optStr(v: unknown, f: string): string | undefined {
-  if (v === undefined) return undefined;
-  if (typeof v !== "string") throw new BadRequestException(`Invalid ${f}`);
-  const t = v.trim();
-  return t.length > 0 ? t : undefined;
-}
-
-function reqStr(v: unknown, f: string): string {
-  const r = optStr(v, f);
-  if (!r) throw new BadRequestException(`${f} is required`);
-  return r;
-}
-
-function optNum(v: unknown, f: string): number | undefined {
-  if (v === undefined) return undefined;
-  const n = Number(v);
-  if (!Number.isFinite(n)) throw new BadRequestException(`Invalid ${f}`);
-  return n;
-}
-
-function parseScope(v: unknown): LeadListScope | undefined {
-  if (v === undefined) return undefined;
-  if (v === "mine" || v === "group" || v === "all") return v;
-  throw new BadRequestException("Invalid scope");
-}
-
-function strArr(v: unknown, f: string): string[] {
-  if (!Array.isArray(v)) throw new BadRequestException(`Invalid ${f}`);
-  const items = v.map((item) => {
-    if (typeof item !== "string")
-      throw new BadRequestException(`Invalid ${f} item`);
-    const t = item.trim();
-    if (t.length === 0) throw new BadRequestException(`Invalid ${f} item`);
-    return t;
-  });
-  if (items.length === 0)
-    throw new BadRequestException(`${f} must contain at least one id`);
-  return [...new Set(items)];
-}
-
-// ── Controller ──
+const UuidParam = () => Param("id", new ParseUUIDPipe());
 
 /**
  * Admin Lead 管理コントローラ。
@@ -149,12 +122,38 @@ export class LeadsAdminController {
   ) {}
 
   /**
+   * Lead を新規作成する。
+   * @param req HTTP リクエスト
+   * @param body 作成リクエストボディ
+   * @returns 作成された Lead
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post()
+  async create(@Req() req: HttpRequest, @Body() body: CreateLeadBody) {
+    return this.svc.create(requireCtx(req), {
+      name: reqStr(body.name, "name"),
+      phone: optStr(body.phone, "phone"),
+      email: optStr(body.email, "email"),
+      sourceChannel: optStr(body.sourceChannel, "sourceChannel"),
+      referrer: optStr(body.referrer, "referrer"),
+      intendedCaseType: optStr(body.intendedCaseType, "intendedCaseType"),
+      groupId: optUuid(body.groupId, "groupId"),
+      ownerUserId: optUuid(body.ownerUserId, "ownerUserId"),
+      nextAction: optStr(body.nextAction, "nextAction"),
+      nextFollowUpAt: optStr(body.nextFollowUpAt, "nextFollowUpAt"),
+      quoteAmount: optNum(body.quoteAmount, "quoteAmount"),
+      note: optStr(body.note, "note"),
+      language: optStr(body.language, "language"),
+    });
+  }
+
+  /**
    * Lead 一覧を取得する。
    * @param req HTTP リクエスト
    * @param query 検索パラメータ
    * @returns Lead 一覧と総件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListLeadsQuery) {
     const ctx = requireCtx(req);
@@ -178,7 +177,7 @@ export class LeadsAdminController {
    * @param query 検索パラメータ
    * @returns 重複候補の Lead と Customer
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get("dedup")
   async dedup(@Req() req: HttpRequest, @Query() query: DedupQuery) {
     return this.svc.dedup(requireCtx(req), {
@@ -193,10 +192,51 @@ export class LeadsAdminController {
    * @param id Lead ID
    * @returns Lead 詳細集約
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get(":id")
-  async getDetail(@Req() req: HttpRequest, @Param("id") id: string) {
+  async getDetail(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.getDetail(requireCtx(req), id);
+  }
+
+  /**
+   * Lead → Customer 転化（顧客作成 + converted_customer_id 回填）。
+   * @param req HTTP リクエスト
+   * @param id Lead ID
+   * @param body 転化リクエストボディ
+   * @returns 更新後の Lead と customerId
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post(":id/convert-customer")
+  async convertCustomer(
+    @Req() req: HttpRequest,
+    @UuidParam() id: string,
+    @Body() body: ConvertCustomerBody,
+  ) {
+    return this.svc.convertCustomer(requireCtx(req), id, {
+      customerId: optUuid(body.customerId, "customerId"),
+      localizedNames: parseLocalizedNames(body.localizedNames),
+      confirmDedup: optBool(body.confirmDedup, "confirmDedup"),
+    });
+  }
+
+  /** Lead → Case 転化。
+   * @param req HTTP リクエスト
+   * @param id Lead ID
+   * @param body 転化リクエストボディ
+   * @returns Lead + caseId
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post(":id/convert-case")
+  async convertCase(
+    @Req() req: HttpRequest,
+    @UuidParam() id: string,
+    @Body() body: ConvertCaseBody,
+  ) {
+    return this.svc.convertCase(requireCtx(req), id, {
+      caseTypeCode: reqStr(body.caseTypeCode, "caseTypeCode"),
+      ownerUserId: reqUuid(body.ownerUserId, "ownerUserId"),
+      groupId: optUuid(body.groupId, "groupId"),
+    });
   }
 
   /**
@@ -206,11 +246,11 @@ export class LeadsAdminController {
    * @param body 更新リクエストボディ
    * @returns 更新後の Lead
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: UpdateLeadBody,
   ) {
     return this.svc.update(requireCtx(req), id, {
@@ -220,8 +260,8 @@ export class LeadsAdminController {
       sourceChannel: optStr(body.sourceChannel, "sourceChannel"),
       referrer: optStr(body.referrer, "referrer"),
       intendedCaseType: optStr(body.intendedCaseType, "intendedCaseType"),
-      groupId: optStr(body.groupId, "groupId"),
-      ownerUserId: optStr(body.ownerUserId, "ownerUserId"),
+      groupId: optUuid(body.groupId, "groupId"),
+      ownerUserId: optUuid(body.ownerUserId, "ownerUserId"),
       nextAction: optStr(body.nextAction, "nextAction"),
       nextFollowUpAt: optStr(body.nextFollowUpAt, "nextFollowUpAt"),
       quoteAmount: optNum(body.quoteAmount, "quoteAmount"),
@@ -236,11 +276,11 @@ export class LeadsAdminController {
    * @param body ステータス遷移リクエストボディ
    * @returns 更新後の Lead
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/status")
   async transitionStatus(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: StatusBody,
   ) {
     return this.svc.transitionStatus(requireCtx(req), id, {
@@ -256,11 +296,11 @@ export class LeadsAdminController {
    * @param body フォローアップリクエストボディ
    * @returns 作成されたフォローアップ
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/followups")
   async addFollowup(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: FollowupBody,
   ) {
     return this.svc.addFollowup(requireCtx(req), id, {
@@ -278,9 +318,9 @@ export class LeadsAdminController {
    * @param id Lead ID
    * @returns フォローアップ一覧
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get(":id/followups")
-  async listFollowups(@Req() req: HttpRequest, @Param("id") id: string) {
+  async listFollowups(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.listFollowups(requireCtx(req), id);
   }
 
@@ -290,34 +330,32 @@ export class LeadsAdminController {
    * @param id Lead ID
    * @returns ログ一覧
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get(":id/logs")
-  async listLogs(@Req() req: HttpRequest, @Param("id") id: string) {
+  async listLogs(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.listLogs(requireCtx(req), id);
   }
 
-  /**
-   * 一括担当者変更を実行する。
+  /** 一括担当者変更。
    * @param req HTTP リクエスト
-   * @param body 一括担当者変更リクエストボディ
+   * @param body リクエストボディ
    * @returns 更新件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk/assign")
   async bulkAssign(@Req() req: HttpRequest, @Body() body: BulkAssignBody) {
     return this.svc.bulkAssign(requireCtx(req), {
       leadIds: strArr(body.leadIds, "leadIds"),
-      ownerUserId: reqStr(body.ownerUserId, "ownerUserId"),
+      ownerUserId: reqUuid(body.ownerUserId, "ownerUserId"),
     });
   }
 
-  /**
-   * 一括フォローアップ追加を実行する。
+  /** 一括フォローアップ追加。
    * @param req HTTP リクエスト
-   * @param body 一括フォローアップリクエストボディ
+   * @param body リクエストボディ
    * @returns 更新件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk/followup")
   async bulkFollowup(@Req() req: HttpRequest, @Body() body: BulkFollowupBody) {
     return this.svc.bulkFollowup(requireCtx(req), {
@@ -327,13 +365,12 @@ export class LeadsAdminController {
     });
   }
 
-  /**
-   * 一括ステータス変更を実行する。
+  /** 一括ステータス変更。
    * @param req HTTP リクエスト
-   * @param body 一括ステータス変更リクエストボディ
-   * @returns 更新件数とエラー一覧
+   * @param body リクエストボディ
+   * @returns 更新件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk/status")
   async bulkStatus(@Req() req: HttpRequest, @Body() body: BulkStatusBody) {
     return this.svc.bulkStatus(requireCtx(req), {
@@ -343,13 +380,12 @@ export class LeadsAdminController {
     });
   }
 
-  /**
-   * 一括タグ更新を実行する。
+  /** 一括タグ更新。
    * @param req HTTP リクエスト
-   * @param body 一括タグリクエストボディ
+   * @param body リクエストボディ
    * @returns 更新件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk/tags")
   async bulkTags(@Req() req: HttpRequest, @Body() body: BulkTagsBody) {
     return this.svc.bulkTags(requireCtx(req), {
@@ -358,13 +394,12 @@ export class LeadsAdminController {
     });
   }
 
-  /**
-   * 一括エクスポート用データを取得する。
+  /** 一括エクスポート。
    * @param req HTTP リクエスト
-   * @param body エクスポートリクエストボディ
+   * @param body リクエストボディ
    * @returns Lead 一覧
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk/export")
   async bulkExport(@Req() req: HttpRequest, @Body() body: BulkExportBody) {
     return this.svc.bulkExport(

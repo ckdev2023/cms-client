@@ -17,9 +17,18 @@ import type {
   LeadLogEntry,
 } from "../types";
 import { HEADER_BUTTON_PRESETS, LEAD_DETAIL_TABS } from "../types";
-import type { LeadRepository } from "./LeadRepository";
-import { createLeadRepository } from "./LeadRepository";
-import type { LeadFollowupInput, LeadDedupResult } from "./LeadAdapter";
+import type { LeadRepository, ServerBlocker } from "./LeadRepository";
+import { createLeadRepository, LeadRepositoryError } from "./LeadRepository";
+import type {
+  LeadFollowupInput,
+  LeadDedupResult,
+  LeadConvertCustomerInput,
+  LeadConvertCaseInput,
+} from "./LeadAdapter";
+import { isLeadBmvGateError } from "./LeadBmvGateBinding";
+import { useLeadMutationActions } from "./useLeadMutationActions";
+
+export type { LeadMutationFailure } from "./useLeadMutationActions";
 
 /**
  *
@@ -213,6 +222,135 @@ async function checkDedupForConvert(
   }
 }
 
+interface ConvertRefs {
+  leadId: Ref<string>;
+  lead: Ref<LeadDetail | null>;
+  convertSubmitting: Ref<boolean>;
+  convertDedupConfirmed: Ref<boolean>;
+  showConvertDedupPrompt: Ref<boolean>;
+  convertDedupResult: Ref<LeadDedupResult | null>;
+  pendingCustomerInput: Ref<LeadConvertCustomerInput>;
+  repo: LeadRepository;
+  fetchDetail: () => Promise<void>;
+  dedupState: ConvertDedupState;
+}
+
+async function doConvertCustomer(
+  refs: ConvertRefs,
+  input: LeadConvertCustomerInput = {},
+): Promise<void> {
+  const id = refs.leadId.value?.trim();
+  if (!id || refs.convertSubmitting.value) return;
+  refs.pendingCustomerInput.value = input;
+  if (!refs.convertDedupConfirmed.value) {
+    if (!(await checkDedupForConvert(refs.lead, refs.repo, refs.dedupState)))
+      return;
+  }
+  refs.convertSubmitting.value = true;
+  try {
+    const payload: LeadConvertCustomerInput = {
+      ...refs.pendingCustomerInput.value,
+      ...(refs.convertDedupConfirmed.value ? { confirmDedup: true } : {}),
+    };
+    await refs.repo.convertCustomer(id, payload);
+    refs.showConvertDedupPrompt.value = false;
+    refs.convertDedupConfirmed.value = false;
+    refs.convertDedupResult.value = null;
+    refs.pendingCustomerInput.value = {};
+    await refs.fetchDetail();
+  } finally {
+    refs.convertSubmitting.value = false;
+  }
+}
+
+/**
+ * 转案件失败时返回的结构化错误。
+ *
+ * - `kind = "bmvGate"` 表示服务端 `CASE_BMV_GATE_BLOCKED` 闸口阻断，
+ *   `blockers` 为原始 blocker 列表（按 server 顺序）。
+ * - `kind = "generic"` 表示其他类型的失败（网络、未授权、表单非法等），
+ *   `messageKey` 为 i18n fallback key，`fallbackMessage` 为 server 原文。
+ */
+export type LeadConvertCaseFailure =
+  | {
+      /**
+       *
+       */
+      kind: "bmvGate";
+      /**
+       *
+       */
+      serverErrorCode: string;
+      /**
+       *
+       */
+      blockers: ServerBlocker[];
+    }
+  | {
+      /**
+       *
+       */
+      kind: "generic";
+      /**
+       *
+       */
+      messageKey: string;
+      /**
+       *
+       */
+      fallbackMessage?: string;
+    };
+
+const GENERIC_CONVERT_CASE_MESSAGE_KEY = "leads.errors.convertCaseFailed";
+
+function toConvertCaseFailure(error: unknown): LeadConvertCaseFailure {
+  if (error instanceof LeadRepositoryError) {
+    const serverErrorCode = error.serverErrorCode;
+    const blockers = error.serverBlockers;
+    if (
+      serverErrorCode !== undefined &&
+      isLeadBmvGateError(serverErrorCode) &&
+      blockers &&
+      blockers.length > 0
+    ) {
+      return {
+        kind: "bmvGate",
+        serverErrorCode,
+        blockers,
+      };
+    }
+    return {
+      kind: "generic",
+      messageKey: GENERIC_CONVERT_CASE_MESSAGE_KEY,
+      fallbackMessage: error.message,
+    };
+  }
+  return {
+    kind: "generic",
+    messageKey: GENERIC_CONVERT_CASE_MESSAGE_KEY,
+    fallbackMessage:
+      error instanceof Error && error.message ? error.message : undefined,
+  };
+}
+
+async function doConvertCase(
+  refs: ConvertRefs,
+  input: LeadConvertCaseInput,
+): Promise<LeadConvertCaseFailure | null> {
+  const id = refs.leadId.value?.trim();
+  if (!id || refs.convertSubmitting.value) return null;
+  refs.convertSubmitting.value = true;
+  try {
+    await refs.repo.convertCase(id, input);
+    await refs.fetchDetail();
+    return null;
+  } catch (error) {
+    return toConvertCaseFailure(error);
+  } finally {
+    refs.convertSubmitting.value = false;
+  }
+}
+
 function useConvertActions(
   leadId: Ref<string>,
   lead: Ref<LeadDetail | null>,
@@ -224,51 +362,44 @@ function useConvertActions(
   const convertSubmitting = ref(false);
   const convertDedupConfirmed = ref(false);
   const showConvertDedupPrompt = ref(false);
+  const pendingCustomerInput = ref<LeadConvertCustomerInput>({});
 
-  const state: ConvertDedupState = {
-    result: convertDedupResult,
-    loading: convertDedupLoading,
-    prompt: showConvertDedupPrompt,
+  const refs: ConvertRefs = {
+    leadId,
+    lead,
+    convertSubmitting,
+    convertDedupConfirmed,
+    showConvertDedupPrompt,
+    convertDedupResult,
+    pendingCustomerInput,
+    repo,
+    fetchDetail,
+    dedupState: {
+      result: convertDedupResult,
+      loading: convertDedupLoading,
+      prompt: showConvertDedupPrompt,
+    },
   };
-
-  async function convertCustomer(): Promise<void> {
-    const id = leadId.value?.trim();
-    if (!id || convertSubmitting.value) return;
-    if (!convertDedupConfirmed.value) {
-      if (!(await checkDedupForConvert(lead, repo, state))) return;
-    }
-    convertSubmitting.value = true;
-    try {
-      await repo.convertLead(id);
-      showConvertDedupPrompt.value = false;
-      convertDedupConfirmed.value = false;
-      convertDedupResult.value = null;
-      await fetchDetail();
-    } finally {
-      convertSubmitting.value = false;
-    }
-  }
-
-  function confirmConvertDedup(): void {
-    convertDedupConfirmed.value = true;
-    showConvertDedupPrompt.value = false;
-    void convertCustomer();
-  }
-
-  function dismissConvertDedup(): void {
-    showConvertDedupPrompt.value = false;
-    convertDedupResult.value = null;
-    convertDedupConfirmed.value = false;
-  }
 
   return {
     convertDedupResult,
     convertDedupLoading,
     convertSubmitting,
     showConvertDedupPrompt,
-    convertCustomer,
-    confirmConvertDedup,
-    dismissConvertDedup,
+    convertCustomer: (input?: LeadConvertCustomerInput) =>
+      doConvertCustomer(refs, input),
+    convertCase: (input: LeadConvertCaseInput) => doConvertCase(refs, input),
+    confirmConvertDedup(): void {
+      convertDedupConfirmed.value = true;
+      showConvertDedupPrompt.value = false;
+      void doConvertCustomer(refs, pendingCustomerInput.value);
+    },
+    dismissConvertDedup(): void {
+      showConvertDedupPrompt.value = false;
+      convertDedupResult.value = null;
+      convertDedupConfirmed.value = false;
+      pendingCustomerInput.value = {};
+    },
   };
 }
 
@@ -344,5 +475,6 @@ export function useLeadDetailModel(
     ...useLogFilter(rawLog),
     ...useConversionInfo(lead),
     ...useConvertActions(leadId, lead, repo, fetchDetail),
+    ...useLeadMutationActions(leadId, repo, fetchDetail),
   };
 }

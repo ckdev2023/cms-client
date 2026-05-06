@@ -61,6 +61,11 @@ const conversationsEnUS = {
     noLinkedEntity: "Not linked",
     channel: "Channel",
     preferredLanguage: "Preferred language",
+    ownerPicker: {
+      selectLabel: "Select owner",
+      cancel: "Cancel",
+      confirm: "Confirm",
+    },
   },
   messages: {
     inputPlaceholder: "Type a message…",

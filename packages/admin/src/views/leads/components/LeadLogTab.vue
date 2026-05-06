@@ -21,17 +21,28 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 
+const SEGMENT_LABEL_KEY: Record<LeadLogCategory, string> = {
+  all: "leads.detail.logTab.categoryAll",
+  status: "leads.detail.logTab.typeStatus",
+  owner: "leads.detail.logTab.typeOwner",
+  group: "leads.detail.logTab.typeGroup",
+  info: "leads.detail.logTab.typeInfo",
+};
+
 const segmentOptions = computed<SegmentOption<LeadLogCategory>[]>(() =>
-  LOG_CATEGORIES.map((c) => ({ value: c.key, label: c.label })),
+  LOG_CATEGORIES.map((c) => ({
+    value: c.key,
+    label: t(SEGMENT_LABEL_KEY[c.key]),
+  })),
 );
 
 const isEmpty = computed(() => props.filteredLog.length === 0);
 
 /**
- * 根据日志类型返回中文标签。
+ * 根据日志类型返回本地化标签。
  *
  * @param type 日志类型
- * @returns 日志类型中文标签
+ * @returns 日志类型本地化标签
  */
 function logTypeLabel(type: string): string {
   switch (type) {
@@ -41,9 +52,21 @@ function logTypeLabel(type: string): string {
       return t("leads.detail.logTab.typeOwner");
     case "group":
       return t("leads.detail.logTab.typeGroup");
+    case "info":
+      return t("leads.detail.logTab.typeInfo");
     default:
       return type;
   }
+}
+
+/**
+ * 操作人为空时使用占位符，避免 UI 出现裸 `·`。
+ *
+ * @param operator 服务端 createdByDisplayName 或 fixture operator 字段
+ * @returns 显示用文案
+ */
+function operatorLabel(operator: string): string {
+  return operator ? operator : t("leads.detail.logTab.actorUnknown");
 }
 </script>
 
@@ -99,7 +122,9 @@ function logTypeLabel(type: string): string {
                 {{ logTypeLabel(entry.type) }}
               </span>
               <span class="log-timeline__time">{{ entry.time }}</span>
-              <span class="log-timeline__operator">· {{ entry.operator }}</span>
+              <span class="log-timeline__operator">
+                · {{ operatorLabel(entry.operator) }}
+              </span>
             </div>
             <div class="log-timeline__change">
               <span class="log-timeline__from">{{ entry.fromValue }}</span>

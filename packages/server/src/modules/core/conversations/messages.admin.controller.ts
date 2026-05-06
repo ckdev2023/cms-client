@@ -5,13 +5,15 @@ import {
   Get,
   Inject,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
   Req,
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { MessagesAdminService } from "./messages.admin.service";
 
@@ -75,6 +77,9 @@ function parseBool(v: unknown): boolean | undefined {
   return undefined;
 }
 
+const ConversationIdParam = () => Param("conversationId", new ParseUUIDPipe());
+const MessageIdParam = () => Param("messageId", new ParseUUIDPipe());
+
 /**
  * Admin 会話メッセージ管理コントローラ。
  */
@@ -96,11 +101,11 @@ export class MessagesAdminController {
    * @param query ページネーションパラメータ
    * @returns メッセージ一覧と総件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get()
   async list(
     @Req() req: HttpRequest,
-    @Param("conversationId") conversationId: string,
+    @ConversationIdParam() conversationId: string,
     @Query() query: ListMessagesQuery,
   ) {
     return this.svc.list(requireCtx(req), conversationId, {
@@ -116,11 +121,11 @@ export class MessagesAdminController {
    * @param body 送信リクエストボディ
    * @returns 作成されたメッセージ
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async send(
     @Req() req: HttpRequest,
-    @Param("conversationId") conversationId: string,
+    @ConversationIdParam() conversationId: string,
     @Body() body: SendMessageBody,
   ) {
     return this.svc.send(requireCtx(req), conversationId, {
@@ -139,12 +144,12 @@ export class MessagesAdminController {
    * @param messageId メッセージ ID
    * @returns 更新後のメッセージ
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":messageId/retry-translation")
   async retryTranslation(
     @Req() req: HttpRequest,
-    @Param("conversationId") conversationId: string,
-    @Param("messageId") messageId: string,
+    @ConversationIdParam() conversationId: string,
+    @MessageIdParam() messageId: string,
   ) {
     return this.svc.retryTranslation(
       requireCtx(req),

@@ -12,7 +12,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type {
   BillingGateEffectMode,
   BillingPlanStatus,
@@ -191,7 +192,7 @@ export class BillingPlansController {
    * @param body - creation body
    * @returns created BillingPlan
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateBillingPlanBody) {
     const ctx = req.requestContext;
@@ -217,7 +218,7 @@ export class BillingPlansController {
    * @param query - query params
    * @returns paginated BillingPlan list
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: BillingPlanListQuery) {
     const ctx = req.requestContext;
@@ -241,7 +242,7 @@ export class BillingPlansController {
    * @param id - billing plan ID
    * @returns BillingPlan
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -260,7 +261,7 @@ export class BillingPlansController {
    * @param body - update body
    * @returns updated BillingPlan
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -290,7 +291,7 @@ export class BillingPlansController {
    * @param body - transition body
    * @returns updated BillingPlan
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/transition")
   async transition(
     @Req() req: HttpRequest,

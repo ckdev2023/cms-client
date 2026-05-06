@@ -161,6 +161,7 @@ void test("mapLeadLogRow maps full row with object payload", () => {
     log_type: "field_change",
     payload: { field: "status", from: "new", to: "following" },
     created_by: "u1",
+    created_by_display_name: "田中 太郎",
     created_at: "2026-04-20T10:00:00.000Z",
   };
   const result = mapLeadLogRow(row);
@@ -173,6 +174,7 @@ void test("mapLeadLogRow maps full row with object payload", () => {
     to: "following",
   });
   assert.equal(result.createdBy, "u1");
+  assert.equal(result.createdByDisplayName, "田中 太郎");
   assert.equal(result.createdAt, "2026-04-20T10:00:00.000Z");
 });
 
@@ -183,10 +185,12 @@ void test("mapLeadLogRow normalizes null payload to empty object", () => {
     log_type: "converted",
     payload: null,
     created_by: "u1",
+    created_by_display_name: null,
     created_at: "2026-04-20T10:00:00.000Z",
   };
   const result = mapLeadLogRow(row);
   assert.deepEqual(result.payload, {});
+  assert.equal(result.createdByDisplayName, null);
 });
 
 void test("mapLeadLogRow normalizes JSON string payload", () => {
@@ -196,6 +200,7 @@ void test("mapLeadLogRow normalizes JSON string payload", () => {
     log_type: "status_change",
     payload: '{"from":"new","to":"lost","lost_reason":"no_budget"}',
     created_by: null,
+    created_by_display_name: null,
     created_at: "2026-04-20T10:00:00.000Z",
   };
   const result = mapLeadLogRow(row);
@@ -205,6 +210,7 @@ void test("mapLeadLogRow normalizes JSON string payload", () => {
     lost_reason: "no_budget",
   });
   assert.equal(result.createdBy, null);
+  assert.equal(result.createdByDisplayName, null);
 });
 
 void test("mapLeadLogRow throws on invalid created_at", () => {
@@ -214,7 +220,21 @@ void test("mapLeadLogRow throws on invalid created_at", () => {
     log_type: "test",
     payload: {},
     created_by: null,
+    created_by_display_name: null,
     created_at: null,
   };
   assert.throws(() => mapLeadLogRow(row), /Invalid timestamp: created_at/);
+});
+
+void test("mapLeadLogRow defaults missing display name field to null (H-5)", () => {
+  const row = {
+    id: "log5",
+    lead_id: "l1",
+    log_type: "status_change",
+    payload: { from: "new", to: "following" },
+    created_by: "u1",
+    created_at: "2026-04-20T10:00:00.000Z",
+  } as unknown as Parameters<typeof mapLeadLogRow>[0];
+  const result = mapLeadLogRow(row);
+  assert.equal(result.createdByDisplayName, null);
 });

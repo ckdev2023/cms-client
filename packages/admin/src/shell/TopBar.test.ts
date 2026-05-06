@@ -6,6 +6,7 @@ import {
   adminSessionController,
 } from "../auth/model/adminSession";
 import { i18n, setAppLocale } from "../i18n";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import TopBar from "./TopBar.vue";
 
 const stubs = {
@@ -33,6 +34,7 @@ describe("TopBar", () => {
     setAppLocale("zh-CN");
     adminSessionController.reset();
     window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+    getDefaultPermissionsStore()._setForTest(["case.create"]);
   });
 
   it("renders a header with role=banner", () => {
@@ -245,6 +247,7 @@ describe("TopBar", () => {
       JSON.stringify({
         token: "jwt-token",
         user: {
+          id: "u-logout-test",
           name: "Admin",
           email: "admin@example.com",
           role: "manager",

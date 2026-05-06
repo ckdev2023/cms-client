@@ -24,6 +24,7 @@ import AppShell from "./shell/AppShell.vue";
 import Toast from "./shared/ui/Toast.vue";
 import { initToast } from "./shared/model/useToast";
 import { initSearchRepository } from "./shared/model/useSearchRepository";
+import { registerTokenProvider } from "./shared/model/tokenProvider";
 
 /**
  * 后台应用根组件，按路由元信息在登录页与管理外壳之间切换布局。
@@ -40,6 +41,7 @@ const userEmail = computed(
 const userInitials = computed(() => currentUser.value?.initials ?? "AD");
 const arcoLocale = computed(() => getArcoLocale(locale.value as AppLocale));
 initToast();
+registerTokenProvider(getAdminAccessToken);
 initSearchRepository({ getToken: getAdminAccessToken });
 const orgSettings = initOrgSettings({
   initialStorageRoot: { rootLabel: null, rootPath: null },

@@ -64,10 +64,13 @@ describe("leads i18n required key groups (T-17)", () => {
 
   const LOG_TAB_KEYS = [
     "detail.logTab.title",
+    "detail.logTab.categoryAll",
     "detail.logTab.typeStatus",
     "detail.logTab.typeOwner",
     "detail.logTab.typeGroup",
+    "detail.logTab.typeInfo",
     "detail.logTab.emptyTitle",
+    "detail.logTab.actorUnknown",
   ] as const;
 
   function resolveKey(obj: Record<string, unknown>, path: string): unknown {

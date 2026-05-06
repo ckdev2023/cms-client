@@ -52,6 +52,31 @@ void test("seedDevData.ts is importable as valid TypeScript", () => {
   );
 });
 
+void test("seedDevConversations.ts is importable as valid TypeScript (H-10)", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevConversations.ts",
+  );
+  assert.ok(fs.existsSync(scriptPath), "seedDevConversations.ts must exist");
+  const source = fs.readFileSync(scriptPath, "utf8");
+  assert.ok(
+    source.includes("INSERT INTO app_users"),
+    "must seed app_users (H-10)",
+  );
+  assert.ok(
+    source.includes("INSERT INTO leads"),
+    "must seed portal-side leads (H-10)",
+  );
+  assert.ok(
+    source.includes("INSERT INTO conversations"),
+    "must seed conversations (H-10)",
+  );
+  assert.ok(
+    source.includes("INSERT INTO messages"),
+    "must seed messages (H-10)",
+  );
+});
+
 void test("seed IDs are valid UUIDs", () => {
   const uuidRe =
     /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -212,7 +237,7 @@ function createMockClient(): {
 
 void test("SQL-level smoke: all seed steps execute and produce parameterized INSERTs", async () => {
   const steps = buildSeedSteps();
-  assert.equal(steps.length, 8, "must have exactly 8 seed steps");
+  assert.equal(steps.length, 12, "must have exactly 12 seed steps");
 
   const { client, queries } = createMockClient();
 
@@ -233,6 +258,10 @@ void test("SQL-level smoke: all seed steps execute and produce parameterized INS
     "template_versions",
     "template_releases",
     "document_templates",
+    "app_users",
+    "leads",
+    "conversations",
+    "messages",
   ];
   const seenTables = new Set(
     insertQueries
@@ -288,7 +317,111 @@ void test("SQL-level smoke: step labels match expected sequence", () => {
     "crossCaseLink",
     "documentChecklistTemplate",
     "documentTemplates",
+    "conversationAppUser",
+    "conversationLead",
+    "conversations",
+    "conversationMessages",
   ]);
+});
+
+void test("H-10: seed produces 1 app_user + 1 portal lead + 2 conversations + 4 messages", async () => {
+  const steps = buildSeedSteps();
+  const { client, queries } = createMockClient();
+  for (const [, fn] of steps) {
+    await fn(client);
+  }
+
+  const appUserInserts = queries.filter((q) =>
+    /INSERT INTO app_users/i.test(q.sql),
+  );
+  const leadInserts = queries.filter((q) => /INSERT INTO leads/i.test(q.sql));
+  const conversationInserts = queries.filter((q) =>
+    /INSERT INTO conversations/i.test(q.sql),
+  );
+  const messageInserts = queries.filter((q) =>
+    /INSERT INTO messages/i.test(q.sql),
+  );
+
+  assert.equal(appUserInserts.length, 1, "expect exactly 1 app_user seed");
+  assert.equal(leadInserts.length, 1, "expect exactly 1 portal-side lead seed");
+  assert.equal(
+    conversationInserts.length,
+    2,
+    "expect 2 conversations (assigned + unassigned) for assign-flow coverage",
+  );
+  assert.equal(
+    messageInserts.length,
+    4,
+    "expect 4 messages (3 in assigned conv incl. 1 failed for retry-translation, 1 in unassigned conv)",
+  );
+
+  for (const q of [
+    ...appUserInserts,
+    ...leadInserts,
+    ...conversationInserts,
+    ...messageInserts,
+  ]) {
+    assert.ok(
+      /ON CONFLICT/i.test(q.sql),
+      `H-10 seed must be idempotent: ${q.sql.slice(0, 60)}`,
+    );
+  }
+});
+
+void test("H-10: seed includes one failed-translation message to enable retry-translation walkthrough", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevConversations.ts",
+  );
+  const source = fs.readFileSync(scriptPath, "utf8");
+  assert.ok(
+    /translationStatus:\s*"failed"/.test(source),
+    "must contain at least one message with translationStatus='failed' so admin can test retry-translation flow",
+  );
+});
+
+void test("H-10: seed conversations include both assigned and unassigned variants", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevConversations.ts",
+  );
+  const source = fs.readFileSync(scriptPath, "utf8");
+  assert.ok(
+    /'open',\s*\n\s*\$5,\s*now\(\)/m.test(source),
+    "must contain assigned conversation seed (owner_user_id = $5)",
+  );
+  assert.ok(
+    /'open',\s*\n\s*null,\s*now\(\)/m.test(source),
+    "must contain unassigned conversation seed (owner_user_id = null) so admin can e2e test assign dialog",
+  );
+});
+
+void test("H-10: seed IDs use the b000 namespace to avoid colliding with existing a000 entities", () => {
+  const scriptPath = path.resolve(
+    new URL(".", import.meta.url).pathname,
+    "seedDevConversations.ts",
+  );
+  const source = fs.readFileSync(scriptPath, "utf8");
+  const h10Constants = [
+    "SEED_APP_USER_ID",
+    "SEED_LEAD_PORTAL_ID",
+    "SEED_CONV_ASSIGNED_ID",
+    "SEED_CONV_UNASSIGNED_ID",
+    "SEED_MSG_ASSIGNED_USER_FIRST_ID",
+    "SEED_MSG_ASSIGNED_STAFF_REPLY_ID",
+    "SEED_MSG_ASSIGNED_USER_FAILED_ID",
+    "SEED_MSG_UNASSIGNED_USER_ID",
+  ];
+  for (const c of h10Constants) {
+    const re = new RegExp(`${c}\\s*=\\s*"([0-9a-f-]+)"`);
+    const m = re.exec(source);
+    assert.ok(m, `must declare ${c} as a literal UUID`);
+    assert.match(
+      m[1],
+      /^00000000-0000-4000-b000-/,
+      `${c} must use the b000 namespace`,
+    );
+  }
 });
 
 void test("SQL-level smoke: DOC_TEMPLATE_SEEDS count matches document_templates INSERTs", async () => {

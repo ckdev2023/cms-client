@@ -27,6 +27,7 @@ import type {
   LeadDetailAggregate,
   LeadDedupResult,
 } from "./LeadAdapterTypes";
+import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
 
 // ─── Shared helpers ─────────────────────────────────────────────
 
@@ -265,8 +266,16 @@ function deriveButtonPreset(
   if (status === "lost") return "lost";
   if (convertedCaseId) return "convertedCase";
   if (convertedCustomerId) return "convertedCustomer";
-  if (status === "signed" && !convertedCustomerId) return "signedNotConverted";
-  return "normal";
+  if (status === "signed") return "signedNotConverted";
+  if (status === "following" || status === "pending_sign") return "normal";
+  return "initial";
+}
+
+function readTimestampLabel(r: Record<string, unknown>): string {
+  const raw = readString(r, "createdAt") || readString(r, "time");
+  if (!raw) return "";
+  const formatted = formatUpdatedAtLabel(raw);
+  return formatted || raw;
 }
 
 function adaptFollowupDto(value: unknown): LeadFollowupRecord | null {
@@ -284,10 +293,18 @@ function adaptFollowupDto(value: unknown): LeadFollowupRecord | null {
     nextAction: readString(r, "nextAction"),
     nextFollowUp:
       readNullableString(r, "nextFollowUpAt") ?? readString(r, "nextFollowUp"),
-    time: readString(r, "createdAt") || readString(r, "time"),
+    time: readTimestampLabel(r),
     operator:
       readString(r, "createdByDisplayName") || readString(r, "operator"),
   };
+}
+
+function readLogPayload(r: Record<string, unknown>): Record<string, unknown> {
+  const v = r.payload;
+  if (v && typeof v === "object" && !Array.isArray(v)) {
+    return v as Record<string, unknown>;
+  }
+  return {};
 }
 
 function adaptLogEntryDto(value: unknown): LeadLogEntry | null {
@@ -296,14 +313,37 @@ function adaptLogEntryDto(value: unknown): LeadLogEntry | null {
   const logType = readString(r, "logType") || readString(r, "type");
   if (!logType) return null;
 
+  // H-5：服务端真实 logType 走 formatter；fixture/legacy 透传字段保留旧行为。
+  const view = formatLeadLogPayload({ logType, payload: readLogPayload(r) });
+  const fromOverride = readString(r, "fromValue");
+  const toOverride = readString(r, "toValue");
+  const chipOverride = readString(r, "chipClass");
+
   return {
-    type: logType as LeadLogEntry["type"],
+    type: view.category,
     operator:
       readString(r, "createdByDisplayName") || readString(r, "operator"),
-    time: readString(r, "createdAt") || readString(r, "time"),
-    fromValue: readString(r, "fromValue"),
-    toValue: readString(r, "toValue"),
-    chipClass: readString(r, "chipClass") || "bg-gray-100 text-gray-700",
+    time: readTimestampLabel(r),
+    fromValue: fromOverride || view.fromValue,
+    toValue: toOverride || view.toValue,
+    chipClass: chipOverride || view.chipClass,
+  };
+}
+
+function readDetailOwnership(leadRecord: Record<string, unknown>) {
+  return {
+    ownerId:
+      readString(leadRecord, "ownerUserId") ||
+      readString(leadRecord, "ownerId"),
+    ownerLabel:
+      readString(leadRecord, "ownerLabel") ||
+      readString(leadRecord, "ownerDisplayName"),
+    ownerInitials: readString(leadRecord, "ownerInitials"),
+    ownerAvatarClass: readString(leadRecord, "ownerAvatarClass"),
+    groupId: readString(leadRecord, "groupId"),
+    groupLabel:
+      readString(leadRecord, "groupLabel") ||
+      readString(leadRecord, "groupName"),
   };
 }
 
@@ -396,20 +436,13 @@ export function adaptLeadDetailAggregate(
 
   const detail: LeadDetail = {
     id,
+    leadNo: readNullableString(leadRecord, "leadNo"),
     name: readString(leadRecord, "name"),
     status,
-    ownerId:
-      readString(leadRecord, "ownerUserId") ||
-      readString(leadRecord, "ownerId"),
-    ownerLabel:
-      readString(leadRecord, "ownerLabel") ||
-      readString(leadRecord, "ownerDisplayName"),
-    ownerInitials: readString(leadRecord, "ownerInitials"),
-    ownerAvatarClass: readString(leadRecord, "ownerAvatarClass"),
-    groupId: readString(leadRecord, "groupId"),
-    groupLabel:
-      readString(leadRecord, "groupLabel") ||
-      readString(leadRecord, "groupName"),
+    ...readDetailOwnership(leadRecord),
+    intendedCaseType:
+      readString(leadRecord, "intendedCaseType") ||
+      readString(leadRecord, "businessType"),
     banner: deriveBanner(status, convertedCustomerId),
     buttons: deriveButtonPreset(status, convertedCustomerId, convertedCaseId),
     readonly: isReadonly,

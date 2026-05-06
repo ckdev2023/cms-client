@@ -116,9 +116,10 @@ describe("leads/types", () => {
   });
 
   describe("LOG_CATEGORIES", () => {
-    it("has 4 categories with all as first", () => {
-      expect(LOG_CATEGORIES).toHaveLength(4);
+    it("has 5 categories with all as first and info appended (H-5)", () => {
+      expect(LOG_CATEGORIES).toHaveLength(5);
       expect(LOG_CATEGORIES[0].key).toBe("all");
+      expect(LOG_CATEGORIES[LOG_CATEGORIES.length - 1].key).toBe("info");
     });
   });
 
@@ -126,26 +127,49 @@ describe("leads/types", () => {
     it("returns Chinese label for known category", () => {
       expect(getLeadLogCategoryLabel("status")).toBe("状态变更");
       expect(getLeadLogCategoryLabel("all")).toBe("全部");
+      expect(getLeadLogCategoryLabel("info")).toBe("其他");
     });
   });
 
   describe("HEADER_BUTTON_PRESETS", () => {
-    it("defines 5 presets", () => {
-      expect(Object.keys(HEADER_BUTTON_PRESETS)).toHaveLength(5);
+    it("defines 6 presets", () => {
+      expect(Object.keys(HEADER_BUTTON_PRESETS)).toHaveLength(6);
     });
 
-    it("normal preset enables all buttons", () => {
+    it("initial preset hides convert buttons (new status)", () => {
+      const initial = HEADER_BUTTON_PRESETS.initial;
+      expect(initial.convertCustomer).toBe("hidden");
+      expect(initial.convertCase).toBe("hidden");
+      expect(initial.markLost).toBe("enabled");
+      expect(initial.editInfo).toBe("enabled");
+      expect(initial.changeStatus).toBe("enabled");
+    });
+
+    it("normal preset enables convertCustomer, hides convertCase (§4: no customer yet)", () => {
       const normal = HEADER_BUTTON_PRESETS.normal;
       expect(normal.convertCustomer).toBe("enabled");
-      expect(normal.convertCase).toBe("enabled");
+      expect(normal.convertCase).toBe("hidden");
       expect(normal.markLost).toBe("enabled");
       expect(normal.editInfo).toBe("enabled");
       expect(normal.changeStatus).toBe("enabled");
     });
 
-    it("lost preset disables action buttons and hides others", () => {
+    it("signedNotConverted highlights convertCustomer, hides convertCase", () => {
+      const preset = HEADER_BUTTON_PRESETS.signedNotConverted;
+      expect(preset.convertCustomer).toBe("highlighted");
+      expect(preset.convertCase).toBe("hidden");
+    });
+
+    it("convertedCustomer shows view-customer and highlights convertCase", () => {
+      const preset = HEADER_BUTTON_PRESETS.convertedCustomer;
+      expect(preset.convertCustomer).toBe("view-customer");
+      expect(preset.convertCase).toBe("highlighted");
+    });
+
+    it("lost preset hides all action buttons", () => {
       const lost = HEADER_BUTTON_PRESETS.lost;
-      expect(lost.convertCustomer).toBe("disabled");
+      expect(lost.convertCustomer).toBe("hidden");
+      expect(lost.convertCase).toBe("hidden");
       expect(lost.markLost).toBe("hidden");
       expect(lost.editInfo).toBe("disabled");
     });

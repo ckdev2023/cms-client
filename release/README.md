@@ -75,7 +75,9 @@ curl https://demo.example.com/health/deps
 
 ### 创建初始管理员（重要）
 
-仓库里 `packages/server/src/scripts/initLocalAdmin.ts` 是为 **本地开发** 用的，里面用的是固定弱密码，**生产/测试环境绝对不能直接跑**。
+> 后续日常 admin 用户运维（查询 / 重置密码 / 新增用户 / 停启用 / 改角色），见独立文档：[`ADMIN-USERS.md`](./ADMIN-USERS.md)。
+
+仓库里 `packages/server/src/scripts/initLocalAdmin.ts` 是为 **本地开发** 用的，里面用的是固定弱密码，**生产/测试环境绝对不能直接跑**（必须通过环境变量覆盖密码）。
 
 测试期推荐做法二选一：
 
@@ -374,6 +376,7 @@ cd packages/server && npm run db:seed-dev:smoke
 ```
 release/
 ├── README.md                       # 本文档
+├── ADMIN-USERS.md                  # admin 用户运维（查询/改密/新增/停启用/改角色）
 ├── .env.example                    # 环境变量模板
 ├── .gitignore                      # 排除 .env / data / backup
 ├── docker/

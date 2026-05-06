@@ -5,7 +5,7 @@
  * Reference: portal/security.test.ts
  *
  * Verifies:
- * - All admin routes require @RequireRoles("staff")
+ * - All admin routes require @RequirePermission(PERMISSION_CODES.CASE_EDIT)
  * - Service uses createTenantDb (RLS path)
  * - Dedup enforces org_id filter
  * - Bulk ops write per-item audit (not aggregated)
@@ -21,7 +21,7 @@ function readSource(filename: string): string {
 }
 
 /* ================================================================ */
-/*  S1: Every admin controller route has @RequireRoles("staff")     */
+/*  S1: Every admin controller route has @RequirePermission          */
 /* ================================================================ */
 
 void test('S1: LeadsAdminController class uses @Controller("admin/leads")', () => {
@@ -32,7 +32,7 @@ void test('S1: LeadsAdminController class uses @Controller("admin/leads")', () =
   );
 });
 
-void test("S1: every async method in LeadsAdminController has @RequireRoles", () => {
+void test("S1: every async method in LeadsAdminController has @RequirePermission", () => {
   const src = readSource("leads.admin.controller.ts");
   const methodPattern = /async\s+(\w+)\s*\(/g;
   let match: RegExpExecArray | null;
@@ -47,15 +47,17 @@ void test("S1: every async method in LeadsAdminController has @RequireRoles", ()
 
   for (const method of methods) {
     const methodIdx = src.indexOf(`async ${method}(`);
-    const decoratorRegion = src.slice(Math.max(0, methodIdx - 250), methodIdx);
+    const decoratorRegion = src.slice(Math.max(0, methodIdx - 300), methodIdx);
     assert.ok(
-      decoratorRegion.includes('@RequireRoles("staff")'),
-      `${method}() must have @RequireRoles("staff") — found none in its decorator region`,
+      decoratorRegion.includes(
+        "@RequirePermission(PERMISSION_CODES.CASE_EDIT)",
+      ),
+      `${method}() must have @RequirePermission(PERMISSION_CODES.CASE_EDIT) — found none in its decorator region`,
     );
   }
 });
 
-void test("S1: controller does not use AppUserAuthGuard (admin must use RequireRoles)", () => {
+void test("S1: controller does not use AppUserAuthGuard (admin must use RequirePermission)", () => {
   const src = readSource("leads.admin.controller.ts");
   assert.equal(
     src.includes("AppUserAuthGuard"),
@@ -389,13 +391,15 @@ void test("S7: admin service passes actorUserId so RLS trigger can attribute wri
 /* ================================================================ */
 
 void test("S8: requireCtx throws UnauthorizedException on missing context", () => {
-  const src = readSource("leads.admin.controller.ts");
+  const parsersSrc = readSource("leads.admin.parsers.ts");
   assert.ok(
-    src.includes("UnauthorizedException"),
-    "Controller must import UnauthorizedException",
+    parsersSrc.includes("UnauthorizedException"),
+    "Parsers must import UnauthorizedException",
   );
   assert.ok(
-    src.includes('throw new UnauthorizedException("Missing request context")'),
+    parsersSrc.includes(
+      'throw new UnauthorizedException("Missing request context")',
+    ),
     "requireCtx must throw for missing context",
   );
 });

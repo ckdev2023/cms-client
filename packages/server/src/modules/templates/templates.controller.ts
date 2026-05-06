@@ -10,7 +10,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../core/auth/auth.decorators";
+import { RequirePermission } from "../core/auth/auth.decorators";
+import { PERMISSION_CODES } from "../core/auth/permissions.codes";
 import type { RequestContext } from "../core/tenancy/requestContext";
 import {
   isTemplateKind,
@@ -233,7 +234,7 @@ export class TemplatesController {
    * @param body 请求体
    * @returns 创建后的版本记录
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post("versions")
   async createVersion(
     @Req() req: HttpRequest,
@@ -273,7 +274,7 @@ export class TemplatesController {
    * @param body 请求体
    * @returns 发布记录
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post("release")
   async release(@Req() req: HttpRequest, @Body() body: ReleaseBody) {
     const ctx = req.requestContext;
@@ -297,7 +298,7 @@ export class TemplatesController {
    * @param body 请求体
    * @returns 发布记录
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post("rollback")
   async rollback(@Req() req: HttpRequest, @Body() body: RollbackBody) {
     const ctx = req.requestContext;
@@ -316,7 +317,7 @@ export class TemplatesController {
    * @param body 请求体
    * @returns 发布记录
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post("mode")
   async setMode(@Req() req: HttpRequest, @Body() body: SetModeBody) {
     const ctx = req.requestContext;

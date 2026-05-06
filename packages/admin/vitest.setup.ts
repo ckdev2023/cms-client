@@ -1,4 +1,5 @@
 import { afterAll, afterEach, beforeEach, vi } from "vitest";
+import { _resetDefaultPermissionsStoreForTest } from "./src/shared/model/PermissionsStore";
 
 // 强制拦截所有的 fetch 请求，防止在测试中发起真实网络请求
 const originalFetch = global.fetch;
@@ -22,6 +23,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  _resetDefaultPermissionsStoreForTest();
   vi.clearAllMocks();
 });
 

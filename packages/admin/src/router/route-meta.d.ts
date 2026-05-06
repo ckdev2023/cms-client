@@ -11,6 +11,7 @@ declare module "vue-router" {
     groupKey?: string;
     titleKey?: string;
     title?: string;
+    requiredPermission?: string;
   }
 }
 

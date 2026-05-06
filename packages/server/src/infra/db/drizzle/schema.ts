@@ -72,12 +72,84 @@ export const users = pgTable("users", {
   passwordHash: text("password_hash"),
   role: text("role").notNull(),
   status: text("status").notNull().default("active"),
+  createdBy: uuid("created_by"),
+  disabledAt: timestamp("disabled_at", { withTimezone: true, mode: "string" }),
+  passwordSetAt: timestamp("password_set_at", {
+    withTimezone: true,
+    mode: "string",
+  }),
+  roleId: uuid("role_id"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
     .notNull()
     .defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
     .notNull()
     .defaultNow(),
+});
+
+/**
+ * `roles` 表定义。
+ *
+ * 用途：
+ * - 表示 RBAC 角色定义（system 内建 + 自定义角色）
+ * - 为 `users.role_id` 与 `role_permissions` 提供外键源
+ */
+export const roles = pgTable(
+  "roles",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    orgId: uuid("org_id")
+      .notNull()
+      .references(() => organizations.id),
+    code: text("code").notNull(),
+    name: text("name").notNull(),
+    description: text("description"),
+    isSystem: boolean("is_system").notNull().default(false),
+    createdBy: uuid("created_by").references(() => users.id),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "string" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("idx_roles_org").on(table.orgId)],
+);
+
+/**
+ * `role_permissions` 表定义。
+ *
+ * 用途：
+ * - 记录角色与权限码的关联
+ */
+export const rolePermissions = pgTable("role_permissions", {
+  roleId: uuid("role_id")
+    .notNull()
+    .references(() => roles.id, { onDelete: "cascade" }),
+  permission: text("permission").notNull(),
+});
+
+/**
+ * `user_permission_overrides` 表定义。
+ *
+ * 用途：
+ * - 记录用户级权限覆盖（grant/deny）
+ * - 支持审计追踪与过期自动回收
+ */
+export const userPermissionOverrides = pgTable("user_permission_overrides", {
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  permission: text("permission").notNull(),
+  effect: text("effect").notNull(),
+  reason: text("reason"),
+  grantedBy: uuid("granted_by")
+    .notNull()
+    .references(() => users.id),
+  grantedAt: timestamp("granted_at", { withTimezone: true, mode: "string" })
+    .notNull()
+    .defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true, mode: "string" }),
 });
 
 /**
@@ -1036,6 +1108,10 @@ export const usersRelations = relations(users, ({ one, many }) => ({
     fields: [users.orgId],
     references: [organizations.id],
   }),
+  assignedRole: one(roles, {
+    fields: [users.roleId],
+    references: [roles.id],
+  }),
   ownedCompanies: many(companies),
   ownedCases: many(cases, { relationName: "case_owner" }),
   assistedCases: many(cases, { relationName: "case_assistant" }),
@@ -1043,7 +1119,46 @@ export const usersRelations = relations(users, ({ one, many }) => ({
   createdCommunicationLogs: many(communicationLogs),
   changedStageHistory: many(caseStageHistory),
   groupMemberships: many(userGroupMemberships),
+  permissionOverrides: many(userPermissionOverrides),
 }));
+
+export const rolesRelations = relations(roles, ({ one, many }) => ({
+  organization: one(organizations, {
+    fields: [roles.orgId],
+    references: [organizations.id],
+  }),
+  creator: one(users, {
+    fields: [roles.createdBy],
+    references: [users.id],
+  }),
+  permissions: many(rolePermissions),
+  users: many(users),
+}));
+
+export const rolePermissionsRelations = relations(
+  rolePermissions,
+  ({ one }) => ({
+    role: one(roles, {
+      fields: [rolePermissions.roleId],
+      references: [roles.id],
+    }),
+  }),
+);
+
+export const userPermissionOverridesRelations = relations(
+  userPermissionOverrides,
+  ({ one }) => ({
+    user: one(users, {
+      fields: [userPermissionOverrides.userId],
+      references: [users.id],
+    }),
+    grantor: one(users, {
+      fields: [userPermissionOverrides.grantedBy],
+      references: [users.id],
+      relationName: "override_grantor",
+    }),
+  }),
+);
 
 /**
  * `groups` 的关联关系定义。

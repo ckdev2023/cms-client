@@ -2,7 +2,9 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Delete,
   Get,
+  HttpCode,
   Inject,
   NotFoundException,
   Param,
@@ -13,8 +15,10 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
+import { GroupMembersService } from "./groupMembers.service";
 import { GroupsService } from "./groups.service";
 import type { GroupStatusFilter } from "./groups.types";
 
@@ -37,6 +41,11 @@ type RenameGroupBody = {
 
 type DisableGroupBody = {
   reason?: unknown;
+};
+
+type AddMemberBody = {
+  userId?: unknown;
+  isPrimary?: unknown;
 };
 
 const VALID_STATUS_FILTERS = new Set<string>(["active", "disabled"]);
@@ -67,31 +76,30 @@ function parseOptionalNullableString(
 }
 
 /**
- * 業務分組 CRUD 接口（全端点要求 manager 角色）。
+ * 業務分組 CRUD + メンバー管理接口（全端点要求 manager 角色）。
  */
 @Controller("groups")
 export class GroupsController {
   /**
-   *
-   * @param groupsService
-   */
-  /**
    * 業務分組コントローラーを生成する。
    *
    * @param groupsService - グループサービス
+   * @param groupMembersService - グループメンバー管理サービス
    */
   constructor(
     @Inject(GroupsService) private readonly groupsService: GroupsService,
+    @Inject(GroupMembersService)
+    private readonly groupMembersService: GroupMembersService,
   ) {}
 
   /**
    * グループ一覧を取得する。
    *
-   * @param req HTTP リクエスト
-   * @param query クエリパラメータ（status で絞り込み可）
+   * @param req - HTTP リクエスト
+   * @param query - クエリパラメータ（status で絞り込み可）
    * @returns グループ一覧
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.GROUP_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListGroupsQuery) {
     const ctx = req.requestContext;
@@ -104,11 +112,11 @@ export class GroupsController {
   /**
    * グループ詳細を取得する。
    *
-   * @param req HTTP リクエスト
-   * @param id グループ ID
+   * @param req - HTTP リクエスト
+   * @param id - グループ ID
    * @returns グループ詳細
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.GROUP_VIEW)
   @Get(":id")
   async detail(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -122,11 +130,11 @@ export class GroupsController {
   /**
    * 新規グループを作成する。
    *
-   * @param req HTTP リクエスト
-   * @param body 作成パラメータ
+   * @param req - HTTP リクエスト
+   * @param body - 作成パラメータ
    * @returns 作成されたグループ詳細
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateGroupBody) {
     const ctx = req.requestContext;
@@ -144,12 +152,12 @@ export class GroupsController {
   /**
    * グループを改名する。
    *
-   * @param req HTTP リクエスト
-   * @param id グループ ID
-   * @param body 改名パラメータ
+   * @param req - HTTP リクエスト
+   * @param id - グループ ID
+   * @param body - 改名パラメータ
    * @returns 更新後のグループ詳細
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)
   @Patch(":id")
   async rename(
     @Req() req: HttpRequest,
@@ -168,12 +176,12 @@ export class GroupsController {
   /**
    * グループを停用する（論理削除）。
    *
-   * @param req HTTP リクエスト
-   * @param id グループ ID
-   * @param body 停用パラメータ（reason 任意）
+   * @param req - HTTP リクエスト
+   * @param id - グループ ID
+   * @param body - 停用パラメータ（reason 任意）
    * @returns 更新後のグループ詳細
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)
   @Post(":id/disable")
   async disable(
     @Req() req: HttpRequest,
@@ -189,5 +197,55 @@ export class GroupsController {
     });
     if (!result) throw new NotFoundException("Group not found");
     return result;
+  }
+
+  /**
+   * グループにメンバーを追加する。
+   *
+   * @param req - HTTP リクエスト
+   * @param id - グループ ID
+   * @param body - メンバー追加パラメータ
+   * @returns 追加されたメンバー DTO
+   */
+  @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)
+  @Post(":id/members")
+  async addMember(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: AddMemberBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const userId = requireString(body.userId, "userId");
+    const isPrimary = body.isPrimary === true;
+
+    return this.groupMembersService.addGroupMember(ctx, id, {
+      userId,
+      isPrimary,
+    });
+  }
+
+  /**
+   * グループからメンバーを論理削除する。
+   *
+   * @param req - HTTP リクエスト
+   * @param id - グループ ID
+   * @param userId - ユーザー ID
+   * @returns 成功フラグ
+   */
+  @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)
+  @Delete(":id/members/:userId")
+  @HttpCode(200)
+  async removeMember(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Param("userId") userId: string,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.groupMembersService.removeGroupMember(ctx, id, userId);
+    return { ok: true };
   }
 }

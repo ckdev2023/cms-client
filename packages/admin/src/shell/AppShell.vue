@@ -17,6 +17,7 @@ import SideNav from "./SideNav.vue";
 import TopBar from "./TopBar.vue";
 import GlobalSearchPalette from "./GlobalSearchPalette.vue";
 import { useGlobalSearch } from "./useGlobalSearch";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import { useSearchRepository } from "../shared/model/useSearchRepository";
 
 /**
@@ -38,6 +39,11 @@ const currentView = shallowRef<Component | null>(null);
 
 const searchRepo = useSearchRepository();
 const search = useGlobalSearch({ repo: searchRepo, router });
+
+const permStore = getDefaultPermissionsStore();
+if (!permStore.loaded.value && !permStore.loading.value) {
+  permStore.load().catch(() => undefined);
+}
 
 /**
  * 根据路由名称与 params 生成渲染 key；query 变化不影响 key，避免无意义的重挂载。

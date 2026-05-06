@@ -43,6 +43,11 @@ function makeMockPool(
         ],
       });
     }
+    if (sql.includes("select id from roles")) {
+      return Promise.resolve({
+        rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
+      });
+    }
     if (sql.includes("insert into users")) {
       return Promise.resolve({
         rows: [
@@ -158,7 +163,14 @@ void test("bootstrapLocalAdmin upserts org, user, group, membership, storageRoot
   assert.equal(userInsert.params[2], "Local Admin");
   assert.equal(userInsert.params[3], "admin@local.test");
   assert.match(String(userInsert.params[4]), /^scrypt\$/);
-  assert.equal(userInsert.params[5], "owner");
+  assert.equal(userInsert.params[5], "00000000-0000-4000-8000-0000000000aa");
+
+  const roleLookup = calls.find((c) => c.sql.includes("select id from roles"));
+  assert.ok(roleLookup, "should resolve role_id from roles table");
+  assert.deepEqual(roleLookup.params, [
+    "00000000-0000-4000-8000-000000000010",
+    "owner",
+  ]);
 
   const groupInsert = calls.find((c) => c.sql.includes("insert into groups"));
   assert.ok(groupInsert, "should insert into groups");
@@ -196,10 +208,11 @@ void test("bootstrapLocalAdmin upserts org, user, group, membership, storageRoot
     .map((c) => c.sql)
     .filter((s) => s !== "BEGIN" && s !== "COMMIT");
   assert.ok(sqlOrder[0]?.includes("insert into organizations"));
-  assert.ok(sqlOrder[1]?.includes("insert into users"));
-  assert.ok(sqlOrder[2]?.includes("insert into groups"));
-  assert.ok(sqlOrder[3]?.includes("insert into user_group_memberships"));
-  assert.ok(sqlOrder[4]?.includes("update organizations"));
+  assert.ok(sqlOrder[1]?.includes("select id from roles"));
+  assert.ok(sqlOrder[2]?.includes("insert into users"));
+  assert.ok(sqlOrder[3]?.includes("insert into groups"));
+  assert.ok(sqlOrder[4]?.includes("insert into user_group_memberships"));
+  assert.ok(sqlOrder[5]?.includes("update organizations"));
 });
 
 void test("bootstrapLocalAdmin is idempotent (second run same result)", async () => {
@@ -247,6 +260,11 @@ void test("bootstrapLocalAdmin rolls back when user upsert fails", async () => {
         rows: [{ id: "org-1", name: "Local Demo Office" }],
       });
     }
+    if (sql.includes("select id from roles")) {
+      return Promise.resolve({
+        rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
+      });
+    }
     if (sql.includes("insert into users")) {
       return Promise.reject(new Error("boom"));
     }
@@ -277,6 +295,11 @@ void test("bootstrapLocalAdmin rolls back when group upsert fails", async () => 
             name: "Local Demo Office",
           },
         ],
+      });
+    }
+    if (sql.includes("select id from roles")) {
+      return Promise.resolve({
+        rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
       });
     }
     if (sql.includes("insert into users")) {

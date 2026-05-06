@@ -6,6 +6,7 @@ import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadDetail, HeaderButtonStates, LeadStatus } from "../types";
 import { getLeadStatusLabel } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerDisplayLabel } from "../../../shared/model/useOwnerOptions";
 
 /** 线索详情页头部：面包屑返回、头像、线索名称、状态 badge、属性 chip 与操作按钮区。 */
 const props = defineProps<{
@@ -17,15 +18,34 @@ const props = defineProps<{
 defineEmits<{
   convertCustomer: [];
   convertCase: [];
+  viewCustomer: [];
+  viewCase: [];
   markLost: [];
   editInfo: [];
   changeStatus: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+/**
+ * 头部「编号」chip 优先展示业务线索编号 `leadNo`（如 `LEAD-202605-0002`）；
+ * fixture 或早期数据缺失 `leadNo` 时回退到 `id`，避免裸出 UUID。
+ */
+const leadNoDisplay = computed(() => props.lead.leadNo || props.lead.id);
 
 const groupDisplay = computed(() =>
   resolveGroupLabel(props.lead.groupLabel, t("shared.group.disabledSuffix")),
+);
+
+const ownerDisplay = computed(() =>
+  resolveOwnerDisplayLabel(
+    props.lead.ownerLabel || props.lead.ownerId,
+    {
+      unassigned: t("leads.list.ownerUnassigned"),
+      unknown: t("leads.list.ownerUnknown"),
+    },
+    locale.value,
+  ),
 );
 
 /**
@@ -128,7 +148,7 @@ function statusTone(
         <Button
           v-if="buttonStates.convertCustomer === 'view-customer'"
           size="sm"
-          @click="$emit('convertCustomer')"
+          @click="$emit('viewCustomer')"
         >
           {{ t("leads.detail.actions.viewCustomer") }}
         </Button>
@@ -153,7 +173,7 @@ function statusTone(
         <Button
           v-if="buttonStates.convertCase === 'view-case'"
           size="sm"
-          @click="$emit('convertCase')"
+          @click="$emit('viewCase')"
         >
           {{ t("leads.detail.actions.viewCase") }}
         </Button>
@@ -178,11 +198,11 @@ function statusTone(
         <div class="detail-header__chips">
           <Chip>
             {{ t("leads.detail.header.id") }}
-            <strong>{{ lead.id }}</strong>
+            <strong>{{ leadNoDisplay }}</strong>
           </Chip>
           <Chip>
             {{ t("leads.detail.header.owner") }}
-            <strong>{{ lead.ownerLabel }}</strong>
+            <strong>{{ ownerDisplay }}</strong>
           </Chip>
           <Chip>
             {{ t("leads.detail.header.group") }}

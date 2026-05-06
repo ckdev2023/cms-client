@@ -109,6 +109,7 @@ export type LeadLog = {
   logType: string;
   payload: Record<string, unknown>;
   createdBy: string | null;
+  createdByDisplayName: string | null;
   createdAt: string;
 };
 
@@ -138,6 +139,7 @@ export type LeadLogQueryRow = {
   log_type: string;
   payload: unknown;
   created_by: string | null;
+  created_by_display_name: string | null;
   created_at: unknown;
 };
 
@@ -208,6 +210,7 @@ export function mapLeadLogRow(r: LeadLogQueryRow): LeadLog {
     logType: r.log_type,
     payload: normalizePayload(r.payload),
     createdBy: r.created_by,
+    createdByDisplayName: r.created_by_display_name ?? null,
     createdAt: requireTimestampString(r.created_at, "created_at"),
   };
 }

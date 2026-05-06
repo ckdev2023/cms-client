@@ -27,7 +27,8 @@ import {
   parseLimit,
 } from "./cases.parsers";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import {
   PermissionsService,
   resolveRoleTier,
@@ -134,7 +135,7 @@ export class CasesController {
    * @param body 创建请求体
    * @returns 创建成功的案件
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_CREATE)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCaseBody) {
     const ctx = req.requestContext;
@@ -201,7 +202,7 @@ export class CasesController {
    * @param query 查询参数
    * @returns 案件列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListCasesQuery) {
     const ctx = req.requestContext;
@@ -240,7 +241,7 @@ export class CasesController {
    * @param id 案件 ID
    * @returns CaseBillingTabAggregate
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id/billing-tab-aggregate")
   async getBillingTabAggregate(
     @Req() req: HttpRequest,
@@ -257,7 +258,7 @@ export class CasesController {
    * @param id 案件 ID
    * @returns 聚合 DTO
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id/aggregate")
   async getAggregate(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;
@@ -286,7 +287,7 @@ export class CasesController {
    * @param id 案件 ID
    * @returns 案件详情
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;
@@ -316,7 +317,7 @@ export class CasesController {
    * @param body 更新请求体
    * @returns 更新后的案件信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -338,7 +339,7 @@ export class CasesController {
    * @param body 变更请求体
    * @returns 变更后的案件信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/transition")
   async transition(
     @Req() req: HttpRequest,
@@ -364,7 +365,7 @@ export class CasesController {
    * @param body 流转请求体
    * @returns 更新后案件
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/phase-transition")
   async phaseTransition(
     @Req() req: HttpRequest,
@@ -393,7 +394,7 @@ export class CasesController {
    * @param body 确认请求体
    * @returns 更新后的案件信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/billing-risk-ack")
   async acknowledgeBillingRisk(
     @Req() req: HttpRequest,
@@ -419,7 +420,7 @@ export class CasesController {
    * @param body 子阶段请求体
    * @returns 更新后的案件信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/post-approval-stage")
   async updatePostApprovalStage(
     @Req() req: HttpRequest,
@@ -443,7 +444,7 @@ export class CasesController {
    * @param body 流转请求体
    * @returns 更新后案件
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/workflow-step-transition")
   async transitionWorkflowStep(
     @Req() req: HttpRequest,
@@ -466,7 +467,7 @@ export class CasesController {
    * @param id 案件 ID
    * @returns 删除成功状态
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @UuidParam() id: string) {
     const ctx = req.requestContext;

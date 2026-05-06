@@ -20,6 +20,53 @@ export type LeadListInput = {
   limit?: number;
 };
 
+// ── Create ──
+
+/** Lead 新規作成入力。`name` 必須、他は更新と同一。 */
+export type LeadCreateInput = {
+  name: string;
+  phone?: string;
+  email?: string;
+  sourceChannel?: string;
+  referrer?: string;
+  intendedCaseType?: string;
+  groupId?: string;
+  ownerUserId?: string;
+  nextAction?: string;
+  nextFollowUpAt?: string;
+  quoteAmount?: number;
+  note?: string;
+  language?: string;
+};
+
+// ── Convert Customer ──
+
+/** Lead → Customer 転化入力。 */
+export type LeadConvertCustomerInput = {
+  customerId?: string;
+  localizedNames?: {
+    zh?: string;
+    ja?: string;
+    en?: string;
+    defaultLocale?: "zh" | "ja" | "en";
+  };
+  confirmDedup?: boolean;
+};
+
+/** Lead → Case 転化入力。 */
+export type LeadConvertCaseInput = {
+  caseTypeCode: string;
+  ownerUserId: string;
+  groupId?: string;
+};
+
+/** 転化可能なステータス群。 */
+export const CONVERTIBLE_STATUSES = new Set([
+  "following",
+  "pending_sign",
+  "signed",
+]);
+
 // ── Update ──
 
 /** Lead 業務フィールド更新入力。 */
@@ -144,9 +191,17 @@ export const LEAD_COLS = [
 export const FOLLOWUP_COLS =
   "id, lead_id, channel, summary, conclusion, next_action, next_follow_up_at, created_by, created_at";
 
-/** lead_logs テーブルのカラム一覧。 */
+/** lead_logs テーブルのカラム一覧（actor displayName を含む）。
+ *
+ * `lead_logs ll left join users u on u.id = ll.created_by` を前提とする。
+ * H-5 修正：actor displayName を追加し UI 側で「誰が」を可視化する。
+ */
 export const LOG_COLS =
-  "id, lead_id, log_type, payload, created_by, created_at";
+  "ll.id, ll.lead_id, ll.log_type, ll.payload, ll.created_by, u.name as created_by_display_name, ll.created_at";
+
+/** lead_logs の SELECT 用 FROM 句（users JOIN 含む）。 */
+export const LOG_FROM_WITH_ACTOR =
+  "lead_logs ll left join users u on u.id = ll.created_by";
 
 // ── Updatable field whitelist ──
 

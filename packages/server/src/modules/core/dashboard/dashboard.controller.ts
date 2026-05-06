@@ -8,7 +8,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
 import { DashboardService } from "./dashboard.service";
@@ -72,7 +73,7 @@ export class DashboardController {
    * @param query 查询参数，包含范围与时间窗口。
    * @returns 供前端渲染仪表盘的摘要结果。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get("summary")
   async summary(
     @Req() req: HttpRequest,
@@ -94,7 +95,7 @@ export class DashboardController {
    * @param req 当前请求对象，用于提取租户上下文。
    * @returns group 选项列表，含 isPrimary 和 isMember 标记。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get("groups")
   async groups(@Req() req: HttpRequest): Promise<DashboardGroupOption[]> {
     const ctx = req.requestContext;

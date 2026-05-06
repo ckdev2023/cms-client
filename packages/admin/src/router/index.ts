@@ -1,5 +1,6 @@
 import { createRouter, createWebHashHistory, type RouteMeta } from "vue-router";
 import { isAdminAuthenticated, isAdminRole } from "../auth/model/adminSession";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import { resolveAdminAuthGuard } from "./authGuard";
 
 const placeholderRoutes: ReadonlyArray<{
@@ -55,6 +56,7 @@ export const router = createRouter({
         navKey: "customers",
         groupKey: "business",
         titleKey: "shell.nav.items.customers",
+        requiredPermission: "customer.view",
       }),
     },
     {
@@ -65,6 +67,7 @@ export const router = createRouter({
         navKey: "customers",
         groupKey: "business",
         titleKey: "shell.nav.items.customers",
+        requiredPermission: "customer.view",
       }),
     },
     {
@@ -119,6 +122,7 @@ export const router = createRouter({
         navKey: "cases",
         groupKey: "business",
         titleKey: "shell.nav.items.cases",
+        requiredPermission: "case.view",
       }),
     },
     {
@@ -129,6 +133,7 @@ export const router = createRouter({
         navKey: "cases",
         groupKey: "business",
         titleKey: "shell.nav.items.cases",
+        requiredPermission: "case.create",
       }),
     },
     {
@@ -139,6 +144,7 @@ export const router = createRouter({
         navKey: "cases",
         groupKey: "business",
         titleKey: "shell.nav.items.cases",
+        requiredPermission: "case.view",
       }),
     },
     {
@@ -180,6 +186,7 @@ export const router = createRouter({
         groupKey: "system",
         titleKey: "shell.nav.items.settings",
         requiresAdmin: true,
+        requiredPermission: "settings.write",
       }),
     },
     ...placeholderRoutes.map((route) => ({
@@ -195,6 +202,15 @@ export const router = createRouter({
   ],
 });
 
-router.beforeEach((to) =>
-  resolveAdminAuthGuard(to, isAdminAuthenticated(), isAdminRole()),
-);
+router.beforeEach((to) => {
+  const store = getDefaultPermissionsStore();
+  const hasPermission = store.loaded.value
+    ? (code: string) => store.has(code)
+    : undefined;
+  return resolveAdminAuthGuard(
+    to,
+    isAdminAuthenticated(),
+    isAdminRole(),
+    hasPermission,
+  );
+});

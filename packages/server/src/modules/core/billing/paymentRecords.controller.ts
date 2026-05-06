@@ -11,7 +11,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { PaymentMethod } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { PaymentRecordsService } from "./paymentRecords.service";
@@ -175,7 +176,7 @@ export class PaymentRecordsController {
    * @param body - creation body
    * @returns created PaymentRecord
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreatePaymentRecordBody) {
     const ctx = req.requestContext;
@@ -196,7 +197,7 @@ export class PaymentRecordsController {
    * @param query - query params
    * @returns paginated PaymentRecord list
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: PaymentRecordListQuery) {
     const ctx = req.requestContext;
@@ -222,7 +223,7 @@ export class PaymentRecordsController {
    * @param id - payment record ID
    * @returns PaymentRecord
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -241,7 +242,7 @@ export class PaymentRecordsController {
    * @param body - void reason
    * @returns voided PaymentRecord
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/void")
   async void(
     @Req() req: HttpRequest,
@@ -264,7 +265,7 @@ export class PaymentRecordsController {
    * @param body - reverse reason (reasonCode required)
    * @returns reversed PaymentRecord
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/reverse")
   async reverse(
     @Req() req: HttpRequest,

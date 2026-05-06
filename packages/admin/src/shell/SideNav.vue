@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useAdminSession } from "../auth/model/adminSession";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import { brandTitle, isExternalItem, getVisibleNavGroups } from "./nav-config";
 import NavIcon from "./NavIcon.vue";
 
@@ -28,7 +29,15 @@ const { t } = useI18n();
 const router = useRouter();
 const route = useRoute();
 const { isAdmin } = useAdminSession();
-const visibleNavGroups = computed(() => getVisibleNavGroups(isAdmin.value));
+const permissionsStore = getDefaultPermissionsStore();
+const visibleNavGroups = computed(() =>
+  getVisibleNavGroups(
+    isAdmin.value,
+    permissionsStore.loaded.value
+      ? (code: string) => permissionsStore.has(code)
+      : undefined,
+  ),
+);
 
 /**
  * 读取当前路由对应的导航 key。

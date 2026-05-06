@@ -101,4 +101,63 @@ describe("resolveAdminAuthGuard", () => {
       query: { redirect: "/settings" },
     });
   });
+
+  it("allows access when requiredPermission is satisfied", () => {
+    expect(
+      resolveAdminAuthGuard(
+        {
+          fullPath: "/cases",
+          meta: { requiresAuth: true, requiredPermission: "case.view" },
+          query: {},
+        },
+        true,
+        false,
+        (code) => code === "case.view",
+      ),
+    ).toBe(true);
+  });
+
+  it("redirects to dashboard when requiredPermission is not satisfied", () => {
+    expect(
+      resolveAdminAuthGuard(
+        {
+          fullPath: "/cases",
+          meta: { requiresAuth: true, requiredPermission: "case.view" },
+          query: {},
+        },
+        true,
+        false,
+        () => false,
+      ),
+    ).toEqual({ name: "dashboard" });
+  });
+
+  it("skips permission check when hasPermission is not provided", () => {
+    expect(
+      resolveAdminAuthGuard(
+        {
+          fullPath: "/cases",
+          meta: { requiresAuth: true, requiredPermission: "case.view" },
+          query: {},
+        },
+        true,
+        false,
+      ),
+    ).toBe(true);
+  });
+
+  it("skips permission check when route has no requiredPermission", () => {
+    expect(
+      resolveAdminAuthGuard(
+        {
+          fullPath: "/dashboard",
+          meta: { requiresAuth: true },
+          query: {},
+        },
+        true,
+        false,
+        () => false,
+      ),
+    ).toBe(true);
+  });
 });

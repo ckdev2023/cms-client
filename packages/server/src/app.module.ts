@@ -6,6 +6,8 @@ import { HealthController } from "./health/health.controller";
 import { AuthController } from "./modules/core/auth/auth.controller";
 import { AuthGuard } from "./modules/core/auth/auth.guard";
 import { AuthService } from "./modules/core/auth/auth.service";
+import { EffectivePermissionsService } from "./modules/core/auth/effective-permissions.service";
+import { PermissionsGuard } from "./modules/core/auth/permissions.guard";
 import { PermissionsService } from "./modules/core/auth/permissions.service";
 import { RequestContextInterceptor } from "./modules/core/auth/requestContext.interceptor";
 import { JobsController } from "./modules/core/jobs/jobs.controller";
@@ -59,6 +61,7 @@ import { CasePartiesController } from "./modules/core/case-parties/caseParties.c
 import { CasePartiesService } from "./modules/core/case-parties/caseParties.service";
 import { CustomersController } from "./modules/core/customers/customers.controller";
 import { CustomersService } from "./modules/core/customers/customers.service";
+import { GroupMembersService } from "./modules/core/groups/groupMembers.service";
 import { GroupsController } from "./modules/core/groups/groups.controller";
 import { GroupsService } from "./modules/core/groups/groups.service";
 import { OrganizationsController } from "./modules/core/organizations/organizations.controller";
@@ -79,6 +82,11 @@ import { ConversationsAdminController } from "./modules/core/conversations/conve
 import { ConversationsAdminService } from "./modules/core/conversations/conversations.admin.service";
 import { SearchController } from "./modules/core/search/search.controller";
 import { SearchService } from "./modules/core/search/search.service";
+import { MePermissionsController } from "./modules/core/auth/mePermissions.controller";
+import { PermissionOverridesController } from "./modules/core/auth/permissionOverrides.controller";
+import { PermissionOverridesService } from "./modules/core/auth/permissionOverrides.service";
+import { RolesAdminController } from "./modules/core/auth/rolesAdmin.controller";
+import { RolesAdminService } from "./modules/core/auth/rolesAdmin.service";
 import { UsersController } from "./modules/core/users/users.controller";
 import { UsersService } from "./modules/core/users/users.service";
 import { MessagesAdminController } from "./modules/core/conversations/messages.admin.controller";
@@ -148,6 +156,9 @@ import {
     MessagesAdminController,
     SearchController,
     UsersController,
+    RolesAdminController,
+    PermissionOverridesController,
+    MePermissionsController,
     ConversationsController,
     MessagesController,
     UserDocumentsController,
@@ -157,6 +168,7 @@ import {
   providers: [
     Reflector,
     AuthService,
+    EffectivePermissionsService,
     PermissionsService,
     {
       provide: Pool,
@@ -173,6 +185,7 @@ import {
     CompaniesService,
     ContactPersonsService,
     DashboardService,
+    GroupMembersService,
     GroupsService,
     OrganizationsService,
     CustomersService,
@@ -202,6 +215,8 @@ import {
     MessagesAdminService,
     SearchService,
     UsersService,
+    RolesAdminService,
+    PermissionOverridesService,
     ConversationsService,
     MessagesService,
     UserDocumentsService,
@@ -232,6 +247,10 @@ import {
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermissionsGuard,
     },
   ],
 })

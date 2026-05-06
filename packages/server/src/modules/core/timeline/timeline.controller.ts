@@ -10,7 +10,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { TimelineService } from "./timeline.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import {
@@ -151,7 +152,7 @@ export class TimelineController {
    * @param body 请求体
    * @returns ok
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("demo")
   async writeDemo(@Req() req: HttpRequest, @Body() body: TimelineDemoBody) {
     const ctx = req.requestContext;

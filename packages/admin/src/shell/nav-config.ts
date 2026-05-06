@@ -22,6 +22,7 @@ interface NavItemBase {
   icon?: NavIconName;
   adminOnly?: boolean;
   requiresStaff?: boolean;
+  requiredPermission?: string;
 }
 
 /** 通过 `RouterLink` 渲染的站内路由项。 */
@@ -81,18 +82,26 @@ export function allNavItems(): NavItem[] {
 }
 
 /**
- * 按管理员权限过滤导航分组，移除非管理员不可见的项并丢弃空分组。
+ * 按管理员权限与権限コード过滤导航分组，移除不可见的项并丢弃空分组。
  *
  * @param isAdmin 当前用户是否为管理员
+ * @param hasPermission 権限コードの保有チェック関数（省略時は全て許可）
  * @returns 过滤后的导航分组列表
  */
-export function getVisibleNavGroups(isAdmin: boolean): NavGroup[] {
-  if (isAdmin) return navGroups;
-
+export function getVisibleNavGroups(
+  isAdmin: boolean,
+  hasPermission?: (code: string) => boolean,
+): NavGroup[] {
   return navGroups
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => !item.adminOnly),
+      items: group.items.filter((item) => {
+        if (item.adminOnly && !isAdmin) return false;
+        if (item.requiredPermission && hasPermission) {
+          return hasPermission(item.requiredPermission);
+        }
+        return true;
+      }),
     }))
     .filter((group) => group.items.length > 0);
 }
@@ -132,8 +141,20 @@ export const navGroups: NavGroup[] = [
       //       icon: "message",
       //       requiresStaff: true,
       //     },
-      { key: "customers", label: "客户", to: "/customers", icon: "users" },
-      { key: "cases", label: "案件", to: "/cases", icon: "file-text" },
+      {
+        key: "customers",
+        label: "客户",
+        to: "/customers",
+        icon: "users",
+        requiredPermission: "customer.view",
+      },
+      {
+        key: "cases",
+        label: "案件",
+        to: "/cases",
+        icon: "file-text",
+        requiredPermission: "case.view",
+      },
       { key: "tasks", label: "任务与提醒", to: "/tasks", icon: "clipboard" },
     ],
   },

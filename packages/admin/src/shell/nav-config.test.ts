@@ -67,9 +67,11 @@ describe("nav-config", () => {
     expect(groupTitles).toEqual(["工作台", "业务", "内容", "财务", "系统"]);
   });
 
-  it("getVisibleNavGroups returns all groups for admin users", () => {
+  it("getVisibleNavGroups returns all groups for admin users without permission check", () => {
     const groups = getVisibleNavGroups(true);
-    expect(groups).toEqual(navGroups);
+    expect(groups.length).toBe(navGroups.length);
+    const allItems = groups.flatMap((g) => g.items);
+    expect(allItems.find((i) => i.key === "settings")).toBeDefined();
   });
 
   it("getVisibleNavGroups hides adminOnly items for non-admin users", () => {
@@ -82,6 +84,20 @@ describe("nav-config", () => {
     const groups = getVisibleNavGroups(false);
     const groupKeys = groups.map((g) => g.key);
     expect(groupKeys).not.toContain("system");
+  });
+
+  it("getVisibleNavGroups hides items when requiredPermission is not satisfied", () => {
+    const groups = getVisibleNavGroups(true, (code) => code === "case.view");
+    const allItems = groups.flatMap((g) => g.items);
+    expect(allItems.find((i) => i.key === "cases")).toBeDefined();
+    expect(allItems.find((i) => i.key === "customers")).toBeUndefined();
+  });
+
+  it("getVisibleNavGroups shows all items when hasPermission is not provided", () => {
+    const groups = getVisibleNavGroups(true);
+    const allItems = groups.flatMap((g) => g.items);
+    expect(allItems.find((i) => i.key === "cases")).toBeDefined();
+    expect(allItems.find((i) => i.key === "customers")).toBeDefined();
   });
 
   it("settings item has correct configuration", () => {

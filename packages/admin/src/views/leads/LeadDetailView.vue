@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import Card from "../../shared/ui/Card.vue";
 import Button from "../../shared/ui/Button.vue";
 import LeadDetailHeader from "./components/LeadDetailHeader.vue";
@@ -10,13 +10,32 @@ import LeadInfoTab from "./components/LeadInfoTab.vue";
 import LeadFollowupsTab from "./components/LeadFollowupsTab.vue";
 import LeadConversionTab from "./components/LeadConversionTab.vue";
 import LeadLogTab from "./components/LeadLogTab.vue";
+import LeadConvertCustomerDialog from "./components/LeadConvertCustomerDialog.vue";
+import LeadConvertCaseDialog from "./components/LeadConvertCaseDialog.vue";
+import LeadEditInfoDialog from "./components/LeadEditInfoDialog.vue";
+import LeadChangeStatusDialog from "./components/LeadChangeStatusDialog.vue";
+import LeadMarkLostDialog from "./components/LeadMarkLostDialog.vue";
 import ConversationDetailView from "../conversations/ConversationDetailView.vue";
-import { useLeadDetailModel } from "./model/useLeadDetailModel";
+import {
+  useLeadDetailModel,
+  type LeadConvertCaseFailure,
+} from "./model/useLeadDetailModel";
+import { useLeadCatalogOptions } from "./model/useLeadCatalogOptions";
+import { useLeadHeaderDialogs } from "./model/useLeadHeaderDialogs";
+import { useLeadHeaderNavigation } from "./model/useLeadHeaderNavigation";
+import { useCurrentUserId } from "../../auth/model/adminSession";
 import { LEAD_DETAIL_TABS } from "./types";
+import { useToast } from "../../shared/model/useToast";
+import type {
+  LeadConvertCustomerInput,
+  LeadConvertCaseInput,
+} from "./model/LeadAdapter";
 
 /** 线索详情页：组合头部、Banner、Tab 栏与四个内容面板。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const route = useRoute();
+const router = useRouter();
+const currentUserId = useCurrentUserId();
 
 const leadId = computed(() => route.params.id as string);
 const {
@@ -40,9 +59,103 @@ const {
   showConvertDedupPrompt,
   convertSubmitting,
   convertCustomer,
+  convertCase,
   confirmConvertDedup,
   dismissConvertDedup,
+  updateSubmitting,
+  transitionSubmitting,
+  markLostSubmitting,
+  updateLead,
+  transitionStatus,
+  markLost,
 } = useLeadDetailModel(leadId);
+
+const { apiOwnerOptions, apiGroupOptions } = useLeadCatalogOptions(locale);
+
+const showConvertCustomerDialog = ref(false);
+const showConvertCaseDialog = ref(false);
+const convertCaseError = ref<LeadConvertCaseFailure | null>(null);
+const toast = tryUseToast();
+
+const {
+  showEditInfoDialog,
+  editInfoError,
+  openEditInfoDialog,
+  closeEditInfoDialog,
+  handleEditInfoConfirm,
+  showChangeStatusDialog,
+  changeStatusError,
+  openChangeStatusDialog,
+  closeChangeStatusDialog,
+  handleChangeStatusConfirm,
+  showMarkLostDialog,
+  markLostError,
+  openMarkLostDialog,
+  closeMarkLostDialog,
+  handleMarkLostConfirm,
+} = useLeadHeaderDialogs({ t, toast, updateLead, transitionStatus, markLost });
+
+/** 打开转客户弹窗 */
+function openConvertCustomerDialog(): void {
+  showConvertCustomerDialog.value = true;
+}
+
+/** 打开转案件弹窗 */
+function openConvertCaseDialog(): void {
+  convertCaseError.value = null;
+  showConvertCaseDialog.value = true;
+}
+
+const { handleViewCustomer, handleViewCase } = useLeadHeaderNavigation({
+  lead,
+  router,
+});
+
+/** 关闭转案件弹窗并清空遗留的错误状态 */
+function closeConvertCaseDialog(): void {
+  showConvertCaseDialog.value = false;
+  convertCaseError.value = null;
+}
+
+async function handleConvertCustomerConfirm(
+  input: LeadConvertCustomerInput,
+): Promise<void> {
+  showConvertCustomerDialog.value = false;
+  await convertCustomer(input);
+}
+
+async function handleConvertCaseConfirm(
+  input: LeadConvertCaseInput,
+): Promise<void> {
+  convertCaseError.value = null;
+  const failure = await convertCase(input);
+  if (failure === null) {
+    showConvertCaseDialog.value = false;
+    return;
+  }
+  convertCaseError.value = failure;
+  if (failure.kind === "generic") {
+    toast?.add({
+      title: t("leads.errors.convertCaseFailedToast.title"),
+      description: t(failure.messageKey),
+      tone: "error",
+    });
+  }
+}
+
+/**
+ * 安全获取全局 Toast 控制器。在测试或未初始化场景下静默返回 null，
+ * 避免线索详情视图在缺少 toast 单例时崩溃。
+ *
+ * @returns Toast 控制器实例，单例未初始化时返回 null
+ */
+function tryUseToast() {
+  try {
+    return useToast();
+  } catch {
+    return null;
+  }
+}
 </script>
 
 <template>
@@ -53,18 +166,20 @@ const {
           :lead="lead"
           :avatar-initials="avatarInitials"
           :button-states="buttonStates"
-          @convert-customer="convertCustomer"
-          @convert-case="() => {}"
-          @mark-lost="() => {}"
-          @edit-info="() => {}"
-          @change-status="() => {}"
+          @convert-customer="openConvertCustomerDialog"
+          @convert-case="openConvertCaseDialog"
+          @view-customer="handleViewCustomer"
+          @view-case="handleViewCase"
+          @mark-lost="openMarkLostDialog"
+          @edit-info="openEditInfoDialog"
+          @change-status="openChangeStatusDialog"
         />
       </Card>
 
       <LeadBannerStrip
         v-if="banner"
         :banner="banner"
-        @convert-case="convertCustomer"
+        @convert-case="openConvertCaseDialog"
       />
 
       <div
@@ -96,6 +211,7 @@ const {
         <LeadInfoTab
           v-if="activeTab === 'info'"
           :info="lead.info"
+          :owner-id="lead.ownerId"
           :readonly="isReadonly"
         />
         <LeadFollowupsTab
@@ -123,8 +239,8 @@ const {
           :conversion="lead.conversion"
           :button-states="buttonStates"
           :readonly="isReadonly"
-          @convert-customer="convertCustomer"
-          @convert-case="() => {}"
+          @convert-customer="openConvertCustomerDialog"
+          @convert-case="openConvertCaseDialog"
         />
         <LeadLogTab
           v-else-if="activeTab === 'log'"
@@ -145,6 +261,53 @@ const {
       <a href="#/leads">{{ t("leads.detail.backToList") }}</a>
     </div>
   </div>
+
+  <LeadConvertCustomerDialog
+    v-if="showConvertCustomerDialog && lead"
+    :default-locale="lead.info.language || 'zh'"
+    :submitting="convertSubmitting"
+    @confirm="handleConvertCustomerConfirm"
+    @close="showConvertCustomerDialog = false"
+  />
+
+  <LeadConvertCaseDialog
+    v-if="showConvertCaseDialog && lead"
+    :intended-case-type="lead.intendedCaseType"
+    :owner-user-id="lead.ownerId || currentUserId || ''"
+    :group-id="lead.groupId"
+    :submitting="convertSubmitting"
+    :error="convertCaseError"
+    @confirm="handleConvertCaseConfirm"
+    @close="closeConvertCaseDialog"
+  />
+
+  <LeadEditInfoDialog
+    v-if="showEditInfoDialog && lead"
+    :lead="lead"
+    :owner-options="apiOwnerOptions"
+    :group-options="apiGroupOptions"
+    :submitting="updateSubmitting"
+    :error="editInfoError"
+    @confirm="handleEditInfoConfirm"
+    @close="closeEditInfoDialog"
+  />
+
+  <LeadChangeStatusDialog
+    v-if="showChangeStatusDialog && lead"
+    :current-status="lead.status"
+    :submitting="transitionSubmitting"
+    :error="changeStatusError"
+    @confirm="handleChangeStatusConfirm"
+    @close="closeChangeStatusDialog"
+  />
+
+  <LeadMarkLostDialog
+    v-if="showMarkLostDialog && lead"
+    :submitting="markLostSubmitting"
+    :error="markLostError"
+    @confirm="handleMarkLostConfirm"
+    @close="closeMarkLostDialog"
+  />
 
   <Teleport to="body">
     <div

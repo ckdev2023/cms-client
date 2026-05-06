@@ -13,11 +13,14 @@ import type { CaseBillingRow } from "../types";
  * Group 下显示空白 / UUID。BUG-136 修复未覆盖 billing 链路；本用例锁
  * 定 row.group 为 UUID 时的渲染契约：
  * - UUID 未注册别名 → 渲染 `—` 占位，不得直显 36-char UUID。
- * - UUID 注册到 catalog 内分组（如 `tokyo-1`）→ 渲染本地化标签。
+ * - UUID 注册到 catalog 内 slug（如 `tokyo-1`）→ 渲染 DB name 原文（R2-B-3）。
  * - UUID 注册到 catalog 外分组名（如 `MyCustomGroup`）→ 渲染服务端原名。
- * - 切换 locale 时 Group 文案随之本地化。
- * - catalog 内静态 ID 渲染保持不变（向后兼容）。
- * - alias 指向 disabled 分组时拼接 disabled 后缀。
+ * - alias 路径下切换 locale 不改变显示（DB name 为权威值，R2-B-3）。
+ * - catalog 内静态 ID 渲染保持本地化（fixture 路径向后兼容）。
+ * - alias 指向 disabled 分组时拼接 disabled 后缀（catalog 仅提供 status）。
+ *
+ * R-CONSULT-02 R2-B-3 调整：原契约「alias UUID → catalog 三语本地化」已
+ * 被废弃；现在 alias 路径以 `/api/groups` 返回的 `name` 为权威值。
  */
 
 const SAMPLE_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
@@ -75,11 +78,11 @@ describe("BillingTable — BUG-140 group UUID rendering", () => {
     expect(text).toBe("—");
   });
 
-  it("renders localized catalog label when alias maps UUID to catalog name", async () => {
+  it("R2-B-3: renders DB-stored alias name verbatim when alias maps UUID to catalog slug", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("东京一组");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
   });
 
   it("renders raw server-side name when alias points outside catalog", async () => {
@@ -89,41 +92,41 @@ describe("BillingTable — BUG-140 group UUID rendering", () => {
     expect(readGroupCellText(wrapper)).toBe("MyCustomGroup");
   });
 
-  it("re-renders to localized label after alias is registered post-mount", async () => {
+  it("re-renders to DB name after alias is registered post-mount (R2-B-3)", async () => {
     const wrapper = mountTable(SAMPLE_UUID);
     expect(readGroupCellText(wrapper)).toBe("—");
 
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     await wrapper.vm.$nextTick();
 
-    expect(readGroupCellText(wrapper)).toBe("东京一组");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
   });
 
-  it("respects locale switch when alias resolves to catalog entry", async () => {
+  it("R2-B-3: alias-path display is locale-invariant (DB name is canonical)", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("东京一组");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("Tokyo Team 1");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("東京一組");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
   });
 
-  it("keeps existing static catalog id rendering unchanged", () => {
+  it("keeps existing static catalog slug rendering localized (fixture path BC)", () => {
     const wrapper = mountTable("tokyo-1");
     expect(readGroupCellText(wrapper)).toBe("东京一组");
   });
 
-  it("appends disabled suffix when alias points to a disabled catalog group", async () => {
+  it("appends disabled suffix to DB name when alias points to a disabled catalog group (R2-B-3)", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "osaka" }]);
     const wrapper = mountTable(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("大阪组（已停用）");
+    expect(readGroupCellText(wrapper)).toBe("osaka（已停用）");
   });
 
   it("renders `—` when row.group is empty string", () => {

@@ -25,9 +25,28 @@ export const SETTINGS_SUBNAV_ITEMS: SettingsSubNavItem[] = [
     id: "group-management",
     labelKey: "settings.subnav.groupManagement",
     defaultActive: true,
+    requiredPermission: "group.manage",
   },
-  { id: "visibility-config", labelKey: "settings.subnav.visibilityConfig" },
-  { id: "storage-root", labelKey: "settings.subnav.storageRoot" },
+  {
+    id: "member-management",
+    labelKey: "settings.subnav.memberManagement",
+    requiredPermission: "user.manage",
+  },
+  {
+    id: "role-management",
+    labelKey: "settings.subnav.roleManagement",
+    requiredPermission: "permission.override",
+  },
+  {
+    id: "visibility-config",
+    labelKey: "settings.subnav.visibilityConfig",
+    requiredPermission: "settings.write",
+  },
+  {
+    id: "storage-root",
+    labelKey: "settings.subnav.storageRoot",
+    requiredPermission: "settings.write",
+  },
 ];
 
 export const DEFAULT_PANEL = "group-management" as const;

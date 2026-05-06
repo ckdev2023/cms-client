@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { CasesService } from "../cases/cases.service";
 import { DocumentItemsService } from "../document-items/documentItems.service";
 import type { RequestContext } from "../tenancy/requestContext";
@@ -97,7 +98,7 @@ export class DocumentRequirementFileRefsController {
    * @param body 引用请求体
    * @returns 创建的引用记录
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async link(@Req() req: HttpRequest, @Body() body: LinkBody) {
     const ctx = req.requestContext;
@@ -122,7 +123,7 @@ export class DocumentRequirementFileRefsController {
    * @param query 查询参数
    * @returns 引用列表或候选列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListQuery) {
     const ctx = req.requestContext;
@@ -147,7 +148,7 @@ export class DocumentRequirementFileRefsController {
    * @param id 引用记录 ID
    * @returns 删除结果
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async unlink(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

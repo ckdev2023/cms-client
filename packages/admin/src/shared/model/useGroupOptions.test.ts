@@ -1,6 +1,7 @@
 import { afterEach, describe, it, expect } from "vitest";
 import {
   clearGroupAliases,
+  getActiveGroupAliasOptions,
   getActiveGroupOptions,
   getAllGroupOptions,
   isGroupDisabled,
@@ -133,7 +134,7 @@ describe("resolveGroupValue", () => {
   });
 });
 
-describe("registerGroupAliases (BUG-136)", () => {
+describe("registerGroupAliases (BUG-136 + R2-B-3)", () => {
   const FAKE_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
   const OTHER_UUID = "11111111-2222-3333-4444-555555555555";
 
@@ -141,23 +142,22 @@ describe("registerGroupAliases (BUG-136)", () => {
     clearGroupAliases();
   });
 
-  it("translates UUID via alias to localized catalog label", () => {
+  it("R2-B-3: alias UUID renders DB-stored name verbatim, not catalog localized label", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
-      "东京一组",
-    );
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "ja-JP")).toBe(
-      "東京一組",
-    );
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-1");
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "ja-JP")).toBe("tokyo-1");
     expect(resolveGroupLabel(FAKE_UUID, " (Disabled)", "en-US")).toBe(
-      "Tokyo Team 1",
+      "tokyo-1",
     );
   });
 
-  it("appends disabled suffix when alias points to disabled catalog entry", () => {
+  it("R2-B-3: appends disabled suffix using catalog status, but keeps DB name as base", () => {
     registerGroupAliases([{ id: OTHER_UUID, name: "osaka" }]);
     expect(resolveGroupLabel(OTHER_UUID, "（已停用）", "zh-CN")).toBe(
-      "大阪组（已停用）",
+      "osaka（已停用）",
+    );
+    expect(resolveGroupLabel(OTHER_UUID, " (Disabled)", "en-US")).toBe(
+      "osaka (Disabled)",
     );
   });
 
@@ -197,18 +197,71 @@ describe("registerGroupAliases (BUG-136)", () => {
 
   it("clearGroupAliases resets all registered aliases", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
-      "东京一组",
-    );
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-1");
     clearGroupAliases();
     expect(resolveGroupLabel(FAKE_UUID)).toBe("—");
   });
 
-  it("later registration overwrites previous alias for same id", () => {
+  it("later registration overwrites previous alias for same id (R2-B-3 verbatim)", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-2" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
-      "东京二组",
-    );
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-2");
+  });
+});
+
+describe("getActiveGroupAliasOptions (R2-A-1 + R2-B-3)", () => {
+  const FAKE_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+  const OTHER_UUID = "11111111-2222-3333-4444-555555555555";
+
+  afterEach(() => {
+    clearGroupAliases();
+  });
+
+  it("returns empty array when no alias registered", () => {
+    expect(getActiveGroupAliasOptions()).toEqual([]);
+  });
+
+  it("returns API UUID as value (not catalog short code)", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
+    const options = getActiveGroupAliasOptions("zh-CN");
+    expect(options).toHaveLength(1);
+    expect(options[0]?.value).toBe(FAKE_UUID);
+    expect(options[0]?.value).not.toBe("tokyo-1");
+  });
+
+  it("R2-B-3: uses DB-stored name as label, ignoring catalog localized labels", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
+    expect(getActiveGroupAliasOptions("zh-CN")).toEqual([
+      { value: FAKE_UUID, label: "tokyo-1" },
+    ]);
+    expect(getActiveGroupAliasOptions("ja-JP")).toEqual([
+      { value: FAKE_UUID, label: "tokyo-1" },
+    ]);
+    expect(getActiveGroupAliasOptions("en-US")).toEqual([
+      { value: FAKE_UUID, label: "tokyo-1" },
+    ]);
+  });
+
+  it("falls back to alias name when name is outside catalog", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "MyCustomGroup" }]);
+    expect(getActiveGroupAliasOptions("zh-CN")).toEqual([
+      { value: FAKE_UUID, label: "MyCustomGroup" },
+    ]);
+  });
+
+  it("excludes aliases that point to disabled catalog entries", () => {
+    registerGroupAliases([
+      { id: FAKE_UUID, name: "tokyo-1" },
+      { id: OTHER_UUID, name: "osaka" },
+    ]);
+    const options = getActiveGroupAliasOptions("zh-CN");
+    expect(options).toHaveLength(1);
+    expect(options[0]?.value).toBe(FAKE_UUID);
+  });
+
+  it("reflects cleared aliases", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
+    clearGroupAliases();
+    expect(getActiveGroupAliasOptions()).toEqual([]);
   });
 });

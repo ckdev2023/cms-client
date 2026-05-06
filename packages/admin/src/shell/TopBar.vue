@@ -5,6 +5,7 @@ import { useRouter } from "vue-router";
 import { logoutAdmin } from "../auth/model/adminSession";
 import NavIcon from "./NavIcon.vue";
 import { localeOptions, setAppLocale, type AppLocale } from "../i18n";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import { buildCaseCreateRoute } from "../views/cases/query";
 
 /**
@@ -36,6 +37,9 @@ const currentLocale = computed<AppLocale>({
     setAppLocale(value);
   },
 });
+
+const permStore = getDefaultPermissionsStore();
+const canCreateCase = computed(() => permStore.has("case.create"));
 
 const localeSelectId = "topbar-locale-select";
 const accountPanelId = "topbar-account-panel";
@@ -147,6 +151,7 @@ function toggleAccountPanel(): void {
             {{ t("shell.topbar.createLead") }}
           </button>
           <button
+            v-if="canCreateCase"
             class="topbar-action topbar-action--primary"
             type="button"
             @click="handleCreateCase"

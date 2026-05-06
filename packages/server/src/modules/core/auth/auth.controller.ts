@@ -9,7 +9,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { Public, RequireRoles } from "./auth.decorators";
+import { Public, RequirePermission } from "./auth.decorators";
+import { PERMISSION_CODES } from "./permissions.codes";
 import { AuthService } from "./auth.service";
 import type { RequestContext } from "../tenancy/requestContext";
 
@@ -83,7 +84,7 @@ export class AuthController {
    *
    * @returns ok
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.USER_MANAGE)
   @Get("manager-only")
   getManagerOnly() {
     return { ok: true };

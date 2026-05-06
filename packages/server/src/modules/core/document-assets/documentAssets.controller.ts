@@ -9,7 +9,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { DocumentAssetsService } from "./documentAssets.service";
 
@@ -70,7 +71,7 @@ export class DocumentAssetsController {
    * @param query 查询参数
    * @returns 资产列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListDocumentAssetsQuery) {
     const ctx = req.requestContext;
@@ -94,7 +95,7 @@ export class DocumentAssetsController {
    * @param id 资产 ID
    * @returns 共享过期风险数据
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id/shared-expiry-risk")
   async getSharedExpiryRisk(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -114,7 +115,7 @@ export class DocumentAssetsController {
    * @param id 资产 ID
    * @returns 资产详情
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

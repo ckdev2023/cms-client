@@ -4,19 +4,32 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import type { LeadBasicInfo } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { resolveOwnerDisplayLabel } from "../../../shared/model/useOwnerOptions";
 
 /** 基础信息 Tab：以只读模式展示线索的 11 个基础字段。 */
 const props = defineProps<{
   info: LeadBasicInfo;
   readonly: boolean;
+  ownerId?: string;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const groupDisplay = computed(() =>
   props.info.group
     ? resolveGroupLabel(props.info.group, t("shared.group.disabledSuffix"))
     : "—",
+);
+
+const ownerDisplay = computed(() =>
+  resolveOwnerDisplayLabel(
+    props.info.owner || props.ownerId || "",
+    {
+      unassigned: t("leads.list.ownerUnassigned"),
+      unknown: t("leads.list.ownerUnknown"),
+    },
+    locale.value,
+  ),
 );
 </script>
 
@@ -82,7 +95,7 @@ const groupDisplay = computed(() =>
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.owner") }}
           </dt>
-          <dd class="info-tab__value">{{ info.owner || "—" }}</dd>
+          <dd class="info-tab__value">{{ ownerDisplay }}</dd>
         </div>
         <div class="info-tab__field">
           <dt class="info-tab__label">

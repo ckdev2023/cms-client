@@ -213,7 +213,7 @@ export interface LeadConversionInfo {
 /* ------------------------------------------------------------------ */
 
 /** */
-export type LeadLogType = "status" | "owner" | "group";
+export type LeadLogType = "status" | "owner" | "group" | "info";
 
 /** */
 export type LeadLogCategory = "all" | LeadLogType;
@@ -231,6 +231,7 @@ export const LOG_CATEGORIES: readonly LeadLogCategoryMeta[] = [
   { key: "status", label: "状态变更" },
   { key: "owner", label: "人员变更" },
   { key: "group", label: "所属组变更" },
+  { key: "info", label: "其他" },
 ] as const;
 
 /**
@@ -322,6 +323,7 @@ export interface HeaderButtonStates {
 
 /** */
 export type HeaderButtonPresetKey =
+  | "initial"
   | "normal"
   | "signedNotConverted"
   | "convertedCustomer"
@@ -332,23 +334,30 @@ export const HEADER_BUTTON_PRESETS: Record<
   HeaderButtonPresetKey,
   HeaderButtonStates
 > = {
+  initial: {
+    convertCustomer: "hidden",
+    convertCase: "hidden",
+    markLost: "enabled",
+    editInfo: "enabled",
+    changeStatus: "enabled",
+  },
   normal: {
     convertCustomer: "enabled",
-    convertCase: "enabled",
+    convertCase: "hidden",
     markLost: "enabled",
     editInfo: "enabled",
     changeStatus: "enabled",
   },
   signedNotConverted: {
     convertCustomer: "highlighted",
-    convertCase: "highlighted",
+    convertCase: "hidden",
     markLost: "enabled",
     editInfo: "enabled",
     changeStatus: "enabled",
   },
   convertedCustomer: {
     convertCustomer: "view-customer",
-    convertCase: "enabled",
+    convertCase: "highlighted",
     markLost: "hidden",
     editInfo: "enabled",
     changeStatus: "hidden",
@@ -361,8 +370,8 @@ export const HEADER_BUTTON_PRESETS: Record<
     changeStatus: "hidden",
   },
   lost: {
-    convertCustomer: "disabled",
-    convertCase: "disabled",
+    convertCustomer: "hidden",
+    convertCase: "hidden",
     markLost: "hidden",
     editInfo: "disabled",
     changeStatus: "hidden",
@@ -377,6 +386,13 @@ export const HEADER_BUTTON_PRESETS: Record<
 export interface LeadDetail {
   /** */
   id: string;
+  /**
+   * 业务线索编号（如 `LEAD-202605-0002`）。
+   *
+   * 服务端通过 `lead_no` 列返回；早期数据或 fixture 缺失时为 `null` /
+   * `undefined`，UI 需回退到 `id` 渲染。
+   */
+  leadNo?: string | null;
   /** */
   name: string;
   /** */
@@ -393,6 +409,8 @@ export interface LeadDetail {
   groupId: string;
   /** */
   groupLabel: string;
+  /** 原始意向业务类型（kebab-case，如 `"family-stay"`）。 */
+  intendedCaseType: string;
   /** */
   banner: BannerPresetKey;
   /** 对应 `HEADER_BUTTON_PRESETS` 中的 key。 */

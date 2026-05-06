@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { hasRequiredRole } from "../auth/roles";
 import type { RequestContext } from "../tenancy/requestContext";
 import { DocumentTemplatesService } from "./documentTemplates.service";
@@ -107,7 +108,7 @@ export class DocumentTemplatesController {
    * @param query 查询参数。
    * @returns 列表结果。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListQuery) {
     const ctx = requireCtx(req);
@@ -132,7 +133,7 @@ export class DocumentTemplatesController {
    * @param id 模板 ID。
    * @returns 单条 DTO。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -148,7 +149,7 @@ export class DocumentTemplatesController {
    * @param body 请求体。
    * @returns 新建的 DTO。
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateBody) {
     const ctx = requireCtx(req);
@@ -175,7 +176,7 @@ export class DocumentTemplatesController {
    * @param body 请求体。
    * @returns 更新后的 DTO。
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,

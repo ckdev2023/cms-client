@@ -121,9 +121,9 @@ export class AuthGuard implements CanActivate {
     const tenantDb = createTenantDb(this.pool, input.orgId, input.userId);
     const userResult = await tenantDb.query<{
       id: string;
-      role: string;
+      role_id: string | null;
       status: string;
-    }>("select id, role, status from users where id = $1 limit 1", [
+    }>("select id, role_id, status from users where id = $1 limit 1", [
       input.userId,
     ]);
     if (userResult.rows.length === 0) {
@@ -131,12 +131,23 @@ export class AuthGuard implements CanActivate {
     }
 
     const user = userResult.rows[0];
-    const role = parseRole(user.role);
-    if (!role) {
-      throw new ForbiddenException("Invalid role");
-    }
     if (user.status !== "active") {
       throw new ForbiddenException("Inactive user");
+    }
+
+    if (!user.role_id) {
+      throw new ForbiddenException("Invalid role");
+    }
+
+    const roleResult = await tenantDb.query<{ code: string }>(
+      "select code from roles where id = $1 limit 1",
+      [user.role_id],
+    );
+    const roleCode = roleResult.rows.at(0)?.code ?? null;
+
+    const role = parseRole(roleCode);
+    if (!role) {
+      throw new ForbiddenException("Invalid role");
     }
 
     return role;

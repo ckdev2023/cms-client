@@ -9,7 +9,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import {
   OrganizationsService,
@@ -121,7 +122,7 @@ export class OrganizationsController {
    * @param req - 当前请求对象
    * @returns 当前组织设置
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get("current/settings")
   async getCurrentSettings(@Req() req: HttpRequest) {
     const ctx = req.requestContext;
@@ -136,7 +137,7 @@ export class OrganizationsController {
    * @param body - 原始更新载荷
    * @returns 更新后的组织设置
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Patch("current/settings")
   async updateCurrentSettings(
     @Req() req: HttpRequest,

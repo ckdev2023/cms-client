@@ -2,13 +2,20 @@
  * 跨模块 Group 选项管理。
  *
  * Catalog 内置 fixture 三项；运行期可通过 `registerGroupAliases` 把
- * 后端 `/api/groups` 返回的 `{ id, name }` 注册到一个响应式别名表，
- * 让 `resolveGroupLabel` 等函数透明地把 DB UUID 翻译为 catalog `value`，
- * 并继续走本地化标签。
+ * 后端 `/api/groups` 返回的 `{ id, name }` 注册到一个响应式别名表。
+ *
+ * 显示策略（R2-B-3 调整后）：
+ * - 当输入直接命中 catalog（slug / 任一本地化 label） → 返回 catalog
+ *   本地化 label（保留 fixture 演示形态，向后兼容仅用 slug 的调用方）。
+ * - 当输入仅在别名表命中（典型为后端 UUID） → **以 `/api/groups` 返回
+ *   的 `name` 作为权威显示值**，catalog 仅参与 `disabled` 后缀判定，
+ *   不再用 catalog 本地化 label 覆盖 DB 名称。这样可以避免「DB
+ *   存的是 `tokyo-1`，UI 却显示 `東京一組`」的 fixture / DB 错位
+ *   （详见 R-CONSULT-02 R2-B-3）。
  *
  * 别名表使用 Vue `ref` 持有，注册后能触发 `computed` 重算，
  * 因此调用方（如 `CustomerTableRow.vue`）首屏拿到 UUID 也会在
- * App 启动时拉到 `/api/groups` 后立即 re-render 为本地化分组名。
+ * App 启动时拉到 `/api/groups` 后立即 re-render 为后端 `name`。
  */
 import { ref } from "vue";
 
@@ -205,6 +212,35 @@ export function getActiveGroupOptions(locale?: string): GroupSelectOption[] {
 }
 
 /**
+ * 返回运行期已注册的后端 Group（UUID → name），供写入路径
+ * （新建/批量改派）的下拉选择使用。
+ *
+ * R2-A-1: 写入路径必须用真实 UUID 作为 value，否则 server 端
+ * UUID 列 cast 失败（500）。filter UI 仍可继续用 catalog 短码。
+ *
+ * R2-B-3: label 直接使用后端 `/api/groups` 返回的 `name`，不再
+ * 套上 catalog 本地化（fixture 与 DB 不再错位）。catalog 仅用于
+ * 过滤掉指向 disabled fixture 项的别名，避免在写入下拉里出现
+ * 已停用项。
+ *
+ * @param _locale - 历史保留参数；当前无效（DB name 已是权威显示值）
+ * @returns 形如 `{ value: id, label: dbName }` 的数组；
+ *   未注册任何别名时返回空数组
+ */
+export function getActiveGroupAliasOptions(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _locale?: string,
+): GroupSelectOption[] {
+  const result: GroupSelectOption[] = [];
+  for (const [id, name] of groupAliasesRef.value) {
+    const catalogMatch = GROUP_CATALOG.find((g) => matchesGroupDirect(g, name));
+    if (catalogMatch && catalogMatch.status === "disabled") continue;
+    result.push({ value: id, label: name });
+  }
+  return result;
+}
+
+/**
  * 返回全量 Group 选项（含 disabled），供需要完整列表的场景使用。
  *
  * @param locale - 可选语言标识；传入时返回对应语言的完整 Group 列表
@@ -244,13 +280,19 @@ export function isGroupDisabledByLabel(label: string): boolean {
 /**
  * 解析 Group 显示名称：若 Group 为 disabled 则追加已停用后缀。
  *
- * 解析顺序：catalog 直匹配 → 通过运行期别名（UUID → name）再匹配 catalog →
- * 仍未命中且别名存在则回落到别名 name → 输入像 UUID 时占位为 `—` 隐藏原始 ID →
- * 否则原样返回。
+ * 解析顺序（R2-B-3 调整后）：
+ * 1. catalog 直匹配（slug / 任一本地化 label）→ 返回 catalog 本地化 label，
+ *    保持 fixture 演示路径向后兼容。
+ * 2. 运行期别名命中（UUID → DB name）→ **以 DB name 作为显示值**；
+ *    若 DB name 经 catalog 标记为 disabled，则在 DB name 后追加 disabled
+ *    后缀。不再使用 catalog 本地化覆盖 DB name，避免 fixture 与 DB 错位。
+ * 3. 输入像 UUID 但未命中以上路径 → 占位为 `—`，避免直显 UUID。
+ * 4. 其余原样返回。
  *
  * @param idOrLabel - Group ID 或显示名称
  * @param disabledSuffix - 已停用后缀文案（支持 i18n），默认"（已停用）"
- * @param locale - 目标显示语言；缺省时保持当前默认日文兼容行为
+ * @param locale - 目标显示语言；仅在 catalog 直匹配路径生效；
+ *   alias 路径以 DB name 为权威值，不受 locale 影响
  * @returns 带状态标记的显示名称
  */
 export function resolveGroupLabel(
@@ -258,13 +300,20 @@ export function resolveGroupLabel(
   disabledSuffix = "（已停用）",
   locale?: string,
 ): string {
-  const found = GROUP_CATALOG.find((g) => matchesGroup(g, idOrLabel));
-  if (found) {
-    const label = found.labels[normalizeGroupLocale(locale)];
-    return found.status === "disabled" ? `${label}${disabledSuffix}` : label;
+  const direct = GROUP_CATALOG.find((g) => matchesGroupDirect(g, idOrLabel));
+  if (direct) {
+    const label = direct.labels[normalizeGroupLocale(locale)];
+    return direct.status === "disabled" ? `${label}${disabledSuffix}` : label;
   }
   const aliased = lookupAlias(idOrLabel);
-  if (aliased) return aliased;
+  if (aliased) {
+    const catalogForStatus = GROUP_CATALOG.find((g) =>
+      matchesGroupDirect(g, aliased),
+    );
+    return catalogForStatus?.status === "disabled"
+      ? `${aliased}${disabledSuffix}`
+      : aliased;
+  }
   if (looksLikeUuid(idOrLabel)) return "—";
   return idOrLabel;
 }

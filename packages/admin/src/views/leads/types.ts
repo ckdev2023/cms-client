@@ -93,6 +93,59 @@ export function getLeadStatusLabel(status: LeadStatus | string): string {
  */
 export const SIGNED_WARNING_BADGE_CLASS = "lead-badge-signed-warning";
 
+/**
+ * P0 合法状态流转白名单（与服务端 `LEAD_STATUS_TRANSITIONS` 一致）。
+ *
+ * - `new` → `following` / `lost`
+ * - `following` → `pending_sign` / `lost`
+ * - `pending_sign` → `signed` / `lost`
+ * - `signed` → `converted_case` / `lost`
+ * - `converted_case` → 终态
+ * - `lost` → `following`（流失复活）
+ *
+ * 注意：UI 头部已为 `lost` / `converted_case` 提供专用按钮，因此
+ * 「调整状态」对话框通常会过滤掉这两个目标，避免与 markLost / convertCase
+ * 入口重复。
+ */
+export const LEAD_STATUS_TRANSITIONS: ReadonlyMap<
+  LeadStatus,
+  ReadonlySet<LeadStatus>
+> = new Map([
+  ["new", new Set<LeadStatus>(["following", "lost"])],
+  ["following", new Set<LeadStatus>(["pending_sign", "lost"])],
+  ["pending_sign", new Set<LeadStatus>(["signed", "lost"])],
+  ["signed", new Set<LeadStatus>(["converted_case", "lost"])],
+  ["converted_case", new Set<LeadStatus>([])],
+  ["lost", new Set<LeadStatus>(["following"])],
+]);
+
+/**
+ * 头部「调整状态」对话框中默认隐藏的目标状态。
+ *
+ * - `lost` 走「标记流失」对话框（需要 lostReason）
+ * - `converted_case` 走「签约并开始建档」(转案件) 对话框
+ */
+const CHANGE_STATUS_DIALOG_HIDDEN_TARGETS: ReadonlySet<LeadStatus> = new Set([
+  "lost",
+  "converted_case",
+]);
+
+/**
+ * 给定当前线索状态，返回「调整状态」对话框中可选的目标状态。
+ *
+ * @param current - 当前线索状态
+ * @returns 已过滤后的可选目标状态
+ */
+export function getChangeStatusDialogOptions(
+  current: LeadStatus,
+): LeadStatus[] {
+  const allowed = LEAD_STATUS_TRANSITIONS.get(current);
+  if (!allowed) return [];
+  return Array.from(allowed).filter(
+    (s) => !CHANGE_STATUS_DIALOG_HIDDEN_TARGETS.has(s),
+  );
+}
+
 /* ------------------------------------------------------------------ */
 /*  可见性范围                                                         */
 /* ------------------------------------------------------------------ */

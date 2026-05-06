@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 
 import { GroupsController } from "./groups.controller";
+import type { GroupMembersService } from "./groupMembers.service";
 import type { GroupsService } from "./groups.service";
 import type { GroupDetailDto, GroupListResultDto } from "./groups.types";
 
@@ -55,6 +56,16 @@ function stubService(overrides?: Record<string, unknown>): GroupsService {
   } as unknown as GroupsService;
 }
 
+function stubMembersService(
+  overrides?: Record<string, unknown>,
+): GroupMembersService {
+  return {
+    addGroupMember: () => Promise.resolve({}),
+    removeGroupMember: () => Promise.resolve(),
+    ...overrides,
+  } as unknown as GroupMembersService;
+}
+
 function readControllerSource(): string {
   return fs.readFileSync(
     path.resolve(import.meta.dirname, "groups.controller.ts"),
@@ -62,9 +73,9 @@ function readControllerSource(): string {
   );
 }
 
-// ── RBAC: every route requires @RequireRoles("manager") ──
+// ── Permission decorators ──
 
-void describe("GroupsController — RBAC decorators", () => {
+void describe("GroupsController — permission decorators", () => {
   void test("controller is mounted at groups", () => {
     const src = readControllerSource();
     assert.ok(
@@ -73,20 +84,47 @@ void describe("GroupsController — RBAC decorators", () => {
     );
   });
 
-  const ROUTE_METHODS = ["list", "detail", "create", "rename", "disable"];
+  const VIEW_ROUTES = ["list", "detail"];
+  const MANAGE_ROUTES = [
+    "create",
+    "rename",
+    "disable",
+    "addMember",
+    "removeMember",
+  ];
 
-  for (const method of ROUTE_METHODS) {
-    void test(`${method}() has @RequireRoles("manager") decorator`, () => {
+  for (const method of VIEW_ROUTES) {
+    void test(`${method}() has @RequirePermission(PERMISSION_CODES.GROUP_VIEW)`, () => {
       const src = readControllerSource();
       const methodIdx = src.indexOf(`async ${method}(`);
       assert.ok(methodIdx > 0, `Method ${method} must exist`);
       const decoratorRegion = src.slice(
-        Math.max(0, methodIdx - 200),
+        Math.max(0, methodIdx - 300),
         methodIdx,
       );
       assert.ok(
-        decoratorRegion.includes('@RequireRoles("manager")'),
-        `${method}() must have @RequireRoles("manager")`,
+        decoratorRegion.includes(
+          "@RequirePermission(PERMISSION_CODES.GROUP_VIEW)",
+        ),
+        `${method}() must have @RequirePermission(PERMISSION_CODES.GROUP_VIEW)`,
+      );
+    });
+  }
+
+  for (const method of MANAGE_ROUTES) {
+    void test(`${method}() has @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)`, () => {
+      const src = readControllerSource();
+      const methodIdx = src.indexOf(`async ${method}(`);
+      assert.ok(methodIdx > 0, `Method ${method} must exist`);
+      const decoratorRegion = src.slice(
+        Math.max(0, methodIdx - 300),
+        methodIdx,
+      );
+      assert.ok(
+        decoratorRegion.includes(
+          "@RequirePermission(PERMISSION_CODES.GROUP_MANAGE)",
+        ),
+        `${method}() must have @RequirePermission(PERMISSION_CODES.GROUP_MANAGE)`,
       );
     });
   }
@@ -95,7 +133,7 @@ void describe("GroupsController — RBAC decorators", () => {
 // ── Missing request context ──
 
 void describe("GroupsController — missing context", () => {
-  const controller = new GroupsController(stubService());
+  const controller = new GroupsController(stubService(), stubMembersService());
 
   void test("list throws UnauthorizedException without requestContext", async () => {
     await assert.rejects(
@@ -136,7 +174,7 @@ void describe("GroupsController — missing context", () => {
 // ── Parameter validation ──
 
 void describe("GroupsController — parameter validation", () => {
-  const controller = new GroupsController(stubService());
+  const controller = new GroupsController(stubService(), stubMembersService());
   const req = makeReq();
 
   void test("list rejects invalid status filter", async () => {
@@ -157,7 +195,7 @@ void describe("GroupsController — parameter validation", () => {
         return Promise.resolve(STUB_LIST_RESULT);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.list(req as never, { status: "active" });
     assert.deepEqual(capturedInput, { status: "active" });
   });
@@ -170,7 +208,7 @@ void describe("GroupsController — parameter validation", () => {
         return Promise.resolve(STUB_LIST_RESULT);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.list(req as never, { status: "disabled" });
     assert.deepEqual(capturedInput, { status: "disabled" });
   });
@@ -183,7 +221,7 @@ void describe("GroupsController — parameter validation", () => {
         return Promise.resolve(STUB_LIST_RESULT);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.list(req as never, {});
     assert.deepEqual(capturedInput, { status: undefined });
   });
@@ -295,7 +333,7 @@ void describe("GroupsController — happy paths", () => {
     const svc = stubService({
       listGroups: () => Promise.resolve(expected),
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     const result = await ctrl.list(req as never, { status: "active" });
     assert.deepEqual(result, expected);
   });
@@ -304,7 +342,7 @@ void describe("GroupsController — happy paths", () => {
     const svc = stubService({
       getGroupDetail: () => Promise.resolve(STUB_DETAIL),
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     const result = await ctrl.detail(req as never, GROUP_ID);
     assert.deepEqual(result, STUB_DETAIL);
   });
@@ -313,7 +351,7 @@ void describe("GroupsController — happy paths", () => {
     const svc = stubService({
       getGroupDetail: () => Promise.resolve(null),
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await assert.rejects(
       () => ctrl.detail(req as never, GROUP_ID),
       NotFoundException,
@@ -328,7 +366,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     const result = await ctrl.create(req as never, {
       name: "  新グループ  ",
       description: "説明",
@@ -348,7 +386,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.create(req as never, { name: "G", description: null });
     assert.deepEqual(capturedInput, { name: "G", description: null });
   });
@@ -361,7 +399,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.create(req as never, { name: "G" });
     assert.deepEqual(capturedInput, { name: "G", description: undefined });
   });
@@ -376,7 +414,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     const result = await ctrl.rename(req as never, GROUP_ID, {
       name: " 改名後 ",
     });
@@ -389,7 +427,7 @@ void describe("GroupsController — happy paths", () => {
     const svc = stubService({
       renameGroup: () => Promise.resolve(null),
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await assert.rejects(
       () => ctrl.rename(req as never, GROUP_ID, { name: "X" }),
       NotFoundException,
@@ -406,7 +444,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     const result = await ctrl.disable(req as never, GROUP_ID, {
       reason: "不要了",
     });
@@ -423,7 +461,7 @@ void describe("GroupsController — happy paths", () => {
         return Promise.resolve(STUB_DETAIL);
       },
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await ctrl.disable(req as never, GROUP_ID, {});
     assert.deepEqual(capturedInput, { reason: undefined });
   });
@@ -432,7 +470,7 @@ void describe("GroupsController — happy paths", () => {
     const svc = stubService({
       disableGroup: () => Promise.resolve(null),
     });
-    const ctrl = new GroupsController(svc);
+    const ctrl = new GroupsController(svc, stubMembersService());
     await assert.rejects(
       () => ctrl.disable(req as never, GROUP_ID, {}),
       NotFoundException,

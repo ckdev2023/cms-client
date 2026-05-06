@@ -5,13 +5,16 @@ import {
   Get,
   Inject,
   Param,
+  ParseUUIDPipe,
   Patch,
   Query,
   Req,
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
+import { optUuid } from "../shared/uuid-parsers";
 import type { RequestContext } from "../tenancy/requestContext";
 import { ConversationsAdminService } from "./conversations.admin.service";
 
@@ -70,6 +73,8 @@ function parseBool(v: unknown): boolean | undefined {
   return undefined;
 }
 
+const UuidParam = () => Param("id", new ParseUUIDPipe());
+
 /**
  * Admin 会話管理コントローラ。
  */
@@ -90,17 +95,17 @@ export class ConversationsAdminController {
    * @param query 検索パラメータ
    * @returns 会話一覧と総件数
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListConversationsQuery) {
     const ctx = requireCtx(req);
     return this.svc.list(ctx, {
       status: optStr(query.status, "status"),
-      ownerUserId: optStr(query.ownerUserId, "ownerUserId"),
-      leadId: optStr(query.leadId, "leadId"),
-      customerId: optStr(query.customerId, "customerId"),
-      caseId: optStr(query.caseId, "caseId"),
-      appUserId: optStr(query.appUserId, "appUserId"),
+      ownerUserId: optUuid(query.ownerUserId, "ownerUserId"),
+      leadId: optUuid(query.leadId, "leadId"),
+      customerId: optUuid(query.customerId, "customerId"),
+      caseId: optUuid(query.caseId, "caseId"),
+      appUserId: optUuid(query.appUserId, "appUserId"),
       unreadOnly: parseBool(query.unreadOnly),
       search: optStr(query.search, "search"),
       page: parsePage(query.page),
@@ -114,9 +119,9 @@ export class ConversationsAdminController {
    * @param id 会話 ID
    * @returns 会話詳細集約
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get(":id")
-  async getDetail(@Req() req: HttpRequest, @Param("id") id: string) {
+  async getDetail(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.getDetail(requireCtx(req), id);
   }
 
@@ -127,15 +132,15 @@ export class ConversationsAdminController {
    * @param body 指派リクエストボディ
    * @returns 更新後の会話
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/assign")
   async assign(
     @Req() req: HttpRequest,
-    @Param("id") id: string,
+    @UuidParam() id: string,
     @Body() body: AssignBody,
   ) {
     return this.svc.assign(requireCtx(req), id, {
-      ownerUserId: optStr(body.ownerUserId, "ownerUserId"),
+      ownerUserId: optUuid(body.ownerUserId, "ownerUserId"),
     });
   }
 
@@ -145,9 +150,9 @@ export class ConversationsAdminController {
    * @param id 会話 ID
    * @returns 閉じた会話
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/close")
-  async close(@Req() req: HttpRequest, @Param("id") id: string) {
+  async close(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.close(requireCtx(req), id);
   }
 
@@ -157,9 +162,9 @@ export class ConversationsAdminController {
    * @param id 会話 ID
    * @returns 再開した会話
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/reopen")
-  async reopen(@Req() req: HttpRequest, @Param("id") id: string) {
+  async reopen(@Req() req: HttpRequest, @UuidParam() id: string) {
     return this.svc.reopen(requireCtx(req), id);
   }
 }

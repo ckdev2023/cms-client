@@ -9,6 +9,13 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { requireTimestampString } from "../model/timestamps";
 import { TimelineService } from "../timeline/timeline.service";
+import {
+  isDuplicateNameError,
+  mapGroupSummaryRow,
+  queryActiveMembers,
+  type GroupDetailRow,
+  type GroupSummaryRow,
+} from "./groups.internal";
 import type {
   CreateGroupInput,
   DisableGroupInput,
@@ -17,72 +24,8 @@ import type {
   GroupListResultDto,
   GroupMemberDto,
   GroupReferenceCounts,
-  GroupSummaryDto,
   RenameGroupInput,
 } from "./groups.types";
-
-type GroupSummaryRow = {
-  id: string;
-  org_id: string;
-  group_no: string | null;
-  name: string;
-  description: string | null;
-  active_flag: boolean;
-  created_at: unknown;
-  active_case_count: string;
-  member_count: string;
-};
-
-function mapGroupSummaryRow(row: GroupSummaryRow): GroupSummaryDto {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    groupNo: row.group_no,
-    name: row.name,
-    description: row.description,
-    activeFlag: row.active_flag,
-    createdAt: requireTimestampString(row.created_at, "created_at"),
-    activeCaseCount: Number.parseInt(row.active_case_count, 10),
-    memberCount: Number.parseInt(row.member_count, 10),
-  };
-}
-
-type GroupDetailRow = {
-  id: string;
-  org_id: string;
-  group_no: string | null;
-  name: string;
-  description: string | null;
-  active_flag: boolean;
-  created_by: string | null;
-  created_at: unknown;
-  updated_by: string | null;
-  updated_at: unknown;
-};
-
-type GroupMemberRow = {
-  id: string;
-  user_id: string;
-  is_primary_group: boolean;
-  active_flag: boolean;
-  joined_at: unknown;
-  user_name: string;
-  user_email: string;
-  user_role: string;
-};
-
-function mapGroupMemberRow(row: GroupMemberRow): GroupMemberDto {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    isPrimaryGroup: row.is_primary_group,
-    activeFlag: row.active_flag,
-    joinedAt: requireTimestampString(row.joined_at, "joined_at"),
-    userName: row.user_name,
-    userEmail: row.user_email,
-    userRole: row.user_role,
-  };
-}
 
 /**
  * 業務分組サービス：グループの CRUD と停用を管理する。
@@ -113,8 +56,8 @@ export class GroupsService {
   /**
    * グループ一覧を取得する（活跃案件数・メンバー数の集約付き）。
    *
-   * @param ctx リクエストコンテキスト
-   * @param input 検索条件（status で active/disabled 絞り込み可）
+   * @param ctx - リクエストコンテキスト
+   * @param input - 検索条件（status で active/disabled 絞り込み可）
    * @returns グループ一覧と合計件数
    */
   async listGroups(
@@ -170,8 +113,8 @@ export class GroupsService {
   /**
    * グループの関連客数・案件数を集計する（停用確認ダイアログと timeline payload 共用）。
    *
-   * @param ctx リクエストコンテキスト
-   * @param groupId グループ ID
+   * @param ctx - リクエストコンテキスト
+   * @param groupId - グループ ID
    * @returns 関連客数と案件数
    */
   async countReferences(
@@ -205,8 +148,8 @@ export class GroupsService {
    *
    * 停用済みグループも読み取り可能。
    *
-   * @param ctx リクエストコンテキスト
-   * @param groupId グループ ID
+   * @param ctx - リクエストコンテキスト
+   * @param groupId - グループ ID
    * @returns グループ詳細 DTO（見つからない場合は null）
    */
   async getGroupDetail(
@@ -226,7 +169,7 @@ export class GroupsService {
     const groupRow = groupResult.rows.at(0);
     if (!groupRow) return null;
 
-    const members = await this.listActiveMembers(db, groupId);
+    const members = await this.listActiveMembers(ctx, groupId);
     const references = await this.countReferences(ctx, groupId);
 
     return {
@@ -246,38 +189,14 @@ export class GroupsService {
   }
 
   /**
-   * グループの有効メンバー一覧を取得する。
-   *
-   * @param db - テナント DB ヘルパー
-   * @param groupId - グループ ID
-   * @returns メンバー DTO 配列
-   */
-  private async listActiveMembers(
-    db: ReturnType<typeof createTenantDb>,
-    groupId: string,
-  ): Promise<GroupMemberDto[]> {
-    const sql = `
-      SELECT m.id, m.user_id, m.is_primary_group, m.active_flag,
-             m.joined_at, u.name AS user_name, u.email AS user_email,
-             u.role AS user_role
-      FROM user_group_memberships m
-      JOIN users u ON u.id = m.user_id
-      WHERE m.group_id = $1 AND m.active_flag = true
-      ORDER BY m.joined_at ASC
-    `;
-    const result = await db.query<GroupMemberRow>(sql, [groupId]);
-    return result.rows.map(mapGroupMemberRow);
-  }
-
-  /**
    * 新規グループを作成する。
    *
    * - `group_no` は `GRP-001` 形式で自動採番（org 内の既存最大値 + 1）
    * - `created_by` / `updated_by` を ctx.userId で記録
    * - 重複名称は DB ユニーク制約（`uq_groups_org_name`）で 422 を返す
    *
-   * @param ctx リクエストコンテキスト
-   * @param input 新規作成パラメータ（name, description?）
+   * @param ctx - リクエストコンテキスト
+   * @param input - 新規作成パラメータ（name, description?）
    * @returns 作成されたグループの詳細 DTO
    */
   async createGroup(
@@ -344,9 +263,9 @@ export class GroupsService {
    * - `updated_by` / `updated_at` を ctx.userId / NOW() で更新
    * - timeline に `group_renamed` を記録（payload: `{ from, to }`）
    *
-   * @param ctx リクエストコンテキスト
-   * @param groupId グループ ID
-   * @param input 改名パラメータ（name）
+   * @param ctx - リクエストコンテキスト
+   * @param groupId - グループ ID
+   * @param input - 改名パラメータ（name）
    * @returns 更新後のグループ詳細 DTO（見つからない場合は null）
    */
   async renameGroup(
@@ -395,9 +314,9 @@ export class GroupsService {
    * - `active_flag=true` の場合のみ実行可能（既に停用済みなら 422）
    * - 関連する客数・案件数を集計し、timeline payload に含める
    *
-   * @param ctx リクエストコンテキスト
-   * @param groupId グループ ID
-   * @param input 停用パラメータ（reason?）
+   * @param ctx - リクエストコンテキスト
+   * @param groupId - グループ ID
+   * @param input - 停用パラメータ（reason?）
    * @returns 更新後のグループ詳細 DTO（見つからない場合は null）
    */
   async disableGroup(
@@ -440,10 +359,11 @@ export class GroupsService {
 
     return this.getGroupDetail(ctx, groupId);
   }
-}
 
-function isDuplicateNameError(err: unknown): boolean {
-  if (typeof err !== "object" || err === null) return false;
-  const pgErr = err as { code?: string; constraint?: string };
-  return pgErr.code === "23505" && pgErr.constraint === "uq_groups_org_name";
+  private async listActiveMembers(
+    ctx: RequestContext,
+    groupId: string,
+  ): Promise<GroupMemberDto[]> {
+    return queryActiveMembers(this.tenantDb(ctx), groupId);
+  }
 }

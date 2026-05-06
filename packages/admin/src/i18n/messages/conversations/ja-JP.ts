@@ -60,6 +60,11 @@ const conversationsJaJP = {
     noLinkedEntity: "未関連",
     channel: "チャネル",
     preferredLanguage: "希望言語",
+    ownerPicker: {
+      selectLabel: "担当者を選択",
+      cancel: "キャンセル",
+      confirm: "確認",
+    },
   },
   messages: {
     inputPlaceholder: "メッセージを入力…",

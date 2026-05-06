@@ -14,7 +14,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { CasesService } from "../cases/cases.service";
 import { DOCUMENT_FILE_ERROR_CODES } from "../documents.types";
 import type { DocumentFile } from "../model/coreEntities";
@@ -200,7 +201,7 @@ export class DocumentFilesController {
    * @param body 上传请求体
    * @returns 创建后的资料文件
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("upload")
   async upload(@Req() req: HttpRequest, @Body() body: UploadBody) {
     const ctx = req.requestContext;
@@ -229,7 +230,7 @@ export class DocumentFilesController {
    * @param query 查询参数
    * @returns 文件列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListQuery) {
     const ctx = req.requestContext;
@@ -252,7 +253,7 @@ export class DocumentFilesController {
    * @param id 文件 ID
    * @returns 文件详情
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -270,7 +271,7 @@ export class DocumentFilesController {
    * @param body 审核请求体
    * @returns 审核后的文件
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/review")
   async review(
     @Req() req: HttpRequest,
@@ -296,7 +297,7 @@ export class DocumentFilesController {
    * @param id 文件 ID
    * @returns 删除结果
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async remove(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { describe, expect, it, vi } from "vitest";
 import {
   ADMIN_SESSION_STORAGE_KEY,
@@ -7,6 +8,7 @@ import {
   getAdminAccessToken,
   isAdminAuthenticated,
   loginAdmin,
+  useCurrentUserId,
 } from "./adminSession";
 
 function createStorage(
@@ -53,6 +55,7 @@ describe("createAdminSessionController", () => {
       [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
         token: "jwt-token",
         user: {
+          id: "u-001",
           name: "Admin User",
           email: "admin@example.com",
           role: "管理员",
@@ -67,6 +70,7 @@ describe("createAdminSessionController", () => {
     expect(controller.isAuthenticated.value).toBe(true);
     expect(controller.currentUser.value?.email).toBe("admin@example.com");
     expect(controller.currentUser.value?.initials).toBe("AU");
+    expect(controller.currentUserId.value).toBe("u-001");
     expect(controller.session.value?.token).toBe("jwt-token");
   });
 
@@ -90,7 +94,7 @@ describe("createAdminSessionController", () => {
     expect(JSON.parse(raw!)).toEqual(session);
   });
 
-  it("loginFromResponse persists the backend token and role", () => {
+  it("loginFromResponse persists the backend token, role, and user id", () => {
     const controller = createAdminSessionController({ now: () => 4096 });
     const storage = createStorage();
 
@@ -109,11 +113,13 @@ describe("createAdminSessionController", () => {
     );
 
     expect(session.token).toBe("jwt-real-token");
+    expect(session.user.id).toBe("user-1");
     expect(session.user.email).toBe("ada@example.com");
     expect(session.user.name).toBe("Ada Lovelace");
     expect(session.user.initials).toBe("AL");
     expect(session.user.role).toBe("manager");
     expect(controller.isAdmin.value).toBe(true);
+    expect(controller.currentUserId.value).toBe("user-1");
     expect(JSON.parse(storage.getItem(ADMIN_SESSION_STORAGE_KEY)!)).toEqual(
       session,
     );
@@ -126,6 +132,7 @@ describe("createAdminSessionController", () => {
       [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
         token: createJwtToken(4),
         user: {
+          id: "u-expired",
           name: "Expired User",
           email: "expired@example.com",
           role: "manager",
@@ -154,6 +161,7 @@ describe("createAdminSessionController", () => {
       JSON.stringify({
         token: "jwt-fresh-token",
         user: {
+          id: "u-fresh",
           name: "Local Admin",
           email: "admin@example.com",
           role: "manager",
@@ -217,6 +225,7 @@ describe("createAdminSessionController", () => {
       [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
         token: "jwt-token",
         user: {
+          id: "u-admin",
           name: "Admin",
           email: "admin@example.com",
           role: "管理员",
@@ -237,6 +246,7 @@ describe("createAdminSessionController", () => {
       [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
         token: "jwt-token",
         user: {
+          id: "u-staff",
           name: "Staff",
           email: "staff@example.com",
           role: "主办人",
@@ -375,6 +385,7 @@ describe("createAdminSessionController", () => {
       JSON.stringify({
         token: "jwt-browser",
         user: {
+          id: "u-browser",
           name: "Admin",
           email: "admin@example.com",
           role: "manager",
@@ -403,6 +414,7 @@ describe("createAdminSessionController", () => {
       JSON.stringify({
         token: "jwt-after-hydrate",
         user: {
+          id: "u-after",
           name: "Admin",
           email: "admin@example.com",
           role: "manager",
@@ -428,6 +440,7 @@ describe("createAdminSessionController", () => {
       JSON.stringify({
         token: createJwtToken(1),
         user: {
+          id: "u-exp",
           name: "Admin",
           email: "admin@example.com",
           role: "manager",
@@ -455,6 +468,7 @@ describe("createAdminSessionController", () => {
       JSON.stringify({
         token: createJwtToken(1),
         user: {
+          id: "u-exp2",
           name: "Admin",
           email: "admin@example.com",
           role: "manager",
@@ -471,6 +485,63 @@ describe("createAdminSessionController", () => {
       expect(window.localStorage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
     } finally {
       nowSpy.mockRestore();
+      adminSessionController.reset();
+    }
+  });
+
+  it("treats legacy sessions without user.id as invalid (forces re-login)", () => {
+    const controller = createAdminSessionController();
+    const storage = createStorage({
+      [ADMIN_SESSION_STORAGE_KEY]: JSON.stringify({
+        token: "jwt-legacy",
+        user: {
+          name: "Legacy User",
+          email: "legacy@example.com",
+          role: "manager",
+          initials: "LU",
+        },
+        loggedInAt: 1234,
+      }),
+    });
+
+    controller.hydrate(storage);
+
+    expect(controller.isAuthenticated.value).toBe(false);
+    expect(controller.session.value).toBeNull();
+  });
+
+  it("useCurrentUserId returns the id from persisted session", () => {
+    adminSessionController.reset();
+    window.localStorage.setItem(
+      ADMIN_SESSION_STORAGE_KEY,
+      JSON.stringify({
+        token: "jwt-uid",
+        user: {
+          id: "abc-def-123",
+          name: "Admin",
+          email: "admin@example.com",
+          role: "manager",
+          initials: "AD",
+        },
+        loggedInAt: 1234,
+      }),
+    );
+
+    try {
+      expect(useCurrentUserId()).toBe("abc-def-123");
+    } finally {
+      window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+      adminSessionController.reset();
+    }
+  });
+
+  it("useCurrentUserId returns null when not authenticated", () => {
+    adminSessionController.reset();
+    window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
+
+    try {
+      expect(useCurrentUserId()).toBeNull();
+    } finally {
       adminSessionController.reset();
     }
   });

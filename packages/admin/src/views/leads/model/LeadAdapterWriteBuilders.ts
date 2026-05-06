@@ -10,6 +10,8 @@ import type {
   LeadStatusInput,
   LeadFollowupInput,
   LeadDedupParams,
+  LeadConvertCustomerInput,
+  LeadConvertCaseInput,
   LeadBulkAssignInput,
   LeadBulkStatusInput,
   LeadBulkFollowupInput,
@@ -349,4 +351,67 @@ export function buildBulkExportPayload(
     leadIds: input.leadIds,
     ...(input.format ? { format: input.format } : {}),
   };
+}
+
+// ─── Convert Path / Payload Builders ────────────────────────────
+
+/**
+ * 构造转客户 REST 路径。
+ *
+ * @param apiPath - API 基路径
+ * @param leadId - 线索 ID
+ * @returns 完整路径
+ */
+export function buildLeadConvertCustomerPath(
+  apiPath: string,
+  leadId: string,
+): string {
+  return `${buildLeadDetailPath(apiPath, leadId)}/convert-customer`;
+}
+
+/**
+ * 构造转案件 REST 路径。
+ *
+ * @param apiPath - API 基路径
+ * @param leadId - 线索 ID
+ * @returns 完整路径
+ */
+export function buildLeadConvertCasePath(
+  apiPath: string,
+  leadId: string,
+): string {
+  return `${buildLeadDetailPath(apiPath, leadId)}/convert-case`;
+}
+
+/**
+ * 构造转客户请求体。
+ *
+ * @param input - 转客户输入
+ * @returns JSON 请求体
+ */
+export function buildLeadConvertCustomerPayload(
+  input: LeadConvertCustomerInput,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  if (input.customerId?.trim()) payload.customerId = input.customerId.trim();
+  if (input.localizedNames) payload.localizedNames = input.localizedNames;
+  if (input.confirmDedup) payload.confirmDedup = true;
+  return payload;
+}
+
+/**
+ * 构造转案件请求体。
+ *
+ * @param input - 转案件输入
+ * @returns JSON 请求体
+ */
+export function buildLeadConvertCasePayload(
+  input: LeadConvertCaseInput,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {
+    caseTypeCode: input.caseTypeCode,
+    ownerUserId: input.ownerUserId,
+  };
+  if (input.groupId?.trim()) payload.groupId = input.groupId.trim();
+  return payload;
 }

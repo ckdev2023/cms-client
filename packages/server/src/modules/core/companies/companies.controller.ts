@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { CompaniesService } from "./companies.service";
 
@@ -103,7 +104,7 @@ export class CompaniesController {
    * @param body 创建请求体
    * @returns 创建成功的企业客户信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCompanyBody) {
     const ctx = req.requestContext;
@@ -138,7 +139,7 @@ export class CompaniesController {
    * @param query 查询参数
    * @returns 企业客户列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListCompaniesQuery) {
     const ctx = req.requestContext;
@@ -157,7 +158,7 @@ export class CompaniesController {
    * @param id 企业客户 ID
    * @returns 匹配的企业客户信息
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -175,7 +176,7 @@ export class CompaniesController {
    * @param body 更新请求体
    * @returns 更新后的企业客户信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -217,7 +218,7 @@ export class CompaniesController {
    * @param id 企业客户 ID
    * @returns 删除成功状态
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

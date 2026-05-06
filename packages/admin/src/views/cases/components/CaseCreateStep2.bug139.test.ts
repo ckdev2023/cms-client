@@ -13,10 +13,13 @@ import type { CaseCreateCustomerOption } from "../types";
  * 直显 group UUID，是 R11 BUG-136 修复对 case 链路的覆盖遗漏。
  *
  * 用例锁定：
- * - 下拉选项文本不得出现 36 字符 UUID（应通过别名表 + locale 翻译）。
+ * - 下拉选项文本不得出现 36 字符 UUID（应通过别名表反解为 DB name）。
  * - 选中卡片副本不得出现 UUID（应实时根据 raw `group` 重新解析）。
  * - 别名注册时机晚于选项注入也能触发再渲染（运行期 ref 反应性）。
- * - 切换 locale 时下拉与卡片同步切换语言。
+ * - alias 路径下切换 locale 不改变显示（DB name 为权威值，R2-B-3）。
+ *
+ * R-CONSULT-02 R2-B-3 调整：原契约「alias UUID → catalog 三语本地化」已
+ * 被废弃；现在 alias 路径以 `/api/groups` 返回的 `name` 为权威值。
  */
 
 const SAMPLE_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
@@ -96,30 +99,30 @@ describe("CaseCreateStep2 — BUG-139 group UUID rendering", () => {
     }
   });
 
-  it("renders localized catalog label in dropdown when alias maps UUID to catalog", async () => {
+  it("R2-B-3: renders DB-stored alias name in dropdown when alias maps UUID to catalog slug", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
-    const customer = buildCustomer({ groupLabel: "东京一组" });
+    const customer = buildCustomer({ groupLabel: "tokyo-1" });
     const wrapper = mountStep2(customer, { selected: false });
     await wrapper.vm.$nextTick();
     const optionTexts = wrapper.findAll("option").map((o) => o.text());
-    expect(optionTexts.some((t) => t.includes("东京一组"))).toBe(true);
+    expect(optionTexts.some((t) => t.includes("tokyo-1"))).toBe(true);
     for (const text of optionTexts) {
       expect(text).not.toContain(SAMPLE_UUID);
     }
   });
 
-  it("renders translated label on selected primary customer card", async () => {
+  it("R2-B-3: renders DB name on selected primary customer card", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
-    const customer = buildCustomer({ groupLabel: "东京一组" });
+    const customer = buildCustomer({ groupLabel: "tokyo-1" });
     const wrapper = mountStep2(customer);
     await wrapper.vm.$nextTick();
     const partyText = wrapper.find(".party").text();
     expect(partyText).toContain("R6试探客户");
-    expect(partyText).toContain("东京一组");
+    expect(partyText).toContain("tokyo-1");
     expect(partyText).not.toContain(SAMPLE_UUID);
   });
 
-  it("re-renders selected card when alias is registered after mount", async () => {
+  it("re-renders selected card when alias is registered after mount (R2-B-3)", async () => {
     const customer = buildCustomer();
     const wrapper = mountStep2(customer);
     await wrapper.vm.$nextTick();
@@ -128,22 +131,22 @@ describe("CaseCreateStep2 — BUG-139 group UUID rendering", () => {
 
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("东京一组");
+    expect(wrapper.find(".party").text()).toContain("tokyo-1");
   });
 
-  it("respects locale switch on selected card after alias is registered", async () => {
+  it("R2-B-3: alias-path display on selected card is locale-invariant (DB name is canonical)", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const customer = buildCustomer();
     const wrapper = mountStep2(customer);
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("东京一组");
+    expect(wrapper.find(".party").text()).toContain("tokyo-1");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("Tokyo Team 1");
+    expect(wrapper.find(".party").text()).toContain("tokyo-1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("東京一組");
+    expect(wrapper.find(".party").text()).toContain("tokyo-1");
   });
 });

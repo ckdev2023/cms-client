@@ -172,17 +172,19 @@ async function upsertAdminUser(
   orgId: string,
 ): Promise<UserRow> {
   const passwordHash = await hashPassword(input.password);
+  const roleId = await resolveSystemRoleId(client, orgId, input.role);
   const result = await client.query<UserRow>(
     `
-      insert into users (id, org_id, name, email, password_hash, role, status)
+      insert into users (id, org_id, name, email, password_hash, role_id, status)
       values ($1, $2, $3, $4, $5, $6, 'active')
       on conflict (org_id, email) do update
       set name = excluded.name,
           password_hash = excluded.password_hash,
-          role = excluded.role,
+          role_id = excluded.role_id,
           status = excluded.status,
           updated_at = now()
-      returning id, org_id, name, email, role
+      returning id, org_id, name, email,
+        (select code from roles where id = users.role_id) as role
     `,
     [
       input.userId,
@@ -190,7 +192,7 @@ async function upsertAdminUser(
       input.userName,
       normalizeEmail(input.email),
       passwordHash,
-      input.role,
+      roleId,
     ],
   );
 
@@ -200,6 +202,24 @@ async function upsertAdminUser(
     ...row,
     email: normalizeEmail(row.email),
   };
+}
+
+async function resolveSystemRoleId(
+  client: PoolClient,
+  orgId: string,
+  roleCode: string,
+): Promise<string> {
+  const result = await client.query<{ id: string }>(
+    `select id from roles where org_id = $1 and code = $2 and is_system = true limit 1`,
+    [orgId, roleCode],
+  );
+  const row = result.rows.at(0);
+  if (!row) {
+    throw new Error(
+      `System role "${roleCode}" not found for org ${orgId}; ensure migration 050 seed has run.`,
+    );
+  }
+  return row.id;
 }
 
 async function upsertDefaultGroup(

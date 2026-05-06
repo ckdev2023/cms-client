@@ -19,8 +19,9 @@ alwaysApply: true
 
 ## Delivery Gates
 
-- 任何代码改动都必须通过 `npm run guard`。
-- 收尾顺序固定：先运行 `npm run fix`，再运行 `npm run guard`。
+- 开发过程中不要每改一个文件就跑 `npm run guard`，避免拖慢节奏；只在最终交付/提交前统一执行一次。
+- 收尾顺序固定：先运行 `npm run fix`，再运行 `npm run guard`；两者全部通过后才能交付或提交。
+- 中途如需快速自检，优先跑相关包/目录的局部 `lint`、`typecheck` 或单测，不要整仓 `guard`。
 - 新增或修改逻辑时，优先补测试，尤其是 `model`、`domain`、`data`。
 - 测试禁止真实网络请求；必须 mock `fetch` 或注入 stub。
 - 仅使用 `npm`，保持 `package-lock.json` 为唯一锁文件。

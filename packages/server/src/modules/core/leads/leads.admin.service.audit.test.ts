@@ -241,6 +241,59 @@ void describe("LeadsAdminService.getDetail", () => {
     assert.equal(result.convertedCase, null);
   });
 
+  void test("getDetail joins users table for log actor display name (H-5)", async () => {
+    const calls: { sql: string }[] = [];
+    const pool = makePool((sql) => {
+      calls.push({ sql });
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({ rows: [leadRow()], rowCount: 1 });
+      }
+      if (sql.includes("from lead_followups")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (sql.includes("lead_logs")) {
+        return Promise.resolve({ rows: [logRow()], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const result = await svc(pool).getDetail(makeCtx(), LEAD_ID);
+    const logSelect = calls.find(
+      (c) =>
+        c.sql.includes("lead_logs ll") &&
+        c.sql.includes("left join users u on u.id = ll.created_by"),
+    );
+    assert.ok(
+      logSelect,
+      "log SELECT must JOIN users for created_by_display_name",
+    );
+    assert.ok(logSelect.sql.includes("u.name as created_by_display_name"));
+    assert.equal(result.logs[0].createdByDisplayName, "田中 太郎");
+  });
+
+  void test("listLogs joins users for actor display name (H-5)", async () => {
+    const calls: { sql: string }[] = [];
+    const pool = makePool((sql) => {
+      calls.push({ sql });
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({ rows: [leadRow()], rowCount: 1 });
+      }
+      if (sql.includes("lead_logs")) {
+        return Promise.resolve({ rows: [logRow()], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const logs = await svc(pool).listLogs(makeCtx(), LEAD_ID);
+    const logSelect = calls.find(
+      (c) =>
+        c.sql.includes("lead_logs ll") &&
+        c.sql.includes("left join users u on u.id = ll.created_by"),
+    );
+    assert.ok(logSelect);
+    assert.equal(logs[0].createdByDisplayName, "田中 太郎");
+  });
+
   void test("throws NotFoundException for missing lead", async () => {
     const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
 

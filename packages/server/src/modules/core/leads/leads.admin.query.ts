@@ -246,3 +246,39 @@ export async function queryDedupCustomers(
     name: extractCustomerName(row.base_profile),
   }));
 }
+
+/** 顧客名サマリを取得する。
+ * @param db テナント DB
+ * @param cid Customer ID
+ * @returns 顧客名サマリ
+ */
+export async function queryCustomerSummary(
+  db: TenantDb,
+  cid: string,
+): Promise<{ id: string; name: string | null } | null> {
+  const r = await db.query<{ id: string; base_profile: unknown }>(
+    `select id, base_profile from customers where id = $1 limit 1`,
+    [cid],
+  );
+  const row = r.rows.at(0);
+  return row
+    ? { id: row.id, name: extractCustomerName(row.base_profile) }
+    : null;
+}
+
+/** 案件サマリを取得する。
+ * @param db テナント DB
+ * @param caseId Case ID
+ * @returns 案件サマリ
+ */
+export async function queryCaseSummary(
+  db: TenantDb,
+  caseId: string,
+): Promise<{ id: string; caseNo: string | null } | null> {
+  const r = await db.query<{ id: string; case_no: string | null }>(
+    `select id, case_no from cases where id = $1 limit 1`,
+    [caseId],
+  );
+  const row = r.rows.at(0);
+  return row ? { id: row.id, caseNo: row.case_no } : null;
+}

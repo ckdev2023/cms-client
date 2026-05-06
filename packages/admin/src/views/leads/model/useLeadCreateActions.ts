@@ -2,6 +2,10 @@ import { computed, ref, type ComputedRef, type Ref } from "vue";
 import type { DedupMatch, LeadCreateFormFields } from "../types";
 import type { LeadDedupResult, LeadCreateInput } from "./LeadAdapterTypes";
 import type { LeadRepository } from "./LeadRepository";
+import {
+  isValidEmail,
+  isValidPhone,
+} from "../../../shared/util/contactValidators";
 
 interface CreateActionsOptions {
   repository: LeadRepository;
@@ -54,6 +58,8 @@ async function runDedupCheck(
     resultRef.value = null;
     return;
   }
+  if (tp && !isValidPhone(tp)) return;
+  if (te && !isValidEmail(te)) return;
   loadingRef.value = true;
   try {
     resultRef.value = await repo.dedup({

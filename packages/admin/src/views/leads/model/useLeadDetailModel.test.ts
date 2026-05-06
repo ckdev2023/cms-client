@@ -37,7 +37,8 @@ function createStubRepo(
     bulkTags: vi.fn().mockResolvedValue({ id: "test" }),
     bulkExport: vi.fn().mockResolvedValue({ id: "test" }),
     dedup: vi.fn().mockResolvedValue({ leads: [], customers: [] }),
-    convertLead: vi.fn().mockResolvedValue({ id: "test" }),
+    convertCustomer: vi.fn().mockResolvedValue({ id: "test" }),
+    convertCase: vi.fn().mockResolvedValue({ id: "test" }),
   };
 
   return { repo, getDetailMock, addFollowupMock };
@@ -134,26 +135,26 @@ describe("useLeadDetailModel", () => {
   });
 
   describe("buttonStates", () => {
-    it("lost lead disables convert buttons", async () => {
+    it("lost lead hides convert buttons (spec §4)", async () => {
       const { model } = setupModel("lost");
       await flush();
-      expect(model.buttonStates.value.convertCustomer).toBe("disabled");
-      expect(model.buttonStates.value.convertCase).toBe("disabled");
+      expect(model.buttonStates.value.convertCustomer).toBe("hidden");
+      expect(model.buttonStates.value.convertCase).toBe("hidden");
       expect(model.buttonStates.value.markLost).toBe("hidden");
     });
 
-    it("signedNotConverted highlights convert buttons", async () => {
+    it("signedNotConverted highlights convertCustomer, hides convertCase (§4: no customer)", async () => {
       const { model } = setupModel("signed");
       await flush();
       expect(model.buttonStates.value.convertCustomer).toBe("highlighted");
-      expect(model.buttonStates.value.convertCase).toBe("highlighted");
+      expect(model.buttonStates.value.convertCase).toBe("hidden");
     });
 
-    it("convertedCustomer shows view-customer", async () => {
+    it("convertedCustomer shows view-customer and highlights convertCase", async () => {
       const { model } = setupModel("converted-customer");
       await flush();
       expect(model.buttonStates.value.convertCustomer).toBe("view-customer");
-      expect(model.buttonStates.value.convertCase).toBe("enabled");
+      expect(model.buttonStates.value.convertCase).toBe("highlighted");
     });
 
     it("convertedCase shows view-customer and view-case", async () => {
@@ -163,10 +164,11 @@ describe("useLeadDetailModel", () => {
       expect(model.buttonStates.value.convertCase).toBe("view-case");
     });
 
-    it("normal preset for following lead", async () => {
+    it("normal preset for following lead enables convertCustomer, hides convertCase", async () => {
       const { model } = setupModel("following");
       await flush();
       expect(model.buttonStates.value.convertCustomer).toBe("enabled");
+      expect(model.buttonStates.value.convertCase).toBe("hidden");
       expect(model.buttonStates.value.markLost).toBe("enabled");
     });
   });
@@ -329,16 +331,27 @@ describe("useLeadDetailModel", () => {
   });
 
   describe("convertCustomer with dedup", () => {
-    it("calls dedup then convertLead when no matches", async () => {
+    it("calls dedup then repo.convertCustomer when no matches", async () => {
       const { model, repo } = setupModel("following");
       await flush();
-      await model.convertCustomer();
+      await model.convertCustomer({});
       await flush();
       expect(repo.dedup).toHaveBeenCalledWith({
         phone: "080-2222-3333",
         email: "li.hua@email.com",
       });
-      expect(repo.convertLead).toHaveBeenCalledWith("following");
+      expect(repo.convertCustomer).toHaveBeenCalledWith("following", {});
+    });
+
+    it("passes input through to repo.convertCustomer", async () => {
+      const { model, repo } = setupModel("following");
+      await flush();
+      const input = { customerId: "CUS-123" };
+      await model.convertCustomer(input);
+      await flush();
+      expect(repo.convertCustomer).toHaveBeenCalledWith("following", {
+        customerId: "CUS-123",
+      });
     });
 
     it("shows dedup prompt when matches found", async () => {
@@ -350,13 +363,13 @@ describe("useLeadDetailModel", () => {
         ],
         customers: [],
       });
-      await model.convertCustomer();
+      await model.convertCustomer({});
       await flush();
       expect(model.showConvertDedupPrompt.value).toBe(true);
-      expect(repo.convertLead).not.toHaveBeenCalled();
+      expect(repo.convertCustomer).not.toHaveBeenCalled();
     });
 
-    it("confirmConvertDedup proceeds with conversion", async () => {
+    it("confirmConvertDedup proceeds with confirmDedup=true", async () => {
       const { model, repo } = setupModel("following");
       await flush();
       vi.mocked(repo.dedup).mockResolvedValueOnce({
@@ -365,13 +378,15 @@ describe("useLeadDetailModel", () => {
         ],
         customers: [],
       });
-      await model.convertCustomer();
+      await model.convertCustomer({});
       await flush();
       expect(model.showConvertDedupPrompt.value).toBe(true);
 
       model.confirmConvertDedup();
       await flush();
-      expect(repo.convertLead).toHaveBeenCalledWith("following");
+      expect(repo.convertCustomer).toHaveBeenCalledWith("following", {
+        confirmDedup: true,
+      });
       expect(model.showConvertDedupPrompt.value).toBe(false);
     });
 
@@ -384,14 +399,14 @@ describe("useLeadDetailModel", () => {
           { id: "cust-1", name: "C", phone: "080", email: "c@x.com" },
         ],
       });
-      await model.convertCustomer();
+      await model.convertCustomer({});
       await flush();
       expect(model.showConvertDedupPrompt.value).toBe(true);
 
       model.dismissConvertDedup();
       expect(model.showConvertDedupPrompt.value).toBe(false);
       expect(model.convertDedupResult.value).toBeNull();
-      expect(repo.convertLead).not.toHaveBeenCalled();
+      expect(repo.convertCustomer).not.toHaveBeenCalled();
     });
 
     it("skips dedup when lead has no phone/email", async () => {
@@ -405,6 +420,36 @@ describe("useLeadDetailModel", () => {
       const model = useLeadDetailModel(id, { repo });
       await flush();
       expect(model.lead.value).not.toBeNull();
+    });
+  });
+
+  describe("convertCase", () => {
+    it("calls repo.convertCase with input", async () => {
+      const { model, repo } = setupModel("converted-customer");
+      await flush();
+      const input = {
+        caseTypeCode: "dependent_visa",
+        ownerUserId: "suzuki",
+        groupId: "tokyo-2",
+      };
+      await model.convertCase(input);
+      await flush();
+      expect(repo.convertCase).toHaveBeenCalledWith(
+        "converted-customer",
+        input,
+      );
+    });
+
+    it("refetches detail after successful convertCase", async () => {
+      const { model, getDetailMock } = setupModel("converted-customer");
+      await flush();
+      const callCountBefore = getDetailMock.mock.calls.length;
+      await model.convertCase({
+        caseTypeCode: "work",
+        ownerUserId: "suzuki",
+      });
+      await flush();
+      expect(getDetailMock.mock.calls.length).toBeGreaterThan(callCountBefore);
     });
   });
 

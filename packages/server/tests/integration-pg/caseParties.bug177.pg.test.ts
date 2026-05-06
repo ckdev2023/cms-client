@@ -27,6 +27,7 @@ after(async () => {
 
 const DUMMY_ORG_ID = "00000000-0000-0000-0000-000000000001";
 const DUMMY_USER_ID = "00000000-0000-0000-0000-000000000010";
+const DUMMY_ROLE_ID = "00000000-0000-0000-0000-00000000a001";
 const DUMMY_CUSTOMER_ID = "00000000-0000-0000-0000-000000000020";
 
 async function seedOrgAndUser(pool: import("pg").Pool) {
@@ -36,10 +37,15 @@ async function seedOrgAndUser(pool: import("pg").Pool) {
     [DUMMY_ORG_ID],
   );
   await pool.query(
-    `INSERT INTO users (id, org_id, email, name, role)
-     VALUES ($1, $2, 'test@test.com', 'Test User', 'admin')
+    `INSERT INTO roles (id, org_id, code, name, is_system)
+     VALUES ($1, $2, 'owner', 'Owner', true) ON CONFLICT DO NOTHING`,
+    [DUMMY_ROLE_ID, DUMMY_ORG_ID],
+  );
+  await pool.query(
+    `INSERT INTO users (id, org_id, email, name, role_id)
+     VALUES ($1, $2, 'test@test.com', 'Test User', $3)
      ON CONFLICT DO NOTHING`,
-    [DUMMY_USER_ID, DUMMY_ORG_ID],
+    [DUMMY_USER_ID, DUMMY_ORG_ID, DUMMY_ROLE_ID],
   );
   await pool.query(
     `INSERT INTO customers (id, org_id, type, base_profile, contacts)

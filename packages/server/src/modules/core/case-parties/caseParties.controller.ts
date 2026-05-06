@@ -17,7 +17,8 @@ import {
 
 import { CASE_WRITE_ERROR_CODES } from "../cases/cases.types";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
 import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
@@ -120,7 +121,7 @@ export class CasePartiesController {
    * @param body 创建请求体
    * @returns 创建成功的关联人信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCasePartyBody) {
     const ctx = req.requestContext;
@@ -151,7 +152,7 @@ export class CasePartiesController {
    * @param query 查询参数
    * @returns 关联人列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListCasePartiesQuery) {
     const ctx = req.requestContext;
@@ -174,7 +175,7 @@ export class CasePartiesController {
    * @param body 更新请求体
    * @returns 更新后的关联人信息
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -212,7 +213,7 @@ export class CasePartiesController {
    * @param id 关联人 ID
    * @returns 删除成功状态
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

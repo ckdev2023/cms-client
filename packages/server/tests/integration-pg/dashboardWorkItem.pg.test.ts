@@ -32,6 +32,7 @@ after(async () => {
 
 const ORG_ID = "20000000-0000-4000-a000-000000000001";
 const USER_ID = "20000000-0000-4000-a000-000000000010";
+const ROLE_ID = "20000000-0000-4000-a000-00000000a001";
 const CUSTOMER_ID = "20000000-0000-4000-a000-000000000020";
 const CASE_ID_TODO = "20000000-0000-4000-a000-000000000030";
 const CASE_ID_DEADLINE = "20000000-0000-4000-a000-000000000031";
@@ -60,10 +61,15 @@ async function seedOrg(pool: Pool) {
 
 async function seedUser(pool: Pool) {
   await pool.query(
-    `INSERT INTO users (id, org_id, email, name, role)
-     VALUES ($1, $2, 'dashboard-test@test.com', 'Dashboard Tester', 'owner')
+    `INSERT INTO roles (id, org_id, code, name, is_system)
+     VALUES ($1, $2, 'owner', 'Owner', true) ON CONFLICT DO NOTHING`,
+    [ROLE_ID, ORG_ID],
+  );
+  await pool.query(
+    `INSERT INTO users (id, org_id, email, name, role_id)
+     VALUES ($1, $2, 'dashboard-test@test.com', 'Dashboard Tester', $3)
      ON CONFLICT DO NOTHING`,
-    [USER_ID, ORG_ID],
+    [USER_ID, ORG_ID, ROLE_ID],
   );
 }
 

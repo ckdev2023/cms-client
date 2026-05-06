@@ -14,7 +14,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { CasesService } from "../cases/cases.service";
 import {
   DOCUMENT_ITEM_ERROR_CODES,
@@ -203,7 +204,7 @@ export class DocumentItemsController {
    * @param body 创建请求体
    * @returns 创建成功的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateDocumentItemBody) {
     const ctx = req.requestContext;
@@ -230,7 +231,7 @@ export class DocumentItemsController {
    * @param query 查询参数
    * @returns 资料项列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListDocumentItemsQuery) {
     const ctx = req.requestContext;
@@ -254,7 +255,7 @@ export class DocumentItemsController {
    * @param query.caseId 案件 ID（必填）
    * @returns 完成率汇总
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get("completion-rate")
   async getCompletionRate(
     @Req() req: HttpRequest,
@@ -273,7 +274,7 @@ export class DocumentItemsController {
    * @param id 资料项 ID
    * @returns 资料项信息
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -291,7 +292,7 @@ export class DocumentItemsController {
    * @param body 更新请求体
    * @returns 更新后的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -316,7 +317,7 @@ export class DocumentItemsController {
    * @param body survey_data 更新请求体
    * @returns 更新后的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id/survey-data")
   async updateSurveyData(
     @Req() req: HttpRequest,
@@ -338,7 +339,7 @@ export class DocumentItemsController {
    * @param body 变更请求体
    * @returns 变更后的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/transition")
   async transition(
     @Req() req: HttpRequest,
@@ -360,7 +361,7 @@ export class DocumentItemsController {
    * @param body 豁免请求体
    * @returns 更新后的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/waive")
   async waive(
     @Req() req: HttpRequest,
@@ -393,7 +394,7 @@ export class DocumentItemsController {
    * @param id 资料项 ID
    * @returns 更新后的资料项
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/follow-up")
   async followUp(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -408,7 +409,7 @@ export class DocumentItemsController {
    * @param id 资料项 ID
    * @returns 删除成功状态
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

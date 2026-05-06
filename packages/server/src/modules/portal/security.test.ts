@@ -192,8 +192,8 @@ void test("P6: JobsController.enqueue requires staff role", () => {
   const enqueueIdx = src.indexOf("async enqueue(");
   const decoratorRegion = src.slice(Math.max(0, enqueueIdx - 200), enqueueIdx);
   assert.ok(
-    decoratorRegion.includes('@RequireRoles("staff")'),
-    'enqueue must have @RequireRoles("staff")',
+    decoratorRegion.includes("@RequirePermission(PERMISSION_CODES.CASE_EDIT)"),
+    "enqueue must have @RequirePermission(PERMISSION_CODES.CASE_EDIT)",
   );
 });
 

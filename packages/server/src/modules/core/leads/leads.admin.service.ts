@@ -8,9 +8,13 @@ import { Pool } from "pg";
 
 import type { Lead, LeadQueryRow } from "../../portal/model/portalEntities";
 import { mapLeadRow } from "../../portal/model/portalEntities";
+import { CasesService } from "../cases/cases.service";
+import { CustomersService } from "../customers/customers.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
+import { convertCase as runConvertCase } from "./leads.admin.convert-case";
+import { convertCustomer as runConvertCustomer } from "./leads.admin.convert";
 import {
   type LeadFollowup,
   type LeadFollowupQueryRow,
@@ -30,6 +34,8 @@ import {
 } from "./leads.admin.bulk";
 import {
   buildListWhere,
+  queryCaseSummary,
+  queryCustomerSummary,
   queryDedupCustomers,
   queryDedupLeads,
   syncLeadNextFields,
@@ -39,12 +45,15 @@ import {
   FOLLOWUP_COLS,
   LEAD_COLS,
   LOG_COLS,
+  LOG_FROM_WITH_ACTOR,
   UPDATABLE_FIELDS,
-  extractCustomerName,
   type LeadBulkAssignInput,
   type LeadBulkFollowupInput,
   type LeadBulkStatusInput,
   type LeadBulkTagsInput,
+  type LeadConvertCaseInput,
+  type LeadConvertCustomerInput,
+  type LeadCreateInput,
   type LeadDedupInput,
   type LeadDedupResult,
   type LeadDetailAggregate,
@@ -53,26 +62,49 @@ import {
   type LeadStatusInput,
   type LeadUpdateInput,
 } from "./leads.admin.types";
+import { insertLeadWithNumbering } from "./leads.create";
 
 export type { LeadListScope } from "./leads.admin.types";
-
-/**
- * Admin 側 Lead 管理サービス。
- */
+/** Admin 側 Lead 管理サービス。 */
 @Injectable()
 export class LeadsAdminService {
-  /**
-   * コンストラクタ。
-   * @param pool PostgreSQL 接続プール
-   * @param timelineService タイムラインサービス
+  /** コンストラクタ。
+   * @param pool DB 接続プール
+   * @param timelineService タイムライン
+   * @param customersService 顧客サービス
+   * @param casesService 案件サービス
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(TimelineService) private readonly timelineService: TimelineService,
+    @Inject(CustomersService)
+    private readonly customersService: CustomersService,
+    @Inject(CasesService) private readonly casesService: CasesService,
   ) {}
 
   /**
-   * Lead 一覧を取得する。
+   * Lead を新規作成する。
+   * @param ctx リクエストコンテキスト
+   * @param input 作成入力
+   * @returns 作成された Lead
+   */
+  async create(ctx: RequestContext, input: LeadCreateInput): Promise<Lead> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const ownerUserId = input.ownerUserId ?? ctx.userId;
+    const lead = await tenantDb.transaction((tx: TenantDbTx) =>
+      insertLeadWithNumbering(tx, ctx, input, ownerUserId),
+    );
+    await this.writeAudit(ctx, lead.id, "created", {
+      name: input.name,
+      phone: input.phone,
+      email: input.email,
+      sourceChannel: input.sourceChannel,
+      ownerUserId,
+    });
+    return lead;
+  }
+
+  /** Lead 一覧を取得する。
    * @param ctx リクエストコンテキスト
    * @param input 一覧検索条件
    * @returns Lead 一覧と総件数
@@ -105,8 +137,7 @@ export class LeadsAdminService {
     return { items: result.rows.map(mapLeadRow), total };
   }
 
-  /**
-   * Lead 詳細（フォローアップ/ログ/重複候補/転化先含む）を取得する。
+  /** Lead 詳細を取得する。
    * @param ctx リクエストコンテキスト
    * @param id Lead ID
    * @returns Lead 詳細集約
@@ -123,16 +154,16 @@ export class LeadsAdminService {
         [id],
       ),
       tenantDb.query<LeadLogQueryRow>(
-        `select ${LOG_COLS} from lead_logs where lead_id = $1 order by created_at desc limit 200`,
+        `select ${LOG_COLS} from ${LOG_FROM_WITH_ACTOR} where ll.lead_id = $1 order by ll.created_at desc limit 200`,
         [id],
       ),
     ]);
     const dedupHints = await this.buildDedupHints(ctx, lead);
     const convertedCustomer = lead.convertedCustomerId
-      ? await this.getCustomerSummary(ctx, lead.convertedCustomerId)
+      ? await queryCustomerSummary(tenantDb, lead.convertedCustomerId)
       : null;
     const convertedCase = lead.convertedCaseId
-      ? await this.getCaseSummary(ctx, lead.convertedCaseId)
+      ? await queryCaseSummary(tenantDb, lead.convertedCaseId)
       : null;
     return {
       lead,
@@ -221,8 +252,7 @@ export class LeadsAdminService {
     return mapLeadRow(row);
   }
 
-  /**
-   * Lead にフォローアップを追加する。
+  /** フォローアップを追加する。
    * @param ctx リクエストコンテキスト
    * @param leadId Lead ID
    * @param input フォローアップ入力
@@ -265,8 +295,7 @@ export class LeadsAdminService {
     return mapLeadFollowupRow(row);
   }
 
-  /**
-   * Lead のフォローアップ一覧を取得する。
+  /** フォローアップ一覧を取得する。
    * @param ctx リクエストコンテキスト
    * @param leadId Lead ID
    * @returns フォローアップ一覧
@@ -284,8 +313,7 @@ export class LeadsAdminService {
     return r.rows.map(mapLeadFollowupRow);
   }
 
-  /**
-   * Lead のログ一覧を取得する。
+  /** ログ一覧を取得する。
    * @param ctx リクエストコンテキスト
    * @param leadId Lead ID
    * @returns ログ一覧
@@ -294,37 +322,34 @@ export class LeadsAdminService {
     await this.getLeadOrThrow(ctx, leadId);
     const db = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const r = await db.query<LeadLogQueryRow>(
-      `select ${LOG_COLS} from lead_logs where lead_id = $1 order by created_at desc limit 200`,
+      `select ${LOG_COLS} from ${LOG_FROM_WITH_ACTOR} where ll.lead_id = $1 order by ll.created_at desc limit 200`,
       [leadId],
     );
     return r.rows.map(mapLeadLogRow);
   }
 
-  /**
-   * 一括担当者変更を実行する。
+  /** 一括担当者変更。
    * @param ctx リクエストコンテキスト
-   * @param input 一括担当者変更入力
+   * @param input 入力
    * @returns 更新件数
    */
   async bulkAssign(ctx: RequestContext, input: LeadBulkAssignInput) {
     return bulkAssign(this.bulkDeps(ctx), input);
   }
 
-  /**
-   * 一括フォローアップ追加を実行する。
+  /** 一括フォローアップ追加。
    * @param ctx リクエストコンテキスト
-   * @param input 一括フォローアップ入力
+   * @param input 入力
    * @returns 更新件数
    */
   async bulkFollowup(ctx: RequestContext, input: LeadBulkFollowupInput) {
     return bulkFollowup(this.bulkDeps(ctx), input);
   }
 
-  /**
-   * 一括ステータス変更を実行する。
+  /** 一括ステータス変更。
    * @param ctx リクエストコンテキスト
-   * @param input 一括ステータス変更入力
-   * @returns 更新件数とエラー一覧
+   * @param input 入力
+   * @returns 更新件数
    */
   async bulkStatus(ctx: RequestContext, input: LeadBulkStatusInput) {
     return bulkStatus(
@@ -334,31 +359,28 @@ export class LeadsAdminService {
     );
   }
 
-  /**
-   * 一括タグ更新を実行する。
+  /** 一括タグ更新。
    * @param ctx リクエストコンテキスト
-   * @param input 一括タグ入力
+   * @param input 入力
    * @returns 更新件数
    */
   async bulkTags(ctx: RequestContext, input: LeadBulkTagsInput) {
     return bulkTags(this.bulkDeps(ctx), input);
   }
 
-  /**
-   * 一括エクスポート用データ取得と監査ログ書き込み。
+  /** 一括エクスポート。
    * @param ctx リクエストコンテキスト
-   * @param leadIds エクスポート対象 Lead ID 群
+   * @param leadIds 対象 ID 群
    * @returns Lead 一覧
    */
   async bulkExport(ctx: RequestContext, leadIds: string[]) {
     return bulkExport(this.bulkDeps(ctx), leadIds);
   }
 
-  /**
-   * 電話番号/メールによる重複候補検索（org_id 強制フィルタ）。
+  /** 重複候補検索。
    * @param ctx リクエストコンテキスト
-   * @param input 重複検索入力
-   * @returns 重複候補の Lead と Customer
+   * @param input 検索入力
+   * @returns 重複候補
    */
   async dedup(
     ctx: RequestContext,
@@ -369,6 +391,54 @@ export class LeadsAdminService {
     const leads = await queryDedupLeads(tenantDb, ctx.orgId, input);
     const customers = await queryDedupCustomers(tenantDb, ctx.orgId, input);
     return { leads, customers };
+  }
+
+  /** Lead → Customer 転化。
+   * @param ctx リクエストコンテキスト
+   * @param leadId Lead ID
+   * @param input 転化入力
+   * @returns Lead + customerId
+   */
+  async convertCustomer(
+    ctx: RequestContext,
+    leadId: string,
+    input: LeadConvertCustomerInput,
+  ): Promise<{ lead: Lead; customerId: string }> {
+    return runConvertCustomer(
+      {
+        pool: this.pool,
+        customersService: this.customersService,
+        getLeadOrThrow: this.getLeadOrThrow.bind(this),
+        writeAudit: this.writeAudit.bind(this),
+      },
+      ctx,
+      leadId,
+      input,
+    );
+  }
+
+  /** Lead → Case 転化。
+   * @param ctx リクエストコンテキスト
+   * @param leadId Lead ID
+   * @param input 転化入力
+   * @returns Lead + caseId
+   */
+  async convertCase(
+    ctx: RequestContext,
+    leadId: string,
+    input: LeadConvertCaseInput,
+  ): Promise<{ lead: Lead; caseId: string }> {
+    return runConvertCase(
+      {
+        pool: this.pool,
+        casesService: this.casesService,
+        getLeadOrThrow: this.getLeadOrThrow.bind(this),
+        writeAudit: this.writeAudit.bind(this),
+      },
+      ctx,
+      leadId,
+      input,
+    );
   }
 
   // ── Private ──
@@ -414,28 +484,6 @@ export class LeadsAdminService {
       phone: lead.phone ?? undefined,
       email: lead.email ?? undefined,
     });
-  }
-
-  private async getCustomerSummary(ctx: RequestContext, cid: string) {
-    const db = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const r = await db.query<{ id: string; base_profile: unknown }>(
-      `select id, base_profile from customers where id = $1 limit 1`,
-      [cid],
-    );
-    const row = r.rows.at(0);
-    return row
-      ? { id: row.id, name: extractCustomerName(row.base_profile) }
-      : null;
-  }
-
-  private async getCaseSummary(ctx: RequestContext, caseId: string) {
-    const db = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const r = await db.query<{ id: string; case_no: string | null }>(
-      `select id, case_no from cases where id = $1 limit 1`,
-      [caseId],
-    );
-    const row = r.rows.at(0);
-    return row ? { id: row.id, caseNo: row.case_no } : null;
   }
 
   private bulkDeps(ctx: RequestContext) {

@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
 import { CasesService } from "../cases/cases.service";
 import { VALIDATION_SUBMISSION_ERROR_CODES } from "../cases/cases.types";
@@ -102,7 +103,7 @@ export class ReviewRecordsController {
    * @param body 请求体。
    * @returns 新建的复核记录。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateReviewRecordBody) {
     const ctx = req.requestContext;
@@ -126,7 +127,7 @@ export class ReviewRecordsController {
    * @param query 查询参数。
    * @returns 分页结果。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ReviewRecordListQuery) {
     const ctx = req.requestContext;
@@ -158,7 +159,7 @@ export class ReviewRecordsController {
    * @param id 复核记录 ID。
    * @returns 单条复核记录。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

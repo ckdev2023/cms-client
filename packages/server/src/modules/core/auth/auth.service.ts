@@ -83,9 +83,16 @@ export class AuthService {
 
     const result = await this.pool.query<LoginUserQueryRow>(
       `
-        select id, org_id, name, email, role, status, password_hash
-        from users
-        where lower(email) = lower($1)
+        select u.id,
+               u.org_id,
+               u.name,
+               u.email,
+               r.code as role,
+               u.status,
+               u.password_hash
+        from users u
+        join roles r on r.id = u.role_id
+        where lower(u.email) = lower($1)
         limit 2
       `,
       [email],

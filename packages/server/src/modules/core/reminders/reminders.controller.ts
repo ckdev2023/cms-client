@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
 import { RemindersService } from "./reminders.service";
@@ -130,7 +131,7 @@ export class RemindersController {
    * @param body 创建请求体
    * @returns 创建成功的提醒
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateReminderBody) {
     const ctx = req.requestContext;
@@ -171,7 +172,7 @@ export class RemindersController {
    * @param query 查询参数
    * @returns 提醒列表
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListRemindersQuery) {
     const ctx = req.requestContext;
@@ -191,7 +192,7 @@ export class RemindersController {
    * @param req HTTP 请求对象
    * @returns 到期的提醒列表
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Get("due")
   async due(@Req() req: HttpRequest) {
     const ctx = req.requestContext;
@@ -206,7 +207,7 @@ export class RemindersController {
    * @param id 提醒 ID
    * @returns 提醒信息
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -224,7 +225,7 @@ export class RemindersController {
    * @param body 更新请求体
    * @returns 更新后的提醒
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -246,7 +247,7 @@ export class RemindersController {
    * @param id 提醒 ID
    * @returns 操作结果
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;

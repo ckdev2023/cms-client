@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import SettingsView from "./SettingsView.vue";
 import { i18n, setAppLocale } from "../../i18n";
@@ -6,6 +6,10 @@ import {
   initOrgSettings,
   resetOrgSettings,
 } from "../../shared/model/useOrgSettings";
+import {
+  getDefaultPermissionsStore,
+  _resetDefaultPermissionsStoreForTest,
+} from "../../shared/model/PermissionsStore";
 
 vi.mock("./model/OrgSettingsRepository", () => ({
   createOrgSettingsRepository: () => ({
@@ -35,6 +39,30 @@ vi.mock("./model/GroupsRepository", () => ({
   }),
 }));
 
+vi.mock("./model/UsersAdminRepository", () => ({
+  createUsersAdminRepository: () => ({
+    listMembers: vi.fn().mockResolvedValue([]),
+    createMember: vi.fn(),
+    updateMemberRole: vi.fn(),
+    disableMember: vi.fn(),
+    activateMember: vi.fn(),
+    resetPassword: vi.fn(),
+    addGroupMember: vi.fn(),
+    removeGroupMember: vi.fn(),
+  }),
+}));
+
+vi.mock("./model/RolesAdminRepository", () => ({
+  createRolesAdminRepository: () => ({
+    listRoles: vi.fn().mockResolvedValue([]),
+    getRoleDetail: vi.fn(),
+    createRole: vi.fn(),
+    updateRole: vi.fn(),
+    setRolePermissions: vi.fn(),
+    deleteRole: vi.fn(),
+  }),
+}));
+
 function mountView() {
   return shallowMount(SettingsView, {
     global: {
@@ -55,32 +83,39 @@ describe("SettingsView — aria-current on sub-navigation", () => {
       initialStorageRoot: { rootLabel: null, rootPath: null },
     });
     setAppLocale("zh-CN");
+
+    const store = getDefaultPermissionsStore();
+    store._setForTest(["group.manage", "user.manage", "settings.write"]);
+  });
+
+  afterEach(() => {
+    _resetDefaultPermissionsStoreForTest();
   });
 
   it("default active panel (group-management) has aria-current='page'", () => {
     const wrapper = mountView();
     const buttons = getSubnavButtons(wrapper);
 
-    expect(buttons.length).toBe(3);
+    expect(buttons.length).toBe(4);
     expect(buttons[0]!.attributes("aria-current")).toBe("page");
     expect(buttons[1]!.attributes("aria-current")).toBeUndefined();
     expect(buttons[2]!.attributes("aria-current")).toBeUndefined();
+    expect(buttons[3]!.attributes("aria-current")).toBeUndefined();
   });
 
   it("switches aria-current to storage-root tab after click", async () => {
     const wrapper = mountView();
     const buttons = getSubnavButtons(wrapper);
 
-    await buttons[2]!.trigger("click");
+    await buttons[3]!.trigger("click");
     await wrapper.vm.$nextTick();
 
     const refreshed = getSubnavButtons(wrapper);
     expect(refreshed[0]!.attributes("aria-current")).toBeUndefined();
-    expect(refreshed[1]!.attributes("aria-current")).toBeUndefined();
-    expect(refreshed[2]!.attributes("aria-current")).toBe("page");
+    expect(refreshed[3]!.attributes("aria-current")).toBe("page");
   });
 
-  it("switches aria-current to visibility-config tab after click", async () => {
+  it("switches aria-current to member-management tab after click", async () => {
     const wrapper = mountView();
     const buttons = getSubnavButtons(wrapper);
 
@@ -90,13 +125,12 @@ describe("SettingsView — aria-current on sub-navigation", () => {
     const refreshed = getSubnavButtons(wrapper);
     expect(refreshed[0]!.attributes("aria-current")).toBeUndefined();
     expect(refreshed[1]!.attributes("aria-current")).toBe("page");
-    expect(refreshed[2]!.attributes("aria-current")).toBeUndefined();
   });
 
   it("only one button has aria-current at any time", async () => {
     const wrapper = mountView();
 
-    for (let i = 0; i < 3; i++) {
+    for (let i = 0; i < 4; i++) {
       const buttons = getSubnavButtons(wrapper);
       await buttons[i]!.trigger("click");
       await wrapper.vm.$nextTick();

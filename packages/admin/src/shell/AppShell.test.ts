@@ -7,6 +7,7 @@ import {
   initSearchRepository,
   resetSearchRepository,
 } from "../shared/model/useSearchRepository";
+import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 
 const stubs = {
   SideNav: { template: "<aside class='stub-sidenav' />" },
@@ -81,6 +82,7 @@ describe("AppShell", () => {
       getToken: () => "test-token",
       request: vi.fn(),
     });
+    getDefaultPermissionsStore()._setForTest(["case.create"]);
   });
 
   it("renders the app-shell root element", async () => {

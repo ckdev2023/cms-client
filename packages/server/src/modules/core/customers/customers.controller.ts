@@ -14,7 +14,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
@@ -120,7 +121,7 @@ export class CustomersController {
    * @param body - 请求体。
    * @returns 创建成功的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCustomerBody) {
     const ctx = requireCtx(req);
@@ -139,7 +140,7 @@ export class CustomersController {
    * @param query - 查询参数。
    * @returns 客户列表与总数。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListCustomersQuery) {
     const ctx = requireCtx(req);
@@ -165,7 +166,7 @@ export class CustomersController {
    * @param body - 去重检查参数。
    * @returns 命中结果列表。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post("check-duplicates")
   async checkDuplicates(
     @Req() req: HttpRequest,
@@ -189,7 +190,7 @@ export class CustomersController {
    * @param body - 批量指派请求体。
    * @returns 更新结果。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post("bulk-assign-owner")
   async bulkAssignOwner(
     @Req() req: HttpRequest,
@@ -212,7 +213,7 @@ export class CustomersController {
    * @param body - 批量调组请求体。
    * @returns 更新结果。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post("bulk-change-group")
   async bulkChangeGroup(
     @Req() req: HttpRequest,
@@ -235,7 +236,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/questionnaire/send")
   async sendBmvQuestionnaire(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -250,7 +251,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/quote/generate")
   async generateBmvQuote(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -265,7 +266,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/sign/record")
   async recordBmvSign(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -281,7 +282,7 @@ export class CustomersController {
    * @param body - 问卷保存请求体。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/save-survey")
   async saveBmvSurvey(
     @Req() req: HttpRequest,
@@ -308,7 +309,7 @@ export class CustomersController {
    * @param body - 报价修改请求体。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/quote/modify")
   async modifyBmvQuote(
     @Req() req: HttpRequest,
@@ -333,7 +334,7 @@ export class CustomersController {
    * @param body - 可选覆写参数。
    * @returns 创建的案件信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Post(":id/bmv/transition-to-case")
   async transitionBmvToCase(
     @Req() req: HttpRequest,
@@ -355,7 +356,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns BMV 聚合 DTO。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_VIEW)
   @Get(":id/bmv")
   async getBmvAggregate(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -369,7 +370,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns 匹配的客户信息。
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);
@@ -385,7 +386,7 @@ export class CustomersController {
    * @param body - 更新请求体。
    * @returns 更新后的客户信息。
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,
@@ -408,7 +409,7 @@ export class CustomersController {
    * @param id - 客户 ID。
    * @returns 删除成功状态。
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.CUSTOMER_EDIT)
   @Delete(":id")
   async delete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = requireCtx(req);

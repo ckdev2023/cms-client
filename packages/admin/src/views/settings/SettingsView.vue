@@ -2,6 +2,7 @@
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
+import { usePermission } from "../../shared/composables/usePermission";
 import { useOrgSettings } from "../../shared/model/useOrgSettings";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import GroupListPanel from "./components/GroupListPanel.vue";
@@ -10,12 +11,29 @@ import GroupMemberList from "./components/GroupMemberList.vue";
 import GroupStatsPanel from "./components/GroupStatsPanel.vue";
 import GroupNameModal from "./components/GroupNameModal.vue";
 import GroupDisableModal from "./components/GroupDisableModal.vue";
+import MemberListPanel from "./components/MemberListPanel.vue";
+import MemberCreateModal from "./components/MemberCreateModal.vue";
+import MemberRoleModal from "./components/MemberRoleModal.vue";
+import PasswordResetResultModal from "./components/PasswordResetResultModal.vue";
+import RoleListPanel from "./components/RoleListPanel.vue";
+import RoleDetailPanel from "./components/RoleDetailPanel.vue";
+import RoleCreateModal from "./components/RoleCreateModal.vue";
+import RoleDeleteModal from "./components/RoleDeleteModal.vue";
+import MemberOverridesDrawer from "./components/MemberOverridesDrawer.vue";
+import OverrideAddModal from "./components/OverrideAddModal.vue";
+import OverrideDeleteModal from "./components/OverrideDeleteModal.vue";
 import VisibilityConfigPanel from "./components/VisibilityConfigPanel.vue";
 import StorageRootPanel from "./components/StorageRootPanel.vue";
 import SettingsToast from "./components/SettingsToast.vue";
 import { createOrgSettingsRepository } from "./model/OrgSettingsRepository";
 import { createGroupsRepository } from "./model/GroupsRepository";
+import { createUsersAdminRepository } from "./model/UsersAdminRepository";
+import { createRolesAdminRepository } from "./model/RolesAdminRepository";
+import { createPermissionOverridesRepository } from "./model/PermissionOverridesRepository";
 import { useSettingsPage } from "./model/useSettingsPage";
+import { useMembersPage } from "./model/useMembersPage";
+import { useRolesPage } from "./model/useRolesPage";
+import { useMemberOverrides } from "./model/useMemberOverrides";
 import {
   SETTINGS_SUBNAV_ITEMS,
   SAMPLE_GROUPS,
@@ -27,7 +45,14 @@ import {
 /** 系统设置页入口，编排子导航切换与三个配置面板。 */
 const { t } = useI18n();
 const route = useRoute();
+const { has: hasPerm } = usePermission();
 const orgSettingsController = useOrgSettings();
+
+const visibleSubnavItems = computed(() =>
+  SETTINGS_SUBNAV_ITEMS.filter(
+    (item) => !item.requiredPermission || hasPerm(item.requiredPermission),
+  ),
+);
 const routeTab = computed(() => {
   const q = route?.query;
   return typeof q?.tab === "string" ? q.tab : undefined;
@@ -43,6 +68,21 @@ const page = useSettingsPage({
   orgSettingsController,
   isAdmin: ref(true),
   routeTab,
+});
+
+const membersPage = useMembersPage({
+  repository: createUsersAdminRepository(),
+});
+
+const rolesAdminRepo = createRolesAdminRepository();
+
+const rolesPage = useRolesPage({
+  repository: rolesAdminRepo,
+});
+
+const overridesPage = useMemberOverrides({
+  overridesRepository: createPermissionOverridesRepository(),
+  rolesRepository: rolesAdminRepo,
 });
 </script>
 
@@ -63,7 +103,7 @@ const page = useSettingsPage({
         :aria-label="t('settings.subnav.ariaLabel')"
       >
         <button
-          v-for="item in SETTINGS_SUBNAV_ITEMS"
+          v-for="item in visibleSubnavItems"
           :key="item.id"
           type="button"
           class="settings-view__subnav-btn"
@@ -136,6 +176,47 @@ const page = useSettingsPage({
             </aside>
           </div>
         </template>
+        <template v-else-if="page.activePanel.value === 'member-management'">
+          <MemberListPanel
+            :members="membersPage.filteredMembers.value"
+            :loading="membersPage.loading.value"
+            :search-query="membersPage.searchQuery.value"
+            :status-filter="membersPage.statusFilter.value"
+            :error="membersPage.error.value"
+            @update:search-query="membersPage.searchQuery.value = $event"
+            @update:status-filter="membersPage.statusFilter.value = $event"
+            @open-create="membersPage.createModalOpen.value = true"
+            @change-role="membersPage.openRoleModal($event)"
+            @disable="membersPage.disableMember($event)"
+            @activate="membersPage.activateMember($event)"
+            @reset-password="membersPage.resetPassword($event)"
+            @open-overrides="overridesPage.openDrawer($event)"
+          />
+        </template>
+        <template v-else-if="page.activePanel.value === 'role-management'">
+          <RoleDetailPanel
+            v-if="
+              rolesPage.view.value === 'detail' && rolesPage.selectedRole.value
+            "
+            :role="rolesPage.selectedRole.value"
+            :saving="rolesPage.saving.value"
+            @back="rolesPage.backToList()"
+            @update="(id, input) => rolesPage.updateRole(id, input)"
+            @save-permissions="
+              (id, perms) => rolesPage.savePermissions(id, perms)
+            "
+            @copy="rolesPage.openCreate($event)"
+          />
+          <RoleListPanel
+            v-else
+            :roles="rolesPage.roles.value"
+            :loading="rolesPage.loading.value"
+            :error="rolesPage.error.value"
+            @select="rolesPage.selectRole($event)"
+            @open-create="rolesPage.openCreate()"
+            @open-delete="rolesPage.openDelete($event)"
+          />
+        </template>
         <VisibilityConfigPanel
           v-else-if="page.activePanel.value === 'visibility-config'"
           :visibility="page.visibility.value"
@@ -183,11 +264,77 @@ const page = useSettingsPage({
       @confirm="page.disableGroup()"
     />
 
+    <MemberCreateModal
+      :open="membersPage.createModalOpen.value"
+      :groups="page.groups.value"
+      @close="membersPage.createModalOpen.value = false"
+      @confirm="membersPage.createMember($event)"
+    />
+
+    <MemberRoleModal
+      :open="membersPage.roleModalOpen.value"
+      :member="membersPage.roleModalTarget.value"
+      @close="membersPage.roleModalOpen.value = false"
+      @confirm="(userId, role) => membersPage.updateRole(userId, role)"
+    />
+
+    <PasswordResetResultModal
+      :open="membersPage.passwordResultOpen.value"
+      :temporary-password="membersPage.temporaryPassword.value"
+      @close="membersPage.closePasswordResult()"
+    />
+
+    <RoleCreateModal
+      :open="rolesPage.createModalOpen.value"
+      :from-role="rolesPage.createFromRole.value"
+      @close="rolesPage.createModalOpen.value = false"
+      @confirm="rolesPage.createRole($event)"
+    />
+
+    <RoleDeleteModal
+      :open="rolesPage.deleteModalOpen.value"
+      :role="rolesPage.deleteTarget.value"
+      :saving="rolesPage.saving.value"
+      @close="rolesPage.deleteModalOpen.value = false"
+      @confirm="rolesPage.deleteRole($event)"
+    />
+
     <SettingsToast
       :visible="page.toast.visible.value"
       :title="t(page.toast.titleKey.value)"
       :description="t(page.toast.descriptionKey.value)"
       @dismiss="page.toast.hide()"
+    />
+
+    <MemberOverridesDrawer
+      :open="overridesPage.open.value"
+      :member="overridesPage.member.value"
+      :loading="overridesPage.loading.value"
+      :saving="overridesPage.saving.value"
+      :error="overridesPage.error.value"
+      :effective-rows="overridesPage.effectiveRows.value"
+      :overrides="overridesPage.overrides.value"
+      :audit-expanded="overridesPage.auditExpanded.value"
+      @close="overridesPage.closeDrawer()"
+      @open-add="overridesPage.openAddModal()"
+      @open-delete="overridesPage.openDeleteModal($event)"
+      @toggle-audit="overridesPage.toggleAudit()"
+    />
+
+    <OverrideAddModal
+      :open="overridesPage.addModalOpen.value"
+      :available-permissions="overridesPage.availablePermissionsForAdd.value"
+      :saving="overridesPage.saving.value"
+      @close="overridesPage.addModalOpen.value = false"
+      @confirm="overridesPage.addOverride($event)"
+    />
+
+    <OverrideDeleteModal
+      :open="overridesPage.deleteModalOpen.value"
+      :override="overridesPage.deleteTarget.value"
+      :saving="overridesPage.saving.value"
+      @close="overridesPage.deleteModalOpen.value = false"
+      @confirm="overridesPage.deleteOverride($event)"
     />
   </div>
 </template>

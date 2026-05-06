@@ -21,11 +21,24 @@ export type LeadRepositoryErrorCode =
   | "VALIDATION_ERROR"
   | "LEAD_WRITE_ERROR";
 
+/** 服务端响应体中的结构化阻断项（如 BMV 建案门禁的 blocker）。 */
+export interface ServerBlocker {
+  /**
+   *
+   */
+  code: string;
+  /**
+   *
+   */
+  message?: string;
+}
+
 interface LeadRepositoryErrorInput {
   code: LeadRepositoryErrorCode;
   message: string;
   status?: number;
   serverErrorCode?: string;
+  serverBlockers?: ServerBlocker[];
   cause?: unknown;
 }
 
@@ -81,6 +94,8 @@ export class LeadRepositoryError extends Error {
    *
    */
   readonly serverErrorCode?: string;
+  /** 服务端返回的门禁阻断项列表（对应 BMV 建案门禁等结构化响应）。 */
+  readonly serverBlockers?: ServerBlocker[];
 
   /**
    * 创建包含错误码、可选 HTTP 状态码及服务端错误码的仓库层错误。
@@ -93,6 +108,7 @@ export class LeadRepositoryError extends Error {
     this.code = input.code;
     this.status = input.status;
     this.serverErrorCode = input.serverErrorCode;
+    this.serverBlockers = input.serverBlockers;
   }
 }
 
@@ -116,8 +132,11 @@ function readMessageFromBody(body: unknown): string | null {
 }
 
 function readErrorCodeFromBody(body: unknown): string | null {
-  if (!body || typeof body !== "object") return null;
+  if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const record = body as Record<string, unknown>;
+
+  if (typeof record.code === "string" && record.code.trim())
+    return record.code.trim();
 
   if (typeof record.errorCode === "string" && record.errorCode.trim())
     return record.errorCode.trim();
@@ -130,6 +149,27 @@ function readErrorCodeFromBody(body: unknown): string | null {
     if (/^[A-Z0-9_]+$/.test(candidate)) return candidate;
   }
   return null;
+}
+
+function readServerBlockersFromBody(
+  body: unknown,
+): ServerBlocker[] | undefined {
+  if (!body || typeof body !== "object" || Array.isArray(body))
+    return undefined;
+  const record = body as Record<string, unknown>;
+  if (!Array.isArray(record.blockers)) return undefined;
+
+  const blockers: ServerBlocker[] = [];
+  for (const item of record.blockers) {
+    if (!item || typeof item !== "object") continue;
+    const entry = item as Record<string, unknown>;
+    if (typeof entry.code !== "string" || !entry.code.trim()) continue;
+    blockers.push({
+      code: entry.code.trim(),
+      message: typeof entry.message === "string" ? entry.message : undefined,
+    });
+  }
+  return blockers.length > 0 ? blockers : undefined;
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -158,7 +198,10 @@ function buildBadResponseError(
   response: Response,
   body: unknown,
 ): LeadRepositoryError {
-  const serverErrorCode = readErrorCodeFromBody(body);
+  const serverErrorCode =
+    response.status === 401 ? null : readErrorCodeFromBody(body);
+  const serverBlockers =
+    response.status === 401 ? undefined : readServerBlockersFromBody(body);
 
   const code: LeadRepositoryErrorCode =
     response.status === 401
@@ -173,6 +216,7 @@ function buildBadResponseError(
     code,
     status: response.status,
     serverErrorCode: serverErrorCode ?? undefined,
+    serverBlockers,
     message:
       readMessageFromBody(body) ??
       (response.status === 401

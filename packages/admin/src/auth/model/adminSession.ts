@@ -4,6 +4,7 @@ import {
   type AdminLoginPayload,
   type AdminLoginResponse,
 } from "./adminLoginApi";
+import { readTokenExpiryMs } from "./adminSession.jwt";
 
 export { AdminLoginRequestError } from "./adminLoginApi";
 export type {
@@ -36,6 +37,10 @@ export interface AdminSessionStorageLike {
  *
  */
 export interface AdminUser {
+  /**
+   *
+   */
+  id: string;
   /**
    *
    */
@@ -147,6 +152,7 @@ function buildInitials(name: string, fallbackInitials: string): string {
 }
 
 function buildUserProfile(
+  id: string,
   email: string,
   role = "管理员",
   name?: string,
@@ -156,6 +162,7 @@ function buildUserProfile(
   const resolvedName = name?.trim() || derived.name;
 
   return {
+    id,
     name: resolvedName,
     email: normalizedEmail,
     role,
@@ -178,6 +185,7 @@ function isAdminUser(value: unknown): value is AdminUser {
 
   const candidate = value as Record<string, unknown>;
   return (
+    typeof candidate.id === "string" &&
     typeof candidate.name === "string" &&
     typeof candidate.email === "string" &&
     typeof candidate.role === "string" &&
@@ -194,33 +202,6 @@ function isAdminSession(value: unknown): value is AdminSession {
     typeof candidate.loggedInAt === "number" &&
     isAdminUser(candidate.user)
   );
-}
-
-function decodeBase64UrlToString(value: string): string | null {
-  try {
-    const normalized = value.replace(/-/g, "+").replace(/_/g, "/");
-    const padding = "=".repeat((4 - (normalized.length % 4 || 4)) % 4);
-    return atob(`${normalized}${padding}`);
-  } catch {
-    return null;
-  }
-}
-
-function readTokenExpiryMs(token: string): number | null {
-  const parts = token.split(".");
-  if (parts.length !== 3) return null;
-
-  const payloadText = decodeBase64UrlToString(parts[1] ?? "");
-  if (!payloadText) return null;
-
-  try {
-    const payload = JSON.parse(payloadText) as { exp?: unknown };
-    return typeof payload.exp === "number" && Number.isFinite(payload.exp)
-      ? payload.exp * 1000
-      : null;
-  } catch {
-    return null;
-  }
 }
 
 function resolveActiveSession(
@@ -246,6 +227,7 @@ function createSessionFromLoginResponse(
   return {
     token: result.token,
     user: buildUserProfile(
+      result.user.id,
       result.user.email,
       result.user.role,
       result.user.name,
@@ -260,7 +242,10 @@ function createDemoSession(
 ): AdminSession {
   return {
     token: `demo-token:${normalizeEmail(payload.email)}`,
-    user: buildUserProfile(payload.email),
+    user: buildUserProfile(
+      "00000000-0000-0000-0000-000000000000",
+      payload.email,
+    ),
     loggedInAt: now(),
   };
 }
@@ -384,6 +369,7 @@ export function createAdminSessionController(
   return {
     session: computed(() => state.sessionState.value),
     currentUser: computed(() => state.sessionState.value?.user ?? null),
+    currentUserId: computed(() => state.sessionState.value?.user?.id ?? null),
     isAuthenticated: computed(() => state.sessionState.value !== null),
     isAdmin: computed(() =>
       isPrivilegedAdminRole(state.sessionState.value?.user?.role),
@@ -489,6 +475,16 @@ export async function loginAdmin(
 
   const result = await requestAdminLogin(payload, request);
   return controller.loginFromResponse(result, storage);
+}
+
+/**
+ * 获取当前登录用户的 UUID；未登录时返回 `null`。
+ *
+ * @returns 当前用户 id 或 `null`
+ */
+export function useCurrentUserId(): string | null {
+  adminSessionController.hydrate(getBrowserSessionStorage());
+  return adminSessionController.currentUserId.value;
 }
 
 /**

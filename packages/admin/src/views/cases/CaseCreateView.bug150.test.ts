@@ -12,6 +12,7 @@ import {
 } from "../../auth/model/adminSession";
 
 function persistTestSession(user: {
+  id: string;
   name: string;
   email: string;
   role: string;
@@ -84,6 +85,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
 
   it("prepends the logged-in user (Local Admin) to the owner dropdown when not in catalog", async () => {
     persistTestSession({
+      id: "u-local-admin",
       name: "Local Admin",
       email: "admin@local.test",
       role: "admin",
@@ -113,6 +115,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
 
   it("does not duplicate when the logged-in user already matches a catalog entry", async () => {
     persistTestSession({
+      id: "u-suzuki",
       name: "鈴木",
       email: "suzuki@example.com",
       role: "manager",

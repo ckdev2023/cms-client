@@ -1,5 +1,7 @@
 import type { Pool, QueryResultRow } from "pg";
 
+import type { CasesService } from "../cases/cases.service";
+import type { CustomersService } from "../customers/customers.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import type { TimelineService } from "../timeline/timeline.service";
 import { LeadsAdminService } from "./leads.admin.service";
@@ -156,17 +158,59 @@ export function logRow(overrides?: Record<string, unknown>) {
     log_type: "field_change",
     payload: JSON.stringify({ name: { from: "Old", to: "New" } }),
     created_by: USER_A,
+    created_by_display_name: "田中 太郎",
     created_at: NOW,
     ...overrides,
   };
 }
 
 /**
+ * 创建 CustomersService 测试 stub。
+ * @param overrides 需要覆写的方法。
+ * @returns 测试 CustomersService stub。
+ */
+export function makeCustomersService(
+  overrides?: Record<string, unknown>,
+): CustomersService {
+  return {
+    create: () => Promise.resolve({ id: "cust-new-001", type: "individual" }),
+    ...overrides,
+  } as unknown as CustomersService;
+}
+
+/**
+ * 创建 CasesService 测试 stub。
+ * @param overrides 需要覆写的方法。
+ * @returns 测试 CasesService stub。
+ */
+export function makeCasesService(
+  overrides?: Record<string, unknown>,
+): CasesService {
+  return {
+    create: () =>
+      Promise.resolve({ id: "case-new-001", caseTypeCode: "general" }),
+    ...overrides,
+  } as unknown as CasesService;
+}
+
+/**
  * 创建 LeadsAdminService 测试实例。
  * @param pool 测试连接池。
  * @param timeline 可选 Timeline stub。
+ * @param customers 可选 CustomersService stub。
+ * @param cases 可选 CasesService stub。
  * @returns LeadsAdminService 实例。
  */
-export function svc(pool: Pool, timeline?: TimelineService) {
-  return new LeadsAdminService(pool, timeline ?? makeTimeline());
+export function svc(
+  pool: Pool,
+  timeline?: TimelineService,
+  customers?: CustomersService,
+  cases?: CasesService,
+) {
+  return new LeadsAdminService(
+    pool,
+    timeline ?? makeTimeline(),
+    customers ?? makeCustomersService(),
+    cases ?? makeCasesService(),
+  );
 }

@@ -3,6 +3,12 @@ import type { PoolClient } from "pg";
 import { createPgPool } from "../infra/db/createPgPool";
 import { readLocalAdminBootstrapInput } from "../modules/core/auth/localAdminBootstrap";
 import { BMV_REQUIREMENT_BLUEPRINT } from "../modules/core/cases/bmvTemplateConfig";
+import {
+  seedConversationAppUser,
+  seedConversationLead,
+  seedConversationMessages,
+  seedConversations,
+} from "./seedDevConversations";
 
 const SEED_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const SEED_USER_ID = "00000000-0000-4000-8000-000000000011";
@@ -398,6 +404,10 @@ export function buildSeedSteps(): SeedStep[] {
     ["crossCaseLink", seedCrossCaseLink],
     ["documentChecklistTemplate", seedDocumentChecklistTemplate],
     ["documentTemplates", seedDocumentTemplates],
+    ["conversationAppUser", seedConversationAppUser],
+    ["conversationLead", seedConversationLead],
+    ["conversations", seedConversations],
+    ["conversationMessages", seedConversationMessages],
   ];
 }
 
@@ -433,7 +443,7 @@ async function main() {
     } else {
       await client.query("COMMIT");
       process.stdout.write(
-        `[seed-dev] done — 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates\n`,
+        `[seed-dev] done — 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
       );
     }
   } catch (error) {

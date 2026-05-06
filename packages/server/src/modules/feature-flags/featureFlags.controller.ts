@@ -10,7 +10,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../core/auth/auth.decorators";
+import { RequirePermission } from "../core/auth/auth.decorators";
+import { PERMISSION_CODES } from "../core/auth/permissions.codes";
 import type { RequestContext } from "../core/tenancy/requestContext";
 import type { FeatureFlagRollout } from "./featureFlags.model";
 import { FeatureFlagsService } from "./featureFlags.service";
@@ -150,7 +151,7 @@ export class FeatureFlagsController {
    * @param body 请求体
    * @returns upsert 后的 flag
    */
-  @RequireRoles("manager")
+  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
   @Post()
   async upsert(@Req() req: HttpRequest, @Body() body: UpsertBody) {
     const ctx = req.requestContext;

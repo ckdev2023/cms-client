@@ -3,6 +3,8 @@
  */
 export type SettingsPanel =
   | "group-management"
+  | "member-management"
+  | "role-management"
   | "visibility-config"
   | "storage-root";
 
@@ -172,6 +174,10 @@ export interface SettingsSubNavItem {
    *
    */
   defaultActive?: boolean;
+  /**
+   * 該タブの表示に必要な権限コード。省略時は常に表示。
+   */
+  requiredPermission?: string;
 }
 
 /**

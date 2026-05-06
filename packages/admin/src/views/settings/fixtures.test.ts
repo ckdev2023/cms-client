@@ -21,8 +21,8 @@ import {
 
 describe("settings/fixtures", () => {
   describe("sub-navigation", () => {
-    it("has exactly 3 P0 panels", () => {
-      expect(SETTINGS_SUBNAV_ITEMS).toHaveLength(3);
+    it("has exactly 5 panels (3 P0 + member-management + role-management)", () => {
+      expect(SETTINGS_SUBNAV_ITEMS).toHaveLength(5);
     });
 
     it("default panel is group-management", () => {
@@ -31,6 +31,12 @@ describe("settings/fixtures", () => {
         (item) => item.defaultActive,
       );
       expect(defaultItem?.id).toBe(DEFAULT_PANEL);
+    });
+
+    it("each panel declares a requiredPermission", () => {
+      for (const item of SETTINGS_SUBNAV_ITEMS) {
+        expect(item.requiredPermission).toBeTruthy();
+      }
     });
   });
 

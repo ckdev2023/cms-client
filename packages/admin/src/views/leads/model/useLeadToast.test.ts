@@ -1,113 +1,69 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import { useLeadToast } from "./useLeadToast";
-
-function createFakeTimers() {
-  const pending: Array<{ cb: () => void; delay: number; id: number }> = [];
-  let seq = 0;
-
-  const fakeSetTimeout = ((cb: () => void, delay: number) => {
-    seq += 1;
-    pending.push({ cb, delay, id: seq });
-    return seq;
-  }) as unknown as typeof setTimeout;
-
-  const fakeClearTimeout = ((id: number) => {
-    const idx = pending.findIndex((p) => p.id === id);
-    if (idx !== -1) pending.splice(idx, 1);
-  }) as unknown as typeof clearTimeout;
-
-  function flush() {
-    const copy = [...pending];
-    pending.length = 0;
-    copy.forEach((p) => p.cb());
-  }
-
-  return { fakeSetTimeout, fakeClearTimeout, flush, pending };
-}
+import { createToastController } from "../../../shared/model/useToast";
 
 describe("useLeadToast", () => {
-  it("starts hidden", () => {
-    const { fakeSetTimeout, fakeClearTimeout } = createFakeTimers();
-    const toast = useLeadToast({
-      setTimeoutFn: fakeSetTimeout,
-      clearTimeoutFn: fakeClearTimeout,
-    });
+  function setup(duration?: number) {
+    const controller = createToastController();
+    const toast = useLeadToast({ duration, controller });
+    return { toast, controller };
+  }
 
-    expect(toast.visible.value).toBe(false);
-    expect(toast.title.value).toBe("");
-    expect(toast.description.value).toBe("");
-  });
-
-  it("shows toast with provided payload", () => {
-    const { fakeSetTimeout, fakeClearTimeout } = createFakeTimers();
-    const toast = useLeadToast({
-      setTimeoutFn: fakeSetTimeout,
-      clearTimeoutFn: fakeClearTimeout,
-    });
+  it("delegates show() to shared toast controller", () => {
+    const { toast, controller } = setup();
 
     toast.show({ title: "Hello", description: "World" });
 
-    expect(toast.visible.value).toBe(true);
-    expect(toast.title.value).toBe("Hello");
-    expect(toast.description.value).toBe("World");
+    expect(controller.items.value).toHaveLength(1);
+    expect(controller.items.value[0].title).toBe("Hello");
+    expect(controller.items.value[0].description).toBe("World");
+    expect(controller.items.value[0].tone).toBe("success");
   });
 
-  it("auto-hides after the configured duration", () => {
-    const { fakeSetTimeout, fakeClearTimeout, flush } = createFakeTimers();
-    const toast = useLeadToast({
-      duration: 2000,
-      setTimeoutFn: fakeSetTimeout,
-      clearTimeoutFn: fakeClearTimeout,
-    });
+  it("uses custom duration", () => {
+    const { toast, controller } = setup(5000);
 
     toast.show({ title: "T", description: "D" });
-    expect(toast.visible.value).toBe(true);
 
-    flush();
-    expect(toast.visible.value).toBe(false);
+    expect(controller.items.value[0].durationMs).toBe(5000);
   });
 
-  it("replaces the current toast when show is called again", () => {
-    const { fakeSetTimeout, fakeClearTimeout, pending } = createFakeTimers();
-    const toast = useLeadToast({
-      setTimeoutFn: fakeSetTimeout,
-      clearTimeoutFn: fakeClearTimeout,
+  it("dismisses previous toast when show is called again", () => {
+    const removed: string[] = [];
+    const controller = createToastController({
+      scheduleRemoval: (id) => {
+        removed.push(id);
+      },
     });
+    const toast = useLeadToast({ controller });
 
     toast.show({ title: "First", description: "1" });
-    expect(pending.length).toBe(1);
+    const firstId = controller.items.value[0]?.id;
 
     toast.show({ title: "Second", description: "2" });
-    expect(pending.length).toBe(1);
-    expect(toast.title.value).toBe("Second");
+
+    const remaining = controller.items.value.filter((i) => i.id === firstId);
+    expect(remaining).toHaveLength(0);
+    expect(controller.items.value).toHaveLength(1);
+    expect(controller.items.value[0].title).toBe("Second");
   });
 
-  it("hide() cancels the timer and hides immediately", () => {
-    const { fakeSetTimeout, fakeClearTimeout, pending } = createFakeTimers();
-    const toast = useLeadToast({
-      setTimeoutFn: fakeSetTimeout,
-      clearTimeoutFn: fakeClearTimeout,
+  it("hide() dismisses the current toast", () => {
+    const controller = createToastController({
+      scheduleRemoval: () => {},
     });
+    const toast = useLeadToast({ controller });
 
     toast.show({ title: "X", description: "Y" });
-    expect(pending.length).toBe(1);
+    expect(controller.items.value).toHaveLength(1);
 
     toast.hide();
-    expect(toast.visible.value).toBe(false);
-    expect(pending.length).toBe(0);
+    expect(controller.items.value).toHaveLength(0);
   });
 
-  it("uses real timers by default", () => {
-    vi.useFakeTimers();
-    try {
-      const toast = useLeadToast({ duration: 500 });
-      toast.show({ title: "A", description: "B" });
-      expect(toast.visible.value).toBe(true);
-
-      vi.advanceTimersByTime(600);
-      expect(toast.visible.value).toBe(false);
-    } finally {
-      vi.useRealTimers();
-    }
+  it("hide() is a no-op when nothing is shown", () => {
+    const { toast, controller } = setup();
+    toast.hide();
+    expect(controller.items.value).toHaveLength(0);
   });
 });

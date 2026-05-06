@@ -80,7 +80,7 @@ describe("useLeadCreateForm", () => {
   it("canCreate is true with name + phone + email", () => {
     const { fields, canCreate } = create();
     fields.name = "Test";
-    fields.phone = "090";
+    fields.phone = "090-0000-0000";
     fields.email = "a@b.com";
     expect(canCreate.value).toBe(true);
   });
@@ -109,6 +109,44 @@ describe("useLeadCreateForm", () => {
     fields.name = "Test";
     fields.phone = "  ";
     fields.email = "  ";
+    expect(canCreate.value).toBe(false);
+  });
+
+  it("canCreate is false when phone format is invalid", () => {
+    const { fields, canCreate } = create();
+    fields.name = "Test";
+    fields.phone = "abc";
+    expect(canCreate.value).toBe(false);
+  });
+
+  it("canCreate is false when email format is invalid", () => {
+    const { fields, canCreate } = create();
+    fields.name = "Test";
+    fields.email = "not-an-email";
+    expect(canCreate.value).toBe(false);
+  });
+
+  it("canCreate allows valid phone even when email is empty", () => {
+    const { fields, canCreate } = create();
+    fields.name = "Test";
+    fields.phone = "+81-90-1234-5678";
+    fields.email = "";
+    expect(canCreate.value).toBe(true);
+  });
+
+  it("canCreate rejects invalid phone even when email is valid", () => {
+    const { fields, canCreate } = create();
+    fields.name = "Test";
+    fields.phone = "12";
+    fields.email = "valid@example.com";
+    expect(canCreate.value).toBe(false);
+  });
+
+  it("canCreate rejects invalid email even when phone is valid", () => {
+    const { fields, canCreate } = create();
+    fields.name = "Test";
+    fields.phone = "090-1234-5678";
+    fields.email = "bad@@email";
     expect(canCreate.value).toBe(false);
   });
 
@@ -144,6 +182,12 @@ describe("useLeadCreateForm", () => {
     expect(dedupeMatches.value).toHaveLength(0);
   });
 
+  it("dedupeMatches requires exact phone match (partial must not match)", () => {
+    const { fields, dedupeMatches } = create();
+    fields.phone = "1234-5678";
+    expect(dedupeMatches.value).toHaveLength(0);
+  });
+
   it("dedupeMatches can return multiple matches", () => {
     const { fields, dedupeMatches } = create([
       lead({ id: "a", phone: "090-1111-2222", email: "x@y.com" }),
@@ -173,7 +217,7 @@ describe("useLeadCreateForm", () => {
   it("canCreate updates reactively after resetForm", () => {
     const { fields, canCreate, resetForm } = create();
     fields.name = "Test";
-    fields.phone = "090";
+    fields.phone = "090-0000-0000";
     expect(canCreate.value).toBe(true);
     resetForm();
     expect(canCreate.value).toBe(false);

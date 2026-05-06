@@ -4,6 +4,8 @@ import { DEFAULT_PANEL } from "./fixtures";
 
 const VALID_PANELS: readonly SettingsPanel[] = [
   "group-management",
+  "member-management",
+  "role-management",
   "visibility-config",
   "storage-root",
 ];

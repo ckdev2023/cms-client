@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import conversationsEnUS from "../../i18n/messages/conversations/en-US";
 import conversationsZhCN from "../../i18n/messages/conversations/zh-CN";
@@ -117,4 +119,25 @@ describe("conversations i18n required key groups (T-17)", () => {
       }
     },
   );
+});
+
+describe("ConversationDetailView template contract (E-2)", () => {
+  const vueSrc = readFileSync(
+    resolve(__dirname, "ConversationDetailView.vue"),
+    "utf-8",
+  );
+
+  it("error variable is rendered via t() — never raw", () => {
+    const templateMatch = vueSrc.match(/<template[\s\S]*<\/template>/);
+    expect(templateMatch).not.toBeNull();
+    const template = templateMatch![0];
+
+    const rawErrorUsages = template.match(/\{\{\s*error\s*\}\}/g);
+    expect(
+      rawErrorUsages,
+      "error must be wrapped in t(error), not rendered raw",
+    ).toBeNull();
+
+    expect(template).toMatch(/\{\{\s*t\(error\)\s*\}\}/);
+  });
 });

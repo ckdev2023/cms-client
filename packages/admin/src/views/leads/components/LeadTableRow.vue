@@ -10,7 +10,7 @@ import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { LeadSummary, LeadStatus } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
-import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
+import { resolveOwnerDisplayOption } from "../../../shared/model/useOwnerOptions";
 
 /** 线索表格行：咨询人信息、状态、负责人、跟进安排、最近更新。 */
 const { t, locale } = useI18n();
@@ -34,12 +34,15 @@ const STATUS_TONE: Record<LeadStatus, ChipTone> = {
 };
 
 const owner = computed(() =>
-  resolveOwnerOption(props.lead.ownerId, locale.value),
+  resolveOwnerDisplayOption(props.lead.ownerId, locale.value, {
+    unassigned: t("leads.list.ownerUnassigned"),
+    unknown: t("leads.list.ownerUnknown"),
+  }),
 );
 
-const ownerLabel = computed(() => owner.value?.label ?? "—");
+const ownerLabel = computed(() => owner.value.label);
 
-const ownerInitials = computed(() => owner.value?.initials ?? "?");
+const ownerInitials = computed(() => owner.value.initials);
 
 const groupLabel = computed(() =>
   props.lead.groupId

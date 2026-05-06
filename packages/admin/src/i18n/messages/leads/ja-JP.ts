@@ -29,6 +29,8 @@ const leadsJaJP = {
       followUp: "フォローアップ",
       updated: "最終更新",
     },
+    ownerUnassigned: "未割当",
+    ownerUnknown: "不明なユーザー",
     status: {
       new: "新規相談",
       following: "フォロー中",
@@ -238,13 +240,81 @@ const leadsJaJP = {
       cancel: "キャンセル",
       confirm: "転換を確認",
     },
+    convertCustomerDialog: {
+      customerIdLabel: "既存顧客ID（任意）",
+      customerIdPlaceholder: "空欄の場合は新規顧客を作成",
+      localizedNamesLegend: "多言語名（任意）",
+      nameZh: "中国語名",
+      nameJa: "日本語名",
+      nameEn: "英語名",
+      defaultLocaleLabel: "デフォルト言語",
+      confirmBtn: "顧客を作成",
+    },
+    convertCaseDialog: {
+      caseTypeLabel: "案件タイプ",
+      caseTypePlaceholder: "案件タイプを選択",
+      ownerLabel: "案件担当者",
+      ownerPlaceholder: "担当者を選択",
+      groupLabel: "グループ（任意）",
+      groupPlaceholder: "空欄の場合はリードのグループを継承",
+      confirmBtn: "案件を作成",
+    },
+    editInfoDialog: {
+      title: "リード情報を編集",
+      description: "基本情報を更新します。変更したフィールドのみ送信されます。",
+      fields: {
+        name: "相談者氏名",
+        namePlaceholder: "氏名を入力",
+        phone: "電話番号",
+        phonePlaceholder: "携帯 / 固定電話",
+        email: "メール",
+        emailPlaceholder: "メールアドレス",
+        source: "流入元",
+        sourcePlaceholder: "流入元を選択",
+        referrer: "紹介者",
+        referrerPlaceholder: "紹介者名または機関名",
+        businessType: "業務タイプ",
+        businessTypePlaceholder: "タイプを選択",
+        group: "グループ",
+        groupPlaceholder: "グループを選択",
+        owner: "担当者",
+        ownerPlaceholder: "担当者を選択",
+        language: "使用言語",
+        languagePlaceholder: "言語を選択",
+        nextAction: "次のアクション",
+        nextActionPlaceholder: "例：電話で意向確認",
+        note: "メモ",
+        notePlaceholder: "例：引継ぎ事項、注意点…",
+      },
+      confirmBtn: "変更を保存",
+    },
+    changeStatusDialog: {
+      title: "ステータス変更",
+      description:
+        "次のステータスを選択してください。許可された遷移のみ実行できます。",
+      statusLabel: "遷移先ステータス",
+      statusPlaceholder: "ステータスを選択",
+      noOptions: "現在のステータスから推進可能な遷移先がありません。",
+      confirmBtn: "更新を確認",
+    },
+    markLostDialog: {
+      title: "失注にする",
+      description:
+        "失注理由を記入してください（後の振り返りに使います）。失注後は閲覧のみ可能です。",
+      reasonLabel: "失注理由",
+      reasonPlaceholder: "例：他事務所を選択された",
+      confirmBtn: "失注として確定",
+    },
     logTab: {
       title: "操作ログ",
       filterLabel: "ログカテゴリフィルター",
+      categoryAll: "すべて",
       typeStatus: "ステータス変更",
       typeOwner: "担当者変更",
       typeGroup: "グループ変更",
+      typeInfo: "その他",
       emptyTitle: "ログがありません",
+      actorUnknown: "操作者不明",
     },
   },
   options: {
@@ -283,10 +353,40 @@ const leadsJaJP = {
     dedupFailed:
       "重複チェックに失敗しました。しばらくしてから再試行してください。",
     convertFailed: "転換に失敗しました。しばらくしてから再試行してください。",
+    convertCaseFailed:
+      "案件の作成に失敗しました。しばらくしてから再試行してください。",
+    convertCaseFailedToast: {
+      title: "案件作成に失敗しました",
+    },
+    updateFailedToast: {
+      title: "リードの更新に失敗しました",
+    },
+    transitionFailedToast: {
+      title: "ステータス変更に失敗しました",
+    },
+    markLostFailed:
+      "失注処理に失敗しました。しばらくしてから再試行してください。",
+    markLostFailedToast: {
+      title: "失注処理に失敗しました",
+    },
     exportFailed:
       "エクスポートに失敗しました。しばらくしてから再試行してください。",
     bulkPartialFailure:
       "一括操作が一部失敗しました：成功 {success} 件、失敗 {failed} 件。",
+    bmvGate: {
+      title: "経営管理ビザ案件を作成できません",
+      description:
+        "顧客カードに戻り、以下のステップを完了してから契約と案件作成に進んでください。",
+      questionnaireNotReturned:
+        "アンケート未回収です。先に顧客カードでアンケートを完了してください。",
+      quoteNotConfirmed:
+        "見積もりが未確定です。先に顧客カードで見積もりを確定してください。",
+      notSigned: "契約が未完了です。先に顧客カードで契約を登録してください。",
+      intakeNotReady:
+        "承継フローが完了していません。顧客カードを更新してから再試行してください。",
+      unknown:
+        "経営管理ビザ承継の前提条件を満たしていません。顧客カードで詳細を確認してください。",
+    },
   },
   statusTransition: {
     invalidTransition: "現在のステータスではこの操作は許可されていません。",
@@ -318,6 +418,10 @@ const leadsJaJP = {
     convertSuccess: {
       title: "転換完了",
       description: "顧客レコードが作成されました。案件を開始できます",
+    },
+    markLostSuccess: {
+      title: "失注として記録しました",
+      description: "このリードは失注状態となり、閲覧のみ可能です。",
     },
   },
 } as const;

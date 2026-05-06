@@ -1,5 +1,9 @@
 import { reactive, computed } from "vue";
 import type { LeadCreateFormFields, LeadSummary } from "../types";
+import {
+  isValidEmail,
+  isValidPhone,
+} from "../../../shared/util/contactValidators";
 
 /**
  *
@@ -36,7 +40,7 @@ function findDedupeMatches(
   return leads.filter((l) => {
     if (phone) {
       const existing = l.phone.replace(/[-\s]/g, "");
-      if (existing && existing.includes(phone)) return true;
+      if (existing && existing === phone) return true;
     }
     return !!(email && l.email && l.email.toLowerCase() === email);
   });
@@ -51,12 +55,16 @@ function findDedupeMatches(
 export function useLeadCreateForm(deps: UseLeadCreateFormDeps) {
   const fields = reactive<LeadCreateFormFields>({ ...BLANK_FIELDS });
 
-  /** 姓名 + (电话 ∨ 邮箱) 为最低创建条件。 */
-  const canCreate = computed(
-    () =>
-      fields.name.trim() !== "" &&
-      (fields.phone.trim() !== "" || fields.email.trim() !== ""),
-  );
+  /** 姓名 + (电话 ∨ 邮箱) 为最低创建条件；非空联系方式须通过格式校验。 */
+  const canCreate = computed(() => {
+    if (fields.name.trim() === "") return false;
+    const phone = fields.phone.trim();
+    const email = fields.email.trim();
+    if (!phone && !email) return false;
+    if (phone && !isValidPhone(phone)) return false;
+    if (email && !isValidEmail(email)) return false;
+    return true;
+  });
 
   const dedupeMatches = computed(() =>
     findDedupeMatches(fields, deps.existingLeads()),

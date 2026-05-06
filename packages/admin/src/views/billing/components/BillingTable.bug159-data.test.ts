@@ -1,12 +1,18 @@
 /**
  * BUG-159 [P2][BE/FE] fix-with-data 闭环锁：server `resolveCustomerGroupId` /
  * `resolveExplicitGroupId` 把 `cases.group_id` 持久化为有效 UUID 后，
- * admin BillingTable Group 列能正确展示本地化标签。
+ * admin BillingTable Group 列能正确展示后端 `name`。
  *
  * 与 BUG-140 (`BillingTable.bug140.test.ts`) 的区别：
  * - BUG-140 = **fix-no-data**：alias 未注册 / UUID 裸露 → `—` 占位兜底。
  * - BUG-159 = **fix-with-data**：server 已持久化 `group_id`，App.vue
- *   `refreshGroupAliases` 完成注册 → Group cell 展示三语 catalog 名。
+ *   `refreshGroupAliases` 完成注册 → Group cell 展示后端 `groups.name`。
+ *
+ * R-CONSULT-02 R2-B-3 调整：原契约「展示三语 catalog 名」已被废弃。
+ * 现在 alias 路径以 `/api/groups` 返回的 `name` 为权威显示值，
+ * 不再用 fixture catalog 本地化覆盖 DB 名称（catalog 仍参与 disabled
+ * 后缀判定，但不影响主体文案）。locale 切换不再改变 alias 路径下的
+ * 显示值——这正是 R2-B-3 想要的「fixture / DB 不再错位」。
  *
  * R13 v2 服务端补强摘要（对照 `cases.service.bug159-group-inheritance.focused.test.ts`）：
  * - `resolveCustomerGroupId`：`g.name = cv.group_val OR g.id::text = cv.group_val`
@@ -71,46 +77,37 @@ describe("BillingTable — BUG-159 fix-with-data closure", () => {
     clearGroupAliases();
   });
 
-  it("renders zh-CN catalog label when server-persisted UUID is alias-registered to catalog name", async () => {
+  it("R2-B-3: renders DB-stored alias name verbatim when server-persisted UUID is alias-registered", async () => {
     registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable([{ ...BASE_ROW }]);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("东京一组");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
   });
 
-  it("renders en-US catalog label after locale switch", async () => {
+  it("R2-B-3: alias-path display is locale-invariant (DB name is canonical)", async () => {
     registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable([{ ...BASE_ROW }]);
     await wrapper.vm.$nextTick();
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("Tokyo Team 1");
-  });
-
-  it("renders ja-JP catalog label after locale switch", async () => {
-    registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
-    const wrapper = mountTable([{ ...BASE_ROW }]);
-    await wrapper.vm.$nextTick();
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("東京一組");
+    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
   });
 
-  it("cycles through all three locales for the same alias-registered UUID", async () => {
-    registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
+  it("R2-B-3: server-side custom name is rendered as-is regardless of locale", async () => {
+    registerGroupAliases([{ id: GROUP_UUID, name: "営業一課" }]);
     const wrapper = mountTable([{ ...BASE_ROW }]);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("东京一组");
+    expect(readGroupCellText(wrapper)).toBe("営業一課");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("Tokyo Team 1");
-
-    setAppLocale("ja-JP");
-    await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("東京一組");
+    expect(readGroupCellText(wrapper)).toBe("営業一課");
   });
 
   it("renders `—` placeholder when row.group is null-equivalent (data not persisted by server)", () => {

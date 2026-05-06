@@ -8,7 +8,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { BillingPlanStatus } from "../model/billingEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { BillingSummaryService } from "./billingSummary.service";
@@ -101,7 +102,7 @@ export class BillingSummaryController {
    * @param query - 可选过滤参数
    * @returns BillingListSummaryDto
    */
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async getSummary(
     @Req() req: HttpRequest,

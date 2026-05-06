@@ -13,7 +13,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";
 import { TasksService } from "./tasks.service";
@@ -119,7 +120,7 @@ export class TasksController {
     @Inject(TasksService) private readonly tasksService: TasksService,
   ) {}
 
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateTaskBody) {
     const ctx = req.requestContext;
@@ -153,7 +154,7 @@ export class TasksController {
     });
   }
 
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
   async list(@Req() req: HttpRequest, @Query() query: ListTasksQuery) {
     const ctx = req.requestContext;
@@ -171,7 +172,7 @@ export class TasksController {
     });
   }
 
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/complete")
   async complete(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -179,7 +180,7 @@ export class TasksController {
     return this.tasksService.complete(ctx, id);
   }
 
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/cancel")
   async cancel(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -187,7 +188,7 @@ export class TasksController {
     return this.tasksService.cancel(ctx, id);
   }
 
-  @RequireRoles("viewer")
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get(":id")
   async get(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
@@ -198,7 +199,7 @@ export class TasksController {
     return task;
   }
 
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Patch(":id")
   async update(
     @Req() req: HttpRequest,

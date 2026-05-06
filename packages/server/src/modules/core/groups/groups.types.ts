@@ -46,6 +46,12 @@ export type DisableGroupInput = {
   reason?: string | null;
 };
 
+/** グループメンバー追加・再有効化の入力。 */
+export type AddGroupMemberInput = {
+  userId: string;
+  isPrimary?: boolean;
+};
+
 // ────────────────────────────────────────────────────────────────
 // 读 DTO — 列表 / 详情 / 成员 / 引用计数
 // ────────────────────────────────────────────────────────────────

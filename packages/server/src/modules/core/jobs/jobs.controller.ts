@@ -11,7 +11,8 @@ import {
   Body,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { JobsService } from "./jobs.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import type { JobEnqueueInput, JobListInput, JobStatus } from "./jobs.model";
@@ -52,7 +53,7 @@ export class JobsController {
    * @param body 请求体
    * @returns Job
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post()
   async enqueue(@Req() req: HttpRequest, @Body() body: EnqueueBody) {
     const ctx = req.requestContext;

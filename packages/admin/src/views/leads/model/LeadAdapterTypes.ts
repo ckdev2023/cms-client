@@ -216,6 +216,37 @@ export interface LeadDedupResult {
   customers: Array<{ id: string; name: string; phone: string; email: string }>;
 }
 
+// ─── Convert Inputs ─────────────────────────────────────────────
+
+/**
+ * 转客户输入。
+ */
+export interface LeadConvertCustomerInput {
+  /** 已有客户 ID（传入则跳过创建，直接关联）。 */
+  customerId?: string;
+  /** 多语名称。 */
+  localizedNames?: {
+    zh?: string;
+    ja?: string;
+    en?: string;
+    defaultLocale?: "zh" | "ja" | "en";
+  };
+  /** 去重确认标记。 */
+  confirmDedup?: boolean;
+}
+
+/**
+ * 转案件输入。
+ */
+export interface LeadConvertCaseInput {
+  /** 案件类型代码（snake_case）。 */
+  caseTypeCode: string;
+  /** 案件负责人 UUID。 */
+  ownerUserId: string;
+  /** 案件所属组 UUID。 */
+  groupId?: string;
+}
+
 // ─── Bulk Inputs ────────────────────────────────────────────────
 
 /**

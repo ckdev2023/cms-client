@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
@@ -7,6 +7,7 @@ import Card from "../../shared/ui/Card.vue";
 import Chip from "../../shared/ui/Chip.vue";
 import Button from "../../shared/ui/Button.vue";
 import MessageBubble from "./components/MessageBubble.vue";
+import ConversationOwnerPickerDialog from "./components/ConversationOwnerPickerDialog.vue";
 import { createConversationRepository } from "./model/ConversationRepository";
 import { useConversationDetailModel } from "./model/useConversationDetailModel";
 
@@ -51,9 +52,21 @@ const {
   autoMarkRead: props.autoMarkRead,
 });
 
-/** 指派当前用户为负责人。 */
-function assignOwner() {
-  assignOwnerModel("current-user");
+const showOwnerPicker = ref(false);
+
+/** 打开负责人选择弹窗 */
+function openOwnerPicker() {
+  showOwnerPicker.value = true;
+}
+
+/**
+ * 处理负责人选择结果并触发指派
+ *
+ * @param ownerId - 选中的用户 ID
+ */
+function handleOwnerPick(ownerId: string) {
+  showOwnerPicker.value = false;
+  assignOwnerModel(ownerId);
 }
 
 watch(resolvedId, () => {
@@ -77,16 +90,16 @@ onMounted(() => {
         { label: detail?.appUserName || '…' },
       ]"
     >
-      <template #actions>
+      <template v-if="detail" #actions>
         <Button
           v-if="!isClosed"
           variant="outlined"
           tone="neutral"
           size="sm"
-          @click="assignOwner"
+          @click="openOwnerPicker"
         >
           {{
-            detail?.ownerUserId
+            detail.ownerUserId
               ? t("conversations.detail.reassign")
               : t("conversations.detail.assignOwner")
           }}
@@ -113,7 +126,7 @@ onMounted(() => {
     </PageHeader>
 
     <div v-if="error" class="conv-detail__error">
-      {{ error }}
+      {{ t(error) }}
     </div>
 
     <div v-if="loading" class="conv-detail__loading">Loading…</div>
@@ -229,6 +242,13 @@ onMounted(() => {
         {{ t("conversations.messages.closedCannotSend") }}
       </div>
     </template>
+
+    <ConversationOwnerPickerDialog
+      v-if="showOwnerPicker"
+      :current-owner-user-id="detail?.ownerUserId"
+      @pick="handleOwnerPick"
+      @close="showOwnerPicker = false"
+    />
   </div>
 </template>
 

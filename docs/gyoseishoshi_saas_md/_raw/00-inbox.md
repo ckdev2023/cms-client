@@ -137,3 +137,73 @@
 
   > 默认选项已用 `[x]` 标记。如 PM 同意推荐方案，确认即可；如有调整请修改标记并补充说明。
   > 三项全部确认后，将此条目状态改为 `已决策`，随后启动 BUG-200 编码。
+
+- 时间：2026-05-06
+  来源：chrome-devtools-mcp 走查 R-CONSULT-01
+  主题：咨询模块（leads + conversations）首轮端到端走查——12 条缺陷 + 5 条新发现遗漏
+  要点：
+  - **走查结论**：模块状态 = 走查无法通过基本 happy-path。UI shell 已完成但 server 关键写入接口缺失。
+  - **P0 缺陷 ×3**：
+    - B-1：`POST /admin/leads` 404 — server 缺 create handler，新建线索全链路阻断
+    - B-1'：`POST /admin/leads/:id/convert` 404 — 转客户/转案件不可用
+    - E-1：conversation `assignOwner` 硬编码 `"current-user"` 字面量，指派负责人永远失败
+  - **P1 缺陷 ×1**：
+    - E-2：conversation 详情错误状态展示 raw i18n key（6 条错误链路 `conversations.errors.*` 裸渲染）
+  - **P2 缺陷 ×3**：
+    - C-1 / D-1：server 路由缺 `ParseUUIDPipe`，非法 UUID 直接 500（leads + conversations 跨模块同源）
+    - B-4：`LeadToast` 缺 `role="alert"` + `aria-live="polite"`
+  - **P3 缺陷 ×4**：
+    - B-2 / B-3：邮箱/电话无客户端格式校验
+    - E-3：conversation detail null 时头部按钮仍渲染
+    - G-1：客户端 dedup `phone.includes(input)` 部分匹配易误判
+  - **P4 缺陷 ×1**：
+    - G-2：`<input>` 缺 `autocomplete` 属性
+  - **5 条新发现遗漏**（走查中额外识别）：
+    1. `lead_no` 编号自动生成机制缺失（server create 不含 `LEAD-YYYYMM-NNNN`）
+    2. `assigned_org_id` + RLS 自读约束（`org_id` 与 `assigned_org_id` 必须同写 `ctx.orgId`，否则 RLS 屏蔽自读）
+    3. 业务类型映射 `intendedCaseType`（kebab-case）→ `caseTypeCode`（snake_case）需经 `mapBusinessTypeToCaseTypeCode`
+    4. `AdminUser.id` 持久化缺失（conversation owner picker 默认值需真实 UUID）
+    5. convert 拆两步对齐 spec §4（admin 端拆 `convert-customer` / `convert-case`，portal 暂保留一步；需 ADR 记录分歧）
+  - **决策记录**：admin convert 拆两步 vs portal convert 保留一步 → [ADR-admin-convert-split.md](../_output/ADR-admin-convert-split.md)
+  - **RBAC 细化**：spec §4 规定"转客户/转案件 = 主办人、助理"，当前实现沿用 `@RequireRoles("staff")` 含销售，留为单独 ticket 跟进
+  需要编译到：
+  - P0/06-页面规格/咨询线索.md（実施状態対照表更新——已完成）
+  - _output/ADR-admin-convert-split.md（已新建）
+  - 03-业务规则与不变量.md（RBAC 细化粒度，待独立 ticket）
+  Owner：研发
+  状态：已编译
+
+- 时间：2026-05-06
+  来源：chrome-devtools-mcp 走查 R-CONSULT-02
+  主题：咨询模块第二轮 happy-path 走查——12 条新缺陷 + R-CONSULT-01 8 条修复回归
+  要点：
+  - **R-CONSULT-01 修复回归**：B-1 / B-1' / B-2 / B-3 / C-1 / D-1 / E-1 / E-2 / E-3 全部 ✅；B-4 / G-1 待回归
+  - **R-CONSULT-02 P0 缺陷 ×2**：
+    - **R2-A-1**：前端 `useOwnerOptions` / `useGroupOptions` 用静态 fixture 短码（`suzuki` / `tokyo-1`），与 server UUID 期望不对齐，`POST /admin/leads` 与 `bulk/assign` 全部 500；同根因导致详情/列表 owner 反解失败
+    - **R2-B-5**：`POST /admin/leads/:id/convert-case` 400（BMV 闸口结构化错误 `CASE_BMV_GATE_BLOCKED` + 4 条 `blockers[]`）被前端 dialog 静默吞噬，仅 console warn，UI 完全无感知
+  - **R-CONSULT-02 P1 缺陷 ×3**：
+    - **R2-B-4**：`LeadDetailView.vue:94-96` 头部 3 按钮（编辑信息 / 调整状态 / 标记流失）handler 全部 `() => {}`，UI 完全失效
+    - **R2-B-6**：lead 已转客户后头部「查看客户」按钮仍 emit `convert-customer`，重新打开 LeadConvertCustomerDialog（dedup 兜底但易误操作）
+    - **R2-A-1 在 bulk 路径**：bulk-assign 同样 500
+  - **R-CONSULT-02 P2 缺陷 ×4**：
+    - **R2-D-1**：`conversations.admin.controller.ts:143` `assign` body 仍用 `optStr` 而非 `optUuid`（E-1 同源风险未补完）
+    - **R2-D-2**：`messages.admin.controller.ts:104` `conversationId` / `messageId` 缺 `ParseUUIDPipe`，非法 UUID → 500（reqid=693 实测）
+    - **H-6**：转客户/转案件成功后 `useLeadDetailModel` 不主动 `fetchDetail()`，UI 状态滞后必须 reload
+    - **H-10**：admin 端无 conversation seed 工具，e2e 走查 send/assign/close/reopen 被阻断
+  - **R-CONSULT-02 P3 缺陷 ×5**：
+    - **R2-B-1 / H-9**：列表/详情 owner 字段显示 raw UUID 或 "?"（同 R2-A-1 根因，详情显示 `00000000-…000011`，列表显示 "?"）
+    - **R2-B-2**：详情头部「编号」字段显示 lead.id（UUID）而非 leadNo（`LEAD-202605-0002`）
+    - **R2-B-3**：`所属组` 显示 fixture catalog 标签 `東京一組` 与 DB `name="tokyo-1"` 不一致
+    - **H-4**：跟进/日志时间显示原始 ISO `2026-05-06T10:24:53.330Z` 未 localize（list 已 localized，showcase 内部不一致）
+    - **H-5**：日志条目仅显示 `logType + 时间`，缺 actor / payload diff
+  - **核心体系性观察**：
+    1. **fixture catalog vs API 数据双轨制**——`LeadConvertCaseDialog` 已对接 `/api/users` 真实数据（仅展示 1 条 Local Admin），但 `LeadCreateModalBody` / `LeadBulkActionBar` / `LeadDetailView` 仍走 fixture catalog 7 条短码，是当前模块写入侧最大的不一致
+    2. **server-side 错误结构化已落地**（CASE_BMV_GATE_BLOCKED + blockers[]）但**前端无对应渲染组件**，需要补 `BMVGateBlockerListPanel`
+    3. **R-CONSULT-01 的 ParseUUIDPipe 修复未完全推广**——messages 子接口被遗漏
+  - **R-CONSULT-03 入门门禁**（5 条）：R2-A-1 / R2-B-4 / R2-B-5 / R2-B-6 / H-10
+  需要编译到：
+  - P0/06-页面规格/咨询线索.md §"实施状态対照表" 增加 R-CONSULT-02 实测列
+  - 04-核心流程与状态流转.md §"BMV 闸口" 增加前端 `BMVGateBlockerList` 渲染约束
+  - _output/57-咨询模块chrome-devtools-mcp走查-第二轮.md（已新建）
+  Owner：研发
+  状态：待编译

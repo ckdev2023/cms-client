@@ -29,6 +29,8 @@ const leadsEnUS = {
       followUp: "Follow-up",
       updated: "Last updated",
     },
+    ownerUnassigned: "Unassigned",
+    ownerUnknown: "Unknown user",
     status: {
       new: "New",
       following: "Following",
@@ -238,13 +240,82 @@ const leadsEnUS = {
       cancel: "Cancel",
       confirm: "Confirm conversion",
     },
+    convertCustomerDialog: {
+      customerIdLabel: "Existing Customer ID (optional)",
+      customerIdPlaceholder: "Leave empty to create a new customer",
+      localizedNamesLegend: "Localized Names (optional)",
+      nameZh: "Chinese Name",
+      nameJa: "Japanese Name",
+      nameEn: "English Name",
+      defaultLocaleLabel: "Default Locale",
+      confirmBtn: "Create Customer",
+    },
+    convertCaseDialog: {
+      caseTypeLabel: "Case Type",
+      caseTypePlaceholder: "Select case type",
+      ownerLabel: "Case Owner",
+      ownerPlaceholder: "Select owner",
+      groupLabel: "Group (optional)",
+      groupPlaceholder: "Leave empty to inherit from lead",
+      confirmBtn: "Create Case",
+    },
+    editInfoDialog: {
+      title: "Edit lead information",
+      description:
+        "Update the lead's basic information. Only changed fields are submitted.",
+      fields: {
+        name: "Name",
+        namePlaceholder: "Enter name",
+        phone: "Phone",
+        phonePlaceholder: "Mobile / landline",
+        email: "Email",
+        emailPlaceholder: "Email address",
+        source: "Source",
+        sourcePlaceholder: "Select source",
+        referrer: "Referrer",
+        referrerPlaceholder: "Referrer name or org",
+        businessType: "Business type",
+        businessTypePlaceholder: "Select type",
+        group: "Group",
+        groupPlaceholder: "Select group",
+        owner: "Owner",
+        ownerPlaceholder: "Select owner",
+        language: "Preferred language",
+        languagePlaceholder: "Select language",
+        nextAction: "Next action",
+        nextActionPlaceholder: "e.g. Call to confirm intent",
+        note: "Note",
+        notePlaceholder: "e.g. handover notes, preferences...",
+      },
+      confirmBtn: "Save changes",
+    },
+    changeStatusDialog: {
+      title: "Change lead status",
+      description:
+        "Pick the next status. Only whitelisted transitions are allowed.",
+      statusLabel: "Target status",
+      statusPlaceholder: "Select status",
+      noOptions: "No further status transitions are available.",
+      confirmBtn: "Update status",
+    },
+    markLostDialog: {
+      title: "Mark as lost",
+      description:
+        "Enter a lost reason for retrospectives. Lost leads are read-only.",
+      reasonLabel: "Lost reason",
+      reasonPlaceholder: "e.g. Customer chose another firm",
+      confirmBtn: "Confirm mark as lost",
+    },
     logTab: {
       title: "Activity Log",
       filterLabel: "Log category filter",
+      categoryAll: "All",
       typeStatus: "Status Change",
       typeOwner: "Owner Change",
       typeGroup: "Group Change",
+      typeInfo: "Other",
       emptyTitle: "No log entries",
+      actorUnknown: "Unknown actor",
     },
   },
   options: {
@@ -279,9 +350,38 @@ const leadsEnUS = {
     followupFailed: "Failed to submit follow-up. Please try again.",
     dedupFailed: "Duplicate check failed. Please try again.",
     convertFailed: "Conversion failed. Please try again.",
+    convertCaseFailed: "Case creation failed. Please try again.",
+    convertCaseFailedToast: {
+      title: "Case creation failed",
+    },
+    updateFailedToast: {
+      title: "Lead update failed",
+    },
+    transitionFailedToast: {
+      title: "Status transition failed",
+    },
+    markLostFailed: "Failed to mark the lead as lost. Please try again.",
+    markLostFailedToast: {
+      title: "Mark-lost failed",
+    },
     exportFailed: "Export failed. Please try again.",
     bulkPartialFailure:
       "Bulk action partially failed: {success} succeeded, {failed} failed.",
+    bmvGate: {
+      title: "Cannot create the Business Manager visa case yet",
+      description:
+        "Please complete the following steps on the customer record, then return here to sign and create the case.",
+      questionnaireNotReturned:
+        "Customer questionnaire is not returned yet. Complete it on the customer record first.",
+      quoteNotConfirmed:
+        "Quote is not confirmed yet. Confirm it on the customer record first.",
+      notSigned:
+        "Customer has not signed yet. Record the signature on the customer record first.",
+      intakeNotReady:
+        "BMV intake is not ready for case creation. Refresh the customer record and retry.",
+      unknown:
+        "BMV intake prerequisites are not satisfied. See the customer record for details.",
+    },
   },
   statusTransition: {
     invalidTransition: "This action is not allowed for the current status.",
@@ -314,6 +414,10 @@ const leadsEnUS = {
     convertSuccess: {
       title: "Conversion successful",
       description: "Customer record created — you can now start a case",
+    },
+    markLostSuccess: {
+      title: "Marked as lost",
+      description: "The lead is now in lost state and read-only.",
     },
   },
 } as const;

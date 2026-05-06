@@ -12,7 +12,6 @@ import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
 import LeadTable from "./components/LeadTable.vue";
 import LeadPagination from "./components/LeadPagination.vue";
 import LeadCreateModal from "./components/LeadCreateModal.vue";
-import LeadToast from "./components/LeadToast.vue";
 import { BUSINESS_TYPE_OPTIONS, getLeadSamples } from "./fixtures";
 import type {
   LeadCreateFormFields,
@@ -20,6 +19,7 @@ import type {
   LeadSummary,
   LeadStatusFilter,
 } from "./types";
+import { useLeadCatalogOptions } from "./model/useLeadCatalogOptions";
 import { useLeadFilters } from "./model/useLeadFilters";
 import { useLeadSelection } from "./model/useLeadSelection";
 import { useLeadCreateForm } from "./model/useLeadCreateForm";
@@ -39,6 +39,7 @@ const router = useRouter();
 const repository = createLeadRepository();
 const groupOptions = computed(() => getActiveGroupOptions(locale.value));
 const ownerOptions = computed(() => getOwnerOptions(locale.value));
+const { apiOwnerOptions, apiGroupOptions } = useLeadCatalogOptions(locale);
 
 const {
   scope,
@@ -166,7 +167,9 @@ async function handleAssignOwner(ownerId: string) {
     ownerId,
   );
   const label =
-    ownerOptions.value.find((o) => o.value === ownerId)?.label ?? ownerId;
+    apiOwnerOptions.value.find((o) => o.value === ownerId)?.label ??
+    ownerOptions.value.find((o) => o.value === ownerId)?.label ??
+    ownerId;
   toast.show({
     title: t("leads.list.toast.bulkAssign.title"),
     description: t("leads.list.toast.bulkAssign.description", {
@@ -419,7 +422,7 @@ watch(
     <div class="leads-list-view__table-card">
       <LeadBulkActionBar
         :selected-count="selectedCount"
-        :owner-options="ownerOptions"
+        :owner-options="apiOwnerOptions"
         @clear="clearSelection"
         @assign-owner="handleAssignOwner"
         @adjust-follow-up="handleAdjustFollowUp"
@@ -453,8 +456,8 @@ watch(
     <LeadCreateModal
       :open="modalOpen"
       :fields="formFields"
-      :owner-options="ownerOptions"
-      :group-options="groupOptions"
+      :owner-options="apiOwnerOptions"
+      :group-options="apiGroupOptions"
       :can-create="canCreate"
       :submitting="createSubmitting"
       :show-dedupe="showDedupe"
@@ -464,11 +467,6 @@ watch(
       @create="handleCreate"
       @update:field="updateFormField"
       @dedup-check="handleDedupCheck"
-    />
-    <LeadToast
-      :visible="toast.visible.value"
-      :title="toast.title.value"
-      :description="toast.description.value"
     />
   </div>
 </template>

@@ -113,15 +113,18 @@ describe("adaptCustomerDropdownItem", () => {
   });
 });
 
-// ─── BUG-139 — locale-aware groupLabel resolution ───────────────
+// ─── BUG-139 + R2-B-3 — locale-aware groupLabel resolution ───────────────
 //
 // `useCustomerDropdownData.adaptItem` 历史上把 raw `group`（catalog id 或
 // 服务端 UUID）直接当 label 透传，导致建案向导主申请人下拉直显 36 字符
 // UUID。修复后传入 locale 时通过 `resolveGroupLabel` 走运行期别名表 +
-// catalog 翻译，保持 R11 BUG-136 的修复增量延伸到 case 链路。
+// catalog 翻译。
+//
+// R-CONSULT-02 R2-B-3 调整：alias 路径下 label 改为 DB name 原文（不再
+// 走 catalog 本地化），catalog 路径仍保留本地化以兼容 fixture 演示数据。
 const SAMPLE_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
 
-describe("adaptCustomerDropdownItem — BUG-139 locale-aware groupLabel", () => {
+describe("adaptCustomerDropdownItem — BUG-139 + R2-B-3 locale-aware groupLabel", () => {
   beforeEach(() => {
     clearGroupAliases();
   });
@@ -129,18 +132,18 @@ describe("adaptCustomerDropdownItem — BUG-139 locale-aware groupLabel", () => 
     clearGroupAliases();
   });
 
-  it("returns localized catalog label when locale is provided for catalog id", () => {
+  it("returns localized catalog label when locale is provided for catalog slug (fixture path)", () => {
     const result = adaptCustomerDropdownItem(VALID_ITEMS.items[0], "zh-CN");
     expect(result?.groupLabel).toBe("东京一组");
   });
 
-  it("translates UUID via alias map to localized catalog label", () => {
+  it("R2-B-3: translates UUID via alias map to DB-stored name verbatim", () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const result = adaptCustomerDropdownItem(
       { ...VALID_ITEMS.items[0], group: SAMPLE_UUID },
       "zh-CN",
     );
-    expect(result?.groupLabel).toBe("东京一组");
+    expect(result?.groupLabel).toBe("tokyo-1");
     expect(result?.group).toBe(SAMPLE_UUID);
   });
 
@@ -171,7 +174,7 @@ describe("adaptCustomerDropdownItem — BUG-139 locale-aware groupLabel", () => 
   });
 });
 
-describe("useCustomerDropdownData — BUG-139 locale getter wiring", () => {
+describe("useCustomerDropdownData — BUG-139 + R2-B-3 locale getter wiring", () => {
   beforeEach(() => {
     clearGroupAliases();
   });
@@ -179,7 +182,7 @@ describe("useCustomerDropdownData — BUG-139 locale getter wiring", () => {
     clearGroupAliases();
   });
 
-  it("translates UUID groupLabel through locale getter at fetch time", async () => {
+  it("R2-B-3: translates UUID groupLabel through locale getter to DB name at fetch time", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const request = stubFetch({
       items: [{ id: "c-9", displayName: "R12 应试客户", group: SAMPLE_UUID }],
@@ -195,7 +198,7 @@ describe("useCustomerDropdownData — BUG-139 locale getter wiring", () => {
 
     expect(dd.customers.value).toHaveLength(1);
     expect(dd.customers.value[0].group).toBe(SAMPLE_UUID);
-    expect(dd.customers.value[0].groupLabel).toBe("东京一组");
+    expect(dd.customers.value[0].groupLabel).toBe("tokyo-1");
   });
 });
 

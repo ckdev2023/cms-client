@@ -66,7 +66,8 @@ export type TimelineEntityType =
   | "billing_record"
   | "billing_plan"
   | "payment_record"
-  | "group";
+  | "group"
+  | "role";
 
 /**
  * Timeline 动作标识。

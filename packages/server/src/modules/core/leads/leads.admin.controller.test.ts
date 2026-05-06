@@ -7,8 +7,6 @@ import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 import { LeadsAdminController } from "./leads.admin.controller";
 import type { LeadsAdminService } from "./leads.admin.service";
 
-// ── Helpers ──
-
 const ORG_ID = "00000000-0000-4000-8000-000000000001";
 const USER_ID = "00000000-0000-4000-8000-00000000000a";
 
@@ -24,6 +22,7 @@ function makeReq(ctx?: Record<string, unknown>) {
 
 function stubService(overrides?: Record<string, unknown>): LeadsAdminService {
   return {
+    create: () => Promise.resolve({}),
     list: () => Promise.resolve({ items: [], total: 0 }),
     getDetail: () => Promise.resolve({ lead: {} }),
     update: () => Promise.resolve({}),
@@ -31,6 +30,8 @@ function stubService(overrides?: Record<string, unknown>): LeadsAdminService {
     addFollowup: () => Promise.resolve({}),
     listFollowups: () => Promise.resolve([]),
     listLogs: () => Promise.resolve([]),
+    convertCustomer: () => Promise.resolve({ lead: {}, customerId: "cust-1" }),
+    convertCase: () => Promise.resolve({ lead: {}, caseId: "case-1" }),
     bulkAssign: () => Promise.resolve({ updatedCount: 0 }),
     bulkFollowup: () => Promise.resolve({ updatedCount: 0 }),
     bulkStatus: () => Promise.resolve({ updatedCount: 0, errors: [] }),
@@ -48,9 +49,7 @@ function readControllerSource(): string {
   );
 }
 
-// ── RBAC: @RequireRoles("staff") on every route ──
-
-void describe("LeadsAdminController — RBAC decorators", () => {
+void describe("LeadsAdminController — permission decorators", () => {
   void test("controller is mounted at admin/leads", () => {
     const src = readControllerSource();
     assert.ok(
@@ -60,9 +59,12 @@ void describe("LeadsAdminController — RBAC decorators", () => {
   });
 
   const ROUTE_METHODS = [
+    "create",
     "list",
     "dedup",
     "getDetail",
+    "convertCustomer",
+    "convertCase",
     "update",
     "transitionStatus",
     "addFollowup",
@@ -76,7 +78,7 @@ void describe("LeadsAdminController — RBAC decorators", () => {
   ];
 
   for (const method of ROUTE_METHODS) {
-    void test(`${method}() has @RequireRoles("staff") decorator`, () => {
+    void test(`${method}() has @RequirePermission(PERMISSION_CODES.CASE_EDIT) decorator`, () => {
       const src = readControllerSource();
       const methodIdx = src.indexOf(`async ${method}(`);
       assert.ok(methodIdx > 0, `Method ${method} must exist`);
@@ -85,14 +87,60 @@ void describe("LeadsAdminController — RBAC decorators", () => {
         methodIdx,
       );
       assert.ok(
-        decoratorRegion.includes('@RequireRoles("staff")'),
-        `${method}() must have @RequireRoles("staff")`,
+        decoratorRegion.includes(
+          "@RequirePermission(PERMISSION_CODES.CASE_EDIT)",
+        ),
+        `${method}() must have @RequirePermission(PERMISSION_CODES.CASE_EDIT)`,
       );
     });
   }
 });
 
-// ── Missing request context ──
+void describe("LeadsAdminController — ParseUUIDPipe on :id routes", () => {
+  const ID_ROUTES = [
+    "getDetail",
+    "convertCustomer",
+    "convertCase",
+    "update",
+    "transitionStatus",
+    "addFollowup",
+    "listFollowups",
+    "listLogs",
+  ];
+
+  void test("controller source imports ParseUUIDPipe", () => {
+    const src = readControllerSource();
+    assert.ok(
+      src.includes("ParseUUIDPipe"),
+      "Controller must import ParseUUIDPipe",
+    );
+  });
+
+  void test("UuidParam helper is defined", () => {
+    const src = readControllerSource();
+    assert.ok(
+      src.includes('Param("id", new ParseUUIDPipe())'),
+      "UuidParam must use ParseUUIDPipe",
+    );
+  });
+
+  for (const method of ID_ROUTES) {
+    void test(`${method}() uses @UuidParam() instead of @Param("id")`, () => {
+      const src = readControllerSource();
+      const methodIdx = src.indexOf(`async ${method}(`);
+      assert.ok(methodIdx > 0, `Method ${method} must exist`);
+      const sig = src.slice(methodIdx, src.indexOf("{", methodIdx));
+      assert.ok(
+        sig.includes("@UuidParam()"),
+        `${method}() must use @UuidParam()`,
+      );
+      assert.ok(
+        !sig.includes('@Param("id")'),
+        `${method}() must NOT use raw @Param("id")`,
+      );
+    });
+  }
+});
 
 void describe("LeadsAdminController — missing context", () => {
   void test("list throws UnauthorizedException without requestContext", async () => {
@@ -344,6 +392,73 @@ void describe("LeadsAdminController — dedup query parsing", () => {
     const input = calledWith as Record<string, unknown>;
     assert.equal(input.phone, "090-1234-5678");
     assert.equal(input.email, "test@example.com");
+  });
+});
+
+void describe("LeadsAdminController — create body parsing", () => {
+  void test("requires name field (missing or blank)", async () => {
+    const c = new LeadsAdminController(stubService());
+    await assert.rejects(
+      () => c.create(makeReq() as never, { phone: "090" }),
+      BadRequestException,
+    );
+    await assert.rejects(
+      () => c.create(makeReq() as never, { name: "  " }),
+      BadRequestException,
+    );
+  });
+
+  void test("forwards all create fields to service", async () => {
+    let calledWith: unknown;
+    const service = stubService({
+      create: (_ctx: unknown, input: unknown) => {
+        calledWith = input;
+        return Promise.resolve({});
+      },
+    });
+
+    const controller = new LeadsAdminController(service);
+    await controller.create(makeReq() as never, {
+      name: "Tanaka Taro",
+      phone: "090-1111-2222",
+      email: "tanaka@example.com",
+      sourceChannel: "web",
+      referrer: "Google",
+      intendedCaseType: "business_manager_visa",
+      ownerUserId: USER_ID,
+      note: "VIP lead",
+      language: "ja",
+    });
+
+    const input = calledWith as Record<string, unknown>;
+    assert.equal(input.name, "Tanaka Taro");
+    assert.equal(input.phone, "090-1111-2222");
+    assert.equal(input.email, "tanaka@example.com");
+    assert.equal(input.sourceChannel, "web");
+    assert.equal(input.referrer, "Google");
+    assert.equal(input.intendedCaseType, "business_manager_visa");
+    assert.equal(input.ownerUserId, USER_ID);
+    assert.equal(input.note, "VIP lead");
+    assert.equal(input.language, "ja");
+  });
+
+  void test("optional fields default to undefined", async () => {
+    let calledWith: unknown;
+    const service = stubService({
+      create: (_ctx: unknown, input: unknown) => {
+        calledWith = input;
+        return Promise.resolve({});
+      },
+    });
+
+    const controller = new LeadsAdminController(service);
+    await controller.create(makeReq() as never, { name: "Minimal Lead" });
+
+    const input = calledWith as Record<string, unknown>;
+    assert.equal(input.name, "Minimal Lead");
+    assert.equal(input.phone, undefined);
+    assert.equal(input.email, undefined);
+    assert.equal(input.ownerUserId, undefined);
   });
 });
 

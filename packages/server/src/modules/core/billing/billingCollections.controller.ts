@@ -8,7 +8,8 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { RequireRoles } from "../auth/auth.decorators";
+import { RequirePermission } from "../auth/auth.decorators";
+import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { BillingCollectionsService } from "./billingCollections.service";
 
@@ -46,7 +47,7 @@ export class BillingCollectionsController {
    * @param body - 请求体
    * @returns CollectionResult
    */
-  @RequireRoles("staff")
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post("bulk")
   async bulk(@Req() req: HttpRequest, @Body() body: BulkCollectBody) {
     const ctx = req.requestContext;

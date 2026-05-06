@@ -59,6 +59,11 @@ const conversationsZhCN = {
     noLinkedEntity: "未关联",
     channel: "渠道",
     preferredLanguage: "首选语言",
+    ownerPicker: {
+      selectLabel: "选择负责人",
+      cancel: "取消",
+      confirm: "确认",
+    },
   },
   messages: {
     inputPlaceholder: "输入消息…",
