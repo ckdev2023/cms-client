@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { shallowMount } from "@vue/test-utils";
+import { createMemoryHistory, createRouter } from "vue-router";
 import SettingsView from "./SettingsView.vue";
 import { i18n, setAppLocale } from "../../i18n";
 import {
@@ -64,9 +65,13 @@ vi.mock("./model/RolesAdminRepository", () => ({
 }));
 
 function mountView() {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [{ path: "/", component: SettingsView }],
+  });
   return shallowMount(SettingsView, {
     global: {
-      plugins: [i18n],
+      plugins: [i18n, router],
       stubs: { teleport: true },
     },
   });

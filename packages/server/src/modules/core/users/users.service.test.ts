@@ -21,13 +21,31 @@ import {
 // ── listOrgUsers ──
 
 void describe("UsersService.listOrgUsers", () => {
-  void test("returns mapped user list", async () => {
+  void test("returns mapped user list with full DTO fields", async () => {
     const { pool } = createTestPool((sql) => {
       if (sql.includes("FROM users u") && sql.includes("ORDER BY u.name")) {
         return {
           rows: [
-            { id: "u1", name: "田中", role: "staff", status: "active" },
-            { id: "u2", name: "鈴木", role: "owner", status: "active" },
+            {
+              id: "u1",
+              name: "田中",
+              email: "tanaka@example.com",
+              role: "staff",
+              role_id: "r1",
+              status: "active",
+              created_at: "2026-01-01T00:00:00.000Z",
+              disabled_at: null,
+            },
+            {
+              id: "u2",
+              name: "鈴木",
+              email: "suzuki@example.com",
+              role: "owner",
+              role_id: "r2",
+              status: "active",
+              created_at: "2026-02-01T00:00:00.000Z",
+              disabled_at: "2026-03-01T00:00:00.000Z",
+            },
           ],
         };
       }
@@ -38,8 +56,56 @@ void describe("UsersService.listOrgUsers", () => {
 
     const result = await svc.listOrgUsers(ownerCtx());
     assert.equal(result.items.length, 2);
-    assert.equal(result.items[0].displayName, "田中");
-    assert.equal(result.items[1].role, "owner");
+
+    const first = result.items[0];
+    assert.equal(first.displayName, "田中");
+    assert.equal(first.email, "tanaka@example.com");
+    assert.equal(first.roleId, "r1");
+    assert.equal(first.createdAt, "2026-01-01T00:00:00.000Z");
+    assert.equal(first.disabledAt, null);
+
+    const second = result.items[1];
+    assert.equal(second.role, "owner");
+    assert.equal(second.email, "suzuki@example.com");
+    assert.equal(second.roleId, "r2");
+    assert.equal(second.disabledAt, "2026-03-01T00:00:00.000Z");
+  });
+
+  void test("SQL selects email and timestamp columns", async () => {
+    let capturedSql = "";
+    const { pool } = createTestPool((sql) => {
+      if (sql.includes("FROM users u") && sql.includes("ORDER BY u.name")) {
+        capturedSql = sql;
+        return {
+          rows: [
+            {
+              id: "u1",
+              name: "T",
+              email: "t@e.com",
+              role: "staff",
+              role_id: null,
+              status: "active",
+              created_at: "2026-01-01T00:00:00.000Z",
+              disabled_at: null,
+            },
+          ],
+        };
+      }
+      return { rows: [] };
+    });
+    const { service: timeline } = stubTimeline();
+    const svc = new UsersService(pool, timeline, stubEffectivePermissions());
+    await svc.listOrgUsers(ownerCtx());
+
+    assert.ok(capturedSql.includes("u.email"), "SQL must select u.email");
+    assert.ok(
+      capturedSql.includes("u.created_at"),
+      "SQL must select u.created_at",
+    );
+    assert.ok(
+      capturedSql.includes("u.disabled_at"),
+      "SQL must select u.disabled_at",
+    );
   });
 });
 

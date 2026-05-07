@@ -30,29 +30,17 @@ import { useLeadMutationActions } from "./useLeadMutationActions";
 
 export type { LeadMutationFailure } from "./useLeadMutationActions";
 
-/**
- *
- */
+/** 跟进表单字段。 */
 export interface FollowupFormFields {
-  /**
-   *
-   */
+  /** */
   channel: FollowupChannel | "";
-  /**
-   *
-   */
+  /** */
   summary: string;
-  /**
-   *
-   */
+  /** */
   conclusion: string;
-  /**
-   *
-   */
+  /** */
   nextAction: string;
-  /**
-   *
-   */
+  /** */
   nextFollowUp: string;
 }
 
@@ -347,8 +335,19 @@ async function doConvertCase(
       lead.status === "signed" &&
       lead.conversion.convertedCustomer == null
     ) {
-      await refs.repo.convertCustomer(id, {});
-      await refs.fetchDetail();
+      try {
+        await refs.repo.convertCustomer(id, {});
+        await refs.fetchDetail();
+      } catch (err) {
+        if (
+          err instanceof LeadRepositoryError &&
+          err.serverErrorCode === "CUSTOMER_ALREADY_CONVERTED"
+        ) {
+          /* swallow — proceed to convertCase */
+        } else {
+          throw err;
+        }
+      }
     }
 
     await refs.repo.convertCase(id, input);

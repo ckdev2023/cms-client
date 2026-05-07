@@ -69,6 +69,7 @@ export interface ConversationRepository {
     conversationId: string,
     page?: number,
     limit?: number,
+    preferredLanguage?: string,
   ): Promise<ConversationMessagesResult>;
 
   /**
@@ -146,6 +147,7 @@ function createGetMessages(runtime: ConversationRepositoryRuntime) {
     conversationId: string,
     page?: number,
     limit?: number,
+    preferredLanguage?: string,
   ): Promise<ConversationMessagesResult> => {
     const normalizedId = conversationId.trim();
     if (!normalizedId)
@@ -162,7 +164,7 @@ function createGetMessages(runtime: ConversationRepositoryRuntime) {
       runtime,
       url,
       method: "GET",
-      adapt: adaptConversationMessagesResult,
+      adapt: (v) => adaptConversationMessagesResult(v, preferredLanguage),
       errorMessage: "Invalid messages response",
     });
   };

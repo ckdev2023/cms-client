@@ -280,7 +280,7 @@ void describe("ConversationsAdminService.list — lastMessagePreview", () => {
   void test("list_returns_non_empty_lastMessagePreview_when_messages_exist", async () => {
     const row = convListRow({
       lm_original_text: "こんにちは、在留資格について相談したいです",
-      lm_sender_role: "app_user",
+      lm_sender_type: "app_user",
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
@@ -300,7 +300,7 @@ void describe("ConversationsAdminService.list — lastMessagePreview", () => {
   void test("lastMessagePreview uses staff prefix for non-app_user sender", async () => {
     const row = convListRow({
       lm_original_text: "承知しました",
-      lm_sender_role: "staff",
+      lm_sender_type: "staff",
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
@@ -316,7 +316,7 @@ void describe("ConversationsAdminService.list — lastMessagePreview", () => {
   void test("lastMessagePreview is empty when no messages", async () => {
     const row = convListRow({
       lm_original_text: null,
-      lm_sender_role: null,
+      lm_sender_type: null,
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
@@ -333,7 +333,7 @@ void describe("ConversationsAdminService.list — lastMessagePreview", () => {
     const longText = "あ".repeat(80);
     const row = convListRow({
       lm_original_text: longText,
-      lm_sender_role: "app_user",
+      lm_sender_type: "app_user",
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
@@ -354,7 +354,7 @@ void describe("ConversationsAdminService.list — lastMessagePreview", () => {
   void test("lastMessagePreview strips newlines", async () => {
     const row = convListRow({
       lm_original_text: "行一\n行二\r\n行三",
-      lm_sender_role: "app_user",
+      lm_sender_type: "app_user",
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {

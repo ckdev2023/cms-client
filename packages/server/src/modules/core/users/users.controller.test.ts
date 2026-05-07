@@ -47,9 +47,12 @@ const STUB_LIST = {
     {
       id: TARGET_ID,
       displayName: "田中太郎",
+      email: "tanaka@example.com",
       role: "staff",
       roleId: "00000000-0000-4000-8000-0000000000r1",
       status: "active",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      disabledAt: null,
     },
   ],
 };

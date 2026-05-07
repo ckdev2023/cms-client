@@ -4,6 +4,7 @@ import type {
   MemberItem,
   CreateMemberInput,
 } from "./UsersAdminRepository";
+import { mapSettingsError } from "./settingsErrorMessages";
 
 /**
  *
@@ -63,8 +64,9 @@ function buildLoadMembers(state: MembersState, repo: UsersAdminRepository) {
     try {
       state.members.value = await repo.listMembers();
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to load members";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to load members",
+      );
     } finally {
       state.loading.value = false;
     }
@@ -80,8 +82,9 @@ function buildCreateMember(state: MembersState, repo: UsersAdminRepository) {
       state.createModalOpen.value = false;
       return created;
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to create member";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to create member",
+      );
       throw e;
     }
   };
@@ -99,8 +102,9 @@ function buildUpdateRole(state: MembersState, repo: UsersAdminRepository) {
       state.roleModalTarget.value = null;
       return updated;
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to update role";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to update role",
+      );
       throw e;
     }
   };
@@ -116,8 +120,9 @@ function buildDisableMember(state: MembersState, repo: UsersAdminRepository) {
       );
       return updated;
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to disable member";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to disable member",
+      );
       throw e;
     }
   };
@@ -133,8 +138,9 @@ function buildActivateMember(state: MembersState, repo: UsersAdminRepository) {
       );
       return updated;
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to activate member";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to activate member",
+      );
       throw e;
     }
   };
@@ -149,8 +155,9 @@ function buildResetPassword(state: MembersState, repo: UsersAdminRepository) {
       state.passwordResultOpen.value = true;
       return result;
     } catch (e) {
-      state.error.value =
-        e instanceof Error ? e.message : "Failed to reset password";
+      state.error.value = mapSettingsError(
+        e instanceof Error ? e.message : "Failed to reset password",
+      );
       throw e;
     }
   };

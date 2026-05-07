@@ -34,6 +34,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
       group: "东京一组",
       owner: "田中",
       language: "中文",
+      tags: [],
       note: "配偶在日永住者，希望尽快提交认定申请。首选语言中文。",
     },
     followups: [
@@ -140,6 +141,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
       group: "东京一组",
       owner: "田中",
       language: "日语",
+      tags: [],
       note: "曾咨询永住申请。三次跟进未回复后标记为流失。",
     },
     followups: [
@@ -227,6 +229,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
       group: "东京一组",
       owner: "铃木",
       language: "中文",
+      tags: [],
       note: "已确认签约意向，合同已签。待创建客户档案与案件。",
     },
     followups: [
@@ -322,6 +325,7 @@ const CORE_SAMPLES: Record<string, LeadDetail> = {
       group: "东京二组",
       owner: "铃木",
       language: "中文",
+      tags: [],
       note: "已建立客户档案。技人国更新申请，公司 BlueWave。",
     },
     followups: [

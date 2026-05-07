@@ -1,6 +1,5 @@
-/**
- * Portal 域实体类型定义与 DB 行映射函数。
- */
+/** Portal 域实体类型定义与 DB 行映射函数。 */
+import { sanitizeWalkthroughTags } from "./walkthroughTags";
 
 /** Portal 侧的 timeline entity type。 */
 export type PortalTimelineEntityType =
@@ -322,7 +321,7 @@ function mapLeadLifecycleFields(
     lostReason: toNullableString(r.lost_reason),
     convertedCustomerId: toNullableString(r.converted_customer_id),
     convertedCaseId: toNullableString(r.converted_case_id),
-    tags: parseStringArray(r.tags),
+    tags: sanitizeWalkthroughTags(parseStringArray(r.tags)),
   };
 }
 

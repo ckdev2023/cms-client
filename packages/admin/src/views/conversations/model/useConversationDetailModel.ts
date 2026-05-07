@@ -125,7 +125,8 @@ function createFetchDetail(
       const result = await repo.getDetail(id);
       if (result) {
         state.detail.value = result.detail;
-        const msgs = await repo.getMessages(id);
+        const lang = result.detail.preferredLanguage || undefined;
+        const msgs = await repo.getMessages(id, undefined, undefined, lang);
         state.messages.value = msgs.items;
         if (autoMarkRead && result.detail.status === "open") {
           await repo.getMessages(id);

@@ -14,6 +14,7 @@ import {
   DOC_TEMPLATE_SEEDS,
   seedDocumentTemplates as seedDocumentTemplatesImpl,
 } from "./seedDevDocTemplates";
+import { seedDevUsers } from "./seedDevUsers";
 
 const SEED_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const SEED_USER_ID = "00000000-0000-4000-8000-000000000011";
@@ -257,28 +258,10 @@ async function seedDocumentTemplates(client: PoolClient) {
   await seedDocumentTemplatesImpl(client, SEED_ORG_ID, SEED_USER_ID);
 }
 
-/**
- * Walkthrough / QA 测试 tag 模式：以 `R<数字>-`、`R<数字>_`、`test-`、`mcp-`、
- * `tmp-` 等开头（大小写不敏感）。这些字面量是 chrome-devtools-mcp 走查
- * 灌入 demo 库的内部串，不应出现在运营视角。
- *
- * SQL 同义模式（用 PostgreSQL POSIX `~*`）：
- *   `^(R[0-9]+|test|mcp|tmp)[-_]`
- */
-export const WALKTHROUGH_TAG_PATTERN = /^(R\d+|test|mcp|tmp)[-_]/i;
-
-/**
- * 过滤掉 walkthrough / QA 测试模式 tag，保留所有真实业务 tag。
- *
- * 与 `seedTagsCleanup` 的 SQL 子句保持语义一致，便于本地测试覆盖与
- * SQL 端行为对齐。
- *
- * @param tags - 原始 tag 数组
- * @returns 已剥离 walkthrough 模式后的 tag 数组（保持原顺序、不去重）
- */
-export function sanitizeWalkthroughTags(tags: readonly string[]): string[] {
-  return tags.filter((t) => !WALKTHROUGH_TAG_PATTERN.test(t));
-}
+export {
+  WALKTHROUGH_TAG_PATTERN,
+  sanitizeWalkthroughTags,
+} from "../modules/portal/model/walkthroughTags";
 
 async function seedTagsCleanup(client: PoolClient) {
   await client.query(`
@@ -326,6 +309,7 @@ export type SeedStep = [string, (c: PoolClient) => Promise<void>];
  */
 export function buildSeedSteps(): SeedStep[] {
   return [
+    ["devUsers", seedDevUsers],
     ["customer", seedCustomer],
     ["cases", seedCases],
     ["documentItems", seedDocumentItems],
@@ -374,7 +358,7 @@ async function main() {
     } else {
       await client.query("COMMIT");
       process.stdout.write(
-        `[seed-dev] done — 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
+        `[seed-dev] done — 7 fixture users, 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
       );
     }
   } catch (error) {

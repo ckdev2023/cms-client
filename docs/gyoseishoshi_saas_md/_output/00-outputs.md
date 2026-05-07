@@ -25,6 +25,131 @@
 
 ## 最新产出
 
+- 时间：2026-05-07（R-SETTINGS-01 chrome-devtools-mcp 走查第一轮 / 系统设置 - 成员与角色管理）
+  问题：用 chrome-devtools-mcp 端到端走查 admin 端「系统设置」页
+  下「成员管理」与「角色管理」两个 tab 的所有可达流程，覆盖列表
+  加载 / 创建 / 编辑 / 角色变更 / 重置密码 / 停用启用 / 个性化权限
+  抽屉 / 角色 CRUD / 权限矩阵保存 / i18n / a11y / URL 同步。
+  结论（TL;DR）：两 tab 在「初次加载 / 刷新」之后均处于完全
+  空列表状态——成员表「暂无成员」、角色表「Invalid roles list response」+
+  「暂无角色定义」，settings 模块列表视图实质不可用。共 13 条
+  缺陷：**P0 2 条**（R6-M-1 `GET /api/users` server 返回精简 DTO
+  缺 `email`，client `adaptMemberItem` 强校验 email 把所有现有成员过滤
+  → 永远「暂无成员」；R6-R-1 `GET /api/admin/roles` server 返回
+  `{ items: [...] }` 包装对象，client `doListRoles` 期望裸数组 →
+  解析失败 + 列表永远空，且行 action 入口不可达 → 编辑/复制/删除
+  全部阻塞）/ **P1 2 条**（R6-R-2 编辑角色名称后 watcher 用 server
+  payload 覆盖本地未保存权限勾选，静默丢数据；R6-M-2 `MemberCreateModal` /
+  `MemberRoleModal` dropdown 硬编码 4 个系统角色，无法分配自定义角色 →
+  打破角色管理存在的意义）/ **P2 4 条**（R6-M-3 `actorRole` 永远
+  fallback owner、R6-M-4 个性化权限抽屉 `roleId=undefined` 来自角色列
+  全空、R6-M-5 / R6-R-3 重复 email / role code 错误码原文显示）/
+  **P3 5 条**（R6-M-6 停用无确认 / R6-M-7 失败后表单 reset / R6-N-1
+  子导航不写回 URL / R6-A-1 复制角色 dialog aria-label 不一致 /
+  R6-N-2 8 条 i18n empty key warning）。两条 P0 同源——client adapter
+  与 server payload 字段契约错位，与 R-CONSULT-05 R5-G-1 / R5-D-1
+  同病：缺统一契约 fixture + shared types。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/61-成员与角色管理chrome-devtools-mcp走查-第一轮.md（本轮完整报告）
+  - packages/admin/src/views/settings/model/UsersAdminRepository.ts:187（adapter 强校验 `typeof v.email !== "string"`）
+  - packages/admin/src/views/settings/model/RolesAdminRepository.ts:45（`if (!Array.isArray(body)) throw new Error("Invalid roles list response")`）
+  - packages/server/src/modules/core/users/users.controller.ts（list endpoint 返回 `{id, displayName, role, roleId, status}` 精简 DTO）
+  - packages/server/src/modules/core/auth/rolesAdmin.controller.ts（list endpoint 返回 `{ items: RoleListItemDto[] }` 包装）
+  - packages/admin/src/views/settings/components/RoleDetailPanel.vue（`watch(() => props.role)` 用 server permissions 覆盖 localPermissions）
+  - packages/admin/src/views/settings/components/MemberCreateModal.vue:28 / MemberRoleModal.vue:31（`const ALL_ROLES = ["staff", "viewer", "manager", "owner"]` 硬编码）
+  - packages/admin/src/views/settings/SettingsView.vue（`@open-overrides="(payload) => memberOverrides.openDrawer(payload)"`，payload 没有 `roleId`）
+  - chrome-devtools-mcp 实测 `GET /api/users` 200 但 client UI 列表 0 条；`GET /api/admin/roles` 200 但 UI 显示「Invalid roles list response」+ EmptyState
+  影响面：
+  - **成员管理列表实质不可用**：admin 看不到 6 名 seed 成员（含
+    自己），停用/启用/重置密码/变更角色/个性化权限五个行 action
+    全部不可达；只有刚创建的新成员能在乐观渲染窗口短暂可见，刷新
+    即消失
+  - **角色管理列表实质不可用**：4 个系统角色 + 任何自定义角色都
+    看不见，删除/编辑权限矩阵/复制角色三个行 action 全部不可达；
+    `POST /api/admin/roles/:id/permissions` 写入成功但 UI 永远
+    看不到结果
+  - **R6-M-2 与 R6-R-1 形成 dependency**：即使 R6-R-1 修了，
+    R6-M-2 不修，自定义角色仍进不了 `MemberCreateModal` /
+    `MemberRoleModal` dropdown
+  - **R6-M-1 / R6-R-1 暴露的两条 P0 都是「server DTO 与 client adapter
+    契约错位」**——R6-M-1 是 list / detail DTO 形状不一致，R6-R-1
+    是 list / detail 包装方式不一致；说明 settings 模块 client / server
+    字段映射层缺一个统一的契约 fixture + shared types（与 R5-G-1 /
+    R5-D-1 同源）
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/61-成员与角色管理chrome-devtools-mcp走查-第一轮.md
+    位置：本轮完整报告（独立文件）
+    Owner：研发
+    状态：已生成（2026-05-07）
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：追加 R6-M-1 / R6-R-1 / R6-R-2 / R6-M-2 四条作为下一轮
+    R-SETTINGS 修复单
+    Owner：研发
+    状态：待回灌
+
+---
+
+- 时间：2026-05-07（R-CONSULT-05 chrome-devtools-mcp 走查第五轮）
+  问题：R4 系列前端修复 6 条已落地（R4-A-1 列表 tags chip 列与过滤 /
+  R4-A-2 详情线索编号 / R4-A-3 来源字段拆分 / R4-D-2 发送字段名对齐 /
+  R4-E-2 所属组 dropdown / R4-F-1 dedup 排除自身），R3-F-1 / R3-F-2
+  bulk-tags 端到端闭环已走通。需要做一轮端到端 chrome-devtools-mcp
+  走查：① 验证 R4 已修条目实际 UI 行为是否仍通；② 验证 R4-D-1
+  messages 拉取 + R4-D-2 send 修复后会话主路径是否真正可读可写；
+  ③ 验证 R4-B-1 lead 详情会话 Tab 是否真渲染该 lead 的会话列表；
+  ④ 验证 R3-F-1 / R3-F-2 bulk-tags toast + chip + audit 是否端到端闭环。
+  结论（TL;DR）：R4 已修 6 条 admin UI 全部回归通过；R3-F-2 端到端
+  闭环（PG 持久化 + audit + 列表 refetch + chip 折叠 popover）真正
+  走通；但本轮新发现 9 条缺陷：P0 0 条 / **P1 2 条**（R5-G-1
+  conversations.admin.types.ts `lm.sender_role` 列名错（实际列
+  `sender_type`），导致 `GET /admin/conversations` 整体 500，同时阻断
+  会话列表页 + lead 详情会话 Tab；R5-D-1 ConversationAdapterMappers
+  `mapMessage` 读 `content/translatedContent`，server payload 字段是
+  `originalText/translatedTextJa|Zh|En`，导致所有 message bubble 正文
+  永远为空、仅显示「翻译中…」hint）/ **P2 2 条**（R5-D-2 convert
+  auto-chain 在 already-converted customer 时把错误冒泡为通用 toast，
+  没识别为预期分支跳过 → BMV gate 4 条 blockers 始终到不了 dialog；
+  R5-E-1 reassign / convert-case / bulk-assign 三处 owner picker 都
+  fallback 到 `[currentOwner]` 单元素列表，没用 `useOwnerOptions`，
+  与 R4-D-3 同源扩面）/ **P3 5 条**（R5-A-1 tags 筛选不写回 URL hash /
+  R5-A-2 chip 折叠 button 无 aria-label / R5-A-3 lead 详情基础信息
+  Tab 不渲染 tags / R5-A-4 bulk-tags 成功无 toast 反馈 / R5-F-1
+  message send 未落 timeline_logs 审计）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/60-咨询模块chrome-devtools-mcp走查-第五轮.md（本轮完整报告）
+  - packages/server/src/modules/core/conversations/conversations.admin.types.ts:47,50（`CONV_LIST_JOIN_COLS` / `CONV_LIST_JOINS` 引用 `lm.sender_role`，PG 列名为 `sender_type`）
+  - packages/admin/src/views/conversations/model/ConversationAdapterMappers.ts:175,179（`mapMessage` 读 `content/translatedContent`，server 返回 `originalText/translatedTextJa|Zh|En`）
+  - packages/admin/src/views/leads/model/useLeadDetailModel.ts（convertCase auto-chain 未识别 already-converted skip 分支）
+  - packages/admin/src/views/conversations/components/ConversationOwnerPickerDialog.vue / packages/admin/src/views/leads/components/LeadConvertCaseDialog.vue / 列表批量操作 owner picker（三处统一未走 `useOwnerOptions`）
+  - PG: `select tags from leads where id='8a7b2cf3...'` → `{R5-walk}`；`select tags from leads where id='00000000-0000-4000-b000-000000000010'` → `{R5-walk,朋友,测试,面談済,VIP,優先}`（R3-F-2 端到端闭环证据）
+  - PG: `select original_text, sender_role from messages limit 1;` → `ERROR: column "sender_role" does not exist. HINT: Perhaps you meant to reference the column "messages.sender_type".`（R5-G-1 直接证据）
+  - chrome-devtools-mcp 实测 `GET /admin/conversations` × 多形态 500（无论 `?leadId=...` 还是 `?scope=mine`）
+  - chrome-devtools-mcp 实测 `POST /messages 201`（R4-D-2 已修），但 mount 后 6 条 bubble 正文全部为空（R5-D-1）
+  - chrome-devtools-mcp 实测 reassign / convert-case dialog dropdown 选项数 = 1，列表筛选 dropdown 选项数 = 7（R5-E-1 共同退化）
+  - timeline_logs：conversation.{assigned/closed/reassigned/reopened} 计数齐全，**无 conversation.message_sent**（R5-F-1）
+  影响面：
+  - **会话主路径再次阻断**：R5-G-1 让会话列表整体 500（含 lead 详情会话 Tab，把 R4-B-1 修复方向 2 拉回 R4 之前的体感）；R5-D-1 让 R4-D-1 已修的 messages 拉取在视觉上等于没修；admin 端会话功能整体不可用，与 R4 时差不多
+  - **owner 指派路径全面退化**：R5-E-1 让 reassign / convert-case / bulk-assign 三处都只能指派给当前用户自己，业务管理流程实质阻塞（主办人 admin 无法把会话 / 案件 / 批量 lead 指派给团队其他成员）
+  - **convert-case happy-path 永远失败**：R5-D-2 让所有 signed + has-customer lead 在 UI 上点「签约并开始建档」都失败（实际上 server BMV gate 已结构化返回 4 条 blockers，client 无法识别 already-converted skip 分支，错误冒泡为通用 toast）
+  - **R5 暴露的两条 P1 都是「契约已修复但又在新地方错位」**——R5-G-1 是新加 join 写错列名，R5-D-1 是写侧字段统一了但读侧 mapper 没跟上；说明会话模块在 client / server 的字段映射层缺一个统一的契约 fixture + shared types
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/60-咨询模块chrome-devtools-mcp走查-第五轮.md
+    位置：本轮完整报告（独立文件）
+    Owner：研发
+    状态：已生成（2026-05-07）
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：追加 R5-G-1 / R5-D-1 / R5-E-1 / R5-D-2 四条作为下一轮修复单
+    Owner：研发
+    状态：待回灌
+  - 目标文档：R-CONSULT-05 修复 PR 计划
+    位置：建议拆 4 个 PR：(1) R5-G-1 + R5-D-1 + R5-F-1 一起解锁会话主路径；(2) R5-E-1 三处 owner picker 共同 fix；(3) R5-D-2 + R4-F-2 + R5-A-3 conversion + projection 补全；(4) R5-A-1 + R5-A-2 + R5-A-4 leads list UX 收尾
+    Owner：研发
+    状态：待排期
+  - 目标文档：下一轮 R-CONSULT-06 命题
+    位置：把 server `messages.admin.types.ts` 与 client `views/conversations/types.ts` 字段映射提到共享 ts/zod 单一数据源，杜绝 R5-G-1 / R5-D-1 这类「契约新错位」复发
+    Owner：研发
+    状态：待排期
+
 - 时间：2026-05-06（R-CONSULT-04 chrome-devtools-mcp 走查第四轮）
   问题：R3 系列修复 7 条服务端 + 前端契约对齐已落地（见 outputs.md
   R3-A-1 / R3-D-2 / R3-E-1 / R3-E-2 / R3-E-3 / R3-E-5 / R3-F-2 等条目），

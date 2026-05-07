@@ -145,6 +145,46 @@ void describe("LeadsAdminService.getDetail — dedup customer name extraction", 
     assert.equal(result.dedupHints.customers[0].name, "佐藤 花子");
   });
 
+  void test("dedup_returns_customer_name_from_fullName_when_only_fullName_present", async () => {
+    const CUST_ID = "00000000-0000-4000-8000-cccc00000005";
+    const pool = makePool((sql) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [leadRow({ phone: "090-9999-8888" })],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("from lead_followups")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (sql.includes("lead_logs")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (sql.includes("from customers")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: CUST_ID,
+              base_profile: { fullName: "山田 花子" },
+            },
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("from leads")) {
+        return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const result = await svc(pool).getDetail(makeCtx(), LEAD_ID);
+    assert.ok(
+      result.dedupHints.customers.length > 0,
+      "should have dedup customer matches",
+    );
+    assert.equal(result.dedupHints.customers[0].name, "山田 花子");
+  });
+
   void test("dedup_returns_null_name_when_base_profile_empty", async () => {
     const CUST_ID = "00000000-0000-4000-8000-cccc00000004";
     const pool = makePool((sql) => {

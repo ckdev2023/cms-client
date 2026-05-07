@@ -45,6 +45,10 @@ export interface MemberItem {
   /**
    *
    */
+  roleId: string | null;
+  /**
+   *
+   */
   status: string;
   /**
    *
@@ -164,13 +168,21 @@ function isRecord(value: unknown): value is Record<string, unknown> {
  */
 export function adaptMemberItem(v: unknown): MemberItem | null {
   if (!isRecord(v)) return null;
-  if (typeof v.id !== "string" || typeof v.email !== "string") return null;
+  if (typeof v.id !== "string") return null;
+
+  const name =
+    typeof v.displayName === "string"
+      ? v.displayName
+      : typeof v.name === "string"
+        ? v.name
+        : "";
 
   return {
     id: v.id,
-    name: typeof v.name === "string" ? v.name : "",
-    email: v.email,
+    name,
+    email: typeof v.email === "string" ? v.email : "",
     role: typeof v.role === "string" ? v.role : "",
+    roleId: typeof v.roleId === "string" ? v.roleId : null,
     status: typeof v.status === "string" ? v.status : "active",
     createdAt: typeof v.createdAt === "string" ? v.createdAt : "",
     disabledAt: typeof v.disabledAt === "string" ? v.disabledAt : null,

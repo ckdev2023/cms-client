@@ -31,6 +31,7 @@ const leadsJaJP = {
       followUp: "フォローアップ",
       updated: "最終更新",
     },
+    tagsRest: "残り {count} 件のタグ",
     ownerUnassigned: "未割当",
     ownerUnknown: "不明なユーザー",
     status: {
@@ -195,6 +196,7 @@ const leadsJaJP = {
         group: "グループ",
         owner: "担当者",
         language: "使用言語",
+        tags: "タグ",
         note: "メモ",
       },
       createdViaLabel: "作成元：{via}",
@@ -342,6 +344,11 @@ const leadsJaJP = {
       zh: "中国語",
       en: "英語",
       vi: "ベトナム語",
+    },
+    createdVia: {
+      admin: "管理画面",
+      appUser: "モバイルアプリ",
+      portal: "顧客ポータル",
     },
   },
   errors: {

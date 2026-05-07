@@ -269,10 +269,15 @@ async function fetchJson(
 
 async function doListRoles(runtime: ResolvedRuntime): Promise<RoleItem[]> {
   const body = await fetchJson(runtime, "", { method: "GET" });
-  if (!Array.isArray(body)) {
+  const arr = Array.isArray(body)
+    ? body
+    : isRecord(body) && Array.isArray(body.items)
+      ? body.items
+      : null;
+  if (!arr) {
     throw new RolesAdminRepositoryError("Invalid roles list response");
   }
-  return body.map(adaptRoleItem).filter((r): r is RoleItem => r !== null);
+  return arr.map(adaptRoleItem).filter((r): r is RoleItem => r !== null);
 }
 
 async function doGetRoleDetail(

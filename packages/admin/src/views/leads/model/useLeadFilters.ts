@@ -1,12 +1,30 @@
-import { ref, reactive, computed, toRefs } from "vue";
+import { ref, reactive, computed, toRefs, watch } from "vue";
 import type { Ref } from "vue";
+import type { LocationQuery } from "vue-router";
 import type {
   LeadFiltersState,
   LeadScope,
+  LeadStatus,
+  LeadStatusFilter,
   LeadSummary,
   SelectOption,
 } from "../types";
 import type { LeadListParams } from "./LeadAdapterTypes";
+
+const LEAD_STATUS_VALUES: readonly LeadStatus[] = [
+  "new",
+  "following",
+  "pending_sign",
+  "signed",
+  "converted_case",
+  "lost",
+];
+
+function toLeadStatusFilter(value: string): LeadStatusFilter {
+  return (LEAD_STATUS_VALUES as readonly string[]).includes(value)
+    ? (value as LeadStatus)
+    : "";
+}
 
 /**
  *
@@ -24,6 +42,10 @@ export interface UseLeadFiltersDeps {
    *
    */
   businessTypeOptions: SelectOption[];
+  /** 路由 query 的响应式引用，用于初始化及监听浏览器前进/后退。 */
+  routeQuery?: Ref<LocationQuery>;
+  /** 将筛选状态写回 URL；由视图层注入 `router.replace`。 */
+  replaceQuery?: (query: Record<string, string | undefined>) => void;
 }
 
 interface DropdownState {
@@ -101,6 +123,117 @@ function buildListParams(
   };
 }
 
+// ─── Route ↔ filter sync ────────────────────────────────────────
+
+function readQueryString(query: LocationQuery, key: string): string {
+  const v = query[key];
+  return typeof v === "string" ? v : "";
+}
+
+interface ParsedFilterQuery {
+  status: LeadStatusFilter;
+  owner: string;
+  group: string;
+  businessType: string;
+  tags: string[];
+}
+
+function parseFiltersFromQuery(query: LocationQuery): ParsedFilterQuery {
+  const tagsRaw = readQueryString(query, "tags");
+  return {
+    status: toLeadStatusFilter(readQueryString(query, "status")),
+    owner: readQueryString(query, "owner"),
+    group: readQueryString(query, "group"),
+    businessType: readQueryString(query, "businessType"),
+    tags: tagsRaw ? tagsRaw.split(",").filter(Boolean) : [],
+  };
+}
+
+function buildFilterQuery(
+  f: Omit<LeadFiltersState, "scope">,
+  tags: string[],
+): Record<string, string | undefined> {
+  return {
+    status: f.status || undefined,
+    owner: f.owner || undefined,
+    group: f.group || undefined,
+    businessType: f.businessType || undefined,
+    tags: tags.length > 0 ? tags.join(",") : undefined,
+  };
+}
+
+function setupRouteSync(
+  f: Omit<LeadFiltersState, "scope">,
+  tagsFilter: Ref<string[]>,
+  routeQuery: Ref<LocationQuery>,
+  replaceQuery: (query: Record<string, string | undefined>) => void,
+) {
+  let skipRouteSync = false;
+
+  function syncToRoute() {
+    if (skipRouteSync) return;
+    replaceQuery(buildFilterQuery(f, tagsFilter.value));
+  }
+
+  watch(
+    () => ({
+      status: f.status,
+      owner: f.owner,
+      group: f.group,
+      businessType: f.businessType,
+      tags: tagsFilter.value,
+    }),
+    () => syncToRoute(),
+  );
+
+  watch(routeQuery, (query) => {
+    skipRouteSync = true;
+    const next = parseFiltersFromQuery(query);
+    f.status = next.status;
+    f.owner = next.owner;
+    f.group = next.group;
+    f.businessType = next.businessType;
+    tagsFilter.value = next.tags;
+    skipRouteSync = false;
+  });
+}
+
+function createFiltersReactive(initial: ParsedFilterQuery | null) {
+  return reactive<Omit<LeadFiltersState, "scope">>({
+    ...BLANK_FILTERS,
+    ...(initial
+      ? {
+          status: initial.status,
+          owner: initial.owner,
+          group: initial.group,
+          businessType: initial.businessType,
+        }
+      : {}),
+  });
+}
+
+function applyFiltersToList(
+  leads: LeadSummary[],
+  f: Omit<LeadFiltersState, "scope">,
+  tagsFilter: readonly string[],
+  groupOptions: SelectOption[],
+): LeadSummary[] {
+  const dd: DropdownState = {
+    status: f.status,
+    owner: f.owner,
+    group: f.group,
+    businessType: f.businessType,
+    groupOptions,
+  };
+  return leads.filter(
+    (l) =>
+      (!f.search || matchesSearch(l, f.search)) &&
+      matchesDropdowns(l, dd) &&
+      matchesDateRange(l, f.dateFrom, f.dateTo) &&
+      (tagsFilter.length === 0 || tagsFilter.every((t) => l.tags?.includes(t))),
+  );
+}
+
 /**
  * 线索列表筛选状态管理。
  *
@@ -109,10 +242,17 @@ function buildListParams(
  */
 export function useLeadFilters(deps: UseLeadFiltersDeps) {
   const scope = ref<LeadScope>("mine");
-  const f = reactive({ ...BLANK_FILTERS });
-  const tagsFilter: Ref<string[]> = ref([]);
+  const initial = deps.routeQuery
+    ? parseFiltersFromQuery(deps.routeQuery.value)
+    : null;
+  const f = createFiltersReactive(initial);
+  const tagsFilter: Ref<string[]> = ref(initial?.tags ?? []);
   const page = ref(1);
   const limit = ref(20);
+
+  if (deps.routeQuery && deps.replaceQuery) {
+    setupRouteSync(f, tagsFilter, deps.routeQuery, deps.replaceQuery);
+  }
 
   const isFilterActive = computed(
     () => Object.values(f).some((v) => v !== "") || tagsFilter.value.length > 0,
@@ -124,27 +264,7 @@ export function useLeadFilters(deps: UseLeadFiltersDeps) {
     page.value = 1;
   }
 
-  function applyFilters(leads: LeadSummary[]): LeadSummary[] {
-    const dd: DropdownState = {
-      status: f.status,
-      owner: f.owner,
-      group: f.group,
-      businessType: f.businessType,
-      groupOptions: deps.groupOptions,
-    };
-    return leads.filter(
-      (l) =>
-        (!f.search || matchesSearch(l, f.search)) &&
-        matchesDropdowns(l, dd) &&
-        matchesDateRange(l, f.dateFrom, f.dateTo) &&
-        (tagsFilter.value.length === 0 ||
-          tagsFilter.value.every((t) => l.tags?.includes(t))),
-    );
-  }
-
   const r = toRefs(f);
-  const toListParams = () =>
-    buildListParams(scope.value, f, tagsFilter.value, page.value, limit.value);
   return {
     scope,
     search: r.search,
@@ -159,7 +279,15 @@ export function useLeadFilters(deps: UseLeadFiltersDeps) {
     limit,
     isFilterActive,
     resetFilters,
-    applyFilters,
-    toListParams,
+    applyFilters: (leads: LeadSummary[]) =>
+      applyFiltersToList(leads, f, tagsFilter.value, deps.groupOptions),
+    toListParams: () =>
+      buildListParams(
+        scope.value,
+        f,
+        tagsFilter.value,
+        page.value,
+        limit.value,
+      ),
   };
 }

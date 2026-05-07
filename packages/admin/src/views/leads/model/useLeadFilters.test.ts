@@ -1,5 +1,12 @@
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
+import { nextTick, ref } from "vue";
+import type { LocationQuery } from "vue-router";
 import { useLeadFilters } from "./useLeadFilters";
+import { useLeadCatalogOptions } from "./useLeadCatalogOptions";
+import {
+  clearUserAliases,
+  registerUserAliases,
+} from "../../../shared/model/useOrgUserOptions";
 import type { LeadSummary, SelectOption } from "../types";
 
 const GROUP_OPTIONS: SelectOption[] = [
@@ -95,6 +102,10 @@ function create() {
     businessTypeOptions: BIZ_TYPE_OPTIONS,
   });
 }
+
+afterEach(() => {
+  clearUserAliases();
+});
 
 describe("useLeadFilters", () => {
   it("initializes with default values", () => {
@@ -260,5 +271,114 @@ describe("useLeadFilters", () => {
     const f = create();
     f.groupFilter.value = "nonexistent";
     expect(f.applyFilters(LEADS)).toHaveLength(3);
+  });
+
+  it("ownerOptions reflect apiOwnerOptions changes after registerUserAliases", () => {
+    const UUID_A = "00000000-0000-4000-8000-000000000011";
+    const UUID_B = "11111111-2222-3333-4444-555555555555";
+
+    const { apiOwnerOptions } = useLeadCatalogOptions(ref("zh-CN"));
+    expect(apiOwnerOptions.value).toHaveLength(0);
+
+    registerUserAliases([
+      { id: UUID_A, displayName: "Local Admin" },
+      { id: UUID_B, displayName: "Staff B" },
+    ]);
+
+    expect(apiOwnerOptions.value).toHaveLength(2);
+    expect(apiOwnerOptions.value.map((o) => o.value)).toContain(UUID_A);
+    expect(apiOwnerOptions.value.map((o) => o.value)).toContain(UUID_B);
+
+    const uuidLeads: LeadSummary[] = [
+      lead({ id: "l1", ownerId: UUID_A }),
+      lead({ id: "l2", ownerId: UUID_B }),
+    ];
+
+    const f = useLeadFilters({
+      groupOptions: GROUP_OPTIONS,
+      ownerOptions: apiOwnerOptions.value,
+      businessTypeOptions: BIZ_TYPE_OPTIONS,
+    });
+
+    f.ownerFilter.value = UUID_A;
+    const result = f.applyFilters(uuidLeads);
+    expect(result).toHaveLength(1);
+    expect(result[0].id).toBe("l1");
+  });
+});
+
+// ─── Route sync tests ───────────────────────────────────────────
+
+function createWithRoute(query: LocationQuery = {}) {
+  const routeQuery = ref<LocationQuery>(query);
+  const replaceQuery = vi.fn();
+  const f = useLeadFilters({
+    groupOptions: GROUP_OPTIONS,
+    ownerOptions: OWNER_OPTIONS,
+    businessTypeOptions: BIZ_TYPE_OPTIONS,
+    routeQuery,
+    replaceQuery,
+  });
+  return { f, routeQuery, replaceQuery };
+}
+
+describe("useLeadFilters — route sync", () => {
+  afterEach(() => {
+    clearUserAliases();
+  });
+
+  it("tagsFilter initialized from route query on mount", () => {
+    const { f } = createWithRoute({ tags: "urgent,vip" });
+    expect(f.tagsFilter.value).toEqual(["urgent", "vip"]);
+  });
+
+  it("tagsFilter writes back to router query", async () => {
+    const { f, replaceQuery } = createWithRoute();
+    f.tagsFilter.value = ["hot", "follow"];
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ tags: "hot,follow" }),
+    );
+  });
+
+  it("statusFilter writes back to router query", async () => {
+    const { f, replaceQuery } = createWithRoute();
+    f.statusFilter.value = "following";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ status: "following" }),
+    );
+  });
+
+  it("ownerFilter initialized from route query and writes back", async () => {
+    const { f, replaceQuery } = createWithRoute({ owner: "suzuki" });
+    expect(f.ownerFilter.value).toBe("suzuki");
+
+    f.ownerFilter.value = "tanaka";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: "tanaka" }),
+    );
+  });
+
+  it("groupFilter and businessTypeFilter sync with route", async () => {
+    const { f, replaceQuery } = createWithRoute({
+      group: "tokyo-1",
+      businessType: "work-visa",
+    });
+    expect(f.groupFilter.value).toBe("tokyo-1");
+    expect(f.businessTypeFilter.value).toBe("work-visa");
+
+    f.groupFilter.value = "osaka";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ group: "osaka" }),
+    );
+
+    f.businessTypeFilter.value = "family-stay";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ businessType: "family-stay" }),
+    );
   });
 });

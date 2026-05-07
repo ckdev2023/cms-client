@@ -104,7 +104,11 @@ function handleConfirm() {
         class="rcm-dialog"
         role="dialog"
         aria-modal="true"
-        :aria-label="t('settings.roles.createModal.title')"
+        :aria-label="
+          fromRole
+            ? t('settings.roles.createModal.titleCopy')
+            : t('settings.roles.createModal.title')
+        "
         @keydown.escape="handleClose"
       >
         <div class="rcm-header">

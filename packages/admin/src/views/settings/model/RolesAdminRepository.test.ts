@@ -120,8 +120,27 @@ describe("RolesAdminRepository", () => {
       );
     });
 
-    it("throws on non-array response", async () => {
-      const request = mockFetch({ items: [] });
+    it("accepts { items } wrapper response", async () => {
+      const roles = [
+        {
+          id: "r1",
+          orgId: "o1",
+          code: "owner",
+          name: "Owner",
+          isSystem: true,
+          memberCount: 1,
+        },
+      ];
+      const request = mockFetch({ items: roles });
+      const repo = createRepo(request);
+
+      const result = await repo.listRoles();
+      expect(result).toHaveLength(1);
+      expect(result[0]!.code).toBe("owner");
+    });
+
+    it("throws on invalid response shape", async () => {
+      const request = mockFetch({ data: "bad" });
       const repo = createRepo(request);
 
       await expect(repo.listRoles()).rejects.toThrow(RolesAdminRepositoryError);

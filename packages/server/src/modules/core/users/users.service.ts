@@ -63,7 +63,8 @@ export class UsersService {
   async listOrgUsers(ctx: RequestContext) {
     const db = this.tenantDb(ctx);
     const result = await db.query<OrgUserRow>(
-      `SELECT u.id, u.name, r.code AS role, u.role_id, u.status
+      `SELECT u.id, u.name, u.email, r.code AS role, u.role_id, u.status,
+              u.created_at, u.disabled_at
        FROM users u
        LEFT JOIN roles r ON r.id = u.role_id
        WHERE u.org_id = $1

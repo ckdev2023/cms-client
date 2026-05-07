@@ -29,13 +29,31 @@ const nameInput = ref("");
 const descInput = ref("");
 
 const localPermissions = ref<Set<string>>(new Set());
+const syncedPermissions = ref<Set<string>>(new Set());
+
+/**
+ * 检查本地权限勾选是否与上次同步值不同。
+ *
+ * @returns 若有未同步变更返回 true
+ */
+function hasLocalPermissionEdits(): boolean {
+  if (syncedPermissions.value.size !== localPermissions.value.size) return true;
+  for (const p of localPermissions.value) {
+    if (!syncedPermissions.value.has(p)) return true;
+  }
+  return false;
+}
 
 watch(
   () => props.role,
-  (r) => {
+  (r, prev) => {
     nameInput.value = r.name;
     descInput.value = r.description ?? "";
-    localPermissions.value = new Set(r.permissions);
+    const roleChanged = !prev || r.id !== prev.id;
+    if (roleChanged || !hasLocalPermissionEdits()) {
+      localPermissions.value = new Set(r.permissions);
+      syncedPermissions.value = new Set(r.permissions);
+    }
   },
   { immediate: true },
 );
@@ -113,6 +131,7 @@ function savePerms() {
 /** 重置权限为服务端原始值。 */
 function resetPerms() {
   localPermissions.value = new Set(props.role.permissions);
+  syncedPermissions.value = new Set(props.role.permissions);
 }
 </script>
 
@@ -338,11 +357,13 @@ function resetPerms() {
   transition: border-color 0.15s;
 }
 
-.rdp__input:focus {
+.rdp__input:focus,
+.rdp__textarea:focus {
   border-color: var(--color-primary-6);
 }
 
-.rdp__input:disabled {
+.rdp__input:disabled,
+.rdp__textarea:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -360,15 +381,6 @@ function resetPerms() {
   resize: vertical;
   transition: border-color 0.15s;
   box-sizing: border-box;
-}
-
-.rdp__textarea:focus {
-  border-color: var(--color-primary-6);
-}
-
-.rdp__textarea:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
 }
 
 .rdp__meta-actions {
@@ -429,7 +441,8 @@ function resetPerms() {
   cursor: pointer;
 }
 
-.rdp__group-label input[type="checkbox"] {
+.rdp__group-label input[type="checkbox"],
+.rdp__perm-item input[type="checkbox"] {
   width: 16px;
   height: 16px;
   cursor: pointer;
@@ -456,12 +469,6 @@ function resetPerms() {
 .rdp__perm-item--disabled {
   cursor: not-allowed;
   opacity: 0.7;
-}
-
-.rdp__perm-item input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
 }
 
 .rdp__perm-item--disabled input[type="checkbox"] {

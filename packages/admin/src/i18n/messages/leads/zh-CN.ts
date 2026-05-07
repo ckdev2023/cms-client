@@ -31,6 +31,7 @@ const leadsZhCN = {
       followUp: "跟进安排",
       updated: "最近更新",
     },
+    tagsRest: "其余 {count} 个标签",
     ownerUnassigned: "未分配",
     ownerUnknown: "未知用户",
     status: {
@@ -193,6 +194,7 @@ const leadsZhCN = {
         group: "所属组",
         owner: "负责人",
         language: "首选语言",
+        tags: "标签",
         note: "备注",
       },
       createdViaLabel: "创建路径：{via}",
@@ -336,6 +338,11 @@ const leadsZhCN = {
       zh: "中文",
       en: "英语",
       vi: "越南语",
+    },
+    createdVia: {
+      admin: "管理员后台",
+      appUser: "移动端",
+      portal: "客户门户",
     },
   },
   errors: {

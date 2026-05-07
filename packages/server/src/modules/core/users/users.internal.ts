@@ -10,22 +10,28 @@ import {
 } from "../model/timestamps";
 import type { UserDetailDto } from "./users.types";
 
-/** DB 行: ユーザー一覧用の最小射影。 */
+/** DB 行: ユーザー一覧用の射影。 */
 export type OrgUserRow = {
   id: string;
   name: string;
+  email: string;
   role: string;
   role_id: string | null;
   status: string;
+  created_at: unknown;
+  disabled_at: unknown;
 };
 
 /** ユーザー一覧項目 DTO。 */
 export type OrgUserDto = {
   id: string;
   displayName: string;
+  email: string;
   role: string;
   roleId: string | null;
   status: string;
+  createdAt: string;
+  disabledAt: string | null;
 };
 
 /** ユーザー一覧結果 DTO。 */
@@ -58,9 +64,12 @@ export function mapOrgUserRow(row: OrgUserRow): OrgUserDto {
   return {
     id: row.id,
     displayName: row.name,
+    email: row.email,
     role: row.role,
     roleId: row.role_id,
     status: row.status,
+    createdAt: requireTimestampString(row.created_at, "created_at"),
+    disabledAt: toTimestampStringOrNull(row.disabled_at),
   };
 }
 

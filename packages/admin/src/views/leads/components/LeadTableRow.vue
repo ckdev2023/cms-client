@@ -87,10 +87,6 @@ const hiddenTags = computed(() =>
   }),
 );
 
-const remainingTagsAriaLabel = computed(() =>
-  hiddenTags.value.map((h) => h.tag).join(", "),
-);
-
 const moreRef = ref<HTMLElement | null>(null);
 const popoverOpen = ref(false);
 const popoverStyle = ref<{ top: string; left: string }>({
@@ -222,7 +218,7 @@ function closeTagPopover() {
           class="lead-row__tags-more"
           tabindex="0"
           role="button"
-          :aria-label="remainingTagsAriaLabel"
+          :aria-label="t('leads.list.tagsRest', { count: remainingTagCount })"
           @mouseenter="openTagPopover"
           @mouseleave="closeTagPopover"
           @focus="openTagPopover"

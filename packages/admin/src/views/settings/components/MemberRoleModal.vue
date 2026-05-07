@@ -9,6 +9,7 @@ const props = defineProps<{
   open: boolean;
   member: MemberItem | null;
   actorRole?: string;
+  availableRoles: { code: string; name: string }[];
 }>();
 
 const emit = defineEmits<{
@@ -17,8 +18,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-
-const ALL_ROLES = ["owner", "manager", "staff", "viewer"] as const;
 
 const selectedRole = ref("");
 
@@ -32,12 +31,15 @@ watch(
 /**
  * 根据操作者角色返回可选角色列表。
  *
- * @returns 可选角色字符串数组
+ * @returns 可选角色对象数组
  */
-function allowedRoles(): string[] {
+function allowedRoles(): { code: string; name: string }[] {
   const actor = props.actorRole ?? "owner";
-  if (actor === "owner") return [...ALL_ROLES];
-  if (actor === "manager") return ["staff", "viewer"];
+  if (actor === "owner") return props.availableRoles;
+  if (actor === "manager")
+    return props.availableRoles.filter(
+      (r) => r.code === "staff" || r.code === "viewer",
+    );
   return [];
 }
 
@@ -97,8 +99,8 @@ function handleConfirm() {
               {{ t("settings.members.roleModal.roleLabel") }}
             </label>
             <select id="mrmRole" v-model="selectedRole" class="mrm-select">
-              <option v-for="r in allowedRoles()" :key="r" :value="r">
-                {{ r }}
+              <option v-for="r in allowedRoles()" :key="r.code" :value="r.code">
+                {{ r.name }}
               </option>
             </select>
           </div>

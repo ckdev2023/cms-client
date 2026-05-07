@@ -122,4 +122,32 @@ void describe("LeadsAdminController — convertCustomer parsing", () => {
       BadRequestException,
     );
   });
+
+  void test("convertCustomer_returns_CUSTOMER_ALREADY_CONVERTED_code_when_already_converted", async () => {
+    const service = stubService({
+      convertCustomer: () =>
+        Promise.reject(
+          new BadRequestException({
+            statusCode: 400,
+            message: "Lead already has a converted customer",
+            code: "CUSTOMER_ALREADY_CONVERTED",
+          }),
+        ),
+    });
+
+    const controller = new LeadsAdminController(service);
+    await assert.rejects(
+      () =>
+        controller.convertCustomer(makeReq() as never, "lead-1", {
+          confirmDedup: true,
+        }),
+      (err: Error) => {
+        assert.ok(err instanceof BadRequestException);
+        const body = err.getResponse() as Record<string, unknown>;
+        assert.equal(body.code, "CUSTOMER_ALREADY_CONVERTED");
+        assert.equal(body.statusCode, 400);
+        return true;
+      },
+    );
+  });
 });

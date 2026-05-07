@@ -14,21 +14,43 @@ import {
 } from "./users.internal";
 
 void describe("mapOrgUserRow", () => {
-  void test("maps DB row to OrgUserDto", () => {
+  void test("maps DB row to OrgUserDto with email and timestamps", () => {
     const row: OrgUserRow = {
       id: "u1",
       name: "田中太郎",
+      email: "tanaka@example.com",
       role: "staff",
       role_id: "r1",
       status: "active",
+      created_at: "2026-01-01T00:00:00.000Z",
+      disabled_at: null,
     };
     assert.deepEqual(mapOrgUserRow(row), {
       id: "u1",
       displayName: "田中太郎",
+      email: "tanaka@example.com",
       role: "staff",
       roleId: "r1",
       status: "active",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      disabledAt: null,
     });
+  });
+
+  void test("maps disabled_at Date to string", () => {
+    const row: OrgUserRow = {
+      id: "u2",
+      name: "鈴木",
+      email: "suzuki@example.com",
+      role: "owner",
+      role_id: "r2",
+      status: "disabled",
+      created_at: new Date("2026-02-01T00:00:00.000Z"),
+      disabled_at: new Date("2026-03-01T00:00:00.000Z"),
+    };
+    const dto = mapOrgUserRow(row);
+    assert.equal(dto.createdAt, "2026-02-01T00:00:00.000Z");
+    assert.equal(dto.disabledAt, "2026-03-01T00:00:00.000Z");
   });
 });
 

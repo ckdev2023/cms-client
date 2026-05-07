@@ -17,6 +17,7 @@ import { RedisQueue } from "../../../infra/queue/redisQueue";
 import type { TranslationJobPayload } from "../jobs/handlers/translationJobHandler";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { TimelineService } from "../timeline/timeline.service";
 import { ConversationsAdminService } from "./conversations.admin.service";
 import type {
   MessageListAdminInput,
@@ -42,12 +43,15 @@ export class MessagesAdminService {
    * @param pool PostgreSQL 接続プール
    * @param redisClient Redis クライアント
    * @param conversationsAdminService 会話管理サービス
+   * @param timelineService タイムラインサービス
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
     @Inject(REDIS_CLIENT) private readonly redisClient: RedisClient,
     @Inject(ConversationsAdminService)
     private readonly conversationsAdminService: ConversationsAdminService,
+    @Inject(TimelineService)
+    private readonly timelineService: TimelineService,
   ) {
     this.queue = new RedisQueue(this.redisClient);
   }
@@ -120,6 +124,17 @@ export class MessagesAdminService {
     if (!input.forceOriginal) {
       await this.enqueueTranslation(ctx.orgId, message, input.originalLanguage);
     }
+    await this.timelineService.write(ctx, {
+      entityType: "conversation",
+      entityId: conversationId,
+      action: "conversation.message_sent",
+      payload: {
+        messageId: message.id,
+        senderType: message.senderType,
+        kind: message.kind,
+        visibleScope: message.visibleScope,
+      },
+    });
     return message;
   }
 
@@ -168,6 +183,12 @@ export class MessagesAdminService {
     const updatedRow = updated.rows.at(0);
     if (!updatedRow)
       throw new NotFoundException("Message not found after retry");
+    await this.timelineService.write(ctx, {
+      entityType: "conversation",
+      entityId: conversationId,
+      action: "conversation.message_translation_retried",
+      payload: { messageId },
+    });
     return mapMessageRow(updatedRow);
   }
 

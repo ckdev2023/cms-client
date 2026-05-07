@@ -180,6 +180,12 @@ const settingsEnUS = {
       cancel: "Cancel",
       confirm: "Confirm",
     },
+    disableModal: {
+      title: "Disable Member",
+      confirm: 'Disable "{name}"? They will no longer be able to log in.',
+      cancel: "Cancel",
+      confirmButton: "Disable",
+    },
     passwordModal: {
       title: "Password Reset",
       notice:
@@ -305,6 +311,18 @@ const settingsEnUS = {
   },
   permission: {
     denied: "Access denied. Please contact an administrator.",
+  },
+  errors: {
+    userDuplicateEmail:
+      "This email is already in use. Please use a different one.",
+    roleDuplicateCode: "This role code already exists. Please choose another.",
+    insufficientRoleAuthority:
+      "Insufficient permissions to perform this action.",
+    userLastOwner: "Cannot disable the only owner account.",
+    roleIsSystem: "Built-in roles cannot be modified.",
+    roleHasMembers:
+      "This role still has members. Please reassign them before deleting.",
+    unknown: "Action failed. Please try again later.",
   },
 } as const;
 

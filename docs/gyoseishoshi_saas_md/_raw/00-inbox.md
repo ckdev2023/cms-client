@@ -24,6 +24,43 @@
 
 ## 最新追加
 
+- 时间：2026-05-07
+  来源：R-SETTINGS-01 chrome-devtools-mcp 走查第一轮（系统设置 - 成员与角色管理）
+  主题：成员管理 + 角色管理两 tab 列表初次加载即不可用（13 条缺陷 / 2 P0 / 2 P1 / 4 P2 / 5 P3）
+  要点：
+  - **R6-M-1 [P0]**：`GET /api/users` server 返回精简 DTO `{id, displayName, role, roleId, status}`，缺 `email/createdAt/disabledAt`；client `packages/admin/src/views/settings/model/UsersAdminRepository.ts:187` `adaptMemberItem` 强校验 `typeof v.email !== "string"` → return null，所有 6 条 seed 成员被过滤；UI 永远「暂无成员」，停用/启用/重置密码/变更角色/个性化权限五个行 action 全部不可达。修复方向：server list endpoint 与 detail 对齐返回完整 `UserListItemDto`（建议）或 client 放宽 email 为 optional（绕过 P0）。
+  - **R6-R-1 [P0]**：`GET /api/admin/roles` server 返回 `{ items: [...] }` 包装，client `packages/admin/src/views/settings/model/RolesAdminRepository.ts:45` `doListRoles` 期望裸数组，`if (!Array.isArray(body)) throw new Error("Invalid roles list response")`；UI 永远显示红色 alert + 「暂无角色定义」，4 个系统角色 + 任何自定义角色都看不见，删除/编辑权限矩阵/复制角色三个行 action 全部不可达；`POST /api/admin/roles/:id/permissions` 写入成功但 UI 永远看不到结果。修复：client 兼容 `{ items }` 与裸数组两种形态。
+  - **R6-R-2 [P1]**：编辑角色名称 `PATCH /admin/roles/:id` 200 → `rolesPage.selectedRole` 被 server payload 重新赋值 → `RoleDetailPanel.vue` 内 `watch(() => props.role)` 触发 → `localPermissions` 被 server permissions 重置，**用户在保存名称前手动勾的权限静默被丢弃**。修复：watcher 引入 `permissionsDirty` 标记跳过 server overwrite。
+  - **R6-M-2 [P1]**：`packages/admin/src/views/settings/components/MemberCreateModal.vue:28` / `MemberRoleModal.vue:31` 都硬编码 `const ALL_ROLES = ["staff", "viewer", "manager", "owner"]`，无法分配自定义角色 → 打破角色管理存在的意义。修复：从 `useRolesPage().items` 注入 prop。
+  - **R6-M-3 / R6-M-4 / R6-M-5 / R6-R-3 [P2 ×4]**：`MemberRoleModal.actorRole` prop 从未传入 → fallback owner、`@open-overrides` payload 没 `roleId` → 个性化权限抽屉「来自角色」列全空、`USER_DUPLICATE_EMAIL` / `ROLE_DUPLICATE_CODE` server 原始错误码直接渲染。
+  - **R6-M-6 / R6-M-7 / R6-N-1 / R6-A-1 / R6-N-2 [P3 ×5]**：停用无 confirm dialog、创建失败后 form 仍 reset、子导航不写回 URL hash、复制角色 dialog aria-label 与 heading 不一致、Toast titleKey/descriptionKey 初始空字符串触发 8 条 i18n empty key warning。
+  - 命题：两条 P0 都是「server DTO 与 client adapter 契约错位」——R6-M-1 是 list / detail DTO 形状不一致，R6-R-1 是 list / detail 包装方式不一致；与 R-CONSULT-05 R5-G-1 / R5-D-1 同病。建议下一轮 R-SETTINGS 修复时把 settings 模块 server `users.types.ts` / `rolesAdmin.types.ts` ↔ client `UsersAdminRepository.ts` / `RolesAdminRepository.ts` 字段映射提到 ts / zod 共享单一数据源，并补 contract test 显式覆盖 list / detail 两形状。
+  需要编译到：
+  - 06-页面规格/系统设置.md §3 / §4（实现状态対照表更新两条 P0 阻断点；列表视图当前不可用）
+  - 03-业务规则与不变量.md §1.4（角色与权限模型：补「角色 dropdown 必须从角色列表派生，不得硬编码」约束）
+  - R-SETTINGS-02 修复 PR 计划（拆 P0 → P1 → P2/P3 三批 PR）
+  Owner：研发
+  状态：待编译
+
+---
+
+- 时间：2026-05-07
+  来源：R-CONSULT-05 chrome-devtools-mcp 走查第五轮
+  主题：R5 新发现 4 条阻断/严重缺陷（2 P1 + 2 P2）
+  要点：
+  - **R5-G-1 [P1]**：`packages/server/src/modules/core/conversations/conversations.admin.types.ts:47,50` 的 `CONV_LIST_JOIN_COLS` / `CONV_LIST_JOINS` 引用 `lm.sender_role`，但 PG `messages` 表实际列为 `sender_type`。`GET /admin/conversations` 列表 + `?leadId=` 同时 500，阻断会话列表 + lead 详情会话 Tab。修复：rename SQL 列 + 类型字段 + 1 条 e2e 单测覆盖真实 SQL。
+  - **R5-D-1 [P1]**：`packages/admin/src/views/conversations/model/ConversationAdapterMappers.ts:175,179` `mapMessage` 读 `content/translatedContent`，server 返回 `originalText/translatedTextJa|Zh|En`。所有 message bubble 正文为空（仅显示「翻译中…」），即使 R4-D-1 把 messages 写到 state 也视觉等于没修。修复：mapper 改读 server 字段 + 按 `preferredLanguage` 选 translated 字段 + 单测。
+  - **R5-D-2 [P2]**：lead 详情 → 「签约并开始建档」点击 → client `useLeadDetailModel.convertCase` auto-chain 在 `convert-customer 400 already converted` 时把错误冒泡为通用 toast，而非识别为 *预期分支* 跳过、继续 `convert-case`。结果 4 条 BMV blockers 的 `code: CASE_BMV_GATE_BLOCKED` 始终到不了 dialog。修复：server `convertCustomer` 加 `code: CUSTOMER_ALREADY_CONVERTED`；client auto-chain skip already-converted；`LeadConvertCaseDialog` 渲染 `BmvGateBlockerList`。
+  - **R5-E-1 [P2]**：reassign / convert-case dialog / leads 列表批量操作工具栏三处 owner picker 都 fallback 到 `[currentOwner]` 单元素列表（dropdown 仅 1 个选项 `Local Admin`），与同页面 lead 列表筛选 dropdown 显示 7 人不一致。三处统一未走 `useOwnerOptions`。修复：三处统一切换到 `useOwnerOptions()` + 三条单测。与 R4-D-3 同源扩面。
+  - 另：R5-A-1 / R5-A-2 / R5-A-3 / R5-A-4 / R5-F-1（5 条 P3，体感 / 审计层）见 60-咨询模块chrome-devtools-mcp走查-第五轮.md §1。
+  - 命题：R5 暴露的两条 P1 都是「契约 *已*修复但又在新地方错位」——R5-G-1 是 R3-E-1 修复（新加 join）写错列名，R5-D-1 是 R4-D-2 修复（写侧字段统一）但读侧 mapper 没跟上。建议下一轮 R-CONSULT-06 起把 server `messages.admin.types.ts` ↔ client `views/conversations/types.ts` 字段映射提到 ts / zod 共享单一数据源，杜绝复发。
+  需要编译到：
+  - 06-页面规格/咨询线索.md §3 / §4（实现状态対照表 owner picker 入口与 BMV gate dialog）
+  - 06-页面规格/咨询会话.md（暂无独立文件，会话规格散落在咨询线索与 03/04 中；建议 R-CONSULT-06 时补独立 spec）
+  - 03-业务规则与不变量.md §3.6（会话操作可审计：补 message_sent timeline 落地）
+  Owner：研发
+  状态：待编译
+
 - 时间：2026-04-10
   来源：仓库变更
   主题：启用编译式知识库入口（raw/output）

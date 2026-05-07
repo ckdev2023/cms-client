@@ -176,6 +176,12 @@ const settingsZhCN = {
       cancel: "取消",
       confirm: "确认",
     },
+    disableModal: {
+      title: "停用成员",
+      confirm: "确定停用「{name}」吗？停用后该成员将无法登录系统。",
+      cancel: "取消",
+      confirmButton: "确认停用",
+    },
     passwordModal: {
       title: "密码已重置",
       notice: "请将以下临时密码告知成员。关闭此弹窗后将无法再次查看。",
@@ -298,6 +304,15 @@ const settingsZhCN = {
   },
   permission: {
     denied: "无访问权限，请联系管理员。",
+  },
+  errors: {
+    userDuplicateEmail: "该邮箱已被使用，请更换邮箱。",
+    roleDuplicateCode: "角色编码已存在，请使用其他编码。",
+    insufficientRoleAuthority: "权限不足，无法执行此操作。",
+    userLastOwner: "无法停用唯一的所有者账号。",
+    roleIsSystem: "内建角色不可修改。",
+    roleHasMembers: "该角色仍有成员，请先迁移成员后再删除。",
+    unknown: "操作失败，请稍后重试。",
   },
 } as const;
 

@@ -4,12 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import type { PoolClient, QueryResult } from "pg";
 
-import {
-  buildSeedSteps,
-  DOC_TEMPLATE_SEEDS,
-  WALKTHROUGH_TAG_PATTERN,
-  sanitizeWalkthroughTags,
-} from "./seedDevData";
+import { buildSeedSteps, DOC_TEMPLATE_SEEDS } from "./seedDevData";
 
 type QueryCall = { sql: string; params?: unknown[] };
 
@@ -228,6 +223,24 @@ function createMockClient(): {
   const client = {
     query: (sql: string, params?: unknown[]): Promise<QueryResult> => {
       queries.push({ sql, params });
+      if (/SELECT count\(\*\).*FROM users/i.test(sql)) {
+        return Promise.resolve({
+          rows: [{ cnt: "1" }],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+      }
+      if (/SELECT id FROM roles/i.test(sql)) {
+        return Promise.resolve({
+          rows: [{ id: "mock-staff-role-id" }],
+          rowCount: 1,
+          command: "SELECT",
+          oid: 0,
+          fields: [],
+        });
+      }
       return Promise.resolve({
         rows: [],
         rowCount: 0,
@@ -242,7 +255,7 @@ function createMockClient(): {
 
 void test("SQL-level smoke: all seed steps execute and produce parameterized INSERTs", async () => {
   const steps = buildSeedSteps();
-  assert.equal(steps.length, 13, "must have exactly 13 seed steps");
+  assert.equal(steps.length, 14, "must have exactly 14 seed steps");
 
   const { client, queries } = createMockClient();
 
@@ -254,6 +267,7 @@ void test("SQL-level smoke: all seed steps execute and produce parameterized INS
   assert.ok(insertQueries.length > 0, "must produce INSERT queries");
 
   const expectedTables = [
+    "users",
     "customers",
     "cases",
     "document_items",
@@ -314,6 +328,7 @@ void test("SQL-level smoke: step labels match expected sequence", () => {
   const steps = buildSeedSteps();
   const labels = steps.map(([label]) => label);
   assert.deepStrictEqual(labels, [
+    "devUsers",
     "customer",
     "cases",
     "documentItems",
@@ -451,48 +466,5 @@ void test("SQL-level smoke: DOC_TEMPLATE_SEEDS count matches document_templates 
     dtInserts.length,
     DOC_TEMPLATE_SEEDS.length,
     "document_templates INSERT count must match DOC_TEMPLATE_SEEDS length",
-  );
-});
-
-void test("sanitizeWalkthroughTags strips R<digit>- / R<digit>_ / test- / mcp- / tmp- patterns", () => {
-  const cases: [string[], string[]][] = [
-    [
-      ["R4-walk", "R4-tag-2", "VIP", "優先"],
-      ["VIP", "優先"],
-    ],
-    [["r3-foo", "面談済"], ["面談済"]],
-    [["TEST-baz", "test_qux", "MCP-hello", "tmp-x", "TMP_y"], []],
-    [["R12-edge", "R0-alpha"], []],
-    [
-      ["R-no-digit", "Rapid-development", "RC1-keep", "RR1-foo"],
-      ["R-no-digit", "Rapid-development", "RC1-keep", "RR1-foo"],
-    ],
-    [
-      ["紹介", "面談予定", "急ぎ"],
-      ["紹介", "面談予定", "急ぎ"],
-    ],
-  ];
-  for (const [input, expected] of cases) {
-    assert.deepEqual(sanitizeWalkthroughTags(input), expected, input.join(","));
-  }
-});
-
-void test("WALKTHROUGH_TAG_PATTERN is consistent with the SQL clause used in seedTagsCleanup", () => {
-  const scriptPath = path.resolve(
-    new URL(".", import.meta.url).pathname,
-    "seedDevData.ts",
-  );
-  const source = fs.readFileSync(scriptPath, "utf8");
-  assert.ok(
-    source.includes("^(R[0-9]+|test|mcp|tmp)[-_]"),
-    "SQL must use the same regex shape as WALKTHROUGH_TAG_PATTERN (POSIX form)",
-  );
-  assert.ok(
-    source.includes("!~*") && /\s~\*/.test(source),
-    "SQL must use case-insensitive POSIX regex operators (~* / !~*) for parity",
-  );
-  assert.ok(
-    WALKTHROUGH_TAG_PATTERN.flags.includes("i"),
-    "JS regex must be case-insensitive to match SQL ~* semantics",
   );
 });

@@ -174,9 +174,44 @@ describe("useConversationDetailModel", () => {
     it("fetchDetail calls getMessages and writes to state.messages", async () => {
       const repo = createRepoStub();
       const { model } = await createModel("conv-001", { repo });
-      expect(repo.getMessages).toHaveBeenCalledWith("conv-001");
+      expect(repo.getMessages).toHaveBeenCalledWith(
+        "conv-001",
+        undefined,
+        undefined,
+        "zh",
+      );
       expect(model.messages.value).toHaveLength(1);
       expect(model.messages.value[0].id).toBe("msg-001");
+    });
+  });
+
+  // ── Message content mapping ─────────────────────────────────
+
+  describe("message content mapping", () => {
+    it("messages.value[0].content is non-empty after fetchDetail", async () => {
+      const msg = createMockMessage({ content: "Hello from user" });
+      const repo = createRepoStub(
+        {
+          "conv-001": createMockAggregate(),
+          "conv-004": createMockClosedAggregate(),
+        },
+        { "conv-001": [msg] },
+      );
+      const { model } = await createModel("conv-001", { repo });
+      expect(model.messages.value).toHaveLength(1);
+      expect(model.messages.value[0].content).not.toBe("");
+      expect(model.messages.value[0].content).toBe("Hello from user");
+    });
+
+    it("passes preferredLanguage to getMessages", async () => {
+      const repo = createRepoStub();
+      await createModel("conv-001", { repo });
+      expect(repo.getMessages).toHaveBeenCalledWith(
+        "conv-001",
+        undefined,
+        undefined,
+        "zh",
+      );
     });
   });
 
@@ -214,7 +249,12 @@ describe("useConversationDetailModel", () => {
       const repo = createRepoStub();
       await createModel("conv-001", { autoMarkRead: false, repo });
       expect(repo.getMessages).toHaveBeenCalledTimes(1);
-      expect(repo.getMessages).toHaveBeenCalledWith("conv-001");
+      expect(repo.getMessages).toHaveBeenCalledWith(
+        "conv-001",
+        undefined,
+        undefined,
+        "zh",
+      );
     });
 
     it("does NOT call extra getMessages for autoMarkRead when conversation is closed", async () => {

@@ -388,7 +388,65 @@ void describe("ConversationsAdminController — assign body UUID validation (R2-
     );
     assert.ok(
       !body.includes("optStr(body.ownerUserId"),
-      "assign body ownerUserId must NOT be parsed with optStr",
+      "assign body ownerUserId must NOT be parsed with optUuid",
+    );
+  });
+});
+
+// ── R5-G-1: list green-path returns items with lastMessagePreview ──
+
+void describe("ConversationsAdminController — list green-path (R5-G-1)", () => {
+  void test("list returns 200 with items and lastMessagePreview populated", async () => {
+    const sampleItem = {
+      id: "conv-001",
+      leadId: "00000000-0000-4000-8000-1ead00000001",
+      appUserId: "app-user-1",
+      orgId: ORG_ID,
+      channel: "web",
+      preferredLanguage: "zh",
+      status: "open",
+      ownerUserId: "00000000-0000-4000-8000-00000000000b",
+      lastMessageAt: "2026-04-27T00:00:00.000Z",
+      unreadCountStaffTenant: 1,
+      unreadCountStaffOwner: 0,
+      unreadCountUser: 0,
+      customerId: null,
+      caseId: null,
+      createdAt: "2026-04-27T00:00:00.000Z",
+      updatedAt: "2026-04-27T00:00:00.000Z",
+      leadName: "張三",
+      customerName: null,
+      ownerDisplayName: "田中太郎",
+      appUserName: "AppUser 張三",
+      linkedEntity: {
+        id: "00000000-0000-4000-8000-1ead00000001",
+        label: "張三",
+        type: "lead",
+      },
+      ownerLabel: "田中太郎",
+      lastMessagePreview: "客户：在留資格について相談したいです",
+    };
+
+    const service = stubService({
+      list: () => Promise.resolve({ items: [sampleItem], total: 1 }),
+    });
+    const controller = new ConversationsAdminController(service);
+    const result = (await controller.list(makeReq() as never, {})) as {
+      items: Record<string, unknown>[];
+      total: number;
+    };
+
+    assert.equal(result.total, 1);
+    assert.ok(result.items.length > 0, "items must not be empty");
+    const item = result.items[0];
+    assert.equal(
+      item.lastMessagePreview,
+      "客户：在留資格について相談したいです",
+    );
+    assert.ok(
+      typeof item.lastMessagePreview === "string" &&
+        item.lastMessagePreview.length > 0,
+      "lastMessagePreview must be a non-empty string",
     );
   });
 });

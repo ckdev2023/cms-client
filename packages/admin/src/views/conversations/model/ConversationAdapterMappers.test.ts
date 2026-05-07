@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   adaptConversationDetailAggregate,
   adaptConversationListResult,
+  adaptConversationMessagesResult,
 } from "./ConversationAdapterMappers";
 
 // ─── Server-shaped nested payload ────────────────────────────────
@@ -209,5 +210,73 @@ describe("adaptConversationListResult", () => {
     expect(result!.items).toHaveLength(1);
     expect(result!.items[0].id).toBe("conv-001");
     expect(result!.total).toBe(1);
+  });
+});
+
+// ─── Server-shaped message fixture ──────────────────────────────
+
+function createServerMessagePayload(overrides: Record<string, unknown> = {}) {
+  return {
+    id: "msg-101",
+    conversationId: "conv-001",
+    senderType: "app_user",
+    senderName: "",
+    originalText: "你好，我想咨询签证问题",
+    translatedTextJa: "こんにちは、ビザについて相談したいです",
+    translatedTextZh: null,
+    translatedTextEn: "Hello, I want to consult about visa issues",
+    translationStatus: "completed",
+    kind: "text",
+    visibleScope: "client_visible",
+    createdAt: "2026-05-01T10:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("adaptConversationMessagesResult", () => {
+  it("reads originalText as content and translatedTextZh when preferredLanguage is zh", () => {
+    const payload = {
+      items: [
+        createServerMessagePayload({
+          originalText: "こんにちは",
+          translatedTextZh: "你好",
+          translatedTextJa: null,
+          translatedTextEn: "Hello",
+        }),
+      ],
+      total: 1,
+      page: 1,
+      limit: 50,
+    };
+
+    const result = adaptConversationMessagesResult(payload, "zh");
+    expect(result).not.toBeNull();
+    expect(result!.items).toHaveLength(1);
+
+    const msg = result!.items[0];
+    expect(msg.content).toBe("こんにちは");
+    expect(msg.translatedContent).toBe("你好");
+  });
+
+  it("falls back to first available translation when preferredLanguage field is null", () => {
+    const payload = {
+      items: [
+        createServerMessagePayload({
+          originalText: "你好",
+          translatedTextZh: null,
+          translatedTextJa: "こんにちは",
+          translatedTextEn: "Hello",
+        }),
+      ],
+      total: 1,
+      page: 1,
+      limit: 50,
+    };
+
+    const result = adaptConversationMessagesResult(payload, "zh");
+    expect(result).not.toBeNull();
+    const msg = result!.items[0];
+    expect(msg.content).toBe("你好");
+    expect(msg.translatedContent).toBe("こんにちは");
   });
 });

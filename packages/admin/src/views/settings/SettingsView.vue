@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { usePermission } from "../../shared/composables/usePermission";
 import { useOrgSettings } from "../../shared/model/useOrgSettings";
+import { useAdminSession } from "../../auth/model/adminSession";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import GroupListPanel from "./components/GroupListPanel.vue";
 import GroupDetailMeta from "./components/GroupDetailMeta.vue";
@@ -14,6 +15,7 @@ import GroupDisableModal from "./components/GroupDisableModal.vue";
 import MemberListPanel from "./components/MemberListPanel.vue";
 import MemberCreateModal from "./components/MemberCreateModal.vue";
 import MemberRoleModal from "./components/MemberRoleModal.vue";
+import MemberDisableConfirmModal from "./components/MemberDisableConfirmModal.vue";
 import PasswordResetResultModal from "./components/PasswordResetResultModal.vue";
 import RoleListPanel from "./components/RoleListPanel.vue";
 import RoleDetailPanel from "./components/RoleDetailPanel.vue";
@@ -41,11 +43,14 @@ import {
   SAMPLE_GROUP_STATS,
   SAMPLE_ORG_SETTINGS_UNCONFIGURED,
 } from "./fixtures";
+import { buildSettingsQuery } from "./query";
 
 /** 系统设置页入口，编排子导航切换与三个配置面板。 */
 const { t } = useI18n();
 const route = useRoute();
+const router = useRouter();
 const { has: hasPerm } = usePermission();
+const { currentUser } = useAdminSession();
 const orgSettingsController = useOrgSettings();
 
 const visibleSubnavItems = computed(() =>
@@ -68,6 +73,7 @@ const page = useSettingsPage({
   orgSettingsController,
   isAdmin: ref(true),
   routeTab,
+  onTabChange: (panel) => router.replace({ query: buildSettingsQuery(panel) }),
 });
 
 const membersPage = useMembersPage({
@@ -84,6 +90,26 @@ const overridesPage = useMemberOverrides({
   overridesRepository: createPermissionOverridesRepository(),
   rolesRepository: rolesAdminRepo,
 });
+
+const disableTarget = ref<{ id: string; name: string } | null>(null);
+
+/**
+ * 打开停用确认弹窗。
+ * @param userId - 目标成员 ID
+ */
+function openDisableConfirm(userId: string) {
+  const m = membersPage.members.value.find((x) => x.id === userId);
+  disableTarget.value = m
+    ? { id: m.id, name: m.name }
+    : { id: userId, name: "" };
+}
+
+/** 确认停用成员并关闭弹窗。 */
+function confirmDisable() {
+  if (disableTarget.value)
+    void membersPage.disableMember(disableTarget.value.id);
+  disableTarget.value = null;
+}
 </script>
 
 <template>
@@ -187,7 +213,7 @@ const overridesPage = useMemberOverrides({
             @update:status-filter="membersPage.statusFilter.value = $event"
             @open-create="membersPage.createModalOpen.value = true"
             @change-role="membersPage.openRoleModal($event)"
-            @disable="membersPage.disableMember($event)"
+            @disable="openDisableConfirm($event)"
             @activate="membersPage.activateMember($event)"
             @reset-password="membersPage.resetPassword($event)"
             @open-overrides="overridesPage.openDrawer($event)"
@@ -267,6 +293,7 @@ const overridesPage = useMemberOverrides({
     <MemberCreateModal
       :open="membersPage.createModalOpen.value"
       :groups="page.groups.value"
+      :available-roles="rolesPage.roles.value"
       @close="membersPage.createModalOpen.value = false"
       @confirm="membersPage.createMember($event)"
     />
@@ -274,8 +301,17 @@ const overridesPage = useMemberOverrides({
     <MemberRoleModal
       :open="membersPage.roleModalOpen.value"
       :member="membersPage.roleModalTarget.value"
+      :available-roles="rolesPage.roles.value"
+      :actor-role="currentUser?.role"
       @close="membersPage.roleModalOpen.value = false"
       @confirm="(userId, role) => membersPage.updateRole(userId, role)"
+    />
+
+    <MemberDisableConfirmModal
+      :open="disableTarget !== null"
+      :member-name="disableTarget?.name ?? ''"
+      @close="disableTarget = null"
+      @confirm="confirmDisable()"
     />
 
     <PasswordResetResultModal
@@ -301,8 +337,12 @@ const overridesPage = useMemberOverrides({
 
     <SettingsToast
       :visible="page.toast.visible.value"
-      :title="t(page.toast.titleKey.value)"
-      :description="t(page.toast.descriptionKey.value)"
+      :title="page.toast.titleKey.value ? t(page.toast.titleKey.value) : ''"
+      :description="
+        page.toast.descriptionKey.value
+          ? t(page.toast.descriptionKey.value)
+          : ''
+      "
       @dismiss="page.toast.hide()"
     />
 
@@ -387,14 +427,11 @@ const overridesPage = useMemberOverrides({
   color: var(--color-text-1);
 }
 
-.settings-view__subnav-btn--active {
+.settings-view__subnav-btn--active,
+.settings-view__subnav-btn--active:hover {
   background: var(--color-primary-1);
   color: var(--color-primary-6);
   font-weight: var(--font-weight-semibold);
-}
-
-.settings-view__subnav-btn--active:hover {
-  background: var(--color-primary-1);
 }
 
 .settings-view__content {
@@ -408,7 +445,6 @@ const overridesPage = useMemberOverrides({
 
 .settings-view__group-layout {
   display: grid;
-  grid-template-columns: 1fr;
   gap: 24px;
 }
 
@@ -436,29 +472,24 @@ const overridesPage = useMemberOverrides({
     gap: 16px;
     min-height: auto;
   }
-
   .settings-view__subnav {
     flex-direction: row;
     overflow-x: auto;
     gap: 4px;
     padding: 8px;
   }
-
   .settings-view__subnav-btn {
     flex: 0 0 auto;
     white-space: nowrap;
     width: auto;
     padding: 8px 12px;
   }
-
   .settings-view__content {
     padding: 16px;
   }
-
   .settings-view__group-layout--with-detail {
     grid-template-columns: minmax(0, 1fr);
   }
-
   .settings-view__group-detail {
     padding-left: 0;
     border-left: none;

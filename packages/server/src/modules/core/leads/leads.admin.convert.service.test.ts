@@ -145,7 +145,7 @@ void describe("LeadsAdminService.convertCustomer", () => {
     );
   });
 
-  void test("rejects when lead already has converted_customer_id", async () => {
+  void test("rejects when lead already has converted_customer_id with CUSTOMER_ALREADY_CONVERTED code", async () => {
     const pool = makePool((sql) => {
       if (sql.includes("from leads") && sql.includes("limit 1")) {
         return Promise.resolve({
@@ -169,6 +169,8 @@ void describe("LeadsAdminService.convertCustomer", () => {
       (err: Error) => {
         assert.ok(err instanceof BadRequestException);
         assert.ok(err.message.includes("already has a converted customer"));
+        const body = err.getResponse() as Record<string, unknown>;
+        assert.equal(body.code, "CUSTOMER_ALREADY_CONVERTED");
         return true;
       },
     );

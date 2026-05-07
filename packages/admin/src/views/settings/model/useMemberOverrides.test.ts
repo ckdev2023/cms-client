@@ -46,6 +46,7 @@ const TEST_MEMBER: MemberItem = {
   name: "Test User",
   email: "test@example.com",
   role: "staff",
+  roleId: "role1",
   status: "active",
   createdAt: "2025-01-01T00:00:00Z",
   disabledAt: null,
@@ -92,13 +93,63 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
 
       expect(hook.open.value).toBe(true);
       expect(hook.member.value).toEqual(TEST_MEMBER);
       expect(hook.overrides.value).toEqual(overrides);
       expect(hook.roleDetail.value?.permissions).toContain("case.view");
       expect(hook.loading.value).toBe(false);
+    });
+
+    it("reads member.roleId and passes it to getRoleDetail", async () => {
+      const getRoleDetailFn = vi.fn().mockResolvedValue({
+        id: "role1",
+        orgId: "org1",
+        code: "staff",
+        name: "Staff",
+        description: null,
+        isSystem: true,
+        memberCount: 3,
+        createdBy: null,
+        createdAt: "",
+        updatedAt: "",
+        permissions: ["case.view", "case.edit"],
+      });
+      rolesRepo = stubRolesRepo({ getRoleDetail: getRoleDetailFn });
+
+      const hook = useMemberOverrides({
+        overridesRepository: overridesRepo,
+        rolesRepository: rolesRepo,
+      });
+
+      await hook.openDrawer(TEST_MEMBER);
+
+      expect(getRoleDetailFn).toHaveBeenCalledWith("role1");
+      expect(hook.roleDetail.value?.permissions).toEqual([
+        "case.view",
+        "case.edit",
+      ]);
+    });
+
+    it("skips getRoleDetail when member.roleId is null", async () => {
+      const getRoleDetailFn = vi.fn();
+      rolesRepo = stubRolesRepo({ getRoleDetail: getRoleDetailFn });
+
+      const memberWithoutRole: MemberItem = {
+        ...TEST_MEMBER,
+        roleId: null,
+      };
+
+      const hook = useMemberOverrides({
+        overridesRepository: overridesRepo,
+        rolesRepository: rolesRepo,
+      });
+
+      await hook.openDrawer(memberWithoutRole);
+
+      expect(getRoleDetailFn).not.toHaveBeenCalled();
+      expect(hook.roleDetail.value).toBeNull();
     });
 
     it("handles error gracefully", async () => {
@@ -111,7 +162,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
 
       expect(hook.error.value).toBe("Network error");
       expect(hook.loading.value).toBe(false);
@@ -149,7 +200,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
 
       const rows = hook.effectiveRows.value;
 
@@ -207,7 +258,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
       await hook.addOverride({
         permission: "case.audit",
         effect: "grant",
@@ -246,7 +297,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
       await hook.deleteOverride("case.export");
 
       expect(hook.overrides.value).toEqual([]);
@@ -276,7 +327,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
 
       expect(hook.availablePermissionsForAdd.value).not.toContain(
         "case.export",
@@ -292,7 +343,7 @@ describe("useMemberOverrides", () => {
         rolesRepository: rolesRepo,
       });
 
-      await hook.openDrawer(TEST_MEMBER, "role1");
+      await hook.openDrawer(TEST_MEMBER);
       hook.closeDrawer();
 
       expect(hook.open.value).toBe(false);

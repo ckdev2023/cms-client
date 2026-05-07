@@ -8,6 +8,7 @@ import type { GroupSummary } from "../types";
 defineProps<{
   open: boolean;
   groups: GroupSummary[];
+  availableRoles: { code: string; name: string }[];
 }>();
 
 const emit = defineEmits<{
@@ -24,8 +25,6 @@ const emit = defineEmits<{
 }>();
 
 const { t } = useI18n();
-
-const AVAILABLE_ROLES = ["staff", "viewer", "manager", "owner"] as const;
 
 const name = ref("");
 const email = ref("");
@@ -55,7 +54,7 @@ function handleClose() {
   emit("close");
 }
 
-/** 提交表单并触发创建事件。 */
+/** 提交表单并触发创建事件。失败时保留输入，由 handleClose 负责重置。 */
 function handleConfirm() {
   if (!canSubmit.value) return;
   emit("confirm", {
@@ -65,7 +64,6 @@ function handleConfirm() {
     initialPassword: initialPassword.value,
     primaryGroupId: primaryGroupId.value || undefined,
   });
-  resetForm();
 }
 </script>
 
@@ -138,8 +136,8 @@ function handleConfirm() {
               {{ t("settings.members.createModal.roleLabel") }}
             </label>
             <select id="mcmRole" v-model="role" class="mcm-select">
-              <option v-for="r in AVAILABLE_ROLES" :key="r" :value="r">
-                {{ r }}
+              <option v-for="r in availableRoles" :key="r.code" :value="r.code">
+                {{ r.name }}
               </option>
             </select>
           </div>

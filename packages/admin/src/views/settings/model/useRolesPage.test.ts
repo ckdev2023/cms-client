@@ -205,15 +205,25 @@ describe("useRolesPage", () => {
     expect(page.selectedRole.value).toBeNull();
   });
 
-  it("sets error on load failure", async () => {
+  it("sets error on load failure — unknown code maps to fallback i18n key", async () => {
     repo = createMockRepo({
       listRoles: vi.fn().mockRejectedValue(new Error("Network error")),
     });
     const page = useRolesPage({ repository: repo });
     await flushPromises();
 
-    expect(page.error.value).toBe("Network error");
+    expect(page.error.value).toBe("settings.errors.unknown");
     expect(page.loading.value).toBe(false);
+  });
+
+  it("sets error on load failure — known code maps to specific i18n key", async () => {
+    repo = createMockRepo({
+      listRoles: vi.fn().mockRejectedValue(new Error("ROLE_DUPLICATE_CODE")),
+    });
+    const page = useRolesPage({ repository: repo });
+    await flushPromises();
+
+    expect(page.error.value).toBe("settings.errors.roleDuplicateCode");
   });
 
   it("sets error on select failure", async () => {
@@ -225,7 +235,7 @@ describe("useRolesPage", () => {
     await flushPromises();
 
     await page.selectRole("r999");
-    expect(page.error.value).toBe("Not found");
+    expect(page.error.value).toBe("settings.errors.unknown");
     expect(page.view.value).toBe("list");
   });
 });

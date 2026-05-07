@@ -387,7 +387,7 @@ function mapAdminConversationListRow(
     ownerLabel: ownerName ?? "",
     lastMessagePreview: buildLastMessagePreview(
       r.lm_original_text,
-      r.lm_sender_role,
+      r.lm_sender_type,
     ),
   };
 }
@@ -401,7 +401,7 @@ function segmentGraphemes(text: string): string[] {
 
 function buildLastMessagePreview(
   originalText: string | null | undefined,
-  senderRole: string | null | undefined,
+  senderType: string | null | undefined,
 ): string {
   if (!originalText) return "";
   const cleaned = originalText.replace(/[\r\n]+/g, " ").trim();
@@ -410,6 +410,6 @@ function buildLastMessagePreview(
     graphemes.length > PREVIEW_MAX_CHARS
       ? graphemes.slice(0, PREVIEW_MAX_CHARS).join("") + "…"
       : cleaned;
-  const prefix = senderRole === "app_user" ? "客户：" : "事務所：";
+  const prefix = senderType === "app_user" ? "客户：" : "事務所：";
   return `${prefix}${truncated}`;
 }

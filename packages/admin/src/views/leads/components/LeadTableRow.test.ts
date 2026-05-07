@@ -120,7 +120,7 @@ describe("LeadTableRow", () => {
       }
     });
 
-    it("超过 3 条时折叠为 +N，并把剩余标签暴露给悬浮 popover（aria-label 列出隐藏标签）", () => {
+    it("超过 3 条时折叠为 +N，role=button + tabindex=0", () => {
       setAppLocale("zh-CN");
       const wrapper = mount(LeadTableRow, {
         props: {
@@ -135,10 +135,33 @@ describe("LeadTableRow", () => {
       const more = wrapper.find(".lead-row__tags-more");
       expect(more.exists()).toBe(true);
       expect(more.text()).toContain("+2");
-      expect(more.attributes("aria-label")).toBe("t-4, t-5");
       expect(more.attributes("role")).toBe("button");
       expect(more.attributes("tabindex")).toBe("0");
       wrapper.unmount();
+    });
+
+    it("aria-label 使用 tagsRest i18n key（zh-CN / en-US / ja-JP）", () => {
+      const localeExpected: [AppLocale, string][] = [
+        ["zh-CN", "其余 2 个标签"],
+        ["en-US", "+2 more tags"],
+        ["ja-JP", "残り 2 件のタグ"],
+      ];
+      for (const [locale, expected] of localeExpected) {
+        setAppLocale(locale);
+        const wrapper = mount(LeadTableRow, {
+          props: {
+            lead: makeLead({
+              id: `ROW-ARIA-${locale}`,
+              tags: ["t-1", "t-2", "t-3", "t-4", "t-5"],
+            }),
+          },
+          global: { plugins: [i18n] },
+          attachTo: document.body,
+        });
+        const more = wrapper.find(".lead-row__tags-more");
+        expect(more.attributes("aria-label")).toBe(expected);
+        wrapper.unmount();
+      }
     });
 
     it("hover +N 时通过 Teleport 渲染 popover，列出全部隐藏标签", async () => {

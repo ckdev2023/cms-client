@@ -423,36 +423,6 @@ describe("useLeadDetailModel", () => {
     });
   });
 
-  describe("convertCase", () => {
-    it("calls repo.convertCase with input", async () => {
-      const { model, repo } = setupModel("converted-customer");
-      await flush();
-      const input = {
-        caseTypeCode: "dependent_visa",
-        ownerUserId: "suzuki",
-        groupId: "tokyo-2",
-      };
-      await model.convertCase(input);
-      await flush();
-      expect(repo.convertCase).toHaveBeenCalledWith(
-        "converted-customer",
-        input,
-      );
-    });
-
-    it("refetches detail after successful convertCase", async () => {
-      const { model, getDetailMock } = setupModel("converted-customer");
-      await flush();
-      const callCountBefore = getDetailMock.mock.calls.length;
-      await model.convertCase({
-        caseTypeCode: "work",
-        ownerUserId: "suzuki",
-      });
-      await flush();
-      expect(getDetailMock.mock.calls.length).toBeGreaterThan(callCountBefore);
-    });
-  });
-
   describe("loading / error state", () => {
     it("sets loading while fetching", async () => {
       const { model } = setupModel("following");

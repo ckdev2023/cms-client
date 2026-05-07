@@ -33,6 +33,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
       group: "东京二组",
       owner: "铃木",
       language: "中文",
+      tags: [],
       note: "已建立客户档案并创建案件。技人国更新，CAS-2026-0210 办理中。",
     },
     followups: [
@@ -138,6 +139,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
       group: "大阪组",
       owner: "佐藤",
       language: "日语",
+      tags: [],
       note: "电话号码与已有线索 LEAD-2026-0023 重复，经人工确认后继续创建。",
     },
     followups: [
@@ -230,6 +232,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
       group: "东京一组",
       owner: "田中",
       language: "中文",
+      tags: [],
       note: "邮箱与已有客户 CUS-2026-0181（李娜）重复，经人工确认后继续创建新线索。",
     },
     followups: [
@@ -322,6 +325,7 @@ export const LEAD_DETAIL_SAMPLES_EXTRA: Record<string, LeadDetail> = {
       group: "东京一组",
       owner: "铃木",
       language: "英语",
+      tags: [],
       note: "刚录入的新线索，尚未开始跟进。",
     },
     followups: [],

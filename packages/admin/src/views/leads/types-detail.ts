@@ -295,6 +295,8 @@ export interface LeadBasicInfo {
   owner: string;
   /** */
   language: string;
+  /** 持久化标签。 */
+  tags: string[];
   /** */
   note: string;
 }

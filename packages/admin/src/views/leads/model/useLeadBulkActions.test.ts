@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { useLeadBulkActions, canBulkOperate } from "./useLeadBulkActions";
 import type { LeadSummary } from "../types";
 
@@ -131,6 +131,43 @@ describe("useLeadBulkActions — markStatus", () => {
     );
     expect(result.success).toBe(1);
     expect(result.skipped).toBe(1);
+  });
+});
+
+describe("useLeadBulkActions — bulkTags", () => {
+  it("succeeds for operable rows", async () => {
+    const bulk = useLeadBulkActions();
+    const result = await bulk.bulkTags(new Set(["1", "2"]), ROWS, [
+      "urgent",
+      "vip",
+    ]);
+    expect(result.kind).toBe("tags");
+    expect(result.success).toBe(2);
+    expect(result.skipped).toBe(0);
+  });
+
+  it("skips terminal-status rows", async () => {
+    const bulk = useLeadBulkActions();
+    const result = await bulk.bulkTags(new Set(["1", "3", "4"]), ROWS, [
+      "urgent",
+    ]);
+    expect(result.success).toBe(1);
+    expect(result.skipped).toBe(2);
+    expect(
+      result.details.filter((d) => d.reason === "terminal-status"),
+    ).toHaveLength(2);
+  });
+
+  it("calls repository.bulkTags with operable ids", async () => {
+    const bulkTagsFn = vi.fn().mockResolvedValue({ updatedCount: 1 });
+    const bulk = useLeadBulkActions({
+      repository: { bulkTags: bulkTagsFn } as any,
+    });
+    await bulk.bulkTags(new Set(["1", "3"]), ROWS, ["a", "b"]);
+    expect(bulkTagsFn).toHaveBeenCalledWith({
+      leadIds: ["1"],
+      tags: ["a", "b"],
+    });
   });
 });
 

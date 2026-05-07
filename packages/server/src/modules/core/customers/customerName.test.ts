@@ -64,6 +64,42 @@ void describe("extractCustomerName", () => {
     assert.equal(extractCustomerName({}), null);
   });
 
+  void test("falls back to fullName when no familyName/lastName", () => {
+    assert.equal(extractCustomerName({ fullName: "山田 花子" }), "山田 花子");
+  });
+
+  void test("falls back to displayName when no fullName either", () => {
+    assert.equal(
+      extractCustomerName({ displayName: "Yamada Hanako" }),
+      "Yamada Hanako",
+    );
+  });
+
+  void test("prefers lastName over fullName", () => {
+    assert.equal(
+      extractCustomerName({
+        lastName: "佐藤",
+        firstName: "一郎",
+        fullName: "Full Name",
+      }),
+      "佐藤 一郎",
+    );
+  });
+
+  void test("prefers fullName over displayName", () => {
+    assert.equal(
+      extractCustomerName({ fullName: "Full", displayName: "Display" }),
+      "Full",
+    );
+  });
+
+  void test("ignores whitespace-only fullName and displayName", () => {
+    assert.equal(
+      extractCustomerName({ fullName: "  ", displayName: "  " }),
+      null,
+    );
+  });
+
   void test("returns null for empty-string name", () => {
     assert.equal(extractCustomerName({ name: "" }), null);
     assert.equal(extractCustomerName({ name: "  " }), null);

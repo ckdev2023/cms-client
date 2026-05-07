@@ -89,6 +89,38 @@ describe("useSettingsPage — sub-navigation edge cases", () => {
 });
 
 // ---------------------------------------------------------------------------
+// onTabChange callback
+// ---------------------------------------------------------------------------
+
+describe("useSettingsPage — onTabChange callback", () => {
+  it("switchPanel calls onTabChange with the target panel", () => {
+    const onTabChange = vi.fn();
+    const s = useSettingsPage(createDeps({ onTabChange }));
+    s.switchPanel("member-management");
+    expect(onTabChange).toHaveBeenCalledOnce();
+    expect(onTabChange).toHaveBeenCalledWith("member-management");
+  });
+
+  it("switchPanel calls onTabChange on every switch", () => {
+    const onTabChange = vi.fn();
+    const s = useSettingsPage(createDeps({ onTabChange }));
+    s.switchPanel("role-management");
+    s.switchPanel("storage-root");
+    s.switchPanel("group-management");
+    expect(onTabChange).toHaveBeenCalledTimes(3);
+    expect(onTabChange).toHaveBeenNthCalledWith(1, "role-management");
+    expect(onTabChange).toHaveBeenNthCalledWith(2, "storage-root");
+    expect(onTabChange).toHaveBeenNthCalledWith(3, "group-management");
+  });
+
+  it("switchPanel works without onTabChange (optional)", () => {
+    const s = useSettingsPage(createDeps());
+    s.switchPanel("visibility-config");
+    expect(s.activePanel.value).toBe("visibility-config");
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Permission
 // ---------------------------------------------------------------------------
 

@@ -24,6 +24,7 @@ import type {
   LeadDedupResult,
 } from "./LeadAdapterTypes";
 import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
+import { sanitizeWalkthroughTags } from "./walkthroughTags";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -223,7 +224,7 @@ function adaptLeadListItemDto(value: unknown): LeadSummary | null {
       readNullableString(r, "groupName") ?? readNullableString(r, "groupLabel"),
     convertedCustomerId,
     convertedCaseId: readNullableString(r, "convertedCaseId"),
-    tags: readStringArray(r, "tags"),
+    tags: sanitizeWalkthroughTags(readStringArray(r, "tags")),
     dedupHint: readNullableString(r, "dedupHint"),
     rowHighlight: resolveRowHighlight(status, convertedCustomerId),
   };
@@ -375,6 +376,7 @@ function adaptBasicInfo(r: Record<string, unknown>): LeadBasicInfo {
       readString(r, "ownerDisplayName") ||
       readString(r, "ownerUserId"),
     language: readString(r, "language"),
+    tags: sanitizeWalkthroughTags(readStringArray(r, "tags")),
     note: readString(r, "note"),
   };
 }

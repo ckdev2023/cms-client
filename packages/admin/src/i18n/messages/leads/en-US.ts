@@ -31,6 +31,7 @@ const leadsEnUS = {
       followUp: "Follow-up",
       updated: "Last updated",
     },
+    tagsRest: "+{count} more tags",
     ownerUnassigned: "Unassigned",
     ownerUnknown: "Unknown user",
     status: {
@@ -195,6 +196,7 @@ const leadsEnUS = {
         group: "Group",
         owner: "Owner",
         language: "Preferred Language",
+        tags: "Tags",
         note: "Note",
       },
       createdViaLabel: "Created via: {via}",
@@ -343,6 +345,11 @@ const leadsEnUS = {
       zh: "Chinese",
       en: "English",
       vi: "Vietnamese",
+    },
+    createdVia: {
+      admin: "Admin console",
+      appUser: "Mobile app",
+      portal: "Customer portal",
     },
   },
   errors: {

@@ -181,6 +181,13 @@ const settingsJaJP = {
       cancel: "キャンセル",
       confirm: "変更",
     },
+    disableModal: {
+      title: "メンバーを停止",
+      confirm:
+        "「{name}」を停止しますか？停止後、このメンバーはログインできなくなります。",
+      cancel: "キャンセル",
+      confirmButton: "停止する",
+    },
     passwordModal: {
       title: "パスワードをリセットしました",
       notice:
@@ -305,6 +312,18 @@ const settingsJaJP = {
   },
   permission: {
     denied: "アクセス権限がありません。管理者にお問い合わせください。",
+  },
+  errors: {
+    userDuplicateEmail:
+      "このメールアドレスは既に使用されています。別のアドレスをお使いください。",
+    roleDuplicateCode:
+      "このロールコードは既に存在します。別のコードを指定してください。",
+    insufficientRoleAuthority: "この操作を行う権限がありません。",
+    userLastOwner: "唯一のオーナーアカウントは停止できません。",
+    roleIsSystem: "内建ロールは変更できません。",
+    roleHasMembers:
+      "このロールにはまだメンバーがいます。削除する前にメンバーを移動してください。",
+    unknown: "操作に失敗しました。しばらくしてからもう一度お試しください。",
   },
 } as const;
 

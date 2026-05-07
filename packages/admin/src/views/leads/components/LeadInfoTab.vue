@@ -2,9 +2,17 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
+import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadBasicInfo } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 import { resolveOwnerDisplayLabel } from "../../../shared/model/useOwnerOptions";
+import { resolveTagTone } from "../model/leadTagTone";
+import {
+  resolveLeadBusinessTypeLabel,
+  resolveLeadCreatedViaLabel,
+  resolveLeadLanguageLabel,
+  resolveLeadSourceLabel,
+} from "../model/leadOptionLabels";
 
 /** 基础信息 Tab：以只读模式展示线索的 11 个基础字段。 */
 const props = defineProps<{
@@ -30,6 +38,22 @@ const ownerDisplay = computed(() =>
     },
     locale.value,
   ),
+);
+
+const sourceDisplay = computed(() =>
+  resolveLeadSourceLabel(props.info.source, t),
+);
+
+const businessTypeDisplay = computed(() =>
+  resolveLeadBusinessTypeLabel(props.info.businessType, t),
+);
+
+const languageDisplay = computed(() =>
+  resolveLeadLanguageLabel(props.info.language, t),
+);
+
+const createdViaDisplay = computed(() =>
+  resolveLeadCreatedViaLabel(props.info.createdVia, t),
 );
 </script>
 
@@ -74,7 +98,7 @@ const ownerDisplay = computed(() =>
             {{ t("leads.detail.infoTab.fields.source") }}
           </dt>
           <dd class="info-tab__value">
-            {{ info.source || "—" }}
+            {{ sourceDisplay || "—" }}
             <span
               v-if="info.createdVia && info.createdVia !== info.source"
               class="info-tab__created-via"
@@ -83,7 +107,7 @@ const ownerDisplay = computed(() =>
             >
               （{{
                 t("leads.detail.infoTab.createdViaLabel", {
-                  via: info.createdVia,
+                  via: createdViaDisplay,
                 })
               }}）
             </span>
@@ -99,7 +123,7 @@ const ownerDisplay = computed(() =>
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.businessType") }}
           </dt>
-          <dd class="info-tab__value">{{ info.businessType || "—" }}</dd>
+          <dd class="info-tab__value">{{ businessTypeDisplay || "—" }}</dd>
         </div>
         <div class="info-tab__field">
           <dt class="info-tab__label">
@@ -117,7 +141,30 @@ const ownerDisplay = computed(() =>
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.language") }}
           </dt>
-          <dd class="info-tab__value">{{ info.language || "—" }}</dd>
+          <dd class="info-tab__value">{{ languageDisplay || "—" }}</dd>
+        </div>
+        <div class="info-tab__field info-tab__field--full">
+          <dt class="info-tab__label">
+            {{ t("leads.detail.infoTab.fields.tags") }}
+          </dt>
+          <dd
+            class="info-tab__value info-tab__value--tags"
+            data-testid="lead-info-tags"
+          >
+            <template v-if="info.tags && info.tags.length > 0">
+              <Chip
+                v-for="tag in info.tags"
+                :key="tag"
+                variant="tag"
+                size="micro"
+                :tone="resolveTagTone(tag)"
+                dot
+              >
+                {{ tag }}
+              </Chip>
+            </template>
+            <span v-else>—</span>
+          </dd>
         </div>
         <div class="info-tab__field info-tab__field--full">
           <dt class="info-tab__label">
@@ -189,6 +236,12 @@ const ownerDisplay = computed(() =>
 .info-tab__value--mono {
   font-family: var(--font-mono, monospace);
   font-size: var(--font-size-xs);
+}
+
+.info-tab__value--tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .info-tab__value--note {

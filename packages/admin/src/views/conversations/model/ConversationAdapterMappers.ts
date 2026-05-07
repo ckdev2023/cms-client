@@ -132,7 +132,34 @@ function buildLinkedFromRelation(
 
 // ─── Message adapter ────────────────────────────────────────────
 
-function adaptMessageItem(value: unknown): MessageItem | null {
+const LANGUAGE_FIELD_MAP: Record<string, string> = {
+  ja: "translatedTextJa",
+  zh: "translatedTextZh",
+  en: "translatedTextEn",
+};
+
+function resolveTranslatedContent(
+  record: Record<string, unknown>,
+  preferredLanguage?: string,
+): string | null {
+  if (preferredLanguage) {
+    const key = LANGUAGE_FIELD_MAP[preferredLanguage];
+    if (key) {
+      const v = readNullableString(record, key);
+      if (v) return v;
+    }
+  }
+  return (
+    readNullableString(record, "translatedTextJa") ??
+    readNullableString(record, "translatedTextZh") ??
+    readNullableString(record, "translatedTextEn")
+  );
+}
+
+function adaptMessageItem(
+  value: unknown,
+  preferredLanguage?: string,
+): MessageItem | null {
   const record = asRecord(value);
   if (!record) return null;
 
@@ -172,11 +199,11 @@ function adaptMessageItem(value: unknown): MessageItem | null {
     conversationId: readString(record, "conversationId"),
     senderType,
     senderName: readString(record, "senderName"),
-    content: readString(record, "content"),
+    content: readString(record, "originalText"),
     kind,
     visibleScope,
     translationStatus,
-    translatedContent: readNullableString(record, "translatedContent"),
+    translatedContent: resolveTranslatedContent(record, preferredLanguage),
     createdAt,
     createdAtLabel: formatDateLabel(createdAt),
   };
@@ -311,17 +338,21 @@ export function adaptConversationDetailAggregate(
  * 将消息列表 JSON 响应转换为 `ConversationMessagesResult`。
  *
  * @param value - 原始 JSON 响应体
+ * @param preferredLanguage - 会话首选语言，用于选取对应翻译字段
  * @returns 类型化消息列表结果，或无效时返回 null
  */
 export function adaptConversationMessagesResult(
   value: unknown,
+  preferredLanguage?: string,
 ): ConversationMessagesResult | null {
   const record = asRecord(value);
   if (!record) return null;
 
   const rawItems = record.items;
   const items: MessageItem[] = Array.isArray(rawItems)
-    ? rawItems.map(adaptMessageItem).filter((m): m is MessageItem => !!m)
+    ? rawItems
+        .map((item) => adaptMessageItem(item, preferredLanguage))
+        .filter((m): m is MessageItem => !!m)
     : [];
 
   return {

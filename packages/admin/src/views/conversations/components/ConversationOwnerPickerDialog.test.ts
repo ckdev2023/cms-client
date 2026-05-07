@@ -136,6 +136,24 @@ describe("ConversationOwnerPickerDialog", () => {
     expect(options[1].textContent!.trim()).toBe("Tanaka Hanako");
   });
 
+  it("dropdown options.length equals registered activeUsers.length (PR-2 regression lock)", () => {
+    clearUserAliases();
+    const users = Array.from({ length: 5 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-0000000000${String(i + 1).padStart(2, "0")}`,
+      displayName: `Staff ${i + 1}`,
+    }));
+    registerUserAliases(users);
+    const wrapper = mount(ConversationOwnerPickerDialog, {
+      global: { plugins: [i18n] },
+      props: {},
+      attachTo: document.body,
+    });
+    cleanup = () => wrapper.unmount();
+
+    const options = qAll(".owner-picker__select option");
+    expect(options.length).toBe(users.length);
+  });
+
   it("renders all 7 options when 7 users are registered (R4-D-3)", () => {
     clearUserAliases();
     const users = Array.from({ length: 7 }, (_, i) => ({

@@ -3,10 +3,15 @@ import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../../i18n";
 import { initToast, resetToast, useToast } from "../../shared/model/useToast";
+import {
+  registerUserAliases,
+  clearUserAliases,
+} from "../../shared/model/useOrgUserOptions";
 import { getLeadSamples } from "./fixtures";
 import type { LeadSummary } from "./types";
 import type { LeadRepository } from "./model/LeadRepository";
 import LeadsListView from "./LeadsListView.vue";
+import LeadFilters from "./components/LeadFilters.vue";
 import LeadTable from "./components/LeadTable.vue";
 import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
 
@@ -77,6 +82,7 @@ describe("LeadsListView", () => {
 
   afterEach(() => {
     mockedRepository.current = null;
+    clearUserAliases();
     resetToast();
   });
 
@@ -159,5 +165,22 @@ describe("LeadsListView", () => {
 
     // initial mount + refetch after bulk tags
     expect(repo.listLeads).toHaveBeenCalledTimes(2);
+  });
+
+  it("LeadFilters receives apiOwnerOptions after registerUserAliases", async () => {
+    const UUID_OWNER = "00000000-0000-4000-8000-000000000011";
+    registerUserAliases([{ id: UUID_OWNER, displayName: "Local Admin" }]);
+
+    mockedRepository.current = createRepository();
+    const { wrapper } = await mountView();
+
+    const filters = wrapper.findComponent(LeadFilters);
+    const ownerOpts = filters.props("ownerOptions") as Array<{
+      value: string;
+      label: string;
+    }>;
+    expect(ownerOpts.length).toBeGreaterThanOrEqual(1);
+    expect(ownerOpts.some((o) => o.value === UUID_OWNER)).toBe(true);
+    expect(ownerOpts.some((o) => o.label === "Local Admin")).toBe(true);
   });
 });

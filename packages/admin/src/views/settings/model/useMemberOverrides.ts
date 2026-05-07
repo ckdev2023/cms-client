@@ -95,13 +95,15 @@ function buildOpenDrawer(
   overridesRepo: PermissionOverridesRepository,
   rolesRepo: RolesAdminRepository,
 ) {
-  return async (member: MemberItem, roleId?: string) => {
+  return async (member: MemberItem) => {
     state.member.value = member;
     state.open.value = true;
     state.loading.value = true;
     state.error.value = null;
     state.overrides.value = [];
     state.roleDetail.value = null;
+
+    const roleId = member.roleId ?? undefined;
 
     try {
       const [overrides, roleDetail] = await Promise.all([

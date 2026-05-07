@@ -85,6 +85,10 @@ export interface UseSettingsPageDeps {
    *
    */
   routeTab?: Ref<string | undefined>;
+  /**
+   * 面板切换时的外部回调，用于同步 URL 等副作用。
+   */
+  onTabChange?: (panel: SettingsPanel) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -314,6 +318,7 @@ export function useSettingsPage(deps: UseSettingsPageDeps) {
     activePanel,
     switchPanel: (p: SettingsPanel) => {
       activePanel.value = p;
+      deps.onTabChange?.(p);
     },
     ...gl,
     toast,

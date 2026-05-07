@@ -209,6 +209,30 @@ describe("LeadConvertCaseDialog", () => {
     expect(ownerSelect.value).toBe(TEST_USER_ID);
   });
 
+  it("owner dropdown options.length equals registered activeUsers.length (PR-2 regression lock)", () => {
+    clearUserAliases();
+    const users = Array.from({ length: 5 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-0000000000${String(i + 1).padStart(2, "0")}`,
+      displayName: `Staff ${i + 1}`,
+    }));
+    registerUserAliases(users);
+    registerGroupAliases([{ id: "grp-01", name: "Tokyo Team A" }]);
+    const wrapper = mount(LeadConvertCaseDialog, {
+      global: { plugins: [i18n] },
+      props: {},
+      attachTo: document.body,
+    });
+    cleanup = () => wrapper.unmount();
+
+    const ownerSelect = document.body.querySelector(
+      "#convert-case-owner",
+    ) as HTMLSelectElement;
+    const valueOptions = Array.from(
+      ownerSelect.querySelectorAll("option"),
+    ).filter((o) => o.value !== "");
+    expect(valueOptions.length).toBe(users.length);
+  });
+
   it("blocks confirm when caseType is set but ownerUserId is empty", async () => {
     const wrapper = mountDialog({
       intendedCaseType: "business-management-visa",

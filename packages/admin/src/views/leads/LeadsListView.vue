@@ -57,8 +57,14 @@ const {
   toListParams,
 } = useLeadFilters({
   groupOptions: getActiveGroupOptions(),
-  ownerOptions: getOwnerOptions(),
+  ownerOptions: [],
   businessTypeOptions: BUSINESS_TYPE_OPTIONS,
+  routeQuery: computed(() => route.query),
+  replaceQuery: (query) =>
+    router.replace({
+      path: route.path,
+      query: query as Record<string, string>,
+    }),
 });
 
 const leads = ref<LeadSummary[]>([]);
@@ -404,7 +410,7 @@ watch(
       :status-filter="statusFilter"
       :owner-filter="ownerFilter"
       :group-filter="groupFilter"
-      :owner-options="ownerOptions"
+      :owner-options="apiOwnerOptions"
       :group-options="groupOptions"
       :business-type-filter="businessTypeFilter"
       :tags-filter="tagsFilter"

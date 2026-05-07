@@ -47,7 +47,11 @@ export async function convertCustomer(
     );
   }
   if (lead.convertedCustomerId) {
-    throw new BadRequestException("Lead already has a converted customer");
+    throw new BadRequestException({
+      statusCode: 400,
+      message: "Lead already has a converted customer",
+      code: "CUSTOMER_ALREADY_CONVERTED",
+    });
   }
 
   if (!input.confirmDedup) {
