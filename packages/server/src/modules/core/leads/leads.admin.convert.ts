@@ -94,12 +94,53 @@ async function createCustomerFromLead(
   if (lead.phone) baseProfile.phone = lead.phone;
   if (lead.email) baseProfile.email = lead.email;
 
+  const owner = lead.ownerUserId;
+  if (owner) baseProfile.ownerUserId = owner;
+  if (lead.groupId) baseProfile.groupId = lead.groupId;
+  if (lead.sourceChannel) baseProfile.sourceChannel = lead.sourceChannel;
+
+  const visa = mapIntendedCaseTypeToCustomerVisaType(lead.intendedCaseType);
+  if (visa) baseProfile.visaType = visa;
+
+  if (lead.name) {
+    baseProfile.name_jp = lead.name;
+    baseProfile.name_cn = lead.name;
+  }
+
   const customer = await customersService.create(ctx, {
     type: "individual",
     baseProfile,
     localizedNames,
   });
   return customer.id;
+}
+
+/**
+ * Lead の intendedCaseType を Customer の visaType にマッピングする。
+ * @param intended Lead 側の案件種別文字列
+ * @returns 対応する visaType。マッピングなしの場合は `undefined`
+ */
+export function mapIntendedCaseTypeToCustomerVisaType(
+  intended: string | null,
+): string | undefined {
+  if (!intended) return undefined;
+
+  switch (intended) {
+    case "business_manager_visa":
+    case "business-management-visa":
+      return "business_manager";
+    case "work":
+    case "work-visa":
+      return "engineer_specialist";
+    case "dependent_visa":
+    case "family-stay":
+      return "dependent";
+    case "permanent":
+      return "permanent_resident";
+    default:
+      if (intended.startsWith("biz_mgmt")) return "business_manager";
+      return undefined;
+  }
 }
 
 function deriveLocalizedNames(
@@ -113,5 +154,5 @@ function deriveLocalizedNames(
 } {
   if (!name) return { defaultLocale: "zh" };
   const locale = language === "ja" ? "ja" : language === "en" ? "en" : "zh";
-  return { [locale]: name, defaultLocale: locale };
+  return { ja: name, zh: name, defaultLocale: locale };
 }

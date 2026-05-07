@@ -147,13 +147,23 @@ export type LeadDedupResult = {
 
 // ── Detail Aggregate ──
 
+/** 転化先 Customer サマリ（Lead 詳細用）。 */
+export type ConvertedCustomerSummary = {
+  id: string;
+  name: string | null;
+  customerNo?: string | null;
+  displayName?: string | null;
+  group?: { id: string; name: string } | null;
+  convertedAt?: string | null;
+};
+
 /** Lead 詳細集約（フォローアップ/ログ/重複候補/転化先含む）。 */
 export type LeadDetailAggregate = {
   lead: Lead;
   followups: LeadFollowup[];
   logs: LeadLog[];
   dedupHints: LeadDedupResult;
-  convertedCustomer: { id: string; name: string | null } | null;
+  convertedCustomer: ConvertedCustomerSummary | null;
   convertedCase: { id: string; caseNo: string | null } | null;
 };
 

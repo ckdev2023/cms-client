@@ -1,0 +1,84 @@
+{
+  "project": "cms-client",
+  "plan_id": "YYYYMMDD-kebab-slug",
+  "base_branch": "main",
+  "plan_mode_approved_at": "2026-01-01T00:00:00+09:00",
+  "assumptions": [
+    "替换为本次拆分的明确假设"
+  ],
+  "global_constraints": [
+    "禁止修改 root package.json 与 lockfile",
+    "禁止跨 workspace 在单个任务内同时改动",
+    "禁止顺手优化 allowed_paths 之外的文件"
+  ],
+  "shared_hotspots": [
+    "packages/admin/src/router/index.ts",
+    "packages/admin/src/i18n/messages/zh-CN.ts",
+    "packages/server/src/app.module.ts",
+    "packages/mobile/src/navigation/RootNavigator.tsx"
+  ],
+  "per_task_checks": {
+    "policy": "typecheck-and-lint-only",
+    "by_workspace": {
+      "@cms/admin": [
+        "npm --workspace @cms/admin run typecheck",
+        "npm --workspace @cms/admin run lint"
+      ],
+      "server": [
+        "npm --workspace server run typecheck",
+        "npm --workspace server run lint"
+      ],
+      "mobile": [
+        "npm --workspace mobile run typecheck",
+        "npm --workspace mobile run lint"
+      ]
+    }
+  },
+  "final_checks": [
+    "npm run fix",
+    "npm run guard"
+  ],
+  "epics": [
+    {
+      "id": "E01",
+      "title": "示例 Epic 标题",
+      "goal": "用一句话描述本 Epic 的业务目标",
+      "workspaces": ["@cms/admin"],
+      "depends_on": [],
+      "tasks": [
+        {
+          "id": "T01",
+          "epic": "E01",
+          "title": "示例原子任务标题",
+          "prompt_file": "epics/E01/tasks/T01-example-slug.md",
+          "workspaces": ["@cms/admin"],
+          "depends_on": [],
+          "parallel_group": "E01-groupA",
+          "allowed_paths": [
+            "packages/admin/src/views/<feature>/<file>.vue",
+            "packages/admin/src/views/<feature>/model/<file>.ts"
+          ],
+          "forbidden_paths": [
+            "packages/admin/src/router",
+            "packages/admin/src/i18n/messages/zh-CN.ts",
+            "package.json",
+            "package-lock.json"
+          ],
+          "per_task_checks": [
+            "npm --workspace @cms/admin run typecheck",
+            "npm --workspace @cms/admin run lint"
+          ],
+          "expected_artifacts": [
+            "artifacts/T01.result.json",
+            "artifacts/T01.summary.md"
+          ],
+          "stop_conditions": [
+            "需要修改 allowed_paths 之外的文件",
+            "需要修改 router / i18n 聚合入口",
+            "需要新增依赖"
+          ]
+        }
+      ]
+    }
+  ]
+}

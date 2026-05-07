@@ -80,6 +80,14 @@ export interface UseLeadDetailModelDeps {
    *
    */
   repo?: LeadRepository;
+  /**
+   *
+   */
+  routeQuery?: Ref<Record<string, string | string[] | null | undefined>>;
+  /**
+   *
+   */
+  replaceQuery?: (query: Record<string, string | undefined>) => void;
 }
 
 function useFollowupForm(
@@ -439,7 +447,14 @@ export function useLeadDetailModel(
   deps: UseLeadDetailModelDeps = {},
 ) {
   const repo = deps.repo ?? createLeadRepository();
-  const activeTab = ref<LeadDetailTab>("info");
+  const initialTab = (() => {
+    const tab = deps.routeQuery?.value?.tab;
+    const tabStr = typeof tab === "string" ? tab : "";
+    return (LEAD_DETAIL_TABS as readonly string[]).includes(tabStr)
+      ? (tabStr as LeadDetailTab)
+      : "info";
+  })();
+  const activeTab = ref<LeadDetailTab>(initialTab);
   const submitting = ref(false);
 
   const { lead, loading, error, fetchDetail } = useLeadFetch(leadId, repo);
@@ -456,6 +471,7 @@ export function useLeadDetailModel(
 
   function switchTab(tab: LeadDetailTab): void {
     activeTab.value = tab;
+    deps.replaceQuery?.({ tab: tab === "info" ? undefined : tab });
   }
 
   const rawLog = computed(() => lead.value?.log ?? []);

@@ -967,6 +967,7 @@ const casesEnUS = {
       business_manager: "Business Manager",
       business_manager_visa: "Business Manager Visa",
       dependent_visa: "Dependent Visa",
+      family_stay: "Family Stay",
       engineer_visa: "Engineer/Specialist (CoE)",
       engineer_humanities_intl_visa: "Engineer/Specialist (CoE)",
     },

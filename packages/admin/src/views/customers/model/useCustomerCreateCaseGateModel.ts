@@ -43,7 +43,11 @@ type UseCustomerCreateCaseGateModelInput = {
  * @returns 是否需要 BMV 门禁
  */
 export function customerRequiresBmv(customer: CustomerDetail): boolean {
-  if (customer.visaType === "business_manager") return true;
+  if (
+    customer.visaType === "business_manager" ||
+    customer.visaType === "business_manager_visa"
+  )
+    return true;
   const profile = customer.bmvProfile;
   if (!profile) return false;
   return profile.questionnaireStatus !== "not_started";

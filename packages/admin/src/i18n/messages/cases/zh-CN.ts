@@ -934,6 +934,7 @@ const casesZhCN = {
       business_manager: "经营管理",
       business_manager_visa: "经营管理签",
       dependent_visa: "家族滞在",
+      family_stay: "家族滞在",
       engineer_visa: "技人国（认定）",
       engineer_humanities_intl_visa: "技人国（认定）",
     },

@@ -11,12 +11,12 @@ import type {
   LeadDetail,
   LeadFollowupRecord,
   LeadLogEntry,
-  LeadConversionInfo,
   FollowupChannel,
   BannerPresetKey,
   HeaderButtonPresetKey,
 } from "../types-detail";
 import { getFollowupChannelLabel } from "../types-detail";
+import { adaptConversionInfo } from "./LeadConversionMapper";
 import type {
   LeadListResult,
   LeadMutationResult,
@@ -382,30 +382,6 @@ function adaptBasicInfo(r: Record<string, unknown>): LeadBasicInfo {
   };
 }
 
-function adaptConversionInfo(value: unknown): LeadConversionInfo {
-  const empty: LeadConversionInfo = {
-    dedupResult: null,
-    convertedCustomer: null,
-    convertedCase: null,
-    conversions: [],
-  };
-  const r = asRecord(value);
-  if (!r) return empty;
-
-  return {
-    dedupResult: null,
-    convertedCustomer: r.convertedCustomer
-      ? (r.convertedCustomer as LeadConversionInfo["convertedCustomer"])
-      : null,
-    convertedCase: r.convertedCase
-      ? (r.convertedCase as LeadConversionInfo["convertedCase"])
-      : null,
-    conversions: Array.isArray(r.conversions)
-      ? (r.conversions as LeadConversionInfo["conversions"])
-      : [],
-  };
-}
-
 /**
  * 将线索详情聚合原始响应适配为类型化结果。
  *
@@ -456,7 +432,7 @@ export function adaptLeadDetailAggregate(
     conversationId: readNullableString(leadRecord, "conversationId"),
     info: adaptBasicInfo(leadRecord),
     followups,
-    conversion: adaptConversionInfo(record.conversion),
+    conversion: adaptConversionInfo(record),
     log: logs,
   };
 

@@ -1,0 +1,43 @@
+{
+  "policy": "typecheck-and-lint-only",
+  "description": "本表是任务级验证命令的唯一权威来源。生成 manifest.json 与原子任务文档时，必须从这里读取实际命令，不可凭印象写。",
+  "workspaces": {
+    "@cms/admin": {
+      "package_dir": "packages/admin",
+      "typecheck": "npm --workspace @cms/admin run typecheck",
+      "lint": "npm --workspace @cms/admin run lint",
+      "notes": "typecheck 实质执行 vue-tsc --noEmit；lint 实质执行 eslint . + checkChineseJsdoc"
+    },
+    "server": {
+      "package_dir": "packages/server",
+      "typecheck": "npm --workspace server run typecheck",
+      "lint": "npm --workspace server run lint",
+      "notes": "typecheck 实质执行 tsc --noEmit；lint 实质执行 eslint src tests scripts drizzle.config.ts eslint.config.cjs"
+    },
+    "mobile": {
+      "package_dir": "packages/mobile",
+      "typecheck": "npm --workspace mobile run typecheck",
+      "lint": "npm --workspace mobile run lint",
+      "notes": "命令通过 root package.json 的 mobile:typecheck / mobile:lint 也可调用，等价"
+    }
+  },
+  "final_checks": {
+    "fix": "npm run fix",
+    "guard": "npm run guard",
+    "order": ["fix", "guard"],
+    "source": "AGENTS.md - 收尾顺序：先 npm run fix，再 npm run guard"
+  },
+  "forbidden_in_per_task_checks": [
+    "npm run guard",
+    "npm run mobile:guard",
+    "npm run admin:guard",
+    "npm run server:guard",
+    "npm test",
+    "npm --workspace @cms/admin run test",
+    "npm --workspace server run test",
+    "npm --workspace mobile run test",
+    "npm run build",
+    "npm --workspace server run db:migrations:check",
+    "npm --workspace server run arch:check"
+  ]
+}

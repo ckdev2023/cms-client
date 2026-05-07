@@ -215,7 +215,10 @@ const showActionCards = computed(
       </Card>
     </div>
 
-    <LeadConvertedRecords v-if="hasConversions" :conversion="conversion" />
+    <LeadConvertedRecords
+      v-if="hasConvertedCustomer || hasConvertedCase || hasConversions"
+      :conversion="conversion"
+    />
   </div>
 </template>
 

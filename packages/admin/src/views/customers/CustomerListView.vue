@@ -8,7 +8,7 @@ import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
-import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
+import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
 import CustomerSummaryCards from "./components/CustomerSummaryCards.vue";
 import CustomerFilters from "./components/CustomerFilters.vue";
 import CustomerBulkActionBar from "./components/CustomerBulkActionBar.vue";
@@ -43,7 +43,7 @@ const groupOptions = computed<SelectOption[]>(() =>
   getActiveGroupOptions(locale.value),
 );
 const ownerOptions = computed<SelectOption[]>(() =>
-  getOwnerOptions(locale.value).map(({ value, label }) => ({ value, label })),
+  getActiveUserOptions().map(({ value, label }) => ({ value, label })),
 );
 const listModel = useCustomerListModel({ repository });
 

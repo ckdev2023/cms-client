@@ -6,13 +6,14 @@ import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadConversionInfo } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 /** 已生成转化记录：展示已转客户/案件卡片及建档记录时间线。 */
 const props = defineProps<{
   conversion: LeadConversionInfo;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const hasConvertedCustomer = computed(
   () => props.conversion.convertedCustomer !== null,
@@ -50,7 +51,11 @@ const hasConvertedCase = computed(
             {{ conversion.convertedCustomer!.name }}
           </p>
           <p class="converted-record__meta">
-            {{ conversion.convertedCustomer!.id }} ·
+            {{
+              conversion.convertedCustomer!.customerNo ||
+              conversion.convertedCustomer!.id
+            }}
+            ·
             {{
               resolveGroupLabel(
                 conversion.convertedCustomer!.group,
@@ -58,7 +63,9 @@ const hasConvertedCase = computed(
               )
             }}
             ·
-            {{ conversion.convertedCustomer!.convertedAt }}
+            {{
+              formatDateTime(conversion.convertedCustomer!.convertedAt, locale)
+            }}
           </p>
         </div>
         <Button size="sm">

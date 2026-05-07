@@ -157,7 +157,11 @@ export interface ConvertedCustomer {
   /** */
   id: string;
   /** */
+  customerNo?: string | null;
+  /** */
   name: string;
+  /** */
+  displayName?: string | null;
   /** */
   group: string;
   /** */

@@ -2,6 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../../i18n";
+import {
+  registerUserAliases,
+  clearUserAliases,
+} from "../../shared/model/useOrgUserOptions";
 import { SAMPLE_CUSTOMERS } from "./fixtures";
 import type { CustomerRepository } from "./model/CustomerRepository";
 import CustomerListView from "./CustomerListView.vue";
@@ -63,10 +67,12 @@ describe("CustomerListView", () => {
   beforeEach(() => {
     setAppLocale("en-US");
     window.localStorage.clear();
+    registerUserAliases([{ id: "takahashi-k", displayName: "Takahashi K." }]);
   });
 
   afterEach(() => {
     mockedRepository.current = null;
+    clearUserAliases();
   });
 
   it("loads customers from repository and renders the remote row", async () => {

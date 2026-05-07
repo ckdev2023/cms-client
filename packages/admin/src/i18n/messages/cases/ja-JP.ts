@@ -962,6 +962,7 @@ const casesJaJP = {
       business_manager: "経営管理",
       business_manager_visa: "経営管理ビザ",
       dependent_visa: "家族滞在",
+      family_stay: "家族滞在",
       engineer_visa: "技人国（認定）",
       engineer_humanities_intl_visa: "技人国（認定）",
     },

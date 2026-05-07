@@ -1,10 +1,12 @@
 import type { PoolClient } from "pg";
 
+import { BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/business-manager-visa";
 import { FAMILY_STAY_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/family-stay";
 import { WORK_VISA_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/work";
 
 const CASE_TEMPLATE_FAMILY_STAY_ID = "00000000-0000-4000-a000-000000000700";
 const CASE_TEMPLATE_WORK_ID = "00000000-0000-4000-a000-000000000701";
+const CASE_TEMPLATE_BMV_ID = "00000000-0000-4000-a000-000000000702";
 
 type CaseTemplateSeed = {
   id: string;
@@ -18,23 +20,30 @@ const CASE_TEMPLATE_SEEDS: CaseTemplateSeed[] = [
   {
     id: CASE_TEMPLATE_FAMILY_STAY_ID,
     templateName: "家族滞在ビザ標準テンプレート",
-    caseType: "family_stay",
+    caseType: "dependent_visa",
     applicationType: null,
     requirementBlueprint: FAMILY_STAY_REQUIREMENT_BLUEPRINT,
   },
   {
     id: CASE_TEMPLATE_WORK_ID,
     templateName: "技術・人文知識・国際業務ビザ標準テンプレート",
-    caseType: "engineer_humanities_intl_visa",
+    caseType: "work",
     applicationType: null,
     requirementBlueprint: WORK_VISA_REQUIREMENT_BLUEPRINT,
+  },
+  {
+    id: CASE_TEMPLATE_BMV_ID,
+    templateName: "経営管理ビザ標準テンプレート",
+    caseType: "business_manager_visa",
+    applicationType: null,
+    requirementBlueprint: BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT,
   },
 ];
 
 export { CASE_TEMPLATE_SEEDS };
 
 /**
- * 批量插入 case_templates 种子数据（家族滞在 + 技人国）。
+ * 批量插入 case_templates 种子数据（家族滞在 + 技人国 + 経営管理）。
  *
  * @param client - 事务内 PoolClient
  * @param orgId - 种子数据归属 org id
@@ -56,6 +65,10 @@ export async function seedCaseTemplates(
        )
        VALUES ($1, $2, $3, $4, $5, $6::jsonb, true)
        ON CONFLICT (id) DO UPDATE SET
+         template_name = EXCLUDED.template_name,
+         case_type = EXCLUDED.case_type,
+         application_type = EXCLUDED.application_type,
+         active_flag = EXCLUDED.active_flag,
          requirement_blueprint = EXCLUDED.requirement_blueprint,
          updated_at = now()`,
       [

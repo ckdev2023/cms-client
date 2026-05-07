@@ -13,6 +13,7 @@ import {
 import {
   LEAD_COLS,
   extractCustomerName,
+  type ConvertedCustomerSummary,
   type LeadDedupInput,
   type LeadFollowupInput,
   type LeadListInput,
@@ -302,23 +303,64 @@ export async function buildDedupHints(
   return { leads, customers };
 }
 
-/** 顧客名サマリを取得する。
+/** 転化先 Customer サマリを取得する（customerNo / displayName / group / convertedAt 含む）。
  * @param db テナント DB
  * @param cid Customer ID
- * @returns 顧客名サマリ
+ * @returns 転化先 Customer サマリ
  */
 export async function queryCustomerSummary(
   db: TenantDb,
   cid: string,
-): Promise<{ id: string; name: string | null } | null> {
-  const r = await db.query<{ id: string; base_profile: unknown }>(
-    `select id, base_profile from customers where id = $1 limit 1`,
+): Promise<ConvertedCustomerSummary | null> {
+  const r = await db.query<{
+    id: string;
+    base_profile: unknown;
+    group_id: string | null;
+    group_name: string | null;
+    created_at: unknown;
+  }>(
+    `select c.id, c.base_profile, c.created_at,
+            g.id as group_id, g.name as group_name
+     from customers c
+     left join groups g on g.id::text = coalesce(
+       c.base_profile->>'groupId',
+       c.base_profile->>'group_id',
+       c.base_profile->>'group'
+     )
+     where c.id = $1 limit 1`,
     [cid],
   );
   const row = r.rows.at(0);
-  return row
-    ? { id: row.id, name: extractCustomerName(row.base_profile) }
-    : null;
+  if (!row) return null;
+
+  const bp =
+    row.base_profile && typeof row.base_profile === "object"
+      ? (row.base_profile as Record<string, unknown>)
+      : null;
+
+  const readStr = (key: string): string | null => {
+    if (!bp) return null;
+    const v = bp[key];
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  };
+
+  const displayName =
+    readStr("name_jp") ??
+    readStr("name_cn") ??
+    extractCustomerName(row.base_profile);
+
+  return {
+    id: row.id,
+    name: extractCustomerName(row.base_profile),
+    customerNo: readStr("customerNumber"),
+    displayName,
+    group: row.group_id
+      ? { id: row.group_id, name: row.group_name ?? "" }
+      : null,
+    convertedAt: row.created_at
+      ? new Date(row.created_at as string | number).toISOString()
+      : null,
+  };
 }
 
 /** 案件サマリを取得する。
