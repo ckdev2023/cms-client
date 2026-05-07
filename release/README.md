@@ -77,6 +77,8 @@ curl https://demo.example.com/health/deps
 
 > 后续日常 admin 用户运维（查询 / 重置密码 / 新增用户 / 停启用 / 改角色），见独立文档：[`ADMIN-USERS.md`](./ADMIN-USERS.md)。
 
+日常账号运维（建账号 / 改角色 / 停启用 / 重置密码）请走 admin UI 或 [`UsersController`](../packages/server/src/modules/core/users/users.controller.ts) 的 API（`POST /users` / `PATCH /users/:id/role` 等）；下面这些是 bootstrap 阶段或应急路径。
+
 仓库里 `packages/server/src/scripts/initLocalAdmin.ts` 是为 **本地开发** 用的，里面用的是固定弱密码，**生产/测试环境绝对不能直接跑**（必须通过环境变量覆盖密码）。
 
 测试期推荐做法二选一：
@@ -94,13 +96,24 @@ docker compose -f compose/docker-compose.prod.yml --env-file .env exec api \
 **方法 B：直连 PG 手动 INSERT 强密码账户**
 
 ```bash
+# 1. 在任何能跑 Node 的机器上算 scrypt hash（16 字节 salt + 64 字节 key + base64url）
+node -e '
+  const c = require("crypto");
+  const password = process.argv[1];
+  const salt = c.randomBytes(16).toString("base64url");
+  c.scrypt(password, Buffer.from(salt, "base64url"), 64, (err, key) => {
+    if (err) throw err;
+    console.log("scrypt$" + salt + "$" + key.toString("base64url"));
+  });
+' 'YourStrongPassword!2026'
+
+# 2. 进 PG，用上面的 hash 手动 INSERT（参考 ADMIN-USERS.md §3.1）
 docker compose -f compose/docker-compose.prod.yml --env-file .env exec postgres \
   psql -U cms -d cms
-
-# 在 psql 里参考 src/scripts/initLocalAdmin.ts 的 SQL 模式手动 INSERT
-# 密码用强 bcrypt hash（在另一台机器上 node -e 'console.log(require("bcrypt").hashSync("xxx",10))'）
 ```
 
+> 详见 [`ADMIN-USERS.md` §2.2](./ADMIN-USERS.md#22-应急在另一台机器算-hash--直接-update)。
+>
 > 长期看应该补一个 `src/scripts/initProdAdmin.ts`，从环境变量读密码。这是 src 改动，不在本部署包范围内。
 
 ## 日常运维

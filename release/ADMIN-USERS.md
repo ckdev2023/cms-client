@@ -37,13 +37,14 @@ $COMPOSE exec postgres psql -U cms -d cms
 
 ```bash
 $COMPOSE exec postgres psql -U cms -d cms -c "
-  select id, org_id, name, email, role, status,
-         (password_hash is null)            as hash_is_null,
-         split_part(password_hash, '\$', 1)  as hash_algo,
-         length(password_hash)              as hash_len,
-         created_at, updated_at
-    from users
-   where lower(email) = lower('admin@example.com');
+  select u.id, u.org_id, u.name, u.email, r.code as role, u.status,
+         (u.password_hash is null)            as hash_is_null,
+         split_part(u.password_hash, '\$', 1)  as hash_algo,
+         length(u.password_hash)              as hash_len,
+         u.created_at, u.updated_at
+    from users u
+    join roles r on r.id = u.role_id
+   where lower(u.email) = lower('admin@example.com');
 "
 ```
 
@@ -52,7 +53,7 @@ $COMPOSE exec postgres psql -U cms -d cms -c "
 | 字段 | 期望值 / 含义 |
 |---|---|
 | `status` | `active` 才能登录 |
-| `role` | `owner` / `manager` / `staff` / `viewer` |
+| `role` | 通过 `role_id` 关联到 `roles.code`；值为 `owner` / `manager` / `staff` / `viewer` |
 | `hash_is_null` | `f`（true 表示没设密码，必登录失败） |
 | `hash_algo` | `scrypt`（其他值会被认证拒绝） |
 | `hash_len` | 正常约 100~110 字符；偏离很可能 hash 损坏 |
@@ -61,17 +62,18 @@ $COMPOSE exec postgres psql -U cms -d cms -c "
 
 ```bash
 $COMPOSE exec postgres psql -U cms -d cms -c "
-  select u.id, u.email, u.name, u.role, u.status,
+  select u.id, u.email, u.name, r.code as role, u.status,
          o.name as org_name,
          array_agg(g.name) filter (where g.id is not null) as groups
     from users u
+    join roles r on r.id = u.role_id
     join organizations o on o.id = u.org_id
     left join user_group_memberships m
       on m.user_id = u.id and m.active_flag = true
     left join groups g on g.id = m.group_id
    where u.org_id = '00000000-0000-4000-8000-000000000010'
-   group by u.id, o.name
-   order by u.role desc, u.email;
+   group by u.id, r.code, o.name
+   order by r.code desc, u.email;
 "
 ```
 
@@ -83,7 +85,7 @@ $COMPOSE exec postgres psql -U cms -d cms -c "
 
 ```bash
 $COMPOSE exec postgres psql -U cms -d cms -c "
-  select 'users (admin)'   as src, id::text, email, role,         status from users      where lower(email)=lower('xxx@example.com')
+  select 'users (admin)'   as src, u.id::text, u.email, r.code as role, u.status from users u join roles r on r.id = u.role_id where lower(u.email)=lower('xxx@example.com')
   union all
   select 'app_users (h5)'  as src, id::text, email, ''   as role, status from app_users  where lower(email)=lower('xxx@example.com');
 "
@@ -161,7 +163,7 @@ $COMPOSE exec postgres psql -U cms -d cms -c "
          status        = 'active',
          updated_at    = now()
    where lower(email) = lower('admin@example.com')
-  returning id, email, role, status;
+  returning id, email, status;
 "
 ```
 
@@ -171,10 +173,10 @@ $COMPOSE exec postgres psql -U cms -d cms -c "
 
 ## 3. 创建新管理员用户
 
-> 当前没有"通过 admin UI 新建管理员"的接口（`UsersController` 只暴露了 `GET /users`，列表用）。新增管理员只能走脚本或直连 PG。
+> 日常账号增删改首选 admin UI 或 `POST /users` / `PATCH /users/:id/role` 等 API（见 `UsersController`）；下面的 SQL 路径仅在 admin 全部不可用、需要应急救援时使用。
 >
 > 一个完整的"可用"管理员需要：
-> 1. `users` 行（含 `password_hash`、`role`、`status='active'`）
+> 1. `users` 行（含 `password_hash`、`role_id`、`status='active'`）
 > 2. `user_group_memberships` 行（必须挂到至少一个有效 `groups`，否则在涉及组隔离的查询里会看不到任何数据）
 
 ### 3.1 推荐：用 SQL 一次创建（在事务里）
@@ -207,13 +209,16 @@ BEGIN;
 
 -- 3.1 新建用户行
 WITH new_user AS (
-  INSERT INTO users (org_id, name, email, password_hash, role, status)
+  INSERT INTO users (org_id, name, email, password_hash, role_id, status)
   VALUES (
     '<ORG_ID>'::uuid,
     'Alice Manager',
     lower('alice@example.com'),
     'scrypt$abc...$def...',         -- §2.2 算出来的 hash
-    'manager',                       -- owner / manager / staff / viewer
+    (SELECT id FROM roles
+      WHERE org_id = '<ORG_ID>'::uuid
+        AND code = 'manager'
+        AND is_system = true),       -- owner / manager / staff / viewer
     'active'
   )
   RETURNING id
@@ -225,9 +230,10 @@ SELECT new_user.id, '<GROUP_ID>'::uuid, true, true, now()
 FROM new_user;
 
 -- 验证
-SELECT u.id, u.email, u.role, u.status,
+SELECT u.id, u.email, r.code AS role, u.status,
        g.name AS primary_group
   FROM users u
+  JOIN roles r ON r.id = u.role_id
   LEFT JOIN user_group_memberships m
     ON m.user_id = u.id AND m.active_flag = true
   LEFT JOIN groups g ON g.id = m.group_id
@@ -237,7 +243,7 @@ COMMIT;
 SQL
 ```
 
-> 把 `<ORG_ID>` / `<GROUP_ID>` / hash 替换成实际值。如果验证 SELECT 不对，跑 `ROLLBACK;` 而不是 `COMMIT;`。
+> 把 `<ORG_ID>` / `<GROUP_ID>` / hash 替换成实际值。角色 `code` 可选 `owner / manager / staff / viewer`。如果验证 SELECT 不对，跑 `ROLLBACK;` 而不是 `COMMIT;`。
 
 约束提醒：
 
@@ -292,13 +298,21 @@ update users
 
 ### 4.3 改角色
 
+> 优先用 `PATCH /users/:id/role` API（`UsersController`）。以下 SQL 仅限应急。
+
 ```sql
 update users
-   set role = 'manager', updated_at = now()
+   set role_id = (
+         select id from roles
+          where org_id = users.org_id
+            and code = 'manager'
+            and is_system = true
+       ),
+       updated_at = now()
  where lower(email) = lower('alice@example.com');
 ```
 
-合法 `role`：`owner | manager | staff | viewer`（`packages/server/src/modules/core/auth/roles.ts`）。
+合法 `code`：`owner | manager | staff | viewer`（`packages/server/src/modules/core/auth/roles.ts`）。
 
 ### 4.4 撤掉 group 成员关系（软删除）
 
@@ -317,8 +331,8 @@ update user_group_memberships
 登录失败时按这个顺序排查：
 
 1. `select status from users where lower(email)=lower('xxx');` → 必须 `active`
-2. `select role from users ...` → 必须是 `owner/manager/staff/viewer` 之一
-3. `select password_hash from users ...` → 不能为空，必须 `scrypt$...$...` 三段
+2. `select r.code from users u join roles r on r.id = u.role_id where lower(u.email)=lower('xxx');` → 必须是 `owner/manager/staff/viewer` 之一
+3. `select password_hash from users where lower(email)=lower('xxx');` → 不能为空，必须 `scrypt$...$...` 三段
 4. 密码本身：让用户重输 / 直接走 §2.1 重置
 5. 容器日志：`bash scripts/logs.sh api | grep -i 'auth\|login\|unauth'`
 
@@ -351,5 +365,8 @@ update user_group_memberships
 | Bootstrap CLI 入口 | `packages/server/src/scripts/initLocalAdmin.ts` |
 | 角色枚举 | `packages/server/src/modules/core/auth/roles.ts` |
 | `users` 表定义 | `packages/server/src/infra/db/migrations/001_init.sql` (L18–L28) |
+| `users` 辅助列与 CHECK 约束 | `packages/server/src/infra/db/migrations/049_users_admin_columns.up.sql` |
+| `roles` / `role_permissions` / `user_permission_overrides` 表定义 | `packages/server/src/infra/db/migrations/050_roles_permissions_tables.up.sql` |
+| `users.role` 列移除、`role_id` NOT NULL | `packages/server/src/infra/db/migrations/051_deprecate_users_role_text.up.sql` |
 | `groups` / `user_group_memberships` 表定义 | `packages/server/src/infra/db/migrations/022_groups_and_case_group.up.sql` |
-| `users` 列表 API（admin UI 用） | `packages/server/src/modules/core/users/users.controller.ts`（仅 GET，无 POST/PUT） |
+| `users` CRUD API（admin UI 用） | `packages/server/src/modules/core/users/users.controller.ts` |
