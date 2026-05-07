@@ -393,10 +393,12 @@ void test("transitionBmvToCase timeline payload includes D5 enriched fields", as
 void test("getBmvAggregate returns profile with empty collections when no case exists", async () => {
   const baseRow = makeBaseRow();
   const { service } = createTestService((sql) => {
-    if (sql.includes("case_type_code")) return Promise.resolve({ rows: [] });
+    if (sql.includes("from customers"))
+      return Promise.resolve({ rows: [baseRow] });
+    if (sql.includes("from cases")) return Promise.resolve({ rows: [] });
     if (sql.includes("from intake_forms")) return Promise.resolve({ rows: [] });
     if (sql.includes("from reminders")) return Promise.resolve({ rows: [] });
-    return Promise.resolve({ rows: [baseRow] });
+    return Promise.resolve({ rows: [] });
   });
   const result = await service.getBmvAggregate(ctx, "c1");
   assert.equal(result.customerId, "c1");
@@ -431,13 +433,14 @@ void test("getBmvAggregate returns case summary and reminders when case exists",
     created_at: "2026-01-03T00:00:00.000Z",
   };
   const { service } = createTestService((sql) => {
-    if (sql.includes("case_type_code"))
-      return Promise.resolve({ rows: [caseRow] });
+    if (sql.includes("from customers"))
+      return Promise.resolve({ rows: [signedRow] });
+    if (sql.includes("from cases")) return Promise.resolve({ rows: [caseRow] });
     if (sql.includes("from reminders"))
       return Promise.resolve({ rows: [reminderRow] });
     if (sql.includes("from intake_forms"))
       return Promise.resolve({ rows: [quoteRow] });
-    return Promise.resolve({ rows: [signedRow] });
+    return Promise.resolve({ rows: [] });
   });
   const result = await service.getBmvAggregate(ctx, "c1");
   assert.ok(result.currentCase);
