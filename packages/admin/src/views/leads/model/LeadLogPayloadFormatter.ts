@@ -49,6 +49,7 @@ const CHIP_BY_CATEGORY: Record<LeadLogType, string> = {
   owner: "bg-emerald-100 text-emerald-700",
   group: "bg-violet-100 text-violet-700",
   info: "bg-gray-100 text-gray-700",
+  conversion: "bg-teal-100 text-teal-700",
 };
 
 const EMPTY_VALUE = "—";
@@ -61,9 +62,9 @@ export interface LeadLogPayloadInput {
   payload: Record<string, unknown>;
 }
 
-/** 格式化后供 UI 直接渲染的四元组。 */
+/** 格式化后供 UI 直接渲染的视图模型。 */
 export interface LeadLogPayloadView {
-  /** 4 大分类：status / owner / group / info；不识别时归类 info。 */
+  /** 分类：status / owner / group / info / conversion；不识别时归类 info。 */
   category: LeadLogType;
   /** 变更前文案（无前值时使用占位符 `—`）。 */
   fromValue: string;
@@ -71,6 +72,8 @@ export interface LeadLogPayloadView {
   toValue: string;
   /** 与分类匹配的 chip Tailwind class（fixture 同源）。 */
   chipClass: string;
+  /** 转化日志的跳转链接（如 `#/customers/:id`）；非转化条目为 `undefined`。 */
+  linkHref?: string;
 }
 
 function buildView(
@@ -150,18 +153,24 @@ const SERVER_TYPE_HANDLERS: Record<
   status_change: formatStatusChange,
   field_change: formatFieldChange,
   created: () => buildView("status", "", getLeadStatusLabel("new")),
-  converted_customer: (payload) =>
-    buildView(
-      "status",
-      getLeadStatusLabel("signed"),
-      readNestedString(payload.customerId),
-    ),
-  converted_case: (payload) =>
-    buildView(
-      "status",
-      getLeadStatusLabel("signed"),
-      readNestedString(payload.caseId),
-    ),
+  converted_customer: (payload) => {
+    const customerId = readNestedString(payload.customerId);
+    const customerNo = readNestedString(payload.customerNo);
+    const label = customerNo || customerId.slice(0, 8);
+    return {
+      ...buildView("conversion", "", `已转客户：${label}`),
+      linkHref: customerId ? `#/customers/${customerId}` : undefined,
+    };
+  },
+  converted_case: (payload) => {
+    const caseId = readNestedString(payload.caseId);
+    const caseNo = readNestedString(payload.caseNo);
+    const label = caseNo || caseId.slice(0, 8);
+    return {
+      ...buildView("conversion", "", `已建案件：${label}`),
+      linkHref: caseId ? `#/cases/${caseId}` : undefined,
+    };
+  },
   owner_assigned: (payload) =>
     buildView("owner", "", readNestedString(payload.ownerUserId)),
   followup_added: (payload) =>
@@ -179,6 +188,7 @@ const LEGACY_TYPES: ReadonlySet<LeadLogType> = new Set([
   "owner",
   "group",
   "info",
+  "conversion",
 ]);
 
 function isLegacyType(logType: string): logType is LeadLogType {

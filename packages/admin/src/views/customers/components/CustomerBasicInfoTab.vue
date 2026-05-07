@@ -9,6 +9,7 @@ import type { CustomerDetail } from "../types";
 import { CUSTOMER_VISA_TYPES } from "../types-customer-fields";
 import { resolveVisaTypeLabel } from "../../../shared/model/visaTypeOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
+import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import type { BasicInfoFormSnapshot } from "../model/useCustomerBasicInfoModel";
 
@@ -56,13 +57,8 @@ const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
 );
 const isBmvCustomer = computed(() => props.customer.bmvProfile !== null);
-const isBmvCandidate = computed(
-  () =>
-    props.customer.bmvProfile !== null ||
-    props.customer.visaType === "business_manager",
-);
 const showBmvIntakeCard = computed(
-  () => props.bmvEnabled === true && isBmvCandidate.value,
+  () => props.bmvEnabled === true && customerRequiresBmv(props.customer),
 );
 const avatarInputId = "basicInfoAvatar";
 

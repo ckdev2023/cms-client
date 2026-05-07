@@ -6,7 +6,7 @@ import { useToast } from "../../shared/model/useToast";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
-import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
+import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
 import CaseSummaryCards from "./components/CaseSummaryCards.vue";
 import CaseFilters from "./components/CaseFilters.vue";
 import CaseTable from "./components/CaseTable.vue";
@@ -22,7 +22,14 @@ const router = useRouter();
 const toast = useToast();
 
 const repository = createCaseRepository();
-const ownerOptions = computed(() => getOwnerOptions(locale.value));
+const ownerOptions = computed<import("./types").CaseOwnerOption[]>(() =>
+  getActiveUserOptions().map((u) => ({
+    ...u,
+    initials: u.label.slice(0, 2),
+    avatarClass: "bg-gray-200",
+    group: null,
+  })),
+);
 const groupOptions = computed(() => getActiveGroupOptions(locale.value));
 
 const {

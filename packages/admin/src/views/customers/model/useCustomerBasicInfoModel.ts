@@ -7,11 +7,14 @@ import {
   resolveGroupValue,
 } from "../../../shared/model/useGroupOptions";
 import {
-  getOwnerOptions,
   resolveOwnerLabel,
   resolveOwnerValue,
-  withCurrentUserOwnerOption,
+  toApiOwnerOption,
 } from "../../../shared/model/useOwnerOptions";
+import {
+  getActiveUserOptions,
+  type UserSelectOption,
+} from "../../../shared/model/useOrgUserOptions";
 import {
   CustomerRepositoryError,
   type CustomerRepository,
@@ -204,24 +207,34 @@ function useBasicInfoOptions(
     return active;
   });
 
-  // BUG-154：客户已存在的 owner 若不在静态 catalog 内（如 server 直回 `Local Admin`），
-  // 必须把它合并到下拉选项里，否则 `<option :value="opt.label">` 没有命中项，
-  // 即便快照值正确，select 仍显示空（dropdown unselected）。复用 `withCurrentUserOwnerOption`
-  // 的「不存在则注入」语义，确保已有 owner 能在表单中默认选中。
   const ownerOptions = computed<readonly SelectOption[]>(() => {
-    const base = getOwnerOptions(locale?.value);
+    const active = getActiveUserOptions();
     const persistedOwner = customer.value?.owner;
     const persistedName = persistedOwner?.name?.trim() ?? "";
-    const merged = persistedName
-      ? withCurrentUserOwnerOption(base, {
-          name: persistedName,
-          initials: persistedOwner?.initials,
-        })
-      : base;
-    return merged.map(({ value, label }) => ({ value, label }));
+    const alreadyInList = active.some(
+      (opt) => opt.label === persistedName || opt.value === persistedName,
+    );
+    if (persistedName && !alreadyInList) {
+      const injected = toApiOwnerOption({
+        id: persistedName,
+        displayName: persistedName,
+      });
+      return [{ value: injected.value, label: injected.label }, ...active];
+    }
+    return active;
   });
 
   return { groupOptions, ownerOptions };
+}
+
+function resolveOwnerId(
+  ownerLabel: string,
+  activeUsers: readonly UserSelectOption[],
+): string | undefined {
+  const catalogId = resolveOwnerValue(ownerLabel);
+  if (catalogId) return catalogId;
+  const match = activeUsers.find((u) => u.label === ownerLabel);
+  return match?.value ?? undefined;
 }
 
 function createBasicInfoPayload(snapshot: BasicInfoFormSnapshot) {
@@ -235,7 +248,7 @@ function createBasicInfoPayload(snapshot: BasicInfoFormSnapshot) {
     phone: snapshot.phone,
     email: snapshot.email,
     group: resolveGroupValue(snapshot.group) ?? snapshot.group,
-    ownerId: resolveOwnerValue(snapshot.owner) ?? undefined,
+    ownerId: resolveOwnerId(snapshot.owner, getActiveUserOptions()),
     referralSource: snapshot.referralSource,
     location: snapshot.location,
     sourceType: snapshot.sourceType,

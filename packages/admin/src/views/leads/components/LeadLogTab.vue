@@ -27,6 +27,7 @@ const SEGMENT_LABEL_KEY: Record<LeadLogCategory, string> = {
   owner: "leads.detail.logTab.typeOwner",
   group: "leads.detail.logTab.typeGroup",
   info: "leads.detail.logTab.typeInfo",
+  conversion: "leads.detail.logTab.typeConversion",
 };
 
 const segmentOptions = computed<SegmentOption<LeadLogCategory>[]>(() =>
@@ -54,6 +55,8 @@ function logTypeLabel(type: string): string {
       return t("leads.detail.logTab.typeGroup");
     case "info":
       return t("leads.detail.logTab.typeInfo");
+    case "conversion":
+      return t("leads.detail.logTab.typeConversion");
     default:
       return type;
   }
@@ -143,7 +146,16 @@ function operatorLabel(operator: string): string {
                   d="M13 7l5 5m0 0l-5 5m5-5H6"
                 />
               </svg>
-              <span class="log-timeline__to">{{ entry.toValue }}</span>
+              <a
+                v-if="entry.linkHref"
+                :href="entry.linkHref"
+                class="log-timeline__to log-timeline__link"
+              >
+                {{ entry.toValue }}
+              </a>
+              <span v-else class="log-timeline__to">
+                {{ entry.toValue }}
+              </span>
             </div>
           </div>
         </div>
@@ -305,5 +317,14 @@ function operatorLabel(operator: string): string {
 .log-timeline__arrow {
   color: var(--color-text-3);
   flex-shrink: 0;
+}
+
+.log-timeline__link {
+  color: var(--color-primary-6);
+  text-decoration: none;
+}
+
+.log-timeline__link:hover {
+  text-decoration: underline;
 }
 </style>

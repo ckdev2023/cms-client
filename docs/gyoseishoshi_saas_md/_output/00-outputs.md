@@ -25,6 +25,56 @@
 
 ## 最新产出
 
+- 时间：2026-05-07（R-FLOW2 chrome-devtools-mcp 走查第二轮 / 咨询 → 客户 → 案件 全链路）
+  问题：在 R-FLOW（第一轮）所有 P1 修复（adapter 拆分、case_templates seed、
+  CustomerCreateCaseGate 解耦 BMV、LeadLogPayloadFormatter 转化分支）已落库后，
+  以 admin 身份再跑一遍 `new → following → pending_sign → signed →
+  convert-customer → convert-case` 全链路，特意切到「家族滞在」（caseTypeCode =
+  `dependent_visa`），覆盖与第一轮 work-visa 不同的业务路径。
+  结论（TL;DR）：R-FLOW（第一轮）报的 D-1 / D-2 / H-1 / C-1 / G-2（cases
+  列表口径）已经真的修好（PG ↔ UI 完全对齐、convert 后 UI 立即刷新到
+  `convertedCase`、日志 Tab 新增「转化」分类与正确文案、cases 列表 owner
+  picker 切到真用户）；但本轮同时把第一轮没提到的两条 P0/P1 推到红线：**P0 1 条**
+  （**R-FLOW2-A-1** R-FLOW-G-1 的 SQL 修复在 `customers.query.ts` 把
+  `ca.case_type_label` 写进 `buildCaseNamesExpr`，但 `cases` 表根本没有这一列，
+  PG 解析期就报 `column "case_type_label" does not exist`，
+  `/api/customers`、`/api/customers/:id` 全 500，整个客户模块在 admin UI
+  不可访问）/ **P1 3 条**（**R-FLOW2-B-1** case_templates 与 admin caseTypeCode
+  口径错配——`family-stay → dependent_visa`、`work-visa → work` 与 seed
+  里的 `family_stay` / `engineer_humanities_intl_visa` 完全不重合，模板查询
+  永远 miss，document_items 仍 0/0；**R-FLOW2-C-1** `HEADER_BUTTON_PRESETS.signedNotConverted`
+  把 `convertCase` 设为 `"hidden"`，导致 banner / 顶部 header / 转化 Tab
+  三处「签约并开始建档」入口同时失效，与 banner 文案「下一步请直接开始建档」
+  自相矛盾；**R-FLOW2-D-1** customer 列表 500 被前端静默吞掉，UI 显示「我的
+  客户 0 位」但 PG 实际 21 条）/ **P2 3 条**（R-FLOW2-E-1 dedup 把 lead
+  自己识别为「可能重复」/ R-FLOW2-E-2 lead 详情 `?tab=log` 不被 active
+  tab 还原 / R-FLOW2-F-1 转化 Tab 在 `convertedCase` 状态下没切「已建案件」
+  view）/ **P3 2 条**（R-FLOW2-G-1 leads 列表对 `family_stay` 旧数据仍 snake-case /
+  R-FLOW2-G-2 转化日志 link 显示 UUID 前缀而非 case_no/customer_no）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/63-咨询客户案件全链路chrome-devtools-mcp走查-第二轮.md（本轮完整报告）
+  - packages/server/src/modules/core/customers/customers.query.ts:97-113（`buildCaseNamesExpr` 引用不存在的 `ca.case_type_label`）
+  - packages/admin/src/i18n/messages/_shared/businessTypes.ts:69（`BUSINESS_TYPE_TO_CASE_TYPE_CODE` 与 seed `case_templates.case_type` 不重合）
+  - packages/server/src/scripts/seedCaseTemplates.ts（seed 用 `family_stay` / `engineer_humanities_intl_visa`）
+  - packages/admin/src/views/leads/types-detail.ts:364-370（`signedNotConverted.convertCase = "hidden"`）
+  - packages/admin/src/views/leads/components/LeadBannerStrip.vue:18-22（banner 仅 `enabled \|\| highlighted` 才渲染按钮）
+  - PG 直查：`select case_type_code from cases where case_no='CASE-202605-0008'` → `dependent_visa`，`select count(*) from document_items where case_id=...` → 0
+  - reqid 2479 GET /api/customers/0577eb14... → 500（generic Internal server error）
+  影响面：
+  - admin 客户模块：列表 / 详情 全 500，无法继续作业
+  - lead → customer → case 主链路：family-stay 路径下「一键签约并建档」CTA 全失，必须先点「仅建客户档案」+ 通过 dedup 弹窗 +「签约并开始建档」 三步
+  - 资料清单：所有新建 case 仍然 0/0，Gate-A（S3 → S4）触发条件永远满足不了
+  - 与 P0/04-核心流程 §4.1 / §4.2、P0/06-页面规格/客户.md §3 / §4 直接冲突
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/04-核心流程与状态流转.md
+    位置：§4.1 「咨询转案件」末尾增加「门禁与按钮预设映射表（signed/convertedCustomer/convertedCase）」
+    Owner：行政书士 SaaS 主链路 lead-customer-case
+    状态：待回灌
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/ADR-case-templates-as-checklist-ssot.md
+    位置：「caseTypeCode ↔ case_templates.case_type 口径」章节
+    Owner：cases 模块
+    状态：待回灌（建议同 PR 加 alias 字段并补 migration）
+
 - 时间：2026-05-07（R-SETTINGS-01 chrome-devtools-mcp 走查第一轮 / 系统设置 - 成员与角色管理）
   问题：用 chrome-devtools-mcp 端到端走查 admin 端「系统设置」页
   下「成员管理」与「角色管理」两个 tab 的所有可达流程，覆盖列表
@@ -1644,3 +1694,26 @@
     位置：§7 落库建议每条尾部（追加 ✅ LANDED 标记）
     Owner：研发
     状态：已回灌（2026-05-02）
+
+- 时间：2026-05-07（R-FLOW-01 咨询→客户→案件全链路第一轮走查修复计划 — 4 PR 批量修复规划）
+  问题：R-FLOW-01 以 chrome-devtools-mcp 端到端走查发现 8 条缺陷（D-1/D-2/B-1/E-1/C-1/F-1/G-1/G-2/A-1/H-1），覆盖 convert 链 UI 死结、case_templates 未消费、BMV 门禁错扩、案件名称缺失、owner picker 硬编码、列表与日志不一致。如何系统性修复并保证 P0 主链路端到端可作业？
+  结论（TL;DR）：拆 4 个 PR 分批修复，PR1+PR2 联合解锁主链路。关键决策：① `case_templates.requirement_blueprint` 设为建案资料清单唯一真源（ADR 已记录），旧 `template_versions` 仅作 BMV 兼容回退、下一迭代清理；② convert adapt 新增专用 `adaptLeadConvertCustomerResult` / `adaptLeadConvertCaseResult`，解除 `adaptLeadMutationResult` 对嵌套响应的误判；③ BMV 门禁解耦——仅 `visaType=business_manager` 或 `questionnaireStatus !== not_started` 的客户才受 BMV 闸口约束；④ owner picker 从静态 `OWNER_CATALOG` 切换到 `getActiveUserOptions()`。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/62-咨询客户案件全链路chrome-devtools-mcp走查-第一轮.md（R-FLOW-01 完整走查报告）
+  - docs/gyoseishoshi_saas_md/_output/ADR-case-templates-as-checklist-ssot.md（case_templates 替代 template_versions 决策）
+  - .cursor/plans/咨询客户案件全链路-第一轮修复_091853f3.plan.md（4 PR 分批修复计划）
+  - packages/server/src/modules/core/cases/cases.template.repository.ts（case_templates 查询仓储）
+  - packages/server/src/scripts/seedCaseTemplates.ts（family-stay + work 种子）
+  - packages/admin/src/views/leads/model/LeadAdapterConvertMappers.ts（convert 专用 adapter）
+  - packages/admin/src/views/cases/model/useCaseDocumentsTab.ts（viewState 四态）
+  影响面：
+  - PR1：convert 链 UI 死结修复——D-1 嵌套响应适配 / D-2 失败后刷新兜底 / B-1 banner 按钮状态同源
+  - PR2：case_templates 作为资料清单真源——建案展开 document_items 从 requirement_blueprint 读取 + 资料 Tab 噪声分级为 4 态
+  - PR3：客户详情 BMV 门禁解耦 / 案件名称 fallback / owner picker 真用户
+  - PR4：leads 列表 source 字段 i18n 对齐 / 日志 conversion 分类 + 链接渲染
+  - BMV 旧路径完全保留，下一迭代再迁移
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/62-咨询客户案件全链路chrome-devtools-mcp走查-第一轮.md
+    位置：尾部追加「修复状态」章节（4 PR 各标注 LANDED / IN_PROGRESS）
+    Owner：研发
+    状态：待回灌（PR 合并后逐条标记）

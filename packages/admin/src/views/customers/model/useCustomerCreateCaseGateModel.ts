@@ -35,10 +35,26 @@ type UseCustomerCreateCaseGateModelInput = {
   customer: Ref<CustomerDetail | null>;
 };
 
+/**
+ * 判断客户是否需要走 BMV 前置流程。
+ * 仅「经管签」或「问卷已开始」的客户才受 BMV 门禁约束；
+ * 其余签证类型直接放行。
+ * @param customer - 客户详情
+ * @returns 是否需要 BMV 门禁
+ */
+export function customerRequiresBmv(customer: CustomerDetail): boolean {
+  if (customer.visaType === "business_manager") return true;
+  const profile = customer.bmvProfile;
+  if (!profile) return false;
+  return profile.questionnaireStatus !== "not_started";
+}
+
 function resolveBlockedReasonKey(
   customer: CustomerDetail | null,
 ): LabelKey | null {
-  const profile = customer?.bmvProfile;
+  if (!customer) return null;
+  if (!customerRequiresBmv(customer)) return null;
+  const profile = customer.bmvProfile;
   if (!profile) return null;
   if (profile.signStatus !== "signed") {
     return "customers.detail.actions.createCaseGate.needsSign";

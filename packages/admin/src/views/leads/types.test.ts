@@ -116,10 +116,10 @@ describe("leads/types", () => {
   });
 
   describe("LOG_CATEGORIES", () => {
-    it("has 5 categories with all as first and info appended (H-5)", () => {
-      expect(LOG_CATEGORIES).toHaveLength(5);
+    it("has 6 categories with all as first and conversion appended (H-5)", () => {
+      expect(LOG_CATEGORIES).toHaveLength(6);
       expect(LOG_CATEGORIES[0].key).toBe("all");
-      expect(LOG_CATEGORIES[LOG_CATEGORIES.length - 1].key).toBe("info");
+      expect(LOG_CATEGORIES[LOG_CATEGORIES.length - 1].key).toBe("conversion");
     });
   });
 

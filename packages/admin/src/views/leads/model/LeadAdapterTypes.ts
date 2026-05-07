@@ -90,6 +90,10 @@ export interface LeadListResult {
 export interface LeadMutationResult {
   /** */
   id: string;
+  /** 转客户时服务端返回的客户 ID。 */
+  customerId?: string;
+  /** 转案件时服务端返回的案件 ID。 */
+  caseId?: string;
 }
 
 /**

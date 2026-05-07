@@ -213,7 +213,7 @@ export interface LeadConversionInfo {
 /* ------------------------------------------------------------------ */
 
 /** */
-export type LeadLogType = "status" | "owner" | "group" | "info";
+export type LeadLogType = "status" | "owner" | "group" | "info" | "conversion";
 
 /** */
 export type LeadLogCategory = "all" | LeadLogType;
@@ -232,6 +232,7 @@ export const LOG_CATEGORIES: readonly LeadLogCategoryMeta[] = [
   { key: "owner", label: "人员变更" },
   { key: "group", label: "所属组变更" },
   { key: "info", label: "其他" },
+  { key: "conversion", label: "转化" },
 ] as const;
 
 /**
@@ -259,6 +260,8 @@ export interface LeadLogEntry {
   toValue: string;
   /** */
   chipClass: string;
+  /** 转化日志关联的跳转链接（如 `#/customers/:id`）。 */
+  linkHref?: string;
 }
 
 /* ------------------------------------------------------------------ */

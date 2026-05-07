@@ -12,7 +12,7 @@
  * 4. 写入 cases 主表（auto case_no 重试）。
  * 5. 写入 document_items / timeline / 初始报价计费方案 / 跨组 timeline / 初始任务。
  */
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, Logger } from "@nestjs/common";
 
 import type { Case } from "../model/coreEntities";
 import type { CaseCreateInput } from "./cases.types";
@@ -40,36 +40,25 @@ import {
   writeTimelineInTx,
 } from "./cases.service.timeline";
 import type { TemplatesResolver } from "./cases.service.types-internal";
+import type { CaseTemplateResolveResult } from "./cases.template.repository";
+
+const logger = new Logger("CaseCreateFlow");
 
 /**
- * 预解析 `document_checklist` 模板配置；legacy/无模板时返回空数组。
- * @param resolver
- * @param ctx
- * @param caseTypeCode
+ *
  */
-export async function resolveChecklistItems(
-  resolver: TemplatesResolver,
+export type CaseTemplateResolver = (
   ctx: RequestContext,
   caseTypeCode: string,
-): Promise<ChecklistItem[]> {
-  let resolved = await resolver.resolve(ctx, {
-    kind: "document_checklist",
-    key: caseTypeCode,
-  });
+) => Promise<CaseTemplateResolveResult>;
 
-  if (resolved.mode !== "template" || !resolved.used) {
-    resolved = await resolver.resolve(ctx, {
-      kind: "case_type",
-      key: caseTypeCode,
-    });
-  }
-
-  if (resolved.mode !== "template" || !resolved.used) return [];
-
-  const rawItems = Array.isArray(resolved.config.items)
-    ? (resolved.config.items as Record<string, unknown>[])
-    : Array.isArray(resolved.config.requirementBlueprint)
-      ? (resolved.config.requirementBlueprint as Record<string, unknown>[])
+function mapRawConfigToChecklist(
+  config: Record<string, unknown>,
+): ChecklistItem[] {
+  const rawItems = Array.isArray(config.items)
+    ? (config.items as Record<string, unknown>[])
+    : Array.isArray(config.requirementBlueprint)
+      ? (config.requirementBlueprint as Record<string, unknown>[])
       : [];
 
   return rawItems.map((item) => {
@@ -94,6 +83,52 @@ export async function resolveChecklistItems(
         typeof item.providedByRole === "string" ? item.providedByRole : null,
     };
   });
+}
+
+/**
+ * 预解析资料清单模板。
+ *
+ * 优先查询 `case_templates` 表（新真源），命中则直接返回；
+ * 未命中回退到 legacy `TemplatesResolver`（保留 BMV 兼容路径）；
+ * 两者均未命中返回空数组并 warn 日志。
+ * @param resolver
+ * @param ctx
+ * @param caseTypeCode
+ * @param caseTemplateResolver
+ */
+export async function resolveChecklistItems(
+  resolver: TemplatesResolver,
+  ctx: RequestContext,
+  caseTypeCode: string,
+  caseTemplateResolver?: CaseTemplateResolver,
+): Promise<ChecklistItem[]> {
+  if (caseTemplateResolver) {
+    const result = await caseTemplateResolver(ctx, caseTypeCode);
+    if (result.found && result.items.length > 0) {
+      return result.items;
+    }
+  }
+
+  let resolved = await resolver.resolve(ctx, {
+    kind: "document_checklist",
+    key: caseTypeCode,
+  });
+
+  if (resolved.mode !== "template" || !resolved.used) {
+    resolved = await resolver.resolve(ctx, {
+      kind: "case_type",
+      key: caseTypeCode,
+    });
+  }
+
+  if (resolved.mode !== "template" || !resolved.used) {
+    logger.warn(
+      `templateMissing: no checklist template found for caseType="${caseTypeCode}" org="${ctx.orgId}"`,
+    );
+    return [];
+  }
+
+  return mapRawConfigToChecklist(resolved.config);
 }
 
 /**

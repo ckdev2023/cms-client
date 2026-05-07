@@ -354,6 +354,7 @@ export type CaseDetailAggregateDto = {
   currentResidencePeriod?: _CaseResidencePeriodSummary | null;
   successCloseoutCheck?: _SuccessCloseoutCheckResult | null;
   failureCloseoutCheck?: _FailureCloseoutCheckResult | null;
+  documentTemplateMissing?: boolean;
 };
 
 /** 创建校验运行请求参数。 */

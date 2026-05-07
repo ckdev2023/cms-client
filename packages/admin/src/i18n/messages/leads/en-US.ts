@@ -319,6 +319,7 @@ const leadsEnUS = {
       typeOwner: "Owner Change",
       typeGroup: "Group Change",
       typeInfo: "Other",
+      typeConversion: "Conversion",
       emptyTitle: "No log entries",
       actorUnknown: "Unknown actor",
     },

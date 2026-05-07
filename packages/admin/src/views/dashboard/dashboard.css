@@ -30,7 +30,7 @@
   width: calc((100% - 8px) / var(--segment-count, 1));
   border-radius: var(--radius-full);
   background: var(--color-primary-6);
-  box-shadow: var(--shadow-primary-btn);
+  box-shadow: 0 4px 10px rgba(3, 105, 161, 0.18);
   transform: translateX(calc(100% * var(--segment-index, 0)));
   transition:
     transform var(--transition-spring),
@@ -42,12 +42,12 @@
   border: 0;
   background: transparent;
   color: var(--color-text-2);
-  padding: 8px 18px;
+  padding: 7px 16px;
   min-height: 32px;
   border-radius: var(--radius-full);
   font: inherit;
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-extrabold);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
   cursor: pointer;
   transition:
@@ -59,12 +59,19 @@
   position: relative;
   z-index: 1;
   flex: 1 1 0;
+  min-width: 48px;
   text-align: center;
+}
+
+.segment-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .segment-btn.active {
   background: transparent;
   color: var(--color-bg-1);
+  font-weight: var(--font-weight-bold);
   box-shadow: none;
 }
 

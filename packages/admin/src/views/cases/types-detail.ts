@@ -1487,6 +1487,8 @@ export interface CaseDetail {
    *
    */
   documents: DocumentGroup[];
+  /** 服务端指示该案件的签证类型是否缺少资料模板配置。 */
+  documentTemplateMissing: boolean;
   /**
    *
    */

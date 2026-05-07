@@ -95,15 +95,20 @@ function buildArchivedCasesExpr(customerAlias: string): string {
 }
 
 function buildCaseNamesExpr(customerAlias: string): string {
-  return `(select coalesce(jsonb_agg(case_name order by created_at desc, id desc), '[]'::jsonb)
+  return `(select coalesce(jsonb_agg(resolved_name order by created_at desc, id desc), '[]'::jsonb)
     from (
-      select distinct on (ca.case_name, ca.id)
-        ca.case_name,
+      select distinct on (ca.id)
+        coalesce(
+          nullif(trim(coalesce(ca.case_name, '')), ''),
+          concat_ws(' · ',
+            nullif(trim(coalesce(${customerAlias}.base_profile->>'displayName', ${customerAlias}.base_profile->>'legalName', '')), ''),
+            nullif(trim(coalesce(ca.case_type_label, ca.metadata->>'caseTypeLabel', '')), '')
+          )
+        ) as resolved_name,
         ca.created_at,
         ca.id
       from cases ca
       where ${buildCaseBaseWhere("ca", customerAlias)}
-        and nullif(trim(coalesce(ca.case_name, '')), '') is not null
     ) named_cases)`;
 }
 

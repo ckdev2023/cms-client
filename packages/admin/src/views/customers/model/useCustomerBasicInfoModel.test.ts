@@ -1,5 +1,5 @@
 import { computed, ref } from "vue";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CustomerDetail } from "../types";
 import { SAMPLE_CUSTOMER_DETAILS } from "../fixtures";
 import type { CustomerRepository } from "./CustomerRepository";
@@ -8,6 +8,10 @@ import {
   snapshotFromCustomer,
   useCustomerBasicInfoModel,
 } from "./useCustomerBasicInfoModel";
+import {
+  clearUserAliases,
+  registerUserAliases,
+} from "../../../shared/model/useOrgUserOptions";
 
 function createRepository(
   overrides: Partial<Pick<CustomerRepository, "updateCustomerBasicInfo">> = {},
@@ -199,5 +203,42 @@ describe("useCustomerBasicInfoModel", () => {
       groupOptions.value.some((option) => option.label.includes("已停用")),
     ).toBe(true);
     expect(ownerOptions.value.length).toBeGreaterThan(0);
+  });
+
+  describe("ownerOptions (active users)", () => {
+    afterEach(() => {
+      clearUserAliases();
+    });
+
+    it("ownerOptionsMatchActiveUsers", () => {
+      registerUserAliases([
+        { id: "u-001", displayName: "Local Admin" },
+        { id: "u-002", displayName: "テスト太郎" },
+      ]);
+
+      const customer = makeCustomerRef("cust-001");
+      const { ownerOptions } = useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+      });
+
+      const labels = ownerOptions.value.map((o) => o.label);
+      expect(labels).toContain("Local Admin");
+      expect(labels).toContain("テスト太郎");
+    });
+
+    it("injects persisted owner when not in active user list", () => {
+      registerUserAliases([{ id: "u-001", displayName: "Local Admin" }]);
+
+      const customer = makeCustomerRef("cust-001");
+      const { ownerOptions } = useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+      });
+
+      const labels = ownerOptions.value.map((o) => o.label);
+      expect(labels).toContain("山田翔太");
+      expect(labels).toContain("Local Admin");
+    });
   });
 });

@@ -179,6 +179,7 @@ function tryUseToast() {
       <LeadBannerStrip
         v-if="banner"
         :banner="banner"
+        :convert-case-state="buttonStates.convertCase"
         @convert-case="openConvertCaseDialog"
       />
 

@@ -124,6 +124,7 @@ import {
   resolveChecklistItems,
   runCreateCaseTransaction,
 } from "./cases.service.create-flow";
+import { findActiveCaseTemplateByCaseType } from "./cases.template.repository";
 import {
   assertCoeSendBillingGate,
   assertPostApprovalBillingGate,
@@ -209,10 +210,13 @@ export class CasesService {
     try {
       validateDueAt(input.dueAt);
       validateCaseEnums(input);
+      const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
+        findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
       const checklistItems = await resolveChecklistItems(
         this.templatesResolver,
         ctx,
         input.caseTypeCode,
+        caseTemplateResolver,
       );
       const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
       return await tenantDb.transaction((tx) =>
@@ -402,6 +406,7 @@ export class CasesService {
    * admin detail 页面消费此方法，避免多轮 HTTP 请求拼装。
    * 子查询使用 Promise.allSettled 降级：任一子查询失败仍返回部分数据（BUG-064）。
    */
+  // eslint-disable-next-line max-lines-per-function
   async getDetailAggregate(
     ctx: RequestContext,
     id: string,
@@ -439,9 +444,24 @@ export class CasesService {
       : null;
     const failureCheck = checkFailureCloseout(caseEntity);
 
+    const mappedCounts = mapDetailCountsRow(counts);
+    let documentTemplateMissing = false;
+    if (mappedCounts.documentItemsTotal === 0) {
+      try {
+        const tplResult = await findActiveCaseTemplateByCaseType(
+          this.pool,
+          ctx,
+          caseEntity.caseTypeCode,
+        );
+        documentTemplateMissing = !tplResult.found;
+      } catch {
+        documentTemplateMissing = false;
+      }
+    }
+
     return {
       case: caseEntity,
-      counts: mapDetailCountsRow(counts),
+      counts: mappedCounts,
       latestValidation: mapLatestValidationRow(latestValidation),
       latestSubmission: mapLatestSubmissionRow(latestSubmission),
       latestReview: mapLatestReviewRow(latestReview),
@@ -452,6 +472,7 @@ export class CasesService {
       currentResidencePeriod,
       successCloseoutCheck,
       failureCloseoutCheck: failureCheck.isFailurePath ? failureCheck : null,
+      documentTemplateMissing,
     };
   }
 

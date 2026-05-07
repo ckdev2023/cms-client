@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import type { BannerPresetKey } from "../types";
+import type { BannerPresetKey, HeaderButtonState } from "../types";
 
 /** 线索详情页横幅提示：只读态（已流失）与警告态（已签约未转化）。 */
-defineProps<{
+const props = defineProps<{
   banner: BannerPresetKey;
+  convertCaseState?: HeaderButtonState;
 }>();
 
 defineEmits<{
@@ -12,6 +14,12 @@ defineEmits<{
 }>();
 
 const { t } = useI18n();
+
+const showConvertCaseButton = computed(
+  () =>
+    props.convertCaseState === "enabled" ||
+    props.convertCaseState === "highlighted",
+);
 </script>
 
 <template>
@@ -57,7 +65,12 @@ const { t } = useI18n();
     <span class="banner__text">
       {{ t("leads.detail.banner.signedNotConverted") }}
     </span>
-    <button class="banner__action" type="button" @click="$emit('convertCase')">
+    <button
+      v-if="showConvertCaseButton"
+      class="banner__action"
+      type="button"
+      @click="$emit('convertCase')"
+    >
       {{ t("leads.detail.actions.convertCase") }}
     </button>
   </div>

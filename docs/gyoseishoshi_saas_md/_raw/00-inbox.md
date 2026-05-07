@@ -245,6 +245,22 @@
   Owner：研发
   状态：待编译
 
+- 时间：2026-05-07
+  来源：R-FLOW-01 修复计划 / ADR-case-templates-as-checklist-ssot
+  主题：BMV `template_versions` 路径在下一迭代清理的待办
+  要点：
+  - 当前 PR2 将 `case_templates.requirement_blueprint` 设为建案资料清单唯一真源
+  - BMV（经营管理签）仍经由 `TemplatesService.resolve(kind="document_checklist", key="business_manager_visa")` 读取 `template_versions` / `template_releases` 表
+  - 下一迭代需要：为 BMV 写入 `case_templates` 行（`case_type = "business_manager"`），验证等价后切换
+  - 切换验证通过后删除 `template_versions` 中 `kind=document_checklist / key=business_manager_visa` 行
+  - `TemplatesService.resolve` 保留但标记 deprecated；全站不再新增消费方
+  - 关联 ADR：[ADR-case-templates-as-checklist-ssot.md](../_output/ADR-case-templates-as-checklist-ssot.md) §BMV 兼容性窗口
+  需要编译到：
+  - 04-核心流程与状态流转.md §4.2（BMV 资料模板路径标注 deprecated 预告）
+  - 07-数据模型设计.md `template_versions` 表注释（标注仅 BMV 残留使用，计划清理）
+  Owner：研发
+  状态：待编译
+
 - 时间：2026-05-06
   来源：R-CONSULT-03 走查 Batch F backlog
   主题：R3-G-1 followups 响应契约裸数组 + controller UUID 化 audit

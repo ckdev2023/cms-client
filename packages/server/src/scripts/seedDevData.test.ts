@@ -255,7 +255,7 @@ function createMockClient(): {
 
 void test("SQL-level smoke: all seed steps execute and produce parameterized INSERTs", async () => {
   const steps = buildSeedSteps();
-  assert.equal(steps.length, 14, "must have exactly 14 seed steps");
+  assert.equal(steps.length, 15, "must have exactly 15 seed steps");
 
   const { client, queries } = createMockClient();
 
@@ -336,6 +336,7 @@ void test("SQL-level smoke: step labels match expected sequence", () => {
     "documentFile",
     "crossCaseLink",
     "documentChecklistTemplate",
+    "caseTemplates",
     "documentTemplates",
     "conversationAppUser",
     "conversationLead",

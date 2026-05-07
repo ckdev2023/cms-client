@@ -318,6 +318,7 @@ const leadsJaJP = {
       typeOwner: "担当者変更",
       typeGroup: "グループ変更",
       typeInfo: "その他",
+      typeConversion: "転換",
       emptyTitle: "ログがありません",
       actorUnknown: "操作者不明",
     },

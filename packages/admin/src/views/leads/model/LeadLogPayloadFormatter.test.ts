@@ -94,24 +94,46 @@ describe("formatLeadLogPayload — server logType coverage (H-5)", () => {
     expect(view.toValue).toBe("新咨询");
   });
 
-  it("converted_customer → status category with customerId in toValue", () => {
+  it("converted_customer → conversion category with human-readable toValue and linkHref", () => {
     const view = formatLeadLogPayload({
       logType: "converted_customer",
       payload: { customerId: "cus-1" },
     });
-    expect(view.category).toBe("status");
-    expect(view.fromValue).toBe("已签约");
-    expect(view.toValue).toBe("cus-1");
+    expect(view.category).toBe("conversion");
+    expect(view.fromValue).toBe("—");
+    expect(view.toValue).toBe("已转客户：cus-1");
+    expect(view.linkHref).toBe("#/customers/cus-1");
+    expect(view.chipClass).toContain("teal");
   });
 
-  it("converted_case → status category with caseId in toValue", () => {
+  it("converted_customer with customerNo uses customerNo as label", () => {
+    const view = formatLeadLogPayload({
+      logType: "converted_customer",
+      payload: { customerId: "cus-abc-def", customerNo: "CUS-202605-0001" },
+    });
+    expect(view.toValue).toBe("已转客户：CUS-202605-0001");
+    expect(view.linkHref).toBe("#/customers/cus-abc-def");
+  });
+
+  it("converted_case → conversion category with human-readable toValue and linkHref", () => {
     const view = formatLeadLogPayload({
       logType: "converted_case",
       payload: { caseId: "case-1", caseTypeCode: "bmv" },
     });
-    expect(view.category).toBe("status");
-    expect(view.fromValue).toBe("已签约");
-    expect(view.toValue).toBe("case-1");
+    expect(view.category).toBe("conversion");
+    expect(view.fromValue).toBe("—");
+    expect(view.toValue).toBe("已建案件：case-1");
+    expect(view.linkHref).toBe("#/cases/case-1");
+    expect(view.chipClass).toContain("teal");
+  });
+
+  it("converted_case with caseNo uses caseNo as label", () => {
+    const view = formatLeadLogPayload({
+      logType: "converted_case",
+      payload: { caseId: "case-abc-def-ghi", caseNo: "CASE-202605-0007" },
+    });
+    expect(view.toValue).toBe("已建案件：CASE-202605-0007");
+    expect(view.linkHref).toBe("#/cases/case-abc-def-ghi");
   });
 
   it("owner_assigned (bulk) → owner category", () => {

@@ -13,6 +13,8 @@ import {
   adaptLeadListResult,
   adaptLeadDetailAggregate,
   adaptLeadMutationResult,
+  adaptLeadConvertCustomerResult,
+  adaptLeadConvertCaseResult,
   adaptLeadBulkResult,
   adaptLeadDedupResult,
   buildLeadListSearchParams,
@@ -390,7 +392,7 @@ function createConvertCustomer(runtime: LeadRepositoryRuntime) {
       url: buildLeadConvertCustomerPath(runtime.apiPath, normalizedId),
       method: "POST",
       body: buildLeadConvertCustomerPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadConvertCustomerResult,
       errorMessage: "Invalid convert customer response",
     });
   };
@@ -413,7 +415,7 @@ function createConvertCase(runtime: LeadRepositoryRuntime) {
       url: buildLeadConvertCasePath(runtime.apiPath, normalizedId),
       method: "POST",
       body: buildLeadConvertCasePayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadConvertCaseResult,
       errorMessage: "Invalid convert case response",
     });
   };

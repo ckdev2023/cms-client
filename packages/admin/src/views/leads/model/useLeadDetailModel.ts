@@ -17,7 +17,7 @@ import type {
   LeadLogEntry,
 } from "../types";
 import { HEADER_BUTTON_PRESETS, LEAD_DETAIL_TABS } from "../types";
-import type { LeadRepository, ServerBlocker } from "./LeadRepository";
+import type { LeadRepository } from "./LeadRepository";
 import { createLeadRepository, LeadRepositoryError } from "./LeadRepository";
 import type {
   LeadFollowupInput,
@@ -25,22 +25,35 @@ import type {
   LeadConvertCustomerInput,
   LeadConvertCaseInput,
 } from "./LeadAdapter";
-import { isLeadBmvGateError } from "./LeadBmvGateBinding";
 import { useLeadMutationActions } from "./useLeadMutationActions";
+import {
+  toConvertCaseFailure,
+  type LeadConvertCaseFailure,
+} from "./LeadConvertCaseFailure";
 
 export type { LeadMutationFailure } from "./useLeadMutationActions";
 
 /** 跟进表单字段。 */
 export interface FollowupFormFields {
-  /** */
+  /**
+   *
+   */
   channel: FollowupChannel | "";
-  /** */
+  /**
+   *
+   */
   summary: string;
-  /** */
+  /**
+   *
+   */
   conclusion: string;
-  /** */
+  /**
+   *
+   */
   nextAction: string;
-  /** */
+  /**
+   *
+   */
   nextFollowUp: string;
 }
 
@@ -223,6 +236,25 @@ interface ConvertRefs {
   dedupState: ConvertDedupState;
 }
 
+function writeBackCustomerResult(refs: ConvertRefs, customerId: string): void {
+  if (!refs.lead.value) return;
+  refs.lead.value = {
+    ...refs.lead.value,
+    buttons: "convertedCustomer",
+    banner: null,
+    conversion: {
+      ...refs.lead.value.conversion,
+      convertedCustomer: {
+        id: customerId,
+        name: "",
+        group: "",
+        convertedAt: new Date().toISOString(),
+        convertedBy: "",
+      },
+    },
+  };
+}
+
 async function doConvertCustomer(
   refs: ConvertRefs,
   input: LeadConvertCustomerInput = {},
@@ -240,84 +272,66 @@ async function doConvertCustomer(
       ...refs.pendingCustomerInput.value,
       ...(refs.convertDedupConfirmed.value ? { confirmDedup: true } : {}),
     };
-    await refs.repo.convertCustomer(id, payload);
+    const result = await refs.repo.convertCustomer(id, payload);
     refs.showConvertDedupPrompt.value = false;
     refs.convertDedupConfirmed.value = false;
     refs.convertDedupResult.value = null;
     refs.pendingCustomerInput.value = {};
+    if (result.customerId) writeBackCustomerResult(refs, result.customerId);
     await refs.fetchDetail();
   } finally {
     refs.convertSubmitting.value = false;
   }
 }
 
-/**
- * 转案件失败时返回的结构化错误。
- *
- * - `kind = "bmvGate"` 表示服务端 `CASE_BMV_GATE_BLOCKED` 闸口阻断，
- *   `blockers` 为原始 blocker 列表（按 server 顺序）。
- * - `kind = "generic"` 表示其他类型的失败（网络、未授权、表单非法等），
- *   `messageKey` 为 i18n fallback key，`fallbackMessage` 为 server 原文。
- */
-export type LeadConvertCaseFailure =
-  | {
-      /**
-       *
-       */
-      kind: "bmvGate";
-      /**
-       *
-       */
-      serverErrorCode: string;
-      /**
-       *
-       */
-      blockers: ServerBlocker[];
-    }
-  | {
-      /**
-       *
-       */
-      kind: "generic";
-      /**
-       *
-       */
-      messageKey: string;
-      /**
-       *
-       */
-      fallbackMessage?: string;
-    };
+export type { LeadConvertCaseFailure } from "./LeadConvertCaseFailure";
 
-const GENERIC_CONVERT_CASE_MESSAGE_KEY = "leads.errors.convertCaseFailed";
-
-function toConvertCaseFailure(error: unknown): LeadConvertCaseFailure {
-  if (error instanceof LeadRepositoryError) {
-    const serverErrorCode = error.serverErrorCode;
-    const blockers = error.serverBlockers;
+async function ensureCustomerConverted(
+  refs: ConvertRefs,
+  id: string,
+): Promise<void> {
+  const lead = refs.lead.value;
+  if (
+    !lead ||
+    lead.status !== "signed" ||
+    lead.conversion.convertedCustomer != null
+  )
+    return;
+  try {
+    await refs.repo.convertCustomer(id, {});
+    await refs.fetchDetail();
+  } catch (err) {
     if (
-      serverErrorCode !== undefined &&
-      isLeadBmvGateError(serverErrorCode) &&
-      blockers &&
-      blockers.length > 0
+      err instanceof LeadRepositoryError &&
+      err.serverErrorCode === "CUSTOMER_ALREADY_CONVERTED"
     ) {
-      return {
-        kind: "bmvGate",
-        serverErrorCode,
-        blockers,
-      };
+      return;
     }
-    return {
-      kind: "generic",
-      messageKey: GENERIC_CONVERT_CASE_MESSAGE_KEY,
-      fallbackMessage: error.message,
-    };
+    throw err;
   }
-  return {
-    kind: "generic",
-    messageKey: GENERIC_CONVERT_CASE_MESSAGE_KEY,
-    fallbackMessage:
-      error instanceof Error && error.message ? error.message : undefined,
+}
+
+function writeBackCaseResult(
+  refs: ConvertRefs,
+  caseId: string,
+  caseTypeCode: string,
+): void {
+  if (!refs.lead.value) return;
+  refs.lead.value = {
+    ...refs.lead.value,
+    buttons: "convertedCase",
+    banner: null,
+    conversion: {
+      ...refs.lead.value.conversion,
+      convertedCase: {
+        id: caseId,
+        title: "",
+        type: caseTypeCode,
+        group: "",
+        convertedAt: new Date().toISOString(),
+        convertedBy: "",
+      },
+    },
   };
 }
 
@@ -329,31 +343,14 @@ async function doConvertCase(
   if (!id || refs.convertSubmitting.value) return null;
   refs.convertSubmitting.value = true;
   try {
-    const lead = refs.lead.value;
-    if (
-      lead &&
-      lead.status === "signed" &&
-      lead.conversion.convertedCustomer == null
-    ) {
-      try {
-        await refs.repo.convertCustomer(id, {});
-        await refs.fetchDetail();
-      } catch (err) {
-        if (
-          err instanceof LeadRepositoryError &&
-          err.serverErrorCode === "CUSTOMER_ALREADY_CONVERTED"
-        ) {
-          /* swallow — proceed to convertCase */
-        } else {
-          throw err;
-        }
-      }
-    }
-
-    await refs.repo.convertCase(id, input);
+    await ensureCustomerConverted(refs, id);
+    const result = await refs.repo.convertCase(id, input);
+    if (result.caseId)
+      writeBackCaseResult(refs, result.caseId, input.caseTypeCode);
     await refs.fetchDetail();
     return null;
   } catch (error) {
+    await refs.fetchDetail().catch(() => {});
     return toConvertCaseFailure(error);
   } finally {
     refs.convertSubmitting.value = false;
@@ -433,11 +430,8 @@ function useConversionInfo(lead: Ref<LeadDetail | null>) {
 /**
  * 线索详情页整体状态编排。
  *
- * 依赖注入 LeadRepository（默认 `createLeadRepository()`），
- * 通过 `getDetail` 异步加载线索详情。
- *
- * @param leadId 路由传入的线索 ID（响应式）
- * @param deps 可选依赖注入
+ * @param leadId - 路由传入的线索 ID（响应式）
+ * @param deps - 可选依赖注入
  * @returns 详情页状态
  */
 export function useLeadDetailModel(

@@ -288,6 +288,30 @@ describe("useLeadDetailModel", () => {
       model.setLogCategory("group");
       expect(model.filteredLog.value.length).toBe(0);
     });
+
+    it("filters by conversion category (H-1)", async () => {
+      const { model } = setupModel("converted-customer");
+      await flush();
+      model.lead.value = {
+        ...model.lead.value!,
+        log: [
+          ...model.lead.value!.log,
+          {
+            type: "conversion" as const,
+            operator: "Admin",
+            time: "2026/04/10 12:00",
+            fromValue: "—",
+            toValue: "已转客户：CUS-001",
+            chipClass: "bg-teal-100 text-teal-700",
+          },
+        ],
+      };
+      model.setLogCategory("conversion");
+      expect(
+        model.filteredLog.value.every((e) => e.type === "conversion"),
+      ).toBe(true);
+      expect(model.filteredLog.value.length).toBe(1);
+    });
   });
 
   describe("conversion info", () => {
@@ -411,13 +435,13 @@ describe("useLeadDetailModel", () => {
 
     it("skips dedup when lead has no phone/email", async () => {
       const { repo } = createStubRepo();
-      const detail = LEAD_DETAIL_SAMPLES["lost"];
-      const aggregate = detail
-        ? { detail, followups: detail.followups, logs: detail.log }
-        : null;
-      vi.mocked(repo.getDetail).mockResolvedValue(aggregate);
-      const id = ref("lost");
-      const model = useLeadDetailModel(id, { repo });
+      const detail = LEAD_DETAIL_SAMPLES["lost"]!;
+      vi.mocked(repo.getDetail).mockResolvedValue({
+        detail,
+        followups: detail.followups,
+        logs: detail.log,
+      });
+      const model = useLeadDetailModel(ref("lost"), { repo });
       await flush();
       expect(model.lead.value).not.toBeNull();
     });

@@ -8,5 +8,6 @@
  */
 export * from "./LeadAdapterTypes";
 export * from "./LeadAdapterMappers";
+export * from "./LeadAdapterConvertMappers";
 export * from "./LeadAdapterBulkMappers";
 export * from "./LeadAdapterWriteBuilders";

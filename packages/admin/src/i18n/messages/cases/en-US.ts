@@ -689,6 +689,10 @@ const casesEnUS = {
         desc: 'This case has no document requirements. Use "Register documents" or "Add manually" to start building the document checklist.',
         registerCta: "Register documents",
         addCta: "Add manually",
+        templateMissing: {
+          title: "Document template not configured",
+          desc: "No document template is configured for this visa type. Please contact the administrator to set it up.",
+        },
       },
       section: {
         title: "Document Checklist",

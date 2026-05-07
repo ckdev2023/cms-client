@@ -37,6 +37,7 @@ interface AggregateSlices {
   failureCloseoutCheck: Record<string, unknown> | null;
   currentResidencePeriod: Record<string, unknown> | null;
   successCloseoutCheck: Record<string, unknown> | null;
+  documentTemplateMissing: boolean;
 }
 
 function parseAggregateSlices(
@@ -59,6 +60,7 @@ function parseAggregateSlices(
     failureCloseoutCheck: asRecord(record.failureCloseoutCheck),
     currentResidencePeriod: asRecord(record.currentResidencePeriod),
     successCloseoutCheck: asRecord(record.successCloseoutCheck),
+    documentTemplateMissing: record.documentTemplateMissing === true,
   };
 }
 
@@ -458,6 +460,7 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
       m.unpaidAmount,
     ),
     ...EMPTY_LISTS,
+    documentTemplateMissing: slices.documentTemplateMissing,
     team: buildTeamFromDeepLink(deepLink),
     ...buildP1WithGuards(caseRecord, slices, m, stageId),
     closeReason: readNullableString(caseRecord, "closeReason"),

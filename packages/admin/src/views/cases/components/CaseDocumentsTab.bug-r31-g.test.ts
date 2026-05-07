@@ -30,6 +30,7 @@ vi.mock("../model/useCaseDocumentsTab", () => ({
     listModel: { loading: ref(false), items: ref([]) },
     documentGroups: ref<DocumentGroup[]>([]),
     hasApiData: ref(false),
+    viewState: ref("empty"),
     apiCompletionRate: ref(null),
     review: {
       approveOpen: ref(false),

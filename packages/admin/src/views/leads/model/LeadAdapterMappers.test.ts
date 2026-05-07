@@ -426,16 +426,16 @@ describe("LeadAdapterMappers", () => {
           chipClass: "bg-amber-100 text-amber-700",
         }),
       );
-
-      const log = result?.logs[0];
-      expect(log?.type).toBe("status");
-      expect(log?.fromValue).toBe("—");
-      expect(log?.toValue).toBe("新咨询");
-      expect(log?.chipClass).toBe("bg-amber-100 text-amber-700");
-      expect(log?.operator).toBe("管理员");
+      expect(result?.logs[0]).toMatchObject({
+        type: "status",
+        fromValue: "—",
+        toValue: "新咨询",
+        chipClass: "bg-amber-100 text-amber-700",
+        operator: "管理员",
+      });
     });
 
-    it("renders converted_case payload caseId in toValue", () => {
+    it("renders converted_case as conversion with linkHref", () => {
       setAppLocale("zh-CN");
       const result = adaptLeadDetailAggregate(
         makeWithLog({
@@ -445,55 +445,33 @@ describe("LeadAdapterMappers", () => {
           createdAt: "2026-04-09T10:00:00.000Z",
         }),
       );
-
       const log = result?.logs[0];
-      expect(log?.type).toBe("status");
-      expect(log?.toValue).toBe("case-001");
-      expect(log?.fromValue).toBe("已签约");
+      expect(log).toMatchObject({
+        type: "conversion",
+        toValue: "已建案件：case-001",
+        fromValue: "—",
+        linkHref: "#/cases/case-001",
+      });
     });
   });
 
-  describe("adaptBasicInfo — source field priority (R3-D-2)", () => {
-    const srcRaw = (o: Record<string, unknown>) => ({
-      lead: { id: "LEAD-SRC", name: "Test", status: "new", ...o },
-      followups: [],
-      logs: [],
-    });
-    it("prefers sourceChannel over source and sourceLabel", () => {
-      const r = adaptLeadDetailAggregate(
-        srcRaw({
-          sourceChannel: "web",
-          source: "admin",
-          sourceLabel: "ウェブ",
-        }),
-      );
-      expect(r?.detail.info.source).toBe("web");
-    });
-    it("falls back to source when sourceChannel is absent", () => {
+  describe("readLeadClassification — source field priority (A-1)", () => {
+    const listSource = (o: Record<string, unknown>) =>
+      adaptLeadListResult(listWrap({ id: "LEAD-SRC", ...o }))?.items[0];
+
+    it("prefers sourceChannel over source", () => {
       expect(
-        adaptLeadDetailAggregate(
-          srcRaw({ source: "referral", sourceLabel: "介绍" }),
-        )?.detail.info.source,
-      ).toBe("referral");
+        listSource({ sourceChannel: "web", source: "admin" })?.source,
+      ).toBe("web");
     });
-    it("falls back to sourceLabel when both sourceChannel and source are absent", () => {
-      expect(
-        adaptLeadDetailAggregate(srcRaw({ sourceLabel: "ウェブ" }))?.detail.info
-          .source,
-      ).toBe("ウェブ");
+    it("falls back to source when sourceChannel absent", () => {
+      expect(listSource({ source: "referral" })?.source).toBe("referral");
     });
-    it("maps createdVia from server source field", () => {
+    it("uses sourceLabel when present", () => {
       expect(
-        adaptLeadDetailAggregate(
-          srcRaw({ source: "admin", sourceChannel: "web" }),
-        )?.detail.info.createdVia,
-      ).toBe("admin");
-    });
-    it("returns empty createdVia when server source field is absent", () => {
-      expect(
-        adaptLeadDetailAggregate(srcRaw({ sourceChannel: "web" }))?.detail.info
-          .createdVia,
-      ).toBe("");
+        listSource({ sourceChannel: "web", sourceLabel: "网站表单" })
+          ?.sourceLabel,
+      ).toBe("网站表单");
     });
   });
 });

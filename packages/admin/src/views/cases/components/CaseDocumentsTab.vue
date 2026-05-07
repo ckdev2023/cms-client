@@ -31,6 +31,7 @@ const {
   listModel,
   documentGroups,
   hasApiData,
+  viewState,
   apiCompletionRate,
   review,
   register,
@@ -48,6 +49,7 @@ const {
 } = useCaseDocumentsTab({
   caseId: toRef(() => props.detail.id),
   isStorageRootConfigured,
+  documentTemplateMissing: toRef(() => props.detail.documentTemplateMissing),
 });
 
 const activeGroups = computed(() =>
@@ -55,6 +57,11 @@ const activeGroups = computed(() =>
 );
 
 const isEmpty = computed(() => isDocumentListEmpty(activeGroups.value));
+
+const effectiveViewState = computed(() => {
+  if (!isEmpty.value) return "ready";
+  return viewState.value;
+});
 
 const overallRate = computed(
   () =>
@@ -72,8 +79,9 @@ const groupStats = computed(() =>
 
 <template>
   <div class="docs-tab">
+    <!-- Storage gate alert: only shown for storageGateBlocked state -->
     <div
-      v-if="!isStorageRootConfigured"
+      v-if="effectiveViewState === 'storageGateBlocked'"
       class="docs-tab__storage-gate"
       role="alert"
     >
@@ -106,8 +114,42 @@ const groupStats = computed(() =>
       {{ t("cases.detail.documents.readonlyNotice") }}
     </div>
 
-    <!-- Empty state -->
-    <Card v-if="isEmpty" padding="md">
+    <!-- Template missing state -->
+    <Card v-if="effectiveViewState === 'templateMissing'" padding="md">
+      <div class="docs-tab__empty">
+        <svg
+          width="48"
+          height="48"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+          class="docs-tab__empty-icon"
+        >
+          <path
+            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+          />
+        </svg>
+        <span class="docs-tab__empty-title">{{
+          t("cases.detail.documents.empty.templateMissing.title")
+        }}</span>
+        <span class="docs-tab__empty-desc">
+          {{ t("cases.detail.documents.empty.templateMissing.desc") }}
+        </span>
+      </div>
+    </Card>
+
+    <!-- Empty state (template exists, but no documents yet) -->
+    <Card
+      v-else-if="
+        effectiveViewState === 'empty' ||
+        effectiveViewState === 'storageGateBlocked'
+      "
+      padding="md"
+    >
       <div class="docs-tab__empty">
         <svg
           width="48"

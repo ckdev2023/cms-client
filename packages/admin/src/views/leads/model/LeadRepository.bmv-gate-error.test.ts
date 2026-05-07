@@ -232,7 +232,10 @@ describe("LeadRepository — convertCase BMV gate error extraction (R2-B-5)", ()
     const request = createRequestMock((input, init) => {
       observedUrl = String(input);
       observedInit = init;
-      return jsonResponse({ id: LEAD_ID }, { status: 201 });
+      return jsonResponse(
+        { lead: { id: LEAD_ID }, caseId: "CASE-NEW-001" },
+        { status: 201 },
+      );
     });
 
     const repo = createLeadRepository({ request, getToken: () => "token-X" });

@@ -312,6 +312,7 @@ const leadsZhCN = {
       typeOwner: "人员变更",
       typeGroup: "所属组变更",
       typeInfo: "其他",
+      typeConversion: "转化",
       emptyTitle: "暂无日志",
       actorUnknown: "未知操作人",
     },

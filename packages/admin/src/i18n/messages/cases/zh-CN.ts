@@ -660,6 +660,10 @@ const casesZhCN = {
         desc: "该案件尚未添加任何资料需求。请通过「登记资料」或「手动添加」开始建立资料清单。",
         registerCta: "登记资料",
         addCta: "手动添加",
+        templateMissing: {
+          title: "资料模板未配置",
+          desc: "当前签证类型尚未配置资料模板，请联系管理员维护。",
+        },
       },
       section: {
         title: "资料登记清单",

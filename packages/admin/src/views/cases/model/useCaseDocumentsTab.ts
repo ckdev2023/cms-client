@@ -22,6 +22,15 @@ import type { DocumentRepository } from "../../documents/model/DocumentRepositor
 import type { UseToastReturn } from "../../../shared/model/useToast";
 
 /**
+ *
+ */
+export type CaseDocumentsViewState =
+  | "templateMissing"
+  | "storageGateBlocked"
+  | "empty"
+  | "ready";
+
+/**
  * 案件资料 Tab 依赖。
  */
 export interface UseCaseDocumentsTabDeps {
@@ -29,6 +38,8 @@ export interface UseCaseDocumentsTabDeps {
   caseId: Ref<string>;
   /** 存储根目录是否已配置。 */
   isStorageRootConfigured: Ref<boolean>;
+  /** 服务端指示该案件签证类型是否缺少资料模板配置。 */
+  documentTemplateMissing?: Ref<boolean>;
   /** 可选注入 repository（测试用）。 */
   repository?: DocumentRepository;
 }
@@ -245,6 +256,20 @@ function buildRegister(
   });
 }
 
+function buildViewState(
+  listModel: ReturnType<typeof useDocumentListModel>,
+  deps: UseCaseDocumentsTabDeps,
+): ComputedRef<CaseDocumentsViewState> {
+  return computed<CaseDocumentsViewState>(() => {
+    const items = listModel.items.value;
+    if (items.length > 0) return "ready";
+    const templateMissing = deps.documentTemplateMissing?.value ?? false;
+    if (templateMissing) return "templateMissing";
+    if (!deps.isStorageRootConfigured.value) return "storageGateBlocked";
+    return "empty";
+  });
+}
+
 function buildApiCompletionRate(repo: DocumentRepository, caseId: Ref<string>) {
   const apiRate = ref<CompletionRate | null>(null);
 
@@ -315,6 +340,8 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
 
   const { detailItems, documentGroups } = buildGrouping(listModel, t);
   const hasApiData = computed(() => listModel.source.value === "api");
+  const viewState = buildViewState(listModel, deps);
+
   const refresh = () => {
     listModel.refresh();
     fetchRate();
@@ -335,6 +362,7 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
     listModel,
     documentGroups,
     hasApiData,
+    viewState,
     apiCompletionRate: apiRate,
     review,
     register,

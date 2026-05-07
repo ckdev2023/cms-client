@@ -48,6 +48,31 @@ const VALID_INPUT = {
   ownerUserId: "00000000-0000-4000-8000-000000000011",
 };
 
+describe("useLeadDetailModel — convertCase auto-chain (R-FLOW-D-1)", () => {
+  it("writes back caseId to conversion state on success", async () => {
+    const repo = createRepo();
+    const id = ref("converted-customer");
+    const model = useLeadDetailModel(id, { repo });
+    await flush();
+
+    vi.mocked(repo.convertCase).mockResolvedValueOnce({
+      id: "converted-customer",
+      caseId: "CASE-NEW-001",
+    });
+    const convertedFixture = fixtureToAggregate("converted-case");
+    vi.mocked(repo.getDetail).mockResolvedValueOnce(convertedFixture);
+
+    const failure = await model.convertCase({
+      caseTypeCode: "work",
+      ownerUserId: "u1",
+    });
+    await flush();
+    expect(failure).toBeNull();
+    expect(model.lead.value?.conversion.convertedCase).not.toBeNull();
+    expect(model.lead.value?.buttons).toBe("convertedCase");
+  });
+});
+
 describe("useLeadDetailModel — convertCase error surfacing (R2-B-5)", () => {
   it("returns null on success and refetches detail", async () => {
     const repo = createRepo();
@@ -164,7 +189,7 @@ describe("useLeadDetailModel — convertCase error surfacing (R2-B-5)", () => {
     }
   });
 
-  it("does NOT refetch detail when convertCase fails", async () => {
+  it("refetches detail when convertCase fails (D-2 recovery)", async () => {
     const repo = createRepo({
       convertCase: vi.fn().mockRejectedValue(
         new LeadRepositoryError({
@@ -184,9 +209,9 @@ describe("useLeadDetailModel — convertCase error surfacing (R2-B-5)", () => {
       .length;
     await model.convertCase(VALID_INPUT);
     await flush();
-    expect((repo.getDetail as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
-      before,
-    );
+    expect(
+      (repo.getDetail as ReturnType<typeof vi.fn>).mock.calls.length,
+    ).toBeGreaterThan(before);
   });
 
   it("releases convertSubmitting after a failed convertCase", async () => {

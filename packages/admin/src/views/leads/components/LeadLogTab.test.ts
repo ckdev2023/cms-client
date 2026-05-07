@@ -78,7 +78,7 @@ describe("LeadLogTab — H-5 actor + payload diff rendering", () => {
     expect(wrapper.find(".log-timeline__type-chip").text()).toBe("其他");
   });
 
-  it("filter SegmentedControl exposes 5 categories incl. info (H-5)", () => {
+  it("filter SegmentedControl exposes 6 categories incl. info and conversion (H-5 / H-1)", () => {
     setAppLocale("zh-CN");
     const wrapper = mountTab();
     const segmentButtons = wrapper.findAll(
@@ -90,5 +90,40 @@ describe("LeadLogTab — H-5 actor + payload diff rendering", () => {
     expect(allText).toContain("人员变更");
     expect(allText).toContain("所属组变更");
     expect(allText).toContain("其他");
+    expect(allText).toContain("转化");
+  });
+
+  it("renders conversion log entry with clickable link (H-1)", () => {
+    setAppLocale("zh-CN");
+    const wrapper = mountTab([
+      {
+        type: "conversion",
+        operator: "Admin",
+        time: "今天 11:00",
+        fromValue: "—",
+        toValue: "已建案件：CASE-202605-0007",
+        chipClass: "bg-teal-100 text-teal-700",
+        linkHref: "#/cases/case-001",
+      },
+    ]);
+    const link = wrapper.find(".log-timeline__link");
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toBe("#/cases/case-001");
+    expect(link.text()).toBe("已建案件：CASE-202605-0007");
+  });
+
+  it("renders 'conversion' chip label (H-1)", () => {
+    setAppLocale("zh-CN");
+    const wrapper = mountTab([
+      {
+        type: "conversion",
+        operator: "Admin",
+        time: "今天 11:00",
+        fromValue: "—",
+        toValue: "已转客户：CUS-001",
+        chipClass: "bg-teal-100 text-teal-700",
+      },
+    ]);
+    expect(wrapper.find(".log-timeline__type-chip").text()).toBe("转化");
   });
 });

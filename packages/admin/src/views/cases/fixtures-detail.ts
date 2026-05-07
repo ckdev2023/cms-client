@@ -330,6 +330,7 @@ function buildWorkSample(): CaseDetail {
     ],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",
@@ -1088,6 +1089,7 @@ function buildFamilySample(): CaseDetail {
     doubleReview: [],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",
@@ -1574,6 +1576,7 @@ function buildGateFailSample(): CaseDetail {
     doubleReview: [],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2008,6 +2011,7 @@ function buildArrearsSample(): CaseDetail {
       time: "2026/04/08 09:00",
       amount: "¥120,000",
     },
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2443,6 +2447,7 @@ function buildCorrectionSample(): CaseDetail {
     ],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2845,6 +2850,7 @@ function buildArchivedSample(): CaseDetail {
     ],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    documentTemplateMissing: false,
     documents: [
       {
         group: "主申请人提供",

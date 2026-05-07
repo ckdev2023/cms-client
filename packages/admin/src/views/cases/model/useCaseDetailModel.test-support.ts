@@ -117,6 +117,7 @@ const BASE_DETAIL: CaseDetail = {
   reviewEnabled: false,
   riskConfirmationRecord: null,
   documents: [],
+  documentTemplateMissing: false,
   forms: { templates: [], generated: [] },
   tasks: [
     { done: false, label: "書類確認" },

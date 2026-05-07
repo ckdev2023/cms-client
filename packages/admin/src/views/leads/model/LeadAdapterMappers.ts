@@ -175,7 +175,7 @@ function readLeadIdentity(r: Record<string, unknown>) {
 
 function readLeadClassification(r: Record<string, unknown>) {
   const bt = readString(r, "businessType") || readString(r, "intendedCaseType");
-  const src = readString(r, "source") || readString(r, "sourceChannel");
+  const src = readString(r, "sourceChannel") || readString(r, "source");
   return {
     businessType: bt,
     businessTypeLabel: readString(r, "businessTypeLabel") || bt,
@@ -330,6 +330,7 @@ function adaptLogEntryDto(value: unknown): LeadLogEntry | null {
     fromValue: fromOverride || view.fromValue,
     toValue: toOverride || view.toValue,
     chipClass: chipOverride || view.chipClass,
+    linkHref: view.linkHref,
   };
 }
 
@@ -463,7 +464,7 @@ export function adaptLeadDetailAggregate(
 }
 
 /**
- * 从写入响应中提取变更结果。
+ * 从写入响应中提取变更结果（兼容根级 `{ id }` 与 `{ lead: { id } }`）。
  *
  * @param value - 创建/更新/流转接口返回的原始 JSON
  * @returns 包含 `id` 的变更结果，格式无效时返回 `null`
@@ -473,7 +474,8 @@ export function adaptLeadMutationResult(
 ): LeadMutationResult | null {
   const record = asRecord(value);
   if (!record) return null;
-  const id = readString(record, "id");
+  const lead = asRecord(record.lead);
+  const id = readString(record, "id") || (lead ? readString(lead, "id") : "");
   return id ? { id } : null;
 }
 

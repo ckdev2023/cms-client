@@ -14,6 +14,10 @@ import {
   DOC_TEMPLATE_SEEDS,
   seedDocumentTemplates as seedDocumentTemplatesImpl,
 } from "./seedDevDocTemplates";
+import {
+  CASE_TEMPLATE_SEEDS,
+  seedCaseTemplates as seedCaseTemplatesImpl,
+} from "./seedCaseTemplates";
 import { seedDevUsers } from "./seedDevUsers";
 
 const SEED_ORG_ID = "00000000-0000-4000-8000-000000000010";
@@ -258,6 +262,10 @@ async function seedDocumentTemplates(client: PoolClient) {
   await seedDocumentTemplatesImpl(client, SEED_ORG_ID, SEED_USER_ID);
 }
 
+async function seedCaseTemplatesStep(client: PoolClient) {
+  await seedCaseTemplatesImpl(client, SEED_ORG_ID);
+}
+
 export {
   WALKTHROUGH_TAG_PATTERN,
   sanitizeWalkthroughTags,
@@ -317,6 +325,7 @@ export function buildSeedSteps(): SeedStep[] {
     ["documentFile", seedDocumentFile],
     ["crossCaseLink", seedCrossCaseLink],
     ["documentChecklistTemplate", seedDocumentChecklistTemplate],
+    ["caseTemplates", seedCaseTemplatesStep],
     ["documentTemplates", seedDocumentTemplates],
     ["conversationAppUser", seedConversationAppUser],
     ["conversationLead", seedConversationLead],
@@ -358,7 +367,7 @@ async function main() {
     } else {
       await client.query("COMMIT");
       process.stdout.write(
-        `[seed-dev] done — 7 fixture users, 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
+        `[seed-dev] done — 7 fixture users, 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(CASE_TEMPLATE_SEEDS.length)} case templates, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
       );
     }
   } catch (error) {
