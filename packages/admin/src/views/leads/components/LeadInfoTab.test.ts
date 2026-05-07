@@ -16,10 +16,12 @@ const UUID_UNKNOWN = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
 function makeInfo(overrides: Partial<LeadBasicInfo> = {}): LeadBasicInfo {
   return {
     id: "LEAD-001",
+    leadNo: "",
     name: "李华",
     phone: "080-1234-5678",
     email: "li@example.com",
     source: "介绍",
+    createdVia: "",
     referrer: "",
     businessType: "家族滞在",
     group: "tokyo-1",
@@ -119,6 +121,87 @@ describe("LeadInfoTab", () => {
         global: { plugins: [i18n] },
       });
       expect(wrapper.text()).toContain("不明なユーザー");
+    });
+  });
+
+  describe("R4-A-2 leadNo display", () => {
+    it("renders leadNo instead of UUID when leadNo is present", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadInfoTab, {
+        props: {
+          info: makeInfo({
+            id: "720dc94b-df0f-4fb5-be18-a514a6cab776",
+            leadNo: "LEAD-202605-0002",
+          }),
+          readonly: false,
+        },
+        global: { plugins: [i18n] },
+      });
+      const mono = wrapper.find(".info-tab__value--mono");
+      expect(mono.text()).toContain("LEAD-202605-0002");
+      expect(mono.text()).not.toContain("720dc94b");
+      expect(mono.attributes("title")).toBe(
+        "720dc94b-df0f-4fb5-be18-a514a6cab776",
+      );
+    });
+
+    it("falls back to id when leadNo is empty", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadInfoTab, {
+        props: {
+          info: makeInfo({ id: "LEAD-001", leadNo: "" }),
+          readonly: false,
+        },
+        global: { plugins: [i18n] },
+      });
+      const mono = wrapper.find(".info-tab__value--mono");
+      expect(mono.text()).toContain("LEAD-001");
+      expect(mono.attributes("title")).toBe("LEAD-001");
+    });
+  });
+
+  describe("R3-D-2 createdVia rendering", () => {
+    it("renders createdVia with localized label when present (R4-A-3)", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadInfoTab, {
+        props: {
+          info: makeInfo({ source: "web", createdVia: "admin" }),
+          readonly: false,
+        },
+        global: { plugins: [i18n] },
+      });
+      const via = wrapper.find("[data-testid='lead-info-created-via']");
+      expect(via.exists()).toBe(true);
+      expect(via.text()).toContain("创建路径：admin");
+      expect(via.attributes("title")).toBe("admin");
+    });
+
+    it("hides createdVia element when empty", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadInfoTab, {
+        props: {
+          info: makeInfo({ source: "web", createdVia: "" }),
+          readonly: false,
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(
+        wrapper.find("[data-testid='lead-info-created-via']").exists(),
+      ).toBe(false);
+    });
+
+    it("hides createdVia when it equals source (R4-A-3)", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadInfoTab, {
+        props: {
+          info: makeInfo({ source: "web", createdVia: "web" }),
+          readonly: false,
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(
+        wrapper.find("[data-testid='lead-info-created-via']").exists(),
+      ).toBe(false);
     });
   });
 });

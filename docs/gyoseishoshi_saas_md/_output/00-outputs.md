@@ -25,6 +25,112 @@
 
 ## 最新产出
 
+- 时间：2026-05-06（R-CONSULT-04 chrome-devtools-mcp 走查第四轮）
+  问题：R3 系列修复 7 条服务端 + 前端契约对齐已落地（见 outputs.md
+  R3-A-1 / R3-D-2 / R3-E-1 / R3-E-2 / R3-E-3 / R3-E-5 / R3-F-2 等条目），
+  在途修复（R3-C-2 convert-case auto-chain / R3-D-1 dedup-confirm
+  reactive / bulk-tags 持久化）已有单测。需要做一轮端到端 chrome-devtools
+  -mcp 走查：① 验证 R3 已修条目实际 UI 行为是否仍通；② 抓取
+  R3 阶段未触达或浅触达的会话 / 转化主路径阻断点；③ 校验 P0 spec
+  与 admin 实际行为之间是否存在新 drift。
+  结论（TL;DR）：R3 已修 7 条 admin UI / API 全部回归通过；R3 在途
+  修复服务端契约已对齐，前端测试覆盖；本轮新发现 11 条缺陷：
+  P0 0 条 / **P1 3 条**（R4-A-1 列表 tags 列与过滤未实现、
+  R4-D-1 会话详情消息时间线根本未拉取、R4-D-2 发送字段名错位）/
+  **P2 4 条**（R4-B-1 lead 详情会话 Tab 永远空 / R4-C-1
+  lastMessagePreview 永远空串 / R4-E-1 convert-case dialog ownerUserId
+  偶发缺失 + 通用 toast / R4-F-2 customers.name 永为 null）/
+  **P3 4 条**（R4-A-2 编号字段歧义 / R4-A-3 来源字段重复渲染 /
+  R4-D-3 owner picker 选项少 / R4-E-2 convert-case 所属组用 UUID textbox）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/59-咨询模块chrome-devtools-mcp走查-第四轮.md（本轮完整报告）
+  - packages/admin/src/views/conversations/model/useConversationDetailModel.ts:128（messages 永远来自 adapter 的 `[]`，getMessages 结果未写回 state）
+  - packages/admin/src/views/conversations/model/ConversationAdapterMappers.ts:297,304（adaptConversationDetailAggregate 写死 `messages: []`）
+  - packages/admin/src/views/conversations/model/useConversationDetailModel.ts:158（sendMessage 透传 `{content}`）
+  - packages/server/src/modules/core/conversations/messages.admin.controller.ts:136-139（server 期望 `originalLanguage` + `originalText`）
+  - packages/server/src/modules/core/conversations/conversations.admin.service.ts:396（`lastMessagePreview: ""` 写死）
+  - docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md §2.1 / §2.2（spec 写 tags chip + tags 过滤，admin UI 缺失）
+  - PG: `select tags from leads where id='8a7b…'` → `{R4-walk,R4-tag-2}`（R3-F-2 服务端落地证据）
+  - chrome-devtools-mcp 实测 `.conv-detail__messages` 子节点数 = 0（R4-D-1）
+  - chrome-devtools-mcp 实测 `POST /messages` 400 `originalLanguage is required`（R4-D-2）
+  影响面：
+  - **会话主路径阻断**：admin 在会话详情页既看不到历史消息（R4-D-1）也无法发送新消息（R4-D-2）；R3-E-2 / R3-E-3 / R3-E-5 修复让"页面不崩"，但读写两端都无法走通
+  - **咨询列表 spec drift**：tags 服务端契约（migration 053 + bulk + filter + audit）全部落地，但 admin 列表 UI 缺 chip 列与 tags 筛选入口（R4-A-1）
+  - **咨询详情 spec drift**：lead 详情第 3 个 Tab「会话」永远空态（R4-B-1），spec §3 未明确该 Tab 但 UI 存在
+  - **转化路径**：convert-case dialog 偶发 ownerUserId race（R4-E-1），BMV gate 4 条 blockers 已在 server 返回但 UI 未渲染到 dialog
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/59-咨询模块chrome-devtools-mcp走查-第四轮.md
+    位置：本轮完整报告（独立文件）
+    Owner：研发
+    状态：已生成（2026-05-06）
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：追加 R4-D-1 / R4-D-2 / R4-A-1 三条 P1 + 1 条 spec drift（lead 详情 Tab 排布）
+    Owner：研发
+    状态：待回灌
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md
+    位置：§3「Tab 排布」补一行『Tab 3: 会话（聚合该 lead 的会话列表）』；实现状态対照表 §2.1 / §2.2 行从 ✅ 调整为「⚠️ 服务端已落地，UI tags chip / 过滤待补」
+    Owner：研发
+    状态：待回灌（与 R4-A-1 + R4-B-1 修复 PR 一并）
+  - 目标文档：R-CONSULT-04 修复 PR 计划
+    位置：建议拆 3 个 PR：(1) R4-D-1 + R4-D-2 解锁会话主路径；(2) R4-A-1 admin tags UI 落地；(3) R4-B-1 + R4-C-1 + R4-F-2 conversations & customers projection 补全
+    Owner：研发
+    状态：待排期
+
+- 时间：2026-05-06（R-CONSULT-03 Batch F — R3-G-1 followups 契约 + controller UUID 化 audit）
+  问题：R3-G-1 走查发现 `GET /admin/leads/:id/followups` 返回裸数组 `LeadFollowup[]`，与全站列表 `{items, total}` 契约不一致；同时需对 leads / conversations / cases / customers / billing 各 controller 做 UUID 化全量 audit，确认 `optStr` → `optUuid` 迁移无残留。
+  结论（TL;DR）：**R3-G-1**：followups / logs 两个子接口均返回裸数组，与全站 `{items, total}` 契约不一致。本轮不改（避免破坏现有消费方），留待下一个 endpoint 契约拉通 PR 统一处理——届时需同步更新前端 adapter 与测试。**UUID audit**：截至 2026-05-06，全部 controller 的 UUID 类参数（`ownerUserId` / `groupId` / `customerId` / `caseId` / `leadId` / `appUserId`）已迁移到 `optUuid`，无遗留 `optStr` 风险。audit 详情：(1) `leads.admin.controller.ts` — `ownerUserId` / `groupId` / `customerId` 已全部 `optUuid`（R3-A-1 + R2-A-1 修复）；(2) `conversations.admin.controller.ts` — `ownerUserId` / `leadId` / `customerId` / `caseId` / `appUserId` 已全部 `optUuid`；(3) `cases` / `customers` / `billing` controllers — 无 `optStr` 用于 UUID 字段；(4) `messages.admin.controller.ts` — `optStr` 仅用于 `kind` / `visibleScope`（非 UUID），无残留。
+  关键依据：
+  - packages/server/src/modules/core/leads/leads.admin.controller.ts:326（followups 端点，裸数组返回）
+  - packages/server/src/modules/core/leads/leads.admin.service.ts:303-313（`listFollowups` 返回 `LeadFollowup[]`）
+  - packages/server/src/modules/core/leads/leads.admin.service.ts:321-328（`listLogs` 返回 `LeadLog[]`）
+  - packages/server/src/modules/core/leads/leads.admin.service.ts:115（`list` 对比：返回 `{items, total}`）
+  - packages/server/src/modules/core/leads/leads.admin.controller.ts:142-143,165-166,219,266-267（`optUuid` 已覆盖全部 UUID 字段）
+  - packages/server/src/modules/core/conversations/conversations.admin.controller.ts:104-108,143（`optUuid` 已覆盖全部 UUID 字段）
+  - .cursor/plans/consult-r3-fix-plan_277736d4.plan.md §八 Batch F（来源计划）
+  影响面：
+  - `GET /admin/leads/:id/followups` 返回裸数组，前端 adapter 当前直接消费数组，若后续改 `{items, total}` 需同步更新
+  - `GET /admin/leads/:id/logs` 同上
+  - UUID audit 确认无遗留——后续可建立 lint 规则禁止对 `*UserId` / `*GroupId` / `*CustomerId` / `*CaseId` / `*LeadId` 使用 `optStr`
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_raw/00-inbox.md
+    位置：最新追加（R3-G-1 + UUID audit backlog）
+    Owner：研发
+    状态：已回灌（2026-05-06）
+  - 目标文档：endpoint 契约拉通 PR（backlog）
+    位置：followups / logs 裸数组 → `{items, total}`
+    Owner：研发
+    状态：待排期（下一轮专门 PR，与 R3-A-1 / R2-D-1 / R2-D-2 一脉相承）
+
+- 时间：2026-05-06（R-CONSULT-03 决策 R3-F-2 / R3-F-1 — tags 持久化方案锁定）
+  问题：R3 走查 R3-F-2 发现 `bulkTags` 批量打标签操作无持久化——标签仅存在于前端内存，刷新即丢失，列表无 chip 渲染，无法按标签过滤。如何最小改动落地 tags 持久化？
+  结论（TL;DR）：R-CONSULT-03 决策锁定 R3-F-2 持久化方案——新增 `leads.tags text[]` 列（NOT NULL DEFAULT '{}'），GIN 索引；写入语义为合并去重（`array(select distinct unnest(tags || $new::text[]))`），不覆盖已有标签；列表过滤使用 `tags && $tags::text[]`（交集匹配，任一命中）；`LeadSummary` 响应新增 `tags: string[]` 字段，前端渲染为 chip 横排（超出缩略）；每次 bulkTags 写入产生 `audit_log(tags_updated)`。R3-F-1（bulk-tags UI 反馈）同步落地：toast 提示 + 列表自动 refetch。
+  关键依据：
+  - packages/server/src/infra/db/migrations/053_leads_tags.up.sql（`ALTER TABLE leads ADD COLUMN tags text[] NOT NULL DEFAULT '{}'` + GIN 索引）
+  - packages/server/src/infra/db/migrations/053_leads_tags.down.sql（回退脚本）
+  - packages/server/src/modules/core/leads/leads.admin.bulk.ts（bulkTags 合并去重写入 + audit_log）
+  - packages/server/src/modules/core/leads/leads.admin.query.ts（pushTagsFilter: `tags && $tags::text[]` 交集匹配）
+  - packages/server/src/modules/core/leads/leads.admin.controller.ts（list 输入加 `tags` 参数）
+  - packages/server/src/modules/core/leads/leads.admin.bulk.tags.test.ts（持久化 + 合并去重测试）
+  - packages/server/src/modules/core/leads/leads.admin.controller.tags.test.ts（list tags 过滤测试）
+  - packages/admin/src/views/leads/model/LeadAdapterMappers.ts（adaptLeadListItemDto 读 tags 数组）
+  - .cursor/plans/consult-r3-fix-plan_277736d4.plan.md §七 Batch E（执行计划）
+  影响面：
+  - server leads 表新增 `tags text[]` 列 + GIN 索引（migration 053）
+  - server `GET /admin/leads` list 响应新增 `tags: string[]`，支持 `?tags=tag1&tags=tag2` 过滤
+  - server `POST /admin/leads/bulk/tags` 持久化至 DB，合并去重，审计日志
+  - admin 列表页 tags chip 横排渲染
+  - admin 列表页 tags 筛选条件
+  - P0 页面规格 §2.1 / §2.2 / §2.3 同步更新
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/P0/06-页面规格/咨询线索.md
+    位置：§2.1 列表字段（+tags chip）、§2.2 默认筛选（+tags）、§2.3 批量动作（+tags 数据契约）、实现状态対照表（§2.1/§2.2/§2.3 行更新）
+    Owner：研发
+    状态：已回灌（2026-05-06）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/00-outputs.md
+    位置：最新产出（本条）
+    Owner：研发
+    状态：已回灌（2026-05-06）
+
 - 时间：2026-05-05（ADR-009 + R-H5-2 走查）
   问题：S1~S7 H5 响应式修复后，是否达到 R-H5-1 走查的 P0 修复目标？需要沉淀什么决策？
   结论（TL;DR）：ADR-009 已沉淀 5 条决策（mobile-first 基线 / minmax(0, fr) / ResponsiveTable / contract test 守门 / i18n attribute 禁 CJK 硬编码）。R-H5-2 复跑走查：18 条中 14 条 FIXED、4 条 IMPROVED/OPEN（S7 残留）、1 条 OPEN（settings 双列布局）。横向溢出 = 0 的页面从 0/10 升至 7/10，console warning 从 16 条降至 0，CJK 硬编码 aria-label 从 2 处降至 0。

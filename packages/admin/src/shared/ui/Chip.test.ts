@@ -70,4 +70,19 @@ describe("Chip", () => {
     expect(w.attributes("aria-selected")).toBe("true");
     expect(w.classes()).toContain("ui-chip--primary");
   });
+
+  it("defaults to solid variant", () => {
+    const w = mount(Chip, { slots: { default: "Tag" } });
+    expect(w.classes()).toContain("ui-chip--variant-solid");
+  });
+
+  it("applies tag variant class when variant=tag", () => {
+    const w = mount(Chip, {
+      props: { variant: "tag", tone: "primary", dot: true },
+      slots: { default: "VIP" },
+    });
+    expect(w.classes()).toContain("ui-chip--variant-tag");
+    expect(w.classes()).toContain("ui-chip--primary");
+    expect(w.find(".ui-chip__dot").exists()).toBe(true);
+  });
 });

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive, computed } from "vue";
+import { reactive, computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import {
@@ -9,6 +9,7 @@ import {
   type BusinessType,
 } from "../../../i18n/messages/_shared/businessTypes";
 import { getActiveUserOptions } from "../../../shared/model/useOrgUserOptions";
+import { getActiveGroupAliasOptions } from "../../../shared/model/useGroupOptions";
 import type { LeadConvertCaseInput } from "../model/LeadAdapter";
 import type { LeadConvertCaseFailure } from "../model/useLeadDetailModel";
 import BmvGateBlockerList from "./BmvGateBlockerList.vue";
@@ -42,8 +43,10 @@ const caseTypeOptions = computed(() => {
 
 const userOptions = computed(() => getActiveUserOptions());
 
+const groupOptions = computed(() => getActiveGroupAliasOptions());
+
 /**
- * 将线索的业务意向类型映射为案件类型代码作为默认值
+ * 将线索的業務意向類型映射为案件类型代码作为默认值
  *
  * @returns 案件类型代码，无法映射时返回空字符串
  */
@@ -54,11 +57,28 @@ function resolveDefaultCaseType(): string {
   return mapBusinessTypeToCaseTypeCode(normalized as BusinessType);
 }
 
+const ownerDirty = ref(false);
+const groupDirty = ref(false);
+
 const form = reactive({
   caseTypeCode: resolveDefaultCaseType(),
-  ownerUserId: props.ownerUserId || "",
-  groupId: props.groupId || "",
+  ownerUserId: props.ownerUserId ?? "",
+  groupId: props.groupId ?? "",
 });
+
+watch(
+  () => props.ownerUserId,
+  (val) => {
+    if (!ownerDirty.value) form.ownerUserId = val ?? "";
+  },
+);
+
+watch(
+  () => props.groupId,
+  (val) => {
+    if (!groupDirty.value) form.groupId = val ?? "";
+  },
+);
 
 const canConfirm = computed(
   () => form.caseTypeCode !== "" && form.ownerUserId !== "",
@@ -73,8 +93,12 @@ const genericErrorMessage = computed(() => {
   return t(props.error.messageKey);
 });
 
-/** 确认提交转案件表单 */
+/** 确認提交轉案件表單 */
 function handleConfirm(): void {
+  if (!form.ownerUserId) {
+    document.getElementById("convert-case-owner")?.focus();
+    return;
+  }
   if (!canConfirm.value) return;
   const input: LeadConvertCaseInput = {
     caseTypeCode: form.caseTypeCode,
@@ -140,6 +164,7 @@ function handleConfirm(): void {
               id="convert-case-owner"
               v-model="form.ownerUserId"
               class="convert-case-dialog__select"
+              @change="ownerDirty = true"
             >
               <option value="" disabled>
                 {{ t("leads.detail.convertCaseDialog.ownerPlaceholder") }}
@@ -156,16 +181,23 @@ function handleConfirm(): void {
 
           <label class="convert-case-dialog__label">
             <span>{{ t("leads.detail.convertCaseDialog.groupLabel") }}</span>
-            <input
+            <select
               id="convert-case-group"
               v-model="form.groupId"
-              type="text"
-              class="convert-case-dialog__input"
-              :placeholder="
-                t('leads.detail.convertCaseDialog.groupPlaceholder')
-              "
-              autocomplete="off"
-            />
+              class="convert-case-dialog__select"
+              @change="groupDirty = true"
+            >
+              <option value="">
+                {{ t("leads.detail.convertCaseDialog.groupPlaceholder") }}
+              </option>
+              <option
+                v-for="opt in groupOptions"
+                :key="opt.value"
+                :value="opt.value"
+              >
+                {{ opt.label }}
+              </option>
+            </select>
           </label>
         </div>
 
@@ -237,7 +269,6 @@ function handleConfirm(): void {
   color: var(--color-text-2);
 }
 
-.convert-case-dialog__input,
 .convert-case-dialog__select {
   padding: 6px 10px;
   border: 1px solid var(--color-border-1);

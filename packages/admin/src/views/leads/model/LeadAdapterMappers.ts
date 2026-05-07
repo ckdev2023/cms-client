@@ -1,11 +1,7 @@
 /**
  * LeadAdapterMappers — 线索响应适配层。
  *
- * 将服务端 JSON 响应转换为类型化视图模型：
- * - 列表：`adaptLeadListResult`
- * - 详情：`adaptLeadDetailAggregate`
- * - 写入结果：`adaptLeadMutationResult`
- * - 去重结果：`adaptLeadDedupResult`
+ * 将服务端 JSON 响应转换为类型化视图模型。
  */
 
 import { getCurrentLocale, type AppLocale } from "../../../i18n";
@@ -28,8 +24,6 @@ import type {
   LeadDedupResult,
 } from "./LeadAdapterTypes";
 import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
-
-// ─── Shared helpers ─────────────────────────────────────────────
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -61,6 +55,15 @@ function readBoolean(record: Record<string, unknown>, key: string): boolean {
   return record[key] === true;
 }
 
+function readStringArray(
+  record: Record<string, unknown>,
+  key: string,
+): string[] {
+  const v = record[key];
+  if (!Array.isArray(v)) return [];
+  return v.filter((item): item is string => typeof item === "string");
+}
+
 function parseIsoDate(isoString: string | null): Date | null {
   if (!isoString) return null;
   const date = new Date(isoString);
@@ -70,15 +73,12 @@ function parseIsoDate(isoString: string | null): Date | null {
 function pad2(value: number): string {
   return String(value).padStart(2, "0");
 }
-
 function hasExplicitTime(isoString: string | null): boolean {
   return Boolean(isoString && /[T ][0-9]{2}:[0-9]{2}/.test(isoString));
 }
-
 function formatMonthDay(date: Date): string {
   return `${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 }
-
 function formatTime(date: Date): string {
   return `${pad2(date.getHours())}:${pad2(date.getMinutes())}`;
 }
@@ -153,8 +153,6 @@ function formatUpdatedAtLabel(
     : formatMonthDay(date);
 }
 
-// ─── List item adapter ──────────────────────────────────────────
-
 function resolveRowHighlight(
   status: LeadStatus,
   convertedCustomerId: string | null,
@@ -217,9 +215,15 @@ function adaptLeadListItemDto(value: unknown): LeadSummary | null {
     ...schedule,
     status,
     ownerId: readString(r, "ownerUserId") || readString(r, "ownerId"),
+    ownerLabel:
+      readNullableString(r, "ownerDisplayName") ??
+      readNullableString(r, "ownerLabel"),
     groupId: readString(r, "groupId"),
+    groupLabel:
+      readNullableString(r, "groupName") ?? readNullableString(r, "groupLabel"),
     convertedCustomerId,
     convertedCaseId: readNullableString(r, "convertedCaseId"),
+    tags: readStringArray(r, "tags"),
     dedupHint: readNullableString(r, "dedupHint"),
     rowHighlight: resolveRowHighlight(status, convertedCustomerId),
   };
@@ -246,8 +250,6 @@ export function adaptLeadListResult(value: unknown): LeadListResult | null {
     limit: readNumber(record, "limit") || items.length,
   };
 }
-
-// ─── Detail aggregate adapter ───────────────────────────────────
 
 function deriveBanner(
   status: LeadStatus,
@@ -350,13 +352,15 @@ function readDetailOwnership(leadRecord: Record<string, unknown>) {
 function adaptBasicInfo(r: Record<string, unknown>): LeadBasicInfo {
   return {
     id: readString(r, "id"),
+    leadNo: readString(r, "leadNo"),
     name: readString(r, "name"),
     phone: readString(r, "phone"),
     email: readString(r, "email"),
     source:
-      readString(r, "sourceLabel") ||
+      readString(r, "sourceChannel") ||
       readString(r, "source") ||
-      readString(r, "sourceChannel"),
+      readString(r, "sourceLabel"),
+    createdVia: readString(r, "source"),
     referrer: readString(r, "referrer"),
     businessType:
       readString(r, "businessTypeLabel") ||
@@ -456,8 +460,6 @@ export function adaptLeadDetailAggregate(
   return { detail, followups, logs };
 }
 
-// ─── Mutation result adapter ────────────────────────────────────
-
 /**
  * 从写入响应中提取变更结果。
  *
@@ -472,8 +474,6 @@ export function adaptLeadMutationResult(
   const id = readString(record, "id");
   return id ? { id } : null;
 }
-
-// ─── Dedup result adapter ───────────────────────────────────────
 
 /**
  * 适配去重查询结果。

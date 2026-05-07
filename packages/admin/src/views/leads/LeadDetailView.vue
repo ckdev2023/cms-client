@@ -15,7 +15,7 @@ import LeadConvertCaseDialog from "./components/LeadConvertCaseDialog.vue";
 import LeadEditInfoDialog from "./components/LeadEditInfoDialog.vue";
 import LeadChangeStatusDialog from "./components/LeadChangeStatusDialog.vue";
 import LeadMarkLostDialog from "./components/LeadMarkLostDialog.vue";
-import ConversationDetailView from "../conversations/ConversationDetailView.vue";
+import LeadConversationsTab from "./components/LeadConversationsTab.vue";
 import {
   useLeadDetailModel,
   type LeadConvertCaseFailure,
@@ -223,17 +223,10 @@ function tryUseToast() {
           @submit-followup="submitFollowup"
           @reset-followup="resetFollowupForm"
         />
-        <template v-else-if="activeTab === 'conversations'">
-          <ConversationDetailView
-            v-if="lead.conversationId"
-            compact
-            auto-mark-read
-            :conversation-id="lead.conversationId"
-          />
-          <div v-else class="lead-detail-view__no-conversations">
-            <p>{{ t("leads.detail.conversationsTab.empty") }}</p>
-          </div>
-        </template>
+        <LeadConversationsTab
+          v-else-if="activeTab === 'conversations'"
+          :lead-id="lead.id"
+        />
         <LeadConversionTab
           v-else-if="activeTab === 'conversion'"
           :conversion="lead.conversion"
@@ -433,15 +426,6 @@ function tryUseToast() {
 
 .lead-detail-view__not-found a:hover {
   text-decoration: underline;
-}
-
-.lead-detail-view__no-conversations {
-  padding: 48px 24px;
-  text-align: center;
-  color: var(--color-text-3);
-  border: 1px dashed var(--color-border-1);
-  border-radius: var(--radius-lg, 16px);
-  font-size: var(--font-size-sm);
 }
 
 .lead-detail-view__dedup-backdrop {

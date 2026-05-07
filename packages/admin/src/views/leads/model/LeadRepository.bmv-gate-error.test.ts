@@ -157,6 +157,47 @@ describe("LeadRepository — convertCase BMV gate error extraction (R2-B-5)", ()
     }
   });
 
+  it("extracts code + blockers from CONVERT_CASE_REQUIRES_CUSTOMER 400 response (R3-C-2)", async () => {
+    const request = createRequestMock(() =>
+      jsonResponse(
+        {
+          code: "CONVERT_CASE_REQUIRES_CUSTOMER",
+          message:
+            "Lead must have converted_customer_id; run convert-customer first",
+          blockers: [
+            {
+              code: "MISSING_CONVERTED_CUSTOMER",
+              message: "Must convert to customer before creating case",
+            },
+          ],
+        },
+        { status: 400 },
+      ),
+    );
+
+    const repo = createLeadRepository({ request, getToken: () => "token-1" });
+
+    try {
+      await repo.convertCase(LEAD_ID, {
+        caseTypeCode: "business_manager_visa",
+        ownerUserId: OWNER_ID,
+      });
+      expect.unreachable("should have thrown");
+    } catch (err) {
+      expect(err).toBeInstanceOf(LeadRepositoryError);
+      const error = err as LeadRepositoryError;
+      expect(error.status).toBe(400);
+      expect(error.code).toBe("LEAD_WRITE_ERROR");
+      expect(error.serverErrorCode).toBe("CONVERT_CASE_REQUIRES_CUSTOMER");
+      expect(error.serverBlockers).toEqual([
+        {
+          code: "MISSING_CONVERTED_CUSTOMER",
+          message: "Must convert to customer before creating case",
+        },
+      ]);
+    }
+  });
+
   it("does not surface serverErrorCode / serverBlockers for 401", async () => {
     const request = createRequestMock(() =>
       jsonResponse(

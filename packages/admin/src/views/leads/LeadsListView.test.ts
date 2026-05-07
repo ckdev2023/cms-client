@@ -2,9 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../../i18n";
+import { initToast, resetToast, useToast } from "../../shared/model/useToast";
 import { getLeadSamples } from "./fixtures";
+import type { LeadSummary } from "./types";
 import type { LeadRepository } from "./model/LeadRepository";
 import LeadsListView from "./LeadsListView.vue";
+import LeadTable from "./components/LeadTable.vue";
+import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
 
 type ListViewRepository = Pick<
   LeadRepository,
@@ -33,19 +37,11 @@ function createRepository(
     listLeads: vi
       .fn()
       .mockResolvedValue({ items: [getLeadSamples("en-US")[0]!], total: 1 }),
-    bulkAssign: vi
-      .fn()
-      .mockResolvedValue({ success: 1, failed: 0, skipped: 0 }),
-    bulkFollowup: vi
-      .fn()
-      .mockResolvedValue({ success: 1, failed: 0, skipped: 0 }),
-    bulkStatus: vi
-      .fn()
-      .mockResolvedValue({ success: 1, failed: 0, skipped: 0 }),
-    bulkTags: vi.fn().mockResolvedValue({ success: 1, failed: 0, skipped: 0 }),
-    bulkExport: vi
-      .fn()
-      .mockResolvedValue({ success: 1, failed: 0, skipped: 0 }),
+    bulkAssign: vi.fn().mockResolvedValue({ updatedCount: 1 }),
+    bulkFollowup: vi.fn().mockResolvedValue({ updatedCount: 1 }),
+    bulkStatus: vi.fn().mockResolvedValue({ updatedCount: 1 }),
+    bulkTags: vi.fn().mockResolvedValue({ updatedCount: 1 }),
+    bulkExport: vi.fn().mockResolvedValue({ updatedCount: 1 }),
     createLead: vi.fn().mockResolvedValue({ id: "lead-new" }),
     dedup: vi.fn().mockResolvedValue([]),
     ...overrides,
@@ -76,10 +72,12 @@ describe("LeadsListView", () => {
   beforeEach(() => {
     setAppLocale("en-US");
     window.localStorage.clear();
+    initToast();
   });
 
   afterEach(() => {
     mockedRepository.current = null;
+    resetToast();
   });
 
   it("opens create modal when mounted with /leads?action=new and clears the entry query", async () => {
@@ -103,5 +101,63 @@ describe("LeadsListView", () => {
 
     expect(wrapper.find(".lead-modal").exists()).toBe(true);
     expect(router.currentRoute.value.query).toEqual({});
+  });
+
+  it("renders tags chips in the table for leads with tags", async () => {
+    const taggedLead: LeadSummary = {
+      ...getLeadSamples("en-US")[0]!,
+      tags: ["優先", "面談済"],
+    };
+    const repo = createRepository({
+      listLeads: vi.fn().mockResolvedValue({ items: [taggedLead], total: 1 }),
+    });
+    mockedRepository.current = repo;
+
+    const { wrapper } = await mountView();
+
+    const chips = wrapper.findAll(".ui-chip");
+    const chipTexts = chips.map((c) => c.text());
+    expect(chipTexts).toContain("優先");
+    expect(chipTexts).toContain("面談済");
+  });
+
+  it("renders tags column header", async () => {
+    mockedRepository.current = createRepository();
+
+    const { wrapper } = await mountView();
+
+    const ths = wrapper.findAll("th");
+    const headers = ths.map((th) => th.text());
+    expect(headers).toContain("Tags");
+  });
+
+  it("bulkTags_shows_toast_and_refetches_list", async () => {
+    const repo = createRepository();
+    mockedRepository.current = repo;
+
+    const { wrapper } = await mountView();
+
+    const sampleId = getLeadSamples("en-US")[0]!.id;
+    const table = wrapper.findComponent(LeadTable);
+    table.vm.$emit("selectRow", sampleId, true);
+    await flushPromises();
+
+    const bulkBar = wrapper.findComponent(LeadBulkActionBar);
+    bulkBar.vm.$emit("bulkTags", ["urgent", "vip"]);
+    await flushPromises();
+
+    expect(repo.bulkTags).toHaveBeenCalledWith({
+      leadIds: [sampleId],
+      tags: ["urgent", "vip"],
+    });
+
+    const toastCtrl = useToast();
+    expect(toastCtrl.items.value.length).toBeGreaterThanOrEqual(1);
+    expect(
+      toastCtrl.items.value.some((t) => t.title === "Bulk tags applied"),
+    ).toBe(true);
+
+    // initial mount + refetch after bulk tags
+    expect(repo.listLeads).toHaveBeenCalledTimes(2);
   });
 });

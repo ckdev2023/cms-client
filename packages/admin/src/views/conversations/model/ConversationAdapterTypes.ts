@@ -125,17 +125,13 @@ export interface ConversationMutationResult {
 }
 
 /**
- * 会话详情聚合（含消息列表）。
+ * 会话详情聚合。
  */
 export interface ConversationDetailAggregate {
   /**
    *
    */
   detail: ConversationDetail;
-  /**
-   *
-   */
-  messages: MessageItem[];
 }
 
 // ─── Write Inputs ───────────────────────────────────────────────
@@ -157,7 +153,11 @@ export interface ConversationSendMessageInput {
   /**
    *
    */
-  content: string;
+  originalText: string;
+  /**
+   *
+   */
+  originalLanguage: string;
   /**
    *
    */

@@ -13,6 +13,7 @@ import {
   adaptLeadListResult,
   adaptLeadDetailAggregate,
   adaptLeadMutationResult,
+  adaptLeadBulkResult,
   adaptLeadDedupResult,
   buildLeadListSearchParams,
   buildLeadDetailPath,
@@ -38,6 +39,7 @@ import {
   type LeadListParams,
   type LeadListResult,
   type LeadMutationResult,
+  type LeadBulkResult,
   type LeadDetailAggregate,
   type LeadCreateInput,
   type LeadUpdateInput,
@@ -112,23 +114,23 @@ export interface LeadRepository {
   /**
    *
    */
-  bulkAssign(input: LeadBulkAssignInput): Promise<LeadMutationResult>;
+  bulkAssign(input: LeadBulkAssignInput): Promise<LeadBulkResult>;
   /**
    *
    */
-  bulkStatus(input: LeadBulkStatusInput): Promise<LeadMutationResult>;
+  bulkStatus(input: LeadBulkStatusInput): Promise<LeadBulkResult>;
   /**
    *
    */
-  bulkFollowup(input: LeadBulkFollowupInput): Promise<LeadMutationResult>;
+  bulkFollowup(input: LeadBulkFollowupInput): Promise<LeadBulkResult>;
   /**
    *
    */
-  bulkTags(input: LeadBulkTagsInput): Promise<LeadMutationResult>;
+  bulkTags(input: LeadBulkTagsInput): Promise<LeadBulkResult>;
   /**
    *
    */
-  bulkExport(input: LeadBulkExportInput): Promise<LeadMutationResult>;
+  bulkExport(input: LeadBulkExportInput): Promise<LeadBulkResult>;
   /**
    *
    */
@@ -297,61 +299,61 @@ function createListLogs(runtime: LeadRepositoryRuntime) {
 }
 
 function createBulkAssign(runtime: LeadRepositoryRuntime) {
-  return async (input: LeadBulkAssignInput): Promise<LeadMutationResult> =>
+  return async (input: LeadBulkAssignInput): Promise<LeadBulkResult> =>
     requestAndAdapt({
       runtime,
       url: buildLeadBulkPath(runtime.apiPath, "assign"),
       method: "POST",
       body: buildBulkAssignPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadBulkResult,
       errorMessage: "Invalid bulk assign response",
     });
 }
 
 function createBulkStatus(runtime: LeadRepositoryRuntime) {
-  return async (input: LeadBulkStatusInput): Promise<LeadMutationResult> =>
+  return async (input: LeadBulkStatusInput): Promise<LeadBulkResult> =>
     requestAndAdapt({
       runtime,
       url: buildLeadBulkPath(runtime.apiPath, "status"),
       method: "POST",
       body: buildBulkStatusPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadBulkResult,
       errorMessage: "Invalid bulk status response",
     });
 }
 
 function createBulkFollowup(runtime: LeadRepositoryRuntime) {
-  return async (input: LeadBulkFollowupInput): Promise<LeadMutationResult> =>
+  return async (input: LeadBulkFollowupInput): Promise<LeadBulkResult> =>
     requestAndAdapt({
       runtime,
       url: buildLeadBulkPath(runtime.apiPath, "followup"),
       method: "POST",
       body: buildBulkFollowupPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadBulkResult,
       errorMessage: "Invalid bulk followup response",
     });
 }
 
 function createBulkTags(runtime: LeadRepositoryRuntime) {
-  return async (input: LeadBulkTagsInput): Promise<LeadMutationResult> =>
+  return async (input: LeadBulkTagsInput): Promise<LeadBulkResult> =>
     requestAndAdapt({
       runtime,
       url: buildLeadBulkPath(runtime.apiPath, "tags"),
       method: "POST",
       body: buildBulkTagsPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadBulkResult,
       errorMessage: "Invalid bulk tags response",
     });
 }
 
 function createBulkExport(runtime: LeadRepositoryRuntime) {
-  return async (input: LeadBulkExportInput): Promise<LeadMutationResult> =>
+  return async (input: LeadBulkExportInput): Promise<LeadBulkResult> =>
     requestAndAdapt({
       runtime,
       url: buildLeadBulkPath(runtime.apiPath, "export"),
       method: "POST",
       body: buildBulkExportPayload(input),
-      adapt: adaptLeadMutationResult,
+      adapt: adaptLeadBulkResult,
       errorMessage: "Invalid bulk export response",
     });
 }

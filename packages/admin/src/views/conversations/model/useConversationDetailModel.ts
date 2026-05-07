@@ -125,7 +125,8 @@ function createFetchDetail(
       const result = await repo.getDetail(id);
       if (result) {
         state.detail.value = result.detail;
-        state.messages.value = result.messages;
+        const msgs = await repo.getMessages(id);
+        state.messages.value = msgs.items;
         if (autoMarkRead && result.detail.status === "open") {
           await repo.getMessages(id);
         }
@@ -155,7 +156,8 @@ function createSendMessage(ctx: ActionContext, isClosed: Ref<boolean>) {
     state.sending.value = true;
     try {
       await ctx.repo.sendMessage(id, {
-        content: state.messageInput.value.trim(),
+        originalText: state.messageInput.value.trim(),
+        originalLanguage: ctx.state.detail.value?.preferredLanguage ?? "ja",
       });
       state.messageInput.value = "";
       await ctx.fetchDetail();

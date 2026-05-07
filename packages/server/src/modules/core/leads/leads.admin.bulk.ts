@@ -140,14 +140,16 @@ export async function bulkTags(
 ): Promise<{ updatedCount: number }> {
   let updatedCount = 0;
   for (const leadId of input.leadIds) {
-    await deps.tenantDb.query(
-      `update leads set updated_at = now() where id = $1`,
-      [leadId],
+    const result = await deps.tenantDb.query(
+      `update leads set tags = (select array(select distinct unnest(tags || $2::text[]))), updated_at = now() where id = $1`,
+      [leadId, input.tags],
     );
-    updatedCount++;
-    await deps.writeAuditLogs(deps.ctx, leadId, "tags_updated", {
-      tags: input.tags,
-    });
+    if (result.rowCount && result.rowCount > 0) {
+      updatedCount++;
+      await deps.writeAuditLogs(deps.ctx, leadId, "tags_updated", {
+        tags: input.tags,
+      });
+    }
   }
   return { updatedCount };
 }

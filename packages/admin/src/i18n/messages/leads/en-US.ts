@@ -15,6 +15,7 @@ const leadsEnUS = {
       ownerAll: "All owners",
       groupAll: "All groups",
       businessTypeAll: "All types",
+      tagsPlaceholder: "Filter by tags",
       dateLabel: "Follow-up",
       reset: "Reset",
     },
@@ -26,6 +27,7 @@ const leadsEnUS = {
       contact: "Contact / Inquiry",
       status: "Status",
       owner: "Owner / Group",
+      tags: "Tags",
       followUp: "Follow-up",
       updated: "Last updated",
     },
@@ -195,6 +197,7 @@ const leadsEnUS = {
         language: "Preferred Language",
         note: "Note",
       },
+      createdViaLabel: "Created via: {via}",
     },
     conversationsTab: {
       empty: "No conversations linked to this lead yet.",

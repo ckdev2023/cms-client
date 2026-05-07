@@ -29,6 +29,8 @@ export interface LeadListParams {
   /** */
   businessType?: string;
   /** */
+  tags?: string[];
+  /** */
   dateFrom?: string;
   /** */
   dateTo?: string;
@@ -45,6 +47,7 @@ export const LEAD_LIST_PARAM_KEYS = [
   "ownerUserId",
   "groupId",
   "businessType",
+  "tags",
   "dateFrom",
   "dateTo",
   "page",
@@ -58,6 +61,7 @@ export const LEAD_LIST_HTTP_FIELD_MAP: Record<string, string> = {
   ownerUserId: "ownerUserId",
   groupId: "groupId",
   businessType: "businessType",
+  tags: "tags",
   dateFrom: "dateFrom",
   dateTo: "dateTo",
   page: "page",
@@ -86,6 +90,18 @@ export interface LeadListResult {
 export interface LeadMutationResult {
   /** */
   id: string;
+}
+
+/**
+ * 批量操作统一返回结构。
+ *
+ * 服务端 `bulk/*` 端点返回 `{updatedCount}`（导出端点返回数组），
+ * 与单条写入的 `{id}` 形态不同，因此必须用独立类型与适配器避免
+ * `adaptLeadMutationResult` 在合法响应上误判为格式错误。
+ */
+export interface LeadBulkResult {
+  /** */
+  updatedCount: number;
 }
 
 /**

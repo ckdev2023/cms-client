@@ -7,12 +7,18 @@ import {
 
 const originalLocale = i18n.global.locale.value as AppLocale;
 
+function listWrap(item: Record<string, unknown>, total = 1) {
+  return {
+    items: [{ id: "LEAD-X", name: "Test", status: "new", ...item }],
+    total,
+  };
+}
+
 describe("LeadAdapterMappers", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-09T12:00:00"));
   });
-
   afterEach(() => {
     vi.useRealTimers();
     setAppLocale(originalLocale);
@@ -20,47 +26,108 @@ describe("LeadAdapterMappers", () => {
 
   it("formats recent updatedAt labels in en-US", () => {
     setAppLocale("en-US");
-
-    const result = adaptLeadListResult({
-      items: [
-        {
-          id: "LEAD-1",
-          name: "Test Lead",
-          status: "new",
-          nextAction: "call",
-          nextFollowUpAt: "2026-04-10",
-          updatedAt: "2026-04-08T15:30:00",
-        },
-      ],
-      total: 1,
-      page: 1,
-      limit: 20,
-    });
-
+    const result = adaptLeadListResult(
+      listWrap({
+        id: "LEAD-1",
+        nextAction: "call",
+        nextFollowUpAt: "2026-04-10",
+        updatedAt: "2026-04-08T15:30:00",
+      }),
+    );
     expect(result?.items[0].nextFollowUpLabel).toBe("04-10");
     expect(result?.items[0].updatedAtLabel).toBe("Yesterday 15:30");
   });
 
   it("formats 3-day-old updatedAt labels in ja-JP", () => {
     setAppLocale("ja-JP");
+    const result = adaptLeadListResult(
+      listWrap({
+        id: "LEAD-2",
+        status: "following",
+        nextAction: "mail",
+        nextFollowUpAt: "2026-04-11",
+        updatedAt: "2026-04-06T17:00:00",
+      }),
+    );
+    expect(result?.items[0].updatedAtLabel).toBe("3 日前 17:00");
+  });
 
-    const result = adaptLeadListResult({
-      items: [
-        {
-          id: "LEAD-2",
-          name: "Test Lead",
+  describe("adaptLeadListResult — tags mapping (R3-F-2)", () => {
+    it("reads tags array from server response", () => {
+      const result = adaptLeadListResult(
+        listWrap({
+          id: "LEAD-T1",
           status: "following",
-          nextAction: "mail",
-          nextFollowUpAt: "2026-04-11",
-          updatedAt: "2026-04-06T17:00:00",
-        },
-      ],
-      total: 1,
-      page: 1,
-      limit: 20,
+          tags: ["VIP", "urgent"],
+        }),
+      );
+      expect(result?.items[0].tags).toEqual(["VIP", "urgent"]);
+    });
+    it("defaults tags to empty array when absent", () => {
+      const result = adaptLeadListResult(listWrap({ id: "LEAD-T2" }));
+      expect(result?.items[0].tags).toEqual([]);
+    });
+    it("defaults tags to empty array when null", () => {
+      const result = adaptLeadListResult(
+        listWrap({ id: "LEAD-T3", tags: null }),
+      );
+      expect(result?.items[0].tags).toEqual([]);
+    });
+    it("filters out non-string items from tags", () => {
+      const result = adaptLeadListResult(
+        listWrap({ id: "LEAD-T4", tags: ["valid", 123, null, "also-valid"] }),
+      );
+      expect(result?.items[0].tags).toEqual(["valid", "also-valid"]);
+    });
+  });
+
+  describe("adaptLeadListResult — ownerLabel / groupLabel mapping", () => {
+    it("maps ownerDisplayName/groupName to ownerLabel/groupLabel", () => {
+      const result = adaptLeadListResult(
+        listWrap({
+          id: "LEAD-OG1",
+          status: "following",
+          ownerDisplayName: "Local Admin",
+          groupName: "Tokyo-1",
+        }),
+      );
+      expect(result?.items[0].ownerLabel).toBe("Local Admin");
+      expect(result?.items[0].groupLabel).toBe("Tokyo-1");
+    });
+    it("defaults ownerLabel to null when ownerDisplayName is absent", () => {
+      const result = adaptLeadListResult(
+        listWrap({ id: "LEAD-OG2", status: "new" }),
+      );
+      expect(result?.items[0].ownerLabel).toBeNull();
+    });
+    it("defaults groupLabel to null when groupName is absent", () => {
+      const result = adaptLeadListResult(
+        listWrap({ id: "LEAD-OG3", status: "new" }),
+      );
+      expect(result?.items[0].groupLabel).toBeNull();
+    });
+    it("falls back to ownerLabel key when ownerDisplayName is absent", () => {
+      const result = adaptLeadListResult(
+        listWrap({
+          id: "LEAD-OG4",
+          status: "following",
+          ownerLabel: "Fallback Owner",
+        }),
+      );
+      expect(result?.items[0].ownerLabel).toBe("Fallback Owner");
     });
 
-    expect(result?.items[0].updatedAtLabel).toBe("3 日前 17:00");
+    it("prefers ownerDisplayName over ownerLabel", () => {
+      const result = adaptLeadListResult(
+        listWrap({
+          id: "LEAD-OG5",
+          status: "following",
+          ownerDisplayName: "Server Name",
+          ownerLabel: "Fallback",
+        }),
+      );
+      expect(result?.items[0].ownerLabel).toBe("Server Name");
+    });
   });
 
   describe("adaptLeadDetailAggregate — button preset derivation (spec §4)", () => {
@@ -383,6 +450,50 @@ describe("LeadAdapterMappers", () => {
       expect(log?.type).toBe("status");
       expect(log?.toValue).toBe("case-001");
       expect(log?.fromValue).toBe("已签约");
+    });
+  });
+
+  describe("adaptBasicInfo — source field priority (R3-D-2)", () => {
+    const srcRaw = (o: Record<string, unknown>) => ({
+      lead: { id: "LEAD-SRC", name: "Test", status: "new", ...o },
+      followups: [],
+      logs: [],
+    });
+    it("prefers sourceChannel over source and sourceLabel", () => {
+      const r = adaptLeadDetailAggregate(
+        srcRaw({
+          sourceChannel: "web",
+          source: "admin",
+          sourceLabel: "ウェブ",
+        }),
+      );
+      expect(r?.detail.info.source).toBe("web");
+    });
+    it("falls back to source when sourceChannel is absent", () => {
+      expect(
+        adaptLeadDetailAggregate(
+          srcRaw({ source: "referral", sourceLabel: "介绍" }),
+        )?.detail.info.source,
+      ).toBe("referral");
+    });
+    it("falls back to sourceLabel when both sourceChannel and source are absent", () => {
+      expect(
+        adaptLeadDetailAggregate(srcRaw({ sourceLabel: "ウェブ" }))?.detail.info
+          .source,
+      ).toBe("ウェブ");
+    });
+    it("maps createdVia from server source field", () => {
+      expect(
+        adaptLeadDetailAggregate(
+          srcRaw({ source: "admin", sourceChannel: "web" }),
+        )?.detail.info.createdVia,
+      ).toBe("admin");
+    });
+    it("returns empty createdVia when server source field is absent", () => {
+      expect(
+        adaptLeadDetailAggregate(srcRaw({ sourceChannel: "web" }))?.detail.info
+          .createdVia,
+      ).toBe("");
     });
   });
 });

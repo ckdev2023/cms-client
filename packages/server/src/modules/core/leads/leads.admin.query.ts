@@ -58,12 +58,12 @@ function applyScopeFilter(
 ): void {
   if (input.scope === "mine") {
     params.push(ctx.userId);
-    where.push(`owner_user_id = $${String(params.length)}`);
+    where.push(`l.owner_user_id = $${String(params.length)}`);
     return;
   }
   if (input.scope === "group" && ctx.groupId) {
     params.push(ctx.groupId);
-    where.push(`group_id = $${String(params.length)}`);
+    where.push(`l.group_id = $${String(params.length)}`);
   }
 }
 
@@ -76,7 +76,7 @@ function pushSearchFilter(
   params.push(`%${search}%`);
   const i = params.length;
   where.push(
-    `(name ilike $${String(i)} or phone ilike $${String(i)} or email ilike $${String(i)} or lead_no ilike $${String(i)})`,
+    `(l.name ilike $${String(i)} or l.phone ilike $${String(i)} or l.email ilike $${String(i)} or l.lead_no ilike $${String(i)})`,
   );
 }
 
@@ -88,7 +88,17 @@ function pushCreatedAtFilter(
 ): void {
   if (!value) return;
   params.push(value);
-  where.push(`created_at ${operator} $${String(params.length)}::timestamptz`);
+  where.push(`l.created_at ${operator} $${String(params.length)}::timestamptz`);
+}
+
+function pushTagsFilter(
+  where: string[],
+  params: unknown[],
+  tags: string[] | undefined,
+): void {
+  if (!tags || tags.length === 0) return;
+  params.push(tags);
+  where.push(`l.tags && $${String(params.length)}::text[]`);
 }
 
 /**
@@ -110,13 +120,14 @@ export function buildListWhere(
   }
 
   applyScopeFilter(ctx, input, where, params);
-  pushEqualsFilter(where, params, "status", input.status);
-  pushEqualsFilter(where, params, "owner_user_id", input.ownerUserId);
-  pushEqualsFilter(where, params, "group_id", input.groupId);
-  pushEqualsFilter(where, params, "intended_case_type", input.businessType);
+  pushEqualsFilter(where, params, "l.status", input.status);
+  pushEqualsFilter(where, params, "l.owner_user_id", input.ownerUserId);
+  pushEqualsFilter(where, params, "l.group_id", input.groupId);
+  pushEqualsFilter(where, params, "l.intended_case_type", input.businessType);
   pushSearchFilter(where, params, input.search);
   pushCreatedAtFilter(where, params, input.dateFrom, ">=");
   pushCreatedAtFilter(where, params, input.dateTo, "<=");
+  pushTagsFilter(where, params, input.tags);
 }
 
 /**
@@ -186,15 +197,21 @@ export async function syncLeadNextFields(
  * @param tenantDb テナントDB
  * @param orgId 組織 ID
  * @param input 重複検索入力
+ * @param excludeLeadId 除外する Lead ID
  * @returns 候補 Lead 一覧
  */
 export async function queryDedupLeads(
   tenantDb: TenantDb,
   orgId: string,
   input: LeadDedupInput,
+  excludeLeadId?: string,
 ): Promise<Lead[]> {
   const where = [`org_id = $1`];
   const params: unknown[] = [orgId];
+  if (excludeLeadId) {
+    params.push(excludeLeadId);
+    where.push(`id != $${String(params.length)}`);
+  }
   const or: string[] = [];
   if (input.phone) {
     params.push(input.phone);
@@ -217,15 +234,21 @@ export async function queryDedupLeads(
  * @param tenantDb テナントDB
  * @param orgId 組織 ID
  * @param input 重複検索入力
+ * @param excludeCustomerId 除外する Customer ID
  * @returns 候補 Customer の ID/名前一覧
  */
 export async function queryDedupCustomers(
   tenantDb: TenantDb,
   orgId: string,
   input: LeadDedupInput,
+  excludeCustomerId?: string,
 ): Promise<{ id: string; name: string | null }[]> {
   const where = [`org_id = $1`];
   const params: unknown[] = [orgId];
+  if (excludeCustomerId) {
+    params.push(excludeCustomerId);
+    where.push(`id != $${String(params.length)}`);
+  }
   const or: string[] = [];
   if (input.phone) {
     params.push(input.phone);
@@ -245,6 +268,38 @@ export async function queryDedupCustomers(
     id: row.id,
     name: extractCustomerName(row.base_profile),
   }));
+}
+
+/**
+ * Lead 詳細用の重複候補ヒントを構築する。自身の Lead と既に転化された Customer を除外する。
+ * @param tenantDb テナント DB
+ * @param orgId 組織 ID
+ * @param lead 対象 Lead
+ * @returns 重複候補（自分自身を除外済み）
+ */
+export async function buildDedupHints(
+  tenantDb: TenantDb,
+  orgId: string,
+  lead: Lead,
+): Promise<{
+  leads: Lead[];
+  customers: { id: string; name: string | null }[];
+}> {
+  if (!lead.phone && !lead.email) return { leads: [], customers: [] };
+  const input: LeadDedupInput = {
+    phone: lead.phone ?? undefined,
+    email: lead.email ?? undefined,
+  };
+  const [leads, customers] = await Promise.all([
+    queryDedupLeads(tenantDb, orgId, input, lead.id),
+    queryDedupCustomers(
+      tenantDb,
+      orgId,
+      input,
+      lead.convertedCustomerId ?? undefined,
+    ),
+  ]);
+  return { leads, customers };
 }
 
 /** 顧客名サマリを取得する。

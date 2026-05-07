@@ -162,7 +162,8 @@ export function buildSendMessagePayload(
   input: ConversationSendMessageInput,
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {
-    content: input.content,
+    originalText: input.originalText,
+    originalLanguage: input.originalLanguage,
   };
   if (input.kind) payload.kind = input.kind;
   if (input.visibleScope) payload.visibleScope = input.visibleScope;

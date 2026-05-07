@@ -6,6 +6,8 @@ import { useI18n } from "vue-i18n";
 import SegmentedControl from "../../../shared/ui/SegmentedControl.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
 import Button from "../../../shared/ui/Button.vue";
+import { ref } from "vue";
+import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadScope, OwnerOption, SelectOption } from "../types";
 import { LEAD_STATUSES } from "../types";
 import { BUSINESS_TYPE_OPTIONS } from "../fixtures";
@@ -19,7 +21,7 @@ const scopeOptions = [
   { label: "", value: "all" as const },
 ];
 
-defineProps<{
+const props = defineProps<{
   scope?: LeadScope;
   search?: string;
   statusFilter?: string;
@@ -28,22 +30,53 @@ defineProps<{
   ownerOptions?: OwnerOption[];
   groupOptions?: SelectOption[];
   businessTypeFilter?: string;
+  tagsFilter?: string[];
   dateFrom?: string;
   dateTo?: string;
   filteredCount?: number;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   "update:scope": [value: LeadScope];
   "update:search": [value: string];
   "update:statusFilter": [value: string];
   "update:ownerFilter": [value: string];
   "update:groupFilter": [value: string];
   "update:businessTypeFilter": [value: string];
+  "update:tagsFilter": [value: string[]];
   "update:dateFrom": [value: string];
   "update:dateTo": [value: string];
   resetFilters: [];
 }>();
+
+const tagInput = ref("");
+
+/** 将输入框文本解析为标签并追加到筛选器。 */
+function addTag() {
+  const raw = tagInput.value.trim();
+  if (!raw) return;
+  const current = props.tagsFilter ?? [];
+  const newTags = raw
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s && !current.includes(s));
+  if (newTags.length > 0) {
+    emit("update:tagsFilter", [...current, ...newTags]);
+  }
+  tagInput.value = "";
+}
+
+/**
+ * 从当前筛选中移除指定标签。
+ * @param tag 要移除的标签值
+ */
+function removeTag(tag: string) {
+  const current = props.tagsFilter ?? [];
+  emit(
+    "update:tagsFilter",
+    current.filter((t) => t !== tag),
+  );
+}
 </script>
 
 <template>
@@ -164,6 +197,40 @@ defineEmits<{
         </option>
       </select>
 
+      <div class="lead-filters__tags-group">
+        <input
+          id="lead-filter-tags"
+          v-model="tagInput"
+          name="tagsFilter"
+          type="text"
+          class="lead-filters__select lead-filters__tags-input"
+          :placeholder="t('leads.list.filters.tagsPlaceholder')"
+          :aria-label="t('leads.list.filters.tagsPlaceholder')"
+          @keydown.enter.prevent="addTag"
+        />
+        <div
+          v-if="(tagsFilter ?? []).length > 0"
+          class="lead-filters__tags-chips"
+        >
+          <Chip
+            v-for="tag in tagsFilter ?? []"
+            :key="tag"
+            tone="primary"
+            size="micro"
+          >
+            {{ tag }}
+            <button
+              type="button"
+              class="lead-filters__tag-remove"
+              :aria-label="`Remove tag ${tag}`"
+              @click="removeTag(tag)"
+            >
+              ×
+            </button>
+          </Chip>
+        </div>
+      </div>
+
       <div class="lead-filters__date-group">
         <span class="lead-filters__date-label">
           {{ t("leads.list.filters.dateLabel") }}
@@ -258,6 +325,36 @@ defineEmits<{
 .lead-filters__select:focus {
   outline: 2px solid var(--color-primary-outline);
   outline-offset: 1px;
+}
+
+.lead-filters__tags-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lead-filters__tags-input {
+  width: 140px;
+}
+
+.lead-filters__tags-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.lead-filters__tag-remove {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  color: inherit;
+  cursor: pointer;
+  padding: 0 2px;
+  margin-left: 2px;
+  line-height: 1;
 }
 
 .lead-filters__date-group {

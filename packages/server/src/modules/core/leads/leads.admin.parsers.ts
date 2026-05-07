@@ -105,6 +105,31 @@ export function strArr(v: unknown, f: string): string[] {
   return [...new Set(items)];
 }
 
+/** クエリパラメータから文字列配列をパースする（カンマ区切りまたは配列）。
+ * @param v 生値
+ * @param f フィールド名
+ * @returns トリム済み配列、空時は undefined
+ */
+export function optStrArr(v: unknown, f: string): string[] | undefined {
+  if (v === undefined || v === null || v === "") return undefined;
+  let items: string[];
+  if (Array.isArray(v)) {
+    items = v.map((item) => {
+      if (typeof item !== "string")
+        throw new BadRequestException(`Invalid ${f} item`);
+      return item.trim();
+    });
+  } else if (typeof v === "string") {
+    items = v
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+  } else {
+    throw new BadRequestException(`Invalid ${f}`);
+  }
+  return items.length > 0 ? [...new Set(items)] : undefined;
+}
+
 /** 任意 boolean をパースする。
  * @param v 生値
  * @param f フィールド名

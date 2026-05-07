@@ -47,7 +47,9 @@ const ownerDisplay = computed(() =>
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.id") }}
           </dt>
-          <dd class="info-tab__value info-tab__value--mono">{{ info.id }}</dd>
+          <dd class="info-tab__value info-tab__value--mono" :title="info.id">
+            {{ info.leadNo || info.id }}
+          </dd>
         </div>
         <div class="info-tab__field">
           <dt class="info-tab__label">
@@ -71,7 +73,21 @@ const ownerDisplay = computed(() =>
           <dt class="info-tab__label">
             {{ t("leads.detail.infoTab.fields.source") }}
           </dt>
-          <dd class="info-tab__value">{{ info.source || "—" }}</dd>
+          <dd class="info-tab__value">
+            {{ info.source || "—" }}
+            <span
+              v-if="info.createdVia && info.createdVia !== info.source"
+              class="info-tab__created-via"
+              :title="info.createdVia"
+              data-testid="lead-info-created-via"
+            >
+              （{{
+                t("leads.detail.infoTab.createdViaLabel", {
+                  via: info.createdVia,
+                })
+              }}）
+            </span>
+          </dd>
         </div>
         <div class="info-tab__field">
           <dt class="info-tab__label">
@@ -177,5 +193,10 @@ const ownerDisplay = computed(() =>
 
 .info-tab__value--note {
   line-height: var(--leading-relaxed);
+}
+
+.info-tab__created-via {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
 }
 </style>

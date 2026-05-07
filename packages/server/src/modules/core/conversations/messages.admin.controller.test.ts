@@ -256,6 +256,48 @@ void describe("MessagesAdminController — send body validation", () => {
   });
 });
 
+void describe("MessagesAdminController — send invalid kind / visibleScope returns 400 (R3-E-5)", () => {
+  void test("send_invalid_kind_returns_400", async () => {
+    const controller = new MessagesAdminController(stubService());
+    await assert.rejects(
+      () =>
+        controller.send(makeReq() as never, VALID_CONV_ID, {
+          originalLanguage: "ja",
+          originalText: "hello",
+          kind: "bogus_kind",
+        } as never),
+      (err: unknown) => {
+        assert.ok(err instanceof BadRequestException);
+        assert.ok(
+          err.message.includes("kind"),
+          "error message must mention 'kind'",
+        );
+        return true;
+      },
+    );
+  });
+
+  void test("send_invalid_visible_scope_returns_400", async () => {
+    const controller = new MessagesAdminController(stubService());
+    await assert.rejects(
+      () =>
+        controller.send(makeReq() as never, VALID_CONV_ID, {
+          originalLanguage: "ja",
+          originalText: "hello",
+          visibleScope: "everyone",
+        } as never),
+      (err: unknown) => {
+        assert.ok(err instanceof BadRequestException);
+        assert.ok(
+          err.message.includes("visibleScope"),
+          "error message must mention 'visibleScope'",
+        );
+        return true;
+      },
+    );
+  });
+});
+
 void describe("MessagesAdminController — retryTranslation forwarding", () => {
   void test("forwards conversationId + messageId to service", async () => {
     let calledArgs: unknown[] = [];

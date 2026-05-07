@@ -16,13 +16,25 @@ import {
 // ── list ──
 
 void describe("LeadsAdminService.list", () => {
-  void test("returns items and total from DB", async () => {
+  void test("returns items and total from DB with join columns", async () => {
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
         return Promise.resolve({ rows: [{ count: "3" }], rowCount: 1 });
       }
       return Promise.resolve({
-        rows: [leadRow(), leadRow({ id: "lead-2" }), leadRow({ id: "lead-3" })],
+        rows: [
+          { ...leadRow(), owner_display_name: "Admin A", group_name: "Sales" },
+          {
+            ...leadRow({ id: "lead-2" }),
+            owner_display_name: null,
+            group_name: null,
+          },
+          {
+            ...leadRow({ id: "lead-3" }),
+            owner_display_name: "Admin B",
+            group_name: null,
+          },
+        ],
         rowCount: 3,
       });
     });
@@ -31,9 +43,37 @@ void describe("LeadsAdminService.list", () => {
     assert.equal(result.total, 3);
     assert.equal(result.items.length, 3);
     assert.equal(result.items[0].id, LEAD_ID);
+    assert.equal(result.items[0].ownerDisplayName, "Admin A");
+    assert.equal(result.items[0].groupName, "Sales");
+    assert.equal(result.items[1].ownerDisplayName, null);
+    assert.equal(result.items[1].groupName, null);
   });
 
-  void test("scope=mine filters by owner_user_id = ctx.userId", async () => {
+  void test("list SQL uses left join users and groups", async () => {
+    const calls: string[] = [];
+    const pool = makePool((sql) => {
+      calls.push(sql);
+      if (sql.includes("count(*)")) {
+        return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    await svc(pool).list(makeCtx(), {});
+    const selectSql = calls.find(
+      (s) => s.includes("from leads l") && !s.includes("count(*)"),
+    );
+    assert.ok(selectSql, "SELECT query must exist");
+    assert.ok(selectSql.includes("left join users u"), "must join users");
+    assert.ok(selectSql.includes("left join groups g"), "must join groups");
+    assert.ok(
+      selectSql.includes("owner_display_name"),
+      "must select owner_display_name",
+    );
+    assert.ok(selectSql.includes("group_name"), "must select group_name");
+  });
+
+  void test("scope=mine filters by l.owner_user_id = ctx.userId", async () => {
     const calls: { sql: string; params?: unknown[] }[] = [];
     const pool = makePool((sql, params) => {
       calls.push({ sql, params });
@@ -45,14 +85,14 @@ void describe("LeadsAdminService.list", () => {
 
     await svc(pool).list(makeCtx(), { scope: "mine" });
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+      (c) => c.sql.includes("from leads l") && !c.sql.includes("count(*)"),
     );
     assert.ok(selectCall);
-    assert.ok(selectCall.sql.includes("owner_user_id = $"));
+    assert.ok(selectCall.sql.includes("l.owner_user_id = $"));
     assert.ok(selectCall.params?.includes(USER_A));
   });
 
-  void test("scope=group filters by group_id = ctx.groupId", async () => {
+  void test("scope=group filters by l.group_id = ctx.groupId", async () => {
     const calls: { sql: string; params?: unknown[] }[] = [];
     const pool = makePool((sql, params) => {
       calls.push({ sql, params });
@@ -64,10 +104,10 @@ void describe("LeadsAdminService.list", () => {
 
     await svc(pool).list(makeCtx({ groupId: GROUP_A }), { scope: "group" });
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+      (c) => c.sql.includes("from leads l") && !c.sql.includes("count(*)"),
     );
     assert.ok(selectCall);
-    assert.ok(selectCall.sql.includes("group_id = $"));
+    assert.ok(selectCall.sql.includes("l.group_id = $"));
     assert.ok(selectCall.params?.includes(GROUP_A));
   });
 
@@ -83,11 +123,11 @@ void describe("LeadsAdminService.list", () => {
 
     await svc(pool).list(makeCtx(), { scope: "all" });
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+      (c) => c.sql.includes("from leads l") && !c.sql.includes("count(*)"),
     );
     assert.ok(selectCall);
-    assert.equal(selectCall.sql.includes("owner_user_id = $"), false);
-    assert.equal(selectCall.sql.includes("group_id = $"), false);
+    assert.equal(selectCall.sql.includes("l.owner_user_id = $"), false);
+    assert.equal(selectCall.sql.includes("l.group_id = $"), false);
   });
 
   void test("invalid ownerUserId filter returns empty without querying invalid uuid", async () => {
@@ -105,7 +145,7 @@ void describe("LeadsAdminService.list", () => {
     assert.equal(result.items.length, 0);
 
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+      (c) => c.sql.includes("from leads l") && !c.sql.includes("count(*)"),
     );
     assert.ok(selectCall);
     assert.ok(selectCall.sql.includes("where 1 = 0"));
@@ -126,10 +166,51 @@ void describe("LeadsAdminService.list", () => {
     assert.equal(result.items.length, 0);
 
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+      (c) => c.sql.includes("from leads l") && !c.sql.includes("count(*)"),
     );
     assert.ok(selectCall);
     assert.ok(selectCall.sql.includes("where 1 = 0"));
+  });
+
+  void test("list SQL uses LEFT JOIN users/groups and selects display columns", async () => {
+    const calls: { sql: string; params?: unknown[] }[] = [];
+    const pool = makePool((sql, params) => {
+      calls.push({ sql, params });
+      if (sql.includes("count(*)")) {
+        return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+      }
+      return Promise.resolve({
+        rows: [
+          {
+            ...leadRow(),
+            owner_display_name: "Local Admin",
+            group_name: "Tokyo-1",
+          },
+        ],
+        rowCount: 1,
+      });
+    });
+
+    const result = await svc(pool).list(makeCtx(), {});
+    const selectCall = calls.find(
+      (c) => c.sql.includes("from leads") && !c.sql.includes("count(*)"),
+    );
+    assert.ok(selectCall, "select query must exist");
+    assert.ok(
+      selectCall.sql.includes("left join users u"),
+      "must LEFT JOIN users",
+    );
+    assert.ok(
+      selectCall.sql.includes("left join groups g"),
+      "must LEFT JOIN groups",
+    );
+    assert.ok(
+      selectCall.sql.includes("owner_display_name"),
+      "must select owner_display_name",
+    );
+    assert.ok(selectCall.sql.includes("group_name"), "must select group_name");
+    assert.equal(result.items[0].ownerDisplayName, "Local Admin");
+    assert.equal(result.items[0].groupName, "Tokyo-1");
   });
 
   void test("page and limit are clamped", async () => {
@@ -144,7 +225,7 @@ void describe("LeadsAdminService.list", () => {
 
     await svc(pool).list(makeCtx(), { page: -1, limit: 999 });
     const selectCall = calls.find(
-      (c) => c.sql.includes("from leads") && c.sql.includes("limit"),
+      (c) => c.sql.includes("from leads l") && c.sql.includes("limit"),
     );
     assert.ok(selectCall);
     assert.ok(selectCall.params?.includes(200), "limit clamped to 200");

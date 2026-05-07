@@ -111,6 +111,25 @@ function adaptLinkedEntity(value: unknown): LinkedEntitySummary | null {
   };
 }
 
+/**
+ * server detail 返回的关联对象 `{ id, name/caseNo }` 转为 `LinkedEntitySummary`。
+ * @param value 服务端返回的关联对象原始值
+ * @param type 关联实体类型
+ * @param labelKey 用于提取显示标签的字段名
+ * @returns 类型化的 LinkedEntitySummary，或 null
+ */
+function buildLinkedFromRelation(
+  value: unknown,
+  type: LinkedEntitySummary["type"],
+  labelKey: string,
+): LinkedEntitySummary | null {
+  const r = asRecord(value);
+  if (!r) return null;
+  const id = readString(r, "id");
+  if (!id) return null;
+  return { id, label: readString(r, labelKey), type };
+}
+
 // ─── Message adapter ────────────────────────────────────────────
 
 function adaptMessageItem(value: unknown): MessageItem | null {
@@ -229,6 +248,9 @@ export function adaptConversationListResult(
 /**
  * 将详情 JSON 响应转换为 `ConversationDetailAggregate`。
  *
+ * server 返回嵌套结构 `{ conversation, lead, customer, case, appUser }`，
+ * 需从 `record.conversation` 读取会话主字段，从关联对象构造 linkedEntity。
+ *
  * @param value - 原始 JSON 响应体
  * @returns 类型化详情聚合，或无效时返回 null
  */
@@ -238,43 +260,51 @@ export function adaptConversationDetailAggregate(
   const record = asRecord(value);
   if (!record) return null;
 
-  const id = readString(record, "id");
+  const conv = asRecord(record.conversation);
+  if (!conv) return null;
+
+  const id = readString(conv, "id");
   if (!id) return null;
 
-  const statusRaw = readString(record, "status") || "open";
+  const statusRaw = readString(conv, "status") || "open";
   const status: ConversationStatus = VALID_STATUSES.has(
     statusRaw as ConversationStatus,
   )
     ? (statusRaw as ConversationStatus)
     : "open";
 
-  const rawMessages = record.messages;
-  const messages: MessageItem[] = Array.isArray(rawMessages)
-    ? rawMessages.map(adaptMessageItem).filter((m): m is MessageItem => !!m)
-    : [];
+  const appUserRecord = asRecord(record.appUser);
+  const appUserName = appUserRecord ? readString(appUserRecord, "name") : "";
+
+  const linkedLead = buildLinkedFromRelation(record.lead, "lead", "name");
+  const linkedCustomer = buildLinkedFromRelation(
+    record.customer,
+    "customer",
+    "name",
+  );
+  const linkedCase = buildLinkedFromRelation(record.case, "case", "caseNo");
 
   const detail: ConversationDetail = {
     id,
-    channel: readString(record, "channel"),
-    preferredLanguage: readString(record, "preferredLanguage"),
+    channel: readString(conv, "channel"),
+    preferredLanguage: readString(conv, "preferredLanguage"),
     status,
-    ownerUserId: readNullableString(record, "ownerUserId"),
-    ownerLabel: readString(record, "ownerLabel"),
-    leadId: readNullableString(record, "leadId"),
-    customerId: readNullableString(record, "customerId"),
-    caseId: readNullableString(record, "caseId"),
-    appUserName: readString(record, "appUserName"),
-    linkedLead: adaptLinkedEntity(record.linkedLead),
-    linkedCustomer: adaptLinkedEntity(record.linkedCustomer),
-    linkedCase: adaptLinkedEntity(record.linkedCase),
-    messages,
-    unreadCountUser: readNumber(record, "unreadCountUser"),
-    unreadCountStaffTenant: readNumber(record, "unreadCountStaffTenant"),
-    unreadCountStaffOwner: readNumber(record, "unreadCountStaffOwner"),
-    createdAt: readString(record, "createdAt"),
+    ownerUserId: readNullableString(conv, "ownerUserId"),
+    ownerLabel: readString(conv, "ownerLabel"),
+    leadId: readNullableString(conv, "leadId"),
+    customerId: readNullableString(conv, "customerId"),
+    caseId: readNullableString(conv, "caseId"),
+    appUserName,
+    linkedLead,
+    linkedCustomer,
+    linkedCase,
+    unreadCountUser: readNumber(conv, "unreadCountUser"),
+    unreadCountStaffTenant: readNumber(conv, "unreadCountStaffTenant"),
+    unreadCountStaffOwner: readNumber(conv, "unreadCountStaffOwner"),
+    createdAt: readString(conv, "createdAt"),
   };
 
-  return { detail, messages };
+  return { detail };
 }
 
 /**

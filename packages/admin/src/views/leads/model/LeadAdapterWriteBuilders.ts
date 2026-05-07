@@ -50,7 +50,12 @@ export function buildLeadListSearchParams(
 
     const httpKey = LEAD_LIST_HTTP_FIELD_MAP[key] ?? key;
 
-    if (typeof raw === "number") {
+    if (Array.isArray(raw)) {
+      for (const item of raw) {
+        const v = typeof item === "string" ? item.trim() : "";
+        if (v) sp.append(httpKey, v);
+      }
+    } else if (typeof raw === "number") {
       if (raw > 0) sp.set(httpKey, String(raw));
     } else {
       const normalized = normalizeFilterValue(raw);
@@ -137,7 +142,9 @@ export function buildLeadBulkPath(apiPath: string, action: string): string {
  * @param filters - UI 筛选状态
  * @returns 列表查询参数
  */
-export function filtersToListParams(filters: LeadFiltersState): LeadListParams {
+export function filtersToListParams(
+  filters: LeadFiltersState & { tags?: string[] },
+): LeadListParams {
   return {
     scope: filters.scope || undefined,
     search: filters.search || undefined,
@@ -145,6 +152,7 @@ export function filtersToListParams(filters: LeadFiltersState): LeadListParams {
     ownerUserId: filters.owner || undefined,
     groupId: filters.group || undefined,
     businessType: filters.businessType || undefined,
+    tags: filters.tags && filters.tags.length > 0 ? filters.tags : undefined,
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined,
   };

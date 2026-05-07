@@ -10,6 +10,9 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { LEAD_COLS, type LeadConvertCaseInput } from "./leads.admin.types";
 
+export const CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE =
+  "CONVERT_CASE_REQUIRES_CUSTOMER" as const;
+
 type ConvertCaseDeps = {
   pool: Pool;
   casesService: CasesService;
@@ -39,16 +42,22 @@ export async function convertCase(
   const lead = await deps.getLeadOrThrow(ctx, leadId);
 
   if (!lead.convertedCustomerId) {
-    throw new BadRequestException(
-      "Lead must have converted_customer_id; run convert-customer first",
-    );
+    throw new BadRequestException({
+      code: CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE,
+      message:
+        "Lead must have converted_customer_id; run convert-customer first",
+      blockers: [
+        {
+          code: "MISSING_CONVERTED_CUSTOMER",
+          message: "Must convert to customer before creating case",
+        },
+      ],
+    });
   }
   if (lead.status === "converted_case") {
     throw new BadRequestException("Lead is already converted to a case");
   }
-
   const isBmv = isBmvCaseTypeCode(input.caseTypeCode);
-
   const caseEntity = await deps.casesService.create(ctx, {
     customerId: lead.convertedCustomerId,
     caseTypeCode: input.caseTypeCode,

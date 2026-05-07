@@ -1,3 +1,5 @@
+import { BadRequestException } from "@nestjs/common";
+
 /** Admin メッセージ送信入力。 */
 export type MessageSendAdminInput = {
   originalLanguage: string;
@@ -31,7 +33,7 @@ const VALID_VISIBLE_SCOPES = new Set(["internal_only", "client_visible"]);
 export function validateKind(kind: string | undefined): string {
   const k = kind ?? "text";
   if (!VALID_KINDS.has(k)) {
-    throw new Error("Invalid message kind: " + k);
+    throw new BadRequestException("Invalid kind: " + k);
   }
   return k;
 }
@@ -44,7 +46,7 @@ export function validateKind(kind: string | undefined): string {
 export function validateVisibleScope(scope: string | undefined): string {
   const s = scope ?? "client_visible";
   if (!VALID_VISIBLE_SCOPES.has(s)) {
-    throw new Error("Invalid visible_scope: " + s);
+    throw new BadRequestException("Invalid visibleScope: " + s);
   }
   return s;
 }

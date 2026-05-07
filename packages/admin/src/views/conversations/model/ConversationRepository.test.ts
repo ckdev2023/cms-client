@@ -38,37 +38,29 @@ const MOCK_LIST_ITEM = {
 };
 
 const MOCK_DETAIL = {
-  id: "conv-001",
-  channel: "web",
-  preferredLanguage: "zh",
-  status: "open",
-  ownerUserId: "suzuki",
-  ownerLabel: "铃木",
-  leadId: "LEAD-001",
-  customerId: null,
-  caseId: null,
-  appUserName: "李娜",
-  linkedLead: { id: "LEAD-001", label: "李娜", type: "lead" },
-  linkedCustomer: null,
-  linkedCase: null,
-  messages: [
-    {
-      id: "msg-001",
-      conversationId: "conv-001",
-      senderType: "app_user",
-      senderName: "李娜",
-      content: "Hello",
-      kind: "text",
-      visibleScope: "client_visible",
-      translationStatus: "completed",
-      translatedContent: "こんにちは",
-      createdAt: "2026-04-27T09:00:00Z",
-    },
-  ],
-  unreadCountUser: 0,
-  unreadCountStaffTenant: 1,
-  unreadCountStaffOwner: 1,
-  createdAt: "2026-04-27T08:50:00Z",
+  conversation: {
+    id: "conv-001",
+    channel: "web",
+    preferredLanguage: "zh",
+    status: "open",
+    ownerUserId: "suzuki",
+    ownerLabel: "铃木",
+    leadId: "LEAD-001",
+    customerId: null,
+    caseId: null,
+    unreadCountUser: 0,
+    unreadCountStaffTenant: 1,
+    unreadCountStaffOwner: 1,
+    createdAt: "2026-04-27T08:50:00Z",
+    updatedAt: "2026-04-27T09:10:00Z",
+    lastMessageAt: "2026-04-27T09:10:00Z",
+    appUserId: "au-001",
+    orgId: "org-1",
+  },
+  lead: { id: "LEAD-001", name: "李娜", status: "following" },
+  customer: null,
+  case: null,
+  appUser: { id: "au-001", name: "李娜", preferredLanguage: "zh" },
 };
 
 const MOCK_MESSAGE = {
@@ -190,7 +182,12 @@ describe("ConversationRepository", () => {
       expect(result).not.toBeNull();
       expect(result!.detail.id).toBe("conv-001");
       expect(result!.detail.status).toBe("open");
-      expect(result!.messages).toHaveLength(1);
+      expect(result!.detail.appUserName).toBe("李娜");
+      expect(result!.detail.linkedLead).toEqual({
+        id: "LEAD-001",
+        label: "李娜",
+        type: "lead",
+      });
     });
 
     it("returns null for empty id", async () => {
@@ -282,21 +279,26 @@ describe("ConversationRepository", () => {
   // ── Send Message ──────────────────────────────────────────────
 
   describe("sendMessage", () => {
-    it("sends POST with content payload", async () => {
+    it("sends POST with originalText and originalLanguage", async () => {
       const request = createRequestMock((input, init) => {
         expect(String(input)).toBe(
           "/api/admin/conversations/conv-001/messages",
         );
         expect(init?.method).toBe("POST");
         const body = JSON.parse(init?.body as string);
-        expect(body.content).toBe("Hello from staff");
+        expect(body.originalText).toBe("Hello from staff");
+        expect(body.originalLanguage).toBe("ja");
+        expect(body.content).toBeUndefined();
         return jsonResponse({ id: "conv-001" });
       });
       const repo = createConversationRepository({
         request,
         getToken: () => "t",
       });
-      await repo.sendMessage("conv-001", { content: "Hello from staff" });
+      await repo.sendMessage("conv-001", {
+        originalText: "Hello from staff",
+        originalLanguage: "ja",
+      });
     });
 
     it("includes kind and visibleScope when provided", async () => {
@@ -311,7 +313,8 @@ describe("ConversationRepository", () => {
         getToken: () => "t",
       });
       await repo.sendMessage("conv-001", {
-        content: "link",
+        originalText: "link",
+        originalLanguage: "ja",
         kind: "intake_link",
         visibleScope: "internal_only",
       });
@@ -328,7 +331,8 @@ describe("ConversationRepository", () => {
         getToken: () => "t",
       });
       await repo.sendMessage("conv-001", {
-        content: "Hello",
+        originalText: "Hello",
+        originalLanguage: "ja",
         forceOriginal: true,
       });
     });
@@ -434,7 +438,10 @@ describe("ConversationRepository", () => {
         getToken: () => "t",
       });
       const err = await repo
-        .sendMessage("conv-001", { content: "x" })
+        .sendMessage("conv-001", {
+          originalText: "x",
+          originalLanguage: "ja",
+        })
         .catch((e) => e);
       expect((err as ConversationRepositoryError).code).toBe(
         "CONVERSATION_WRITE_ERROR",

@@ -341,6 +341,16 @@ async function doConvertCase(
   if (!id || refs.convertSubmitting.value) return null;
   refs.convertSubmitting.value = true;
   try {
+    const lead = refs.lead.value;
+    if (
+      lead &&
+      lead.status === "signed" &&
+      lead.conversion.convertedCustomer == null
+    ) {
+      await refs.repo.convertCustomer(id, {});
+      await refs.fetchDetail();
+    }
+
     await refs.repo.convertCase(id, input);
     await refs.fetchDetail();
     return null;

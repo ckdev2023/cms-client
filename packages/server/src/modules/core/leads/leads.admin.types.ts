@@ -16,6 +16,7 @@ export type LeadListInput = {
   search?: string;
   dateFrom?: string;
   dateTo?: string;
+  tags?: string[];
   page?: number;
   limit?: number;
 };
@@ -158,8 +159,7 @@ export type LeadDetailAggregate = {
 
 // ── Column Definitions ──
 
-/** Lead テーブルのカラム一覧（SELECT で使用）。 */
-export const LEAD_COLS = [
+const LEAD_COL_NAMES = [
   "id",
   "org_id",
   "app_user_id",
@@ -183,9 +183,62 @@ export const LEAD_COLS = [
   "lost_reason",
   "converted_customer_id",
   "converted_case_id",
+  "tags",
   "created_at",
   "updated_at",
-].join(", ");
+] as const;
+
+/** Lead テーブルのカラム一覧（SELECT で使用）。 */
+export const LEAD_COLS = LEAD_COL_NAMES.join(", ");
+
+/** `leads l` エイリアス付き SELECT 列。 */
+export const LEAD_COLS_ALIASED = LEAD_COL_NAMES.map((c) => `l.${c}`).join(", ");
+
+/** 一覧 JOIN 用の追加 SELECT カラム。 */
+export const LEAD_LIST_JOIN_COLS =
+  "u.name as owner_display_name, g.name as group_name";
+
+/** 一覧 LEFT JOIN 句。 */
+export const LEAD_LIST_JOINS =
+  "left join users u on u.id = l.owner_user_id left join groups g on g.id = l.group_id";
+
+/** Admin 一覧 JOIN 結果行。 */
+export type AdminLeadListRow = {
+  id: string;
+  org_id: string | null;
+  app_user_id: string;
+  source: string;
+  language: string;
+  status: string;
+  assigned_org_id: string | null;
+  owner_user_id?: string | null;
+  lead_no?: string | null;
+  name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  source_channel?: string | null;
+  referrer?: string | null;
+  intended_case_type?: string | null;
+  group_id?: string | null;
+  next_action?: string | null;
+  next_follow_up_at?: unknown;
+  quote_amount?: unknown;
+  note?: string | null;
+  lost_reason?: string | null;
+  converted_customer_id?: string | null;
+  converted_case_id?: string | null;
+  tags?: string[] | null;
+  created_at: unknown;
+  updated_at: unknown;
+  owner_display_name?: string | null;
+  group_name?: string | null;
+};
+
+/** Admin 一覧レスポンス用アイテム。 */
+export type AdminLeadListItem = Lead & {
+  ownerDisplayName: string | null;
+  groupName: string | null;
+};
 
 /** lead_followups テーブルのカラム一覧。 */
 export const FOLLOWUP_COLS =
@@ -224,18 +277,4 @@ export const UPDATABLE_FIELDS: ReadonlyMap<keyof LeadUpdateInput, string> =
 
 // ── Helpers ──
 
-/**
- * base_profile から顧客名を抽出する。
- * @param baseProfile base_profile JSON
- * @returns 顧客名、取得不可時は null
- */
-export function extractCustomerName(baseProfile: unknown): string | null {
-  if (!baseProfile || typeof baseProfile !== "object") return null;
-  const bp = baseProfile as Record<string, unknown>;
-  if (typeof bp.name === "string") return bp.name;
-  if (typeof bp.lastName === "string") {
-    const first = typeof bp.firstName === "string" ? bp.firstName : "";
-    return `${bp.lastName} ${first}`.trim();
-  }
-  return null;
-}
+export { extractCustomerName } from "../customers/customerName";

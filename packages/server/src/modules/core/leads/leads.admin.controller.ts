@@ -20,6 +20,7 @@ import {
   parsePage,
   parseLimit,
   optStr,
+  optStrArr,
   reqStr,
   optNum,
   parseScope,
@@ -41,6 +42,7 @@ type ListLeadsQuery = {
   search?: unknown;
   dateFrom?: unknown;
   dateTo?: unknown;
+  tags?: unknown;
   page?: unknown;
   limit?: unknown;
 };
@@ -160,12 +162,13 @@ export class LeadsAdminController {
     return this.svc.list(ctx, {
       scope: parseScope(query.scope),
       status: optStr(query.status, "status"),
-      ownerUserId: optStr(query.ownerUserId, "ownerUserId"),
-      groupId: optStr(query.groupId, "groupId"),
+      ownerUserId: optUuid(query.ownerUserId, "ownerUserId"),
+      groupId: optUuid(query.groupId, "groupId"),
       businessType: optStr(query.businessType, "businessType"),
       search: optStr(query.search, "search"),
       dateFrom: optStr(query.dateFrom, "dateFrom"),
       dateTo: optStr(query.dateTo, "dateTo"),
+      tags: optStrArr(query.tags, "tags"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
     });

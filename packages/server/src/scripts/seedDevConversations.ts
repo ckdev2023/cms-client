@@ -110,11 +110,11 @@ export async function seedConversationLead(client: PoolClient): Promise<void> {
     `INSERT INTO leads (
        id, org_id, app_user_id, source, language, status,
        assigned_org_id, owner_user_id, lead_no, name, phone, email,
-       source_channel, intended_case_type
+       source_channel, intended_case_type, tags
      )
      VALUES ($1, $2, $3, 'web', 'zh', 'following',
              $2, $4, $5, $6, $7, $8,
-             'web', 'family_stay')
+             'web', 'family_stay', $9::text[])
      ON CONFLICT (id) DO NOTHING`,
     [
       SEED_LEAD_PORTAL_ID,
@@ -125,6 +125,7 @@ export async function seedConversationLead(client: PoolClient): Promise<void> {
       APP_USER_NAME,
       APP_USER_PHONE,
       APP_USER_EMAIL,
+      ["VIP", "優先", "面談済"],
     ],
   );
 }

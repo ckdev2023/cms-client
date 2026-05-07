@@ -41,7 +41,6 @@ function createMockDetail(
     linkedLead: { id: "LEAD-001", label: "李娜", type: "lead" },
     linkedCustomer: null,
     linkedCase: null,
-    messages: [createMockMessage()],
     unreadCountUser: 0,
     unreadCountStaffTenant: 1,
     unreadCountStaffOwner: 1,
@@ -54,7 +53,7 @@ function createMockAggregate(
   detailOverrides: Partial<ConversationDetail> = {},
 ): ConversationDetailAggregate {
   const detail = createMockDetail(detailOverrides);
-  return { detail, messages: detail.messages };
+  return { detail };
 }
 
 function createMockClosedAggregate(): ConversationDetailAggregate {
@@ -82,6 +81,9 @@ function createRepoStub(
     "conv-001": createMockAggregate(),
     "conv-004": createMockClosedAggregate(),
   },
+  messagesMap: Record<string, MessageItem[]> = {
+    "conv-001": [createMockMessage()],
+  },
 ): ConversationRepository {
   return {
     listConversations: vi.fn(async () => ({
@@ -91,9 +93,9 @@ function createRepoStub(
       limit: 20,
     })),
     getDetail: vi.fn(async (id: string) => aggregates[id] ?? null),
-    getMessages: vi.fn(async () => ({
-      items: [],
-      total: 0,
+    getMessages: vi.fn(async (id: string) => ({
+      items: messagesMap[id] ?? [],
+      total: (messagesMap[id] ?? []).length,
       page: 1,
       limit: 50,
     })),
@@ -168,6 +170,14 @@ describe("useConversationDetailModel", () => {
 
       expect(repo.getDetail).toHaveBeenCalledWith("conv-004");
     });
+
+    it("fetchDetail calls getMessages and writes to state.messages", async () => {
+      const repo = createRepoStub();
+      const { model } = await createModel("conv-001", { repo });
+      expect(repo.getMessages).toHaveBeenCalledWith("conv-001");
+      expect(model.messages.value).toHaveLength(1);
+      expect(model.messages.value[0].id).toBe("msg-001");
+    });
   });
 
   // ── Three-tier unread counts ──────────────────────────────────
@@ -193,22 +203,24 @@ describe("useConversationDetailModel", () => {
   // ── autoMarkRead timing ───────────────────────────────────────
 
   describe("autoMarkRead timing", () => {
-    it("calls getMessages on load when autoMarkRead=true and conversation is open", async () => {
+    it("calls getMessages twice on load when autoMarkRead=true and conversation is open", async () => {
       const repo = createRepoStub();
       await createModel("conv-001", { autoMarkRead: true, repo });
+      expect(repo.getMessages).toHaveBeenCalledTimes(2);
       expect(repo.getMessages).toHaveBeenCalledWith("conv-001");
     });
 
-    it("does NOT call getMessages when autoMarkRead=false", async () => {
+    it("calls getMessages once (for timeline) when autoMarkRead=false", async () => {
       const repo = createRepoStub();
       await createModel("conv-001", { autoMarkRead: false, repo });
-      expect(repo.getMessages).not.toHaveBeenCalled();
+      expect(repo.getMessages).toHaveBeenCalledTimes(1);
+      expect(repo.getMessages).toHaveBeenCalledWith("conv-001");
     });
 
-    it("does NOT call getMessages when conversation is closed even with autoMarkRead=true", async () => {
+    it("does NOT call extra getMessages for autoMarkRead when conversation is closed", async () => {
       const repo = createRepoStub();
       await createModel("conv-004", { autoMarkRead: true, repo });
-      expect(repo.getMessages).not.toHaveBeenCalled();
+      expect(repo.getMessages).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -274,15 +286,28 @@ describe("useConversationDetailModel", () => {
   // ── Send message ──────────────────────────────────────────────
 
   describe("sendMessage", () => {
-    it("sends message and clears input on success", async () => {
+    it("sends message with originalText/originalLanguage and clears input", async () => {
       const repo = createRepoStub();
       const { model } = await createModel("conv-001", { repo });
       model.messageInput.value = "Hello staff message";
       await model.sendMessage();
       expect(repo.sendMessage).toHaveBeenCalledWith("conv-001", {
-        content: "Hello staff message",
+        originalText: "Hello staff message",
+        originalLanguage: "zh",
       });
       expect(model.messageInput.value).toBe("");
+    });
+
+    it("sendMessage re-pulls messages after success", async () => {
+      const repo = createRepoStub();
+      const { model } = await createModel("conv-001", { repo });
+      const callsBefore = (repo.getMessages as ReturnType<typeof vi.fn>).mock
+        .calls.length;
+      model.messageInput.value = "new msg";
+      await model.sendMessage();
+      const callsAfter = (repo.getMessages as ReturnType<typeof vi.fn>).mock
+        .calls.length;
+      expect(callsAfter).toBeGreaterThan(callsBefore);
     });
 
     it("does not send when input is blank", async () => {
@@ -357,13 +382,14 @@ describe("useConversationDetailModel", () => {
 
   describe("translation failure retry", () => {
     it("calls repo.retryTranslation with correct messageId", async () => {
-      const aggregate = createMockAggregate({
-        messages: [createFailedTranslationMessage()],
-      });
-      const repo = createRepoStub({
-        "conv-001": aggregate,
-        "conv-004": createMockClosedAggregate(),
-      });
+      const failedMessage = createFailedTranslationMessage();
+      const repo = createRepoStub(
+        {
+          "conv-001": createMockAggregate(),
+          "conv-004": createMockClosedAggregate(),
+        },
+        { "conv-001": [failedMessage] },
+      );
       const { model } = await createModel("conv-001", { repo });
 
       const failedMsg = model.messages.value.find(

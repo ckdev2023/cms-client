@@ -255,8 +255,12 @@ export interface LeadSummary {
   status: LeadStatus;
   /** */
   ownerId: string;
+  /** server JOIN 返回的负责人显示名；优先于 alias 兜底。 */
+  ownerLabel: string | null;
   /** */
   groupId: string;
+  /** server JOIN 返回的组名；优先于 alias 兜底。 */
+  groupLabel: string | null;
   /** */
   nextAction: string;
   /** */
@@ -271,6 +275,8 @@ export interface LeadSummary {
   convertedCustomerId: string | null;
   /** */
   convertedCaseId: string | null;
+  /** 持久化标签。 */
+  tags: string[];
   /** 去重预置 key；非 null 时列表弹出提示。 */
   dedupHint: string | null;
   /** `warning` = 已签约未转化高亮行，`dimmed` = 已流失弱化行。 */

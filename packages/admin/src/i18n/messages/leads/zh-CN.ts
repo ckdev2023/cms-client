@@ -15,6 +15,7 @@ const leadsZhCN = {
       ownerAll: "负责人：全部",
       groupAll: "所属分组：全部",
       businessTypeAll: "业务类型：全部",
+      tagsPlaceholder: "按标签筛选",
       dateLabel: "跟进",
       reset: "重置",
     },
@@ -26,6 +27,7 @@ const leadsZhCN = {
       contact: "联系方式 / 咨询信息",
       status: "当前状态",
       owner: "负责人 / 组",
+      tags: "标签",
       followUp: "跟进安排",
       updated: "最近更新",
     },
@@ -193,6 +195,7 @@ const leadsZhCN = {
         language: "首选语言",
         note: "备注",
       },
+      createdViaLabel: "创建路径：{via}",
     },
     conversationsTab: {
       empty: "该线索暂无关联会话。",

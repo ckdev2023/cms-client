@@ -33,6 +33,7 @@ import {
   createAuditWriter,
 } from "./leads.admin.bulk";
 import {
+  buildDedupHints,
   buildListWhere,
   queryCaseSummary,
   queryCustomerSummary,
@@ -42,8 +43,13 @@ import {
   validateTransition,
 } from "./leads.admin.query";
 import {
+  type AdminLeadListItem,
+  type AdminLeadListRow,
   FOLLOWUP_COLS,
   LEAD_COLS,
+  LEAD_COLS_ALIASED,
+  LEAD_LIST_JOIN_COLS,
+  LEAD_LIST_JOINS,
   LOG_COLS,
   LOG_FROM_WITH_ACTOR,
   UPDATABLE_FIELDS,
@@ -112,7 +118,7 @@ export class LeadsAdminService {
   async list(
     ctx: RequestContext,
     input: LeadListInput,
-  ): Promise<{ items: Lead[]; total: number }> {
+  ): Promise<{ items: AdminLeadListItem[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
@@ -122,7 +128,7 @@ export class LeadsAdminService {
     buildListWhere(ctx, input, where, params);
     const wc = where.length > 0 ? `where ${where.join(" and ")}` : "";
     const countRes = await tenantDb.query<{ count: string }>(
-      `select count(*)::text as count from leads ${wc}`,
+      `select count(*)::text as count from leads l ${LEAD_LIST_JOINS} ${wc}`,
       params,
     );
     const total = parseInt(countRes.rows[0]?.count ?? "0", 10);
@@ -130,11 +136,18 @@ export class LeadsAdminService {
     const li = params.length;
     params.push(offset);
     const oi = params.length;
-    const result = await tenantDb.query<LeadQueryRow>(
-      `select ${LEAD_COLS} from leads ${wc} order by created_at desc, id desc limit $${String(li)} offset $${String(oi)}`,
+    const result = await tenantDb.query<AdminLeadListRow>(
+      `select ${LEAD_COLS_ALIASED}, ${LEAD_LIST_JOIN_COLS} from leads l ${LEAD_LIST_JOINS} ${wc} order by l.created_at desc, l.id desc limit $${String(li)} offset $${String(oi)}`,
       params,
     );
-    return { items: result.rows.map(mapLeadRow), total };
+    return {
+      items: result.rows.map((row) => ({
+        ...mapLeadRow(row),
+        ownerDisplayName: row.owner_display_name ?? null,
+        groupName: row.group_name ?? null,
+      })),
+      total,
+    };
   }
 
   /** Lead 詳細を取得する。
@@ -158,7 +171,7 @@ export class LeadsAdminService {
         [id],
       ),
     ]);
-    const dedupHints = await this.buildDedupHints(ctx, lead);
+    const dedupHints = await buildDedupHints(tenantDb, ctx.orgId, lead);
     const convertedCustomer = lead.convertedCustomerId
       ? await queryCustomerSummary(tenantDb, lead.convertedCustomerId)
       : null;
@@ -336,7 +349,6 @@ export class LeadsAdminService {
   async bulkAssign(ctx: RequestContext, input: LeadBulkAssignInput) {
     return bulkAssign(this.bulkDeps(ctx), input);
   }
-
   /** 一括フォローアップ追加。
    * @param ctx リクエストコンテキスト
    * @param input 入力
@@ -345,7 +357,6 @@ export class LeadsAdminService {
   async bulkFollowup(ctx: RequestContext, input: LeadBulkFollowupInput) {
     return bulkFollowup(this.bulkDeps(ctx), input);
   }
-
   /** 一括ステータス変更。
    * @param ctx リクエストコンテキスト
    * @param input 入力
@@ -358,7 +369,6 @@ export class LeadsAdminService {
       this.transitionStatus.bind(this),
     );
   }
-
   /** 一括タグ更新。
    * @param ctx リクエストコンテキスト
    * @param input 入力
@@ -367,7 +377,6 @@ export class LeadsAdminService {
   async bulkTags(ctx: RequestContext, input: LeadBulkTagsInput) {
     return bulkTags(this.bulkDeps(ctx), input);
   }
-
   /** 一括エクスポート。
    * @param ctx リクエストコンテキスト
    * @param leadIds 対象 ID 群
@@ -376,7 +385,6 @@ export class LeadsAdminService {
   async bulkExport(ctx: RequestContext, leadIds: string[]) {
     return bulkExport(this.bulkDeps(ctx), leadIds);
   }
-
   /** 重複候補検索。
    * @param ctx リクエストコンテキスト
    * @param input 検索入力
@@ -392,7 +400,6 @@ export class LeadsAdminService {
     const customers = await queryDedupCustomers(tenantDb, ctx.orgId, input);
     return { leads, customers };
   }
-
   /** Lead → Customer 転化。
    * @param ctx リクエストコンテキスト
    * @param leadId Lead ID
@@ -416,7 +423,6 @@ export class LeadsAdminService {
       input,
     );
   }
-
   /** Lead → Case 転化。
    * @param ctx リクエストコンテキスト
    * @param leadId Lead ID
@@ -442,7 +448,6 @@ export class LeadsAdminService {
   }
 
   // ── Private ──
-
   private async getLeadOrThrow(ctx: RequestContext, id: string): Promise<Lead> {
     const db = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const r = await db.query<LeadQueryRow>(
@@ -473,17 +478,6 @@ export class LeadsAdminService {
         payload,
       }),
     ]);
-  }
-
-  private async buildDedupHints(
-    ctx: RequestContext,
-    lead: Lead,
-  ): Promise<LeadDedupResult> {
-    if (!lead.phone && !lead.email) return { leads: [], customers: [] };
-    return this.dedup(ctx, {
-      phone: lead.phone ?? undefined,
-      email: lead.email ?? undefined,
-    });
   }
 
   private bulkDeps(ctx: RequestContext) {

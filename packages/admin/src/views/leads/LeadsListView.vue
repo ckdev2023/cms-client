@@ -48,6 +48,7 @@ const {
   ownerFilter,
   groupFilter,
   businessTypeFilter,
+  tagsFilter,
   dateFrom,
   dateTo,
   page,
@@ -97,6 +98,7 @@ watch(
     ownerFilter,
     groupFilter,
     businessTypeFilter,
+    tagsFilter,
     dateFrom,
     dateTo,
     locale,
@@ -405,6 +407,7 @@ watch(
       :owner-options="ownerOptions"
       :group-options="groupOptions"
       :business-type-filter="businessTypeFilter"
+      :tags-filter="tagsFilter"
       :date-from="dateFrom"
       :date-to="dateTo"
       :filtered-count="totalCount"
@@ -414,6 +417,7 @@ watch(
       @update:owner-filter="ownerFilter = $event"
       @update:group-filter="groupFilter = $event"
       @update:business-type-filter="businessTypeFilter = $event"
+      @update:tags-filter="tagsFilter = $event"
       @update:date-from="dateFrom = $event"
       @update:date-to="dateTo = $event"
       @reset-filters="resetFilters"

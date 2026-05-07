@@ -16,6 +16,7 @@ import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
 import type { RequestContext } from "../tenancy/requestContext";
 import { MessagesAdminService } from "./messages.admin.service";
+import { validateKind, validateVisibleScope } from "./messages.admin.types";
 
 type HttpRequest = { requestContext?: RequestContext };
 
@@ -128,11 +129,15 @@ export class MessagesAdminController {
     @ConversationIdParam() conversationId: string,
     @Body() body: SendMessageBody,
   ) {
+    const kind = optStr(body.kind, "kind");
+    const visibleScope = optStr(body.visibleScope, "visibleScope");
+    if (kind !== undefined) validateKind(kind);
+    if (visibleScope !== undefined) validateVisibleScope(visibleScope);
     return this.svc.send(requireCtx(req), conversationId, {
       originalLanguage: reqStr(body.originalLanguage, "originalLanguage"),
       originalText: reqStr(body.originalText, "originalText"),
-      kind: optStr(body.kind, "kind"),
-      visibleScope: optStr(body.visibleScope, "visibleScope"),
+      kind,
+      visibleScope,
       forceOriginal: parseBool(body.forceOriginal),
     });
   }

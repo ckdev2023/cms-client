@@ -211,10 +211,12 @@ describe("leads/types", () => {
       conversationId: null,
       info: {
         id: "LEAD-TEST",
+        leadNo: "",
         name: "Test Lead",
         phone: "",
         email: "t@t.com",
         source: "web",
+        createdVia: "",
         referrer: "",
         businessType: "other",
         group: "东京一组",

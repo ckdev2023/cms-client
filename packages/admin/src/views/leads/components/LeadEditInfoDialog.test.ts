@@ -45,10 +45,12 @@ const BASE_LEAD: LeadDetail = {
   conversationId: null,
   info: {
     id: "LEAD-TEST",
+    leadNo: "",
     name: "李华",
     phone: "080-2222-3333",
     email: "li.hua@example.com",
     source: "referral",
+    createdVia: "admin",
     referrer: "佐藤弁護士",
     businessType: "family-stay",
     group: "tokyo-1",
@@ -227,5 +229,21 @@ describe("LeadEditInfoDialog (R2-B-4)", () => {
       "[data-testid='lead-edit-info-dialog-confirm']",
     ) as HTMLButtonElement;
     expect(btn.disabled).toBe(true);
+  });
+
+  it("pre-fills source dropdown with sourceChannel value for admin-created lead (R3-D-2)", () => {
+    const lead: LeadDetail = {
+      ...BASE_LEAD,
+      info: {
+        ...BASE_LEAD.info,
+        source: "web",
+        createdVia: "admin",
+      },
+    };
+    mountDialog({ lead });
+    const sourceSelect = q(
+      "select[name='leadEditInfo.source']",
+    ) as HTMLSelectElement;
+    expect(sourceSelect.value).toBe("web");
   });
 });

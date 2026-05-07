@@ -4,13 +4,17 @@
  *
  * 支持 warning（已签约未转化）和 dimmed（已流失）两种行高亮。
  */
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { LeadSummary, LeadStatus } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
-import { resolveOwnerDisplayOption } from "../../../shared/model/useOwnerOptions";
+import {
+  deriveInitialsFromName,
+  resolveOwnerDisplayOption,
+} from "../../../shared/model/useOwnerOptions";
+import { resolveTagTone } from "../model/leadTagTone";
 
 /** 线索表格行：咨询人信息、状态、负责人、跟进安排、最近更新。 */
 const { t, locale } = useI18n();
@@ -33,26 +37,89 @@ const STATUS_TONE: Record<LeadStatus, ChipTone> = {
   lost: "neutral",
 };
 
-const owner = computed(() =>
-  resolveOwnerDisplayOption(props.lead.ownerId, locale.value, {
+const owner = computed(() => {
+  if (props.lead.ownerLabel) {
+    return {
+      label: props.lead.ownerLabel,
+      initials: deriveInitialsFromName(props.lead.ownerLabel),
+    };
+  }
+  const resolved = resolveOwnerDisplayOption(props.lead.ownerId, locale.value, {
     unassigned: t("leads.list.ownerUnassigned"),
     unknown: t("leads.list.ownerUnknown"),
-  }),
-);
+  });
+  return { label: resolved.label, initials: resolved.initials };
+});
 
 const ownerLabel = computed(() => owner.value.label);
 
 const ownerInitials = computed(() => owner.value.initials);
 
-const groupLabel = computed(() =>
-  props.lead.groupId
+const groupLabel = computed(() => {
+  if (props.lead.groupLabel) return props.lead.groupLabel;
+  return props.lead.groupId
     ? resolveGroupLabel(
         props.lead.groupId,
         t("shared.group.disabledSuffix"),
         locale.value,
       )
-    : "—",
+    : "—";
+});
+
+const TAG_VISIBLE_LIMIT = 3;
+
+const visibleTags = computed(() =>
+  (props.lead.tags ?? []).slice(0, TAG_VISIBLE_LIMIT).map((tag) => {
+    const tone = resolveTagTone(tag);
+    return { tag, tone, dot: tone !== "neutral" };
+  }),
 );
+
+const remainingTagCount = computed(() => {
+  const total = props.lead.tags?.length ?? 0;
+  return total > TAG_VISIBLE_LIMIT ? total - TAG_VISIBLE_LIMIT : 0;
+});
+
+const hiddenTags = computed(() =>
+  (props.lead.tags ?? []).slice(TAG_VISIBLE_LIMIT).map((tag) => {
+    const tone = resolveTagTone(tag);
+    return { tag, tone, dot: tone !== "neutral" };
+  }),
+);
+
+const remainingTagsAriaLabel = computed(() =>
+  hiddenTags.value.map((h) => h.tag).join(", "),
+);
+
+const moreRef = ref<HTMLElement | null>(null);
+const popoverOpen = ref(false);
+const popoverStyle = ref<{ top: string; left: string }>({
+  top: "0px",
+  left: "0px",
+});
+
+/**
+ * 打开 +N 隐藏标签的悬浮 popover，并按 +N 元素的实际位置定位（Teleport
+ * 到 body 后必须用视口坐标，避免被表格卡片 `overflow:hidden` 裁掉）。
+ */
+function openTagPopover() {
+  const el = moreRef.value;
+  if (!el) {
+    popoverOpen.value = true;
+    return;
+  }
+  const rect = el.getBoundingClientRect();
+  popoverStyle.value = {
+    top: `${String(rect.top - 8)}px`,
+    left: `${String(rect.left + rect.width / 2)}px`,
+  };
+  popoverOpen.value = true;
+}
+
+/** 关闭 +N 隐藏标签的悬浮 popover。 */
+function closeTagPopover() {
+  popoverOpen.value = false;
+}
 </script>
 
 <template>
@@ -132,6 +199,59 @@ const groupLabel = computed(() =>
       <div class="lead-row__group">
         <Chip tone="neutral">{{ groupLabel }}</Chip>
       </div>
+    </td>
+
+    <!-- 标签 -->
+    <td class="lead-row__hide-md">
+      <div v-if="lead.tags && lead.tags.length > 0" class="lead-row__tags">
+        <Chip
+          v-for="item in visibleTags"
+          :key="item.tag"
+          :tone="item.tone"
+          size="micro"
+          variant="tag"
+          :dot="item.dot"
+          :title="item.tag"
+          class="lead-row__tag-chip"
+        >
+          <span class="lead-row__tag-text">{{ item.tag }}</span>
+        </Chip>
+        <span
+          v-if="remainingTagCount > 0"
+          ref="moreRef"
+          class="lead-row__tags-more"
+          tabindex="0"
+          role="button"
+          :aria-label="remainingTagsAriaLabel"
+          @mouseenter="openTagPopover"
+          @mouseleave="closeTagPopover"
+          @focus="openTagPopover"
+          @blur="closeTagPopover"
+        >
+          +{{ remainingTagCount }}
+          <Teleport to="body">
+            <div
+              v-if="popoverOpen"
+              class="lead-row__tags-popover"
+              role="tooltip"
+              :style="popoverStyle"
+            >
+              <Chip
+                v-for="item in hiddenTags"
+                :key="item.tag"
+                :tone="item.tone"
+                size="micro"
+                variant="tag"
+                :dot="item.dot"
+                class="lead-row__tags-popover-chip"
+              >
+                <span class="lead-row__tag-text">{{ item.tag }}</span>
+              </Chip>
+            </div>
+          </Teleport>
+        </span>
+      </div>
+      <span v-else class="lead-row__na">—</span>
     </td>
 
     <!-- 跟进安排 -->
@@ -276,6 +396,39 @@ const groupLabel = computed(() =>
   color: var(--color-text-2);
 }
 
+.lead-row__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+}
+
+.lead-row__tag-chip {
+  max-width: 96px;
+}
+
+.lead-row__tag-text {
+  display: inline-block;
+  max-width: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
+}
+
+.lead-row__tags-more {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+  font-weight: var(--font-weight-semibold);
+  cursor: default;
+}
+
+.lead-row__tags-more:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 1px;
+  border-radius: var(--radius-sm);
+}
+
 .lead-row__na {
   color: var(--color-text-3);
 }
@@ -290,5 +443,42 @@ const groupLabel = computed(() =>
   .lead-row__hide-lg {
     display: none;
   }
+}
+</style>
+
+<style>
+/**
+ * Teleport 到 body 的标签 popover：必须用非 scoped 样式，
+ * 否则 scoped 选择器无法命中根级渲染节点。
+ */
+.lead-row__tags-popover {
+  position: fixed;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  max-width: 240px;
+  padding: 8px;
+  transform: translate(-50%, -100%);
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border-1);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  z-index: 1000;
+  white-space: normal;
+  pointer-events: none;
+}
+
+.lead-row__tags-popover-chip {
+  max-width: 220px;
+}
+
+.lead-row__tags-popover .lead-row__tag-text {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: bottom;
 }
 </style>

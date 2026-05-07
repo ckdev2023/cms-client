@@ -120,6 +120,7 @@ export function leadRow(overrides?: Record<string, unknown>) {
     lost_reason: null,
     converted_customer_id: null,
     converted_case_id: null,
+    tags: [],
     created_at: NOW,
     updated_at: NOW,
     ...overrides,

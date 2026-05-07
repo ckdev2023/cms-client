@@ -256,10 +256,6 @@ export interface ConversationDetail {
   /**
    *
    */
-  messages: MessageItem[];
-  /**
-   *
-   */
   unreadCountUser: number;
   /**
    *

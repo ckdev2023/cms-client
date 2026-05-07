@@ -227,6 +227,60 @@ void describe("ConversationsAdminController — optUuid import", () => {
   });
 });
 
+// ── list response includes join fields (R3-E-1) ──
+
+void describe("ConversationsAdminController — list response join fields (R3-E-1)", () => {
+  void test("list response contains linkedEntity and ownerLabel", async () => {
+    const sampleItem = {
+      id: "conv-001",
+      channel: "web",
+      preferredLanguage: "zh",
+      status: "open",
+      ownerUserId: "00000000-0000-4000-8000-00000000000b",
+      ownerLabel: "田中太郎",
+      ownerDisplayName: "田中太郎",
+      leadName: "張三",
+      customerName: null,
+      appUserName: "AppUser 張三",
+      linkedEntity: {
+        id: "00000000-0000-4000-8000-1ead00000001",
+        label: "張三",
+        type: "lead",
+      },
+      lastMessagePreview: "",
+      lastMessageAt: "2026-04-27T00:00:00.000Z",
+      unreadCountUser: 0,
+      unreadCountStaffTenant: 1,
+      unreadCountStaffOwner: 0,
+      createdAt: "2026-04-27T00:00:00.000Z",
+      updatedAt: "2026-04-27T00:00:00.000Z",
+    };
+
+    const service = stubService({
+      list: () => Promise.resolve({ items: [sampleItem], total: 1 }),
+    });
+    const controller = new ConversationsAdminController(service);
+    const result = (await controller.list(makeReq() as never, {})) as {
+      items: Record<string, unknown>[];
+      total: number;
+    };
+
+    assert.equal(result.total, 1);
+    assert.equal(result.items.length, 1);
+    const item = result.items[0];
+    assert.equal(item.ownerLabel, "田中太郎");
+    assert.equal(item.appUserName, "AppUser 張三");
+    assert.ok(item.linkedEntity);
+    const linked = item.linkedEntity as {
+      id: string;
+      label: string;
+      type: string;
+    };
+    assert.equal(linked.type, "lead");
+    assert.equal(linked.label, "張三");
+  });
+});
+
 // ── R2-D-1: assign body ownerUserId UUID validation ──
 
 void describe("ConversationsAdminController — assign body UUID validation (R2-D-1)", () => {

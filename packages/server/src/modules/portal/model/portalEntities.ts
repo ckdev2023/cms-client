@@ -56,10 +56,10 @@ export type Lead = {
   lostReason: string | null;
   convertedCustomerId: string | null;
   convertedCaseId: string | null;
+  tags: string[];
   createdAt: string;
   updatedAt: string;
 };
-
 /** Conversation 核心对象（会話）。 */
 export type Conversation = {
   id: string;
@@ -97,7 +97,6 @@ export type Message = {
   visibleScope: string;
   createdAt: string;
 };
-
 /** UserDocument 核心对象（用户上传文件）。 */
 export type UserDocument = {
   id: string;
@@ -111,7 +110,6 @@ export type UserDocument = {
   status: string;
   uploadedAt: string;
 };
-
 /** IntakeForm 核心对象（信息采集表单）。 */
 export type IntakeForm = {
   id: string;
@@ -124,7 +122,6 @@ export type IntakeForm = {
   createdAt: string;
   updatedAt: string;
 };
-
 /** 数据库查询返回的 AppUser 行类型。 */
 export type AppUserQueryRow = {
   id: string;
@@ -136,7 +133,6 @@ export type AppUserQueryRow = {
   created_at: unknown;
   updated_at: unknown;
 };
-
 /**
  * 数据库查询返回的 Lead 行类型。
  *
@@ -169,6 +165,7 @@ export type LeadQueryRow = {
   lost_reason?: string | null;
   converted_customer_id?: string | null;
   converted_case_id?: string | null;
+  tags?: string[] | null;
   created_at: unknown;
   updated_at: unknown;
 };
@@ -192,7 +189,6 @@ export type ConversationQueryRow = {
   created_at: unknown;
   updated_at: unknown;
 };
-
 /** 数据库查询返回的 Message 行类型。 */
 export type MessageQueryRow = {
   id: string;
@@ -210,7 +206,6 @@ export type MessageQueryRow = {
   visible_scope?: string;
   created_at: unknown;
 };
-
 /** 数据库查询返回的 UserDocument 行类型。 */
 export type UserDocumentQueryRow = {
   id: string;
@@ -224,7 +219,6 @@ export type UserDocumentQueryRow = {
   status: string;
   uploaded_at: unknown;
 };
-
 /** 数据库查询返回的 IntakeForm 行类型。 */
 export type IntakeFormQueryRow = {
   id: string;
@@ -237,7 +231,6 @@ export type IntakeFormQueryRow = {
   created_at: unknown;
   updated_at: unknown;
 };
-
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value === "string") return value;
@@ -303,6 +296,11 @@ function mapLeadIdentityFields(
   };
 }
 
+function parseStringArray(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v) => typeof v === "string");
+  return [];
+}
+
 function mapLeadLifecycleFields(
   r: LeadQueryRow,
 ): Pick<
@@ -314,6 +312,7 @@ function mapLeadLifecycleFields(
   | "lostReason"
   | "convertedCustomerId"
   | "convertedCaseId"
+  | "tags"
 > {
   return {
     nextAction: toNullableString(r.next_action),
@@ -323,6 +322,7 @@ function mapLeadLifecycleFields(
     lostReason: toNullableString(r.lost_reason),
     convertedCustomerId: toNullableString(r.converted_customer_id),
     convertedCaseId: toNullableString(r.converted_case_id),
+    tags: parseStringArray(r.tags),
   };
 }
 

@@ -269,14 +269,22 @@ export interface LeadLogEntry {
 export interface LeadBasicInfo {
   /** */
   id: string;
+  /**
+   * 业务线索编号（如 `LEAD-202605-0002`）。
+   *
+   * 早期数据或 fixture 缺失时为空字符串，UI 回退到 `id` 渲染。
+   */
+  leadNo: string;
   /** */
   name: string;
   /** */
   phone: string;
   /** */
   email: string;
-  /** */
+  /** 业务来源渠道（对应 dropdown 值，如 `"web"` / `"referral"`）。 */
   source: string;
+  /** 系统创建来源（`"admin"` / `"app_user"` / `"portal"`），仅只读展示。 */
+  createdVia: string;
   /** */
   referrer: string;
   /** */

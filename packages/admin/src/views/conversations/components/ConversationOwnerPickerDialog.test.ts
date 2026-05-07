@@ -135,4 +135,25 @@ describe("ConversationOwnerPickerDialog", () => {
     expect(options[0].textContent!.trim()).toBe("Suzuki Taro");
     expect(options[1].textContent!.trim()).toBe("Tanaka Hanako");
   });
+
+  it("renders all 7 options when 7 users are registered (R4-D-3)", () => {
+    clearUserAliases();
+    const users = Array.from({ length: 7 }, (_, i) => ({
+      id: `00000000-0000-4000-8000-0000000000${String(i + 1).padStart(2, "0")}`,
+      displayName: `User ${i + 1}`,
+    }));
+    registerUserAliases(users);
+    const wrapper = mount(ConversationOwnerPickerDialog, {
+      global: { plugins: [i18n] },
+      props: {},
+      attachTo: document.body,
+    });
+    cleanup = () => wrapper.unmount();
+
+    const options = qAll(".owner-picker__select option");
+    expect(options.length).toBe(7);
+    for (let i = 0; i < 7; i++) {
+      expect(options[i].textContent!.trim()).toBe(`User ${i + 1}`);
+    }
+  });
 });

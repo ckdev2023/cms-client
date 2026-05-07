@@ -207,3 +207,22 @@
   - _output/57-咨询模块chrome-devtools-mcp走查-第二轮.md（已新建）
   Owner：研发
   状态：待编译
+
+- 时间：2026-05-06
+  来源：R-CONSULT-03 走查 Batch F backlog
+  主题：R3-G-1 followups 响应契约裸数组 + controller UUID 化 audit
+  要点：
+  - **R3-G-1**：`GET /admin/leads/:id/followups` 返回裸数组 `LeadFollowup[]`，与全站列表接口 `{items, total}` 契约不一致。同源问题还包括 `GET /admin/leads/:id/logs`（返回 `LeadLog[]`）。本轮不改（避免破坏现有前端消费方），留待下一个 endpoint 契约拉通 PR 统一处理。
+  - **UUID 化 audit**：扫描 `packages/server/src/modules/core/` 下所有 controller，确认所有 `*UserId / *GroupId / *CustomerId / *CaseId / *LeadId` 类 UUID 参数是否已从 `optStr` 迁移到 `optUuid`。
+    - ✅ `leads.admin.controller.ts`：`ownerUserId` / `groupId` / `customerId` 已全部 `optUuid`（R3-A-1 / R2-A-1 已修复）
+    - ✅ `conversations.admin.controller.ts`：`ownerUserId` / `leadId` / `customerId` / `caseId` / `appUserId` 已全部 `optUuid`
+    - ✅ `cases` controllers：无 `optStr` 用于 UUID 字段
+    - ✅ `customers` controllers：无 `optStr` 用于 UUID 字段
+    - ✅ `billing` controllers：无 `optStr` 用于 UUID 字段
+    - ✅ `messages.admin.controller.ts`：`optStr` 仅用于 `kind` / `visibleScope`（非 UUID），无残留
+    - **结论**：截至 2026-05-06，全部 controller 的 UUID 类参数已迁移到 `optUuid`，无遗留风险。
+  需要编译到：
+  - P0 backlog（endpoint 契约拉通 PR：followups / logs 裸数组→ `{items, total}`）
+  - 本条 audit 结论可用于后续 UUID 守门 lint 规则设计
+  Owner：研发
+  状态：已编译（audit 已完成，R3-G-1 修复留下一轮）

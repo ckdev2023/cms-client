@@ -4,11 +4,16 @@ import { createPgPool } from "../infra/db/createPgPool";
 import { readLocalAdminBootstrapInput } from "../modules/core/auth/localAdminBootstrap";
 import { BMV_REQUIREMENT_BLUEPRINT } from "../modules/core/cases/bmvTemplateConfig";
 import {
+  SEED_LEAD_PORTAL_ID,
   seedConversationAppUser,
   seedConversationLead,
   seedConversationMessages,
   seedConversations,
 } from "./seedDevConversations";
+import {
+  DOC_TEMPLATE_SEEDS,
+  seedDocumentTemplates as seedDocumentTemplatesImpl,
+} from "./seedDevDocTemplates";
 
 const SEED_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const SEED_USER_ID = "00000000-0000-4000-8000-000000000011";
@@ -31,20 +36,6 @@ const TMPL_RELEASE_DOC_CHECKLIST_ID = "00000000-0000-4000-a000-000000000501";
 const DOC_FILE_ID = "00000000-0000-4000-a000-000000000200";
 const DOC_ASSET_ID = "00000000-0000-4000-a000-000000000300";
 const DOC_REF_ID = "00000000-0000-4000-a000-000000000400";
-
-const DOC_TPL_FAMILY_STAY_1 = "00000000-0000-4000-a000-000000000600";
-const DOC_TPL_FAMILY_STAY_2 = "00000000-0000-4000-a000-000000000601";
-const DOC_TPL_FAMILY_STAY_3 = "00000000-0000-4000-a000-000000000602";
-const DOC_TPL_ENGINEER_1 = "00000000-0000-4000-a000-000000000610";
-const DOC_TPL_ENGINEER_2 = "00000000-0000-4000-a000-000000000611";
-const DOC_TPL_ENGINEER_3 = "00000000-0000-4000-a000-000000000612";
-
-const DOC_TPL_BMV_PLAN_1 = "00000000-0000-4000-a000-000000000620";
-const DOC_TPL_BMV_PLAN_2 = "00000000-0000-4000-a000-000000000621";
-const DOC_TPL_BMV_PLAN_3 = "00000000-0000-4000-a000-000000000622";
-const DOC_TPL_BMV_OVERVIEW_1 = "00000000-0000-4000-a000-000000000623";
-const DOC_TPL_BMV_OVERVIEW_2 = "00000000-0000-4000-a000-000000000624";
-const DOC_TPL_BMV_OVERVIEW_3 = "00000000-0000-4000-a000-000000000625";
 
 async function seedCustomer(client: PoolClient) {
   await client.query(
@@ -262,111 +253,50 @@ async function seedDocumentChecklistTemplate(client: PoolClient) {
   );
 }
 
-type DocTemplateSeed = {
-  id: string;
-  caseType: string;
-  templateName: string;
-  docType: string;
-};
-
-const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
-  // 家族滞在 — 三种 caseTypeCode 别名
-  {
-    id: DOC_TPL_FAMILY_STAY_1,
-    caseType: "family_stay",
-    templateName: "申請理由書",
-    docType: "reason_statement",
-  },
-  {
-    id: DOC_TPL_FAMILY_STAY_2,
-    caseType: "family",
-    templateName: "申請理由書",
-    docType: "reason_statement",
-  },
-  {
-    id: DOC_TPL_FAMILY_STAY_3,
-    caseType: "dependent_visa",
-    templateName: "申請理由書",
-    docType: "reason_statement",
-  },
-  // 技人国 — 三種 caseTypeCode 別名
-  {
-    id: DOC_TPL_ENGINEER_1,
-    caseType: "engineer_humanities_intl_visa",
-    templateName: "雇用契約書サマリ",
-    docType: "employment_summary",
-  },
-  {
-    id: DOC_TPL_ENGINEER_2,
-    caseType: "hum",
-    templateName: "雇用契約書サマリ",
-    docType: "employment_summary",
-  },
-  {
-    id: DOC_TPL_ENGINEER_3,
-    caseType: "engineer_visa",
-    templateName: "雇用契約書サマリ",
-    docType: "employment_summary",
-  },
-  // 経営管理 — 三種 caseTypeCode 別名 × 事業計画書 + 会社概要
-  {
-    id: DOC_TPL_BMV_PLAN_1,
-    caseType: "biz_mgmt",
-    templateName: "事業計画書",
-    docType: "business_plan",
-  },
-  {
-    id: DOC_TPL_BMV_PLAN_2,
-    caseType: "biz_mgmt_4m",
-    templateName: "事業計画書",
-    docType: "business_plan",
-  },
-  {
-    id: DOC_TPL_BMV_PLAN_3,
-    caseType: "biz_mgmt_cert_4m",
-    templateName: "事業計画書",
-    docType: "business_plan",
-  },
-  {
-    id: DOC_TPL_BMV_OVERVIEW_1,
-    caseType: "biz_mgmt",
-    templateName: "会社概要",
-    docType: "company_overview",
-  },
-  {
-    id: DOC_TPL_BMV_OVERVIEW_2,
-    caseType: "biz_mgmt_4m",
-    templateName: "会社概要",
-    docType: "company_overview",
-  },
-  {
-    id: DOC_TPL_BMV_OVERVIEW_3,
-    caseType: "biz_mgmt_cert_4m",
-    templateName: "会社概要",
-    docType: "company_overview",
-  },
-];
-
 async function seedDocumentTemplates(client: PoolClient) {
-  for (const tpl of DOC_TEMPLATE_SEEDS) {
-    await client.query(
-      `INSERT INTO document_templates (
-         id, org_id, template_name, case_type, doc_type, language,
-         version_no, content_body, variables_schema, active_flag,
-         created_by, updated_by
-       )
-       VALUES ($1,$2,$3,$4,$5,'ja',1,'','{}'::jsonb,true,$6,$6)
-       ON CONFLICT (id) DO NOTHING`,
-      [
-        tpl.id,
-        SEED_ORG_ID,
-        tpl.templateName,
-        tpl.caseType,
-        tpl.docType,
-        SEED_USER_ID,
-      ],
-    );
-  }
+  await seedDocumentTemplatesImpl(client, SEED_ORG_ID, SEED_USER_ID);
+}
+
+/**
+ * Walkthrough / QA 测试 tag 模式：以 `R<数字>-`、`R<数字>_`、`test-`、`mcp-`、
+ * `tmp-` 等开头（大小写不敏感）。这些字面量是 chrome-devtools-mcp 走查
+ * 灌入 demo 库的内部串，不应出现在运营视角。
+ *
+ * SQL 同义模式（用 PostgreSQL POSIX `~*`）：
+ *   `^(R[0-9]+|test|mcp|tmp)[-_]`
+ */
+export const WALKTHROUGH_TAG_PATTERN = /^(R\d+|test|mcp|tmp)[-_]/i;
+
+/**
+ * 过滤掉 walkthrough / QA 测试模式 tag，保留所有真实业务 tag。
+ *
+ * 与 `seedTagsCleanup` 的 SQL 子句保持语义一致，便于本地测试覆盖与
+ * SQL 端行为对齐。
+ *
+ * @param tags - 原始 tag 数组
+ * @returns 已剥离 walkthrough 模式后的 tag 数组（保持原顺序、不去重）
+ */
+export function sanitizeWalkthroughTags(tags: readonly string[]): string[] {
+  return tags.filter((t) => !WALKTHROUGH_TAG_PATTERN.test(t));
+}
+
+async function seedTagsCleanup(client: PoolClient) {
+  await client.query(`
+    UPDATE leads
+    SET tags = array(
+      SELECT t FROM unnest(tags) t
+      WHERE t !~* '^(R[0-9]+|test|mcp|tmp)[-_]'
+    )
+    WHERE EXISTS (
+      SELECT 1 FROM unnest(tags) t
+      WHERE t ~* '^(R[0-9]+|test|mcp|tmp)[-_]'
+    )
+  `);
+
+  await client.query(`UPDATE leads SET tags = $1::text[] WHERE id = $2`, [
+    ["VIP", "優先", "面談済"],
+    SEED_LEAD_PORTAL_ID,
+  ]);
 }
 
 async function seedCrossCaseLink(client: PoolClient) {
@@ -408,6 +338,7 @@ export function buildSeedSteps(): SeedStep[] {
     ["conversationLead", seedConversationLead],
     ["conversations", seedConversations],
     ["conversationMessages", seedConversationMessages],
+    ["tagsCleanup", seedTagsCleanup],
   ];
 }
 

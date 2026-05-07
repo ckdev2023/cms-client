@@ -1,4 +1,5 @@
 import { ref, reactive, computed, toRefs } from "vue";
+import type { Ref } from "vue";
 import type {
   LeadFiltersState,
   LeadScope,
@@ -81,6 +82,7 @@ function matchesDateRange(
 function buildListParams(
   scopeVal: LeadScope,
   f: Omit<LeadFiltersState, "scope">,
+  tagsVal: string[],
   pageVal: number,
   limitVal: number,
 ): LeadListParams {
@@ -91,6 +93,7 @@ function buildListParams(
     ownerUserId: f.owner || undefined,
     groupId: f.group || undefined,
     businessType: f.businessType || undefined,
+    tags: tagsVal.length > 0 ? tagsVal : undefined,
     dateFrom: f.dateFrom || undefined,
     dateTo: f.dateTo || undefined,
     page: pageVal,
@@ -107,13 +110,17 @@ function buildListParams(
 export function useLeadFilters(deps: UseLeadFiltersDeps) {
   const scope = ref<LeadScope>("mine");
   const f = reactive({ ...BLANK_FILTERS });
+  const tagsFilter: Ref<string[]> = ref([]);
   const page = ref(1);
   const limit = ref(20);
 
-  const isFilterActive = computed(() => Object.values(f).some((v) => v !== ""));
+  const isFilterActive = computed(
+    () => Object.values(f).some((v) => v !== "") || tagsFilter.value.length > 0,
+  );
 
   function resetFilters() {
     Object.assign(f, { ...BLANK_FILTERS });
+    tagsFilter.value = [];
     page.value = 1;
   }
 
@@ -129,26 +136,30 @@ export function useLeadFilters(deps: UseLeadFiltersDeps) {
       (l) =>
         (!f.search || matchesSearch(l, f.search)) &&
         matchesDropdowns(l, dd) &&
-        matchesDateRange(l, f.dateFrom, f.dateTo),
+        matchesDateRange(l, f.dateFrom, f.dateTo) &&
+        (tagsFilter.value.length === 0 ||
+          tagsFilter.value.every((t) => l.tags?.includes(t))),
     );
   }
 
-  const refs = toRefs(f);
+  const r = toRefs(f);
+  const toListParams = () =>
+    buildListParams(scope.value, f, tagsFilter.value, page.value, limit.value);
   return {
     scope,
-    search: refs.search,
-    statusFilter: refs.status,
-    ownerFilter: refs.owner,
-    groupFilter: refs.group,
-    businessTypeFilter: refs.businessType,
-    dateFrom: refs.dateFrom,
-    dateTo: refs.dateTo,
+    search: r.search,
+    statusFilter: r.status,
+    ownerFilter: r.owner,
+    groupFilter: r.group,
+    businessTypeFilter: r.businessType,
+    tagsFilter,
+    dateFrom: r.dateFrom,
+    dateTo: r.dateTo,
     page,
     limit,
     isFilterActive,
     resetFilters,
     applyFilters,
-    toListParams: () =>
-      buildListParams(scope.value, f, page.value, limit.value),
+    toListParams,
   };
 }

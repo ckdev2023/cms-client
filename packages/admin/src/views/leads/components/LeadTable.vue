@@ -42,6 +42,7 @@ const columns: ResponsiveColumn[] = [
   { key: "contact", label: t("leads.list.columns.contact"), hideAt: "md" },
   { key: "status", label: t("leads.list.columns.status") },
   { key: "owner", label: t("leads.list.columns.owner"), hideAt: "md" },
+  { key: "tags", label: t("leads.list.columns.tags"), hideAt: "md" },
   { key: "followUp", label: t("leads.list.columns.followUp"), hideAt: "lg" },
   { key: "updated", label: t("leads.list.columns.updated"), hideAt: "lg" },
 ];
@@ -81,6 +82,9 @@ const columns: ResponsiveColumn[] = [
           <th class="lead-table__hide-md lead-table__th-owner">
             {{ t("leads.list.columns.owner") }}
           </th>
+          <th class="lead-table__hide-md lead-table__th-tags">
+            {{ t("leads.list.columns.tags") }}
+          </th>
           <th class="lead-table__hide-lg lead-table__th-followup">
             {{ t("leads.list.columns.followUp") }}
           </th>
@@ -105,7 +109,7 @@ const columns: ResponsiveColumn[] = [
               />
             </label>
           </td>
-          <td colspan="5" class="lead-table__draft-cell">
+          <td colspan="6" class="lead-table__draft-cell">
             <span class="lead-table__draft-chip">
               {{ t("leads.list.draft.rowLabel") }}
             </span>
@@ -257,6 +261,10 @@ const columns: ResponsiveColumn[] = [
 
 .lead-table__th-owner {
   width: 140px;
+}
+
+.lead-table__th-tags {
+  width: 160px;
 }
 
 .lead-table__th-followup {

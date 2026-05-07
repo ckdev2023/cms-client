@@ -13,14 +13,22 @@ import type {
 import { mapConversationRow } from "../../portal/model/portalEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { extractCustomerName } from "../customers/customerName";
 import { TimelineService } from "../timeline/timeline.service";
 import { buildListWhere } from "./conversations.admin.query";
 import type {
+  AdminConversationListItem,
+  AdminConversationListRow,
   ConversationAssignInput,
   ConversationDetailAggregate,
   ConversationListInput,
 } from "./conversations.admin.types";
-import { CONV_ADMIN_COLS } from "./conversations.admin.types";
+import {
+  CONV_ADMIN_COLS,
+  CONV_ADMIN_COLS_ALIASED,
+  CONV_LIST_JOIN_COLS,
+  CONV_LIST_JOINS,
+} from "./conversations.admin.types";
 
 /**
  * Admin 側会話管理サービス。
@@ -38,7 +46,7 @@ export class ConversationsAdminService {
   ) {}
 
   /**
-   * 会話一覧を取得する。
+   * 会話一覧を取得する（leads/customers/users/app_users を JOIN して表示用フィールドを付与）。
    * @param ctx リクエストコンテキスト
    * @param input 一覧検索条件
    * @returns 会話一覧と総件数
@@ -46,7 +54,7 @@ export class ConversationsAdminService {
   async list(
     ctx: RequestContext,
     input: ConversationListInput,
-  ): Promise<{ items: Conversation[]; total: number }> {
+  ): Promise<{ items: AdminConversationListItem[]; total: number }> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const limit = Math.min(Math.max(input.limit ?? 50, 1), 200);
     const page = Math.max(input.page ?? 1, 1);
@@ -56,7 +64,7 @@ export class ConversationsAdminService {
     buildListWhere(input, where, params);
     const wc = where.length > 0 ? `where ${where.join(" and ")}` : "";
     const countRes = await tenantDb.query<{ count: string }>(
-      `select count(*)::text as count from conversations ${wc}`,
+      `select count(*)::text as count from conversations c ${CONV_LIST_JOINS} ${wc}`,
       params,
     );
     const total = parseInt(countRes.rows[0]?.count ?? "0", 10);
@@ -64,11 +72,11 @@ export class ConversationsAdminService {
     const li = params.length;
     params.push(offset);
     const oi = params.length;
-    const result = await tenantDb.query<ConversationQueryRow>(
-      `select ${CONV_ADMIN_COLS} from conversations ${wc} order by last_message_at desc nulls last, created_at desc, id desc limit $${String(li)} offset $${String(oi)}`,
+    const result = await tenantDb.query<AdminConversationListRow>(
+      `select ${CONV_ADMIN_COLS_ALIASED}, ${CONV_LIST_JOIN_COLS} from conversations c ${CONV_LIST_JOINS} ${wc} order by c.last_message_at desc nulls last, c.created_at desc, c.id desc limit $${String(li)} offset $${String(oi)}`,
       params,
     );
-    return { items: result.rows.map(mapConversationRow), total };
+    return { items: result.rows.map(mapAdminConversationListRow), total };
   }
 
   /**
@@ -293,13 +301,115 @@ export class ConversationsAdminService {
   }
 }
 
-function extractCustomerName(baseProfile: unknown): string | null {
-  if (!baseProfile || typeof baseProfile !== "object") return null;
-  const bp = baseProfile as Record<string, unknown>;
-  if (typeof bp.name === "string") return bp.name;
-  if (typeof bp.lastName === "string") {
-    const first = typeof bp.firstName === "string" ? bp.firstName : "";
-    return `${bp.lastName} ${first}`.trim();
+function toNullableString(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  return typeof v === "string" ? v : null;
+}
+
+function toTimestampStringOrNull(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string") return value;
+  if (value instanceof Date) return value.toISOString();
+  return null;
+}
+
+function parseNullableNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const n = Number(value);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function requireTimestamp(value: unknown, field: string): string {
+  const s = toTimestampStringOrNull(value);
+  if (!s) throw new Error(`Invalid timestamp: ${field}`);
+  return s;
+}
+
+function deriveLinkedEntity(
+  row: AdminConversationListRow,
+  customerName: string | null,
+): AdminConversationListItem["linkedEntity"] {
+  if (row.case_id) {
+    return { id: row.case_id, label: "", type: "case" };
+  }
+  if (row.customer_id) {
+    return {
+      id: row.customer_id,
+      label: customerName ?? "",
+      type: "customer",
+    };
+  }
+  if (row.lead_id) {
+    return {
+      id: row.lead_id,
+      label: toNullableString(row.lead_name) ?? "",
+      type: "lead",
+    };
   }
   return null;
+}
+
+/**
+ * Admin 一覧 JOIN 行→ AdminConversationListItem へ変換。
+ * @param r JOIN 結果行
+ * @returns 変換済みリストアイテム
+ */
+function mapAdminConversationListRow(
+  r: AdminConversationListRow,
+): AdminConversationListItem {
+  const customerName = extractCustomerName(r.customer_base_profile);
+  const ownerName = toNullableString(r.owner_display_name);
+  return {
+    id: r.id,
+    leadId: r.lead_id,
+    appUserId: r.app_user_id,
+    orgId: r.org_id,
+    channel: r.channel,
+    preferredLanguage: r.preferred_language,
+    status: r.status,
+    ownerUserId: toNullableString(r.owner_user_id),
+    lastMessageAt: toTimestampStringOrNull(r.last_message_at),
+    unreadCountStaffTenant: parseNullableNumber(r.unread_count_staff_tenant),
+    unreadCountStaffOwner: parseNullableNumber(r.unread_count_staff_owner),
+    unreadCountUser: parseNullableNumber(r.unread_count_user),
+    customerId: toNullableString(r.customer_id),
+    caseId: toNullableString(r.case_id),
+    createdAt: requireTimestamp(r.created_at, "created_at"),
+    updatedAt: requireTimestamp(r.updated_at, "updated_at"),
+    leadName: toNullableString(r.lead_name),
+    customerName,
+    ownerDisplayName: ownerName,
+    appUserName: toNullableString(r.app_user_name) ?? "",
+    linkedEntity: deriveLinkedEntity(r, customerName),
+    ownerLabel: ownerName ?? "",
+    lastMessagePreview: buildLastMessagePreview(
+      r.lm_original_text,
+      r.lm_sender_role,
+    ),
+  };
+}
+
+const PREVIEW_MAX_CHARS = 60;
+
+function segmentGraphemes(text: string): string[] {
+  const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+  return Array.from(seg.segment(text), (s) => s.segment);
+}
+
+function buildLastMessagePreview(
+  originalText: string | null | undefined,
+  senderRole: string | null | undefined,
+): string {
+  if (!originalText) return "";
+  const cleaned = originalText.replace(/[\r\n]+/g, " ").trim();
+  const graphemes = segmentGraphemes(cleaned);
+  const truncated =
+    graphemes.length > PREVIEW_MAX_CHARS
+      ? graphemes.slice(0, PREVIEW_MAX_CHARS).join("") + "…"
+      : cleaned;
+  const prefix = senderRole === "app_user" ? "客户：" : "事務所：";
+  return `${prefix}${truncated}`;
 }

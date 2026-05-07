@@ -15,6 +15,7 @@ const leadsJaJP = {
       ownerAll: "すべての担当者",
       groupAll: "すべてのグループ",
       businessTypeAll: "すべての業務タイプ",
+      tagsPlaceholder: "タグで絞り込み",
       dateLabel: "フォローアップ",
       reset: "リセット",
     },
@@ -26,6 +27,7 @@ const leadsJaJP = {
       contact: "連絡先 / 相談内容",
       status: "ステータス",
       owner: "担当 / グループ",
+      tags: "タグ",
       followUp: "フォローアップ",
       updated: "最終更新",
     },
@@ -195,6 +197,7 @@ const leadsJaJP = {
         language: "使用言語",
         note: "メモ",
       },
+      createdViaLabel: "作成元：{via}",
     },
     conversationsTab: {
       empty: "このリードに関連する会話はまだありません。",

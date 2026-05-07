@@ -267,7 +267,13 @@ function hashStringToIndex(value: string, modulo: number): number {
   return modulo > 0 ? hash % modulo : 0;
 }
 
-function deriveInitialsFromName(name: string): string {
+/**
+ * 从姓名中提取首字母缩写（最多两字符）。
+ *
+ * @param name - 完整姓名
+ * @returns 最多两字符的首字母缩写
+ */
+export function deriveInitialsFromName(name: string): string {
   const trimmed = name.trim();
   if (!trimmed) return "";
   const words = trimmed.split(/\s+/).filter(Boolean);

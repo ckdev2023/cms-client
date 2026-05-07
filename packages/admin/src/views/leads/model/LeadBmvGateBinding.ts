@@ -16,6 +16,10 @@ import type { ServerBlocker } from "./LeadRepositorySupport";
 /** 服务端 BMV 建案门禁顶层错误码（对齐 server `CASE_BMV_GATE_ERROR_CODE`）。 */
 export const LEAD_BMV_GATE_ERROR_CODE = "CASE_BMV_GATE_BLOCKED" as const;
 
+/** 服务端 convert-case 前置条件错误码：缺少 convertedCustomerId。 */
+export const LEAD_CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE =
+  "CONVERT_CASE_REQUIRES_CUSTOMER" as const;
+
 /** 服务端 BMV 门禁阻断码（对齐 server `BMV_CASE_CREATION_GATE_CODES`）。 */
 export const LEAD_BMV_GATE_BLOCKER_CODES = {
   QUESTIONNAIRE_NOT_RETURNED: "BMV_QUESTIONNAIRE_NOT_RETURNED",
@@ -38,6 +42,7 @@ const BLOCKER_I18N_MAP: Record<string, string> = {
   [LEAD_BMV_GATE_BLOCKER_CODES.NOT_SIGNED]: "leads.errors.bmvGate.notSigned",
   [LEAD_BMV_GATE_BLOCKER_CODES.INTAKE_NOT_READY]:
     "leads.errors.bmvGate.intakeNotReady",
+  MISSING_CONVERTED_CUSTOMER: "leads.errors.bmvGate.missingConvertedCustomer",
 };
 
 const FALLBACK_BLOCKER_I18N_KEY = "leads.errors.bmvGate.unknown";
@@ -51,7 +56,10 @@ const FALLBACK_BLOCKER_I18N_KEY = "leads.errors.bmvGate.unknown";
 export function isLeadBmvGateError(
   serverErrorCode: string | undefined,
 ): boolean {
-  return serverErrorCode === LEAD_BMV_GATE_ERROR_CODE;
+  return (
+    serverErrorCode === LEAD_BMV_GATE_ERROR_CODE ||
+    serverErrorCode === LEAD_CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE
+  );
 }
 
 /**
