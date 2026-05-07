@@ -37,6 +37,28 @@ const showActionCards = computed(
   () =>
     !hasConvertedCustomer.value && !hasConvertedCase.value && !props.readonly,
 );
+
+const convertCaseDisabled = computed(
+  () =>
+    props.buttonStates.convertCase === "disabled" ||
+    props.buttonStates.convertCase === "hidden",
+);
+const convertCustomerDisabled = computed(
+  () =>
+    props.buttonStates.convertCustomer === "disabled" ||
+    props.buttonStates.convertCustomer === "hidden",
+);
+
+const convertCaseDisabledHint = computed(() =>
+  convertCaseDisabled.value
+    ? t("leads.detail.conversionTab.convertCaseDisabledHint")
+    : undefined,
+);
+const convertCustomerDisabledHint = computed(() =>
+  convertCustomerDisabled.value
+    ? t("leads.detail.conversionTab.convertCustomerDisabledHint")
+    : undefined,
+);
 </script>
 
 <template>
@@ -161,10 +183,10 @@ const showActionCards = computed(
             variant="filled"
             tone="primary"
             size="sm"
-            :disabled="
-              buttonStates.convertCase === 'disabled' ||
-              buttonStates.convertCase === 'hidden'
-            "
+            :disabled="convertCaseDisabled"
+            :title="convertCaseDisabledHint"
+            :aria-label="convertCaseDisabledHint"
+            :data-disabled-reason="convertCaseDisabledHint"
             @click="$emit('convertCase')"
           >
             {{ t("leads.detail.conversionTab.convertCaseTitle") }}
@@ -203,10 +225,10 @@ const showActionCards = computed(
           </div>
           <Button
             size="sm"
-            :disabled="
-              buttonStates.convertCustomer === 'disabled' ||
-              buttonStates.convertCustomer === 'hidden'
-            "
+            :disabled="convertCustomerDisabled"
+            :title="convertCustomerDisabledHint"
+            :aria-label="convertCustomerDisabledHint"
+            :data-disabled-reason="convertCustomerDisabledHint"
             @click="$emit('convertCustomer')"
           >
             {{ t("leads.detail.conversionTab.convertCustomerTitle") }}

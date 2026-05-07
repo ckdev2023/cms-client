@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildLeadListSearchParams } from "./LeadAdapterWriteBuilders";
+import {
+  buildLeadDedupParams,
+  buildLeadListSearchParams,
+} from "./LeadAdapterWriteBuilders";
 
 describe("buildLeadListSearchParams — tags multi-value (R4-A-1)", () => {
   it("appends multiple tags= params for each tag", () => {
@@ -37,5 +40,41 @@ describe("buildLeadListSearchParams — tags multi-value (R4-A-1)", () => {
     expect(
       buildLeadListSearchParams({ tags: ["VIP", "  ", ""] }).getAll("tags"),
     ).toEqual(["VIP"]);
+  });
+});
+
+describe("buildLeadDedupParams — excludeLeadId (R-FLOW5-A-4)", () => {
+  it("appends leadId param when provided", () => {
+    const sp = buildLeadDedupParams({
+      phone: "09055556666",
+      email: "r-flow-04@example.com",
+      leadId: "35ed6148-00de-48cf-8924-15c787554b75",
+    });
+    expect(sp.get("leadId")).toBe("35ed6148-00de-48cf-8924-15c787554b75");
+  });
+
+  it("omits leadId param when undefined", () => {
+    const sp = buildLeadDedupParams({ phone: "09055556666" });
+    expect(sp.has("leadId")).toBe(false);
+  });
+
+  it("omits leadId param when empty after trim", () => {
+    const sp = buildLeadDedupParams({ phone: "09055556666", leadId: "   " });
+    expect(sp.has("leadId")).toBe(false);
+  });
+
+  it("trims whitespace from leadId value", () => {
+    const sp = buildLeadDedupParams({
+      phone: "09055556666",
+      leadId: "  abc-123  ",
+    });
+    expect(sp.get("leadId")).toBe("abc-123");
+  });
+
+  it("omits phone/email when undefined while keeping leadId", () => {
+    const sp = buildLeadDedupParams({ leadId: "abc-123" });
+    expect(sp.has("phone")).toBe(false);
+    expect(sp.has("email")).toBe(false);
+    expect(sp.get("leadId")).toBe("abc-123");
   });
 });

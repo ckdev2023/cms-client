@@ -40,7 +40,45 @@ export async function convertCase(
   input: LeadConvertCaseInput,
 ): Promise<{ lead: Lead; caseId: string }> {
   const lead = await deps.getLeadOrThrow(ctx, leadId);
+  const customerId = assertConvertCasePreconditions(lead);
 
+  const isBmv = isBmvCaseTypeCode(input.caseTypeCode);
+  const caseEntity = await deps.casesService.create(ctx, {
+    customerId,
+    caseTypeCode: input.caseTypeCode,
+    ownerUserId: input.ownerUserId,
+    groupId: input.groupId ?? lead.groupId ?? undefined,
+  });
+  const caseId = caseEntity.id;
+  const caseNo = normalizeCaseNo(caseEntity.caseNo);
+
+  const tenantDb = createTenantDb(deps.pool, ctx.orgId, ctx.userId);
+  const result = await tenantDb.query<LeadQueryRow>(
+    `update leads set status = 'converted_case', converted_case_id = $2, updated_at = now() where id = $1 returning ${LEAD_COLS}`,
+    [leadId, caseId],
+  );
+  const row = result.rows.at(0);
+  if (!row) throw new BadRequestException("Failed to update lead");
+
+  if (isBmv) {
+    await initializeBmvProfile(tenantDb, customerId, leadId);
+  }
+  await backfillConversationCustomer(tenantDb, customerId, leadId);
+
+  // R-FLOW5-A-6：caseNo / caseNumber 写入 lead_logs.payload，使日志 Tab
+  // 显示 CASE-... 编号而非 8 位 UUID 前缀；caseNumber 字段保留兼容旧渲染器。
+  await deps.writeAudit(ctx, leadId, "converted_case", {
+    caseId,
+    caseTypeCode: input.caseTypeCode,
+    ownerUserId: input.ownerUserId,
+    isBmv,
+    ...(caseNo ? { caseNo, caseNumber: caseNo } : {}),
+  });
+
+  return { lead: mapLeadRow(row), caseId };
+}
+
+function assertConvertCasePreconditions(lead: Lead): string {
   if (!lead.convertedCustomerId) {
     throw new BadRequestException({
       code: CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE,
@@ -57,41 +95,13 @@ export async function convertCase(
   if (lead.status === "converted_case") {
     throw new BadRequestException("Lead is already converted to a case");
   }
-  const isBmv = isBmvCaseTypeCode(input.caseTypeCode);
-  const caseEntity = await deps.casesService.create(ctx, {
-    customerId: lead.convertedCustomerId,
-    caseTypeCode: input.caseTypeCode,
-    ownerUserId: input.ownerUserId,
-    groupId: input.groupId ?? lead.groupId ?? undefined,
-  });
-  const caseId = caseEntity.id;
+  return lead.convertedCustomerId;
+}
 
-  const tenantDb = createTenantDb(deps.pool, ctx.orgId, ctx.userId);
-
-  const result = await tenantDb.query<LeadQueryRow>(
-    `update leads set status = 'converted_case', converted_case_id = $2, updated_at = now() where id = $1 returning ${LEAD_COLS}`,
-    [leadId, caseId],
-  );
-  const row = result.rows.at(0);
-  if (!row) throw new BadRequestException("Failed to update lead");
-
-  if (isBmv) {
-    await initializeBmvProfile(tenantDb, lead.convertedCustomerId, leadId);
-  }
-  await backfillConversationCustomer(
-    tenantDb,
-    lead.convertedCustomerId,
-    leadId,
-  );
-
-  await deps.writeAudit(ctx, leadId, "converted_case", {
-    caseId,
-    caseTypeCode: input.caseTypeCode,
-    ownerUserId: input.ownerUserId,
-    isBmv,
-  });
-
-  return { lead: mapLeadRow(row), caseId };
+function normalizeCaseNo(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 async function initializeBmvProfile(

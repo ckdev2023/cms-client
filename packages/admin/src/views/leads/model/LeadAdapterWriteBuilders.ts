@@ -285,6 +285,7 @@ export function buildLeadDedupParams(input: LeadDedupParams): URLSearchParams {
   const sp = new URLSearchParams();
   if (input.phone?.trim()) sp.set("phone", input.phone.trim());
   if (input.email?.trim()) sp.set("email", input.email.trim());
+  if (input.leadId?.trim()) sp.set("leadId", input.leadId.trim());
   return sp;
 }
 

@@ -102,7 +102,7 @@ function buildCaseNamesExpr(customerAlias: string): string {
           nullif(trim(coalesce(ca.case_name, '')), ''),
           concat_ws(' · ',
             nullif(trim(coalesce(${customerAlias}.base_profile->>'displayName', ${customerAlias}.base_profile->>'legalName', '')), ''),
-            nullif(trim(coalesce(ca.case_type_label, ca.metadata->>'caseTypeLabel', '')), '')
+            nullif(trim(coalesce(ca.metadata->>'caseTypeLabel', ca.case_type_code, '')), '')
           )
         ) as resolved_name,
         ca.created_at,

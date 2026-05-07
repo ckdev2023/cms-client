@@ -25,6 +25,7 @@ import type {
   LeadConvertCustomerInput,
   LeadConvertCaseInput,
 } from "./LeadAdapter";
+import { buildConvertDedupParams } from "./convertDedupParams";
 import { useLeadMutationActions } from "./useLeadMutationActions";
 import {
   toConvertCaseFailure,
@@ -201,36 +202,6 @@ interface ConvertDedupState {
   prompt: Ref<boolean>;
 }
 
-async function checkDedupForConvert(
-  lead: Ref<LeadDetail | null>,
-  repo: LeadRepository,
-  state: ConvertDedupState,
-): Promise<boolean> {
-  const detail = lead.value;
-  if (!detail) return false;
-  const phone = detail.info.phone?.trim();
-  const email = detail.info.email?.trim();
-  if (!phone && !email) return true;
-
-  state.loading.value = true;
-  try {
-    const r = await repo.dedup({
-      phone: phone || undefined,
-      email: email || undefined,
-    });
-    state.result.value = r;
-    if (r.leads.length > 0 || r.customers.length > 0) {
-      state.prompt.value = true;
-      return false;
-    }
-    return true;
-  } catch {
-    return true;
-  } finally {
-    state.loading.value = false;
-  }
-}
-
 interface ConvertRefs {
   leadId: Ref<string>;
   lead: Ref<LeadDetail | null>;
@@ -242,6 +213,28 @@ interface ConvertRefs {
   repo: LeadRepository;
   fetchDetail: () => Promise<void>;
   dedupState: ConvertDedupState;
+}
+
+async function checkDedupForConvert(refs: ConvertRefs): Promise<boolean> {
+  const detail = refs.lead.value;
+  if (!detail) return false;
+  const params = buildConvertDedupParams(refs.leadId, detail);
+  if (!params) return true;
+  const state = refs.dedupState;
+  state.loading.value = true;
+  try {
+    const r = await refs.repo.dedup(params);
+    state.result.value = r;
+    if (r.leads.length > 0 || r.customers.length > 0) {
+      state.prompt.value = true;
+      return false;
+    }
+    return true;
+  } catch {
+    return true;
+  } finally {
+    state.loading.value = false;
+  }
 }
 
 function writeBackCustomerResult(refs: ConvertRefs, customerId: string): void {
@@ -271,8 +264,7 @@ async function doConvertCustomer(
   if (!id || refs.convertSubmitting.value) return;
   refs.pendingCustomerInput.value = input;
   if (!refs.convertDedupConfirmed.value) {
-    if (!(await checkDedupForConvert(refs.lead, refs.repo, refs.dedupState)))
-      return;
+    if (!(await checkDedupForConvert(refs))) return;
   }
   refs.convertSubmitting.value = true;
   try {

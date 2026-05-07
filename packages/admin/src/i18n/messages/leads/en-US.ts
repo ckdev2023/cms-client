@@ -229,8 +229,12 @@ const leadsEnUS = {
       dedupConfirmed: "Confirmed to continue",
       convertCaseTitle: "Sign & File",
       convertCaseDesc: "Creates a customer record first, then the initial case",
+      convertCaseDisabledHint:
+        "Move the lead status to 'Signed' before starting case filing",
       convertCustomerTitle: "Create Customer Only",
       convertCustomerDesc: "Create the customer record without starting a case",
+      convertCustomerDisabledHint:
+        "Follow up with the lead and confirm its status first",
       recordsTitle: "Generated Records",
       viewCustomer: "View Customer",
       viewCase: "View Case",

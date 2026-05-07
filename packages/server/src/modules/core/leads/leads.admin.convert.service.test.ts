@@ -212,6 +212,154 @@ void describe("LeadsAdminService.convertCustomer", () => {
     );
   });
 
+  void test("R-FLOW5-A-6: writes customerNo into lead_logs.payload (existing customerId path)", async () => {
+    const CUSTOMER_ID = "00000000-0000-4000-8000-c00000000010";
+    const CUSTOMER_NO = "CUS-202605-0010";
+    const pool = makePool((sql, params) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [leadRow({ status: "following" })],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("update leads set converted_customer_id")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "following",
+              converted_customer_id: CUSTOMER_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (
+        sql.includes("base_profile->>'customerNumber'") &&
+        sql.includes("from customers") &&
+        params?.includes(CUSTOMER_ID)
+      ) {
+        return Promise.resolve({
+          rows: [{ customer_no: CUSTOMER_NO }],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const timeline = makeTimeline();
+    await svc(pool, timeline).convertCustomer(makeCtx(), LEAD_ID, {
+      customerId: CUSTOMER_ID,
+      confirmDedup: true,
+    });
+
+    const auditCall = timeline.calls.find(
+      (c) => c.action === "lead.converted_customer",
+    );
+    assert.ok(auditCall, "Must write converted_customer audit");
+    const payload = auditCall.payload as Record<string, unknown>;
+    assert.equal(payload.customerId, CUSTOMER_ID);
+    assert.equal(
+      payload.customerNo,
+      CUSTOMER_NO,
+      "lead_logs.payload must include customerNo for UI link",
+    );
+  });
+
+  void test("R-FLOW5-A-6: writes customerNo into lead_logs.payload (newly created customer path)", async () => {
+    const CUSTOMER_ID = "00000000-0000-4000-8000-c00000000020";
+    const CUSTOMER_NO = "CUS-202605-0020";
+    const customersService = makeCustomersService({
+      create: () =>
+        Promise.resolve({
+          id: CUSTOMER_ID,
+          type: "individual",
+          baseProfile: { customerNumber: CUSTOMER_NO },
+        }),
+    });
+
+    const pool = makePool((sql) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [leadRow({ status: "signed", name: "T", phone: "090" })],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("update leads set converted_customer_id")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "signed",
+              converted_customer_id: CUSTOMER_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const timeline = makeTimeline();
+    await svc(pool, timeline, customersService).convertCustomer(
+      makeCtx(),
+      LEAD_ID,
+      { confirmDedup: true },
+    );
+
+    const auditCall = timeline.calls.find(
+      (c) => c.action === "lead.converted_customer",
+    );
+    assert.ok(auditCall, "Must write converted_customer audit");
+    const payload = auditCall.payload as Record<string, unknown>;
+    assert.equal(payload.customerId, CUSTOMER_ID);
+    assert.equal(
+      payload.customerNo,
+      CUSTOMER_NO,
+      "newly created customer must surface customerNumber as customerNo",
+    );
+  });
+
+  void test("R-FLOW5-A-6: omits customerNo when DB lookup returns no customerNumber", async () => {
+    const CUSTOMER_ID = "00000000-0000-4000-8000-c00000000099";
+    const pool = makePool((sql) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [leadRow({ status: "following" })],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("update leads set converted_customer_id")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "following",
+              converted_customer_id: CUSTOMER_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const timeline = makeTimeline();
+    await svc(pool, timeline).convertCustomer(makeCtx(), LEAD_ID, {
+      customerId: CUSTOMER_ID,
+      confirmDedup: true,
+    });
+
+    const auditCall = timeline.calls.find(
+      (c) => c.action === "lead.converted_customer",
+    );
+    assert.ok(auditCall);
+    const payload = auditCall.payload as Record<string, unknown>;
+    assert.equal(payload.customerId, CUSTOMER_ID);
+    assert.equal(
+      payload.customerNo,
+      undefined,
+      "missing customerNumber must omit customerNo (UI falls back to id slice)",
+    );
+  });
+
   void test("dedup hit with confirmDedup=true proceeds", async () => {
     const CUSTOMER_ID = "00000000-0000-4000-8000-c00000000002";
     const pool = makePool((sql) => {

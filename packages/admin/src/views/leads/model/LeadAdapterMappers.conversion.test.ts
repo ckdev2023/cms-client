@@ -152,6 +152,85 @@ describe("LeadAdapterMappers — conversion & source", () => {
       expect(cas?.id).toBe("CAS-2");
       expect(cas?.title).toBe("CASE-001");
     });
+
+    it("R-FLOW5-A-8: reads customer.group from { id, name } object shape", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCustomer: {
+            id: "CUS-1",
+            customerNo: "CUS-202605-0013",
+            name: "鈴木次郎",
+            group: {
+              id: "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c",
+              name: "tokyo-1",
+            },
+            convertedAt: "2026-05-07T20:37:00Z",
+            convertedBy: "Admin",
+          },
+        }),
+      );
+
+      const cust = result?.detail.conversion.convertedCustomer;
+      expect(cust).not.toBeNull();
+      expect(cust?.group).toBe("tokyo-1");
+    });
+
+    it("R-FLOW5-A-8: reads case.group from { id, name } object shape", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCase: {
+            id: "11a18544-56bd-4f74-95d6-fc135bad5b46",
+            caseNo: "CASE-202605-0009",
+            caseTypeCode: "dependent_visa",
+            group: {
+              id: "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c",
+              name: "tokyo-1",
+            },
+            convertedAt: "2026-05-07T20:37:00Z",
+          },
+        }),
+      );
+
+      const cas = result?.detail.conversion.convertedCase;
+      expect(cas).not.toBeNull();
+      expect(cas?.title).toBe("CASE-202605-0009");
+      expect(cas?.type).toBe("dependent_visa");
+      expect(cas?.group).toBe("tokyo-1");
+      expect(cas?.convertedAt).toBe("2026-05-07T20:37:00Z");
+    });
+
+    it("R-FLOW5-A-8: falls back to group.id when group.name is missing", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCustomer: {
+            id: "CUS-1",
+            name: "鈴木次郎",
+            group: {
+              id: "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c",
+              name: "",
+            },
+          },
+        }),
+      );
+
+      const cust = result?.detail.conversion.convertedCustomer;
+      expect(cust?.group).toBe("ef21fdd2-1ffc-4a27-8b47-a640d6bd021c");
+    });
+
+    it("R-FLOW5-A-8: returns empty group when server returns null", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCustomer: {
+            id: "CUS-1",
+            name: "鈴木次郎",
+            group: null,
+          },
+        }),
+      );
+
+      const cust = result?.detail.conversion.convertedCustomer;
+      expect(cust?.group).toBe("");
+    });
   });
 
   describe("readLeadClassification — source field priority (A-1)", () => {

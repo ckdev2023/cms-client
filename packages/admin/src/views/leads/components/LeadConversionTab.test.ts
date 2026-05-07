@@ -65,6 +65,77 @@ describe("LeadConversionTab", () => {
     ).toBe(true);
   });
 
+  it("convertCase disabled in normal preset shows tooltip + aria-label hint", () => {
+    const wrapper = mountTab(EMPTY_CONVERSION, HEADER_BUTTON_PRESETS.normal);
+
+    const convertCaseBtn = wrapper
+      .findAll(".conversion-action button")
+      .find((btn) =>
+        btn
+          .text()
+          .includes(
+            i18n.global.t("leads.detail.conversionTab.convertCaseTitle"),
+          ),
+      );
+
+    expect(convertCaseBtn).toBeTruthy();
+    expect(convertCaseBtn!.attributes("disabled")).toBeDefined();
+    expect(convertCaseBtn!.attributes("title")).toBe(
+      i18n.global.t("leads.detail.conversionTab.convertCaseDisabledHint"),
+    );
+    expect(convertCaseBtn!.attributes("aria-label")).toBe(
+      i18n.global.t("leads.detail.conversionTab.convertCaseDisabledHint"),
+    );
+    expect(convertCaseBtn!.attributes("data-disabled-reason")).toBe(
+      i18n.global.t("leads.detail.conversionTab.convertCaseDisabledHint"),
+    );
+  });
+
+  it("convertCase enabled in signedNotConverted preset omits tooltip attributes", () => {
+    const wrapper = mountTab(
+      EMPTY_CONVERSION,
+      HEADER_BUTTON_PRESETS.signedNotConverted,
+    );
+
+    const convertCaseBtn = wrapper
+      .findAll(".conversion-action button")
+      .find((btn) =>
+        btn
+          .text()
+          .includes(
+            i18n.global.t("leads.detail.conversionTab.convertCaseTitle"),
+          ),
+      );
+
+    expect(convertCaseBtn).toBeTruthy();
+    expect(convertCaseBtn!.attributes("disabled")).toBeUndefined();
+    expect(convertCaseBtn!.attributes("title")).toBeUndefined();
+    expect(convertCaseBtn!.attributes("data-disabled-reason")).toBeUndefined();
+  });
+
+  it("convertCustomer disabled in initial preset shows tooltip hint", () => {
+    const wrapper = mountTab(EMPTY_CONVERSION, HEADER_BUTTON_PRESETS.initial);
+
+    const convertCustomerBtn = wrapper
+      .findAll(".conversion-action button")
+      .find((btn) =>
+        btn
+          .text()
+          .includes(
+            i18n.global.t("leads.detail.conversionTab.convertCustomerTitle"),
+          ),
+      );
+
+    expect(convertCustomerBtn).toBeTruthy();
+    expect(convertCustomerBtn!.attributes("disabled")).toBeDefined();
+    expect(convertCustomerBtn!.attributes("title")).toBe(
+      i18n.global.t("leads.detail.conversionTab.convertCustomerDisabledHint"),
+    );
+    expect(convertCustomerBtn!.attributes("aria-label")).toBe(
+      i18n.global.t("leads.detail.conversionTab.convertCustomerDisabledHint"),
+    );
+  });
+
   it("convertedCustomer only — shows records but hides action cards", () => {
     const conversion: LeadConversionInfo = {
       dedupResult: null,

@@ -20,6 +20,28 @@ function readString(record: Record<string, unknown>, key: string): string {
   return typeof v === "string" ? v : "";
 }
 
+/**
+ * R-FLOW5-A-8：服务端 `queryCustomerSummary / queryCaseSummary` 的
+ * `group` 字段从 string 升级为 `{ id, name } | null`，UI 侧的
+ * `resolveGroupLabel` 仍按 string 工作（catalog slug / 本地化 label /
+ * UUID 别名表三路解析）。这里把对象形态归一为字符串：
+ *
+ * - 对象 `name` 优先（多为 catalog slug，如 `tokyo-1` / `osaka`，
+ *   能直接命中 catalog 路径并返回本地化 label）；
+ * - `name` 缺失时退到 `id`（UUID），交给 `resolveGroupLabel` 走
+ *   `groupAliases` 别名表路径；
+ * - 兼容旧 fixture / 历史响应直接返回字符串的形态。
+ *
+ * @param value 服务端返回的 group 字段（string / { id, name } / null / undefined）
+ * @returns 适配后的 group 字符串；无可用值时返回空串
+ */
+function readGroupString(value: unknown): string {
+  if (typeof value === "string") return value;
+  const obj = asRecord(value);
+  if (!obj) return "";
+  return readString(obj, "name") || readString(obj, "id");
+}
+
 function adaptConvertedCustomerDto(value: unknown): ConvertedCustomer | null {
   const r = asRecord(value);
   if (!r) return null;
@@ -27,7 +49,7 @@ function adaptConvertedCustomerDto(value: unknown): ConvertedCustomer | null {
     id: readString(r, "id"),
     customerNo: readString(r, "customerNo") || readString(r, "customerNumber"),
     name: readString(r, "displayName") || readString(r, "name"),
-    group: readString(r, "group"),
+    group: readGroupString(r.group),
     convertedAt: readString(r, "convertedAt"),
     convertedBy: readString(r, "convertedBy"),
   };
@@ -40,7 +62,7 @@ function adaptConvertedCaseDto(value: unknown): ConvertedCase | null {
     id: readString(r, "id"),
     title: readString(r, "caseNo") || readString(r, "title"),
     type: readString(r, "caseTypeCode") || readString(r, "type"),
-    group: readString(r, "group"),
+    group: readGroupString(r.group),
     convertedAt: readString(r, "convertedAt"),
     convertedBy: readString(r, "convertedBy"),
   };

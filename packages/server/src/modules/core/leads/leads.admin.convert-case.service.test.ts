@@ -83,6 +83,119 @@ void describe("LeadsAdminService.convertCase", () => {
     assert.equal(payload.isBmv, true);
   });
 
+  void test("R-FLOW5-A-6: writes caseNo + caseNumber into lead_logs.payload when CasesService returns caseNo", async () => {
+    const CASE_NO = "CASE-202605-0009";
+    const pool = makePool((sql) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "signed",
+              converted_customer_id: CUSTOMER_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("update leads set status = 'converted_case'")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "converted_case",
+              converted_customer_id: CUSTOMER_ID,
+              converted_case_id: CASE_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const casesService = makeCasesService({
+      create: () => Promise.resolve({ id: CASE_ID, caseNo: CASE_NO }),
+    });
+
+    const timeline = makeTimeline();
+    await svc(pool, timeline, undefined, casesService).convertCase(
+      makeCtx(),
+      LEAD_ID,
+      {
+        caseTypeCode: "dependent_visa",
+        ownerUserId: USER_A,
+      },
+    );
+
+    const auditCall = timeline.calls.find(
+      (c) => c.action === "lead.converted_case",
+    );
+    assert.ok(auditCall, "Must write converted_case audit");
+    const payload = auditCall.payload as Record<string, unknown>;
+    assert.equal(payload.caseId, CASE_ID);
+    assert.equal(
+      payload.caseNo,
+      CASE_NO,
+      "lead_logs.payload must include caseNo for UI link",
+    );
+    assert.equal(
+      payload.caseNumber,
+      CASE_NO,
+      "lead_logs.payload must include caseNumber as compat alias",
+    );
+  });
+
+  void test("R-FLOW5-A-6: omits caseNo / caseNumber when CasesService returns no caseNo", async () => {
+    const pool = makePool((sql) => {
+      if (sql.includes("from leads") && sql.includes("limit 1")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "signed",
+              converted_customer_id: CUSTOMER_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("update leads set status = 'converted_case'")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              status: "converted_case",
+              converted_customer_id: CUSTOMER_ID,
+              converted_case_id: CASE_ID,
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    const casesService = makeCasesService({
+      create: () => Promise.resolve({ id: CASE_ID, caseNo: null }),
+    });
+
+    const timeline = makeTimeline();
+    await svc(pool, timeline, undefined, casesService).convertCase(
+      makeCtx(),
+      LEAD_ID,
+      {
+        caseTypeCode: "general",
+        ownerUserId: USER_A,
+      },
+    );
+
+    const auditCall = timeline.calls.find(
+      (c) => c.action === "lead.converted_case",
+    );
+    assert.ok(auditCall);
+    const payload = auditCall.payload as Record<string, unknown>;
+    assert.equal(payload.caseId, CASE_ID);
+    assert.equal(payload.caseNo, undefined);
+    assert.equal(payload.caseNumber, undefined);
+  });
+
   void test("rejects when converted_customer_id is null (convert-customer not run)", async () => {
     const pool = makePool((sql) => {
       if (sql.includes("from leads") && sql.includes("limit 1")) {

@@ -66,20 +66,66 @@ export async function convertCustomer(
     }
   }
 
-  const customerId =
-    input.customerId ??
-    (await createCustomerFromLead(deps.customersService, ctx, lead, input));
+  const resolved = await resolveTargetCustomer(deps, ctx, lead, input);
 
   const tenantDb = createTenantDb(deps.pool, ctx.orgId, ctx.userId);
   const result = await tenantDb.query<LeadQueryRow>(
     `update leads set converted_customer_id = $2, updated_at = now() where id = $1 returning ${LEAD_COLS}`,
-    [leadId, customerId],
+    [leadId, resolved.id],
   );
   const row = result.rows.at(0);
   if (!row) throw new BadRequestException("Failed to update lead");
 
-  await deps.writeAudit(ctx, leadId, "converted_customer", { customerId });
-  return { lead: mapLeadRow(row), customerId };
+  const customerNo =
+    resolved.customerNo ?? (await fetchCustomerNoById(tenantDb, resolved.id));
+
+  // R-FLOW5-A-6：customerNo 写入 lead_logs.payload，使日志 Tab 显示 CUS-... 编号而非 8 位 UUID 前缀。
+  await deps.writeAudit(ctx, leadId, "converted_customer", {
+    customerId: resolved.id,
+    ...(customerNo ? { customerNo } : {}),
+  });
+  return { lead: mapLeadRow(row), customerId: resolved.id };
+}
+
+async function resolveTargetCustomer(
+  deps: ConvertDeps,
+  ctx: RequestContext,
+  lead: Lead,
+  input: LeadConvertCustomerInput,
+): Promise<{ id: string; customerNo: string | null }> {
+  if (input.customerId) {
+    return { id: input.customerId, customerNo: null };
+  }
+  return createCustomerFromLead(deps.customersService, ctx, lead, input);
+}
+
+function readCustomerNumberFromBaseProfile(
+  baseProfile: Record<string, unknown> | undefined,
+): string | null {
+  if (!baseProfile) return null;
+  const value = baseProfile.customerNumber;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
+async function fetchCustomerNoById(
+  tenantDb: {
+    query: (
+      sql: string,
+      params: unknown[],
+    ) => Promise<{ rows: { customer_no: string | null }[] }>;
+  },
+  customerId: string,
+): Promise<string | null> {
+  const r = await tenantDb.query(
+    `select base_profile->>'customerNumber' as customer_no from customers where id = $1 limit 1`,
+    [customerId],
+  );
+  const value = r.rows.at(0)?.customer_no;
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
 async function createCustomerFromLead(
@@ -87,7 +133,7 @@ async function createCustomerFromLead(
   ctx: RequestContext,
   lead: Lead,
   input: LeadConvertCustomerInput,
-): Promise<string> {
+): Promise<{ id: string; customerNo: string | null }> {
   const localizedNames =
     input.localizedNames ?? deriveLocalizedNames(lead.name, lead.language);
   const baseProfile: Record<string, unknown> = {};
@@ -112,7 +158,10 @@ async function createCustomerFromLead(
     baseProfile,
     localizedNames,
   });
-  return customer.id;
+  return {
+    id: customer.id,
+    customerNo: readCustomerNumberFromBaseProfile(customer.baseProfile),
+  };
 }
 
 /**

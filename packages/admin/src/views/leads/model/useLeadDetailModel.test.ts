@@ -363,6 +363,7 @@ describe("useLeadDetailModel", () => {
       expect(repo.dedup).toHaveBeenCalledWith({
         phone: "080-2222-3333",
         email: "li.hua@email.com",
+        leadId: "following",
       });
       expect(repo.convertCustomer).toHaveBeenCalledWith("following", {});
     });

@@ -229,8 +229,12 @@ const leadsJaJP = {
       dedupConfirmed: "確認済み（続行）",
       convertCaseTitle: "契約＆案件作成",
       convertCaseDesc: "まず顧客を登録し、その後案件を作成します",
+      convertCaseDisabledHint:
+        "リードのステータスを「契約済み」に変更してから案件を作成してください",
       convertCustomerTitle: "顧客のみ作成",
       convertCustomerDesc: "案件を作成せず、顧客登録のみ行います",
+      convertCustomerDisabledHint:
+        "リードのフォローアップを完了し、ステータスを確認してください",
       recordsTitle: "作成済みレコード",
       viewCustomer: "顧客を見る",
       viewCase: "案件を見る",

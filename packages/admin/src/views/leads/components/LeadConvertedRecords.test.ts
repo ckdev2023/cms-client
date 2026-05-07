@@ -78,4 +78,73 @@ describe("LeadConvertedRecords", () => {
     expect(meta).toContain("2026");
     expect(meta).not.toBe("");
   });
+
+  it("rendersGroupLabelForCustomer — resolves catalog slug to localized label (R-FLOW5-A-8)", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: {
+        id: "CUS-1",
+        customerNo: "CUS-202605-0013",
+        name: "R-FLOW-04 鈴木次郎",
+        group: "tokyo-1",
+        convertedAt: "2026-05-07T20:37:00Z",
+        convertedBy: "Admin",
+      },
+      convertedCase: null,
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const meta = wrapper.find(".converted-record__meta").text();
+
+    expect(meta).toContain("东京一组");
+    expect(meta).not.toMatch(/CUS-202605-0013\s*·\s*·/);
+  });
+
+  it("rendersCaseNoForCase — case meta shows caseNo · group · formatted convertedAt (R-FLOW5-A-8)", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "11a18544-56bd-4f74-95d6-fc135bad5b46",
+        title: "CASE-202605-0009",
+        type: "dependent_visa",
+        group: "tokyo-1",
+        convertedAt: "2026-05-07T20:37:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const metas = wrapper.findAll(".converted-record__meta");
+    expect(metas.length).toBeGreaterThan(0);
+    const caseMeta = metas[metas.length - 1].text();
+
+    expect(caseMeta).toContain("CASE-202605-0009");
+    expect(caseMeta).toContain("东京一组");
+    expect(caseMeta).toContain("2026");
+    expect(caseMeta).not.toContain("11a18544-56bd-4f74");
+  });
+
+  it("falls back to case id when title is empty (R-FLOW5-A-8)", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "11a18544-56bd-4f74-95d6-fc135bad5b46",
+        title: "",
+        type: "dependent_visa",
+        group: "tokyo-1",
+        convertedAt: "2026-05-07T20:37:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseMeta = wrapper.findAll(".converted-record__meta").pop()!.text();
+
+    expect(caseMeta).toContain("11a18544-56bd-4f74");
+  });
 });

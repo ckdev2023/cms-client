@@ -60,6 +60,7 @@ const hasConvertedCase = computed(
               resolveGroupLabel(
                 conversion.convertedCustomer!.group,
                 t("shared.group.disabledSuffix"),
+                locale,
               )
             }}
             ·
@@ -93,12 +94,24 @@ const hasConvertedCase = computed(
         </div>
         <div class="converted-record__info">
           <p class="converted-record__name">
-            {{ conversion.convertedCase!.title }}
+            {{
+              conversion.convertedCase!.title || conversion.convertedCase!.id
+            }}
           </p>
           <p class="converted-record__meta">
-            {{ conversion.convertedCase!.id }} ·
-            {{ conversion.convertedCase!.type }} ·
-            {{ conversion.convertedCase!.convertedAt }}
+            {{
+              conversion.convertedCase!.title || conversion.convertedCase!.id
+            }}
+            ·
+            {{
+              resolveGroupLabel(
+                conversion.convertedCase!.group,
+                t("shared.group.disabledSuffix"),
+                locale,
+              )
+            }}
+            ·
+            {{ formatDateTime(conversion.convertedCase!.convertedAt, locale) }}
           </p>
         </div>
         <Button size="sm">

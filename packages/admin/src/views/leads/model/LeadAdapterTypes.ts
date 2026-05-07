@@ -218,6 +218,8 @@ export interface LeadDedupParams {
   phone?: string;
   /** */
   email?: string;
+  /** 排除自身 lead id（详情页转化前 pre-check 与 dialog 二次校验时传入，避免命中 lead 自己）。 */
+  leadId?: string;
 }
 
 /**
