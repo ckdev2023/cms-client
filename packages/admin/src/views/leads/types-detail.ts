@@ -367,7 +367,7 @@ export const HEADER_BUTTON_PRESETS: Record<
   },
   signedNotConverted: {
     convertCustomer: "highlighted",
-    convertCase: "hidden",
+    convertCase: "highlighted",
     markLost: "enabled",
     editInfo: "enabled",
     changeStatus: "enabled",

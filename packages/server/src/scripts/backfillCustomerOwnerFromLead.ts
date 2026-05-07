@@ -20,7 +20,6 @@ type BackfillRow = {
   customer_id: string;
   base_profile: Record<string, unknown>;
   owner_user_id: string | null;
-  assigned_user_id: string | null;
   group_id: string | null;
   intended_case_type: string | null;
 };
@@ -42,9 +41,8 @@ function buildPatch(row: BackfillRow): BackfillPatch | null {
   const bp = row.base_profile;
   const patch: BackfillPatch = {};
 
-  if (!bp.ownerUserId) {
-    const owner = row.assigned_user_id ?? row.owner_user_id;
-    if (owner) patch.ownerUserId = owner;
+  if (!bp.ownerUserId && row.owner_user_id) {
+    patch.ownerUserId = row.owner_user_id;
   }
 
   if (!bp.groupId && row.group_id) {
@@ -61,9 +59,11 @@ function buildPatch(row: BackfillRow): BackfillPatch | null {
 
 export { buildPatch, type BackfillRow, type BackfillPatch };
 
-const BACKFILL_QUERY = `
+// R-FLOW5-A-3: leads.assigned_user_id 列は migration 027 で
+// owner_user_id に rename 済みのため、ここでは参照しない。
+export const BACKFILL_QUERY = `
   SELECT c.id AS customer_id, c.base_profile,
-         l.owner_user_id, l.assigned_user_id,
+         l.owner_user_id,
          l.group_id, l.intended_case_type
   FROM customers c
   JOIN leads l ON l.converted_customer_id = c.id
@@ -77,7 +77,15 @@ type PgClient = {
   ) => Promise<{ rows: Record<string, unknown>[] }>;
 };
 
-async function applyBackfill(
+/**
+ * バックフィル対象行を customers.base_profile に書き戻す。
+ *
+ * @param client - PG クライアント（Pool もしくはトランザクション中の Client）
+ * @param rows - `BACKFILL_QUERY` の取得結果
+ * @param dryRun - true の場合は DB を変更せず、適用予定だけを集計する
+ * @returns 実際に更新した行数と、既に埋まっていてスキップした行数
+ */
+export async function applyBackfill(
   client: PgClient,
   rows: BackfillRow[],
   dryRun: boolean,

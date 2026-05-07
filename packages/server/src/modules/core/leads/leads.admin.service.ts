@@ -396,7 +396,12 @@ export class LeadsAdminService {
   ): Promise<LeadDedupResult> {
     if (!input.phone && !input.email) return { leads: [], customers: [] };
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const leads = await queryDedupLeads(tenantDb, ctx.orgId, input);
+    const leads = await queryDedupLeads(
+      tenantDb,
+      ctx.orgId,
+      input,
+      input.leadId,
+    );
     const customers = await queryDedupCustomers(tenantDb, ctx.orgId, input);
     return { leads, customers };
   }

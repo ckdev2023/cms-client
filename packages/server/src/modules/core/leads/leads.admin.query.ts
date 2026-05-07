@@ -13,6 +13,7 @@ import {
 import {
   LEAD_COLS,
   extractCustomerName,
+  type ConvertedCaseSummary,
   type ConvertedCustomerSummary,
   type LeadDedupInput,
   type LeadFollowupInput,
@@ -363,7 +364,7 @@ export async function queryCustomerSummary(
   };
 }
 
-/** 案件サマリを取得する。
+/** 案件サマリを取得する（caseNo / caseTypeCode / group / convertedAt 含む / R-FLOW5-A-8）。
  * @param db テナント DB
  * @param caseId Case ID
  * @returns 案件サマリ
@@ -371,11 +372,34 @@ export async function queryCustomerSummary(
 export async function queryCaseSummary(
   db: TenantDb,
   caseId: string,
-): Promise<{ id: string; caseNo: string | null } | null> {
-  const r = await db.query<{ id: string; case_no: string | null }>(
-    `select id, case_no from cases where id = $1 limit 1`,
+): Promise<ConvertedCaseSummary | null> {
+  const r = await db.query<{
+    id: string;
+    case_no: string | null;
+    case_type_code: string | null;
+    group_id: string | null;
+    group_name: string | null;
+    created_at: unknown;
+  }>(
+    `select ca.id, ca.case_no, ca.case_type_code,
+            g.id as group_id, g.name as group_name,
+            ca.created_at
+     from cases ca
+     left join groups g on g.id = ca.group_id
+     where ca.id = $1 limit 1`,
     [caseId],
   );
   const row = r.rows.at(0);
-  return row ? { id: row.id, caseNo: row.case_no } : null;
+  if (!row) return null;
+  return {
+    id: row.id,
+    caseNo: row.case_no,
+    caseTypeCode: row.case_type_code,
+    group: row.group_id
+      ? { id: row.group_id, name: row.group_name ?? "" }
+      : null,
+    convertedAt: row.created_at
+      ? new Date(row.created_at as string | number).toISOString()
+      : null,
+  };
 }

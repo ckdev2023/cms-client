@@ -154,10 +154,10 @@ describe("leads/types", () => {
       expect(normal.changeStatus).toBe("enabled");
     });
 
-    it("signedNotConverted highlights convertCustomer, hides convertCase", () => {
+    it("signedNotConverted highlights both convertCustomer and convertCase (R-FLOW5-A-1)", () => {
       const preset = HEADER_BUTTON_PRESETS.signedNotConverted;
       expect(preset.convertCustomer).toBe("highlighted");
-      expect(preset.convertCase).toBe("hidden");
+      expect(preset.convertCase).toBe("highlighted");
     });
 
     it("convertedCustomer shows view-customer and highlights convertCase", () => {

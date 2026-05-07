@@ -143,11 +143,11 @@ describe("useLeadDetailModel", () => {
       expect(model.buttonStates.value.markLost).toBe("hidden");
     });
 
-    it("signedNotConverted highlights convertCustomer, hides convertCase (§4: no customer)", async () => {
+    it("signedNotConverted highlights convertCustomer and convertCase (R-FLOW5-A-1)", async () => {
       const { model } = setupModel("signed");
       await flush();
       expect(model.buttonStates.value.convertCustomer).toBe("highlighted");
-      expect(model.buttonStates.value.convertCase).toBe("hidden");
+      expect(model.buttonStates.value.convertCase).toBe("highlighted");
     });
 
     it("convertedCustomer shows view-customer and highlights convertCase", async () => {

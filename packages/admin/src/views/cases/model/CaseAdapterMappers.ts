@@ -206,3 +206,22 @@ export function adaptCaseSummaryResult(
     cards: adaptCaseSummaryCards(listResult.items),
   };
 }
+
+// ─── Legacy status fallback (R-FLOW5-A-9) ───────────────────────
+// 老 fixture 把 case status 直接写成原始字符串（如 `prepare`），UI 走
+// `cases.constants.caseStatuses.<value>` 字典翻译。新数据使用 BMV step
+// code（大写蛇形），不属于该字典，需返回空串让上层选择其他渲染路径。
+const LEGACY_CASE_STATUS_CODES: ReadonlySet<string> = new Set(["prepare"]);
+
+/**
+ * 兜底处理列表行 raw status 字段：
+ * 老 fixture 的 lowercase 状态 → 对应 i18n key；
+ * 其他值（含未知字符串与大写 BMV step code）→ 空串。
+ *
+ * @param value - 列表行 status 原始值
+ * @returns 命中字典时返回 i18n key，否则返回空串
+ */
+export function normalizeCaseStatus(value: string): string {
+  if (!LEGACY_CASE_STATUS_CODES.has(value)) return "";
+  return `cases.constants.caseStatuses.${value}`;
+}

@@ -137,6 +137,8 @@ export type LeadBulkTagsInput = {
 export type LeadDedupInput = {
   phone?: string;
   email?: string;
+  /** 自分自身を結果から除外したい場合に渡す Lead ID（R-FLOW5-A-4）。 */
+  leadId?: string;
 };
 
 /** 重複検索結果。 */
@@ -157,6 +159,15 @@ export type ConvertedCustomerSummary = {
   convertedAt?: string | null;
 };
 
+/** 転化先 Case サマリ（Lead 詳細用 / R-FLOW5-A-8）。 */
+export type ConvertedCaseSummary = {
+  id: string;
+  caseNo: string | null;
+  caseTypeCode?: string | null;
+  group?: { id: string; name: string } | null;
+  convertedAt?: string | null;
+};
+
 /** Lead 詳細集約（フォローアップ/ログ/重複候補/転化先含む）。 */
 export type LeadDetailAggregate = {
   lead: Lead;
@@ -164,7 +175,7 @@ export type LeadDetailAggregate = {
   logs: LeadLog[];
   dedupHints: LeadDedupResult;
   convertedCustomer: ConvertedCustomerSummary | null;
-  convertedCase: { id: string; caseNo: string | null } | null;
+  convertedCase: ConvertedCaseSummary | null;
 };
 
 // ── Column Definitions ──

@@ -106,7 +106,7 @@ type ConvertCaseBody = {
   groupId?: unknown;
 };
 type BulkExportBody = { leadIds?: unknown };
-type DedupQuery = { phone?: unknown; email?: unknown };
+type DedupQuery = { phone?: unknown; email?: unknown; leadId?: unknown };
 
 const UuidParam = () => Param("id", new ParseUUIDPipe());
 
@@ -186,6 +186,7 @@ export class LeadsAdminController {
     return this.svc.dedup(requireCtx(req), {
       phone: optStr(query.phone, "phone"),
       email: optStr(query.email, "email"),
+      leadId: optStr(query.leadId, "leadId"),
     });
   }
 

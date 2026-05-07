@@ -8,7 +8,6 @@ function row(overrides: Partial<BackfillRow> = {}): BackfillRow {
     customer_id: "cust-1",
     base_profile: {},
     owner_user_id: null,
-    assigned_user_id: null,
     group_id: null,
     intended_case_type: null,
     ...overrides,
@@ -34,16 +33,7 @@ void describe("buildPatch", () => {
     assert.equal(buildPatch(row()), null);
   });
 
-  void it("patches ownerUserId from assigned_user_id (preferred over owner_user_id)", () => {
-    const r = row({
-      assigned_user_id: "assigned-1",
-      owner_user_id: "owner-1",
-    });
-    const patch = buildPatch(r);
-    assert.deepEqual(patch, { ownerUserId: "assigned-1" });
-  });
-
-  void it("patches ownerUserId from owner_user_id when assigned is null", () => {
+  void it("patches ownerUserId directly from owner_user_id (R-FLOW5-A-3)", () => {
     const r = row({ owner_user_id: "owner-1" });
     const patch = buildPatch(r);
     assert.deepEqual(patch, { ownerUserId: "owner-1" });
