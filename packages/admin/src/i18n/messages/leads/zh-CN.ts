@@ -328,6 +328,7 @@ const leadsZhCN = {
       phone: "电话",
       other: "其他",
     },
+    /** @deprecated 由 shared/i18n/businessTypes BUSINESS_TYPE_LABELS 统一提供；保留一个 release 后移除。 */
     businessType: {
       highlySkilled: "高度人才",
       workVisa: "技人国",

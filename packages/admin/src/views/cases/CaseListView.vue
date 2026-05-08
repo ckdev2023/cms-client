@@ -5,7 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../../shared/model/useToast";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
-import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getGroupOptions } from "../../shared/model/useGroupOptions";
 import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
 import CaseSummaryCards from "./components/CaseSummaryCards.vue";
 import CaseFilters from "./components/CaseFilters.vue";
@@ -30,7 +30,7 @@ const ownerOptions = computed<import("./types").CaseOwnerOption[]>(() =>
     group: null,
   })),
 );
-const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+const groupOptions = computed(() => getGroupOptions("filter", locale.value));
 
 const {
   filters,

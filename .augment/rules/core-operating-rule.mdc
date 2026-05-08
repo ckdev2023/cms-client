@@ -9,11 +9,7 @@ alwaysApply: true
 
 ## Task Routing
 
-- 涉及行政书士 SaaS 的业务范围、流程、字段归属、状态机、页面规格、P0/P1 边界、经营管理签或在留资格资料要求时，先连接 MCP server `mempalace-readonly`。
-- 业务问答默认先调用 `prepare_grounded_answer(query)`；只有在需要自定义编排时，才改用 `route_query` + `ground_query`。
-- 若 MemPalace 返回 `status=blocked`，不得输出确定性的业务规则、实现口径或范围结论；必须明确说明缺少权威引用，并优先复用返回的 `suggested_reply`。
-- 若 MemPalace 返回 `status=grounded`，只能依据 `citation_bundles` 作答；回答结构固定为：`结论 / 依据 / 引用 / 缺失项`。
-- `get_document` 与 `get_citation_context` 只用于扩展已通过门禁的引用上下文，不得绕过门禁直接拼装业务结论。
+- 涉及行政书士 SaaS 的业务范围、流程、字段归属、状态机、页面规格、P0/P1 边界、经营管理签或在留资格资料要求时，以 `docs/gyoseishoshi_saas_md/` 内的权威文档为准；缺少权威引用时不得输出确定性结论。
 - 当任务依赖第三方库、框架 API、配置、迁移或测试 helper 时，写代码前先查询 Context7；优先采用当前版本的官方推荐路径。
 - 纯业务逻辑、仓库内部重构、纯文档整理，不强制使用 Context7。
 

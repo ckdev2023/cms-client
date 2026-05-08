@@ -10,7 +10,7 @@
 > 走查环境：`http://localhost:5173/api`，本地 admin（`admin@local.test` / `Admin123!`）；后端 NestJS `:3300`，Vite 反代 `:5173`，PostgreSQL `cms-client-postgres-1` `:5433`
 > 与第十四轮（`20-...md`）互为续篇；本轮**对 R14 标 ✅ FIX-LANDED 9 条逐条实测**，外加**对 R13 §1 8 条 reaffirm**，共 17 条门禁 + 1 条跨轮 land（BUG-137）的复测；统一登记本轮新发现的**边界遗漏**与**隐性回归**。
 >
-> mempalace `prepare_grounded_answer` 已 grounded（biz-mgmt P1 落地清单 / M6 收费与 COE 门禁 / M8 在留期间与续签提醒）；本文不直接陈述业务规则，仅以"产品规则 / 文档锚点"维度引用。
+> 业务规则 ground 锚点已落在仓库内权威文档（biz-mgmt P1 落地清单 / M6 收费与 COE 门禁 / M8 在留期间与续签提醒）；本文不直接陈述业务规则，仅以"产品规则 / 文档锚点"维度引用。
 
 ---
 

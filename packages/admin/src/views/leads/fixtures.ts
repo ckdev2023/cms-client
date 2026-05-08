@@ -6,7 +6,7 @@ import type {
 } from "./types";
 import { getCurrentLocale, type AppLocale } from "../../i18n";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
-import { BUSINESS_TYPE_OPTIONS_I18N } from "../../i18n/messages/_shared/businessTypes";
+import { BUSINESS_TYPE_OPTIONS_I18N } from "../../shared/i18n/businessTypes";
 
 /* ------------------------------------------------------------------ */
 /*  参照选项                                                           */

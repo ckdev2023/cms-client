@@ -510,8 +510,8 @@
   关键依据：
   - docs/gyoseishoshi_saas_md/_output/19-双层状态机自动化复盘走查Bug清单-第十三轮.md（本轮全文）
   - docs/gyoseishoshi_saas_md/_output/18-双层状态机自动化复盘走查Bug清单-第十二轮.md §1 BUG-133~156（24 条原始定义）
-  - docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md §适用说明（mempalace prepare_grounded_answer 引用）
-  - docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md §执行重点（mempalace 引用）
+  - docs/事务所流程/在留資格別必要情報一覧Ver2.scenarios/biz-mgmt-renewal.md §适用说明
+  - docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md §执行重点
   - packages/admin/src/views/cases/model/useCreateCasePreSignGate.ts:80-110（BUG-158 root：四前提门禁判定）
   - packages/admin/src/views/cases/model/useCustomerDropdownData.ts:144-150（BMV 状态读取路径，server 永远下发 null）
   - packages/admin/src/shell/nav-config.ts:137-139（BUG-157 root：Tasks nav 注释与实际不一致）
@@ -1207,7 +1207,7 @@
 
 - 时间：2026-04-28
   问题：[T-00-ground] 双层状态机实装前的业务规则 ground——20 状态枚举、7 场景资料矩阵、CLOSED_SUCCESS 前置条件、stageToPhaseDefault 映射
-  结论（TL;DR）：MemPalace 4 项查询全部 `status=grounded`；20 状态来源于 `docs/事务所流程/事务所流程.master.json` → `workflow.states`（权威源为 `新规经营管理签申请全套流程Markdown文档.md`）；7 场景资料矩阵来源于 `在留資格別必要情報一覧Ver2.ai-optimized.md` 结构化摘要；CLOSED_SUCCESS 前置条件来源于 P1/01 §M9 + 流程文档业务规则§在留期间记录规则 + §提醒失败兜底规则；`stageToPhaseDefault` 映射是本计划新增的架构决策（§3），P0/P1 权威文档中只定义了 S1-S9 管理层与 CaseWorkflowStep 业务层的双层模型（07 §1 + 08 §双层状态模型），尚无显式 stage→businessPhase 映射表——需要本轮实装时一并固化。
+  结论（TL;DR）：本轮 4 项关键 ground 全部命中权威文档；20 状态来源于 `docs/事务所流程/事务所流程.master.json` → `workflow.states`（权威源为 `新规经营管理签申请全套流程Markdown文档.md`）；7 场景资料矩阵来源于 `在留資格別必要情報一覧Ver2.ai-optimized.md` 结构化摘要；CLOSED_SUCCESS 前置条件来源于 P1/01 §M9 + 流程文档业务规则§在留期间记录规则 + §提醒失败兜底规则；`stageToPhaseDefault` 映射是本计划新增的架构决策（§3），P0/P1 权威文档中只定义了 S1-S9 管理层与 CaseWorkflowStep 业务层的双层模型（07 §1 + 08 §双层状态模型），尚无显式 stage→businessPhase 映射表——需要本轮实装时一并固化。
 
   关键依据：
 
@@ -1239,7 +1239,7 @@
   引用来源：
   - `docs/事务所流程/事务所流程.master.json` → `workflow.states`（20 条）
   - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §状态说明（State Definition）
-  - MemPalace `P1/01-经营管理签扩展范围与落地计划.md` §0 结构化速查（grounded chunk ac28cbaf）
+  - `docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md` §0 结构化速查
 
   ### B. 7 场景资料矩阵
 
@@ -1259,7 +1259,6 @@
   - `docs/事务所流程/在留資格別必要情報一覧Ver2.ai-optimized.md` → §结构化摘要
   - `docs/事务所流程/在留資格別必要情報一覧Ver2.中文规范版资料清单.md` → §场景一览
   - `docs/事务所流程/事务所流程.master.json` → `documents_matrix.scenarios`
-  - MemPalace grounded chunk 864f990c（ai-optimized.md §结构化摘要）
 
   ### C. CLOSED_SUCCESS 前置条件
 
@@ -1273,10 +1272,10 @@
   进入 `CLOSED_FAILED` 必须填写 `closeReason`；允许进入的前置状态为 `REJECTED` 或 `VISA_REJECTED`。
 
   引用来源：
-  - `docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md` → §M9 结案与异常兜底（grounded chunk 8e51f019）
-  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §在留期间记录规则（grounded chunk c71b2055）
-  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §提醒失败兜底规则（grounded chunk f8e26ece）
-  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §到期提醒规则（grounded chunk 9d223783）
+  - `docs/gyoseishoshi_saas_md/P1/01-经营管理签扩展范围与落地计划.md` → §M9 结案与异常兜底
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §在留期间记录规则
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §提醒失败兜底规则
+  - `docs/事务所流程/新规经营管理签申请全套流程Markdown文档.md` → §到期提醒规则
   - `docs/事务所流程/事务所流程.master.json` → `workflow.flow_paths.exception_paths`
 
   ### D. stageToPhaseDefault 映射（本轮架构决策）
@@ -1302,10 +1301,10 @@
   - `S9 → CLOSED_SUCCESS`：旧归档案件默认视为成功结案；若实际为失败结案，后续需人工或脚本修正。
 
   引用来源：
-  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §Stage（案件阶段）（grounded chunk 33fd3a93）
-  - `docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md` → §双层状态模型（grounded chunk d3f25952）
-  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §P0 必须理解的 7 个概念（grounded chunk e0a04d91）
-  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §双层状态模型（P1 可扩展性核心设计）（grounded chunk 249530ae）
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §Stage（案件阶段）
+  - `docs/gyoseishoshi_saas_md/P0/07-数据模型设计.md` → §双层状态模型
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §P0 必须理解的 7 个概念
+  - `docs/gyoseishoshi_saas_md/P0/08-术语表.md` → §双层状态模型（P1 可扩展性核心设计）
   - `docs/事务所流程/事务所流程.master.json` → `workflow.states` + `workflow.transitions`（20 状态转换图）
 
   ### E. 业务规则转换图（允许的 phase 转换）
@@ -1466,7 +1465,7 @@
   - docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md §4 关键动作——4 项动作均为正向收费流，无退款入口
   - docs/gyoseishoshi_saas_md/P0/06-页面规格/收费与财务.md §P0 明确不做——6 项延后功能无一涉及退款
   - docs/gyoseishoshi_saas_md/P0/03-业务规则与不变量.md §6 收费与欠款策略——仅定义欠款 warn 模式、风险确认留痕、回款归集口径、回款更正（voided/reversed），未涉及退款场景
-  - MemPalace 检索：`prepare_grounded_answer("失败结案路径下的退款规则")` + `prepare_grounded_answer("案件拒签失败后退款流程...")` + `search_knowledge("退款 refund 收费 billing 结案 失败 拒签")` 三次查询均未命中任何退款相关内容
+  - 仓库内权威文档全文检索（关键词覆盖：「失败结案路径下的退款规则」「案件拒签失败后退款流程」「退款 / refund / 收费 / billing / 结案 / 失败 / 拒签」）均未命中任何退款相关内容
   影响面：
   - CLOSED_FAILED phase transition 后的财务收尾流：当前 phase 推到 CLOSED_FAILED 后 billing 状态无变化，未结清节点保持 due/overdue
   - BillingPlan 状态枚举：可能需追加 refunded / partially_refunded / cancelled 等状态
@@ -1774,3 +1773,21 @@
     位置：§5.2 已标注 → CLOSED
     Owner：研发
     状态：已回灌（2026-05-08）
+
+- 时间：2026-05-08（walkthrough-v6 Phase B-3 — caseTypeCode canonical 决策显式延期）
+  问题：LEAD intendedCaseType ↔ CASE caseTypeCode ↔ CUSTOMER visaType 三字段的 canonical 集合与映射关系未有权威业务口径定义；i18n 中 `work` 与 `engineer_humanities_intl_visa` 的语义粒度关系不明；历史别名（`biz_mgmt*`、`hum*`、`family_stay` 等）是否需要迁移尚未决定。
+  结论（TL;DR）：**本轮显式延期（BLOCKED on mempalace）。** 理由：字段归属、枚举集合属业务范围，依 core-operating-rule §Task Routing 必须先走 mempalace 门禁获取权威口径，门禁不可用时不得输出确定性代码变更。已完成 B-1 audit（76-AUDIT 文档）和 B-2 seed 补漏（contract test 守护），B-3 canonical 决策 / i18n 对齐 / 历史数据迁移留 TODO。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/76-AUDIT-caseType-codes-2026-05-08.md（全量分布审计 + TODO 区块）
+  - .cursor/rules/core-operating-rule.mdc §Task Routing（门禁规则）
+  - packages/admin/src/i18n/messages/_shared/businessTypes.ts（BUSINESS_TYPE_TO_CASE_TYPE_CODE 映射）
+  - packages/server/src/scripts/seedDevDocTemplates.contract.test.ts（B-2 contract test 守护）
+  影响面：
+  - 不改 i18n label / 不合并 caseTypeCode code / 不调整 BUSINESS_TYPE_TO_CASE_TYPE_CODE
+  - B-2 contract test 已确保新增 LEAD 业务类型时立即报错防止再次遗漏
+  - mempalace 恢复后执行 76-AUDIT TODO 区块 7 项待决事宜
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/76-AUDIT-caseType-codes-2026-05-08.md
+    位置：末尾 TODO 区块
+    Owner：研发
+    状态：待 mempalace 恢复后回灌

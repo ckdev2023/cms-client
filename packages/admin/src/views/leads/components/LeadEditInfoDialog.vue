@@ -2,11 +2,8 @@
 import { computed, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
-import {
-  BUSINESS_TYPE_OPTIONS,
-  LEAD_SOURCE_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from "../fixtures";
+import { LEAD_SOURCE_OPTIONS, LANGUAGE_OPTIONS } from "../fixtures";
+import { getBusinessTypeSelectOptions } from "../../../shared/i18n/businessTypes";
 import type { LeadDetail, OwnerOption, SelectOption } from "../types";
 import type { LeadUpdateInput } from "../model/LeadAdapter";
 import type { LeadMutationFailure } from "../model/useLeadDetailModel";
@@ -36,7 +33,11 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const businessTypeOpts = computed(() =>
+  getBusinessTypeSelectOptions(locale.value, "primary"),
+);
 
 const initial = ref<LeadEditInfoFormState>(leadEditInfoSnapshot(props.lead));
 const form = reactive<LeadEditInfoFormState>({ ...initial.value });
@@ -201,11 +202,11 @@ function handleConfirm(): void {
                   }}
                 </option>
                 <option
-                  v-for="opt in BUSINESS_TYPE_OPTIONS"
+                  v-for="opt in businessTypeOpts"
                   :key="opt.value"
                   :value="opt.value"
                 >
-                  {{ t(opt.label) }}
+                  {{ opt.label }}
                 </option>
               </select>
             </label>

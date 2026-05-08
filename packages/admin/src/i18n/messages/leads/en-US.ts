@@ -337,6 +337,7 @@ const leadsEnUS = {
       phone: "Phone",
       other: "Other",
     },
+    /** @deprecated 业务类型标签已由 shared/i18n/businessTypes BUSINESS_TYPE_LABELS 统一提供；保留一个 release 后移除。 */
     businessType: {
       highlySkilled: "Highly Skilled Professional",
       workVisa: "Engineer/Specialist in Humanities",

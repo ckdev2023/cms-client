@@ -55,6 +55,7 @@ const zhCN = {
     group: {
       disabledSuffix: "（已停用）",
     },
+    groupOptions: { writeHint: "（仅显示你所属的分组）" },
     breadcrumbsLabel: "面包屑导航",
     loading: "加载中…",
     submitting: "提交中…",

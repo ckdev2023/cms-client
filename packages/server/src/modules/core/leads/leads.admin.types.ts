@@ -164,6 +164,8 @@ export type ConvertedCaseSummary = {
   id: string;
   caseNo: string | null;
   caseTypeCode?: string | null;
+  title?: string | null;
+  applicantName?: string | null;
   group?: { id: string; name: string } | null;
   convertedAt?: string | null;
 };

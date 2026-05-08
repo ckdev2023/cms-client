@@ -48,32 +48,48 @@ describe("leadOptionLabels", () => {
   });
 
   describe("resolveLeadBusinessTypeLabel", () => {
-    it("zh-CN 下识别 kebab-case 业务类型", () => {
-      setAppLocale("zh-CN");
-      expect(resolveLeadBusinessTypeLabel("highly-skilled", t)).toBe(
+    it("locale 字符串：zh-CN 下识别 kebab-case 业务类型", () => {
+      expect(resolveLeadBusinessTypeLabel("highly-skilled", "zh-CN")).toBe(
         "高度人才",
       );
-      expect(resolveLeadBusinessTypeLabel("family-stay", t)).toBe("家族滞在");
-      expect(resolveLeadBusinessTypeLabel("business-management-visa", t)).toBe(
-        "经营管理",
+      expect(resolveLeadBusinessTypeLabel("family-stay", "zh-CN")).toBe(
+        "家族滞在",
+      );
+      expect(
+        resolveLeadBusinessTypeLabel("business-management-visa", "zh-CN"),
+      ).toBe("经营管理");
+    });
+
+    it("locale 字符串：ja-JP 下返回日文标签", () => {
+      expect(resolveLeadBusinessTypeLabel("work-visa", "ja-JP")).toBe(
+        "技術・人文知識・国際業務",
+      );
+    });
+
+    it("locale 字符串：en-US 下返回英文标签", () => {
+      expect(resolveLeadBusinessTypeLabel("work-visa", "en-US")).toBe(
+        "Engineer/Specialist in Humanities",
       );
     });
 
     it("兼容旧值 business-manager → business-management-visa", () => {
-      setAppLocale("zh-CN");
-      expect(resolveLeadBusinessTypeLabel("business-manager", t)).toBe(
+      expect(resolveLeadBusinessTypeLabel("business-manager", "zh-CN")).toBe(
         "经营管理",
       );
     });
 
     it("未识别的字面量原样返回", () => {
-      setAppLocale("zh-CN");
-      expect(resolveLeadBusinessTypeLabel("家族滞在", t)).toBe("家族滞在");
+      expect(resolveLeadBusinessTypeLabel("家族滞在", "zh-CN")).toBe(
+        "家族滞在",
+      );
     });
 
     it("空字符串返回空串", () => {
-      setAppLocale("zh-CN");
-      expect(resolveLeadBusinessTypeLabel("", t)).toBe("");
+      expect(resolveLeadBusinessTypeLabel("", "zh-CN")).toBe("");
+    });
+
+    it("backward-compat: 传入 t 函数仍正常解析（默认 ja-JP）", () => {
+      expect(resolveLeadBusinessTypeLabel("permanent", t)).toBe("永住");
     });
   });
 

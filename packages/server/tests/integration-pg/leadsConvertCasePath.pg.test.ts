@@ -63,11 +63,17 @@ function stubCases(pool: Pool): CasesService {
   return {
     create: async (
       ctx: RequestContext,
-      input: { customerId: string; caseTypeCode: string; ownerUserId: string },
+      input: {
+        customerId: string;
+        caseTypeCode: string;
+        ownerUserId: string;
+        caseName?: string | null;
+      },
     ) => {
+      const caseName = input.caseName ?? "Test Case";
       await pool.query(
         `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, case_no, case_name, business_phase)
-         VALUES ($1, $2, $3, $4, 'open', $5, 'CASE-TEST-001', 'Test Case', 'INTAKE')
+         VALUES ($1, $2, $3, $4, 'open', $5, 'CASE-TEST-001', $6, 'INTAKE')
          ON CONFLICT DO NOTHING`,
         [
           CASE_ID,
@@ -75,9 +81,14 @@ function stubCases(pool: Pool): CasesService {
           input.customerId,
           input.caseTypeCode,
           input.ownerUserId,
+          caseName,
         ],
       );
-      return { id: CASE_ID, caseTypeCode: input.caseTypeCode };
+      return {
+        id: CASE_ID,
+        caseTypeCode: input.caseTypeCode,
+        caseNo: "CASE-TEST-001",
+      };
     },
   } as unknown as CasesService;
 }
@@ -143,6 +154,11 @@ void test("convertCase happy-path: sets status=converted_case and converted_case
   const svc = createService(pool);
   const leadId = await createConvertedLead(svc, pool);
 
+  await pool.query(`UPDATE customers SET base_profile = $2 WHERE id = $1`, [
+    CUSTOMER_ID,
+    JSON.stringify({ name_jp: "Case Target JP" }),
+  ]);
+
   const result = await svc.convertCase(CTX, leadId, {
     caseTypeCode: "general",
     ownerUserId: USER_ID,
@@ -155,6 +171,13 @@ void test("convertCase happy-path: sets status=converted_case and converted_case
   const detail = await svc.getDetail(CTX, leadId);
   assert.equal(detail.lead.status, "converted_case");
   assert.equal(detail.lead.convertedCaseId, CASE_ID);
+  assert.ok(detail.convertedCase, "convertedCase must be present");
+  assert.equal(detail.convertedCase.applicantName, "Case Target JP");
+  assert.equal(
+    detail.convertedCase.title,
+    "Case Target · 一般",
+    "composeCaseName must produce applicant · ja-JP type label",
+  );
 });
 
 // ── 2. missing converted_customer_id → 400 ──
@@ -347,5 +370,30 @@ void test("convertCase backfills conversation customer_id", async () => {
     convResult.rows[0]?.customer_id,
     CUSTOMER_ID,
     "convertCase must backfill conversation customer_id",
+  );
+});
+
+// ── 7. A-3: convertCase composes case_name in DB ──
+
+void test("convertCase writes composed case_name (applicant · ja-JP type label) to cases table", async () => {
+  const pool = getTestPool();
+  await seedBase(pool);
+
+  const svc = createService(pool);
+  const leadId = await createConvertedLead(svc, pool);
+
+  await svc.convertCase(CTX, leadId, {
+    caseTypeCode: "dependent_visa",
+    ownerUserId: USER_ID,
+  });
+
+  const caseRow = await pool.query<{ case_name: string | null }>(
+    `SELECT case_name FROM cases WHERE id = $1`,
+    [CASE_ID],
+  );
+  assert.equal(
+    caseRow.rows[0]?.case_name,
+    "Case Target · 家族滞在",
+    "case_name must be composed from lead.name + ja-JP caseType label",
   );
 });

@@ -14,6 +14,16 @@ const DOC_TPL_BMV_OVERVIEW_1 = "00000000-0000-4000-a000-000000000623";
 const DOC_TPL_BMV_OVERVIEW_2 = "00000000-0000-4000-a000-000000000624";
 const DOC_TPL_BMV_OVERVIEW_3 = "00000000-0000-4000-a000-000000000625";
 
+const DOC_TPL_WORK_1 = "00000000-0000-4000-a000-000000000630";
+const DOC_TPL_WORK_2 = "00000000-0000-4000-a000-000000000631";
+const DOC_TPL_WORK_3 = "00000000-0000-4000-a000-000000000632";
+const DOC_TPL_BMV_CANONICAL_1 = "00000000-0000-4000-a000-000000000640";
+const DOC_TPL_BMV_CANONICAL_2 = "00000000-0000-4000-a000-000000000641";
+const DOC_TPL_COMPANY_SETUP = "00000000-0000-4000-a000-000000000650";
+const DOC_TPL_HIGHLY_SKILLED = "00000000-0000-4000-a000-000000000660";
+const DOC_TPL_PERMANENT = "00000000-0000-4000-a000-000000000670";
+const DOC_TPL_OTHER = "00000000-0000-4000-a000-000000000680";
+
 type DocTemplateSeed = {
   id: string;
   caseType: string;
@@ -96,6 +106,63 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
     caseType: "biz_mgmt_cert_4m",
     templateName: "会社概要",
     docType: "company_overview",
+  },
+  // work — BUSINESS_TYPE_TO_CASE_TYPE_CODE["work-visa"] canonical
+  {
+    id: DOC_TPL_WORK_1,
+    caseType: "work",
+    templateName: "雇用契約書サマリ",
+    docType: "employment_summary",
+  },
+  {
+    id: DOC_TPL_WORK_2,
+    caseType: "work",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_WORK_3,
+    caseType: "work",
+    templateName: "履歴書",
+    docType: "resume",
+  },
+  // business_manager_visa — BUSINESS_TYPE_TO_CASE_TYPE_CODE["business-management-visa"] canonical
+  {
+    id: DOC_TPL_BMV_CANONICAL_1,
+    caseType: "business_manager_visa",
+    templateName: "事業計画書",
+    docType: "business_plan",
+  },
+  {
+    id: DOC_TPL_BMV_CANONICAL_2,
+    caseType: "business_manager_visa",
+    templateName: "会社概要",
+    docType: "company_overview",
+  },
+  // TODO: 業務口径回帰後に細化
+  {
+    id: DOC_TPL_COMPANY_SETUP,
+    caseType: "company_setup",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_HIGHLY_SKILLED,
+    caseType: "highly_skilled",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_PERMANENT,
+    caseType: "permanent",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_OTHER,
+    caseType: "other",
+    templateName: "申請理由書",
+    docType: "reason_statement",
   },
 ];
 

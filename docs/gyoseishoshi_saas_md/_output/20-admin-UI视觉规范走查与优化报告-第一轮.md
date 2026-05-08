@@ -353,7 +353,7 @@ theme.css token：[--font-size-xs=11, --font-size-sm=12, --font-size-base=14, --
 
 ---
 
-## 8. 引用与缺失项（mempalace 对齐）
+## 8. 引用与缺失项（权威文档对齐）
 
 ### 8.1 文档引用
 

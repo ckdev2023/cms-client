@@ -7,6 +7,11 @@ import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadConversionInfo } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import {
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../../shared/model/caseTitleFallback";
+import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 
 /** 已生成转化记录：展示已转客户/案件卡片及建档记录时间线。 */
 const props = defineProps<{
@@ -26,6 +31,21 @@ const hasConvertedCustomer = computed(
 const hasConvertedCase = computed(
   () => props.conversion.convertedCase !== null,
 );
+
+const caseDisplayTitle = computed(() => {
+  const c = props.conversion.convertedCase;
+  if (!c) return "";
+  if (!isFallbackTitle(c.title, c.caseNo, c.id)) return c.title;
+  const key = getCaseTypeI18nKey(c.type);
+  const typeLabel = key ? t(key) : "";
+  const resolvedLabel = typeLabel && typeLabel !== key ? typeLabel : "";
+  return buildFallbackName(
+    c.applicantName,
+    resolvedLabel,
+    c.caseNo ?? undefined,
+    c.id,
+  );
+});
 </script>
 
 <template>
@@ -99,11 +119,7 @@ const hasConvertedCase = computed(
         </div>
         <div class="converted-record__info">
           <p class="converted-record__name">
-            {{
-              conversion.convertedCase!.title ||
-              conversion.convertedCase!.caseNo ||
-              conversion.convertedCase!.id
-            }}
+            {{ caseDisplayTitle }}
           </p>
           <p class="converted-record__meta">
             {{

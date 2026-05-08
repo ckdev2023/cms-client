@@ -1,3 +1,22 @@
+/**
+ * Dev / staging seed data.
+ *
+ * ## staff_users display_name ↔ email 错位（故意制造的边界用例）
+ *
+ * 运行环境中 admin002@example.jp 的 display_name 为 "admin003"。
+ * 这是**故意保留的错位**，用于验证以下边界场景：
+ *
+ * - 审计日志可读性：actor 显示 "admin003"，与登录邮箱前缀 "admin002" 不一致。
+ * - 负责人下拉：下拉中的 "admin002" 选项指向另一位 staff_user，
+ *   与当前登录的 admin002@example.jp 实际身份不匹配。
+ * - scope=mine 行为：`/cases?scope=mine` 按 user.id 过滤，
+ *   结果与按 display_name 前缀"admin002"人工预期的不一致
+ *   （例如 scope=mine 返回 0 条、scope=all 返回 1 条）。
+ *
+ * 这些用户不在本文件的 `DEV_USER_SEEDS` 中创建，而是通过管理面板或
+ * 外部 bootstrap 脚本生成。如需对齐 display_name 与 email 前缀，
+ * 请参见 `seedDevData.staff-mapping.contract.test.ts` 中的可选断言。
+ */
 import type { PoolClient } from "pg";
 
 import { createPgPool } from "../infra/db/createPgPool";

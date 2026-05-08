@@ -155,6 +155,7 @@ const customerList = {
       sourceTypeAds: "広告",
       visaType: "在留資格",
       visaTypeNone: "—",
+      /** @deprecated 签证类型标签已由 shared/model/useVisaTypeOptions 静态 catalog 统一提供；保留一个 release 后移除。 */
       visaTypeBusinessManager: "経営・管理",
       visaTypeEngineerSpecialist: "技術・人文知識・国際業務",
       visaTypeSkilledLabor: "技能",

@@ -12,8 +12,8 @@
 --   - signStatus = signed
 --   - intakeStatus = ready_for_case_creation
 --
--- 业务对照：mempalace `prepare_grounded_answer` 经营管理签续签场景
---   §执行重点 — 客户已有 active BMV case 即视为"承接已签约"事实成立。
+-- 业务对照：经营管理签续签场景执行重点
+--   客户已有 active BMV case 即视为"承接已签约"事实成立。
 WITH bmv_customers AS (
   SELECT DISTINCT c.customer_id, c.org_id
   FROM cases c

@@ -376,15 +376,19 @@ export async function queryCaseSummary(
   const r = await db.query<{
     id: string;
     case_no: string | null;
+    case_name: string | null;
     case_type_code: string | null;
+    base_profile: unknown;
     group_id: string | null;
     group_name: string | null;
     created_at: unknown;
   }>(
-    `select ca.id, ca.case_no, ca.case_type_code,
+    `select ca.id, ca.case_no, ca.case_name, ca.case_type_code,
+            c.base_profile,
             g.id as group_id, g.name as group_name,
             ca.created_at
      from cases ca
+     left join customers c on c.id = ca.customer_id
      left join groups g on g.id = ca.group_id
      where ca.id = $1 limit 1`,
     [caseId],
@@ -395,6 +399,8 @@ export async function queryCaseSummary(
     id: row.id,
     caseNo: row.case_no,
     caseTypeCode: row.case_type_code,
+    title: row.case_name ?? null,
+    applicantName: extractApplicantName(row.base_profile),
     group: row.group_id
       ? { id: row.group_id, name: row.group_name ?? "" }
       : null,
@@ -402,4 +408,20 @@ export async function queryCaseSummary(
       ? new Date(row.created_at as string | number).toISOString()
       : null,
   };
+}
+
+/**
+ * base_profile から申請者名を抽出する（name_jp → name_cn → name_en の優先順）。
+ *
+ * @param baseProfile Customer の base_profile JSONB（形式は不定）。
+ * @returns 抽出した申請者名。値が無い / 不正な場合は null。
+ */
+function extractApplicantName(baseProfile: unknown): string | null {
+  if (!baseProfile || typeof baseProfile !== "object") return null;
+  const bp = baseProfile as Record<string, unknown>;
+  for (const key of ["name_jp", "name_cn", "name_en"]) {
+    const v = bp[key];
+    if (typeof v === "string" && v.trim()) return v.trim();
+  }
+  return null;
 }

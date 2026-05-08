@@ -8,9 +8,9 @@
  */
 
 import {
-  BUSINESS_TYPE_OPTIONS_I18N,
   normalizeBusinessType,
-} from "../../../i18n/messages/_shared/businessTypes";
+  resolveBusinessTypeLabel,
+} from "../../../shared/i18n/businessTypes";
 
 type Translate = (key: string) => string;
 
@@ -88,17 +88,26 @@ export function resolveLeadCreatedViaLabel(
  * `business-management-visa`），未识别的值原样返回，保留 fixture 已经
  * 预翻译过的字面量（如 `"家族滞在"`）继续展示。
  *
- * @param value - 业务类型枚举值（如 `highly-skilled`）。
- * @param t - vue-i18n 的 `t` 翻译函数。
- * @returns 本地化标签；未识别的值原样返回。
+ * 第二参数支持 locale 字符串（优先）或 `t` 翻译函数（向后兼容，
+ * 下一 release 移除）。传入 locale 时直接走 shared catalog，不再
+ * 经由 i18n `t()` 间接查找。
+ *
+ * @param value     业务类型枚举值（如 `highly-skilled`）
+ * @param localeOrT locale 字符串或 vue-i18n `t` 函数（向后兼容）
+ * @returns 本地化标签；未识别的值原样返回
  */
 export function resolveLeadBusinessTypeLabel(
   value: string,
-  t: Translate,
+  localeOrT: string | Translate,
 ): string {
   if (!value) return "";
   const normalized = normalizeBusinessType(value);
   if (!normalized) return value;
-  const opt = BUSINESS_TYPE_OPTIONS_I18N.find((o) => o.value === normalized);
-  return opt ? t(opt.labelKey) : value;
+
+  if (typeof localeOrT === "string") {
+    return resolveBusinessTypeLabel(normalized, localeOrT, "primary");
+  }
+
+  // @deprecated — 传入 t 函数的旧路径；下一 release 移除
+  return resolveBusinessTypeLabel(normalized, undefined, "primary");
 }

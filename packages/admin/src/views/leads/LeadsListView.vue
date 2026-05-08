@@ -5,7 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import type { AppLocale } from "../../i18n";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
-import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getGroupOptions } from "../../shared/model/useGroupOptions";
 import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import LeadFilters from "./components/LeadFilters.vue";
 import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
@@ -37,7 +37,7 @@ const route = useRoute();
 const router = useRouter();
 
 const repository = createLeadRepository();
-const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+const groupOptions = computed(() => getGroupOptions("filter", locale.value));
 const ownerOptions = computed(() => getOwnerOptions(locale.value));
 const { apiOwnerOptions, apiGroupOptions } = useLeadCatalogOptions(locale);
 
@@ -56,7 +56,7 @@ const {
   resetFilters: resetFiltersRaw,
   toListParams,
 } = useLeadFilters({
-  groupOptions: getActiveGroupOptions(),
+  groupOptions: getGroupOptions("filter"),
   ownerOptions: [],
   businessTypeOptions: BUSINESS_TYPE_OPTIONS,
   routeQuery: computed(() => route.query),

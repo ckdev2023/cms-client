@@ -176,7 +176,7 @@ describe("LeadConvertedRecords", () => {
     expect(caseMeta).not.toContain("8d8279a8-fd8e-4f1f");
   });
 
-  it("NEW-V5-2: case card falls back to caseNo for name when title missing", () => {
+  it("NEW-V5-2: case card uses buildFallbackName with typeLabel when title missing (NEW-V6-1 upgrade)", () => {
     const conversion: LeadConversionInfo = {
       dedupResult: null,
       convertedCustomer: null,
@@ -195,7 +195,77 @@ describe("LeadConvertedRecords", () => {
     const wrapper = mountRecords(conversion);
     const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
 
-    expect(caseName).toContain("CASE-202605-0011");
+    expect(caseName).not.toContain("8d8279a8-fd8e-4f1f");
+    expect(caseName).toBeTruthy();
+  });
+
+  it("NEW-V6-1: case card uses buildFallbackName when title is missing but applicantName + caseTypeCode present", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "aaaa-bbbb-cccc",
+        title: "CASE-202605-0020",
+        caseNo: "CASE-202605-0020",
+        applicantName: "R-FLOW-V6 走查申請人",
+        type: "dependent_visa",
+        group: "tokyo-1",
+        convertedAt: "2026-05-08T18:00:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
+
+    expect(caseName).toContain("R-FLOW-V6 走查申請人");
+    expect(caseName).not.toContain("CASE-202605-0020");
+    expect(caseName).not.toContain("aaaa-bbbb-cccc");
+  });
+
+  it("NEW-V6-1: case card falls back to caseNo when both title and applicantName are missing", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "aaaa-bbbb-cccc",
+        title: "",
+        caseNo: "CASE-202605-0021",
+        type: "unknown_type_xxx",
+        group: "tokyo-1",
+        convertedAt: "2026-05-08T18:00:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
+
+    expect(caseName).toBe("CASE-202605-0021");
+  });
+
+  it("NEW-V6-1: case card falls back to id when title, applicantName, and caseNo are all missing", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "aaaa-bbbb-cccc-dddd",
+        title: "",
+        caseNo: "",
+        type: "",
+        group: "",
+        convertedAt: "2026-05-08T18:00:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
+
+    expect(caseName).toBe("aaaa-bbbb-cccc-dddd");
   });
 
   it("emits viewCustomer when customer button is clicked (P1-3)", async () => {

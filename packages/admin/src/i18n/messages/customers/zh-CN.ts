@@ -76,6 +76,7 @@ const customerDetail = {
       sourceTypeAds: "广告",
       visaType: "签证类型",
       visaTypeNone: "—",
+      /** @deprecated 签证类型标签已由 shared/model/useVisaTypeOptions 静态 catalog 统一提供；保留一个 release 后移除。 */
       visaTypeBusinessManager: "经营管理",
       visaTypeEngineerSpecialist: "技术·人文知识·国际业务",
       visaTypeSkilledLabor: "技能",

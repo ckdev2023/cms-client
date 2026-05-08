@@ -49,7 +49,7 @@ const sourceDisplay = computed(() =>
 );
 
 const businessTypeDisplay = computed(() =>
-  resolveLeadBusinessTypeLabel(props.info.businessType, t),
+  resolveLeadBusinessTypeLabel(props.info.businessType, locale.value),
 );
 
 const languageDisplay = computed(() =>

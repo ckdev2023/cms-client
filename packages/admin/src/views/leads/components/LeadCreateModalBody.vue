@@ -12,14 +12,15 @@ import type {
   OwnerOption,
   SelectOption,
 } from "../types";
-import {
-  BUSINESS_TYPE_OPTIONS,
-  LEAD_SOURCE_OPTIONS,
-  LANGUAGE_OPTIONS,
-} from "../fixtures";
+import { LEAD_SOURCE_OPTIONS, LANGUAGE_OPTIONS } from "../fixtures";
+import { getBusinessTypeSelectOptions } from "../../../shared/i18n/businessTypes";
 
 /** 新建线索弹窗表单主体：字段输入、来源联动与去重提示。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const businessTypeOpts = computed(() =>
+  getBusinessTypeSelectOptions(locale.value, "primary"),
+);
 
 const props = defineProps<{
   fields?: LeadCreateFormFields;
@@ -192,11 +193,11 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               {{ t("leads.list.createModal.fields.businessTypePlaceholder") }}
             </option>
             <option
-              v-for="opt in BUSINESS_TYPE_OPTIONS"
+              v-for="opt in businessTypeOpts"
               :key="opt.value"
               :value="opt.value"
             >
-              {{ t(opt.label) }}
+              {{ opt.label }}
             </option>
           </select>
         </div>
@@ -204,6 +205,9 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <label class="lead-modal-body__label" for="lead-create-group">
             {{ t("leads.list.createModal.fields.group") }}
           </label>
+          <p class="lead-modal-body__hint">
+            {{ t("shared.groupOptions.writeHint") }}
+          </p>
           <select
             id="lead-create-group"
             name="group"
@@ -399,6 +403,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
 .lead-modal-body__required {
   color: #dc2626;
+}
+
+.lead-modal-body__hint {
+  margin: 0;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-4, #999);
 }
 
 .lead-modal-body__input {

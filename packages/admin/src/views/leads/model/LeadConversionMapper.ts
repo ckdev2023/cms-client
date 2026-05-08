@@ -61,10 +61,9 @@ function adaptConvertedCaseDto(value: unknown): ConvertedCase | null {
   const caseNo = readString(r, "caseNo");
   return {
     id: readString(r, "id"),
-    // NEW-V5-2：title 优先于 caseNo，与同文件 customer.name 风格保持一致；
-    // 若服务端缺 title 仍回退到 caseNo（兼容历史 minimal 响应）。
     title: readString(r, "title") || caseNo,
     caseNo,
+    applicantName: readString(r, "applicantName") || undefined,
     type: readString(r, "caseTypeCode") || readString(r, "type"),
     group: readGroupString(r.group),
     convertedAt: readString(r, "convertedAt"),

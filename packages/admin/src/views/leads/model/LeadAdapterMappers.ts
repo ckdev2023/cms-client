@@ -25,7 +25,7 @@ import type {
 } from "./LeadAdapterTypes";
 import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
 import { sanitizeWalkthroughTags } from "./walkthroughTags";
-import { normalizeBusinessType } from "../../../i18n/messages/_shared/businessTypes";
+import { normalizeBusinessType } from "../../../shared/i18n/businessTypes";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)

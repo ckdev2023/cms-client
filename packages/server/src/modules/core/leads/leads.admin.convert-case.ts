@@ -5,6 +5,7 @@ import type { Lead, LeadQueryRow } from "../../portal/model/portalEntities";
 import { mapLeadRow } from "../../portal/model/portalEntities";
 import { createDefaultCustomerBmvProfile } from "../customers/customers.dto-mappers";
 import { isBmvCaseTypeCode } from "../cases/cases.template-bmv";
+import { getCaseTypeLabelJa } from "../cases/caseTypeLabels.ja";
 import type { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
@@ -43,11 +44,13 @@ export async function convertCase(
   const customerId = assertConvertCasePreconditions(lead);
 
   const isBmv = isBmvCaseTypeCode(input.caseTypeCode);
+  const caseName = composeCaseName(lead, input.caseTypeCode);
   const caseEntity = await deps.casesService.create(ctx, {
     customerId,
     caseTypeCode: input.caseTypeCode,
     ownerUserId: input.ownerUserId,
     groupId: input.groupId ?? lead.groupId ?? undefined,
+    caseName,
   });
   const caseId = caseEntity.id;
   const caseNo = normalizeCaseNo(caseEntity.caseNo);
@@ -173,4 +176,24 @@ async function backfillConversationCustomer(
   } catch {
     // best-effort backfill; swallow constraint errors
   }
+}
+
+/**
+ * ja-JP ラベルで案件名を best-effort 合成する。
+ * 前端が locale に応じて buildFallbackName で上書きするため、
+ * DB 値は SQL 検索/CSV 出力/audit 用の readable baseline。
+ *
+ * @param lead Lead から申請者名（name）のみ参照する。
+ * @param caseTypeCode 案件タイプコード（例: "permanent", "work"）。
+ * @returns 合成した案件名。情報不足時は null。
+ */
+export function composeCaseName(
+  lead: Pick<Lead, "name">,
+  caseTypeCode: string,
+): string | null {
+  const trimmed = lead.name?.trim() ?? "";
+  const applicant = trimmed.length > 0 ? trimmed : null;
+  const typeLabel = getCaseTypeLabelJa(caseTypeCode) ?? null;
+  const parts = [applicant, typeLabel].filter(Boolean);
+  return parts.length > 0 ? parts.join(" · ") : null;
 }

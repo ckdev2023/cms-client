@@ -7,7 +7,7 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
-import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
+import { getGroupOptions } from "../../shared/model/useGroupOptions";
 import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
 import CustomerSummaryCards from "./components/CustomerSummaryCards.vue";
 import CustomerFilters from "./components/CustomerFilters.vue";
@@ -40,7 +40,7 @@ const router = useRouter();
 const repository = createCustomerRepository();
 const { currentUser } = useAdminSession();
 const groupOptions = computed<SelectOption[]>(() =>
-  getActiveGroupOptions(locale.value),
+  getGroupOptions("filter", locale.value),
 );
 const ownerOptions = computed<SelectOption[]>(() =>
   getActiveUserOptions().map(({ value, label }) => ({ value, label })),

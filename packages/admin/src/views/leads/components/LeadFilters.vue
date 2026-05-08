@@ -6,14 +6,18 @@ import { useI18n } from "vue-i18n";
 import SegmentedControl from "../../../shared/ui/SegmentedControl.vue";
 import SearchField from "../../../shared/ui/SearchField.vue";
 import Button from "../../../shared/ui/Button.vue";
-import { ref } from "vue";
+import { computed, ref } from "vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadScope, OwnerOption, SelectOption } from "../types";
 import { LEAD_STATUSES } from "../types";
-import { BUSINESS_TYPE_OPTIONS } from "../fixtures";
+import { getBusinessTypeSelectOptions } from "../../../shared/i18n/businessTypes";
 
 /** 线索列表筛选区：范围切换、搜索、下拉筛选与日期范围。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
+
+const businessTypeOpts = computed(() =>
+  getBusinessTypeSelectOptions(locale.value, "primary"),
+);
 
 const scopeOptions = [
   { label: "", value: "mine" as const },
@@ -189,11 +193,11 @@ function removeTag(tag: string) {
           {{ t("leads.list.filters.businessTypeAll") }}
         </option>
         <option
-          v-for="opt in BUSINESS_TYPE_OPTIONS"
+          v-for="opt in businessTypeOpts"
           :key="opt.value"
           :value="opt.value"
         >
-          {{ t(opt.label) }}
+          {{ opt.label }}
         </option>
       </select>
 

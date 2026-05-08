@@ -19,13 +19,16 @@ void describe("queryCaseSummary", () => {
   void test("returns full summary with caseNo, group, convertedAt", async () => {
     const db = makeTenantDb((sql) => {
       assert.ok(sql.includes("from cases ca"));
+      assert.ok(sql.includes("left join customers c on c.id = ca.customer_id"));
       assert.ok(sql.includes("left join groups g on g.id = ca.group_id"));
       return {
         rows: [
           {
             id: "case-001",
             case_no: "CASE-202605-0001",
+            case_name: "田中太郎 · 家族滞在",
             case_type_code: "dependent_visa",
+            base_profile: { name_jp: "田中太郎" },
             group_id: "grp-001",
             group_name: "東京オフィス",
             created_at: "2026-05-07T10:00:00.000Z",
@@ -39,6 +42,8 @@ void describe("queryCaseSummary", () => {
     assert.equal(result.id, "case-001");
     assert.equal(result.caseNo, "CASE-202605-0001");
     assert.equal(result.caseTypeCode, "dependent_visa");
+    assert.equal(result.title, "田中太郎 · 家族滞在");
+    assert.equal(result.applicantName, "田中太郎");
     assert.deepEqual(result.group, { id: "grp-001", name: "東京オフィス" });
     assert.equal(result.convertedAt, "2026-05-07T10:00:00.000Z");
   });
@@ -49,7 +54,9 @@ void describe("queryCaseSummary", () => {
         {
           id: "case-002",
           case_no: "CASE-202605-0002",
+          case_name: null,
           case_type_code: "work_visa",
+          base_profile: { name_cn: "李明" },
           group_id: null,
           group_name: null,
           created_at: "2026-04-01T08:00:00.000Z",
@@ -62,6 +69,8 @@ void describe("queryCaseSummary", () => {
     assert.equal(result.id, "case-002");
     assert.equal(result.caseNo, "CASE-202605-0002");
     assert.equal(result.caseTypeCode, "work_visa");
+    assert.equal(result.title, null);
+    assert.equal(result.applicantName, "李明");
     assert.equal(result.group, null);
     assert.equal(result.convertedAt, "2026-04-01T08:00:00.000Z");
   });
@@ -78,7 +87,9 @@ void describe("queryCaseSummary", () => {
         {
           id: "case-003",
           case_no: null,
+          case_name: null,
           case_type_code: "bmv",
+          base_profile: null,
           group_id: "grp-002",
           group_name: "大阪支社",
           created_at: "2026-03-15T12:00:00.000Z",
@@ -90,6 +101,8 @@ void describe("queryCaseSummary", () => {
     assert.ok(result);
     assert.equal(result.caseNo, null);
     assert.equal(result.caseTypeCode, "bmv");
+    assert.equal(result.title, null);
+    assert.equal(result.applicantName, null);
     assert.deepEqual(result.group, { id: "grp-002", name: "大阪支社" });
   });
 
@@ -99,7 +112,9 @@ void describe("queryCaseSummary", () => {
         {
           id: "case-004",
           case_no: "CASE-004",
+          case_name: null,
           case_type_code: "general",
+          base_profile: null,
           group_id: "grp-003",
           group_name: null,
           created_at: "2026-05-01T00:00:00.000Z",
@@ -110,6 +125,153 @@ void describe("queryCaseSummary", () => {
     const result = await queryCaseSummary(db, "case-004");
     assert.ok(result);
     assert.deepEqual(result.group, { id: "grp-003", name: "" });
+  });
+
+  void test("returns title when case_name is set", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-t1",
+          case_no: "CASE-T1",
+          case_name: "鈴木一郎 · 技人国",
+          case_type_code: "work",
+          base_profile: { name_jp: "鈴木一郎" },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-t1");
+    assert.ok(result);
+    assert.equal(result.title, "鈴木一郎 · 技人国");
+  });
+
+  void test("returns null title when case_name is NULL", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-t2",
+          case_no: "CASE-T2",
+          case_name: null,
+          case_type_code: "work",
+          base_profile: null,
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-t2");
+    assert.ok(result);
+    assert.equal(result.title, null);
+  });
+
+  void test("extracts applicantName from base_profile.name_jp", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-a1",
+          case_no: "CASE-A1",
+          case_name: null,
+          case_type_code: "dependent_visa",
+          base_profile: { name_jp: "山田花子", name_cn: "张三" },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-a1");
+    assert.ok(result);
+    assert.equal(result.applicantName, "山田花子");
+  });
+
+  void test("falls back to name_cn when name_jp is absent", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-a2",
+          case_no: "CASE-A2",
+          case_name: null,
+          case_type_code: "work",
+          base_profile: { name_cn: "王五", name_en: "Wang Wu" },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-a2");
+    assert.ok(result);
+    assert.equal(result.applicantName, "王五");
+  });
+
+  void test("falls back to name_en when name_jp and name_cn are absent", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-a3",
+          case_no: "CASE-A3",
+          case_name: null,
+          case_type_code: "work",
+          base_profile: { name_en: "John Doe" },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-a3");
+    assert.ok(result);
+    assert.equal(result.applicantName, "John Doe");
+  });
+
+  void test("returns null applicantName when base_profile has no name fields", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-a4",
+          case_no: "CASE-A4",
+          case_name: null,
+          case_type_code: "work",
+          base_profile: { email: "test@example.com" },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-a4");
+    assert.ok(result);
+    assert.equal(result.applicantName, null);
+  });
+
+  void test("returns null applicantName when base_profile is null", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "case-a5",
+          case_no: "CASE-A5",
+          case_name: null,
+          case_type_code: "work",
+          base_profile: null,
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-08T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCaseSummary(db, "case-a5");
+    assert.ok(result);
+    assert.equal(result.applicantName, null);
   });
 });
 

@@ -56,6 +56,9 @@ const enUS = {
     group: {
       disabledSuffix: " (Disabled)",
     },
+    groupOptions: {
+      writeHint: "(Only your assigned groups)",
+    },
     breadcrumbsLabel: "Breadcrumb navigation",
     loading: "Loading…",
     submitting: "Submitting…",

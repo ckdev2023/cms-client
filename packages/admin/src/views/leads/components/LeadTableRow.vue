@@ -71,7 +71,7 @@ const groupLabel = computed(() => {
 });
 
 const businessTypeDisplay = computed(() =>
-  resolveLeadBusinessTypeLabel(props.lead.businessTypeLabel, t),
+  resolveLeadBusinessTypeLabel(props.lead.businessTypeLabel, locale.value),
 );
 
 /** 优先业务编号 `leadNo`，缺失回退 `id`；与 `LeadDetailHeader` 同口径。 */

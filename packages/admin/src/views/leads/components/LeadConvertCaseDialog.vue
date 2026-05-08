@@ -3,13 +3,13 @@ import { reactive, computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import {
-  BUSINESS_TYPE_OPTIONS_I18N,
   mapBusinessTypeToCaseTypeCode,
   normalizeBusinessType,
+  getBusinessTypeSelectOptions,
   type BusinessType,
-} from "../../../i18n/messages/_shared/businessTypes";
+} from "../../../shared/i18n/businessTypes";
 import { getActiveUserOptions } from "../../../shared/model/useOrgUserOptions";
-import { getActiveGroupAliasOptions } from "../../../shared/model/useGroupOptions";
+import { getGroupOptions } from "../../../shared/model/useGroupOptions";
 import type { LeadConvertCaseInput } from "../model/LeadAdapter";
 import type { LeadConvertCaseFailure } from "../model/useLeadDetailModel";
 import BmvGateBlockerList from "./BmvGateBlockerList.vue";
@@ -35,15 +35,15 @@ const emit = defineEmits<{
 const { t, locale } = useI18n();
 
 const caseTypeOptions = computed(() => {
-  return BUSINESS_TYPE_OPTIONS_I18N.map((opt) => ({
+  return getBusinessTypeSelectOptions(locale.value, "primary").map((opt) => ({
     value: mapBusinessTypeToCaseTypeCode(opt.value),
-    label: t(opt.labelKey),
+    label: opt.label,
   }));
 });
 
 const userOptions = computed(() => getActiveUserOptions());
 
-const groupOptions = computed(() => getActiveGroupAliasOptions(locale.value));
+const groupOptions = computed(() => getGroupOptions("write", locale.value));
 
 /**
  * 将线索的業務意向類型映射为案件类型代码作为默认值
@@ -181,6 +181,9 @@ function handleConfirm(): void {
 
           <label class="convert-case-dialog__label">
             <span>{{ t("leads.detail.convertCaseDialog.groupLabel") }}</span>
+            <p class="convert-case-dialog__hint">
+              {{ t("shared.groupOptions.writeHint") }}
+            </p>
             <select
               id="convert-case-group"
               v-model="form.groupId"
@@ -277,6 +280,12 @@ function handleConfirm(): void {
   font-size: var(--font-size-sm);
   color: var(--color-text-1);
   background: var(--color-bg-1);
+}
+
+.convert-case-dialog__hint {
+  margin: 0;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-text-4, #999);
 }
 
 .convert-case-dialog__actions {

@@ -56,6 +56,9 @@ const jaJP = {
     group: {
       disabledSuffix: "（停止）",
     },
+    groupOptions: {
+      writeHint: "（所属するグループのみ表示）",
+    },
     breadcrumbsLabel: "パンくずリスト",
     loading: "読み込み中…",
     submitting: "送信中…",

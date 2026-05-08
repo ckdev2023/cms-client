@@ -178,6 +178,8 @@ export interface ConvertedCase {
   title: string;
   /** 案件编号 `CASE-YYYYMM-XXXX`，独立于 title 单独存放，便于副标题拆分展示 */
   caseNo?: string | null;
+  /** 申请人名称，用于 `buildFallbackName` 拼接可读标题 */
+  applicantName?: string;
   /** */
   type: string;
   /** */

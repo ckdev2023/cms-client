@@ -944,6 +944,7 @@ const casesJaJP = {
       RESIDENCE_PERIOD_RECORDED: "在留期間記録済み",
       RENEWAL_REMINDER_SCHEDULED: "更新リマインダー設定済み",
     },
+    /** @deprecated 与 BUSINESS_TYPE_TO_CASE_TYPE_CODE 映射重叠的 key 已由 shared/i18n/businessTypes 统一提供；保留一个 release 后移除重叠条目。 */
     caseTypes: {
       family: "家族滞在",
       work: "就労ビザ",

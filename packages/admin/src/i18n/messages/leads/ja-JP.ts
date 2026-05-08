@@ -336,6 +336,7 @@ const leadsJaJP = {
       phone: "電話",
       other: "その他",
     },
+    /** @deprecated 由 shared/i18n/businessTypes BUSINESS_TYPE_LABELS 统一提供；保留一个 release 后移除。 */
     businessType: {
       highlySkilled: "高度専門職",
       workVisa: "技術・人文知識・国際業務",

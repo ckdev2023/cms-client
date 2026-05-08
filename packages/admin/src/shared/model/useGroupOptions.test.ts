@@ -111,6 +111,14 @@ describe("resolveGroupLabel", () => {
     expect(resolveGroupLabel("tokyo-1", " (Disabled)")).toBe("東京一組");
   });
 
+  it("returns dash placeholder for empty string input", () => {
+    expect(resolveGroupLabel("")).toBe("—");
+  });
+
+  it("returns dash placeholder for undefined input", () => {
+    expect(resolveGroupLabel(undefined as unknown as string)).toBe("—");
+  });
+
   it("localizes known labels across locales", () => {
     expect(resolveGroupLabel("東京一組", "（已停用）", "zh-CN")).toBe(
       "东京一组",

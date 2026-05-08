@@ -450,8 +450,8 @@ void test("SQL-level smoke: DOC_TEMPLATE_SEEDS count matches document_templates 
   assert.ok(DOC_TEMPLATE_SEEDS.length > 0, "must not be empty");
   assert.equal(
     DOC_TEMPLATE_SEEDS.length,
-    12,
-    "expected 12 document template seeds",
+    21,
+    "expected 21 document template seeds",
   );
 
   const steps = buildSeedSteps();

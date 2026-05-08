@@ -198,6 +198,7 @@ export function clearGroupAliases(): void {
 /**
  * 仅返回 active Group 的选项列表，供选择器/下拉/表单使用。
  *
+ * @deprecated 使用 `getGroupOptions('filter', locale)` 或 `getGroupOptions('write', locale)` 替代。
  * @param locale - 可选语言标识；用于返回对应语言的 Group 标签
  * @returns 仅包含 value/label 的活跃 Group 数组
  */
@@ -221,6 +222,7 @@ export function getActiveGroupOptions(locale?: string): GroupSelectOption[] {
  * 时，走 catalog 本地化路径；自定义组名（未命中 catalog）仍以
  * DB name 为权威显示值。catalog 仍用于过滤 disabled fixture 项。
  *
+ * @deprecated 使用 `getGroupOptions('write', locale)` 替代。
  * @param locale - 目标显示语言；命中 catalog 时返回对应语言标签
  * @returns 形如 `{ value: id, label }` 的数组；
  *   未注册任何别名时返回空数组
@@ -243,6 +245,7 @@ export function getActiveGroupAliasOptions(
 /**
  * 返回全量 Group 选项（含 disabled），供需要完整列表的场景使用。
  *
+ * @deprecated 使用 `getGroupOptions('filter', locale)` 替代。
  * @param locale - 可选语言标识；传入时返回对应语言的完整 Group 列表
  * @returns 包含状态信息的全量 Group 数组
  */
@@ -251,6 +254,31 @@ export function getAllGroupOptions(
 ): readonly GroupOptionWithStatus[] {
   if (!locale) return ALL_OPTIONS;
   return GROUP_CATALOG.map((option) => localizeGroupOption(option, locale));
+}
+
+/**
+ * 统一的 Group 选项入口，按使用场景（mode）返回对应选项列表。
+ *
+ * - `'filter'`：筛选路径，返回全量 catalog 选项（含 disabled），
+ *   使用 catalog 短码作为 value，适用于列表筛选下拉。
+ * - `'write'`：写入路径，返回运行期已注册的后端 Group（UUID 作为
+ *   value），适用于新建/编辑表单下拉。
+ *
+ * @param mode - 使用场景：'filter'（筛选）或 'write'（写入）
+ * @param locale - 目标显示语言
+ * @returns 符合场景的 Group 选项数组
+ */
+export function getGroupOptions(
+  mode: "filter" | "write",
+  locale?: string,
+): GroupSelectOption[] {
+  if (mode === "write") {
+    return getActiveGroupAliasOptions(locale);
+  }
+  return GROUP_CATALOG.map(({ value, labels }) => ({
+    value,
+    label: labels[normalizeGroupLocale(locale)],
+  }));
 }
 
 /**
@@ -300,6 +328,7 @@ export function resolveGroupLabel(
   disabledSuffix = "（已停用）",
   locale?: string,
 ): string {
+  if (!idOrLabel?.trim()) return "—";
   const direct = GROUP_CATALOG.find((g) => matchesGroupDirect(g, idOrLabel));
   if (direct) {
     const label = direct.labels[normalizeGroupLocale(locale)];

@@ -10,7 +10,7 @@
 > 走查环境：`http://localhost:5173/api`，本地 admin（`admin@local.test` / `Admin123!`）；后端 NestJS `:3300`，Vite 反代 `:5173`，PostgreSQL `cms-client-postgres-1` `:5433`
 > 与第十三轮（`19-...md`）互为续篇；本轮**先验 R13 §1 全部 8 条**，再以经管签 4M（BMV-CERT-4M）流程为锚把 admin 全链路从「客户详情 → BMV 承接卡片 → 转正式案件 → Step 1-4 → 案件详情 → Tasks → 收费」走通，统一登记走查中暴露的**新偏差**与**R13 land 项实测验收差异**。
 >
-> mempalace `prepare_grounded_answer` 已 grounded（biz-mgmt P1 落地清单 / 经营管理签签约前承接页面规格 / M8 在留期间与续签提醒 / M6 收费与 COE 门禁）；本文不直接陈述业务规则，仅以"产品规则 / 文档锚点"维度引用。
+> 业务规则 ground 锚点已落在仓库内权威文档（biz-mgmt P1 落地清单 / 经营管理签签约前承接页面规格 / M8 在留期间与续签提醒 / M6 收费与 COE 门禁）；本文不直接陈述业务规则，仅以"产品规则 / 文档锚点"维度引用。
 
 ---
 
@@ -72,7 +72,7 @@ R13 §0.4「P1 偏差」唯一一条 BUG-137，R13 §1 与 §2.2 均标记 ❌ F
 
 1. **R13 §1 8 条修复整体大幅 land 到位**：`6/8 ✅ PASS`，`2/8 ⚠️ 边界缺漏`（BUG-160 漏 PG 22P02 错误码、BUG-163 漏 dedupe key UUID 字段），`1 条跨轮 land`（R13 标 ❌ FAIL 的 BUG-137 已经在 R14 时返 201）。R13 的 P0 BUG-158 / P2 BUG-159、P2 BUG-160（部分）/ P2 BUG-164 / P2 BUG-157 / P3 BUG-161 / P3 BUG-162 全部经 chrome-devtools-mcp + curl + DB 直查三重验证已 land。
 2. **事务所流程 Step 1-20 在 admin UI 端打通到 Step 18（建案向导 Step 4 复核页 + 「所有前提条件已满足，可以建案」）后，被 BUG-165 P0 卡死**——`ownerUserId` 字段在 admin 端是 catalog slug（`suzuki`/`tanaka`/`sato`/`li`）或 email（`admin@local.test`），server 端没有像 R13 v2 给 `groupId` 加的 `resolveExplicitGroupId` 那样补 `resolveExplicitOwnerUserId`，导致 PG 22P02 → BUG-166 又把它映射成 500 而非 400 → BUG-173 admin UI toast 无 actionable detail。三层联动让事务所流程在 R13 修完 BUG-158/159 之后立刻撞到下一道墙，仍然建不出新案件。
-3. **三处 case detail tab 内容中文硬编码（BUG-167/168/169）+ 一处建案 owner UUID 解析缺口（BUG-165）+ 一处 PG 错误码漏映射（BUG-166）+ 三处 raw slug/UUID 直显（BUG-170/171/172）**叠加：在 mempalace `prepare_grounded_answer` 引用的"经营管理签 P1 落地清单 §3.3 收费与 COE 门禁（M6）/§3.4 在留期间与提醒（M8-M9）"维度看，R14 的 P0 让"建立续签案件"到"复核 → 提交 → COE 门禁"这条主链在 admin 仍未端到端跑通；P2 i18n 缺漏在 en-US / ja-JP demo 场景下直接破坏多语合规。
+3. **三处 case detail tab 内容中文硬编码（BUG-167/168/169）+ 一处建案 owner UUID 解析缺口（BUG-165）+ 一处 PG 错误码漏映射（BUG-166）+ 三处 raw slug/UUID 直显（BUG-170/171/172）**叠加：从权威文档"经营管理签 P1 落地清单 §3.3 收费与 COE 门禁（M6）/§3.4 在留期间与提醒（M8-M9）"维度看，R14 的 P0 让"建立续签案件"到"复核 → 提交 → COE 门禁"这条主链在 admin 仍未端到端跑通；P2 i18n 缺漏在 en-US / ja-JP demo 场景下直接破坏多语合规。
 
 ---
 
@@ -115,7 +115,7 @@ R13 §0.4「P1 偏差」唯一一条 BUG-137，R13 §1 与 §2.2 均标记 ❌ F
   2. `packages/admin/src/shared/model/useOwnerOptions.ts:150-153` `buildCurrentUserOwnerValue` 在登录用户为 `Local Admin (admin@local.test)` 时把 `value` 设为 `email`（`admin@local.test`），同样不是 UUID。
   3. `packages/server/src/modules/core/cases/cases.service.ts#create` 在 `assertCreateRefs` / `insertCaseWithAutoNumber` 中直接把 `input.ownerUserId` 作为 UUID 写入 SQL（与 R13 v2 给 `groupId` 补的 `resolveExplicitGroupId` 双路径 SQL 不对称）。
 
-- **业务对照**（mempalace 引用 `docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md §3.3 收费与 COE 门禁（M6）` 与 `docs/gyoseishoshi_saas_md/P1/04-页面规格-客户经营管理签签约前承接.md §4. 操作列表`）：「转正式案件」是 BMV 承接卡片签约后立即触发的主按钮，"前置条件 = `signStatus = signed` → 跳转 `case/create.html` 并带上经营管理签模板参数"——当前 R14 BUG-165 让这条主链路在最后一步彻底失败；R13 BUG-158 fix 把承接卡片露出来了，但「转」过去之后还是建不出来。
+- **业务对照**（依据 `docs/gyoseishoshi_saas_md/P1/02-经营管理签技术落地清单.md §3.3 收费与 COE 门禁（M6）` 与 `docs/gyoseishoshi_saas_md/P1/04-页面规格-客户经营管理签签约前承接.md §4. 操作列表`）：「转正式案件」是 BMV 承接卡片签约后立即触发的主按钮，"前置条件 = `signStatus = signed` → 跳转 `case/create.html` 并带上经营管理签模板参数"——当前 R14 BUG-165 让这条主链路在最后一步彻底失败；R13 BUG-158 fix 把承接卡片露出来了，但「转」过去之后还是建不出来。
 
 - **修复方向**：
   1. **server 对称补强（首选 / 高优）**：在 `cases.service.ts#create` 的 `assertCreateRefs` 之前增加 `resolveOwnerUserId(tx, orgId, input.ownerUserId)`：双路径 `users.id::text = $2 OR users.email = $2 OR users.name = $2` 归一化为真实 UUID；不存在 → `BadRequestException(OWNER_NOT_FOUND)`；空字符串 / 空白 → 视同缺省（继承当前用户）。完全对齐 R13 v2 给 `resolveExplicitGroupId` 的 fix 模式。

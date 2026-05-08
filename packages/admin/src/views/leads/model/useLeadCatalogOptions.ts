@@ -1,6 +1,6 @@
 import { computed, type ComputedRef, type Ref } from "vue";
 import {
-  getActiveGroupAliasOptions,
+  getGroupOptions,
   type GroupSelectOption,
 } from "../../../shared/model/useGroupOptions";
 import { toApiOwnerOption } from "../../../shared/model/useOwnerOptions";
@@ -39,7 +39,7 @@ export function useLeadCatalogOptions(locale: Ref<string>): LeadCatalogOptions {
     ),
   );
   const apiGroupOptions = computed(() =>
-    getActiveGroupAliasOptions(locale.value),
+    getGroupOptions("write", locale.value),
   );
   return { apiOwnerOptions, apiGroupOptions };
 }

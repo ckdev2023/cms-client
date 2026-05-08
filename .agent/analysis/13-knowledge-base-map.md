@@ -7,7 +7,7 @@
 | 类别 | 路径 | 性质 | 权威 |
 |------|------|------|------|
 | **工程门禁规则** | `AGENTS.md`（45 行）| Agent 级行为门禁（`npm run guard` / 架构边界 / "只做用户要求" / 知识库工作方式）| 工程行为最高优先 |
-| **工程门禁规则·路由** | `.augment/rules/core-operating-rule.mdc`（同名也存在 `.cursor/rules/`、`.trae/rules/`）| 任务路由（MemPalace MCP）+ 交付门禁 + 架构 + 编码规范 | 与 AGENTS.md 互补，覆盖 IDE 多端 |
+| **工程门禁规则·路由** | `.augment/rules/core-operating-rule.mdc`（同名也存在 `.cursor/rules/`、`.trae/rules/`）| 任务路由 + 交付门禁 + 架构 + 编码规范 | 与 AGENTS.md 互补，覆盖 IDE 多端 |
 | **业务规范主体** | `docs/gyoseishoshi_saas_md/`（行政書士 SaaS）| 四层文档体系：入口 / 术语 / 规范正文 / 维护 | **业务最高权威** |
 | **业务规范·扩展** | `docs/gyoseishoshi_saas_md/P0/`、`P1/` | 按版本范围分级的规范正文 + 页面规格 | 版本化权威（P0=已落地，P1=扩展计划）|
 | **流程结构化数据** | `docs/事务所流程/`（含 master.json）| 状态机 / 在留资格资料矩阵 / 经营管理签流程；`.master.json` 是 RAG-friendly 结构化版本 | 业务流程 + 资料的结构化真相源 |
@@ -91,16 +91,15 @@ docs/gyoseishoshi_saas_md/
 - 知识库：见 §5 沉淀闭环。
 
 `.augment/rules/core-operating-rule.mdc`（多端镜像于 `.cursor/`、`.trae/`）扩展：
-- **任务路由**：业务问答先连 MCP `mempalace-readonly`；调用 `prepare_grounded_answer` / `route_query` + `ground_query`；`status=blocked` 不得给确定性结论；`status=grounded` 仅依据 `citation_bundles`，输出 `结论 / 依据 / 引用 / 缺失项`。
+- **任务路由**：业务问答以 `docs/gyoseishoshi_saas_md/` 内权威文档为准；缺少权威引用时不得输出确定性结论。
 - **第三方库**：写代码前先查 Context7（当前版本官方推荐）。
 - **架构 / 交付门禁** 与 AGENTS.md 一致 + 强调单文件 ≤ 500 行（B-011 验证 13 admin + 5 server 违例）。
 
-→ 业务问答的"权威 ground"路径是 **MCP mempalace-readonly + citation_bundles**，本仓库的 `docs/gyoseishoshi_saas_md/` 是**该 MCP 的可读源**（待验证 → OQ-63）。
+→ 业务问答的"权威 ground"路径是仓库内 `docs/gyoseishoshi_saas_md/` 的四层文档体系（03 业务规则与不变量 / 04 流程 / 06 页面规格 / 07 数据模型 / 08 术语 等）。
 
 ## 8. 关键缺口
 
 - **OQ-62**：`_output/` 走查清单与 admin/server bug ID 命名族（B-010 §4）无结构对账 → 业务走查 → 工程修复 → 测试回归的链路不可机械追踪。
-- **OQ-63**：MCP `mempalace-readonly` 索引的"权威源"具体是 `docs/gyoseishoshi_saas_md/` 哪些层（仅 P0 / 含 P1 / 含 _raw / 含 _output）？仓库内未发现 MCP 配置文件。
 - **OQ-64**：`docs/事务所流程/事务所流程.master.json`（2026-04-28）声明的 `sources` 与 `gyoseishoshi_saas_md/` 内的 03-04-07 是否双向同步？流程定义存在两处 → 漂移风险。
 
 ## 9. 置信度
@@ -110,4 +109,4 @@ docs/gyoseishoshi_saas_md/
 | 四层结构 / P0-P1 分层 / 流程 master.json 内容 | High（直读）|
 | AGENTS.md / core-operating-rule.mdc 内容 | High（直读）|
 | 业务文档 ↔ 代码层关联点 | High（已跨 B-001..B-010 累积证据）|
-| MCP 索引边界 / 双源同步状态 | Low（无配置 / 无对账文件）|
+| 双源同步状态（`docs/gyoseishoshi_saas_md/` ↔ `docs/事务所流程/`）| Low（无对账文件）|

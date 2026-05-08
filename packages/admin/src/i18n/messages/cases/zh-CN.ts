@@ -916,6 +916,11 @@ const casesZhCN = {
       RESIDENCE_PERIOD_RECORDED: "在留期间已录入",
       RENEWAL_REMINDER_SCHEDULED: "续签提醒已设置",
     },
+    /**
+     * @deprecated 与 BUSINESS_TYPE_TO_CASE_TYPE_CODE 映射重叠的 key（work / business_manager_visa /
+     * dependent_visa / company_setup 等）已由 shared/i18n/businessTypes BUSINESS_TYPE_LABELS 统一提供；
+     * 保留一个 release 后逐步移除重叠条目。非业务类型的子类型（biz_mgmt_4m 等）暂不变动。
+     */
     caseTypes: {
       family: "家族滞在",
       work: "工作签证",

@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { CUSTOMER_TYPES, type CustomerType } from "../types-customer-fields";
 import type { CustomerCreateFormFields, SelectOption } from "../types";
+import { getVisaTypeOptions } from "../../../shared/model/visaTypeOptions";
 
 /**
  * 新建客户弹窗字段表单。
@@ -19,8 +20,6 @@ import type { CustomerCreateFormFields, SelectOption } from "../types";
 const { t, locale } = useI18n();
 
 // prettier-ignore
-const VISA_LABEL: Record<string, string> = { business_manager:"visaTypeBusinessManager",engineer_specialist:"visaTypeEngineerSpecialist",skilled_labor:"visaTypeSkilledLabor",student:"visaTypeStudent",dependent:"visaTypeDependent",permanent_resident:"visaTypePermanentResident",spouse_of_jp_national:"visaTypeSpouseOfJpNational",long_term_resident:"visaTypeLongTermResident",designated_activities:"visaTypeDesignatedActivities",other:"visaTypeOther" };
-// prettier-ignore
 const SOURCE_LABEL: Record<string, string> = { REFERRAL:"sourceTypeReferral",WEB:"sourceTypeWeb",ADS:"sourceTypeAds" };
 // prettier-ignore
 const LOCATION_LABEL: Record<string, string> = { OVERSEAS:"locationOverseas",JAPAN:"locationJapan" };
@@ -29,7 +28,7 @@ const toOpts = (map: Record<string, string>) =>
   computed(() =>
     Object.entries(map).map(([v, k]) => ({ value: v, label: t(`${p}.${k}`) })),
   );
-const visaOpts = toOpts(VISA_LABEL);
+const visaOpts = computed(() => getVisaTypeOptions(locale.value));
 const sourceOpts = toOpts(SOURCE_LABEL);
 const locationOpts = toOpts(LOCATION_LABEL);
 

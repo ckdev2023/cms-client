@@ -6,8 +6,10 @@ import Button from "../../../shared/ui/Button.vue";
 import CustomerBmvIntakeCard from "./CustomerBmvIntakeCard.vue";
 import CustomerLocalizedFilePicker from "./CustomerLocalizedFilePicker.vue";
 import type { CustomerDetail } from "../types";
-import { CUSTOMER_VISA_TYPES } from "../types-customer-fields";
-import { resolveVisaTypeLabel } from "../../../shared/model/visaTypeOptions";
+import {
+  getVisaTypeOptions,
+  resolveVisaTypeLabel,
+} from "../../../shared/model/visaTypeOptions";
 import { resolveGroupValue } from "../../../shared/model/useGroupOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
 import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
@@ -87,15 +89,7 @@ function onSelect(field: keyof BasicInfoFormSnapshot, e: Event) {
     formSnapshot.value[field] = (e.target as HTMLSelectElement).value;
 }
 
-// prettier-ignore
-const VISA_LABEL: Record<string, string> = { business_manager:"visaTypeBusinessManager",engineer_specialist:"visaTypeEngineerSpecialist",skilled_labor:"visaTypeSkilledLabor",student:"visaTypeStudent",dependent:"visaTypeDependent",permanent_resident:"visaTypePermanentResident",spouse_of_jp_national:"visaTypeSpouseOfJpNational",long_term_resident:"visaTypeLongTermResident",designated_activities:"visaTypeDesignatedActivities",other:"visaTypeOther" };
-const fp = "customers.detail.basicInfo.fields";
-const visaOpts = computed(() =>
-  CUSTOMER_VISA_TYPES.map((v) => ({
-    value: v,
-    label: t(`${fp}.${VISA_LABEL[v]}`),
-  })),
-);
+const visaOpts = computed(() => getVisaTypeOptions(locale.value));
 // BUG-185：BMV 客户的 Visa type 字段绑定的是 raw enum（含历史 `BUSINESS_MANAGER`
 // 等大写值），直接显示会暴露内部 code；统一走 `resolveVisaTypeLabel` 兜底，
 // 命中目录则展示本地化标签，未命中保持原值（如 `new_1year` 等 BMV 专属 plan）。
@@ -272,6 +266,9 @@ const bmvVisaTypeLabel = computed(() =>
           <label class="basic-info__label" for="basicInfoGroup">{{
             t("customers.detail.basicInfo.fields.group")
           }}</label>
+          <p v-if="isEditing" class="basic-info__hint">
+            {{ t("shared.groupOptions.writeHint") }}
+          </p>
           <select
             id="basicInfoGroup"
             name="group"
