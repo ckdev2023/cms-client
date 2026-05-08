@@ -5,8 +5,9 @@ import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import CaseValidationSupport from "./CaseValidationSupport.vue";
 import GateItemVue from "./GateItem.vue";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 
-import type { CaseDetail, GateItem } from "../types-detail";
+import type { CaseDetail, GateItem, ValidationData } from "../types-detail";
 import type { CaseDetailTab } from "../types";
 
 /** 校验与提交 Tab：展示 Gate 报告、提交包、补正包与支持区。 */
@@ -27,7 +28,7 @@ const emit = defineEmits<{
   (e: "start-review"): void;
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const SEVERITY_CLASS: Record<string, string> = {
   A: "vt__item--danger",
@@ -63,6 +64,20 @@ function hasValidationItems(detail: CaseDetail): boolean {
  */
 function onNavigate(tab: CaseDetailTab | string) {
   emit("switch-tab", tab as CaseDetailTab);
+}
+
+/**
+ * 解析最后执行时间，优先使用 ISO 格式化。
+ * @param v - 校验数据
+ * @param loc - 当前语言
+ * @returns 格式化后的时间文案
+ */
+function resolveLastTime(v: ValidationData, loc: string): string {
+  if (v.lastTimeIso) {
+    const formatted = formatDateTime(v.lastTimeIso, loc);
+    if (formatted) return formatted;
+  }
+  return v.lastTime;
 }
 </script>
 
@@ -112,7 +127,9 @@ function onNavigate(tab: CaseDetailTab | string) {
             </Button>
           </template>
 
-          <div class="vt__last-time">{{ detail.validation.lastTime }}</div>
+          <div class="vt__last-time">
+            {{ resolveLastTime(detail.validation, locale) }}
+          </div>
 
           <template v-if="hasValidationItems(detail)">
             <div v-if="detail.validation.blocking.length > 0" class="vt__group">

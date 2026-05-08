@@ -105,6 +105,16 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       params: { suffix, colonSuffix: formatColonSuffix(suffix) },
     };
   },
+  "case.converted_from_lead": (p) => {
+    const leadNo = pickFirst(p, ["leadNo", "lead_no"]);
+    const leadId = pickFirst(p, ["leadId", "lead_id"]);
+    const customerId = pickFirst(p, ["customerId", "customer_id"]);
+    const leadRef = leadNo || (leadId ? leadId.slice(0, 8) : "");
+    return {
+      key: "cases.log.timeline.caseConvertedFromLead",
+      params: { leadRef, leadNo, leadId, customerId },
+    };
+  },
   "case.group_transferred": (p) => ({
     key: "cases.log.timeline.groupTransferred",
     params: {

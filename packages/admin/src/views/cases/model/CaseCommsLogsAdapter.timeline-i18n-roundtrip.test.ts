@@ -110,3 +110,59 @@ describe("CaseCommsLogsAdapter timeline i18n roundtrip — generated_document.fi
     expect(rendered).toBe("文書確定：申請理由書");
   });
 });
+
+// NEW-V5-4 回归：「由 LEAD-XXX 转化而来」三语 roundtrip。
+describe("CaseCommsLogsAdapter timeline i18n roundtrip — case.converted_from_lead", () => {
+  const PAYLOAD = {
+    leadId: "fd3627bb-b5ea-454b-92a9-cd876c4d64d7",
+    leadNo: "LEAD-202605-0010",
+    customerId: "ba90e062-dc56-4ea5-9f7e-e32090dc021c",
+  };
+
+  it("zh-CN: renders 「由线索 LEAD-202605-0010 转化而来」", () => {
+    const i18n = makeI18n("zh-CN");
+    const entry = adaptCaseLogDto(
+      makeLogDto("case.converted_from_lead", PAYLOAD),
+    );
+    expect(entry).not.toBeNull();
+    expect(i18n.global.t(entry!.text, entry!.textParams ?? {})).toBe(
+      "由线索 LEAD-202605-0010 转化而来",
+    );
+  });
+
+  it("ja-JP: renders 「リード LEAD-202605-0010 から転化」", () => {
+    const i18n = makeI18n("ja-JP");
+    const entry = adaptCaseLogDto(
+      makeLogDto("case.converted_from_lead", PAYLOAD),
+    );
+    expect(entry).not.toBeNull();
+    expect(i18n.global.t(entry!.text, entry!.textParams ?? {})).toBe(
+      "リード LEAD-202605-0010 から転化",
+    );
+  });
+
+  it("en-US: renders 'Converted from lead LEAD-202605-0010'", () => {
+    const i18n = makeI18n("en-US");
+    const entry = adaptCaseLogDto(
+      makeLogDto("case.converted_from_lead", PAYLOAD),
+    );
+    expect(entry).not.toBeNull();
+    expect(i18n.global.t(entry!.text, entry!.textParams ?? {})).toBe(
+      "Converted from lead LEAD-202605-0010",
+    );
+  });
+
+  it("falls back to leadId 8-char prefix when leadNo missing (zh-CN)", () => {
+    const i18n = makeI18n("zh-CN");
+    const entry = adaptCaseLogDto(
+      makeLogDto("case.converted_from_lead", {
+        leadId: "fd3627bb-b5ea-454b-92a9-cd876c4d64d7",
+        customerId: "ba90e062-dc56-4ea5-9f7e-e32090dc021c",
+      }),
+    );
+    expect(entry).not.toBeNull();
+    expect(i18n.global.t(entry!.text, entry!.textParams ?? {})).toBe(
+      "由线索 fd3627bb 转化而来",
+    );
+  });
+});

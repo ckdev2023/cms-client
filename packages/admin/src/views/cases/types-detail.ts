@@ -142,6 +142,12 @@ export interface TimelineEntry {
   synthesized?: string;
   /** 事件轨道——`business_phase` / `stage` / `other`；概览双轨渲染使用。 */
   track?: TimelineTrack;
+  /** 桶内事件总数（≥2 时启用合并展示）。 */
+  mergedCount?: number;
+  /** 桶内最早 ISO 时间戳。 */
+  mergedEarliestIso?: string;
+  /** 桶内最新 ISO 时间戳。 */
+  mergedLatestIso?: string;
 }
 
 /**
@@ -515,6 +521,8 @@ export interface ValidationData {
    *
    */
   lastTime: string;
+  /** 原始 ISO 时间戳；view 层可用于 locale-aware 格式化，缺失时回退 `lastTime`。 */
+  lastTimeIso?: string;
   /**
    *
    */

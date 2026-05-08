@@ -268,7 +268,51 @@ void test("convertCase with BMV type initializes bmvProfile on customer", async 
   );
 });
 
-// ── 5. conversation backfill ──
+// ── 5b. NEW-V5-4: case timeline records `case.converted_from_lead` ──
+
+void test("convertCase writes case.converted_from_lead timeline on case side", async () => {
+  const pool = getTestPool();
+  await seedBase(pool);
+
+  const svc = createService(pool);
+  const leadId = await createConvertedLead(svc, pool);
+
+  await svc.convertCase(CTX, leadId, {
+    caseTypeCode: "general",
+    ownerUserId: USER_ID,
+  });
+
+  const tl = await pool.query<{
+    entity_type: string;
+    entity_id: string;
+    action: string;
+    actor_user_id: string | null;
+    payload: Record<string, unknown>;
+  }>(
+    `SELECT entity_type, entity_id, action, actor_user_id, payload
+       FROM timeline_logs
+      WHERE entity_type = 'case'
+        AND entity_id = $1
+        AND action = 'case.converted_from_lead'`,
+    [CASE_ID],
+  );
+
+  assert.equal(
+    tl.rows.length,
+    1,
+    "exactly one case.converted_from_lead timeline row must exist",
+  );
+  const row = tl.rows[0];
+  assert.equal(row.actor_user_id, USER_ID);
+  assert.equal(row.payload.leadId, leadId);
+  assert.equal(row.payload.customerId, CUSTOMER_ID);
+  assert.ok(
+    typeof row.payload.leadNo === "string" && row.payload.leadNo.length > 0,
+    "payload.leadNo must be present so the case-side log shows LEAD-XXX, not a UUID",
+  );
+});
+
+// ── 6. conversation backfill ──
 
 void test("convertCase backfills conversation customer_id", async () => {
   const pool = getTestPool();

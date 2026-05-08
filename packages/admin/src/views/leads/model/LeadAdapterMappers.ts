@@ -215,6 +215,7 @@ function adaptLeadListItemDto(value: unknown): LeadSummary | null {
 
   return {
     ...identity,
+    leadNo: readNullableString(r, "leadNo"),
     ...classification,
     ...schedule,
     status,

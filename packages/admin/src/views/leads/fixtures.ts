@@ -99,6 +99,7 @@ export const DEDUP_PRESETS: DedupPresets = {
 const LEAD_SAMPLES_BASE: LeadSummary[] = [
   {
     id: "LEAD-2026-0042",
+    leadNo: null,
     name: "Michael Thompson",
     phone: "090-8765-4321",
     email: "michael.t@email.com",
@@ -125,6 +126,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0035",
+    leadNo: "LEAD-202604-0035",
     name: "李华",
     phone: "080-2222-3333",
     email: "li.hua@email.com",
@@ -151,6 +153,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0028",
+    leadNo: null,
     name: "田中 太郎",
     phone: "070-5555-6666",
     email: "tanaka.t@email.com",
@@ -177,6 +180,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0015",
+    leadNo: "LEAD-202603-0015",
     name: "王 明",
     phone: "080-7777-8888",
     email: "wang.ming@email.com",
@@ -203,6 +207,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0019",
+    leadNo: "LEAD-202603-0019",
     name: "佐藤 美咲",
     phone: "090-4444-1111",
     email: "sato.misaki@email.com",
@@ -229,6 +234,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0022",
+    leadNo: "LEAD-202604-0022",
     name: "陈 大伟",
     phone: "080-9999-0000",
     email: "chen.dw@email.com",
@@ -256,6 +262,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0046",
+    leadNo: null,
     name: "田中 花子",
     phone: "080-1234-5678",
     email: "",
@@ -282,6 +289,7 @@ const LEAD_SAMPLES_BASE: LeadSummary[] = [
   },
   {
     id: "LEAD-2026-0047",
+    leadNo: null,
     name: "李娜（重复确认）",
     phone: "",
     email: "li.na@email.com",

@@ -32,7 +32,7 @@ const emit = defineEmits<{
   close: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const caseTypeOptions = computed(() => {
   return BUSINESS_TYPE_OPTIONS_I18N.map((opt) => ({
@@ -43,7 +43,7 @@ const caseTypeOptions = computed(() => {
 
 const userOptions = computed(() => getActiveUserOptions());
 
-const groupOptions = computed(() => getActiveGroupAliasOptions());
+const groupOptions = computed(() => getActiveGroupAliasOptions(locale.value));
 
 /**
  * 将线索的業務意向類型映射为案件类型代码作为默认值

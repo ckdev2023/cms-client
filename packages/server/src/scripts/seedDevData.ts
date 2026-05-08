@@ -77,7 +77,9 @@ async function seedCases(client: PoolClient) {
        )
        VALUES ($1,$2,$3,$7,'open','document_collection',
                $4,$5,$6,'prepare','standard','{}'::jsonb)
-       ON CONFLICT (id) DO NOTHING`,
+       ON CONFLICT (id) DO UPDATE SET
+         case_type_code = EXCLUDED.case_type_code,
+         case_name = EXCLUDED.case_name`,
       [
         caseId,
         SEED_ORG_ID,
@@ -98,7 +100,9 @@ async function seedCases(client: PoolClient) {
      )
      VALUES ($1,$2,$3,'business_manager_visa','open','S2',
              $4,$5,$6,'WAITING_MATERIAL','standard','{}'::jsonb)
-     ON CONFLICT (id) DO NOTHING`,
+     ON CONFLICT (id) DO UPDATE SET
+       case_type_code = EXCLUDED.case_type_code,
+       case_name = EXCLUDED.case_name`,
     [
       SEED_CASE_BMV_ID,
       SEED_ORG_ID,

@@ -130,6 +130,25 @@ describe("LeadAdapterMappers", () => {
     });
   });
 
+  describe("adaptLeadListResult — leadNo mapping (R2-B-2 列表口径同步)", () => {
+    it("reads server-side leadNo into LeadSummary.leadNo", () => {
+      const result = adaptLeadListResult(
+        listWrap({ id: "uuid-x", leadNo: "LEAD-202605-0002" }),
+      );
+      expect(result?.items[0].leadNo).toBe("LEAD-202605-0002");
+    });
+
+    it("defaults leadNo to null when server omits or returns null", () => {
+      expect(
+        adaptLeadListResult(listWrap({ id: "L1" }))?.items[0].leadNo,
+      ).toBeNull();
+      expect(
+        adaptLeadListResult(listWrap({ id: "L2", leadNo: null }))?.items[0]
+          .leadNo,
+      ).toBeNull();
+    });
+  });
+
   describe("adaptLeadDetailAggregate — button preset derivation (spec §4)", () => {
     function makeRaw(overrides: Record<string, unknown>) {
       return {

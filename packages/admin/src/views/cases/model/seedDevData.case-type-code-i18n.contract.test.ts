@@ -32,7 +32,7 @@ function extractSeedCaseTypeCodes(): string[] {
   const codes = new Set<string>();
 
   for (const m of source.matchAll(
-    /\[\s*SEED_CASE_\w+,\s*"[^"]*",\s*"[^"]*",\s*"([^"]+)"\s*\]/g,
+    /\[\s*SEED_CASE_\w+,\s*"[^"]*",\s*"[^"]*",\s*"([^"]+)",?\s*\]/g,
   )) {
     codes.add(m[1]);
   }
@@ -47,8 +47,12 @@ function extractSeedCaseTypeCodes(): string[] {
 describe("seed case_type_code ↔ i18n contract", () => {
   const codes = extractSeedCaseTypeCodes();
 
-  it("extracts at least 2 distinct case_type_code values from seed", () => {
-    expect(codes.length).toBeGreaterThanOrEqual(2);
+  it("extracts at least 3 distinct case_type_code values from seed", () => {
+    expect(codes.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("includes engineer_humanities_intl_visa (CASE-DEV-002)", () => {
+    expect(codes).toContain("engineer_humanities_intl_visa");
   });
 
   for (const code of codes) {

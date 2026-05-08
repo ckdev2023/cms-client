@@ -373,6 +373,7 @@ const casesZhCN = {
         title: "近期动态",
         empty: "暂无近期动态",
         viewAll: "查看完整日志 →",
+        mergedSummary: "× {count} 次（最早 {earliest} · 最近 {latest}）",
       },
       risk: {
         blockingDetail: "{count} 项阻断",
@@ -1045,6 +1046,7 @@ const casesZhCN = {
       billingRiskAck: "未收款风险确认{colonSuffix}",
       postApprovalStageChange: "许可后阶段变更{colonSuffix}",
       crossGroupCreated: "跨组建案{colonSuffix}",
+      caseConvertedFromLead: "由线索 {leadRef} 转化而来",
       groupTransferred: "案件转组：{from} → {to}（{reason}）",
       phaseChange: "业务阶段变更：{from} → {to}",
       commLogCreated: "沟通记录追加{colonSuffix}",

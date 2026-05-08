@@ -25,6 +25,39 @@
 
 ## 最新产出
 
+- 时间：2026-05-08（chrome-devtools-mcp 第五轮 / 咨询 → 客户 → 案件 转化链路专项）
+  问题：在 70 报告（V2）+ 73 报告（V4）已修复 7 项 P1（NEW-1/2/4 + V3-1/2/3 + P0-2 后端明细）后，
+  以 admin 身份从 0 创建一个新线索 LEAD-202605-0010，按白名单状态机推进
+  `新咨询→跟进中→待签约→已签约`，再触发「签约并开始建档」一键转化为
+  CUS-202605-0015 + CASE-202605-0011，覆盖整条转化链路与所有产物的
+  跨模块跳转 / 详情 Tab / 日志回看。
+  结论（TL;DR）：链路自身工作正常（毫秒级同步生成客户+案件、状态机白名单生效、
+  跨模块跳转无错），70/73 报告 7 项回归全部 PASS；本轮新发现 **P1 × 2**：
+  **NEW-V5-1**「签约并开始建档」对话框组下拉显示日文 `東京一組`（zh-CN UI 漏出 ja-JP
+  默认 locale，根因 `LeadConvertCaseDialog.vue:46` 调 `getActiveGroupAliasOptions()`
+  无参，落入 `useGroupOptions.ts:120` 默认 `return "ja-JP"` 分支）；
+  **NEW-V5-2** 线索转化结果卡片案件标题落到 `case_no` 且与副标题重复，根因
+  双重：(a) `LeadConversionMapper.ts:63` 字段优先级反转 `caseNo || title` 应改为
+  `title || caseNo`；(b) `LeadConvertedRecords.vue:102, 108` 两个 `<p>` 用同一表达式
+  导致 caseNo 重复渲染，应拆为 name=title / meta=caseNo（与客户卡片 L56/L60 对齐）。
+  另有 P2 × 2：NEW-V5-3（V5-1 衍生 placeholder 与选项 locale 混杂）/ NEW-V5-4（案件日志
+  缺「由 LEAD-XXX 转化而来」反向记录，仅 LEAD 侧记录单向）。无新增 P0。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/74-MCP-lead-customer-case-conversion-walkthrough-2026-05-08-v5.md（本轮完整报告）
+  - packages/admin/src/views/leads/components/LeadConvertCaseDialog.vue:46（V5-1 调用点缺 locale）
+  - packages/admin/src/shared/model/useGroupOptions.ts:115-121, 228-241（V5-1 默认 locale 兜底为 ja-JP）
+  - packages/admin/src/views/leads/model/LeadConversionMapper.ts:58-69（V5-2 字段优先级反转）
+  - packages/admin/src/views/leads/components/LeadConvertedRecords.vue:101-109（V5-2 模板字段重复）
+  - tmp/walkthrough-2026-05-08-v5/04-conversion-modal-signed.png、15-lead-conversion-final.png（V5-1/V5-2 现场）
+  影响面：
+  - 主功能：LEAD 转化对话框 / LEAD 转化 Tab「已生成记录」面板（仅显示层）
+  - 衍生：所有 `getActiveGroupAliasOptions()` 无参调用点（建议全仓 audit）
+  回灌计划：
+  - 目标文档：P0/04-核心流程与状态流转.md
+    位置：§4.1 咨询转案件（衍生：「跨实体转化必须在两侧都留可追溯日志」）
+    Owner：admin 模块（LEAD/CUSTOMER/CASE 视图）
+    状态：NEW-V5-1 / NEW-V5-2 / NEW-V5-3 / NEW-V5-4 已于 **2026-05-08 同日修复合入**（见 74 报告 §1.2 / §1.3 / §5.1 「修复落地」行）；同日追加修复 **70 §NEW-3 DATA-STALE**——`seedDevData.seedCases` 两段 INSERT 由 `ON CONFLICT (id) DO NOTHING` 改为 `DO UPDATE SET case_type_code/case_name`（`status/stage/business_phase` 不重置），CASE-DEV-002 在下一次 `npm run db:seed-dev` 后自动收敛到「技人国（认定）」（详见 74 报告 §1.4）。下一步把「显示型 adapter 字段优先级必须与字段语义一致」+「locale-aware 工具函数必须在 UI 层强制注入 locale」+「seed 必须以 DO UPDATE 自愈外显字段（`status/stage/business_phase` 例外）」三条入库口径回灌到 P0/04 + ESLint 规则候选。
+
 - 时间：2026-05-07（R-FLOW2 chrome-devtools-mcp 走查第二轮 / 咨询 → 客户 → 案件 全链路）
   问题：在 R-FLOW（第一轮）所有 P1 修复（adapter 拆分、case_templates seed、
   CustomerCreateCaseGate 解耦 BMV、LeadLogPayloadFormatter 转化分支）已落库后，
@@ -1717,3 +1750,27 @@
     位置：尾部追加「修复状态」章节（4 PR 各标注 LANDED / IN_PROGRESS）
     Owner：研发
     状态：待回灌（PR 合并后逐条标记）
+
+- 时间：2026-05-08（案件走查 V4 §5.2 P2-UX 双项优化 — 概览时间线同日同事件折叠 + lastTime 精度统一）
+  问题：V4 走查发现两项 P2 UX 问题：① 案件概览「近期动态」同日同类条目密度过高（同事件多次触发全量渲染）；② 提交前检查时间戳仅显示日期，同日多 run 无法区分。如何降低信息噪声并统一时间精度？
+  结论（TL;DR）：合并为一个 PR「时间相关 UX 微调」。核心改动：① **NEW-V4-1** `CaseCommsLogsAdapter.buildOverviewTimelineFromLog` 新增同日同 text 同 track 桶合并逻辑——桶 key = `day|text|track|stableStringify(textParams)`，合并后附 `mergedCount` / `mergedEarliestIso` / `mergedLatestIso`；view 层 `CaseOverviewTimeline.vue` 在 chip 区渲染「× N 次（最早 HH:mm · 最近 HH:mm）」；② **NEW-V4-2** `CaseAdapterValidationBilling` 新增 `lastTimeIso` 字段透出原始 ISO，view 层 `CaseValidationTab.vue` 用 `formatDateTime(lastTimeIso, locale)` 渲染完整时分，缺失时回退 `lastTime` 原文；③ 新增 `formatTimeOnly` 小工具（`Intl.DateTimeFormat` 输出 `HH:mm`）；④ 三语 i18n key `cases.detail.overview.timeline.mergedSummary`。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/73-MCP-case-walkthrough-2026-05-08-v4.md §2.2（NEW-V4-1 / NEW-V4-2 原始发现）
+  - packages/admin/src/views/cases/model/CaseCommsLogsAdapter.ts（桶合并逻辑）
+  - packages/admin/src/views/cases/model/CaseAdapterValidationBilling.ts（lastTimeIso 字段）
+  - packages/admin/src/views/cases/model/CaseAdapterDetailAggregate.ts（lastTimeIso 透出）
+  - packages/admin/src/views/cases/types-detail.ts（TimelineEntry + ValidationData 类型扩展）
+  - packages/admin/src/shared/model/formatTimeOnly.ts（HH:mm 格式化工具）
+  - packages/admin/src/views/cases/components/CaseOverviewTimeline.vue（merged-chip 渲染）
+  - packages/admin/src/views/cases/components/CaseValidationTab.vue（lastTimeIso 优先渲染）
+  - packages/admin/src/i18n/messages/cases/{zh-CN,ja-JP,en-US}.ts（mergedSummary 三语 key）
+  影响面：
+  - 案件概览「近期动态」：同日同类事件合并展示，降低信息密度；单条不受影响
+  - 提交前检查 Tab：时间戳从 YYYY/MM/DD 升级为 YYYY/MM/DD HH:mm，同日多 run 可区分
+  - TimelineEntry 类型扩展为可选字段，向后兼容旧 view 路径
+  - lastTimeIso 缺失时自动回退 lastTime 原文，不会出现空白
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/73-MCP-case-walkthrough-2026-05-08-v4.md
+    位置：§5.2 已标注 → CLOSED
+    Owner：研发
+    状态：已回灌（2026-05-08）

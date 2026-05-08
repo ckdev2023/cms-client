@@ -174,8 +174,10 @@ export interface ConvertedCustomer {
 export interface ConvertedCase {
   /** */
   id: string;
-  /** */
+  /** 案件标题（语义最完整字段，缺失时由 mapper 回退 caseNo） */
   title: string;
+  /** 案件编号 `CASE-YYYYMM-XXXX`，独立于 title 单独存放，便于副标题拆分展示 */
+  caseNo?: string | null;
   /** */
   type: string;
   /** */

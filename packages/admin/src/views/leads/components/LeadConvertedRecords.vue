@@ -100,12 +100,14 @@ const hasConvertedCase = computed(
         <div class="converted-record__info">
           <p class="converted-record__name">
             {{
-              conversion.convertedCase!.title || conversion.convertedCase!.id
+              conversion.convertedCase!.title ||
+              conversion.convertedCase!.caseNo ||
+              conversion.convertedCase!.id
             }}
           </p>
           <p class="converted-record__meta">
             {{
-              conversion.convertedCase!.title || conversion.convertedCase!.id
+              conversion.convertedCase!.caseNo || conversion.convertedCase!.id
             }}
             ·
             {{

@@ -235,6 +235,11 @@ export type RowHighlight = "warning" | "dimmed" | null;
 export interface LeadSummary {
   /** */
   id: string;
+  /**
+   * 业务侧线索编号（如 `LEAD-202605-0002`），缺失时由列表行回退展示 `id`。
+   * 与 `LeadDetail.leadNo` / `LeadBasicInfo.leadNo` 同口径。
+   */
+  leadNo: string | null;
   /** */
   name: string;
   /** */

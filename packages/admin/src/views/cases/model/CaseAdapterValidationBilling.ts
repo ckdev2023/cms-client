@@ -102,6 +102,25 @@ function parseGateArray(raw: unknown, defaultGate: string): GateItem[] {
     .filter((item): item is GateItem => item !== null);
 }
 
+function backfillSummaryItem(
+  run: Record<string, unknown>,
+  target: GateItem[],
+  countKey: string,
+  gate: string,
+  titleKey: string,
+): void {
+  const count = readNumber(run, countKey);
+  if (target.length === 0 && count > 0) {
+    target.push({
+      gate,
+      title: "",
+      titleKey,
+      titleParams: { count },
+      noteKey: "cases.validation.refReport",
+    });
+  }
+}
+
 function findLatestRun(items: unknown[]): Record<string, unknown> | null {
   let latest: Record<string, unknown> | null = null;
   let latestTime = "";
@@ -129,7 +148,13 @@ export function adaptCaseValidationData(value: unknown): ValidationData | null {
 
   const latest = findLatestRun(items);
   if (!latest) {
-    return { lastTime: "", blocking: [], warnings: [], info: [] };
+    return {
+      lastTime: "",
+      lastTimeIso: "",
+      blocking: [],
+      warnings: [],
+      info: [],
+    };
   }
 
   const executedAt = readNullableString(latest, "executedAt");
@@ -149,24 +174,20 @@ export function adaptCaseValidationData(value: unknown): ValidationData | null {
     info = [];
   }
 
-  if (blocking.length === 0 && readNumber(latest, "blockingCount") > 0) {
-    blocking.push({
-      gate: "A",
-      title: "",
-      titleKey: "cases.validation.blockingSummary",
-      titleParams: { count: readNumber(latest, "blockingCount") },
-      noteKey: "cases.validation.refReport",
-    });
-  }
-  if (warnings.length === 0 && readNumber(latest, "warningCount") > 0) {
-    warnings.push({
-      gate: "B",
-      title: "",
-      titleKey: "cases.validation.warningSummary",
-      titleParams: { count: readNumber(latest, "warningCount") },
-      noteKey: "cases.validation.refReport",
-    });
-  }
+  backfillSummaryItem(
+    latest,
+    blocking,
+    "blockingCount",
+    "A",
+    "cases.validation.blockingSummary",
+  );
+  backfillSummaryItem(
+    latest,
+    warnings,
+    "warningCount",
+    "B",
+    "cases.validation.warningSummary",
+  );
 
   const status = readString(latest, "resultStatus");
   const retriggerNote =
@@ -174,6 +195,7 @@ export function adaptCaseValidationData(value: unknown): ValidationData | null {
 
   return {
     lastTime: formatDate(executedAt),
+    lastTimeIso: executedAt ?? "",
     blocking,
     warnings,
     info,

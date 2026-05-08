@@ -65,6 +65,16 @@ export async function convertCase(
   }
   await backfillConversationCustomer(tenantDb, customerId, leadId);
 
+  // NEW-V5-4 修复：在案件侧补一条「由线索 LEAD-XXX 转化而来」时间线，
+  // 与 LEAD 侧的 `lead.converted_case` 形成双向可追溯对（避免「案件 → 线索」
+  // 必须经客户三跳追溯）。
+  await writeCaseConvertedFromLeadTimeline(tenantDb, ctx, {
+    caseId,
+    leadId,
+    customerId,
+    leadNo: lead.leadNo,
+  });
+
   // R-FLOW5-A-6：caseNo / caseNumber 写入 lead_logs.payload，使日志 Tab
   // 显示 CASE-... 编号而非 8 位 UUID 前缀；caseNumber 字段保留兼容旧渲染器。
   await deps.writeAudit(ctx, leadId, "converted_case", {
@@ -76,6 +86,29 @@ export async function convertCase(
   });
 
   return { lead: mapLeadRow(row), caseId };
+}
+
+async function writeCaseConvertedFromLeadTimeline(
+  db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  ctx: RequestContext,
+  payload: {
+    caseId: string;
+    leadId: string;
+    customerId: string;
+    leadNo: string | null;
+  },
+): Promise<void> {
+  const { caseId, leadId, customerId, leadNo } = payload;
+  const timelinePayload: Record<string, unknown> = {
+    leadId,
+    customerId,
+    ...(leadNo ? { leadNo } : {}),
+  };
+  await db.query(
+    `insert into timeline_logs(org_id, entity_type, entity_id, action, actor_user_id, payload)
+     values ($1, 'case', $2, 'case.converted_from_lead', $3, $4::jsonb)`,
+    [ctx.orgId, caseId, ctx.userId, JSON.stringify(timelinePayload)],
+  );
 }
 
 function assertConvertCasePreconditions(lead: Lead): string {

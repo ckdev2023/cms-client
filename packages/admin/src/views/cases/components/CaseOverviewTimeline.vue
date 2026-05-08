@@ -4,6 +4,7 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import { formatTimeOnly } from "../../../shared/model/formatTimeOnly";
 import {
   resolveTimelineText,
   type I18nAccessor,
@@ -81,6 +82,22 @@ function formatEntryTime(raw: string, loc: string): string {
   if (!raw) return "";
   return formatDateTime(raw, loc) || raw;
 }
+
+/**
+ * 合并事件的摘要文案。
+ * @param entry - 时间线条目
+ * @returns 摘要文案或空字符串
+ */
+function formatMergedSummary(entry: TimelineEntry): string {
+  if (!entry.mergedCount || entry.mergedCount <= 1) return "";
+  const earliest = formatTimeOnly(entry.mergedEarliestIso, locale.value);
+  const latest = formatTimeOnly(entry.mergedLatestIso, locale.value);
+  return t("cases.detail.overview.timeline.mergedSummary", {
+    count: entry.mergedCount,
+    earliest,
+    latest,
+  });
+}
 </script>
 
 <template>
@@ -124,6 +141,15 @@ function formatEntryTime(raw: string, loc: string): string {
                 >
                   {{ t("cases.log.timeline.synthesizedHint") }}
                 </Chip>
+                <Chip
+                  v-if="entry.mergedCount && entry.mergedCount > 1"
+                  tone="neutral"
+                  size="micro"
+                  class="overview-timeline__merged-chip"
+                  data-testid="merged-chip"
+                >
+                  {{ formatMergedSummary(entry) }}
+                </Chip>
               </div>
               <div class="overview-timeline__meta">
                 {{ formatEntryTime(entry.meta, locale) }}
@@ -163,6 +189,15 @@ function formatEntryTime(raw: string, loc: string): string {
                 >
                   {{ t("cases.log.timeline.synthesizedHint") }}
                 </Chip>
+                <Chip
+                  v-if="entry.mergedCount && entry.mergedCount > 1"
+                  tone="neutral"
+                  size="micro"
+                  class="overview-timeline__merged-chip"
+                  data-testid="merged-chip"
+                >
+                  {{ formatMergedSummary(entry) }}
+                </Chip>
               </div>
               <div class="overview-timeline__meta">
                 {{ formatEntryTime(entry.meta, locale) }}
@@ -186,6 +221,15 @@ function formatEntryTime(raw: string, loc: string): string {
             <div>
               <div class="overview-timeline__text">
                 {{ resolveText(entry) }}
+                <Chip
+                  v-if="entry.mergedCount && entry.mergedCount > 1"
+                  tone="neutral"
+                  size="micro"
+                  class="overview-timeline__merged-chip"
+                  data-testid="merged-chip"
+                >
+                  {{ formatMergedSummary(entry) }}
+                </Chip>
               </div>
               <div class="overview-timeline__meta">
                 {{ formatEntryTime(entry.meta, locale) }}
@@ -209,6 +253,15 @@ function formatEntryTime(raw: string, loc: string): string {
         <div>
           <div class="overview-timeline__text">
             {{ resolveText(entry) }}
+            <Chip
+              v-if="entry.mergedCount && entry.mergedCount > 1"
+              tone="neutral"
+              size="micro"
+              class="overview-timeline__merged-chip"
+              data-testid="merged-chip"
+            >
+              {{ formatMergedSummary(entry) }}
+            </Chip>
           </div>
           <div class="overview-timeline__meta">
             {{ formatEntryTime(entry.meta, locale) }}
@@ -309,7 +362,8 @@ function formatEntryTime(raw: string, loc: string): string {
   padding-bottom: 4px;
   border-bottom: 1px solid var(--color-border-1);
 }
-.overview-timeline__synthesized-chip {
+.overview-timeline__synthesized-chip,
+.overview-timeline__merged-chip {
   margin-left: 6px;
   vertical-align: middle;
 }

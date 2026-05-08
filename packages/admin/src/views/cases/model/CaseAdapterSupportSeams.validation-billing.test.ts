@@ -40,6 +40,7 @@ describe("adaptCaseValidationData", () => {
     const result = adaptCaseValidationData({ items: [], total: 0 });
     expect(result).toEqual({
       lastTime: "",
+      lastTimeIso: "",
       blocking: [],
       warnings: [],
       info: [],

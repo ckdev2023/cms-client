@@ -5,6 +5,7 @@ import type { LeadSummary } from "../types";
 function lead(id: string): LeadSummary {
   return {
     id,
+    leadNo: null,
     name: id,
     phone: "",
     email: "",

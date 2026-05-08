@@ -60,11 +60,47 @@ describe("LeadAdapterMappers — conversion & source", () => {
       expect(result?.detail.conversion.convertedCase).toEqual({
         id: "CAS-1",
         title: "CASE-202605-0001",
+        caseNo: "CASE-202605-0001",
         type: "dependent_visa",
         group: "Tokyo-1",
         convertedAt: "2026-05-02T10:00:00Z",
         convertedBy: "Admin",
       });
+    });
+
+    it("NEW-V5-2: prefers title over caseNo when both present, exposes caseNo separately", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCase: {
+            id: "CAS-3",
+            title: "R-FLOW-V5 走查申请人 · 家族滞在",
+            caseNo: "CASE-202605-0011",
+            caseTypeCode: "dependent_visa",
+            convertedAt: "2026-05-08T17:22:00Z",
+            convertedBy: "Admin",
+          },
+        }),
+      );
+
+      const cas = result?.detail.conversion.convertedCase;
+      expect(cas?.title).toBe("R-FLOW-V5 走查申请人 · 家族滞在");
+      expect(cas?.caseNo).toBe("CASE-202605-0011");
+    });
+
+    it("NEW-V5-2: falls back to caseNo for title when server omits title", () => {
+      const result = adaptLeadDetailAggregate(
+        makeDetailRaw({
+          convertedCase: {
+            id: "CAS-4",
+            caseNo: "CASE-202605-0012",
+            caseTypeCode: "dependent_visa",
+          },
+        }),
+      );
+
+      const cas = result?.detail.conversion.convertedCase;
+      expect(cas?.title).toBe("CASE-202605-0012");
+      expect(cas?.caseNo).toBe("CASE-202605-0012");
     });
 
     it("returns null conversion fields when server omits them", () => {

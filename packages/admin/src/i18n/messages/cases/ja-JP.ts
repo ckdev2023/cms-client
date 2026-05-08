@@ -388,6 +388,7 @@ const casesJaJP = {
         title: "最近のアクティビティ",
         empty: "最近のアクティビティはありません",
         viewAll: "ログ全体を見る →",
+        mergedSummary: "× {count} 件（最早 {earliest}・最近 {latest}）",
       },
       risk: {
         blockingDetail: "{count} 件のブロッカー",
@@ -1106,6 +1107,7 @@ const casesJaJP = {
       billingRiskAck: "未収金リスク確認{colonSuffix}",
       postApprovalStageChange: "許可後段階変更{colonSuffix}",
       crossGroupCreated: "越境建案{colonSuffix}",
+      caseConvertedFromLead: "リード {leadRef} から転化",
       groupTransferred: "案件転組：{from} → {to}（{reason}）",
       phaseChange: "業務フェーズ変更：{from} → {to}",
       commLogCreated: "連絡記録追加{colonSuffix}",

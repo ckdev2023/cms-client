@@ -63,9 +63,21 @@ describe("buildOverviewTimelineFromLog", () => {
 
   it("maps category type to correct color", () => {
     const entries = [
-      makeLogEntry({ type: "status", time: "2026-04-01T03:00:00Z" }),
-      makeLogEntry({ type: "review", time: "2026-04-01T02:00:00Z" }),
-      makeLogEntry({ type: "operation", time: "2026-04-01T01:00:00Z" }),
+      makeLogEntry({
+        type: "status",
+        time: "2026-04-01T03:00:00Z",
+        text: "status-event",
+      }),
+      makeLogEntry({
+        type: "review",
+        time: "2026-04-01T02:00:00Z",
+        text: "review-event",
+      }),
+      makeLogEntry({
+        type: "operation",
+        time: "2026-04-01T01:00:00Z",
+        text: "operation-event",
+      }),
     ];
 
     const result = buildOverviewTimelineFromLog(entries);
@@ -140,5 +152,138 @@ describe("buildOverviewTimelineFromLog", () => {
     expect(result[2].color).toBe("var(--warning)");
     expect(result[3].color).toBe("var(--muted)");
     expect(result[4].color).toBe("var(--primary)");
+  });
+
+  // ── merge (同日+同 text+同 track+同 params) ─────────────────────
+
+  it("merges same-day same-text same-track entries into one with mergedCount", () => {
+    const entries = [
+      makeLogEntry({ time: "2026-04-01T08:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-01T09:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-01T10:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-01T11:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-01T12:00:00Z", text: "ev-a" }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].mergedCount).toBe(5);
+    expect(result[0].mergedEarliestIso).toBe("2026-04-01T08:00:00Z");
+    expect(result[0].mergedLatestIso).toBe("2026-04-01T12:00:00Z");
+    expect(result[0].meta).toBe("2026-04-01T12:00:00Z");
+  });
+
+  it("does not merge entries across different days", () => {
+    const entries = [
+      makeLogEntry({ time: "2026-04-01T10:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-02T10:00:00Z", text: "ev-a" }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].mergedCount).toBeUndefined();
+    expect(result[1].mergedCount).toBeUndefined();
+  });
+
+  it("does not merge entries with different text", () => {
+    const entries = [
+      makeLogEntry({ time: "2026-04-01T10:00:00Z", text: "ev-a" }),
+      makeLogEntry({ time: "2026-04-01T11:00:00Z", text: "ev-b" }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].mergedCount).toBeUndefined();
+    expect(result[1].mergedCount).toBeUndefined();
+  });
+
+  it("does not merge entries with different track", () => {
+    const entries = [
+      makeLogEntry({
+        time: "2026-04-01T10:00:00Z",
+        text: "ev-a",
+        track: "stage",
+      }),
+      makeLogEntry({
+        time: "2026-04-01T11:00:00Z",
+        text: "ev-a",
+        track: "business_phase",
+      }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].mergedCount).toBeUndefined();
+    expect(result[1].mergedCount).toBeUndefined();
+  });
+
+  it("does not merge entries with different textParams", () => {
+    const entries = [
+      makeLogEntry({
+        time: "2026-04-01T10:00:00Z",
+        text: "ev-a",
+        textParams: { from: "S1", to: "S2" },
+      }),
+      makeLogEntry({
+        time: "2026-04-01T11:00:00Z",
+        text: "ev-a",
+        textParams: { from: "S2", to: "S3" },
+      }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].mergedCount).toBeUndefined();
+    expect(result[1].mergedCount).toBeUndefined();
+  });
+
+  it("single entry does not attach merged fields", () => {
+    const entries = [makeLogEntry({ time: "2026-04-01T10:00:00Z" })];
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result[0].mergedCount).toBeUndefined();
+    expect(result[0].mergedEarliestIso).toBeUndefined();
+    expect(result[0].mergedLatestIso).toBeUndefined();
+  });
+
+  it("merged entries sort by latest time; limit applies after merge", () => {
+    const entries = [
+      makeLogEntry({ time: "2026-04-01T08:00:00Z", text: "old-ev" }),
+      makeLogEntry({ time: "2026-04-01T09:00:00Z", text: "old-ev" }),
+      makeLogEntry({ time: "2026-04-01T10:00:00Z", text: "old-ev" }),
+      makeLogEntry({ time: "2026-04-02T10:00:00Z", text: "newer" }),
+      makeLogEntry({ time: "2026-04-03T10:00:00Z", text: "newest" }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries, 2);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].text).toBe("newest");
+    expect(result[1].text).toBe("newer");
+  });
+
+  it("treats textParams key order as irrelevant for bucketing", () => {
+    const entries = [
+      makeLogEntry({
+        time: "2026-04-01T10:00:00Z",
+        text: "ev-a",
+        textParams: { from: "S1", to: "S2" },
+      }),
+      makeLogEntry({
+        time: "2026-04-01T11:00:00Z",
+        text: "ev-a",
+        textParams: { to: "S2", from: "S1" },
+      }),
+    ];
+
+    const result = buildOverviewTimelineFromLog(entries);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].mergedCount).toBe(2);
   });
 });

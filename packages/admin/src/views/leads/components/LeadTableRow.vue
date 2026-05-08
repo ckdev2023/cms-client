@@ -74,6 +74,9 @@ const businessTypeDisplay = computed(() =>
   resolveLeadBusinessTypeLabel(props.lead.businessTypeLabel, t),
 );
 
+/** 优先业务编号 `leadNo`，缺失回退 `id`；与 `LeadDetailHeader` 同口径。 */
+const leadCodeDisplay = computed(() => props.lead.leadNo || props.lead.id);
+
 const sourceDisplay = computed(() =>
   resolveLeadSourceLabel(props.lead.sourceLabel, t),
 );
@@ -166,7 +169,9 @@ function closeTagPopover() {
         <a class="lead-row__name" :href="`#/leads/${lead.id}`">
           {{ lead.name }}
         </a>
-        <span class="lead-row__meta">{{ lead.id }}</span>
+        <span class="lead-row__meta" :title="lead.id">{{
+          leadCodeDisplay
+        }}</span>
       </div>
       <div
         v-if="lead.rowHighlight === 'warning' && lead.warningText"

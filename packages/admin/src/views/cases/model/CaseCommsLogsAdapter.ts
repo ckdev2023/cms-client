@@ -1,20 +1,4 @@
-/**
- * CaseCommsLogsAdapter — messages / log 独立 adapter（p0-fe-002e-01 落地）。
- *
- * 本 adapter 完全自包含，拥有独立的解析器（`asRecord` / `pickOptionalString` 等），
- * 不依赖 `CaseAdapterShared` 或其他 adapter 文件。
- *
- * 职责：
- * - `adaptCaseMessageDto` / `adaptCaseMessageListResult`：
- *   将 `/api/communication-logs` DTO 适配为 `MessageItem`。
- * - `adaptCaseLogDto` / `adaptCaseLogListResult`：
- *   将 `/api/timeline` DTO 适配为 `LogEntry`。
- * - `resolveMessageType` / `resolveLogCategory`：
- *   分类映射（对齐 P0-CONTRACT-DETAIL §7 / §13）。
- *
- * 其他配套模块 adapter（documents / forms / validation / billing / tasks / deadlines）
- * 的接缝定义在 `CaseAdapterSupportSeams.ts`，待 p0-fe-006b / p0-fe-006d 填充。
- */
+/** CaseCommsLogsAdapter — messages / log 独立 adapter（p0-fe-002e-01 落地）。 */
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
 import type {
@@ -25,6 +9,7 @@ import type {
 } from "../types-detail";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { buildCaseTimelineMessageResult } from "./CaseCommsTimelineBuilders";
+import { formatDate } from "./CaseAdapterShared";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -373,9 +358,8 @@ export function adaptCaseLogDto(value: unknown): LogEntry | null {
 
 /**
  * 适配时间线日志列表响应为日志条目数组。
- *
- * @param value - 后端返回的时间线日志数组或带 items 的列表对象
- * @returns 适配后的日志条目数组；无法识别时返回 null
+ * @param value - 日志数组或带 items 的列表对象
+ * @returns 日志条目数组或 null
  */
 export function adaptCaseLogListResult(value: unknown): LogEntry[] | null {
   const items = readArrayOrItems(value);
@@ -398,26 +382,18 @@ const OVERVIEW_TIMELINE_COLOR_MAP: Record<string, string> = {
 };
 const OVERVIEW_TIMELINE_COLOR_FALLBACK = "var(--muted)";
 
-/**
- * 从 LogEntry 列表导出概览 timeline 摘要。
- *
- * @param entries - adaptCaseLogListResult 输出的日志条目
- * @param limit - 最多返回条数（默认 5）
- * @returns 按时间倒序排列、截取前 N 条的 TimelineEntry 数组
- */
-export function buildOverviewTimelineFromLog(
-  entries: readonly LogEntry[],
-  limit = 5,
-): TimelineEntry[] {
-  const sorted = [...entries].sort((a, b) => {
-    if (a.time > b.time) return -1;
-    if (a.time < b.time) return 1;
-    return 0;
-  });
+function stableStringify(
+  value: Record<string, unknown> | null | undefined,
+): string {
+  if (value == null) return "null";
+  const keys = Object.keys(value).sort();
+  const obj: Record<string, unknown> = {};
+  for (const k of keys) obj[k] = value[k];
+  return JSON.stringify(obj);
+}
 
-  const top = sorted.slice(0, limit);
-
-  return top.map((e) => ({
+function mapToTimelineEntry(e: LogEntry): TimelineEntry {
+  return {
     color:
       OVERVIEW_TIMELINE_COLOR_MAP[e.type] ?? OVERVIEW_TIMELINE_COLOR_FALLBACK,
     text: e.text,
@@ -425,7 +401,52 @@ export function buildOverviewTimelineFromLog(
     meta: e.time,
     ...(e.synthesized ? { synthesized: e.synthesized } : {}),
     track: e.track,
-  }));
+  };
+}
+
+/**
+ * 从 LogEntry 列表导出概览 timeline 摘要（同日同事件合并）。
+ * @param entries - 日志条目
+ * @param limit - 最多返回条数
+ * @returns 按时间倒序的 TimelineEntry 数组
+ */
+export function buildOverviewTimelineFromLog(
+  entries: readonly LogEntry[],
+  limit = 5,
+): TimelineEntry[] {
+  const buckets = new Map<string, LogEntry[]>();
+  for (const e of entries) {
+    const day = formatDate(e.time);
+    const fp = `${day}|${e.text}|${e.track ?? ""}|${stableStringify(e.textParams)}`;
+    let group = buckets.get(fp);
+    if (!group) {
+      group = [];
+      buckets.set(fp, group);
+    }
+    group.push(e);
+  }
+
+  const merged = [...buckets.values()].map((group) => {
+    const latest = group.reduce((a, b) => (a.time > b.time ? a : b));
+    const earliest = group.reduce((a, b) => (a.time < b.time ? a : b));
+    const base = mapToTimelineEntry(latest);
+    return group.length > 1
+      ? {
+          ...base,
+          mergedCount: group.length,
+          mergedEarliestIso: earliest.time,
+          mergedLatestIso: latest.time,
+        }
+      : base;
+  });
+
+  return merged
+    .sort((a, b) => {
+      if (a.meta > b.meta) return -1;
+      if (a.meta < b.meta) return 1;
+      return 0;
+    })
+    .slice(0, limit);
 }
 
 // ────────────────────────────────────────────────────────────────
@@ -438,10 +459,9 @@ function deriveApiPrefix(casesApiPath: string): string {
 
 /**
  * 构建获取指定案件沟通记录的完整请求 URL。
- *
- * @param casesApiPath - 案件 API 基础路径，例如 `/api/cases`。
- * @param caseId - 要查询的案件 ID。
- * @returns 带查询参数的完整 URL。
+ * @param casesApiPath - 基础路径
+ * @param caseId - 案件 ID
+ * @returns 完整请求地址
  */
 export function buildCaseMessagesUrl(
   casesApiPath: string,
@@ -452,10 +472,9 @@ export function buildCaseMessagesUrl(
 
 /**
  * 构建获取指定案件时间线日志的完整请求 URL。
- *
- * @param casesApiPath - 案件 API 基础路径，例如 `/api/cases`。
- * @param caseId - 要查询的案件 ID。
- * @returns 带查询参数的完整 URL。
+ * @param casesApiPath - 基础路径
+ * @param caseId - 案件 ID
+ * @returns 完整请求地址
  */
 export function buildCaseLogEntriesUrl(
   casesApiPath: string,
@@ -463,10 +482,6 @@ export function buildCaseLogEntriesUrl(
 ): string {
   return `${deriveApiPrefix(casesApiPath)}/timeline?entityType=case&entityId=${encodeURIComponent(caseId)}`;
 }
-
-// ────────────────────────────────────────────────────────────────
-// Internal helpers
-// ────────────────────────────────────────────────────────────────
 
 function readArrayOrItems(value: unknown): unknown[] | null {
   const record = asRecord(value);

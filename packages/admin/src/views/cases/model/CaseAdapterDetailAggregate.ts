@@ -306,8 +306,10 @@ function formatYen(amount: number) {
 }
 
 function buildValidationBlock(lv: Record<string, unknown> | null) {
+  const executedAt = lv ? readNullableString(lv, "executedAt") : null;
   return {
-    lastTime: lv ? formatDate(readNullableString(lv, "executedAt")) : "",
+    lastTime: lv ? formatDate(executedAt) : "",
+    lastTimeIso: executedAt ?? "",
     blocking: [] as never[],
     warnings: [] as never[],
     info: [] as never[],
@@ -476,9 +478,8 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
 // ─── Public adapter ──────────────────────────────────────────────
 /**
  * 将聚合 DTO 适配为客户端详情模型。
- *
- * @param value - `GET /cases/:id/aggregate` 返回的原始 JSON
- * @returns 类型化的详情聚合，格式无效时返回 `null`
+ * @param value - 原始 JSON
+ * @returns 详情聚合或 `null`
  */
 export function adaptCaseDetailAggregate(
   value: unknown,

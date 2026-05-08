@@ -117,6 +117,21 @@ describe("slice graceful degradation", () => {
     expect(result.detail.validationHint).toBe("");
     expect(result.detail.risk.lastValidation).toBe("");
     expect(result.detail.validation.lastTime).toBe("");
+    expect(result.detail.validation.lastTimeIso).toBe("");
+  });
+
+  it("exposes lastTimeIso from latestValidation.executedAt", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate({
+        latestValidation: {
+          ...MOCK_VALIDATION,
+          executedAt: "2026-04-01T00:00:00.000Z",
+        },
+      }),
+    )!;
+    expect(result.detail.validation.lastTimeIso).toBe(
+      "2026-04-01T00:00:00.000Z",
+    );
   });
 
   it("handles missing latestSubmission gracefully", () => {
@@ -299,8 +314,6 @@ describe("validation hint", () => {
   });
 });
 
-// ─── Billing risk confirmation ───────────────────────────────────
-
 describe("billing risk confirmation", () => {
   it("builds risk confirmation when acknowledged", () => {
     const result = adaptCaseDetailAggregate(
@@ -330,8 +343,6 @@ describe("billing risk confirmation", () => {
     expect(result.detail.riskConfirmationRecord).toBeNull();
   });
 });
-
-// ─── Slice field consumption contracts (p0-fe-002c-01) ──────────
 
 describe("slice field consumption contracts", () => {
   it("BILLING_SLICE_CONSUMED_FIELDS matches CaseBillingSummary", () => {
@@ -415,8 +426,6 @@ describe("slice field consumption contracts", () => {
   });
 });
 
-// ─── Billing received computation (p0-fe-002c-01) ───────────────
-
 describe("billing received computation", () => {
   it("computes received from totalReceived when present (CaseBillingSummaryFull)", () => {
     const result = adaptCaseDetailAggregate(
@@ -447,8 +456,6 @@ describe("billing received computation", () => {
   });
 });
 
-// ─── Billing quotePrice edge cases (p0-fe-002c-01) ──────────────
-
 describe("billing quotePrice edge cases", () => {
   it("handles quotePrice: null from server", () => {
     const result = adaptCaseDetailAggregate(
@@ -470,8 +477,6 @@ describe("billing quotePrice edge cases", () => {
     expect(result.detail.billing.total).toBe("—");
   });
 });
-
-// ─── EMPTY_LISTS placeholder ─────────────────────────────────────
 
 describe("placeholder collections (tabs not yet populated)", () => {
   it("provides empty arrays for tab collections", () => {

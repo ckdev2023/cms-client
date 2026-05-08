@@ -90,6 +90,51 @@ describe("LeadTableRow", () => {
     expect(tagChip1!.props("tone")).toBe(tagChip2!.props("tone"));
   });
 
+  describe("R2-B-2 行下方编号优先展示 leadNo（缺失回退 id）", () => {
+    it("lead.leadNo 存在时显示 leadNo 而非 UUID", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            id: "a82d2e67-e7dc-44f6-a297-0a2cfd0922f6",
+            leadNo: "LEAD-202605-0002",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      const meta = wrapper.find(".lead-row__meta");
+      expect(meta.text()).toBe("LEAD-202605-0002");
+      expect(meta.attributes("title")).toBe(
+        "a82d2e67-e7dc-44f6-a297-0a2cfd0922f6",
+      );
+      expect(wrapper.text()).not.toContain(
+        "a82d2e67-e7dc-44f6-a297-0a2cfd0922f6",
+      );
+    });
+
+    it("lead.leadNo 为 null 时回退展示 lead.id（兼容 fixture / legacy）", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ id: "LEAD-2026-0099", leadNo: null }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__meta").text()).toBe("LEAD-2026-0099");
+    });
+
+    it("lead.leadNo 为空字符串时也回退展示 lead.id", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ id: "LEAD-2026-0100", leadNo: "" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__meta").text()).toBe("LEAD-2026-0100");
+    });
+  });
+
   describe("R4-A-1 标签视觉契约（variant=tag + 截断 + tooltip）", () => {
     it("用户自定义标签使用 variant=tag 走中性外观，避免与 status 撞色", () => {
       setAppLocale("zh-CN");

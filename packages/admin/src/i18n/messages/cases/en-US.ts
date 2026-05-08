@@ -391,6 +391,7 @@ const casesEnUS = {
         title: "Recent activity",
         empty: "No recent activity",
         viewAll: "View full log →",
+        mergedSummary: "× {count} times (earliest {earliest}, latest {latest})",
       },
       risk: {
         blockingDetail: "{count} blocking item(s)",
@@ -1107,6 +1108,7 @@ const casesEnUS = {
       billingRiskAck: "Unpaid risk acknowledged{colonSuffix}",
       postApprovalStageChange: "Post-approval stage change{colonSuffix}",
       crossGroupCreated: "Cross-group case created{colonSuffix}",
+      caseConvertedFromLead: "Converted from lead {leadRef}",
       groupTransferred: "Case transferred: {from} → {to} ({reason})",
       phaseChange: "Phase change: {from} → {to}",
       commLogCreated: "Communication log added{colonSuffix}",

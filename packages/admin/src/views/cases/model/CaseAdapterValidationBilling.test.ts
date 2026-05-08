@@ -78,6 +78,7 @@ describe("adaptCaseValidationData — synthetic items & fallback", () => {
     const result = adaptCaseValidationData({ items: [] });
     expect(result).toEqual({
       lastTime: "",
+      lastTimeIso: "",
       blocking: [],
       warnings: [],
       info: [],

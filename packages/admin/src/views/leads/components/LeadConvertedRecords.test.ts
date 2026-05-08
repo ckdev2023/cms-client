@@ -108,6 +108,7 @@ describe("LeadConvertedRecords", () => {
       convertedCase: {
         id: "11a18544-56bd-4f74-95d6-fc135bad5b46",
         title: "CASE-202605-0009",
+        caseNo: "CASE-202605-0009",
         type: "dependent_visa",
         group: "tokyo-1",
         convertedAt: "2026-05-07T20:37:00Z",
@@ -146,6 +147,55 @@ describe("LeadConvertedRecords", () => {
     const caseMeta = wrapper.findAll(".converted-record__meta").pop()!.text();
 
     expect(caseMeta).toContain("11a18544-56bd-4f74");
+  });
+
+  it("NEW-V5-2: case card shows title in name row and caseNo in meta row (no duplicate)", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "8d8279a8-fd8e-4f1f-b58e-7f6d4d3fa6dd",
+        title: "R-FLOW-V5 走查申请人 · 家族滞在",
+        caseNo: "CASE-202605-0011",
+        type: "dependent_visa",
+        group: "tokyo-1",
+        convertedAt: "2026-05-08T17:22:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
+    const caseMeta = wrapper.findAll(".converted-record__meta").pop()!.text();
+
+    expect(caseName).toContain("R-FLOW-V5 走查申请人 · 家族滞在");
+    expect(caseName).not.toContain("CASE-202605-0011");
+    expect(caseMeta).toContain("CASE-202605-0011");
+    expect(caseMeta).not.toContain("R-FLOW-V5 走查申请人");
+    expect(caseMeta).not.toContain("8d8279a8-fd8e-4f1f");
+  });
+
+  it("NEW-V5-2: case card falls back to caseNo for name when title missing", () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "8d8279a8-fd8e-4f1f-b58e-7f6d4d3fa6dd",
+        title: "",
+        caseNo: "CASE-202605-0011",
+        type: "dependent_visa",
+        group: "tokyo-1",
+        convertedAt: "2026-05-08T17:22:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const caseName = wrapper.findAll(".converted-record__name").pop()!.text();
+
+    expect(caseName).toContain("CASE-202605-0011");
   });
 
   it("emits viewCustomer when customer button is clicked (P1-3)", async () => {
