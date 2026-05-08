@@ -48,7 +48,7 @@ async function factory(
   await router.isReady();
 
   const wrapper = mount(CustomerCasesTab, {
-    props: { customerId: "cust-001", repository },
+    props: { customerId: "cust-001", customerName: "田中太郎", repository },
     global: { plugins: [i18n, router] },
   });
 
@@ -286,13 +286,13 @@ describe("CustomerCasesTab", () => {
     expect(idTd.attributes("title")).toBe("case-no-number");
   });
 
-  it("renders caseNumber as button text when caseName is missing (C-4)", async () => {
+  it("renders fallback name when caseName equals caseNumber (C-4)", async () => {
     const repository = createRepository({
       listRelatedCases: vi.fn().mockResolvedValue([
         {
           id: "a63aa5f0-1111-2222-3333-444444444444",
           caseNumber: "CASE-202605-0009",
-          name: "CASE-202605-0009",
+          name: "",
           type: "work",
           stage: "S2",
           status: "active",
@@ -306,13 +306,15 @@ describe("CustomerCasesTab", () => {
     await flushPromises();
 
     const nameButton = wrapper.find(".cases-tab__name-link");
-    expect(nameButton.text()).toBe("CASE-202605-0009");
+    expect(nameButton.text()).toBe("田中太郎 · Work Visa");
     expect(nameButton.text()).not.toContain("a63aa5f0");
 
     const openButton = wrapper
       .findAll("button")
       .find((b) => b.text() === "Open")!;
-    expect(openButton.attributes("aria-label")).toContain("CASE-202605-0009");
+    expect(openButton.attributes("aria-label")).toContain(
+      "田中太郎 · Work Visa",
+    );
   });
 
   it("does not render duplicate disabled create/batchCreate buttons (P1-15)", async () => {

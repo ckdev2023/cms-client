@@ -156,7 +156,7 @@ export interface CaseListItem {
   /**
    *
    */
-  validationLabel: string;
+  validationLabel: { status: CaseValidationStatus; blockingCount: number };
   /**
    *
    */

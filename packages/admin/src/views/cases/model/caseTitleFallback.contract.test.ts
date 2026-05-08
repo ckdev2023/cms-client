@@ -5,7 +5,10 @@
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import { CASE_DETAIL_HEADER_FIELDS } from "./CaseAdapterDetailContracts";
-import { buildFallbackName, isFallbackTitle } from "./caseTitleFallback";
+import {
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../../shared/model/caseTitleFallback";
 
 const BASE_CASE = {
   id: "case-tf01",

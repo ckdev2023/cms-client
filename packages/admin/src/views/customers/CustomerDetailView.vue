@@ -277,6 +277,7 @@ function handleRetry(): void {
         <CustomerCasesTab
           v-else-if="activeTab === 'cases'"
           :customer-id="customer.id"
+          :customer-name="customer.displayName"
           :repository="repository"
         />
         <CustomerContactsTab

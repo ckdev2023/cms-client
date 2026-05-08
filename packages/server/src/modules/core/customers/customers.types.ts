@@ -16,6 +16,7 @@ export type CustomerQueryRow = {
   archived_cases?: unknown;
   case_names?: unknown;
   case_titles?: unknown;
+  case_type_codes?: unknown;
   last_case_created_date?: unknown;
   owner_name?: unknown;
 };
@@ -276,8 +277,10 @@ export type CustomerDetailDto = CustomerSummaryDto & {
   referrerName: string | null;
   archivedCases: number;
   caseNames: string[];
-  /** 案件标题列表：case_name 优先 → displayName · caseTypeCode 兜底。 */
+  /** 案件标题列表：仅输出 case_name，空则空串；前端按 locale 拼装 fallback。 */
   caseTitles: string[];
+  /** 案件类型代码列表：与 caseTitles 同序输出 case_type_code。 */
+  caseTypeCodes: string[];
   lastCaseCreatedDate: string | null;
 };
 
@@ -294,6 +297,7 @@ export type CustomerDtoAggregates = {
   groupName?: string | null;
   caseNames?: string[];
   caseTitles?: string[];
+  caseTypeCodes?: string[];
   lastCaseCreatedDate?: string | null;
 };
 

@@ -14,12 +14,17 @@ import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
 import { buildCaseDetailRoute } from "../../cases/query";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
-import { getCaseTypeI18nKey } from "../../cases/constants";
+import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
+import {
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../../shared/model/caseTitleFallback";
 import { resolveOwnerLabel } from "../../../shared/model/useOwnerOptions";
 
 /** 关联案件 Tab：按全部/活跃/归档筛选案件列表。 */
 const props = defineProps<{
   customerId: string;
+  customerName: string;
   repository: Pick<CustomerRepository, "listRelatedCases">;
 }>();
 
@@ -80,6 +85,23 @@ function caseTypeLabel(code: string): string {
   if (!key) return "—";
   const translated = t(key);
   return translated !== key ? translated : code;
+}
+
+/**
+ * 解析案件行显示名称：name 为空或等于 caseNumber/id 时用 fallback 拼装。
+ * @param c - 客户关联案件
+ * @returns 适合直接展示的案件名称
+ */
+function caseName(c: CustomerCase): string {
+  if (isFallbackTitle(c.name, c.caseNumber, c.id)) {
+    return buildFallbackName(
+      props.customerName,
+      caseTypeLabel(c.type),
+      c.caseNumber,
+      c.id,
+    );
+  }
+  return c.name;
 }
 
 /**
@@ -198,12 +220,12 @@ function looksLikeUuid(value: string): boolean {
                   class="cases-tab__name-link"
                   :aria-label="
                     t('customers.detail.casesTab.openCase', {
-                      name: c.name || c.caseNumber || c.id,
+                      name: caseName(c),
                     })
                   "
                   @click="openCase(c.id)"
                 >
-                  {{ c.name || c.caseNumber || "—" }}
+                  {{ caseName(c) }}
                 </button>
               </td>
               <td class="cases-tab__td cases-tab__td--type" :title="c.type">
@@ -234,7 +256,7 @@ function looksLikeUuid(value: string): boolean {
                   pill
                   :aria-label="
                     t('customers.detail.casesTab.openCase', {
-                      name: c.name || c.caseNumber || c.id,
+                      name: caseName(c),
                     })
                   "
                   @click="openCase(c.id)"

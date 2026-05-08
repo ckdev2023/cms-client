@@ -492,6 +492,7 @@ export function mapCustomerToDetailDto(
     archivedCases: aggregates.archivedCases ?? 0,
     caseNames: normalizeStringArray(aggregates.caseNames),
     caseTitles: normalizeStringArray(aggregates.caseTitles),
+    caseTypeCodes: normalizeStringArray(aggregates.caseTypeCodes),
     lastCaseCreatedDate: aggregates.lastCaseCreatedDate ?? null,
   };
 }

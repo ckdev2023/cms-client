@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildFallbackName, isFallbackTitle } from "./caseTitleFallback";
+import {
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../../shared/model/caseTitleFallback";
 
 describe("buildFallbackName", () => {
   it("applicant + typeLabel → 'applicant · typeLabel'", () => {

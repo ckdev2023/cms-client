@@ -449,6 +449,10 @@ export interface CustomerDetail extends CustomerSummary {
    */
   caseTitles: string[];
   /**
+   * 案件类型代码列表：与 caseTitles 同序输出 case_type_code，供前端按 locale 拼装 fallback。
+   */
+  caseTypeCodes: string[];
+  /**
    *
    */
   lastCaseCreatedDate: string | null;

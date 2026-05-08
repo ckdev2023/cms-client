@@ -112,6 +112,7 @@ function stubDetailRepository(): Pick<CustomerRepository, "getCustomerDetail"> {
       archivedCases: 0,
       caseNames: [],
       caseTitles: [],
+      caseTypeCodes: [],
       lastCaseCreatedDate: null,
     }),
   };

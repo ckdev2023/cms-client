@@ -83,9 +83,10 @@ void test("W-5: case_names fallback orders case_name BEFORE case_no", () => {
 });
 
 /**
- * P1-9/10：case_titles 子查询存在且包含 case_type_code（设计意图）。
+ * P1-9/10：case_titles 子查询不再引用 case_type_code（§5.1 口径：
+ * 服务端只返回结构化字段，前端按 locale 拼装 fallback）。
  */
-void test("P1-9/10: case_titles expression exists and uses case_type_code for fallback title", () => {
+void test("P1-9/10: case_titles expression does NOT reference case_type_code (decoupled to caseTypeCodes)", () => {
   const select = buildCustomerListSelect("c");
   assert.ok(
     select.includes("as case_titles"),
@@ -98,11 +99,37 @@ void test("P1-9/10: case_titles expression exists and uses case_type_code for fa
     caseTitlesEnd + "as case_titles".length,
   );
   assert.ok(
-    caseTitlesExpr.includes("ca.case_type_code"),
-    `expected case_titles to reference ca.case_type_code for human-readable fallback`,
+    !caseTitlesExpr.includes("ca.case_type_code"),
+    `expected case_titles to NOT reference ca.case_type_code (decoupled to caseTypeCodes column)`,
   );
   assert.ok(
     caseTitlesExpr.includes("ca.case_name"),
     `expected case_titles to reference ca.case_name as primary branch`,
+  );
+});
+
+/**
+ * P1-9/10：caseTypeCodes 独立子查询暴露 case_type_code 数组，
+ * 与 caseTitles 同序。
+ */
+void test("P1-9/10: case_type_codes subquery exposes independent column with case_type_code", () => {
+  const select = buildCustomerListSelect("c");
+  assert.ok(
+    select.includes("as case_type_codes"),
+    `expected list select to expose case_type_codes column`,
+  );
+  const caseTypeCodesEnd = select.indexOf("as case_type_codes");
+  const caseTypeCodesStart = select.lastIndexOf("(select", caseTypeCodesEnd);
+  const caseTypeCodesExpr = select.slice(
+    caseTypeCodesStart,
+    caseTypeCodesEnd + "as case_type_codes".length,
+  );
+  assert.ok(
+    caseTypeCodesExpr.includes("ca.case_type_code"),
+    `expected case_type_codes to reference ca.case_type_code`,
+  );
+  assert.ok(
+    caseTypeCodesExpr.includes("order by created_at desc, id desc"),
+    `expected case_type_codes to use same ordering as case_titles`,
   );
 });

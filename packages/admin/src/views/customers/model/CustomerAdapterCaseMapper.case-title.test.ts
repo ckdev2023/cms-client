@@ -43,7 +43,7 @@ describe("adaptCustomerCaseListResult — caseTitle priority (P1-9/10)", () => {
     expect(result![0].name).toBe("経営管理ビザ新規");
   });
 
-  it("falls back to caseNumber when both caseTitle and caseName are absent", () => {
+  it("returns empty string when both caseTitle and caseName are absent (component layer handles fallback)", () => {
     const result = adaptCustomerCaseListResult({
       items: [
         {
@@ -59,7 +59,7 @@ describe("adaptCustomerCaseListResult — caseTitle priority (P1-9/10)", () => {
     });
 
     expect(result).not.toBeNull();
-    expect(result![0].name).toBe("CASE-202605-0003");
+    expect(result![0].name).toBe("");
   });
 
   it("returns empty string when caseTitle, caseName, and caseNumber are all absent", () => {

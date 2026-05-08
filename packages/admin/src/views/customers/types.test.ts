@@ -70,6 +70,7 @@ describe("customers/types", () => {
       archivedCases: 0,
       caseNames: ["Case A"],
       caseTitles: ["Case A"],
+      caseTypeCodes: ["dependent_visa"],
       lastCaseCreatedDate: "2025-01-01",
     };
     expect(detail.nationality).toBe("JP");

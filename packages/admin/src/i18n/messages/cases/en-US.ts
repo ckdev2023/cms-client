@@ -42,6 +42,7 @@ const casesEnUS = {
       passed: "Passed",
       pending: "Pending",
       failed: "Failed",
+      failedWithCount: "Failed ({count})",
     },
     filterSummary: "{scope} · {count} cases",
     loading: "Loading cases…",
@@ -1145,6 +1146,18 @@ const casesEnUS = {
     },
   },
   validation: {
+    checks: {
+      generated_documents_present: {
+        title: "At least one document required",
+        message:
+          "At least one generated document is required before submission",
+      },
+      generated_documents_finalized: {
+        title: "All documents must be finalized",
+        message:
+          "All generated documents must be final or exported before submission",
+      },
+    },
     refReport: "See the validation report for details",
     lastFailed:
       "Blocking items were found in the previous validation. Please fix them and re-run.",

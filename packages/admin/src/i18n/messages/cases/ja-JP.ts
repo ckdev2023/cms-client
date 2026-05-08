@@ -41,6 +41,7 @@ const casesJaJP = {
       passed: "合格",
       pending: "未検査",
       failed: "不合格",
+      failedWithCount: "不合格 ({count})",
     },
     filterSummary: "{scope} · {count} 件",
     loading: "案件を読み込み中…",
@@ -1143,6 +1144,17 @@ const casesJaJP = {
     },
   },
   validation: {
+    checks: {
+      generated_documents_present: {
+        title: "文書が1件以上必要",
+        message: "提出前に少なくとも1件の文書を生成してください",
+      },
+      generated_documents_finalized: {
+        title: "全文書の確定が必要",
+        message:
+          "生成されたすべての文書が確定済みまたはエクスポート済みである必要があります",
+      },
+    },
     refReport: "詳細は検証レポートを参照",
     lastFailed:
       "前回の検証で不合格項目が検出されました。修正後に再検証を実行してください。",

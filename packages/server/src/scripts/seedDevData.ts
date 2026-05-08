@@ -62,7 +62,12 @@ async function seedCustomer(client: PoolClient) {
 async function seedCases(client: PoolClient) {
   for (const [caseId, caseName, caseNo, caseTypeCode] of [
     [SEED_CASE_A_ID, "家族滞在 — 田中太郎", "CASE-DEV-001", "family_stay"],
-    [SEED_CASE_B_ID, "技人国 — 田中太郎", "CASE-DEV-002", "work"],
+    [
+      SEED_CASE_B_ID,
+      "技人国 — 田中太郎",
+      "CASE-DEV-002",
+      "engineer_humanities_intl_visa",
+    ],
   ] as const) {
     await client.query(
       `INSERT INTO cases (

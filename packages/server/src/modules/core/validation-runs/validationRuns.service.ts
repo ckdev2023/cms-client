@@ -37,6 +37,8 @@ type ValidationCheck = {
   passed: boolean;
   severity: "blocking" | "warning";
   message: string;
+  titleKey: string;
+  messageKey: string;
   meta?: Record<string, unknown>;
 };
 
@@ -187,7 +189,11 @@ export class ValidationRunsService {
         evaluation.resultStatus,
         evaluation.blockingCount,
         evaluation.warningCount,
-        JSON.stringify({ caseStatus, checks: evaluation.checks }),
+        JSON.stringify({
+          caseStatus,
+          checks: evaluation.checks,
+          ...partitionChecksBySeverity(evaluation.checks),
+        }),
         ctx.userId,
       ],
     );
@@ -306,6 +312,8 @@ function buildValidationChecks(
       code: "generated_documents_present",
       passed: counts.generatedDocumentCount > 0,
       severity: "blocking",
+      titleKey: "cases.validation.checks.generated_documents_present.title",
+      messageKey: "cases.validation.checks.generated_documents_present.message",
       message:
         counts.generatedDocumentCount > 0
           ? "At least one generated document exists"
@@ -316,6 +324,9 @@ function buildValidationChecks(
       code: "generated_documents_finalized",
       passed: counts.blockedGeneratedDocumentCount === 0,
       severity: "blocking",
+      titleKey: "cases.validation.checks.generated_documents_finalized.title",
+      messageKey:
+        "cases.validation.checks.generated_documents_finalized.message",
       message:
         counts.blockedGeneratedDocumentCount === 0
           ? "All generated documents are final or exported"
@@ -342,6 +353,38 @@ function summarizeValidationChecks(
     warningCount,
     checks,
   };
+}
+
+type PartitionedChecks = {
+  blocking: ValidationCheck[];
+  warnings: ValidationCheck[];
+  info: ValidationCheck[];
+};
+
+/**
+ * 按 severity 分桶：blocking / warnings / info。
+ *
+ * @param checks - 全部校验条目
+ * @returns 分桶结果
+ */
+export function partitionChecksBySeverity(
+  checks: ValidationCheck[],
+): PartitionedChecks {
+  const blocking: ValidationCheck[] = [];
+  const warnings: ValidationCheck[] = [];
+  const info: ValidationCheck[] = [];
+
+  for (const check of checks) {
+    if (!check.passed && check.severity === "blocking") {
+      blocking.push(check);
+    } else if (!check.passed && check.severity === "warning") {
+      warnings.push(check);
+    } else {
+      info.push(check);
+    }
+  }
+
+  return { blocking, warnings, info };
 }
 
 function defaultRulesetRef(): Record<string, unknown> {

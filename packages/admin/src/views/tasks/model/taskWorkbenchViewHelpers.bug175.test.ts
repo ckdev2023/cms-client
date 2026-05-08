@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ReminderRecord } from "../types";
 import { reminderTitle } from "./taskWorkbenchViewHelpers";
 import { residenceLabelToCode } from "./residenceLabelToTypeCode";
-import { getCaseTypeI18nKey } from "../../cases/constants";
+import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 
 function createReminder(
   overrides: Partial<ReminderRecord> = {},

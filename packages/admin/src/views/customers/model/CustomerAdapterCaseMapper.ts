@@ -91,8 +91,7 @@ function adaptCustomerCaseDto(value: unknown): CustomerCase | null {
   return {
     id,
     ...(caseNumber !== undefined ? { caseNumber } : {}),
-    name:
-      pickOptionalString(record, CUSTOMER_CASE_NAME_FIELDS) ?? caseNumber ?? "",
+    name: pickOptionalString(record, CUSTOMER_CASE_NAME_FIELDS) ?? "",
     type: pickOptionalString(record, CUSTOMER_CASE_TYPE_FIELDS) ?? "",
     stage: pickOptionalString(record, CUSTOMER_CASE_STAGE_FIELDS) ?? "",
     status: readCustomerCaseStatus(record),

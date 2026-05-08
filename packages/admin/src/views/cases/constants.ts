@@ -533,12 +533,4 @@ export function getGateLabel(gateId: GateId | string): string {
   return CASE_GATES[gateId as GateId]?.label ?? gateId;
 }
 
-/**
- * 将案件类型代码转为 i18n key（`cases.constants.caseTypes.<code>`）。
- * @param code - 案件类型代码
- * @returns i18n key；未匹配时返回 `""`
- */
-export function getCaseTypeI18nKey(code: string): string {
-  if (!code) return "";
-  return `cases.constants.caseTypes.${code}`;
-}
+export { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";

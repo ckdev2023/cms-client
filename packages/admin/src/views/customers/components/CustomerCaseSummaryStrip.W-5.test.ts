@@ -7,11 +7,8 @@ import CustomerCaseSummaryStrip from "./CustomerCaseSummaryStrip.vue";
 
 /**
  * W-5：客户详情案件摘要卡「案件名称」显示优先级：
- *   caseTitles（P1-9/10 新增）→ caseNames（兜底）→ "—" 占位。
- *
- * caseTitles 由服务端 buildCaseTitlesExpr 生成：
- *   case_name 优先 → displayName · caseTypeCode 兜底。
- * 当 caseTitles 为空数组时，退回到 caseNames 兼容路径。
+ *   caseTitles[0] 有值 → 直接展示；
+ *   caseTitles 为空 → buildFallbackName(displayName, caseTypeLabel, "—", "—")。
  */
 describe("CustomerCaseSummaryStrip W-5 fallback", () => {
   beforeEach(() => {
@@ -38,13 +35,15 @@ describe("CustomerCaseSummaryStrip W-5 fallback", () => {
     );
   });
 
-  it("falls back to caseNames when caseTitles is empty", () => {
+  it("uses buildFallbackName when caseTitles is empty and caseTypeCodes present", () => {
     const { wrapper } = factory({
       caseTitles: [],
-      caseNames: ["CASE-202605-0011"],
+      caseTypeCodes: ["dependent_visa"],
+      displayName: "山田太郎",
+      caseNames: [],
     });
     expect(wrapper.find(".case-strip__case-link").text()).toBe(
-      "CASE-202605-0011",
+      "山田太郎 · Dependent Visa",
     );
   });
 
@@ -58,18 +57,43 @@ describe("CustomerCaseSummaryStrip W-5 fallback", () => {
     );
   });
 
-  it("falls back to '—' placeholder when caseTitles[0] is empty string", () => {
-    const { wrapper } = factory({ caseTitles: [""], caseNames: [] });
+  it("uses displayName only when caseTitles empty and caseTypeCodes empty", () => {
+    const { wrapper } = factory({
+      caseTitles: [],
+      caseTypeCodes: [],
+      caseNames: [],
+      displayName: "佐藤花子",
+    });
+    expect(wrapper.find(".case-strip__case-link").text()).toBe("佐藤花子");
+  });
+
+  it("falls back to '—' when caseTitles[0] is empty string and caseTypeCodes triggers buildFallbackName", () => {
+    const { wrapper } = factory({
+      caseTitles: [""],
+      caseTypeCodes: [],
+      caseNames: [],
+      displayName: "",
+    });
     expect(wrapper.find(".case-strip__case-link").text()).toBe("—");
   });
 
-  it("falls back to '—' placeholder when caseTitles[0] is whitespace only", () => {
-    const { wrapper } = factory({ caseTitles: ["   "], caseNames: [] });
+  it("falls back via buildFallbackName when caseTitles[0] is whitespace only", () => {
+    const { wrapper } = factory({
+      caseTitles: ["   "],
+      caseTypeCodes: [],
+      caseNames: [],
+      displayName: "",
+    });
     expect(wrapper.find(".case-strip__case-link").text()).toBe("—");
   });
 
-  it("falls back to '—' placeholder when both arrays are empty", () => {
-    const { wrapper } = factory({ caseTitles: [], caseNames: [] });
+  it("falls back via buildFallbackName when both arrays are empty and displayName is empty", () => {
+    const { wrapper } = factory({
+      caseTitles: [],
+      caseTypeCodes: [],
+      caseNames: [],
+      displayName: "",
+    });
     expect(wrapper.find(".case-strip__case-link").text()).toBe("—");
   });
 

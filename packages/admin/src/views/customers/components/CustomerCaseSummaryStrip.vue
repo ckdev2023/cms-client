@@ -3,6 +3,8 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CustomerDetail } from "../types";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import { buildFallbackName } from "../../../shared/model/caseTitleFallback";
+import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 
 /** 案件摘要条：展示累计/活跃/归档案件数与案件名称，位于详情页头部下方。 */
 const props = defineProps<{
@@ -12,9 +14,12 @@ const props = defineProps<{
 const { t, locale } = useI18n();
 
 const firstCaseName = computed(() => {
-  const titles = props.customer.caseTitles;
-  const first = titles.length > 0 ? titles[0] : props.customer.caseNames[0];
-  return first && first.trim().length > 0 ? first : "—";
+  const title = props.customer.caseTitles[0]?.trim();
+  if (title) return title;
+  const code = props.customer.caseTypeCodes[0];
+  const typeKey = code ? getCaseTypeI18nKey(code) : "";
+  const typeLabel = typeKey ? t(typeKey) : "";
+  return buildFallbackName(props.customer.displayName, typeLabel, "—", "—");
 });
 const extraCaseCount = computed(() => {
   const titles = props.customer.caseTitles;

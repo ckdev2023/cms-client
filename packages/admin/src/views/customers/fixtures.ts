@@ -370,6 +370,11 @@ export const SAMPLE_CUSTOMER_DETAILS: Record<string, CustomerDetail> = {
     referrerName: "佐藤様",
     caseNames: ["経営管理1年更新", "会社設立", "技人国 → 経営管理 変更"],
     caseTitles: ["経営管理1年更新", "会社設立", "技人国 → 経営管理 変更"],
+    caseTypeCodes: [
+      "business_manager_visa",
+      "company_establishment",
+      "engineer_humanities_intl_visa",
+    ],
     lastCaseCreatedDate: "2025-03-20",
   },
   "cust-002": {
@@ -400,6 +405,7 @@ export const SAMPLE_CUSTOMER_DETAILS: Record<string, CustomerDetail> = {
     referrerName: "",
     caseNames: ["経営管理4ヶ月認定", "経営管理1年更新"],
     caseTitles: ["経営管理4ヶ月認定", "経営管理1年更新"],
+    caseTypeCodes: ["business_manager_visa", "business_manager_visa"],
     lastCaseCreatedDate: "2025-04-01",
   },
   "cust-003": {
@@ -430,6 +436,7 @@ export const SAMPLE_CUSTOMER_DETAILS: Record<string, CustomerDetail> = {
     referrerName: "",
     caseNames: ["技人国 認定（完了）"],
     caseTitles: ["技人国 認定（完了）"],
+    caseTypeCodes: ["engineer_humanities_intl_visa"],
     lastCaseCreatedDate: "2024-12-15",
   },
   "cust-004": {
@@ -474,6 +481,7 @@ export const SAMPLE_CUSTOMER_DETAILS: Record<string, CustomerDetail> = {
     referrerName: "",
     caseNames: [],
     caseTitles: [],
+    caseTypeCodes: [],
     lastCaseCreatedDate: null,
   },
 };

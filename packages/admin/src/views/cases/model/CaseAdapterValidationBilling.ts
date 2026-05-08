@@ -42,6 +42,33 @@ export {
   buildCaseValidationRunsUrl,
 } from "./CaseAdapterValidationUrls";
 
+function resolveGateTitle(
+  r: Record<string, unknown>,
+  titleKey: string | undefined,
+): string {
+  if (titleKey) return "";
+  return (
+    readString(r, "title") ||
+    readString(r, "rule") ||
+    readString(r, "code") ||
+    readString(r, "message") ||
+    readString(r, "description")
+  );
+}
+
+function resolveGateNote(
+  r: Record<string, unknown>,
+  titleKey: string | undefined,
+): string | undefined {
+  if (titleKey) return undefined;
+  const explicitNote = readNullableString(r, "note");
+  if (explicitNote != null) return explicitNote;
+  const primaryTitle =
+    readString(r, "title") || readString(r, "rule") || readString(r, "code");
+  const fallbackText = readString(r, "message") || readString(r, "description");
+  return primaryTitle && fallbackText ? fallbackText : undefined;
+}
+
 function adaptGateItemDto(
   value: unknown,
   defaultGate: string,
@@ -49,21 +76,18 @@ function adaptGateItemDto(
   const r = asRecord(value);
   if (!r) return null;
 
-  const primaryTitle =
-    readString(r, "title") || readString(r, "rule") || readString(r, "code");
-  const fallbackText = readString(r, "message") || readString(r, "description");
-  const title = primaryTitle || fallbackText;
-  if (!title) return null;
-
-  const explicitNote = readNullableString(r, "note");
-  const note =
-    explicitNote ?? (primaryTitle && fallbackText ? fallbackText : undefined);
+  const titleKey = readOptionalString(r, "titleKey");
+  const messageKey = readOptionalString(r, "messageKey");
+  const title = resolveGateTitle(r, titleKey);
+  if (!titleKey && !title) return null;
 
   return {
     gate: readString(r, "gate") || defaultGate,
     title,
+    titleKey,
     fix: readOptionalString(r, "fix"),
-    note,
+    note: resolveGateNote(r, titleKey),
+    noteKey: messageKey,
     assignee: readOptionalString(r, "assignee"),
     deadline: readOptionalString(r, "deadline"),
     actionLabel: readOptionalString(r, "actionLabel"),

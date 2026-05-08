@@ -21,7 +21,7 @@ import {
   taskStatusLabel,
 } from "./model/taskWorkbenchViewHelpers";
 import { residenceLabelToCode } from "./model/residenceLabelToTypeCode";
-import { getCaseTypeI18nKey } from "../cases/constants";
+import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
 import { useTaskWorkbenchModel } from "./model/useTaskWorkbenchModel";
 import { createTaskWorkbenchToastNotifier } from "./model/useTaskWorkbenchToast";
 import type { TaskRecord, TaskWorkbenchView } from "./types";

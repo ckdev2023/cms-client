@@ -43,7 +43,7 @@ function baseItem(overrides: Partial<CaseListItem> = {}): CaseListItem {
     completionPercent: 0,
     completionLabel: "",
     validationStatus: "pending",
-    validationLabel: "",
+    validationLabel: { status: "pending", blockingCount: 0 },
     blockerCount: 0,
     unpaidAmount: 0,
     updatedAtLabel: "",

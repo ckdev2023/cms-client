@@ -17,6 +17,7 @@ export function mapCustomerAggregates(
     archivedCases: toOptionalNumber(row.archived_cases),
     caseNames: toStringArray(row.case_names),
     caseTitles: toStringArray(row.case_titles),
+    caseTypeCodes: toStringArray(row.case_type_codes),
     lastCaseCreatedDate: toOptionalDateString(row.last_case_created_date),
     ownerName: toOptionalString(row.owner_name),
   };

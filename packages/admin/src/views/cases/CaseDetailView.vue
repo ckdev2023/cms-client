@@ -41,8 +41,11 @@ import {
   getStageI18nKey,
 } from "./constants";
 import { formatCaseIdentity } from "./caseIdentity";
-import { getCaseTypeI18nKey } from "./constants";
-import { buildFallbackName, isFallbackTitle } from "./model/caseTitleFallback";
+import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
+import {
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../shared/model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
 

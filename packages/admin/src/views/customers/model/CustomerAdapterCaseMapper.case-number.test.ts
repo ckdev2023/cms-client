@@ -102,7 +102,7 @@ describe("adaptCustomerCaseListResult — caseNumber mapping (BUG-190)", () => {
 
     expect(result).not.toBeNull();
     expect(result![0].caseNumber).toBe("CASE-202605-0099");
-    expect(result![0].name).toBe("CASE-202605-0099");
+    expect(result![0].name).toBe("");
   });
 
   it("returnsEmptyStringWhenBothMissing", () => {

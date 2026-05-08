@@ -1,16 +1,9 @@
-// ── Owner: p0-fe-002b-05 — derived status field mapping contract.
-// Excludes: base fields (002b-04), summary cards, detail aggregate,
-//   write builders, repository orchestration, downstream reuse.
-// ────────────────────────────────────────────────────────────────
-
 import { describe, expect, it } from "vitest";
 import { adaptCaseListResult } from "./CaseAdapterMappers";
 import {
   CASE_LIST_DERIVED_FIELD_MAP,
   CASE_LIST_DERIVED_TARGET_KEYS,
 } from "./CaseAdapterTypes";
-
-// ─── Helpers ────────────────────────────────────────────────────
 
 const BASE_CASE = {
   id: "case-001",
@@ -55,8 +48,6 @@ function adaptFirst(payload: unknown) {
   return result!.items[0];
 }
 
-// ─── Contract constants (p0-fe-002b-05) ─────────────────────────
-
 describe("derived status contract constants (p0-fe-002b-05)", () => {
   it("CASE_LIST_DERIVED_FIELD_MAP covers all 5 DTO source fields", () => {
     expect(Object.keys(CASE_LIST_DERIVED_FIELD_MAP).sort()).toEqual([
@@ -97,8 +88,6 @@ describe("derived status contract constants (p0-fe-002b-05)", () => {
   });
 });
 
-// ─── Full snapshot tests ────────────────────────────────────────
-
 describe("derived status — flat DTO snapshot", () => {
   it("maps all derived status fields from a flat DTO", () => {
     const item = adaptFirst({
@@ -119,7 +108,10 @@ describe("derived status — flat DTO snapshot", () => {
       total: 1,
     });
     expect(item.validationStatus).toBe("passed");
-    expect(item.validationLabel).toBe("passed");
+    expect(item.validationLabel).toEqual({
+      status: "passed",
+      blockingCount: 0,
+    });
     expect(item.blockerCount).toBe(0);
     expect(item.riskStatus).toBe("attention");
     expect(item.riskLabel).toBe("medium");
@@ -154,7 +146,10 @@ describe("derived status — wrapped (summary) DTO snapshot", () => {
       total: 1,
     });
     expect(item.validationStatus).toBe("failed");
-    expect(item.validationLabel).toBe("failed (3)");
+    expect(item.validationLabel).toEqual({
+      status: "failed",
+      blockingCount: 3,
+    });
     expect(item.blockerCount).toBe(3);
     expect(item.riskStatus).toBe("critical");
     expect(item.riskLabel).toBe("high");
@@ -164,8 +159,6 @@ describe("derived status — wrapped (summary) DTO snapshot", () => {
     expect(item.updatedAtLabel).toBeTruthy();
   });
 });
-
-// ─── Per-field edge cases ───────────────────────────────────────
 
 describe("derived status — validationStatus", () => {
   it("resolves passed/failed from latestValidation.status", () => {
@@ -219,7 +212,10 @@ describe("derived status — validationStatus", () => {
       ],
       total: 1,
     });
-    expect(passed.validationLabel).toBe("passed");
+    expect(passed.validationLabel).toEqual({
+      status: "passed",
+      blockingCount: 0,
+    });
 
     const failedWithBlockers = adaptFirst({
       items: [
@@ -229,7 +225,10 @@ describe("derived status — validationStatus", () => {
       ],
       total: 1,
     });
-    expect(failedWithBlockers.validationLabel).toBe("failed (5)");
+    expect(failedWithBlockers.validationLabel).toEqual({
+      status: "failed",
+      blockingCount: 5,
+    });
 
     const failedNoBlockers = adaptFirst({
       items: [
@@ -239,13 +238,19 @@ describe("derived status — validationStatus", () => {
       ],
       total: 1,
     });
-    expect(failedNoBlockers.validationLabel).toBe("failed");
+    expect(failedNoBlockers.validationLabel).toEqual({
+      status: "failed",
+      blockingCount: 0,
+    });
 
     const noValidation = adaptFirst({
       items: [flatRow({ latestValidation: null })],
       total: 1,
     });
-    expect(noValidation.validationLabel).toBe("pending");
+    expect(noValidation.validationLabel).toEqual({
+      status: "pending",
+      blockingCount: 0,
+    });
   });
 
   it("blockerCount is extracted from latestValidation.blockingCount", () => {
@@ -401,8 +406,6 @@ describe("derived status — updatedAtLabel", () => {
     }
   });
 });
-
-// ─── Structural invariants ──────────────────────────────────────
 
 describe("derived status — structural invariants", () => {
   it("all CASE_LIST_DERIVED_TARGET_KEYS exist on every adapted item", () => {

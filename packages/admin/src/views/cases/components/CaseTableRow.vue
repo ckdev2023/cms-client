@@ -7,13 +7,12 @@ import StageChip from "./StageChip.vue";
 import type { CaseListItem } from "../types";
 import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
 import { buildCaseDetailHref } from "../query";
+import { getPhaseI18nKey, getPhaseBadge, BADGE_TONE_MAP } from "../constants";
+import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 import {
-  getPhaseI18nKey,
-  getPhaseBadge,
-  getCaseTypeI18nKey,
-  BADGE_TONE_MAP,
-} from "../constants";
-import { buildFallbackName, isFallbackTitle } from "../model/caseTitleFallback";
+  buildFallbackName,
+  isFallbackTitle,
+} from "../../../shared/model/caseTitleFallback";
 
 /** 案件列表行：展示案件摘要信息和操作入口。 */
 const { t, locale } = useI18n();
@@ -50,6 +49,16 @@ const validationTone = computed<ChipTone>(() => {
   if (props.item.validationStatus === "failed") return "danger";
   if (props.item.validationStatus === "passed") return "success";
   return "neutral";
+});
+
+const validationDisplay = computed(() => {
+  const { status, blockingCount } = props.item.validationLabel;
+  if (status === "failed" && blockingCount > 0) {
+    return t("cases.list.validationLabels.failedWithCount", {
+      count: blockingCount,
+    });
+  }
+  return t(`cases.list.validationLabels.${status}`);
 });
 
 const phaseTone = computed<ChipTone>(() => {
@@ -177,7 +186,7 @@ const isFailureStep = computed(
 
     <td class="case-row__hide-md">
       <Chip :tone="validationTone" dot>
-        {{ item.validationLabel }}
+        {{ validationDisplay }}
       </Chip>
     </td>
 

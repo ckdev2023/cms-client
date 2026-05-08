@@ -76,6 +76,7 @@ describe("CustomerAdapter", () => {
       archivedCases: 1,
       caseNames: ["技人国更新", "永住申请"],
       caseTitles: ["技人国更新", "永住申请"],
+      caseTypeCodes: ["engineer_humanities_intl_visa", "permanent_residence"],
       lastCaseCreatedDate: "2026-04-01",
     });
 
@@ -83,6 +84,10 @@ describe("CustomerAdapter", () => {
     expect(result?.archivedCases).toBe(1);
     expect(result?.caseNames).toEqual(["技人国更新", "永住申请"]);
     expect(result?.caseTitles).toEqual(["技人国更新", "永住申请"]);
+    expect(result?.caseTypeCodes).toEqual([
+      "engineer_humanities_intl_visa",
+      "permanent_residence",
+    ]);
     expect(result?.location).toBe("JAPAN");
     expect(result?.sourceType).toBe("REFERRAL");
     expect(result?.visaType).toBe("engineer_specialist");

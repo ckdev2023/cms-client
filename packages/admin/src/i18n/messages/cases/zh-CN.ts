@@ -41,6 +41,7 @@ const casesZhCN = {
       passed: "已通过",
       pending: "待检查",
       failed: "未通过",
+      failedWithCount: "未通过 ({count})",
     },
     filterSummary: "{scope} · 共 {count} 条案件",
     loading: "正在加载案件…",
@@ -1082,6 +1083,16 @@ const casesZhCN = {
     },
   },
   validation: {
+    checks: {
+      generated_documents_present: {
+        title: "需要至少生成一份文书",
+        message: "提交前需要至少生成一份文书",
+      },
+      generated_documents_finalized: {
+        title: "所有文书需定稿",
+        message: "所有生成的文书必须为定稿或已导出状态",
+      },
+    },
     refReport: "详细请参阅检查报告",
     lastFailed: "上次检查有未通过项，请修改后重新检查。",
     blockingSummary: "{count} 项阻断未处理",

@@ -251,6 +251,7 @@ function readDetailFields(record: Record<string, unknown>) {
     archivedCases: readNumberField(record, "archivedCases") ?? 0,
     caseNames: readStringArray(record.caseNames) ?? [],
     caseTitles: readStringArray(record.caseTitles) ?? [],
+    caseTypeCodes: readStringArray(record.caseTypeCodes) ?? [],
     lastCaseCreatedDate:
       readNullableStringField(record, "lastCaseCreatedDate") ?? null,
   };

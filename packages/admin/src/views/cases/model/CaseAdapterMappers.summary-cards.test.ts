@@ -37,7 +37,7 @@ const LIST_ITEM_BASE: Omit<
   ownerId: "o",
   completionPercent: 0,
   completionLabel: "",
-  validationLabel: "",
+  validationLabel: { status: "pending", blockingCount: 0 },
   blockerCount: 0,
   updatedAtLabel: "",
   dueDateLabel: "",
