@@ -6,6 +6,10 @@ import {
   clearUserAliases,
   registerUserAliases,
 } from "../../../shared/model/useOrgUserOptions";
+import {
+  clearGroupAliases,
+  registerGroupAliases,
+} from "../../../shared/model/useGroupOptions";
 import type { LeadSummary } from "../types";
 import LeadTableRow from "./LeadTableRow.vue";
 
@@ -26,6 +30,7 @@ describe("LeadTableRow", () => {
   afterEach(() => {
     setAppLocale(originalLocale);
     clearUserAliases();
+    clearGroupAliases();
   });
 
   it("renders localized fallback follow-up note and relative time in ja-JP", () => {
@@ -204,6 +209,82 @@ describe("LeadTableRow", () => {
         .find((c) => c.text() === longTag);
       expect(chip).toBeTruthy();
       expect(chip!.attributes("title")).toBe(longTag);
+    });
+  });
+
+  describe("W-1 leads 列表组列本地化（B-0 路径扩散）", () => {
+    it("server JOIN 返回 catalog slug『tokyo-1』时按 zh-CN 渲染为『东京一组』", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: "tokyo-1", groupId: "tokyo-1" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      const groupChip = wrapper.findAll(".lead-row__group .ui-chip").at(0);
+      expect(groupChip).toBeTruthy();
+      expect(groupChip!.text()).toBe("东京一组");
+      expect(wrapper.text()).not.toContain("tokyo-1");
+    });
+
+    it("server JOIN 返回 catalog slug『tokyo-1』时按 en-US 渲染为『Tokyo Team 1』", () => {
+      setAppLocale("en-US");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: "tokyo-1", groupId: "tokyo-1" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__group .ui-chip").text()).toBe(
+        "Tokyo Team 1",
+      );
+    });
+
+    it("groupLabel 为空但 groupId 命中 catalog → 按 locale 本地化（不裸出 slug）", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: null, groupId: "tokyo-2" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__group .ui-chip").text()).toBe("东京二组");
+    });
+
+    it("groupLabel 与 groupId 都为空 → 显示『—』而非空 chip", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: null, groupId: "" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__group .ui-chip").text()).toBe("—");
+    });
+
+    it("groupId 为 UUID 且 alias 已注册 catalog slug → 按 locale 本地化", () => {
+      setAppLocale("zh-CN");
+      const UUID_GROUP = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+      registerGroupAliases([{ id: UUID_GROUP, name: "tokyo-1" }]);
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: null, groupId: UUID_GROUP }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__group .ui-chip").text()).toBe("东京一组");
+      expect(wrapper.text()).not.toContain(UUID_GROUP);
+    });
+
+    it("自定义组名（不在 catalog）原样保留，不被 locale 影响", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({ groupLabel: "営業一課", groupId: "tokyo-1" }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.find(".lead-row__group .ui-chip").text()).toBe("営業一課");
     });
   });
 

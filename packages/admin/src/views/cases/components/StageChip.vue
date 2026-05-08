@@ -2,8 +2,8 @@
 /**
  * Stage 渲染粒度：
  * - `short`：仅展示 stage code（如 `S1`）。
- * - `full`：仅展示本地化全文 label（如 `Case opened`）。
- * - `both`：同 Chip 内同时展示 code + label（如 `S1 · Case opened`），
+ * - `full`：仅展示本地化全文 label（如 `Filed`）。
+ * - `both`：同 Chip 内同时展示 code + label（如 `S1 · Filed`），
  *   用于 Case Detail header 等需要高信息密度的场景。
  */
 export type StagePrecision = "short" | "full" | "both";

@@ -17,7 +17,7 @@ const MESSAGES = {
     cases: {
       constants: {
         stages: {
-          S1: "Case opened",
+          S1: "Filed",
           S2: "Collecting documents",
           S3: "Pending / Under review",
           S4: "Drafting forms",
@@ -34,7 +34,7 @@ const MESSAGES = {
     cases: {
       constants: {
         stages: {
-          S1: "案件開始",
+          S1: "案件登録済",
           S2: "資料収集中",
           S9: "アーカイブ済み",
         },
@@ -45,7 +45,7 @@ const MESSAGES = {
     cases: {
       constants: {
         stages: {
-          S1: "刚开始办案",
+          S1: "已建档",
           S2: "资料收集中",
           S9: "已归档",
         },
@@ -85,9 +85,9 @@ describe("StageChip", () => {
       expect(w.text()).toBe("資料収集中");
     });
 
-    it("S1 zh-CN 显示 `刚开始办案`", () => {
+    it("S1 zh-CN 显示 `已建档`（对齐 P0 §3 双层状态机：S1 = 已建档）", () => {
       const w = mountChip({ code: "S1" }, "zh-CN");
-      expect(w.text()).toBe("刚开始办案");
+      expect(w.text()).toBe("已建档");
     });
 
     it("precision 缺省即 `full`", () => {
@@ -104,9 +104,9 @@ describe("StageChip", () => {
   });
 
   describe("precision=both: Case Detail header 主口径", () => {
-    it("S1 en-US 输出 `S1 · Case opened`（code + label 同 Chip 内并列）", () => {
+    it("S1 en-US 输出 `S1 · Filed`（code + label 同 Chip 内并列，对齐 P0 §3 S1=已建档）", () => {
       const w = mountChip({ code: "S1", precision: "both" });
-      expect(w.text()).toBe("S1 · Case opened");
+      expect(w.text()).toBe("S1 · Filed");
     });
 
     it("S9 ja-JP 输出 `S9 · アーカイブ済み`", () => {

@@ -262,7 +262,7 @@ describe("overview summary card definitions (p0-fe-006a-01)", () => {
 
   it("summary cards degrade gracefully with empty aggregate", () => {
     const result = adaptCaseDetailAggregate(buildMinimalAggregate())!;
-    expect(result.detail.stage).toBe("刚开始办案");
+    expect(result.detail.stage).toBe("已建档");
     expect(result.detail.deadline).toBe("");
     expect(result.detail.progressPercent).toBe(0);
     expect(result.detail.progressCount).toBe("0/0");

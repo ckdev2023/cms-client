@@ -6,7 +6,7 @@
 //   覆盖 zh-CN / en-US / ja-JP × S1..S9。
 // Does NOT test: 真实 mount `CaseDetailView`（依赖 router + useCaseDetailModel），
 //   亦不测试 stage Chip 视觉/tone 映射。
-// Rationale: 第十轮走查发现切到 EN/JA 后 stage Chip 残留 `刚开始办案`，
+// Rationale: 第十轮走查发现切到 EN/JA 后 stage Chip 残留 `已建档`，
 //   而 phase Chip 走 `t(getPhaseI18nKey(...))` 正确翻译。修复方向为镜像
 //   `phaseLabel`：经 `getStageI18nKey` 拿 i18n key 再 `t()`，仅 key 缺失才回退。
 // ────────────────────────────────────────────────────────────────
@@ -31,7 +31,7 @@ const FULL_MESSAGES = {
 
 const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
   "zh-CN": {
-    S1: "刚开始办案",
+    S1: "已建档",
     S2: "资料收集中",
     S3: "资料待补 / 审核中",
     S4: "文书制作中",
@@ -42,7 +42,7 @@ const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
     S9: "已归档",
   },
   "en-US": {
-    S1: "Case opened",
+    S1: "Filed",
     S2: "Collecting documents",
     S3: "Pending / Under review",
     S4: "Drafting forms",
@@ -53,7 +53,7 @@ const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
     S9: "Archived",
   },
   "ja-JP": {
-    S1: "案件開始",
+    S1: "案件登録済",
     S2: "資料収集中",
     S3: "資料補完待ち / 審査中",
     S4: "文書作成中",
@@ -96,7 +96,7 @@ describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", ()
       for (const stageId of CASE_STAGE_IDS) {
         it(`${locale} × ${stageId} → ${EXPECTED_STAGE_LABELS[locale][stageId]}`, () => {
           const detail = createMockDetail({
-            stage: "刚开始办案",
+            stage: "已建档",
             stageCode: stageId,
           });
           const stageLabel = buildStageLabelFromDetail(detail, locale);
@@ -110,16 +110,16 @@ describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", ()
       expect(stageLabel.value).toBe("");
     });
 
-    it("EN/JA locale 不允许 zh-CN fallback `刚开始办案` 残留（BUG-132 反向断言）", () => {
+    it("EN/JA locale 不允许 zh-CN fallback `已建档` 残留（BUG-132 反向断言）", () => {
       const detail = createMockDetail({
-        stage: "刚开始办案",
+        stage: "已建档",
         stageCode: "S1",
       });
       expect(buildStageLabelFromDetail(detail, "en-US").value).not.toBe(
-        "刚开始办案",
+        "已建档",
       );
       expect(buildStageLabelFromDetail(detail, "ja-JP").value).not.toBe(
-        "刚开始办案",
+        "已建档",
       );
     });
 
@@ -149,7 +149,7 @@ describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", ()
       const banner = buildReadonlyBannerFromDetail(detail, "en-US");
       expect(banner).toContain("Archived");
       expect(banner).not.toContain("已归档");
-      expect(banner).not.toContain("刚开始办案");
+      expect(banner).not.toContain("已建档");
     });
 
     it("ja-JP: 不含 zh-CN 字面 `已归档`", () => {
@@ -157,7 +157,7 @@ describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", ()
       const banner = buildReadonlyBannerFromDetail(detail, "ja-JP");
       expect(banner).toContain("アーカイブ済み");
       expect(banner).not.toContain("已归档");
-      expect(banner).not.toContain("刚开始办案");
+      expect(banner).not.toContain("已建档");
     });
   });
 });

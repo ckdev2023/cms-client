@@ -182,6 +182,65 @@ function useCommittedSnapshot(
   };
 }
 
+/**
+ * R-FLOW6-CUS W-4：catalog + alias 选项归并去重。
+ *
+ * Alias 的 raw DB name（如 `"tokyo-1"`）若能反解为已知 catalog slug，
+ * 则视作 catalog 的同义条目，由 catalog 项承担显示与选中（catalog
+ * label 已本地化）；alias 仅保留无法归并的自定义组。
+ *
+ * @param catalogOpts - 内置 catalog 选项（slug + 本地化 label）
+ * @param aliasOpts - `/api/groups` 派生的运行期别名选项（UUID + DB name）
+ * @returns 已按 canonical slug 去重的合并选项列表
+ */
+function mergeGroupOptionsCatalogFirst(
+  catalogOpts: readonly SelectOption[],
+  aliasOpts: readonly SelectOption[],
+): SelectOption[] {
+  const seen = new Set(catalogOpts.map((o) => o.value));
+  const merged: SelectOption[] = [...catalogOpts];
+  for (const opt of aliasOpts) {
+    const canonical = resolveGroupValue(opt.label);
+    if (canonical && seen.has(canonical)) continue;
+    if (seen.has(opt.value)) continue;
+    seen.add(opt.value);
+    merged.push(opt);
+  }
+  return merged;
+}
+
+/**
+ * 当前客户已落到 disabled 分组时，在选项列表末尾追加一条
+ * 「带停用后缀」的兜底选项，避免 picker 显示空白。
+ *
+ * @param merged - 已去重的 catalog + alias 合并列表
+ * @param currentSnapshot - 当前客户基础信息快照
+ * @param locale - 当前语言
+ * @param disabledSuffix - i18n 化的停用后缀
+ * @returns 必要时追加 disabled 兜底项后的选项列表
+ */
+function appendDisabledCurrentGroup(
+  merged: SelectOption[],
+  currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>,
+  locale?: Readonly<Ref<string>>,
+  disabledSuffix?: Readonly<Ref<string>>,
+): SelectOption[] {
+  const currentGroup = currentSnapshot.value?.group ?? "";
+  const currentGroupValue = resolveGroupValue(currentGroup);
+  if (!currentGroupValue || !isGroupDisabled(currentGroupValue)) return merged;
+  return [
+    ...merged,
+    {
+      value: currentGroupValue,
+      label: resolveGroupLabel(
+        currentGroupValue,
+        disabledSuffix?.value ?? "（已停用）",
+        locale?.value,
+      ),
+    },
+  ];
+}
+
 function useBasicInfoOptions(
   currentSnapshot: Readonly<Ref<BasicInfoFormSnapshot | null>>,
   customer: ComputedRef<CustomerDetail | null>,
@@ -189,34 +248,16 @@ function useBasicInfoOptions(
   disabledSuffix?: Readonly<Ref<string>>,
 ) {
   const groupOptions = computed<readonly SelectOption[]>(() => {
-    const catalogOpts = getActiveGroupOptions(locale?.value);
-    const aliasOpts = getActiveGroupAliasOptions(locale?.value);
-
-    const seen = new Set(catalogOpts.map((o) => o.value));
-    const merged: SelectOption[] = [...catalogOpts];
-    for (const opt of aliasOpts) {
-      if (!seen.has(opt.value)) {
-        seen.add(opt.value);
-        merged.push(opt);
-      }
-    }
-
-    const currentGroup = currentSnapshot.value?.group ?? "";
-    const currentGroupValue = resolveGroupValue(currentGroup);
-    if (currentGroupValue && isGroupDisabled(currentGroupValue)) {
-      return [
-        ...merged,
-        {
-          value: currentGroupValue,
-          label: resolveGroupLabel(
-            currentGroupValue,
-            disabledSuffix?.value ?? "（已停用）",
-            locale?.value,
-          ),
-        },
-      ];
-    }
-    return merged;
+    const merged = mergeGroupOptionsCatalogFirst(
+      getActiveGroupOptions(locale?.value),
+      getActiveGroupAliasOptions(locale?.value),
+    );
+    return appendDisabledCurrentGroup(
+      merged,
+      currentSnapshot,
+      locale,
+      disabledSuffix,
+    );
   });
 
   const ownerOptions = computed<readonly SelectOption[]>(() => {

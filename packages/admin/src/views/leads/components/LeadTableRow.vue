@@ -56,14 +56,14 @@ const ownerLabel = computed(() => owner.value.label);
 const ownerInitials = computed(() => owner.value.initials);
 
 const groupLabel = computed(() => {
-  if (props.lead.groupLabel) return props.lead.groupLabel;
-  return props.lead.groupId
-    ? resolveGroupLabel(
-        props.lead.groupId,
-        t("shared.group.disabledSuffix"),
-        locale.value,
-      )
-    : "—";
+  const raw = props.lead.groupLabel || props.lead.groupId;
+  if (!raw) return "—";
+  const resolved = resolveGroupLabel(
+    raw,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  );
+  return resolved || "—";
 });
 
 const TAG_VISIBLE_LIMIT = 3;

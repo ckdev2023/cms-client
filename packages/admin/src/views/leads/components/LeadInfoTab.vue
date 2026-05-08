@@ -23,11 +23,15 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 
-const groupDisplay = computed(() =>
-  props.info.group
-    ? resolveGroupLabel(props.info.group, t("shared.group.disabledSuffix"))
-    : "—",
-);
+const groupDisplay = computed(() => {
+  if (!props.info.group) return "—";
+  const resolved = resolveGroupLabel(
+    props.info.group,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  );
+  return resolved || "—";
+});
 
 const ownerDisplay = computed(() =>
   resolveOwnerDisplayLabel(

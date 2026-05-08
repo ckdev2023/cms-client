@@ -33,9 +33,16 @@ const { t, locale } = useI18n();
  */
 const leadNoDisplay = computed(() => props.lead.leadNo || props.lead.id);
 
-const groupDisplay = computed(() =>
-  resolveGroupLabel(props.lead.groupLabel, t("shared.group.disabledSuffix")),
-);
+const groupDisplay = computed(() => {
+  const raw = props.lead.groupLabel || props.lead.groupId;
+  if (!raw) return "—";
+  const resolved = resolveGroupLabel(
+    raw,
+    t("shared.group.disabledSuffix"),
+    locale.value,
+  );
+  return resolved || "—";
+});
 
 const ownerDisplay = computed(() =>
   resolveOwnerDisplayLabel(

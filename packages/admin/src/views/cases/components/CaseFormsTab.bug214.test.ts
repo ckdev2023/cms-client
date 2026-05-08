@@ -12,11 +12,24 @@ const CARD_STUB = {
     "<section><header><slot name='header' /></header><slot /><footer><slot name='footer' /></footer></section>",
 };
 
+const SHELL_TOPBAR_COMING_SOON: Record<string, string> = {
+  "zh-CN": "建设中",
+  "ja-JP": "準備中",
+  "en-US": "Coming soon",
+};
+
 function makeI18n(locale: string, messages: Record<string, unknown>) {
   return createI18n({
     legacy: false,
     locale,
-    messages: { [locale]: { cases: messages } },
+    messages: {
+      [locale]: {
+        cases: messages,
+        shell: {
+          topbar: { comingSoon: SHELL_TOPBAR_COMING_SOON[locale] ?? "" },
+        },
+      },
+    },
   });
 }
 

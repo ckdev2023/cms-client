@@ -7,14 +7,32 @@ import {
   clearUserAliases,
   registerUserAliases,
 } from "../../../shared/model/useOrgUserOptions";
+import {
+  clearGroupAliases,
+  registerGroupAliases,
+} from "../../../shared/model/useGroupOptions";
 import LeadDetailHeader from "./LeadDetailHeader.vue";
 
 const originalLocale = i18n.global.locale.value as AppLocale;
+
+function findChipText(
+  wrapper: ReturnType<typeof mount>,
+  label: string,
+): string {
+  const chips = wrapper.findAll(".detail-header__chips .ui-chip");
+  for (const chip of chips) {
+    if (chip.text().startsWith(label)) {
+      return chip.text();
+    }
+  }
+  return "";
+}
 
 describe("LeadDetailHeader", () => {
   afterEach(() => {
     setAppLocale(originalLocale);
     clearUserAliases();
+    clearGroupAliases();
   });
 
   it("localizes breadcrumb aria-label in zh-CN", () => {
@@ -154,6 +172,103 @@ describe("LeadDetailHeader", () => {
       });
 
       expect(wrapper.html()).toContain(LEAD_DETAIL_SAMPLES.following.id);
+    });
+  });
+
+  describe("W-2 头部所属组 chip 不再为空 / 不再裸出 slug", () => {
+    it("groupLabel 为空但 groupId 命中 catalog → chip 显示本地化 label，不为空", () => {
+      setAppLocale("zh-CN");
+      const lead = {
+        ...LEAD_DETAIL_SAMPLES.following,
+        groupId: "tokyo-1",
+        groupLabel: "",
+      };
+      const wrapper = mount(LeadDetailHeader, {
+        global: { plugins: [i18n] },
+        props: {
+          lead,
+          avatarInitials: "李",
+          buttonStates: HEADER_BUTTON_PRESETS.normal,
+        },
+      });
+      const chipText = findChipText(wrapper, "所属组");
+      expect(chipText).toBe("所属组 东京一组");
+    });
+
+    it("groupLabel 为 catalog slug 时按 zh-CN 渲染本地化 label", () => {
+      setAppLocale("zh-CN");
+      const lead = {
+        ...LEAD_DETAIL_SAMPLES.following,
+        groupId: "tokyo-1",
+        groupLabel: "tokyo-1",
+      };
+      const wrapper = mount(LeadDetailHeader, {
+        global: { plugins: [i18n] },
+        props: {
+          lead,
+          avatarInitials: "李",
+          buttonStates: HEADER_BUTTON_PRESETS.normal,
+        },
+      });
+      expect(findChipText(wrapper, "所属组")).toBe("所属组 东京一组");
+      expect(wrapper.text()).not.toContain("tokyo-1");
+    });
+
+    it("groupLabel 为 catalog ja-JP label 时按 zh-CN 切回简体", () => {
+      setAppLocale("zh-CN");
+      const lead = {
+        ...LEAD_DETAIL_SAMPLES.following,
+        groupId: "tokyo-1",
+        groupLabel: "東京一組",
+      };
+      const wrapper = mount(LeadDetailHeader, {
+        global: { plugins: [i18n] },
+        props: {
+          lead,
+          avatarInitials: "李",
+          buttonStates: HEADER_BUTTON_PRESETS.normal,
+        },
+      });
+      expect(findChipText(wrapper, "所属组")).toBe("所属组 东京一组");
+    });
+
+    it("groupId 为 UUID + alias 已注册 catalog slug → chip 显示本地化 label", () => {
+      setAppLocale("zh-CN");
+      const UUID_GROUP = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+      registerGroupAliases([{ id: UUID_GROUP, name: "tokyo-1" }]);
+      const lead = {
+        ...LEAD_DETAIL_SAMPLES.following,
+        groupId: UUID_GROUP,
+        groupLabel: "",
+      };
+      const wrapper = mount(LeadDetailHeader, {
+        global: { plugins: [i18n] },
+        props: {
+          lead,
+          avatarInitials: "李",
+          buttonStates: HEADER_BUTTON_PRESETS.normal,
+        },
+      });
+      expect(findChipText(wrapper, "所属组")).toBe("所属组 东京一组");
+      expect(wrapper.text()).not.toContain(UUID_GROUP);
+    });
+
+    it("groupLabel 与 groupId 都为空 → chip 显示『—』占位，不为空", () => {
+      setAppLocale("zh-CN");
+      const lead = {
+        ...LEAD_DETAIL_SAMPLES.following,
+        groupId: "",
+        groupLabel: "",
+      };
+      const wrapper = mount(LeadDetailHeader, {
+        global: { plugins: [i18n] },
+        props: {
+          lead,
+          avatarInitials: "李",
+          buttonStates: HEADER_BUTTON_PRESETS.normal,
+        },
+      });
+      expect(findChipText(wrapper, "所属组")).toBe("所属组 —");
     });
   });
 

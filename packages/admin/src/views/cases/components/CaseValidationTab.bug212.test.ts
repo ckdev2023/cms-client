@@ -5,23 +5,27 @@ import CaseValidationTab from "./CaseValidationTab.vue";
 import CaseValidationSupport from "./CaseValidationSupport.vue";
 import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
 import type { CaseDetail } from "../types-detail";
+import casesZhCN from "../../../i18n/messages/cases/zh-CN";
+import casesJaJP from "../../../i18n/messages/cases/ja-JP";
+import casesEnUS from "../../../i18n/messages/cases/en-US";
 
 type Locale = "zh-CN" | "ja-JP" | "en-US";
 
-const SHELL_MESSAGES: Record<
-  Locale,
-  { shell: { topbar: { comingSoon: string } } }
-> = {
-  "zh-CN": { shell: { topbar: { comingSoon: "建设中" } } },
-  "ja-JP": { shell: { topbar: { comingSoon: "準備中" } } },
-  "en-US": { shell: { topbar: { comingSoon: "Coming soon" } } },
+// 完整 cases 命名空间 + shell.topbar.comingSoon（防止子组件按钮 title 落到 raw key）
+const FULL_MESSAGES: Record<Locale, Record<string, unknown>> = {
+  "zh-CN": { cases: casesZhCN, shell: { topbar: { comingSoon: "建设中" } } },
+  "ja-JP": { cases: casesJaJP, shell: { topbar: { comingSoon: "準備中" } } },
+  "en-US": {
+    cases: casesEnUS,
+    shell: { topbar: { comingSoon: "Coming soon" } },
+  },
 };
 
 function makeI18n(locale: Locale) {
   return createI18n({
     legacy: false,
     locale,
-    messages: SHELL_MESSAGES,
+    messages: FULL_MESSAGES,
   });
 }
 

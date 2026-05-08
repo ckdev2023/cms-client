@@ -317,7 +317,7 @@ describe("all-null empty state (p0-fe-002c-04)", () => {
   });
 
   it("stage defaults to S1", () => {
-    expect(result.detail.stage).toBe("刚开始办案");
+    expect(result.detail.stage).toBe("已建档");
     expect(result.detail.stageCode).toBe("S1");
     expect(result.detail.statusBadge).toBe("badge-gray");
     expect(result.detail.readonly).toBe(false);

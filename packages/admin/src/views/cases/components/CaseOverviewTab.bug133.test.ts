@@ -33,7 +33,7 @@ const FULL_MESSAGES = {
 
 const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
   "zh-CN": {
-    S1: "刚开始办案",
+    S1: "已建档",
     S2: "资料收集中",
     S3: "资料待补 / 审核中",
     S4: "文书制作中",
@@ -44,7 +44,7 @@ const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
     S9: "已归档",
   },
   "en-US": {
-    S1: "Case opened",
+    S1: "Filed",
     S2: "Collecting documents",
     S3: "Pending / Under review",
     S4: "Drafting forms",
@@ -55,7 +55,7 @@ const EXPECTED_STAGE_LABELS: Record<Locale, Record<CaseStageId, string>> = {
     S9: "Archived",
   },
   "ja-JP": {
-    S1: "案件開始",
+    S1: "案件登録済",
     S2: "資料収集中",
     S3: "資料補完待ち / 審査中",
     S4: "文書作成中",

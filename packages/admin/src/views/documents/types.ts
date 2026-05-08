@@ -203,6 +203,11 @@ export interface DocumentListItem {
   backendStatus?: string;
   /** 资料项类别（`"standard"` / `"questionnaire"` 等），影响"催办"等守卫。 */
   category?: string;
+  /**
+   * 服务端 `document_items.checklist_item_code`（blueprint slug，如 `fs-passport-copy`）。
+   * 用于案件详情资料行副标题"资料编号"展示；手动添加项以 `manual:` 开头，UI 应跳过。
+   */
+  checklistItemCode?: string;
 }
 
 // ─── Review & Actions ────────────────────────────────────────────

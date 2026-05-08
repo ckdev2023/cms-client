@@ -421,10 +421,13 @@ describe("DocumentListView — storageGate alert inline link", () => {
     setAppLocale(locale);
     return mount(
       {
+        // 显式指定 scope="global"，避免匿名根组件没有 i18n scope 触发
+        // "[intlify] Not found parent scope. use the global scope." 告警。
         template: `
           <i18n-t
             keypath="documents.storageGate.description"
             tag="p"
+            scope="global"
           >
             <template #link>
               <RouterLink

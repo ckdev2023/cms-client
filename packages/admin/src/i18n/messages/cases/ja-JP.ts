@@ -831,7 +831,7 @@ const casesJaJP = {
       renewal: "更新",
     },
     stages: {
-      S1: "案件開始",
+      S1: "案件登録済",
       S2: "資料収集中",
       S3: "資料補完待ち / 審査中",
       S4: "文書作成中",
@@ -1147,6 +1147,17 @@ const casesJaJP = {
       "前回の検証で不合格項目が検出されました。修正後に再検証を実行してください。",
     blockingSummary: "{count} 件の阻断項目",
     warningSummary: "{count} 件の警告項目",
+    retrigger: {
+      documentChange:
+        "再検証の実行条件：必須提出資料の状態が変更されたとき、または「再検証」ボタンを押したときに自動的に実行されます。",
+      validationStage: "検証フェーズに入ると自動的に実行されます。",
+      manualAfterBlock:
+        "現在のブロッカーを解消した後、手動で再検証を実行できます。",
+      passedNeedRiskAck:
+        "提出前検証は通過しました。料金リスクは結果を阻害しませんが、確認が必要です。",
+      correctionSubmitted: "補正パッケージ提出後に自動的に再検証されます。",
+      archived: "案件はアーカイブ済みのため、検証は実行できません。",
+    },
   },
   deadlines: {
     summary: {

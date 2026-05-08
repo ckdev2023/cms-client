@@ -2,10 +2,11 @@
  * PG smoke test — customers.query buildCustomerDetailSelect / buildCustomerListSelect
  *
  * 验证：生成的 SQL 在真实 PG schema 上不出现解析期错误（column does not exist）。
- * 覆盖三种 case_names fallback fixture：
- *   1. case_name = null → resolved_name = 'displayName · caseTypeLabel'
- *   2. case_name = '' & metadata.caseTypeLabel = 'X' → resolved_name = 'displayName · X'
- *   3. case_name = '' & metadata 无 caseTypeLabel → resolved_name = 'displayName · case_type_code'
+ * 覆盖 case_names fallback 三种 fixture（与 C-1
+ * CustomerAdapterCaseMapper 的 caseName → caseNumber → "" 链路对齐）：
+ *   1. case_name 非空              → resolved_name = case_name
+ *   2. case_name = '' & case_no    → resolved_name = case_no（不暴露 case_type_code）
+ *   3. case_name = '' & case_no='' → resolved_name = ''（前端再走 "—" 占位）
  *
  * 运行方式：
  *   docker compose -f docker-compose.integration.yml up -d
@@ -107,9 +108,11 @@ const ORG_ID = "40000000-0000-4000-a000-000000000001";
 const USER_ID = "40000000-0000-4000-a000-000000000010";
 const ROLE_ID = "40000000-0000-4000-a000-00000000a001";
 const CUSTOMER_ID = "40000000-0000-4000-a000-000000000c01";
+const CUSTOMER_ID_NAMEJP = "40000000-0000-4000-a000-000000000c02";
 const CASE_ID_1 = "40000000-0000-4000-a000-0000000ca001";
 const CASE_ID_2 = "40000000-0000-4000-a000-0000000ca002";
 const CASE_ID_3 = "40000000-0000-4000-a000-0000000ca003";
+const CASE_ID_NAMEJP = "40000000-0000-4000-a000-0000000ca0a1";
 
 const CTX: RequestContext = { orgId: ORG_ID, userId: USER_ID, role: "owner" };
 
@@ -139,37 +142,48 @@ async function seedFixtures(p: Pool) {
     ],
   );
 
-  // Fixture 1: case_name = NULL → fallback to "田中太郎 · 家族滞在"
+  // Fixture 1: case_name 非空 → fallback 走第一支 case_name
   await p.query(
-    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, metadata)
-     VALUES ($1, $2, $3, 'dependent_visa', 'open', $4, 'INTAKE', NULL, $5::jsonb) ON CONFLICT DO NOTHING`,
-    [
-      CASE_ID_1,
-      ORG_ID,
-      CUSTOMER_ID,
-      USER_ID,
-      JSON.stringify({ caseTypeLabel: "家族滞在" }),
-    ],
+    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, case_no, metadata)
+     VALUES ($1, $2, $3, 'dependent_visa', 'open', $4, 'INTAKE', '家族滞在更新', 'CASE-202605-0001', '{}'::jsonb) ON CONFLICT DO NOTHING`,
+    [CASE_ID_1, ORG_ID, CUSTOMER_ID, USER_ID],
   );
 
-  // Fixture 2: case_name = '' + metadata.caseTypeLabel = '技術・人文知識・国際業務'
+  // Fixture 2: case_name = '' + case_no 非空 → fallback 走 case_no
   await p.query(
-    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, metadata)
-     VALUES ($1, $2, $3, 'work', 'open', $4, 'INTAKE', '', $5::jsonb) ON CONFLICT DO NOTHING`,
-    [
-      CASE_ID_2,
-      ORG_ID,
-      CUSTOMER_ID,
-      USER_ID,
-      JSON.stringify({ caseTypeLabel: "技術・人文知識・国際業務" }),
-    ],
+    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, case_no, metadata)
+     VALUES ($1, $2, $3, 'work', 'open', $4, 'INTAKE', '', 'CASE-202605-0002', '{}'::jsonb) ON CONFLICT DO NOTHING`,
+    [CASE_ID_2, ORG_ID, CUSTOMER_ID, USER_ID],
   );
 
-  // Fixture 3: case_name = '' + no metadata caseTypeLabel → fallback to case_type_code
+  // Fixture 3: case_name = '' + case_no IS NULL → fallback 走 ""（避免暴露 case_type_code）
   await p.query(
-    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, metadata)
-     VALUES ($1, $2, $3, 'business_manager_visa', 'open', $4, 'INTAKE', '', '{}'::jsonb) ON CONFLICT DO NOTHING`,
+    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, case_no, metadata)
+     VALUES ($1, $2, $3, 'business_manager_visa', 'open', $4, 'INTAKE', '', NULL, '{}'::jsonb) ON CONFLICT DO NOTHING`,
     [CASE_ID_3, ORG_ID, CUSTOMER_ID, USER_ID],
+  );
+
+  // W-5 fixture：客户仅有 name_jp / name_cn（convertLeadToCustomer 写入路径），
+  // 案件 case_name 为 NULL，case_no='CASE-202605-9999'。
+  // 期望 case_names fallback 直接走 case_no，而不是退化成 visa key
+  // `dependent_visa`（与 C-1 caseName → caseNumber → "" 设计一致）。
+  await p.query(
+    `INSERT INTO customers (id, org_id, type, base_profile)
+     VALUES ($1, $2, 'individual', $3::jsonb) ON CONFLICT DO NOTHING`,
+    [
+      CUSTOMER_ID_NAMEJP,
+      ORG_ID,
+      JSON.stringify({
+        name_jp: "R-FLOW-05 山田太郎",
+        name_cn: "R-FLOW-05 山田太郎",
+        ownerUserId: USER_ID,
+      }),
+    ],
+  );
+  await p.query(
+    `INSERT INTO cases (id, org_id, customer_id, case_type_code, status, owner_user_id, business_phase, case_name, case_no, metadata)
+     VALUES ($1, $2, $3, 'dependent_visa', 'open', $4, 'INTAKE', NULL, 'CASE-202605-9999', '{}'::jsonb) ON CONFLICT DO NOTHING`,
+    [CASE_ID_NAMEJP, ORG_ID, CUSTOMER_ID_NAMEJP, USER_ID],
   );
 }
 
@@ -230,9 +244,9 @@ void test("customer list query executes without SQL parse error on real PG", asy
   assert.ok(result.rows.length >= 1, "expected at least 1 row from list");
 });
 
-// ── 3. case_names fallback: null case_name → 'displayName · caseTypeLabel' ──
+// ── 3. case_names fallback: case_name 非空 → 直接使用 case_name ──
 
-void test("case_names fallback: null case_name resolves to 'displayName · caseTypeLabel'", async (t) => {
+void test("case_names fallback: non-empty case_name resolves to case_name itself", async (t) => {
   if (!pgAvailable) {
     t.skip("integration PG not reachable");
     return;
@@ -255,19 +269,19 @@ void test("case_names fallback: null case_name resolves to 'displayName · caseT
   assert.equal(
     caseNames.length,
     3,
-    `expected 3 case_names, got ${String(caseNames.length)}`,
+    `expected 3 case_names (one per fixture case), got ${String(caseNames.length)}`,
   );
 
-  const hasMetadataLabel = caseNames.some((n) => n.includes("家族滞在"));
+  const hasCaseName = caseNames.some((n) => n === "家族滞在更新");
   assert.ok(
-    hasMetadataLabel,
-    `expected one name to contain '家族滞在' (metadata fallback), got: ${JSON.stringify(caseNames)}`,
+    hasCaseName,
+    `expected one resolved name to equal '家族滞在更新' (case_name primary branch), got: ${JSON.stringify(caseNames)}`,
   );
 });
 
-// ── 4. case_names fallback: empty case_name + metadata.caseTypeLabel ──
+// ── 4. case_names fallback: empty case_name + non-empty case_no → case_no ──
 
-void test("case_names fallback: empty case_name with metadata.caseTypeLabel uses label", async (t) => {
+void test("case_names fallback: empty case_name with non-empty case_no resolves to case_no", async (t) => {
   if (!pgAvailable) {
     t.skip("integration PG not reachable");
     return;
@@ -287,18 +301,23 @@ void test("case_names fallback: empty case_name with metadata.caseTypeLabel uses
   assert.ok(row, "expected row");
 
   const caseNames = parseCaseNames(row);
-  const hasWorkLabel = caseNames.some((n) =>
-    n.includes("技術・人文知識・国際業務"),
+  const hasCaseNo = caseNames.some((n) => n === "CASE-202605-0002");
+  assert.ok(
+    hasCaseNo,
+    `expected one resolved name to equal 'CASE-202605-0002' (case_no fallback), got: ${JSON.stringify(caseNames)}`,
+  );
+  const exposesVisaKey = caseNames.some((n) =>
+    n.toLowerCase().includes("work"),
   );
   assert.ok(
-    hasWorkLabel,
-    `expected one name to contain '技術・人文知識・国際業務' (metadata caseTypeLabel), got: ${JSON.stringify(caseNames)}`,
+    !exposesVisaKey,
+    `expected case_names to NOT expose case_type_code 'work' visa key (W-5 guard), got: ${JSON.stringify(caseNames)}`,
   );
 });
 
-// ── 5. case_names fallback: empty case_name + no metadata → case_type_code ──
+// ── 5. case_names fallback: empty case_name + null case_no → "" ──
 
-void test("case_names fallback: empty case_name without metadata.caseTypeLabel falls back to case_type_code", async (t) => {
+void test("case_names fallback: empty case_name and null case_no resolves to empty string (no visa key leak)", async (t) => {
   if (!pgAvailable) {
     t.skip("integration PG not reachable");
     return;
@@ -318,11 +337,56 @@ void test("case_names fallback: empty case_name without metadata.caseTypeLabel f
   assert.ok(row, "expected row");
 
   const caseNames = parseCaseNames(row);
-  const hasCaseTypeCode = caseNames.some((n) =>
+  const exposesVisaKey = caseNames.some((n) =>
     n.includes("business_manager_visa"),
   );
   assert.ok(
-    hasCaseTypeCode,
-    `expected one name to contain 'business_manager_visa' (case_type_code fallback), got: ${JSON.stringify(caseNames)}`,
+    !exposesVisaKey,
+    `expected case_names to NOT expose case_type_code 'business_manager_visa' visa key (W-5 guard), got: ${JSON.stringify(caseNames)}`,
+  );
+  const hasEmpty = caseNames.includes("");
+  assert.ok(
+    hasEmpty,
+    `expected one resolved name to be empty string when both case_name and case_no are empty, got: ${JSON.stringify(caseNames)}`,
+  );
+});
+
+// ── 6. W-5 case_names fallback: customer with only name_jp/name_cn ──
+
+void test("W-5: case_names falls back to case_no instead of bare visa key when customer only has name_jp/name_cn", async (t) => {
+  if (!pgAvailable) {
+    t.skip("integration PG not reachable");
+    return;
+  }
+
+  const p = getPool();
+  await seedFixtures(p);
+
+  const tenantDb = createTenantDb(p, ORG_ID, USER_ID);
+  const result = await tenantDb.query<Record<string, unknown>>(
+    `select ${buildCustomerDetailSelect("c")} from customers c
+     where c.id = $1 and c.org_id = '${ORG_ID}' limit 1`,
+    [CUSTOMER_ID_NAMEJP],
+  );
+
+  const row = result.rows[0];
+  assert.ok(row, "expected customer row");
+
+  const caseNames = parseCaseNames(row);
+  assert.equal(
+    caseNames.length,
+    1,
+    `expected exactly 1 case_name, got ${String(caseNames.length)}`,
+  );
+
+  const resolved = caseNames[0] ?? "";
+  assert.equal(
+    resolved,
+    "CASE-202605-9999",
+    `expected resolved name to equal case_no 'CASE-202605-9999' (caseName→caseNumber→"" chain), got: ${resolved}`,
+  );
+  assert.ok(
+    !resolved.includes("dependent_visa"),
+    `expected resolved name to NOT contain visa key 'dependent_visa' (W-5 visa key leak guard), got: ${resolved}`,
   );
 });

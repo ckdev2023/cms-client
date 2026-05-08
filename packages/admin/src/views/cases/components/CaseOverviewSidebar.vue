@@ -77,7 +77,7 @@ function teamGradient(member: TeamMember): string {
               {{
                 detail.risk.arrearsStatusLoc
                   ? t(detail.risk.arrearsStatusLoc.key)
-                  : t(detail.risk.arrearsStatus)
+                  : detail.risk.arrearsStatus
               }}
             </div>
             <div class="overview-sidebar__risk-detail">

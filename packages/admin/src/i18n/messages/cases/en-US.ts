@@ -836,7 +836,7 @@ const casesEnUS = {
       renewal: "Renewal",
     },
     stages: {
-      S1: "Case opened",
+      S1: "Filed",
       S2: "Collecting documents",
       S3: "Pending / Under review",
       S4: "Drafting forms",
@@ -1149,6 +1149,19 @@ const casesEnUS = {
       "Blocking items were found in the previous validation. Please fix them and re-run.",
     blockingSummary: "{count} blocking items",
     warningSummary: "{count} warning items",
+    retrigger: {
+      documentChange:
+        "Re-validation triggers automatically whenever a required document changes status, or when you click the Re-validate button.",
+      validationStage:
+        "Triggered automatically when entering the review stage.",
+      manualAfterBlock:
+        "You can re-run the validation manually after the current blocker is resolved.",
+      passedNeedRiskAck:
+        "Pre-submission validation has passed. Outstanding billing risk does not block the result but still requires confirmation.",
+      correctionSubmitted:
+        "Re-validation runs automatically after a correction package is submitted.",
+      archived: "Case has been archived. Validation can no longer be executed.",
+    },
   },
   deadlines: {
     summary: {

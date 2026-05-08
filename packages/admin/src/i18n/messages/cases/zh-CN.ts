@@ -803,7 +803,7 @@ const casesZhCN = {
       renewal: "更新",
     },
     stages: {
-      S1: "刚开始办案",
+      S1: "已建档",
       S2: "资料收集中",
       S3: "资料待补 / 审核中",
       S4: "文书制作中",
@@ -1085,6 +1085,16 @@ const casesZhCN = {
     lastFailed: "上次检查有未通过项，请修改后重新检查。",
     blockingSummary: "{count} 项阻断未处理",
     warningSummary: "{count} 项警告未处理",
+    retrigger: {
+      documentChange:
+        "重新检查触发条件：当任意必交资料项状态变更、或手动点击「重新检查」按钮时自动执行。",
+      validationStage: "进入校验阶段后自动触发。",
+      manualAfterBlock: "处理完当前卡点后可手动重新检查。",
+      passedNeedRiskAck:
+        "提交前检查已通过；收费风险不拦截检查结果，但需先完成确认。",
+      correctionSubmitted: "补正包提交后自动触发补正校验。",
+      archived: "案件已归档，无法执行校验。",
+    },
   },
   deadlines: {
     summary: {

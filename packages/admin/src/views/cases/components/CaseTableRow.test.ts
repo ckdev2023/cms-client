@@ -18,7 +18,7 @@ const MESSAGES = {
       },
       constants: {
         stages: {
-          S1: "Case opened",
+          S1: "Filed",
           S2: "Collecting documents",
           S3: "Pending / Under review",
           S4: "Drafting forms",
@@ -49,7 +49,7 @@ const MESSAGES = {
       },
       constants: {
         stages: {
-          S1: "案件開始",
+          S1: "案件登録済",
           S2: "資料収集中",
           S3: "資料補完待ち / 審査中",
           S9: "アーカイブ済み",
@@ -75,7 +75,7 @@ const MESSAGES = {
       },
       constants: {
         stages: {
-          S1: "刚开始办案",
+          S1: "已建档",
           S2: "资料收集中",
           S9: "已归档",
         },

@@ -73,23 +73,62 @@ interface CaseSummaryRow {
   caseName?: string | null;
 }
 
+function readOptionalString(
+  r: Record<string, unknown>,
+  key: string,
+): string | undefined {
+  const v = r[key];
+  return typeof v === "string" ? v : undefined;
+}
+
+function readRequiredString(
+  r: Record<string, unknown>,
+  key: string,
+): string | null {
+  const v = r[key];
+  return typeof v === "string" ? v : null;
+}
+
+interface DocumentItemDtoLikeRequired {
+  id: string;
+  caseId: string;
+  name: string;
+  status: string;
+}
+
+function readDocumentItemRequired(
+  r: Record<string, unknown>,
+): DocumentItemDtoLikeRequired | null {
+  const id = readRequiredString(r, "id");
+  const caseId = readRequiredString(r, "caseId");
+  const name = readRequiredString(r, "name");
+  const status = readRequiredString(r, "status");
+  if (!id || !caseId || !name || !status) return null;
+  return { id, caseId, name, status };
+}
+
+function buildDocumentItemDtoLike(
+  r: Record<string, unknown>,
+  required: DocumentItemDtoLikeRequired,
+): DocumentItemDtoLike {
+  return {
+    ...required,
+    ownerSide: readOptionalString(r, "ownerSide") ?? "applicant",
+    dueAt: readOptionalString(r, "dueAt") ?? null,
+    lastFollowUpAt: readOptionalString(r, "lastFollowUpAt") ?? null,
+    referenceCount:
+      typeof r.referenceCount === "number" ? r.referenceCount : undefined,
+    category: readOptionalString(r, "category"),
+    checklistItemCode: readOptionalString(r, "checklistItemCode"),
+  };
+}
+
 function toDocumentItemDtoLike(value: unknown): DocumentItemDtoLike | null {
   if (!value || typeof value !== "object") return null;
   const r = value as Record<string, unknown>;
-  if (typeof r.id !== "string" || typeof r.caseId !== "string") return null;
-  if (typeof r.name !== "string" || typeof r.status !== "string") return null;
-  return {
-    id: r.id,
-    caseId: r.caseId,
-    name: r.name,
-    status: r.status,
-    ownerSide: typeof r.ownerSide === "string" ? r.ownerSide : "applicant",
-    dueAt: typeof r.dueAt === "string" ? r.dueAt : null,
-    lastFollowUpAt:
-      typeof r.lastFollowUpAt === "string" ? r.lastFollowUpAt : null,
-    referenceCount:
-      typeof r.referenceCount === "number" ? r.referenceCount : undefined,
-  };
+  const required = readDocumentItemRequired(r);
+  if (!required) return null;
+  return buildDocumentItemDtoLike(r, required);
 }
 
 function toCaseSummaryRow(value: unknown): CaseSummaryRow | null {

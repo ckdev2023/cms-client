@@ -95,15 +95,20 @@ function buildArchivedCasesExpr(customerAlias: string): string {
 }
 
 function buildCaseNamesExpr(customerAlias: string): string {
+  // W-5：与 C-1（CustomerAdapterCaseMapper）保持一致的 fallback 设计：
+  // case_name → case_no → ""。旧实现在 case_name 为空时退化到
+  // `customerName · caseTypeLabel/case_type_code`，当客户没有
+  // displayName/legalName/name_* 且 metadata 也没有 caseTypeLabel 时，
+  // concat_ws 会再退化成裸 `dependent_visa` 这种 visa key，把内部
+  // case_type_code 暴露给 admin。统一改成与「关联案件 Tab」/案件详情
+  // header 同一条 caseName→caseNumber→"" 链路，避免 visa key 泄漏。
   return `(select coalesce(jsonb_agg(resolved_name order by created_at desc, id desc), '[]'::jsonb)
     from (
       select distinct on (ca.id)
         coalesce(
           nullif(trim(coalesce(ca.case_name, '')), ''),
-          concat_ws(' · ',
-            nullif(trim(coalesce(${customerAlias}.base_profile->>'displayName', ${customerAlias}.base_profile->>'legalName', '')), ''),
-            nullif(trim(coalesce(ca.metadata->>'caseTypeLabel', ca.case_type_code, '')), '')
-          )
+          nullif(trim(coalesce(ca.case_no, '')), ''),
+          ''
         ) as resolved_name,
         ca.created_at,
         ca.id

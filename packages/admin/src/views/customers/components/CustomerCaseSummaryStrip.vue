@@ -11,7 +11,13 @@ const props = defineProps<{
 
 const { t, locale } = useI18n();
 
-const firstCaseName = computed(() => props.customer.caseNames[0] ?? "—");
+// W-5：服务端走 caseName → caseNumber → "" fallback（与 C-1 对齐），
+// 当案件 case_name / case_no 双空时，caseNames[i] 会下来空字串；
+// 这里把空字串和 undefined 一并兜底为占位符，避免空格摘要卡。
+const firstCaseName = computed(() => {
+  const first = props.customer.caseNames[0];
+  return first && first.trim().length > 0 ? first : "—";
+});
 const extraCaseCount = computed(() =>
   Math.max(0, props.customer.caseNames.length - 1),
 );

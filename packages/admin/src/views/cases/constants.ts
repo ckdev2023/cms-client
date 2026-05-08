@@ -28,7 +28,7 @@ export type { CaseListFiltersState } from "./types";
 export const CASE_STAGES: Record<CaseStageId, CaseStage> = {
   S1: {
     code: "S1",
-    label: "刚开始办案",
+    label: "已建档",
     i18nKey: "cases.constants.stages.S1",
     badge: "badge-gray",
   },

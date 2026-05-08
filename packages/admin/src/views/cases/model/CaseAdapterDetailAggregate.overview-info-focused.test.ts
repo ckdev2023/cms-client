@@ -388,7 +388,7 @@ describe("overview empty state degradation (p0-fe-006a-03)", () => {
   const result = adaptCaseDetailAggregate(buildEmpty())!;
 
   it("stage card defaults to S1 label", () => {
-    expect(result.detail.stage).toBe("刚开始办案");
+    expect(result.detail.stage).toBe("已建档");
     expect(result.detail.stageMeta).toBe("S1");
   });
 

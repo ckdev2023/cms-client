@@ -91,7 +91,7 @@ describe("cases/constants — BADGE_TONE_MAP", () => {
 
 describe("getStageLabel", () => {
   it("returns label for known stage IDs", () => {
-    expect(getStageLabel("S1")).toBe("刚开始办案");
+    expect(getStageLabel("S1")).toBe("已建档");
     expect(getStageLabel("S9")).toBe("已归档");
   });
 

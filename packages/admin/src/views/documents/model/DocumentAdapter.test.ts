@@ -72,7 +72,17 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
       referenceCount: 1,
       backendStatus: "pending",
       category: undefined,
+      checklistItemCode: undefined,
     });
+  });
+
+  it("propagates checklistItemCode from backend row (W-6 / bug254)", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, checklistItemCode: "fs-passport-copy" },
+      () => undefined,
+      NOW,
+    );
+    expect(item.checklistItemCode).toBe("fs-passport-copy");
   });
 
   it("preserves backend status and category when present (used by canRemind guard)", () => {

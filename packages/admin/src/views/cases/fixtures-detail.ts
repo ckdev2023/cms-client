@@ -287,8 +287,7 @@ function buildWorkSample(): CaseDetail {
           note: "不阻断提交，但建议在提交前完善",
         },
       ],
-      retriggerNote:
-        "重新检查触发条件：当任意必交资料项状态变更、或手动点击「重新检查」按钮时自动执行。",
+      retriggerNote: "cases.validation.retrigger.documentChange",
     },
     submissionPackages: [
       {
@@ -1082,7 +1081,7 @@ function buildFamilySample(): CaseDetail {
       blocking: [],
       warnings: [],
       info: [],
-      retriggerNote: "进入校验阶段后自动触发。",
+      retriggerNote: "cases.validation.retrigger.validationStage",
     },
     submissionPackages: [],
     correctionPackage: null,
@@ -1569,7 +1568,7 @@ function buildGateFailSample(): CaseDetail {
           note: "質問書非认定必交项，可提交后补充",
         },
       ],
-      retriggerNote: "处理完当前卡点后可手动重新检查。",
+      retriggerNote: "cases.validation.retrigger.manualAfterBlock",
     },
     submissionPackages: [],
     correctionPackage: null,
@@ -1987,8 +1986,7 @@ function buildArrearsSample(): CaseDetail {
         },
       ],
       info: [],
-      retriggerNote:
-        "提交前检查已通过；收费风险不拦截检查结果，但需先完成确认。",
+      retriggerNote: "cases.validation.retrigger.passedNeedRiskAck",
     },
     submissionPackages: [],
     correctionPackage: null,
@@ -2414,7 +2412,7 @@ function buildCorrectionSample(): CaseDetail {
           note: "补正包提交后需等待入管局确认",
         },
       ],
-      retriggerNote: "补正包提交后自动触发补正校验。",
+      retriggerNote: "cases.validation.retrigger.correctionSubmitted",
     },
     submissionPackages: [
       {
@@ -2825,7 +2823,7 @@ function buildArchivedSample(): CaseDetail {
       blocking: [],
       warnings: [],
       info: [],
-      retriggerNote: "案件已归档，无法执行校验。",
+      retriggerNote: "cases.validation.retrigger.archived",
     },
     submissionPackages: [
       {
@@ -3029,7 +3027,7 @@ function buildArchivedSample(): CaseDetail {
         type: "status",
         avatar: "SZ",
         avatarStyle: "primary",
-        text: "案件创建：刚开始办案",
+        text: "案件创建：已建档",
         category: "状态变更",
         categoryChip: "blue",
         objectType: "操作人：Suzuki",

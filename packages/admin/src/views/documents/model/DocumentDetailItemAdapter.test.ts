@@ -150,14 +150,41 @@ describe("deriveActions", () => {
 
 describe("toCaseDetailItem", () => {
   it("maps basic fields from DocumentListItem", () => {
-    const result = toCaseDetailItem(BASE_LIST_ITEM);
+    const result = toCaseDetailItem({
+      ...BASE_LIST_ITEM,
+      checklistItemCode: "fs-passport-copy",
+    });
     expect(result.name).toBe("護照写し");
     expect(result.status).toBe("pending");
     expect(result.statusLabelKey).toBe("documents.status.pending");
-    expect(result.meta).toBe("2026-05-10 · 経管签新規");
+    expect(result.meta).toBe("fs-passport-copy · 期限: 2026-05-10");
     expect(result.relativePath).toBeNull();
     expect(result.referenceLabelKey).toBeNull();
     expect(result.referenceCount).toBe(1);
+  });
+
+  it("never leaks caseId/caseName into meta (W-6 / bug254)", () => {
+    const item: DocumentListItem = {
+      ...BASE_LIST_ITEM,
+      caseId: "73f54c49-3793-4aba-999c-e0dcdf76c60b",
+      caseName: "73f54c49-3793-4aba-999c-e0dcdf76c60b",
+      checklistItemCode: "fs-passport-copy",
+    };
+    const result = toCaseDetailItem(item);
+    expect(result.meta).not.toContain(item.caseId);
+    expect(result.meta).not.toContain(item.caseName);
+    expect(result.meta).toBe("fs-passport-copy · 期限: 2026-05-10");
+  });
+
+  it("skips internal manual: prefix code from meta", () => {
+    const item: DocumentListItem = {
+      ...BASE_LIST_ITEM,
+      checklistItemCode: "manual:00000000-0000-0000-0000-000000000000",
+      dueDate: null,
+      dueDateLabel: "—",
+    };
+    const result = toCaseDetailItem(item);
+    expect(result.meta).toBe("");
   });
 
   it("defaults versions/reviews/reminders to empty arrays", () => {
@@ -247,11 +274,22 @@ describe("toCaseDetailItem", () => {
   it("handles item without dueDate in meta", () => {
     const item = {
       ...BASE_LIST_ITEM,
+      checklistItemCode: "fs-passport-copy",
       dueDate: null,
       dueDateLabel: "—",
     };
     const result = toCaseDetailItem(item);
-    expect(result.meta).toBe("経管签新規");
+    expect(result.meta).toBe("fs-passport-copy");
+  });
+
+  it("returns empty meta when both checklistItemCode and dueDate are missing", () => {
+    const item = {
+      ...BASE_LIST_ITEM,
+      dueDate: null,
+      dueDateLabel: "—",
+    };
+    const result = toCaseDetailItem(item);
+    expect(result.meta).toBe("");
   });
 });
 

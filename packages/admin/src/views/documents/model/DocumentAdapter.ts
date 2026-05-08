@@ -77,6 +77,8 @@ export interface DocumentItemDtoLike {
   referenceCount?: number;
   /** 资料项类别（`standard` / `questionnaire` / 等），影响行内动作守卫。 */
   category?: string;
+  /** Blueprint 资料编号（kebab-case slug，如 `fs-passport-copy`）。 */
+  checklistItemCode?: string;
 }
 
 /** 案件摘要 → 用于补齐 `DocumentListItem.caseName`。 */
@@ -185,6 +187,7 @@ export function adaptDocumentItem(
     referenceCount,
     backendStatus: row.status,
     category: row.category,
+    checklistItemCode: row.checklistItemCode,
   };
 }
 

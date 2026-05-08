@@ -211,12 +211,13 @@ describe("useCustomerBasicInfoModel", () => {
 
   describe("groupOptions (catalog + alias merge)", () => {
     const ALIAS_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+    const CUSTOM_UUID = "11111111-2222-3333-4444-555555555555";
 
     afterEach(() => {
       clearGroupAliases();
     });
 
-    it("mergesCatalogAndAliasGroupOptions", () => {
+    it("dedupesAliasWhoseNameResolvesToCatalogSlug (R-FLOW6-CUS W-4)", () => {
       registerGroupAliases([{ id: ALIAS_UUID, name: "tokyo-1" }]);
 
       const customer = makeCustomerRef("cust-001");
@@ -230,11 +231,34 @@ describe("useCustomerBasicInfoModel", () => {
       const values = groupOptions.value.map((o) => o.value);
       expect(values).toContain("tokyo-1");
       expect(values).toContain("tokyo-2");
-      expect(values).toContain(ALIAS_UUID);
+      expect(values).not.toContain(ALIAS_UUID);
       expect(new Set(values).size).toBe(values.length);
+
+      const tokyo1 = groupOptions.value.find((o) => o.value === "tokyo-1");
+      expect(tokyo1?.label).toBe("东京一组");
     });
 
-    it("selectsAliasUuidWhenSnapshotIsRawSlug", () => {
+    it("keepsAliasOptionWhenLabelIsOutsideCatalog", () => {
+      registerGroupAliases([{ id: CUSTOM_UUID, name: "営業一課" }]);
+
+      const customer = makeCustomerRef("cust-001");
+      const locale = ref("zh-CN");
+      const { groupOptions } = useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+        locale,
+      });
+
+      const values = groupOptions.value.map((o) => o.value);
+      expect(values).toContain("tokyo-1");
+      expect(values).toContain("tokyo-2");
+      expect(values).toContain(CUSTOM_UUID);
+
+      const custom = groupOptions.value.find((o) => o.value === CUSTOM_UUID);
+      expect(custom?.label).toBe("営業一課");
+    });
+
+    it("selectsLocalizedCatalogOptionWhenSnapshotIsRawSlug", () => {
       registerGroupAliases([{ id: ALIAS_UUID, name: "tokyo-1" }]);
 
       const customerRef = ref<CustomerDetail | null>({
@@ -252,7 +276,8 @@ describe("useCustomerBasicInfoModel", () => {
       expect(currentSnapshot.value!.group).toBe("东京一组");
 
       const values = groupOptions.value.map((o) => o.value);
-      expect(values).toContain(ALIAS_UUID);
+      expect(values).toContain("tokyo-1");
+      expect(values).not.toContain(ALIAS_UUID);
     });
   });
 
