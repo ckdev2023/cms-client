@@ -225,7 +225,9 @@ void _contractGuard;
                 </span>
                 <div>
                   <div class="info-tab__party-name">{{ party.name }}</div>
-                  <div class="info-tab__party-role">{{ party.role }}</div>
+                  <div class="info-tab__party-role">
+                    {{ te(party.role) ? t(party.role) : party.role }}
+                  </div>
                 </div>
               </div>
               <div class="info-tab__party-detail">{{ party.detail }}</div>

@@ -4,6 +4,7 @@ import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import CaseValidationSupport from "./CaseValidationSupport.vue";
+import GateItemVue from "./GateItem.vue";
 
 import type { CaseDetail, GateItem } from "../types-detail";
 import type { CaseDetailTab } from "../types";
@@ -128,55 +129,13 @@ function onNavigate(tab: CaseDetailTab | string) {
                 :key="`b-${i}`"
                 :class="['vt__item', itemClass(item)]"
               >
-                <div class="vt__item-row">
-                  <div class="vt__item-main">
-                    <div class="vt__item-title">
-                      {{
-                        item.titleKey
-                          ? t(item.titleKey, item.titleParams ?? {})
-                          : item.title
-                      }}
-                    </div>
-                    <div v-if="item.fix" class="vt__item-desc">
-                      {{
-                        t(
-                          "cases.detail.validation.tab.gateCard.fixSuggestion",
-                          { fix: item.fix },
-                        )
-                      }}
-                    </div>
-                    <div v-if="item.noteKey || item.note" class="vt__item-desc">
-                      {{
-                        item.noteKey
-                          ? t(item.noteKey, item.noteParams ?? {})
-                          : item.note
-                      }}
-                    </div>
-                  </div>
-                  <Button
-                    v-if="item.actionLabel && item.actionTab"
-                    size="sm"
-                    pill
-                    @click="onNavigate(item.actionTab!)"
-                  >
-                    {{ item.actionLabel }}
-                  </Button>
-                </div>
-                <div
-                  v-if="item.assignee || item.deadline"
-                  class="vt__item-meta"
-                >
-                  <span v-if="item.assignee">{{
-                    t("cases.detail.validation.tab.gateCard.assignee", {
-                      name: item.assignee,
-                    })
-                  }}</span>
-                  <span v-if="item.deadline">{{
-                    t("cases.detail.validation.tab.gateCard.deadline", {
-                      date: item.deadline,
-                    })
-                  }}</span>
-                </div>
+                <GateItemVue
+                  :item="item"
+                  :readonly="readonly"
+                  show-assignee-meta
+                  show-fix
+                  @navigate="onNavigate"
+                />
               </div>
             </div>
 
@@ -194,22 +153,11 @@ function onNavigate(tab: CaseDetailTab | string) {
                 :key="`w-${i}`"
                 :class="['vt__item', itemClass(item)]"
               >
-                <div class="vt__item-title">
-                  {{
-                    item.titleKey
-                      ? t(item.titleKey, item.titleParams ?? {})
-                      : item.title
-                  }}
-                </div>
-                <div v-if="item.noteKey || item.note" class="vt__item-desc">
-                  {{
-                    item.noteKey
-                      ? t(item.noteKey, item.noteParams ?? {})
-                      : t("cases.detail.validation.tab.gateCard.suggestion", {
-                          note: item.note,
-                        })
-                  }}
-                </div>
+                <GateItemVue
+                  :item="item"
+                  :readonly="readonly"
+                  wrap-note-as-suggestion
+                />
               </div>
             </div>
 
@@ -227,10 +175,7 @@ function onNavigate(tab: CaseDetailTab | string) {
                 :key="`i-${i}`"
                 :class="['vt__item', itemClass(item)]"
               >
-                <div class="vt__item-title">{{ item.title }}</div>
-                <div v-if="item.note" class="vt__item-desc">
-                  {{ item.note }}
-                </div>
+                <GateItemVue :item="item" :readonly="readonly" />
               </div>
             </div>
           </template>

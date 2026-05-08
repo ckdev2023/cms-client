@@ -106,27 +106,27 @@
   border-left: 3px solid var(--color-primary-6);
 }
 
-.vt__item-row {
+:deep(.vt__item-row) {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
-.vt__item-main {
+:deep(.vt__item-main) {
   min-width: 0;
   flex: 1;
 }
-.vt__item-title {
+:deep(.vt__item-title) {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
-.vt__item-desc {
+:deep(.vt__item-desc) {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
   margin-top: 4px;
 }
-.vt__item-meta {
+:deep(.vt__item-meta) {
   display: flex;
   gap: 16px;
   margin-top: 8px;

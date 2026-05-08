@@ -116,7 +116,8 @@ const casesZhCN = {
       relatedEmpty: "暂无关联人",
       relatedAdd: "添加关联人",
       documentPreview: "资料清单预览",
-      documentPreviewHint: "依据所选模板自动生成 · 用于预审与提交检查",
+      documentPreviewHint:
+        "依据所选模板自动生成 · 用于预审与提交检查；正式建档后以日文官方名（行政书士标准）登记",
       documentPreviewSummary: "{total} 项 · {required} 必须",
       documentPreviewEmpty: "请先在第 1 步选择案件模板",
       requiredBadge: "必须",
@@ -539,6 +540,7 @@ const casesZhCN = {
       relatedParties: {
         title: "关联主体",
         empty: "暂无关联主体",
+        rolePrimary: "主申请人",
       },
       riskTags: {
         title: "风险标签",

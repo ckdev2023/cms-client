@@ -118,7 +118,8 @@ const casesJaJP = {
       relatedEmpty: "関連者なし",
       relatedAdd: "関連者を追加",
       documentPreview: "必要書類プレビュー",
-      documentPreviewHint: "選択テンプレートから自動生成 ・ 提出前チェック用",
+      documentPreviewHint:
+        "選択テンプレートから自動生成 ・ 提出前チェック用 ・ 案件作成後は日本語の正式名称で登録",
       documentPreviewSummary: "{total} 項目 ・ 必須 {required}",
       documentPreviewEmpty: "ステップ 1 でテンプレートを選択してください",
       requiredBadge: "必須",
@@ -563,6 +564,7 @@ const casesJaJP = {
       relatedParties: {
         title: "関連者",
         empty: "関連者なし",
+        rolePrimary: "主申請者",
       },
       riskTags: {
         title: "リスクタグ",

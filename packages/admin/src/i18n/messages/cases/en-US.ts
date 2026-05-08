@@ -120,7 +120,7 @@ const casesEnUS = {
       relatedAdd: "Add related party",
       documentPreview: "Document checklist preview",
       documentPreviewHint:
-        "Generated from the selected template — used for pre-check & submission audit",
+        "Auto-generated from the selected template for pre-submission review; the actual checklist uses Japanese official names after case creation.",
       documentPreviewSummary: "{total} items · {required} required",
       documentPreviewEmpty: "Pick a case template in Step 1 first",
       requiredBadge: "Required",
@@ -566,6 +566,7 @@ const casesEnUS = {
       relatedParties: {
         title: "Related parties",
         empty: "No related parties",
+        rolePrimary: "Primary applicant",
       },
       riskTags: {
         title: "Risk tags",
