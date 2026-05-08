@@ -17,7 +17,7 @@ import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { getCaseTypeI18nKey } from "../../cases/constants";
 import { resolveOwnerLabel } from "../../../shared/model/useOwnerOptions";
 
-/** 关联案件 Tab：按全部/活跃/归档筛选案件列表，保留办案入口占位。 */
+/** 关联案件 Tab：按全部/活跃/归档筛选案件列表。 */
 const props = defineProps<{
   customerId: string;
   repository: Pick<CustomerRepository, "listRelatedCases">;
@@ -134,14 +134,6 @@ function looksLikeUuid(value: string): boolean {
         <h3 class="cases-tab__title">
           {{ t("customers.detail.casesTab.title") }}
         </h3>
-        <div class="cases-tab__actions">
-          <Button size="sm" pill disabled>
-            {{ t("customers.detail.casesTab.batchCreate") }}
-          </Button>
-          <Button variant="filled" tone="primary" size="sm" disabled>
-            {{ t("customers.detail.casesTab.create") }}
-          </Button>
-        </div>
       </div>
 
       <div class="cases-tab__filter">
@@ -290,13 +282,6 @@ function looksLikeUuid(value: string): boolean {
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
-}
-
-.cases-tab__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
 }
 
 .cases-tab__filter {

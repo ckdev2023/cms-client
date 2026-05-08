@@ -91,6 +91,10 @@ describe("getPhaseLabel", () => {
     expect(getPhaseLabel("CLOSED_SUCCESS")).toBe("成功归档");
   });
 
+  it("returns label for extra phase 'prepare'", () => {
+    expect(getPhaseLabel("prepare")).toBe("准备中");
+  });
+
   it("returns raw code for unknown phase", () => {
     expect(getPhaseLabel("UNKNOWN_XYZ")).toBe("UNKNOWN_XYZ");
   });
@@ -110,6 +114,10 @@ describe("getPhaseI18nKey", () => {
     );
   });
 
+  it("returns i18n key for extra phase 'prepare'", () => {
+    expect(getPhaseI18nKey("prepare")).toBe("cases.constants.phases.prepare");
+  });
+
   it("returns empty string for unknown phase", () => {
     expect(getPhaseI18nKey("NOT_A_PHASE")).toBe("");
   });
@@ -124,6 +132,10 @@ describe("getPhaseBadge", () => {
     expect(getPhaseBadge("CONSULTING")).toBe("badge-gray");
     expect(getPhaseBadge("APPROVED")).toBe("badge-green");
     expect(getPhaseBadge("UNDER_REVIEW")).toBe("badge-orange");
+  });
+
+  it("returns badge for extra phase 'prepare'", () => {
+    expect(getPhaseBadge("prepare")).toBe("badge-blue");
   });
 
   it("returns badge-gray for unknown phase", () => {

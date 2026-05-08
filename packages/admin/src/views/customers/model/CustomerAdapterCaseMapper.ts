@@ -10,7 +10,7 @@ import {
 // prettier-ignore
 export const CUSTOMER_CASE_UPSTREAM_CONTRACT = ["id","caseName","caseTypeCode","stage","ownerUserId","createdAt","updatedAt"] as const;
 
-const CUSTOMER_CASE_NAME_FIELDS = ["name", "caseName", "title"];
+const CUSTOMER_CASE_NAME_FIELDS = ["caseTitle", "name", "caseName", "title"];
 const CUSTOMER_CASE_NUMBER_FIELDS = ["caseNo", "caseNumber"];
 // prettier-ignore
 const CUSTOMER_CASE_TYPE_FIELDS = ["type","caseType","caseTypeCode","applicationType"];

@@ -60,9 +60,9 @@ async function seedCustomer(client: PoolClient) {
 }
 
 async function seedCases(client: PoolClient) {
-  for (const [caseId, caseName, caseNo] of [
-    [SEED_CASE_A_ID, "家族滞在 — 田中太郎", "CASE-DEV-001"],
-    [SEED_CASE_B_ID, "技人国 — 田中太郎", "CASE-DEV-002"],
+  for (const [caseId, caseName, caseNo, caseTypeCode] of [
+    [SEED_CASE_A_ID, "家族滞在 — 田中太郎", "CASE-DEV-001", "family_stay"],
+    [SEED_CASE_B_ID, "技人国 — 田中太郎", "CASE-DEV-002", "work"],
   ] as const) {
     await client.query(
       `INSERT INTO cases (
@@ -70,10 +70,18 @@ async function seedCases(client: PoolClient) {
          owner_user_id, case_no, case_name, business_phase,
          application_flow_type, metadata
        )
-       VALUES ($1,$2,$3,'family_stay','open','document_collection',
+       VALUES ($1,$2,$3,$7,'open','document_collection',
                $4,$5,$6,'prepare','standard','{}'::jsonb)
        ON CONFLICT (id) DO NOTHING`,
-      [caseId, SEED_ORG_ID, SEED_CUSTOMER_ID, SEED_USER_ID, caseNo, caseName],
+      [
+        caseId,
+        SEED_ORG_ID,
+        SEED_CUSTOMER_ID,
+        SEED_USER_ID,
+        caseNo,
+        caseName,
+        caseTypeCode,
+      ],
     );
   }
 

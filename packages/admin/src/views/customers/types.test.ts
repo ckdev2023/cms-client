@@ -69,6 +69,7 @@ describe("customers/types", () => {
       referrerName: "",
       archivedCases: 0,
       caseNames: ["Case A"],
+      caseTitles: ["Case A"],
       lastCaseCreatedDate: "2025-01-01",
     };
     expect(detail.nationality).toBe("JP");

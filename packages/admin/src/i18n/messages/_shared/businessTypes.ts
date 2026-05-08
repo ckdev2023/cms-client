@@ -64,6 +64,11 @@ export const LEGACY_BUSINESS_TYPE_ALIAS: Readonly<
   Record<string, BusinessType>
 > = {
   "business-manager": "business-management-visa",
+  family_stay: "family-stay",
+  work_visa: "work-visa",
+  highly_skilled: "highly-skilled",
+  company_setup: "company-setup",
+  business_management_visa: "business-management-visa",
 };
 
 const BUSINESS_TYPE_TO_CASE_TYPE_CODE: Record<BusinessType, string> = {

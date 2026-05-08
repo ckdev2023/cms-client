@@ -67,6 +67,96 @@ const SUPPORT_STUBS = {
   },
 };
 
+describe("P0-2 — blocking section renders noteKey", () => {
+  it("blocking item with noteKey renders translated note text (zh-CN)", () => {
+    const detail: CaseDetail = {
+      ...CASE_DETAIL_SAMPLES["gate-fail"],
+      riskConfirmationRecord: null,
+      validation: {
+        lastTime: "2026/05/01",
+        blocking: [
+          {
+            gate: "A",
+            title: "",
+            titleKey: "cases.validation.blockingSummary",
+            titleParams: { count: 2 },
+            noteKey: "cases.validation.refReport",
+          },
+        ],
+        warnings: [],
+        info: [],
+      },
+    };
+
+    const wrapper = mount(CaseValidationTab, {
+      props: { detail, readonly: false },
+      global: { plugins: [makeI18n("zh-CN")], stubs: TAB_STUBS },
+    });
+
+    const descs = wrapper.findAll(".vt__item-desc");
+    const noteTexts = descs.map((d) => d.text());
+    expect(noteTexts.some((t) => t.includes("详细请参阅检查报告"))).toBe(true);
+  });
+
+  it("blocking item with plain note renders note text directly", () => {
+    const detail: CaseDetail = {
+      ...CASE_DETAIL_SAMPLES["gate-fail"],
+      riskConfirmationRecord: null,
+      validation: {
+        lastTime: "2026/05/01",
+        blocking: [
+          {
+            gate: "A",
+            title: "在職証明書未提供",
+            note: "雇主 HR 已确认将于下周一寄送",
+          },
+        ],
+        warnings: [],
+        info: [],
+      },
+    };
+
+    const wrapper = mount(CaseValidationTab, {
+      props: { detail, readonly: false },
+      global: { plugins: [makeI18n("zh-CN")], stubs: TAB_STUBS },
+    });
+
+    const descs = wrapper.findAll(".vt__item-desc");
+    const noteTexts = descs.map((d) => d.text());
+    expect(
+      noteTexts.some((t) => t.includes("雇主 HR 已确认将于下周一寄送")),
+    ).toBe(true);
+  });
+
+  it("blocking item without noteKey or note does NOT render extra desc", () => {
+    const detail: CaseDetail = {
+      ...CASE_DETAIL_SAMPLES["gate-fail"],
+      riskConfirmationRecord: null,
+      validation: {
+        lastTime: "2026/05/01",
+        blocking: [
+          {
+            gate: "A",
+            title: "在職証明書未提供",
+          },
+        ],
+        warnings: [],
+        info: [],
+      },
+    };
+
+    const wrapper = mount(CaseValidationTab, {
+      props: { detail, readonly: false },
+      global: { plugins: [makeI18n("zh-CN")], stubs: TAB_STUBS },
+    });
+
+    const blockingItems = wrapper.findAll(".vt__item--danger");
+    expect(blockingItems).toHaveLength(1);
+    const descs = blockingItems[0].findAll(".vt__item-desc");
+    expect(descs).toHaveLength(0);
+  });
+});
+
 describe("BUG-212 — common.comingSoon i18n key spelling", () => {
   describe.each<Locale>(["zh-CN", "ja-JP", "en-US"])(
     "%s: CaseValidationTab disabled buttons resolve title",

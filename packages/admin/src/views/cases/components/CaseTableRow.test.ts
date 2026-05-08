@@ -31,6 +31,7 @@ const MESSAGES = {
         phases: {
           CONSULTING: "Consulting",
           WAITING_MATERIAL: "Awaiting documents",
+          prepare: "Preparing",
         },
         bmvSteps: {},
       },
@@ -57,6 +58,7 @@ const MESSAGES = {
         phases: {
           CONSULTING: "相談中",
           WAITING_MATERIAL: "資料待ち",
+          prepare: "準備中",
         },
         bmvSteps: {},
       },
@@ -82,6 +84,7 @@ const MESSAGES = {
         phases: {
           CONSULTING: "咨询中",
           WAITING_MATERIAL: "等待资料",
+          prepare: "准备中",
         },
         bmvSteps: {},
       },
@@ -280,6 +283,41 @@ describe("CaseTableRow", () => {
     it("renders case name as the link text", () => {
       const w = mountRow(baseItem({ name: "Test Case Name" }));
       expect(w.find(".case-row__name").text()).toBe("Test Case Name");
+    });
+  });
+
+  describe("P2-12: prepare phase renders i18n label instead of raw key", () => {
+    it("renders 'Preparing' for businessPhase=prepare in en-US", () => {
+      const w = mountRow(baseItem({ businessPhase: "prepare" }), "en-US");
+      const stageCell = w.findAll("td")[1];
+      expect(stageCell.text()).toContain("Preparing");
+      expect(stageCell.text()).not.toContain("prepare");
+    });
+
+    it("renders '準備中' for businessPhase=prepare in ja-JP", () => {
+      const w = mountRow(baseItem({ businessPhase: "prepare" }), "ja-JP");
+      const stageCell = w.findAll("td")[1];
+      expect(stageCell.text()).toContain("準備中");
+    });
+
+    it("renders '准备中' for businessPhase=prepare in zh-CN", () => {
+      const w = mountRow(baseItem({ businessPhase: "prepare" }), "zh-CN");
+      const stageCell = w.findAll("td")[1];
+      expect(stageCell.text()).toContain("准备中");
+    });
+  });
+
+  describe("P2-12: DEV badge for CASE-DEV-* case numbers", () => {
+    it("shows DEV chip when caseNo starts with CASE-DEV-", () => {
+      const w = mountRow(baseItem({ caseNo: "CASE-DEV-001" }), "en-US");
+      const identityCell = w.findAll("td")[0];
+      expect(identityCell.text()).toContain("DEV");
+    });
+
+    it("does not show DEV chip for regular caseNo", () => {
+      const w = mountRow(baseItem({ caseNo: "CASE-202605-0010" }), "en-US");
+      const identityCell = w.findAll("td")[0];
+      expect(identityCell.text()).not.toContain("DEV");
     });
   });
 });

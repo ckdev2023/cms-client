@@ -174,6 +174,7 @@ const leadsZhCN = {
       markLost: "标记流失",
       convertCustomer: "仅建客户档案",
       convertCase: "签约并开始建档",
+      startCaseFromSigned: "开始建档",
       viewCustomer: "查看客户",
       viewCase: "查看案件",
     },

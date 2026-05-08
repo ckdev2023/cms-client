@@ -288,6 +288,87 @@ describe("LeadTableRow", () => {
     });
   });
 
+  describe("P2-11 businessTypeLabel / sourceLabel 本地化（不再裸出英文 slug）", () => {
+    it("businessTypeLabel 为 raw slug 'family-stay' 时渲染为本地化标签", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            businessTypeLabel: "family-stay",
+            sourceLabel: "referral",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.text()).toContain("家族滞在");
+      expect(wrapper.text()).not.toContain("family-stay");
+      expect(wrapper.text()).toContain("介绍");
+      expect(wrapper.text()).not.toContain("referral");
+    });
+
+    it("businessTypeLabel 为 underscore variant 'family_stay' 时仍可解析", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            businessTypeLabel: "family_stay",
+            sourceLabel: "web",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.text()).toContain("家族滞在");
+      expect(wrapper.text()).not.toContain("family_stay");
+      expect(wrapper.text()).toContain("网站表单");
+      expect(wrapper.text()).not.toContain("web");
+    });
+
+    it("businessTypeLabel 已是本地化文案时原样透传", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            businessTypeLabel: "技人国",
+            sourceLabel: "介绍",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.text()).toContain("技人国");
+      expect(wrapper.text()).toContain("介绍");
+    });
+
+    it("en-US locale 下 slug 'work-visa' 渲染为 English label", () => {
+      setAppLocale("en-US");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            businessTypeLabel: "work-visa",
+            sourceLabel: "walkin",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      expect(wrapper.text()).not.toContain("work-visa");
+      expect(wrapper.text()).not.toContain("walkin");
+    });
+
+    it("sourceLabel 为空时不渲染分隔符 ·", () => {
+      setAppLocale("zh-CN");
+      const wrapper = mount(LeadTableRow, {
+        props: {
+          lead: makeLead({
+            businessTypeLabel: "family-stay",
+            sourceLabel: "",
+          }),
+        },
+        global: { plugins: [i18n] },
+      });
+      const bizInfo = wrapper.find(".lead-row__biz-info");
+      expect(bizInfo.find(".lead-row__dot").exists()).toBe(false);
+    });
+  });
+
   describe("H-9 owner UUID 列表渲染（不再展示 raw UUID 或 ?）", () => {
     it("ownerId 是 catalog 短码 → 仍然走 catalog 本地化路径（BC）", () => {
       setAppLocale("zh-CN");

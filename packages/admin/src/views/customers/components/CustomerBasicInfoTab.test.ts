@@ -321,4 +321,42 @@ describe("CustomerBasicInfoTab", () => {
     const input = w.find("#basicInfoVisaType").element as HTMLInputElement;
     expect(input.value).toBe("经营管理");
   });
+
+  it("does not show BMV visa type hint for family_stay customer (P1-7)", () => {
+    const familyStayCustomer = {
+      ...SAMPLE_CUSTOMER_DETAILS["cust-003"]!,
+      visaType: "family_stay",
+      bmvProfile: null,
+    };
+    const { wrapper: w } = factory(familyStayCustomer);
+    expect(w.find(".basic-info__hint").exists()).toBe(false);
+    const visaSelect = w.find("#basicInfoVisaType");
+    expect(visaSelect.element.tagName).toBe("SELECT");
+  });
+
+  it("does not show BMV visa type hint when bmvProfile exists but is inactive for non-BMV visa (P1-7)", () => {
+    const inactiveProfileCustomer = {
+      ...SAMPLE_CUSTOMER_DETAILS["cust-003"]!,
+      visaType: "family_stay",
+      bmvProfile: {
+        questionnaireStatus: "not_started" as const,
+        quoteStatus: "not_started" as const,
+        signStatus: "not_started" as const,
+        intakeStatus: "not_started" as const,
+        questionnaireSentAt: null,
+        questionnaireReturnedAt: null,
+        quoteGeneratedAt: null,
+        quoteConfirmedAt: null,
+        signedAt: null,
+        note: null,
+        sourceLeadId: null,
+        leadGroupId: null,
+        leadOwnerUserId: null,
+      },
+    };
+    const { wrapper: w } = factory(inactiveProfileCustomer);
+    expect(w.find(".basic-info__hint").exists()).toBe(false);
+    const visaSelect = w.find("#basicInfoVisaType");
+    expect(visaSelect.element.tagName).toBe("SELECT");
+  });
 });

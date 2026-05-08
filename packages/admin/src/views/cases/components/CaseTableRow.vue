@@ -79,6 +79,8 @@ const displayName = computed(() => {
 
 const identityMeta = computed(() => props.item.caseNo || props.item.id);
 
+const isDevCase = computed(() => !!props.item.caseNo?.startsWith("CASE-DEV-"));
+
 const FAILURE_STEP_CODES = new Set(["VISA_REJECTED"]);
 
 const isFailureStep = computed(
@@ -92,7 +94,17 @@ const isFailureStep = computed(
   <tr class="case-row">
     <td>
       <div class="case-row__identity" :title="item.id">
-        <a class="case-row__name" :href="detailHref">{{ displayName }}</a>
+        <div class="case-row__name-line">
+          <a class="case-row__name" :href="detailHref">{{ displayName }}</a>
+          <Chip
+            v-if="isDevCase"
+            tone="warning"
+            size="micro"
+            class="case-row__dev-chip"
+          >
+            DEV
+          </Chip>
+        </div>
         <span class="case-row__meta">{{ identityMeta }}</span>
       </div>
     </td>
@@ -236,6 +248,16 @@ const isFailureStep = computed(
 
 .case-row__name:hover {
   color: var(--color-primary-6);
+}
+
+.case-row__name-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.case-row__dev-chip {
+  flex-shrink: 0;
 }
 
 .case-row__meta {

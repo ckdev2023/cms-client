@@ -231,6 +231,7 @@ function toggle() {
       </Button>
       <span
         v-if="acts.canRegister"
+        class="doc-row__register-wrap"
         :title="
           props.storageRootConfigured === false
             ? t('documents.storageGate.buttonTooltip')
@@ -245,6 +246,14 @@ function toggle() {
         >
           {{ t("documents.actions.register") }}
         </Button>
+        <RouterLink
+          v-if="props.storageRootConfigured === false"
+          to="/settings?tab=storage-root"
+          class="doc-row__storage-link"
+          @click.stop
+        >
+          {{ t("documents.storageGate.settingsLinkText") }}
+        </RouterLink>
       </span>
       <Button
         v-if="acts.canReference"
@@ -392,6 +401,23 @@ function toggle() {
   align-items: center;
   gap: 4px;
   padding: 0 20px 8px 42px;
+}
+
+.doc-row__register-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.doc-row__storage-link {
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-6);
+  text-decoration: underline;
+  white-space: nowrap;
+}
+
+.doc-row__storage-link:hover {
+  color: var(--color-primary-7, var(--color-primary-6));
 }
 
 .doc-row__waive-btn {

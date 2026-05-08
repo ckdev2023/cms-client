@@ -15,6 +15,7 @@ export type CustomerQueryRow = {
   active_cases?: unknown;
   archived_cases?: unknown;
   case_names?: unknown;
+  case_titles?: unknown;
   last_case_created_date?: unknown;
   owner_name?: unknown;
 };
@@ -275,6 +276,8 @@ export type CustomerDetailDto = CustomerSummaryDto & {
   referrerName: string | null;
   archivedCases: number;
   caseNames: string[];
+  /** 案件标题列表：case_name 优先 → displayName · caseTypeCode 兜底。 */
+  caseTitles: string[];
   lastCaseCreatedDate: string | null;
 };
 
@@ -290,6 +293,7 @@ export type CustomerDtoAggregates = {
   referralSource?: string | null;
   groupName?: string | null;
   caseNames?: string[];
+  caseTitles?: string[];
   lastCaseCreatedDate?: string | null;
 };
 

@@ -477,7 +477,8 @@ describe("placeholder collections (tabs not yet populated)", () => {
   it("provides empty arrays for tab collections", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.timeline).toEqual([]);
-    expect(result.detail.relatedParties).toEqual([]);
+    expect(result.detail.relatedParties).toHaveLength(1);
+    expect(result.detail.relatedParties[0].name).toBe("张伟");
     expect(result.detail.deadlines).toEqual([]);
     expect(result.detail.submissionPackages).toEqual([]);
     expect(result.detail.correctionPackage).toBeNull();

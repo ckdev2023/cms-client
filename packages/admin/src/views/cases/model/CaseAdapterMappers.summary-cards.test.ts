@@ -243,6 +243,22 @@ describe("failedValidations — validationStatus consistency (p0-fe-002b-06)", (
     ]);
     expect(findCard(cards, "failedValidations").value).toBe(1);
   });
+
+  it("also counts items with blockerCount > 0 even if validationStatus is not 'failed'", () => {
+    const cards = adaptCaseSummaryCards([
+      listItem({ id: "1", validationStatus: "passed", blockerCount: 0 }),
+      listItem({ id: "2", validationStatus: "pending", blockerCount: 2 }),
+      listItem({ id: "3", validationStatus: "failed", blockerCount: 0 }),
+    ]);
+    expect(findCard(cards, "failedValidations").value).toBe(2);
+  });
+
+  it("does not double-count items that are both failed and have blockerCount > 0", () => {
+    const cards = adaptCaseSummaryCards([
+      listItem({ id: "1", validationStatus: "failed", blockerCount: 3 }),
+    ]);
+    expect(findCard(cards, "failedValidations").value).toBe(1);
+  });
 });
 
 // ─── dueSoon — dueDate + stageId consistency ────────────────────
@@ -456,7 +472,8 @@ describe("cross-card consistency with list model (p0-fe-002b-06)", () => {
 
     expect(findCard(cards, "activeCases").value).toBe(active.length);
     expect(findCard(cards, "failedValidations").value).toBe(
-      items.filter((c) => c.validationStatus === "failed").length,
+      items.filter((c) => c.validationStatus === "failed" || c.blockerCount > 0)
+        .length,
     );
     expect(findCard(cards, "unpaidTotal").value).toBe(
       active.reduce((sum, c) => sum + c.unpaidAmount, 0),

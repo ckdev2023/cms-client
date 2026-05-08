@@ -174,12 +174,31 @@ const PHASE_DEFS: Record<BusinessPhaseId, BusinessPhaseDef> = {
 export { PHASE_DEFS as BUSINESS_PHASE_MAP };
 
 /**
+ * 非标准但后端可能下发的阶段代码 → i18n / badge 兜底表。
+ * 当 `PHASE_DEFS` 未命中时，按此表做二次查找。
+ */
+const PHASE_EXTRAS: Record<
+  string,
+  { i18nKey: string; badge: string; label: string }
+> = {
+  prepare: {
+    i18nKey: "cases.constants.phases.prepare",
+    badge: "badge-blue",
+    label: "准备中",
+  },
+};
+
+/**
  * 业务阶段 code → 中文标签。
  * @param phase 业务阶段代码
  * @returns 中文标签，未知 code 原样返回
  */
 export function getPhaseLabel(phase: string): string {
-  return PHASE_DEFS[phase as BusinessPhaseId]?.label ?? phase;
+  return (
+    PHASE_DEFS[phase as BusinessPhaseId]?.label ??
+    PHASE_EXTRAS[phase]?.label ??
+    phase
+  );
 }
 
 /**
@@ -188,7 +207,11 @@ export function getPhaseLabel(phase: string): string {
  * @returns i18n key；未匹配时返回 `""`
  */
 export function getPhaseI18nKey(phase: string): string {
-  return PHASE_DEFS[phase as BusinessPhaseId]?.i18nKey ?? "";
+  return (
+    PHASE_DEFS[phase as BusinessPhaseId]?.i18nKey ??
+    PHASE_EXTRAS[phase]?.i18nKey ??
+    ""
+  );
 }
 
 /**
@@ -197,5 +220,9 @@ export function getPhaseI18nKey(phase: string): string {
  * @returns badge class；未匹配时返回 `"badge-gray"`
  */
 export function getPhaseBadge(phase: string): string {
-  return PHASE_DEFS[phase as BusinessPhaseId]?.badge ?? "badge-gray";
+  return (
+    PHASE_DEFS[phase as BusinessPhaseId]?.badge ??
+    PHASE_EXTRAS[phase]?.badge ??
+    "badge-gray"
+  );
 }

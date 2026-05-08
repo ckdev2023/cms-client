@@ -147,4 +147,58 @@ describe("LeadConvertedRecords", () => {
 
     expect(caseMeta).toContain("11a18544-56bd-4f74");
   });
+
+  it("emits viewCustomer when customer button is clicked (P1-3)", async () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: {
+        id: "CUS-1",
+        customerNo: "CUS-202605-0001",
+        name: "田中 花子",
+        group: "Tokyo-1",
+        convertedAt: "2026-05-01T10:00:00Z",
+        convertedBy: "Admin",
+      },
+      convertedCase: null,
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const btn = wrapper
+      .findAll("button")
+      .find((b) =>
+        b
+          .text()
+          .includes(i18n.global.t("leads.detail.conversionTab.viewCustomer")),
+      );
+    expect(btn).toBeTruthy();
+    await btn!.trigger("click");
+    expect(wrapper.emitted("viewCustomer")).toHaveLength(1);
+  });
+
+  it("emits viewCase when case button is clicked (P1-3)", async () => {
+    const conversion: LeadConversionInfo = {
+      dedupResult: null,
+      convertedCustomer: null,
+      convertedCase: {
+        id: "CAS-1",
+        title: "CASE-202605-0001",
+        type: "dependent_visa",
+        group: "Tokyo-1",
+        convertedAt: "2026-05-02T10:00:00Z",
+        convertedBy: "Admin",
+      },
+      conversions: [],
+    };
+
+    const wrapper = mountRecords(conversion);
+    const btn = wrapper
+      .findAll("button")
+      .find((b) =>
+        b.text().includes(i18n.global.t("leads.detail.conversionTab.viewCase")),
+      );
+    expect(btn).toBeTruthy();
+    await btn!.trigger("click");
+    expect(wrapper.emitted("viewCase")).toHaveLength(1);
+  });
 });

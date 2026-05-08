@@ -175,6 +175,7 @@ const leadsJaJP = {
       markLost: "失注にする",
       convertCustomer: "顧客のみ作成",
       convertCase: "契約＆案件作成",
+      startCaseFromSigned: "案件作成へ",
       viewCustomer: "顧客を見る",
       viewCase: "案件を見る",
     },

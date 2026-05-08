@@ -235,6 +235,8 @@ function tryUseToast() {
           :readonly="isReadonly"
           @convert-customer="openConvertCustomerDialog"
           @convert-case="openConvertCaseDialog"
+          @view-customer="handleViewCustomer"
+          @view-case="handleViewCase"
         />
         <LeadLogTab
           v-else-if="activeTab === 'log'"

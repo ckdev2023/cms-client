@@ -52,22 +52,26 @@ describe("useLeadCatalogOptions (R2-A-1)", () => {
     expect(opt?.avatarClass.length).toBeGreaterThan(0);
   });
 
-  it("R2-B-3: apiGroupOptions returns API UUID as value and DB-stored name as label", () => {
+  it("R2-B-3: apiGroupOptions returns API UUID as value", () => {
     registerGroupAliases([{ id: UUID_GROUP, name: "tokyo-1" }]);
     const { apiGroupOptions } = useLeadCatalogOptions(ref("zh-CN"));
-    expect(apiGroupOptions.value).toEqual([
-      { value: UUID_GROUP, label: "tokyo-1" },
-    ]);
+    expect(apiGroupOptions.value[0]?.value).toBe(UUID_GROUP);
   });
 
-  it("R2-B-3: apiGroupOptions label is locale-invariant (DB name is canonical)", () => {
+  it("P2-13: apiGroupOptions label is localized when DB name matches catalog", () => {
     registerGroupAliases([{ id: UUID_GROUP, name: "tokyo-1" }]);
     const locale = ref("zh-CN");
     const { apiGroupOptions } = useLeadCatalogOptions(locale);
-    expect(apiGroupOptions.value[0]?.label).toBe("tokyo-1");
+    expect(apiGroupOptions.value[0]?.label).toBe("东京一组");
     locale.value = "ja-JP";
-    expect(apiGroupOptions.value[0]?.label).toBe("tokyo-1");
+    expect(apiGroupOptions.value[0]?.label).toBe("東京一組");
     locale.value = "en-US";
-    expect(apiGroupOptions.value[0]?.label).toBe("tokyo-1");
+    expect(apiGroupOptions.value[0]?.label).toBe("Tokyo Team 1");
+  });
+
+  it("P2-13: apiGroupOptions preserves custom DB name when not in catalog", () => {
+    registerGroupAliases([{ id: UUID_GROUP, name: "カスタム分組" }]);
+    const { apiGroupOptions } = useLeadCatalogOptions(ref("zh-CN"));
+    expect(apiGroupOptions.value[0]?.label).toBe("カスタム分組");
   });
 });

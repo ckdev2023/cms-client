@@ -14,6 +14,7 @@ import {
   formatDate,
   readNullableString,
   readNumber,
+  readOptionalString,
   readString,
 } from "./CaseAdapterShared";
 import { resolveMilestoneI18nKey } from "./billingMilestoneI18n";
@@ -32,93 +33,14 @@ function readArrayOrItems(value: unknown): unknown[] | null {
   return r && Array.isArray(r.items) ? (r.items as unknown[]) : null;
 }
 
-function deriveApiPrefix(casesApiPath: string): string {
-  return casesApiPath.replace(/\/cases\/?$/, "");
-}
-
-/**
- * 构造 validation runs URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCaseValidationRunsUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${deriveApiPrefix(casesApiPath)}/validation-runs?caseId=${encodeURIComponent(caseId)}`;
-}
-
-/**
- * 构造 review records URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCaseReviewRecordsUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${deriveApiPrefix(casesApiPath)}/review-records?caseId=${encodeURIComponent(caseId)}`;
-}
-
-/**
- * 构造 billing plans URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCaseBillingPlansUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${deriveApiPrefix(casesApiPath)}/billing-plans?caseId=${encodeURIComponent(caseId)}`;
-}
-
-/**
- * 构造 payment records URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCasePaymentRecordsUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${deriveApiPrefix(casesApiPath)}/payment-records?caseId=${encodeURIComponent(caseId)}`;
-}
-
-/**
- * 构造 submission packages URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCaseSubmissionPackagesUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${deriveApiPrefix(casesApiPath)}/submission-packages?caseId=${encodeURIComponent(caseId)}`;
-}
-
-/**
- * 构造 billing tab aggregate URL。
- *
- * @param casesApiPath - cases API 基路径
- * @param caseId - 案件 ID
- * @returns 接口地址
- */
-export function buildCaseBillingTabAggregateUrl(
-  casesApiPath: string,
-  caseId: string,
-): string {
-  return `${casesApiPath}/${encodeURIComponent(caseId)}/billing-tab-aggregate`;
-}
+export {
+  buildCaseBillingPlansUrl,
+  buildCaseBillingTabAggregateUrl,
+  buildCasePaymentRecordsUrl,
+  buildCaseReviewRecordsUrl,
+  buildCaseSubmissionPackagesUrl,
+  buildCaseValidationRunsUrl,
+} from "./CaseAdapterValidationUrls";
 
 function adaptGateItemDto(
   value: unknown,
@@ -126,19 +48,26 @@ function adaptGateItemDto(
 ): GateItem | null {
   const r = asRecord(value);
   if (!r) return null;
-  const title =
+
+  const primaryTitle =
     readString(r, "title") || readString(r, "rule") || readString(r, "code");
+  const fallbackText = readString(r, "message") || readString(r, "description");
+  const title = primaryTitle || fallbackText;
   if (!title) return null;
+
+  const explicitNote = readNullableString(r, "note");
+  const note =
+    explicitNote ?? (primaryTitle && fallbackText ? fallbackText : undefined);
 
   return {
     gate: readString(r, "gate") || defaultGate,
     title,
-    fix: readNullableString(r, "fix") ?? undefined,
-    note: readNullableString(r, "note") ?? undefined,
-    assignee: readNullableString(r, "assignee") ?? undefined,
-    deadline: readNullableString(r, "deadline") ?? undefined,
-    actionLabel: readNullableString(r, "actionLabel") ?? undefined,
-    actionTab: readNullableString(r, "actionTab") ?? undefined,
+    fix: readOptionalString(r, "fix"),
+    note,
+    assignee: readOptionalString(r, "assignee"),
+    deadline: readOptionalString(r, "deadline"),
+    actionLabel: readOptionalString(r, "actionLabel"),
+    actionTab: readOptionalString(r, "actionTab"),
   };
 }
 

@@ -15,6 +15,10 @@ import {
   resolveOwnerDisplayOption,
 } from "../../../shared/model/useOwnerOptions";
 import { resolveTagTone } from "../model/leadTagTone";
+import {
+  resolveLeadBusinessTypeLabel,
+  resolveLeadSourceLabel,
+} from "../model/leadOptionLabels";
 
 /** 线索表格行：咨询人信息、状态、负责人、跟进安排、最近更新。 */
 const { t, locale } = useI18n();
@@ -65,6 +69,14 @@ const groupLabel = computed(() => {
   );
   return resolved || "—";
 });
+
+const businessTypeDisplay = computed(() =>
+  resolveLeadBusinessTypeLabel(props.lead.businessTypeLabel, t),
+);
+
+const sourceDisplay = computed(() =>
+  resolveLeadSourceLabel(props.lead.sourceLabel, t),
+);
 
 const TAG_VISIBLE_LIMIT = 3;
 
@@ -172,9 +184,9 @@ function closeTagPopover() {
         <span v-if="lead.email">{{ lead.email }}</span>
       </div>
       <div class="lead-row__biz-info">
-        {{ lead.businessTypeLabel }}
-        <span v-if="lead.sourceLabel" class="lead-row__dot">·</span>
-        {{ lead.sourceLabel }}
+        {{ businessTypeDisplay }}
+        <span v-if="sourceDisplay" class="lead-row__dot">·</span>
+        {{ sourceDisplay }}
         <template v-if="lead.referrer"> ({{ lead.referrer }}) </template>
       </div>
     </td>

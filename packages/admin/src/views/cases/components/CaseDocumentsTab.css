@@ -43,6 +43,14 @@
   font-size: var(--font-size-xs);
   color: var(--color-warning-text);
 }
+.docs-tab__gate-link {
+  color: var(--color-primary-6);
+  text-decoration: underline;
+  font-weight: var(--font-weight-semibold);
+}
+.docs-tab__gate-link:hover {
+  color: var(--color-primary-7, var(--color-primary-6));
+}
 .docs-tab__register-wrap {
   display: inline-flex;
 }

@@ -250,6 +250,7 @@ function readDetailFields(record: Record<string, unknown>) {
     referrerName: stringOrEmpty(record, "referrerName"),
     archivedCases: readNumberField(record, "archivedCases") ?? 0,
     caseNames: readStringArray(record.caseNames) ?? [],
+    caseTitles: readStringArray(record.caseTitles) ?? [],
     lastCaseCreatedDate:
       readNullableStringField(record, "lastCaseCreatedDate") ?? null,
   };

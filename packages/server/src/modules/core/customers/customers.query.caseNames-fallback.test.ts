@@ -24,45 +24,85 @@ void test("G-1: case_names expression no longer excludes null case_name rows", (
 /**
  * W-5：案件摘要卡 case_names fallback 必须与 C-1
  * （CustomerAdapterCaseMapper）保持一致的 caseName → caseNumber → ""
- * 链路；任何对 case_type_code / metadata.caseTypeLabel 的引用都视为
- * visa key 泄漏回归（admin 不应看到 `dependent_visa` 这种 internal code）。
+ * 链路；case_names 子查询不得引用 case_type_code / metadata.caseTypeLabel。
+ *
+ * 注意：case_titles（P1-9/10）可以包含 case_type_code（设计意图），
+ * 此测试仅检查 case_names 子查询部分。
  */
 void test("W-5: case_names expression falls back to case_no, never exposes case_type_code or metadata label", () => {
   const select = buildCustomerListSelect("c");
+  const caseNamesEnd = select.indexOf("as case_names");
+  assert.ok(caseNamesEnd >= 0, "expected case_names column in select");
+  const caseNamesPortion = select.slice(
+    0,
+    caseNamesEnd + "as case_names".length,
+  );
   assert.ok(
-    select.includes("coalesce("),
+    caseNamesPortion.includes("coalesce("),
     `expected case_names to use coalesce for fallback`,
   );
   assert.ok(
-    select.includes("ca.case_name"),
+    caseNamesPortion.includes("ca.case_name"),
     `expected fallback to reference ca.case_name as primary branch`,
   );
   assert.ok(
-    select.includes("ca.case_no"),
+    caseNamesPortion.includes("ca.case_no"),
     `expected fallback to reference ca.case_no as secondary branch`,
   );
   assert.ok(
-    !select.includes("ca.case_type_code"),
-    `expected fallback to NOT reference ca.case_type_code (W-5 visa key leak guard)`,
+    !caseNamesPortion.includes("ca.case_type_code"),
+    `expected case_names fallback to NOT reference ca.case_type_code (W-5 visa key leak guard)`,
   );
   assert.ok(
-    !select.includes("metadata->>'caseTypeLabel'"),
-    `expected fallback to NOT reference metadata->>'caseTypeLabel' (W-5 keep parity with C-1 caseName→caseNumber→"" chain)`,
+    !caseNamesPortion.includes("metadata->>'caseTypeLabel'"),
+    `expected case_names fallback to NOT reference metadata->>'caseTypeLabel'`,
   );
   assert.ok(
-    !select.includes("case_type_label"),
-    `expected fallback to NOT reference non-existent column ca.case_type_label (R-FLOW5-A-2 regression guard)`,
+    !caseNamesPortion.includes("case_type_label"),
+    `expected case_names fallback to NOT reference non-existent column ca.case_type_label`,
   );
 });
 
 /**
- * W-5：fallback 链路顺序锁定 —— case_name 必须排在 case_no 之前，
- * 避免「客户最后联系编号覆盖案件名」这种漂移。
+ * W-5：fallback 链路顺序锁定 —— case_names 内 case_name 必须排在 case_no 之前。
  */
 void test("W-5: case_names fallback orders case_name BEFORE case_no", () => {
   const select = buildCustomerListSelect("c");
-  const caseNameIdx = select.indexOf("ca.case_name");
-  const caseNoIdx = select.indexOf("ca.case_no");
-  assert.ok(caseNameIdx >= 0, "ca.case_name must appear in select");
-  assert.ok(caseNoIdx > caseNameIdx, "ca.case_no must come after ca.case_name");
+  const caseNamesEnd = select.indexOf("as case_names");
+  const caseNamesPortion = select.slice(
+    0,
+    caseNamesEnd + "as case_names".length,
+  );
+  const caseNameIdx = caseNamesPortion.indexOf("ca.case_name");
+  const caseNoIdx = caseNamesPortion.indexOf("ca.case_no");
+  assert.ok(caseNameIdx >= 0, "ca.case_name must appear in case_names portion");
+  assert.ok(
+    caseNoIdx > caseNameIdx,
+    "ca.case_no must come after ca.case_name in case_names",
+  );
+});
+
+/**
+ * P1-9/10：case_titles 子查询存在且包含 case_type_code（设计意图）。
+ */
+void test("P1-9/10: case_titles expression exists and uses case_type_code for fallback title", () => {
+  const select = buildCustomerListSelect("c");
+  assert.ok(
+    select.includes("as case_titles"),
+    `expected list select to expose case_titles column`,
+  );
+  const caseNamesEnd = select.indexOf("as case_names");
+  const caseTitlesEnd = select.indexOf("as case_titles");
+  const caseTitlesExpr = select.slice(
+    caseNamesEnd + "as case_names".length,
+    caseTitlesEnd + "as case_titles".length,
+  );
+  assert.ok(
+    caseTitlesExpr.includes("ca.case_type_code"),
+    `expected case_titles to reference ca.case_type_code for human-readable fallback`,
+  );
+  assert.ok(
+    caseTitlesExpr.includes("ca.case_name"),
+    `expected case_titles to reference ca.case_name as primary branch`,
+  );
 });

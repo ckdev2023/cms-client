@@ -79,7 +79,7 @@ const customerNumberDisplay = computed(() => {
         </a>
         <span class="detail-header__sep" aria-hidden="true">/</span>
         <span class="detail-header__crumb-current" aria-current="page">
-          {{ t("customers.detail.breadcrumb") }}
+          {{ customer.displayName || t("customers.detail.breadcrumb") }}
         </span>
       </nav>
       <div class="detail-header__actions-block">

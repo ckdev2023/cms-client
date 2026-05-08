@@ -111,6 +111,7 @@ function stubDetailRepository(): Pick<CustomerRepository, "getCustomerDetail"> {
       referrerName: "",
       archivedCases: 0,
       caseNames: [],
+      caseTitles: [],
       lastCaseCreatedDate: null,
     }),
   };

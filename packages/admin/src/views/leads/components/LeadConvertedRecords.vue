@@ -13,6 +13,11 @@ const props = defineProps<{
   conversion: LeadConversionInfo;
 }>();
 
+defineEmits<{
+  viewCustomer: [];
+  viewCase: [];
+}>();
+
 const { t, locale } = useI18n();
 
 const hasConvertedCustomer = computed(
@@ -69,7 +74,7 @@ const hasConvertedCase = computed(
             }}
           </p>
         </div>
-        <Button size="sm">
+        <Button size="sm" @click="$emit('viewCustomer')">
           {{ t("leads.detail.conversionTab.viewCustomer") }}
         </Button>
       </div>
@@ -114,7 +119,7 @@ const hasConvertedCase = computed(
             {{ formatDateTime(conversion.convertedCase!.convertedAt, locale) }}
           </p>
         </div>
-        <Button size="sm">
+        <Button size="sm" @click="$emit('viewCase')">
           {{ t("leads.detail.conversionTab.viewCase") }}
         </Button>
       </div>

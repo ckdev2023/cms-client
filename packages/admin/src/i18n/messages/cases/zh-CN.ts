@@ -893,6 +893,7 @@ const casesZhCN = {
       RENEWAL_REMINDER_SCHEDULED: "更新提醒已设定",
       CLOSED_SUCCESS: "成功归档",
       CLOSED_FAILED: "失败归档",
+      prepare: "准备中",
     },
     bmvSteps: {
       WAITING_MATERIAL: "等待资料",

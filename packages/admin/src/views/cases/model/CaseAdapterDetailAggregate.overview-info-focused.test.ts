@@ -1,8 +1,6 @@
-// Owner: p0-fe-006a-03 — overview/info tabs focused tests
-// Locks field display values, null/empty degradation, and readonly.
-// Does NOT test: frozen key-set snapshots, per-slice degradation,
-// per-group mapping, structural key-set integrity, list mappers,
-// write builders, or repository orchestration.
+// Owner: p0-fe-006a-03 — overview/info tabs focused tests.
+// Locks display values, null/empty degradation, readonly.
+// Excludes: frozen snapshots, per-slice/group, list mappers, write builders.
 
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
@@ -349,8 +347,12 @@ describe("info tab field display (p0-fe-006a-03)", () => {
     expect(result.detail.agency).toBe("");
   });
 
-  it("relatedParties is empty placeholder array", () => {
-    expect(result.detail.relatedParties).toEqual([]);
+  it("relatedParties auto-injects primary applicant from deepLink", () => {
+    expect(result.detail.relatedParties).toHaveLength(1);
+    expect(result.detail.relatedParties[0].name).toBe("王小明");
+    expect(result.detail.relatedParties[0].role).toBe(
+      "cases.detail.info.relatedParties.rolePrimary",
+    );
   });
 });
 

@@ -57,7 +57,7 @@ const {
 const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
 );
-const isBmvCustomer = computed(() => props.customer.bmvProfile !== null);
+const isBmvCustomer = computed(() => customerRequiresBmv(props.customer));
 const showBmvIntakeCard = computed(
   () => props.bmvEnabled === true && customerRequiresBmv(props.customer),
 );

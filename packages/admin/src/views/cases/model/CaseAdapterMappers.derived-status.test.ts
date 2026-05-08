@@ -1,10 +1,6 @@
-// ── Test Ownership ──────────────────────────────────────────────
-// Owner: list DTO → CaseListItem derived status field mapping contract
-//   (p0-fe-002b-05: latestValidation / risk / due / unpaid / updatedAt).
-// Does NOT test: base fields (→ CaseAdapterMappers.base-fields.test 002b-04),
-//   summary cards (→ CaseAdapterMappers.test), detail aggregate, mutation
-//   results, write builders, repository orchestration, or customer
-//   downstream reuse (→ CaseListSummaryDownstream.test).
+// ── Owner: p0-fe-002b-05 — derived status field mapping contract.
+// Excludes: base fields (002b-04), summary cards, detail aggregate,
+//   write builders, repository orchestration, downstream reuse.
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
@@ -16,20 +12,24 @@ import {
 
 // ─── Helpers ────────────────────────────────────────────────────
 
+const BASE_CASE = {
+  id: "case-001",
+  customerId: "cust-001",
+  caseTypeCode: "visa",
+  stage: "S3",
+  groupId: "group-1",
+  ownerUserId: "user-1",
+  caseName: "技人国更新",
+  caseNo: "CASE-001",
+  riskLevel: "low",
+  billingUnpaidAmountCached: 50000,
+  updatedAt: "2026-04-10T00:00:00.000Z",
+  dueAt: "2026-06-01",
+};
+
 function flatRow(overrides: Record<string, unknown> = {}) {
   return {
-    id: "case-001",
-    customerId: "cust-001",
-    caseTypeCode: "visa",
-    stage: "S3",
-    groupId: "group-1",
-    ownerUserId: "user-1",
-    caseName: "技人国更新",
-    caseNo: "CASE-001",
-    riskLevel: "low",
-    billingUnpaidAmountCached: 50000,
-    updatedAt: "2026-04-10T00:00:00.000Z",
-    dueAt: "2026-06-01",
+    ...BASE_CASE,
     customerName: "張伟",
     groupName: "Tokyo-1",
     ...overrides,
@@ -41,21 +41,7 @@ function wrappedRow(
   wrapperOverrides: Record<string, unknown> = {},
 ) {
   return {
-    case: {
-      id: "case-001",
-      customerId: "cust-001",
-      caseTypeCode: "visa",
-      stage: "S3",
-      groupId: "group-1",
-      ownerUserId: "user-1",
-      caseName: "技人国更新",
-      caseNo: "CASE-001",
-      riskLevel: "low",
-      billingUnpaidAmountCached: 50000,
-      updatedAt: "2026-04-10T00:00:00.000Z",
-      dueAt: "2026-06-01",
-      ...caseOverrides,
-    },
+    case: { ...BASE_CASE, ...caseOverrides },
     customerName: "張伟",
     groupName: "Tokyo-1",
     latestValidation: null,
@@ -88,8 +74,9 @@ describe("derived status contract constants (p0-fe-002b-05)", () => {
     }
   });
 
-  it("CASE_LIST_DERIVED_TARGET_KEYS enumerates all 8 UI properties", () => {
+  it("CASE_LIST_DERIVED_TARGET_KEYS enumerates all 9 UI properties", () => {
     expect([...CASE_LIST_DERIVED_TARGET_KEYS].sort()).toEqual([
+      "blockerCount",
       "dueDate",
       "dueDateLabel",
       "riskLabel",
@@ -121,13 +108,19 @@ describe("derived status — flat DTO snapshot", () => {
           billingUnpaidAmountCached: 120000,
           updatedAt: "2026-04-15T09:30:00.000Z",
           dueAt: "2026-07-01",
-          latestValidation: { status: "passed", executedAt: "2026-04-01" },
+          latestValidation: {
+            status: "passed",
+            executedAt: "2026-04-01",
+            blockingCount: 0,
+            warningCount: 1,
+          },
         }),
       ],
       total: 1,
     });
     expect(item.validationStatus).toBe("passed");
-    expect(item.validationLabel).toBe("");
+    expect(item.validationLabel).toBe("passed");
+    expect(item.blockerCount).toBe(0);
     expect(item.riskStatus).toBe("attention");
     expect(item.riskLabel).toBe("medium");
     expect(item.dueDate).toBe("2026-07-01");
@@ -148,13 +141,21 @@ describe("derived status — wrapped (summary) DTO snapshot", () => {
             updatedAt: "2026-04-12T14:00:00.000Z",
             dueAt: "2026-05-15",
           },
-          { latestValidation: { status: "failed", executedAt: "2026-04-10" } },
+          {
+            latestValidation: {
+              status: "failed",
+              executedAt: "2026-04-10",
+              blockingCount: 3,
+              warningCount: 1,
+            },
+          },
         ),
       ],
       total: 1,
     });
     expect(item.validationStatus).toBe("failed");
-    expect(item.validationLabel).toBe("");
+    expect(item.validationLabel).toBe("failed (3)");
+    expect(item.blockerCount).toBe(3);
     expect(item.riskStatus).toBe("critical");
     expect(item.riskLabel).toBe("high");
     expect(item.dueDate).toBe("2026-05-15");
@@ -209,14 +210,70 @@ describe("derived status — validationStatus", () => {
     expect(item.validationStatus).toBe("passed");
   });
 
-  it("validationLabel is always empty string", () => {
-    for (const vr of [{ status: "passed" }, { status: "failed" }, null]) {
-      const item = adaptFirst({
-        items: [flatRow({ latestValidation: vr })],
-        total: 1,
-      });
-      expect(item.validationLabel).toBe("");
-    }
+  it("validationLabel reflects status and blocker count", () => {
+    const passed = adaptFirst({
+      items: [
+        flatRow({
+          latestValidation: { status: "passed", blockingCount: 0 },
+        }),
+      ],
+      total: 1,
+    });
+    expect(passed.validationLabel).toBe("passed");
+
+    const failedWithBlockers = adaptFirst({
+      items: [
+        flatRow({
+          latestValidation: { status: "failed", blockingCount: 5 },
+        }),
+      ],
+      total: 1,
+    });
+    expect(failedWithBlockers.validationLabel).toBe("failed (5)");
+
+    const failedNoBlockers = adaptFirst({
+      items: [
+        flatRow({
+          latestValidation: { status: "failed", blockingCount: 0 },
+        }),
+      ],
+      total: 1,
+    });
+    expect(failedNoBlockers.validationLabel).toBe("failed");
+
+    const noValidation = adaptFirst({
+      items: [flatRow({ latestValidation: null })],
+      total: 1,
+    });
+    expect(noValidation.validationLabel).toBe("pending");
+  });
+
+  it("blockerCount is extracted from latestValidation.blockingCount", () => {
+    const withBlockers = adaptFirst({
+      items: [
+        flatRow({
+          latestValidation: { status: "failed", blockingCount: 7 },
+        }),
+      ],
+      total: 1,
+    });
+    expect(withBlockers.blockerCount).toBe(7);
+
+    const noBlockers = adaptFirst({
+      items: [
+        flatRow({
+          latestValidation: { status: "passed", blockingCount: 0 },
+        }),
+      ],
+      total: 1,
+    });
+    expect(noBlockers.blockerCount).toBe(0);
+
+    const noValidation = adaptFirst({
+      items: [flatRow({ latestValidation: null })],
+      total: 1,
+    });
+    expect(noValidation.blockerCount).toBe(0);
   });
 });
 
@@ -421,12 +478,13 @@ describe("derived status — structural invariants", () => {
       updatedAt: "2026-04-10T00:00:00.000Z",
       dueAt: "2026-06-01",
     };
+    const vr = { status: "failed", blockingCount: 2, warningCount: 0 };
     const flatItem = adaptFirst({
-      items: [flatRow({ ...data, latestValidation: { status: "failed" } })],
+      items: [flatRow({ ...data, latestValidation: vr })],
       total: 1,
     });
     const wrappedItem = adaptFirst({
-      items: [wrappedRow(data, { latestValidation: { status: "failed" } })],
+      items: [wrappedRow(data, { latestValidation: vr })],
       total: 1,
     });
     const flatRec = flatItem as unknown as Record<string, unknown>;

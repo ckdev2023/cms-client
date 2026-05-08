@@ -145,6 +145,13 @@ function onNavigate(tab: CaseDetailTab | string) {
                         )
                       }}
                     </div>
+                    <div v-if="item.noteKey || item.note" class="vt__item-desc">
+                      {{
+                        item.noteKey
+                          ? t(item.noteKey, item.noteParams ?? {})
+                          : item.note
+                      }}
+                    </div>
                   </div>
                   <Button
                     v-if="item.actionLabel && item.actionTab"

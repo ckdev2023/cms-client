@@ -217,24 +217,25 @@ export function getActiveGroupOptions(locale?: string): GroupSelectOption[] {
  * R2-A-1: 写入路径必须用真实 UUID 作为 value，否则 server 端
  * UUID 列 cast 失败（500）。filter UI 仍可继续用 catalog 短码。
  *
- * R2-B-3: label 直接使用后端 `/api/groups` 返回的 `name`，不再
- * 套上 catalog 本地化（fixture 与 DB 不再错位）。catalog 仅用于
- * 过滤掉指向 disabled fixture 项的别名，避免在写入下拉里出现
- * 已停用项。
+ * R2-B-3 + P2-13: 当 DB name 命中 catalog slug 或任一本地化 label
+ * 时，走 catalog 本地化路径；自定义组名（未命中 catalog）仍以
+ * DB name 为权威显示值。catalog 仍用于过滤 disabled fixture 项。
  *
- * @param _locale - 历史保留参数；当前无效（DB name 已是权威显示值）
- * @returns 形如 `{ value: id, label: dbName }` 的数组；
+ * @param locale - 目标显示语言；命中 catalog 时返回对应语言标签
+ * @returns 形如 `{ value: id, label }` 的数组；
  *   未注册任何别名时返回空数组
  */
 export function getActiveGroupAliasOptions(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  _locale?: string,
+  locale?: string,
 ): GroupSelectOption[] {
   const result: GroupSelectOption[] = [];
   for (const [id, name] of groupAliasesRef.value) {
     const catalogMatch = GROUP_CATALOG.find((g) => matchesGroupDirect(g, name));
     if (catalogMatch && catalogMatch.status === "disabled") continue;
-    result.push({ value: id, label: name });
+    const label = catalogMatch
+      ? catalogMatch.labels[normalizeGroupLocale(locale)]
+      : name;
+    result.push({ value: id, label });
   }
   return result;
 }

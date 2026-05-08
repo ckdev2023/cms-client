@@ -20,6 +20,7 @@ import {
   toDateInputValue,
 } from "./CaseAdapterShared";
 import { buildCustomerLocalizedNames } from "./CaseAdapterCustomerLocale";
+import { buildRelatedPartiesFromDeepLink } from "./CaseAdapterRelatedParties";
 import { buildTeamFromDeepLink } from "./CaseAdapterTeam";
 import { buildTransitionGuards } from "./CaseAdapterTransitionGuards";
 
@@ -460,6 +461,7 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
       m.unpaidAmount,
     ),
     ...EMPTY_LISTS,
+    relatedParties: buildRelatedPartiesFromDeepLink(deepLink),
     documentTemplateMissing: slices.documentTemplateMissing,
     team: buildTeamFromDeepLink(deepLink),
     ...buildP1WithGuards(caseRecord, slices, m, stageId),

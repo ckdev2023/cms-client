@@ -254,16 +254,16 @@ describe("getActiveGroupAliasOptions (R2-A-1 + R2-B-3)", () => {
     expect(options[0]?.value).not.toBe("tokyo-1");
   });
 
-  it("R2-B-3: uses DB-stored name as label, ignoring catalog localized labels", () => {
+  it("P2-13: localizes label when DB name matches catalog", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
     expect(getActiveGroupAliasOptions("zh-CN")).toEqual([
-      { value: FAKE_UUID, label: "tokyo-1" },
+      { value: FAKE_UUID, label: "东京一组" },
     ]);
     expect(getActiveGroupAliasOptions("ja-JP")).toEqual([
-      { value: FAKE_UUID, label: "tokyo-1" },
+      { value: FAKE_UUID, label: "東京一組" },
     ]);
     expect(getActiveGroupAliasOptions("en-US")).toEqual([
-      { value: FAKE_UUID, label: "tokyo-1" },
+      { value: FAKE_UUID, label: "Tokyo Team 1" },
     ]);
   });
 

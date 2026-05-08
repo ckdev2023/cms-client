@@ -921,6 +921,7 @@ const casesJaJP = {
       RENEWAL_REMINDER_SCHEDULED: "更新リマインダー設定済み",
       CLOSED_SUCCESS: "成功クローズ",
       CLOSED_FAILED: "失敗クローズ",
+      prepare: "準備中",
     },
     bmvSteps: {
       WAITING_MATERIAL: "資料待ち",

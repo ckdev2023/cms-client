@@ -315,6 +315,22 @@ describe("CustomerCasesTab", () => {
     expect(openButton.attributes("aria-label")).toContain("CASE-202605-0009");
   });
 
+  it("does not render duplicate disabled create/batchCreate buttons (P1-15)", async () => {
+    const repository = createRepository();
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const allButtons = wrapper.findAll("button");
+    const disabledButtons = allButtons.filter(
+      (b) => b.attributes("disabled") !== undefined,
+    );
+    expect(disabledButtons).toHaveLength(0);
+
+    expect(wrapper.text()).not.toContain("Batch create cases");
+    expect(wrapper.text()).not.toContain("Start case");
+    expect(wrapper.find(".cases-tab__actions").exists()).toBe(false);
+  });
+
   it("navigates to case detail when clicking open", async () => {
     const repository = createRepository();
     const { wrapper, router } = await factory(repository);

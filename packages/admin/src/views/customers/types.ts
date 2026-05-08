@@ -440,9 +440,14 @@ export interface CustomerDetail extends CustomerSummary {
    */
   archivedCases: number;
   /**
-   * 关联案件名称列表，用于摘要条的案件名显示与 popover。
+   * 关联案件名称列表（caseName → caseNumber → ""），保留兼容。
    */
   caseNames: string[];
+  /**
+   * 案件标题列表：case_name 优先 → displayName · caseTypeCode 兜底。
+   * 用于摘要条展示比 caseNames 更可读的标题。
+   */
+  caseTitles: string[];
   /**
    *
    */

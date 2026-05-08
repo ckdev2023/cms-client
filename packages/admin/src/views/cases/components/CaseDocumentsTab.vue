@@ -103,9 +103,20 @@ const groupStats = computed(() =>
         <p class="docs-tab__gate-title">
           {{ t("documents.storageGate.title") }}
         </p>
-        <p class="docs-tab__gate-desc">
-          {{ t("documents.storageGate.description") }}
-        </p>
+        <i18n-t
+          keypath="documents.storageGate.description"
+          tag="p"
+          class="docs-tab__gate-desc"
+        >
+          <template #link>
+            <RouterLink
+              to="/settings?tab=storage-root"
+              class="docs-tab__gate-link"
+            >
+              {{ t("documents.storageGate.settingsLinkText") }}
+            </RouterLink>
+          </template>
+        </i18n-t>
       </div>
     </div>
 

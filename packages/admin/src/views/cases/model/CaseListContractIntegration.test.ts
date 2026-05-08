@@ -431,7 +431,7 @@ describe("master contract surface lock (p0-fe-002b-08)", () => {
     expect(Object.keys(CASE_LIST_BASE_FIELD_MAP)).toHaveLength(10);
     expect(CASE_LIST_BASE_TARGET_KEYS).toHaveLength(10);
     expect(Object.keys(CASE_LIST_DERIVED_FIELD_MAP)).toHaveLength(5);
-    expect(CASE_LIST_DERIVED_TARGET_KEYS).toHaveLength(8);
+    expect(CASE_LIST_DERIVED_TARGET_KEYS).toHaveLength(9);
     expect(CASE_SUMMARY_CARD_KEYS).toHaveLength(4);
     expect(CUSTOMER_DOWNSTREAM_MINIMUM_FIELDS).toHaveLength(8);
     expect(Object.keys(CUSTOMER_DOWNSTREAM_FIELD_MAP)).toHaveLength(7);
@@ -444,9 +444,9 @@ describe("master contract surface lock (p0-fe-002b-08)", () => {
     }
   });
 
-  it("derived field map targets sum to 8", () => {
+  it("derived field map targets sum to 9", () => {
     const allTargets = Object.values(CASE_LIST_DERIVED_FIELD_MAP).flat();
-    expect(allTargets).toHaveLength(8);
+    expect(allTargets).toHaveLength(9);
   });
 
   it("summary card field usage covers all card keys", () => {

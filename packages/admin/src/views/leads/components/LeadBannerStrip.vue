@@ -71,7 +71,7 @@ const showConvertCaseButton = computed(
       type="button"
       @click="$emit('convertCase')"
     >
-      {{ t("leads.detail.actions.convertCase") }}
+      {{ t("leads.detail.actions.startCaseFromSigned") }}
     </button>
   </div>
 </template>

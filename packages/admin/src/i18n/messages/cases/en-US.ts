@@ -926,6 +926,7 @@ const casesEnUS = {
       RENEWAL_REMINDER_SCHEDULED: "Renewal reminder set",
       CLOSED_SUCCESS: "Closed (success)",
       CLOSED_FAILED: "Closed (failed)",
+      prepare: "Preparing",
     },
     bmvSteps: {
       WAITING_MATERIAL: "Awaiting documents",

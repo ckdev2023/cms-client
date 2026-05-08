@@ -186,6 +186,38 @@ export function resolveValidationStatus(
 }
 
 /**
+ * 从校验记录中提取面向列表行的状态标签。
+ *
+ * failed 且有阻断项时附带数量，便于列表行一目了然。
+ *
+ * @param latestVr - 最新校验运行记录
+ * @returns 显示用标签（`"passed"` / `"failed (N)"` / `"pending"` 等）
+ */
+export function resolveValidationLabel(latestVr: unknown): string {
+  const record = asRecord(latestVr);
+  if (!record) return "pending";
+  const status = readString(record, "status");
+  if (status === "passed") return "passed";
+  if (status === "failed") {
+    const blockingCount = readNumber(record, "blockingCount");
+    return blockingCount > 0 ? `failed (${blockingCount})` : "failed"; // i18n-skip
+  }
+  return "pending";
+}
+
+/**
+ * 从校验记录中提取阻断项数量。
+ *
+ * @param latestVr - 最新校验运行记录
+ * @returns 阻断项计数，无记录时返回 `0`
+ */
+export function extractBlockerCount(latestVr: unknown): number {
+  const record = asRecord(latestVr);
+  if (!record) return 0;
+  return readNumber(record, "blockingCount");
+}
+
+/**
  * 将 ISO 日期字符串格式化为零填充 slash 格式 `YYYY/MM/DD`。
  *
  * @param isoString - ISO 时间戳或 `null`

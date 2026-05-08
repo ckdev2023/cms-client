@@ -75,12 +75,14 @@ describe("CustomerAdapter", () => {
       referrerName: "田中先生",
       archivedCases: 1,
       caseNames: ["技人国更新", "永住申请"],
+      caseTitles: ["技人国更新", "永住申请"],
       lastCaseCreatedDate: "2026-04-01",
     });
 
     expect(result?.birthDate).toBe("1991-03-14");
     expect(result?.archivedCases).toBe(1);
     expect(result?.caseNames).toEqual(["技人国更新", "永住申请"]);
+    expect(result?.caseTitles).toEqual(["技人国更新", "永住申请"]);
     expect(result?.location).toBe("JAPAN");
     expect(result?.sourceType).toBe("REFERRAL");
     expect(result?.visaType).toBe("engineer_specialist");

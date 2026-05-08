@@ -33,6 +33,34 @@ describe("CustomerDetailHeader", () => {
     expect(wrapper.text()).toContain("高桥健太");
   });
 
+  it("shows customer.displayName in breadcrumb current segment", () => {
+    const wrapper = mount(CustomerDetailHeader, {
+      global: { plugins: [i18n] },
+      props: {
+        customer: SAMPLE_CUSTOMER_DETAILS["cust-003"]!,
+        avatarInitials: "L",
+      },
+    });
+
+    const crumb = wrapper.find(".detail-header__crumb-current");
+    expect(crumb.text()).toBe("Li Wei");
+  });
+
+  it("falls back to i18n key when displayName is empty", () => {
+    const customer = {
+      ...SAMPLE_CUSTOMER_DETAILS["cust-003"]!,
+      displayName: "",
+    };
+    const wrapper = mount(CustomerDetailHeader, {
+      global: { plugins: [i18n] },
+      props: { customer, avatarInitials: "L" },
+    });
+
+    const crumb = wrapper.find(".detail-header__crumb-current");
+    expect(crumb.text()).not.toBe("");
+    expect(crumb.text()).not.toBe("Li Wei");
+  });
+
   it("resolvesAliasUuidToCatalogLabel — zh-CN shows 东京一组", () => {
     const UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
     registerGroupAliases([{ id: UUID, name: "tokyo-1" }]);

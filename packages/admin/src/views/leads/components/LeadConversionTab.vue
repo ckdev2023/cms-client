@@ -18,6 +18,8 @@ const props = defineProps<{
 defineEmits<{
   convertCustomer: [];
   convertCase: [];
+  viewCustomer: [];
+  viewCase: [];
 }>();
 
 const { t } = useI18n();
@@ -240,6 +242,8 @@ const convertCustomerDisabledHint = computed(() =>
     <LeadConvertedRecords
       v-if="hasConvertedCustomer || hasConvertedCase || hasConversions"
       :conversion="conversion"
+      @view-customer="$emit('viewCustomer')"
+      @view-case="$emit('viewCase')"
     />
   </div>
 </template>

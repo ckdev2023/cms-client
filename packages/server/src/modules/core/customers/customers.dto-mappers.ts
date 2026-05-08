@@ -491,6 +491,7 @@ export function mapCustomerToDetailDto(
     referrerName: pickOptionalString(bp, ["referrerName", "referrer_name"]),
     archivedCases: aggregates.archivedCases ?? 0,
     caseNames: normalizeStringArray(aggregates.caseNames),
+    caseTitles: normalizeStringArray(aggregates.caseTitles),
     lastCaseCreatedDate: aggregates.lastCaseCreatedDate ?? null,
   };
 }

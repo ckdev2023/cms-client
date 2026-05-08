@@ -7,6 +7,7 @@ import {
 } from "./CaseAdapterTypes";
 import {
   asRecord,
+  extractBlockerCount,
   formatDate,
   readNullableString,
   readNumber,
@@ -14,6 +15,7 @@ import {
   readString,
   resolveRiskStatus,
   resolveStageId,
+  resolveValidationLabel,
   resolveValidationStatus,
 } from "./CaseAdapterShared";
 
@@ -63,8 +65,8 @@ function adaptCaseListItemDto(value: unknown): CaseListItem | null {
     completionPercent: 0,
     completionLabel: "",
     validationStatus: resolveValidationStatus(record.latestValidation),
-    validationLabel: "",
-    blockerCount: 0,
+    validationLabel: resolveValidationLabel(record.latestValidation),
+    blockerCount: extractBlockerCount(record.latestValidation),
     unpaidAmount: readNumber(caseRecord, "billingUnpaidAmountCached"),
     updatedAtLabel: formatDate(readNullableString(caseRecord, "updatedAt")),
     dueDate: dueAt ?? "",
@@ -109,7 +111,7 @@ export function adaptCaseListResult(value: unknown): CaseListResult | null {
 // ─── Summary Cards (frozen by p0-fe-002b-06) ────────────────────
 // 聚合口径：
 //   activeCases     — stageId !== "S9" 的计数
-//   failedValidations — validationStatus === "failed" 的计数（含 S9）
+//   failedValidations — validationStatus === "failed" || blockerCount > 0 的计数（含 S9）
 //   dueSoon         — 非 S9 且 dueDate 在 [today, today+7] 的计数
 //   unpaidTotal     — 非 S9 的 unpaidAmount 求和
 // 字段来源全部为 CaseListItem，与列表模型一致。
@@ -143,7 +145,7 @@ export function adaptCaseSummaryCards(
 ): CaseSummaryCardData[] {
   const active = items.filter((c) => c.stageId !== "S9");
   const failedValidations = items.filter(
-    (c) => c.validationStatus === "failed",
+    (c) => c.validationStatus === "failed" || c.blockerCount > 0,
   ).length;
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);

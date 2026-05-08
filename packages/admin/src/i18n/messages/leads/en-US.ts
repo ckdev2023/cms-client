@@ -175,6 +175,7 @@ const leadsEnUS = {
       markLost: "Mark Lost",
       convertCustomer: "Create Customer Only",
       convertCase: "Sign & File",
+      startCaseFromSigned: "Start Filing",
       viewCustomer: "View Customer",
       viewCase: "View Case",
     },

@@ -19,7 +19,33 @@ describe("LeadBannerStrip", () => {
 
     const actionBtn = wrapper.find(".banner__action");
     expect(actionBtn.exists()).toBe(true);
-    expect(actionBtn.text()).toBe("签约并开始建档");
+    expect(actionBtn.text()).toBe("开始建档");
+  });
+
+  it("signedNotConverted CTA uses startCaseFromSigned key (ja-JP)", () => {
+    setAppLocale("ja-JP");
+    const wrapper = mount(LeadBannerStrip, {
+      global: { plugins: [i18n] },
+      props: {
+        banner: "signedNotConverted",
+        convertCaseState: "highlighted",
+      },
+    });
+
+    expect(wrapper.find(".banner__action").text()).toBe("案件作成へ");
+  });
+
+  it("signedNotConverted CTA uses startCaseFromSigned key (en-US)", () => {
+    setAppLocale("en-US");
+    const wrapper = mount(LeadBannerStrip, {
+      global: { plugins: [i18n] },
+      props: {
+        banner: "signedNotConverted",
+        convertCaseState: "highlighted",
+      },
+    });
+
+    expect(wrapper.find(".banner__action").text()).toBe("Start Filing");
   });
 
   it("signedNotConverted with enabled convertCase also renders action button", () => {

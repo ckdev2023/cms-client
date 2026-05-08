@@ -1,14 +1,7 @@
-// ── Test Ownership ──────────────────────────────────────────────
-// Owner: p0-fe-002c-04 — detail aggregate adapter focused tests
-//   (snapshot + empty state + structural integrity).
-// Read-only state tests → CaseAdapterDetailAggregate.readonly.test.ts
-// Contract freeze, header mapping, deep-link
-//   → CaseAdapterDetailAggregate.test.ts
-// Slice degradation per-slice
-//   → CaseAdapterDetailAggregate.slices.test.ts
-// Per-group main-chain mapping
-//   → CaseAdapterDetailAggregate.main-chain.test.ts
-// Does NOT test: list mappers, mutation results, write builders,
+// ── Test Ownership: p0-fe-002c-04 ──────────────────────────────
+// Focused: snapshot + empty state + structural integrity.
+// Related: *.readonly.test, *.test, *.slices.test, *.main-chain.test.
+// Excludes: list mappers, mutation results, write builders,
 //   or repository orchestration.
 // ────────────────────────────────────────────────────────────────
 
@@ -287,9 +280,8 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
     }
   });
 
-  it("placeholder tab collections remain empty (except team)", () => {
+  it("placeholder tab collections remain empty (except team & relatedParties)", () => {
     expect(result.detail.timeline).toEqual([]);
-    expect(result.detail.relatedParties).toEqual([]);
     expect(result.detail.deadlines).toEqual([]);
     expect(result.detail.submissionPackages).toEqual([]);
     expect(result.detail.correctionPackage).toBeNull();
@@ -299,6 +291,17 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
     expect(result.detail.tasks).toEqual([]);
     expect(result.detail.logEntries).toEqual([]);
     expect(result.detail.messages).toEqual([]);
+  });
+
+  it("relatedParties auto-injects primary applicant from deepLink customer", () => {
+    expect(result.detail.relatedParties).toHaveLength(1);
+    expect(result.detail.relatedParties[0]).toEqual({
+      initials: "李明",
+      name: "李明",
+      role: "cases.detail.info.relatedParties.rolePrimary",
+      detail: "",
+      avatarStyle: "gradient",
+    });
   });
 });
 
@@ -407,6 +410,7 @@ describe("all-null empty state (p0-fe-002c-04)", () => {
   it("placeholder tab collections remain empty", () => {
     expect(result.detail.timeline).toEqual([]);
     expect(result.detail.team).toEqual([]);
+    expect(result.detail.relatedParties).toEqual([]);
     expect(result.detail.documents).toEqual([]);
     expect(result.detail.tasks).toEqual([]);
     expect(result.detail.messages).toEqual([]);
@@ -440,5 +444,54 @@ describe("structural key-set integrity (p0-fe-002c-04)", () => {
     const keys = Object.keys(result.tabCounts).sort();
     const expected = [...CASE_DETAIL_TAB_COUNTS_KEYS].sort();
     expect(keys).toEqual(expected);
+  });
+});
+
+// ─── relatedParties injection (p1-6) ─────────────────────────────
+
+describe("relatedParties auto-injection from deepLink (p1-6)", () => {
+  it("injects primary applicant when deepLink has customerName", () => {
+    const result = adaptCaseDetailAggregate(buildFullAggregate())!;
+    expect(result.detail.relatedParties).toHaveLength(1);
+    expect(result.detail.relatedParties[0].name).toBe("李明");
+    expect(result.detail.relatedParties[0].role).toBe(
+      "cases.detail.info.relatedParties.rolePrimary",
+    );
+    expect(result.detail.relatedParties[0].avatarStyle).toBe("gradient");
+  });
+
+  it("returns empty when deepLink is null", () => {
+    const result = adaptCaseDetailAggregate(
+      buildMinimalAggregate({ deepLink: null }),
+    )!;
+    expect(result.detail.relatedParties).toEqual([]);
+  });
+
+  it("returns empty when customerName is empty string", () => {
+    const result = adaptCaseDetailAggregate(
+      buildFullAggregate({
+        deepLink: { ...FULL_DEEP_LINK, customerName: "" },
+      }),
+    )!;
+    expect(result.detail.relatedParties).toEqual([]);
+  });
+
+  it("derives initials from multi-word Japanese name", () => {
+    const result = adaptCaseDetailAggregate(
+      buildFullAggregate({
+        deepLink: { ...FULL_DEEP_LINK, customerName: "田中 太郎" },
+      }),
+    )!;
+    expect(result.detail.relatedParties[0].initials).toBe("田太");
+    expect(result.detail.relatedParties[0].name).toBe("田中 太郎");
+  });
+
+  it("derives initials from single-word name", () => {
+    const result = adaptCaseDetailAggregate(
+      buildFullAggregate({
+        deepLink: { ...FULL_DEEP_LINK, customerName: "Admin" },
+      }),
+    )!;
+    expect(result.detail.relatedParties[0].initials).toBe("AD");
   });
 });

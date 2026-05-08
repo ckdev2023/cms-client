@@ -25,6 +25,7 @@ import type {
 } from "./LeadAdapterTypes";
 import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
 import { sanitizeWalkthroughTags } from "./walkthroughTags";
+import { normalizeBusinessType } from "../../../i18n/messages/_shared/businessTypes";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -174,7 +175,9 @@ function readLeadIdentity(r: Record<string, unknown>) {
 }
 
 function readLeadClassification(r: Record<string, unknown>) {
-  const bt = readString(r, "businessType") || readString(r, "intendedCaseType");
+  const rawBt =
+    readString(r, "businessType") || readString(r, "intendedCaseType");
+  const bt = normalizeBusinessType(rawBt) ?? rawBt;
   const src = readString(r, "sourceChannel") || readString(r, "source");
   return {
     businessType: bt,

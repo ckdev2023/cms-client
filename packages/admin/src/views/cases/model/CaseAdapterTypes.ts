@@ -221,7 +221,7 @@ export const CASE_LIST_BASE_TARGET_KEYS = [
  * latestValidation / riskLevel / dueAt / billingUnpaidAmountCached / updatedAt。
  */
 export const CASE_LIST_DERIVED_FIELD_MAP = {
-  latestValidation: ["validationStatus", "validationLabel"],
+  latestValidation: ["validationStatus", "validationLabel", "blockerCount"],
   riskLevel: ["riskStatus", "riskLabel"],
   dueAt: ["dueDate", "dueDateLabel"],
   billingUnpaidAmountCached: ["unpaidAmount"],
@@ -234,6 +234,7 @@ export const CASE_LIST_DERIVED_FIELD_MAP = {
 export const CASE_LIST_DERIVED_TARGET_KEYS = [
   "validationStatus",
   "validationLabel",
+  "blockerCount",
   "riskStatus",
   "riskLabel",
   "dueDate",

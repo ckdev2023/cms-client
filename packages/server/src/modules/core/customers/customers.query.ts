@@ -117,6 +117,35 @@ function buildCaseNamesExpr(customerAlias: string): string {
     ) named_cases)`;
 }
 
+function buildCaseTitlesExpr(customerAlias: string): string {
+  return `(select coalesce(jsonb_agg(resolved_title order by created_at desc, id desc), '[]'::jsonb)
+    from (
+      select distinct on (ca.id)
+        coalesce(
+          nullif(trim(coalesce(ca.case_name, '')), ''),
+          nullif(
+            trim(concat_ws(' · ',
+              nullif(trim(coalesce(
+                ${customerAlias}.base_profile->>'displayName',
+                ${customerAlias}.base_profile->>'display_name',
+                ${customerAlias}.base_profile->>'name',
+                ${customerAlias}.base_profile->>'name_jp',
+                ${customerAlias}.base_profile->>'name_cn',
+                ''
+              )), ''),
+              nullif(trim(coalesce(ca.case_type_code, '')), '')
+            )),
+            ''
+          ),
+          ''
+        ) as resolved_title,
+        ca.created_at,
+        ca.id
+      from cases ca
+      where ${buildCaseBaseWhere("ca", customerAlias)}
+    ) titled_cases)`;
+}
+
 function buildLastCaseCreatedDateExpr(customerAlias: string): string {
   return `(select max(ca.created_at)
     from cases ca
@@ -362,6 +391,7 @@ export function buildCustomerListSelect(alias = "c"): string {
     `${buildActiveCasesExpr(alias)} as active_cases`,
     `${buildArchivedCasesExpr(alias)} as archived_cases`,
     `${buildCaseNamesExpr(alias)} as case_names`,
+    `${buildCaseTitlesExpr(alias)} as case_titles`,
     `${buildLastCaseCreatedDateExpr(alias)} as last_case_created_date`,
     `${buildOwnerNameExpr(alias)} as owner_name`,
   ].join(",\n        ");
