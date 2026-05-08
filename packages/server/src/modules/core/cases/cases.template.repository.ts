@@ -54,7 +54,7 @@ export async function findActiveCaseTemplateByCaseType(
   return { found: true, items };
 }
 
-function parseRequirementBlueprint(raw: unknown): ChecklistItem[] {
+export function parseRequirementBlueprint(raw: unknown): ChecklistItem[] {
   if (!raw) return [];
 
   const blueprint = extractItemsArray(raw);

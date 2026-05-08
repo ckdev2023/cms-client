@@ -85,7 +85,7 @@ describe("adaptCustomerCaseListResult — caseNumber mapping (BUG-190)", () => {
     expect(result![0].name).toBe("No Number Case");
   });
 
-  it("does not use caseNo as name fallback", () => {
+  it("usesCaseNumberWhenCaseNameMissing", () => {
     const result = adaptCustomerCaseListResult({
       items: [
         {
@@ -102,6 +102,25 @@ describe("adaptCustomerCaseListResult — caseNumber mapping (BUG-190)", () => {
 
     expect(result).not.toBeNull();
     expect(result![0].caseNumber).toBe("CASE-202605-0099");
-    expect(result![0].name).toBe("e07ee9f0-5555-6666-7777-888888888888");
+    expect(result![0].name).toBe("CASE-202605-0099");
+  });
+
+  it("returnsEmptyStringWhenBothMissing", () => {
+    const result = adaptCustomerCaseListResult({
+      items: [
+        {
+          id: "f18ff0a0-6666-7777-8888-999999999999",
+          caseTypeCode: "family",
+          stage: "S1",
+          ownerUserId: "owner-6",
+          createdAt: "2026-05-01",
+          updatedAt: "2026-05-02",
+        },
+      ],
+    });
+
+    expect(result).not.toBeNull();
+    expect(result![0].caseNumber).toBeUndefined();
+    expect(result![0].name).toBe("");
   });
 });

@@ -111,3 +111,57 @@ void test("BUG-158: mapCustomerToDetailDto.visaType is null when neither bmvProf
   const detail = mapCustomerToDetailDto(baseCustomer);
   assert.equal(detail.visaType, null);
 });
+
+// --- A-2: sourceChannel → sourceType mapping ---
+
+void test("mapsSourceChannel_web_to_WEB", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: { ...baseCustomer.baseProfile, sourceChannel: "web" },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, "WEB");
+});
+
+void test("mapsSourceChannel_referral_to_REFERRAL", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: { ...baseCustomer.baseProfile, sourceChannel: "referral" },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, "REFERRAL");
+});
+
+void test("mapsSourceChannel_ad_to_ADS", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: { ...baseCustomer.baseProfile, sourceChannel: "ad" },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, "ADS");
+});
+
+void test("mapsSourceChannel_ads_to_ADS", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: { ...baseCustomer.baseProfile, sourceChannel: "ads" },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, "ADS");
+});
+
+void test("mapsSourceChannel_walkin_returns_null", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: { ...baseCustomer.baseProfile, sourceChannel: "walkin" },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, null);
+});
+
+void test("prefersLegacySourceTypeOverSourceChannel", () => {
+  const customer: Customer = {
+    ...baseCustomer,
+    baseProfile: {
+      ...baseCustomer.baseProfile,
+      sourceType: "REFERRAL",
+      sourceChannel: "web",
+    },
+  };
+  assert.equal(mapCustomerToDetailDto(customer).sourceType, "REFERRAL");
+});

@@ -7,8 +7,8 @@ import {
   CUSTOMER_BMV_SIGN_STATUSES,
   CUSTOMER_LOCATIONS,
   CUSTOMER_RELATION_TYPES,
-  CUSTOMER_SOURCE_TYPES,
 } from "./customers.types";
+import { pickSourceType } from "./customers.source-type";
 import type {
   CustomerBmvIntakeStatus,
   CustomerBmvProfile,
@@ -484,11 +484,7 @@ export function mapCustomerToDetailDto(
     avatar: pickOptionalString(bp, CUSTOMER_AVATAR_FIELDS) ?? "",
     note: pickOptionalString(bp, CUSTOMER_NOTE_FIELDS) ?? "",
     location: pickEnum(bp, ["location"], CUSTOMER_LOCATIONS),
-    sourceType: pickEnum(
-      bp,
-      ["sourceType", "source_type"],
-      CUSTOMER_SOURCE_TYPES,
-    ),
+    sourceType: pickSourceType(bp, pickOptionalString),
     visaType:
       summary.bmvProfile.visaPlan ??
       pickOptionalString(bp, ["visaType", "visa_type"]),

@@ -22,6 +22,8 @@ type BackfillRow = {
   owner_user_id: string | null;
   group_id: string | null;
   intended_case_type: string | null;
+  source_channel: string | null;
+  lead_name: string | null;
 };
 
 /** バックフィル時に customers.base_profile へマージする差分。 */
@@ -29,7 +31,31 @@ type BackfillPatch = {
   ownerUserId?: string;
   groupId?: string;
   visaType?: string;
+  sourceChannel?: string;
+  name_jp?: string;
+  name_cn?: string;
 };
+
+function resolveVisaPatch(
+  bp: Record<string, unknown>,
+  row: BackfillRow,
+): string | undefined {
+  if (bp.visaType || !row.intended_case_type) return undefined;
+  return (
+    mapIntendedCaseTypeToCustomerVisaType(row.intended_case_type) ?? undefined
+  );
+}
+
+function resolveNamePatches(
+  bp: Record<string, unknown>,
+  leadName: string | null,
+): Pick<BackfillPatch, "name_jp" | "name_cn"> {
+  if (!leadName) return {};
+  const result: Pick<BackfillPatch, "name_jp" | "name_cn"> = {};
+  if (!bp.name_jp) result.name_jp = leadName;
+  if (!bp.name_cn) result.name_cn = leadName;
+  return result;
+}
 
 /**
  * 行ごとに不足フィールドを検出してパッチを構築する。
@@ -41,18 +67,15 @@ function buildPatch(row: BackfillRow): BackfillPatch | null {
   const bp = row.base_profile;
   const patch: BackfillPatch = {};
 
-  if (!bp.ownerUserId && row.owner_user_id) {
+  if (!bp.ownerUserId && row.owner_user_id)
     patch.ownerUserId = row.owner_user_id;
-  }
+  if (!bp.groupId && row.group_id) patch.groupId = row.group_id;
 
-  if (!bp.groupId && row.group_id) {
-    patch.groupId = row.group_id;
-  }
+  const visa = resolveVisaPatch(bp, row);
+  if (visa) patch.visaType = visa;
 
-  if (!bp.visaType && row.intended_case_type) {
-    const visa = mapIntendedCaseTypeToCustomerVisaType(row.intended_case_type);
-    if (visa) patch.visaType = visa;
-  }
+  if (!bp.sourceChannel) patch.sourceChannel = row.source_channel ?? "unknown";
+  Object.assign(patch, resolveNamePatches(bp, row.lead_name));
 
   return Object.keys(patch).length > 0 ? patch : null;
 }
@@ -64,7 +87,8 @@ export { buildPatch, type BackfillRow, type BackfillPatch };
 export const BACKFILL_QUERY = `
   SELECT c.id AS customer_id, c.base_profile,
          l.owner_user_id,
-         l.group_id, l.intended_case_type
+         l.group_id, l.intended_case_type,
+         l.source_channel, l.name AS lead_name
   FROM customers c
   JOIN leads l ON l.converted_customer_id = c.id
   WHERE l.converted_customer_id IS NOT NULL

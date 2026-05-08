@@ -111,14 +111,14 @@ describe("CaseCreateStep2 — BUG-139 group UUID rendering", () => {
     }
   });
 
-  it("R2-B-3: renders DB name on selected primary customer card", async () => {
+  it("B-0: renders localized label on selected primary customer card when DB name matches catalog", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
-    const customer = buildCustomer({ groupLabel: "tokyo-1" });
+    const customer = buildCustomer({ groupLabel: "东京一组" });
     const wrapper = mountStep2(customer);
     await wrapper.vm.$nextTick();
     const partyText = wrapper.find(".party").text();
     expect(partyText).toContain("R6试探客户");
-    expect(partyText).toContain("tokyo-1");
+    expect(partyText).toContain("东京一组");
     expect(partyText).not.toContain(SAMPLE_UUID);
   });
 
@@ -131,22 +131,22 @@ describe("CaseCreateStep2 — BUG-139 group UUID rendering", () => {
 
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("tokyo-1");
+    expect(wrapper.find(".party").text()).toContain("东京一组");
   });
 
-  it("R2-B-3: alias-path display on selected card is locale-invariant (DB name is canonical)", async () => {
+  it("B-0: alias-path display on selected card is locale-dependent when DB name matches catalog", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const customer = buildCustomer();
     const wrapper = mountStep2(customer);
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("tokyo-1");
+    expect(wrapper.find(".party").text()).toContain("东京一组");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("tokyo-1");
+    expect(wrapper.find(".party").text()).toContain("Tokyo Team 1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(wrapper.find(".party").text()).toContain("tokyo-1");
+    expect(wrapper.find(".party").text()).toContain("東京一組");
   });
 });

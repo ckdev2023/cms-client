@@ -137,13 +137,13 @@ describe("adaptCustomerDropdownItem — BUG-139 + R2-B-3 locale-aware groupLabel
     expect(result?.groupLabel).toBe("东京一组");
   });
 
-  it("R2-B-3: translates UUID via alias map to DB-stored name verbatim", () => {
+  it("B-0: translates UUID via alias map to localized label when DB name matches catalog", () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const result = adaptCustomerDropdownItem(
       { ...VALID_ITEMS.items[0], group: SAMPLE_UUID },
       "zh-CN",
     );
-    expect(result?.groupLabel).toBe("tokyo-1");
+    expect(result?.groupLabel).toBe("东京一组");
     expect(result?.group).toBe(SAMPLE_UUID);
   });
 
@@ -182,7 +182,7 @@ describe("useCustomerDropdownData — BUG-139 + R2-B-3 locale getter wiring", ()
     clearGroupAliases();
   });
 
-  it("R2-B-3: translates UUID groupLabel through locale getter to DB name at fetch time", async () => {
+  it("B-0: translates UUID groupLabel through locale getter to localized label at fetch time", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const request = stubFetch({
       items: [{ id: "c-9", displayName: "R12 应试客户", group: SAMPLE_UUID }],
@@ -198,7 +198,7 @@ describe("useCustomerDropdownData — BUG-139 + R2-B-3 locale getter wiring", ()
 
     expect(dd.customers.value).toHaveLength(1);
     expect(dd.customers.value[0].group).toBe(SAMPLE_UUID);
-    expect(dd.customers.value[0].groupLabel).toBe("tokyo-1");
+    expect(dd.customers.value[0].groupLabel).toBe("东京一组");
   });
 });
 

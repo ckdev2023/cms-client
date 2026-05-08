@@ -77,26 +77,26 @@ describe("BillingTable — BUG-159 fix-with-data closure", () => {
     clearGroupAliases();
   });
 
-  it("R2-B-3: renders DB-stored alias name verbatim when server-persisted UUID is alias-registered", async () => {
+  it("B-0: renders localized catalog label when server-persisted UUID alias matches catalog", async () => {
     registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable([{ ...BASE_ROW }]);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
+    expect(readGroupCellText(wrapper)).toBe("东京一组");
   });
 
-  it("R2-B-3: alias-path display is locale-invariant (DB name is canonical)", async () => {
+  it("B-0: alias-path display is locale-dependent when DB name matches catalog", async () => {
     registerGroupAliases([{ id: GROUP_UUID, name: "tokyo-1" }]);
     const wrapper = mountTable([{ ...BASE_ROW }]);
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
+    expect(readGroupCellText(wrapper)).toBe("东京一组");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
+    expect(readGroupCellText(wrapper)).toBe("Tokyo Team 1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(readGroupCellText(wrapper)).toBe("tokyo-1");
+    expect(readGroupCellText(wrapper)).toBe("東京一組");
   });
 
   it("R2-B-3: server-side custom name is rendered as-is regardless of locale", async () => {

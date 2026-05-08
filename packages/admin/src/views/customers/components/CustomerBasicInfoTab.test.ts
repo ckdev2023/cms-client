@@ -230,7 +230,7 @@ describe("CustomerBasicInfoTab", () => {
     );
   });
 
-  it("localizes furigana label and group value in zh-CN", () => {
+  it("localizes furigana label and group select uses slug value in zh-CN", () => {
     setAppLocale("zh-CN");
     const { wrapper: w } = factory();
 
@@ -238,7 +238,7 @@ describe("CustomerBasicInfoTab", () => {
       "假名（片假名）",
     );
     expect((w.find("#basicInfoGroup").element as HTMLSelectElement).value).toBe(
-      "东京一组",
+      "tokyo-1",
     );
   });
 

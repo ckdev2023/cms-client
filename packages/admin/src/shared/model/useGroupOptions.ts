@@ -4,14 +4,13 @@
  * Catalog 内置 fixture 三项；运行期可通过 `registerGroupAliases` 把
  * 后端 `/api/groups` 返回的 `{ id, name }` 注册到一个响应式别名表。
  *
- * 显示策略（R2-B-3 调整后）：
+ * 显示策略（R6-B-0 调整后）：
  * - 当输入直接命中 catalog（slug / 任一本地化 label） → 返回 catalog
  *   本地化 label（保留 fixture 演示形态，向后兼容仅用 slug 的调用方）。
- * - 当输入仅在别名表命中（典型为后端 UUID） → **以 `/api/groups` 返回
- *   的 `name` 作为权威显示值**，catalog 仅参与 `disabled` 后缀判定，
- *   不再用 catalog 本地化 label 覆盖 DB 名称。这样可以避免「DB
- *   存的是 `tokyo-1`，UI 却显示 `東京一組`」的 fixture / DB 错位
- *   （详见 R-CONSULT-02 R2-B-3）。
+ * - 当输入仅在别名表命中（典型为后端 UUID） → 取出 DB name 后再匹配
+ *   catalog：**仅当 DB name 命中 catalog（slug 或任一本地化 label）时
+ *   走 catalog 本地化路径**；自定义组名（未命中 catalog）仍以 DB name
+ *   为权威显示值（保留 R-CONSULT-02 R2-B-3 对自定义组名的兼容）。
  *
  * 别名表使用 Vue `ref` 持有，注册后能触发 `computed` 重算，
  * 因此调用方（如 `CustomerTableRow.vue`）首屏拿到 UUID 也会在
@@ -280,19 +279,19 @@ export function isGroupDisabledByLabel(label: string): boolean {
 /**
  * 解析 Group 显示名称：若 Group 为 disabled 则追加已停用后缀。
  *
- * 解析顺序（R2-B-3 调整后）：
+ * 解析顺序（R6-B-0 调整后）：
  * 1. catalog 直匹配（slug / 任一本地化 label）→ 返回 catalog 本地化 label，
  *    保持 fixture 演示路径向后兼容。
- * 2. 运行期别名命中（UUID → DB name）→ **以 DB name 作为显示值**；
- *    若 DB name 经 catalog 标记为 disabled，则在 DB name 后追加 disabled
- *    后缀。不再使用 catalog 本地化覆盖 DB name，避免 fixture 与 DB 错位。
+ * 2. 运行期别名命中（UUID → DB name）→ 若 DB name 命中 catalog（slug
+ *    或任一本地化 label），返回 catalog 本地化 label；否则以 DB name
+ *    为权威显示值（保留 R2-B-3 对自定义组名的兼容）。
  * 3. 输入像 UUID 但未命中以上路径 → 占位为 `—`，避免直显 UUID。
  * 4. 其余原样返回。
  *
  * @param idOrLabel - Group ID 或显示名称
  * @param disabledSuffix - 已停用后缀文案（支持 i18n），默认"（已停用）"
- * @param locale - 目标显示语言；仅在 catalog 直匹配路径生效；
- *   alias 路径以 DB name 为权威值，不受 locale 影响
+ * @param locale - 目标显示语言；catalog 直匹配与 alias 命中 catalog
+ *   两条路径均生效；自定义组名（未命中 catalog）不受 locale 影响
  * @returns 带状态标记的显示名称
  */
 export function resolveGroupLabel(
@@ -307,12 +306,16 @@ export function resolveGroupLabel(
   }
   const aliased = lookupAlias(idOrLabel);
   if (aliased) {
-    const catalogForStatus = GROUP_CATALOG.find((g) =>
+    const catalogForAlias = GROUP_CATALOG.find((g) =>
       matchesGroupDirect(g, aliased),
     );
-    return catalogForStatus?.status === "disabled"
-      ? `${aliased}${disabledSuffix}`
-      : aliased;
+    if (catalogForAlias) {
+      const label = catalogForAlias.labels[normalizeGroupLocale(locale)];
+      return catalogForAlias.status === "disabled"
+        ? `${label}${disabledSuffix}`
+        : label;
+    }
+    return aliased;
   }
   if (looksLikeUuid(idOrLabel)) return "—";
   return idOrLabel;

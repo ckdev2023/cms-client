@@ -12,6 +12,10 @@ import {
   clearUserAliases,
   registerUserAliases,
 } from "../../../shared/model/useOrgUserOptions";
+import {
+  clearGroupAliases,
+  registerGroupAliases,
+} from "../../../shared/model/useGroupOptions";
 
 function createRepository(
   overrides: Partial<Pick<CustomerRepository, "updateCustomerBasicInfo">> = {},
@@ -203,6 +207,53 @@ describe("useCustomerBasicInfoModel", () => {
       groupOptions.value.some((option) => option.label.includes("已停用")),
     ).toBe(true);
     expect(ownerOptions.value.length).toBeGreaterThan(0);
+  });
+
+  describe("groupOptions (catalog + alias merge)", () => {
+    const ALIAS_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+
+    afterEach(() => {
+      clearGroupAliases();
+    });
+
+    it("mergesCatalogAndAliasGroupOptions", () => {
+      registerGroupAliases([{ id: ALIAS_UUID, name: "tokyo-1" }]);
+
+      const customer = makeCustomerRef("cust-001");
+      const locale = ref("zh-CN");
+      const { groupOptions } = useCustomerBasicInfoModel({
+        customer: customer.computed,
+        repository: createRepository(),
+        locale,
+      });
+
+      const values = groupOptions.value.map((o) => o.value);
+      expect(values).toContain("tokyo-1");
+      expect(values).toContain("tokyo-2");
+      expect(values).toContain(ALIAS_UUID);
+      expect(new Set(values).size).toBe(values.length);
+    });
+
+    it("selectsAliasUuidWhenSnapshotIsRawSlug", () => {
+      registerGroupAliases([{ id: ALIAS_UUID, name: "tokyo-1" }]);
+
+      const customerRef = ref<CustomerDetail | null>({
+        ...SAMPLE_CUSTOMER_DETAILS["cust-001"]!,
+        group: ALIAS_UUID,
+      });
+      const customer = computed<CustomerDetail | null>(() => customerRef.value);
+      const locale = ref("zh-CN");
+      const { currentSnapshot, groupOptions } = useCustomerBasicInfoModel({
+        customer,
+        repository: createRepository(),
+        locale,
+      });
+
+      expect(currentSnapshot.value!.group).toBe("东京一组");
+
+      const values = groupOptions.value.map((o) => o.value);
+      expect(values).toContain(ALIAS_UUID);
+    });
   });
 
   describe("ownerOptions (active users)", () => {

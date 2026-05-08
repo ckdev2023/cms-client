@@ -227,7 +227,7 @@ describe("CustomerAdapter", () => {
       },
       {
         id: "case-002",
-        name: "case-002",
+        name: "",
         type: "",
         stage: "",
         status: "archived",

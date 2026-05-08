@@ -74,11 +74,11 @@ describe("CustomerTableRow — BUG-136 group UUID rendering", () => {
     expect(chipText).toBe("—");
   });
 
-  it("R2-B-3: renders DB-stored alias name verbatim when alias maps UUID to catalog slug", async () => {
+  it("B-0: renders localized catalog label when alias maps UUID to catalog slug", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const wrapper = mountRow(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupChipText(wrapper)).toBe("tokyo-1");
+    expect(readGroupChipText(wrapper)).toBe("东京一组");
   });
 
   it("renders raw server-side name when alias points outside catalog", async () => {
@@ -88,29 +88,29 @@ describe("CustomerTableRow — BUG-136 group UUID rendering", () => {
     expect(readGroupChipText(wrapper)).toBe("MyCustomGroup");
   });
 
-  it("re-renders to DB name after alias is registered post-mount (R2-B-3)", async () => {
+  it("re-renders to localized label after alias is registered post-mount (B-0)", async () => {
     const wrapper = mountRow(SAMPLE_UUID);
     expect(readGroupChipText(wrapper)).toBe("—");
 
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     await wrapper.vm.$nextTick();
 
-    expect(readGroupChipText(wrapper)).toBe("tokyo-1");
+    expect(readGroupChipText(wrapper)).toBe("东京一组");
   });
 
-  it("R2-B-3: alias-path display is locale-invariant (DB name is canonical)", async () => {
+  it("B-0: alias-path display is locale-dependent when DB name matches catalog", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "tokyo-1" }]);
     const wrapper = mountRow(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupChipText(wrapper)).toBe("tokyo-1");
+    expect(readGroupChipText(wrapper)).toBe("东京一组");
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
-    expect(readGroupChipText(wrapper)).toBe("tokyo-1");
+    expect(readGroupChipText(wrapper)).toBe("Tokyo Team 1");
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
-    expect(readGroupChipText(wrapper)).toBe("tokyo-1");
+    expect(readGroupChipText(wrapper)).toBe("東京一組");
   });
 
   it("keeps existing static catalog slug rendering localized (fixture path BC)", () => {
@@ -118,10 +118,10 @@ describe("CustomerTableRow — BUG-136 group UUID rendering", () => {
     expect(readGroupChipText(wrapper)).toBe("东京一组");
   });
 
-  it("appends disabled suffix to DB name when alias points to a disabled catalog group (R2-B-3)", async () => {
+  it("appends disabled suffix to localized label when alias points to a disabled catalog group (B-0)", async () => {
     registerGroupAliases([{ id: SAMPLE_UUID, name: "osaka" }]);
     const wrapper = mountRow(SAMPLE_UUID);
     await wrapper.vm.$nextTick();
-    expect(readGroupChipText(wrapper)).toBe("osaka（已停用）");
+    expect(readGroupChipText(wrapper)).toBe("大阪组（已停用）");
   });
 });

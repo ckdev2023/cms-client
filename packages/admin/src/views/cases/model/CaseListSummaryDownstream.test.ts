@@ -386,7 +386,7 @@ describe("cross-adapter contract (p0-fe-002b-07)", () => {
       items: [dtoWithoutCaseName],
     });
     expect(result).not.toBeNull();
-    expect(result![0].name).toBe("case-degrade");
+    expect(result![0].name).toBe("");
   });
 
   it("customer adapter parses wrapped (summary) DTO into CustomerCase (p0-fe-009-01)", () => {

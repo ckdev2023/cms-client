@@ -1,6 +1,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import type { CustomerDetail, SelectOption } from "../types";
 import {
+  getActiveGroupAliasOptions,
   getActiveGroupOptions,
   isGroupDisabled,
   resolveGroupLabel,
@@ -146,7 +147,7 @@ export function snapshotFromCustomer(
     owner: resolveOwnerLabel(customer.owner.name, locale),
     referralSource: customer.referralSource,
     location: customer.location,
-    sourceType: customer.sourceType,
+    sourceType: customer.sourceType ? customer.sourceType.toUpperCase() : "",
     visaType: customer.visaType,
     referrerName: customer.referrerName,
     avatar: customer.avatar,
@@ -188,12 +189,23 @@ function useBasicInfoOptions(
   disabledSuffix?: Readonly<Ref<string>>,
 ) {
   const groupOptions = computed<readonly SelectOption[]>(() => {
-    const active = getActiveGroupOptions(locale?.value);
+    const catalogOpts = getActiveGroupOptions(locale?.value);
+    const aliasOpts = getActiveGroupAliasOptions(locale?.value);
+
+    const seen = new Set(catalogOpts.map((o) => o.value));
+    const merged: SelectOption[] = [...catalogOpts];
+    for (const opt of aliasOpts) {
+      if (!seen.has(opt.value)) {
+        seen.add(opt.value);
+        merged.push(opt);
+      }
+    }
+
     const currentGroup = currentSnapshot.value?.group ?? "";
     const currentGroupValue = resolveGroupValue(currentGroup);
     if (currentGroupValue && isGroupDisabled(currentGroupValue)) {
       return [
-        ...active,
+        ...merged,
         {
           value: currentGroupValue,
           label: resolveGroupLabel(
@@ -204,7 +216,7 @@ function useBasicInfoOptions(
         },
       ];
     }
-    return active;
+    return merged;
   });
 
   const ownerOptions = computed<readonly SelectOption[]>(() => {

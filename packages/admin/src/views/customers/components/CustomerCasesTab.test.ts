@@ -286,6 +286,35 @@ describe("CustomerCasesTab", () => {
     expect(idTd.attributes("title")).toBe("case-no-number");
   });
 
+  it("renders caseNumber as button text when caseName is missing (C-4)", async () => {
+    const repository = createRepository({
+      listRelatedCases: vi.fn().mockResolvedValue([
+        {
+          id: "a63aa5f0-1111-2222-3333-444444444444",
+          caseNumber: "CASE-202605-0009",
+          name: "CASE-202605-0009",
+          type: "work",
+          stage: "S2",
+          status: "active",
+          owner: "高桥健太",
+          createdAt: "2026-05-01",
+          updatedAt: "2026-05-02",
+        },
+      ]),
+    });
+    const { wrapper } = await factory(repository);
+    await flushPromises();
+
+    const nameButton = wrapper.find(".cases-tab__name-link");
+    expect(nameButton.text()).toBe("CASE-202605-0009");
+    expect(nameButton.text()).not.toContain("a63aa5f0");
+
+    const openButton = wrapper
+      .findAll("button")
+      .find((b) => b.text() === "Open")!;
+    expect(openButton.attributes("aria-label")).toContain("CASE-202605-0009");
+  });
+
   it("navigates to case detail when clicking open", async () => {
     const repository = createRepository();
     const { wrapper, router } = await factory(repository);

@@ -8,6 +8,7 @@ import CustomerLocalizedFilePicker from "./CustomerLocalizedFilePicker.vue";
 import type { CustomerDetail } from "../types";
 import { CUSTOMER_VISA_TYPES } from "../types-customer-fields";
 import { resolveVisaTypeLabel } from "../../../shared/model/visaTypeOptions";
+import { resolveGroupValue } from "../../../shared/model/useGroupOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
 import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
 import type { CustomerRepository } from "../model/CustomerRepository";
@@ -275,7 +276,9 @@ const bmvVisaTypeLabel = computed(() =>
             id="basicInfoGroup"
             name="group"
             :class="selectCls"
-            :value="displayValues.group"
+            :value="
+              resolveGroupValue(displayValues.group) ?? displayValues.group
+            "
             :disabled="!isEditing"
             :aria-disabled="!isEditing"
             @change="onSelect('group', $event)"
@@ -283,7 +286,7 @@ const bmvVisaTypeLabel = computed(() =>
             <option
               v-for="opt in groupOptions"
               :key="opt.value"
-              :value="opt.label"
+              :value="opt.value"
             >
               {{ opt.label }}
             </option>

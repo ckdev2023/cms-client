@@ -86,14 +86,17 @@ async function insertLead(
     groupId?: string | null;
     intendedCaseType?: string | null;
     convertedCustomerId?: string | null;
+    sourceChannel?: string | null;
+    name?: string | null;
   } = {},
 ) {
   const pool = getTestPool();
   await pool.query(
     `INSERT INTO leads (
        id, org_id, status, owner_user_id, group_id,
-       intended_case_type, converted_customer_id
-     ) VALUES ($1, $2, 'signed', $3, $4, $5, $6)
+       intended_case_type, converted_customer_id,
+       source_channel, name
+     ) VALUES ($1, $2, 'signed', $3, $4, $5, $6, $7, $8)
      ON CONFLICT DO NOTHING`,
     [
       id,
@@ -102,6 +105,8 @@ async function insertLead(
       overrides.groupId ?? null,
       overrides.intendedCaseType ?? null,
       overrides.convertedCustomerId ?? null,
+      overrides.sourceChannel ?? null,
+      overrides.name ?? null,
     ],
   );
 }
@@ -198,6 +203,7 @@ void test("applyBackfill returns skipped count for fully populated customers", a
     ownerUserId: USER_ID,
     groupId: GROUP_ID,
     visaType: "business_manager",
+    sourceChannel: "web",
   });
   await insertLead(LEAD_C, {
     ownerUserId: USER_ID,
@@ -245,6 +251,70 @@ void test("buildPatch uses owner_user_id directly", () => {
     owner_user_id: "u-owner",
     group_id: null,
     intended_case_type: null,
+    source_channel: null,
+    lead_name: null,
   });
-  assert.deepEqual(patch, { ownerUserId: "u-owner" });
+  assert.deepEqual(patch, { ownerUserId: "u-owner", sourceChannel: "unknown" });
+});
+
+// ── 7. applyBackfill fills sourceChannel and dual name from lead ──
+
+void test("applyBackfill fills sourceChannel and dual name from lead", async () => {
+  const pool = getTestPool();
+  await seedBase();
+
+  await insertCustomer(CUSTOMER_A);
+  await insertLead(LEAD_A, {
+    ownerUserId: USER_ID,
+    groupId: GROUP_ID,
+    intendedCaseType: "dependent_visa",
+    convertedCustomerId: CUSTOMER_A,
+    sourceChannel: "web",
+    name: "測試太郎",
+  });
+
+  const { rows } = await pool.query<BackfillRow>(BACKFILL_QUERY);
+  await applyBackfill(pool, rows, false);
+
+  const bp = await readBaseProfile(CUSTOMER_A);
+  assert.equal(bp.sourceChannel, "web", "sourceChannel backfilled from lead");
+  assert.equal(bp.name_jp, "測試太郎", "name_jp backfilled from lead.name");
+  assert.equal(bp.name_cn, "測試太郎", "name_cn backfilled from lead.name");
+});
+
+// ── 8. applyBackfill fills sourceChannel='unknown' when lead.source_channel is null ──
+
+void test("applyBackfill fills sourceChannel='unknown' when lead.source_channel is null", async () => {
+  const pool = getTestPool();
+  await seedBase();
+
+  await insertCustomer(CUSTOMER_A);
+  await insertLead(LEAD_A, {
+    ownerUserId: USER_ID,
+    groupId: GROUP_ID,
+    intendedCaseType: "work",
+    convertedCustomerId: CUSTOMER_A,
+    sourceChannel: null,
+    name: null,
+  });
+
+  const { rows } = await pool.query<BackfillRow>(BACKFILL_QUERY);
+  await applyBackfill(pool, rows, false);
+
+  const bp = await readBaseProfile(CUSTOMER_A);
+  assert.equal(
+    bp.sourceChannel,
+    "unknown",
+    "sourceChannel falls back to 'unknown' when lead has no source_channel",
+  );
+  assert.equal(
+    bp.name_jp,
+    undefined,
+    "name_jp not backfilled when lead.name is null",
+  );
+  assert.equal(
+    bp.name_cn,
+    undefined,
+    "name_cn not backfilled when lead.name is null",
+  );
 });

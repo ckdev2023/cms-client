@@ -219,11 +219,11 @@ describe("response DTO → CustomerCase adapter contract (p0-fe-009-03)", () => 
     expect(result![0].status).toBe("archived");
   });
 
-  it("adapter falls back name to id when caseName is missing", () => {
+  it("adapter falls back name to empty string when caseName and caseNumber are missing", () => {
     const result = adaptCustomerCaseListResult({
       items: [canonicalCaseDto({ caseName: "", caseNo: "" })],
     });
-    expect(result![0].name).toBe("case-reg-001");
+    expect(result![0].name).toBe("");
   });
 
   it("multiple items with same customerId are all preserved", () => {

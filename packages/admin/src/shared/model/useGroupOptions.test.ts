@@ -142,22 +142,26 @@ describe("registerGroupAliases (BUG-136 + R2-B-3)", () => {
     clearGroupAliases();
   });
 
-  it("R2-B-3: alias UUID renders DB-stored name verbatim, not catalog localized label", () => {
+  it("R6-B-0: alias UUID whose DB name matches catalog slug returns localized label", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-1");
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "ja-JP")).toBe("tokyo-1");
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
+      "东京一组",
+    );
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "ja-JP")).toBe(
+      "東京一組",
+    );
     expect(resolveGroupLabel(FAKE_UUID, " (Disabled)", "en-US")).toBe(
-      "tokyo-1",
+      "Tokyo Team 1",
     );
   });
 
-  it("R2-B-3: appends disabled suffix using catalog status, but keeps DB name as base", () => {
+  it("R6-B-0: appends disabled suffix using catalog localized label when DB name matches catalog", () => {
     registerGroupAliases([{ id: OTHER_UUID, name: "osaka" }]);
     expect(resolveGroupLabel(OTHER_UUID, "（已停用）", "zh-CN")).toBe(
-      "osaka（已停用）",
+      "大阪组（已停用）",
     );
     expect(resolveGroupLabel(OTHER_UUID, " (Disabled)", "en-US")).toBe(
-      "osaka (Disabled)",
+      "Osaka Team (Disabled)",
     );
   });
 
@@ -197,15 +201,36 @@ describe("registerGroupAliases (BUG-136 + R2-B-3)", () => {
 
   it("clearGroupAliases resets all registered aliases", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-1");
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
+      "东京一组",
+    );
     clearGroupAliases();
     expect(resolveGroupLabel(FAKE_UUID)).toBe("—");
   });
 
-  it("later registration overwrites previous alias for same id (R2-B-3 verbatim)", () => {
+  it("later registration overwrites previous alias for same id", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-2" }]);
-    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe("tokyo-2");
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
+      "东京二组",
+    );
+  });
+
+  it("resolveGroupLabel_aliasNameMatchesCatalogSlug_returnsLocalizedLabel", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
+    const label = resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN");
+    expect(label).toBe("东京一组");
+    expect(label).not.toBe("tokyo-1");
+  });
+
+  it("resolveGroupLabel_aliasNameNotInCatalog_returnsRawDbName", () => {
+    registerGroupAliases([{ id: FAKE_UUID, name: "営業一課" }]);
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "zh-CN")).toBe(
+      "営業一課",
+    );
+    expect(resolveGroupLabel(FAKE_UUID, "（已停用）", "ja-JP")).toBe(
+      "営業一課",
+    );
   });
 });
 

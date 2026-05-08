@@ -205,11 +205,13 @@ function looksLikeUuid(value: string): boolean {
                   type="button"
                   class="cases-tab__name-link"
                   :aria-label="
-                    t('customers.detail.casesTab.openCase', { name: c.name })
+                    t('customers.detail.casesTab.openCase', {
+                      name: c.name || c.caseNumber || c.id,
+                    })
                   "
                   @click="openCase(c.id)"
                 >
-                  {{ c.name }}
+                  {{ c.name || c.caseNumber || "—" }}
                 </button>
               </td>
               <td class="cases-tab__td cases-tab__td--type" :title="c.type">
@@ -239,7 +241,9 @@ function looksLikeUuid(value: string): boolean {
                   size="sm"
                   pill
                   :aria-label="
-                    t('customers.detail.casesTab.openCase', { name: c.name })
+                    t('customers.detail.casesTab.openCase', {
+                      name: c.name || c.caseNumber || c.id,
+                    })
                   "
                   @click="openCase(c.id)"
                 >
