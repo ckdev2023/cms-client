@@ -302,12 +302,13 @@ void test("DocumentAssetsService.get returns null when not found", async () => {
 // ── buildUpsertAssetSql ──
 
 void test("buildUpsertAssetSql uses customer conflict target when ownerCustomerId is set", () => {
-  const { insertSql, fallbackSql, params } = buildUpsertAssetSql({
-    orgId: ORG_ID,
-    materialCode: "passport",
-    ownerSubjectType: "customer",
-    ownerCustomerId: CUSTOMER_ID,
-  });
+  const { insertSql, insertParams, fallbackSql, fallbackParams } =
+    buildUpsertAssetSql({
+      orgId: ORG_ID,
+      materialCode: "passport",
+      ownerSubjectType: "customer",
+      ownerCustomerId: CUSTOMER_ID,
+    });
 
   assert.ok(
     insertSql.includes("ON CONFLICT"),
@@ -325,28 +326,46 @@ void test("buildUpsertAssetSql uses customer conflict target when ownerCustomerI
     fallbackSql.includes("owner_customer_id"),
     "fallback should match on owner_customer_id",
   );
-  assert.equal(params.length, 7);
-  assert.equal(params[0], ORG_ID);
-  assert.equal(params[1], "passport");
-  assert.equal(params[3], CUSTOMER_ID);
+  assert.equal(insertParams.length, 7);
+  assert.equal(insertParams[0], ORG_ID);
+  assert.equal(insertParams[1], "passport");
+  assert.equal(insertParams[3], CUSTOMER_ID);
+  assert.equal(
+    fallbackParams.length,
+    4,
+    "fallback should bind exactly the placeholders it references",
+  );
+  assert.deepStrictEqual(fallbackParams, [
+    ORG_ID,
+    "passport",
+    "customer",
+    CUSTOMER_ID,
+  ]);
 });
 
 void test("buildUpsertAssetSql uses employer conflict target when ownerEmployerIdentityKey is set", () => {
-  const { insertSql, fallbackSql, params } = buildUpsertAssetSql({
-    orgId: ORG_ID,
-    materialCode: "tax_certificate",
-    ownerSubjectType: "employer",
-    ownerEmployerIdentityKey: "EMP-001",
-  });
+  const { insertSql, insertParams, fallbackSql, fallbackParams } =
+    buildUpsertAssetSql({
+      orgId: ORG_ID,
+      materialCode: "tax_certificate",
+      ownerSubjectType: "employer",
+      ownerEmployerIdentityKey: "EMP-001",
+    });
 
   assert.ok(insertSql.includes("owner_employer_identity_key"));
   assert.ok(fallbackSql.includes("owner_employer_identity_key"));
-  assert.equal(params[4], "EMP-001");
-  assert.equal(params[3], null);
+  assert.equal(insertParams[4], "EMP-001");
+  assert.equal(insertParams[3], null);
+  assert.equal(fallbackParams.length, 3);
+  assert.deepStrictEqual(fallbackParams, [
+    ORG_ID,
+    "tax_certificate",
+    "EMP-001",
+  ]);
 });
 
 void test("buildUpsertAssetSql has no conflict clause when neither owner key is set", () => {
-  const { insertSql, fallbackSql } = buildUpsertAssetSql({
+  const { insertSql, fallbackSql, fallbackParams } = buildUpsertAssetSql({
     orgId: ORG_ID,
     materialCode: "other_doc",
     ownerSubjectType: "unknown",
@@ -357,10 +376,11 @@ void test("buildUpsertAssetSql has no conflict clause when neither owner key is 
     "no conflict clause without owner key",
   );
   assert.ok(fallbackSql.includes("FALSE"), "fallback should be unsatisfiable");
+  assert.equal(fallbackParams.length, 0);
 });
 
 void test("buildUpsertAssetSql passes originCaseId and sourceRequirementId", () => {
-  const { params } = buildUpsertAssetSql({
+  const { insertParams } = buildUpsertAssetSql({
     orgId: ORG_ID,
     materialCode: "passport",
     ownerSubjectType: "customer",
@@ -369,8 +389,8 @@ void test("buildUpsertAssetSql passes originCaseId and sourceRequirementId", () 
     sourceRequirementId: "00000000-0000-4000-8000-000000000099",
   });
 
-  assert.equal(params[5], CASE_ID);
-  assert.equal(params[6], "00000000-0000-4000-8000-000000000099");
+  assert.equal(insertParams[5], CASE_ID);
+  assert.equal(insertParams[6], "00000000-0000-4000-8000-000000000099");
 });
 
 // ── DocumentAssetsService.upsertByOwnerAndMaterial ──

@@ -188,12 +188,16 @@ export async function upsertAssetInTx(
   tx: TenantDbTx,
   input: UpsertAssetInput,
 ): Promise<string> {
-  const { insertSql, fallbackSql, params } = buildUpsertAssetSql(input);
-  const insertResult = await tx.query<{ id: string }>(insertSql, params);
+  const { insertSql, insertParams, fallbackSql, fallbackParams } =
+    buildUpsertAssetSql(input);
+  const insertResult = await tx.query<{ id: string }>(insertSql, insertParams);
   if (insertResult.rows.length > 0) {
     return insertResult.rows[0].id;
   }
-  const selectResult = await tx.query<{ id: string }>(fallbackSql, params);
+  const selectResult = await tx.query<{ id: string }>(
+    fallbackSql,
+    fallbackParams,
+  );
   if (selectResult.rows.length === 0) {
     throw new Error(
       "upsertAssetInTx: neither INSERT nor SELECT returned a row",

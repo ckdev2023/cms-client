@@ -24,17 +24,44 @@ export type LeadP0Status = (typeof LEAD_P0_STATUSES)[number];
 /**
  * P0 合法状态遷移ホワイトリスト。
  *
- * key = 現在のステータス、value = 遷移可能先ステータス群。
- * `lost → following`（復活）を含む。
+ * 運用効率を優先し、非終態（new / following / pending_sign / signed）の
+ * 4 つは互いに任意切替を許可する：
+ * - 前向き飛び越し（例：new → signed）— 顧客が一気に複数段階を
+ *   スキップした際、運営担当が実際の進度に合わせて状態を直接補正できる。
+ * - 後ろ向き訂正（例：signed → following）— 誤入力をやり直せる。
+ *
+ * 終態関連は従来通り：
+ * - 任意の非終態 → `lost`（`lost_reason` が必須、`validateTransition` で強制）。
+ * - `signed` → `converted_case`（案件作成は専用フローを通る）。
+ * - `converted_case` は終態（出 transition なし）。
+ * - `lost` → `following`（復活経路は従来通り、直接 `signed` などへは遷移不可）。
  */
 export const LEAD_STATUS_TRANSITIONS: ReadonlyMap<
   LeadP0Status,
   ReadonlySet<LeadP0Status>
 > = new Map([
-  ["new", new Set<LeadP0Status>(["following", "lost"])],
-  ["following", new Set<LeadP0Status>(["pending_sign", "lost"])],
-  ["pending_sign", new Set<LeadP0Status>(["signed", "lost"])],
-  ["signed", new Set<LeadP0Status>(["converted_case", "lost"])],
+  [
+    "new",
+    new Set<LeadP0Status>(["following", "pending_sign", "signed", "lost"]),
+  ],
+  [
+    "following",
+    new Set<LeadP0Status>(["new", "pending_sign", "signed", "lost"]),
+  ],
+  [
+    "pending_sign",
+    new Set<LeadP0Status>(["new", "following", "signed", "lost"]),
+  ],
+  [
+    "signed",
+    new Set<LeadP0Status>([
+      "new",
+      "following",
+      "pending_sign",
+      "converted_case",
+      "lost",
+    ]),
+  ],
   ["converted_case", new Set<LeadP0Status>([])],
   ["lost", new Set<LeadP0Status>(["following"])],
 ]);

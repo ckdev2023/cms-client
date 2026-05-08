@@ -294,7 +294,8 @@ const leadsZhCN = {
     },
     changeStatusDialog: {
       title: "调整线索状态",
-      description: "请选择下一个状态；只能按业务规则白名单流转。",
+      description:
+        "请选择目标状态。客户实际进度跨过多个环节时，可直接切到对应状态；误操作也可回退纠正。流失与签约转案件请使用专用按钮。",
       statusLabel: "目标状态",
       statusPlaceholder: "请选择状态",
       noOptions: "当前状态没有可推进的目标状态。",
@@ -381,6 +382,8 @@ const leadsZhCN = {
       quoteNotConfirmed: "报价尚未确认，请先在客户档案确认报价。",
       notSigned: "客户尚未完成签约，请先在客户档案登记签约。",
       intakeNotReady: "经营管理签承接流程尚未就绪，请刷新客户档案后重试。",
+      featureDisabled:
+        "经营管理签功能未在本租户启用，请联系管理员开启 BMV 功能开关，或先选择其他案件类型继续办案。",
       unknown: "经营管理签承接前置条件未满足，请回到客户档案查看详情。",
     },
   },

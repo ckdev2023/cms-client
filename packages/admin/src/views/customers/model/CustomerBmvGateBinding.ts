@@ -6,6 +6,13 @@ import type { ServerBlocker } from "./CustomerRepositorySupport";
 export const BMV_GATE_ERROR_CODE = "CASE_BMV_GATE_BLOCKED" as const;
 
 /**
+ * 服务端 BMV feature flag 关闭时的顶层错误码（对齐 server
+ * `CASE_WRITE_ERROR_CODES.BMV_FEATURE_DISABLED`）。
+ */
+export const BMV_FEATURE_DISABLED_ERROR_CODE =
+  "CASE_BMV_FEATURE_DISABLED" as const;
+
+/**
  * 服务端 BMV 门禁阻断码（对齐 BMV_CASE_CREATION_GATE_CODES）。
  */
 export const BMV_GATE_BLOCKER_CODES = {
@@ -13,6 +20,8 @@ export const BMV_GATE_BLOCKER_CODES = {
   QUOTE_NOT_CONFIRMED: "BMV_QUOTE_NOT_CONFIRMED",
   NOT_SIGNED: "BMV_NOT_SIGNED",
   INTAKE_NOT_READY: "BMV_INTAKE_NOT_READY",
+  /** BMV 功能在本租户未启用，伴随顶层 CASE_BMV_FEATURE_DISABLED 一同返回。 */
+  FEATURE_DISABLED: "BMV_FEATURE_DISABLED",
 } as const;
 
 /**
@@ -30,6 +39,8 @@ const BLOCKER_I18N_MAP: Record<string, string> = {
     "customers.detail.bmvIntake.errors.signRequiredForCase",
   [BMV_GATE_BLOCKER_CODES.INTAKE_NOT_READY]:
     "customers.detail.bmvIntake.gate.signNotDone",
+  [BMV_GATE_BLOCKER_CODES.FEATURE_DISABLED]:
+    "customers.detail.bmvIntake.errors.featureDisabled",
 };
 
 const GATE_STATUS_I18N_MAP: Record<string, string> = {
@@ -44,13 +55,16 @@ const GATE_STATUS_I18N_MAP: Record<string, string> = {
 };
 
 /**
- * 判断服务端错误码是否为 BMV 门禁错误。
+ * 判断服务端错误码是否为 BMV 门禁/功能开关错误。
  *
  * @param serverErrorCode - 服务端返回的业务错误码
- * @returns 是否为 CASE_BMV_GATE_BLOCKED
+ * @returns 是否为 CASE_BMV_GATE_BLOCKED 或 CASE_BMV_FEATURE_DISABLED
  */
 export function isBmvGateError(serverErrorCode: string | undefined): boolean {
-  return serverErrorCode === BMV_GATE_ERROR_CODE;
+  return (
+    serverErrorCode === BMV_GATE_ERROR_CODE ||
+    serverErrorCode === BMV_FEATURE_DISABLED_ERROR_CODE
+  );
 }
 
 /**

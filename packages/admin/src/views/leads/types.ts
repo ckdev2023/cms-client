@@ -96,12 +96,14 @@ export const SIGNED_WARNING_BADGE_CLASS = "lead-badge-signed-warning";
 /**
  * P0 合法状态流转白名单（与服务端 `LEAD_STATUS_TRANSITIONS` 一致）。
  *
- * - `new` → `following` / `lost`
- * - `following` → `pending_sign` / `lost`
- * - `pending_sign` → `signed` / `lost`
- * - `signed` → `converted_case` / `lost`
- * - `converted_case` → 终态
- * - `lost` → `following`（流失复活）
+ * 非终态 4 个状态（new / following / pending_sign / signed）相互可任意切换，
+ * 以满足运营场景：客户一次跳过多个环节时直接补正状态，或纠正误操作。
+ *
+ * 终态相关流转保持收敛：
+ * - 任意非终态 → `lost`（需 `lostReason`，由「标记流失」专用对话框承担）
+ * - `signed` → `converted_case`（案件创建走「签约并转案件」专用流程）
+ * - `converted_case` 为终态
+ * - `lost` → `following`（流失复活，仅此一条路径，不直达 pending_sign / signed）
  *
  * 注意：UI 头部已为 `lost` / `converted_case` 提供专用按钮，因此
  * 「调整状态」对话框通常会过滤掉这两个目标，避免与 markLost / convertCase
@@ -111,10 +113,19 @@ export const LEAD_STATUS_TRANSITIONS: ReadonlyMap<
   LeadStatus,
   ReadonlySet<LeadStatus>
 > = new Map([
-  ["new", new Set<LeadStatus>(["following", "lost"])],
-  ["following", new Set<LeadStatus>(["pending_sign", "lost"])],
-  ["pending_sign", new Set<LeadStatus>(["signed", "lost"])],
-  ["signed", new Set<LeadStatus>(["converted_case", "lost"])],
+  ["new", new Set<LeadStatus>(["following", "pending_sign", "signed", "lost"])],
+  ["following", new Set<LeadStatus>(["new", "pending_sign", "signed", "lost"])],
+  ["pending_sign", new Set<LeadStatus>(["new", "following", "signed", "lost"])],
+  [
+    "signed",
+    new Set<LeadStatus>([
+      "new",
+      "following",
+      "pending_sign",
+      "converted_case",
+      "lost",
+    ]),
+  ],
   ["converted_case", new Set<LeadStatus>([])],
   ["lost", new Set<LeadStatus>(["following"])],
 ]);

@@ -9,6 +9,7 @@ import {
   LEAD_P0_STATUSES,
   LEAD_FOLLOWUP_CHANNELS,
   LEAD_STATUS_TRANSITIONS,
+  type LeadP0Status,
 } from "./leadEntities";
 
 // ── isLeadP0Status ──
@@ -44,12 +45,59 @@ void test("converted_case has no outgoing transitions", () => {
   assert.equal(targets.size, 0);
 });
 
-void test("new can transition to following or lost", () => {
+void test("new can skip ahead to any non-terminal status or be marked lost", () => {
   const targets = LEAD_STATUS_TRANSITIONS.get("new");
   assert.ok(targets);
   assert.equal(targets.has("following"), true);
+  assert.equal(targets.has("pending_sign"), true);
+  assert.equal(targets.has("signed"), true);
   assert.equal(targets.has("lost"), true);
-  assert.equal(targets.size, 2);
+  assert.equal(targets.has("converted_case"), false);
+  assert.equal(targets.size, 4);
+});
+
+void test("non-terminal statuses are mutually reachable (forward skip + backward correction)", () => {
+  const NON_TERMINAL: LeadP0Status[] = [
+    "new",
+    "following",
+    "pending_sign",
+    "signed",
+  ];
+  for (const from of NON_TERMINAL) {
+    const targets = LEAD_STATUS_TRANSITIONS.get(from);
+    assert.ok(targets);
+    for (const to of NON_TERMINAL) {
+      if (from === to) continue;
+      assert.equal(
+        targets.has(to),
+        true,
+        `expected ${from} → ${to} to be allowed`,
+      );
+    }
+  }
+});
+
+void test("signed retains converted_case path; only signed reaches converted_case", () => {
+  const signedTargets = LEAD_STATUS_TRANSITIONS.get("signed");
+  assert.ok(signedTargets);
+  assert.equal(signedTargets.has("converted_case"), true);
+
+  for (const from of ["new", "following", "pending_sign"] as const) {
+    const targets = LEAD_STATUS_TRANSITIONS.get(from);
+    assert.ok(targets);
+    assert.equal(
+      targets.has("converted_case"),
+      false,
+      `${from} must not reach converted_case directly`,
+    );
+  }
+});
+
+void test("lost revival path remains restricted to following only", () => {
+  const targets = LEAD_STATUS_TRANSITIONS.get("lost");
+  assert.ok(targets);
+  assert.equal(targets.has("following"), true);
+  assert.equal(targets.size, 1);
 });
 
 void test("every P0 status has an entry in the transition map", () => {

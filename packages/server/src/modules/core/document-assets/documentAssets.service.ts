@@ -101,17 +101,24 @@ export class DocumentAssetsService {
   ): Promise<string> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
 
-    const { insertSql, fallbackSql, params } = buildUpsertAssetSql({
-      ...input,
-      orgId: ctx.orgId,
-    });
+    const { insertSql, insertParams, fallbackSql, fallbackParams } =
+      buildUpsertAssetSql({
+        ...input,
+        orgId: ctx.orgId,
+      });
 
     return tenantDb.transaction(async (tx) => {
-      const insertResult = await tx.query<{ id: string }>(insertSql, params);
+      const insertResult = await tx.query<{ id: string }>(
+        insertSql,
+        insertParams,
+      );
       if (insertResult.rows.length > 0) {
         return insertResult.rows[0].id;
       }
-      const selectResult = await tx.query<{ id: string }>(fallbackSql, params);
+      const selectResult = await tx.query<{ id: string }>(
+        fallbackSql,
+        fallbackParams,
+      );
       if (selectResult.rows.length === 0) {
         throw new Error(
           "upsertByOwnerAndMaterial: neither INSERT nor SELECT returned a row",

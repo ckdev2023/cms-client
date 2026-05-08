@@ -36,6 +36,8 @@ import type { CaseBillingTabAggregate } from "./cases.types-billing";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { recalcSupplementCount } from "./casesSupplementCount";
+import { FeatureFlagsService } from "../../feature-flags/featureFlags.service";
+import { requiresBmvCaseCreationGate } from "../../portal/intake/intake.types";
 
 import {
   CASE_COLS,
@@ -187,6 +189,7 @@ export class CasesService {
    * @param permissionsService 权限判定服务
    * @param billingPlansService 收费计划服务
    * @param paymentRecordsService 回款记录服务
+   * @param featureFlagsService 功能开关服务（BMV 建案前置校验）
    */
   constructor(
     @Inject(Pool) private readonly pool: Pool,
@@ -201,6 +204,9 @@ export class CasesService {
     @Optional()
     @Inject(PaymentRecordsService)
     private readonly paymentRecordsService?: PaymentRecordsService,
+    @Optional()
+    @Inject(FeatureFlagsService)
+    private readonly featureFlagsService?: FeatureFlagsService,
   ) {}
 
   /** 创建案件（事务内：写入 + document_items + Timeline + 跨组留痕）。
@@ -210,6 +216,7 @@ export class CasesService {
     try {
       validateDueAt(input.dueAt);
       validateCaseEnums(input);
+      await this.assertBmvFeatureEnabledIfNeeded(ctx, input.caseTypeCode);
       const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
         findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
       const checklistItems = await resolveChecklistItems(
@@ -824,5 +831,44 @@ export class CasesService {
     return tenantDb.transaction(async (tx) =>
       recalcSupplementCount(tx, caseId),
     );
+  }
+
+  /**
+   * 当 caseTypeCode 触发 BMV 建案闸口时，先校验本租户是否启用 BMV feature flag。
+   *
+   * 背景：customers controller 上的 BMV 写入端点（送问卷/生成报价/登记签约）
+   * 都被 `assertBmvEnabled` 守卫，flag 关闭时返回 403；但 cases.service 的
+   * BMV 闸口仅根据 caseTypeCode 触发，会要求客户必须完成 BMV 流程。两者结合
+   * 会出现「服务端要求过 BMV 闸口、客户档案因 flag 关闭无法完成 BMV 流程」的
+   * 死锁状态。此处在 flag 关闭时直接返回 `CASE_BMV_FEATURE_DISABLED`，让前端
+   * 把 4 条空泛 blocker 替换为「请联系管理员开启 BMV 功能」的明确提示。
+   *
+   * 兼容旧测试：`featureFlagsService` 通过 `@Optional()` 注入，未提供时跳过
+   * flag 校验，避免破坏只构造 pool + templatesResolver 两个依赖的旧用例。
+   *
+   * @param ctx 请求上下文
+   * @param caseTypeCode 案件类型代码
+   */
+  private async assertBmvFeatureEnabledIfNeeded(
+    ctx: RequestContext,
+    caseTypeCode: string,
+  ): Promise<void> {
+    if (!requiresBmvCaseCreationGate(caseTypeCode)) return;
+    if (!this.featureFlagsService) return;
+    const resolution = await this.featureFlagsService.resolve(ctx, {
+      key: "bmv",
+    });
+    if (!resolution.enabled) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.BMV_FEATURE_DISABLED,
+        message: "BMV feature is not enabled for this organization",
+        blockers: [
+          {
+            code: "BMV_FEATURE_DISABLED",
+            message: "BMV feature is not enabled for this organization",
+          },
+        ],
+      });
+    }
   }
 }

@@ -272,18 +272,9 @@ void describe("LeadsAdminService.transitionStatus — whitelist", () => {
   }
 
   const FORBIDDEN_TRANSITIONS: [LeadP0Status, LeadP0Status][] = [
-    ["new", "pending_sign"],
-    ["new", "signed"],
     ["new", "converted_case"],
-    ["following", "new"],
-    ["following", "signed"],
     ["following", "converted_case"],
-    ["pending_sign", "new"],
-    ["pending_sign", "following"],
     ["pending_sign", "converted_case"],
-    ["signed", "new"],
-    ["signed", "following"],
-    ["signed", "pending_sign"],
     ["converted_case", "new"],
     ["converted_case", "following"],
     ["converted_case", "pending_sign"],

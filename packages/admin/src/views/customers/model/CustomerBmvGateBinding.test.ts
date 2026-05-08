@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  BMV_FEATURE_DISABLED_ERROR_CODE,
   BMV_GATE_BLOCKER_CODES,
   BMV_GATE_ERROR_CODE,
   isBmvGateError,
@@ -12,10 +13,14 @@ describe("BMV_GATE_ERROR_CODE", () => {
   it("equals the server-side CASE_BMV_GATE_ERROR_CODE", () => {
     expect(BMV_GATE_ERROR_CODE).toBe("CASE_BMV_GATE_BLOCKED");
   });
+
+  it("BMV_FEATURE_DISABLED_ERROR_CODE equals the server-side CASE_BMV_FEATURE_DISABLED", () => {
+    expect(BMV_FEATURE_DISABLED_ERROR_CODE).toBe("CASE_BMV_FEATURE_DISABLED");
+  });
 });
 
 describe("BMV_GATE_BLOCKER_CODES", () => {
-  it("aligns with server BMV_CASE_CREATION_GATE_CODES", () => {
+  it("aligns with server BMV_CASE_CREATION_GATE_CODES + feature flag blocker", () => {
     expect(BMV_GATE_BLOCKER_CODES.QUESTIONNAIRE_NOT_RETURNED).toBe(
       "BMV_QUESTIONNAIRE_NOT_RETURNED",
     );
@@ -25,6 +30,9 @@ describe("BMV_GATE_BLOCKER_CODES", () => {
     expect(BMV_GATE_BLOCKER_CODES.NOT_SIGNED).toBe("BMV_NOT_SIGNED");
     expect(BMV_GATE_BLOCKER_CODES.INTAKE_NOT_READY).toBe(
       "BMV_INTAKE_NOT_READY",
+    );
+    expect(BMV_GATE_BLOCKER_CODES.FEATURE_DISABLED).toBe(
+      "BMV_FEATURE_DISABLED",
     );
   });
 
@@ -43,6 +51,10 @@ describe("BMV_GATE_BLOCKER_CODES", () => {
 describe("isBmvGateError", () => {
   it("returns true for CASE_BMV_GATE_BLOCKED", () => {
     expect(isBmvGateError("CASE_BMV_GATE_BLOCKED")).toBe(true);
+  });
+
+  it("returns true for CASE_BMV_FEATURE_DISABLED", () => {
+    expect(isBmvGateError("CASE_BMV_FEATURE_DISABLED")).toBe(true);
   });
 
   it("returns false for other error codes", () => {
@@ -75,6 +87,12 @@ describe("resolveBmvBlockerI18nKey", () => {
   it("maps INTAKE_NOT_READY to gate sign-not-done key", () => {
     expect(resolveBmvBlockerI18nKey("BMV_INTAKE_NOT_READY")).toBe(
       "customers.detail.bmvIntake.gate.signNotDone",
+    );
+  });
+
+  it("maps FEATURE_DISABLED to feature-disabled error key", () => {
+    expect(resolveBmvBlockerI18nKey("BMV_FEATURE_DISABLED")).toBe(
+      "customers.detail.bmvIntake.errors.featureDisabled",
     );
   });
 

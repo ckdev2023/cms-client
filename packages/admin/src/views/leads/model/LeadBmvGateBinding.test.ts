@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  LEAD_BMV_FEATURE_DISABLED_ERROR_CODE,
   LEAD_BMV_GATE_BLOCKER_CODES,
   LEAD_BMV_GATE_ERROR_CODE,
   isLeadBmvGateError,
@@ -13,19 +14,34 @@ describe("LeadBmvGateBinding — constants", () => {
     expect(LEAD_BMV_GATE_ERROR_CODE).toBe("CASE_BMV_GATE_BLOCKED");
   });
 
-  it("blocker codes match server BMV_CASE_CREATION_GATE_CODES", () => {
+  it("blocker codes match server BMV_CASE_CREATION_GATE_CODES + feature flag blocker", () => {
     expect(LEAD_BMV_GATE_BLOCKER_CODES).toEqual({
       QUESTIONNAIRE_NOT_RETURNED: "BMV_QUESTIONNAIRE_NOT_RETURNED",
       QUOTE_NOT_CONFIRMED: "BMV_QUOTE_NOT_CONFIRMED",
       NOT_SIGNED: "BMV_NOT_SIGNED",
       INTAKE_NOT_READY: "BMV_INTAKE_NOT_READY",
+      FEATURE_DISABLED: "BMV_FEATURE_DISABLED",
     });
+  });
+
+  it("LEAD_BMV_FEATURE_DISABLED_ERROR_CODE matches server CASE_BMV_FEATURE_DISABLED", () => {
+    expect(LEAD_BMV_FEATURE_DISABLED_ERROR_CODE).toBe(
+      "CASE_BMV_FEATURE_DISABLED",
+    );
   });
 });
 
 describe("LeadBmvGateBinding — isLeadBmvGateError", () => {
   it("returns true for CASE_BMV_GATE_BLOCKED", () => {
     expect(isLeadBmvGateError("CASE_BMV_GATE_BLOCKED")).toBe(true);
+  });
+
+  it("returns true for CASE_BMV_FEATURE_DISABLED", () => {
+    expect(isLeadBmvGateError("CASE_BMV_FEATURE_DISABLED")).toBe(true);
+  });
+
+  it("returns true for CONVERT_CASE_REQUIRES_CUSTOMER", () => {
+    expect(isLeadBmvGateError("CONVERT_CASE_REQUIRES_CUSTOMER")).toBe(true);
   });
 
   it("returns false for other server error codes", () => {
@@ -58,6 +74,11 @@ describe("LeadBmvGateBinding — resolveLeadBmvBlockerI18nKey", () => {
         LEAD_BMV_GATE_BLOCKER_CODES.INTAKE_NOT_READY,
       ),
     ).toBe("leads.errors.bmvGate.intakeNotReady");
+    expect(
+      resolveLeadBmvBlockerI18nKey(
+        LEAD_BMV_GATE_BLOCKER_CODES.FEATURE_DISABLED,
+      ),
+    ).toBe("leads.errors.bmvGate.featureDisabled");
   });
 
   it("falls back to leads.errors.bmvGate.unknown for unrecognized codes", () => {

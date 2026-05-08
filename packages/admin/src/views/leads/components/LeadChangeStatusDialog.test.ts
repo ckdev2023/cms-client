@@ -46,7 +46,7 @@ describe("LeadChangeStatusDialog (R2-B-4)", () => {
     expect(q("[data-testid='lead-change-status-dialog']")).not.toBeNull();
   });
 
-  it("populates options from LEAD_STATUS_TRANSITIONS, excluding lost", () => {
+  it("lists all non-terminal forward/backward targets, excluding lost & converted_case", () => {
     mountDialog({ currentStatus: "following" });
     const select = q(
       "[data-testid='lead-change-status-dialog-select']",
@@ -54,7 +54,27 @@ describe("LeadChangeStatusDialog (R2-B-4)", () => {
     const values = Array.from(select.options)
       .map((o) => o.value)
       .filter((v) => v !== "");
+    expect(values).toContain("new");
     expect(values).toContain("pending_sign");
+    expect(values).toContain("signed");
+    expect(values).not.toContain("following");
+    expect(values).not.toContain("lost");
+    expect(values).not.toContain("converted_case");
+  });
+
+  it("offers backward correction targets when status=signed (e.g. signed → following)", () => {
+    mountDialog({ currentStatus: "signed" });
+    const select = q(
+      "[data-testid='lead-change-status-dialog-select']",
+    ) as HTMLSelectElement;
+    expect(select).not.toBeNull();
+    const values = Array.from(select.options)
+      .map((o) => o.value)
+      .filter((v) => v !== "");
+    expect(values).toContain("new");
+    expect(values).toContain("following");
+    expect(values).toContain("pending_sign");
+    expect(values).not.toContain("signed");
     expect(values).not.toContain("lost");
     expect(values).not.toContain("converted_case");
   });
@@ -65,10 +85,17 @@ describe("LeadChangeStatusDialog (R2-B-4)", () => {
     expect(q("[data-testid='lead-change-status-dialog-select']")).toBeNull();
   });
 
-  it("shows empty message when status=signed (signed -> only converted_case/lost which are filtered)", () => {
-    mountDialog({ currentStatus: "signed" });
-    expect(q("[data-testid='lead-change-status-dialog-empty']")).not.toBeNull();
-    expect(q("[data-testid='lead-change-status-dialog-select']")).toBeNull();
+  it("allows forward skip from new to pending_sign / signed (multi-stage skip)", () => {
+    mountDialog({ currentStatus: "new" });
+    const select = q(
+      "[data-testid='lead-change-status-dialog-select']",
+    ) as HTMLSelectElement;
+    const values = Array.from(select.options)
+      .map((o) => o.value)
+      .filter((v) => v !== "");
+    expect(values).toContain("following");
+    expect(values).toContain("pending_sign");
+    expect(values).toContain("signed");
   });
 
   it("disables confirm button until a status is chosen", () => {

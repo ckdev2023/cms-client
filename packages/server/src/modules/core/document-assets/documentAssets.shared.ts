@@ -284,22 +284,76 @@ export function buildAssetListFilters(
 }
 
 /**
+ * 为 upsert 构造 fallback SELECT，占位符严格对齐 params 数量，避免
+ * PostgreSQL 的「bind message supplies N parameters, but prepared
+ * statement requires M」错误。
+ *
+ * @param input upsert 输入（owner + material 标识）
+ * @returns 与占位符严格对齐的 SELECT SQL 与 params
+ */
+function buildFallbackSelect(input: UpsertAssetInput): {
+  fallbackSql: string;
+  fallbackParams: unknown[];
+} {
+  if (input.ownerCustomerId !== undefined && input.ownerCustomerId !== null) {
+    return {
+      fallbackSql: `
+        SELECT id FROM document_assets
+        WHERE org_id = $1 AND material_code = $2 AND owner_subject_type = $3
+          AND owner_customer_id = $4 AND active_flag = true
+        LIMIT 1
+      `,
+      fallbackParams: [
+        input.orgId,
+        input.materialCode,
+        input.ownerSubjectType,
+        input.ownerCustomerId,
+      ],
+    };
+  }
+  if (
+    input.ownerEmployerIdentityKey !== undefined &&
+    input.ownerEmployerIdentityKey !== null
+  ) {
+    return {
+      fallbackSql: `
+        SELECT id FROM document_assets
+        WHERE org_id = $1 AND material_code = $2
+          AND owner_employer_identity_key = $3 AND active_flag = true
+        LIMIT 1
+      `,
+      fallbackParams: [
+        input.orgId,
+        input.materialCode,
+        input.ownerEmployerIdentityKey,
+      ],
+    };
+  }
+  return {
+    fallbackSql: `SELECT id FROM document_assets WHERE FALSE LIMIT 1`,
+    fallbackParams: [],
+  };
+}
+
+/**
  * 构建 ON CONFLICT DO NOTHING 形式的 upsert 所需 SQL。
  *
  * 依赖 036 迁移新增的两个 partial unique index：
  * - idx_document_assets_unique_customer_owned  (org_id, material_code, owner_subject_type, owner_customer_id)  WHERE active_flag AND owner_customer_id IS NOT NULL
  * - idx_document_assets_unique_employer_owned  (org_id, material_code, owner_employer_identity_key)            WHERE active_flag AND owner_employer_identity_key IS NOT NULL
  *
- * 返回 insertSql（ON CONFLICT DO NOTHING RETURNING id）和 fallbackSql（用于 INSERT 返回空行时 SELECT 已有记录）。
- * 两条 SQL 共享同一个 params 数组，调用方须在同一事务内顺序执行。
+ * 返回 insertSql（ON CONFLICT DO NOTHING RETURNING id）和 fallbackSql
+ * （用于 INSERT 返回空行时 SELECT 已有记录）。两条 SQL 各自带独立的
+ * params 数组。
  *
  * @param input upsert 输入（owner + material 标识）
- * @returns insertSql、fallbackSql 和共享 params
+ * @returns insertSql、insertParams、fallbackSql、fallbackParams
  */
 export function buildUpsertAssetSql(input: UpsertAssetInput): {
   insertSql: string;
+  insertParams: unknown[];
   fallbackSql: string;
-  params: unknown[];
+  fallbackParams: unknown[];
 } {
   const isCustomerOwned =
     input.ownerCustomerId !== undefined && input.ownerCustomerId !== null;
@@ -313,7 +367,7 @@ export function buildUpsertAssetSql(input: UpsertAssetInput): {
       ? "(org_id, material_code, owner_employer_identity_key) WHERE active_flag = true AND owner_employer_identity_key IS NOT NULL"
       : null;
 
-  const params: unknown[] = [
+  const insertParams: unknown[] = [
     input.orgId,
     input.materialCode,
     input.ownerSubjectType,
@@ -332,15 +386,9 @@ export function buildUpsertAssetSql(input: UpsertAssetInput): {
     RETURNING id
   `;
 
-  const fallbackWhere = isCustomerOwned
-    ? "org_id = $1 AND material_code = $2 AND owner_subject_type = $3 AND owner_customer_id = $4 AND active_flag = true"
-    : isEmployerOwned
-      ? "org_id = $1 AND material_code = $2 AND owner_employer_identity_key = $5 AND active_flag = true"
-      : "FALSE";
+  const { fallbackSql, fallbackParams } = buildFallbackSelect(input);
 
-  const fallbackSql = `SELECT id FROM document_assets WHERE ${fallbackWhere} LIMIT 1`;
-
-  return { insertSql, fallbackSql, params };
+  return { insertSql, insertParams, fallbackSql, fallbackParams };
 }
 
 export const ASSET_SELECT_SQL = `

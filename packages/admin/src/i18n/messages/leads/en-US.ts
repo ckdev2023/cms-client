@@ -302,7 +302,7 @@ const leadsEnUS = {
     changeStatusDialog: {
       title: "Change lead status",
       description:
-        "Pick the next status. Only whitelisted transitions are allowed.",
+        "Pick the target status. Skip ahead when the customer jumps multiple stages, or roll back to correct mistakes. Use the dedicated buttons for lost / convert-to-case.",
       statusLabel: "Target status",
       statusPlaceholder: "Select status",
       noOptions: "No further status transitions are available.",
@@ -396,6 +396,8 @@ const leadsEnUS = {
         "Customer has not signed yet. Record the signature on the customer record first.",
       intakeNotReady:
         "BMV intake is not ready for case creation. Refresh the customer record and retry.",
+      featureDisabled:
+        "The Business Manager visa feature is not enabled for this organization. Ask an administrator to turn on the BMV feature flag, or pick a different case type for now.",
       unknown:
         "BMV intake prerequisites are not satisfied. See the customer record for details.",
     },
