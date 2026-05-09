@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import test from "node:test";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
@@ -18,6 +20,17 @@ function stubService(override?: Partial<SearchService>): SearchService {
     ...override,
   } as unknown as SearchService;
 }
+
+void test('SearchController class uses @Controller("admin/search") to align with admin route prefix', () => {
+  const src = fs.readFileSync(
+    path.resolve(import.meta.dirname, "search.controller.ts"),
+    "utf-8",
+  );
+  assert.ok(
+    src.includes('@Controller("admin/search")'),
+    'SearchController must be mounted at "admin/search" so the admin frontend can hit /api/admin/search?q=...',
+  );
+});
 
 void test("SearchController.search requires request context", async () => {
   const controller = new SearchController(stubService());

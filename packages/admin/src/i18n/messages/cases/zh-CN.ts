@@ -788,10 +788,18 @@ const casesZhCN = {
           supplementaryInfo: "补充说明",
           onlyTip: "仅提示",
           noBlockers: "校验通过，无阻断项",
+          advanceStageButton: "下一步：推进至 {nextStage}",
+          advanceStageDisabled: {
+            mustHandleBlocker: "存在未处理的阻断项，请先解决后再推进。",
+            validationNotPassed: "最新校验未通过，请先重新检查。",
+            validationStale: "校验结果已过期，请重新检查后再推进。",
+          },
         },
         submissionPackages: {
           title: "提交包（历史快照）",
           create: "新建提交包",
+          createStageGateTooltip:
+            "仅当案件进入 S6（提交准备）或 S7（已提交）阶段后才能创建提交包。",
           locked: "已锁定",
           empty: "暂无提交包记录",
         },
@@ -1185,6 +1193,18 @@ const casesZhCN = {
       },
       cancel: "取消",
       submit: "提交",
+    },
+  },
+  submissionPackage: {
+    createModal: {
+      title: "新建提交包",
+      hint: "提交包将锁定当前资料、文书与字段快照，请填写必要信息后提交。",
+      submittedAt: "提交日期",
+      authorityName: "提交对象（机关名）",
+      authorityNamePlaceholder: "例：东京出入国在留管理局",
+      submit: "创建提交包",
+      cancel: "取消",
+      close: "关闭",
     },
   },
   coach: {

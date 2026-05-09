@@ -108,6 +108,23 @@ function createFilterSetters(
 
 // ─── Route sync ─────────────────────────────────────────────────
 
+/**
+ * 仅当浏览器原生导航（前进/后退、深链等）使 URL 与「最近一次我们 push 出去的 query」
+ * 不一致时，才把 URL 反向写回 filters。
+ *
+ * 不能简单比较 URL 与当前 filters：用户连续输入时，filters 已经超前于 URL，
+ * 但还有“早先 push 的旧 URL”在异步导航队列里完成回执。若直接以 URL 为准，
+ * 会用旧 URL 覆盖最新的 filters（造成只保留首字符的输入丢字 bug）。
+ *
+ * 实现：用 Map 记录最近一段时间内由我们自己 push 出去的 query 字符串，
+ * 收到 routeQuery 变更时，若命中我们自己的 push 即视为 echo 直接忽略；
+ * 未命中才按外部导航处理，回写到 filters。
+ * @param filters - 反向写回的目标 filters reactive 对象
+ * @param customerId - 反向写回的目标 customerId ref
+ * @param routeQuery - 当前路由 query 的响应式引用
+ * @param replaceQuery - 由 view 注入的 router.replace 包装
+ * @param onInvalidStage - 检测到非法 stage 值时的回调
+ */
 function setupRouteSync(
   filters: CaseListFiltersState,
   customerId: Ref<string | undefined>,
@@ -115,15 +132,33 @@ function setupRouteSync(
   replaceQuery: (query: Record<string, string | undefined>) => void,
   onInvalidStage?: (raw: string) => void,
 ) {
-  let skipRouteSync = false;
+  const pendingPushes = new Map<string, number>();
+  const PUSH_TTL_MS = 1500;
+
+  function purgeExpired(now: number): void {
+    for (const [key, ts] of pendingPushes) {
+      if (now - ts > PUSH_TTL_MS) pendingPushes.delete(key);
+    }
+  }
+
+  function serialiseQuery(query: Record<string, string | undefined>): string {
+    const sorted = Object.keys(query)
+      .filter((k) => query[k] !== undefined)
+      .sort()
+      .map((k) => [k, query[k]] as const);
+    return JSON.stringify(sorted);
+  }
 
   function syncToRoute() {
-    if (skipRouteSync) return;
+    const now = Date.now();
+    purgeExpired(now);
     const params: CaseListQueryParams = {
       ...filters,
       customerId: customerId.value,
     };
-    replaceQuery(buildCaseListQuery(params));
+    const built = buildCaseListQuery(params);
+    pendingPushes.set(serialiseQuery(built), now);
+    replaceQuery(built);
   }
 
   watch(
@@ -133,8 +168,13 @@ function setupRouteSync(
 
   watch(routeQuery, (query) => {
     detectInvalidStage(query, onInvalidStage);
-    skipRouteSync = true;
     const next = parseCaseListQuery(query);
+    const nextKey = serialiseQuery(buildCaseListQuery(next));
+    if (pendingPushes.has(nextKey)) {
+      pendingPushes.delete(nextKey);
+      return;
+    }
+    purgeExpired(Date.now());
     filters.scope = next.scope;
     filters.search = next.search;
     filters.stage = next.stage;
@@ -143,7 +183,6 @@ function setupRouteSync(
     filters.risk = next.risk;
     filters.validation = next.validation;
     customerId.value = next.customerId;
-    skipRouteSync = false;
   });
 }
 

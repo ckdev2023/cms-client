@@ -3,6 +3,7 @@ export const shellSearchZhCN = {
   placeholder: "搜索客户、案件、资料…",
   empty: "没有找到结果",
   loading: "搜索中…",
+  error: "搜索失败，请稍后再试",
   shortcutHint: "⌘K",
   group: {
     customers: "客户",

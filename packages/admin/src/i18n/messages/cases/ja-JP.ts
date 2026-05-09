@@ -816,10 +816,20 @@ const casesJaJP = {
           supplementaryInfo: "補足",
           onlyTip: "参考のみ",
           noBlockers: "チェック通過、ブロッカーなし",
+          advanceStageButton: "次のステップ：{nextStage} に進める",
+          advanceStageDisabled: {
+            mustHandleBlocker:
+              "未処理のブロック項目があります。先に解決してから進めてください。",
+            validationNotPassed: "最新の検証が不合格です。再検査してください。",
+            validationStale:
+              "検証結果が期限切れです。再検査してから進めてください。",
+          },
         },
         submissionPackages: {
           title: "提出パッケージ（履歴）",
           create: "パッケージ作成",
+          createStageGateTooltip:
+            "案件が S6（提出準備）または S7（提出済）に到達してからパッケージを作成できます。",
           locked: "ロック済み",
           empty: "提出パッケージなし",
         },
@@ -1246,6 +1256,18 @@ const casesJaJP = {
       },
       cancel: "キャンセル",
       submit: "追加",
+    },
+  },
+  submissionPackage: {
+    createModal: {
+      title: "提出パッケージ作成",
+      hint: "提出パッケージは現時点の資料・文書・主要項目のスナップショットを固定します。必要事項を入力してください。",
+      submittedAt: "提出日時",
+      authorityName: "提出先機関",
+      authorityNamePlaceholder: "例：東京出入国在留管理局",
+      submit: "作成",
+      cancel: "キャンセル",
+      close: "閉じる",
     },
   },
   coach: {

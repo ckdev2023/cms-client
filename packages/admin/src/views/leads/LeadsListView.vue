@@ -29,7 +29,6 @@ import { useLeadBulkActions } from "./model/useLeadBulkActions";
 import { createLeadRepository } from "./model/LeadRepository";
 import { syncLeadCreateEntryFromRoute } from "./model/leadCreateEntry";
 import { useLeadCreateActions } from "./model/useLeadCreateActions";
-import type { LeadListResult } from "./model/LeadAdapterTypes";
 
 /** 线索列表页组合层，装配筛选、表格、批量操作、新建弹窗、toast、草稿等子模块。 */
 const { t, locale } = useI18n();
@@ -80,20 +79,23 @@ const paginationEnd = computed(() =>
   Math.min(page.value * limit.value, totalCount.value),
 );
 
-/** 从服务端拉取线索列表，失败时回退到示例数据。 */
+let activeFetchToken = 0; // 防止用户连打字时旧响应覆盖最新结果
+
 async function fetchLeads() {
+  const token = ++activeFetchToken;
   listLoading.value = true;
   listError.value = null;
+  let next: { items: LeadSummary[]; total: number };
   try {
-    const result: LeadListResult = await repository.listLeads(toListParams());
-    leads.value = result.items;
-    totalCount.value = result.total;
+    next = await repository.listLeads(toListParams());
   } catch {
-    leads.value = getLeadSamples(locale.value as AppLocale);
-    totalCount.value = leads.value.length;
-  } finally {
-    listLoading.value = false;
+    const fallback = getLeadSamples(locale.value as AppLocale);
+    next = { items: fallback, total: fallback.length };
   }
+  if (token !== activeFetchToken) return;
+  leads.value = next.items;
+  totalCount.value = next.total;
+  listLoading.value = false;
 }
 
 watch(

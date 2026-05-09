@@ -24,6 +24,11 @@
   gap: 8px;
   min-width: 0;
 }
+.vt__header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .vt__title {
   margin: 0;
   font-size: var(--font-size-md);

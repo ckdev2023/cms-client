@@ -3,6 +3,7 @@ export const shellSearchEnUS = {
   placeholder: "Search customers, cases, documents…",
   empty: "No results found",
   loading: "Searching…",
+  error: "Search failed. Please try again.",
   shortcutHint: "⌘K",
   group: {
     customers: "Customers",

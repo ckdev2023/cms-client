@@ -131,6 +131,13 @@ function sanitizeFileName(fileName: string): string {
   return name + ext;
 }
 
+// 从资料项名称派生文件名时使用：仅去掉路径/控制字符（不强制小写后缀），
+// 避免诸如 `在留資格認定/変更許可申請書` 这种业务名称把 `/` 当成路径分隔符
+// 导致服务端 `sanitizeFileName` 把斜杠改成下划线、relativePath 与 fileName 不一致。
+function sanitizeDerivedFileName(name: string): string {
+  return name.replace(UNSAFE_PATH_CHARS_RE, "_").trim();
+}
+
 function todayStamp(): string {
   const d = new Date();
   const y = d.getFullYear();
@@ -175,6 +182,33 @@ export function suggestPath(input: SuggestPathInput): string {
   return `${caseNo}/${ownerSide}/${checklistItemCode}/${todayStamp()}_${sanitized}`;
 }
 
+// 实际提交服务端的文件名解析顺序：
+// 1) 用户在「资料说明」字段显式填写
+// 2) 归档路径末尾（user 直接粘了完整路径例 `case/.../passport.pdf`）
+// 3) 所选资料项的 name（建议路径以 `/` 结尾时的兜底，避免空 fileName 触发服务端 400）
+function buildFileNameComputeds(
+  form: Ref<RegisterDocumentForm>,
+  selectedDocItem: ComputedRef<DocumentListItem | undefined>,
+) {
+  const effectiveFileName = computed<string>(() => {
+    const f = form.value;
+    const explicit = f.fileName.trim();
+    if (explicit) return sanitizeDerivedFileName(explicit);
+    const tail = derivePathTail(f.relativePath).trim();
+    if (tail) return tail;
+    const itemName = selectedDocItem.value?.name?.trim();
+    return itemName ? sanitizeDerivedFileName(itemName) : "";
+  });
+  const fileNameError = computed<string | null>(() => {
+    const f = form.value;
+    if (!f.caseId || !f.docItemId) return null;
+    if (f.relativePath.trim() === "") return null;
+    if (effectiveFileName.value !== "") return null;
+    return "documents.register.fields.fileNameRequiredError";
+  });
+  return { effectiveFileName, fileNameError };
+}
+
 function setupComputeds(
   deps: RegisterDocumentDeps,
   form: Ref<RegisterDocumentForm>,
@@ -183,23 +217,21 @@ function setupComputeds(
     const p = form.value.relativePath.trim();
     return p ? validateRelativePath(p) : null;
   });
-
   const caseOptions = computed(() => deriveCaseOptions(deps.allItems()));
-
   const docItemOptions = computed(() =>
     deriveDocItemOptions(deps.allItems(), form.value.caseId),
   );
-
   const selectedDocItem = computed(() =>
     deps.allItems().find((d) => d.id === form.value.docItemId),
   );
-
   const version = computed(() =>
     selectedDocItem.value ? (selectedDocItem.value.referenceCount ?? 0) + 1 : 1,
   );
-
   const versionLabel = computed(() => `v${version.value}（系统自动递增）`);
-
+  const { effectiveFileName, fileNameError } = buildFileNameComputeds(
+    form,
+    selectedDocItem,
+  );
   const canSubmit = computed(() => {
     const f = form.value;
     const p = f.relativePath.trim();
@@ -207,17 +239,19 @@ function setupComputeds(
       f.caseId !== "" &&
       f.docItemId !== "" &&
       p !== "" &&
-      validateRelativePath(p) === null
+      validateRelativePath(p) === null &&
+      effectiveFileName.value !== ""
     );
   });
-
   return {
     pathError,
+    fileNameError,
     caseOptions,
     docItemOptions,
     version,
     versionLabel,
     canSubmit,
+    effectiveFileName,
   };
 }
 
@@ -242,8 +276,20 @@ function setupWatchers(
   watch(
     () => form.value.relativePath,
     (v) => {
-      if (!fileNameManuallyEdited.value)
-        form.value.fileName = derivePathTail(v);
+      if (fileNameManuallyEdited.value) return;
+      const tail = derivePathTail(v);
+      if (tail) {
+        form.value.fileName = tail;
+        return;
+      }
+      // 建议路径以 `/` 结尾或路径为空时，回退到所选资料项的名称作为默认文件名，
+      // 避免提交时 fileName 为空触发服务端 `Invalid fileName` 校验失败。
+      // 资料项名称可能含 `/` 等路径字符（如「在留資格認定/変更許可申請書」），
+      // 必须 sanitize 后再写入表单，保证 relativePath 与 fileName 一致。
+      const item = deps.allItems().find((d) => d.id === form.value.docItemId);
+      form.value.fileName = item?.name
+        ? sanitizeDerivedFileName(item.name)
+        : "";
     },
   );
 
@@ -258,21 +304,33 @@ function setupWatchers(
   });
 }
 
+function composeFullPath(rawPath: string, fileName: string): string {
+  const trimmed = rawPath.trim().replace(/\\/g, "/");
+  if (!trimmed) return trimmed;
+  if (!trimmed.endsWith("/")) return trimmed;
+  // 防御性 sanitize：即便上游已 sanitize，也避免 fileName 含 `/` 把目录段拆开，
+  // 导致 relativePath 与服务端 sanitizeFileName 出来的 fileName 不一致。
+  return trimmed + sanitizeDerivedFileName(fileName);
+}
+
 async function executeSubmit(
   deps: RegisterDocumentDeps,
   form: Ref<RegisterDocumentForm>,
   submitting: Ref<boolean>,
   closeModal: () => void,
+  effectiveFileName: ComputedRef<string>,
 ) {
   submitting.value = true;
   try {
     const f = form.value;
+    const fileName = effectiveFileName.value;
+    const fullPath = composeFullPath(f.relativePath, fileName);
     await deps.repository.uploadLocalArchive({
       requirementId: f.docItemId,
-      fileName: f.fileName || derivePathTail(f.relativePath),
-      relativePath: f.relativePath.trim(),
+      fileName,
+      relativePath: fullPath,
     });
-    const snapshot = { ...f };
+    const snapshot = { ...f, fileName, relativePath: fullPath };
     closeModal();
     deps.onSuccess?.(snapshot);
   } catch (error) {
@@ -291,6 +349,16 @@ interface RegisterState {
   submitting: Ref<boolean>;
   storageRootConfigured: ComputedRef<boolean>;
   suggestedPath: ComputedRef<string>;
+}
+
+// 「使用建议路径」点击后，若用户未手动编辑过资料说明且字段为空，
+// 立即用所选资料项的名称兜底；资料项名称可能含 `/`，必须 sanitize 后再写入，
+// 否则 relativePath 与服务端最终 sanitize 出的 fileName 会不一致。
+function fillFileNameFallback(deps: RegisterDocumentDeps, s: RegisterState) {
+  if (s.fileNameManuallyEdited.value) return;
+  if (s.form.value.fileName.trim() !== "") return;
+  const item = deps.allItems().find((d) => d.id === s.form.value.docItemId);
+  if (item?.name) s.form.value.fileName = sanitizeDerivedFileName(item.name);
 }
 
 function buildActions(
@@ -322,10 +390,10 @@ function buildActions(
     },
     applySuggestedPath() {
       const base = s.suggestedPath.value;
-      if (base) {
-        s.form.value.relativePath = base + "/";
-        s.pathManuallyEdited.value = false;
-      }
+      if (!base) return;
+      s.form.value.relativePath = base + "/";
+      s.pathManuallyEdited.value = false;
+      fillFileNameFallback(deps, s);
     },
     resetPath() {
       s.form.value.relativePath = "";
@@ -333,7 +401,13 @@ function buildActions(
     },
     async submit() {
       if (!derived.canSubmit.value || s.submitting.value) return;
-      await executeSubmit(deps, s.form, s.submitting, closeModal);
+      await executeSubmit(
+        deps,
+        s.form,
+        s.submitting,
+        closeModal,
+        derived.effectiveFileName,
+      );
     },
   };
 }

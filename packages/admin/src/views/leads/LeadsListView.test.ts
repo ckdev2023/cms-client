@@ -183,4 +183,58 @@ describe("LeadsListView", () => {
     expect(ownerOpts.some((o) => o.value === UUID_OWNER)).toBe(true);
     expect(ownerOpts.some((o) => o.label === "Local Admin")).toBe(true);
   });
+
+  it("does not clobber latest search result with stale earlier response", async () => {
+    // 旧实现里每个字符触发一次 listLeads 但不做请求版本守卫，
+    // search="R-FLOW-0" 的慢响应（5 条）可能晚于 search="R-FLOW-01"（1 条）到达，
+    // 把更新的结果用更旧的覆盖掉。token 守卫后：仅最后一次请求允许写回。
+    const fastResult = {
+      items: [
+        { ...getLeadSamples("en-US")[0]!, id: "lead-fast", name: "FAST" },
+      ],
+      total: 1,
+    };
+    const slowResult = {
+      items: getLeadSamples("en-US").slice(0, 5),
+      total: 5,
+    };
+
+    let resolveSlow: ((value: typeof slowResult) => void) | null = null;
+    const listLeads = vi
+      .fn()
+      .mockImplementationOnce(() =>
+        Promise.resolve({
+          items: getLeadSamples("en-US").slice(0, 1),
+          total: 1,
+        }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<typeof slowResult>((resolve) => {
+            resolveSlow = resolve;
+          }),
+      )
+      .mockImplementationOnce(() => Promise.resolve(fastResult));
+
+    const repo = createRepository({ listLeads });
+    mockedRepository.current = repo;
+
+    const { wrapper } = await mountView();
+    await flushPromises();
+
+    const filters = wrapper.findComponent(LeadFilters);
+    filters.vm.$emit("update:search", "R-FLOW-0");
+    await flushPromises();
+
+    filters.vm.$emit("update:search", "R-FLOW-01");
+    await flushPromises();
+
+    expect(resolveSlow).not.toBeNull();
+    resolveSlow!(slowResult);
+    await flushPromises();
+
+    const tableRows = wrapper.findAll("tbody tr");
+    expect(tableRows.length).toBe(1);
+    expect(tableRows[0]!.text()).toContain("FAST");
+  });
 });

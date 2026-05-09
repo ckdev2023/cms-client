@@ -103,9 +103,18 @@ export interface CaseValidationActions {
    */
   createSpErrorI18nKey: Ref<string | null>;
   /**
-   *
+   * 创建提交包（initial）。submittedAt 与 authorityName 必填，对应后端契约。
    */
-  createSubmissionPackage: () => Promise<void>;
+  createSubmissionPackage: (payload: {
+    /**
+     * 提交日时 ISO-8601 字符串。
+     */
+    submittedAt: string;
+    /**
+     * 提交对象（机关名）。
+     */
+    authorityName: string;
+  }) => Promise<void>;
   /**
    *
    */
@@ -233,8 +242,8 @@ function buildCreateSpAction(
   loading: Ref<boolean>,
   error: Ref<string | null>,
   errorI18nKey: Ref<string | null>,
-): () => Promise<void> {
-  return async () => {
+): (payload: { submittedAt: string; authorityName: string }) => Promise<void> {
+  return async (payload) => {
     if (loading.value) return;
     loading.value = true;
     error.value = null;
@@ -243,7 +252,18 @@ function buildCreateSpAction(
       await spRepo.create({
         caseId: deps.caseId.value,
         submissionKind: "initial",
-        items: [{ itemType: "field_snapshot", refId: deps.caseId.value }],
+        submittedAt: payload.submittedAt,
+        authorityName: payload.authorityName,
+        items: [
+          {
+            itemType: "field_snapshot",
+            refId: deps.caseId.value,
+            snapshotPayload: {
+              source: "admin-ui",
+              capturedAt: new Date().toISOString(),
+            },
+          },
+        ],
       });
       deps.onCreateSpSuccess?.();
     } catch (e) {

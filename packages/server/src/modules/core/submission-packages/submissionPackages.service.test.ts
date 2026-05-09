@@ -127,8 +127,21 @@ function createService(
 ) {
   const timeline = makeTimeline();
   const cases = makeCasesService(caseStatus);
+  // Bug D 修复后预校验需要 billing_records；为保留既有用例语义，
+  // 默认对 billing_records 查询返回一条记录，单测可显式覆写 queryFn 触发空场景。
+  const wrappedQueryFn: QueryFn = async (sql, params) => {
+    const result = await queryFn(sql, params);
+    if (result.rows.length > 0) return result;
+    if (sql.includes("from billing_records") && sql.includes("case_id")) {
+      return {
+        rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
+        rowCount: 1,
+      };
+    }
+    return result;
+  };
   const svc = new SubmissionPackagesService(
-    makePool(queryFn),
+    makePool(wrappedQueryFn),
     timeline.service as never,
     cases.service as never,
     makeTemplatesResolver(reviewRequired) as never,

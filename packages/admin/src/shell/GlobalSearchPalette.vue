@@ -10,14 +10,18 @@ import NavIcon from "./NavIcon.vue";
  */
 const DIALOG_ID = "global-search-palette";
 
-const props = defineProps<{
-  open: boolean;
-  groups: readonly SearchGroup[];
-  flatHits: readonly SearchHit[];
-  highlightedIndex: number;
-  loading: boolean;
-  query: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    open: boolean;
+    groups: readonly SearchGroup[];
+    flatHits: readonly SearchHit[];
+    highlightedIndex: number;
+    loading: boolean;
+    query: string;
+    error?: string | null;
+  }>(),
+  { error: null },
+);
 
 const emit = defineEmits<{
   "update:open": [value: boolean];
@@ -31,10 +35,18 @@ const inputRef = ref<HTMLInputElement | null>(null);
 const panelRef = ref<HTMLElement | null>(null);
 
 const hasQuery = computed(() => props.query.trim().length > 0);
+const hasError = computed(() => !!props.error);
+// 错误优先级高于 empty：避免 search API 失败（如 404 / 500）时被误显示为「没有找到结果」。
 const showEmpty = computed(
-  () => hasQuery.value && !props.loading && props.flatHits.length === 0,
+  () =>
+    hasQuery.value &&
+    !props.loading &&
+    !hasError.value &&
+    props.flatHits.length === 0,
 );
-const showResults = computed(() => props.flatHits.length > 0);
+const showResults = computed(
+  () => !hasError.value && props.flatHits.length > 0,
+);
 
 let trapFocusCleanup: (() => void) | null = null;
 
@@ -181,6 +193,18 @@ onBeforeUnmount(() => {
             <div v-if="loading" class="search-palette-state">
               <div class="search-palette-spinner" aria-hidden="true" />
               <span>{{ t("shell.search.loading") }}</span>
+            </div>
+
+            <div
+              v-else-if="hasError"
+              class="search-palette-state search-palette-state--error"
+              role="alert"
+              data-testid="search-error"
+            >
+              <p class="search-palette-empty-title">
+                {{ t("shell.search.error") }}
+              </p>
+              <p class="search-palette-muted">{{ error }}</p>
             </div>
 
             <div
@@ -335,6 +359,9 @@ onBeforeUnmount(() => {
   gap: var(--space-2);
   padding: var(--space-8) var(--space-7);
   text-align: center;
+}
+.search-palette-state--error .search-palette-empty-title {
+  color: var(--color-danger-6, #dc2626);
 }
 .search-palette-spinner {
   width: 16px;

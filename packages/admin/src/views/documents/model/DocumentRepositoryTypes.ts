@@ -640,13 +640,35 @@ export function parseSharedExpiryRiskData(json: unknown): SharedExpiryRiskData {
 /**
  * 后端完成率 JSON → CompletionRate 映射。
  *
+ * 口径与 R31-G 验收一致：分母为「实际需要处理的资料项」（即排除 waived），
+ * 分子为「已审核通过」（仅 approved，不含 waived）。这样案件详情资料 Tab 的
+ * 全局完成率与各分组完成率（computeDocumentStatusBreakdown 等本地工具）一致，
+ * 避免 waived 同时计入分子/分母带来的「2/10 50%（共 9 项 · 8 项待提交）」错位。
+ *
+ * 兼容旧响应：若不含 approved/waived 字段，则退回 completed/total 旧口径。
+ *
  * @param json - 后端 JSON 响应
  * @returns 完成率数据
  */
 export function parseCompletionRate(json: unknown): CompletionRate {
   const r = (json ?? {}) as Record<string, unknown>;
-  const completed = typeof r.completed === "number" ? r.completed : 0;
   const total = typeof r.total === "number" ? r.total : 0;
+  const completed = typeof r.completed === "number" ? r.completed : 0;
+  const hasApproved = typeof r.approved === "number";
+  const hasWaived = typeof r.waived === "number";
+  if (hasApproved && hasWaived) {
+    const approved = r.approved as number;
+    const waived = r.waived as number;
+    const activeTotal = Math.max(0, total - waived);
+    const percent =
+      activeTotal > 0 ? Math.round((approved / activeTotal) * 100) : 0;
+    return {
+      collected: approved,
+      total: activeTotal,
+      percent,
+      label: `${approved}/${activeTotal}`,
+    };
+  }
   const percent =
     typeof r.completionRate === "number"
       ? r.completionRate

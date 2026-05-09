@@ -48,11 +48,13 @@ async function assertLatestValidationRunPassed(
   const label = `${fromLabel}→${toLabel}`;
   const latestVR = await getLatestValidationRun(tenantDb, ctx.orgId, c.id);
   if (!latestVR) {
-    throw new BadRequestException(`${label} requires a passed validation run`);
+    throw new BadRequestException(
+      `${CASE_WRITE_ERROR_CODES.GATE_VALIDATION_RUN_MISSING}: ${label} requires a passed validation run`,
+    );
   }
   if (latestVR.result_status !== "passed") {
     throw new BadRequestException(
-      `${label} requires the latest validation run to be passed`,
+      `${CASE_WRITE_ERROR_CODES.GATE_VALIDATION_RUN_NOT_PASSED}: ${label} requires the latest validation run to be passed`,
     );
   }
 
@@ -64,7 +66,7 @@ async function assertLatestValidationRunPassed(
   );
   if (stale) {
     throw new BadRequestException(
-      `${label} blocked: validation run is stale because relevant data changed after validation`,
+      `${CASE_WRITE_ERROR_CODES.GATE_VALIDATION_RUN_STALE}: ${label} blocked: validation run is stale because relevant data changed after validation`,
     );
   }
 
@@ -78,7 +80,7 @@ async function assertLatestValidationRunPassed(
   );
   if (latestReview?.decision !== "approved") {
     throw new BadRequestException(
-      `${label} requires an approved review record when review_required_flag is enabled`,
+      `${CASE_WRITE_ERROR_CODES.GATE_REVIEW_NOT_APPROVED}: ${label} requires an approved review record when review_required_flag is enabled`,
     );
   }
 }
@@ -221,7 +223,7 @@ async function validateReadyForDocumentPreparation(
 
   if (!primaryPartyResult.rows.at(0)) {
     throw new BadRequestException(
-      "S3→S4 requires a primary case party before moving to S4",
+      `${CASE_WRITE_ERROR_CODES.GATE_A_MISSING_PRIMARY_PARTY}: S3→S4 requires a primary case party before moving to S4`,
     );
   }
 }
@@ -255,7 +257,7 @@ async function validateReadyForInternalReview(
 
   if (incompleteRequiredItemResult.rows.at(0)) {
     throw new BadRequestException(
-      "S4→S5 requires all required document items to be approved or waived",
+      `${CASE_WRITE_ERROR_CODES.GATE_B_INCOMPLETE_REQUIRED_ITEMS}: S4→S5 requires all required document items to be approved or waived`,
     );
   }
 }
@@ -311,7 +313,7 @@ async function validateGateC(
 
   if (c.billingUnpaidAmountCached > 0 && !c.billingRiskAcknowledgedAt) {
     throw new BadRequestException(
-      "S6→S7 requires billing risk acknowledgment before formal submission when there is unpaid balance",
+      `${CASE_WRITE_ERROR_CODES.GATE_C_BILLING_RISK_UNACKNOWLEDGED}: S6→S7 requires billing risk acknowledgment before formal submission when there is unpaid balance`,
     );
   }
 }
@@ -395,7 +397,19 @@ async function dispatchGateCheck(
   }
 }
 
-async function validateTransitionGate(
+/**
+ * 仅校验阶段流转的 gate 前置条件（不校验 state_flow 模板允许列表）。
+ * 暴露给 SubmissionPackagesService 在 SP 创建前预检 S6→S7 gate。
+ *
+ * @param pool - 数据库连接池
+ * @param templatesResolver - 模板解析器
+ * @param ctx - 请求上下文
+ * @param c - 案件实体
+ * @param from - 起始阶段
+ * @param to - 目标阶段
+ * @param closeReason - 结案理由（仅 S9 终态使用）
+ */
+export async function validateTransitionGate(
   pool: Pool,
   templatesResolver: TemplatesResolver,
   ctx: RequestContext,

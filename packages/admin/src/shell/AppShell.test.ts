@@ -200,6 +200,28 @@ describe("AppShell", () => {
     expect(document.activeElement).toBe(w.find("main#main-content").element);
   });
 
+  it("preserves the active input focus on query-only navigation", async () => {
+    const { wrapper: w, router } = await mountShell();
+    await router.push("/cases");
+    await flushPromises();
+
+    const input = document.createElement("input");
+    input.id = "tester-search";
+    document.body.appendChild(input);
+    input.focus();
+    expect(document.activeElement).toBe(input);
+
+    await router.replace("/cases?search=B");
+    await flushPromises();
+
+    expect(document.activeElement).toBe(input);
+    expect(document.activeElement).not.toBe(
+      w.find("main#main-content").element,
+    );
+
+    input.remove();
+  });
+
   it("renders the cases route view when navigating to /cases", async () => {
     const { wrapper: w, router } = await mountShell();
     await router.push("/cases");

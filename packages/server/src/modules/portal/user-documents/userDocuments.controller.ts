@@ -271,12 +271,16 @@ function parseContentType(value: unknown): string {
   return contentType;
 }
 
+// 仅剔除会破坏文件系统/显示的字符，保留 Unicode（中日韩）等业务必要字符；
+// 与 core `documentFiles.controller.ts` 中的 `sanitizeFileName` 保持等价。
+// 控制字符 \x00-\x1f 是有意阻断的非打印字符，故关闭 no-control-regex。
+// eslint-disable-next-line no-control-regex
+const UNSAFE_FILE_NAME_CHARS_RE = /[\\/:*?"<>|\x00-\x1f]/g;
+
 function sanitizeFileName(raw: string): string {
-  // 去除路径分隔符和危险字符，只保留安全字符
   const cleaned = raw
-    .replace(/[/\\]/g, "_")
+    .replace(UNSAFE_FILE_NAME_CHARS_RE, "_")
     .replace(/\.\./g, "_")
-    .replace(/[^\w.\-() ]/g, "_")
     .trim();
   if (cleaned.length === 0 || cleaned.length > 255) {
     throw new BadRequestException("Invalid fileName");

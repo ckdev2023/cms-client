@@ -133,9 +133,14 @@ function syncRouteView(
 
 syncRouteView();
 
-const stopRouteSync = router.afterEach(async (to) => {
+const stopRouteSync = router.afterEach(async (to, from) => {
   syncRouteView(to);
   closeMobileNav();
+  // 仅在真正的页面切换（路由名或 params 变化）时才把焦点重置到主内容区，
+  // 避免列表筛选/搜索通过 router.replace 同步 query 时把焦点从输入框抢走，
+  // 进而打断用户连续输入。query-only 变化保留当前焦点。
+  const viewChanged = viewKeyOf(to) !== viewKeyOf(from);
+  if (!viewChanged) return;
   await nextTick();
   mainContentRef.value?.focus({ preventScroll: true });
   scrollToTop();
@@ -229,6 +234,7 @@ onBeforeUnmount(() => {
       :highlighted-index="search.highlightedIndex.value"
       :loading="search.loading.value"
       :query="search.query.value"
+      :error="search.error.value"
       @update:open="(v) => (v ? search.openPalette() : search.closePalette())"
       @update:query="(v) => (search.query.value = v)"
       @move-highlight="search.moveHighlight"

@@ -184,6 +184,21 @@ describe("GlobalSearchPalette", () => {
     expect(findDialog()!.textContent).toContain("没有找到结果");
   });
 
+  it("shows error state instead of empty when error is set", async () => {
+    mountPalette({
+      flatHits: [],
+      groups: [],
+      query: "fail",
+      error: "Network failure",
+    });
+    await nextTick();
+    const errorEl = document.querySelector('[data-testid="search-error"]');
+    expect(errorEl).not.toBeNull();
+    expect(errorEl!.textContent).toContain("搜索失败，请稍后再试");
+    expect(errorEl!.textContent).toContain("Network failure");
+    expect(findDialog()!.textContent).not.toContain("没有找到结果");
+  });
+
   it("shows placeholder hint when no query entered", async () => {
     mountPalette({ flatHits: [], groups: [], query: "" });
     await nextTick();

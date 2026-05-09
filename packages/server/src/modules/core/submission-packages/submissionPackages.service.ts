@@ -17,6 +17,11 @@ import {
   TEMPLATES_RESOLVER,
   type TemplatesResolver,
 } from "../cases/cases.service";
+import { validateTransitionGate } from "../cases/cases.service.transition-gates";
+import {
+  CASE_WRITE_ERROR_CODES,
+  VALIDATION_SUBMISSION_ERROR_CODES,
+} from "../cases/cases.types";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
@@ -195,24 +200,28 @@ function requireValidSubmissionKind(kind: string): void {
 
 function requireValidItems(items: SubmissionPackageCreateItemInput[]): void {
   if (items.length === 0) {
-    throw new BadRequestException("items must not be empty");
+    throw new BadRequestException(
+      `${VALIDATION_SUBMISSION_ERROR_CODES.SP_MISSING_MINIMUM_FIELDS}: items must not be empty`,
+    );
   }
   const seen = new Set<string>();
   for (const item of items) {
     if (!ALLOWED_ITEM_TYPES.has(item.itemType)) {
       throw new BadRequestException(
-        `Unsupported submission package itemType: ${item.itemType}`,
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_INVALID_ITEM_TYPE}: Unsupported submission package itemType: ${item.itemType}`,
       );
     }
     const dedupeKey = `${item.itemType}:${item.refId}`;
     if (seen.has(dedupeKey)) {
       throw new BadRequestException(
-        "Duplicate submission package item is not allowed",
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_DUPLICATE_ITEM}: Duplicate submission package item is not allowed`,
       );
     }
     seen.add(dedupeKey);
     if (item.itemType === "field_snapshot" && !item.snapshotPayload) {
-      throw new BadRequestException("field_snapshot requires snapshotPayload");
+      throw new BadRequestException(
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_MISSING_MINIMUM_FIELDS}: field_snapshot requires snapshotPayload`,
+      );
     }
   }
 }
@@ -222,7 +231,7 @@ function requireSubmissionMinimumFields(
 ): void {
   if (!input.submittedAt) {
     throw new BadRequestException(
-      "submittedAt is required for submission package",
+      `${VALIDATION_SUBMISSION_ERROR_CODES.SP_MISSING_MINIMUM_FIELDS}: submittedAt is required for submission package`,
     );
   }
   if (
@@ -230,7 +239,7 @@ function requireSubmissionMinimumFields(
     input.authorityName.trim().length === 0
   ) {
     throw new BadRequestException(
-      "authorityName is required for submission package",
+      `${VALIDATION_SUBMISSION_ERROR_CODES.SP_MISSING_MINIMUM_FIELDS}: authorityName is required for submission package`,
     );
   }
 }
@@ -271,23 +280,41 @@ export class SubmissionPackagesService {
 
     if (submissionKind === "supplement" && !input.relatedSubmissionId) {
       throw new BadRequestException(
-        "relatedSubmissionId is required for supplement package",
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_SUPPLEMENT_REQUIRES_RELATED}: relatedSubmissionId is required for supplement package`,
       );
     }
     if (submissionKind === "initial" && input.relatedSubmissionId) {
       throw new BadRequestException(
-        "initial package cannot set relatedSubmissionId",
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_INITIAL_NO_RELATED}: initial package cannot set relatedSubmissionId`,
       );
     }
 
     const currentCase = await this.casesService.get(ctx, input.caseId);
     if (!currentCase) {
-      throw new NotFoundException("Case not found");
+      throw new NotFoundException(
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_CASE_NOT_FOUND}: Case not found`,
+      );
     }
     const currentCaseStage = currentCase.stage ?? currentCase.status;
     if (currentCaseStage !== "S6" && currentCaseStage !== "S7") {
       throw new BadRequestException(
-        "Submission package can only be created when case is in S6 or S7",
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_CASE_STAGE_INVALID}: Submission package can only be created when case is in S6 or S7`,
+      );
+    }
+
+    // Bug D 修复：在创建 SP 之前预校验 S6→S7 transition gate 前置条件
+    // （计费记录、欠款风险确认等），避免 SP 已 commit 但阶段推进失败导致
+    // orphan SP / 状态不一致。仅校验 gate，不重复校验 state_flow 矩阵
+    // （前面已保证 stage ∈ {S6, S7}）。
+    if (currentCaseStage === "S6") {
+      await validateTransitionGate(
+        this.pool,
+        this.templatesResolver,
+        ctx,
+        currentCase,
+        "S6",
+        "S7",
+        null,
       );
     }
 
@@ -706,12 +733,12 @@ export class SubmissionPackagesService {
     const latestValidationRun = validationRunResult.rows.at(0);
     if (!latestValidationRun) {
       throw new BadRequestException(
-        "Gate-C requires a latest validation run before creating a submission package",
+        `${CASE_WRITE_ERROR_CODES.GATE_VALIDATION_RUN_MISSING}: Gate-C requires a latest validation run before creating a submission package`,
       );
     }
     if (latestValidationRun.result_status !== "passed") {
       throw new BadRequestException(
-        "Gate-C requires the latest validation run to be passed",
+        `${CASE_WRITE_ERROR_CODES.GATE_VALIDATION_RUN_NOT_PASSED}: Gate-C requires the latest validation run to be passed`,
       );
     }
     if (validationRunId && validationRunId !== latestValidationRun.id) {
@@ -827,7 +854,9 @@ export class SubmissionPackagesService {
     if (item.snapshotPayload) return item.snapshotPayload;
 
     if (item.itemType === "field_snapshot") {
-      throw new BadRequestException("field_snapshot requires snapshotPayload");
+      throw new BadRequestException(
+        `${VALIDATION_SUBMISSION_ERROR_CODES.SP_MISSING_MINIMUM_FIELDS}: field_snapshot requires snapshotPayload`,
+      );
     }
 
     if (item.itemType === "document_requirement") {

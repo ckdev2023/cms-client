@@ -133,63 +133,67 @@ function fmtCreatedAt(iso: string | null | undefined): string {
       </div>
 
       <!-- Table -->
-      <table v-else class="group-list-panel__table">
-        <thead>
-          <tr>
-            <th
-              v-for="col in GROUP_TABLE_COLUMNS"
-              :key="col.key"
-              class="group-list-panel__th"
-              :style="col.width ? { width: col.width } : undefined"
-              :class="{
-                'group-list-panel__th--center': col.align === 'center',
-                'group-list-panel__th--right': col.align === 'right',
-              }"
-            >
-              {{ t(col.labelKey) }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr
-            v-for="group in filteredGroups"
-            :key="group.id"
-            class="group-list-panel__row"
-            :class="{
-              'group-list-panel__row--selected': group.id === selectedGroupId,
-            }"
-            tabindex="0"
-            role="button"
-            @click="$emit('selectGroup', group.id)"
-            @keydown.enter="$emit('selectGroup', group.id)"
-            @keydown.space.prevent="$emit('selectGroup', group.id)"
-          >
-            <td class="group-list-panel__td">
-              <span class="group-list-panel__group-name">{{ group.name }}</span>
-              <small
-                v-if="group.groupNo"
-                class="group-list-panel__group-slug"
-                :title="group.groupNo"
-                >{{ group.groupNo }}</small
+      <div v-else class="group-list-panel__table-scroll">
+        <table class="group-list-panel__table">
+          <thead>
+            <tr>
+              <th
+                v-for="col in GROUP_TABLE_COLUMNS"
+                :key="col.key"
+                class="group-list-panel__th"
+                :style="col.width ? { width: col.width } : undefined"
+                :class="{
+                  'group-list-panel__th--center': col.align === 'center',
+                  'group-list-panel__th--right': col.align === 'right',
+                }"
               >
-            </td>
-            <td class="group-list-panel__td">
-              <Chip :tone="chipToneFor(group.status)" dot>
-                {{ t(GROUP_STATUS_BADGE[group.status].label) }}
-              </Chip>
-            </td>
-            <td class="group-list-panel__td">
-              {{ fmtCreatedAt(group.createdAt) }}
-            </td>
-            <td class="group-list-panel__td group-list-panel__td--center">
-              {{ group.activeCaseCount }}
-            </td>
-            <td class="group-list-panel__td group-list-panel__td--center">
-              {{ group.memberCount }}
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                {{ t(col.labelKey) }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr
+              v-for="group in filteredGroups"
+              :key="group.id"
+              class="group-list-panel__row"
+              :class="{
+                'group-list-panel__row--selected': group.id === selectedGroupId,
+              }"
+              tabindex="0"
+              role="button"
+              @click="$emit('selectGroup', group.id)"
+              @keydown.enter="$emit('selectGroup', group.id)"
+              @keydown.space.prevent="$emit('selectGroup', group.id)"
+            >
+              <td class="group-list-panel__td">
+                <span class="group-list-panel__group-name">{{
+                  group.name
+                }}</span>
+                <small
+                  v-if="group.groupNo"
+                  class="group-list-panel__group-slug"
+                  :title="group.groupNo"
+                  >{{ group.groupNo }}</small
+                >
+              </td>
+              <td class="group-list-panel__td">
+                <Chip :tone="chipToneFor(group.status)" dot>
+                  {{ t(GROUP_STATUS_BADGE[group.status].label) }}
+                </Chip>
+              </td>
+              <td class="group-list-panel__td">
+                {{ fmtCreatedAt(group.createdAt) }}
+              </td>
+              <td class="group-list-panel__td group-list-panel__td--center">
+                {{ group.activeCaseCount }}
+              </td>
+              <td class="group-list-panel__td group-list-panel__td--center">
+                {{ group.memberCount }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </template>
   </section>
 </template>
@@ -199,6 +203,7 @@ function fmtCreatedAt(iso: string | null | undefined): string {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 /* --- Toolbar --- */
@@ -208,6 +213,7 @@ function fmtCreatedAt(iso: string | null | undefined): string {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .group-list-panel__filter {
@@ -232,8 +238,16 @@ function fmtCreatedAt(iso: string | null | undefined): string {
 
 /* --- Table --- */
 
+.group-list-panel__table-scroll {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .group-list-panel__table {
   width: 100%;
+  min-width: 560px;
   text-align: left;
   border-collapse: collapse;
 }

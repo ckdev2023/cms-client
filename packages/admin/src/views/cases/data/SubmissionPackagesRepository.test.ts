@@ -154,5 +154,37 @@ describe("SubmissionPackagesRepository", () => {
         items: [{ itemType: "field_snapshot", refId: "case-1" }],
       });
     });
+
+    it("forwards submittedAt and authorityName when provided", async () => {
+      const mockFetch = createMockFetch((_url, init) => {
+        const body = JSON.parse(init?.body as string);
+        expect(body.submittedAt).toBe("2026-05-09T05:14:00.000Z");
+        expect(body.authorityName).toBe("Tokyo Immigration");
+        return jsonResponse({ id: "sp-003", caseId: "case-1" });
+      });
+
+      const repo = createRepo(mockFetch);
+      await repo.create({
+        caseId: "case-1",
+        submittedAt: "2026-05-09T05:14:00.000Z",
+        authorityName: "Tokyo Immigration",
+        items: [{ itemType: "field_snapshot", refId: "case-1" }],
+      });
+    });
+
+    it("omits submittedAt and authorityName when undefined", async () => {
+      const mockFetch = createMockFetch((_url, init) => {
+        const body = JSON.parse(init?.body as string);
+        expect(body).not.toHaveProperty("submittedAt");
+        expect(body).not.toHaveProperty("authorityName");
+        return jsonResponse({ id: "sp-004", caseId: "case-1" });
+      });
+
+      const repo = createRepo(mockFetch);
+      await repo.create({
+        caseId: "case-1",
+        items: [{ itemType: "field_snapshot", refId: "case-1" }],
+      });
+    });
   });
 });

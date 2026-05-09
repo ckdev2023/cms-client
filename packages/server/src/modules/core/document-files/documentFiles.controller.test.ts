@@ -373,6 +373,55 @@ void test("DocumentFilesController upload allows when parent case is not S9", as
   assert.equal(res.id, FILE_ID);
 });
 
+void test("DocumentFilesController upload preserves CJK characters in fileName (sanitizeFileName Unicode-safe)", async () => {
+  let uploadInput: Record<string, unknown> | undefined;
+  const service = {
+    upload: (_ctx: unknown, input: Record<string, unknown>) => {
+      uploadInput = input;
+      return Promise.resolve(mockFile);
+    },
+  } as unknown as DocumentFilesService;
+  const controller = new DocumentFilesController(
+    service,
+    makeMockItemsService(),
+    makeMockCasesService(),
+  );
+
+  await controller.upload(req as never, {
+    requirementId: REQUIREMENT_ID,
+    fileName: "在留カードコピー.pdf",
+    storageType: "local_server",
+    relativePath: "A2026-001/applicant/fs-residence-card/",
+  });
+  assert.ok(uploadInput);
+  assert.equal(uploadInput.fileName, "在留カードコピー.pdf");
+});
+
+void test("DocumentFilesController upload still strips path-traversal sequences", async () => {
+  let uploadInput: Record<string, unknown> | undefined;
+  const service = {
+    upload: (_ctx: unknown, input: Record<string, unknown>) => {
+      uploadInput = input;
+      return Promise.resolve(mockFile);
+    },
+  } as unknown as DocumentFilesService;
+  const controller = new DocumentFilesController(
+    service,
+    makeMockItemsService(),
+    makeMockCasesService(),
+  );
+
+  await controller.upload(req as never, {
+    requirementId: REQUIREMENT_ID,
+    fileName: "../../etc/在留:カード*report.pdf",
+    storageType: "local_server",
+    relativePath: "A2026-001/applicant/fs-residence-card/",
+  });
+  assert.ok(uploadInput);
+  // `..` 折叠为 `_`，`/` 与 `:` 与 `*` 折叠为 `_`，CJK 字符保留。
+  assert.equal(uploadInput.fileName, "____etc_在留_カード_report.pdf");
+});
+
 void test("DocumentFilesController upload rejects when requirement not found", async () => {
   const service = {
     upload: () => Promise.resolve(mockFile),

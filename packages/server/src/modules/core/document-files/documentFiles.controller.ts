@@ -156,11 +156,16 @@ function parseOptionalDateOnly(
   return str;
 }
 
+// 仅剔除会破坏文件系统/显示的字符，保留 Unicode（中日韩）等业务必要字符；
+// 否则 `资料说明` 字段输入「在留カードコピー」会被拆成下划线，对日文 SaaS 不可接受。
+// 控制字符 \x00-\x1f 是有意阻断的非打印字符，故关闭 no-control-regex。
+// eslint-disable-next-line no-control-regex
+const UNSAFE_FILE_NAME_CHARS_RE = /[\\/:*?"<>|\x00-\x1f]/g;
+
 function sanitizeFileName(raw: string): string {
   const cleaned = raw
-    .replace(/[/\\]/g, "_")
+    .replace(UNSAFE_FILE_NAME_CHARS_RE, "_")
     .replace(/\.\./g, "_")
-    .replace(/[^\w.\-() ]/g, "_")
     .trim();
   if (cleaned.length === 0 || cleaned.length > 255) {
     throw new BadRequestException("Invalid fileName");

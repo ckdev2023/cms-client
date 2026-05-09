@@ -33,6 +33,14 @@ export interface SubmissionPackageCreateInput {
    */
   submissionKind?: "initial" | "supplement";
   /**
+   * 提交日时（ISO-8601 字符串）。后端要求必填。
+   */
+  submittedAt?: string;
+  /**
+   * 提交对象（机关名）。后端要求必填。
+   */
+  authorityName?: string;
+  /**
    *
    */
   validationRunId?: string | null;
@@ -106,13 +114,17 @@ function adaptResult(body: unknown): SubmissionPackageResult | null {
 function buildPayload(
   input: SubmissionPackageCreateInput,
 ): Record<string, unknown> {
-  return {
+  const payload: Record<string, unknown> = {
     caseId: input.caseId,
     submissionKind: input.submissionKind ?? "initial",
     validationRunId: input.validationRunId,
     reviewRecordId: input.reviewRecordId,
     items: input.items,
   };
+  if (input.submittedAt !== undefined) payload.submittedAt = input.submittedAt;
+  if (input.authorityName !== undefined)
+    payload.authorityName = input.authorityName;
+  return payload;
 }
 
 function createRuntime(

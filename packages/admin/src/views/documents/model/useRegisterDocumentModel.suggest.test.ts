@@ -207,6 +207,60 @@ describe("useRegisterDocumentModel – path suggestion watcher", () => {
     expect(model.pathManuallyEdited.value).toBe(false);
   });
 
+  it("applySuggestedPath leaves fileName resolvable to doc item name when empty", async () => {
+    const { model } = setup();
+    model.openModal("c1", "d1");
+    await nextTick();
+
+    model.applySuggestedPath();
+    // 即便 form.fileName 显式留空，effectiveFileName 也会通过资料项名称兜底，
+    // 让用户点完「使用建议路径」之后无需手动填写也能成功登记。
+    expect(model.form.value.fileName).toBe("パスポート写し");
+    expect(model.canSubmit.value).toBe(true);
+  });
+
+  it("applySuggestedPath does not override manually edited fileName", async () => {
+    const { model } = setup();
+    model.openModal("c1", "d1");
+    await nextTick();
+    model.updateField("fileName", "passport_2026.pdf");
+
+    model.applySuggestedPath();
+    expect(model.form.value.fileName).toBe("passport_2026.pdf");
+  });
+
+  // 当资料项名称包含 `/`（业务名称如「在留資格認定/変更許可申請書」），
+  // 兜底写入表单的 fileName 必须 sanitize，否则提交时会被服务端 sanitize 出
+  // 与 relativePath 末段不一致的结果。
+  it("applySuggestedPath sanitizes fileName fallback when doc item name contains '/'", async () => {
+    const items: DocumentListItem[] = [
+      makeItem({
+        id: "ds",
+        caseId: "c1",
+        caseName: "案件A",
+        provider: "main_applicant",
+        checklistItemCode: "fs-application-form",
+        name: "在留資格認定/変更許可申請書",
+      }),
+    ];
+    const caseNoLookup = vi.fn(() => "A2026-001");
+    const itemMetaLookup = vi.fn(() => ({
+      ownerSide: "office",
+      checklistItemCode: "fs-application-form",
+    }));
+    const model = useRegisterDocumentModel({
+      allItems: () => items,
+      repository: stubRepository(),
+      caseNoLookup,
+      itemMetaLookup,
+    });
+    model.openModal("c1", "ds");
+    await nextTick();
+    model.applySuggestedPath();
+    expect(model.form.value.fileName).toBe("在留資格認定_変更許可申請書");
+    expect(model.canSubmit.value).toBe(true);
+  });
+
   it("resetPath clears the path and resets manual flag", async () => {
     const { model } = setup();
     model.openModal("c1", "d1");

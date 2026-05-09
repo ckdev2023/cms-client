@@ -63,23 +63,14 @@ export async function convertCase(
   const row = result.rows.at(0);
   if (!row) throw new BadRequestException("Failed to update lead");
 
-  if (isBmv) {
-    await initializeBmvProfile(tenantDb, customerId, leadId);
-  }
-  await backfillConversationCustomer(tenantDb, customerId, leadId);
-
-  // NEW-V5-4 修复：在案件侧补一条「由线索 LEAD-XXX 转化而来」时间线，
-  // 与 LEAD 侧的 `lead.converted_case` 形成双向可追溯对（避免「案件 → 线索」
-  // 必须经客户三跳追溯）。
-  await writeCaseConvertedFromLeadTimeline(tenantDb, ctx, {
+  await runPostCreateBookkeeping(tenantDb, ctx, {
     caseId,
-    leadId,
     customerId,
+    leadId,
     leadNo: lead.leadNo,
+    isBmv,
   });
 
-  // R-FLOW5-A-6：caseNo / caseNumber 写入 lead_logs.payload，使日志 Tab
-  // 显示 CASE-... 编号而非 8 位 UUID 前缀；caseNumber 字段保留兼容旧渲染器。
   await deps.writeAudit(ctx, leadId, "converted_case", {
     caseId,
     caseTypeCode: input.caseTypeCode,
@@ -89,6 +80,64 @@ export async function convertCase(
   });
 
   return { lead: mapLeadRow(row), caseId };
+}
+
+type PostCreateBookkeepingPayload = {
+  caseId: string;
+  customerId: string;
+  leadId: string;
+  leadNo: string | null;
+  isBmv: boolean;
+};
+
+async function runPostCreateBookkeeping(
+  db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  ctx: RequestContext,
+  payload: PostCreateBookkeepingPayload,
+): Promise<void> {
+  const { caseId, customerId, leadId, leadNo, isBmv } = payload;
+  await ensurePrimaryApplicantCaseParty(db, ctx, caseId, customerId);
+  if (isBmv) {
+    await initializeBmvProfile(db, customerId, leadId);
+  }
+  await backfillConversationCustomer(db, customerId, leadId);
+  await writeCaseConvertedFromLeadTimeline(db, ctx, {
+    caseId,
+    leadId,
+    customerId,
+    leadNo,
+  });
+}
+
+/**
+ * 主申請人 case_party を best-effort で作成する。
+ *
+ * Gate-A（S3→S4）が is_primary=true の case_party を要求するため、
+ * 转化时点で linked customer を主申請人として自動登録する。
+ * 既に同一 case に対して is_primary=true の party が存在する場合は何もしない（idempotent）。
+ *
+ * @param db - tenantDb / tx
+ * @param db.query - SQL 実行関数（query メソッドのみ利用）
+ * @param ctx - リクエストコンテキスト
+ * @param caseId - 案件 ID
+ * @param customerId - 主申請人として登録する customer ID
+ */
+async function ensurePrimaryApplicantCaseParty(
+  db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  ctx: RequestContext,
+  caseId: string,
+  customerId: string,
+): Promise<void> {
+  await db.query(
+    `insert into case_parties
+       (org_id, case_id, party_type, customer_id, contact_person_id, relation_to_case, is_primary)
+     select $1, $2, 'applicant', $3, null, '主申請人', true
+     where not exists (
+       select 1 from case_parties
+       where org_id = $1 and case_id = $2 and is_primary = true
+     )`,
+    [ctx.orgId, caseId, customerId],
+  );
 }
 
 async function writeCaseConvertedFromLeadTimeline(

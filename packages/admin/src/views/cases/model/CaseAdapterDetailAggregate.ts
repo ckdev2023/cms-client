@@ -190,15 +190,32 @@ function buildBillingBlock(
 }
 
 function buildRiskConfirmation(
+  caseRecord: Record<string, unknown>,
   billing: Record<string, unknown> | null,
   acknowledged: boolean,
   unpaidAmount: number,
 ) {
   if (!acknowledged || !billing) return null;
+  // 確認者は acknowledgedBy（user UUID）。display name が解決できない場合は
+  // reasonCode をフォールバック表示し、原因と被らないようにする。
+  // P0 仕様：CaseDetailAggregateDto.billing は CaseBillingSummary 簡版で
+  // reasonNote / evidenceUrl を含まないため、case 本体から読み取る。
+  const reasonCode =
+    readString(billing, "billingRiskAckReasonCode") ||
+    readString(caseRecord, "billingRiskAckReasonCode");
+  const reasonNote = readNullableString(caseRecord, "billingRiskAckReasonNote");
+  const evidenceUrl = readNullableString(
+    caseRecord,
+    "billingRiskAckEvidenceUrl",
+  );
+  const acknowledgedBy = readNullableString(
+    caseRecord,
+    "billingRiskAcknowledgedBy",
+  );
   return {
-    confirmedBy: readString(billing, "billingRiskAckReasonCode"),
-    reason: readString(billing, "billingRiskAckReasonCode"),
-    evidence: "",
+    confirmedBy: acknowledgedBy ?? reasonCode,
+    reason: reasonNote ?? reasonCode,
+    evidence: evidenceUrl ?? "",
     time: formatDate(readNullableString(billing, "billingRiskAcknowledgedAt")),
     amount: unpaidAmount > 0 ? `¥${unpaidAmount.toLocaleString()}` : "",
   };
@@ -463,6 +480,7 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
     billing: buildBillingBlock(m.quotePrice, m.unpaidAmount, m.totalReceived),
     validation: buildValidationBlock(latestValidation),
     riskConfirmationRecord: buildRiskConfirmation(
+      caseRecord,
       billing,
       m.billingRiskAck,
       m.unpaidAmount,

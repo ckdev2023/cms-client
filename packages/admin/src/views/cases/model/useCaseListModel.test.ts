@@ -210,6 +210,54 @@ describe("useCaseListModel", () => {
     expect(model.filters.search).toBe(item.applicant);
   });
 
+  /**
+   * 复现 BUG：连续输入触发 router.replace 后，迟到的 routeQuery 回执
+   * 用旧 URL 覆盖最新 filters，导致 search 输入只保留首字符。
+   * 修复后：自己 push 出去的 query 即使作为 echo 迟到，也不应反向覆盖
+   * 已经超前的 filters。
+   */
+  it("rapid setSearch + stale route echo does not clobber latest filters", async () => {
+    const routeQuery = ref<LocationQuery>({ scope: "all" });
+    const replaceQuery = vi.fn();
+    const { repository } = createMockRepository();
+    const model = useCaseListModel({
+      repository,
+      routeQuery,
+      replaceQuery,
+    });
+    await flushFetch();
+
+    model.setSearch("B");
+    await nextTick();
+    model.setSearch("BU");
+    await nextTick();
+    model.setSearch("BUG-111");
+    await nextTick();
+
+    expect(model.filters.search).toBe("BUG-111");
+
+    routeQuery.value = { scope: "all", search: "B" };
+    await flushFetch();
+
+    expect(model.filters.search).toBe("BUG-111");
+
+    routeQuery.value = { scope: "all", search: "BUG-111" };
+    await flushFetch();
+
+    expect(model.filters.search).toBe("BUG-111");
+  });
+
+  it("external route query change still updates filters", async () => {
+    const { model, routeQuery } = await createModel({ scope: "all" });
+    model.setSearch("local-typed");
+    await nextTick();
+
+    routeQuery.value = { scope: "all", search: "from-deep-link" };
+    await flushFetch();
+
+    expect(model.filters.search).toBe("from-deep-link");
+  });
+
   it("scope setter updates scope", async () => {
     const { model } = await createModel();
     model.setScope("all");

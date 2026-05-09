@@ -62,6 +62,7 @@ vi.mock("../model/useCaseDocumentsTab", () => ({
       open: ref(false),
       form: ref({ caseId: "", docItemId: "", relativePath: "" }),
       pathError: ref(""),
+      fileNameError: ref(null),
       caseOptions: ref([]),
       docItemOptions: ref([]),
       versionLabel: ref(""),

@@ -819,10 +819,21 @@ const casesEnUS = {
           supplementaryInfo: "Additional info",
           onlyTip: "FYI",
           noBlockers: "Validation passed, no blockers",
+          advanceStageButton: "Next step: advance to {nextStage}",
+          advanceStageDisabled: {
+            mustHandleBlocker:
+              "There are unresolved blockers. Please resolve them before advancing.",
+            validationNotPassed:
+              "The latest validation did not pass. Please re-run the check.",
+            validationStale:
+              "Validation results are stale. Please re-run the check before advancing.",
+          },
         },
         submissionPackages: {
           title: "Submission packages (history)",
           create: "Create package",
+          createStageGateTooltip:
+            "Submission packages can only be created once the case reaches S6 (submission prep) or S7 (submitted).",
           locked: "Locked",
           empty: "No submission packages yet",
         },
@@ -1248,6 +1259,18 @@ const casesEnUS = {
       },
       cancel: "Cancel",
       submit: "Submit",
+    },
+  },
+  submissionPackage: {
+    createModal: {
+      title: "Create submission package",
+      hint: "Submission package will lock the current documents, generated files, and field snapshot. Please fill in the required fields.",
+      submittedAt: "Submitted at",
+      authorityName: "Authority (where submitted)",
+      authorityNamePlaceholder: "e.g. Tokyo Immigration",
+      submit: "Create",
+      cancel: "Cancel",
+      close: "Close",
     },
   },
   coach: {

@@ -23,6 +23,7 @@ import CaseEditModal from "./components/CaseEditModal.vue";
 import CaseDeadlineCreateModal from "./components/CaseDeadlineCreateModal.vue";
 import CaseFormGenerateModal from "./components/CaseFormGenerateModal.vue";
 import CaseTaskCreateModal from "./components/CaseTaskCreateModal.vue";
+import SubmissionPackageCreateModal from "./components/SubmissionPackageCreateModal.vue";
 import PhaseTransitionPopover from "./components/PhaseTransitionPopover.vue";
 import {
   useCaseDetailModel,
@@ -88,6 +89,7 @@ const {
   switchTab,
   openRiskModal,
   closeRiskModal,
+  transitionStage,
   transitionWorkflowStep,
   retryReminderCreation,
   failureClose,
@@ -155,6 +157,15 @@ function onRiskConfirm(payload: {
 
 watch(
   () => validationActions.riskAckErrorI18nKey.value,
+  (key) => {
+    if (key) {
+      toast.add({ title: t(key), tone: "error" });
+    }
+  },
+);
+
+watch(
+  () => validationActions.createSpErrorI18nKey.value,
   (key) => {
     if (key) {
       toast.add({ title: t(key), tone: "error" });
@@ -286,6 +297,32 @@ function failureCloseCase(): void {
 
 const editModalOpen = ref(false);
 const editSaving = ref(false);
+
+const spCreateModalOpen = ref(false);
+/** 打开新建提交包弹窗。 */
+function openSpCreateModal(): void {
+  spCreateModalOpen.value = true;
+}
+/** 关闭新建提交包弹窗。 */
+function closeSpCreateModal(): void {
+  spCreateModalOpen.value = false;
+}
+/**
+ * 提交包弹窗确认提交：触发创建 action，无错误则关闭弹窗。
+ *
+ * @param payload - 弹窗收集到的提交日时与提交对象（机关名）。
+ * @param payload.submittedAt - 提交日时 ISO-8601 字符串。
+ * @param payload.authorityName - 提交对象（机关名）。
+ */
+async function onSubmissionPackageCreate(payload: {
+  submittedAt: string;
+  authorityName: string;
+}): Promise<void> {
+  await validationActions.createSubmissionPackage(payload);
+  if (validationActions.createSpErrorI18nKey.value === null) {
+    closeSpCreateModal();
+  }
+}
 
 async function onSaveCaseEdit(fields: {
   caseName: string;
@@ -783,11 +820,13 @@ async function onFormGenSubmit(payload: {
           :rerun-error="validationActions.rerunError.value"
           :create-sp-loading="validationActions.createSpLoading.value"
           :review-loading="validationActions.reviewLoading.value"
+          :advance-stage-loading="writeFeedback.submitting"
           @switch-tab="switchTab"
           @open-risk-modal="openRiskModal"
           @rerun-validation="validationActions.rerunValidation"
-          @create-submission-package="validationActions.createSubmissionPackage"
+          @create-submission-package="openSpCreateModal"
           @start-review="validationActions.createReviewRequest"
+          @advance-stage="(s) => transitionStage(s)"
         />
         <CaseBillingTab
           v-else-if="activeTab === 'billing'"
@@ -853,6 +892,14 @@ async function onFormGenSubmit(payload: {
           clearWriteFeedback();
         "
         @submit="onTaskSubmit"
+      />
+
+      <SubmissionPackageCreateModal
+        :open="spCreateModalOpen"
+        :submitting="validationActions.createSpLoading.value"
+        :default-authority-name="detail?.jurisdictionAuthority ?? null"
+        @close="closeSpCreateModal"
+        @submit="onSubmissionPackageCreate"
       />
 
       <PhaseTransitionPopover

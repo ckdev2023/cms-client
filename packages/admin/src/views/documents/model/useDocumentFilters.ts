@@ -60,10 +60,16 @@ function statusFilterToApiParams(
   }
 }
 
+// 客户端搜索时一次性拉取的最大条数：由后端 documentFiles.controller 的 limit 上限（200）决定。
+// 后端目前不支持搜索；放大 limit 让客户端 search 能看到完整数据集，避免“当前页过滤命中 0 件，
+// 但分页仍显示 共 47 条”这类错位。后续如后端支持服务端搜索，应把 search 参数下推、回收此放大。
+const SEARCH_FULL_LIMIT = 200;
+
 function buildApiParams(
   status: DocumentStatusFilter,
   caseId: string,
   provider: DocumentProviderFilter,
+  search: string,
 ): ListDocumentsParams {
   const p: ListDocumentsParams = {
     ...statusFilterToApiParams(status),
@@ -73,6 +79,7 @@ function buildApiParams(
     p.ownerSide =
       PROVIDER_TO_OWNER_SIDE[provider as DocumentProviderType] ?? provider;
   }
+  if (search) p.limit = SEARCH_FULL_LIMIT;
   return p;
 }
 
@@ -127,7 +134,7 @@ export function useDocumentFilters() {
   );
 
   const apiParams = computed<ListDocumentsParams>(() =>
-    buildApiParams(status.value, caseId.value, provider.value),
+    buildApiParams(status.value, caseId.value, provider.value, search.value),
   );
 
   return {

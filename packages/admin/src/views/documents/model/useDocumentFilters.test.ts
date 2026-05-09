@@ -401,10 +401,17 @@ describe("useDocumentFilters — apiParams", () => {
     expect(f.apiParams.value.ownerSide).toBe("employer");
   });
 
-  it("does NOT include search", () => {
+  it("bumps limit to 200 when search is active so client-side filter sees all data", () => {
+    // 后端不支持 search；仅靠当前页 20 条做客户端过滤会出现“共 0 件资料 vs 共 47 条”的错位。
+    // 搜索激活时通过把 API limit 拉到上限（200）一次性拉全数据，让客户端搜索得到正确结果。
     const f = create();
     f.search.value = "パスポート";
-    expect(f.apiParams.value).toEqual({});
+    expect(f.apiParams.value).toEqual({ limit: 200 });
+  });
+
+  it("does not bump limit when search is empty", () => {
+    const f = create();
+    expect(f.apiParams.value.limit).toBeUndefined();
   });
 });
 

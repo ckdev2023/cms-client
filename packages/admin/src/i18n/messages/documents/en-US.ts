@@ -126,7 +126,9 @@ const documentsEnUS = {
       fileNamePlaceholder:
         "e.g. Passport front page, residence card both sides",
       fileNameHint:
-        "For internal identification; auto-derived from the archive path if left blank.",
+        "Used for internal identification; if the archive location ends with '/', please fill it in manually.",
+      fileNameRequiredError:
+        "Please fill in the description (used as the document file name in the system)",
       version: "Version",
     },
     cancel: "Cancel",

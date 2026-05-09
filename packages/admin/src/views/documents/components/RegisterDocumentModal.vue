@@ -10,6 +10,7 @@ defineProps<{
   open: boolean;
   form: RegisterDocumentForm;
   pathError: string | null;
+  fileNameError: string | null;
   caseOptions: { value: string; label: string }[];
   docItemOptions: { value: string; label: string }[];
   versionLabel: string;
@@ -184,17 +185,21 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <div class="rdm__field">
             <label class="rdm__label" for="doc-register-fileName">
               {{ t("documents.register.fields.fileName") }}
+              <span class="rdm__required">*</span>
             </label>
             <input
               id="doc-register-fileName"
               name="docRegisterFileName"
               type="text"
-              class="rdm__input"
+              :class="['rdm__input', { 'rdm__input--error': fileNameError }]"
               :value="form.fileName"
               :placeholder="t('documents.register.fields.fileNamePlaceholder')"
               @input="$emit('update:field', 'fileName', inputValue($event))"
             />
-            <p class="rdm__hint">
+            <p v-if="fileNameError" class="rdm__error">
+              {{ t(fileNameError) }}
+            </p>
+            <p v-else class="rdm__hint">
               {{ t("documents.register.fields.fileNameHint") }}
             </p>
           </div>

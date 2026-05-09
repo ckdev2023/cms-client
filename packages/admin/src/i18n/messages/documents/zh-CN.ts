@@ -120,7 +120,8 @@ const documentsZhCN = {
       fileNamePlaceholder:
         "例如：护照首页、在留卡正反面、2026-04 更新版课税证明",
       fileNameHint:
-        "用于事务所内部识别这份资料；如不填写，可从归档路径自动带出文件名。",
+        "用于事务所内部识别这份资料；如归档位置以「/」结尾（仅文件夹），请在此手动填写。",
+      fileNameRequiredError: "请填写资料说明（用作系统内的资料文件名）",
       version: "版本号",
     },
     cancel: "取消",

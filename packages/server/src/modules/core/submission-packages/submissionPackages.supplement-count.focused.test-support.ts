@@ -270,6 +270,17 @@ function handleInsertSubmissionPackageItemsQuery(
   return { rows: [makeSubmissionPackageItemRow()], rowCount: 1 };
 }
 
+function handleBillingRecordsLookupQuery(sql: string): QueryResult | null {
+  if (!sql.includes("from billing_records") || !sql.includes("case_id")) {
+    return null;
+  }
+  // Bug D 修复后预校验需要 billing_records；为既有用例提供默认 1 条记录。
+  return {
+    rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
+    rowCount: 1,
+  };
+}
+
 function resolveStandardQuery(
   sql: string,
   params: unknown[] | undefined,
@@ -284,6 +295,7 @@ function resolveStandardQuery(
     handleDocumentItemsQuery(sql),
     handleGeneratedDocumentsQuery(sql),
     handleInsertSubmissionPackageItemsQuery(sql),
+    handleBillingRecordsLookupQuery(sql),
   ];
   return (
     handlers.find((result) => result !== null) ?? { rows: [], rowCount: 0 }

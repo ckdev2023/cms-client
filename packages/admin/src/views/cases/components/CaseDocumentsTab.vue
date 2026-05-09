@@ -66,10 +66,9 @@ const activeGroups = computed(() =>
 
 const isEmpty = computed(() => isDocumentListEmpty(activeGroups.value));
 
-const effectiveViewState = computed(() => {
-  if (!isEmpty.value) return "ready";
-  return viewState.value;
-});
+const effectiveViewState = computed(() =>
+  isEmpty.value ? viewState.value : "ready",
+);
 
 const overallRate = computed(
   () =>
@@ -418,6 +417,7 @@ const groupStats = computed(() =>
       :open="register.open.value"
       :form="register.form.value"
       :path-error="register.pathError.value"
+      :file-name-error="register.fileNameError.value"
       :case-options="register.caseOptions.value"
       :doc-item-options="register.docItemOptions.value"
       :version-label="register.versionLabel.value"

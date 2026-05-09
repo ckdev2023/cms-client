@@ -236,6 +236,16 @@ function appendScopeWhere(
   )`);
 }
 
+// 仅当 keyword 看起来像电话号码（数字 + 常见分隔符 / 国际前缀 +）时，才把它
+// 拆出 digits 走电话号码模糊匹配。否则像 "R-FLOW-01" 这种业务编号会被
+// `normalizePhone` 剥离成 "01"，再以 `%01%` 命中所有电话里出现 "01" 的客户，
+// 造成大量假阳性。日文姓名 / 邮箱 / 业务编号都会含字母或假名，不应触发电话分支。
+const PHONE_LIKE_KEYWORD_RE = /^[\d+\s().-]+$/;
+
+function isPhoneLikeKeyword(keyword: string): boolean {
+  return PHONE_LIKE_KEYWORD_RE.test(keyword) && /\d/.test(keyword);
+}
+
 function appendKeywordWhere(
   alias: string,
   keyword: string | null,
@@ -250,14 +260,16 @@ function appendKeywordWhere(
     [...CUSTOMER_NAME_FIELDS, ...CUSTOMER_KANA_FIELDS, "phone", "email"],
     patternRef,
   );
-  const normalizedKeywordPhone = normalizePhone(keyword);
 
-  if (normalizedKeywordPhone) {
-    const phonePatternRef = pushParam(
-      params,
-      `%${escapeLikePattern(normalizedKeywordPhone)}%`,
-    );
-    rawKeywordClauses.push(buildPhoneContainsClause(alias, phonePatternRef));
+  if (isPhoneLikeKeyword(keyword)) {
+    const normalizedKeywordPhone = normalizePhone(keyword);
+    if (normalizedKeywordPhone) {
+      const phonePatternRef = pushParam(
+        params,
+        `%${escapeLikePattern(normalizedKeywordPhone)}%`,
+      );
+      rawKeywordClauses.push(buildPhoneContainsClause(alias, phonePatternRef));
+    }
   }
 
   where.push(`(${rawKeywordClauses.join(" or ")})`);

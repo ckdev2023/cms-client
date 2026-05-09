@@ -243,7 +243,6 @@ async function handleConfirmWaive() {
 }
 /**
  * 打开共享过期风险面板。
- *
  * @param item - 目标资料
  */
 function handleOpenRiskPanel(item: DocumentListItem) {
@@ -251,7 +250,6 @@ function handleOpenRiskPanel(item: DocumentListItem) {
 }
 /**
  * 行级引用版本对话框。
- *
  * @param item - 目标资料
  */
 function handleRowReference(item: DocumentListItem) {
@@ -262,8 +260,7 @@ async function handleConfirmReference() {
   await review.confirmReference();
 }
 
-void handleRowReference;
-void failedIds;
+void [handleRowReference, failedIds];
 </script>
 
 <template>
@@ -413,6 +410,7 @@ void failedIds;
         @open-risk-panel="handleOpenRiskPanel"
       />
       <DocumentPagination
+        v-if="!search"
         :page="listModel.page.value"
         :limit="listModel.limit.value"
         :total="listModel.total.value"
@@ -431,6 +429,7 @@ void failedIds;
       :open="register.open.value"
       :form="register.form.value"
       :path-error="register.pathError.value"
+      :file-name-error="register.fileNameError.value"
       :case-options="register.caseOptions.value"
       :doc-item-options="register.docItemOptions.value"
       :version-label="register.versionLabel.value"

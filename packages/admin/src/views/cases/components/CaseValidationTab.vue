@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
@@ -9,15 +10,17 @@ import { formatDateTime } from "../../../shared/model/formatDateTime";
 
 import type { CaseDetail, GateItem, ValidationData } from "../types-detail";
 import type { CaseDetailTab } from "../types";
+import { CASE_STAGE_FORWARD_NEXT } from "../model/caseStageTransitions";
 
 /** 校验与提交 Tab：展示 Gate 报告、提交包、补正包与支持区。 */
-defineProps<{
+const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
   rerunLoading?: boolean;
   rerunError?: string | null;
   createSpLoading?: boolean;
   reviewLoading?: boolean;
+  advanceStageLoading?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +29,7 @@ const emit = defineEmits<{
   (e: "rerun-validation"): void;
   (e: "create-submission-package"): void;
   (e: "start-review"): void;
+  (e: "advance-stage", toStage: string): void;
 }>();
 
 const { t, locale } = useI18n();
@@ -79,6 +83,41 @@ function resolveLastTime(v: ValidationData, loc: string): string {
   }
   return v.lastTime;
 }
+
+/**
+ * 仅在案件阶段处于 S6（提交准备）或 S7（已提交）时允许创建提交包。
+ * 与服务端 `submissionPackages.service` 的 SP_CASE_STAGE_INVALID gate 对齐，
+ * 避免点击后被后端拒绝产生死链路。
+ */
+const canCreateSubmissionPackage = computed(
+  () => props.detail.stageCode === "S6" || props.detail.stageCode === "S7",
+);
+
+const nextStage = computed(
+  () => CASE_STAGE_FORWARD_NEXT[props.detail.stageCode] ?? null,
+);
+
+const advanceDisabledReasonKey = computed<string | null>(() => {
+  const stage = props.detail.stageCode;
+  const v = props.detail.validation;
+
+  if (stage === "S5") {
+    if (v.blocking.length > 0)
+      return "cases.detail.validation.tab.gateCard.advanceStageDisabled.mustHandleBlocker";
+    if (v.retriggerNote)
+      return "cases.detail.validation.tab.gateCard.advanceStageDisabled.validationStale";
+  }
+
+  if (stage === "S4" && v.blocking.length > 0) {
+    return "cases.detail.validation.tab.gateCard.advanceStageDisabled.mustHandleBlocker";
+  }
+
+  return null;
+});
+
+const canAdvanceStage = computed(
+  () => nextStage.value !== null && advanceDisabledReasonKey.value === null,
+);
 </script>
 
 <template>
@@ -99,32 +138,59 @@ function resolveLastTime(v: ValidationData, loc: string): string {
                 {{ t("cases.detail.validation.tab.gateCard.currentBlocker") }}
               </span>
             </div>
-            <Button
-              v-if="!readonly"
-              variant="filled"
-              tone="primary"
-              size="sm"
-              :disabled="rerunLoading"
-              :aria-busy="rerunLoading"
-              @click="emit('rerun-validation')"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
+            <div class="vt__header-actions">
+              <Button
+                v-if="nextStage && !readonly"
+                variant="outlined"
+                tone="primary"
+                size="sm"
+                :disabled="!canAdvanceStage || advanceStageLoading"
+                :aria-busy="advanceStageLoading"
+                :title="
+                  advanceDisabledReasonKey
+                    ? t(advanceDisabledReasonKey)
+                    : undefined
+                "
+                data-testid="advance-stage-button"
+                @click="
+                  canAdvanceStage &&
+                  nextStage &&
+                  emit('advance-stage', nextStage)
+                "
               >
-                <path
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-              {{ t("cases.detail.validation.tab.gateCard.recheck") }}
-            </Button>
+                {{
+                  t("cases.detail.validation.tab.gateCard.advanceStageButton", {
+                    nextStage,
+                  })
+                }}
+              </Button>
+              <Button
+                v-if="!readonly"
+                variant="filled"
+                tone="primary"
+                size="sm"
+                :disabled="rerunLoading"
+                :aria-busy="rerunLoading"
+                @click="emit('rerun-validation')"
+              >
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+                {{ t("cases.detail.validation.tab.gateCard.recheck") }}
+              </Button>
+            </div>
           </template>
 
           <div class="vt__last-time">
@@ -232,9 +298,19 @@ function resolveLastTime(v: ValidationData, loc: string): string {
             <Button
               v-if="!readonly"
               size="sm"
-              :disabled="createSpLoading"
+              :disabled="createSpLoading || !canCreateSubmissionPackage"
               :aria-busy="createSpLoading"
-              @click="emit('create-submission-package')"
+              :title="
+                !canCreateSubmissionPackage
+                  ? t(
+                      'cases.detail.validation.tab.submissionPackages.createStageGateTooltip',
+                    )
+                  : undefined
+              "
+              :data-testid="'sp-create-button'"
+              @click="
+                canCreateSubmissionPackage && emit('create-submission-package')
+              "
             >
               <svg
                 width="14"

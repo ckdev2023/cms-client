@@ -79,8 +79,6 @@ function create() {
   return { model, repository, onSuccess, onError };
 }
 
-// ─── Initial state ──────────────────────────────────────────────
-
 describe("useRegisterDocumentModel — initial state", () => {
   it("starts closed with empty form", () => {
     const { model } = create();
@@ -319,6 +317,63 @@ describe("useRegisterDocumentModel — canSubmit", () => {
     model.updateField("relativePath", "A2026-001/main/passport.pdf");
     expect(model.canSubmit.value).toBe(true);
   });
+
+  it("true when path ends with slash but doc item name fallback resolves fileName", () => {
+    const { model } = create();
+    model.updateField("caseId", "c1");
+    model.updateField("docItemId", "d1");
+    model.updateField("relativePath", "A2026-001/applicant/passport/");
+    expect(model.canSubmit.value).toBe(true);
+  });
+
+  it("false when path is folder-only AND fileName explicit empty AND no doc item fallback", () => {
+    const stub = stubRepository();
+    const m = useRegisterDocumentModel({
+      allItems: () => [],
+      repository: stub,
+    });
+    m.updateField("caseId", "c1");
+    m.updateField("docItemId", "missing");
+    m.updateField("relativePath", "A2026-001/applicant/passport/");
+    expect(m.canSubmit.value).toBe(false);
+  });
+});
+
+// ─── fileNameError ───────────────────────────────────────────────
+
+describe("useRegisterDocumentModel — fileNameError", () => {
+  it("returns null when caseId or docItemId not yet selected", () => {
+    const { model } = create();
+    expect(model.fileNameError.value).toBeNull();
+  });
+
+  it("returns null when path empty (no eager validation)", () => {
+    const { model } = create();
+    model.updateField("caseId", "c1");
+    model.updateField("docItemId", "d1");
+    expect(model.fileNameError.value).toBeNull();
+  });
+
+  it("returns null when fileName resolves via doc item name fallback", () => {
+    const { model } = create();
+    model.updateField("caseId", "c1");
+    model.updateField("docItemId", "d1");
+    model.updateField("relativePath", "A2026-001/applicant/passport/");
+    expect(model.fileNameError.value).toBeNull();
+  });
+
+  it("returns localized i18n key when fileName cannot be resolved", () => {
+    const m = useRegisterDocumentModel({
+      allItems: () => [],
+      repository: stubRepository(),
+    });
+    m.updateField("caseId", "c1");
+    m.updateField("docItemId", "missing");
+    m.updateField("relativePath", "A2026-001/applicant/passport/");
+    expect(m.fileNameError.value).toBe(
+      "documents.register.fields.fileNameRequiredError",
+    );
+  });
 });
 
 // ─── Storage root gate ──────────────────────────────────────────
@@ -352,8 +407,6 @@ describe("useRegisterDocumentModel — storage root gate", () => {
   });
 });
 
-// ─── submit ─────────────────────────────────────────────────────
-
 describe("useRegisterDocumentModel — submit", () => {
   it("calls repository.uploadLocalArchive and onSuccess on submit", async () => {
     const { model, repository, onSuccess } = create();
@@ -369,6 +422,23 @@ describe("useRegisterDocumentModel — submit", () => {
     });
     expect(onSuccess).toHaveBeenCalledOnce();
     expect(onSuccess.mock.calls[0][0].caseId).toBe("c1");
+  });
+
+  // 服务端 normalizeRelativePath 会拒绝以 `/` 结尾的路径（split 出空段），
+  // 因此 folder-only 路径必须把 fileName 拼到末尾形成完整文件路径。
+  it("composes folder-only path with doc item name", async () => {
+    const { model, repository, onSuccess } = create();
+    model.updateField("caseId", "c1");
+    model.updateField("docItemId", "d1");
+    model.updateField("relativePath", "A2026-001/applicant/passport/");
+    await model.submit();
+    const fullPath = "A2026-001/applicant/passport/パスポート写し";
+    expect(repository.uploadLocalArchive).toHaveBeenCalledWith({
+      requirementId: "d1",
+      fileName: "パスポート写し",
+      relativePath: fullPath,
+    });
+    expect(onSuccess.mock.calls[0][0].relativePath).toBe(fullPath);
   });
 
   it("closes the modal after successful submit", async () => {

@@ -24,9 +24,10 @@ type SearchQuery = {
 };
 
 /**
- * 全局搜索端点。
+ * 全局搜索端点。前端调用 `/api/admin/search?q=...`，
+ * 与其他 admin 控制器（admin/leads, admin/conversations）保持同一约定。
  */
-@Controller("search")
+@Controller("admin/search")
 export class SearchController {
   /**
    * 创建全局搜索控制器。
