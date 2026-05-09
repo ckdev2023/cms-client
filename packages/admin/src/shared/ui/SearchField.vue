@@ -6,8 +6,13 @@ export type SearchFieldVariant = "box" | "inline";
 </script>
 
 <script setup lang="ts">
+import { onBeforeUnmount, watch } from "vue";
+
 /**
  * 通用搜索输入框，支持独立搜索框与行内筛选两种模式。
+ *
+ * 通过 `debounceMs` 可延迟 `update:modelValue` 的触发，
+ * 用于服务端搜索场景，避免逐字键入触发请求风暴。
  */
 const props = withDefaults(
   defineProps<{
@@ -17,11 +22,13 @@ const props = withDefaults(
     label?: string;
     id?: string;
     name?: string;
+    debounceMs?: number;
   }>(),
   {
     modelValue: "",
     placeholder: "搜索…",
     variant: "box",
+    debounceMs: 0,
   },
 );
 
@@ -29,13 +36,69 @@ const emit = defineEmits<{
   "update:modelValue": [value: string];
 }>();
 
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingValue: string | null = null;
+
+/** 取消尚未触发的延迟定时器。 */
+function clearTimer() {
+  if (debounceTimer !== null) {
+    clearTimeout(debounceTimer);
+    debounceTimer = null;
+  }
+}
+
+/** 立即提交 `pendingValue`，无挂起值时为空操作。 */
+function flushPending() {
+  if (pendingValue === null) return;
+  const value = pendingValue;
+  pendingValue = null;
+  clearTimer();
+  emit("update:modelValue", value);
+}
+
+watch(
+  () => props.modelValue,
+  () => {
+    pendingValue = null;
+    clearTimer();
+  },
+);
+
+onBeforeUnmount(() => {
+  flushPending();
+});
+
 /**
- * 同步输入框内容到 `v-model`。
+ * 同步输入框内容到 `v-model`，按 `debounceMs` 延迟。
  *
  * @param event 输入事件对象
  */
 function onInput(event: Event) {
-  emit("update:modelValue", (event.target as HTMLInputElement).value);
+  const value = (event.target as HTMLInputElement).value;
+  if (props.debounceMs <= 0) {
+    pendingValue = null;
+    clearTimer();
+    emit("update:modelValue", value);
+    return;
+  }
+  pendingValue = value;
+  clearTimer();
+  debounceTimer = setTimeout(() => {
+    debounceTimer = null;
+    flushPending();
+  }, props.debounceMs);
+}
+
+/**
+ * 处理 `change` 事件（Enter 或失焦时触发），立即结清待发送值。
+ *
+ * @param event 输入事件对象
+ */
+function onChange(event: Event) {
+  if (props.debounceMs <= 0) return;
+  const value = (event.target as HTMLInputElement).value;
+  pendingValue = value;
+  flushPending();
 }
 </script>
 
@@ -65,6 +128,7 @@ function onInput(event: Event) {
       :placeholder="props.placeholder"
       :aria-label="props.label ?? props.placeholder"
       @input="onInput"
+      @change="onChange"
     />
     <slot name="trailing" />
   </div>

@@ -11,9 +11,11 @@ import {
   resolveGroupLabel,
 } from "../../shared/model/useGroupOptions";
 import {
-  getOwnerOptions,
-  withCurrentUserOwnerOption,
+  buildSessionOwnerOption,
+  toApiOwnerOption,
 } from "../../shared/model/useOwnerOptions";
+import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
+import type { CaseOwnerOption } from "./types";
 import { formatJpyAmount } from "../../shared/model/formatCurrency";
 import { useAdminSession } from "../../auth/model/adminSession";
 import CaseCreateStep1 from "./components/CaseCreateStep1.vue";
@@ -47,10 +49,22 @@ const viewer = fixtureRepo.getViewer();
 const { currentUser } = useAdminSession();
 const sourceContext = parseCaseCreateQuery(route.query, route.hash);
 const templates = fixtureRepo.getCreateTemplates();
-const ownerOptions = computed(() =>
-  withCurrentUserOwnerOption(getOwnerOptions(locale.value), currentUser.value),
-);
+// 真实组织用户来自 `/api/users`（注册到 useOrgUserOptions 后可用）；
+// 若当前登录管理员不在列表中（首屏未拉到 / 测试 / 兜底场景），
+// 把 session 用户作为首项追加，保证用户始终可把案件分给自己（BUG-150）。
+const ownerOptions = computed<CaseOwnerOption[]>(() => {
+  const apiOptions = getActiveUserOptions().map((u) =>
+    toApiOwnerOption({ id: u.value, displayName: u.label }),
+  );
+  const session = currentUser.value;
+  if (!session) return apiOptions;
+  if (apiOptions.some((option) => option.value === session.id)) {
+    return apiOptions;
+  }
+  return [buildSessionOwnerOption(session), ...apiOptions];
+});
 const groupOptions = computed(() => getActiveGroupOptions(locale.value));
+const defaultOwnerId = computed(() => currentUser.value?.id ?? viewer.ownerId);
 
 const customerDropdown = useCustomerDropdownData({
   locale: () => locale.value,
@@ -67,7 +81,7 @@ const model = useCreateCaseModel({
   groupOptions: () => groupOptions.value,
   sourceContext,
   defaultGroup: viewer.groupId,
-  defaultOwner: viewer.ownerId,
+  defaultOwner: defaultOwnerId.value,
   locale: () => locale.value,
 });
 

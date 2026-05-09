@@ -10,6 +10,10 @@ import {
   adminSessionController,
   type AdminSession,
 } from "../../auth/model/adminSession";
+import {
+  clearUserAliases,
+  registerUserAliases,
+} from "../../shared/model/useOrgUserOptions";
 
 function persistTestSession(user: {
   id: string;
@@ -30,10 +34,12 @@ function persistTestSession(user: {
 }
 
 /**
- * BUG-150 回归：建案向导 Step 3 owner 下拉必须包含登录用户（如 `Local Admin`），
- * 否则登录用户无法把案件分给自己。
+ * BUG-150 回归（R-FLOW7 收紧）：
  *
- * 静态 catalog 仅包含 7 个 fixture 同事；登录态注入后应在选项列表首项追加。
+ *   1. 建案向导 Step 3 owner 下拉必须能让登录用户把案件分配给自己。
+ *   2. owner option `value` 必须使用真实 user UUID（与 `POST /cases.ownerUserId`
+ *      schema 一致），不得回填 fixture slug；否则后端会触发
+ *      `CASE_OWNER_NOT_FOUND`（R-FLOW7 P0-1）。
  */
 
 async function mountView() {
@@ -63,29 +69,27 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
     setAppLocale("zh-CN");
     window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
+    clearUserAliases();
   });
 
   afterEach(() => {
     window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
+    clearUserAliases();
     document.body.innerHTML = "";
   });
 
-  it("falls back to static catalog when no admin session is loaded", async () => {
+  it("returns an empty list when no admin session and no api users are loaded", async () => {
     const wrapper = await mountView();
     const step3 = wrapper.findComponent(CaseCreateStep3);
     const options = step3.props("ownerOptions") as Array<{ label: string }>;
 
-    const labels = options.map((o) => o.label);
-    expect(labels).not.toContain("Local Admin");
-    expect(labels).toEqual(
-      expect.arrayContaining(["铃木", "田中", "李", "佐藤"]),
-    );
+    expect(options).toEqual([]);
   });
 
-  it("prepends the logged-in user (Local Admin) to the owner dropdown when not in catalog", async () => {
+  it("prepends the logged-in user when the api user list does not include them", async () => {
     persistTestSession({
-      id: "u-local-admin",
+      id: "00000000-0000-4000-8000-000000000099",
       name: "Local Admin",
       email: "admin@local.test",
       role: "admin",
@@ -101,34 +105,75 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
     }>;
 
     expect(options[0]).toMatchObject({
-      value: "admin@local.test",
+      value: "00000000-0000-4000-8000-000000000099",
       label: "Local Admin",
       initials: "LA",
     });
-
-    const labels = options.map((o) => o.label);
-    expect(labels).toContain("Local Admin");
-    expect(labels).toEqual(
-      expect.arrayContaining(["Local Admin", "铃木", "田中"]),
-    );
   });
 
-  it("does not duplicate when the logged-in user already matches a catalog entry", async () => {
+  it("uses real user UUIDs (not fixture slugs) once api users are registered", async () => {
     persistTestSession({
-      id: "u-suzuki",
-      name: "鈴木",
-      email: "suzuki@example.com",
-      role: "manager",
-      initials: "S",
+      id: "00000000-0000-4000-8000-000000000099",
+      name: "Local Admin",
+      email: "admin@local.test",
+      role: "admin",
+      initials: "LA",
     });
+    registerUserAliases([
+      {
+        id: "00000000-0000-4000-8000-000000000099",
+        displayName: "Local Admin",
+      },
+      {
+        id: "00000000-0000-4000-8000-000000000100",
+        displayName: "R6走查成员",
+      },
+    ]);
 
     const wrapper = await mountView();
+    await flushPromises();
     const step3 = wrapper.findComponent(CaseCreateStep3);
-    const options = step3.props("ownerOptions") as Array<{ label: string }>;
+    const options = step3.props("ownerOptions") as Array<{
+      value: string;
+      label: string;
+    }>;
 
-    const suzukiCount = options.filter((o) =>
-      ["铃木", "鈴木", "Suzuki"].includes(o.label),
+    const adminEntry = options.find((o) => o.label === "Local Admin");
+    expect(adminEntry).toBeDefined();
+    expect(adminEntry?.value).toBe("00000000-0000-4000-8000-000000000099");
+    // 没有任何 fixture slug（如 "suzuki" / "tanaka"）作为 value。
+    const slugLeak = options.filter((o) =>
+      ["suzuki", "tanaka", "li", "sato"].includes(o.value),
+    );
+    expect(slugLeak).toEqual([]);
+  });
+
+  it("does not duplicate the session user when api users already include them", async () => {
+    persistTestSession({
+      id: "00000000-0000-4000-8000-000000000099",
+      name: "Local Admin",
+      email: "admin@local.test",
+      role: "admin",
+      initials: "LA",
+    });
+    registerUserAliases([
+      {
+        id: "00000000-0000-4000-8000-000000000099",
+        displayName: "Local Admin",
+      },
+    ]);
+
+    const wrapper = await mountView();
+    await flushPromises();
+    const step3 = wrapper.findComponent(CaseCreateStep3);
+    const options = step3.props("ownerOptions") as Array<{
+      value: string;
+      label: string;
+    }>;
+
+    const adminCount = options.filter(
+      (o) => o.value === "00000000-0000-4000-8000-000000000099",
     ).length;
-    expect(suzukiCount).toBe(1);
+    expect(adminCount).toBe(1);
   });
 });

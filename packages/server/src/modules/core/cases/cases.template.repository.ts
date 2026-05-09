@@ -3,6 +3,7 @@ import type { Pool } from "pg";
 
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { BMV_CASE_TYPE, isBmvCaseTypeCode } from "./cases.template-bmv";
 import type { ChecklistItem } from "./cases.service.write-ops";
 
 export type CaseTemplateRow = {
@@ -18,6 +19,22 @@ export type CaseTemplateResolveResult =
   | { found: false };
 
 /**
+ * 解析 caseTypeCode → 实际查询的 case_type 候选列表。
+ *
+ * BMV 系列子类型（biz_mgmt_*）当前共享一份 `business_manager_visa` 模板蓝图，
+ * 因此先按原始 code 精确查询，未命中再回退到 BMV 总表。
+ *
+ * @param caseTypeCode 入参案件类型 code
+ */
+function resolveCaseTypeCandidates(caseTypeCode: string): string[] {
+  if (caseTypeCode === BMV_CASE_TYPE) return [BMV_CASE_TYPE];
+  if (isBmvCaseTypeCode(caseTypeCode)) {
+    return [caseTypeCode, BMV_CASE_TYPE];
+  }
+  return [caseTypeCode];
+}
+
+/**
  * @param pool
  * @param ctx
  * @param caseTypeCode
@@ -31,27 +48,33 @@ export async function findActiveCaseTemplateByCaseType(
 ): Promise<CaseTemplateResolveResult> {
   const tenantDb = createTenantDb(pool, ctx.orgId, ctx.userId);
 
-  const whereClause = applicationType
-    ? `case_type = $1 AND application_type = $2 AND active_flag = true`
-    : `case_type = $1 AND active_flag = true`;
+  const candidates = resolveCaseTypeCandidates(caseTypeCode);
 
-  const params = applicationType
-    ? [caseTypeCode, applicationType]
-    : [caseTypeCode];
+  for (const candidate of candidates) {
+    const whereClause = applicationType
+      ? `case_type = $1 AND application_type = $2 AND active_flag = true`
+      : `case_type = $1 AND active_flag = true`;
 
-  const result = await tenantDb.query<CaseTemplateRow>(
-    `SELECT id, case_type, application_type, requirement_blueprint, active_flag
-     FROM case_templates
-     WHERE ${whereClause}
-     ORDER BY created_at DESC
-     LIMIT 1`,
-    params,
-  );
+    const params = applicationType ? [candidate, applicationType] : [candidate];
 
-  if (result.rows.length === 0) return { found: false };
+    const result = await tenantDb.query<CaseTemplateRow>(
+      `SELECT id, case_type, application_type, requirement_blueprint, active_flag
+       FROM case_templates
+       WHERE ${whereClause}
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      params,
+    );
 
-  const items = parseRequirementBlueprint(result.rows[0].requirement_blueprint);
-  return { found: true, items };
+    if (result.rows.length === 0) continue;
+
+    const items = parseRequirementBlueprint(
+      result.rows[0].requirement_blueprint,
+    );
+    return { found: true, items };
+  }
+
+  return { found: false };
 }
 
 export function parseRequirementBlueprint(raw: unknown): ChecklistItem[] {

@@ -26,14 +26,23 @@ export type BackfillCaseRow = {
   requirement_blueprint: unknown;
 };
 
+// BMV 子类型（biz_mgmt_*）当前共享 case_type='business_manager_visa' 模板蓝图，
+// 因此先按精确 case_type 匹配，匹配不到时 BMV 系列回退到总表。
 export const BACKFILL_QUERY = `
   SELECT c.id AS case_id, c.org_id, c.case_type_code,
-         t.requirement_blueprint
+         coalesce(t_exact.requirement_blueprint, t_bmv.requirement_blueprint)
+           AS requirement_blueprint
   FROM cases c
-  LEFT JOIN case_templates t
-    ON t.org_id = c.org_id
-   AND t.case_type = c.case_type_code
-   AND t.active_flag = true
+  LEFT JOIN case_templates t_exact
+    ON t_exact.org_id = c.org_id
+   AND t_exact.case_type = c.case_type_code
+   AND t_exact.active_flag = true
+  LEFT JOIN case_templates t_bmv
+    ON t_bmv.org_id = c.org_id
+   AND t_bmv.case_type = 'business_manager_visa'
+   AND t_bmv.active_flag = true
+   AND (c.case_type_code LIKE 'biz_mgmt%')
+   AND t_exact.id IS NULL
   WHERE NOT EXISTS (
     SELECT 1 FROM document_items di
      WHERE di.case_id = c.id

@@ -90,6 +90,7 @@ const validationLabels = computed<Record<string, string>>(() => ({
         :model-value="search"
         :placeholder="t('cases.list.searchPlaceholder')"
         variant="inline"
+        :debounce-ms="300"
         @update:model-value="$emit('update:search', $event)"
       />
     </div>

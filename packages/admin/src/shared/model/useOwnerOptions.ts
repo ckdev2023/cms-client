@@ -314,6 +314,40 @@ export function toApiOwnerOption(input: ApiOwnerInput): OwnerSelectOption {
   };
 }
 
+/**
+ * 当前登录用户的最小输入，用于构建 owner 选项兜底。
+ */
+export interface SessionOwnerInput {
+  /** 用户主键 UUID。 */
+  id: string;
+  /** 显示名（非空才会取用）。 */
+  name: string;
+  /** 可选头像缩写，缺省时按显示名派生。 */
+  initials?: string;
+}
+
+/**
+ * 构建当前登录用户的 `OwnerSelectOption`（含 UUID + 头像缩写）。
+ *
+ * 用于 BUG-150 兜底：当 `/api/users` 尚未注册（首屏 / 测试），
+ * 至少让登录管理员能把案件分给自己；调用方需自行去重。
+ *
+ * @param user - 来自 `useAdminSession.currentUser` 的最小输入
+ * @returns 含 UUID value 与 initials 的 owner option
+ */
+export function buildSessionOwnerOption(
+  user: SessionOwnerInput,
+): OwnerSelectOption {
+  const trimmedName = user.name.trim();
+  return {
+    value: user.id,
+    label: trimmedName || user.id,
+    initials:
+      (user.initials ?? "").trim() || deriveInitialsFromName(trimmedName),
+    avatarClass: "bg-slate-100 text-slate-700",
+  };
+}
+
 const NIL_UUID = "00000000-0000-0000-0000-000000000000";
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

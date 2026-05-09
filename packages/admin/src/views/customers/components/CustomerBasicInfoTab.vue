@@ -266,9 +266,6 @@ const bmvVisaTypeLabel = computed(() =>
           <label class="basic-info__label" for="basicInfoGroup">{{
             t("customers.detail.basicInfo.fields.group")
           }}</label>
-          <p v-if="isEditing" class="basic-info__hint">
-            {{ t("shared.groupOptions.writeHint") }}
-          </p>
           <select
             id="basicInfoGroup"
             name="group"
@@ -288,6 +285,9 @@ const bmvVisaTypeLabel = computed(() =>
               {{ opt.label }}
             </option>
           </select>
+          <p v-if="isEditing" class="basic-info__hint">
+            {{ t("shared.groupOptions.writeHint") }}
+          </p>
         </div>
         <div class="basic-info__field">
           <label class="basic-info__label" for="basicInfoOwner">{{

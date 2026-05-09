@@ -142,30 +142,34 @@ onMounted(async () => {
       />
     </div>
     <div class="checks">
-      <label class="check-item ui-checkbox-hit">
-        <input
-          type="checkbox"
-          name="autoChecklist"
-          :checked="props.model.draft.autoChecklist"
-          @change="
-            props.model.setAutoChecklist(
-              ($event.target as HTMLInputElement).checked,
-            )
-          "
-        />
+      <label class="check-item">
+        <span class="ui-checkbox-hit">
+          <input
+            type="checkbox"
+            name="autoChecklist"
+            :checked="props.model.draft.autoChecklist"
+            @change="
+              props.model.setAutoChecklist(
+                ($event.target as HTMLInputElement).checked,
+              )
+            "
+          />
+        </span>
         {{ t("cases.create.step3.autoChecklist") }}
       </label>
-      <label class="check-item ui-checkbox-hit">
-        <input
-          type="checkbox"
-          name="autoTasks"
-          :checked="props.model.draft.autoTasks"
-          @change="
-            props.model.setAutoTasks(
-              ($event.target as HTMLInputElement).checked,
-            )
-          "
-        />
+      <label class="check-item">
+        <span class="ui-checkbox-hit">
+          <input
+            type="checkbox"
+            name="autoTasks"
+            :checked="props.model.draft.autoTasks"
+            @change="
+              props.model.setAutoTasks(
+                ($event.target as HTMLInputElement).checked,
+              )
+            "
+          />
+        </span>
         {{ t("cases.create.step3.autoTasks") }}
       </label>
     </div>

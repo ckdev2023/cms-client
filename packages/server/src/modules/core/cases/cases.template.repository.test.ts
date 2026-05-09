@@ -150,6 +150,70 @@ void describe("findActiveCaseTemplateByCaseType", () => {
     assert.equal((items[0] as { ownerSide: string }).ownerSide, "office");
   });
 
+  void test("falls back to business_manager_visa template for BMV subtype codes", async () => {
+    const blueprint = {
+      version: 1,
+      items: [
+        {
+          checklistItemCode: "bmv_questionnaire",
+          name: "経営管理ビザ情報表",
+          category: "questionnaire",
+          requiredFlag: true,
+          ownerSide: "customer",
+        },
+      ],
+    };
+    const queries: { sql: string; params: unknown[] | undefined }[] = [];
+    let callCount = 0;
+    const pool = makePool((sql, params) => {
+      queries.push({ sql, params });
+      callCount += 1;
+      // First call (case_type='biz_mgmt_cert_4m'): return empty.
+      if (callCount === 1) return ok([]);
+      // Second call (case_type='business_manager_visa'): return BMV template.
+      return ok([
+        {
+          id: "tpl-bmv",
+          case_type: "business_manager_visa",
+          application_type: null,
+          requirement_blueprint: blueprint,
+          active_flag: true,
+        },
+      ]);
+    });
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "biz_mgmt_cert_4m",
+    );
+
+    assert.equal(result.found, true);
+    const items = (result as { found: true; items: unknown[] }).items;
+    assert.equal(items.length, 1);
+    assert.equal((items[0] as { code: string }).code, "bmv_questionnaire");
+    // First lookup uses the original sub-type code, then falls back to canonical.
+    assert.deepEqual(queries[0].params, ["biz_mgmt_cert_4m"]);
+    assert.deepEqual(queries[1].params, ["business_manager_visa"]);
+  });
+
+  void test("does not fall back for non-BMV unknown codes", async () => {
+    let callCount = 0;
+    const pool = makePool(() => {
+      callCount += 1;
+      return ok([]);
+    });
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "totally_unknown",
+    );
+
+    assert.equal(result.found, false);
+    assert.equal(callCount, 1);
+  });
+
   void test("returns empty items when requirement_blueprint is null", async () => {
     const pool = makePool(() =>
       ok([
