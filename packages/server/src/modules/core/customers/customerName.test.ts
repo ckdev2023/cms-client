@@ -104,4 +104,47 @@ void describe("extractCustomerName", () => {
     assert.equal(extractCustomerName({ name: "" }), null);
     assert.equal(extractCustomerName({ name: "  " }), null);
   });
+
+  void test("falls back to name_jp when no other name field is present", () => {
+    assert.equal(
+      extractCustomerName({ name_jp: "デモ依頼者 — 王 小明" }),
+      "デモ依頼者 — 王 小明",
+    );
+  });
+
+  void test("falls back to name_cn when name_jp is absent", () => {
+    assert.equal(extractCustomerName({ name_cn: "王 小明" }), "王 小明");
+  });
+
+  void test("falls back to name_en when name_jp/name_cn are absent", () => {
+    assert.equal(
+      extractCustomerName({ name_en: "Wang Xiaoming" }),
+      "Wang Xiaoming",
+    );
+  });
+
+  void test("prefers name_jp over name_cn over name_en", () => {
+    assert.equal(
+      extractCustomerName({ name_jp: "JP", name_cn: "CN", name_en: "EN" }),
+      "JP",
+    );
+  });
+
+  void test("prefers displayName over localized name fields", () => {
+    assert.equal(
+      extractCustomerName({
+        displayName: "Display",
+        name_jp: "JP",
+        name_cn: "CN",
+      }),
+      "Display",
+    );
+  });
+
+  void test("ignores whitespace-only localized name fields", () => {
+    assert.equal(
+      extractCustomerName({ name_jp: "  ", name_cn: "  ", name_en: "  " }),
+      null,
+    );
+  });
 });

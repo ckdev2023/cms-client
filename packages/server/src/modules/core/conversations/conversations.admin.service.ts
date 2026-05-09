@@ -333,7 +333,11 @@ function deriveLinkedEntity(
   customerName: string | null,
 ): AdminConversationListItem["linkedEntity"] {
   if (row.case_id) {
-    return { id: row.case_id, label: "", type: "case" };
+    return {
+      id: row.case_id,
+      label: toNullableString(row.case_no) ?? "",
+      type: "case",
+    };
   }
   if (row.customer_id) {
     return {

@@ -1,6 +1,7 @@
 node_modules
 .cursor/state/*.json
-
+tmp/
+.tmp/
 # env files (keep .env.example tracked)
 .env
 .env.local

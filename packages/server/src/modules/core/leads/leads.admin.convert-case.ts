@@ -100,7 +100,7 @@ async function runPostCreateBookkeeping(
   if (isBmv) {
     await initializeBmvProfile(db, customerId, leadId);
   }
-  await backfillConversationCustomer(db, customerId, leadId);
+  await backfillConversationLinks(db, { customerId, caseId, leadId });
   await writeCaseConvertedFromLeadTimeline(db, ctx, {
     caseId,
     leadId,
@@ -212,15 +212,36 @@ async function initializeBmvProfile(
   );
 }
 
-async function backfillConversationCustomer(
+/**
+ * Lead → Case 转化后，对该 Lead 关联的 conversations best-effort 回填 customer_id 与 case_id。
+ *
+ * - customer_id：仅在原值为 NULL 时写入（避免覆盖管理员手动选择的客户）
+ * - case_id：仅在原值为 NULL 时写入（同上）
+ *
+ * 任一字段已有值的会话仍可能匹配 WHERE 条件并仅更新另一字段；
+ * 若两字段都已写入则不会被更新。
+ *
+ * @param db tenantDb / tx
+ * @param db.query SQL 实行関数（query メソッドのみ利用）
+ * @param payload 回填参数
+ * @param payload.customerId 关联的 customer ID
+ * @param payload.caseId 新建的 case ID
+ * @param payload.leadId 来源 lead ID
+ */
+async function backfillConversationLinks(
   db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
-  customerId: string,
-  leadId: string,
+  payload: { customerId: string; caseId: string; leadId: string },
 ): Promise<void> {
+  const { customerId, caseId, leadId } = payload;
   try {
     await db.query(
-      "update conversations set customer_id = $1 where lead_id = $2 and customer_id is null",
-      [customerId, leadId],
+      `update conversations
+         set customer_id = coalesce(customer_id, $1),
+             case_id = coalesce(case_id, $2),
+             updated_at = now()
+       where lead_id = $3
+         and (customer_id is null or case_id is null)`,
+      [customerId, caseId, leadId],
     );
   } catch {
     // best-effort backfill; swallow constraint errors

@@ -44,10 +44,10 @@ export const CONV_ADMIN_COLS = `id, lead_id, app_user_id, org_id, channel, prefe
 export const CONV_ADMIN_COLS_ALIASED = `c.id, c.lead_id, c.app_user_id, c.org_id, c.channel, c.preferred_language, c.status, c.owner_user_id, c.last_message_at, c.unread_count_staff_tenant, c.unread_count_staff_owner, c.unread_count_user, c.customer_id, c.case_id, c.created_at, c.updated_at`;
 
 /** 一覧 JOIN 用の追加 SELECT カラム。 */
-export const CONV_LIST_JOIN_COLS = `l.name as lead_name, cu.base_profile as customer_base_profile, u.name as owner_display_name, au.name as app_user_name, lm.original_text as lm_original_text, lm.sender_type as lm_sender_type`;
+export const CONV_LIST_JOIN_COLS = `l.name as lead_name, cu.base_profile as customer_base_profile, ca.case_no as case_no, u.name as owner_display_name, au.name as app_user_name, lm.original_text as lm_original_text, lm.sender_type as lm_sender_type`;
 
 /** 一覧 LEFT JOIN 句。 */
-export const CONV_LIST_JOINS = `left join leads l on l.id = c.lead_id left join customers cu on cu.id = c.customer_id left join users u on u.id = c.owner_user_id left join app_users au on au.id = c.app_user_id left join lateral (select original_text, sender_type from messages m where m.conversation_id = c.id order by m.created_at desc limit 1) lm on true`;
+export const CONV_LIST_JOINS = `left join leads l on l.id = c.lead_id left join customers cu on cu.id = c.customer_id left join cases ca on ca.id = c.case_id left join users u on u.id = c.owner_user_id left join app_users au on au.id = c.app_user_id left join lateral (select original_text, sender_type from messages m where m.conversation_id = c.id order by m.created_at desc limit 1) lm on true`;
 
 /**
  * Admin 一覧向け会話行（JOIN 結果カラム含む）。
@@ -71,6 +71,7 @@ export type AdminConversationListRow = {
   updated_at: unknown;
   lead_name?: string | null;
   customer_base_profile?: unknown;
+  case_no?: string | null;
   owner_display_name?: string | null;
   app_user_name?: string | null;
   lm_original_text?: string | null;

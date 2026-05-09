@@ -79,6 +79,7 @@ function convListRow(overrides?: Record<string, unknown>) {
     updated_at: NOW,
     lead_name: "张三",
     customer_base_profile: null,
+    case_no: null,
     owner_display_name: "田中太郎",
     app_user_name: "AppUser 张三",
     ...overrides,
@@ -138,6 +139,7 @@ void describe("ConversationsAdminService.list — join fields", () => {
       lead_id: LEAD_ID,
       lead_name: "リード名",
       customer_base_profile: { name: "山田" },
+      case_no: "CASE-202605-0001",
     });
     const pool = makePool((sql) => {
       if (sql.includes("count(*)")) {
@@ -151,6 +153,32 @@ void describe("ConversationsAdminService.list — join fields", () => {
     assert.ok(item.linkedEntity);
     assert.equal(item.linkedEntity.type, "case");
     assert.equal(item.linkedEntity.id, caseId);
+    assert.equal(
+      item.linkedEntity.label,
+      "CASE-202605-0001",
+      "case linkedEntity label must use case_no (was empty before fix)",
+    );
+  });
+
+  void test("linkedEntity case label falls back to empty when case_no is null", async () => {
+    const caseId = "00000000-0000-4000-8000-ca5e00000002";
+    const row = convListRow({
+      customer_id: CUSTOMER_ID,
+      case_id: caseId,
+      case_no: null,
+    });
+    const pool = makePool((sql) => {
+      if (sql.includes("count(*)")) {
+        return Promise.resolve({ rows: [{ count: "1" }], rowCount: 1 });
+      }
+      return Promise.resolve({ rows: [row], rowCount: 1 });
+    });
+
+    const result = await makeSvc(pool).list(makeCtx(), {});
+    const item = result.items[0];
+    assert.ok(item.linkedEntity);
+    assert.equal(item.linkedEntity.type, "case");
+    assert.equal(item.linkedEntity.label, "");
   });
 
   void test("linkedEntity is lead when no customer/case", async () => {
@@ -238,6 +266,14 @@ void describe("ConversationsAdminService.list — join fields", () => {
     assert.ok(
       selectCall.includes("left join app_users au on au.id = c.app_user_id"),
       "must join app_users",
+    );
+    assert.ok(
+      selectCall.includes("left join cases ca on ca.id = c.case_id"),
+      "must join cases (so linkedEntity case label can use case_no)",
+    );
+    assert.ok(
+      selectCall.includes("ca.case_no as case_no"),
+      "must select case_no column from cases join",
     );
   });
 
