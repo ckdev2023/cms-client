@@ -1,0 +1,17 @@
+{
+  "name": "@cms/operation-manual",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Admin 后台运营使用手册（图文 PDF）",
+  "scripts": {
+    "capture": "node scripts/capture.mjs",
+    "render": "node scripts/render.mjs",
+    "pdf": "node scripts/print-pdf.mjs",
+    "build": "npm run capture && npm run render && npm run pdf"
+  },
+  "type": "module",
+  "dependencies": {
+    "markdown-it": "^14.1.1",
+    "playwright": "^1.59.1"
+  }
+}

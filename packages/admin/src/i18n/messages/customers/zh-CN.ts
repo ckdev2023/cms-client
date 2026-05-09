@@ -26,6 +26,8 @@ const customerDetail = {
       blockedTitle: "当前不可建案",
       needsSign: "经营管理签客户需先完成签约，才可进入建案流程。",
       intakeNotReady: "已记录签约，但承接状态尚未开放建案，请刷新后重试。",
+      featureDisabled:
+        "经营管理签功能尚未在本租户启用，无法推进签约与建案，请联系管理员开启 BMV 功能开关。",
     },
   },
   header: {
@@ -100,6 +102,13 @@ const customerDetail = {
     nextStep: "下一步",
     gateHint: "建案门禁",
     note: "补充说明",
+    disabledNotice: {
+      ariaLabel: "经营管理签功能未启用提示",
+      title: "经营管理签功能未启用",
+      description:
+        "本租户尚未启用经营管理签 (BMV) 功能开关，无法发送问卷、生成报价或登记签约，「开始办案」也会保持禁用。",
+      hint: "请联系所内管理员在系统设置中开启 BMV 功能开关；若客户实际是其他签证类型，请将「签证类型」改为对应类型后重试。",
+    },
     steps: {
       questionnaire: "问卷",
       quote: "报价",

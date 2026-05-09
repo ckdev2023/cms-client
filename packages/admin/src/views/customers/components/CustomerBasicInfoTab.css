@@ -28,6 +28,61 @@
 .basic-info__intake-card {
   margin-top: 20px;
 }
+
+.basic-info__bmv-disabled-notice {
+  margin-top: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-warning-border, rgba(202, 138, 4, 0.32));
+  border-radius: var(--radius-lg, 16px);
+  background: linear-gradient(
+    180deg,
+    var(--color-warning-soft-1, rgba(254, 243, 199, 0.7)),
+    var(--color-warning-soft-2, rgba(254, 252, 232, 0.4))
+  );
+  color: var(--color-text-1);
+}
+
+.basic-info__bmv-disabled-notice-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning-strong, #92400e);
+  background-color: var(--color-warning-icon-bg, rgba(202, 138, 4, 0.18));
+}
+
+.basic-info__bmv-disabled-notice-body {
+  display: grid;
+  gap: 4px;
+  flex: 1;
+}
+
+.basic-info__bmv-disabled-notice-title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-warning-strong, #92400e);
+}
+
+.basic-info__bmv-disabled-notice-description {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-1);
+}
+
+.basic-info__bmv-disabled-notice-hint {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
 .basic-info__form {
   margin-top: 20px;
   display: grid;

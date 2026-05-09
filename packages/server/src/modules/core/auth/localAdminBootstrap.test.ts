@@ -72,6 +72,9 @@ function makeMockPool(
     if (sql.includes("update organizations") && sql.includes("storageRoot")) {
       return Promise.resolve({ rows: opts.storageRootExists ? [] : [{}] });
     }
+    if (sql.includes("insert into feature_flags")) {
+      return Promise.resolve({ rows: [] });
+    }
     throw new Error(`Unexpected SQL: ${sql}`);
   });
 }
@@ -213,6 +216,23 @@ void test("bootstrapLocalAdmin upserts org, user, group, membership, storageRoot
   assert.ok(sqlOrder[3]?.includes("insert into groups"));
   assert.ok(sqlOrder[4]?.includes("insert into user_group_memberships"));
   assert.ok(sqlOrder[5]?.includes("update organizations"));
+  assert.ok(sqlOrder[6]?.includes("insert into feature_flags"));
+
+  const featureFlagInsert = calls.find((c) =>
+    c.sql.includes("insert into feature_flags"),
+  );
+  assert.ok(featureFlagInsert, "should insert default feature_flags row");
+  assert.deepEqual(featureFlagInsert.params, [
+    "00000000-0000-4000-8000-000000000010",
+  ]);
+  assert.ok(
+    featureFlagInsert.sql.includes("'bmv'"),
+    "default flag should target bmv key",
+  );
+  assert.ok(
+    featureFlagInsert.sql.includes("on conflict (org_id, key) do nothing"),
+    "default flag insert must be idempotent and respect manual overrides",
+  );
 });
 
 void test("bootstrapLocalAdmin is idempotent (second run same result)", async () => {

@@ -31,6 +31,8 @@ const customerDetail = {
         "BMV customers must complete signing before a case can be created.",
       intakeNotReady:
         "Signing is recorded, but the intake stage is not ready for case creation yet. Refresh and try again.",
+      featureDisabled:
+        "The BMV feature is not enabled for this tenant, so signing and case creation cannot proceed. Ask an administrator to enable the BMV feature flag.",
     },
   },
   header: {
@@ -105,6 +107,13 @@ const customerDetail = {
     nextStep: "Next step",
     gateHint: "Case gate",
     note: "Operational note",
+    disabledNotice: {
+      ariaLabel: "BMV feature disabled notice",
+      title: "BMV feature is not enabled",
+      description:
+        'The Business Manager Visa (BMV) feature flag is not enabled for this tenant, so questionnaires, quotes and signing cannot be recorded, and "Start case" stays disabled.',
+      hint: "Ask an administrator to enable the BMV feature flag in system settings. If this customer is not actually a BMV customer, change the visa type and try again.",
+    },
     steps: {
       questionnaire: "Questionnaire",
       quote: "Quote",

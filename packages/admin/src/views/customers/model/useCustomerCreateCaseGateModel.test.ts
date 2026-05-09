@@ -70,7 +70,19 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     customer.visaType = "family_stay";
     customer.bmvProfile = null;
 
-    expect(buildCustomerCreateCaseGateViewModel(customer)).toEqual({
+    expect(buildCustomerCreateCaseGateViewModel(customer, true)).toEqual({
+      single: { disabled: false },
+      batch: { disabled: false },
+      blockedReasonKey: null,
+    });
+  });
+
+  it("keeps non-BMV customers unblocked even when BMV flag is disabled", () => {
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-003"]!);
+    customer.visaType = "family_stay";
+    customer.bmvProfile = null;
+
+    expect(buildCustomerCreateCaseGateViewModel(customer, false)).toEqual({
       single: { disabled: false },
       batch: { disabled: false },
       blockedReasonKey: null,
@@ -81,6 +93,7 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     expect(
       buildCustomerCreateCaseGateViewModel(
         SAMPLE_CUSTOMER_DETAILS["cust-001"]!,
+        true,
       ),
     ).toEqual({
       single: { disabled: false },
@@ -93,6 +106,7 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     expect(
       buildCustomerCreateCaseGateViewModel(
         SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+        true,
       ),
     ).toEqual({
       single: { disabled: true },
@@ -108,7 +122,7 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     customer.bmvProfile.signStatus = "signed";
     customer.bmvProfile.intakeStatus = "sign_pending";
 
-    expect(buildCustomerCreateCaseGateViewModel(customer)).toEqual({
+    expect(buildCustomerCreateCaseGateViewModel(customer, true)).toEqual({
       single: { disabled: true },
       batch: { disabled: true },
       blockedReasonKey:
@@ -123,10 +137,52 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     customer.bmvProfile.signStatus = "signed";
     customer.bmvProfile.intakeStatus = "ready_for_case_creation";
 
-    expect(buildCustomerCreateCaseGateViewModel(customer)).toEqual({
+    expect(buildCustomerCreateCaseGateViewModel(customer, true)).toEqual({
       single: { disabled: false },
       batch: { disabled: false },
       blockedReasonKey: null,
+    });
+  });
+
+  it("bmvCustomer_flagDisabled_emitsFeatureDisabledReason", () => {
+    expect(
+      buildCustomerCreateCaseGateViewModel(
+        SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+        false,
+      ),
+    ).toEqual({
+      single: { disabled: true },
+      batch: { disabled: true },
+      blockedReasonKey:
+        "customers.detail.actions.createCaseGate.featureDisabled",
+    });
+  });
+
+  it("bmvCustomer_flagDisabled_overridesIntakeNotReady", () => {
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    if (!customer.bmvProfile) throw new Error("Expected BMV profile");
+
+    customer.bmvProfile.signStatus = "signed";
+    customer.bmvProfile.intakeStatus = "sign_pending";
+
+    expect(buildCustomerCreateCaseGateViewModel(customer, false)).toEqual({
+      single: { disabled: true },
+      batch: { disabled: true },
+      blockedReasonKey:
+        "customers.detail.actions.createCaseGate.featureDisabled",
+    });
+  });
+
+  it("bmvCustomer_flagLoading_keepsExistingGateBehaviour", () => {
+    expect(
+      buildCustomerCreateCaseGateViewModel(
+        SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+        undefined,
+      ),
+    ).toEqual({
+      single: { disabled: true },
+      batch: { disabled: true },
+      blockedReasonKey: "customers.detail.actions.createCaseGate.needsSign",
     });
   });
 });
@@ -136,6 +192,7 @@ describe("useCustomerCreateCaseGateModel", () => {
     const customer = computed(() => SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
     const { createCaseGate, canCreateCase } = useCustomerCreateCaseGateModel({
       customer,
+      bmvEnabled: computed(() => true),
     });
 
     expect(createCaseGate.value.blockedReasonKey).toBe(
@@ -153,11 +210,27 @@ describe("useCustomerCreateCaseGateModel", () => {
 
     const { createCaseGate, canCreateCase } = useCustomerCreateCaseGateModel({
       customer: computed(() => customer),
+      bmvEnabled: computed(() => true),
     });
 
     expect(createCaseGate.value.blockedReasonKey).toBeNull();
     expect(createCaseGate.value.single.disabled).toBe(false);
     expect(createCaseGate.value.batch.disabled).toBe(false);
     expect(canCreateCase.value).toBe(true);
+  });
+
+  it("emits featureDisabled when flag is disabled for BMV customer", () => {
+    const customer = computed(() => SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    const { createCaseGate, canCreateCase } = useCustomerCreateCaseGateModel({
+      customer,
+      bmvEnabled: computed(() => false),
+    });
+
+    expect(createCaseGate.value.blockedReasonKey).toBe(
+      "customers.detail.actions.createCaseGate.featureDisabled",
+    );
+    expect(createCaseGate.value.single.disabled).toBe(true);
+    expect(createCaseGate.value.batch.disabled).toBe(true);
+    expect(canCreateCase.value).toBe(false);
   });
 });

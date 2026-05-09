@@ -122,6 +122,7 @@ export async function bootstrapLocalAdmin(
     const groupId = await upsertDefaultGroup(client, organization.id);
     await upsertDefaultMembership(client, user.id, groupId);
     await upsertDefaultStorageRoot(client, organization.id);
+    await upsertDefaultFeatureFlags(client, organization.id);
 
     await client.query("COMMIT");
 
@@ -289,6 +290,31 @@ async function upsertDefaultStorageRoot(
              or settings->'storageRoot'->>'rootPath' = '')
     `,
     [orgId, rootPath, rootLabel],
+  );
+}
+
+/**
+ * 为新建/再次启动的本地组织默认开启 BMV 功能开关。
+ *
+ * 历史现象：`feature_flags.bmv` 行长期缺失（reason=missing）→ 客户详情页对
+ * 经管签客户隐藏承接卡片 + 「开始办案」误显示「需先完成签约」，造成 UI 死锁。
+ * 这里采用 ON CONFLICT DO NOTHING：若管理员显式关停过，将保留其原状态，
+ * 避免重启服务时被覆盖。
+ *
+ * @param client PostgreSQL 连接
+ * @param orgId 组织 ID
+ */
+async function upsertDefaultFeatureFlags(
+  client: PoolClient,
+  orgId: string,
+): Promise<void> {
+  await client.query(
+    `
+      insert into feature_flags (org_id, key, enabled, payload)
+      values ($1, 'bmv', true, '{}'::jsonb)
+      on conflict (org_id, key) do nothing
+    `,
+    [orgId],
   );
 }
 

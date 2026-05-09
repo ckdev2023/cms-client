@@ -284,7 +284,62 @@ describe("CustomerBasicInfoTab", () => {
     expect(wrapper.text()).toContain("Not started");
   });
 
-  it("hides BMV intake card when bmvEnabled is false", () => {
+  it("hides BMV intake card when bmvFlagState is disabled and shows the disabled notice instead", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: bmvCustomer,
+        repository,
+        bmvFlagState: "disabled" as const,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+    const notice = wrapper.find(".basic-info__bmv-disabled-notice");
+    expect(notice.exists()).toBe(true);
+    expect(notice.text()).toContain("BMV feature is not enabled");
+  });
+
+  it("does not render the BMV disabled notice for non-BMV customers when bmvFlagState is disabled", () => {
+    const nonBmvCustomer = SAMPLE_CUSTOMER_DETAILS["cust-003"]!;
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: nonBmvCustomer,
+        repository,
+        bmvFlagState: "disabled" as const,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
+    expect(wrapper.find(".basic-info__bmv-disabled-notice").exists()).toBe(
+      false,
+    );
+  });
+
+  it("hides BMV intake card and notice when neither bmvEnabled nor bmvFlagState is set (loading state)", () => {
+    const { wrapper: w } = factory(bmvCustomer);
+    expect(w.find(".bmv-intake-card").exists()).toBe(false);
+    expect(w.find(".basic-info__bmv-disabled-notice").exists()).toBe(false);
+  });
+
+  it("renders the BMV intake card when only legacy bmvEnabled=true prop is provided (backward-compat)", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: bmvCustomer,
+        repository,
+        bmvEnabled: true,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
+    expect(wrapper.find(".basic-info__bmv-disabled-notice").exists()).toBe(
+      false,
+    );
+  });
+
+  it("ignores legacy bmvEnabled=false alone and treats it as loading (no disabled notice)", () => {
     const repository = createRepository();
     const wrapper = mount(CustomerBasicInfoTab, {
       props: {
@@ -295,11 +350,9 @@ describe("CustomerBasicInfoTab", () => {
       global: { plugins: [i18n] },
     });
     expect(wrapper.find(".bmv-intake-card").exists()).toBe(false);
-  });
-
-  it("hides BMV intake card when bmvEnabled is undefined (loading state)", () => {
-    const { wrapper: w } = factory(bmvCustomer);
-    expect(w.find(".bmv-intake-card").exists()).toBe(false);
+    expect(wrapper.find(".basic-info__bmv-disabled-notice").exists()).toBe(
+      false,
+    );
   });
 
   // BUG-185：BMV 客户详情 Visa type 字段直接绑定 raw enum；en-US 下显示

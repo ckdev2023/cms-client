@@ -31,6 +31,10 @@ const router = useRouter();
 const repository = createCustomerRepository();
 
 const bmvEnabled = ref<boolean | undefined>(undefined);
+const bmvFlagState = computed<"enabled" | "disabled" | undefined>(() => {
+  if (bmvEnabled.value === undefined) return undefined;
+  return bmvEnabled.value ? "enabled" : "disabled";
+});
 onMounted(async () => {
   bmvEnabled.value = await repository.isBmvEnabled();
 });
@@ -70,7 +74,10 @@ const {
   routeTab,
   onTabChange: handleTabChange,
 });
-const { createCaseGate } = useCustomerCreateCaseGateModel({ customer });
+const { createCaseGate } = useCustomerCreateCaseGateModel({
+  customer,
+  bmvEnabled,
+});
 const customerToast = useCustomerToast();
 const {
   visible: customerToastVisible,
@@ -272,6 +279,7 @@ function handleRetry(): void {
           :repository="repository"
           :refresh-customer="retry"
           :bmv-enabled="bmvEnabled"
+          :bmv-flag-state="bmvFlagState"
           @transition-to-case="handleTransitionToCase"
         />
         <CustomerCasesTab

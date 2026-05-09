@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
+import CustomerBmvDisabledNotice from "./CustomerBmvDisabledNotice.vue";
 import CustomerBmvIntakeCard from "./CustomerBmvIntakeCard.vue";
 import CustomerLocalizedFilePicker from "./CustomerLocalizedFilePicker.vue";
 import type { CustomerDetail } from "../types";
@@ -16,7 +17,11 @@ import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import type { BasicInfoFormSnapshot } from "../model/useCustomerBasicInfoModel";
 
-/** 基础信息 Tab：以只读/编辑双模式展示客户的 13 个基础字段。 */
+/**
+ * 基础信息 Tab：以只读/编辑双模式展示客户的 13 个基础字段。
+ * 使用字符串 `bmvFlagState` 而非 boolean 表达 flag 解析态，以避免 Vue 把
+ * 缺省 boolean 强转为 false，使「加载中」与「flag 已关闭」混淆。
+ */
 const props = defineProps<{
   customer: CustomerDetail;
   repository: Pick<
@@ -27,7 +32,17 @@ const props = defineProps<{
     | "recordBmvSign"
   >;
   refreshCustomer?: () => Promise<void>;
+  /**
+   * 历史 prop：当前租户是否启用 BMV 功能。
+   * 仅作向后兼容；新代码应使用 `bmvFlagState`，因为 boolean prop 会被 Vue 把
+   * 缺省值强转为 false，导致「加载中」与「已关闭」无法区分。
+   */
   bmvEnabled?: boolean;
+  /**
+   * BMV 功能开关解析状态：`undefined`/缺省 = 加载中；`enabled` = 启用；
+   * `disabled` = 已关闭。优先于 `bmvEnabled` 生效。
+   */
+  bmvFlagState?: "enabled" | "disabled";
 }>();
 
 const emit = defineEmits<{
@@ -60,8 +75,22 @@ const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
 );
 const isBmvCustomer = computed(() => customerRequiresBmv(props.customer));
+// 优先消费 `bmvFlagState`（字符串、非 Boolean，可保留 loading 语义）；
+// 若调用方仍传 boolean 形式 `bmvEnabled`，则按旧逻辑兜底，但此时 loading
+// 态会与 disabled 态混淆，因此不会展示降级提示卡片。
+const bmvFlagResolution = computed<"loading" | "enabled" | "disabled">(() => {
+  if (props.bmvFlagState === "enabled") return "enabled";
+  if (props.bmvFlagState === "disabled") return "disabled";
+  if (props.bmvEnabled === true) return "enabled";
+  return "loading";
+});
 const showBmvIntakeCard = computed(
-  () => props.bmvEnabled === true && customerRequiresBmv(props.customer),
+  () => bmvFlagResolution.value === "enabled" && isBmvCustomer.value,
+);
+// BMV 客户但当前租户 flag 未开：渲染降级提示卡片，避免「按钮 disabled
+// + 无入口」的死锁体验。loading 态保持空白以避免页面初始化时闪烁。
+const showBmvDisabledNotice = computed(
+  () => bmvFlagResolution.value === "disabled" && isBmvCustomer.value,
 );
 const avatarInputId = "basicInfoAvatar";
 
@@ -128,6 +157,8 @@ const bmvVisaTypeLabel = computed(() =>
         class="basic-info__intake-card"
         @transition-to-case="emit('transition-to-case')"
       />
+
+      <CustomerBmvDisabledNotice v-else-if="showBmvDisabledNotice" />
 
       <form v-if="displayValues" class="basic-info__form" @submit.prevent>
         <div class="basic-info__field">

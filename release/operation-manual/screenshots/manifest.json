@@ -1,0 +1,235 @@
+[
+  {
+    "id": "01-login",
+    "section": "1. 系统准入",
+    "title": "登录页",
+    "hash": "/login",
+    "requiresAuth": false,
+    "waitFor": "#login-email",
+    "file": "screenshots/01-login.png"
+  },
+  {
+    "id": "02-dashboard",
+    "section": "2. 工作台",
+    "title": "仪表盘 — 今日工作面板",
+    "hash": "/",
+    "waitFor": "main",
+    "file": "screenshots/02-dashboard.png"
+  },
+  {
+    "id": "03-leads-list",
+    "section": "3. 咨询线索",
+    "title": "咨询线索列表",
+    "hash": "/leads",
+    "waitFor": "main",
+    "file": "screenshots/03-leads-list.png"
+  },
+  {
+    "id": "03-conversations-list",
+    "section": "3. 咨询线索",
+    "title": "会话列表（与客户的来往沟通）",
+    "hash": "/conversations",
+    "waitFor": "main",
+    "file": "screenshots/03-conversations-list.png"
+  },
+  {
+    "id": "03-conversation-detail",
+    "section": "3. 咨询线索",
+    "title": "会话详情 — 消息与备注",
+    "hash": "/conversations/00000000-0000-4000-b000-000000000021",
+    "waitFor": "main",
+    "file": "screenshots/03-conversation-detail.png"
+  },
+  {
+    "id": "04-customers-list",
+    "section": "4. 客户管理",
+    "title": "客户列表",
+    "hash": "/customers",
+    "waitFor": "main",
+    "file": "screenshots/04-customers-list.png"
+  },
+  {
+    "id": "04-customer-detail",
+    "section": "4. 客户管理",
+    "title": "客户详情 — 田中 太郎",
+    "hash": "/customers/00000000-0000-4000-a000-000000000001",
+    "waitFor": "main",
+    "file": "screenshots/04-customer-detail.png"
+  },
+  {
+    "id": "04-customer-detail-cases",
+    "section": "4. 客户管理",
+    "title": "客户详情 — 关联案件 Tab",
+    "hash": "/customers/00000000-0000-4000-a000-000000000001?tab=cases",
+    "waitFor": "main",
+    "file": "screenshots/04-customer-detail-cases.png"
+  },
+  {
+    "id": "04-customer-detail-comms",
+    "section": "4. 客户管理",
+    "title": "客户详情 — 沟通记录 Tab",
+    "hash": "/customers/00000000-0000-4000-a000-000000000001?tab=comms",
+    "waitFor": "main",
+    "file": "screenshots/04-customer-detail-comms.png"
+  },
+  {
+    "id": "04-customer-detail-log",
+    "section": "4. 客户管理",
+    "title": "客户详情 — 操作日志 Tab",
+    "hash": "/customers/00000000-0000-4000-a000-000000000001?tab=log",
+    "waitFor": "main",
+    "file": "screenshots/04-customer-detail-log.png"
+  },
+  {
+    "id": "05-cases-list",
+    "section": "5. 案件管理",
+    "title": "案件列表（含阶段与负责人筛选）",
+    "hash": "/cases",
+    "waitFor": "main",
+    "file": "screenshots/05-cases-list.png"
+  },
+  {
+    "id": "05-case-create",
+    "section": "5. 案件管理",
+    "title": "新建案件 — 模板选择与基础信息",
+    "hash": "/cases/create",
+    "waitFor": "main",
+    "file": "screenshots/05-case-create.png"
+  },
+  {
+    "id": "05-case-detail",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 概览 / 资料 / 文书 / 任务 / 时间线",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail.png"
+  },
+  {
+    "id": "05-case-detail-bmv",
+    "section": "5. 案件管理",
+    "title": "案件详情（BMV 模板）",
+    "hash": "/cases/00000000-0000-4000-a000-000000000012",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-bmv.png"
+  },
+  {
+    "id": "05-case-detail-documents",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 资料清单 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=documents",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-documents.png"
+  },
+  {
+    "id": "05-case-detail-tasks",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 任务 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=tasks",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-tasks.png"
+  },
+  {
+    "id": "05-case-detail-forms",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 文书 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=forms",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-forms.png"
+  },
+  {
+    "id": "05-case-detail-deadlines",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 期限 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=deadlines",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-deadlines.png"
+  },
+  {
+    "id": "05-case-detail-validation",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 提交前检查 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=validation",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-validation.png"
+  },
+  {
+    "id": "05-case-detail-billing",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 收费 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=billing",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-billing.png"
+  },
+  {
+    "id": "05-case-detail-log",
+    "section": "5. 案件管理",
+    "title": "案件详情 — 日志 Tab",
+    "hash": "/cases/00000000-0000-4000-a000-000000000010?tab=log",
+    "waitFor": "main",
+    "file": "screenshots/05-case-detail-log.png"
+  },
+  {
+    "id": "06-documents-list",
+    "section": "6. 资料中心",
+    "title": "资料中心 — 资料清单与状态",
+    "hash": "/documents",
+    "waitFor": "main",
+    "file": "screenshots/06-documents-list.png"
+  },
+  {
+    "id": "07-tasks-list",
+    "section": "7. 任务与提醒",
+    "title": "任务与提醒列表",
+    "hash": "/tasks",
+    "waitFor": "main",
+    "file": "screenshots/07-tasks-list.png"
+  },
+  {
+    "id": "08-billing-list",
+    "section": "8. 收费与财务",
+    "title": "收费与财务总览",
+    "hash": "/billing",
+    "waitFor": "main",
+    "file": "screenshots/08-billing-list.png"
+  },
+  {
+    "id": "09-settings-groups",
+    "section": "9. 系统设置",
+    "title": "系统设置 — 分组管理",
+    "hash": "/settings?tab=group-management",
+    "waitFor": "main",
+    "file": "screenshots/09-settings-groups.png"
+  },
+  {
+    "id": "09-settings-members",
+    "section": "9. 系统设置",
+    "title": "系统设置 — 成员管理",
+    "hash": "/settings?tab=member-management",
+    "waitFor": "main",
+    "file": "screenshots/09-settings-members.png"
+  },
+  {
+    "id": "09-settings-roles",
+    "section": "9. 系统设置",
+    "title": "系统设置 — 角色与权限",
+    "hash": "/settings?tab=role-management",
+    "waitFor": "main",
+    "file": "screenshots/09-settings-roles.png"
+  },
+  {
+    "id": "09-settings-visibility",
+    "section": "9. 系统设置",
+    "title": "系统设置 — 可见性配置",
+    "hash": "/settings?tab=visibility-config",
+    "waitFor": "main",
+    "file": "screenshots/09-settings-visibility.png"
+  },
+  {
+    "id": "09-settings-storage",
+    "section": "9. 系统设置",
+    "title": "系统设置 — 本地资料根目录",
+    "hash": "/settings?tab=storage-root",
+    "waitFor": "main",
+    "file": "screenshots/09-settings-storage.png"
+  }
+]
