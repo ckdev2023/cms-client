@@ -61,22 +61,22 @@ describe("deriveActions", () => {
     expect(a.canReference).toBe(true);
   });
 
-  it("uploaded_reviewing → canApprove + canReject + canWaive", () => {
+  it("uploaded_reviewing → canApprove + canReject, no canWaive (backend rejects)", () => {
     const a = deriveActions("uploaded_reviewing");
     expect(a.canApprove).toBe(true);
     expect(a.canReject).toBe(true);
     expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(true);
+    expect(a.canWaive).toBe(false);
     expect(a.canRegister).toBe(false);
     expect(a.canReference).toBe(false);
   });
 
-  it("approved → only canRegister for re-upload", () => {
+  it("approved → canWaive (backend allows waive from approved)", () => {
     const a = deriveActions("approved");
     expect(a.canApprove).toBe(false);
     expect(a.canReject).toBe(false);
     expect(a.canRemind).toBe(false);
-    expect(a.canWaive).toBe(false);
+    expect(a.canWaive).toBe(true);
     expect(a.canRegister).toBe(false);
     expect(a.canReference).toBe(false);
   });
@@ -89,11 +89,11 @@ describe("deriveActions", () => {
     expect(a.canReference).toBe(true);
   });
 
-  it("expired → canRegister + canReference, no canWaive", () => {
+  it("expired → canRegister + canReference + canWaive (backend allows waive from expired)", () => {
     const a = deriveActions("expired");
     expect(a.canRegister).toBe(true);
     expect(a.canReference).toBe(true);
-    expect(a.canWaive).toBe(false);
+    expect(a.canWaive).toBe(true);
     expect(a.canRemind).toBe(false);
   });
 

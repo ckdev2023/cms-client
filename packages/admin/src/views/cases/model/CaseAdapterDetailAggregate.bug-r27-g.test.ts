@@ -58,17 +58,67 @@ describe("adaptProviderProgress labelKey (R27-G / T3.1)", () => {
     expect(p.label).toBe("weirdValue");
   });
 
-  it("all five known roles produce correct labelKey", () => {
-    const roles = ["applicant", "office", "employer", "agent", "unknown"];
+  it("all six known roles produce correct labelKey", () => {
+    const roles = [
+      "applicant",
+      "supporter",
+      "office",
+      "employer",
+      "agent",
+      "unknown",
+    ];
     const entries = roles.map((r) => ({ providerRole: r, total: 1, done: 0 }));
     const result = adaptCaseDetailAggregate(buildAggregate(entries))!;
-    expect(result.detail.providerProgress).toHaveLength(5);
+    expect(result.detail.providerProgress).toHaveLength(6);
     for (let i = 0; i < roles.length; i++) {
       expect(result.detail.providerProgress[i].labelKey).toBe(
         `cases.detail.providers.${roles[i]}`,
       );
       expect(result.detail.providerProgress[i].providerRole).toBe(roles[i]);
     }
+  });
+
+  it("unknown bucket with total=0 is hidden", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate([
+        { providerRole: "applicant", total: 5, done: 3 },
+        { providerRole: "unknown", total: 0, done: 0 },
+      ]),
+    )!;
+    expect(result.detail.providerProgress).toHaveLength(1);
+    expect(result.detail.providerProgress[0].providerRole).toBe("applicant");
+  });
+
+  it("unknown bucket with total>0 is kept", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate([{ providerRole: "unknown", total: 3, done: 1 }]),
+    )!;
+    expect(result.detail.providerProgress).toHaveLength(1);
+    expect(result.detail.providerProgress[0].providerRole).toBe("unknown");
+    expect(result.detail.providerProgress[0].total).toBe(3);
+  });
+
+  it("unspecified (null role) bucket with total=0 is hidden", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate([
+        { providerRole: "office", total: 2, done: 1 },
+        { providerRole: null, total: 0, done: 0 },
+      ]),
+    )!;
+    expect(result.detail.providerProgress).toHaveLength(1);
+    expect(result.detail.providerProgress[0].providerRole).toBe("office");
+  });
+
+  it("supporter role resolves correctly", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate([{ providerRole: "supporter", total: 4, done: 2 }]),
+    )!;
+    expect(result.detail.providerProgress).toHaveLength(1);
+    const p = result.detail.providerProgress[0];
+    expect(p.labelKey).toBe("cases.detail.providers.supporter");
+    expect(p.providerRole).toBe("supporter");
+    expect(p.done).toBe(2);
+    expect(p.total).toBe(4);
   });
 
   it("empty providerRole string → fallback to unspecified", () => {

@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 /**
  * 配套模块 adapter seam — 边界冻结于 p0-fe-002a-04，落地于 p0-fe-002e。
  *
@@ -45,6 +46,7 @@ import {
 } from "./CaseAdapterShared";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { isFollowUpAllowed } from "../../documents/constants";
+import { WAIVE_ALLOWED_FROM_STATUSES_SET } from "../../documents/fixtures-waive-contract";
 
 // ─── Type re-exports ────────────────────────────────────────────
 
@@ -131,7 +133,6 @@ const DOC_STATUS_LABEL_KEYS: Record<string, string> = {
   rejected: "cases.detail.documents.docStatus.rejected",
 };
 
-const WAIVE_ELIGIBLE = new Set(["pending", "waiting_upload"]);
 const REGISTER_ELIGIBLE = new Set([
   "pending",
   "waiting_upload",
@@ -146,7 +147,7 @@ function deriveDocumentActions(
     canApprove: status === "uploaded_reviewing",
     canReject: status === "uploaded_reviewing",
     canRemind: isFollowUpAllowed(status, category ?? undefined),
-    canWaive: WAIVE_ELIGIBLE.has(status),
+    canWaive: WAIVE_ALLOWED_FROM_STATUSES_SET.has(status),
     canRegister: REGISTER_ELIGIBLE.has(status),
   };
 }
@@ -173,7 +174,7 @@ function adaptDocumentItemDto(value: unknown): DocumentItem | null {
     statusLabelKey:
       DOC_STATUS_LABEL_KEYS[status] ??
       "cases.detail.documents.docStatus.unknown",
-    canWaive: WAIVE_ELIGIBLE.has(status),
+    canWaive: WAIVE_ALLOWED_FROM_STATUSES_SET.has(status),
     actions: deriveDocumentActions(status, category),
     backendStatus: status,
     category: category ?? undefined,
@@ -220,13 +221,17 @@ export function adaptCaseDocumentGroups(
 const GEN_DOC_STATUS_TONES: Record<string, string> = {
   draft: "muted",
   final: "success",
+  exporting: "warning",
   exported: "primary",
+  export_failed: "danger",
 };
 
 const VALID_BACKEND_STATUSES = new Set<GeneratedDocumentBackendStatus>([
   "draft",
   "final",
+  "exporting",
   "exported",
+  "export_failed",
 ]);
 
 function resolveBackendStatus(raw: string): GeneratedDocumentBackendStatus {
@@ -262,6 +267,24 @@ function buildGeneratedDocMeta(
   return parts.join(" · ");
 }
 
+function isPlaceholderUrl(url: string | null): boolean {
+  return url != null && url.startsWith("placeholder://");
+}
+
+/**
+ * 构造下载 URL — 通过 server 流式接口返回 storage 文件。
+ *
+ * 与直接使用 `fileUrl`（storage key 相对路径）不同，这里指向稳定的
+ * `/api/generated-documents/:id/file`，由 server 鉴权 + 适配器解析存储位置。
+ *
+ * @param id - 生成文書 ID
+ * @returns 下载 URL，id 为空时返回 null
+ */
+function buildDownloadUrl(id: string): string | null {
+  if (!id) return null;
+  return `/api/generated-documents/${encodeURIComponent(id)}/file`;
+}
+
 function adaptGeneratedDocumentDto(
   value: unknown,
   locale?: string,
@@ -274,6 +297,11 @@ function adaptGeneratedDocumentDto(
 
   const status = readString(r, "status");
   const fileUrl = readNullableString(r, "fileUrl");
+  const placeholder = isPlaceholderUrl(fileUrl);
+  const downloadUrl =
+    !placeholder && fileUrl && status === "exported"
+      ? buildDownloadUrl(id)
+      : null;
 
   return {
     id: id || "",
@@ -282,7 +310,8 @@ function adaptGeneratedDocumentDto(
     tone: GEN_DOC_STATUS_TONES[status] ?? "muted",
     backendStatus: resolveBackendStatus(status),
     fileUrl,
-    isPlaceholderFile: fileUrl?.startsWith("placeholder://") ?? false,
+    fileUrlIsPlaceholder: placeholder,
+    downloadUrl,
     approvedBy: readNullableString(r, "approvedByDisplayName"),
     approvedAt: formatDateOrDateTime(
       readNullableString(r, "approvedAt"),

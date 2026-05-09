@@ -35,6 +35,7 @@ function makeItemRow(overrides: Record<string, unknown> = {}) {
     reviewed_at: null,
     due_at: null,
     owner_side: "applicant",
+    provided_by_role: "applicant",
     last_follow_up_at: null,
     note: null,
     category: null,
@@ -880,6 +881,23 @@ void test("updateSurveyData: throws when item not found", async () => {
   );
 });
 
+// ── mapDocumentItemRow: providedByRole（NEW-V10-1 资料分组一致性修复） ──
+void test("mapDocumentItemRow: maps provided_by_role when populated", () => {
+  for (const role of ["applicant", "supporter", "office", "employer"]) {
+    const item = mapDocumentItemRow(
+      makeItemRow({ provided_by_role: role }) as never,
+    );
+    assert.equal(item.providedByRole, role);
+  }
+});
+
+void test("mapDocumentItemRow: maps null provided_by_role to null (legacy / 058 迁移前)", () => {
+  const item = mapDocumentItemRow(
+    makeItemRow({ provided_by_role: null }) as never,
+  );
+  assert.equal(item.providedByRole, null);
+});
+
 // ── mapDocumentItemRow: surveyData from JSON string ──
 void test("mapDocumentItemRow: parses survey_data JSON string", () => {
   const row = makeItemRow({
@@ -1390,6 +1408,129 @@ void test("waive: passes userId and reasonCode to SQL params", async () => {
   assert.equal(updateCall.params[2], "see case #42");
   assert.equal(updateCall.params[3], USER_ID);
   assert.equal(updateCall.params[4], "approved");
+});
+
+// ── unwaive ──
+
+void test("unwaive: success path — status becomes pending, 4 latest fields nulled, timeline written", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "waived",
+            waive_reason_code_latest: "other",
+            waive_reason_latest: "reason",
+            waived_by_user_id_latest: USER_ID,
+            waived_at_latest: "2026-02-01T00:00:00.000Z",
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (
+      sql.includes("update document_items") &&
+      sql.includes("status = 'pending'")
+    ) {
+      return Promise.resolve({
+        rows: [
+          makeItemRow({
+            status: "pending",
+            waive_reason_code_latest: null,
+            waive_reason_latest: null,
+            waived_by_user_id_latest: null,
+            waived_at_latest: null,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const timeline = makeTimeline();
+  const svc = createService(pool, timeline);
+  const result = await svc.unwaive(makeCtx(), ITEM_ID, { note: "restoring" });
+
+  assert.equal(result.status, "pending");
+  assert.equal(result.waiveReasonCodeLatest, null);
+  assert.equal(result.waiveReasonLatest, null);
+  assert.equal(result.waivedByUserIdLatest, null);
+  assert.equal(result.waivedAtLatest, null);
+  assert.equal(timeline.writes.length, 1);
+  const entry = timeline.writes[0] as {
+    action: string;
+    payload: { from: string; note: string | null };
+  };
+  assert.equal(entry.action, "document_item.unwaived");
+  assert.equal(entry.payload.from, "waived");
+  assert.equal(entry.payload.note, "restoring");
+});
+
+void test("unwaive: rejects when status is not waived", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "pending" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.unwaive(makeCtx(), ITEM_ID, { note: null }),
+    (err: Error) => err.message.includes("Cannot unwaive"),
+  );
+});
+
+void test("unwaive: throws on item not found", async () => {
+  const pool = makePool(() => Promise.resolve({ rows: [], rowCount: 0 }));
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.unwaive(makeCtx(), ITEM_ID, {}),
+    (err: Error) => err.message.includes("not found"),
+  );
+});
+
+void test("unwaive: concurrent status change causes failure", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "waived" })],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("update document_items")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.unwaive(makeCtx(), ITEM_ID, { note: null }),
+    (err: Error) => err.message.includes("concurrently"),
+  );
+});
+
+void test("transition: rejects waived → pending (path closed)", async () => {
+  const pool = makePool((sql, params) => {
+    if (sql.includes("from document_items") && params?.[0] === ITEM_ID) {
+      return Promise.resolve({
+        rows: [makeItemRow({ status: "waived" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  const svc = createService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.transition(makeCtx(), ITEM_ID, { toStatus: "pending" }),
+    (err: Error) => err.message.includes("not allowed"),
+  );
 });
 
 // ────────────────────────────────────────────────────────────────

@@ -378,6 +378,8 @@ export interface DocumentItemActions {
   canRemind?: boolean;
   /** 可标记 waived。 */
   canWaive?: boolean;
+  /** 可取消豁免（状态=waived）。 */
+  canUnwaive?: boolean;
   /** 可登记资料（本地归档）。 */
   canRegister?: boolean;
   /** 可引用既有版本。 */
@@ -523,6 +525,8 @@ export interface ValidationData {
   lastTime: string;
   /** 原始 ISO 时间戳；view 层可用于 locale-aware 格式化，缺失时回退 `lastTime`。 */
   lastTimeIso?: string;
+  /** 关联资料/文书的最大 updatedAt ISO；用于 stale 判定（A2）。 */
+  dataMaxUpdatedAt?: string;
   /**
    *
    */
@@ -662,7 +666,12 @@ export interface RiskConfirmationRecord {
 }
 
 /** 生成文書の後端ステータス（三態）。 */
-export type GeneratedDocumentBackendStatus = "draft" | "final" | "exported";
+export type GeneratedDocumentBackendStatus =
+  | "draft"
+  | "final"
+  | "exporting"
+  | "exported"
+  | "export_failed";
 
 /**
  *
@@ -714,8 +723,13 @@ export interface FormGenerated {
   backendStatus: GeneratedDocumentBackendStatus;
   /** 生成ファイルの URL（`null` = 未生成）。 */
   fileUrl: string | null;
-  /** `fileUrl` が `placeholder://` プレフィックスか（P1 落地前の仮 URL）。 */
-  isPlaceholderFile: boolean;
+  /** `true` のとき fileUrl は placeholder プロトコルであり、ダウンロード不可。 */
+  fileUrlIsPlaceholder: boolean;
+  /**
+   * ブラウザでダウンロード可能な URL — server `/generated-documents/:id/file` 経由のストリーミング。
+   * status=`exported` かつ fileUrl 有効時のみ非 null。
+   */
+  downloadUrl: string | null;
   /** 確定/出力操作者の表示名。 */
   approvedBy: string | null;
   /** 確定/出力日時（フォーマット済み表示用文字列）。 */

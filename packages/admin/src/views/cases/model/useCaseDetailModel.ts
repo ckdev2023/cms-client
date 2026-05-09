@@ -25,27 +25,8 @@ import {
   type NotFoundReason,
 } from "./useCaseDetailErrorStatus";
 
-/**
- *
- */
-export interface TabCounter {
-  /**
-   *
-   */
-  label: string;
-  /**
-   *
-   */
-  tone: "default" | "warning" | "danger";
-  /**
-   *
-   */
-  i18nKey?: string;
-  /**
-   *
-   */
-  i18nParams?: Record<string, unknown>;
-}
+export type { TabCounter } from "./caseDetailTabCounter";
+import type { TabCounter } from "./caseDetailTabCounter";
 
 interface DetailTabDataBundle {
   documents: CaseDetail["documents"];
@@ -319,7 +300,10 @@ interface UseCaseDetailModelDeps {
   routeTab?: Ref<string | undefined>;
   initialTab?: string;
   onTabChange?: (tab: CaseDetailTab) => void;
+  /** R39-A: 文書テンプレートのコンテンツ言語（`listDocumentTemplates` 専用、UI locale と分離）。 */
   templateLanguage?: Ref<string>;
+  /** 表示 locale（BCP 47）。`getMessages` / `getGeneratedDocuments` の整形に使用。 */
+  displayLocale?: Ref<string>;
 }
 
 function createFormTemplatesSlice(
@@ -455,7 +439,7 @@ export function useCaseDetailModel(
     loading: state.loading,
     error: state.error,
     errorStatus: state.errorStatus,
-    locale: deps.templateLanguage,
+    locale: deps.displayLocale ?? deps.templateLanguage,
   });
   const riskModal = createRiskModalController();
   const switchTab = createTabSwitcher(state.activeTab, deps.onTabChange);

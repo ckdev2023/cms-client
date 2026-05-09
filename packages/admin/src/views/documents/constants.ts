@@ -93,12 +93,12 @@ export const STATUS_TRANSITIONS: Record<
   DocumentItemStatus,
   readonly DocumentItemStatus[]
 > = {
-  pending: ["uploaded_reviewing", "waived"],
-  uploaded_reviewing: ["approved", "rejected", "waived"],
+  pending: ["uploaded_reviewing"],
+  uploaded_reviewing: ["approved", "rejected"],
   approved: ["expired", "uploaded_reviewing"],
-  rejected: ["uploaded_reviewing", "waived"],
+  rejected: ["uploaded_reviewing"],
   expired: ["uploaded_reviewing"],
-  waived: ["pending"],
+  waived: [],
 };
 
 // ─── Case-detail legacy key → P0 status (§6.4) ─────────────────

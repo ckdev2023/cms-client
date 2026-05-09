@@ -117,6 +117,11 @@ const documentsEnUS = {
         "e.g. A2026-001/main_applicant/passport/20260409_passport.pdf",
       relativePathHint:
         "Enter the folder path on the office computer; typically start with the case number.",
+      relativePathSuggestPreviewLabel: "Normalized path:",
+      relativePathSuggestApplyButton: "Use suggested path",
+      relativePathSuggestResetButton: "Reset",
+      fileNameSanitizedHint:
+        "Duplicate filenames are versioned automatically — no need to add _2 suffix manually.",
       fileName: "Description",
       fileNamePlaceholder:
         "e.g. Passport front page, residence card both sides",
@@ -149,6 +154,8 @@ const documentsEnUS = {
     toastRemindDesc: "Sent a reminder to {provider}",
     toastWaiveTitle: "Marked as waived",
     toastWaiveDesc: "{name} has been excluded from completion rate",
+    toastUnwaiveTitle: "Waiver cancelled",
+    toastUnwaiveDesc: "{name} has been restored to pending status",
     toastReferenceTitle: "Reference successful",
     toastReferenceDesc: "Referenced {docName} from {caseName}",
   },
@@ -214,6 +221,7 @@ const documentsEnUS = {
     register: "Register document",
     reference: "Reference version",
     waive: "Mark as waived",
+    unwaive: "Cancel waiver",
     riskDetail: "Risk detail",
   },
 } as const;

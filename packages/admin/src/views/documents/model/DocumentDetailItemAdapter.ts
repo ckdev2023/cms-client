@@ -10,9 +10,9 @@ import type { DocumentFileDto } from "./DocumentRepositoryTypes";
 import {
   DOCUMENT_STATUSES,
   LEGACY_STATUS_MAP,
-  STATUS_TRANSITIONS,
   isFollowUpAllowed,
 } from "../constants";
+import { WAIVE_ALLOWED_FROM_STATUSES_SET } from "../fixtures-waive-contract";
 
 /**
  * DocumentListItem → DocumentItem（案件详情资料行）变换时，
@@ -58,28 +58,52 @@ export interface DeriveActionsContext {
  * @param ctx - 可选上下文（后端原始状态 + 资料类别），用于精确判断
  * @returns 行内动作可见性标志
  */
+const FRONTEND_TO_BACKEND_STATUS: Record<string, string> = {
+  rejected: "revision_required",
+};
+
+/**
+ * 派生资料行可用的操作集合（审核/退回/催办/豁免/取消豁免/登记/引用）。
+ *
+ * @param status 前端资料行状态
+ * @param ctx 可选上下文（后端原始状态 + 资料类目）
+ * @returns 操作可用性 flag 集合
+ */
 export function deriveActions(
   status: DocumentItemStatus,
   ctx?: DeriveActionsContext,
 ): DocumentItemActions {
-  const transitions = STATUS_TRANSITIONS[status] ?? [];
-  const remindBackend =
-    ctx?.backendStatus ??
-    (status === "pending"
-      ? "waiting_upload"
-      : status === "rejected"
-        ? "revision_required"
-        : status);
+  const remindBackend = resolveRemindBackend(status, ctx?.backendStatus);
+  const waiveBackend = resolveWaiveBackend(status, ctx?.backendStatus);
+  const isRegisterable =
+    status === "pending" || status === "rejected" || status === "expired";
   return {
     canApprove: status === "uploaded_reviewing",
     canReject: status === "uploaded_reviewing",
     canRemind: isFollowUpAllowed(remindBackend, ctx?.category ?? undefined),
-    canWaive: transitions.includes("waived"),
-    canRegister:
-      status === "pending" || status === "rejected" || status === "expired",
-    canReference:
-      status === "pending" || status === "rejected" || status === "expired",
+    canWaive: WAIVE_ALLOWED_FROM_STATUSES_SET.has(waiveBackend),
+    canUnwaive: status === "waived",
+    canRegister: isRegisterable,
+    canReference: isRegisterable,
   };
+}
+
+function resolveRemindBackend(
+  status: DocumentItemStatus,
+  backendStatus: string | null | undefined,
+): string {
+  if (backendStatus) return backendStatus;
+  if (status === "pending") return "waiting_upload";
+  if (status === "rejected") return "revision_required";
+  return status;
+}
+
+function resolveWaiveBackend(
+  status: DocumentItemStatus,
+  backendStatus: string | null | undefined,
+): string {
+  if (backendStatus) return backendStatus;
+  return FRONTEND_TO_BACKEND_STATUS[status] ?? status;
 }
 
 /**
@@ -221,8 +245,8 @@ export function toDocumentListItem(
     lastReminderAtLabel: lastReminderAt ?? "—",
     relativePath: detailItem.relativePath ?? null,
     sharedExpiryRisk:
-      (detailItem.referenceCount ?? 1) > 1 && status === "expired",
-    referenceCount: detailItem.referenceCount ?? 1,
+      (detailItem.referenceCount ?? 0) > 1 && status === "expired",
+    referenceCount: detailItem.referenceCount ?? 0,
   };
 }
 

@@ -50,6 +50,7 @@ import { SubmissionPackagesService } from "./modules/core/submission-packages/su
 import { TasksController } from "./modules/core/tasks/tasks.controller";
 import { TasksService } from "./modules/core/tasks/tasks.service";
 import { ValidationRunsController } from "./modules/core/validation-runs/validationRuns.controller";
+import { ValidationAutoRunService } from "./modules/core/validation-runs/validationAutoRun.service";
 import { ValidationRunsService } from "./modules/core/validation-runs/validationRuns.service";
 import { CompaniesController } from "./modules/core/companies/companies.controller";
 import { CompaniesService } from "./modules/core/companies/companies.service";
@@ -202,6 +203,7 @@ import {
     RemindersService,
     ResidencePeriodsService,
     ValidationRunsService,
+    ValidationAutoRunService,
     DocumentTemplatesService,
     GeneratedDocumentsService,
     ReviewRecordsService,

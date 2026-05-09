@@ -28,6 +28,8 @@ function makeGdRow(overrides: Record<string, unknown> = {}) {
     approved_by: null,
     generated_at: "2026-01-01T00:00:00.000Z",
     approved_at: null,
+    template_version_no_snapshot: null,
+    template_doc_type: null,
     generated_by_display_name: "Admin User",
     approved_by_display_name: null,
     ...overrides,
@@ -192,13 +194,13 @@ void test("update (draft→final) SQL sets status and approved_by columns", asyn
   );
 });
 
-void test("update (final→exported) SQL sets status and file_url columns", async () => {
+void test("update (exporting→exported) SQL sets status and file_url columns", async () => {
   const captured: { sql: string; params?: unknown[] }[] = [];
 
   const pool = makePool((sql, params) => {
     captured.push({ sql, params });
     if (sql.includes("from generated_documents") && sql.includes("limit 1")) {
-      return ok([makeGdRow({ status: "final" })]);
+      return ok([makeGdRow({ status: "exporting" })]);
     }
     if (sql.includes("gen_u.name")) {
       return ok([makeGdRow({ status: "exported" })]);
@@ -210,7 +212,7 @@ void test("update (final→exported) SQL sets status and file_url columns", asyn
   const svc = new GeneratedDocumentsService(pool, makeTimeline());
   await svc.update(ctx(), GD_ID, {
     status: "exported",
-    fileUrl: "placeholder://test.pdf",
+    fileUrl: "generated-documents/org-1/gd-1/v1.docx",
   });
 
   const updateCall = captured.find((c) =>

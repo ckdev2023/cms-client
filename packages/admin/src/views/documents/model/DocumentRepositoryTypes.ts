@@ -142,6 +142,16 @@ export interface WaiveParams {
 /**
  *
  */
+export interface UnwaiveParams {
+  /**
+   *
+   */
+  note?: string | null;
+}
+
+/**
+ *
+ */
 export interface UploadLocalArchiveParams {
   /**
    *
@@ -458,6 +468,10 @@ export interface DocumentRepository {
    *
    */
   waive(itemId: string, params: WaiveParams): Promise<DocumentItemDto>;
+  /**
+   *
+   */
+  unwaive(itemId: string, params: UnwaiveParams): Promise<DocumentItemDto>;
   /**
    *
    */

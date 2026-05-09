@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { BadRequestException, Inject, NotFoundException } from "@nestjs/common";
 import { Injectable } from "@nestjs/common";
 import { Pool } from "pg";
@@ -13,6 +14,7 @@ import {
   type DocumentItemCreateInput,
   type DocumentItemListInput,
   type DocumentItemTransitionInput,
+  type DocumentItemUnwaiveInput,
   type DocumentItemUpdateInput,
   type DocumentItemUpdateSurveyDataInput,
   type DocumentItemWaiveInput,
@@ -34,6 +36,7 @@ export type {
   DocumentItemCreateInput,
   DocumentItemListInput,
   DocumentItemTransitionInput,
+  DocumentItemUnwaiveInput,
   DocumentItemUpdateInput,
   DocumentItemUpdateSurveyDataInput,
   DocumentItemWaiveInput,
@@ -407,6 +410,56 @@ export class DocumentItemsService {
         reasonCode: input.reasonCode,
         note: input.note ?? null,
       },
+    });
+    return updated;
+  }
+
+  /** 取消豁免：status → pending、清空 4 个 waive latest 字段、重置 requested_at。
+   * @param ctx 请求上下文
+   * @param id 资料项 ID
+   * @param input 取消豁免参数
+   * @returns 更新后的资料项
+   */
+  async unwaive(
+    ctx: RequestContext,
+    id: string,
+    input: DocumentItemUnwaiveInput,
+  ): Promise<DocumentItem> {
+    const current = await this.get(ctx, id);
+    if (!current) throw new NotFoundException("Document item not found");
+
+    if (current.status !== "waived") {
+      throw new BadRequestException(
+        `Cannot unwaive a document item with status '${current.status}'`,
+      );
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<DocumentItemQueryRow>(
+      `update document_items
+       set status = 'pending',
+           waive_reason_code_latest = null,
+           waive_reason_latest = null,
+           waived_by_user_id_latest = null,
+           waived_at_latest = null,
+           requested_at = now(),
+           updated_at = now()
+       where id = $1 and status = 'waived' and status != 'deleted'
+       returning ${DOC_ITEM_COLS}`,
+      [id],
+    );
+    const row = result.rows.at(0);
+    if (!row)
+      throw new BadRequestException(
+        "Failed to unwaive document item or status changed concurrently",
+      );
+    const updated = mapDocumentItemRow(row);
+
+    await this.timelineService.write(ctx, {
+      entityType: "document_item",
+      entityId: updated.id,
+      action: "document_item.unwaived",
+      payload: { from: "waived", note: input.note ?? null },
     });
     return updated;
   }

@@ -43,6 +43,7 @@ export function makeItemRow(overrides: Record<string, unknown> = {}) {
     reviewed_at: null,
     due_at: null,
     owner_side: "customer",
+    provided_by_role: "supporter",
     last_follow_up_at: null,
     note: null,
     category: "questionnaire",

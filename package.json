@@ -25,6 +25,7 @@
     "admin:guard": "npm --workspace @cms/admin run guard",
     "admin:fix": "npm --workspace @cms/admin run fix",
     "server:dev": "npm --workspace server run dev",
+    "worker:dev": "npm --workspace server run worker:dev",
     "server:build": "npm --workspace server run build",
     "server:typecheck": "npm --workspace server run typecheck",
     "server:test": "npm --workspace server run test",

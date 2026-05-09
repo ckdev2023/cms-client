@@ -14,6 +14,8 @@ import type { CaseDetail } from "../types-detail";
 import {
   computeProviderStat,
   computeCaseDocumentCompletionRate,
+  computeDocumentStatusBreakdown,
+  computeGroupsStatusBreakdown,
   isDocumentListEmpty,
 } from "../model/caseDocumentStats";
 import { useCaseDocumentsTab } from "../model/useCaseDocumentsTab";
@@ -26,6 +28,9 @@ const props = defineProps<{
   detail: CaseDetail;
   readonly: boolean;
 }>();
+
+/** 写后通知父级刷新案件 aggregate（NEW-V11-1 修复）。 */
+const emit = defineEmits<{ refresh: [] }>();
 
 const {
   listModel,
@@ -42,6 +47,7 @@ const {
   handleRowRegister,
   handleRowReference,
   handleRowWaive,
+  handleRowUnwaive,
   handleConfirmWaive,
   handleConfirmReference,
   handleRegisterClick,
@@ -50,6 +56,8 @@ const {
   caseId: toRef(() => props.detail.id),
   isStorageRootConfigured,
   documentTemplateMissing: toRef(() => props.detail.documentTemplateMissing),
+  caseNo: toRef(() => props.detail.caseNo),
+  onWriteSuccess: () => emit("refresh"),
 });
 
 const activeGroups = computed(() =>
@@ -69,10 +77,15 @@ const overallRate = computed(
     computeCaseDocumentCompletionRate(activeGroups.value),
 );
 
+const overallBreakdown = computed(() =>
+  computeGroupsStatusBreakdown(activeGroups.value),
+);
+
 const groupStats = computed(() =>
   activeGroups.value.map((g) => ({
     group: g,
     stat: computeProviderStat(g),
+    breakdown: computeDocumentStatusBreakdown(g.items),
   })),
 );
 </script>
@@ -309,35 +322,62 @@ const groupStats = computed(() =>
                 />
               </div>
               <span class="docs-tab__global-progress-label">
-                {{
-                  overallRate.total === 0
-                    ? t("cases.detail.documents.completion.empty")
-                    : t("cases.detail.documents.completion.label", {
-                        collected: overallRate.collected,
-                        total: overallRate.total,
+                <template v-if="overallRate.total === 0">
+                  {{ t("cases.detail.documents.completion.empty") }}
+                </template>
+                <template v-else>
+                  {{
+                    t("cases.detail.documents.completion.labelWithPercent", {
+                      collected: overallRate.collected,
+                      total: overallRate.total,
+                      percent: overallRate.percent,
+                    })
+                  }}
+                  <span class="docs-tab__global-progress-detail">
+                    {{
+                      t("cases.detail.documents.progressBreakdown", {
+                        total: overallBreakdown.total,
+                        reviewing: overallBreakdown.reviewing,
+                        pending: overallBreakdown.pending,
                       })
-                }}（{{ overallRate.percent }}%）
+                    }}
+                  </span>
+                </template>
               </span>
             </div>
           </div>
         </template>
 
         <div
-          v-for="({ group, stat }, gi) in groupStats"
+          v-for="({ group, stat, breakdown }, gi) in groupStats"
           :key="gi"
           class="docs-tab__group"
         >
           <div class="docs-tab__group-header">
             <div class="docs-tab__group-header-row">
               <span class="docs-tab__group-title">{{ group.group }}</span>
-              <span class="docs-tab__group-count">{{
-                stat.total === 0
-                  ? t("cases.detail.documents.completion.empty")
-                  : t("cases.detail.documents.completion.label", {
+              <span class="docs-tab__group-count">
+                <template v-if="stat.total === 0">
+                  {{ t("cases.detail.documents.completion.empty") }}
+                </template>
+                <template v-else>
+                  {{
+                    t("cases.detail.documents.completion.label", {
                       collected: stat.collected,
                       total: stat.total,
                     })
-              }}</span>
+                  }}
+                  <span class="docs-tab__group-count-detail">
+                    {{
+                      t("cases.detail.documents.progressBreakdown", {
+                        total: breakdown.total,
+                        reviewing: breakdown.reviewing,
+                        pending: breakdown.pending,
+                      })
+                    }}
+                  </span>
+                </template>
+              </span>
             </div>
             <div class="docs-tab__group-bar">
               <div
@@ -361,6 +401,7 @@ const groupStats = computed(() =>
             @register="handleRowRegister"
             @reference="handleRowReference"
             @waive="handleRowWaive"
+            @unwaive="handleRowUnwaive"
           />
           <div v-if="group.items.length === 0" class="docs-tab__group-empty">
             {{ t("cases.detail.documents.groupEmpty") }}
@@ -381,9 +422,13 @@ const groupStats = computed(() =>
       :doc-item-options="register.docItemOptions.value"
       :version-label="register.versionLabel.value"
       :can-submit="register.canSubmit.value"
+      :suggested-path="register.suggestedPath.value"
+      :normalized-path="register.normalizedPath.value"
       @close="register.closeModal()"
       @update:field="(field, value) => register.updateField(field, value)"
       @submit="register.submit()"
+      @apply-suggested-path="register.applySuggestedPath()"
+      @reset-path="register.resetPath()"
     />
 
     <ReviewDocumentModal

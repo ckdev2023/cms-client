@@ -1,6 +1,6 @@
 import "reflect-metadata";
 
-/* eslint-disable max-depth, max-lines-per-function, max-statements, @typescript-eslint/restrict-template-expressions */
+/* eslint-disable max-depth, max-lines, max-lines-per-function, max-statements, complexity, @typescript-eslint/restrict-template-expressions */
 import crypto from "node:crypto";
 import os from "node:os";
 
@@ -26,6 +26,11 @@ import {
   handleExportJob,
   type ExportJobPayload,
 } from "./modules/core/jobs/handlers/exportJobHandler";
+import {
+  handleGeneratedDocExportJob,
+  GENERATED_DOC_EXPORT_QUEUE,
+  type GeneratedDocExportJobPayload,
+} from "./modules/core/jobs/handlers/generatedDocExportHandler";
 import { isTimelineEntityType } from "./modules/core/model/coreEntities";
 import { createTenantDb, type TenantDb } from "./modules/core/tenancy/tenantDb";
 import { isUuid } from "./modules/core/tenancy/uuid";
@@ -36,8 +41,6 @@ import {
 } from "./modules/core/jobs/jobs.runtime";
 import type { JobQueryRow } from "./modules/core/jobs/jobs.model";
 
-// JobQueryRow 从 jobs.model 导入，无需本地重复定义
-
 type TimelineWritePayload = {
   entityType: unknown;
   entityId: unknown;
@@ -46,23 +49,16 @@ type TimelineWritePayload = {
   actorUserId?: unknown;
 };
 
-/** 已注册的 Redis 队列名列表（导出供测试使用）。 */
 export const REGISTERED_QUEUES = [
   "reminder_jobs",
   "notification_jobs",
   "translation_jobs",
   "export_jobs",
+  GENERATED_DOC_EXPORT_QUEUE,
 ] as const;
 
-/**
- * Worker 入口（异步任务执行器）。
- *
- * 同时运行：
- * 1. PostgreSQL 轮询式 job 执行（timeline.write 等）
- * 2. Redis 队列 handler（reminder / notification / translation / export）
- *
- * @returns 启动结果
- */
+const STALE_EXPORT_THRESHOLD_MINUTES = 5;
+
 async function bootstrapWorker(): Promise<void> {
   const env = loadEnv();
   const pool = createPgPool(env.dbUrl);
@@ -149,6 +145,16 @@ async function bootstrapWorker(): Promise<void> {
         }
 
         if (!ran) {
+          for (const orgId of orgIds) {
+            if (shutdown.isStopping()) break;
+            try {
+              await sweepStaleExports(pool, orgId);
+            } catch (e) {
+              process.stderr.write(
+                `[worker] sweepStaleExports failed for org ${orgId}: ${String(e)}\n`,
+              );
+            }
+          }
           await sleep(300);
         }
       }
@@ -177,6 +183,10 @@ async function bootstrapWorker(): Promise<void> {
       ),
       queue.runWorker<ExportJobPayload>("export_jobs", (job) =>
         handleExportJob(pool, storageAdapter, queue, job),
+      ),
+      queue.runWorker<GeneratedDocExportJobPayload>(
+        GENERATED_DOC_EXPORT_QUEUE,
+        (job) => handleGeneratedDocExportJob(pool, storageAdapter, queue, job),
       ),
     ]);
   } finally {
@@ -483,6 +493,24 @@ async function releaseWorkerLocks(pool: Pool, workerId: string): Promise<void> {
         [workerId],
       );
     }),
+  );
+}
+
+/**
+ * 将超过阈值仍处于 exporting 的 generated_documents 标记为 export_failed，
+ * 防止前端永远卡在「导出中…」。
+ *
+ * @param pool PostgreSQL 连接池
+ * @param orgId 当前组织 ID（用于 RLS 隔离）
+ */
+async function sweepStaleExports(pool: Pool, orgId: string): Promise<void> {
+  const tenantDb = createTenantDb(pool, orgId);
+  await tenantDb.query(
+    `update generated_documents
+     set status = 'export_failed', updated_at = now()
+     where status = 'exporting'
+       and updated_at < now() - ($1::int * interval '1 minute')`,
+    [STALE_EXPORT_THRESHOLD_MINUTES],
   );
 }
 

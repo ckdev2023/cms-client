@@ -42,6 +42,33 @@ export interface CaseDocumentCompletionRate {
 
 const COLLECTED_STATUS = "approved";
 const WAIVED_STATUS = "waived";
+const REVIEWING_STATUS = "uploaded_reviewing";
+
+/**
+ * 资料项按状态分桶统计。
+ */
+export interface DocumentStatusBreakdown {
+  /**
+   *
+   */
+  approved: number;
+  /**
+   *
+   */
+  reviewing: number;
+  /**
+   *
+   */
+  pending: number;
+  /**
+   *
+   */
+  waived: number;
+  /**
+   *
+   */
+  total: number;
+}
 
 /**
  * 判断资料项是否已通过。
@@ -125,6 +152,40 @@ export function computeCaseDocumentCompletionRate(
 ): CaseDocumentCompletionRate {
   const allItems = groups.flatMap((g) => g.items);
   return computeItemsCompletionRate(allItems);
+}
+
+/**
+ * 按状态分桶统计（waived 不计入 total）。
+ *
+ * @param items 资料行列表
+ * @returns 已通过 / 待审核 / 待提交 / 已豁免 / 总数（不含 waived）
+ */
+export function computeDocumentStatusBreakdown(
+  items: DocumentItem[],
+): DocumentStatusBreakdown {
+  let approved = 0;
+  let reviewing = 0;
+  let waived = 0;
+  for (const item of items) {
+    if (item.status === COLLECTED_STATUS) approved++;
+    else if (item.status === REVIEWING_STATUS) reviewing++;
+    else if (item.status === WAIVED_STATUS) waived++;
+  }
+  const total = items.length - waived;
+  const pending = total - approved - reviewing;
+  return { approved, reviewing, pending, waived, total };
+}
+
+/**
+ * 按状态分桶统计所有分组合并后的结果。
+ *
+ * @param groups 资料分组列表
+ * @returns 合并所有分组下资料行的状态分桶统计
+ */
+export function computeGroupsStatusBreakdown(
+  groups: DocumentGroup[],
+): DocumentStatusBreakdown {
+  return computeDocumentStatusBreakdown(groups.flatMap((g) => g.items));
 }
 
 /**

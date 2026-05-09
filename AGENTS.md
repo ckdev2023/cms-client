@@ -18,6 +18,12 @@
 - `domain` / `data` 禁止依赖 `shared/ui`
 - feature 之间禁止直接互相依赖；跨 feature 协作必须走 `domain` / `shared` 或 public 出口
 
+## Worker（文書导出等异步任务）
+
+- 文書导出需要 worker 进程处理队列任务。
+- 使用 `npm run local:dev` 会自动启动 server + admin + worker。
+- 单独启动 worker：`npm run worker:dev -w packages/server`（或根目录 `npm run worker:dev`）。
+
 ## 只做用户要求
 
 - 只做用户明确要求的改动，禁止顺手“顺带优化”无关文件

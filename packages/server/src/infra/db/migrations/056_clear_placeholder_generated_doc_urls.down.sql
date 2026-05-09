@@ -1,0 +1,3 @@
+-- 056_clear_placeholder_generated_doc_urls (down)
+-- 不可逆：原始 placeholder URL 的精确值无法恢复。
+-- 此 down 为空操作。

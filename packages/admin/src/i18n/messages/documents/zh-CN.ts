@@ -112,6 +112,10 @@ const documentsZhCN = {
         "例如：A2026-001/main_applicant/passport/20260409_passport.pdf",
       relativePathHint:
         "填写这份资料在事务所电脑中的文件夹位置；通常从案件编号开始填写即可。",
+      relativePathSuggestPreviewLabel: "归一化路径：",
+      relativePathSuggestApplyButton: "使用建议路径",
+      relativePathSuggestResetButton: "重置",
+      fileNameSanitizedHint: "同名文件登记会保留版本，无需手动加 _2 等后缀。",
       fileName: "资料说明",
       fileNamePlaceholder:
         "例如：护照首页、在留卡正反面、2026-04 更新版课税证明",
@@ -144,6 +148,8 @@ const documentsZhCN = {
     toastRemindDesc: "已发送催办提醒给 {provider}",
     toastWaiveTitle: "已标记无需提供",
     toastWaiveDesc: "{name} 已从完成率分母剔除",
+    toastUnwaiveTitle: "已取消豁免",
+    toastUnwaiveDesc: "{name} 已恢复为待提交状态",
     toastReferenceTitle: "引用成功",
     toastReferenceDesc: "已引用 {caseName} 的 {docName}",
   },
@@ -208,6 +214,7 @@ const documentsZhCN = {
     register: "登记资料",
     reference: "引用既有版本",
     waive: "标记无需提供",
+    unwaive: "取消豁免",
     riskDetail: "风险详情",
   },
 } as const;

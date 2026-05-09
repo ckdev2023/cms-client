@@ -205,7 +205,7 @@ export const DTO_SMOKE_ENTRIES: DtoSmokeEntry[] = [
     buildSql: () =>
       `select id, org_id, case_id, checklist_item_code, name, status,
         required_flag, requested_at, received_at, reviewed_at, due_at,
-        owner_side, last_follow_up_at, note, category, survey_data,
+        owner_side, provided_by_role, last_follow_up_at, note, category, survey_data,
         created_at, updated_at
       from document_items
       where org_id = ${DUMMY_ORG} limit 1`,

@@ -39,8 +39,12 @@ void test("DOCUMENT_ITEM_STATUSES has 8 values (7 active + deleted)", () => {
   }
 });
 
-void test("DOCUMENT_ITEM_ALLOWED_TRANSITIONS covers all non-terminal active statuses", () => {
-  const activeStatuses = DOCUMENT_ITEM_STATUSES.filter((s) => s !== "deleted");
+void test("DOCUMENT_ITEM_ALLOWED_TRANSITIONS covers all non-terminal active statuses (except waived)", () => {
+  // P0 §3.2: `waived` 出度仅由 POST /:id/unwaive 提供（与 *→waived 已关闭对称），
+  // 因此不在 DOCUMENT_ITEM_ALLOWED_TRANSITIONS 矩阵内。
+  const activeStatuses = DOCUMENT_ITEM_STATUSES.filter(
+    (s) => s !== "deleted" && s !== "waived",
+  );
   for (const status of activeStatuses) {
     const transitions =
       DOCUMENT_ITEM_ALLOWED_TRANSITIONS[
@@ -51,6 +55,18 @@ void test("DOCUMENT_ITEM_ALLOWED_TRANSITIONS covers all non-terminal active stat
       `status '${status}' should have defined transitions`,
     );
   }
+});
+
+void test("'waived' status has no entry in ALLOWED_TRANSITIONS (unwaive uses dedicated endpoint)", () => {
+  const transitions =
+    DOCUMENT_ITEM_ALLOWED_TRANSITIONS[
+      "waived" as keyof typeof DOCUMENT_ITEM_ALLOWED_TRANSITIONS
+    ];
+  assert.equal(
+    transitions,
+    undefined,
+    "'waived' should NOT have transitions — exit is via POST /:id/unwaive only",
+  );
 });
 
 void test("transition targets are all valid statuses", () => {

@@ -18,43 +18,26 @@ import {
   type GeneratedDocumentListResult,
   type GeneratedDocumentUpdateInput,
 } from "../cases/cases.types-generated-docs";
-
-const VALID_STATUSES = new Set(["draft", "final", "exported"]);
-const VALID_OUTPUT_FORMATS = new Set(["pdf", "docx", "xlsx"]);
-
-const STATUS_TRANSITIONS: Record<string, Set<string>> = {
-  draft: new Set(["draft", "final"]),
-  final: new Set(["final", "exported"]),
-  exported: new Set(["exported"]),
-};
+import {
+  type GeneratedDocumentDtoRow,
+  type GeneratedDocumentRow,
+  buildListWhere,
+  buildUpdateSets,
+  mapDtoRow,
+  mapRow,
+  validateCreateInput,
+} from "./generatedDocuments.helpers";
 
 export const GD_DTO_SELECT = `
   gd.id, gd.org_id, gd.case_id, gd.template_id, gd.title, gd.version_no, gd.output_format, gd.file_url, gd.status, gd.generated_by, gd.approved_by, gd.generated_at, gd.approved_at,
+  gd.template_version_no_snapshot, gd.template_doc_type,
   gen_u.name as generated_by_display_name,
   apr_u.name as approved_by_display_name
 `;
 
 export const GD_DTO_JOINS = ` from generated_documents gd left join users gen_u on gen_u.id = gd.generated_by left join users apr_u on apr_u.id = gd.approved_by`;
 
-type GeneratedDocumentRow = {
-  id: string;
-  org_id: string;
-  case_id: string;
-  template_id: string | null;
-  title: string;
-  version_no: number;
-  output_format: string;
-  file_url: string | null;
-  status: string;
-  generated_by: string | null;
-  approved_by: string | null;
-  generated_at: unknown;
-  approved_at: unknown;
-};
-type GeneratedDocumentDtoRow = GeneratedDocumentRow & {
-  generated_by_display_name: string | null;
-  approved_by_display_name: string | null;
-};
+type TemplateSnapshot = { versionNo: number; docType: string };
 
 /** 生成文书 CRUD 服务。 */
 @Injectable()
@@ -82,7 +65,7 @@ export class GeneratedDocumentsService {
   ): Promise<GeneratedDocument | null> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     const result = await tenantDb.query<GeneratedDocumentRow>(
-      `select id, org_id, case_id, template_id, title, version_no, output_format, file_url, status, generated_by, approved_by, generated_at, approved_at from generated_documents where id = $1 and org_id = $2 limit 1`,
+      `select id, org_id, case_id, template_id, title, version_no, output_format, file_url, status, generated_by, approved_by, generated_at, approved_at, template_version_no_snapshot, template_doc_type from generated_documents where id = $1 and org_id = $2 limit 1`,
       [id, ctx.orgId],
     );
     const row = result.rows.at(0);
@@ -163,13 +146,26 @@ export class GeneratedDocumentsService {
   ): Promise<GeneratedDocumentDto> {
     validateCreateInput(input);
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const templateSnapshot = input.templateId
+      ? await this.resolveTemplateSnapshot(
+          tenantDb,
+          ctx.orgId,
+          input.caseId,
+          input.templateId,
+        )
+      : null;
     const versionNo = await this.nextVersionNo(
       tenantDb,
       ctx.orgId,
       input.caseId,
       input.templateId ?? null,
     );
-    const dto = await this.insertAndReturn(ctx, input, versionNo);
+    const dto = await this.insertAndReturn(
+      ctx,
+      input,
+      versionNo,
+      templateSnapshot,
+    );
 
     await this.timelineService.write(ctx, {
       entityType: "case",
@@ -234,79 +230,6 @@ export class GeneratedDocumentsService {
     return dto;
   }
 
-  private async requireDto(
-    ctx: RequestContext,
-    id: string,
-  ): Promise<GeneratedDocumentDto> {
-    const dto = await this.getDto(ctx, id);
-    if (!dto) throw new NotFoundException("Generated document not found");
-    return dto;
-  }
-
-  private async insertAndReturn(
-    ctx: RequestContext,
-    input: GeneratedDocumentCreateInput,
-    versionNo: number,
-  ): Promise<GeneratedDocumentDto> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<GeneratedDocumentDtoRow>(
-      `
-        with ins as (
-          insert into generated_documents (
-            org_id, case_id, template_id, title, version_no,
-            output_format, file_url, status, generated_by
-          )
-          values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-          returning *
-        )
-        select
-          ins.id, ins.org_id, ins.case_id, ins.template_id, ins.title,
-          ins.version_no, ins.output_format, ins.file_url, ins.status,
-          ins.generated_by, ins.approved_by, ins.generated_at, ins.approved_at,
-          u.name as generated_by_display_name,
-          null::text as approved_by_display_name
-        from ins
-        left join users u on u.id = ins.generated_by
-      `,
-      [
-        ctx.orgId,
-        input.caseId,
-        input.templateId ?? null,
-        input.title.trim(),
-        versionNo,
-        input.outputFormat ?? "pdf",
-        input.fileUrl ?? null,
-        input.status ?? "draft",
-        ctx.userId,
-      ],
-    );
-
-    const row = result.rows.at(0);
-    if (!row) {
-      throw new BadRequestException("Failed to create generated document");
-    }
-    return mapDtoRow(row);
-  }
-
-  private async nextVersionNo(
-    tenantDb: ReturnType<typeof createTenantDb>,
-    orgId: string,
-    caseId: string,
-    templateId: string | null,
-  ): Promise<number> {
-    const templateFilter = templateId
-      ? "and template_id = $3"
-      : "and template_id is null";
-    const params: unknown[] = templateId
-      ? [orgId, caseId, templateId]
-      : [orgId, caseId];
-    const result = await tenantDb.query<{ max_ver: number | null }>(
-      `select max(version_no) as max_ver from generated_documents where org_id = $1 and case_id = $2 ${templateFilter}`,
-      params,
-    );
-    return (result.rows.at(0)?.max_ver ?? 0) + 1;
-  }
-
   /**
    * 写入生成文書专用 timeline 条目。
    *
@@ -336,164 +259,117 @@ export class GeneratedDocumentsService {
       },
     });
   }
-}
 
-// ─── Pure helpers ────────────────────────────────────────────────
-function validateCreateInput(input: GeneratedDocumentCreateInput): void {
-  if (!input.title || input.title.trim().length === 0) {
-    throw new BadRequestException(
-      GENERATED_DOCUMENT_ERROR_CODES.GD_TITLE_REQUIRED + ": title is required",
+  private async requireDto(
+    ctx: RequestContext,
+    id: string,
+  ): Promise<GeneratedDocumentDto> {
+    const dto = await this.getDto(ctx, id);
+    if (!dto) throw new NotFoundException("Generated document not found");
+    return dto;
+  }
+
+  private async resolveTemplateSnapshot(
+    tenantDb: ReturnType<typeof createTenantDb>,
+    orgId: string,
+    caseId: string,
+    templateId: string,
+  ): Promise<TemplateSnapshot> {
+    const tplResult = await tenantDb.query<{
+      case_type: string;
+      doc_type: string;
+      version_no: number;
+    }>(
+      `select case_type, doc_type, version_no from document_templates where id = $1 and org_id = $2 and active_flag = true limit 1`,
+      [templateId, orgId],
     );
-  }
-  const fmt = input.outputFormat ?? "pdf";
-  if (!VALID_OUTPUT_FORMATS.has(fmt)) {
-    throw new BadRequestException(
-      GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_OUTPUT_FORMAT +
-        ": output_format must be pdf, docx, or xlsx",
-    );
-  }
-  const st = input.status ?? "draft";
-  if (!VALID_STATUSES.has(st)) {
-    throw new BadRequestException(
-      GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_STATUS +
-        ": status must be draft, final, or exported",
-    );
-  }
-}
-
-function assertStatusTransition(current: string, target: string): void {
-  if (!STATUS_TRANSITIONS[current].has(target)) {
-    throw new BadRequestException(
-      GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION +
-        `: cannot transition from '${current}' to '${target}'`,
-    );
-  }
-}
-
-function buildListWhere(
-  orgId: string,
-  input: GeneratedDocumentListInput,
-): { whereClause: string; params: unknown[] } {
-  const where = ["gd.org_id = $1"];
-  const params: unknown[] = [orgId];
-
-  params.push(input.caseId);
-  where.push(`gd.case_id = $${String(params.length)}`);
-
-  if (input.status) {
-    params.push(input.status);
-    where.push(`gd.status = $${String(params.length)}`);
-  }
-
-  return { whereClause: where.join(" and "), params };
-}
-
-function buildUpdateSets(
-  id: string,
-  ctx: RequestContext,
-  input: GeneratedDocumentUpdateInput,
-  existing: GeneratedDocument,
-): { sets: string[]; params: unknown[] } {
-  const sets: string[] = [];
-  const params: unknown[] = [id, ctx.orgId];
-
-  if (input.title !== undefined) {
-    if (input.title.trim().length === 0) {
+    const tplRow = tplResult.rows.at(0);
+    if (!tplRow) {
       throw new BadRequestException(
-        GENERATED_DOCUMENT_ERROR_CODES.GD_TITLE_REQUIRED +
-          ": title is required",
+        GENERATED_DOCUMENT_ERROR_CODES.GD_TEMPLATE_NOT_FOUND +
+          ": Document template not found or inactive",
       );
     }
-    params.push(input.title.trim());
-    sets.push(`title = $${String(params.length)}`);
-  }
-
-  if (input.outputFormat !== undefined) {
-    if (!VALID_OUTPUT_FORMATS.has(input.outputFormat)) {
+    const caseResult = await tenantDb.query<{ case_type_code: string }>(
+      `select case_type_code from cases where id = $1 and org_id = $2 limit 1`,
+      [caseId, orgId],
+    );
+    const caseRow = caseResult.rows.at(0);
+    if (caseRow && tplRow.case_type !== caseRow.case_type_code) {
       throw new BadRequestException(
-        GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_OUTPUT_FORMAT +
-          ": output_format must be pdf, docx, or xlsx",
+        GENERATED_DOCUMENT_ERROR_CODES.GD_TEMPLATE_CASE_TYPE_MISMATCH +
+          `: Template caseType '${tplRow.case_type}' does not match case caseType '${caseRow.case_type_code}'`,
       );
     }
-    params.push(input.outputFormat);
-    sets.push(`output_format = $${String(params.length)}`);
+    return { versionNo: tplRow.version_no, docType: tplRow.doc_type };
   }
 
-  if (input.fileUrl !== undefined) {
-    params.push(input.fileUrl);
-    sets.push(`file_url = $${String(params.length)}`);
-  }
+  private async insertAndReturn(
+    ctx: RequestContext,
+    input: GeneratedDocumentCreateInput,
+    versionNo: number,
+    templateSnapshot?: TemplateSnapshot | null,
+  ): Promise<GeneratedDocumentDto> {
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const result = await tenantDb.query<GeneratedDocumentDtoRow>(
+      `
+        with ins as (
+          insert into generated_documents (
+            org_id, case_id, template_id, title, version_no,
+            output_format, file_url, status, generated_by,
+            template_version_no_snapshot, template_doc_type
+          )
+          values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          returning *
+        )
+        select
+          ins.id, ins.org_id, ins.case_id, ins.template_id, ins.title,
+          ins.version_no, ins.output_format, ins.file_url, ins.status,
+          ins.generated_by, ins.approved_by, ins.generated_at, ins.approved_at,
+          ins.template_version_no_snapshot, ins.template_doc_type,
+          u.name as generated_by_display_name,
+          null::text as approved_by_display_name
+        from ins
+        left join users u on u.id = ins.generated_by
+      `,
+      [
+        ctx.orgId,
+        input.caseId,
+        input.templateId ?? null,
+        input.title.trim(),
+        versionNo,
+        input.outputFormat ?? "pdf",
+        input.fileUrl ?? null,
+        input.status ?? "draft",
+        ctx.userId,
+        templateSnapshot?.versionNo ?? null,
+        templateSnapshot?.docType ?? null,
+      ],
+    );
 
-  if (input.status !== undefined) {
-    if (!VALID_STATUSES.has(input.status)) {
-      throw new BadRequestException(
-        GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_STATUS +
-          ": status must be draft, final, or exported",
-      );
+    const row = result.rows.at(0);
+    if (!row) {
+      throw new BadRequestException("Failed to create generated document");
     }
-    assertStatusTransition(existing.status, input.status);
-    params.push(input.status);
-    sets.push(`status = $${String(params.length)}`);
-
-    if (
-      input.status === "final" &&
-      existing.status === "draft" &&
-      !existing.approvedBy
-    ) {
-      params.push(ctx.userId);
-      sets.push(`approved_by = $${String(params.length)}`);
-      sets.push("approved_at = now()");
-    }
+    return mapDtoRow(row);
   }
 
-  return { sets, params };
-}
-
-function mapRow(row: GeneratedDocumentRow): GeneratedDocument {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    caseId: row.case_id,
-    templateId: row.template_id,
-    title: row.title,
-    versionNo: row.version_no,
-    outputFormat: row.output_format,
-    fileUrl: row.file_url,
-    status: row.status,
-    generatedBy: row.generated_by,
-    approvedBy: row.approved_by,
-    generatedAt: tsString(row.generated_at, "generated_at"),
-    approvedAt: tsStringOrNull(row.approved_at),
-  };
-}
-
-function mapDtoRow(row: GeneratedDocumentDtoRow): GeneratedDocumentDto {
-  return {
-    id: row.id,
-    caseId: row.case_id,
-    templateId: row.template_id,
-    title: row.title,
-    versionNo: row.version_no,
-    outputFormat: row.output_format,
-    fileUrl: row.file_url,
-    status: row.status,
-    generatedBy: row.generated_by,
-    generatedByDisplayName: row.generated_by_display_name,
-    approvedBy: row.approved_by,
-    approvedByDisplayName: row.approved_by_display_name,
-    generatedAt: tsString(row.generated_at, "generated_at"),
-    approvedAt: tsStringOrNull(row.approved_at),
-  };
-}
-
-function tsString(value: unknown, field: string): string {
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  throw new Error(`Invalid timestamp: ${field}`);
-}
-
-function tsStringOrNull(v: unknown): string | null {
-  if (v === null || v === undefined) return null;
-  if (typeof v === "string") return v;
-  return v instanceof Date ? v.toISOString() : null;
+  private async nextVersionNo(
+    tenantDb: ReturnType<typeof createTenantDb>,
+    orgId: string,
+    caseId: string,
+    templateId: string | null,
+  ): Promise<number> {
+    const templateFilter = templateId
+      ? "and template_id = $3"
+      : "and template_id is null";
+    const params: unknown[] = templateId
+      ? [orgId, caseId, templateId]
+      : [orgId, caseId];
+    const result = await tenantDb.query<{ max_ver: number | null }>(
+      `select max(version_no) as max_ver from generated_documents where org_id = $1 and case_id = $2 ${templateFilter}`,
+      params,
+    );
+    return (result.rows.at(0)?.max_ver ?? 0) + 1;
+  }
 }

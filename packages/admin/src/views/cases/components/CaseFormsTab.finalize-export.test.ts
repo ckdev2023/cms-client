@@ -40,9 +40,12 @@ function makeI18n() {
               status: {
                 draft: "草稿",
                 final: "已定稿",
+                exporting: "导出中…",
                 exported: "已导出",
+                export_failed: "导出失败",
               },
-              placeholderBadge: "占位 URL · P1 落地",
+              retryExportAction: "重试导出",
+              placeholderBadge: "占位文件 · 待 D2 渲染落地",
               downloadAction: "下载文件",
               metaApprovedAt: "{action}：{name} · {time}",
             },
@@ -64,7 +67,8 @@ function buildGeneratedDoc(
     tone: "primary",
     backendStatus: "draft",
     fileUrl: null,
-    isPlaceholderFile: false,
+    fileUrlIsPlaceholder: false,
+    downloadUrl: null,
     approvedBy: null,
     approvedAt: null,
     ...overrides,
@@ -178,67 +182,97 @@ describe("CaseFormsTab finalize/export event dispatch", () => {
   });
 });
 
-describe("CaseFormsTab placeholder badge & download link", () => {
-  it("exported + placeholder fileUrl 显示占位徽标", () => {
+describe("CaseFormsTab download link & exporting/export_failed UI", () => {
+  it("exported + downloadUrl 显示下载链接（指向 server 流式接口）", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({
           backendStatus: "exported",
           tone: "primary",
-          fileUrl: "placeholder://gd-01",
-          isPlaceholderFile: true,
-        }),
-      ]),
-    );
-    expect(w.find("[data-testid='placeholder-badge']").exists()).toBe(true);
-    expect(w.find("[data-testid='download-link']").exists()).toBe(false);
-  });
-
-  it("exported + 真实 fileUrl 显示下载链接", () => {
-    const w = mountTab(
-      buildDetail([
-        buildGeneratedDoc({
-          backendStatus: "exported",
-          tone: "primary",
-          fileUrl: "https://cdn.example.com/doc.pdf",
-          isPlaceholderFile: false,
+          fileUrl: "generated-documents/org-001/doc-1/v1.docx",
+          downloadUrl: "/api/generated-documents/doc-1/file",
         }),
       ]),
     );
     expect(w.find("[data-testid='download-link']").exists()).toBe(true);
     const link = w.find("[data-testid='download-link']");
-    expect(link.attributes("href")).toBe("https://cdn.example.com/doc.pdf");
+    expect(link.attributes("href")).toBe("/api/generated-documents/doc-1/file");
     expect(link.attributes("download")).toBeDefined();
-    expect(w.find("[data-testid='placeholder-badge']").exists()).toBe(false);
   });
 
-  it("exported + null fileUrl 不显示下载链接和占位徽标", () => {
+  it("exported + null downloadUrl 不显示下载链接", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({
           backendStatus: "exported",
           tone: "primary",
           fileUrl: null,
-          isPlaceholderFile: false,
+          downloadUrl: null,
         }),
       ]),
     );
     expect(w.find("[data-testid='download-link']").exists()).toBe(false);
-    expect(w.find("[data-testid='placeholder-badge']").exists()).toBe(false);
   });
 
-  it("draft 状态不显示下载链接和占位徽标", () => {
+  it("fileUrl='placeholder://...' 时不渲染下载链接，显示占位徽章", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({
-          backendStatus: "draft",
-          fileUrl: "placeholder://gd-01",
-          isPlaceholderFile: true,
+          backendStatus: "exported",
+          tone: "primary",
+          fileUrl: "placeholder://gen-doc-001/output.pdf",
+          fileUrlIsPlaceholder: true,
+          downloadUrl: null,
         }),
       ]),
     );
     expect(w.find("[data-testid='download-link']").exists()).toBe(false);
+    expect(w.find("[data-testid='placeholder-badge']").exists()).toBe(true);
+    expect(w.find("[data-testid='placeholder-badge']").text()).toContain(
+      "占位文件",
+    );
+  });
+
+  it("正常 fileUrl 不显示占位徽章", () => {
+    const w = mountTab(
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "exported",
+          tone: "primary",
+          fileUrl: "generated-documents/org-001/doc-1/v1.docx",
+          fileUrlIsPlaceholder: false,
+          downloadUrl: "/api/generated-documents/doc-1/file",
+        }),
+      ]),
+    );
     expect(w.find("[data-testid='placeholder-badge']").exists()).toBe(false);
+    expect(w.find("[data-testid='download-link']").exists()).toBe(true);
+  });
+
+  it("exporting 状态显示导出中指示器", () => {
+    const w = mountTab(
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "exporting",
+          tone: "warning",
+        }),
+      ]),
+    );
+    expect(w.find("[data-testid='exporting-indicator']").exists()).toBe(true);
+    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
+  });
+
+  it("export_failed 状态显示重试按钮", () => {
+    const w = mountTab(
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "export_failed",
+          tone: "danger",
+        }),
+      ]),
+    );
+    expect(w.find("[data-testid='retry-export-btn']").exists()).toBe(true);
+    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
   });
 });
 

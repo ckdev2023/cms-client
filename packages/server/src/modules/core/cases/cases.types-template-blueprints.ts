@@ -102,6 +102,14 @@ export const REQUIREMENT_CATEGORIES = [
 /** 资料清单类别枚举值。 */
 export type RequirementCategory = (typeof REQUIREMENT_CATEGORIES)[number];
 
+/** 进度分组角色枚举值 — 与 document_items.provided_by_role 列对齐。 */
+export const PROVIDED_BY_ROLES = ["applicant", "supporter", "office"] as const;
+
+/**
+ *
+ */
+export type ProvidedByRole = (typeof PROVIDED_BY_ROLES)[number];
+
 /**
  * 模板资料清单蓝图项。
  *
@@ -116,6 +124,7 @@ export type RequirementBlueprintItem = {
   ownerSide: "applicant" | "customer" | "office";
   sortOrder: number;
   description?: string;
+  providedByRole?: ProvidedByRole;
 };
 
 const VALID_CATEGORIES: ReadonlySet<string> = new Set(REQUIREMENT_CATEGORIES);
@@ -124,18 +133,13 @@ const VALID_OWNER_SIDES: ReadonlySet<string> = new Set([
   "customer",
   "office",
 ]);
+const VALID_PROVIDED_BY_ROLES: ReadonlySet<string> = new Set(PROVIDED_BY_ROLES);
 
 function isValidRequirementItem(
   r: Record<string, unknown>,
   codes: Set<string>,
 ): boolean {
-  if (
-    typeof r.checklistItemCode !== "string" ||
-    r.checklistItemCode.length === 0
-  )
-    return false;
-  if (codes.has(r.checklistItemCode)) return false;
-  codes.add(r.checklistItemCode);
+  if (!hasUniqueChecklistCode(r, codes)) return false;
   if (typeof r.name !== "string" || r.name.length === 0) return false;
   if (typeof r.category !== "string" || !VALID_CATEGORIES.has(r.category))
     return false;
@@ -143,7 +147,29 @@ function isValidRequirementItem(
   if (typeof r.ownerSide !== "string" || !VALID_OWNER_SIDES.has(r.ownerSide))
     return false;
   if (typeof r.sortOrder !== "number") return false;
+  if (!isValidOptionalProvidedByRole(r.providedByRole)) return false;
   return true;
+}
+
+function hasUniqueChecklistCode(
+  r: Record<string, unknown>,
+  codes: Set<string>,
+): boolean {
+  if (
+    typeof r.checklistItemCode !== "string" ||
+    r.checklistItemCode.length === 0
+  ) {
+    return false;
+  }
+  if (codes.has(r.checklistItemCode)) return false;
+  codes.add(r.checklistItemCode);
+  return true;
+}
+
+function isValidOptionalProvidedByRole(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (typeof value !== "string") return false;
+  return VALID_PROVIDED_BY_ROLES.has(value);
 }
 
 /**

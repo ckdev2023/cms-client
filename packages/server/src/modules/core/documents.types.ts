@@ -94,10 +94,11 @@ export type DocumentItemStatusEnum = (typeof DOCUMENT_ITEM_STATUSES)[number];
  * - `uploaded_reviewing` → `approved`（审核通过）、`revision_required`（退回补正）
  * - `revision_required` → `waiting_upload`（重新登记）、`uploaded_reviewing`（重新提交后待审核）
  * - `approved` → `expired`（过期）
- * - `waived` → `pending`（取消豁免，回到初始）
  * - `expired` → `waiting_upload`（重新请求有效版本）
  *
- * 注意：`*→waived` 路径已关闭，豁免必须走专用端点 `POST /:id/waive`。
+ * 注意：
+ * - `*→waived` 路径已关闭，豁免必须走专用端点 `POST /:id/waive`。
+ * - `waived` 状态出度仅由 `POST /:id/unwaive` 提供（与 `*→waived` 已关闭对称）。
  */
 export const DOCUMENT_ITEM_ALLOWED_TRANSITIONS: Readonly<
   Partial<Record<DocumentItemStatusEnum, readonly DocumentItemStatusEnum[]>>
@@ -107,7 +108,6 @@ export const DOCUMENT_ITEM_ALLOWED_TRANSITIONS: Readonly<
   uploaded_reviewing: ["approved", "revision_required"],
   revision_required: ["waiting_upload", "uploaded_reviewing"],
   approved: ["expired"],
-  waived: ["pending"],
   expired: ["waiting_upload"],
 } as const;
 
@@ -221,6 +221,11 @@ export const WAIVE_ALLOWED_FROM_STATUSES: readonly DocumentItemStatusEnum[] = [
 /** 资料项豁免请求参数。 */
 export type DocumentItemWaiveInput = {
   reasonCode: WaiveReasonCode;
+  note?: string | null;
+};
+
+/** 取消豁免请求参数。 */
+export type DocumentItemUnwaiveInput = {
   note?: string | null;
 };
 

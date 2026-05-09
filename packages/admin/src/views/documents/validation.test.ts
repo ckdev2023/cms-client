@@ -21,6 +21,7 @@ import {
   getStatusSortPriority,
   isSelectableForBatch,
   mapLegacyStatus,
+  normalizeRelativePathFront,
   validateRelativePath,
 } from "./validation";
 
@@ -112,16 +113,16 @@ describe("documents/getStatusTone", () => {
 // ─── Status transitions ─────────────────────────────────────────
 
 describe("documents/status-transitions", () => {
-  it("pending can transition to uploaded_reviewing and waived", () => {
+  it("pending can transition to uploaded_reviewing (waive via dedicated endpoint)", () => {
     expect(canTransition("pending", "uploaded_reviewing")).toBe(true);
-    expect(canTransition("pending", "waived")).toBe(true);
+    expect(canTransition("pending", "waived")).toBe(false);
     expect(canTransition("pending", "approved")).toBe(false);
   });
 
-  it("uploaded_reviewing can transition to approved, rejected, waived", () => {
+  it("uploaded_reviewing can transition to approved, rejected (waive via dedicated endpoint)", () => {
     expect(canTransition("uploaded_reviewing", "approved")).toBe(true);
     expect(canTransition("uploaded_reviewing", "rejected")).toBe(true);
-    expect(canTransition("uploaded_reviewing", "waived")).toBe(true);
+    expect(canTransition("uploaded_reviewing", "waived")).toBe(false);
     expect(canTransition("uploaded_reviewing", "pending")).toBe(false);
   });
 
@@ -131,9 +132,9 @@ describe("documents/status-transitions", () => {
     expect(canTransition("approved", "pending")).toBe(false);
   });
 
-  it("rejected can transition to uploaded_reviewing and waived", () => {
+  it("rejected can transition to uploaded_reviewing (waive via dedicated endpoint)", () => {
     expect(canTransition("rejected", "uploaded_reviewing")).toBe(true);
-    expect(canTransition("rejected", "waived")).toBe(true);
+    expect(canTransition("rejected", "waived")).toBe(false);
     expect(canTransition("rejected", "approved")).toBe(false);
   });
 
@@ -142,13 +143,15 @@ describe("documents/status-transitions", () => {
     expect(canTransition("expired", "waived")).toBe(false);
   });
 
-  it("waived can only revert to pending", () => {
-    expect(canTransition("waived", "pending")).toBe(true);
+  it("waived has no outgoing transition in matrix (exit via POST /:id/unwaive)", () => {
+    expect(STATUS_TRANSITIONS["waived"].length).toBe(0);
+    expect(canTransition("waived", "pending")).toBe(false);
     expect(canTransition("waived", "approved")).toBe(false);
   });
 
-  it("every status has at least one outgoing transition", () => {
+  it("every non-waived status has at least one outgoing transition", () => {
     for (const id of DOCUMENT_STATUS_IDS) {
+      if (id === "waived") continue;
       expect(STATUS_TRANSITIONS[id].length).toBeGreaterThan(0);
     }
   });
@@ -240,6 +243,56 @@ describe("documents/validateRelativePath", () => {
   it("error message mentions 相对路径", () => {
     const msg = validateRelativePath("");
     expect(msg).toContain("相对路径");
+  });
+});
+
+// ─── normalizeRelativePathFront ─────────────────────────────────
+
+describe("documents/normalizeRelativePathFront", () => {
+  it("trims and normalizes backslashes", () => {
+    expect(normalizeRelativePathFront("  foo\\bar\\baz.pdf  ")).toBe(
+      "foo/bar/baz.pdf",
+    );
+  });
+
+  it("returns the path as-is when already normalized", () => {
+    expect(normalizeRelativePathFront("A2026-001/applicant/passport.pdf")).toBe(
+      "A2026-001/applicant/passport.pdf",
+    );
+  });
+
+  it("returns null for empty string", () => {
+    expect(normalizeRelativePathFront("")).toBeNull();
+    expect(normalizeRelativePathFront("   ")).toBeNull();
+  });
+
+  it("returns null for absolute path (unix)", () => {
+    expect(normalizeRelativePathFront("/etc/passwd")).toBeNull();
+  });
+
+  it("returns null for absolute path (windows)", () => {
+    expect(normalizeRelativePathFront("C:\\Users\\file.pdf")).toBeNull();
+  });
+
+  it("returns null for tilde-prefixed path", () => {
+    expect(normalizeRelativePathFront("~/Documents/file.pdf")).toBeNull();
+  });
+
+  it("returns null for paths with empty segments (double slash)", () => {
+    expect(normalizeRelativePathFront("foo//bar.pdf")).toBeNull();
+  });
+
+  it("returns null for paths with dot segment", () => {
+    expect(normalizeRelativePathFront("foo/./bar.pdf")).toBeNull();
+  });
+
+  it("returns null for paths with dotdot segment", () => {
+    expect(normalizeRelativePathFront("foo/../bar.pdf")).toBeNull();
+  });
+
+  it("matches server-side normalizeRelativePath behavior for valid paths", () => {
+    const valid = "case001/applicant/doc/20260508_file.pdf";
+    expect(normalizeRelativePathFront(valid)).toBe(valid);
   });
 });
 

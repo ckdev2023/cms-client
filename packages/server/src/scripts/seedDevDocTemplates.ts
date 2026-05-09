@@ -3,6 +3,7 @@ import type { PoolClient } from "pg";
 const DOC_TPL_FAMILY_STAY_1 = "00000000-0000-4000-a000-000000000600";
 const DOC_TPL_FAMILY_STAY_2 = "00000000-0000-4000-a000-000000000601";
 const DOC_TPL_FAMILY_STAY_3 = "00000000-0000-4000-a000-000000000602";
+const DOC_TPL_DEPENDENT_VISA_2 = "00000000-0000-4000-a000-000000000603";
 const DOC_TPL_ENGINEER_1 = "00000000-0000-4000-a000-000000000610";
 const DOC_TPL_ENGINEER_2 = "00000000-0000-4000-a000-000000000611";
 const DOC_TPL_ENGINEER_3 = "00000000-0000-4000-a000-000000000612";
@@ -32,7 +33,10 @@ type DocTemplateSeed = {
 };
 
 export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
-  // 家族滞在 — 三种 caseTypeCode 别名
+  // ── Alias entries ──────────────────────────────────────────────
+  // TODO(C-template-seed): 以下 alias 条目与 case_templates 无对应蓝图，
+  //   待产品 confirm 后另起 PR 清理。保留以免影响现有 dev 数据。
+  // 家族滞在 — alias caseTypeCode（canonical = dependent_visa）
   {
     id: DOC_TPL_FAMILY_STAY_1,
     caseType: "family_stay",
@@ -45,13 +49,7 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
     templateName: "申請理由書",
     docType: "reason_statement",
   },
-  {
-    id: DOC_TPL_FAMILY_STAY_3,
-    caseType: "dependent_visa",
-    templateName: "申請理由書",
-    docType: "reason_statement",
-  },
-  // 技人国 — 三種 caseTypeCode 別名
+  // 技人国 — alias caseTypeCode（canonical = work）
   {
     id: DOC_TPL_ENGINEER_1,
     caseType: "engineer_humanities_intl_visa",
@@ -70,7 +68,7 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
     templateName: "雇用契約書サマリ",
     docType: "employment_summary",
   },
-  // 経営管理 — 三種 caseTypeCode 別名 × 事業計画書 + 会社概要
+  // 経営管理 — alias caseTypeCode（canonical = business_manager_visa）
   {
     id: DOC_TPL_BMV_PLAN_1,
     caseType: "biz_mgmt",
@@ -106,6 +104,20 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
     caseType: "biz_mgmt_cert_4m",
     templateName: "会社概要",
     docType: "company_overview",
+  },
+  // ── Canonical entries (aligned with case_templates blueprints) ──
+  // dependent_visa — BUSINESS_TYPE_TO_CASE_TYPE_CODE["family-stay"] canonical
+  {
+    id: DOC_TPL_FAMILY_STAY_3,
+    caseType: "dependent_visa",
+    templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_DEPENDENT_VISA_2,
+    caseType: "dependent_visa",
+    templateName: "身元保証書",
+    docType: "guarantor_statement",
   },
   // work — BUSINESS_TYPE_TO_CASE_TYPE_CODE["work-visa"] canonical
   {
@@ -167,14 +179,12 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
 ];
 
 /**
+ * 批量 upsert `document_templates` 种子数据。
+ * canonical 三套蓝图（dependent_visa / work / business_manager_visa）与
+ * case_templates 对齐；alias 条目为兼容历史 dev 数据保留。
  *
- * @param client
- * @param orgId
- * @param userId
- */
-/**
- * 批量插入 `document_templates` 种子数据，覆盖家族滞在 / 技人国 / 経営管理
- * 三个签证类型的多种 caseTypeCode 别名，便于本地走查与回归测试。
+ * dev 种子 = 当前 codebase 的可重现状态：同 id 第二次 seed 会更新
+ * template_name / case_type / doc_type 等业务字段，保证 seed 与代码同步。
  *
  * @param client - 当前事务内的 PoolClient
  * @param orgId - 种子数据归属的 org id
@@ -193,7 +203,15 @@ export async function seedDocumentTemplates(
          created_by, updated_by
        )
        VALUES ($1,$2,$3,$4,$5,'ja',1,'','{}'::jsonb,true,$6,$6)
-       ON CONFLICT (id) DO NOTHING`,
+       ON CONFLICT (id) DO UPDATE SET
+         template_name = EXCLUDED.template_name,
+         case_type     = EXCLUDED.case_type,
+         doc_type      = EXCLUDED.doc_type,
+         language      = EXCLUDED.language,
+         version_no    = EXCLUDED.version_no,
+         active_flag   = EXCLUDED.active_flag,
+         updated_by    = EXCLUDED.updated_by,
+         updated_at    = now()`,
       [tpl.id, orgId, tpl.templateName, tpl.caseType, tpl.docType, userId],
     );
   }

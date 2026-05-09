@@ -14,12 +14,16 @@ defineProps<{
   docItemOptions: { value: string; label: string }[];
   versionLabel: string;
   canSubmit: boolean;
+  suggestedPath?: string;
+  normalizedPath?: string | null;
 }>();
 
 defineEmits<{
   close: [];
   "update:field": [field: keyof RegisterDocumentForm, value: string];
   submit: [];
+  applySuggestedPath: [];
+  resetPath: [];
 }>();
 
 const selectValue = (e: Event) => (e.target as HTMLSelectElement).value;
@@ -136,6 +140,45 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             <p v-else class="rdm__hint">
               {{ t("documents.register.fields.relativePathHint") }}
             </p>
+            <div
+              v-if="suggestedPath || normalizedPath"
+              class="rdm__path-preview"
+            >
+              <p v-if="normalizedPath" class="rdm__path-preview-text">
+                <span class="rdm__path-preview-label">{{
+                  t("documents.register.fields.relativePathSuggestPreviewLabel")
+                }}</span>
+                <code class="rdm__path-preview-value">{{
+                  normalizedPath
+                }}</code>
+              </p>
+              <div class="rdm__path-preview-actions">
+                <button
+                  v-if="suggestedPath"
+                  type="button"
+                  class="rdm__path-btn"
+                  @click="$emit('applySuggestedPath')"
+                >
+                  {{
+                    t(
+                      "documents.register.fields.relativePathSuggestApplyButton",
+                    )
+                  }}
+                </button>
+                <button
+                  v-if="form.relativePath"
+                  type="button"
+                  class="rdm__path-btn rdm__path-btn--reset"
+                  @click="$emit('resetPath')"
+                >
+                  {{
+                    t(
+                      "documents.register.fields.relativePathSuggestResetButton",
+                    )
+                  }}
+                </button>
+              </div>
+            </div>
           </div>
 
           <div class="rdm__field">
@@ -336,6 +379,65 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
   font-size: var(--font-size-xs);
   color: #dc2626;
   font-weight: var(--font-weight-semibold);
+}
+
+.rdm__path-preview {
+  margin-top: 4px;
+  padding: 8px 10px;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-table-row);
+  border-radius: var(--radius-md);
+}
+
+.rdm__path-preview-text {
+  margin: 0 0 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-2);
+}
+
+.rdm__path-preview-label {
+  margin-right: 4px;
+}
+
+.rdm__path-preview-value {
+  font-family: var(
+    --font-family-mono,
+    ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    monospace
+  );
+  font-size: var(--font-size-xs);
+  color: var(--color-text-1);
+  word-break: break-all;
+}
+
+.rdm__path-preview-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.rdm__path-btn {
+  border: none;
+  background: none;
+  padding: 2px 6px;
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-6);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-normal);
+}
+
+.rdm__path-btn:hover {
+  background: var(--color-primary-light);
+}
+
+.rdm__path-btn--reset {
+  color: var(--color-text-3);
+}
+
+.rdm__path-btn--reset:hover {
+  background: var(--color-bg-2);
 }
 
 .rdm__footer {

@@ -82,6 +82,7 @@ const emit = defineEmits<{
   reject: [item: DocumentItem];
   remind: [item: DocumentItem];
   waive: [item: DocumentItem];
+  unwaive: [item: DocumentItem];
   register: [item: DocumentItem];
   reference: [item: DocumentItem];
 }>();
@@ -168,6 +169,7 @@ function toggle() {
               'doc-row__name',
               { 'doc-row__name--waived': item.status === 'waived' },
             ]"
+            lang="ja"
           >
             {{ item.name }}
           </div>
@@ -270,6 +272,14 @@ function toggle() {
         @click.stop="emit('waive', item)"
       >
         {{ t("documents.actions.waive") }}
+      </button>
+      <button
+        v-if="acts.canUnwaive"
+        type="button"
+        class="doc-row__unwaive-btn"
+        @click.stop="emit('unwaive', item)"
+      >
+        {{ t("documents.actions.unwaive") }}
       </button>
     </div>
 
@@ -435,5 +445,22 @@ function toggle() {
 
 .doc-row__waive-btn:hover {
   color: var(--color-text-1);
+}
+
+.doc-row__unwaive-btn {
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.doc-row__unwaive-btn:hover {
+  color: var(--color-primary-7, var(--color-primary-6));
 }
 </style>

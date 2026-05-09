@@ -1,9 +1,12 @@
 import {
   BadRequestException,
   Body,
+  ConflictException,
   Controller,
   ForbiddenException,
   Get,
+  GoneException,
+  Header,
   Inject,
   NotFoundException,
   Param,
@@ -11,8 +14,10 @@ import {
   Post,
   Query,
   Req,
+  StreamableFile,
   UnauthorizedException,
 } from "@nestjs/common";
+import crypto from "node:crypto";
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
@@ -21,6 +26,19 @@ import { CasesService } from "../cases/cases.service";
 import { GENERATED_DOCUMENT_ERROR_CODES } from "../cases/cases.types-generated-docs";
 import type { RequestContext } from "../tenancy/requestContext";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
+import {
+  GENERATED_DOC_EXPORT_QUEUE,
+  type GeneratedDocExportJobPayload,
+} from "../jobs/handlers/generatedDocExportHandler";
+import {
+  REDIS_CLIENT,
+  type RedisClient,
+} from "../../../infra/redis/createRedisClient";
+import { RedisQueue } from "../../../infra/queue/redisQueue";
+import {
+  STORAGE_ADAPTER,
+  type StorageAdapter,
+} from "../../../infra/storage/storageAdapter";
 
 type HttpRequest = { requestContext?: RequestContext };
 
@@ -93,11 +111,16 @@ function parseLimit(value: unknown): number | undefined {
  */
 @Controller("generated-documents")
 export class GeneratedDocumentsController {
+  private readonly queue: RedisQueue;
+
   /**
-   * 构造函数。
-   * @param generatedDocumentsService 生成文书服务。
-   * @param casesService 案件服务（查找父案件用于鉴权）。
-   * @param permissionsService 权限服务。
+   * DI コンストラクタ。
+   *
+   * @param generatedDocumentsService - 生成文書サービス
+   * @param casesService - 案件サービス
+   * @param permissionsService - 権限サービス
+   * @param redisClient - Redis クライアント
+   * @param storageAdapter - 文書ファイルのストレージアダプター（ローカルまたは S3）
    */
   constructor(
     @Inject(GeneratedDocumentsService)
@@ -106,7 +129,13 @@ export class GeneratedDocumentsController {
     private readonly casesService: CasesService,
     @Inject(PermissionsService)
     private readonly permissionsService: PermissionsService,
-  ) {}
+    @Inject(REDIS_CLIENT)
+    redisClient: RedisClient,
+    @Inject(STORAGE_ADAPTER)
+    private readonly storageAdapter: StorageAdapter,
+  ) {
+    this.queue = new RedisQueue(redisClient);
+  }
 
   /**
    * 列出指定案件的生成文书（须父案件 view 权限）。
@@ -148,6 +177,54 @@ export class GeneratedDocumentsController {
 
     await this.assertCanViewParentCase(ctx, dto.caseId);
     return dto;
+  }
+
+  /**
+   * 下载生成文书的文件内容（须父案件 view 权限）。
+   *
+   * 仅在 `status = 'exported'` 且 `file_url` 为有效 storage key 时返回内容。
+   * 历史 placeholder URL 返回 410 Gone。
+   *
+   * @param req - HTTP 请求
+   * @param id - 生成文書 ID
+   * @returns 流式文件
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
+  @Get(":id/file")
+  @Header("Cache-Control", "no-store")
+  async downloadFile(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+  ): Promise<StreamableFile> {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const dto = await this.generatedDocumentsService.getDto(ctx, id);
+    if (!dto) throw new NotFoundException("Generated document not found");
+
+    await this.assertCanViewParentCase(ctx, dto.caseId);
+
+    if (dto.status !== "exported" || !dto.fileUrl) {
+      throw new NotFoundException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_NOT_AVAILABLE +
+          ": Generated document is not yet exported",
+      );
+    }
+
+    if (dto.fileUrl.startsWith("placeholder://")) {
+      throw new GoneException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_PLACEHOLDER_LEGACY +
+          ": Legacy placeholder file is no longer available; please re-export",
+      );
+    }
+
+    const buffer = await this.storageAdapter.download(dto.fileUrl);
+    const ext = resolveExtensionFromFormat(dto.outputFormat);
+    const filename = buildDownloadFilename(dto.title, ext);
+    return new StreamableFile(buffer, {
+      type: resolveContentTypeFromExt(ext),
+      disposition: `attachment; filename="${encodeURIComponent(filename)}"`,
+    });
   }
 
   /**
@@ -253,11 +330,14 @@ export class GeneratedDocumentsController {
   }
 
   /**
-   * 导出生成文書（每次留痕，fileUrl 写占位 URL）。
+   * 导出生成文書 — 入队异步渲染，立即返回 `exporting` 状态。
    *
-   * @param req HTTP 请求对象。
-   * @param id 生成文書 ID。
-   * @returns 更新后的 DTO。
+   * 幂等守卫：已在 `exporting` 状态时返回 409。
+   * 重试入口：`export_failed` 状态允许重新入队。
+   *
+   * @param req - HTTP 请求
+   * @param id - 生成文書 ID
+   * @returns 更新后 DTO
    */
   @RequirePermission(PERMISSION_CODES.CASE_EDIT)
   @Post(":id/export")
@@ -270,20 +350,46 @@ export class GeneratedDocumentsController {
 
     await this.assertCanEditParentCase(ctx, existing.caseId);
 
-    const placeholderFileUrl = `placeholder://generated-documents/${id}.${existing.outputFormat}`;
+    if (existing.status === "exporting") {
+      throw new ConflictException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_EXPORT_IN_PROGRESS +
+          ": Export is already in progress",
+      );
+    }
 
     const dto = await this.generatedDocumentsService.update(
       ctx,
       id,
-      { status: "exported", fileUrl: placeholderFileUrl },
+      { status: "exporting" },
       { skipTimelineWrite: true },
+    );
+
+    const jobPayload: GeneratedDocExportJobPayload = {
+      orgId: ctx.orgId,
+      userId: ctx.userId,
+      generatedDocumentId: id,
+      caseId: existing.caseId,
+      templateId: existing.templateId,
+      templateVersionNo: existing.templateVersionNoSnapshot,
+      outputFormat: existing.outputFormat,
+      title: existing.title,
+    };
+
+    await this.queue.enqueue<GeneratedDocExportJobPayload>(
+      GENERATED_DOC_EXPORT_QUEUE,
+      {
+        id: crypto.randomUUID(),
+        name: "generated_doc_export",
+        payload: jobPayload,
+        createdAt: new Date().toISOString(),
+      },
     );
 
     await this.generatedDocumentsService.writeTimeline(ctx, {
       caseId: existing.caseId,
       generatedDocumentId: id,
-      action: "generated_document.exported",
-      extra: { title: existing.title, fileUrl: placeholderFileUrl },
+      action: "generated_document.export_queued",
+      extra: { title: existing.title },
     });
 
     return dto;
@@ -353,4 +459,26 @@ export class GeneratedDocumentsController {
     }
     return caseEntity;
   }
+}
+
+function resolveExtensionFromFormat(format: string): string {
+  if (format === "docx" || format === "xlsx") return format;
+  return "pdf";
+}
+
+function resolveContentTypeFromExt(ext: string): string {
+  switch (ext) {
+    case "docx":
+      return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    case "xlsx":
+      return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    default:
+      return "application/pdf";
+  }
+}
+
+function buildDownloadFilename(title: string, ext: string): string {
+  const safe = title.replace(/[\\/:*?"<>|]/g, "_").trim();
+  const base = safe.length > 0 ? safe : "document";
+  return `${base}.${ext}`;
 }

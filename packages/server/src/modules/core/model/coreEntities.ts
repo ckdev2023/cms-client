@@ -284,6 +284,7 @@ export type DocumentItem = {
   reviewedAt: string | null;
   dueAt: string | null;
   ownerSide: DocumentItemOwnerSide;
+  providedByRole: string | null;
   lastFollowUpAt: string | null;
   note: string | null;
   category: string | null;
@@ -489,7 +490,6 @@ const TIMELINE_ENTITY_TYPES: ReadonlySet<string> = new Set<string>([
 
 /**
  * 判断输入是否为 TimelineEntityType。
- *
  * @param value 待判断值
  * @returns 是否为 TimelineEntityType
  */

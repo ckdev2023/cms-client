@@ -48,6 +48,7 @@ import {
 } from "../../shared/model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
+import { useCaseFormsExportPolling } from "./model/useCaseFormsExportPolling";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
@@ -105,6 +106,7 @@ const {
   routeTab,
   onTabChange: (tab) =>
     router.replace({ query: buildCaseDetailQuery({ tab }) }),
+  displayLocale: locale,
 });
 
 const validationActions = useCaseValidationActions({
@@ -122,6 +124,8 @@ const validationActions = useCaseValidationActions({
 });
 
 const guard = useCaseDetailGuard(detail);
+
+useCaseFormsExportPolling(detail, refetch);
 
 const clientDisplayName = computed(() => {
   const d = detail.value;
@@ -737,6 +741,7 @@ async function onFormGenSubmit(payload: {
           v-else-if="activeTab === 'documents'"
           :detail="detail"
           :readonly="isReadonly"
+          @refresh="() => void refetch()"
         />
         <CaseDeadlinesTab
           v-else-if="activeTab === 'deadlines'"

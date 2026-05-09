@@ -15,6 +15,7 @@ export type DocumentItemQueryRow = {
   reviewed_at: unknown;
   due_at: unknown;
   owner_side: string;
+  provided_by_role: string | null;
   last_follow_up_at: unknown;
   note: unknown;
   category: string | null;
@@ -80,6 +81,7 @@ export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
     reviewedAt: toTimestampStringOrNull(row.reviewed_at),
     dueAt: toTimestampStringOrNull(row.due_at),
     ownerSide: row.owner_side,
+    providedByRole: toStringOrNull(row.provided_by_role),
     lastFollowUpAt: toTimestampStringOrNull(row.last_follow_up_at),
     note: toStringOrNull(row.note),
     category: row.category ?? null,
@@ -93,7 +95,7 @@ export function mapDocumentItemRow(row: DocumentItemQueryRow): DocumentItem {
   };
 }
 
-export const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, last_follow_up_at, note, category, survey_data, waive_reason_latest, waive_reason_code_latest, waived_by_user_id_latest, waived_at_latest, created_at, updated_at`;
+export const DOC_ITEM_COLS = `id, org_id, case_id, checklist_item_code, name, status, required_flag, requested_at, received_at, reviewed_at, due_at, owner_side, provided_by_role, last_follow_up_at, note, category, survey_data, waive_reason_latest, waive_reason_code_latest, waived_by_user_id_latest, waived_at_latest, created_at, updated_at`;
 
 // ── list filter helpers ──
 

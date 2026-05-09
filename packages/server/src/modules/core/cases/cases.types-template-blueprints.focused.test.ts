@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
@@ -8,6 +9,7 @@ import {
   validateReminderScheduleBlueprint,
   parseCaseTemplateConfig,
   REQUIREMENT_CATEGORIES,
+  PROVIDED_BY_ROLES,
 } from "./cases.types-template-blueprints";
 import {
   SAMPLE_FIELDS,
@@ -213,6 +215,49 @@ void describe("validateRequirementBlueprint", () => {
         `ownerSide "${side}" should be valid`,
       );
     }
+  });
+
+  void test("accepts all valid providedByRole values", () => {
+    for (const role of PROVIDED_BY_ROLES) {
+      const item = {
+        ...VALID_REQ,
+        checklistItemCode: `item-${role}`,
+        providedByRole: role,
+      };
+      assert.ok(
+        validateRequirementBlueprint([item]),
+        `providedByRole "${role}" should be valid`,
+      );
+    }
+  });
+
+  void test("accepts item without providedByRole (optional)", () => {
+    const item = { ...VALID_REQ } as Record<string, unknown>;
+    delete item.providedByRole;
+    assert.ok(validateRequirementBlueprint([item]));
+  });
+
+  void test("rejects invalid providedByRole", () => {
+    assert.equal(
+      validateRequirementBlueprint([
+        { ...VALID_REQ, providedByRole: "invalid" },
+      ]),
+      false,
+    );
+  });
+
+  void test("rejects non-string providedByRole", () => {
+    assert.equal(
+      validateRequirementBlueprint([{ ...VALID_REQ, providedByRole: 42 }]),
+      false,
+    );
+  });
+
+  void test("PROVIDED_BY_ROLES is frozen and contains expected values", () => {
+    assert.deepEqual(
+      [...PROVIDED_BY_ROLES],
+      ["applicant", "supporter", "office"],
+    );
   });
 });
 
@@ -477,4 +522,59 @@ void describe("minimum template creation conditions", () => {
       ["standard", "questionnaire", "company", "personal"],
     );
   });
+});
+
+// ────────────────────────────────────────────────────────────────
+// 7. Blueprint providedByRole coverage
+// ────────────────────────────────────────────────────────────────
+
+void describe("blueprint providedByRole coverage", async () => {
+  const { FAMILY_STAY_REQUIREMENT_BLUEPRINT } =
+    await import("../../../scripts/__data__/caseTemplateBlueprints/family-stay");
+  const { WORK_VISA_REQUIREMENT_BLUEPRINT } =
+    await import("../../../scripts/__data__/caseTemplateBlueprints/work");
+  const { BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT } =
+    await import("../../../scripts/__data__/caseTemplateBlueprints/business-manager-visa");
+
+  const blueprints = [
+    { name: "family-stay", items: FAMILY_STAY_REQUIREMENT_BLUEPRINT },
+    { name: "work", items: WORK_VISA_REQUIREMENT_BLUEPRINT },
+    {
+      name: "business-manager-visa",
+      items: BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT,
+    },
+  ];
+
+  for (const bp of blueprints) {
+    void test(`${bp.name}: all items have providedByRole set`, () => {
+      for (const item of bp.items) {
+        assert.ok(
+          typeof item.providedByRole === "string" &&
+            item.providedByRole.length > 0,
+          `${bp.name}/${item.checklistItemCode} missing providedByRole`,
+        );
+      }
+    });
+
+    void test(`${bp.name}: passes validateRequirementBlueprint`, () => {
+      assert.ok(validateRequirementBlueprint(bp.items));
+    });
+
+    void test(`${bp.name}: ownerSide→providedByRole mapping is consistent`, () => {
+      const EXPECTED_MAP: Record<string, string> = {
+        applicant: "applicant",
+        customer: "supporter",
+        office: "office",
+      };
+      for (const item of bp.items) {
+        const expected = EXPECTED_MAP[item.ownerSide];
+        const got = item.providedByRole ?? "undefined";
+        assert.equal(
+          item.providedByRole,
+          expected,
+          `${bp.name}/${item.checklistItemCode}: ownerSide=${item.ownerSide} should map to providedByRole=${expected}, got ${got}`,
+        );
+      }
+    });
+  }
 });

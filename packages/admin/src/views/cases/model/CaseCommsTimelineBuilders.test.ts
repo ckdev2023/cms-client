@@ -147,6 +147,166 @@ describe("CaseCommsTimelineBuilders", () => {
     });
   });
 
+  describe("generated_document.export_queued", () => {
+    it("returns generatedDocumentExportQueued key with title suffix", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.export_queued",
+        { title: "申請理由書" },
+      );
+      expect(result.key).toBe(
+        "cases.log.timeline.generatedDocumentExportQueued",
+      );
+      expect(result.params).toMatchObject({ suffix: "申請理由書" });
+      expect(result.params!.colonSuffix).toBe("：申請理由書");
+    });
+
+    it("drops colon when payload is empty", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.export_queued",
+        {},
+      );
+      expect(result.params).toMatchObject({ suffix: "" });
+      expect(result.params!.colonSuffix).toBe("");
+    });
+  });
+
+  describe("generated_document.export_failed", () => {
+    it("returns generatedDocumentExportFailed key with title suffix", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.export_failed",
+        { title: "事業計画書" },
+      );
+      expect(result.key).toBe(
+        "cases.log.timeline.generatedDocumentExportFailed",
+      );
+      expect(result.params).toMatchObject({ suffix: "事業計画書" });
+      expect(result.params!.colonSuffix).toBe("：事業計画書");
+    });
+
+    it("drops colon when payload is empty", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.export_failed",
+        {},
+      );
+      expect(result.params).toMatchObject({ suffix: "" });
+      expect(result.params!.colonSuffix).toBe("");
+    });
+  });
+
+  describe("document_item.transitioned", () => {
+    it("returns documentItemTransitioned key with to suffix", () => {
+      const result = buildCaseTimelineMessageResult(
+        "document_item.transitioned",
+        { to: "approved" },
+      );
+      expect(result.key).toBe("cases.log.timeline.documentItemTransitioned");
+      expect(result.params).toEqual({
+        suffix: "approved",
+        colonSuffix: "：approved",
+      });
+    });
+
+    it("falls back to toStatus field", () => {
+      const result = buildCaseTimelineMessageResult(
+        "document_item.transitioned",
+        { toStatus: "expired" },
+      );
+      expect(result.params).toEqual({
+        suffix: "expired",
+        colonSuffix: "：expired",
+      });
+    });
+
+    it("defaults to empty when no to/toStatus", () => {
+      const result = buildCaseTimelineMessageResult(
+        "document_item.transitioned",
+        {},
+      );
+      expect(result.params).toEqual({ suffix: "", colonSuffix: "" });
+    });
+  });
+
+  describe("document_item.waived", () => {
+    it("returns documentItemWaived key with reasonCode suffix", () => {
+      const result = buildCaseTimelineMessageResult("document_item.waived", {
+        reasonCode: "not_applicable",
+      });
+      expect(result.key).toBe("cases.log.timeline.documentItemWaived");
+      expect(result.params).toEqual({
+        suffix: "not_applicable",
+        colonSuffix: "：not_applicable",
+      });
+    });
+
+    it("falls back to reason_code field", () => {
+      const result = buildCaseTimelineMessageResult("document_item.waived", {
+        reason_code: "duplicate",
+      });
+      expect(result.params).toEqual({
+        suffix: "duplicate",
+        colonSuffix: "：duplicate",
+      });
+    });
+
+    it("defaults to empty when no reasonCode", () => {
+      const result = buildCaseTimelineMessageResult("document_item.waived", {});
+      expect(result.params).toEqual({ suffix: "", colonSuffix: "" });
+    });
+  });
+
+  describe("document_item.unwaived", () => {
+    it("returns documentItemUnwaived key", () => {
+      const result = buildCaseTimelineMessageResult("document_item.unwaived", {
+        note: "re-required",
+      });
+      expect(result.key).toBe("cases.log.timeline.documentItemUnwaived");
+    });
+  });
+
+  describe("document_item.deleted", () => {
+    it("returns documentItemDeleted key", () => {
+      const result = buildCaseTimelineMessageResult(
+        "document_item.deleted",
+        {},
+      );
+      expect(result.key).toBe("cases.log.timeline.documentItemDeleted");
+    });
+  });
+
+  describe("document_item.survey_data_updated", () => {
+    it("returns documentItemSurveyDataUpdated key", () => {
+      const result = buildCaseTimelineMessageResult(
+        "document_item.survey_data_updated",
+        {},
+      );
+      expect(result.key).toBe(
+        "cases.log.timeline.documentItemSurveyDataUpdated",
+      );
+    });
+  });
+
+  describe("validation_run.auto_failed", () => {
+    it("returns validationRunAutoFailed key with trigger suffix", () => {
+      const result = buildCaseTimelineMessageResult(
+        "validation_run.auto_failed",
+        { trigger: "generated_document.finalize" },
+      );
+      expect(result.key).toBe("cases.log.timeline.validationRunAutoFailed");
+      expect(result.params).toEqual({
+        suffix: "generated_document.finalize",
+        colonSuffix: "：generated_document.finalize",
+      });
+    });
+
+    it("defaults to empty when no trigger", () => {
+      const result = buildCaseTimelineMessageResult(
+        "validation_run.auto_failed",
+        {},
+      );
+      expect(result.params).toEqual({ suffix: "", colonSuffix: "" });
+    });
+  });
+
   describe("existing builders remain stable", () => {
     it("case.stage_changed still returns stageChange key", () => {
       const result = buildCaseTimelineMessageResult("case.stage_changed", {

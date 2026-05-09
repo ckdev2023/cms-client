@@ -146,6 +146,8 @@ export type GeneratedDocument = {
   approvedBy: string | null;
   generatedAt: string;
   approvedAt: string | null;
+  templateVersionNoSnapshot: number | null;
+  templateDocType: string | null;
 };
 
 /**

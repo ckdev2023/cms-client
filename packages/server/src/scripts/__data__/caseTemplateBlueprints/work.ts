@@ -7,6 +7,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 1,
   },
   {
@@ -15,6 +16,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 2,
   },
   {
@@ -23,6 +25,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 3,
   },
   {
@@ -31,6 +34,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 4,
     description:
       "学歴を証明する書類。学歴要件を満たさない場合は実務経験証明書で代替",
@@ -41,6 +45,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 5,
   },
   {
@@ -49,6 +54,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 6,
   },
   {
@@ -57,6 +63,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 7,
   },
   {
@@ -65,6 +72,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 8,
   },
   {
@@ -73,6 +81,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "office",
+    providedByRole: "office",
     sortOrder: 9,
     description: "行政書士事務所が作成",
   },
@@ -82,6 +91,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "office",
+    providedByRole: "office",
     sortOrder: 10,
     description: "行政書士事務所が作成・提出",
   },
@@ -91,6 +101,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: false,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 11,
     description: "カテゴリー1〜3に該当する場合の証明書（法定調書合計表等）",
   },

@@ -8,6 +8,7 @@ import type { GeneratedDocumentDto } from "../cases/cases.types-generated-docs";
 import { CasesService } from "../cases/cases.service";
 import { GeneratedDocumentsController } from "./generatedDocuments.controller";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
+import type { RedisClient } from "../../../infra/redis/createRedisClient";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
 const USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -94,6 +95,8 @@ function gdEntity(
     approvedBy: null,
     generatedAt: "2026-01-01T00:00:00.000Z",
     approvedAt: null,
+    templateVersionNoSnapshot: null,
+    templateDocType: null,
     ...overrides,
   };
 }
@@ -116,6 +119,8 @@ function gdDto(
     approvedByDisplayName: "Test",
     generatedAt: "2026-01-01T00:00:00.000Z",
     approvedAt: "2026-01-02T00:00:00.000Z",
+    templateVersionNoSnapshot: null,
+    templateDocType: null,
     ...overrides,
   };
 }
@@ -158,10 +163,24 @@ function ctrl(opts: {
     writeTimeline: () => Promise.resolve(),
     ...opts.svc,
   } as unknown as GeneratedDocumentsService;
+  const fakeRedis = {
+    isOpen: true,
+    rPush: () => Promise.resolve(1),
+    lPop: () => Promise.resolve(null),
+    connect: () => Promise.resolve(),
+  } as unknown as RedisClient;
+  const fakeStorage = {
+    upload: () => Promise.resolve(),
+    download: () => Promise.resolve(Buffer.from("stub")),
+    remove: () => Promise.resolve(),
+    getSignedUrl: () => Promise.resolve("https://example.test/file"),
+  };
   return new GeneratedDocumentsController(
     svc,
     cases(opts.cs),
     perms(opts.perm),
+    fakeRedis,
+    fakeStorage,
   );
 }
 
@@ -210,7 +229,7 @@ void test("export timeline extra.title equals existing.title", async () => {
   const c = ctrl({
     entity: gdEntity({ status: "final", title: "雇用契約書" }),
     svc: {
-      update: () => Promise.resolve(gdDto({ status: "exported" })),
+      update: () => Promise.resolve(gdDto({ status: "exporting" })),
       writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
         tlInput = i;
         return Promise.resolve();
@@ -219,13 +238,13 @@ void test("export timeline extra.title equals existing.title", async () => {
   });
   await c.export(staffReq as never, GD_ID);
   assert.ok(tlInput, "writeTimeline must have been called");
-  assert.equal(tlInput.action, "generated_document.exported");
+  assert.equal(tlInput.action, "generated_document.export_queued");
   const extra = tlInput.extra as Record<string, unknown>;
   assert.ok(extra, "extra must be present");
   assert.equal(extra.title, "雇用契約書");
 });
 
-void test("export timeline extra contains both title and fileUrl", async () => {
+void test("export timeline extra contains title (export_queued action)", async () => {
   let tlInput: Record<string, unknown> | undefined;
   const c = ctrl({
     entity: gdEntity({
@@ -234,7 +253,7 @@ void test("export timeline extra contains both title and fileUrl", async () => {
       outputFormat: "docx",
     }),
     svc: {
-      update: () => Promise.resolve(gdDto({ status: "exported" })),
+      update: () => Promise.resolve(gdDto({ status: "exporting" })),
       writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
         tlInput = i;
         return Promise.resolve();
@@ -243,10 +262,7 @@ void test("export timeline extra contains both title and fileUrl", async () => {
   });
   await c.export(staffReq as never, GD_ID);
   assert.ok(tlInput);
+  assert.equal(tlInput.action, "generated_document.export_queued");
   const extra = tlInput.extra as Record<string, unknown>;
   assert.equal(extra.title, "事業計画書");
-  assert.equal(
-    extra.fileUrl,
-    `placeholder://generated-documents/${GD_ID}.docx`,
-  );
 });

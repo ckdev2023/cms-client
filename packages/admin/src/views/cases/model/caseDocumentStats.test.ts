@@ -10,6 +10,8 @@ import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
 import {
   computeAllProviderStats,
   computeCaseDocumentCompletionRate,
+  computeDocumentStatusBreakdown,
+  computeGroupsStatusBreakdown,
   computeItemsCompletionRate,
   computeProviderStat,
   isDocumentCollected,
@@ -216,6 +218,88 @@ describe("computeCaseDocumentCompletionRate", () => {
     ];
     const rate = computeCaseDocumentCompletionRate(groups);
     expect(rate.total).toBe(0);
+  });
+});
+
+// ─── computeDocumentStatusBreakdown ─────────────────────────────
+
+describe("computeDocumentStatusBreakdown", () => {
+  it("returns all zeros for empty array", () => {
+    expect(computeDocumentStatusBreakdown([])).toEqual({
+      approved: 0,
+      reviewing: 0,
+      pending: 0,
+      waived: 0,
+      total: 0,
+    });
+  });
+
+  it("counts each status bucket correctly", () => {
+    const items = [
+      makeItem("approved"),
+      makeItem("approved"),
+      makeItem("uploaded_reviewing"),
+      makeItem("waiting_upload"),
+      makeItem("pending"),
+      makeItem("waived"),
+    ];
+    const bd = computeDocumentStatusBreakdown(items);
+    expect(bd.approved).toBe(2);
+    expect(bd.reviewing).toBe(1);
+    expect(bd.pending).toBe(2);
+    expect(bd.waived).toBe(1);
+    expect(bd.total).toBe(5);
+  });
+
+  it("all waived → total=0, pending=0", () => {
+    const items = [makeItem("waived"), makeItem("waived")];
+    const bd = computeDocumentStatusBreakdown(items);
+    expect(bd.total).toBe(0);
+    expect(bd.pending).toBe(0);
+  });
+
+  it("treats revision_required and expired as pending", () => {
+    const items = [
+      makeItem("revision_required"),
+      makeItem("expired"),
+      makeItem("approved"),
+    ];
+    const bd = computeDocumentStatusBreakdown(items);
+    expect(bd.pending).toBe(2);
+    expect(bd.approved).toBe(1);
+    expect(bd.reviewing).toBe(0);
+    expect(bd.total).toBe(3);
+  });
+});
+
+// ─── computeGroupsStatusBreakdown ───────────────────────────────
+
+describe("computeGroupsStatusBreakdown", () => {
+  it("merges all groups into a single breakdown", () => {
+    const groups: DocumentGroup[] = [
+      makeGroup("A", [
+        makeItem("approved"),
+        makeItem("uploaded_reviewing"),
+        makeItem("waived"),
+      ]),
+      makeGroup("B", [makeItem("waiting_upload"), makeItem("approved")]),
+    ];
+    const bd = computeGroupsStatusBreakdown(groups);
+    expect(bd.approved).toBe(2);
+    expect(bd.reviewing).toBe(1);
+    expect(bd.pending).toBe(1);
+    expect(bd.waived).toBe(1);
+    expect(bd.total).toBe(4);
+  });
+
+  it("returns all zeros for empty groups", () => {
+    expect(computeGroupsStatusBreakdown([])).toEqual({
+      approved: 0,
+      reviewing: 0,
+      pending: 0,
+      waived: 0,
+      total: 0,
+    });
   });
 });
 

@@ -13,6 +13,7 @@ import type { GeneratedDocument } from "../model/documentEntities";
 import { CasesService } from "../cases/cases.service";
 import type { GeneratedDocumentDto } from "../cases/cases.types-generated-docs";
 import { GeneratedDocumentsController } from "./generatedDocuments.controller";
+import type { RedisClient } from "../../../infra/redis/createRedisClient";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -96,6 +97,8 @@ const mockGdEntity: GeneratedDocument = {
   approvedBy: null,
   generatedAt: "2026-01-01T00:00:00.000Z",
   approvedAt: null,
+  templateVersionNoSnapshot: null,
+  templateDocType: null,
 };
 
 const mockGdDto: GeneratedDocumentDto = {
@@ -113,6 +116,8 @@ const mockGdDto: GeneratedDocumentDto = {
   approvedByDisplayName: null,
   generatedAt: "2026-01-01T00:00:00.000Z",
   approvedAt: null,
+  templateVersionNoSnapshot: null,
+  templateDocType: null,
 };
 
 function makePermissions(
@@ -151,10 +156,24 @@ function makeController(
     update: () => Promise.resolve(mockGdDto),
     ...opts.service,
   } as unknown as GeneratedDocumentsService;
+  const fakeRedis = {
+    isOpen: true,
+    rPush: () => Promise.resolve(1),
+    lPop: () => Promise.resolve(null),
+    connect: () => Promise.resolve(),
+  } as unknown as RedisClient;
+  const fakeStorage = {
+    upload: () => Promise.resolve(),
+    download: () => Promise.resolve(Buffer.from("stub")),
+    remove: () => Promise.resolve(),
+    getSignedUrl: () => Promise.resolve("https://example.test/file"),
+  };
   return new GeneratedDocumentsController(
     service,
     makeCasesService(opts.cases),
     makePermissions(opts.permissions),
+    fakeRedis,
+    fakeStorage,
   );
 }
 

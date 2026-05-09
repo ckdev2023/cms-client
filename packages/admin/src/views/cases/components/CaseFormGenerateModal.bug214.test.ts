@@ -75,7 +75,7 @@ describe("BUG-214 CaseFormGenerateModal", () => {
     };
     expect(payload.title).toBe("生成テスト");
     expect(payload.templateId).toBeNull();
-    expect(payload.outputFormat).toBe("pdf");
+    expect(payload.outputFormat).toBe("docx");
   });
 
   it("emits close when cancel is clicked", async () => {
@@ -99,9 +99,9 @@ describe("BUG-214 CaseFormGenerateModal", () => {
     expect(btn.attributes("disabled")).toBeDefined();
   });
 
-  it("format select defaults to pdf", () => {
+  it("format select defaults to docx (V9: PDF stub 未稳定前不作为默认)", () => {
     const w = mountModal();
     const select = w.find("[data-testid='form-gen-format-select']");
-    expect((select.element as HTMLSelectElement).value).toBe("pdf");
+    expect((select.element as HTMLSelectElement).value).toBe("docx");
   });
 });

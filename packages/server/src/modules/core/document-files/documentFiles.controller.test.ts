@@ -49,6 +49,7 @@ const mockDocumentItem: DocumentItem = {
   reviewedAt: null,
   dueAt: null,
   ownerSide: "applicant",
+  providedByRole: "applicant",
   lastFollowUpAt: null,
   note: null,
   category: null,

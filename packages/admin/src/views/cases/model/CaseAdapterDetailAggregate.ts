@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 import type { CaseStageId } from "../types";
 import type {
   CaseDetailAggregate,
@@ -67,6 +68,7 @@ function parseAggregateSlices(
 
 const KNOWN_PROVIDER_ROLES = new Set([
   "applicant",
+  "supporter",
   "office",
   "employer",
   "agent",
@@ -84,12 +86,15 @@ function adaptProviderProgress(raw: unknown[]) {
       if (!pr) return null;
       const rawRole = readString(pr, "providerRole");
       const role = resolveProviderRole(rawRole);
+      const total = readNumber(pr, "total");
+      if ((role === "unknown" || role === "unspecified") && total === 0)
+        return null;
       return {
         label: rawRole,
         labelKey: `cases.detail.providers.${role}`,
         providerRole: role,
         done: readNumber(pr, "done"),
-        total: readNumber(pr, "total"),
+        total,
       };
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);

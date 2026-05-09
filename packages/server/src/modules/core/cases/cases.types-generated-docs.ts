@@ -19,7 +19,12 @@
 // ────────────────────────────────────────────────────────────────
 
 /** 生成文书状态枚举 — 对齐 validation gate 检查。 */
-export type GeneratedDocumentStatus = "draft" | "final" | "exported";
+export type GeneratedDocumentStatus =
+  | "draft"
+  | "final"
+  | "exporting"
+  | "exported"
+  | "export_failed";
 
 /** 生成文书输出格式。 */
 export type GeneratedDocumentOutputFormat = "pdf" | "docx" | "xlsx";
@@ -62,6 +67,8 @@ export type GeneratedDocumentDto = {
   approvedByDisplayName: string | null;
   generatedAt: string;
   approvedAt: string | null;
+  templateVersionNoSnapshot: number | null;
+  templateDocType: string | null;
 };
 
 /**
@@ -109,6 +116,12 @@ export const GENERATED_DOCUMENT_ERROR_CODES = {
   GD_INVALID_TRANSITION: "GD_INVALID_TRANSITION",
   GD_INVALID_OUTPUT_FORMAT: "GD_INVALID_OUTPUT_FORMAT",
   GD_TITLE_REQUIRED: "GD_TITLE_REQUIRED",
+  GD_TEMPLATE_NOT_FOUND: "GD_TEMPLATE_NOT_FOUND",
+  GD_TEMPLATE_CASE_TYPE_MISMATCH: "GD_TEMPLATE_CASE_TYPE_MISMATCH",
+  GD_EXPORT_IN_PROGRESS: "GD_EXPORT_IN_PROGRESS",
+  GD_EXPORT_FAILED: "GD_EXPORT_FAILED",
+  GD_FILE_NOT_AVAILABLE: "GD_FILE_NOT_AVAILABLE",
+  GD_FILE_PLACEHOLDER_LEGACY: "GD_FILE_PLACEHOLDER_LEGACY",
 } as const;
 
 /**

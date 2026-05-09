@@ -25,6 +25,96 @@
 
 ## 最新产出
 
+- 时间：2026-05-09（D3 文档行政書士实务对照评审 v1 + 80/81/82 三份文档同步修订）
+  问题：80/81/82 三份 D3 设计文档由 AI 初稿，**未对照行政書士市面正常流程**审核；存在范围漏失（如缺委任状 / 翻訳証明）、字段漏失（如缺英字氏名 / 国籍細分）、合规漏洞（印影法律要求 / PII 字段级权限 / 法律责任分担）等系统性问题。如何按行政書士業界実務（行政書士法 + 入管法 + 個人情報保護法 + 申請取次行政書士業務）做完整对照评审？
+  结论（TL;DR）：完成 22 条评审条目（**P0×8 + P1×9 + P2×5**），P0/P1 共 17 条已直接回填到 80/81/82 三份文档（章节扩展、字段表新增、矩阵扩展、状态机说明、新增 §10 法律免責）；P2 5 条明确写入 deferred 区。**关键修正**：① 申請書 PDF 自動填表明确为 **P3 单独 RFC**（不在 D3 范围）；② 必备模板矩阵 7 份扩展到 **11 份**（含 common 三件套：委任状 / 個人情報取扱同意書 / 申請内容真実性誓約書）；③ customer 字段族扩展 4 字段（fullNameEn / fullNameOnResidenceCard / fullNameAlt / nameScript）+ nationality 細分（CN/TW/HK/MO 4 区分）；④ 新增 narrative.* 字段族（applicationReason / familyBackground / businessPlan / additionalRemarks），admin 起案后 free text 入力；⑤ 新增 PII 字段级权限分类（HIGH/MEDIUM/LOW 三级 + can_view_high_pii 控制 + 访问审计）；⑥ 印影法律要求明确（行政書士法施行規則 §11）+ admin UX 提示自行盖印；⑦ 法律责任分担明确（平台 = 模板素材；事務所行政書士本人 = 最终文書责任）+ ToS 第 X 条 + admin 同意 UI；⑧ 保管期限分级（業務帳簿 2 年 / 法人 5 年 / 訴訟時効 7 年 / 永続）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/83-AUDIT-gyoseishoshi-practice-review-2026-05-09.md（22 条评审完整记录 + 落地章节清单）
+  - 行政書士法（昭和 26 年法律第 4 号）§1-2 / §9 / §10
+  - 行政書士法施行規則 §11（職印）
+  - 出入国管理及び難民認定法（2024-04-01 改正反映）
+  - 個人情報保護法 §3
+  - 一般社団法人 日本行政書士会連合会 業務指針
+  - 入管局 在留資格申請手続きガイドブック（2024-06-15）
+  影响面：
+  - 80 RFC：评审历史章节 + §2.3 模板矩阵扩展 + §4.6 印影法律要求 + §11 不做范围扩展（5 项 P2/P3 明确化）
+  - 81 Context Schema：评审历史 + §2 customer 拆分 §2.1-2.7（氏名族扩展 + 国籍细分 + 在留情報 + 委任関係）+ §3.2 案件日期三者 + §4 supporter.statusOfResidence 必填 + 新增 §11 narrative + 新增 §14 PII 分级（章节顺序整理 §11-§16）
+  - 82 模板治理：评审历史 + §0.5 范围限定 + §1.3 客户確認 phase 说明 + §3.1 审核维度扩 3 项（印影占位 / 政治敏感 / 条文版本）+ §4.1 必备矩阵从 7 扩到 11（含 common 三件套）+ §4.1.1 範囲外明确化 + §8.3 retention_policy + 新增 §10 法律免責 / 責任分担 + §11 评审清单扩到 14 项 + §12 实施清单扩到 15 项
+  - 评审会议建议讨论顺序：(a) P0-1 ~ P0-3（范围 / 委任状 / 在留カード氏名）→ (b) P0-7 ~ P0-8（法律责任 / PII 权限）→ (c) P0-4 ~ P0-6（中国系处理 / narrative / 印影）→ (d) P1 批量批准 → (e) P2 5 项明确不做
+  - Deferred（不本轮落地）：印影 PNG 嵌入 / 多语种自动翻译 / 申請書 PDF AcroForm（P3）/ OCR + 翻訳証明 / 業務帳簿自動生成
+  回灌计划：
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/80-rfc-document-rendering-pipeline-2026-05-09.md
+    位置：评审历史 / §2.3 / §4.6 / §11
+    Owner：研发 / 法务（评审）
+    状态：已回填（评审标记：v1.1）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/81-spec-document-rendering-context-schema-v1-2026-05-09.md
+    位置：评审历史 / §2.1-2.7 / §3.2-3.3 / §4 / §11 / §14
+    Owner：研发 / 产品
+    状态：已回填（评审标记：v1.1）
+  - 目标文档：docs/gyoseishoshi_saas_md/_output/82-spec-document-template-governance-2026-05-09.md
+    位置：评审历史 / §1.3 / §3.1 / §4.1 / §4.1.1 / §8.3 / §10 / §11 / §12
+    Owner：研发 / 法务 / 产品
+    状态：已回填（评审标记：v1.1）
+  - 目标文档：03-业务规则与不变量.md
+    位置：新增「行政書士印影は法律要求（行政書士法施行規則 §11）」「業務帳簿保管 2 年（行政書士法 §9）」「PII 字段级权限分类」「文書最终责任 = 事務所行政書士本人」四条不变量
+    Owner：研发 / 产品 / 法务
+    状态：待评审通过后回灌
+  - 目标文档：04-核心流程与状态流转.md §文書生成
+    位置：补充「客户確認」phase 说明 + 修正循环 → 新 versionNo 模式
+    Owner：研发
+    状态：待回灌
+  - 目标文档：99-文档维护与版本记录.md
+    位置：新增「文書 Context Schema / 模板治理 行政書士实务对照评审流程」章节
+    Owner：产品 / 法务
+    状态：待回灌
+
+- 时间：2026-05-09（D3 文書真实化渲染管线设计 — RFC + 上下文 Schema + 模板治理三件落地）
+  问题：D2 阶段 export 链路虽已通（队列 + handler + 状态机 + 前端轮询），但 `generatedDocExportHandler.ts:156-194` 的 `renderDocument` 是占位 stub（`buildMinimalPdf` / `buildMinimalDocx` 只画一行标题，模板/案件/客户/事务所数据全部不读），所有用户、所有 caseType 拿到的都是空白文書。如何系统性把"空白文書"这一业务问题闭环？
+  结论（TL;DR）：拆三层（L1 模板资产 / L2 变量上下文 / L3 渲染管线）+ 一个前移兜底（finalize-time preflight），同步落地三份文档作为评审输入与运营手册。关键决策：① P1 仅 DOCX，PDF 走 P2（B1=是）；② preflight 缺 required 字段 → 拦截定稿（B2=拦截，不允许 `——` 占位）；③ P1 不开放事务所自定义模板上传，平台运营预置 7–8 份官方模板（B3=否）；④ 资料附件不内嵌主文書，主文书 + 资料 ZIP 分开（B4=否）；⑤ 模板生命周期 = 平台运营 + 法务季度复核（B5=是）。新增 `generated_documents.{export_failure_reason, fill_rate}` + `document_templates.{template_storage_key, publish_state, rollout_org_ids}` 列；CI 强制三件契约测试（必备模板矩阵覆盖率 / 模板占位 ⊆ schema / schema 字段 ⊆ Context Schema v1 字典）。
+  关键依据：
+  - docs/gyoseishoshi_saas_md/_output/80-rfc-document-rendering-pipeline-2026-05-09.md（D3 渲染管线 RFC，覆盖 L1/L2/L3 + 灰度 + 回退 + 实施清单 M1–M15）
+  - docs/gyoseishoshi_saas_md/_output/81-spec-document-rendering-context-schema-v1-2026-05-09.md（变量上下文 Schema v1 权威字典：customer / case / supporter / documents / org / today 六大块 + applicableWhen DSL + 派生字段 + fixHint i18n 约定）
+  - docs/gyoseishoshi_saas_md/_output/82-spec-document-template-governance-2026-05-09.md（模板生命周期状态机 / 审核 SLA / 覆盖率契约 / 灰度机制 / 退役流程 / RACI）
+  - docs/gyoseishoshi_saas_md/_output/77-rfc-real-file-generation-2026-05-08.md（前置：D2 队列 / 状态机 / handler 框架）
+  - docs/gyoseishoshi_saas_md/_output/78-MCP-docs-forms-walkthrough-2026-05-09-v7.md §NEW-V7-5 / §NEW-V7-6（症状暴露：模板 seed 漂移 + worker / 轮询缺失）
+  - packages/server/src/modules/core/jobs/handlers/generatedDocExportHandler.ts:156-194（占位 stub）
+  - packages/server/src/modules/core/generated-documents/generatedDocuments.helpers.ts:13-28（D2 状态机）
+  - packages/server/src/infra/db/migrations/048_document_templates.up.sql:6-21（模板表）
+  影响面：
+  - server 渲染管线：handler 改造（loadTemplate → buildContext → preflight → fillDocx → upload）+ 新增 renderer 子模块（mapCustomer / mapCase / mapSupporter / mapOrg / makeToday / preflight / fillDocx）+ 引入 `docx-templates` 依赖（RFC-077 §2.4 已批准）
+  - server 数据库：3 个迁移（059 reason+fill_rate / 060 template_storage_key / 061 publish_state） + 1 个备选（062 rollout_org_ids）
+  - server 端点：finalize 新增 422 + missing payload；export 失败时填 export_failure_reason；新增 GET `/api/document-templates/:id/preview-context-schema`
+  - admin 前端：CaseFormsTab.vue 渲染 missing 清单 + 跳转链接；CaseFormFinalizeModal 预览变量；i18n 三语 fixHint 文案；timeline builder 扩展 export_failed reason
+  - admin 模板管理（运营/法务角色）：草稿编辑 / 提交审核 / 灰度推进 UI（M5）
+  - dev seed：seedDevDocTemplates 扩展 publish_state + 上传 7–8 份官方 docx 到 storage；contract test 三件全开
+  - 兼容老记录：D2 阶段产出的 `status=exported, file_url=NULL` 占位记录不主动 backfill，前端展示「⚠️ 旧版生成，建议重新导出」+ 提供「重新导出」入口
+  - 不做范围：PDF 直出 / 自定义模板上传 / 印影 PNG / 多语种自动翻译 / 在线模板编辑器（全部 P2 单独 RFC）
+  回灌计划：
+  - 目标文档：03-业务规则与不变量.md
+    位置：新增「文書生成 preflight = 定稿门禁」「published 模板不可编辑」两条不变量
+    Owner：研发 / 产品
+    状态：待评审通过后回灌
+  - 目标文档：04-核心流程与状态流转.md
+    位置：§文書生成 — draft → final 加 preflight gate；export 失败时 export_failure_reason 分支
+    Owner：研发
+    状态：待回灌
+  - 目标文档：06-页面规格/案件详情-文书Tab.md
+    位置：export_failed 行展开 missing 清单 + 跳转链接；finalize 模态框预览变量
+    Owner：研发 / 设计
+    状态：待回灌
+  - 目标文档：06-页面规格/系统设置-事务所基本情報.md
+    位置：首次使用 D3 必须补全 4 项（gyoseishoshi_name / license_no / office_address_jp / office_phone）
+    Owner：研发
+    状态：待回灌
+  - 目标文档：07-数据模型.md
+    位置：generated_documents（+ export_failure_reason / fill_rate）；document_templates（+ template_storage_key / publish_state / rollout_org_ids）
+    Owner：研发
+    状态：待回灌
+  - 目标文档：99-文档维护与版本记录.md
+    位置：新增「文書 Context Schema 维护流程」章节，引用 81 / 82
+    Owner：产品 / 法务
+    状态：待回灌
+
 - 时间：2026-05-08（chrome-devtools-mcp 第五轮 / 咨询 → 客户 → 案件 转化链路专项）
   问题：在 70 报告（V2）+ 73 报告（V4）已修复 7 项 P1（NEW-1/2/4 + V3-1/2/3 + P0-2 后端明细）后，
   以 admin 身份从 0 创建一个新线索 LEAD-202605-0010，按白名单状态机推进

@@ -24,6 +24,79 @@
 
 ## 最新追加
 
+- 时间：2026-05-09
+  来源：D3 文档行政書士实务对照评审会话（user 指示「按行政書士市面正常流程评审 + 优化」）
+  主题：80/81/82 三份 D3 文档系统性评审 + 直接落地修改（22 条评审 / P0×8 / P1×9 / P2×5）
+  要点：
+  - 评审基准：行政書士法 §1-2 §9 §10、行政書士法施行規則 §11（職印）、入管法、個人情報保護法、一般社団法人 日本行政書士会連合会 業務指針、入管局ガイドブック、申請取次行政書士業務マニュアル、同业 SaaS（freee 行政書士 / legalon / cloud-sign）实践参照
+  - 评审维度（7 项）：業務範囲 / 文書類型 / 法規遵守 / 業務帳簿 / 入管実務 / PII 保護 / 責任分担
+  - **P0 必改 8 条**（已落地）：
+    - P0-1 申請書 PDF（入管定式）必須明確不在 D3 范围 → P3 单独 RFC（pdf-lib + AcroForm）
+    - P0-2 委任状 = 每案必备，加入 common caseType 必备模板矩阵
+    - P0-3 在留カード氏名・英文表記の欠落 → customer 字段族扩展 4 字段
+    - P0-4 中国系客户 nationality 細分（CN/TW/HK/MO 4 区分）+ 漢字处理（日漢字統一）
+    - P0-5 申請理由書叙述性内容 → 新增 narrative.* 字段族
+    - P0-6 行政書士印影 = 法律要求（行政書士法施行規則 §11）
+    - P0-7 模板法律责任分担 = 事務所行政書士本人最终责任 + ToS 第 X 条
+    - P0-8 PII 字段级权限分类（HIGH/MEDIUM/LOW + can_view_high_pii）
+  - **P1 强建议 9 条**（已落地）：
+    - P1-1 客户確認 = 案件 phase（不是 generated_document state）— 流程图说明
+    - P1-2 supporter.statusOfResidence 必填（applicableWhen 在日 supporter 时）
+    - P1-3 翻訳証明 = P2 单独 RFC，doc_type 命名空间预留
+    - P1-4 業務帳簿保管 2 年（行政書士法 §9）+ retention_policy 字段
+    - P1-5 入管法令版本字段（references_law_version）
+    - P1-6 報酬請求書 / 領収書 = P2 单独 RFC（インボイス制度対応）
+    - P1-7 案件日期三者：作成日 / 申請日 / 提出日
+    - P1-8 同意書 / 誓約書 / 念書 加入 common 必备模板矩阵
+    - P1-9 会社設立 / 許認可 / 相続 = P2 caseType 扩展时各加 1 份代表模板
+  - **P2 deferred 5 条**：印影 PNG 嵌入 / 多语种自动翻译 / 申請書 PDF AcroForm（P3）/ OCR + 翻訳証明 / 業務帳簿自動生成
+  - **必备模板矩阵从 7 份扩到 11 份**：common 三件套（委任状 / 個人情報取扱同意書 / 申請内容真実性誓約書）+ caseType-specific 8 份
+  - **审核维度扩到 8 项**：法律合规 / 文書格式 / **印影占位** / 占位完备 / schema 合理 / 三语兼容 / 政治敏感 / **条文版本追跡**
+  - **Schema 章节重排**：81 §2 拆为 §2.1-2.7（氏名族 / 個人基本属性 / 国籍编码 / 在留情報 / 連絡先住所 / 委任関係 / applicableWhen 示例）；新增 §11 narrative / §14 PII 分级
+  - **新文档 83**：完整评审记录 22 条 + 已落地修改清单 + deferred 区 + 评审会建议讨论顺序
+  - **三份原文同步打 v1.1 评审标记**：80 §2.3 / §4.6 / §11；81 §2.1-2.7 / §3.2-3.3 / §4 / §11 / §14；82 §1.3 / §3.1 / §4.1 / §4.1.1 / §8.3 / §10
+  需要编译到：
+  - 03-业务规则与不变量.md（新增 4 条不变量：印影法律要求 / 業務帳簿保管 2 年 / PII 字段级权限 / 文書最终责任在事務所行政書士本人）
+  - 04-核心流程与状态流转.md §文書生成（客户確認 phase + 修正循环 → 新 versionNo 模式）
+  - 06-页面规格/案件详情-文书Tab.md（narrative 入力 UI / 缺 disclaimer 同意时 finalize 拒否）
+  - 06-页面规格/系统设置-事務所基本情報.md（印影位置占位提示 / disclaimer 同意 UI）
+  - 06-页面规格/系统设置-成员与角色管理.md（can_view_high_pii 角色权限）
+  - 07-数据模型.md（generated_documents.narrative_payload + retention_policy；document_templates.references_law_version + default_retention_policy；users.can_view_high_pii；audit_logs.accessed_fields + disclaimer_acknowledged）
+  - 利用規約 / ToS（第 X 条「文書テンプレート機能の利用」）
+  - 99-文档维护与版本记录.md（新增「行政書士实务对照评审 v1」章节）
+  Owner：研发 / 产品 / 法务（评审）
+  状态：已落地修改 → 评审会通过后回灌权威文档
+
+- 时间：2026-05-09
+  来源：D3 渲染管线设计会话（user feedback「文書都是空白的」+ AI 业务级分析）
+  主题：文書真实化渲染管线 D3 阶段三层设计（L1 模板资产 / L2 变量上下文 / L3 渲染管线）+ 治理规约
+  要点：
+  - **症状定性**：D2 阶段 export 链路虽已通（队列 + handler + 状态机 + 前端轮询），但 `generatedDocExportHandler.ts:156-194` `renderDocument` 是占位 stub（`buildMinimalPdf` / `buildMinimalDocx` 只画一行标题），`templateId` / 案件 / 客户 / 事务所数据全部未读；所有用户、所有 caseType 拿到的都是空白文書 → 业务上等价于功能不可用。
+  - **业务三层定位**（不是只解决渲染那一层）：
+    - **L1 模板资产**：`document_templates.content_body` 默认空字符串（迁移 048）+ `variables_schema` 默认 `'{}'`，模板内容 + 变量字典都是空——P1 必须由平台运营预置 7–8 份官方 DOCX 模板（dependent_visa / work / business_manager 三个 canonical caseType 全覆盖），存 storage（`template_storage_key`），不再使用 `content_body`。
+    - **L2 变量上下文**：定义「文書生成上下文 schema v1」作为模板与数据之间的单一合同（customer / case / supporter / documents / org / today 六大块），运行时由 mapper 从 customers.base_profile / cases.metadata / case_relations / organization_settings 抽取；缺 required 字段 → preflight 失败 → 拒绝定稿/拒绝渲染（业务硬规则：行政書士行业容错极低，不允许打 `——` 占位继续）。
+    - **L3 渲染管线**：handler 内 `loadTemplate → buildContext → preflight → fillDocx (docx-templates) → upload`；`generated_documents` 新增 `export_failure_reason` + `fill_rate` 列；finalize 同步执行 preflight，失败前移到「按定稿之前」就报缺失字段，UX 大幅好转。
+  - **关键业务决策（5 项）**：
+    - B1 = P1 仅 DOCX，PDF 走 P2（行政書士工作流以 docx 为主，用户 Word 内自行另存 PDF）
+    - B2 = preflight 缺失字段 → 拦截定稿（不允许 `——` 占位）
+    - B3 = P1 不开放事务所自定义模板上传（先把官方 7–8 份打磨稳）
+    - B4 = 资料附件不内嵌主文書（主文书 + 资料 ZIP 分开）
+    - B5 = 模板生命周期 = 平台运营 + 法务季度复核
+  - **可观测性**：`generated_documents.fill_rate`（填充率 = 实填字段数 / required+applicable optional 字段数）入库；运营看板 P50/P95，< 95% 告警；按 caseType / templateId 分组定位「哪份模板字段最常缺」。
+  - **灰度与退役**：feature flag `GD_RENDER_PIPELINE_V3`；`document_templates.publish_state` 状态机（draft → review → published → deprecated）+ `rollout_org_ids` 控制；published 不可编辑，改内容必升 versionNo；deprecated 模板不可被新案件选用，但旧案件已快照的 versionNo 仍可重新渲染。
+  - **CI 强制 contract test 三件**：(a) 必备模板矩阵覆盖率（每 canonical caseType 至少 N 份 published）；(b) 模板 docx 占位 ⊆ variables_schema 字段；(c) schema 字段 ⊆ Context Schema v1 字典定义。
+  - **产出文档（已落地到 _output/）**：80（D3 RFC）/ 81（Context Schema v1）/ 82（模板治理规约）。
+  - **不做范围明确**：PDF 直出 / 自定义模板 / 印影 PNG / 多语种 / 在线模板编辑器 → 全部 P2 单独 RFC。
+  需要编译到：
+  - 03-业务规则与不变量.md（新增「文書生成 preflight = 定稿门禁」不变量；新增「published 模板不可编辑」不变量）
+  - 04-核心流程与状态流转.md §文書生成（draft → final 加 preflight gate；export 失败时 export_failure_reason）
+  - 06-页面规格/案件详情-文书Tab.md（export_failed 行展开 missing 清单 + 跳转链接；finalize 模态框预览变量）
+  - 06-页面规格/系统设置-事务所基本情報.md（首次使用 D3 必须补全 gyoseishoshi_name / license_no / office_address_jp / office_phone）
+  - 07-数据模型.md（generated_documents 新增 export_failure_reason / fill_rate；document_templates 新增 template_storage_key / publish_state / rollout_org_ids）
+  - 99-文档维护与版本记录.md（新增「文書 Context Schema 维护流程」章节，引用 81 / 82）
+  Owner：研发 / 产品 / 法务（评审）
+  状态：待编译 → 评审通过后回灌
+
 - 时间：2026-05-07
   来源：R-SETTINGS-01 chrome-devtools-mcp 走查第一轮（系统设置 - 成员与角色管理）
   主题：成员管理 + 角色管理两 tab 列表初次加载即不可用（13 条缺陷 / 2 P0 / 2 P1 / 4 P2 / 5 P3）
@@ -279,3 +352,12 @@
   - 本条 audit 结论可用于后续 UUID 守门 lint 规则设计
   Owner：研发
   状态：已编译（audit 已完成，R3-G-1 修复留下一轮）
+
+---
+
+- **2026-05-09 — 同一统计概念必须有单一来源 (T4/NEW-V7-1)**
+  走查发现进度卡「未知 N/N」显示，根因：blueprint 的 `providedByRole` 未填，落库后 `provided_by_role=NULL`，分组查询 coalesce 为 `unknown`。
+  解决：在 `RequirementBlueprintItem` 类型新增 `providedByRole?: ProvidedByRole`（值域 applicant | supporter | office），三个种子蓝图全量补齐；前端 `adaptProviderProgress` 过滤 `unknown/unspecified + total=0` 的桶。
+  教训：同一概念（资料提供者角色）的分组维度和显示维度必须有单一来源字段，不能依赖 coalesce 兜底。
+  Owner：研发
+  状态：已实施

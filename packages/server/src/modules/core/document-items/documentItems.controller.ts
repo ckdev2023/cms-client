@@ -25,6 +25,7 @@ import {
   type WaiveReasonCode,
 } from "../documents.types";
 import type { RequestContext } from "../tenancy/requestContext";
+import { ValidationAutoRunService } from "../validation-runs/validationAutoRun.service";
 import { DocumentItemsService } from "./documentItems.service";
 
 type HttpRequest = {
@@ -59,6 +60,10 @@ type UpdateSurveyDataBody = {
 
 type WaiveBody = {
   reasonCode: unknown;
+  note?: unknown;
+};
+
+type UnwaiveBody = {
   note?: unknown;
 };
 
@@ -190,12 +195,15 @@ export class DocumentItemsController {
    * 构造函数。
    * @param documentItemsService 资料项服务实例
    * @param casesService 案件服务（S9 readonly 守卫）
+   * @param autoRunService 自动 validation 重算服务
    */
   constructor(
     @Inject(DocumentItemsService)
     private readonly documentItemsService: DocumentItemsService,
     @Inject(CasesService)
     private readonly casesService: CasesService,
+    @Inject(ValidationAutoRunService)
+    private readonly autoRunService: ValidationAutoRunService,
   ) {}
 
   /**
@@ -386,6 +394,35 @@ export class DocumentItemsController {
     await this.assertCaseNotS9(ctx, item.caseId);
 
     return this.documentItemsService.waive(ctx, id, { reasonCode, note });
+  }
+
+  /**
+   * 取消豁免（专用端点，S9 守卫）。
+   * @param req HTTP 请求对象
+   * @param id 资料项 ID
+   * @param body 取消豁免请求体
+   * @returns 更新后的资料项
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post(":id/unwaive")
+  async unwaive(
+    @Req() req: HttpRequest,
+    @Param("id") id: string,
+    @Body() body: UnwaiveBody,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    const note = parseOptionalNullableString(body.note, "note");
+
+    const item = await this.documentItemsService.get(ctx, id);
+    if (!item) throw new BadRequestException("Document item not found");
+
+    await this.assertCaseNotS9(ctx, item.caseId);
+
+    const result = await this.documentItemsService.unwaive(ctx, id, { note });
+    this.autoRunService.schedule(ctx, item.caseId, "document_item.unwaive");
+    return result;
   }
 
   /**

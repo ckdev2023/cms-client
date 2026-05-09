@@ -34,20 +34,19 @@ function makeGdRow(overrides: Record<string, unknown> = {}) {
     approved_by: null,
     generated_at: "2026-01-01T00:00:00.000Z",
     approved_at: null,
+    template_version_no_snapshot: null,
+    template_doc_type: null,
     generated_by_display_name: "Admin User",
     approved_by_display_name: null,
     ...overrides,
   };
 }
-
 type QueryFn = (
   sql: string,
   params?: unknown[],
 ) => Promise<{ rows: unknown[]; rowCount: number }>;
-
 const ok = (rows: unknown[] = [], rowCount = rows.length) =>
   Promise.resolve({ rows, rowCount });
-
 function makePool(qf: QueryFn) {
   return {
     connect: () =>
@@ -57,7 +56,6 @@ function makePool(qf: QueryFn) {
       }),
   } as unknown as Pool;
 }
-
 function makeSpyTimeline() {
   const calls: TimelineWriteInput[] = [];
   const service = {
@@ -68,11 +66,9 @@ function makeSpyTimeline() {
   } as unknown as TimelineService;
   return { service, calls };
 }
-
 function ctx(role: "staff" | "manager" | "viewer" = "staff") {
   return { orgId: ORG_ID, userId: USER_ID, role };
 }
-
 function makeServiceForStatus(
   existingStatus: string,
   timeline: { service: TimelineService; calls: TimelineWriteInput[] },
@@ -93,8 +89,6 @@ function makeServiceForStatus(
   });
   return new GeneratedDocumentsService(pool, timeline.service);
 }
-
-// ─── Finalize: status machine ────────────────────────────────────
 
 void test("finalize (draft → final) succeeds", async () => {
   const tl = makeSpyTimeline();
@@ -250,16 +244,54 @@ void test("finalize (final → final) does NOT overwrite approved_by", async () 
 
 // ─── Export: status machine ──────────────────────────────────────
 
-void test("export (final → exported) succeeds", async () => {
+void test("export (final → exporting) succeeds", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("final", tl);
+  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
+  assert.ok(dto);
+});
+
+void test("export (exporting → exported) succeeds", async () => {
+  const tl = makeSpyTimeline();
+  const svc = makeServiceForStatus("exporting", tl);
   const dto = await svc.update(ctx(), GD_ID, { status: "exported" });
+  assert.ok(dto);
+});
+
+void test("export (exporting → export_failed) succeeds", async () => {
+  const tl = makeSpyTimeline();
+  const svc = makeServiceForStatus("exporting", tl);
+  const dto = await svc.update(ctx(), GD_ID, { status: "export_failed" });
+  assert.ok(dto);
+});
+
+void test("export retry (export_failed → exporting) succeeds", async () => {
+  const tl = makeSpyTimeline();
+  const svc = makeServiceForStatus("export_failed", tl);
+  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
   assert.ok(dto);
 });
 
 void test("export rejects draft → exported (must finalize first)", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("draft", tl);
+  await assert.rejects(
+    () => svc.update(ctx(), GD_ID, { status: "exported" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION,
+        ),
+      );
+      return true;
+    },
+  );
+});
+
+void test("export rejects final → exported (must go through exporting)", async () => {
+  const tl = makeSpyTimeline();
+  const svc = makeServiceForStatus("final", tl);
   await assert.rejects(
     () => svc.update(ctx(), GD_ID, { status: "exported" }),
     (e) => {
@@ -281,35 +313,6 @@ void test("export is idempotent: exported → exported succeeds", async () => {
   const svc = makeServiceForStatus("exported", tl);
   const dto = await svc.update(ctx(), GD_ID, { status: "exported" });
   assert.ok(dto);
-});
-
-// ─── Export: fileUrl placeholder ─────────────────────────────────
-
-void test("export can set fileUrl placeholder via update", async () => {
-  const tl = makeSpyTimeline();
-  const captured: { sql: string; params?: unknown[] }[] = [];
-  const svc = makeServiceForStatus("final", tl, (sql, params) => {
-    captured.push({ sql, params });
-  });
-
-  const placeholderUrl = `placeholder://generated-documents/${GD_ID}.pdf`;
-  await svc.update(ctx(), GD_ID, {
-    status: "exported",
-    fileUrl: placeholderUrl,
-  });
-
-  const updateCall = captured.find((c) =>
-    c.sql.includes("update generated_documents"),
-  );
-  assert.ok(updateCall, "must emit UPDATE SQL");
-  assert.ok(
-    updateCall.sql.includes("file_url"),
-    "UPDATE must set file_url on export",
-  );
-  assert.ok(
-    updateCall.params?.includes(placeholderUrl),
-    "file_url param must be the placeholder URL",
-  );
 });
 
 // ─── Timeline: generic updated event on finalize ─────────────────
@@ -372,15 +375,13 @@ void test("export writes generated_document.updated timeline event", async () =>
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("final", tl);
 
-  await svc.update(ctx(), GD_ID, { status: "exported" });
+  await svc.update(ctx(), GD_ID, { status: "exporting" });
 
   assert.equal(tl.calls.length, 1, "exactly one timeline event");
   assert.equal(tl.calls[0].action, "generated_document.updated");
   assert.equal(tl.calls[0].entityType, "case");
   assert.equal(tl.calls[0].entityId, CASE_ID);
 });
-
-// ─── Export: repeated trace (每次留痕) ───────────────────────────
 
 void test("two consecutive exports produce two timeline writes", async () => {
   const tl = makeSpyTimeline();
@@ -395,8 +396,6 @@ void test("two consecutive exports produce two timeline writes", async () => {
   assert.equal(tl.calls[0].payload.generatedDocumentId, GD_ID);
   assert.equal(tl.calls[1].payload.generatedDocumentId, GD_ID);
 });
-
-// ─── Timeline: rejected transition produces no timeline write ────
 
 void test("rejected transition does not write timeline", async () => {
   const tl = makeSpyTimeline();

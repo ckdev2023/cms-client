@@ -22,6 +22,7 @@ export const VALID_REQ = {
   category: "questionnaire",
   requiredFlag: true,
   ownerSide: "customer",
+  providedByRole: "supporter",
   sortOrder: 1,
 };
 

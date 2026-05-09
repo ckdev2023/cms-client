@@ -14,6 +14,7 @@ import type { GeneratedDocumentDto } from "../cases/cases.types-generated-docs";
 import { CasesService } from "../cases/cases.service";
 import { GeneratedDocumentsController } from "./generatedDocuments.controller";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
+import type { RedisClient } from "../../../infra/redis/createRedisClient";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
 const USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -116,6 +117,8 @@ function gdEntity(
     approvedBy: null,
     generatedAt: "2026-01-01T00:00:00.000Z",
     approvedAt: null,
+    templateVersionNoSnapshot: null,
+    templateDocType: null,
     ...overrides,
   };
 }
@@ -138,6 +141,8 @@ function gdDto(
     approvedByDisplayName: "Test",
     generatedAt: "2026-01-01T00:00:00.000Z",
     approvedAt: "2026-01-02T00:00:00.000Z",
+    templateVersionNoSnapshot: null,
+    templateDocType: null,
     ...overrides,
   };
 }
@@ -164,6 +169,20 @@ function cases(overrides: Partial<CasesService> = {}): CasesService {
   } as unknown as CasesService;
 }
 
+const fakeRedisClient = {
+  isOpen: true,
+  rPush: () => Promise.resolve(1),
+  lPop: () => Promise.resolve(null),
+  connect: () => Promise.resolve(),
+} as unknown as RedisClient;
+
+const fakeStorageAdapter = {
+  upload: () => Promise.resolve(),
+  download: () => Promise.resolve(Buffer.from("stub")),
+  remove: () => Promise.resolve(),
+  getSignedUrl: () => Promise.resolve("https://example.test/file"),
+};
+
 function ctrl(opts: {
   entity?: GeneratedDocument;
   svc?: Partial<GeneratedDocumentsService>;
@@ -184,6 +203,8 @@ function ctrl(opts: {
     svc,
     cases(opts.cs),
     perms(opts.perm),
+    fakeRedisClient,
+    fakeStorageAdapter,
   );
 }
 
@@ -325,7 +346,7 @@ void test("finalize rejects S9 case", async () => {
 
 // ─── export: happy path ─────────────────────────────────────────
 
-void test("export calls update with status=exported, placeholder fileUrl, and skipTimelineWrite", async () => {
+void test("export calls update with status=exporting and skipTimelineWrite", async () => {
   let input: Record<string, unknown> | undefined;
   let opts: Record<string, unknown> | undefined;
   const c = ctrl({
@@ -339,26 +360,26 @@ void test("export calls update with status=exported, placeholder fileUrl, and sk
       ) => {
         input = i;
         opts = o;
-        return Promise.resolve(gdDto({ status: "exported" }));
+        return Promise.resolve(gdDto({ status: "exporting" }));
       },
     },
   });
   const r = await c.export(staffReq as never, GD_ID);
-  assert.equal(r.status, "exported");
+  assert.equal(r.status, "exporting");
   assert.ok(input, "update must have been called");
-  assert.equal(input.status, "exported");
-  assert.equal(input.fileUrl, `placeholder://generated-documents/${GD_ID}.pdf`);
+  assert.equal(input.status, "exporting");
+  assert.equal(input.fileUrl, undefined);
   assert.deepEqual(opts, { skipTimelineWrite: true });
 });
 
-// ─── export: timeline written every time ─────────────────────────
+// ─── export: timeline written with export_queued action ─────────
 
-void test("export writes exported timeline on each call", async () => {
+void test("export writes export_queued timeline", async () => {
   const tlCalls: Record<string, unknown>[] = [];
   const c = ctrl({
     entity: gdEntity({ status: "final" }),
     svc: {
-      update: () => Promise.resolve(gdDto({ status: "exported" })),
+      update: () => Promise.resolve(gdDto({ status: "exporting" })),
       writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
         tlCalls.push(i);
         return Promise.resolve();
@@ -366,31 +387,38 @@ void test("export writes exported timeline on each call", async () => {
     },
   });
   await c.export(staffReq as never, GD_ID);
-  await c.export(staffReq as never, GD_ID);
-  assert.equal(tlCalls.length, 2);
-  assert.equal(tlCalls[0].action, "generated_document.exported");
-  assert.equal(tlCalls[1].action, "generated_document.exported");
+  assert.equal(tlCalls.length, 1);
+  assert.equal(tlCalls[0].action, "generated_document.export_queued");
 });
 
-// ─── export: placeholder fileUrl uses outputFormat ───────────────
+// ─── export: 409 when already exporting ──────────────────────────
 
-void test("export placeholder uses entity outputFormat", async () => {
-  let input: Record<string, unknown> | undefined;
+void test("export returns 409 when already exporting", async () => {
   const c = ctrl({
-    entity: gdEntity({ status: "final", outputFormat: "docx" }),
+    entity: gdEntity({ status: "exporting" }),
+  });
+  await assert.rejects(
+    () => c.export(staffReq as never, GD_ID),
+    (e) => {
+      assert.ok(
+        e instanceof Error && e.constructor.name === "ConflictException",
+      );
+      return true;
+    },
+  );
+});
+
+// ─── export: allows retry from export_failed ─────────────────────
+
+void test("export allows retry from export_failed status", async () => {
+  const c = ctrl({
+    entity: gdEntity({ status: "export_failed" }),
     svc: {
-      update: (_c: unknown, _id: string, i: Record<string, unknown>) => {
-        input = i;
-        return Promise.resolve(gdDto({ status: "exported" }));
-      },
+      update: () => Promise.resolve(gdDto({ status: "exporting" })),
     },
   });
-  await c.export(staffReq as never, GD_ID);
-  assert.ok(input, "update must have been called");
-  assert.equal(
-    input.fileUrl,
-    `placeholder://generated-documents/${GD_ID}.docx`,
-  );
+  const r = await c.export(staffReq as never, GD_ID);
+  assert.equal(r.status, "exporting");
 });
 
 // ─── export: auth guard ──────────────────────────────────────────
@@ -438,14 +466,14 @@ void test("export throws ForbiddenException when canEditCase denies", async () =
   );
 });
 
-// ─── export: timeline payload includes fileUrl ───────────────────
+// ─── export: timeline payload includes title ─────────────────────
 
-void test("export timeline payload includes fileUrl in extra", async () => {
+void test("export timeline payload includes title in extra", async () => {
   let tlInput: Record<string, unknown> | undefined;
   const c = ctrl({
-    entity: gdEntity({ status: "final" }),
+    entity: gdEntity({ status: "final", title: "申請書" }),
     svc: {
-      update: () => Promise.resolve(gdDto({ status: "exported" })),
+      update: () => Promise.resolve(gdDto({ status: "exporting" })),
       writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
         tlInput = i;
         return Promise.resolve();
@@ -455,5 +483,5 @@ void test("export timeline payload includes fileUrl in extra", async () => {
   await c.export(staffReq as never, GD_ID);
   assert.ok(tlInput);
   const extra = tlInput.extra as Record<string, unknown>;
-  assert.equal(extra.fileUrl, `placeholder://generated-documents/${GD_ID}.pdf`);
+  assert.equal(extra.title, "申請書");
 });

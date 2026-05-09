@@ -8,6 +8,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "personal",
       requiredFlag: true,
       ownerSide: "applicant",
+      providedByRole: "applicant",
       sortOrder: 1,
     },
     {
@@ -16,6 +17,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "personal",
       requiredFlag: true,
       ownerSide: "applicant",
+      providedByRole: "applicant",
       sortOrder: 2,
     },
     {
@@ -24,6 +26,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "personal",
       requiredFlag: true,
       ownerSide: "applicant",
+      providedByRole: "applicant",
       sortOrder: 3,
     },
     {
@@ -32,6 +35,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: true,
       ownerSide: "office",
+      providedByRole: "office",
       sortOrder: 4,
       description: "行政書士事務所が作成",
     },
@@ -41,6 +45,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: true,
       ownerSide: "customer",
+      providedByRole: "supporter",
       sortOrder: 5,
     },
     {
@@ -49,6 +54,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: true,
       ownerSide: "customer",
+      providedByRole: "supporter",
       sortOrder: 6,
     },
     {
@@ -57,6 +63,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: true,
       ownerSide: "customer",
+      providedByRole: "supporter",
       sortOrder: 7,
     },
     {
@@ -65,6 +72,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: false,
       ownerSide: "customer",
+      providedByRole: "supporter",
       sortOrder: 8,
       description: "事務所の内部・外観写真",
     },
@@ -74,6 +82,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: false,
       ownerSide: "customer",
+      providedByRole: "supporter",
       sortOrder: 9,
       description: "更新・既存法人の場合に必要",
     },
@@ -83,6 +92,7 @@ export const BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintIt
       category: "company",
       requiredFlag: false,
       ownerSide: "office",
+      providedByRole: "office",
       sortOrder: 10,
     },
   ];

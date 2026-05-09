@@ -66,9 +66,13 @@ vi.mock("../model/useCaseDocumentsTab", () => ({
       docItemOptions: ref([]),
       versionLabel: ref(""),
       canSubmit: ref(false),
+      suggestedPath: ref(""),
+      normalizedPath: ref(""),
       closeModal: vi.fn(),
       updateField: vi.fn(),
       submit: vi.fn(),
+      applySuggestedPath: vi.fn(),
+      resetPath: vi.fn(),
     },
     addItem: {
       open: ref(false),
@@ -85,6 +89,7 @@ vi.mock("../model/useCaseDocumentsTab", () => ({
     handleRowRegister: vi.fn(),
     handleRowReference: vi.fn(),
     handleRowWaive: vi.fn(),
+    handleRowUnwaive: vi.fn(),
     handleConfirmWaive: vi.fn(),
     handleConfirmReference: vi.fn(),
     handleRegisterClick: vi.fn(),
@@ -144,7 +149,7 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
   describe("zh-CN completion label", () => {
     it("renders collected/total with zh format", () => {
       const html = mountTab("zh-CN", buildDetail(mixedGroups)).html();
-      expect(html).toContain("1 / 2 完成");
+      expect(html).toContain("1 / 2 已通过审核");
     });
 
     it("renders empty label when all waived", () => {
@@ -156,8 +161,8 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
   describe("en-US completion label", () => {
     it("renders collected/total with en format", () => {
       const html = mountTab("en-US", buildDetail(mixedGroups)).html();
-      expect(html).toContain("1 / 2 completed");
-      expect(html).not.toContain("完成");
+      expect(html).toContain("1 / 2 approved");
+      expect(html).not.toContain("已通过审核");
     });
 
     it("renders empty label when all waived", () => {
@@ -170,8 +175,8 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
   describe("ja-JP completion label", () => {
     it("renders collected/total with ja format", () => {
       const html = mountTab("ja-JP", buildDetail(mixedGroups)).html();
-      expect(html).toContain("1 / 2 完了");
-      expect(html).not.toContain("1 / 2 完成");
+      expect(html).toContain("1 / 2 承認済み");
+      expect(html).not.toContain("1 / 2 已通过审核");
     });
 
     it("renders empty label when all waived", () => {
@@ -185,21 +190,21 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
     it("zh-CN overall shows collected/total", () => {
       const detail = buildDetail(mixedGroups);
       const html = mountTab("zh-CN", detail).html();
-      expect(html).toContain("1 / 2 完成");
+      expect(html).toContain("1 / 2 已通过审核");
       expect(html).toContain("50%");
     });
 
-    it("en-US overall shows completed", () => {
+    it("en-US overall shows approved", () => {
       const detail = buildDetail(mixedGroups);
       const html = mountTab("en-US", detail).html();
-      expect(html).toContain("1 / 2 completed");
+      expect(html).toContain("1 / 2 approved");
       expect(html).toContain("50%");
     });
 
-    it("ja-JP overall shows 完了", () => {
+    it("ja-JP overall shows 承認済み", () => {
       const detail = buildDetail(mixedGroups);
       const html = mountTab("ja-JP", detail).html();
-      expect(html).toContain("1 / 2 完了");
+      expect(html).toContain("1 / 2 承認済み");
       expect(html).toContain("50%");
     });
   });

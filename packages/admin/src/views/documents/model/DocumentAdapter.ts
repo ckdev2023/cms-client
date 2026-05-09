@@ -33,12 +33,27 @@ const OWNER_SIDE_PROVIDER_MAP: Record<string, DocumentProviderType> = {
   guarantor: "dependent_guarantor",
   dependent_guarantor: "dependent_guarantor",
   family: "dependent_guarantor",
+  supporter: "dependent_guarantor",
+  customer: "dependent_guarantor",
   employer: "employer_org",
   employer_org: "employer_org",
   company: "employer_org",
   office: "office_internal",
   office_internal: "office_internal",
   internal: "office_internal",
+};
+
+/**
+ * `provided_by_role`（蓝图派生字段）→ 资料中心 4 类提供方的归一化映射。
+ *
+ * 与「按提供方完成率」卡片使用同一权威字段，确保详情列表分组与卡片一致。
+ */
+const PROVIDED_BY_ROLE_PROVIDER_MAP: Record<string, DocumentProviderType> = {
+  applicant: "main_applicant",
+  supporter: "dependent_guarantor",
+  guarantor: "dependent_guarantor",
+  employer: "employer_org",
+  office: "office_internal",
 };
 
 /**
@@ -73,12 +88,18 @@ export interface DocumentItemDtoLike {
    *
    */
   lastFollowUpAt: string | null;
-  /** 跨案件引用计数（后端 list 派生字段提供时使用，缺省回退到 1）。 */
+  /** 跨案件引用计数（后端 list 派生字段提供时使用，缺省回退到 0 = 零引用 / 首次登记）。 */
   referenceCount?: number;
   /** 资料项类别（`standard` / `questionnaire` / 等），影响行内动作守卫。 */
   category?: string;
   /** Blueprint 资料编号（kebab-case slug，如 `fs-passport-copy`）。 */
   checklistItemCode?: string;
+  /**
+   * Blueprint 派生的「资料提供方分组」字段（`applicant` / `supporter` / `office`）。
+   *
+   * 优先用于资料分组归一；缺省时按 {@link DocumentItemDtoLike.ownerSide} 兜底。
+   */
+  providedByRole?: string | null;
 }
 
 /** 案件摘要 → 用于补齐 `DocumentListItem.caseName`。 */
@@ -117,6 +138,27 @@ export function mapOwnerSideToProvider(
   ownerSide: string,
 ): DocumentProviderType {
   return OWNER_SIDE_PROVIDER_MAP[ownerSide] ?? "main_applicant";
+}
+
+/**
+ * 将后端 `providedByRole`（优先）+ `ownerSide`（兜底）映射到资料中心 4 类提供方枚举。
+ *
+ * - `providedByRole` 是蓝图派生字段，直接对应资料分组；若有值优先使用。
+ * - `providedByRole` 为 `null/undefined/未识别` 时回退到 `ownerSide` 映射，保持向后兼容。
+ *
+ * @param providedByRole - 后端 `document_items.provided_by_role`（可能为 null）
+ * @param ownerSide - 后端 `document_items.owner_side` 值
+ * @returns 资料提供方枚举
+ */
+export function resolveProvider(
+  providedByRole: string | null | undefined,
+  ownerSide: string,
+): DocumentProviderType {
+  if (providedByRole) {
+    const mapped = PROVIDED_BY_ROLE_PROVIDER_MAP[providedByRole];
+    if (mapped) return mapped;
+  }
+  return mapOwnerSideToProvider(ownerSide);
 }
 
 /**
@@ -169,14 +211,14 @@ export function adaptDocumentItem(
   const dueDate = toIsoDate(row.dueAt);
   const lastReminderAt = toIsoMinute(row.lastFollowUpAt);
   const caseName = caseNameOf(row.caseId) ?? row.caseId;
-  const referenceCount = row.referenceCount ?? 1;
+  const referenceCount = row.referenceCount ?? 0;
 
   return {
     id: row.id,
     name: row.name,
     caseId: row.caseId,
     caseName,
-    provider: mapOwnerSideToProvider(row.ownerSide),
+    provider: resolveProvider(row.providedByRole, row.ownerSide),
     status,
     dueDate,
     dueDateLabel: dueDate ?? "—",

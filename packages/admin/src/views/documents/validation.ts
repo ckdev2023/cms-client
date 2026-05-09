@@ -28,6 +28,28 @@ export function validateRelativePath(path: string): string | null {
   return null;
 }
 
+/**
+ * 前端镜像的 `normalizeRelativePath`（与服务端 `documentFiles.shared.ts` 规则等价）。
+ *
+ * @param value - 原始路径字符串
+ * @returns 归一化后路径；不合法时返回 `null`
+ */
+export function normalizeRelativePathFront(value: string): string | null {
+  const trimmed = value.trim().replace(/\\/g, "/");
+  if (trimmed.length === 0) return null;
+  if (
+    trimmed.startsWith("/") ||
+    trimmed.startsWith("~") ||
+    /^[A-Za-z]:[/\\]/.test(value.trim())
+  ) {
+    return null;
+  }
+  const segments = trimmed.split("/");
+  if (segments.some((seg) => seg.length === 0 || seg === ".")) return null;
+  if (segments.includes("..")) return null;
+  return trimmed;
+}
+
 // ─── Completion rate (§6.3) ─────────────────────────────────────
 
 /**

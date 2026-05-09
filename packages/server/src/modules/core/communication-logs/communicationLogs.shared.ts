@@ -153,6 +153,10 @@ export function mapCommunicationLogRow(
 /**
  * Maps a Drizzle select row into the domain communication log shape.
  *
+ * Drizzle スキーマで `timestamp({ mode: "string" })` を使っているため
+ * 生で受け取ると PostgreSQL テキスト形式（`"2026-05-08 18:43:06.783546+00"`）
+ * になる。API 契約は ISO 8601 のため、共通ヘルパーを通して正規化する。
+ *
  * @param row Communication log row returned from Drizzle.
  * @returns Communication log in API/domain format.
  */
@@ -173,8 +177,8 @@ export function mapCommunicationLogRecord(
     visibleToClient: row.visibleToClient,
     createdBy: row.createdBy,
     followUpRequired: row.followUpRequired,
-    followUpDueAt: row.followUpDueAt,
-    createdAt: row.createdAt,
+    followUpDueAt: toTimestampStringOrNull(row.followUpDueAt),
+    createdAt: requireTimestampString(row.createdAt, "created_at"),
   };
 }
 

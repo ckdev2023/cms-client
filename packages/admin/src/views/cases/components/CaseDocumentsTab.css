@@ -208,6 +208,12 @@
   white-space: nowrap;
 }
 
+.docs-tab__global-progress-detail {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-4);
+  margin-left: 4px;
+}
+
 .docs-tab__header-actions {
   display: flex;
   gap: 8px;
@@ -244,6 +250,12 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
+}
+
+.docs-tab__group-count-detail {
+  font-weight: var(--font-weight-regular);
+  color: var(--color-text-4);
+  margin-left: 4px;
 }
 
 .docs-tab__group-bar {

@@ -40,12 +40,14 @@ function makeI18n() {
               status: {
                 draft: "草稿",
                 final: "已定稿",
+                exporting: "导出中…",
                 exported: "已导出",
+                export_failed: "导出失败",
               },
               docType: {
                 application_form: "申请书",
               },
-              placeholderBadge: "占位 URL · P1 落地",
+              retryExportAction: "重试导出",
               downloadAction: "下载文件",
               metaApprovedAt: "{action}：{name} · {time}",
             },
@@ -81,7 +83,8 @@ function buildGeneratedDoc(
     tone: "primary",
     backendStatus: "draft",
     fileUrl: null,
-    isPlaceholderFile: false,
+    fileUrlIsPlaceholder: false,
+    downloadUrl: null,
     approvedBy: null,
     approvedAt: null,
     ...overrides,
@@ -231,8 +234,8 @@ describe("CaseFormsTab S9 readonly — read-only content still visible", () => {
       [
         buildGeneratedDoc({
           backendStatus: "exported",
-          fileUrl: "https://cdn.example.com/doc.pdf",
-          isPlaceholderFile: false,
+          fileUrl: "generated-documents/org-001/doc-1/v1.docx",
+          downloadUrl: "/api/generated-documents/doc-1/file",
         }),
       ],
     );
@@ -240,7 +243,7 @@ describe("CaseFormsTab S9 readonly — read-only content still visible", () => {
 
     const link = w.find("[data-testid='download-link']");
     expect(link.exists()).toBe(true);
-    expect(link.attributes("href")).toBe("https://cdn.example.com/doc.pdf");
+    expect(link.attributes("href")).toBe("/api/generated-documents/doc-1/file");
   });
 
   it("readonly=true: only templates, no generated → empty state shown", () => {

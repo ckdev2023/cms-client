@@ -1,20 +1,31 @@
 /**
- * DB 行の timestamp 値を ISO 文字列へ正規化する共有ヘルパー。
+ * DB 行の timestamp 値を ISO 8601 文字列へ正規化する共有ヘルパー。
  *
  * pg ドライバは `timestamptz` を `Date` で返すこともあれば
- * `string` のまま返すこともあるため、両方を統一的に扱う。
+ * Drizzle の `mode: "string"` 設定下では `string`（PostgreSQL テキスト形式：
+ * 例 `"2026-05-08 18:43:06.783546+00"`）のまま返すこともあるため、両方を
+ * 統一的に ISO 8601（例 `"2026-05-08T18:43:06.783Z"`）へ正規化する。
+ *
+ * 既に ISO 形式（`T` セパレータ含み）の文字列はそのまま返す。
  */
+
+function normalizeTimestampString(value: string): string {
+  if (value.includes("T")) return value;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+  return parsed.toISOString();
+}
 
 /**
  * null 許容の timestamp 変換。
  *
  * @param value DB から取得した値
- * @returns ISO 文字列、または null
+ * @returns ISO 8601 文字列、または null
  */
 export function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
-  if (typeof value === "string") return value;
   if (value instanceof Date) return value.toISOString();
+  if (typeof value === "string") return normalizeTimestampString(value);
   return null;
 }
 

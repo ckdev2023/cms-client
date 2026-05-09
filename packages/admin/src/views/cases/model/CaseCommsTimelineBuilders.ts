@@ -170,6 +170,29 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "document_item.updated": () => ({
     key: "cases.log.timeline.documentItemUpdated",
   }),
+  "document_item.transitioned": (p) => {
+    const suffix = pickFirst(p, ["to", "toStatus"]);
+    return {
+      key: "cases.log.timeline.documentItemTransitioned",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "document_item.waived": (p) => {
+    const suffix = pickFirst(p, ["reasonCode", "reason_code"]);
+    return {
+      key: "cases.log.timeline.documentItemWaived",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "document_item.unwaived": () => ({
+    key: "cases.log.timeline.documentItemUnwaived",
+  }),
+  "document_item.deleted": () => ({
+    key: "cases.log.timeline.documentItemDeleted",
+  }),
+  "document_item.survey_data_updated": () => ({
+    key: "cases.log.timeline.documentItemSurveyDataUpdated",
+  }),
   "document_file.created": (p) => {
     const suffix = pickFirst(p, ["fileName", "name"]);
     return {
@@ -231,6 +254,13 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
   "validation_run.failed": () => ({
     key: "cases.log.timeline.validationRunFailed",
   }),
+  "validation_run.auto_failed": (p) => {
+    const suffix = pickFirst(p, ["trigger"]);
+    return {
+      key: "cases.log.timeline.validationRunAutoFailed",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "validation_run.executed": (p) => {
     const status = pickFirst(p, ["resultStatus", "result_status"]);
     if (status === "passed")
@@ -270,6 +300,20 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
     const suffix = pickFirst(p, ["title", "templateName", "name"]);
     return {
       key: "cases.log.timeline.generatedDocumentExported",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "generated_document.export_queued": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentExportQueued",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
+  "generated_document.export_failed": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentExportFailed",
       params: { suffix, colonSuffix: formatColonSuffix(suffix) },
     };
   },

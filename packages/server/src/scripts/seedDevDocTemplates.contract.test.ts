@@ -21,6 +21,8 @@ const CANONICAL_CASE_TYPE_CODES = [
   "other",
 ] as const;
 
+const CASE_TEMPLATE_CASE_TYPES = CASE_TEMPLATE_SEEDS.map((s) => s.caseType);
+
 void describe("seedDevDocTemplates contract", () => {
   const docTemplateCaseTypes = new Set(
     DOC_TEMPLATE_SEEDS.map((s) => s.caseType),
@@ -38,8 +40,7 @@ void describe("seedDevDocTemplates contract", () => {
   });
 
   void test("covers all CASE_TEMPLATE_SEEDS caseType values", () => {
-    const caseTemplateCaseTypes = CASE_TEMPLATE_SEEDS.map((s) => s.caseType);
-    const missing = caseTemplateCaseTypes.filter(
+    const missing = CASE_TEMPLATE_CASE_TYPES.filter(
       (code) => !docTemplateCaseTypes.has(code),
     );
     assert.deepEqual(
@@ -47,5 +48,26 @@ void describe("seedDevDocTemplates contract", () => {
       [],
       `DOC_TEMPLATE_SEEDS is missing caseType entries for CASE_TEMPLATE_SEEDS values: ${missing.join(", ")}`,
     );
+  });
+
+  void test("canonical three blueprints each have at least 2 active doc templates", () => {
+    for (const caseType of CASE_TEMPLATE_CASE_TYPES) {
+      const count = DOC_TEMPLATE_SEEDS.filter(
+        (s) => s.caseType === caseType,
+      ).length;
+      assert.ok(
+        count >= 2,
+        `caseType '${caseType}' has only ${String(count)} doc template(s), expected >= 2`,
+      );
+    }
+  });
+
+  void test("no duplicate seed IDs", () => {
+    const ids = DOC_TEMPLATE_SEEDS.map((s) => s.id);
+    const seen = new Set<string>();
+    for (const id of ids) {
+      assert.ok(!seen.has(id), `Duplicate seed ID: ${id}`);
+      seen.add(id);
+    }
   });
 });

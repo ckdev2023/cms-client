@@ -1,6 +1,5 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-
 import {
   SURVEY_DATA_CATEGORY,
   DOCUMENT_ITEM_CATEGORIES,
@@ -33,6 +32,7 @@ function makeRow(
     reviewed_at: null,
     due_at: null,
     owner_side: "customer",
+    provided_by_role: "supporter",
     last_follow_up_at: null,
     note: null,
     category: "questionnaire",

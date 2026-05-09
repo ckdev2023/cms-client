@@ -27,8 +27,9 @@ const emit = defineEmits<{
 const backdropRef = ref<HTMLElement | null>(null);
 
 const localTitle = ref("");
-const localOutputFormat = ref("pdf");
+const localOutputFormat = ref("docx");
 const localTemplateId = ref<string | null>(null);
+const titleManuallyEdited = ref(false);
 
 const resolvedTemplates = computed(() => props.templates ?? []);
 const hasTemplates = computed(() => resolvedTemplates.value.length > 0);
@@ -38,13 +39,26 @@ watch(
   (isOpen) => {
     if (isOpen) {
       localTitle.value = props.caseName ?? "";
-      localOutputFormat.value = "pdf";
+      localOutputFormat.value = "docx";
       localTemplateId.value = props.initialTemplateId ?? null;
+      titleManuallyEdited.value = false;
       nextTick(() => backdropRef.value?.focus());
     }
   },
   { immediate: true },
 );
+
+watch(localTemplateId, (templateId) => {
+  if (titleManuallyEdited.value) return;
+  if (templateId) {
+    const tpl = resolvedTemplates.value.find((t) => t.id === templateId);
+    if (tpl) {
+      localTitle.value = tpl.name;
+      return;
+    }
+  }
+  localTitle.value = props.caseName ?? "";
+});
 
 /**
  * 提交可用性判定。
@@ -53,6 +67,16 @@ watch(
  */
 function canSubmit(): boolean {
   return localTitle.value.trim().length > 0 && !props.submitting;
+}
+
+/**
+ * 处理标题输入事件，标记用户已手动编辑，防止后续选模板覆盖输入。
+ *
+ * @param event 文书标题输入框的 input 事件
+ */
+function onTitleInput(event: Event): void {
+  localTitle.value = (event.target as HTMLInputElement).value;
+  titleManuallyEdited.value = true;
 }
 
 /** 提交生成文書表单。 */
@@ -168,7 +192,7 @@ function handleSubmit(): void {
               :value="localTitle"
               :disabled="props.submitting"
               data-testid="form-gen-title-input"
-              @input="localTitle = ($event.target as HTMLInputElement).value"
+              @input="onTitleInput($event)"
             />
           </label>
 

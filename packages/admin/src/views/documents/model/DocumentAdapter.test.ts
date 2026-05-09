@@ -4,6 +4,7 @@ import {
   adaptDocumentItems,
   mapBackendStatus,
   mapOwnerSideToProvider,
+  resolveProvider,
   type DocumentItemDtoLike,
 } from "./DocumentAdapter";
 
@@ -47,9 +48,29 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
   it("maps owner_side to provider enum with sensible fallbacks", () => {
     expect(mapOwnerSideToProvider("applicant")).toBe("main_applicant");
     expect(mapOwnerSideToProvider("guarantor")).toBe("dependent_guarantor");
+    expect(mapOwnerSideToProvider("supporter")).toBe("dependent_guarantor");
+    expect(mapOwnerSideToProvider("customer")).toBe("dependent_guarantor");
     expect(mapOwnerSideToProvider("employer")).toBe("employer_org");
     expect(mapOwnerSideToProvider("office")).toBe("office_internal");
     expect(mapOwnerSideToProvider("nonsense")).toBe("main_applicant");
+  });
+
+  it("resolveProvider prefers providedByRole over ownerSide (NEW-V10-1: 详情列表分组与顶部完成率卡一致)", () => {
+    expect(resolveProvider("applicant", "applicant")).toBe("main_applicant");
+    expect(resolveProvider("supporter", "customer")).toBe(
+      "dependent_guarantor",
+    );
+    expect(resolveProvider("office", "office")).toBe("office_internal");
+    expect(resolveProvider("employer", "employer")).toBe("employer_org");
+  });
+
+  it("resolveProvider falls back to ownerSide when providedByRole is null/empty/unknown (向后兼容旧数据)", () => {
+    expect(resolveProvider(null, "applicant")).toBe("main_applicant");
+    expect(resolveProvider(undefined, "customer")).toBe("dependent_guarantor");
+    expect(resolveProvider("", "office")).toBe("office_internal");
+    expect(resolveProvider("totally-unknown", "applicant")).toBe(
+      "main_applicant",
+    );
   });
 
   it("adapts a backend row to a DocumentListItem with caseName lookup", () => {
@@ -69,11 +90,29 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
       lastReminderAtLabel: "—",
       relativePath: null,
       sharedExpiryRisk: false,
-      referenceCount: 1,
+      referenceCount: 0,
       backendStatus: "pending",
       category: undefined,
       checklistItemCode: undefined,
     });
+  });
+
+  it("uses providedByRole=supporter to bucket dependent_guarantor (NEW-V10-1 修复)", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, ownerSide: "customer", providedByRole: "supporter" },
+      () => undefined,
+      NOW,
+    );
+    expect(item.provider).toBe("dependent_guarantor");
+  });
+
+  it("falls back to ownerSide when providedByRole is null (legacy 数据 / 058 迁移前)", () => {
+    const item = adaptDocumentItem(
+      { ...ROW, ownerSide: "office", providedByRole: null },
+      () => undefined,
+      NOW,
+    );
+    expect(item.provider).toBe("office_internal");
   });
 
   it("propagates checklistItemCode from backend row (W-6 / bug254)", () => {
@@ -127,14 +166,14 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
     expect(item.sharedExpiryRisk).toBe(true);
   });
 
-  it("derives sharedExpiryRisk=false when referenceCount=1 even if expired", () => {
+  it("derives sharedExpiryRisk=false when referenceCount defaults to 0 even if expired", () => {
     const item = adaptDocumentItem(
       { ...ROW, status: "approved", dueAt: "2026-04-01T00:00:00Z" },
       () => undefined,
       NOW,
     );
     expect(item.status).toBe("expired");
-    expect(item.referenceCount).toBe(1);
+    expect(item.referenceCount).toBe(0);
     expect(item.sharedExpiryRisk).toBe(false);
   });
 

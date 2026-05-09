@@ -8,6 +8,7 @@ import {
 
 import type { Case, DocumentItem } from "../model/coreEntities";
 import { CasesService } from "../cases/cases.service";
+import { ValidationAutoRunService } from "../validation-runs/validationAutoRun.service";
 import { DocumentItemsController } from "./documentItems.controller";
 import { DocumentItemsService } from "./documentItems.service";
 
@@ -37,6 +38,7 @@ const mockItem: DocumentItem = {
   reviewedAt: null,
   dueAt: null,
   ownerSide: "applicant",
+  providedByRole: "applicant",
   lastFollowUpAt: null,
   note: null,
   category: null,
@@ -111,22 +113,35 @@ const mockCase: Case = {
   updatedAt: "2026-01-01T00:00:00.000Z",
 };
 
+const autoRunCalls: { caseId: string; trigger: string }[] = [];
+
+function makeAutoRun(): ValidationAutoRunService {
+  return {
+    schedule: (_ctx: unknown, caseId: string, trigger: string) => {
+      autoRunCalls.push({ caseId, trigger });
+    },
+  } as unknown as ValidationAutoRunService;
+}
+
 function makeController(
   opts: {
     service?: Partial<DocumentItemsService>;
     cases?: Partial<CasesService>;
+    autoRun?: ValidationAutoRunService;
   } = {},
 ): DocumentItemsController {
   const service = {
     get: () => Promise.resolve(mockItem),
     waive: () => Promise.resolve(waivedItem),
+    unwaive: () => Promise.resolve({ ...mockItem, status: "pending" }),
     ...opts.service,
   } as unknown as DocumentItemsService;
   const cases = {
     get: () => Promise.resolve(mockCase),
     ...opts.cases,
   } as unknown as CasesService;
-  return new DocumentItemsController(service, cases);
+  const autoRun = opts.autoRun ?? makeAutoRun();
+  return new DocumentItemsController(service, cases, autoRun);
 }
 
 // ── waive: happy path ──

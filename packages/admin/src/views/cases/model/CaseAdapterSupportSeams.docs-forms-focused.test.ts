@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 // Owner: p0-fe-006b-03 — documents/forms/submission/review tabs focused tests
 import { describe, expect, it } from "vitest";
 import {
@@ -161,7 +162,7 @@ describe("documents tab action button gates (p0-fe-006b-03)", () => {
     expect(a.canRegister).toBe(true);
   });
 
-  it("uploaded_reviewing: canApprove + canReject only", () => {
+  it("uploaded_reviewing: canApprove + canReject only, no canWaive (backend rejects)", () => {
     const a = actionsForStatus("uploaded_reviewing");
     expect(a.canApprove).toBe(true);
     expect(a.canReject).toBe(true);
@@ -170,8 +171,17 @@ describe("documents tab action button gates (p0-fe-006b-03)", () => {
     expect(a.canRegister).toBe(false);
   });
 
-  it("approved/waived/expired/unknown: all gates closed", () => {
-    for (const status of ["approved", "waived", "expired", "unknown_status"]) {
+  it("approved: canWaive only (backend allows waive from approved)", () => {
+    const a = actionsForStatus("approved");
+    expect(a.canApprove).toBe(false);
+    expect(a.canReject).toBe(false);
+    expect(a.canRemind).toBe(false);
+    expect(a.canWaive).toBe(true);
+    expect(a.canRegister).toBe(false);
+  });
+
+  it("waived/unknown: all gates closed", () => {
+    for (const status of ["waived", "unknown_status"]) {
       const a = actionsForStatus(status);
       expect(a.canApprove).toBe(false);
       expect(a.canReject).toBe(false);
@@ -181,12 +191,21 @@ describe("documents tab action button gates (p0-fe-006b-03)", () => {
     }
   });
 
-  it("revision_required: canRemind + canRegister, no approve/reject/waive", () => {
+  it("expired: canWaive only (backend allows waive from expired)", () => {
+    const a = actionsForStatus("expired");
+    expect(a.canApprove).toBe(false);
+    expect(a.canReject).toBe(false);
+    expect(a.canRemind).toBe(false);
+    expect(a.canWaive).toBe(true);
+    expect(a.canRegister).toBe(false);
+  });
+
+  it("revision_required: canRemind + canRegister + canWaive (backend allows waive from revision_required)", () => {
     const a = actionsForStatus("revision_required");
     expect(a.canApprove).toBe(false);
     expect(a.canReject).toBe(false);
     expect(a.canRemind).toBe(true);
-    expect(a.canWaive).toBe(false);
+    expect(a.canWaive).toBe(true);
     expect(a.canRegister).toBe(true);
   });
 });
@@ -291,21 +310,85 @@ describe("forms tab summary display (p0-fe-006b-03)", () => {
     ]);
   });
 
-  it("fileUrl exposed as-is; null preserved; isPlaceholderFile derives from prefix", () => {
+  it("fileUrl exposed as-is; null preserved", () => {
     const real = adaptCaseFormsData({
       items: [genDoc({ fileUrl: "https://cdn.example.com/doc.pdf" })],
     })!;
     expect(real.generated[0].fileUrl).toBe("https://cdn.example.com/doc.pdf");
-    expect(real.generated[0].isPlaceholderFile).toBe(false);
-
-    const ph = adaptCaseFormsData({
-      items: [genDoc({ fileUrl: "placeholder://gd-f01" })],
-    })!;
-    expect(ph.generated[0].isPlaceholderFile).toBe(true);
 
     const nil = adaptCaseFormsData({ items: [genDoc({ fileUrl: null })] })!;
     expect(nil.generated[0].fileUrl).toBeNull();
-    expect(nil.generated[0].isPlaceholderFile).toBe(false);
+  });
+
+  it("placeholder:// URL → fileUrlIsPlaceholder=true", () => {
+    const result = adaptCaseFormsData({
+      items: [genDoc({ fileUrl: "placeholder://gen-doc-001/output.pdf" })],
+    })!;
+    expect(result.generated[0].fileUrlIsPlaceholder).toBe(true);
+    expect(result.generated[0].fileUrl).toBe(
+      "placeholder://gen-doc-001/output.pdf",
+    );
+  });
+
+  it("real URL → fileUrlIsPlaceholder=false", () => {
+    const result = adaptCaseFormsData({
+      items: [genDoc({ fileUrl: "https://cdn.example.com/doc.pdf" })],
+    })!;
+    expect(result.generated[0].fileUrlIsPlaceholder).toBe(false);
+  });
+
+  it("null fileUrl → fileUrlIsPlaceholder=false", () => {
+    const result = adaptCaseFormsData({
+      items: [genDoc({ fileUrl: null })],
+    })!;
+    expect(result.generated[0].fileUrlIsPlaceholder).toBe(false);
+  });
+
+  it("status='exported' + 真实 fileUrl → downloadUrl 指向 server 流式接口", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          id: "gd-down-01",
+          status: "exported",
+          fileUrl: "generated-documents/org-1/gd-down-01/v1.docx",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].downloadUrl).toBe(
+      "/api/generated-documents/gd-down-01/file",
+    );
+  });
+
+  it("status='draft' 即使有 fileUrl 也不暴露 downloadUrl", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "draft",
+          fileUrl: "generated-documents/org-1/gd-f01/v1.docx",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].downloadUrl).toBeNull();
+  });
+
+  it("placeholder:// fileUrl 时 downloadUrl=null（避免 410 死链）", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "exported",
+          fileUrl: "placeholder://gd-f01.pdf",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].downloadUrl).toBeNull();
+    expect(result.generated[0].fileUrlIsPlaceholder).toBe(true);
+  });
+
+  it("null fileUrl → downloadUrl=null", () => {
+    const result = adaptCaseFormsData({
+      items: [genDoc({ status: "exported", fileUrl: null })],
+    })!;
+    expect(result.generated[0].downloadUrl).toBeNull();
   });
 
   it("approvedBy/approvedAt exposed and formatted; null preserved", () => {

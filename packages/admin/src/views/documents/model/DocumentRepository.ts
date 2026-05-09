@@ -5,6 +5,11 @@ import {
   type DocumentItemDtoLike,
 } from "./DocumentAdapter";
 import {
+  toDocumentItemDtoLike,
+  toCaseSummaryRow,
+  type DocumentItemListResponse,
+} from "./DocumentRepositoryDtos";
+import {
   getDefaultRequest,
   buildHeaders,
   readJson,
@@ -62,87 +67,7 @@ const CASES_API_PATH = "/api/cases";
 const DEFAULT_LIMIT = 200;
 
 // ─── List-specific helpers ───────────────────────────────────────
-
-interface DocumentItemListResponse {
-  items: unknown;
-  total?: unknown;
-}
-
-interface CaseSummaryRow {
-  id: string;
-  caseName?: string | null;
-}
-
-function readOptionalString(
-  r: Record<string, unknown>,
-  key: string,
-): string | undefined {
-  const v = r[key];
-  return typeof v === "string" ? v : undefined;
-}
-
-function readRequiredString(
-  r: Record<string, unknown>,
-  key: string,
-): string | null {
-  const v = r[key];
-  return typeof v === "string" ? v : null;
-}
-
-interface DocumentItemDtoLikeRequired {
-  id: string;
-  caseId: string;
-  name: string;
-  status: string;
-}
-
-function readDocumentItemRequired(
-  r: Record<string, unknown>,
-): DocumentItemDtoLikeRequired | null {
-  const id = readRequiredString(r, "id");
-  const caseId = readRequiredString(r, "caseId");
-  const name = readRequiredString(r, "name");
-  const status = readRequiredString(r, "status");
-  if (!id || !caseId || !name || !status) return null;
-  return { id, caseId, name, status };
-}
-
-function buildDocumentItemDtoLike(
-  r: Record<string, unknown>,
-  required: DocumentItemDtoLikeRequired,
-): DocumentItemDtoLike {
-  return {
-    ...required,
-    ownerSide: readOptionalString(r, "ownerSide") ?? "applicant",
-    dueAt: readOptionalString(r, "dueAt") ?? null,
-    lastFollowUpAt: readOptionalString(r, "lastFollowUpAt") ?? null,
-    referenceCount:
-      typeof r.referenceCount === "number" ? r.referenceCount : undefined,
-    category: readOptionalString(r, "category"),
-    checklistItemCode: readOptionalString(r, "checklistItemCode"),
-  };
-}
-
-function toDocumentItemDtoLike(value: unknown): DocumentItemDtoLike | null {
-  if (!value || typeof value !== "object") return null;
-  const r = value as Record<string, unknown>;
-  const required = readDocumentItemRequired(r);
-  if (!required) return null;
-  return buildDocumentItemDtoLike(r, required);
-}
-
-function toCaseSummaryRow(value: unknown): CaseSummaryRow | null {
-  if (!value || typeof value !== "object") return null;
-  const r = value as Record<string, unknown>;
-  if (typeof r.id !== "string") return null;
-  const caseName =
-    typeof r.caseName === "string"
-      ? r.caseName
-      : typeof r.case_name === "string"
-        ? r.case_name
-        : null;
-  return { id: r.id, caseName };
-}
+// DTO-shaping helpers 在 ./DocumentRepositoryDtos.ts，避免本文件超过 max-lines。
 
 function setIfTruthy(
   qs: URLSearchParams,
@@ -461,11 +386,8 @@ async function repoGetSharedExpiryRisk(
   );
 }
 
-// ─── Factory ─────────────────────────────────────────────────────
-
 /**
  * 创建资料中心仓储实例。
- *
  * @param input - 工厂参数
  * @returns 资料中心仓储
  */
@@ -482,6 +404,16 @@ export function createDocumentRepository(
     transition: (id, p) => repoTransition(c, id, p),
     followUp: (id) => repoFollowUp(c, id),
     waive: (id, p) => repoWaive(c, id, p),
+    unwaive: async (id, p) =>
+      toFullDocumentItemDto(
+        await postJson(
+          c.request,
+          `${DOCUMENT_ITEMS_API_PATH}/${id}/unwaive`,
+          c.getToken(),
+          { note: p.note ?? null },
+          "unwaive",
+        ),
+      ),
     uploadLocalArchive: (p) => repoUpload(c, p),
     listFiles: (id, o) => repoListFiles(c, id, o),
     getCompletionRate: (id) => repoGetCompletionRate(c, id),

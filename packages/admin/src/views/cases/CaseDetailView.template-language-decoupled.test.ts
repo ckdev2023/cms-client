@@ -80,11 +80,11 @@ describe("R39-A: template language decoupled from UI locale", () => {
   });
 });
 
-describe("R39-A: CaseDetailView static scan — locale not passed as language", () => {
+describe("R39-A: CaseDetailView static scan — locale not passed as templateLanguage", () => {
   const templatePath = resolve(__dirname, "CaseDetailView.vue");
   const src = readFileSync(templatePath, "utf-8");
 
-  it("useCaseDetailModel call must NOT pass vue-i18n locale as language", () => {
+  function getDepsBlock(): string {
     const callPattern =
       /useCaseDetailModel\s*\(\s*caseId\s*,\s*\{([\s\S]*?)\}\s*\)/;
     const match = callPattern.exec(src);
@@ -92,15 +92,25 @@ describe("R39-A: CaseDetailView static scan — locale not passed as language", 
       match,
       "useCaseDetailModel call not found in CaseDetailView.vue",
     ).toBeTruthy();
+    return match![1];
+  }
 
-    const argsBlock = match![1];
-    const hasBareLocale = /(?:^|[,\s])locale\s*[,}]/m.test(argsBlock);
-    const hasLocaleColon = /locale\s*:/.test(argsBlock);
+  it("useCaseDetailModel call must NOT pass vue-i18n locale as templateLanguage", () => {
+    const argsBlock = getDepsBlock();
+
+    const passesTemplateLanguageLocale = /templateLanguage\s*:\s*locale\b/.test(
+      argsBlock,
+    );
+    const hasShorthandTemplateLanguage = /\btemplateLanguage\s*[,}]/.test(
+      argsBlock,
+    );
 
     expect(
-      hasBareLocale || hasLocaleColon,
-      "CaseDetailView must not pass vue-i18n locale to useCaseDetailModel — " +
-        "use a dedicated templateLanguage ref if content-language filtering is needed",
+      passesTemplateLanguageLocale || hasShorthandTemplateLanguage,
+      "CaseDetailView must not pass vue-i18n locale to useCaseDetailModel as " +
+        "templateLanguage — use a dedicated templateLanguage ref if content-" +
+        "language filtering is needed. Display locale should go through " +
+        "displayLocale instead.",
     ).toBe(false);
   });
 

@@ -1,10 +1,12 @@
 <script setup lang="ts">
+/* eslint-disable max-lines */
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
-import type { ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, FormGenerated } from "../types-detail";
+import { iconClass, chipTone, hasForms } from "./CaseFormsTab.helpers";
+import { downloadGeneratedDocument } from "../model/useGeneratedDocumentDownload";
 
 /** 文書管理 Tab：展示可用模板列表与已生成文書记录。 */
 const { t } = useI18n();
@@ -18,53 +20,25 @@ const emit = defineEmits<{
   (e: "open-generate-modal", templateId?: string): void;
   (e: "finalize", docId: string): void;
   (e: "export", docId: string): void;
+  (e: "download-error", payload: { docId: string; reason: string }): void;
 }>();
 
-const TONE_ICON_CLASS: Record<string, string> = {
-  success: "forms-tab__icon--success",
-  warning: "forms-tab__icon--warning",
-  primary: "forms-tab__icon--primary",
-  muted: "forms-tab__icon--muted",
-};
-
 /**
- * 根据生成文書状态色调返回图标 CSS 类名。
+ * 处理下载点击 — 通过认证 fetch 触发浏览器保存。
  *
- * @param item - 已生成文書条目
- * @returns CSS 类名
+ * @param event - 原始 click 事件（用于阻止默认导航）
+ * @param doc - 已生成文書 view-model
  */
-function iconClass(item: FormGenerated): string {
-  return TONE_ICON_CLASS[item.tone] ?? "forms-tab__icon--muted";
-}
-
-const TONE_TO_CHIP: Record<string, ChipTone> = {
-  success: "success",
-  primary: "primary",
-  muted: "neutral",
-};
-
-/**
- * 将生成文書的 tone 映射为 Chip 组件色调。
- *
- * @param item - 生成文書条目
- * @returns Chip 色调
- */
-function chipTone(item: FormGenerated): ChipTone {
-  return TONE_TO_CHIP[item.tone] ?? "neutral";
-}
-
-/**
- * 判断当前案件是否有模板或已生成文書。
- *
- * @param detail - 案件详情数据
- * @param isReadonly - 是否只读模式
- * @returns 是否包含文書数据
- */
-function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
-  return (
-    (!isReadonly && detail.forms.templates.length > 0) ||
-    detail.forms.generated.length > 0
-  );
+async function handleDownloadClick(
+  event: MouseEvent,
+  doc: FormGenerated,
+): Promise<void> {
+  if (!doc.downloadUrl) return;
+  event.preventDefault();
+  const result = await downloadGeneratedDocument(doc.downloadUrl, doc.name);
+  if (!result.ok) {
+    emit("download-error", { docId: doc.id, reason: result.reason });
+  }
 }
 </script>
 
@@ -131,7 +105,7 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                 />
               </svg>
               <div>
-                <div class="forms-tab__name">{{ tpl.name }}</div>
+                <div class="forms-tab__name" lang="ja">{{ tpl.name }}</div>
                 <div class="forms-tab__meta">
                   <template v-if="tpl.docTypeKey">{{
                     t(tpl.docTypeKey)
@@ -186,7 +160,7 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
               <div>
-                <div class="forms-tab__name">{{ doc.name }}</div>
+                <div class="forms-tab__name" lang="ja">{{ doc.name }}</div>
                 <div class="forms-tab__meta">
                   {{ doc.meta }}
                   <template v-if="doc.approvedBy || doc.approvedAt">
@@ -208,26 +182,47 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
               </Chip>
             </div>
             <div class="forms-tab__row-actions">
-              <Chip
-                v-if="doc.backendStatus === 'exported' && doc.isPlaceholderFile"
-                tone="neutral"
-                size="micro"
+              <span
+                v-if="doc.backendStatus === 'exporting'"
+                class="forms-tab__exporting-indicator"
+                data-testid="exporting-indicator"
+              >
+                <svg
+                  class="forms-tab__spinner"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  aria-hidden="true"
+                >
+                  <circle cx="12" cy="12" r="10" opacity="0.25" />
+                  <path d="M12 2a10 10 0 0 1 10 10" />
+                </svg>
+                <span class="forms-tab__btn-label">{{
+                  t("cases.detail.forms.status.exporting")
+                }}</span>
+              </span>
+              <span
+                v-if="doc.fileUrlIsPlaceholder"
+                class="forms-tab__placeholder-badge"
                 data-testid="placeholder-badge"
-                :title="t('cases.detail.forms.placeholderBadge')"
               >
                 {{ t("cases.detail.forms.placeholderBadge") }}
-              </Chip>
+              </span>
               <a
                 v-if="
                   doc.backendStatus === 'exported' &&
-                  !doc.isPlaceholderFile &&
-                  doc.fileUrl
+                  doc.downloadUrl &&
+                  !doc.fileUrlIsPlaceholder
                 "
                 class="forms-tab__download-link"
-                :href="doc.fileUrl"
+                :href="doc.downloadUrl"
                 download
                 data-testid="download-link"
                 :aria-label="t('cases.detail.forms.downloadAction')"
+                @click="handleDownloadClick($event, doc)"
               >
                 <svg
                   width="14"
@@ -256,6 +251,15 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
                 @click="emit('finalize', doc.id)"
               >
                 {{ t("cases.detail.forms.finalizeAction") }}
+              </Button>
+              <Button
+                v-if="doc.backendStatus === 'export_failed' && !readonly"
+                size="sm"
+                pill
+                data-testid="retry-export-btn"
+                @click="emit('export', doc.id)"
+              >
+                {{ t("cases.detail.forms.retryExportAction") }}
               </Button>
               <Button
                 v-if="
@@ -334,11 +338,9 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   display: grid;
   gap: 20px;
 }
-
 .forms-tab :deep(.ui-card__header) {
   padding: 14px 20px;
 }
-
 .forms-tab__title {
   margin: 0;
   font-size: var(--font-size-md);
@@ -346,15 +348,12 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
-
 .forms-tab__section {
   padding: 0 20px 12px;
 }
-
 .forms-tab__section--border {
   border-top: 1px solid var(--color-border-1);
 }
-
 .forms-tab__kicker {
   padding: 16px 0 8px;
   font-size: var(--font-size-xs);
@@ -363,9 +362,6 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
-/* ── Rows ─────────────────────────────────────────────── */
-
 .forms-tab__row {
   display: flex;
   align-items: center;
@@ -373,11 +369,9 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   gap: 12px;
   padding: 12px 0;
 }
-
 .forms-tab__row + .forms-tab__row {
   border-top: 1px solid var(--color-border-1);
 }
-
 .forms-tab__row-left {
   display: flex;
   align-items: center;
@@ -385,30 +379,25 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   min-width: 0;
   flex: 1;
 }
-
 .forms-tab__row-icon {
   flex-shrink: 0;
 }
-
 .forms-tab__name {
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
-
 .forms-tab__meta {
   font-size: var(--font-size-xs);
   color: var(--color-text-3);
   margin-top: 2px;
 }
-
 .forms-tab__row-actions {
   display: flex;
   align-items: center;
   gap: 12px;
   flex-shrink: 0;
 }
-
 .forms-tab__download-link {
   display: inline-flex;
   align-items: center;
@@ -419,11 +408,9 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   text-decoration: none;
   white-space: nowrap;
 }
-
 .forms-tab__download-link:hover {
   text-decoration: underline;
 }
-
 .forms-tab__link-btn {
   padding: 0;
   border: none;
@@ -435,18 +422,14 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   cursor: pointer;
   white-space: nowrap;
 }
-
 .forms-tab__link-btn:hover:not(:disabled) {
   text-decoration: underline;
 }
-
 .forms-tab__link-btn:disabled {
   color: var(--color-text-3);
   cursor: not-allowed;
   opacity: 0.5;
 }
-
-/* ── Icon tones ───────────────────────────────────────── */
 .forms-tab__icon--success {
   color: var(--color-success, #22c55e);
 }
@@ -456,8 +439,40 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
 .forms-tab__icon--primary {
   color: var(--color-primary-6);
 }
+.forms-tab__icon--danger {
+  color: #ef4444;
+}
 .forms-tab__icon--muted {
   color: var(--color-text-3);
+}
+.forms-tab__placeholder-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-3);
+  background: var(--color-fill-2, #f3f4f6);
+  white-space: nowrap;
+}
+.forms-tab__exporting-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-2);
+}
+.forms-tab__spinner {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 767px) {
@@ -479,9 +494,6 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
     font-size: var(--font-size-sm);
   }
 }
-
-/* ── Empty state ──────────────────────────────────────── */
-
 .forms-tab__empty {
   display: flex;
   flex-direction: column;
@@ -490,7 +502,6 @@ function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
   padding: 48px 24px;
   color: var(--color-text-3);
 }
-
 .forms-tab__empty p {
   margin: 0;
   font-size: var(--font-size-sm);

@@ -7,6 +7,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 1,
   },
   {
@@ -15,6 +16,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 2,
   },
   {
@@ -23,6 +25,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 3,
   },
   {
@@ -31,6 +34,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "personal",
     requiredFlag: true,
     ownerSide: "applicant",
+    providedByRole: "applicant",
     sortOrder: 4,
     description:
       "配偶者が日本人の場合は戸籍謄本、外国人同士の場合は本国の婚姻証明書",
@@ -41,6 +45,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 5,
   },
   {
@@ -49,6 +54,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 6,
   },
   {
@@ -57,6 +63,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 7,
   },
   {
@@ -65,6 +72,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "office",
+    providedByRole: "office",
     sortOrder: 8,
     description: "行政書士事務所が作成",
   },
@@ -74,6 +82,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "office",
+    providedByRole: "office",
     sortOrder: 9,
     description: "行政書士事務所が作成・提出",
   },
@@ -83,6 +92,7 @@ export const FAMILY_STAY_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "standard",
     requiredFlag: true,
     ownerSide: "customer",
+    providedByRole: "supporter",
     sortOrder: 10,
   },
 ];

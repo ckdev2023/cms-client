@@ -121,6 +121,11 @@ const documentsJaJP = {
         "例：A2026-001/main_applicant/passport/20260409_passport.pdf",
       relativePathHint:
         "事務所パソコン内のフォルダパスを入力してください。通常は案件番号から始めます。",
+      relativePathSuggestPreviewLabel: "正規化パス：",
+      relativePathSuggestApplyButton: "推奨パスを使用",
+      relativePathSuggestResetButton: "リセット",
+      fileNameSanitizedHint:
+        "同名ファイルはバージョン管理されるため、_2 等の接尾辞は不要です。",
       fileName: "資料説明",
       fileNamePlaceholder:
         "例：パスポート表紙、在留カード表裏面、2026-04 更新版課税証明",
@@ -153,6 +158,8 @@ const documentsJaJP = {
     toastRemindDesc: "{provider} に催促を送信しました",
     toastWaiveTitle: "不要としてマーク済み",
     toastWaiveDesc: "{name} を完了率の分母から除外しました",
+    toastUnwaiveTitle: "免除を取消しました",
+    toastUnwaiveDesc: "{name} を未提出状態に戻しました",
     toastReferenceTitle: "引用成功",
     toastReferenceDesc: "{caseName} の {docName} を引用しました",
   },
@@ -217,6 +224,7 @@ const documentsJaJP = {
     register: "資料を登録",
     reference: "既存バージョン引用",
     waive: "不要としてマーク",
+    unwaive: "免除取消",
     riskDetail: "リスク詳細",
   },
 } as const;

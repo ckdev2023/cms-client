@@ -91,9 +91,22 @@ body,
   --space-8: 24px;
 
   /* --- Typography --- */
+  /* CJK fallback ladders are explicit so Windows / Linux do not fall back to
+     a different system font than macOS, and so :lang() rules can flip glyph
+     locality (Chinese vs Japanese kanji conventions) without re-declaring
+     the Latin head of the stack. */
+  --font-family-base:
+    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+  --font-family-cjk-sc:
+    "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC",
+    "Noto Sans CJK SC";
+  --font-family-cjk-jp:
+    "Hiragino Sans", "Yu Gothic", "Yu Gothic UI", Meiryo, "Noto Sans JP",
+    "Noto Sans CJK JP";
+  --font-family-fallback: Helvetica, Arial, sans-serif;
   --font-family:
-    "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+    var(--font-family-base), var(--font-family-cjk-sc),
+    var(--font-family-cjk-jp), var(--font-family-fallback);
 
   /* Typescale (canonical) */
   --font-size-sm: 13px;
@@ -157,6 +170,15 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: var(--letter-spacing-normal);
+}
+
+/* Lang-aware kanji glyph locality. Japanese content (lang="ja" 或 <html lang="ja">)
+   优先匹配 JP 字体，避免在中文系统下用 PingFang SC 渲染日文汉字（書 / 認 / 謄 / 証 等）。
+   英语与中文继承默认（中文优先），保持既有外观。 */
+:lang(ja) {
+  font-family:
+    var(--font-family-base), var(--font-family-cjk-jp),
+    var(--font-family-cjk-sc), var(--font-family-fallback);
 }
 
 /* ===================================================================

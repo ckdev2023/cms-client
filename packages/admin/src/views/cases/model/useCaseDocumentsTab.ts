@@ -14,7 +14,10 @@ import {
   useDocumentReviewModel,
   type DocumentReviewDeps,
 } from "../../documents/model/useDocumentReviewModel";
-import { useRegisterDocumentModel } from "../../documents/model/useRegisterDocumentModel";
+import {
+  useRegisterDocumentModel,
+  type RegisterDocumentDeps,
+} from "../../documents/model/useRegisterDocumentModel";
 import { useAddDocumentItemModel } from "../../documents/model/useAddDocumentItemModel";
 import { createDocumentRepository } from "../../documents/model/DocumentRepository";
 import { toCaseDetailItems } from "../../documents/model/DocumentDetailItemAdapter";
@@ -42,9 +45,30 @@ export interface UseCaseDocumentsTabDeps {
   documentTemplateMissing?: Ref<boolean>;
   /** 可选注入 repository（测试用）。 */
   repository?: DocumentRepository;
+  /** 案件业务编号（用于路径建议）。 */
+  caseNo?: Ref<string | undefined>;
+  /**
+   * 写操作（审核 / 退回 / 催办 / 登记 / 引用 / 豁免 / 取消豁免 / 添加项）成功后触发，
+   * 用于让父级 `CaseDetailView` 同步刷新顶部「按提供方完成率」卡片与 Tab 计数器
+   * （它们读取自 `detail.providerProgress` / `detail.docsCounter`，必须重新拉取 aggregate）。
+   * NEW-V11-1 修复：缺少此回调会让 Tab 计数器与详情列表口径分裂。
+   */
+  onWriteSuccess?: () => void;
 }
 
 type T = ReturnType<typeof useI18n>["t"];
+
+/**
+ * 资料分组的固定显示顺序，与「按提供方完成率」顶部卡片（按 `provided_by_role`
+ * 字母序：`applicant` → `office` → `supporter`）保持一致；未列出的 provider
+ * 排在尾部，仍按字母序兜底。
+ */
+const PROVIDER_GROUP_ORDER: Record<string, number> = {
+  main_applicant: 1,
+  office_internal: 2,
+  dependent_guarantor: 3,
+  employer_org: 4,
+};
 
 function buildGrouping(
   listModel: ReturnType<typeof useDocumentListModel>,
@@ -59,7 +83,14 @@ function buildGrouping(
       if (!grouped.has(key)) grouped.set(key, []);
       grouped.get(key)!.push(detailItems.value[i]);
     }
-    return Array.from(grouped.entries()).map(([p, gItems]) => ({
+    const entries = Array.from(grouped.entries());
+    entries.sort(([a], [b]) => {
+      const pa = PROVIDER_GROUP_ORDER[a] ?? Number.MAX_SAFE_INTEGER;
+      const pb = PROVIDER_GROUP_ORDER[b] ?? Number.MAX_SAFE_INTEGER;
+      if (pa !== pb) return pa - pb;
+      return a.localeCompare(b);
+    });
+    return entries.map(([p, gItems]) => ({
       group: t(getProviderLabelKey(p)),
       count: `${gItems.length} 件`,
       items: gItems,
@@ -165,6 +196,32 @@ function buildReviewDeps(
   };
 }
 
+function buildUnwaiveHandler(
+  find: (item: DocumentItem) => DocumentListItem | undefined,
+  repo: DocumentRepository,
+  toast: UseToastReturn,
+  t: T,
+  onErr: (e: unknown) => void,
+  refresh: () => void,
+) {
+  return async (item: DocumentItem) => {
+    const li = find(item);
+    if (!li) return;
+    try {
+      await repo.unwaive(li.id, { note: null });
+      toast.add({
+        title: t("documents.review.toastUnwaiveTitle"),
+        description: t("documents.review.toastUnwaiveDesc", {
+          name: li.name,
+        }),
+      });
+      refresh();
+    } catch (error) {
+      onErr(error);
+    }
+  };
+}
+
 function buildRowHandlers(
   find: (item: DocumentItem) => DocumentListItem | undefined,
   review: ReturnType<typeof useDocumentReviewModel>,
@@ -232,6 +289,13 @@ function buildAddItem(
   });
 }
 
+const PROVIDER_TO_OWNER_SIDE: Record<string, string> = {
+  main_applicant: "applicant",
+  dependent_guarantor: "guarantor",
+  employer_org: "employer",
+  office_internal: "office",
+};
+
 function buildRegister(
   deps: UseCaseDocumentsTabDeps,
   listModel: ReturnType<typeof useDocumentListModel>,
@@ -241,6 +305,21 @@ function buildRegister(
   onErr: (e: unknown) => void,
   refresh: () => void,
 ) {
+  const caseNoLookup: RegisterDocumentDeps["caseNoLookup"] = () =>
+    deps.caseNo?.value ?? null;
+
+  const itemMetaLookup: RegisterDocumentDeps["itemMetaLookup"] = (
+    docItemId,
+  ) => {
+    const item = listModel.items.value.find((i) => i.id === docItemId);
+    if (!item) return null;
+    const ownerSide = PROVIDER_TO_OWNER_SIDE[item.provider] ?? "applicant";
+    return {
+      ownerSide,
+      checklistItemCode: item.checklistItemCode ?? "doc",
+    };
+  };
+
   return useRegisterDocumentModel({
     allItems: () => listModel.items.value,
     repository: repo,
@@ -253,6 +332,8 @@ function buildRegister(
     },
     onError: onErr,
     isStorageRootConfigured: () => deps.isStorageRootConfigured.value,
+    caseNoLookup,
+    itemMetaLookup,
   });
 }
 
@@ -316,6 +397,18 @@ function buildWriteModels(
   return { review, register, addItem, onErr };
 }
 
+function makeRefresh(
+  listModel: ReturnType<typeof useDocumentListModel>,
+  fetchRate: (id?: string) => Promise<void>,
+  onWriteSuccess?: () => void,
+): () => void {
+  return () => {
+    listModel.refresh();
+    void fetchRate();
+    onWriteSuccess?.();
+  };
+}
+
 /**
  * 案件详情资料清单 Tab 的组合式 model。
  *
@@ -341,11 +434,7 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
   const { detailItems, documentGroups } = buildGrouping(listModel, t);
   const hasApiData = computed(() => listModel.source.value === "api");
   const viewState = buildViewState(listModel, deps);
-
-  const refresh = () => {
-    listModel.refresh();
-    fetchRate();
-  };
+  const refresh = makeRefresh(listModel, fetchRate, deps.onWriteSuccess);
   const { review, register, addItem, onErr } = buildWriteModels(
     deps,
     listModel,
@@ -368,6 +457,7 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
     register,
     addItem,
     ...buildRowHandlers(find, review, register, ws, t),
+    handleRowUnwaive: buildUnwaiveHandler(find, repo, toast, t, onErr, refresh),
     handleConfirmWaive: buildWaiveHandler(
       ws,
       review,

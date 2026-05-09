@@ -10,6 +10,7 @@ export CORS_ORIGINS="${CORS_ORIGINS:-http://127.0.0.1:5173,http://localhost:5173
 
 SERVER_PID=""
 ADMIN_PID=""
+WORKER_PID=""
 
 is_http_ready() {
   local url="$1"
@@ -62,6 +63,10 @@ cleanup() {
     kill "$ADMIN_PID" >/dev/null 2>&1 || true
   fi
 
+  if [[ -n "$WORKER_PID" ]] && kill -0 "$WORKER_PID" >/dev/null 2>&1; then
+    kill "$WORKER_PID" >/dev/null 2>&1 || true
+  fi
+
   wait >/dev/null 2>&1 || true
   exit "$exit_code"
 }
@@ -101,10 +106,17 @@ if ! wait_for_http_ready "http://127.0.0.1:5173"; then
   exit 1
 fi
 
-echo "[local-dev] admin url: http://127.0.0.1:5173"
-echo "[local-dev] press Ctrl+C to stop server/admin dev processes"
+echo "[local-dev] starting worker"
+(
+  cd "$ROOT_DIR"
+  npm run worker:dev
+) &
+WORKER_PID=$!
 
-if [[ -z "$SERVER_PID" && -z "$ADMIN_PID" ]]; then
+echo "[local-dev] admin url: http://127.0.0.1:5173"
+echo "[local-dev] press Ctrl+C to stop server/admin/worker dev processes"
+
+if [[ -z "$SERVER_PID" && -z "$ADMIN_PID" && -z "$WORKER_PID" ]]; then
   echo "[local-dev] nothing to supervise"
   exit 0
 fi
@@ -117,6 +129,11 @@ while true; do
 
   if [[ -n "$ADMIN_PID" ]] && ! kill -0 "$ADMIN_PID" >/dev/null 2>&1; then
     wait "$ADMIN_PID"
+    break
+  fi
+
+  if [[ -n "$WORKER_PID" ]] && ! kill -0 "$WORKER_PID" >/dev/null 2>&1; then
+    wait "$WORKER_PID"
     break
   fi
 
