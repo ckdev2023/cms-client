@@ -284,6 +284,22 @@ describe("CustomerBasicInfoTab", () => {
     expect(wrapper.text()).toContain("Not started");
   });
 
+  it("renders the BMV intake card when bmvFlagState is enabled for BMV customers", () => {
+    const repository = createRepository();
+    const wrapper = mount(CustomerBasicInfoTab, {
+      props: {
+        customer: bmvCustomer,
+        repository,
+        bmvFlagState: "enabled" as const,
+      },
+      global: { plugins: [i18n] },
+    });
+    expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
+    expect(wrapper.find(".basic-info__bmv-disabled-notice").exists()).toBe(
+      false,
+    );
+  });
+
   it("hides BMV intake card when bmvFlagState is disabled and shows the disabled notice instead", () => {
     const repository = createRepository();
     const wrapper = mount(CustomerBasicInfoTab, {

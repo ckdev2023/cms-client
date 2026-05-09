@@ -17,6 +17,7 @@
 - feature 层禁止直接依赖 `tamagui` / `@tamagui/*`（必须通过 `shared/ui` 封装组件）
 - `domain` / `data` 禁止依赖 `shared/ui`
 - feature 之间禁止直接互相依赖；跨 feature 协作必须走 `domain` / `shared` 或 public 出口
+- 在 Vue `defineProps` 中由异步赋值 / 远程 resolve 的 boolean 字段必须改用字符串 discriminator + `undefined` 表示加载态；禁止裸 `boolean` 参与三态语义
 
 ## Worker（文書导出等异步任务）
 

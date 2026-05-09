@@ -6,6 +6,7 @@ import MemberCreateModal from "./components/MemberCreateModal.vue";
 import MemberRoleModal from "./components/MemberRoleModal.vue";
 import MemberDisableConfirmModal from "./components/MemberDisableConfirmModal.vue";
 import MemberListPanel from "./components/MemberListPanel.vue";
+import FeatureFlagsPanel from "./components/FeatureFlagsPanel.vue";
 import SettingsToast from "./components/SettingsToast.vue";
 import { i18n, setAppLocale } from "../../i18n";
 import {
@@ -102,6 +103,20 @@ vi.mock("./model/UsersAdminRepository", () => ({
   }),
 }));
 
+vi.mock("./model/FeatureFlagsAdminRepository", () => ({
+  createFeatureFlagsAdminRepository: () => ({
+    listFlags: vi.fn().mockResolvedValue([]),
+    resolveFlag: vi.fn().mockResolvedValue({
+      key: "bmv",
+      enabled: false,
+      used: false,
+      reason: "missing",
+    }),
+    upsertFlag: vi.fn(),
+    resetFlag: vi.fn(),
+  }),
+}));
+
 vi.mock("./model/RolesAdminRepository", () => ({
   createRolesAdminRepository: () => ({
     listRoles: vi.fn().mockResolvedValue(STUB_ROLES),
@@ -150,6 +165,7 @@ describe("SettingsView", () => {
       "user.manage",
       "permission.override",
       "settings.write",
+      "feature_flag.manage",
     ]);
   });
 
@@ -238,5 +254,67 @@ describe("SettingsView", () => {
     const toast = wrapper.findComponent(SettingsToast);
     expect(toast.props("title")).toBe("");
     expect(toast.props("description")).toBe("");
+  });
+
+  describe("feature-flags sub-navigation permission matrix", () => {
+    it("owner (feature_flag.manage) sees the feature-flags nav item", () => {
+      const store = getDefaultPermissionsStore();
+      store._setForTest([
+        "group.manage",
+        "user.manage",
+        "permission.override",
+        "settings.write",
+        "feature_flag.manage",
+      ]);
+      const wrapper = mountView();
+
+      const navBtns = wrapper.findAll(".settings-view__subnav-btn");
+      const ffBtn = navBtns.find((btn) => btn.text().includes("功能开关"));
+      expect(ffBtn).toBeDefined();
+    });
+
+    it("manager (no feature_flag.manage) does NOT see the feature-flags nav item", () => {
+      const store = getDefaultPermissionsStore();
+      store._setForTest(["group.manage", "user.manage", "settings.write"]);
+      const wrapper = mountView();
+
+      const navBtns = wrapper.findAll(".settings-view__subnav-btn");
+      const ffBtn = navBtns.find((btn) => btn.text().includes("功能开关"));
+      expect(ffBtn).toBeUndefined();
+    });
+
+    it("staff (no feature_flag.manage) does NOT see the feature-flags nav item", () => {
+      const store = getDefaultPermissionsStore();
+      store._setForTest(["group.manage"]);
+      const wrapper = mountView();
+
+      const navBtns = wrapper.findAll(".settings-view__subnav-btn");
+      const ffBtn = navBtns.find((btn) => btn.text().includes("功能开关"));
+      expect(ffBtn).toBeUndefined();
+    });
+
+    it("viewer (no feature_flag.manage) does NOT see the feature-flags nav item", () => {
+      const store = getDefaultPermissionsStore();
+      store._setForTest([]);
+      const wrapper = mountView();
+
+      const navBtns = wrapper.findAll(".settings-view__subnav-btn");
+      const ffBtn = navBtns.find((btn) => btn.text().includes("功能开关"));
+      expect(ffBtn).toBeUndefined();
+    });
+
+    it("clicking feature-flags nav item shows FeatureFlagsPanel", async () => {
+      const wrapper = mountView();
+      await flushPromises();
+
+      const navBtns = wrapper.findAll(".settings-view__subnav-btn");
+      const ffBtn = navBtns.find((btn) => btn.text().includes("功能开关"));
+      expect(ffBtn).toBeDefined();
+
+      await ffBtn!.trigger("click");
+      await flushPromises();
+
+      expect(wrapper.findComponent(FeatureFlagsPanel).exists()).toBe(true);
+    });
   });
 });

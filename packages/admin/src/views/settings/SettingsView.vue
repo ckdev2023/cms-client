@@ -27,13 +27,16 @@ import OverrideAddModal from "./components/OverrideAddModal.vue";
 import OverrideDeleteModal from "./components/OverrideDeleteModal.vue";
 import VisibilityConfigPanel from "./components/VisibilityConfigPanel.vue";
 import StorageRootPanel from "./components/StorageRootPanel.vue";
+import FeatureFlagsPanel from "./components/FeatureFlagsPanel.vue";
 import SettingsToast from "./components/SettingsToast.vue";
 import { createOrgSettingsRepository } from "./model/OrgSettingsRepository";
 import { createGroupsRepository } from "./model/GroupsRepository";
 import { createUsersAdminRepository } from "./model/UsersAdminRepository";
 import { createRolesAdminRepository } from "./model/RolesAdminRepository";
 import { createPermissionOverridesRepository } from "./model/PermissionOverridesRepository";
+import { createFeatureFlagsAdminRepository } from "./model/FeatureFlagsAdminRepository";
 import { useSettingsPage } from "./model/useSettingsPage";
+import { useFeatureFlagsPanel } from "./model/useFeatureFlagsPanel";
 import { useMembersPage } from "./model/useMembersPage";
 import { useRolesPage } from "./model/useRolesPage";
 import { useMemberOverrides } from "./model/useMemberOverrides";
@@ -90,6 +93,11 @@ const rolesPage = useRolesPage({
 const overridesPage = useMemberOverrides({
   overridesRepository: createPermissionOverridesRepository(),
   rolesRepository: rolesAdminRepo,
+});
+
+const featureFlagsPanel = useFeatureFlagsPanel({
+  repository: createFeatureFlagsAdminRepository(),
+  toast: page.toast,
 });
 
 const disableTarget = ref<{ id: string; name: string } | null>(null);
@@ -263,6 +271,10 @@ function confirmDisable() {
           @update:root-label="page.storageRoot.value.rootLabel = $event"
           @update:root-path="page.storageRoot.value.rootPath = $event"
           @save="page.saveStorageRoot()"
+        />
+        <FeatureFlagsPanel
+          v-else-if="page.activePanel.value === 'feature-flags'"
+          :panel="featureFlagsPanel"
         />
       </div>
     </div>

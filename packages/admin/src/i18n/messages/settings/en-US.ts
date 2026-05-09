@@ -7,6 +7,7 @@ const settingsEnUS = {
     roleManagement: "Role Management",
     visibilityConfig: "Visibility Settings",
     storageRoot: "Local Document Root",
+    featureFlags: "Feature Flags",
   },
   group: {
     filter: {
@@ -131,6 +132,14 @@ const settingsEnUS = {
     storageRootUpdated: {
       title: "Root directory updated (demo)",
       description: 'Root directory updated to "{name}"',
+    },
+    featureFlagUpdated: {
+      title: "Feature flag updated",
+      description: "The feature flag has been updated successfully.",
+    },
+    featureFlagFailed: {
+      title: "Feature flag update failed",
+      description: "Could not update the feature flag. Please try again.",
     },
   },
   members: {
@@ -262,11 +271,35 @@ const settingsEnUS = {
       confirm: "Delete",
     },
   },
+  featureFlags: {
+    loading: "Loading feature flags…",
+    loadError: "Failed to load feature flags. Please try again.",
+    currentlyResolvedAs: "Currently resolved as:",
+    rowMissing: "No org row (resolves to disabled by default)",
+    recommendedDefaultHint: "Catalog recommends: {state}",
+    resetButton: "Reset",
+    resetTooltip: "Write recommended default ({state}) to org row",
+    state: {
+      enabled: "enabled",
+      disabled: "disabled",
+    },
+    unknownFlag: {
+      description: "Unregistered feature flag",
+      warning:
+        "This flag is not registered in the catalog. Use toggle only for emergency shutoff.",
+    },
+    bmv: {
+      label: "BMV (Business Model Validation)",
+      description:
+        "Controls whether BMV features are available for customers in this organization.",
+    },
+  },
   aria: {
     groupManagement: "Group management",
     groupDetail: "Group detail",
     visibilitySettings: "Visibility settings",
     storageRoot: "Storage root settings",
+    featureFlags: "Feature flags settings",
   },
   overrides: {
     drawerTitle: "Personalized Permissions",

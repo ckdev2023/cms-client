@@ -27,6 +27,8 @@ export const PERMISSION_CODES = {
   PERMISSION_OVERRIDE: "permission.override",
 
   SETTINGS_WRITE: "settings.write",
+
+  FEATURE_FLAG_MANAGE: "feature_flag.manage",
 } as const;
 
 /** 権限コード値のユニオン型。 */

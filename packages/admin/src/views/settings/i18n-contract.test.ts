@@ -58,6 +58,7 @@ describe("settings i18n required key groups (T-17)", () => {
     "subnav.groupManagement",
     "subnav.visibilityConfig",
     "subnav.storageRoot",
+    "subnav.featureFlags",
   ] as const;
 
   const GROUP_COLUMN_KEYS = [
@@ -76,10 +77,32 @@ describe("settings i18n required key groups (T-17)", () => {
     "visibility.saveButton",
   ] as const;
 
+  const FEATURE_FLAG_KEYS = [
+    "featureFlags.loading",
+    "featureFlags.loadError",
+    "featureFlags.currentlyResolvedAs",
+    "featureFlags.rowMissing",
+    "featureFlags.recommendedDefaultHint",
+    "featureFlags.resetButton",
+    "featureFlags.resetTooltip",
+    "featureFlags.state.enabled",
+    "featureFlags.state.disabled",
+    "featureFlags.unknownFlag.description",
+    "featureFlags.unknownFlag.warning",
+    "featureFlags.bmv.label",
+    "featureFlags.bmv.description",
+    "toast.featureFlagUpdated.title",
+    "toast.featureFlagUpdated.description",
+    "toast.featureFlagFailed.title",
+    "toast.featureFlagFailed.description",
+    "aria.featureFlags",
+  ] as const;
+
   const ALL_REQUIRED = [
     ...SUBNAV_KEYS,
     ...GROUP_COLUMN_KEYS,
     ...VISIBILITY_KEYS,
+    ...FEATURE_FLAG_KEYS,
   ];
 
   it.each(LOCALES.map((l) => [l.name, l] as const))(

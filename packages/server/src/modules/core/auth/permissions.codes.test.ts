@@ -11,7 +11,7 @@ import {
 void describe("PERMISSION_CODES", () => {
   void test("all codes follow resource.action naming convention", () => {
     for (const code of ALL_PERMISSION_CODES) {
-      assert.match(code, /^[a-z]+\.[a-z]+$/);
+      assert.match(code, /^[a-z][a-z_]*\.[a-z]+$/);
     }
   });
 
@@ -20,8 +20,8 @@ void describe("PERMISSION_CODES", () => {
     assert.equal(unique.size, ALL_PERMISSION_CODES.length);
   });
 
-  void test("contains expected count (15)", () => {
-    assert.equal(ALL_PERMISSION_CODES.length, 15);
+  void test("contains expected count (16)", () => {
+    assert.equal(ALL_PERMISSION_CODES.length, 16);
   });
 });
 
@@ -34,13 +34,14 @@ void describe("getSystemRolePermissions", () => {
     }
   });
 
-  void test("manager has all except permission.override", () => {
+  void test("manager has all except permission.override and feature_flag.manage", () => {
     const perms = getSystemRolePermissions("manager");
     assert.ok(!perms.includes(PERMISSION_CODES.PERMISSION_OVERRIDE));
+    assert.ok(!perms.includes(PERMISSION_CODES.FEATURE_FLAG_MANAGE));
     assert.ok(perms.includes(PERMISSION_CODES.CASE_VIEW));
     assert.ok(perms.includes(PERMISSION_CODES.USER_MANAGE));
     assert.ok(perms.includes(PERMISSION_CODES.ROLE_ASSIGN));
-    assert.equal(perms.length, ALL_PERMISSION_CODES.length - 1);
+    assert.equal(perms.length, ALL_PERMISSION_CODES.length - 2);
   });
 
   void test("staff has 10 permissions", () => {

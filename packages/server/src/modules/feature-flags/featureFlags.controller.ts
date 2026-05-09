@@ -145,13 +145,13 @@ export class FeatureFlagsController {
   }
 
   /**
-   * 写入/更新 flag（manager 以上）。
+   * 写入/更新 flag（owner 限定、feature_flag.manage 権限）。
    *
    * @param req 请求对象
    * @param body 请求体
    * @returns upsert 后的 flag
    */
-  @RequirePermission(PERMISSION_CODES.SETTINGS_WRITE)
+  @RequirePermission(PERMISSION_CODES.FEATURE_FLAG_MANAGE)
   @Post()
   async upsert(@Req() req: HttpRequest, @Body() body: UpsertBody) {
     const ctx = req.requestContext;

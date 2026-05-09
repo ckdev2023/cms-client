@@ -7,6 +7,7 @@ const settingsJaJP = {
     roleManagement: "ロール管理",
     visibilityConfig: "可視性設定",
     storageRoot: "ローカル資料ルートディレクトリ",
+    featureFlags: "機能フラグ",
   },
   group: {
     filter: {
@@ -132,6 +133,14 @@ const settingsJaJP = {
     storageRootUpdated: {
       title: "ルートディレクトリを更新しました（デモ）",
       description: "ルートディレクトリを「{name}」に更新しました",
+    },
+    featureFlagUpdated: {
+      title: "機能フラグを更新しました",
+      description: "機能フラグが正常に更新されました。",
+    },
+    featureFlagFailed: {
+      title: "機能フラグの更新に失敗しました",
+      description: "機能フラグを更新できませんでした。もう一度お試しください。",
     },
   },
   members: {
@@ -263,11 +272,35 @@ const settingsJaJP = {
       confirm: "削除",
     },
   },
+  featureFlags: {
+    loading: "機能フラグを読み込み中…",
+    loadError: "機能フラグの読み込みに失敗しました。もう一度お試しください。",
+    currentlyResolvedAs: "現在の適用状態：",
+    rowMissing: "org 行なし（デフォルトで無効として解決されます）",
+    recommendedDefaultHint: "カタログ推奨値：{state}",
+    resetButton: "リセット",
+    resetTooltip: "推奨デフォルト値（{state}）を org 行に書き込む",
+    state: {
+      enabled: "有効",
+      disabled: "無効",
+    },
+    unknownFlag: {
+      description: "未登録の機能フラグ",
+      warning:
+        "このフラグはカタログに登録されていません。緊急停止の場合のみトグルを使用してください。",
+    },
+    bmv: {
+      label: "BMV（ビジネスモデル検証）",
+      description:
+        "この組織の顧客に対して BMV 機能を利用可能にするかどうかを制御します。",
+    },
+  },
   aria: {
     groupManagement: "グループ管理",
     groupDetail: "グループ詳細",
     visibilitySettings: "可視性設定",
     storageRoot: "ストレージルート設定",
+    featureFlags: "機能フラグ設定",
   },
   overrides: {
     drawerTitle: "個別権限設定",

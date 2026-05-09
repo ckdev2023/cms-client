@@ -33,6 +33,7 @@ alwaysApply: true
 - feature 不得直接导入 `data` 或 `infra`；通过 app container + `domain` / `shared` 抽象协作。
 - feature 不得直接导入 `tamagui` 或 `@tamagui/*`；必须通过 `shared/ui` 封装组件。
 - `domain` 和 `data` 不得依赖 `shared/ui`。
+- 在 Vue `defineProps` 中由异步赋值 / 远程 resolve 的 boolean 字段必须改用字符串 discriminator + `undefined` 表示加载态；禁止裸 `boolean` 参与三态语义。
 
 ## Authoring Rules
 

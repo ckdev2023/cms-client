@@ -7,6 +7,7 @@ const settingsZhCN = {
     roleManagement: "角色管理",
     visibilityConfig: "可见性配置",
     storageRoot: "本地资料根目录",
+    featureFlags: "功能开关",
   },
   group: {
     filter: {
@@ -127,6 +128,14 @@ const settingsZhCN = {
     storageRootUpdated: {
       title: "根目录配置已更新（示例）",
       description: "根目录已更新为「{name}」",
+    },
+    featureFlagUpdated: {
+      title: "功能开关已更新",
+      description: "功能开关已成功更新。",
+    },
+    featureFlagFailed: {
+      title: "功能开关更新失败",
+      description: "无法更新功能开关，请稍后重试。",
     },
   },
   members: {
@@ -256,11 +265,33 @@ const settingsZhCN = {
       confirm: "删除",
     },
   },
+  featureFlags: {
+    loading: "正在加载功能开关…",
+    loadError: "加载功能开关失败，请稍后重试。",
+    currentlyResolvedAs: "当前生效状态：",
+    rowMissing: "无组织行（默认解析为禁用）",
+    recommendedDefaultHint: "目录推荐值：{state}",
+    resetButton: "重置",
+    resetTooltip: "将推荐默认值（{state}）写入组织行",
+    state: {
+      enabled: "启用",
+      disabled: "禁用",
+    },
+    unknownFlag: {
+      description: "未注册的功能开关",
+      warning: "此开关未在目录中注册，仅在紧急关停场景下使用切换。",
+    },
+    bmv: {
+      label: "BMV（商业模式验证）",
+      description: "控制此组织的客户是否可以使用 BMV 功能。",
+    },
+  },
   aria: {
     groupManagement: "分组管理",
     groupDetail: "分组详情",
     visibilitySettings: "权限范围设置",
     storageRoot: "本地资料根目录设置",
+    featureFlags: "功能开关设置",
   },
   overrides: {
     drawerTitle: "个性化权限",

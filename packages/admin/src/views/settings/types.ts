@@ -6,7 +6,8 @@ export type SettingsPanel =
   | "member-management"
   | "role-management"
   | "visibility-config"
-  | "storage-root";
+  | "storage-root"
+  | "feature-flags";
 
 /**
  *
@@ -305,7 +306,9 @@ export type SettingsToastKey =
   | "groupDisabled"
   | "groupActionFailed"
   | "visibilityUpdated"
-  | "storageRootUpdated";
+  | "storageRootUpdated"
+  | "featureFlagUpdated"
+  | "featureFlagFailed";
 
 /**
  *

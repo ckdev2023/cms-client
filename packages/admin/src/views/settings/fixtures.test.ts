@@ -21,8 +21,8 @@ import {
 
 describe("settings/fixtures", () => {
   describe("sub-navigation", () => {
-    it("has exactly 5 panels (3 P0 + member-management + role-management)", () => {
-      expect(SETTINGS_SUBNAV_ITEMS).toHaveLength(5);
+    it("has exactly 6 panels (3 P0 + member-management + role-management + feature-flags)", () => {
+      expect(SETTINGS_SUBNAV_ITEMS).toHaveLength(6);
     });
 
     it("default panel is group-management", () => {
@@ -203,9 +203,9 @@ describe("settings/fixtures", () => {
   });
 
   describe("toast presets", () => {
-    it("has all 6 toast scenarios", () => {
+    it("has all 8 toast scenarios", () => {
       const keys = Object.keys(SETTINGS_TOAST_PRESETS);
-      expect(keys).toHaveLength(6);
+      expect(keys).toHaveLength(8);
       expect(keys).toEqual(
         expect.arrayContaining([
           "groupCreated",
@@ -214,6 +214,8 @@ describe("settings/fixtures", () => {
           "groupActionFailed",
           "visibilityUpdated",
           "storageRootUpdated",
+          "featureFlagUpdated",
+          "featureFlagFailed",
         ]),
       );
     });

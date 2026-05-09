@@ -233,4 +233,19 @@ describe("useCustomerCreateCaseGateModel", () => {
     expect(createCaseGate.value.batch.disabled).toBe(true);
     expect(canCreateCase.value).toBe(false);
   });
+
+  it("keeps gate behaviour intact when flag is loading (undefined) for BMV customer", () => {
+    const customer = computed(() => SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    const { createCaseGate, canCreateCase } = useCustomerCreateCaseGateModel({
+      customer,
+      bmvEnabled: computed(() => undefined),
+    });
+
+    expect(createCaseGate.value.blockedReasonKey).toBe(
+      "customers.detail.actions.createCaseGate.needsSign",
+    );
+    expect(createCaseGate.value.single.disabled).toBe(true);
+    expect(createCaseGate.value.batch.disabled).toBe(true);
+    expect(canCreateCase.value).toBe(false);
+  });
 });

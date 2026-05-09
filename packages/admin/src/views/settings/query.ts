@@ -8,6 +8,7 @@ const VALID_PANELS: readonly SettingsPanel[] = [
   "role-management",
   "visibility-config",
   "storage-root",
+  "feature-flags",
 ];
 
 /**

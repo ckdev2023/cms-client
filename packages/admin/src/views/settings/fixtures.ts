@@ -47,6 +47,11 @@ export const SETTINGS_SUBNAV_ITEMS: SettingsSubNavItem[] = [
     labelKey: "settings.subnav.storageRoot",
     requiredPermission: "settings.write",
   },
+  {
+    id: "feature-flags",
+    labelKey: "settings.subnav.featureFlags",
+    requiredPermission: "feature_flag.manage",
+  },
 ];
 
 export const DEFAULT_PANEL = "group-management" as const;
@@ -210,6 +215,14 @@ export const SETTINGS_TOAST_PRESETS: Record<
   storageRootUpdated: {
     titleKey: "settings.toast.storageRootUpdated.title",
     descriptionKey: "settings.toast.storageRootUpdated.description",
+  },
+  featureFlagUpdated: {
+    titleKey: "settings.toast.featureFlagUpdated.title",
+    descriptionKey: "settings.toast.featureFlagUpdated.description",
+  },
+  featureFlagFailed: {
+    titleKey: "settings.toast.featureFlagFailed.title",
+    descriptionKey: "settings.toast.featureFlagFailed.description",
   },
 };
 

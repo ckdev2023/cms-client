@@ -301,6 +301,9 @@ async function upsertDefaultStorageRoot(
  * 这里采用 ON CONFLICT DO NOTHING：若管理员显式关停过，将保留其原状态，
  * 避免重启服务时被覆盖。
  *
+ * **与 admin catalog（`packages/admin/src/views/settings/model/featureFlagCatalog.ts`）
+ * 必须保持一致；新增 flag 时双向更新。**
+ *
  * @param client PostgreSQL 连接
  * @param orgId 组织 ID
  */
