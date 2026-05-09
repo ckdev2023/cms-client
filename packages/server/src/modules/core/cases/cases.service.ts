@@ -372,10 +372,12 @@ export class CasesService {
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const { whereClause, params } = buildCaseListFilterPrefixed(input, "cs.");
+    const { whereClause, params } = buildCaseListFilterPrefixed(input, "cs.", {
+      customerAlias: "cu",
+    });
 
     const countResult = await tenantDb.query<{ count: string }>(
-      `select count(*) as count from cases cs ${whereClause}`,
+      `select count(*) as count from cases cs ${SUMMARY_JOINS} ${whereClause}`,
       params,
     );
     const total = parseInt(countResult.rows[0]?.count ?? "0", 10);

@@ -140,7 +140,11 @@ void describe("BUG-195: runCreateTransaction 末尾插入初始任务", () => {
 
     assert.equal(taskInserts[0]?.params?.[0], ORG, "org_id");
     assert.equal(taskInserts[0]?.params?.[1], "case-1", "case_id");
-    assert.equal(taskInserts[0]?.params?.[2], "邀请客户上传基础资料", "title");
+    assert.equal(
+      taskInserts[0]?.params?.[2],
+      "顧客に基礎資料のアップロードを依頼",
+      "title",
+    );
     assert.equal(
       taskInserts[0]?.params?.[3],
       "document_follow_up",
@@ -152,7 +156,7 @@ void describe("BUG-195: runCreateTransaction 末尾插入初始任务", () => {
 
     assert.equal(
       taskInserts[1]?.params?.[2],
-      "确认客户初次面谈",
+      "顧客との初回面談を確認",
       "second title",
     );
     assert.equal(

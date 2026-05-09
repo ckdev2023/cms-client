@@ -202,12 +202,12 @@ const INITIAL_TASK_SEEDS: {
   priority: string;
 }[] = [
   {
-    title: "邀请客户上传基础资料",
+    title: "顧客に基礎資料のアップロードを依頼",
     taskType: "document_follow_up",
     priority: "normal",
   },
   {
-    title: "确认客户初次面谈",
+    title: "顧客との初回面談を確認",
     taskType: "client_contact",
     priority: "normal",
   },

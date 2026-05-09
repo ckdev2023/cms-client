@@ -24,6 +24,7 @@ import { PermissionsService } from "../auth/permissions.service";
 import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { ResidencePeriodsService } from "./residencePeriods.service";
+import { assertStatusOfResidenceMatchesVisaType } from "./residencePeriods.validation";
 
 type HttpRequest = { requestContext?: RequestContext };
 
@@ -184,14 +185,18 @@ export class ResidencePeriodsController {
     const caseId = requireString(body.caseId, "caseId");
     await this.assertCanEditParentCase(ctx, caseId);
 
+    const visaType = requireString(body.visaType, "visaType");
+    const statusOfResidence = requireString(
+      body.statusOfResidence,
+      "statusOfResidence",
+    );
+    assertStatusOfResidenceMatchesVisaType(visaType, statusOfResidence);
+
     return this.residencePeriodsService.create(ctx, {
       caseId,
       customerId: requireString(body.customerId, "customerId"),
-      visaType: requireString(body.visaType, "visaType"),
-      statusOfResidence: requireString(
-        body.statusOfResidence,
-        "statusOfResidence",
-      ),
+      visaType,
+      statusOfResidence,
       periodYears: parseOptionalInteger(body.periodYears, "periodYears"),
       periodLabel: parseOptionalNullableString(body.periodLabel, "periodLabel"),
       validFrom: parseDateOnly(body.validFrom, "validFrom"),
@@ -267,12 +272,21 @@ export class ResidencePeriodsController {
     if (!period) throw new NotFoundException("Residence period not found");
     await this.assertCanEditParentCase(ctx, period.caseId);
 
+    const visaType = parseOptionalString(body.visaType, "visaType");
+    const statusOfResidence = parseOptionalString(
+      body.statusOfResidence,
+      "statusOfResidence",
+    );
+    if (visaType !== undefined || statusOfResidence !== undefined) {
+      assertStatusOfResidenceMatchesVisaType(
+        visaType ?? period.visaType,
+        statusOfResidence ?? period.statusOfResidence,
+      );
+    }
+
     return this.residencePeriodsService.update(ctx, id, {
-      visaType: parseOptionalString(body.visaType, "visaType"),
-      statusOfResidence: parseOptionalString(
-        body.statusOfResidence,
-        "statusOfResidence",
-      ),
+      visaType,
+      statusOfResidence,
       periodYears: parseOptionalInteger(body.periodYears, "periodYears"),
       periodLabel: parseOptionalNullableString(body.periodLabel, "periodLabel"),
       validFrom: parseOptionalDateOnly(body.validFrom, "validFrom"),

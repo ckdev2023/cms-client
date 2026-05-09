@@ -11,7 +11,18 @@ import type {
   CaseVisibilityFilter,
 } from "./cases.types";
 import { isUuid } from "../tenancy/uuid";
+import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import { resolveRequestedCaseStage } from "./cases.service.write-helpers";
+
+/** {@link buildCaseListFilterPrefixed} 可选项。 */
+export type CaseListFilterOptions = {
+  /**
+   * 调用方在外层 SQL 中已 JOIN 的 customers 表别名。
+   * 设置后 `search` 子句将额外匹配关联客户的展示名（含 jp/cn/en），
+   * 与列表"申请人"列展示口径一致。
+   */
+  customerAlias?: string;
+};
 
 /**
  * 列表过滤条件构建器（提取以降低 list 方法复杂度）。
@@ -34,10 +45,12 @@ function hasInvalidCaseListUuidFilter(input: CaseListInput): boolean {
  *
  * @param input
  * @param prefix
+ * @param options
  */
 export function buildCaseListFilterPrefixed(
   input: CaseListInput,
   prefix: string,
+  options: CaseListFilterOptions = {},
 ): {
   whereClause: string;
   params: unknown[];
@@ -70,11 +83,7 @@ export function buildCaseListFilterPrefixed(
     }
   }
 
-  if (input.search) {
-    params.push(`%${input.search}%`);
-    const idx = `$${String(params.length)}`;
-    where.push(`(${p}case_name ilike ${idx} or ${p}case_no ilike ${idx})`);
-  }
+  appendSearchCondition(where, params, input.search, prefix, options);
 
   if (input.visibility) {
     appendVisibilityConditionPrefixed(where, params, input.visibility, prefix);
@@ -91,6 +100,26 @@ export function buildCaseListFilterPrefixed(
 
   const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
   return { whereClause, params };
+}
+
+function appendSearchCondition(
+  where: string[],
+  params: unknown[],
+  search: string | undefined,
+  prefix: string,
+  options: CaseListFilterOptions,
+): void {
+  if (!search) return;
+  params.push(`%${search}%`);
+  const idx = `$${String(params.length)}`;
+  const targets = [
+    `${prefix}case_name ilike ${idx}`,
+    `${prefix}case_no ilike ${idx}`,
+  ];
+  if (options.customerAlias) {
+    targets.push(`${customerNameExpr(options.customerAlias)} ilike ${idx}`);
+  }
+  where.push(`(${targets.join(" or ")})`);
 }
 
 function appendVisibilityConditionPrefixed(
