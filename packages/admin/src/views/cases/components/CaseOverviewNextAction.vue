@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import type { CaseDetailTab } from "../types";
@@ -16,6 +17,18 @@ const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
   (e: "openCloseReason"): void;
 }>();
+
+const secondaryTab = computed(
+  () => props.detail.overviewActions.secondary.tab as CaseDetailTab,
+);
+
+const secondaryDisabled = computed(
+  () => secondaryTab.value === "validation" && !props.canRunValidation,
+);
+
+const secondaryDisabledTitle = computed(() =>
+  secondaryDisabled.value ? t("cases.detail.wip") : undefined,
+);
 </script>
 
 <template>
@@ -111,14 +124,9 @@ const emit = defineEmits<{
         </Button>
         <Button
           size="sm"
-          :disabled="!props.canRunValidation"
-          :title="props.canRunValidation ? undefined : t('cases.detail.wip')"
-          @click="
-            emit(
-              'switchTab',
-              detail.overviewActions.secondary.tab as CaseDetailTab,
-            )
-          "
+          :disabled="secondaryDisabled"
+          :title="secondaryDisabledTitle"
+          @click="emit('switchTab', secondaryTab)"
         >
           {{ t(detail.overviewActions.secondary.label) }}
         </Button>

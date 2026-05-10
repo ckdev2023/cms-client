@@ -1,7 +1,7 @@
 // ── Test Ownership ──────────────────────────────────────────────
-// Owner: R27-K — Overview "执行检查" button disable 同步 canRunValidation
-//   非终态下一关键动作区的 secondary 按钮（执行检查 / runValidation）
-//   应当在 canRunValidation=false 时 disabled + title 显示"建设中"。
+// Owner: R27-K — Overview secondary 按钮与 canRunValidation 的同步
+//   当次按钮目标是「提交前检查」(validation) 时，canRunValidation=false
+//   应 disabled + title「建设中」。指向其他 tab（如期限）时不应被该标志误禁用。
 // ────────────────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
@@ -34,16 +34,18 @@ describe("R27-K: overview runValidation button disabled sync", () => {
     expect(src).toContain("canRunValidation");
   });
 
-  it("secondary button is disabled when canRunValidation is false", () => {
-    expect(src).toContain(`:disabled="!props.canRunValidation"`);
+  it("secondary disable is gated by validation tab + canRunValidation", () => {
+    expect(src).toContain('secondaryTab.value === "validation"');
+    expect(src).toContain(':disabled="secondaryDisabled"');
   });
 
   it("secondary button has title referencing cases.detail.wip i18n key", () => {
     expect(src).toContain("cases.detail.wip");
   });
 
-  it("title is only set when canRunValidation is false", () => {
-    expect(src).toContain("props.canRunValidation ? undefined");
+  it("wip title is bound via secondaryDisabledTitle computed", () => {
+    expect(src).toContain(':title="secondaryDisabledTitle"');
+    expect(src).toContain("secondaryDisabledTitle");
   });
 
   describe("cases.detail.wip i18n key exists in all locales", () => {
