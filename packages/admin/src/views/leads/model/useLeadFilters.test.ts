@@ -381,4 +381,51 @@ describe("useLeadFilters — route sync", () => {
       expect.objectContaining({ businessType: "family-stay" }),
     );
   });
+
+  it("search filter is restored from URL on mount", () => {
+    const { f } = createWithRoute({ search: "MCP" });
+    expect(f.search.value).toBe("MCP");
+  });
+
+  it("search filter writes back to router query", async () => {
+    const { f, replaceQuery } = createWithRoute();
+    f.search.value = "alice";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ search: "alice" }),
+    );
+  });
+
+  it("dateFrom and dateTo are restored from URL on mount", () => {
+    const { f } = createWithRoute({
+      dateFrom: "2026-05-01",
+      dateTo: "2026-05-31",
+    });
+    expect(f.dateFrom.value).toBe("2026-05-01");
+    expect(f.dateTo.value).toBe("2026-05-31");
+  });
+
+  it("dateFrom and dateTo write back to router query", async () => {
+    const { f, replaceQuery } = createWithRoute();
+    f.dateFrom.value = "2026-05-01";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ dateFrom: "2026-05-01" }),
+    );
+
+    f.dateTo.value = "2026-05-31";
+    await nextTick();
+    expect(replaceQuery).toHaveBeenCalledWith(
+      expect.objectContaining({ dateTo: "2026-05-31" }),
+    );
+  });
+
+  it("clearing search via URL change clears local state (no stale value)", async () => {
+    const { f, routeQuery } = createWithRoute({ search: "MCP" });
+    expect(f.search.value).toBe("MCP");
+
+    routeQuery.value = {};
+    await nextTick();
+    expect(f.search.value).toBe("");
+  });
 });

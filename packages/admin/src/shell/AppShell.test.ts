@@ -1,8 +1,10 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { flushPromises, mount } from "@vue/test-utils";
+import { nextTick } from "vue";
 import { createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../i18n";
 import AppShell from "./AppShell.vue";
+import GlobalSearchPalette from "./GlobalSearchPalette.vue";
 import {
   initSearchRepository,
   resetSearchRepository,
@@ -276,6 +278,38 @@ describe("AppShell", () => {
   it("renders GlobalSearchPalette component", async () => {
     const { wrapper: w } = await mountShell();
     expect(w.find(".stub-search-palette").exists()).toBe(true);
+  });
+
+  it("closes the search palette when the route changes", async () => {
+    const { router, wrapper: w } = await mountShell({
+      global: {
+        stubs: {
+          SideNav: stubs.SideNav,
+          TopBar: stubs.TopBar,
+          GlobalSearchPalette: false,
+          NavIcon: { props: ["name"], template: "<span />" },
+        },
+      },
+    });
+    document.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "k",
+        metaKey: true,
+        cancelable: true,
+      }),
+    );
+    await flushPromises();
+    await nextTick();
+    await flushPromises();
+
+    const palette = w.findComponent(GlobalSearchPalette);
+    expect(palette.props("open")).toBe(true);
+
+    await router.push("/leads");
+    await flushPromises();
+    await nextTick();
+
+    expect(palette.props("open")).toBe(false);
   });
 
   it("intercepts Cmd+K keydown to open the search palette", async () => {

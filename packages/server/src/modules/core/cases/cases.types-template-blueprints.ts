@@ -103,7 +103,12 @@ export const REQUIREMENT_CATEGORIES = [
 export type RequirementCategory = (typeof REQUIREMENT_CATEGORIES)[number];
 
 /** 进度分组角色枚举值 — 与 document_items.provided_by_role 列对齐。 */
-export const PROVIDED_BY_ROLES = ["applicant", "supporter", "office"] as const;
+export const PROVIDED_BY_ROLES = [
+  "applicant",
+  "employer",
+  "office",
+  "supporter",
+] as const;
 
 /**
  *

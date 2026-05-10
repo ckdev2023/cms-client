@@ -52,28 +52,36 @@ let trapFocusCleanup: (() => void) | null = null;
 
 watch(
   () => props.open,
-  async (open) => {
+  (open) => {
     if (open) {
-      await nextTick();
-      inputRef.value?.focus();
-      const handler = makeFocusTrapHandler();
-      document.addEventListener("keydown", handler, true);
+      const handler = makeDocumentKeydownHandler();
+      window.addEventListener("keydown", handler, true);
       trapFocusCleanup = () =>
-        document.removeEventListener("keydown", handler, true);
+        window.removeEventListener("keydown", handler, true);
+      void (async () => {
+        await nextTick();
+        inputRef.value?.focus();
+      })();
     } else {
       trapFocusCleanup?.();
       trapFocusCleanup = null;
     }
   },
+  { immediate: true },
 );
 
 /**
- * 构造 Tab 键 focus trap 处理函数，防止焦点逃逸至面板外部。
+ * 在捕获阶段处理 Esc（任意焦点下关闭）与 Tab（焦点循环）。
  *
  * @returns keydown 事件处理函数
  */
-function makeFocusTrapHandler(): (e: KeyboardEvent) => void {
+function makeDocumentKeydownHandler(): (e: KeyboardEvent) => void {
   return (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      emit("update:open", false);
+      return;
+    }
     if (e.key !== "Tab" || !panelRef.value) return;
     const focusable = panelRef.value.querySelectorAll<HTMLElement>(
       'input, button, [tabindex]:not([tabindex="-1"])',
@@ -92,7 +100,7 @@ function makeFocusTrapHandler(): (e: KeyboardEvent) => void {
 }
 
 /**
- * 处理面板内键盘快捷键（↑↓ 导航、Enter 选中、Esc 关闭）。
+ * 处理面板内键盘快捷键（↑↓ 导航、Enter 选中）。
  *
  * @param e - 键盘事件
  */
@@ -111,10 +119,6 @@ function handleKeydown(e: KeyboardEvent): void {
     case "Enter":
       e.preventDefault();
       emit("select");
-      break;
-    case "Escape":
-      e.preventDefault();
-      emit("update:open", false);
       break;
   }
 }

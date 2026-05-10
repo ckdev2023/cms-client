@@ -965,6 +965,7 @@ const casesZhCN = {
       family_stay: "家族滞在",
       engineer_visa: "技人国（认定）",
       engineer_humanities_intl_visa: "技人国（认定）",
+      highly_skilled: "高度专门职",
     },
   },
   writeErrors: {

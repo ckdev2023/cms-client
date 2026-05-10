@@ -131,21 +131,27 @@ function readQueryString(query: LocationQuery, key: string): string {
 }
 
 interface ParsedFilterQuery {
+  search: string;
   status: LeadStatusFilter;
   owner: string;
   group: string;
   businessType: string;
   tags: string[];
+  dateFrom: string;
+  dateTo: string;
 }
 
 function parseFiltersFromQuery(query: LocationQuery): ParsedFilterQuery {
   const tagsRaw = readQueryString(query, "tags");
   return {
+    search: readQueryString(query, "search"),
     status: toLeadStatusFilter(readQueryString(query, "status")),
     owner: readQueryString(query, "owner"),
     group: readQueryString(query, "group"),
     businessType: readQueryString(query, "businessType"),
     tags: tagsRaw ? tagsRaw.split(",").filter(Boolean) : [],
+    dateFrom: readQueryString(query, "dateFrom"),
+    dateTo: readQueryString(query, "dateTo"),
   };
 }
 
@@ -154,11 +160,14 @@ function buildFilterQuery(
   tags: string[],
 ): Record<string, string | undefined> {
   return {
+    search: f.search || undefined,
     status: f.status || undefined,
     owner: f.owner || undefined,
     group: f.group || undefined,
     businessType: f.businessType || undefined,
     tags: tags.length > 0 ? tags.join(",") : undefined,
+    dateFrom: f.dateFrom || undefined,
+    dateTo: f.dateTo || undefined,
   };
 }
 
@@ -177,11 +186,14 @@ function setupRouteSync(
 
   watch(
     () => ({
+      search: f.search,
       status: f.status,
       owner: f.owner,
       group: f.group,
       businessType: f.businessType,
       tags: tagsFilter.value,
+      dateFrom: f.dateFrom,
+      dateTo: f.dateTo,
     }),
     () => syncToRoute(),
   );
@@ -189,13 +201,27 @@ function setupRouteSync(
   watch(routeQuery, (query) => {
     skipRouteSync = true;
     const next = parseFiltersFromQuery(query);
-    f.status = next.status;
-    f.owner = next.owner;
-    f.group = next.group;
-    f.businessType = next.businessType;
-    tagsFilter.value = next.tags;
+    if (f.search !== next.search) f.search = next.search;
+    if (f.status !== next.status) f.status = next.status;
+    if (f.owner !== next.owner) f.owner = next.owner;
+    if (f.group !== next.group) f.group = next.group;
+    if (f.businessType !== next.businessType)
+      f.businessType = next.businessType;
+    if (f.dateFrom !== next.dateFrom) f.dateFrom = next.dateFrom;
+    if (f.dateTo !== next.dateTo) f.dateTo = next.dateTo;
+    if (!sameStringArray(tagsFilter.value, next.tags)) {
+      tagsFilter.value = next.tags;
+    }
     skipRouteSync = false;
   });
+}
+
+function sameStringArray(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
 function createFiltersReactive(initial: ParsedFilterQuery | null) {
@@ -203,10 +229,13 @@ function createFiltersReactive(initial: ParsedFilterQuery | null) {
     ...BLANK_FILTERS,
     ...(initial
       ? {
+          search: initial.search,
           status: initial.status,
           owner: initial.owner,
           group: initial.group,
           businessType: initial.businessType,
+          dateFrom: initial.dateFrom,
+          dateTo: initial.dateTo,
         }
       : {}),
   });

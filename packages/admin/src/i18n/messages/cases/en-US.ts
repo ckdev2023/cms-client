@@ -995,6 +995,7 @@ const casesEnUS = {
       family_stay: "Family Stay",
       engineer_visa: "Engineer/Specialist (CoE)",
       engineer_humanities_intl_visa: "Engineer/Specialist (CoE)",
+      highly_skilled: "Highly Skilled Professional",
     },
   },
   writeErrors: {

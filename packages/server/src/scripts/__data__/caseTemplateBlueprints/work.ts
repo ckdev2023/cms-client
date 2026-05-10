@@ -45,7 +45,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
-    providedByRole: "supporter",
+    providedByRole: "employer",
     sortOrder: 5,
   },
   {
@@ -54,7 +54,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
-    providedByRole: "supporter",
+    providedByRole: "employer",
     sortOrder: 6,
   },
   {
@@ -63,7 +63,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
-    providedByRole: "supporter",
+    providedByRole: "employer",
     sortOrder: 7,
   },
   {
@@ -72,7 +72,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: true,
     ownerSide: "customer",
-    providedByRole: "supporter",
+    providedByRole: "employer",
     sortOrder: 8,
   },
   {
@@ -101,7 +101,7 @@ export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
     category: "company",
     requiredFlag: false,
     ownerSide: "customer",
-    providedByRole: "supporter",
+    providedByRole: "employer",
     sortOrder: 11,
     description: "カテゴリー1〜3に該当する場合の証明書（法定調書合計表等）",
   },

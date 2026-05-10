@@ -991,6 +991,7 @@ const casesJaJP = {
       family_stay: "家族滞在",
       engineer_visa: "技人国（認定）",
       engineer_humanities_intl_visa: "技人国（認定）",
+      highly_skilled: "高度専門職",
     },
   },
   writeErrors: {

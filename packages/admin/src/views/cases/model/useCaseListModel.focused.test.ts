@@ -9,6 +9,17 @@ import type { CaseListItem } from "../types";
 import { DEFAULT_CASE_PAGE_SIZE } from "../constants";
 import { SAMPLE_CASE_LIST } from "../fixtures";
 
+function lastPaginatedListParams(listCases: {
+  mock: { calls: unknown[][] };
+}): CaseListParams {
+  const paginatedCalls = listCases.mock.calls
+    .map((c) => c[0] as CaseListParams)
+    .filter(
+      (p) => (p.limit ?? DEFAULT_CASE_PAGE_SIZE) === DEFAULT_CASE_PAGE_SIZE,
+    );
+  return paginatedCalls.at(-1)!;
+}
+
 // ─── Async helpers ──────────────────────────────────────────────
 
 async function flushFetch(): Promise<void> {
@@ -92,9 +103,9 @@ describe("pagination contract (p0-fe-004-03)", () => {
 
     model.setPage(3);
     await flushFetch();
-    const lastCall = listCases.mock.calls.at(-1)![0] as CaseListParams;
-    expect(lastCall.page).toBe(3);
-    expect(lastCall.limit).toBe(DEFAULT_CASE_PAGE_SIZE);
+    const lastPageCall = lastPaginatedListParams(listCases);
+    expect(lastPageCall.page).toBe(3);
+    expect(lastPageCall.limit).toBe(DEFAULT_CASE_PAGE_SIZE);
   });
 
   it("totalPages rounds up correctly for non-divisible totals", async () => {

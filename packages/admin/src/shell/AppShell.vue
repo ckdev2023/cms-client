@@ -134,6 +134,7 @@ function syncRouteView(
 syncRouteView();
 
 const stopRouteSync = router.afterEach(async (to, from) => {
+  search.closePalette();
   syncRouteView(to);
   closeMobileNav();
   // 仅在真正的页面切换（路由名或 params 变化）时才把焦点重置到主内容区，

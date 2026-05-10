@@ -466,6 +466,12 @@ export const CASE_GROUP_OPTIONS: readonly CaseGroupOption[] =
 
 export const DEFAULT_CASE_PAGE_SIZE = 20;
 
+/**
+ * 列表页汇总卡片抽样条数上限，需与后端 `GET /api/cases` 的 `limit` 最大值一致。
+ * 超出本上限的匹配结果在汇总指标上可能仍不完整。
+ */
+export const CASE_LIST_SUMMARY_BASIS_CAP = 200;
+
 // ─── Default Filters ────────────────────────────────────────────
 
 export const DEFAULT_CASE_LIST_FILTERS: CaseListFiltersState = {

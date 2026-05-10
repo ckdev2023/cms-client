@@ -5,7 +5,6 @@ import { useRoute, useRouter } from "vue-router";
 import type { AppLocale } from "../../i18n";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
-import { getGroupOptions } from "../../shared/model/useGroupOptions";
 import { getOwnerOptions } from "../../shared/model/useOwnerOptions";
 import LeadFilters from "./components/LeadFilters.vue";
 import LeadBulkActionBar from "./components/LeadBulkActionBar.vue";
@@ -15,7 +14,6 @@ import LeadCreateModal from "./components/LeadCreateModal.vue";
 import { BUSINESS_TYPE_OPTIONS, getLeadSamples } from "./fixtures";
 import type {
   LeadCreateFormFields,
-  LeadStatus,
   LeadSummary,
   LeadStatusFilter,
 } from "./types";
@@ -26,7 +24,9 @@ import { useLeadCreateForm } from "./model/useLeadCreateForm";
 import { useLeadToast } from "./model/useLeadToast";
 import { useLeadDrafts } from "./model/useLeadDrafts";
 import { useLeadBulkActions } from "./model/useLeadBulkActions";
+import { useLeadBulkHandlers } from "./model/useLeadBulkHandlers";
 import { createLeadRepository } from "./model/LeadRepository";
+import { LeadRepositoryError } from "./model/LeadRepositorySupport";
 import { syncLeadCreateEntryFromRoute } from "./model/leadCreateEntry";
 import { useLeadCreateActions } from "./model/useLeadCreateActions";
 
@@ -36,7 +36,6 @@ const route = useRoute();
 const router = useRouter();
 
 const repository = createLeadRepository();
-const groupOptions = computed(() => getGroupOptions("filter", locale.value));
 const ownerOptions = computed(() => getOwnerOptions(locale.value));
 const { apiOwnerOptions, apiGroupOptions } = useLeadCatalogOptions(locale);
 
@@ -55,7 +54,7 @@ const {
   resetFilters: resetFiltersRaw,
   toListParams,
 } = useLeadFilters({
-  groupOptions: getGroupOptions("filter"),
+  groupOptions: apiGroupOptions.value,
   ownerOptions: [],
   businessTypeOptions: BUSINESS_TYPE_OPTIONS,
   routeQuery: computed(() => route.query),
@@ -85,16 +84,30 @@ async function fetchLeads() {
   const token = ++activeFetchToken;
   listLoading.value = true;
   listError.value = null;
-  let next: { items: LeadSummary[]; total: number };
+  let next: { items: LeadSummary[]; total: number } | null = null;
+  let errorKey: string | null = null;
   try {
     next = await repository.listLeads(toListParams());
-  } catch {
-    const fallback = getLeadSamples(locale.value as AppLocale);
-    next = { items: fallback, total: fallback.length };
+  } catch (cause) {
+    if (cause instanceof LeadRepositoryError && cause.code === "NETWORK") {
+      // 仅在 fetch 完全失败（如离线 / dev server 未启动）时
+      // 回退到本地 fixture，避免演示环境彻底空白。
+      const fallback = getLeadSamples(locale.value as AppLocale);
+      next = { items: fallback, total: fallback.length };
+    } else {
+      // 4xx/5xx 等结构化错误必须显式上抛，不再悄悄替换为 fixture。
+      errorKey = "leads.errors.fetchFailed";
+    }
   }
   if (token !== activeFetchToken) return;
-  leads.value = next.items;
-  totalCount.value = next.total;
+  if (next) {
+    leads.value = next.items;
+    totalCount.value = next.total;
+  } else {
+    leads.value = [];
+    totalCount.value = 0;
+  }
+  listError.value = errorKey;
   listLoading.value = false;
 }
 
@@ -165,106 +178,23 @@ const { drafts, saveDraft, removeDraft, getDraft } = useLeadDrafts({
 const activeDraftId = ref<string | null>(null);
 const bulk = useLeadBulkActions({ repository });
 
-/**
- * 批量指派负责人后弹 toast 并清除选择。
- *
- * @param ownerId - 负责人选项值
- */
-async function handleAssignOwner(ownerId: string) {
-  const result = await bulk.assignOwner(
-    selectedIds.value,
-    leads.value,
-    ownerId,
-  );
-  const label =
-    apiOwnerOptions.value.find((o) => o.value === ownerId)?.label ??
-    ownerOptions.value.find((o) => o.value === ownerId)?.label ??
-    ownerId;
-  toast.show({
-    title: t("leads.list.toast.bulkAssign.title"),
-    description: t("leads.list.toast.bulkAssign.description", {
-      count: result.success,
-      owner: label,
-    }),
-  });
-  clearSelection();
-  await fetchLeads();
-}
-
-/**
- * 批量调整跟进时间后弹 toast 并清除选择。
- *
- * @param date - 目标日期
- */
-async function handleAdjustFollowUp(date: string) {
-  const result = await bulk.adjustFollowUp(
-    selectedIds.value,
-    leads.value,
-    date,
-  );
-  toast.show({
-    title: t("leads.list.toast.bulkFollowUp.title"),
-    description: t("leads.list.toast.bulkFollowUp.description", {
-      count: result.success,
-      date,
-    }),
-  });
-  clearSelection();
-  await fetchLeads();
-}
-
-/**
- * 批量标记状态后弹 toast 并清除选择。
- *
- * @param status - 目标状态
- */
-async function handleMarkStatus(status: LeadStatus) {
-  const result = await bulk.markStatus(selectedIds.value, leads.value, status);
-  toast.show({
-    title: t("leads.list.toast.bulkStatus.title"),
-    description: t("leads.list.toast.bulkStatus.description", {
-      success: result.success,
-      skipped: result.skipped,
-    }),
-  });
-  clearSelection();
-  await fetchLeads();
-}
-
-/**
- * 批量打标签后弹 toast 并清除选择。
- *
- * @param tags - 标签列表
- */
-async function handleBulkTags(tags: string[]) {
-  const result = await bulk.bulkTags(selectedIds.value, leads.value, tags);
-  toast.show({
-    title: t("leads.list.toast.bulkTags.title"),
-    description: t("leads.list.toast.bulkTags.description", {
-      count: result.success,
-      tags: tags.join(", "),
-    }),
-  });
-  clearSelection();
-  await fetchLeads();
-}
-
-/**
- * 批量导出后弹 toast 并清除选择。
- *
- * @param format - 导出格式
- */
-async function handleBulkExport(format: "csv" | "xlsx") {
-  const result = await bulk.bulkExport(selectedIds.value, leads.value, format);
-  toast.show({
-    title: t("leads.list.toast.bulkExport.title"),
-    description: t("leads.list.toast.bulkExport.description", {
-      count: result.success,
-      format: format.toUpperCase(),
-    }),
-  });
-  clearSelection();
-}
+const {
+  handleAssignOwner,
+  handleAdjustFollowUp,
+  handleMarkStatus,
+  handleBulkTags,
+  handleBulkExport,
+} = useLeadBulkHandlers({
+  t,
+  selectedIds,
+  leads,
+  apiOwnerOptions,
+  ownerOptions,
+  bulk,
+  toast,
+  clearSelection,
+  fetchLeads,
+});
 
 const modalOpen = ref(false);
 const {
@@ -413,7 +343,7 @@ watch(
       :owner-filter="ownerFilter"
       :group-filter="groupFilter"
       :owner-options="apiOwnerOptions"
-      :group-options="groupOptions"
+      :group-options="apiGroupOptions"
       :business-type-filter="businessTypeFilter"
       :tags-filter="tagsFilter"
       :date-from="dateFrom"
@@ -430,6 +360,15 @@ watch(
       @update:date-to="dateTo = $event"
       @reset-filters="resetFilters"
     />
+
+    <div
+      v-if="listError"
+      class="leads-list-view__error"
+      role="alert"
+      data-testid="leads-list-error"
+    >
+      {{ t(listError) }}
+    </div>
 
     <div class="leads-list-view__table-card">
       <LeadBulkActionBar
@@ -495,5 +434,13 @@ watch(
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow-1);
   overflow: hidden;
+}
+
+.leads-list-view__error {
+  padding: 12px 16px;
+  background: var(--color-danger-bg, #fef2f2);
+  color: var(--color-danger, #ef4444);
+  border-radius: var(--radius-md);
+  font-size: 14px;
 }
 </style>

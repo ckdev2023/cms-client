@@ -162,7 +162,10 @@ const isFailureStep = computed(
 
     <td class="case-row__hide-lg">
       <div v-if="owner" class="case-row__owner">
-        <span :class="['case-row__owner-avatar', owner.avatarClass]">
+        <span
+          aria-hidden="true"
+          :class="['case-row__owner-avatar', owner.avatarClass]"
+        >
           {{ owner.initials }}
         </span>
         {{ owner.label }}

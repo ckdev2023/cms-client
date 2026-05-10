@@ -14,6 +14,24 @@ async function flushFetch(): Promise<void> {
   await nextTick();
 }
 
+function lastPaginatedFromLog(log: CaseListParams[]): CaseListParams {
+  const paginatedCalls = log.filter(
+    (p) => (p.limit ?? DEFAULT_CASE_PAGE_SIZE) === DEFAULT_CASE_PAGE_SIZE,
+  );
+  return paginatedCalls.at(-1)!;
+}
+
+function lastPaginatedListParams(listCases: {
+  mock: { calls: unknown[][] };
+}): CaseListParams {
+  const paginatedCalls = listCases.mock.calls
+    .map((c) => c[0] as CaseListParams)
+    .filter(
+      (p) => (p.limit ?? DEFAULT_CASE_PAGE_SIZE) === DEFAULT_CASE_PAGE_SIZE,
+    );
+  return paginatedCalls.at(-1)!;
+}
+
 function createSpyRepository(
   handler: (params: CaseListParams) => CaseListResult | Promise<CaseListResult>,
 ) {
@@ -192,12 +210,12 @@ describe("pagination + filter combined lifecycle (p0-fe-004-03)", () => {
 
     model.setPage(4);
     await flushFetch();
-    const pageCall = callLog.at(-1)!;
+    const pageCall = lastPaginatedFromLog(callLog);
     expect(pageCall.page).toBe(4);
 
     model.setStage("S7");
     await flushFetch();
-    const filterCall = callLog.at(-1)!;
+    const filterCall = lastPaginatedFromLog(callLog);
     expect(filterCall.page).toBe(1);
     expect(filterCall.stage).toBe("S7");
   });
@@ -242,7 +260,7 @@ describe("pagination + filter combined lifecycle (p0-fe-004-03)", () => {
     await model.refetch();
     await flushFetch();
 
-    const lastParams = listCases.mock.calls.at(-1)![0] as CaseListParams;
+    const lastParams = lastPaginatedListParams(listCases);
     expect(lastParams.page).toBe(2);
   });
 });

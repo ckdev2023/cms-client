@@ -10,6 +10,7 @@ import {
 import { getLeadSamples } from "./fixtures";
 import type { LeadSummary } from "./types";
 import type { LeadRepository } from "./model/LeadRepository";
+import { LeadRepositoryError } from "./model/LeadRepositorySupport";
 import LeadsListView from "./LeadsListView.vue";
 import LeadFilters from "./components/LeadFilters.vue";
 import LeadTable from "./components/LeadTable.vue";
@@ -182,6 +183,50 @@ describe("LeadsListView", () => {
     expect(ownerOpts.length).toBeGreaterThanOrEqual(1);
     expect(ownerOpts.some((o) => o.value === UUID_OWNER)).toBe(true);
     expect(ownerOpts.some((o) => o.label === "Local Admin")).toBe(true);
+  });
+
+  it("surfaces fetch error banner instead of silently falling back to fixtures on bad response", async () => {
+    const repo = createRepository({
+      listLeads: vi.fn().mockRejectedValue(
+        new LeadRepositoryError({
+          code: "BAD_RESPONSE",
+          status: 400,
+          message: "groupId is not a valid UUID",
+        }),
+      ),
+    });
+    mockedRepository.current = repo;
+
+    const { wrapper } = await mountView();
+    await flushPromises();
+
+    const banner = wrapper.find('[data-testid="leads-list-error"]');
+    expect(banner.exists()).toBe(true);
+    expect(banner.text().length).toBeGreaterThan(0);
+
+    const sampleName = getLeadSamples("en-US")[0]!.name;
+    expect(wrapper.text()).not.toContain(sampleName);
+  });
+
+  it("falls back to fixtures only when the repository raises a NETWORK error", async () => {
+    const repo = createRepository({
+      listLeads: vi.fn().mockRejectedValue(
+        new LeadRepositoryError({
+          code: "NETWORK",
+          message: "fetch failed",
+        }),
+      ),
+    });
+    mockedRepository.current = repo;
+
+    const { wrapper } = await mountView();
+    await flushPromises();
+
+    const banner = wrapper.find('[data-testid="leads-list-error"]');
+    expect(banner.exists()).toBe(false);
+
+    const tableRows = wrapper.findAll("tbody tr");
+    expect(tableRows.length).toBeGreaterThan(0);
   });
 
   it("does not clobber latest search result with stale earlier response", async () => {

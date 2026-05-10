@@ -7,6 +7,7 @@ import {
   isGroupDisabled,
   isGroupDisabledByLabel,
   registerGroupAliases,
+  resolveCaseListGroupFilterForApi,
   resolveGroupLabel,
   resolveGroupValue,
 } from "./useGroupOptions";
@@ -296,5 +297,34 @@ describe("getActiveGroupAliasOptions (R2-A-1 + R2-B-3)", () => {
     registerGroupAliases([{ id: FAKE_UUID, name: "tokyo-1" }]);
     clearGroupAliases();
     expect(getActiveGroupAliasOptions()).toEqual([]);
+  });
+});
+
+const CASE_LIST_GROUP_UUID = "ef21fdd2-1ffc-4a27-8b47-a640d6bd021c";
+
+describe("resolveCaseListGroupFilterForApi", () => {
+  afterEach(() => {
+    clearGroupAliases();
+  });
+
+  it("passes through UUID verbatim", () => {
+    expect(resolveCaseListGroupFilterForApi(CASE_LIST_GROUP_UUID)).toBe(
+      CASE_LIST_GROUP_UUID,
+    );
+  });
+
+  it("maps catalog slug to registered UUID when DB name matches catalog", () => {
+    registerGroupAliases([{ id: CASE_LIST_GROUP_UUID, name: "东京一组" }]);
+    expect(resolveCaseListGroupFilterForApi("tokyo-1")).toBe(
+      CASE_LIST_GROUP_UUID,
+    );
+  });
+
+  it("returns original value when alias table cannot resolve slug", () => {
+    expect(resolveCaseListGroupFilterForApi("tokyo-1")).toBe("tokyo-1");
+  });
+
+  it("returns empty string for whitespace-only input", () => {
+    expect(resolveCaseListGroupFilterForApi("   ")).toBe("");
   });
 });

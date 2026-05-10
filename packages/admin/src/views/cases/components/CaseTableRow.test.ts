@@ -320,4 +320,15 @@ describe("CaseTableRow", () => {
       expect(identityCell.text()).not.toContain("DEV");
     });
   });
+
+  describe("owner avatar accessibility", () => {
+    it("marks initials avatar as aria-hidden (decorative)", () => {
+      const w = mountRow(
+        baseItem({ ownerDisplayName: "Local Admin" }),
+        "en-US",
+      );
+      const avatar = w.find(".case-row__owner-avatar");
+      expect(avatar.attributes("aria-hidden")).toBe("true");
+    });
+  });
 });

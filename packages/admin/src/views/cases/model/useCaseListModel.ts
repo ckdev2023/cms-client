@@ -24,48 +24,13 @@ import {
   parseCaseListQuery,
 } from "../query";
 import type { CaseRepository } from "./CaseRepository";
-import type { CaseListParams } from "./CaseAdapterTypes";
 import { adaptCaseSummaryCards } from "./CaseAdapterMappers";
+import {
+  buildCaseListRequestParams,
+  fetchWideCaseListSummaryBasis,
+} from "./caseListWideSummaryFetch";
 
-// ─── Filter matching ────────────────────────────────────────────
-
-function matchesSearch(item: CaseListItem, query: string): boolean {
-  const q = query.toLowerCase();
-  return (
-    item.name.toLowerCase().includes(q) ||
-    item.applicant.toLowerCase().includes(q) ||
-    item.id.toLowerCase().includes(q) ||
-    item.type.toLowerCase().includes(q)
-  );
-}
-
-const FIELD_MATCHERS: [keyof CaseListFiltersState, keyof CaseListItem][] = [
-  ["stage", "stageId"],
-  ["owner", "ownerId"],
-  ["group", "groupId"],
-  ["risk", "riskStatus"],
-  ["validation", "validationStatus"],
-];
-
-/**
- * 判断单条案件是否满足全部筛选条件。
- *
- * @param item - 待判断的案件
- * @param filters - 筛选状态
- * @param customerId - 可选的客户来源过滤
- * @returns 是否通过所有筛选
- */
-export function matchesCaseFilters(
-  item: CaseListItem,
-  filters: CaseListFiltersState,
-  customerId?: string,
-): boolean {
-  if (filters.search && !matchesSearch(item, filters.search)) return false;
-  for (const [fk, ik] of FIELD_MATCHERS) {
-    if (filters[fk] && item[ik] !== filters[fk]) return false;
-  }
-  return !(customerId && item.customerId !== customerId);
-}
+export { matchesCaseFilters } from "./caseListFilterMatching";
 
 // ─── Filter setters factory ─────────────────────────────────────
 
@@ -200,27 +165,6 @@ function setupRouteSync(
 
 // ─── Helpers ────────────────────────────────────────────────────
 
-function filtersToListParams(
-  filters: CaseListFiltersState,
-  customerId: string | undefined,
-  riskBucket: string | undefined,
-  page: number,
-  limit: number,
-): CaseListParams {
-  return {
-    scope: filters.scope || undefined,
-    search: filters.search || undefined,
-    stage: filters.stage || undefined,
-    owner: filters.owner || undefined,
-    group: filters.group || undefined,
-    risk: filters.risk || undefined,
-    riskBucket: riskBucket || undefined,
-    customerId,
-    page,
-    limit,
-  };
-}
-
 function detectInvalidStage(
   query: LocationQuery,
   onInvalidStage?: (raw: string) => void,
@@ -246,6 +190,7 @@ function createListState(parsed: ReturnType<typeof parseCaseListQuery>) {
     customerId: ref<string | undefined>(parsed.customerId),
     riskBucket: ref<string | undefined>(parsed.riskBucket),
     items: ref<CaseListItem[]>([]),
+    summaryBasisItems: ref<CaseListItem[]>([]),
     total: ref(0),
     page: ref(1),
     pageSize: DEFAULT_CASE_PAGE_SIZE,
@@ -262,6 +207,7 @@ function createFetchCases(input: {
   page: Ref<number>;
   pageSize: number;
   items: Ref<CaseListItem[]>;
+  summaryBasisItems: Ref<CaseListItem[]>;
   total: Ref<number>;
   loading: Ref<boolean>;
   error: Ref<string | null>;
@@ -273,7 +219,7 @@ function createFetchCases(input: {
     input.loading.value = true;
     input.error.value = null;
     try {
-      const params = filtersToListParams(
+      const params = buildCaseListRequestParams(
         input.filters,
         input.customerId.value,
         input.riskBucket.value,
@@ -282,12 +228,25 @@ function createFetchCases(input: {
       );
       const result = await input.repository.listCases(params);
       if (gen !== fetchGeneration) return;
+
+      const basis = await fetchWideCaseListSummaryBasis(
+        input.repository,
+        input.filters,
+        input.customerId.value,
+        input.riskBucket.value,
+        gen,
+        () => fetchGeneration,
+        result,
+      );
+      if (gen !== fetchGeneration) return;
       input.items.value = result.items;
       input.total.value = result.total;
+      input.summaryBasisItems.value = basis;
     } catch (e) {
       if (gen !== fetchGeneration) return;
       input.error.value = e instanceof Error ? e.message : String(e);
       input.items.value = [];
+      input.summaryBasisItems.value = [];
       input.total.value = 0;
     } finally {
       if (gen === fetchGeneration) input.loading.value = false;
@@ -300,12 +259,18 @@ function createDerivedState(
   customerId: Ref<string | undefined>,
   riskBucket: Ref<string | undefined>,
   items: Ref<CaseListItem[]>,
+  summaryBasisItems: Ref<CaseListItem[]>,
   total: Ref<number>,
   pageSize: number,
 ) {
   const filteredCases = computed(() => {
     if (!filters.validation) return items.value;
     return items.value.filter((c) => c.validationStatus === filters.validation);
+  });
+  const summaryItemsForCards = computed(() => {
+    const base = summaryBasisItems.value;
+    if (!filters.validation) return base;
+    return base.filter((c) => c.validationStatus === filters.validation);
   });
   const totalPages = computed(() =>
     total.value > 0 ? Math.ceil(total.value / pageSize) : 1,
@@ -335,7 +300,9 @@ function createDerivedState(
     activeFilterCount,
     isFilterActive: computed(() => activeFilterCount.value > 0),
     customerLabel,
-    summaryCards: computed(() => adaptCaseSummaryCards(filteredCases.value)),
+    summaryCards: computed(() =>
+      adaptCaseSummaryCards(summaryItemsForCards.value),
+    ),
   };
 }
 
@@ -432,6 +399,7 @@ export interface UseCaseListModelDeps {
  *
  * 通过注入的 CaseRepository 发起异步列表查询；
  * `validation` 字段仅客户端过滤，不参与 HTTP 请求。
+ * 当符合条件的总数大于当前页条数时，会额外请求一批案件用于汇总卡片（单批上限见 `CASE_LIST_SUMMARY_BASIS_CAP`），避免卡片只反映当前页。
  *
  * @param deps - 仓储、路由 query 与路由操作注入
  * @returns 筛选状态、过滤结果、加载状态与操作方法
@@ -448,6 +416,7 @@ export function useCaseListModel(deps: UseCaseListModelDeps) {
     page: state.page,
     pageSize: state.pageSize,
     items: state.items,
+    summaryBasisItems: state.summaryBasisItems,
     total: state.total,
     loading: state.loading,
     error: state.error,
@@ -457,6 +426,7 @@ export function useCaseListModel(deps: UseCaseListModelDeps) {
     state.customerId,
     state.riskBucket,
     state.items,
+    state.summaryBasisItems,
     state.total,
     state.pageSize,
   );

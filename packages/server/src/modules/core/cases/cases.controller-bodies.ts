@@ -108,4 +108,5 @@ export type ListCasesQuery = {
   page?: unknown;
   limit?: unknown;
   view?: unknown;
+  groupId?: unknown;
 };

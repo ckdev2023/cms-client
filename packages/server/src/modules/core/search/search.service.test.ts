@@ -88,8 +88,6 @@ void test("scoreMatch: startsWith=2, includes=1, miss=0, case-insensitive", () =
   assert.equal(scoreMatch("hello", "HELLO"), 2);
 });
 
-// ─── empty / whitespace q ───
-
 void test("search returns empty hits for empty string", async () => {
   const service = createService({
     customers: makeCustomerStub([
@@ -111,8 +109,6 @@ void test("search returns empty hits for whitespace-only string", async () => {
   assert.equal(result.hits.length, 0);
   assert.equal(result.query, "");
 });
-
-// ─── tenant isolation: ctx forwarded to service calls ───
 
 void test("search passes request context to each service", async () => {
   const capturedCtxs: RequestContext[] = [];
@@ -146,8 +142,6 @@ void test("search passes request context to each service", async () => {
     assert.equal(captured.userId, customCtx.userId);
   }
 });
-
-// ─── per-type truncation to 5 ───
 
 void test("customer hits are truncated to MAX_HITS_PER_TYPE", async () => {
   const customers = Array.from({ length: 10 }, (_, i) => ({
@@ -186,8 +180,6 @@ void test("task hits are truncated to MAX_HITS_PER_TYPE", async () => {
   const hits = result.hits.filter((h) => h.type === "task");
   assert.ok(hits.length <= MAX_HITS_PER_TYPE);
 });
-
-// ─── scoring and sort order ───
 
 void test("hits are sorted by score descending", async () => {
   const service = createService({
@@ -245,8 +237,6 @@ void test("startsWith scores higher than includes across types", async () => {
   assert.equal(result.hits[1].score, 1);
 });
 
-// ─── partial failure: failed slices don't block others ───
-
 void test("partial failure: one service throws, others still return", async () => {
   const service = createService({
     customers: { list: () => Promise.reject(new Error("DB fail")) } as never,
@@ -279,8 +269,6 @@ void test("partial failure: all services fail returns empty", async () => {
   assert.equal(result.hits.length, 0);
   assert.equal(result.truncated, false);
 });
-
-// ─── truncated flag ───
 
 function fakeN<T>(n: number, fn: (i: number) => T): T[] {
   return Array.from({ length: n }, (_, i) => fn(i));
@@ -334,8 +322,6 @@ void test("truncated flag is set correctly", async () => {
   });
   assert.equal((await small.search(makeCtx(), "Foo")).truncated, false);
 });
-
-// ─── hit shape and href ───
 
 void test("hit shape: customer, case, lead", async () => {
   const c = createService({
@@ -405,16 +391,12 @@ void test("task and document hits have correct href pattern", async () => {
   );
 });
 
-// ─── service with no injected services ───
-
 void test("service with no injected services returns empty", async () => {
   const service = createService({});
   const result = await service.search(makeCtx(), "anything");
   assert.equal(result.hits.length, 0);
   assert.equal(result.truncated, false);
 });
-
-// ─── in-memory filter: non-matching items excluded ───
 
 void test("in-memory filter excludes non-matching items", async () => {
   const s1 = createService({
@@ -437,6 +419,20 @@ void test("in-memory filter excludes non-matching items", async () => {
   assert.equal(r1.hits.filter((h) => h.type === "case").length, 1);
   assert.equal(r1.hits[0].id, "case-1");
 
+  const s1b = createService({
+    cases: makeCaseStub([
+      {
+        id: "case-uuid",
+        caseName: "日文或中文标题 · 家族滞在",
+        caseNo: "CASE-202605-0020",
+        customerName: "申请人",
+      },
+    ]),
+  });
+  const r1b = await s1b.search(makeCtx(), "CASE-202605-0020");
+  assert.equal(r1b.hits.filter((h) => h.type === "case").length, 1);
+  assert.equal(r1b.hits.find((h) => h.type === "case")?.id, "case-uuid");
+
   const s2 = createService({
     tasks: makeTaskStub([
       { id: "t1", title: "Review submission", status: "pending" },
@@ -447,8 +443,6 @@ void test("in-memory filter excludes non-matching items", async () => {
   assert.equal(r2.hits.filter((h) => h.type === "task").length, 1);
   assert.equal(r2.hits[0].id, "t1");
 });
-
-// ─── query trimming ───
 
 void test("query is trimmed before search", async () => {
   let capturedQ: string | undefined;
@@ -463,8 +457,6 @@ void test("query is trimmed before search", async () => {
   assert.equal(result.query, "hello");
   assert.equal(capturedQ, "hello");
 });
-
-// ─── mixed types merge correctly ───
 
 void test("hits from multiple types merge sorted", async () => {
   const service = createService({

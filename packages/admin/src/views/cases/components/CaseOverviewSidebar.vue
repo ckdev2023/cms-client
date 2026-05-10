@@ -158,6 +158,7 @@ function teamGradient(member: TeamMember): string {
           class="overview-sidebar__team-member"
         >
           <span
+            aria-hidden="true"
             class="overview-sidebar__team-avatar"
             :style="{ background: teamGradient(member) }"
           >

@@ -27,6 +27,16 @@ describe("matchesCaseFilters", () => {
     );
   });
 
+  it("filters by search (case number)", () => {
+    const withNo = { ...item, caseNo: "CASE-FILTER-TEST-001" };
+    expect(
+      matchesCaseFilters(withNo, {
+        ...defaults,
+        search: "CASE-FILTER-TEST-001",
+      }),
+    ).toBe(true);
+  });
+
   it("filters by stage", () => {
     expect(matchesCaseFilters(item, { ...defaults, stage: item.stageId })).toBe(
       true,

@@ -28,6 +28,17 @@ async function flushFetch(): Promise<void> {
   await nextTick();
 }
 
+function lastPaginatedListParams(listCases: {
+  mock: { calls: unknown[][] };
+}): CaseListParams {
+  const paginatedCalls = listCases.mock.calls
+    .map((c) => c[0] as CaseListParams)
+    .filter(
+      (p) => (p.limit ?? DEFAULT_CASE_PAGE_SIZE) === DEFAULT_CASE_PAGE_SIZE,
+    );
+  return paginatedCalls.at(-1)!;
+}
+
 function stubItems(
   count: number,
   overrides: Partial<CaseListItem> = {},
@@ -373,7 +384,7 @@ describe("refetch retains state (p0-qa-001-01)", () => {
 
     await model.refetch();
     await flushFetch();
-    const lastParams = listCases.mock.calls.at(-1)![0] as CaseListParams;
+    const lastParams = lastPaginatedListParams(listCases);
     expect(lastParams.page).toBe(2);
   });
 });

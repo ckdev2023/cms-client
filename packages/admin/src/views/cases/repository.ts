@@ -29,6 +29,7 @@ import {
   FAMILY_SCENARIO,
 } from "./fixtures-create";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
+import { resolveCaseListGroupFilterForApi } from "../../shared/model/useGroupOptions";
 
 /**
  *
@@ -76,12 +77,28 @@ export function matchesCaseFilters(
 ): boolean {
   if (params.search) {
     const q = params.search.toLowerCase();
-    const haystack = [item.name, item.id, item.applicant, item.type]
+    const haystack = [
+      item.name,
+      item.id,
+      item.applicant,
+      item.type,
+      item.caseNo,
+    ]
+      .filter((x): x is string => typeof x === "string" && x.length > 0)
       .join(" ")
       .toLowerCase();
     if (!haystack.includes(q)) return false;
   }
   for (const [pk, ik] of REPO_FIELD_MATCHERS) {
+    if (pk === "group") {
+      if (
+        params.group &&
+        item.groupId !== resolveCaseListGroupFilterForApi(params.group)
+      ) {
+        return false;
+      }
+      continue;
+    }
     if (params[pk] && item[ik] !== params[pk]) return false;
   }
   return true;

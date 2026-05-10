@@ -222,6 +222,7 @@ export class CasesController {
       companyId: parseOptionalString(query.companyId, "companyId"),
       phase: parseOptionalString(query.phase, "phase"),
       search: parseOptionalString(query.search, "search"),
+      groupId: parseOptionalString(query.groupId, "groupId"),
       page: parsePage(query.page),
       limit: parseLimit(query.limit),
       visibility: {

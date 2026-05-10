@@ -79,6 +79,17 @@ describe("matchesCaseFilters", () => {
     ).toBe(true);
   });
 
+  it("filters by search text on case number", () => {
+    const match = caseItem({
+      id: "uuid-1",
+      name: "标题与编号不一致",
+      caseNo: "CASE-202605-0020",
+    });
+    expect(
+      matchesCaseFilters(match, defaultParams({ search: "CASE-202605-0020" })),
+    ).toBe(true);
+  });
+
   it("filters by stage", () => {
     expect(
       matchesCaseFilters(

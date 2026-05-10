@@ -256,7 +256,7 @@ void describe("validateRequirementBlueprint", () => {
   void test("PROVIDED_BY_ROLES is frozen and contains expected values", () => {
     assert.deepEqual(
       [...PROVIDED_BY_ROLES],
-      ["applicant", "supporter", "office"],
+      ["applicant", "employer", "office", "supporter"],
     );
   });
 });
@@ -561,18 +561,17 @@ void describe("blueprint providedByRole coverage", async () => {
     });
 
     void test(`${bp.name}: ownerSide→providedByRole mapping is consistent`, () => {
-      const EXPECTED_MAP: Record<string, string> = {
-        applicant: "applicant",
-        customer: "supporter",
-        office: "office",
-      };
       for (const item of bp.items) {
-        const expected = EXPECTED_MAP[item.ownerSide];
-        const got = item.providedByRole ?? "undefined";
+        let expected: string;
+        if (item.ownerSide === "applicant") expected = "applicant";
+        else if (item.ownerSide === "office") expected = "office";
+        else {
+          expected = item.category === "company" ? "employer" : "supporter";
+        }
         assert.equal(
           item.providedByRole,
           expected,
-          `${bp.name}/${item.checklistItemCode}: ownerSide=${item.ownerSide} should map to providedByRole=${expected}, got ${got}`,
+          `${bp.name}/${item.checklistItemCode}: ownerSide=${item.ownerSide} category=${item.category} should map to providedByRole=${expected}, got ${item.providedByRole ?? "undefined"}`,
         );
       }
     });

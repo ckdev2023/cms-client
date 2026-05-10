@@ -173,16 +173,24 @@ export class SearchService {
     });
     const qLower = q.toLowerCase();
     return items
-      .filter((c) =>
-        (c.caseName ?? c.caseNo ?? "").toLowerCase().includes(qLower),
-      )
+      .filter((c) => {
+        const blob = [c.caseName, c.caseNo, c.customerName]
+          .filter((x): x is string => typeof x === "string" && x.length > 0)
+          .join(" ")
+          .toLowerCase();
+        return blob.includes(qLower);
+      })
       .map((c) => ({
         type: "case" as const,
         id: c.id,
         title: c.caseName ?? c.caseNo ?? c.id,
         subtitle: c.customerName,
         href: `/cases/${c.id}`,
-        score: scoreMatch(c.caseName ?? c.caseNo ?? "", q),
+        score: Math.max(
+          scoreMatch(c.caseName ?? "", q),
+          scoreMatch(c.caseNo ?? "", q),
+          scoreMatch(c.customerName, q),
+        ),
       }));
   }
 

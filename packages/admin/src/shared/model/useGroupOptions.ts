@@ -352,6 +352,28 @@ export function resolveGroupLabel(
 }
 
 /**
+ * 案件列表 API 的 `groupId`：将 catalog 短码或任一本地化组名解析为已注册的后端 UUID；
+ * 已为 UUID 则原样返回；无法在别名表中匹配到对应组时原样返回（服务端对非 UUID
+ * 按空结果集处理，见 `buildCaseListFilter`）。
+ *
+ * @param raw - 路由筛选或下拉保存的原始值
+ * @returns 发往 `/api/cases?groupId=` 的取值（可能仍为 slug，由服务端过滤）
+ */
+export function resolveCaseListGroupFilterForApi(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  if (looksLikeUuid(trimmed)) return trimmed;
+  const catalogEntry = GROUP_CATALOG.find((g) =>
+    matchesGroupDirect(g, trimmed),
+  );
+  if (!catalogEntry) return trimmed;
+  for (const [id, name] of groupAliasesRef.value) {
+    if (matchesGroupDirect(catalogEntry, name)) return id;
+  }
+  return trimmed;
+}
+
+/**
  * 将 Group ID 或显示名称解析为稳定的 Group ID。
  *
  * 未命中已知选项时返回 `null`，避免把显示标签误当成下游表单的 groupId。

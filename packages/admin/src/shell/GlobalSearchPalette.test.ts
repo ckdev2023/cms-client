@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { mount, VueWrapper } from "@vue/test-utils";
+import { flushPromises, mount, VueWrapper } from "@vue/test-utils";
 import { nextTick } from "vue";
 import { i18n, setAppLocale } from "../i18n";
 import GlobalSearchPalette from "./GlobalSearchPalette.vue";
@@ -100,12 +100,38 @@ describe("GlobalSearchPalette", () => {
   it("emits update:open=false on Escape keydown", async () => {
     const w = mountPalette();
     await nextTick();
-    const dialog = findDialog()!;
-    dialog.dispatchEvent(
-      new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
+    const dialog = findDialog();
+    expect(dialog).not.toBeNull();
+    dialog!.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      }),
     );
+    await flushPromises();
     await nextTick();
     expect(w.emitted("update:open")).toEqual([[false]]);
+  });
+
+  it("emits update:open=false on Escape when focus is outside the dialog", async () => {
+    const w = mountPalette();
+    await nextTick();
+    const outside = document.createElement("button");
+    document.body.appendChild(outside);
+    outside.focus();
+    expect(document.activeElement).toBe(outside);
+    window.dispatchEvent(
+      new KeyboardEvent("keydown", {
+        key: "Escape",
+        bubbles: true,
+        cancelable: true,
+      }),
+    );
+    await flushPromises();
+    await nextTick();
+    expect(w.emitted("update:open")).toEqual([[false]]);
+    outside.remove();
   });
 
   it("emits moveHighlight(1) on ArrowDown", async () => {
