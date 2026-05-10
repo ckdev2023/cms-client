@@ -1237,6 +1237,9 @@ const casesJaJP = {
       failed: "送信失敗",
       canceled: "取消済み",
     },
+    desc: {
+      noExtra: "補足情報はありません",
+    },
     remaining: {
       overdue: "{days}日超過",
       today: "本日",

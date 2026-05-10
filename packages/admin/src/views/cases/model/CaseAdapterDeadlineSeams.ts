@@ -109,14 +109,15 @@ function resolveReminderTitle(
 
 function buildReminderDesc(
   payload: Record<string, unknown> | null,
-  targetType: string,
   sendStatus: string,
 ): string {
   const descParts: string[] = [];
   const payloadDesc = payload ? readString(payload, "description") : "";
   if (payloadDesc) descParts.push(payloadDesc);
   if (sendStatus) descParts.push(SEND_STATUS_LABELS[sendStatus] ?? sendStatus);
-  return descParts.join(" · ") || targetType;
+  const joined = descParts.join(" · ");
+  if (joined) return joined;
+  return "cases.deadlines.desc.noExtra";
 }
 
 function adaptReminderDto(value: unknown): DeadlineItem | null {
@@ -136,7 +137,7 @@ function adaptReminderDto(value: unknown): DeadlineItem | null {
   return {
     id,
     title: resolveReminderTitle(payload, targetType),
-    desc: buildReminderDesc(payload, targetType, sendStatus),
+    desc: buildReminderDesc(payload, sendStatus),
     date: remindAt ? formatDate(remindAt) : "—",
     remaining: remainingState.label,
     remainingKey: remainingState.labelKey,

@@ -246,6 +246,18 @@ describe("adaptCaseDeadlineList", () => {
     expect(result![0].desc).toContain("cases.deadlines.sendStatus.sent");
   });
 
+  it("desc uses noExtra i18n key when payload has no description and sendStatus is blank", () => {
+    const result = adaptCaseDeadlineList({
+      items: [
+        reminderDto({
+          payloadSnapshot: { kind: "custom" },
+          sendStatus: "",
+        }),
+      ],
+    });
+    expect(result![0].desc).toBe("cases.deadlines.desc.noExtra");
+  });
+
   it("shows — for date when remindAt is null", () => {
     const result = adaptCaseDeadlineList({
       items: [reminderDto({ remindAt: null })],

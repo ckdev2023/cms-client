@@ -1174,6 +1174,9 @@ const casesZhCN = {
       failed: "发送失败",
       canceled: "已取消",
     },
+    desc: {
+      noExtra: "暂无补充说明",
+    },
     remaining: {
       overdue: "{days}日超期",
       today: "今日",

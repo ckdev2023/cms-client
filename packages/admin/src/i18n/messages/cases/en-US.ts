@@ -1240,6 +1240,9 @@ const casesEnUS = {
       failed: "Send failed",
       canceled: "Canceled",
     },
+    desc: {
+      noExtra: "No additional notes",
+    },
     remaining: {
       overdue: "{days} days overdue",
       today: "Today",

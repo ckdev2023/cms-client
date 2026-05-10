@@ -3,7 +3,13 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseCloseoutChecklist from "./CaseCloseoutChecklist.vue";
-import type { CaseDetail, DeadlineItem } from "../types-detail";
+import type { CaseDetail } from "../types-detail";
+import {
+  formatDeadlineItemDesc,
+  deadlineItemBarColor,
+  deadlineItemChipClass,
+  deadlineItemDateClass,
+} from "../model/caseDeadlineItemDisplay";
 
 /** 关键期限 Tab：展示期限进度、提醒操作与结案检查项。 */
 const { t } = useI18n();
@@ -16,55 +22,9 @@ const emit = defineEmits<{
   (e: "open-create-deadline"): void;
 }>();
 
-const SEVERITY_COLOR: Record<string, string> = {
-  danger: "var(--color-danger)",
-  warning: "#f59e0b",
-  primary: "var(--color-primary-6)",
-  muted: "var(--color-border-2)",
-};
-
-const SEVERITY_TEXT_CLASS: Record<string, string> = {
-  danger: "deadlines-tab__date--danger",
-  warning: "deadlines-tab__date--warning",
-  primary: "deadlines-tab__date--primary",
-  muted: "deadlines-tab__date--muted",
-};
-
-const SEVERITY_CHIP_CLASS: Record<string, string> = {
-  danger: "deadlines-tab__remaining--danger",
-  warning: "deadlines-tab__remaining--warning",
-  primary: "deadlines-tab__remaining--primary",
-  muted: "deadlines-tab__remaining--muted",
-};
-
-/**
- * 解析期限项进度条颜色。
- * @param item - 期限项。
- * @returns 对应的颜色值。
- */
-function barColor(item: DeadlineItem): string {
-  return SEVERITY_COLOR[item.severity] ?? "var(--color-border-2)";
-}
-
-/**
- * 解析期限日期文本样式类名。
- * @param item - 期限项。
- * @returns 对应的日期样式类名。
- */
-function dateClass(item: DeadlineItem): string {
-  return SEVERITY_TEXT_CLASS[item.severity] ?? "deadlines-tab__date--muted";
-}
-
-/**
- * 解析剩余时间标签样式类名。
- * @param item - 期限项。
- * @returns 对应的标签样式类名。
- */
-function chipClass(item: DeadlineItem): string {
-  return (
-    SEVERITY_CHIP_CLASS[item.severity] ?? "deadlines-tab__remaining--muted"
-  );
-}
+const barColor = deadlineItemBarColor;
+const dateClass = deadlineItemDateClass;
+const chipClass = deadlineItemChipClass;
 </script>
 
 <template>
@@ -212,7 +172,9 @@ function chipClass(item: DeadlineItem): string {
           />
           <div class="deadlines-tab__item-left">
             <div class="deadlines-tab__item-title">{{ t(item.title) }}</div>
-            <div class="deadlines-tab__item-desc">{{ t(item.desc) }}</div>
+            <div class="deadlines-tab__item-desc">
+              {{ formatDeadlineItemDesc(item.desc, t) }}
+            </div>
           </div>
           <div class="deadlines-tab__item-right">
             <div :class="['deadlines-tab__item-date', dateClass(item)]">

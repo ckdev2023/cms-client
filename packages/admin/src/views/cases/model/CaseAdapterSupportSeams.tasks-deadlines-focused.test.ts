@@ -435,7 +435,7 @@ describe("deadlines tab summary display (p0-fe-006d-03)", () => {
     }
   });
 
-  it("desc falls back to targetType when no description and no sendStatus", () => {
+  it("desc falls back to noExtra i18n key when no description and no sendStatus", () => {
     const result = adaptCaseDeadlineList({
       items: [
         reminderDto({
@@ -445,7 +445,7 @@ describe("deadlines tab summary display (p0-fe-006d-03)", () => {
         }),
       ],
     })!;
-    expect(result[0].desc).toBe("requirement");
+    expect(result[0].desc).toBe("cases.deadlines.desc.noExtra");
   });
 
   it("date shows formatted date when remindAt is present", () => {
