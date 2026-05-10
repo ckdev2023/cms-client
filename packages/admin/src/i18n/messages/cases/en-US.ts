@@ -603,6 +603,10 @@ const casesEnUS = {
       addTask: "Add task",
       addInline: "Add a new task…",
       empty: "No tasks yet",
+      initial: {
+        documentFollowUp: "Ask the client to upload basic documents",
+        clientContact: "Confirm the first meeting with the client",
+      },
       createModal: {
         title: "Add Task",
         fields: {
@@ -716,6 +720,7 @@ const casesEnUS = {
         label: "{collected} / {total} approved",
         labelWithPercent: "{collected} / {total} approved ({percent}%)",
         empty: "No required documents",
+        allWaived: "Nothing to submit (all items waived)",
       },
       progressBreakdown:
         "({total} total · {reviewing} under review · {pending} pending)",

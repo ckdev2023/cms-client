@@ -10,6 +10,7 @@ import { createTaskRepository } from "./model/TaskRepository";
 import {
   canComplete,
   formatDateTime,
+  formatTaskWorkbenchTitle,
   formatUpdatedAt,
   isTaskOverdue,
   priorityLabel,
@@ -248,7 +249,7 @@ onMounted(() => {
             >
               <td>
                 <div class="cell-stack">
-                  <strong>{{ task.title }}</strong>
+                  <strong>{{ formatTaskWorkbenchTitle(task, t) }}</strong>
                   <span class="cell-meta">{{
                     task.description || task.taskType
                   }}</span>

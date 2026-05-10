@@ -107,21 +107,19 @@ function resolveWaiveBackend(
 }
 
 /**
- * 案件详情资料行副标题构造规则（W-6 修复，bug254）：
+ * 案件详情资料行副标题构造规则（W-6 修复，bug254；内部编号不透出 UI）：
  * - 案件名在详情页头部已展示，再注入会冗余，且当 `/cases?view=summary` 没命中
  *   目标案件时 `caseName` 会回退为 `caseId`（UUID），直接泄漏到 UI。
- * - 改用「资料编号 · 期限」语义，与 `adaptCaseDocumentGroups` 的旧路径对齐。
- * - 手动添加项 `checklistItemCode` 形如 `manual:<uuid>`，属内部生成的标识符，跳过。
+ * - `checklistItemCode`（蓝图 slug / `manual:<uuid>`）为用户无意义的内部标识，不向终端展示；
+ *   主标题 `name` 已承载可读的清单项名称。
+ * - 仅在有期限时展示「期限: …」。
  *
  * @param item - 资料列表项
  * @returns 副标题文案；无可展示信息时返回空串
  */
 function buildMeta(item: DocumentListItem): string {
-  const parts: string[] = [];
-  const code = item.checklistItemCode;
-  if (code && !code.startsWith("manual:")) parts.push(code);
-  if (item.dueDate) parts.push(`期限: ${item.dueDateLabel}`);
-  return parts.join(" · ");
+  if (item.dueDate) return `期限: ${item.dueDateLabel}`;
+  return "";
 }
 
 function buildReferenceLabel(item: DocumentListItem): string | null {

@@ -117,11 +117,12 @@ describe("documents tab summary display (p0-fe-006b-03)", () => {
     );
   });
 
-  it("meta includes checklist code when present", () => {
+  it("meta does not expose checklistItemCode (internal slug)", () => {
     const result = adaptCaseDocumentGroups({
       items: [docItem({ checklistItemCode: "REQ-A3" })],
     })!;
-    expect(result[0].items[0].meta).toContain("REQ-A3");
+    expect(result[0].items[0].meta).not.toContain("REQ-A3");
+    expect(result[0].items[0].meta).toBe("");
   });
 
   it("meta includes 期限 when dueAt is set", () => {

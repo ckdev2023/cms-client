@@ -601,6 +601,10 @@ const casesJaJP = {
       addTask: "タスクを追加",
       addInline: "新しいタスクを追加…",
       empty: "タスクがありません",
+      initial: {
+        documentFollowUp: "顧客に基礎資料のアップロードを依頼",
+        clientContact: "顧客との初回面談を確認",
+      },
       createModal: {
         title: "タスクを追加",
         fields: {
@@ -713,6 +717,7 @@ const casesJaJP = {
         label: "{collected} / {total} 承認済み",
         labelWithPercent: "{collected} / {total} 承認済み（{percent}%）",
         empty: "必須書類なし",
+        allWaived: "提出不要（一覧はすべて免除）",
       },
       progressBreakdown:
         "（全 {total} 件 · {reviewing} 件審査中 · {pending} 件未提出）",

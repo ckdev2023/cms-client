@@ -5,6 +5,7 @@ import { useOrgSettings } from "../../../shared/model/useOrgSettings";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import CaseDocumentRow from "./CaseDocumentRow.vue";
+import CaseDocumentsTabEmptyGlyph from "./CaseDocumentsTabEmptyGlyph.vue";
 import RegisterDocumentModal from "../../documents/components/RegisterDocumentModal.vue";
 import ReviewDocumentModal from "../../documents/components/ReviewDocumentModal.vue";
 import WaiveReasonModal from "../../documents/components/WaiveReasonModal.vue";
@@ -17,6 +18,7 @@ import {
   computeDocumentStatusBreakdown,
   computeGroupsStatusBreakdown,
   isDocumentListEmpty,
+  completionZeroDenominatorMessageKey,
 } from "../model/caseDocumentStats";
 import { useCaseDocumentsTab } from "../model/useCaseDocumentsTab";
 
@@ -80,12 +82,25 @@ const overallBreakdown = computed(() =>
   computeGroupsStatusBreakdown(activeGroups.value),
 );
 
+const overallZeroLabelKey = computed(() =>
+  overallRate.value.total !== 0
+    ? null
+    : completionZeroDenominatorMessageKey(overallBreakdown.value.waived > 0),
+);
+
 const groupStats = computed(() =>
-  activeGroups.value.map((g) => ({
-    group: g,
-    stat: computeProviderStat(g),
-    breakdown: computeDocumentStatusBreakdown(g.items),
-  })),
+  activeGroups.value.map((g) => {
+    const stat = computeProviderStat(g);
+    return {
+      group: g,
+      stat,
+      breakdown: computeDocumentStatusBreakdown(g.items),
+      zeroLabelKey:
+        stat.total === 0
+          ? completionZeroDenominatorMessageKey(g.items.length > 0)
+          : null,
+    };
+  }),
 );
 </script>
 
@@ -140,22 +155,7 @@ const groupStats = computed(() =>
     <!-- Template missing state -->
     <Card v-if="effectiveViewState === 'templateMissing'" padding="md">
       <div class="docs-tab__empty">
-        <svg
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          class="docs-tab__empty-icon"
-        >
-          <path
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
+        <CaseDocumentsTabEmptyGlyph />
         <span class="docs-tab__empty-title">{{
           t("cases.detail.documents.empty.templateMissing.title")
         }}</span>
@@ -174,22 +174,7 @@ const groupStats = computed(() =>
       padding="md"
     >
       <div class="docs-tab__empty">
-        <svg
-          width="48"
-          height="48"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-          class="docs-tab__empty-icon"
-        >
-          <path
-            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-          />
-        </svg>
+        <CaseDocumentsTabEmptyGlyph />
         <span class="docs-tab__empty-title">{{
           t("cases.detail.documents.empty.title")
         }}</span>
@@ -321,9 +306,9 @@ const groupStats = computed(() =>
                 />
               </div>
               <span class="docs-tab__global-progress-label">
-                <template v-if="overallRate.total === 0">
-                  {{ t("cases.detail.documents.completion.empty") }}
-                </template>
+                <template v-if="overallZeroLabelKey">{{
+                  t(overallZeroLabelKey)
+                }}</template>
                 <template v-else>
                   {{
                     t("cases.detail.documents.completion.labelWithPercent", {
@@ -348,7 +333,7 @@ const groupStats = computed(() =>
         </template>
 
         <div
-          v-for="({ group, stat, breakdown }, gi) in groupStats"
+          v-for="({ group, stat, breakdown, zeroLabelKey }, gi) in groupStats"
           :key="gi"
           class="docs-tab__group"
         >
@@ -356,9 +341,7 @@ const groupStats = computed(() =>
             <div class="docs-tab__group-header-row">
               <span class="docs-tab__group-title">{{ group.group }}</span>
               <span class="docs-tab__group-count">
-                <template v-if="stat.total === 0">
-                  {{ t("cases.detail.documents.completion.empty") }}
-                </template>
+                <template v-if="zeroLabelKey">{{ t(zeroLabelKey) }}</template>
                 <template v-else>
                   {{
                     t("cases.detail.documents.completion.label", {

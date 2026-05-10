@@ -157,7 +157,7 @@ describe("toCaseDetailItem", () => {
     expect(result.name).toBe("護照写し");
     expect(result.status).toBe("pending");
     expect(result.statusLabelKey).toBe("documents.status.pending");
-    expect(result.meta).toBe("fs-passport-copy · 期限: 2026-05-10");
+    expect(result.meta).toBe("期限: 2026-05-10");
     expect(result.relativePath).toBeNull();
     expect(result.referenceLabelKey).toBeNull();
     expect(result.referenceCount).toBe(1);
@@ -173,7 +173,7 @@ describe("toCaseDetailItem", () => {
     const result = toCaseDetailItem(item);
     expect(result.meta).not.toContain(item.caseId);
     expect(result.meta).not.toContain(item.caseName);
-    expect(result.meta).toBe("fs-passport-copy · 期限: 2026-05-10");
+    expect(result.meta).toBe("期限: 2026-05-10");
   });
 
   it("skips internal manual: prefix code from meta", () => {
@@ -279,7 +279,7 @@ describe("toCaseDetailItem", () => {
       dueDateLabel: "—",
     };
     const result = toCaseDetailItem(item);
-    expect(result.meta).toBe("fs-passport-copy");
+    expect(result.meta).toBe("");
   });
 
   it("returns empty meta when both checklistItemCode and dueDate are missing", () => {

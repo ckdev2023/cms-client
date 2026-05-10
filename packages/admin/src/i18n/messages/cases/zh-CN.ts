@@ -577,6 +577,10 @@ const casesZhCN = {
       addTask: "新增任务",
       addInline: "添加新任务…",
       empty: "暂无待办任务",
+      initial: {
+        documentFollowUp: "请客户上传基础资料",
+        clientContact: "与客户确认首次面谈",
+      },
       createModal: {
         title: "新增任务",
         fields: {
@@ -689,6 +693,7 @@ const casesZhCN = {
         label: "{collected} / {total} 已通过审核",
         labelWithPercent: "{collected} / {total} 已通过审核（{percent}%）",
         empty: "无必需资料",
+        allWaived: "均已豁免，无需提交",
       },
       progressBreakdown:
         "（共 {total} 项 · {reviewing} 项待审核 · {pending} 项待提交）",

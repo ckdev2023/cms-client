@@ -763,6 +763,10 @@ export interface TaskItem {
    */
   label: string;
   /**
+   * 优先于 `label` 展示（如建案自动任务按 `taskType` 本地化）。
+   */
+  labelI18nKey?: string;
+  /**
    *
    */
   done: boolean;

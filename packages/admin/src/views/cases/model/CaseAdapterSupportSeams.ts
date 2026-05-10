@@ -45,6 +45,7 @@ import {
   readString,
 } from "./CaseAdapterShared";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import { resolveInitialAutoCreateTaskTitleKey } from "../../../shared/model/initialAutoCreateTaskI18n";
 import { isFollowUpAllowed } from "../../documents/constants";
 import { WAIVE_ALLOWED_FROM_STATUSES_SET } from "../../documents/fixtures-waive-contract";
 
@@ -161,10 +162,8 @@ function adaptDocumentItemDto(value: unknown): DocumentItem | null {
   const status = readString(r, "status");
   const category = readNullableString(r, "category");
   const dueAt = readNullableString(r, "dueAt");
-  const checklistCode = readString(r, "checklistItemCode");
 
   const metaParts: string[] = [];
-  if (checklistCode) metaParts.push(checklistCode);
   if (dueAt) metaParts.push(`期限: ${formatDate(dueAt)}`);
 
   return {
@@ -463,10 +462,19 @@ function adaptTaskDto(value: unknown): TaskItem | null {
   const done = TASK_DONE_STATUSES.has(status);
   const dueAt = readNullableString(r, "dueAt");
   const priority = readString(r, "priority") || "normal";
+  const taskType =
+    readNullableString(r, "taskType") ?? readNullableString(r, "task_type");
+  const sourceType =
+    readNullableString(r, "sourceType") ?? readNullableString(r, "source_type");
+  const labelI18nKey = resolveInitialAutoCreateTaskTitleKey(
+    sourceType,
+    taskType,
+  );
 
   return {
     id,
     label: title,
+    labelI18nKey,
     done,
     status,
     due: dueAt ? formatDate(dueAt) : "",

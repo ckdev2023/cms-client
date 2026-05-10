@@ -56,6 +56,16 @@ function dueClass(item: TaskItem): string {
 function avatarBg(item: TaskItem): string {
   return AVATAR_COLOR[item.color] ?? "var(--color-primary-6)";
 }
+
+/**
+ * 返回任务在界面上展示的标题文案（优先解析 `labelI18nKey`）。
+ *
+ * @param task - 案件详情 Tab 内的任务项
+ * @returns 已按当前语言解析的标题
+ */
+function taskDisplayLabel(task: TaskItem): string {
+  return task.labelI18nKey ? t(task.labelI18nKey) : task.label;
+}
 </script>
 
 <template>
@@ -97,7 +107,7 @@ function avatarBg(item: TaskItem): string {
               ]"
               role="checkbox"
               :aria-checked="task.done"
-              :aria-label="task.label"
+              :aria-label="taskDisplayLabel(task)"
               :disabled="readonly || task.done"
               @click="onToggle(task)"
             >
@@ -122,7 +132,7 @@ function avatarBg(item: TaskItem): string {
                 { 'tasks-tab__label--done': task.done },
               ]"
             >
-              {{ task.label }}
+              {{ taskDisplayLabel(task) }}
             </span>
           </div>
           <div class="tasks-tab__row-right">

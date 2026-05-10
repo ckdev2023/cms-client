@@ -304,3 +304,17 @@ export function reminderRowTone(reminder: ReminderRecord): string {
 export function canComplete(task: TaskRecord): boolean {
   return task.status === "pending" || task.status === "in_progress";
 }
+
+/**
+ * 返回工作台任务列表行标题（优先使用 `titleI18nKey` 走 vue-i18n）。
+ *
+ * @param task - 任务记录。
+ * @param t - vue-i18n 翻译函数。
+ * @returns 展示用标题。
+ */
+export function formatTaskWorkbenchTitle(
+  task: TaskRecord,
+  t: TaskI18nT,
+): string {
+  return task.titleI18nKey ? t(task.titleI18nKey) : task.title;
+}

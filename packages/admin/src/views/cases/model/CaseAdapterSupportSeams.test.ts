@@ -284,7 +284,7 @@ describe("adaptCaseDocumentGroups", () => {
     expect(actions.canWaive).toBe(false);
   });
 
-  it("builds meta from checklistItemCode and dueAt", () => {
+  it("builds meta from dueAt only (no internal checklist slug)", () => {
     const result = adaptCaseDocumentGroups({
       items: [
         item({
@@ -294,8 +294,15 @@ describe("adaptCaseDocumentGroups", () => {
       ],
     });
     const meta = result![0].items[0].meta;
-    expect(meta).toContain("DOC-010");
+    expect(meta).not.toContain("DOC-010");
     expect(meta).toContain("期限:");
+  });
+
+  it("omits meta when no due date even if checklistItemCode is set", () => {
+    const result = adaptCaseDocumentGroups({
+      items: [item({ checklistItemCode: "DOC-ZZ" })],
+    });
+    expect(result![0].items[0].meta).toBe("");
   });
 
   it("skips items with empty name", () => {

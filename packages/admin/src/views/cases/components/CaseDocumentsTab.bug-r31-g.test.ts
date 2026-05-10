@@ -153,9 +153,9 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
       expect(html).toContain("1 / 2 已通过审核");
     });
 
-    it("renders empty label when all waived", () => {
+    it("renders all-waived label when listed items are all waived", () => {
       const html = mountTab("zh-CN", buildDetail(allWaivedGroups)).html();
-      expect(html).toContain("无必需资料");
+      expect(html).toContain("均已豁免，无需提交");
     });
   });
 
@@ -166,9 +166,9 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
       expect(html).not.toContain("已通过审核");
     });
 
-    it("renders empty label when all waived", () => {
+    it("renders all-waived label when listed items are all waived", () => {
       const html = mountTab("en-US", buildDetail(allWaivedGroups)).html();
-      expect(html).toContain("No required documents");
+      expect(html).toContain("Nothing to submit (all items waived)");
       expect(html).not.toContain("无必需资料");
     });
   });
@@ -180,9 +180,9 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
       expect(html).not.toContain("1 / 2 已通过审核");
     });
 
-    it("renders empty label when all waived", () => {
+    it("renders all-waived label when listed items are all waived", () => {
       const html = mountTab("ja-JP", buildDetail(allWaivedGroups)).html();
-      expect(html).toContain("必須書類なし");
+      expect(html).toContain("提出不要（一覧はすべて免除）");
       expect(html).not.toContain("无必需资料");
     });
   });
@@ -207,6 +207,16 @@ describe("R31-G: document completion label uses i18n (no hardcoded Chinese)", ()
       const html = mountTab("ja-JP", detail).html();
       expect(html).toContain("1 / 2 承認済み");
       expect(html).toContain("50%");
+    });
+
+    it("zh-CN overall shows all-waived caption when every item is waived", () => {
+      const html = mountTab("zh-CN", buildDetail(allWaivedGroups)).html();
+      expect(html).toContain("均已豁免，无需提交");
+    });
+
+    it("ja-JP overall shows all-waived caption when every item is waived", () => {
+      const html = mountTab("ja-JP", buildDetail(allWaivedGroups)).html();
+      expect(html).toContain("提出不要（一覧はすべて免除）");
     });
   });
 });

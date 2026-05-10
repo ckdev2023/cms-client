@@ -198,3 +198,19 @@ export function isDocumentListEmpty(groups: DocumentGroup[]): boolean {
   if (groups.length === 0) return true;
   return groups.every((g) => g.items.length === 0);
 }
+
+/**
+ * 完成率分母为 0 时，顶栏/分组副标题用的 i18n key（有行但全豁免 vs 真无项）。
+ *
+ * @param hasAnyDocumentRows - 当前统计范围内是否存在资料行（含已豁免）
+ * @returns `completion.allWaived` 或 `completion.empty` 文案键
+ */
+export function completionZeroDenominatorMessageKey(
+  hasAnyDocumentRows: boolean,
+):
+  | "cases.detail.documents.completion.allWaived"
+  | "cases.detail.documents.completion.empty" {
+  return hasAnyDocumentRows
+    ? "cases.detail.documents.completion.allWaived"
+    : "cases.detail.documents.completion.empty";
+}

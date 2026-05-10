@@ -15,6 +15,10 @@ export interface TaskRecord {
    */
   title: string;
   /**
+   * 优先于 `title` 展示（如建案自动任务按 `taskType` 本地化）。
+   */
+  titleI18nKey?: string;
+  /**
    *
    */
   description: string | null;

@@ -16,6 +16,7 @@ import {
   buildCreateTaskPayload,
   type TaskCreateInput,
 } from "./TaskWriteBuilders";
+import { resolveInitialAutoCreateTaskTitleKey } from "../../../shared/model/initialAutoCreateTaskI18n";
 
 /**
  * 任务与提醒工作台依赖的仓储接口。
@@ -76,17 +77,30 @@ function adaptTask(value: unknown): TaskRecord | null {
   const title = readString(record, "title");
   if (!id || !title) return null;
 
+  const taskTypeRaw =
+    readString(record, "taskType") ||
+    readString(record, "task_type") ||
+    "general";
+  const sourceTypeResolved =
+    readNullableString(record, "sourceType") ??
+    readNullableString(record, "source_type");
+  const titleI18nKey = resolveInitialAutoCreateTaskTitleKey(
+    sourceTypeResolved,
+    taskTypeRaw,
+  );
+
   return {
     id,
     caseId: readNullableString(record, "caseId"),
     title,
+    titleI18nKey,
     description: readNullableString(record, "description"),
-    taskType: readString(record, "taskType") || "general",
+    taskType: taskTypeRaw,
     assigneeUserId: readNullableString(record, "assigneeUserId"),
     priority: readString(record, "priority") || "normal",
     dueAt: readNullableString(record, "dueAt"),
     status: readString(record, "status") || "pending",
-    sourceType: readNullableString(record, "sourceType"),
+    sourceType: sourceTypeResolved,
     sourceId: readNullableString(record, "sourceId"),
     completedAt: readNullableString(record, "completedAt"),
     caseNo: readNullableString(record, "caseNo"),

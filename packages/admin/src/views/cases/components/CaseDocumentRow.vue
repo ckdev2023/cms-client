@@ -11,6 +11,9 @@ import { getStatusTone } from "../../documents/constants";
 /** 文書行组件：展示单项文書的状态、名称、路径、行内操作与可展开详情。 */
 const { t } = useI18n();
 
+/** 待处理 / 需关注状态：圆环 + 醒目叹号（避免单竖线在 16px 下形同针脚）。 */
+const ICON_CIRCLE_ALERT = "M12 9v5m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z";
+
 const STATUS_ICON_MAP: Record<string, { color: string; path: string }> = {
   approved: {
     color: "var(--color-success)",
@@ -22,11 +25,11 @@ const STATUS_ICON_MAP: Record<string, { color: string; path: string }> = {
   },
   waiting_upload: {
     color: "#f59e0b",
-    path: "M12 8v4m0 4h.01",
+    path: ICON_CIRCLE_ALERT,
   },
   not_sent: {
     color: "var(--color-text-3)",
-    path: "M12 8v4m0 4h.01",
+    path: ICON_CIRCLE_ALERT,
   },
   revision_required: {
     color: "var(--color-danger)",
@@ -56,7 +59,7 @@ function iconFor(item: DocumentItem) {
   return (
     STATUS_ICON_MAP[item.status] ?? {
       color: "var(--color-text-3)",
-      path: "M12 8v4m0 4h.01",
+      path: ICON_CIRCLE_ALERT,
     }
   );
 }
@@ -150,8 +153,8 @@ function toggle() {
         </svg>
         <svg
           class="doc-row__icon"
-          width="16"
-          height="16"
+          width="20"
+          height="20"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -174,6 +177,7 @@ function toggle() {
             {{ item.name }}
           </div>
           <div
+            v-if="item.meta"
             :class="[
               'doc-row__meta',
               { 'doc-row__meta--danger': item.status === 'expired' },
@@ -346,7 +350,7 @@ function toggle() {
 
 .doc-row__icon {
   flex-shrink: 0;
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .doc-row__info {

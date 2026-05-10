@@ -14,6 +14,7 @@ import {
   computeGroupsStatusBreakdown,
   computeItemsCompletionRate,
   computeProviderStat,
+  completionZeroDenominatorMessageKey,
   isDocumentCollected,
   isDocumentListEmpty,
   isDocumentWaived,
@@ -392,5 +393,19 @@ describe("integration with CASE_DETAIL_SAMPLES", () => {
       expect(rate.collected).toBeGreaterThanOrEqual(0);
       expect(rate.total).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  describe("completionZeroDenominatorMessageKey", () => {
+    it("uses allWaived key when scope still lists rows", () => {
+      expect(completionZeroDenominatorMessageKey(true)).toBe(
+        "cases.detail.documents.completion.allWaived",
+      );
+    });
+
+    it("uses empty key when scope has no rows", () => {
+      expect(completionZeroDenominatorMessageKey(false)).toBe(
+        "cases.detail.documents.completion.empty",
+      );
+    });
   });
 });

@@ -139,3 +139,10 @@ describe("CaseDocumentRow: storage root gate tooltip + settings link", () => {
     expect(w.find(".doc-row__storage-link").exists()).toBe(false);
   });
 });
+
+describe("CaseDocumentRow: meta line", () => {
+  it("omits meta wrapper when meta is empty", () => {
+    const w = mountRow(makeItem({ meta: "" }));
+    expect(w.find(".doc-row__meta").exists()).toBe(false);
+  });
+});
