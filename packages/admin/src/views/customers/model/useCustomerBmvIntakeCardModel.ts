@@ -271,7 +271,16 @@ function resolveNextStepKey(profile: CustomerBmvProfile): LabelKey {
   return "customers.detail.bmvIntake.nextStepValue.not_started";
 }
 
-function resolveGateHintKey(profile: CustomerBmvProfile): LabelKey {
+function resolveGateHintKey(
+  customer: CustomerDetail,
+  profile: CustomerBmvProfile,
+): LabelKey {
+  // 当客户已存在任意案件（活跃 or 归档）时，BMV 承接已不再是建案前置门禁，
+  // 与 useCustomerCreateCaseGateModel 中 totalCases > 0 放行口径保持一致；
+  // 否则继续基于 signStatus 区分 locked / ready。
+  if (customer.totalCases > 0) {
+    return "customers.detail.bmvIntake.gateHintValue.bypassed_existing_cases";
+  }
   return profile.signStatus === "signed"
     ? "customers.detail.bmvIntake.gateHintValue.ready"
     : "customers.detail.bmvIntake.gateHintValue.locked";
@@ -424,7 +433,7 @@ export function buildCustomerBmvIntakeCardViewModel(
       tone: intakeStageTone(profile),
     },
     nextStepKey: resolveNextStepKey(profile),
-    gateHintKey: resolveGateHintKey(profile),
+    gateHintKey: resolveGateHintKey(customer, profile),
     stepStatuses: buildStepStatuses(profile),
     timeline: buildTimelineItems(profile, locale),
     note: profile.note,

@@ -55,15 +55,27 @@ const emit = defineEmits<{
 
 const tagInput = ref("");
 
-/** 将输入框文本解析为标签并追加到筛选器。 */
+/**
+ * 将输入框文本解析为标签并追加到筛选器。
+ *
+ * 大小写视为同一个标签：服务端按 case-insensitive 命中（如 `tags=VIP` 与
+ * `tags=vip` 命中同一批数据），UI 上不应让用户产生"两个不同筛选条件"的错觉。
+ * 同 batch 内 + 与已有 chip 都做大小写无关去重。
+ */
 function addTag() {
   const raw = tagInput.value.trim();
   if (!raw) return;
   const current = props.tagsFilter ?? [];
-  const newTags = raw
-    .split(",")
-    .map((s) => s.trim())
-    .filter((s) => s && !current.includes(s));
+  const seen = new Set(current.map((t) => t.toLowerCase()));
+  const newTags: string[] = [];
+  for (const segment of raw.split(",")) {
+    const trimmed = segment.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    newTags.push(trimmed);
+  }
   if (newTags.length > 0) {
     emit("update:tagsFilter", [...current, ...newTags]);
   }

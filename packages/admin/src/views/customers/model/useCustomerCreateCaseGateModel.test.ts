@@ -115,6 +115,35 @@ describe("buildCustomerCreateCaseGateViewModel", () => {
     });
   });
 
+  it("unblocks bmv customer with at least one existing case (lead-intent vs actual-case mismatch)", () => {
+    // 复现 MCP 走查场景：lead.intendedCaseType=business_manager_visa 转客户后
+    // visaType=business_manager，但通过「签约并开始建档」实际建出 family_stay
+    // 案件，此时 totalCases=1 应放行后续建案。
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    customer.totalCases = 1;
+    customer.activeCases = 1;
+    customer.caseTypeCodes = ["dependent_visa"];
+
+    expect(buildCustomerCreateCaseGateViewModel(customer, true)).toEqual({
+      single: { disabled: false },
+      batch: { disabled: false },
+      blockedReasonKey: null,
+    });
+  });
+
+  it("unblocks bmv customer when totalCases > 0 even if all cases are archived", () => {
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    customer.totalCases = 2;
+    customer.activeCases = 0;
+    customer.archivedCases = 2;
+
+    expect(buildCustomerCreateCaseGateViewModel(customer, true)).toEqual({
+      single: { disabled: false },
+      batch: { disabled: false },
+      blockedReasonKey: null,
+    });
+  });
+
   it("keeps the gate locked when signing is recorded but intake is not ready", () => {
     const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
     if (!customer.bmvProfile) throw new Error("Expected BMV profile");

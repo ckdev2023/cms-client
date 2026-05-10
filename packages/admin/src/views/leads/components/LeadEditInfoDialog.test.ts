@@ -246,4 +246,38 @@ describe("LeadEditInfoDialog (R2-B-4)", () => {
     ) as HTMLSelectElement;
     expect(sourceSelect.value).toBe("web");
   });
+
+  it("pre-fills businessType dropdown when intendedCaseType is canonical kebab-case", () => {
+    mountDialog({
+      lead: { ...BASE_LEAD, intendedCaseType: "family-stay" },
+    });
+    const sel = q(
+      "select[name='leadEditInfo.businessType']",
+    ) as HTMLSelectElement;
+    expect(sel.value).toBe("family-stay");
+  });
+
+  it("pre-fills businessType dropdown when intendedCaseType is legacy snake_case (family_stay)", () => {
+    mountDialog({
+      lead: { ...BASE_LEAD, intendedCaseType: "family_stay" },
+    });
+    const sel = q(
+      "select[name='leadEditInfo.businessType']",
+    ) as HTMLSelectElement;
+    expect(sel.value).toBe("family-stay");
+  });
+
+  it("emits close on Escape key (modal keyboard a11y)", async () => {
+    const wrapper = mountDialog();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("close")).toBeTruthy();
+  });
+
+  it("does NOT emit close on Escape while submitting (prevent accidental abort)", async () => {
+    const wrapper = mountDialog({ submitting: true });
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" }));
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("close")).toBeFalsy();
+  });
 });

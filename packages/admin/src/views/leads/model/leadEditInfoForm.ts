@@ -1,5 +1,6 @@
 import type { LeadDetail } from "../types";
 import type { LeadUpdateInput } from "./LeadAdapter";
+import { normalizeBusinessType } from "../../../shared/i18n/businessTypes";
 
 /**
  * 编辑信息对话框的表单字段。
@@ -63,12 +64,29 @@ export function leadEditInfoSnapshot(lead: LeadDetail): LeadEditInfoFormState {
     email: lead.info.email ?? "",
     source: lead.info.source ?? "",
     referrer: lead.info.referrer ?? "",
-    businessType: lead.intendedCaseType ?? "",
+    businessType: normalizeIntendedCaseType(lead.intendedCaseType),
     groupId: lead.groupId ?? "",
     ownerUserId: lead.ownerId ?? "",
     language: lead.info.language ?? "",
     note: lead.info.note ?? "",
   };
+}
+
+/**
+ * 将 server 返回的 `intendedCaseType` 投影为 select 可识别的 canonical kebab-case
+ * 业务类型 code。
+ *
+ * Server 历史数据可能以 snake_case 持久化（如 `family_stay`），而下拉选项使用
+ * canonical kebab-case（如 `family-stay`）。若不规范化，旧数据会导致下拉显示
+ * 为空、提交后又把空值当成"未设置"误清掉服务端实际的业务类型。
+ *
+ * @param raw server 端原始字符串（snake_case / kebab-case / 空值）
+ * @returns 规范化后可直接绑定到 select 的字符串；未识别时回落原值（保守保留）
+ */
+function normalizeIntendedCaseType(raw: string | null | undefined): string {
+  const trimmed = raw?.trim() ?? "";
+  if (!trimmed) return "";
+  return normalizeBusinessType(trimmed) ?? trimmed;
 }
 
 /**

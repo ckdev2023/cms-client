@@ -18,6 +18,7 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
   });
 
   it("returns not_started empty state when bmvProfile is null", () => {
+    // cust-001 已有多个案件 (totalCases=3)，门禁文案应反映「不再作为前置」的实际语义。
     const viewModel = buildCustomerBmvIntakeCardViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-001"]!,
       undefined,
@@ -30,7 +31,8 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
         tone: "neutral",
       },
       nextStepKey: "customers.detail.bmvIntake.nextStepValue.not_started",
-      gateHintKey: "customers.detail.bmvIntake.gateHintValue.locked",
+      gateHintKey:
+        "customers.detail.bmvIntake.gateHintValue.bypassed_existing_cases",
       stepStatuses: [
         {
           labelKey: "customers.detail.bmvIntake.steps.questionnaire",
@@ -252,6 +254,40 @@ describe("buildCustomerBmvIntakeCardViewModel", () => {
       type: "COE 期限確認",
       status: "pending",
     });
+  });
+
+  it("emits bypassed_existing_cases gate hint when customer already has cases", () => {
+    // 复现 MCP 走查场景：lead.intendedCaseType=business_manager_visa 转客户后实际建出
+    // 非 BMV 案件（如 family_stay），totalCases=1。此时承接卡片的「建案门禁」文案
+    // 应明确表达不再阻断，避免与 useCustomerCreateCaseGateModel 的放行口径自相矛盾。
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    customer.totalCases = 1;
+    customer.activeCases = 1;
+
+    const viewModel = buildCustomerBmvIntakeCardViewModel(
+      customer,
+      undefined,
+      "ja-JP",
+    );
+    expect(viewModel?.gateHintKey).toBe(
+      "customers.detail.bmvIntake.gateHintValue.bypassed_existing_cases",
+    );
+  });
+
+  it("emits bypassed_existing_cases gate hint when only archived cases exist", () => {
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-004"]!);
+    customer.totalCases = 1;
+    customer.activeCases = 0;
+    customer.archivedCases = 1;
+
+    const viewModel = buildCustomerBmvIntakeCardViewModel(
+      customer,
+      undefined,
+      "ja-JP",
+    );
+    expect(viewModel?.gateHintKey).toBe(
+      "customers.detail.bmvIntake.gateHintValue.bypassed_existing_cases",
+    );
   });
 
   it("sets canTransitionToCase true only when signed and ready", () => {

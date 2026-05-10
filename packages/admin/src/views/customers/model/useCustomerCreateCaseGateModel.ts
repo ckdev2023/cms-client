@@ -63,6 +63,14 @@ function resolveBlockedReasonKey(
 ): LabelKey | null {
   if (!customer) return null;
   if (!customerRequiresBmv(customer)) return null;
+  // 客户已有任意案件时，BMV 承接已不再是建案前置门禁：
+  // - 该流程的语义是「为客户建立首个 BMV 案件之前的承接准备」；
+  // - 当 lead.intendedCaseType=business_manager_visa 但实际通过「签约并开始建档」
+  //   建出非 BMV 案件（如 family_stay）时，会出现 visaType=business_manager
+  //   + 已有非 BMV 活跃案件 + BMV 承接未开始 的状态；
+  // - 此时仍按 needsSign 阻断「开始办案」会与「累计案件 1 / 活跃案件 1」自相矛盾。
+  // 基于 totalCases > 0 放行，可同时覆盖已归档案件的客户，符合「建过案就跳过承接前置」语义。
+  if (customer.totalCases > 0) return null;
   // BMV 必要 + flag 关闭：替换误导性的 needsSign 文案，给出真实根因。
   // flag loading（undefined）保持现状，避免登场态闪烁。
   if (bmvEnabled === false) {

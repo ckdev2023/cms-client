@@ -94,7 +94,8 @@ describe("CustomerBmvIntakeCard", () => {
   it("renders not_started empty state when bmvProfile is null", () => {
     setAppLocale("en-US");
     const repository = createRepository();
-
+    // cust-001 已有多个案件 (totalCases=3)，门禁文案应反映「不再作为前置」的实际语义；
+    // 仍可从 not_started 状态发送问卷，但建案门禁不再依赖 BMV 承接是否完成。
     const wrapper = mount(CustomerBmvIntakeCard, {
       props: { customer: SAMPLE_CUSTOMER_DETAILS["cust-001"]!, repository },
       global: { plugins: [i18n] },
@@ -103,6 +104,24 @@ describe("CustomerBmvIntakeCard", () => {
     expect(wrapper.find(".bmv-intake-card").exists()).toBe(true);
     expect(wrapper.text()).toContain("Not started");
     expect(wrapper.text()).toContain("Send the questionnaire to start intake");
+    expect(wrapper.text()).toContain(
+      "Customer already has cases — intake is no longer a prerequisite for new cases",
+    );
+  });
+
+  it("renders locked gate hint for not_started bmv customer with no existing cases", () => {
+    setAppLocale("en-US");
+    const repository = createRepository();
+    const customer = structuredClone(SAMPLE_CUSTOMER_DETAILS["cust-001"]!);
+    customer.totalCases = 0;
+    customer.activeCases = 0;
+    customer.archivedCases = 0;
+
+    const wrapper = mount(CustomerBmvIntakeCard, {
+      props: { customer, repository },
+      global: { plugins: [i18n] },
+    });
+
     expect(wrapper.text()).toContain(
       "Case creation stays locked until signing is completed",
     );

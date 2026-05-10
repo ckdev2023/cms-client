@@ -160,6 +160,8 @@ const customerDetail = {
     gateHintValue: {
       locked: "Case creation stays locked until signing is completed",
       ready: "Signing is complete — formal case creation is now available",
+      bypassed_existing_cases:
+        "Customer already has cases — intake is no longer a prerequisite for new cases",
     },
     errors: {
       saveSurveyFailed: "Failed to save the survey. Please try again.",

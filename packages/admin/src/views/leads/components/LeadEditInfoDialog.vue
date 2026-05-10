@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, reactive, ref, watch } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  reactive,
+  ref,
+  watch,
+} from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import { LEAD_SOURCE_OPTIONS, LANGUAGE_OPTIONS } from "../fixtures";
@@ -69,6 +76,28 @@ function handleConfirm(): void {
   if (!canConfirm.value || !hasChanges.value) return;
   emit("confirm", diff.value);
 }
+
+/**
+ * 监听 ESC 关闭：模态对话框默认应支持键盘关闭，避免用户被困在
+ * 弹窗内（无障碍 + 习惯一致性）。提交中（submitting）时不响应，
+ * 防止误关闭中断保存操作。
+ *
+ * @param event 全局 keydown 事件
+ */
+function handleKeydown(event: KeyboardEvent): void {
+  if (event.key !== "Escape") return;
+  if (props.submitting) return;
+  event.stopPropagation();
+  emit("close");
+}
+
+onMounted(() => {
+  document.addEventListener("keydown", handleKeydown);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener("keydown", handleKeydown);
+});
 </script>
 
 <template>

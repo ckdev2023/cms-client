@@ -153,6 +153,7 @@ const customerDetail = {
     gateHintValue: {
       locked: "签约完成前仍不可建案",
       ready: "已完成签约，可以进入正式建案",
+      bypassed_existing_cases: "客户已有案件，承接不再作为建案前置门禁",
     },
     errors: {
       saveSurveyFailed: "问卷数据保存失败，请重试。",

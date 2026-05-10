@@ -157,6 +157,8 @@ const customerDetail = {
     gateHintValue: {
       locked: "契約完了までは起案できません",
       ready: "契約完了済みのため正式起案が可能です",
+      bypassed_existing_cases:
+        "既に案件があるため、引受は新規起案の前提条件ではありません",
     },
     errors: {
       saveSurveyFailed:
