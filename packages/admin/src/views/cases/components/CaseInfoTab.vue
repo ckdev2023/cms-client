@@ -305,16 +305,18 @@ void _contractGuard;
 }
 
 .info-tab__label {
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-2);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
 
 .info-tab__value {
   padding: 8px 12px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   background: var(--color-bg-1);
@@ -332,8 +334,8 @@ void _contractGuard;
 
 .info-tab__section-title {
   margin: 0;
-  font-size: var(--font-size-md);
-  line-height: var(--leading-md);
+  font-size: var(--font-size-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -372,24 +374,28 @@ void _contractGuard;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
 }
 
 .info-tab__party-name {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .info-tab__party-role {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 
 .info-tab__party-detail {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
   padding-left: 42px;
 }
 
@@ -404,13 +410,15 @@ void _contractGuard;
 }
 
 .info-tab__placeholder-text {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 
 .info-tab__placeholder-sub {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 </style>

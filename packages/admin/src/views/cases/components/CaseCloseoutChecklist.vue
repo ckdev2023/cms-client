@@ -60,7 +60,8 @@ defineProps<{
 
 .closeout__title {
   margin: 0 0 8px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -113,7 +114,8 @@ defineProps<{
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-semibold);
   border-radius: 50%;
   flex-shrink: 0;

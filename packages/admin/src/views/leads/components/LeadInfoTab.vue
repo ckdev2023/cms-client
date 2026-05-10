@@ -199,7 +199,8 @@ const createdViaDisplay = computed(() =>
 
 .info-tab__title {
   margin: 0;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -223,23 +224,26 @@ const createdViaDisplay = computed(() =>
 
 .info-tab__label {
   display: block;
-  margin: 0 0 2px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  letter-spacing: 0.02em;
-  color: var(--color-text-3);
+  margin: 0 0 4px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.01em;
+  color: var(--color-text-2);
 }
 
 .info-tab__value {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
 
 .info-tab__value--mono {
   font-family: var(--font-mono, monospace);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
 }
 
 .info-tab__value--tags {
@@ -253,7 +257,9 @@ const createdViaDisplay = computed(() =>
 }
 
 .info-tab__created-via {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 </style>

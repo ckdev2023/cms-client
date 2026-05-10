@@ -265,7 +265,7 @@ function avatarColor(style: string): string {
   padding: 6px 14px;
   border: 1px solid var(--color-border-2);
   border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   text-decoration: none;
@@ -303,7 +303,7 @@ function avatarColor(style: string): string {
   border: 1px solid var(--color-border-2);
   border-radius: var(--radius-md);
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--color-text-1);
   background: var(--color-bg-1);
   resize: none;
@@ -316,7 +316,7 @@ function avatarColor(style: string): string {
 }
 .messages-tab__composer-hint {
   margin: 8px 0 12px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 .messages-tab__composer-footer {
@@ -335,7 +335,7 @@ function avatarColor(style: string): string {
   border: 1px solid var(--color-border-2);
   border-radius: var(--radius-md);
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
   background: var(--color-bg-1);
@@ -346,7 +346,7 @@ function avatarColor(style: string): string {
   border: none;
   border-radius: var(--radius-md);
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: #fff;
   background: var(--color-primary-6);
@@ -375,17 +375,17 @@ function avatarColor(style: string): string {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   flex-shrink: 0;
 }
 .messages-tab__author-name {
-  font-size: 14px;
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 .messages-tab__msg-time {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   white-space: nowrap;
@@ -393,7 +393,7 @@ function avatarColor(style: string): string {
 }
 .messages-tab__msg-body {
   margin: 0 0 0 36px;
-  font-size: 14px;
+  font-size: var(--font-size-base);
   color: var(--color-text-1);
   line-height: var(--leading-relaxed);
 }
@@ -408,7 +408,7 @@ function avatarColor(style: string): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   cursor: pointer;
@@ -431,7 +431,7 @@ function avatarColor(style: string): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   cursor: pointer;
@@ -451,7 +451,7 @@ function avatarColor(style: string): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
   cursor: pointer;
   &:hover {
@@ -482,7 +482,7 @@ function avatarColor(style: string): string {
   flex-shrink: 0;
 }
 .messages-tab__filter-label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   color: var(--color-text-2);
   &--active {
     font-weight: var(--font-weight-bold);
@@ -494,7 +494,7 @@ function avatarColor(style: string): string {
   padding: 48px 24px;
   text-align: center;
   color: var(--color-text-3);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
 }
 </style>

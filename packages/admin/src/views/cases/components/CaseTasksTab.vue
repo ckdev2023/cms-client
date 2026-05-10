@@ -34,7 +34,7 @@ const DUE_COLOR_CLASS: Record<string, string> = {
 const AVATAR_COLOR: Record<string, string> = {
   primary: "var(--color-primary-6)",
   success: "var(--color-success, #22c55e)",
-  warning: "#f59e0b",
+  warning: "var(--color-warning)",
 };
 
 /**
@@ -212,6 +212,7 @@ function taskDisplayLabel(task: TaskItem): string {
   font-size: var(--font-size-md);
   line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-1);
 }
 
@@ -225,7 +226,8 @@ function taskDisplayLabel(task: TaskItem): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   cursor: pointer;
@@ -233,6 +235,12 @@ function taskDisplayLabel(task: TaskItem): string {
 
 .tasks-tab__add-link:hover {
   text-decoration: underline;
+}
+
+.tasks-tab__add-link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Task rows ────────────────────────────────────────── */
@@ -294,10 +302,16 @@ function taskDisplayLabel(task: TaskItem): string {
   color: #fff;
 }
 
+.tasks-tab__checkbox:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+}
+
 /* ── Label ────────────────────────────────────────────── */
 
 .tasks-tab__label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -314,7 +328,8 @@ function taskDisplayLabel(task: TaskItem): string {
   display: inline-block;
   padding: 3px 8px;
   border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   white-space: nowrap;
 }
@@ -343,7 +358,8 @@ function taskDisplayLabel(task: TaskItem): string {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
   color: #fff;
   flex-shrink: 0;
@@ -365,7 +381,8 @@ function taskDisplayLabel(task: TaskItem): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   cursor: pointer;
@@ -375,6 +392,12 @@ function taskDisplayLabel(task: TaskItem): string {
 
 .tasks-tab__add-inline:hover {
   color: var(--color-text-1);
+}
+
+.tasks-tab__add-inline:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Empty state ──────────────────────────────────────── */
@@ -390,7 +413,8 @@ function taskDisplayLabel(task: TaskItem): string {
 
 .tasks-tab__empty p {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
 }
 </style>

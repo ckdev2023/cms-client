@@ -35,6 +35,17 @@ const CREATED_VIA_LABEL_KEYS: Readonly<Record<string, string>> = {
   portal: "leads.options.createdVia.portal",
 };
 
+/**
+ * 服务端 `leads.source` 在管理端创建等场景可能为 `admin` / `app_user` /
+ * `portal`（表示录入路径），不代表营销来源；不可与 `source_channel` 混用。
+ *
+ * @param value - 服务端 `source` 列或其它上下文字符串。
+ * @returns `true` 表示该值仅代表录入路径，不应作为营销来源展示。
+ */
+export function isLeadCreationPathSource(value: string): boolean {
+  return Boolean(value && Object.hasOwn(CREATED_VIA_LABEL_KEYS, value));
+}
+
 function resolveByMap(
   value: string,
   map: Readonly<Record<string, string>>,

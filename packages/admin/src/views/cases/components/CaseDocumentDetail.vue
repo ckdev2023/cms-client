@@ -148,7 +148,8 @@ function copyPath(path: string) {
 
 .doc-detail__section-title {
   margin: 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -160,7 +161,8 @@ function copyPath(path: string) {
 .doc-detail__version-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 
 .doc-detail__version-table th {
@@ -186,7 +188,7 @@ function copyPath(path: string) {
 .doc-detail__version-badge {
   display: inline-block;
   padding: 1px 6px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   background: var(--color-bg-3);
   border-radius: var(--radius-md);
@@ -207,7 +209,7 @@ function copyPath(path: string) {
 }
 
 .doc-detail__version-ref {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-primary-6);
 }
 
@@ -226,6 +228,11 @@ function copyPath(path: string) {
   color: var(--color-text-1);
 }
 
+.doc-detail__copy-btn:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+}
+
 /* ── Review records ────────────────────────────────── */
 
 .doc-detail__review-list {
@@ -239,7 +246,8 @@ function copyPath(path: string) {
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
 }
 
 .doc-detail__review-meta {
@@ -302,7 +310,8 @@ function copyPath(path: string) {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  font-size: 12px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
 }
 
 .doc-detail__reminder-time {
@@ -312,5 +321,6 @@ function copyPath(path: string) {
 
 .doc-detail__reminder-desc {
   color: var(--color-text-3);
+  line-height: var(--leading-sm);
 }
 </style>

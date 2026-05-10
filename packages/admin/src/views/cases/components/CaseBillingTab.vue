@@ -217,6 +217,7 @@ function paymentType(row: PaymentRow): string {
   font-size: var(--font-size-md);
   line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-1);
 }
 
@@ -254,7 +255,8 @@ function paymentType(row: PaymentRow): string {
 }
 
 .billing-tab__stat-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   margin-bottom: 4px;
@@ -297,7 +299,8 @@ function paymentType(row: PaymentRow): string {
 
 .billing-tab__th {
   padding: 12px 16px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -325,7 +328,8 @@ function paymentType(row: PaymentRow): string {
 
 .billing-tab__td {
   padding: 14px 16px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-2);
   border-bottom: 1px solid var(--color-border-1);
   white-space: nowrap;
@@ -351,7 +355,7 @@ function paymentType(row: PaymentRow): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);
   cursor: pointer;
@@ -360,6 +364,12 @@ function paymentType(row: PaymentRow): string {
 
 .billing-tab__link:hover {
   text-decoration: underline;
+}
+
+.billing-tab__link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 /* ── Invoice placeholder ───────────────────────────────── */
@@ -372,7 +382,8 @@ function paymentType(row: PaymentRow): string {
 
 .billing-tab__invoice-title {
   margin: 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
 }
@@ -381,7 +392,8 @@ function paymentType(row: PaymentRow): string {
   margin: 0;
   padding: 16px 0;
   text-align: center;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-text-3);
 }
 </style>

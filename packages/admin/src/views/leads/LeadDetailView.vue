@@ -375,7 +375,8 @@ function tryUseToast() {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   cursor: pointer;

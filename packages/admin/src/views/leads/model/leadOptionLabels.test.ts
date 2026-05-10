@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { i18n, setAppLocale, type AppLocale } from "../../../i18n";
 import {
+  isLeadCreationPathSource,
   resolveLeadBusinessTypeLabel,
   resolveLeadCreatedViaLabel,
   resolveLeadLanguageLabel,
@@ -13,6 +14,19 @@ const t = (key: string): string => i18n.global.t(key);
 describe("leadOptionLabels", () => {
   afterEach(() => {
     setAppLocale(originalLocale);
+  });
+
+  describe("isLeadCreationPathSource", () => {
+    it("recognizes admin portal app_user sentinel values", () => {
+      expect(isLeadCreationPathSource("admin")).toBe(true);
+      expect(isLeadCreationPathSource("app_user")).toBe(true);
+      expect(isLeadCreationPathSource("portal")).toBe(true);
+    });
+    it("returns false for marketing channel codes and empty", () => {
+      expect(isLeadCreationPathSource("web")).toBe(false);
+      expect(isLeadCreationPathSource("referral")).toBe(false);
+      expect(isLeadCreationPathSource("")).toBe(false);
+    });
   });
 
   describe("resolveLeadSourceLabel", () => {

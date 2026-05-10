@@ -346,6 +346,7 @@ async function handleDownloadClick(
   font-size: var(--font-size-md);
   line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-1);
 }
 .forms-tab__section {
@@ -356,7 +357,8 @@ async function handleDownloadClick(
 }
 .forms-tab__kicker {
   padding: 16px 0 8px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -383,12 +385,14 @@ async function handleDownloadClick(
   flex-shrink: 0;
 }
 .forms-tab__name {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 .forms-tab__meta {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-text-3);
   margin-top: 2px;
 }
@@ -402,7 +406,7 @@ async function handleDownloadClick(
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   text-decoration: none;
@@ -411,12 +415,17 @@ async function handleDownloadClick(
 .forms-tab__download-link:hover {
   text-decoration: underline;
 }
+.forms-tab__download-link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
 .forms-tab__link-btn {
   padding: 0;
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-primary-6);
   cursor: pointer;
@@ -424,6 +433,11 @@ async function handleDownloadClick(
 }
 .forms-tab__link-btn:hover:not(:disabled) {
   text-decoration: underline;
+}
+.forms-tab__link-btn:focus-visible:not(:disabled) {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .forms-tab__link-btn:disabled {
   color: var(--color-text-3);
@@ -434,13 +448,13 @@ async function handleDownloadClick(
   color: var(--color-success, #22c55e);
 }
 .forms-tab__icon--warning {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 .forms-tab__icon--primary {
   color: var(--color-primary-6);
 }
 .forms-tab__icon--danger {
-  color: #ef4444;
+  color: var(--color-danger-vivid);
 }
 .forms-tab__icon--muted {
   color: var(--color-text-3);
@@ -450,17 +464,19 @@ async function handleDownloadClick(
   align-items: center;
   padding: 2px 8px;
   border-radius: 4px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
-  background: var(--color-fill-2, #f3f4f6);
+  background: var(--color-bg-3);
   white-space: nowrap;
 }
 .forms-tab__exporting-indicator {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-2);
 }
 .forms-tab__spinner {
@@ -491,7 +507,7 @@ async function handleDownloadClick(
   }
   .forms-tab__row-actions .forms-tab__link-btn::before {
     content: "⏱";
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-base);
   }
 }
 .forms-tab__empty {
@@ -504,7 +520,8 @@ async function handleDownloadClick(
 }
 .forms-tab__empty p {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
 }
 </style>

@@ -301,7 +301,8 @@ const coeNoteKeySuffix = computed<string>(() => {
   border-radius: var(--radius-full);
   background: var(--color-primary-1, #e0e7ff);
   color: var(--color-primary-6);
-  font-size: 12px;
+  font-size: var(--font-size-xs);
+  line-height: var(--leading-xs);
   font-weight: var(--font-weight-bold);
   flex-shrink: 0;
 }

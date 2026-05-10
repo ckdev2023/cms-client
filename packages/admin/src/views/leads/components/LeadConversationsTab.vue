@@ -125,8 +125,9 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 48px 24px;
-  color: var(--color-text-3);
-  font-size: var(--font-size-sm);
+  color: var(--color-text-2);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 
 .lead-conv-tab__error {
@@ -134,24 +135,27 @@ onMounted(() => {
   background: var(--color-danger-bg, #fef2f2);
   color: var(--color-danger, #ef4444);
   border-radius: var(--radius-md);
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 
 .lead-conv-tab__table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 
 .lead-conv-tab__table th {
   text-align: left;
   padding: 10px 12px;
-  font-weight: var(--font-weight-medium, 500);
-  color: var(--color-text-3, #6b7280);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-2, #4b5563);
   border-bottom: 1px solid var(--color-border-1, #e5e7eb);
-  font-size: 12px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
 }
 
 .lead-conv-tab__table td {
@@ -176,13 +180,15 @@ onMounted(() => {
 }
 
 .lead-conv-tab__name {
-  font-weight: var(--font-weight-medium, 500);
+  font-weight: var(--font-weight-semibold, 600);
   color: var(--color-text-1, #1f2937);
 }
 
 .lead-conv-tab__meta {
-  font-size: 12px;
-  color: var(--color-text-3, #6b7280);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2, #4b5563);
 }
 
 .lead-conv-tab__preview-cell {
@@ -196,15 +202,16 @@ onMounted(() => {
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 280px;
-  color: var(--color-text-2, #4b5563);
+  color: var(--color-text-1, #1f2937);
 }
 
 .lead-conv-tab__empty {
   padding: 48px 24px;
   text-align: center;
-  color: var(--color-text-3);
+  color: var(--color-text-2);
   border: 1px dashed var(--color-border-1);
   border-radius: var(--radius-lg, 16px);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
 }
 </style>

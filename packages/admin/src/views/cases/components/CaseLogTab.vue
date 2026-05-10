@@ -218,7 +218,7 @@ function resolveEntryText(entry: LogEntry): string {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   cursor: pointer;
@@ -304,7 +304,7 @@ function resolveEntryText(entry: LogEntry): string {
   width: 28px;
   height: 28px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: #fff;
   flex-shrink: 0;
@@ -319,7 +319,8 @@ function resolveEntryText(entry: LogEntry): string {
 
 .log-tab__entry-text {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-1);
 }
 
@@ -331,12 +332,12 @@ function resolveEntryText(entry: LogEntry): string {
 }
 
 .log-tab__entry-object {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 
 .log-tab__entry-time {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   white-space: nowrap;
@@ -368,7 +369,7 @@ function resolveEntryText(entry: LogEntry): string {
 
 .log-tab__empty p {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
 }
 </style>

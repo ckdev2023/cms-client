@@ -237,7 +237,8 @@ const form = reactive(props.followupForm);
 
 .followup-form__title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -263,9 +264,10 @@ const form = reactive(props.followupForm);
 .followup-form__label {
   display: block;
   margin-bottom: 4px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-2);
 }
 
 .followup-form__required {
@@ -277,7 +279,8 @@ const form = reactive(props.followupForm);
   width: 100%;
   padding: 8px 12px;
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-1);
   background-color: var(--color-bg-1);
   border: 1px solid var(--color-border-1);
@@ -340,9 +343,10 @@ const form = reactive(props.followupForm);
 
 .followup-empty__desc {
   margin: 4px 0 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 
 /* ---- Timeline ---- */
@@ -411,41 +415,45 @@ const form = reactive(props.followupForm);
   align-items: center;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
 
 .followup-timeline__time {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  color: var(--color-text-2);
 }
 
 .followup-timeline__operator {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 
 .followup-timeline__summary {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-relaxed);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
-  line-height: var(--leading-relaxed);
 }
 
 .followup-timeline__details {
   margin-top: 8px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 
 .followup-timeline__detail-label {
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-2);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
 }
 </style>

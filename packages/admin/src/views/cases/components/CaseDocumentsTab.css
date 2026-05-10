@@ -11,7 +11,8 @@
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
 }
@@ -34,13 +35,15 @@
 }
 .docs-tab__gate-title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-warning-text);
 }
 .docs-tab__gate-desc {
   margin: 4px 0 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-warning-text);
 }
 .docs-tab__gate-link {
@@ -50,6 +53,11 @@
 }
 .docs-tab__gate-link:hover {
   color: var(--color-primary-7, var(--color-primary-6));
+}
+.docs-tab__gate-link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 .docs-tab__register-wrap {
   display: inline-flex;
@@ -72,12 +80,14 @@
 
 .docs-tab__empty-title {
   font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-extrabold);
   color: var(--color-text-1);
 }
 
 .docs-tab__empty-desc {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-3);
   max-width: 360px;
 }
@@ -96,7 +106,8 @@
 }
 
 .docs-tab__kicker {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -104,9 +115,11 @@
 }
 
 .docs-tab__progress-title {
+  margin: 0;
   font-size: var(--font-size-md);
   line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-1);
 }
 
@@ -125,7 +138,8 @@
 .docs-tab__progress-label {
   flex-shrink: 0;
   width: 140px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-2);
 }
@@ -148,7 +162,8 @@
 .docs-tab__progress-count {
   flex-shrink: 0;
   min-width: 36px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-2);
   text-align: right;
@@ -176,6 +191,7 @@
   font-size: var(--font-size-md);
   line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
   color: var(--color-text-1);
 }
 
@@ -202,7 +218,8 @@
 }
 
 .docs-tab__global-progress-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   white-space: nowrap;
@@ -239,7 +256,8 @@
 }
 
 .docs-tab__group-title {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-3);
   text-transform: uppercase;
@@ -247,7 +265,8 @@
 }
 
 .docs-tab__group-count {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }
@@ -279,7 +298,8 @@
 .docs-tab__group-empty {
   padding: 20px;
   text-align: center;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   color: var(--color-text-3);
 }
 

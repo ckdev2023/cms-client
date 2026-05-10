@@ -24,7 +24,7 @@ const STATUS_ICON_MAP: Record<string, { color: string; path: string }> = {
     path: "M9 12l2 2 4-4",
   },
   waiting_upload: {
-    color: "#f59e0b",
+    color: "var(--color-warning)",
     path: ICON_CIRCLE_ALERT,
   },
   not_sent: {
@@ -358,7 +358,8 @@ function toggle() {
 }
 
 .doc-row__name {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
   white-space: nowrap;
@@ -372,7 +373,8 @@ function toggle() {
 }
 
 .doc-row__meta {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-text-3);
   margin-top: 1px;
 }
@@ -383,7 +385,8 @@ function toggle() {
 
 .doc-row__path {
   margin-top: 2px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-text-3);
   max-width: 300px;
   overflow: hidden;
@@ -394,7 +397,8 @@ function toggle() {
 
 .doc-row__ref {
   margin-top: 2px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-primary-6);
 }
 
@@ -424,7 +428,7 @@ function toggle() {
 }
 
 .doc-row__storage-link {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-primary-6);
   text-decoration: underline;
   white-space: nowrap;
@@ -434,11 +438,17 @@ function toggle() {
   color: var(--color-primary-7, var(--color-primary-6));
 }
 
+.doc-row__storage-link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .doc-row__waive-btn {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   text-decoration: underline;
@@ -451,11 +461,17 @@ function toggle() {
   color: var(--color-text-1);
 }
 
+.doc-row__waive-btn:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
 .doc-row__unwaive-btn {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-primary-6);
   text-decoration: underline;
@@ -466,5 +482,11 @@ function toggle() {
 
 .doc-row__unwaive-btn:hover {
   color: var(--color-primary-7, var(--color-primary-6));
+}
+
+.doc-row__unwaive-btn:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 </style>

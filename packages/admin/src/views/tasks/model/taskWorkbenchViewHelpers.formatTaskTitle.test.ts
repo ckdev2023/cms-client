@@ -27,7 +27,9 @@ function baseTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
 
 describe("formatTaskWorkbenchTitle", () => {
   it("uses titleI18nKey when present", () => {
-    const t = vi.fn((k: string) => (k === "cases.detail.tasks.initial.clientContact" ? "ZH" : k));
+    const t = vi.fn((k: string) =>
+      k === "cases.detail.tasks.initial.clientContact" ? "ZH" : k,
+    );
     const label = formatTaskWorkbenchTitle(
       baseTask({
         titleI18nKey: "cases.detail.tasks.initial.clientContact",
@@ -40,7 +42,9 @@ describe("formatTaskWorkbenchTitle", () => {
 
   it("falls back to raw title when no titleI18nKey", () => {
     const t = vi.fn();
-    expect(formatTaskWorkbenchTitle(baseTask({ title: "保持" }), t)).toBe("保持");
+    expect(formatTaskWorkbenchTitle(baseTask({ title: "保持" }), t)).toBe(
+      "保持",
+    );
     expect(t).not.toHaveBeenCalled();
   });
 });

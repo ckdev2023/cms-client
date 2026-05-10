@@ -27,6 +27,10 @@ describe("adaptBasicInfo — source field priority (R3-D-2)", () => {
   it("falls back to sourceLabel when both absent", () => {
     expect(detailSource({ sourceLabel: "ウェブ" })?.source).toBe("ウェブ");
   });
+  it("does not treat server source=admin as marketing channel when channel absent", () => {
+    expect(detailSource({ source: "admin" })?.source).toBe("");
+    expect(detailSource({ source: "admin" })?.createdVia).toBe("admin");
+  });
   it("maps createdVia from server source field", () => {
     expect(
       detailSource({ source: "admin", sourceChannel: "web" })?.createdVia,

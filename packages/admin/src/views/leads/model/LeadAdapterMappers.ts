@@ -26,6 +26,7 @@ import type {
 import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
 import { sanitizeWalkthroughTags } from "./walkthroughTags";
 import { normalizeBusinessType } from "../../../shared/i18n/businessTypes";
+import { isLeadCreationPathSource } from "./leadOptionLabels";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -174,16 +175,31 @@ function readLeadIdentity(r: Record<string, unknown>) {
   };
 }
 
+/**
+ * 解析营销来源（`source_channel` 或 legacy `source`）；忽略 `source` 列上的
+ * 录入路径哨兵（`admin` / `app_user` / `portal`），与 `leads.create` 写入一致。
+ *
+ * @param r - 列表项或详情 `lead` 的原始字段对象。
+ * @returns 用于 UI 展示的渠道枚举或预翻译字面量；无营销来源时为空串。
+ */
+function readLeadMarketingChannel(r: Record<string, unknown>): string {
+  const channel = readString(r, "sourceChannel");
+  if (channel) return channel;
+  const legacy = readString(r, "source");
+  if (legacy && !isLeadCreationPathSource(legacy)) return legacy;
+  return readString(r, "sourceLabel");
+}
+
 function readLeadClassification(r: Record<string, unknown>) {
   const rawBt =
     readString(r, "businessType") || readString(r, "intendedCaseType");
   const bt = normalizeBusinessType(rawBt) ?? rawBt;
-  const src = readString(r, "sourceChannel") || readString(r, "source");
+  const marketing = readLeadMarketingChannel(r);
   return {
     businessType: bt,
     businessTypeLabel: readString(r, "businessTypeLabel") || bt,
-    source: src,
-    sourceLabel: readString(r, "sourceLabel") || src,
+    source: marketing,
+    sourceLabel: readString(r, "sourceLabel") || marketing,
   };
 }
 
@@ -362,10 +378,7 @@ function adaptBasicInfo(r: Record<string, unknown>): LeadBasicInfo {
     name: readString(r, "name"),
     phone: readString(r, "phone"),
     email: readString(r, "email"),
-    source:
-      readString(r, "sourceChannel") ||
-      readString(r, "source") ||
-      readString(r, "sourceLabel"),
+    source: readLeadMarketingChannel(r),
     createdVia: readString(r, "source"),
     referrer: readString(r, "referrer"),
     businessType:

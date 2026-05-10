@@ -180,7 +180,8 @@ const caseDisplayTitle = computed(() => {
 
 .converted-records__title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
@@ -218,16 +219,18 @@ const caseDisplayTitle = computed(() => {
 
 .converted-record__name {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .converted-record__meta {
   margin: 2px 0 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 
 .converted-records__history {
@@ -238,9 +241,10 @@ const caseDisplayTitle = computed(() => {
 
 .converted-records__history-title {
   margin: 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-2);
 }
 
 .history-item {
@@ -251,13 +255,15 @@ const caseDisplayTitle = computed(() => {
 }
 
 .history-item__label {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
 
 .history-item__meta {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 </style>

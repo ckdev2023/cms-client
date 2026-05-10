@@ -181,7 +181,8 @@ function operatorLabel(operator: string): string {
 
 .log-tab__title {
   margin: 0;
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-lg);
+  line-height: var(--leading-lg);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
@@ -285,27 +286,31 @@ function operatorLabel(operator: string): string {
   align-items: center;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
 }
 
 .log-timeline__time {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  color: var(--color-text-2);
 }
 
 .log-timeline__operator {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 
 .log-timeline__change {
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }

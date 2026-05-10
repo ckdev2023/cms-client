@@ -259,9 +259,10 @@ const convertCustomerDisabledHint = computed(() =>
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 
 .dedup-clean__icon {
@@ -289,14 +290,16 @@ const convertCustomerDisabledHint = computed(() =>
 
 .dedup-hit__title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-warning-text);
 }
 
 .dedup-hit__message {
   margin: 4px 0 0;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   color: var(--color-warning-text);
 }
 
@@ -309,15 +312,17 @@ const convertCustomerDisabledHint = computed(() =>
 
 .dedup-hit__match-name {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-1);
 }
 
 .dedup-hit__match-meta {
   margin: 2px 0 0;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-2);
 }
 
 .conversion-tab__actions {
@@ -366,15 +371,17 @@ const convertCustomerDisabledHint = computed(() =>
 
 .conversion-action__title {
   margin: 0;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .conversion-action__desc {
   margin: 2px 0 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-2);
 }
 </style>

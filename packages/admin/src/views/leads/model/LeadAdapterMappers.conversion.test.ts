@@ -281,6 +281,14 @@ describe("LeadAdapterMappers — conversion & source", () => {
     it("falls back to source when sourceChannel absent", () => {
       expect(listSource({ source: "referral" })?.source).toBe("referral");
     });
+    it("does not use admin creation-path sentinel as marketing source", () => {
+      expect(listSource({ source: "admin" })?.source).toBe("");
+    });
+    it("falls back to sourceLabel when channel absent and source is creation path", () => {
+      expect(
+        listSource({ source: "admin", sourceLabel: "网站表单" })?.source,
+      ).toBe("网站表单");
+    });
     it("uses sourceLabel when present", () => {
       expect(
         listSource({ sourceChannel: "web", sourceLabel: "网站表单" })

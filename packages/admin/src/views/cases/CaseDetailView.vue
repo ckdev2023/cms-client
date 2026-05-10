@@ -1024,7 +1024,8 @@ async function onFormGenSubmit(payload: {
   border: none;
   background: none;
   font: inherit;
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
   cursor: pointer;
@@ -1055,7 +1056,8 @@ async function onFormGenSubmit(payload: {
 .case-detail-view__counter {
   padding: 1px 7px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
   font-weight: var(--font-weight-bold);
   background: var(--color-text-1);
   color: #fff;

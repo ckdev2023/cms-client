@@ -277,7 +277,7 @@ function chipClass(item: DeadlineItem): string {
   background: var(--color-bg-3);
   border: 1px solid var(--color-border-1);
   border-radius: var(--radius-lg);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 
@@ -286,7 +286,7 @@ function chipClass(item: DeadlineItem): string {
   align-self: flex-start;
   padding: 2px 8px;
   border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
@@ -317,31 +317,31 @@ function chipClass(item: DeadlineItem): string {
 }
 
 .deadlines-tab__summary-label {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-3);
 }
 
 .deadlines-tab__summary-value {
-  font-size: var(--font-size-sm);
+  font-size: var(--font-size-base);
   font-weight: var(--font-weight-bold);
   color: var(--color-text-1);
 }
 
 .deadlines-tab__summary-period {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 
 .deadlines-tab__summary-details {
   display: flex;
   gap: 12px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-2);
 }
 
 .deadlines-tab__summary-meta {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
 }
 
@@ -356,7 +356,7 @@ function chipClass(item: DeadlineItem): string {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-2);
 }
 
@@ -433,7 +433,7 @@ function chipClass(item: DeadlineItem): string {
 }
 
 .deadlines-tab__item-desc {
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   color: var(--color-text-3);
   margin-top: 4px;
 }
@@ -445,6 +445,7 @@ function chipClass(item: DeadlineItem): string {
 
 .deadlines-tab__item-date {
   font-size: var(--font-size-xl);
+  line-height: var(--leading-xl);
   font-weight: var(--font-weight-bold);
   letter-spacing: -0.02em;
 }
@@ -453,10 +454,7 @@ function chipClass(item: DeadlineItem): string {
   color: var(--color-danger);
 }
 
-.deadlines-tab__date--warning {
-  color: var(--color-text-1);
-}
-
+.deadlines-tab__date--warning,
 .deadlines-tab__date--primary {
   color: var(--color-text-1);
 }
@@ -472,7 +470,7 @@ function chipClass(item: DeadlineItem): string {
   margin-top: 4px;
   padding: 2px 8px;
   border-radius: var(--radius-md);
-  font-size: var(--font-size-xs);
+  font-size: var(--font-size-sm);
   font-weight: var(--font-weight-bold);
 }
 
