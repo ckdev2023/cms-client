@@ -8,6 +8,7 @@
 import type {
   CaseListInput,
   CaseListScope,
+  CaseRiskBucket,
   CaseVisibilityFilter,
 } from "./cases.types";
 import { isUuid } from "../tenancy/uuid";
@@ -83,6 +84,8 @@ export function buildCaseListFilterPrefixed(
     }
   }
 
+  appendRiskBucketCondition(where, input.riskBucket, prefix);
+
   appendSearchCondition(where, params, input.search, prefix, options);
 
   if (input.visibility) {
@@ -100,6 +103,48 @@ export function buildCaseListFilterPrefixed(
 
   const whereClause = where.length > 0 ? `where ${where.join(" and ")}` : "";
   return { whereClause, params };
+}
+
+/**
+ * 注入与 dashboard "风险案件" 同口径的并集风险条件，
+ * 与 `riskLevel` 精确匹配正交：两者同时存在时按 AND 叠加。
+ *
+ * 实现说明：使用相关子查询取最新一条 validation_run 的 result_status，
+ * 避免破坏外层 SQL 的 JOIN/参数计数策略。子查询不接收外部参数。
+ *
+ * @param where 累积的 where 子句数组（就地追加）
+ * @param bucket 风险并集桶；为 undefined 时不附加任何子句
+ * @param prefix cases 表别名前缀（list 路径为空，listSummary 为 `cs.`）
+ */
+function appendRiskBucketCondition(
+  where: string[],
+  bucket: CaseRiskBucket | undefined,
+  prefix: string,
+): void {
+  if (!bucket) return;
+  const p = prefix;
+  const latestValidationFailedExpr = `(
+    select vr.result_status
+    from validation_runs vr
+    where vr.case_id = ${p}id and vr.org_id = ${p}org_id
+    order by vr.executed_at desc, vr.created_at desc
+    limit 1
+  ) = 'failed'`;
+  switch (bucket) {
+    case "high":
+      where.push(`${p}risk_level = 'high'`);
+      return;
+    case "billing":
+      where.push(`coalesce(${p}billing_unpaid_amount_cached::numeric, 0) > 0`);
+      return;
+    case "validation":
+      where.push(latestValidationFailedExpr);
+      return;
+    case "any":
+      where.push(
+        `(${p}risk_level = 'high' or coalesce(${p}billing_unpaid_amount_cached::numeric, 0) > 0 or ${latestValidationFailedExpr})`,
+      );
+  }
 }
 
 function appendSearchCondition(

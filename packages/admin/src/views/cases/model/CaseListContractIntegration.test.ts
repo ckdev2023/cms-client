@@ -136,7 +136,8 @@ describe("query → searchParams pipeline (p0-fe-002b-08)", () => {
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.stage)).toBe("S4");
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.owner)).toBe("suzuki");
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.group)).toBe("tokyo-1");
-    expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.risk)).toBe("attention");
+    // domain "attention" → DB literal "medium" (cases.risk_level)
+    expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.risk)).toBe("medium");
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.customerId)).toBe("cust-001");
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.page)).toBe("1");
     expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.limit)).toBe("25");
@@ -426,8 +427,10 @@ describe("master contract surface lock (p0-fe-002b-08)", () => {
   });
 
   it("frozen key set sizes are stable", () => {
-    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(9);
-    expect(CASE_LIST_PARAM_KEYS).toHaveLength(9);
+    // Both sets grew by 1 (riskBucket) when dashboard "风险案件" 跳转
+    // 与 cases list 风险并集口径对齐。
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(10);
+    expect(CASE_LIST_PARAM_KEYS).toHaveLength(10);
     expect(Object.keys(CASE_LIST_BASE_FIELD_MAP)).toHaveLength(10);
     expect(CASE_LIST_BASE_TARGET_KEYS).toHaveLength(10);
     expect(Object.keys(CASE_LIST_DERIVED_FIELD_MAP)).toHaveLength(5);

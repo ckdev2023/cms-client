@@ -22,7 +22,6 @@ import {
   buildCaseListQuery,
   isValidStageId,
   parseCaseListQuery,
-  type CaseListQueryParams,
 } from "../query";
 import type { CaseRepository } from "./CaseRepository";
 import type { CaseListParams } from "./CaseAdapterTypes";
@@ -73,6 +72,7 @@ export function matchesCaseFilters(
 function createFilterSetters(
   filters: CaseListFiltersState,
   customerId: Ref<string | undefined>,
+  riskBucket: Ref<string | undefined>,
 ) {
   return {
     setScope(scope: CaseScope) {
@@ -99,90 +99,102 @@ function createFilterSetters(
     clearCustomerId() {
       customerId.value = undefined;
     },
+    /**
+     * 清空 dashboard 注入的 riskBucket（并集风险桶），供"重置筛选"等场景调用。
+     */
+    clearRiskBucket() {
+      riskBucket.value = undefined;
+    },
     resetFilters() {
       Object.assign(filters, { ...DEFAULT_CASE_LIST_FILTERS });
       customerId.value = undefined;
+      riskBucket.value = undefined;
     },
   };
 }
 
 // ─── Route sync ─────────────────────────────────────────────────
 
+const PUSH_TTL_MS = 1500;
+
+function serialiseQueryEcho(q: Record<string, string | undefined>): string {
+  return JSON.stringify(
+    Object.keys(q)
+      .filter((k) => q[k] !== undefined)
+      .sort()
+      .map((k) => [k, q[k]] as const),
+  );
+}
+
+function purgeExpiredPushes(p: Map<string, number>, now: number): void {
+  for (const [key, ts] of p) if (now - ts > PUSH_TTL_MS) p.delete(key);
+}
+
+function applyParsedToState(
+  filters: CaseListFiltersState,
+  customerId: Ref<string | undefined>,
+  riskBucket: Ref<string | undefined>,
+  next: ReturnType<typeof parseCaseListQuery>,
+): void {
+  filters.scope = next.scope;
+  filters.search = next.search;
+  filters.stage = next.stage;
+  filters.owner = next.owner;
+  filters.group = next.group;
+  filters.risk = next.risk;
+  filters.validation = next.validation;
+  customerId.value = next.customerId;
+  riskBucket.value = next.riskBucket;
+}
+
 /**
- * 仅当浏览器原生导航（前进/后退、深链等）使 URL 与「最近一次我们 push 出去的 query」
- * 不一致时，才把 URL 反向写回 filters。
+ * 仅当 URL 与最近一次本地 push 不一致时才把 URL 反向写回 filters，
+ * 避免连续输入时迟到的 echo 覆盖最新 filters（首字母丢字 bug）。
  *
- * 不能简单比较 URL 与当前 filters：用户连续输入时，filters 已经超前于 URL，
- * 但还有“早先 push 的旧 URL”在异步导航队列里完成回执。若直接以 URL 为准，
- * 会用旧 URL 覆盖最新的 filters（造成只保留首字符的输入丢字 bug）。
- *
- * 实现：用 Map 记录最近一段时间内由我们自己 push 出去的 query 字符串，
- * 收到 routeQuery 变更时，若命中我们自己的 push 即视为 echo 直接忽略；
- * 未命中才按外部导航处理，回写到 filters。
- * @param filters - 反向写回的目标 filters reactive 对象
- * @param customerId - 反向写回的目标 customerId ref
- * @param routeQuery - 当前路由 query 的响应式引用
- * @param replaceQuery - 由 view 注入的 router.replace 包装
- * @param onInvalidStage - 检测到非法 stage 值时的回调
+ * @param filters 反向写回目标筛选状态
+ * @param customerId 客户来源过滤的响应式引用
+ * @param riskBucket 风险并集桶的响应式引用（由 dashboard 注入）
+ * @param routeQuery 当前路由 query 引用
+ * @param replaceQuery 视图注入的 router.replace 包装
+ * @param onInvalidStage 非法 stage 值的回调
  */
 function setupRouteSync(
   filters: CaseListFiltersState,
   customerId: Ref<string | undefined>,
+  riskBucket: Ref<string | undefined>,
   routeQuery: Ref<LocationQuery>,
   replaceQuery: (query: Record<string, string | undefined>) => void,
   onInvalidStage?: (raw: string) => void,
 ) {
   const pendingPushes = new Map<string, number>();
-  const PUSH_TTL_MS = 1500;
-
-  function purgeExpired(now: number): void {
-    for (const [key, ts] of pendingPushes) {
-      if (now - ts > PUSH_TTL_MS) pendingPushes.delete(key);
-    }
-  }
-
-  function serialiseQuery(query: Record<string, string | undefined>): string {
-    const sorted = Object.keys(query)
-      .filter((k) => query[k] !== undefined)
-      .sort()
-      .map((k) => [k, query[k]] as const);
-    return JSON.stringify(sorted);
-  }
-
-  function syncToRoute() {
-    const now = Date.now();
-    purgeExpired(now);
-    const params: CaseListQueryParams = {
+  watch(
+    () => ({
       ...filters,
       customerId: customerId.value,
-    };
-    const built = buildCaseListQuery(params);
-    pendingPushes.set(serialiseQuery(built), now);
-    replaceQuery(built);
-  }
-
-  watch(
-    () => ({ ...filters, customerId: customerId.value }),
-    () => syncToRoute(),
+      riskBucket: riskBucket.value,
+    }),
+    () => {
+      const now = Date.now();
+      purgeExpiredPushes(pendingPushes, now);
+      const built = buildCaseListQuery({
+        ...filters,
+        customerId: customerId.value,
+        riskBucket: riskBucket.value,
+      });
+      pendingPushes.set(serialiseQueryEcho(built), now);
+      replaceQuery(built);
+    },
   );
-
   watch(routeQuery, (query) => {
     detectInvalidStage(query, onInvalidStage);
     const next = parseCaseListQuery(query);
-    const nextKey = serialiseQuery(buildCaseListQuery(next));
+    const nextKey = serialiseQueryEcho(buildCaseListQuery(next));
     if (pendingPushes.has(nextKey)) {
       pendingPushes.delete(nextKey);
       return;
     }
-    purgeExpired(Date.now());
-    filters.scope = next.scope;
-    filters.search = next.search;
-    filters.stage = next.stage;
-    filters.owner = next.owner;
-    filters.group = next.group;
-    filters.risk = next.risk;
-    filters.validation = next.validation;
-    customerId.value = next.customerId;
+    purgeExpiredPushes(pendingPushes, Date.now());
+    applyParsedToState(filters, customerId, riskBucket, next);
   });
 }
 
@@ -191,6 +203,7 @@ function setupRouteSync(
 function filtersToListParams(
   filters: CaseListFiltersState,
   customerId: string | undefined,
+  riskBucket: string | undefined,
   page: number,
   limit: number,
 ): CaseListParams {
@@ -201,6 +214,7 @@ function filtersToListParams(
     owner: filters.owner || undefined,
     group: filters.group || undefined,
     risk: filters.risk || undefined,
+    riskBucket: riskBucket || undefined,
     customerId,
     page,
     limit,
@@ -230,6 +244,7 @@ function createListState(parsed: ReturnType<typeof parseCaseListQuery>) {
       validation: parsed.validation,
     }),
     customerId: ref<string | undefined>(parsed.customerId),
+    riskBucket: ref<string | undefined>(parsed.riskBucket),
     items: ref<CaseListItem[]>([]),
     total: ref(0),
     page: ref(1),
@@ -243,6 +258,7 @@ function createFetchCases(input: {
   repository: CaseRepository;
   filters: CaseListFiltersState;
   customerId: Ref<string | undefined>;
+  riskBucket: Ref<string | undefined>;
   page: Ref<number>;
   pageSize: number;
   items: Ref<CaseListItem[]>;
@@ -260,6 +276,7 @@ function createFetchCases(input: {
       const params = filtersToListParams(
         input.filters,
         input.customerId.value,
+        input.riskBucket.value,
         input.page.value,
         input.pageSize,
       );
@@ -281,6 +298,7 @@ function createFetchCases(input: {
 function createDerivedState(
   filters: CaseListFiltersState,
   customerId: Ref<string | undefined>,
+  riskBucket: Ref<string | undefined>,
   items: Ref<CaseListItem[]>,
   total: Ref<number>,
   pageSize: number,
@@ -302,6 +320,7 @@ function createDerivedState(
         filters.risk,
         filters.validation,
         customerId.value,
+        riskBucket.value,
       ].filter(Boolean).length,
   );
   const customerLabel = computed(() => {
@@ -323,6 +342,7 @@ function createDerivedState(
 function setupRefetchWatchers(
   filters: CaseListFiltersState,
   customerId: Ref<string | undefined>,
+  riskBucket: Ref<string | undefined>,
   page: Ref<number>,
   fetchCases: () => Promise<void>,
 ): void {
@@ -335,6 +355,7 @@ function setupRefetchWatchers(
       group: filters.group,
       risk: filters.risk,
       customerId: customerId.value,
+      riskBucket: riskBucket.value,
     }),
     () => {
       page.value = 1;
@@ -371,6 +392,7 @@ function createListModelResult(input: {
   return {
     filters: input.state.filters,
     customerId: input.state.customerId,
+    riskBucket: input.state.riskBucket,
     filteredCases: input.derived.filteredCases,
     total: input.state.total,
     page: input.state.page,
@@ -393,21 +415,13 @@ function createListModelResult(input: {
 
 // ─── Composable ─────────────────────────────────────────────────
 
-/**
- *
- */
+/** 列表 composable 注入依赖。 */
 export interface UseCaseListModelDeps {
-  /**
-   * 真实 CaseRepository 实例（由 CaseListView 注入）。
-   */
+  /** 真实 CaseRepository 实例（由 CaseListView 注入）。 */
   repository: CaseRepository;
-  /**
-   *
-   */
+  /** 当前路由 query 引用。 */
   routeQuery: Ref<LocationQuery>;
-  /**
-   *
-   */
+  /** router.replace 包装。 */
   replaceQuery: (query: Record<string, string | undefined>) => void;
   /** URL stage 参数非法时的回调（由视图层注入 toast 通知）。 */
   onInvalidStage?: (rawValue: string) => void;
@@ -430,6 +444,7 @@ export function useCaseListModel(deps: UseCaseListModelDeps) {
     repository: deps.repository,
     filters: state.filters,
     customerId: state.customerId,
+    riskBucket: state.riskBucket,
     page: state.page,
     pageSize: state.pageSize,
     items: state.items,
@@ -440,22 +455,34 @@ export function useCaseListModel(deps: UseCaseListModelDeps) {
   const derived = createDerivedState(
     state.filters,
     state.customerId,
+    state.riskBucket,
     state.items,
     state.total,
     state.pageSize,
   );
 
-  setupRefetchWatchers(state.filters, state.customerId, state.page, fetchCases);
+  setupRefetchWatchers(
+    state.filters,
+    state.customerId,
+    state.riskBucket,
+    state.page,
+    fetchCases,
+  );
   setupRouteSync(
     state.filters,
     state.customerId,
+    state.riskBucket,
     deps.routeQuery,
     deps.replaceQuery,
     deps.onInvalidStage,
   );
 
   void fetchCases();
-  const filterSetters = createFilterSetters(state.filters, state.customerId);
+  const filterSetters = createFilterSetters(
+    state.filters,
+    state.customerId,
+    state.riskBucket,
+  );
   const setPage = createPageSetter(derived.totalPages, state.page);
 
   return createListModelResult({

@@ -77,26 +77,15 @@ function isValidValidation(v: string): v is CaseValidationStatus {
 
 // ─── List Query ─────────────────────────────────────────────────
 
-/**
- * CaseListQueryParams = CaseListFiltersState + customerId。
- *
- * 所有 URL query 字段都会被 `parseCaseListQuery` 解析，
- * model composable 负责将 `validation` 保留为客户端过滤、
- * 其余字段经由 `CaseListParams` 流向 `buildCaseListSearchParams` 序列化到 HTTP。
- *
- * 字段归属：
- *  - 来自 CaseListFiltersState：scope, search, stage, owner, group, risk, validation
- *  - 扩展字段：customerId（customer 深链传入）
- */
+/** CaseListQueryParams：CaseListFiltersState + customer 深链 + dashboard 风险并集桶。 */
 export interface CaseListQueryParams extends CaseListFiltersState {
   /** 从客户页深链传入的客户 ID，用于预过滤。 */
   customerId?: string;
+  /** 与 dashboard 同口径的风险并集桶（any|high|billing|validation）。 */
+  riskBucket?: string;
 }
 
-/**
- * Frozen key set for `CaseListQueryParams`。
- * 用于 contract tests 校验 URL query 字段集与下游 `CaseListParams` 的覆盖关系。
- */
+/** Frozen key set for `CaseListQueryParams` —— contract tests 锁定字段集与 `CaseListParams` 覆盖关系。 */
 export const CASE_LIST_QUERY_PARAM_KEYS = [
   "scope",
   "search",
@@ -107,7 +96,15 @@ export const CASE_LIST_QUERY_PARAM_KEYS = [
   "validation",
   "phase",
   "customerId",
+  "riskBucket",
 ] as const;
+
+const VALID_RISK_BUCKETS: readonly string[] = [
+  "any",
+  "high",
+  "billing",
+  "validation",
+];
 
 type _QueryParamKey = (typeof CASE_LIST_QUERY_PARAM_KEYS)[number];
 type _NoExtraQueryKeys = Exclude<keyof CaseListQueryParams, _QueryParamKey>;
@@ -133,7 +130,7 @@ export function parseCaseListQuery(query: LocationQuery): CaseListQueryParams {
   const risk = firstString(query.risk);
   const validation = firstString(query.validation);
   const phase = firstString(query.phase);
-
+  const bucket = firstString(query.riskBucket);
   return {
     scope: isValidScope(scope) ? scope : DEFAULT_CASE_LIST_FILTERS.scope,
     search: firstString(query.search),
@@ -144,6 +141,7 @@ export function parseCaseListQuery(query: LocationQuery): CaseListQueryParams {
     validation: isValidValidation(validation) ? validation : "",
     phase: (BUSINESS_PHASES as readonly string[]).includes(phase) ? phase : "",
     customerId: firstString(query.customerId) || undefined,
+    riskBucket: VALID_RISK_BUCKETS.includes(bucket) ? bucket : undefined,
   };
 }
 
@@ -169,6 +167,7 @@ export function buildCaseListQuery(
     validation: params.validation || undefined,
     phase: params.phase || undefined,
     customerId: params.customerId || undefined,
+    riskBucket: params.riskBucket || undefined,
   };
 }
 

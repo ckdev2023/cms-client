@@ -20,6 +20,7 @@ import {
   type LeadListInput,
   type LeadStatusInput,
 } from "./leads.admin.types";
+import { resolveCustomerDisplayName } from "../customers/customerName";
 
 /**
  * UUID フィルタ値が不正かどうかを判定する。
@@ -345,14 +346,15 @@ export async function queryCustomerSummary(
     return typeof v === "string" && v.trim() ? v.trim() : null;
   };
 
-  const displayName =
-    readStr("name_jp") ??
-    readStr("name_cn") ??
-    extractCustomerName(row.base_profile);
+  // displayName 必须尊重 `name_default_locale`，并保持与 `customers.dto-mappers`
+  // / `customerNameExpr` 一致的兜底顺序（name_cn → name_en → name_jp）；
+  // 否则会出现 admin 端「线索转化记录卡」与「客户详情页」展示名不一致
+  // （前者显示日文，后者显示中文）的语言漂移。
+  const displayName = resolveCustomerDisplayName(row.base_profile);
 
   return {
     id: row.id,
-    name: extractCustomerName(row.base_profile),
+    name: displayName ?? extractCustomerName(row.base_profile),
     customerNo: readStr("customerNumber"),
     displayName,
     group: row.group_id

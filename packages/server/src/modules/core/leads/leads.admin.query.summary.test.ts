@@ -356,3 +356,141 @@ void describe("queryCustomerSummary — group output regression", () => {
     assert.deepEqual(result.group, { id: "grp-x", name: "" });
   });
 });
+
+void describe("queryCustomerSummary — displayName / name resolution", () => {
+  void test("respects name_default_locale=zh and returns name_cn", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-1",
+          base_profile: {
+            name_cn: "走查客户",
+            name_jp: "ウォークスルー",
+            name_en: "Audit Customer",
+            name_default_locale: "zh",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-1");
+    assert.ok(result);
+    assert.equal(result.displayName, "走查客户");
+    assert.equal(result.name, "走查客户");
+  });
+
+  void test("respects name_default_locale=ja and returns name_jp", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-2",
+          base_profile: {
+            name_cn: "山田",
+            name_jp: "山田太郎",
+            name_default_locale: "ja",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-2");
+    assert.ok(result);
+    assert.equal(result.displayName, "山田太郎");
+  });
+
+  void test("respects name_default_locale=en and returns name_en", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-3",
+          base_profile: {
+            name_cn: "约翰",
+            name_jp: "ジョン",
+            name_en: "John Doe",
+            name_default_locale: "en",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-3");
+    assert.ok(result);
+    assert.equal(result.displayName, "John Doe");
+  });
+
+  void test("falls back to canonical priority (name_cn → name_en → name_jp) when name_default_locale missing", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-4",
+          base_profile: {
+            name_cn: "中文姓名",
+            name_jp: "日本語名",
+            name_en: "English Name",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-4");
+    assert.ok(result);
+    assert.equal(result.displayName, "中文姓名");
+  });
+
+  void test("uses explicit displayName before localized names", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-5",
+          base_profile: {
+            displayName: "代表姓名",
+            name_cn: "中文",
+            name_jp: "日本語",
+            name_default_locale: "ja",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-5");
+    assert.ok(result);
+    assert.equal(result.displayName, "代表姓名");
+  });
+
+  void test("falls back to next localized name when default locale field is empty", async () => {
+    const db = makeTenantDb(() => ({
+      rows: [
+        {
+          id: "cust-disp-6",
+          base_profile: {
+            name_cn: "",
+            name_jp: "山田",
+            name_default_locale: "zh",
+          },
+          group_id: null,
+          group_name: null,
+          created_at: "2026-05-10T00:00:00.000Z",
+        },
+      ],
+    }));
+
+    const result = await queryCustomerSummary(db, "cust-disp-6");
+    assert.ok(result);
+    assert.equal(result.displayName, "山田");
+  });
+});

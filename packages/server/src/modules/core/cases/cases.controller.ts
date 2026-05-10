@@ -19,6 +19,7 @@ import {
 import {
   requireString,
   parseCaseScope,
+  parseCaseRiskBucket,
   parseOptionalString,
   parseOptionalNullableString,
   parseOptionalNullableNumber,
@@ -217,6 +218,7 @@ export class CasesController {
       customerId: parseOptionalString(query.customerId, "customerId"),
       priority: parseOptionalString(query.priority, "priority"),
       riskLevel: parseOptionalString(query.riskLevel, "riskLevel"),
+      riskBucket: parseCaseRiskBucket(query.riskBucket),
       companyId: parseOptionalString(query.companyId, "companyId"),
       phase: parseOptionalString(query.phase, "phase"),
       search: parseOptionalString(query.search, "search"),

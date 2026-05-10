@@ -394,6 +394,40 @@ void test("DashboardService.getSummary scope=group excludes cases with group_id 
   }
 });
 
+void test("DashboardService.getSummary excludes soft-deleted cases (metadata._status='deleted') across all queries", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const service = new DashboardService(
+    makePool((sql, params) => {
+      calls.push({ sql, params });
+      return Promise.resolve({ rows: [{ count: "0" }] });
+    }),
+  );
+
+  await service.getSummary(makeCtx(), {
+    scope: "mine",
+    timeWindow: 7,
+  });
+
+  const softDeleteFilter =
+    "coalesce(c.metadata->>'_status', '') is distinct from 'deleted'";
+
+  const dataQueries = calls.filter(
+    (call) =>
+      !isTxSql(call.sql) &&
+      (call.sql.includes("from cases c") || call.sql.includes("from tasks t")),
+  );
+  assert.ok(
+    dataQueries.length >= 8,
+    `expected >=8 data queries (4 counts + 4 panels), got ${String(dataQueries.length)}`,
+  );
+  for (const call of dataQueries) {
+    assert.ok(
+      call.sql.includes(softDeleteFilter),
+      `data query must exclude soft-deleted cases (metadata._status='deleted') to stay aligned with /api/cases?riskBucket=any list filter:\n${call.sql}`,
+    );
+  }
+});
+
 void test("DashboardService.getSummary scope=all ignores provided groupId", async () => {
   const GROUP_ID = "00000000-0000-4000-8000-000000000099";
   const calls: { sql: string; params?: unknown[] }[] = [];

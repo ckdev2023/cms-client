@@ -100,6 +100,8 @@ export type ListCasesQuery = {
   customerId?: unknown;
   priority?: unknown;
   riskLevel?: unknown;
+  /** 与 dashboard "风险案件" 同口径的并集风险桶。 */
+  riskBucket?: unknown;
   companyId?: unknown;
   phase?: unknown;
   search?: unknown;

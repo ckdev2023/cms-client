@@ -202,13 +202,13 @@ describe("WorkPanelSection", () => {
     expect(router.currentRoute.value.query).toEqual({ stage: "S6" });
   });
 
-  it("navigates to /cases?risk=critical when the risk panel action is clicked", async () => {
+  it("navigates to /cases?riskBucket=any when the risk panel action is clicked", async () => {
     const { wrapper: w, router } = await mountSection();
     const buttons = w.findAll(".work-panel-action");
     await buttons[3]!.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/cases");
-    expect(router.currentRoute.value.query).toEqual({ risk: "critical" });
+    expect(router.currentRoute.value.query).toEqual({ riskBucket: "any" });
   });
 
   it.each([

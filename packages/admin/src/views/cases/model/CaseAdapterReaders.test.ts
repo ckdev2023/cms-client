@@ -180,8 +180,8 @@ describe("contract freeze — CaseListParams key set", () => {
     expect(_ASSERT_FROZEN_KEYS).toBe(true);
   });
 
-  it("CASE_LIST_PARAM_KEYS enumerates exactly 9 keys", () => {
-    expect(CASE_LIST_PARAM_KEYS).toHaveLength(9);
+  it("CASE_LIST_PARAM_KEYS enumerates exactly 10 keys", () => {
+    expect(CASE_LIST_PARAM_KEYS).toHaveLength(10);
     expect([...CASE_LIST_PARAM_KEYS].sort()).toEqual([
       "customerId",
       "group",
@@ -189,6 +189,7 @@ describe("contract freeze — CaseListParams key set", () => {
       "owner",
       "page",
       "risk",
+      "riskBucket",
       "scope",
       "search",
       "stage",
@@ -250,6 +251,7 @@ describe("contract freeze — HTTP field mapping matches builder", () => {
       owner: "u",
       group: "g",
       risk: "r",
+      riskBucket: "any",
       customerId: "c",
       page: 1,
       limit: 10,

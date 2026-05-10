@@ -44,7 +44,7 @@ const cards: SummaryCardDef[] = [
     id: "riskCases",
     tone: "risk",
     statusTone: "danger",
-    route: { name: "cases", query: { risk: "critical" } },
+    route: { name: "cases", query: { riskBucket: "any" } },
   },
 ];
 

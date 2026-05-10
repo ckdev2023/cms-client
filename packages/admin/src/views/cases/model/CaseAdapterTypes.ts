@@ -40,8 +40,10 @@ export interface CaseListParams {
   owner?: string;
   /** 分组过滤，序列化为 `groupId`。 */
   group?: string;
-  /** 风险等级过滤，序列化为 `riskLevel`。 */
+  /** 风险过滤（domain `normal/attention/critical`，序列化时反向映射到 `low/medium/high`）。 */
   risk?: string;
+  /** 风险并集桶（与 dashboard 同口径，dashboard 聚合入口注入；any|high|billing|validation）。 */
+  riskBucket?: string;
   /** 客户 ID 过滤，列表页与 customer 下游共用。 */
   customerId?: string;
   /** 分页页码。 */
@@ -65,6 +67,7 @@ export const CASE_LIST_PARAM_KEYS = [
   "owner",
   "group",
   "risk",
+  "riskBucket",
   "customerId",
   "page",
   "limit",
@@ -86,6 +89,7 @@ export const CASE_LIST_HTTP_FIELD_MAP: Record<
   owner: "ownerUserId",
   group: "groupId",
   risk: "riskLevel",
+  riskBucket: "riskBucket",
   customerId: "customerId",
   page: "page",
   limit: "limit",

@@ -230,10 +230,16 @@ describe("query params → HTTP URL (p0-qa-001-01)", () => {
     expect(sp.get("groupId")).toBe("tokyo-1");
   });
 
-  it("maps risk → riskLevel", async () => {
+  it("maps risk → riskLevel with domain → DB literal mapping", async () => {
     const url = await captureUrl({ risk: "critical" });
     const sp = new URL(url, "http://localhost").searchParams;
-    expect(sp.get("riskLevel")).toBe("critical");
+    expect(sp.get("riskLevel")).toBe("high");
+  });
+
+  it("maps riskBucket → riskBucket verbatim", async () => {
+    const url = await captureUrl({ riskBucket: "any" });
+    const sp = new URL(url, "http://localhost").searchParams;
+    expect(sp.get("riskBucket")).toBe("any");
   });
 
   it("maps customerId → customerId", async () => {
@@ -267,6 +273,7 @@ describe("query params → HTTP URL (p0-qa-001-01)", () => {
       owner: "tanaka",
       group: "osaka",
       risk: "attention",
+      riskBucket: "any",
       customerId: "cust-X",
       page: 2,
       limit: 10,
@@ -277,7 +284,8 @@ describe("query params → HTTP URL (p0-qa-001-01)", () => {
     expect(sp.get("stage")).toBe("S3");
     expect(sp.get("ownerUserId")).toBe("tanaka");
     expect(sp.get("groupId")).toBe("osaka");
-    expect(sp.get("riskLevel")).toBe("attention");
+    expect(sp.get("riskLevel")).toBe("medium");
+    expect(sp.get("riskBucket")).toBe("any");
     expect(sp.get("customerId")).toBe("cust-X");
     expect(sp.get("page")).toBe("2");
     expect(sp.get("limit")).toBe("10");

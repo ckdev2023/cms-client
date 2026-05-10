@@ -1,6 +1,10 @@
 import { BadRequestException } from "@nestjs/common";
 
-import type { CaseListScope } from "./cases.types";
+import {
+  CASE_RISK_BUCKETS,
+  type CaseListScope,
+  type CaseRiskBucket,
+} from "./cases.types";
 
 /**
  * Validates that value is a non-empty string; throws on invalid input.
@@ -115,4 +119,23 @@ export function parseCaseScope(value: unknown): CaseListScope | undefined {
     return value;
   }
   throw new BadRequestException("Invalid scope");
+}
+
+/**
+ * 解析案件列表 riskBucket；未传或空字符串时返回 `undefined`。
+ * 非法值抛 400，避免静默忽略导致与仪表盘口径不一致。
+ * @param value - 原始请求参数
+ * @returns 合法的 riskBucket 或 `undefined`
+ */
+export function parseCaseRiskBucket(
+  value: unknown,
+): CaseRiskBucket | undefined {
+  if (value === undefined || value === "") return undefined;
+  if (typeof value !== "string") {
+    throw new BadRequestException("Invalid riskBucket");
+  }
+  if ((CASE_RISK_BUCKETS as readonly string[]).includes(value)) {
+    return value as CaseRiskBucket;
+  }
+  throw new BadRequestException("Invalid riskBucket");
 }

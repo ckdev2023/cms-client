@@ -1,7 +1,10 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
-import { extractCustomerName } from "./customerName";
+import {
+  extractCustomerName,
+  resolveCustomerDisplayName,
+} from "./customerName";
 
 void describe("extractCustomerName", () => {
   void test("returns null for null/undefined/non-object", () => {
@@ -146,5 +149,120 @@ void describe("extractCustomerName", () => {
       extractCustomerName({ name_jp: "  ", name_cn: "  ", name_en: "  " }),
       null,
     );
+  });
+});
+
+void describe("resolveCustomerDisplayName", () => {
+  void test("returns null for null/non-object", () => {
+    assert.equal(resolveCustomerDisplayName(null), null);
+    assert.equal(resolveCustomerDisplayName(undefined), null);
+    assert.equal(resolveCustomerDisplayName(42), null);
+  });
+
+  void test("respects name_default_locale=zh", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "走查客户",
+        name_jp: "ウォークスルー",
+        name_en: "Audit",
+        name_default_locale: "zh",
+      }),
+      "走查客户",
+    );
+  });
+
+  void test("respects name_default_locale=ja", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "走查客户",
+        name_jp: "ウォークスルー",
+        name_en: "Audit",
+        name_default_locale: "ja",
+      }),
+      "ウォークスルー",
+    );
+  });
+
+  void test("respects name_default_locale=en", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "走查客户",
+        name_jp: "ウォークスルー",
+        name_en: "Audit",
+        name_default_locale: "en",
+      }),
+      "Audit",
+    );
+  });
+
+  void test("prefers displayName over localized names", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        displayName: "Display",
+        name_cn: "中文",
+        name_jp: "日本語",
+        name_default_locale: "ja",
+      }),
+      "Display",
+    );
+  });
+
+  void test("prefers legalName over localized names when displayName absent", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        legalName: "法人名称",
+        name_jp: "日本語",
+        name_default_locale: "ja",
+      }),
+      "法人名称",
+    );
+  });
+
+  void test("falls back to canonical priority (name_cn → name_en → name_jp) without locale", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "中文",
+        name_jp: "日本語",
+        name_en: "English",
+      }),
+      "中文",
+    );
+  });
+
+  void test("falls back to name_en when name_cn absent and locale missing", () => {
+    assert.equal(
+      resolveCustomerDisplayName({ name_jp: "日本語", name_en: "English" }),
+      "English",
+    );
+  });
+
+  void test("falls back to name_jp when only name_jp present", () => {
+    assert.equal(resolveCustomerDisplayName({ name_jp: "日本語" }), "日本語");
+  });
+
+  void test("falls back to next localized when default-locale field is empty", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "  ",
+        name_jp: "山田",
+        name_default_locale: "zh",
+      }),
+      "山田",
+    );
+  });
+
+  void test("ignores invalid name_default_locale values", () => {
+    assert.equal(
+      resolveCustomerDisplayName({
+        name_cn: "中文",
+        name_jp: "日本語",
+        name_default_locale: "fr",
+      }),
+      "中文",
+    );
+  });
+
+  void test("returns null when no name field is present", () => {
+    assert.equal(resolveCustomerDisplayName({ phone: "0" }), null);
   });
 });

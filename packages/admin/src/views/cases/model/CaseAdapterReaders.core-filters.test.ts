@@ -199,10 +199,25 @@ describe("core filter — group", () => {
 });
 
 describe("core filter — risk", () => {
-  it("serializes risk to HTTP key 'riskLevel'", () => {
+  it("maps domain risk 'critical' → DB literal 'high' under HTTP key 'riskLevel'", () => {
     const sp = buildCaseListSearchParams({ risk: "critical" });
-    expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.risk)).toBe("critical");
-    expect(sp.get("riskLevel")).toBe("critical");
+    expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.risk)).toBe("high");
+    expect(sp.get("riskLevel")).toBe("high");
+  });
+
+  it("maps domain risk 'attention' → DB literal 'medium'", () => {
+    const sp = buildCaseListSearchParams({ risk: "attention" });
+    expect(sp.get("riskLevel")).toBe("medium");
+  });
+
+  it("maps domain risk 'normal' → DB literal 'low'", () => {
+    const sp = buildCaseListSearchParams({ risk: "normal" });
+    expect(sp.get("riskLevel")).toBe("low");
+  });
+
+  it("passes unknown risk values through unchanged (forward compat)", () => {
+    const sp = buildCaseListSearchParams({ risk: "high" });
+    expect(sp.get("riskLevel")).toBe("high");
   });
 
   it("omits risk when empty string", () => {
@@ -222,14 +237,46 @@ describe("core filter — risk", () => {
     expect(sp.has("riskLevel")).toBe(false);
   });
 
-  it("trims whitespace from risk", () => {
+  it("trims whitespace before mapping", () => {
     const sp = buildCaseListSearchParams({ risk: " attention " });
-    expect(sp.get("riskLevel")).toBe("attention");
+    expect(sp.get("riskLevel")).toBe("medium");
   });
 
   it("omits risk when whitespace-only", () => {
     const sp = buildCaseListSearchParams({ risk: "   " });
     expect(sp.has("riskLevel")).toBe(false);
+  });
+});
+
+describe("core filter — riskBucket", () => {
+  it("serializes riskBucket to HTTP key 'riskBucket'", () => {
+    const sp = buildCaseListSearchParams({ riskBucket: "any" });
+    expect(sp.get(CASE_LIST_HTTP_FIELD_MAP.riskBucket)).toBe("any");
+    expect(sp.get("riskBucket")).toBe("any");
+  });
+
+  it("preserves bucket value verbatim (no domain remap)", () => {
+    const sp = buildCaseListSearchParams({ riskBucket: "billing" });
+    expect(sp.get("riskBucket")).toBe("billing");
+  });
+
+  it("omits riskBucket when empty string / undefined / whitespace", () => {
+    expect(
+      buildCaseListSearchParams({ riskBucket: "" }).has("riskBucket"),
+    ).toBe(false);
+    expect(buildCaseListSearchParams({}).has("riskBucket")).toBe(false);
+    expect(
+      buildCaseListSearchParams({ riskBucket: "   " }).has("riskBucket"),
+    ).toBe(false);
+  });
+
+  it("can be combined with riskLevel (independent params)", () => {
+    const sp = buildCaseListSearchParams({
+      riskBucket: "any",
+      risk: "critical",
+    });
+    expect(sp.get("riskBucket")).toBe("any");
+    expect(sp.get("riskLevel")).toBe("high");
   });
 });
 

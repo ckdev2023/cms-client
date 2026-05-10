@@ -36,14 +36,40 @@ function normalizeFilterValue(
 }
 
 /**
+ * 把前端 domain 风险值（`normal/attention/critical`）反向映射到
+ * 后端 cases.risk_level 列存储的字面值（`low/medium/high`）。
+ *
+ * 兼容 admin domain 与 DB 列两套命名：domain 用于 UI / URL，
+ * DB 字面值用于 SQL 精确匹配。未识别的取值原样保留（前向兼容）。
+ *
+ * @param value 已 trim 的风险过滤取值
+ * @returns 对齐后端列存的取值
+ */
+function mapRiskFilterToDbLiteral(value: string): string {
+  switch (value) {
+    case "critical":
+      return "high";
+    case "attention":
+      return "medium";
+    case "normal":
+      return "low";
+    default:
+      return value;
+  }
+}
+
+/**
  * 将列表筛选参数转换为 URLSearchParams，空值自动省略。
  *
  * 始终附加 `view=summary`，以获取包含 `customerName` / `groupName` /
  * `latestValidation` 等展示字段的富响应。customer 下游通过
  * `{ customerId }` 复用同一构造器时，也会自动获得 summary 格式。
  *
- * 核心过滤参数（scope/search/stage/owner/group/risk）统一经过
+ * 核心过滤参数（scope/search/stage/owner/group/risk/riskBucket）统一经过
  * `normalizeFilterValue` 去除前后空白并省略空字符串与 null/undefined。
+ * `risk` 取值会从前端 domain（`normal/attention/critical`）反向映射到
+ * cases.risk_level 列字面值（`low/medium/high`），保持 SQL 精确匹配可命中；
+ * `riskBucket` 透传，与 dashboard 风险并集口径对齐。
  * 字段名映射统一来自 `CASE_LIST_HTTP_FIELD_MAP`。
  *
  * @param params - 案件列表筛选参数
@@ -71,7 +97,10 @@ export function buildCaseListSearchParams(
   if (group) sp.set(map.group, group);
 
   const risk = normalizeFilterValue(params.risk);
-  if (risk) sp.set(map.risk, risk);
+  if (risk) sp.set(map.risk, mapRiskFilterToDbLiteral(risk));
+
+  const riskBucket = normalizeFilterValue(params.riskBucket);
+  if (riskBucket) sp.set(map.riskBucket, riskBucket);
 
   const customerId = normalizeFilterValue(params.customerId);
   if (customerId) sp.set(map.customerId, customerId);

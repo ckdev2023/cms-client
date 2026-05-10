@@ -214,6 +214,17 @@ export type CaseVisibilityFilter = {
 /** 案件列表 scope 过滤。 */
 export type CaseListScope = "mine" | "group" | "all";
 
+/** 风险并集桶——与 dashboard "风险案件" 同口径，与 riskLevel 正交可叠加。 */
+export type CaseRiskBucket = "any" | "high" | "billing" | "validation";
+
+/** 合法的 riskBucket 取值集合，供 controller 端解析白名单使用。 */
+export const CASE_RISK_BUCKETS: readonly CaseRiskBucket[] = [
+  "any",
+  "high",
+  "billing",
+  "validation",
+] as const;
+
 /** 列表查询请求参数。 */
 export type CaseListInput = {
   scope?: CaseListScope;
@@ -225,6 +236,8 @@ export type CaseListInput = {
   groupId?: string;
   priority?: string;
   riskLevel?: string;
+  /** 风险并集桶——与 dashboard 同口径，与 riskLevel 可叠加。 */
+  riskBucket?: CaseRiskBucket;
   companyId?: string;
   /** businessPhase 精确匹配过滤。 */
   phase?: string;

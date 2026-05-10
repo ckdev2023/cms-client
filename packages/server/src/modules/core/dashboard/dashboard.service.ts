@@ -8,6 +8,7 @@ import {
   buildGroupClause,
   buildTaskScopeClause,
   isManagerRole,
+  notSoftDeletedCaseClause,
   readCount,
   type CountRow,
   type DashboardGroupOption,
@@ -193,7 +194,10 @@ export class DashboardService {
        left join cases c on c.id = t.case_id and c.org_id = t.org_id
        where t.org_id = $1
          and t.status in ('pending', 'in_progress')
-         and (c.id is null or c.archived_at is null)
+         and (
+           c.id is null
+           or (c.archived_at is null and ${notSoftDeletedCaseClause("c")})
+         )
          ${scopeClause}
          ${groupClause}`,
       params,
@@ -213,6 +217,7 @@ export class DashboardService {
        from cases c
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and c.due_at is not null
          and c.due_at <= now() + make_interval(days => $2::int)
          ${scopeClause}
@@ -234,6 +239,7 @@ export class DashboardService {
        from cases c
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and coalesce(c.stage, c.status) = 'S6'
          ${scopeClause}
          ${groupClause}`,
@@ -263,6 +269,7 @@ export class DashboardService {
        left join latest_validation lv on lv.case_id = c.id
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and (
            c.risk_level = 'high'
            or c.billing_unpaid_amount_cached::numeric > 0
@@ -298,7 +305,10 @@ export class DashboardService {
        left join users u on u.id = t.assignee_user_id and u.org_id = t.org_id
        where t.org_id = $1
          and t.status in ('pending', 'in_progress')
-         and (c.id is null or c.archived_at is null)
+         and (
+           c.id is null
+           or (c.archived_at is null and ${notSoftDeletedCaseClause("c")})
+         )
          ${scopeClause}
          ${groupClause}
        order by
@@ -331,6 +341,7 @@ export class DashboardService {
        left join users u on u.id = c.owner_user_id and u.org_id = c.org_id
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and c.due_at is not null
          and c.due_at <= now() + make_interval(days => $2::int)
          ${scopeClause}
@@ -380,6 +391,7 @@ export class DashboardService {
        left join latest_review lr on lr.case_id = c.id
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and coalesce(c.stage, c.status) = 'S6'
          ${scopeClause}
          ${groupClause}
@@ -420,6 +432,7 @@ export class DashboardService {
        left join latest_validation lv on lv.case_id = c.id
        where c.org_id = $1
          and c.archived_at is null
+         and ${notSoftDeletedCaseClause("c")}
          and (
            c.risk_level = 'high'
            or c.billing_unpaid_amount_cached::numeric > 0

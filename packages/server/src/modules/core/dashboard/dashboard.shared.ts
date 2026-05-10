@@ -164,6 +164,19 @@ export function pushParam(params: unknown[], value: unknown): string {
 }
 
 /**
+ * 生成排除软删除案件的 SQL 片段。
+ *
+ * 软删除通过 `metadata._status='deleted'` 标记，
+ * 与 `cases` 列表 / 详情查询保持同口径，避免仪表盘统计与列表数量不一致。
+ *
+ * @param alias 案件表别名。
+ * @returns 可拼接到 `where` 子句中的 SQL 片段。
+ */
+export function notSoftDeletedCaseClause(alias = "c"): string {
+  return `coalesce(${alias}.metadata->>'_status', '') is distinct from 'deleted'`;
+}
+
+/**
  * 生成 group 过滤的 SQL 片段。
  *
  * `scope=group` 时用 `groupId` 限定 `cases.group_id`；其他 scope 返回空。

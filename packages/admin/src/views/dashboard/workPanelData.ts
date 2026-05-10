@@ -57,6 +57,6 @@ export const panels: PanelDef[] = [
     id: "risks",
     featured: false,
     listKey: "risks",
-    route: { name: "cases", query: { risk: "critical" } },
+    route: { name: "cases", query: { riskBucket: "any" } },
   },
 ];

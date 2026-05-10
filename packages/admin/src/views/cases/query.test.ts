@@ -304,14 +304,15 @@ describe("contract freeze — CaseListQueryParams key set", () => {
     expect(_ASSERT_QUERY_FROZEN_KEYS).toBe(true);
   });
 
-  it("CASE_LIST_QUERY_PARAM_KEYS enumerates exactly 9 keys", () => {
-    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(9);
+  it("CASE_LIST_QUERY_PARAM_KEYS enumerates exactly 10 keys", () => {
+    expect(CASE_LIST_QUERY_PARAM_KEYS).toHaveLength(10);
     expect([...CASE_LIST_QUERY_PARAM_KEYS].sort()).toEqual([
       "customerId",
       "group",
       "owner",
       "phase",
       "risk",
+      "riskBucket",
       "scope",
       "search",
       "stage",
@@ -358,11 +359,41 @@ describe("contract freeze — CaseListQueryParams key set", () => {
       validation: "passed",
       phase: "UNDER_REVIEW",
       customerId: "c",
+      riskBucket: "any",
     };
     const result = buildCaseListQuery(input);
     expect(typeof result).toBe("object");
     for (const key of CASE_LIST_QUERY_PARAM_KEYS) {
       expect(key in input).toBe(true);
     }
+  });
+});
+
+// ─── riskBucket parsing & round-trip ────────────────────────────
+
+describe("parseCaseListQuery — riskBucket", () => {
+  it("accepts valid riskBucket values", () => {
+    for (const v of ["any", "high", "billing", "validation"]) {
+      expect(parseCaseListQuery({ riskBucket: v }).riskBucket).toBe(v);
+    }
+  });
+
+  it("drops invalid riskBucket value to undefined (no silent SQL miss)", () => {
+    expect(
+      parseCaseListQuery({ riskBucket: "critical" }).riskBucket,
+    ).toBeUndefined();
+    expect(parseCaseListQuery({ riskBucket: "" }).riskBucket).toBeUndefined();
+  });
+
+  it("round-trips riskBucket through buildCaseListQuery", () => {
+    const original: CaseListQueryParams = {
+      ...DEFAULT_CASE_LIST_FILTERS,
+      scope: "all",
+      riskBucket: "any",
+    };
+    const built = buildCaseListQuery(original);
+    expect(built.riskBucket).toBe("any");
+    const parsed = parseCaseListQuery(built as LocationQuery);
+    expect(parsed.riskBucket).toBe("any");
   });
 });

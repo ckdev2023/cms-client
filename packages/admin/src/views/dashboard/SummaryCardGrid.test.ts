@@ -112,13 +112,13 @@ describe("SummaryCardGrid", () => {
     expect(router.currentRoute.value.query).toEqual({ stage: "S6" });
   });
 
-  it("navigates to /cases?risk=critical when fix risk items is clicked", async () => {
+  it("navigates to /cases?riskBucket=any when fix risk items is clicked", async () => {
     const { wrapper: w, router } = await mountGrid();
     const buttons = w.findAll(".summary-card-footer .mini-btn");
     await buttons[3]!.trigger("click");
     await flushPromises();
     expect(router.currentRoute.value.path).toBe("/cases");
-    expect(router.currentRoute.value.query).toEqual({ risk: "critical" });
+    expect(router.currentRoute.value.query).toEqual({ riskBucket: "any" });
   });
 
   it("renders placeholders before the payload is available", async () => {
