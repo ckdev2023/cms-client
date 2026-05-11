@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { CUSTOMER_TYPES, type CustomerType } from "../types-customer-fields";
 import type { CustomerCreateFormFields, SelectOption } from "../types";
+import { utcTodayIsoDateString } from "../../../shared/model/dateTodayIsoUtc";
 import { getVisaTypeOptions } from "../../../shared/model/visaTypeOptions";
 
 /**
@@ -18,6 +19,7 @@ import { getVisaTypeOptions } from "../../../shared/model/visaTypeOptions";
  * 显式把当前 i18n locale 透传到 `lang` 属性，让 Chromium 按应用语言渲染原生 picker 文案。
  */
 const { t, locale } = useI18n();
+const birthDateMaxIso = computed(() => utcTodayIsoDateString());
 
 // prettier-ignore
 const SOURCE_LABEL: Record<string, string> = { REFERRAL:"sourceTypeReferral",WEB:"sourceTypeWeb",ADS:"sourceTypeAds" };
@@ -238,6 +240,7 @@ function onCustomerTypeChange(event: Event) {
           type="date"
           class="customer-modal__input"
           :lang="locale"
+          :max="birthDateMaxIso"
           :value="props.fields?.birthDate"
           @input="$emit('update:field', 'birthDate', inputValue($event))"
         />

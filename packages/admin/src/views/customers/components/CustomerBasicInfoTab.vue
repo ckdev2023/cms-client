@@ -11,6 +11,7 @@ import {
   getVisaTypeOptions,
   resolveVisaTypeLabel,
 } from "../../../shared/model/visaTypeOptions";
+import { utcTodayIsoDateString } from "../../../shared/model/dateTodayIsoUtc";
 import { resolveGroupValue } from "../../../shared/model/useGroupOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
 import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
@@ -18,9 +19,7 @@ import type { CustomerRepository } from "../model/CustomerRepository";
 import type { BasicInfoFormSnapshot } from "../model/useCustomerBasicInfoModel";
 
 /**
- * 基础信息 Tab：以只读/编辑双模式展示客户的 13 个基础字段。
- * 使用字符串 `bmvFlagState` 而非 boolean 表达 flag 解析态，以避免 Vue 把
- * 缺省 boolean 强转为 false，使「加载中」与「flag 已关闭」混淆。
+ * 基础信息 Tab：客户基础字段只读/编辑切换；BMV loading 语义用字符串 `bmvFlagState`。
  */
 const props = defineProps<{
   customer: CustomerDetail;
@@ -32,16 +31,9 @@ const props = defineProps<{
     | "recordBmvSign"
   >;
   refreshCustomer?: () => Promise<void>;
-  /**
-   * 历史 prop：当前租户是否启用 BMV 功能。
-   * 仅作向后兼容；新代码应使用 `bmvFlagState`，因为 boolean prop 会被 Vue 把
-   * 缺省值强转为 false，导致「加载中」与「已关闭」无法区分。
-   */
+  /** 遗留：`bmvFlagState` 优先。 */
   bmvEnabled?: boolean;
-  /**
-   * BMV 功能开关解析状态：`undefined`/缺省 = 加载中；`enabled` = 启用；
-   * `disabled` = 已关闭。优先于 `bmvEnabled` 生效。
-   */
+  /** BMV：`undefined` 加载，`enabled`|`disabled`。 */
   bmvFlagState?: "enabled" | "disabled";
 }>();
 
@@ -75,9 +67,7 @@ const displayValues = computed(() =>
   isEditing.value ? formSnapshot.value : currentSnapshot.value,
 );
 const isBmvCustomer = computed(() => customerRequiresBmv(props.customer));
-// 优先消费 `bmvFlagState`（字符串、非 Boolean，可保留 loading 语义）；
-// 若调用方仍传 boolean 形式 `bmvEnabled`，则按旧逻辑兜底，但此时 loading
-// 态会与 disabled 态混淆，因此不会展示降级提示卡片。
+// `bmvFlagState` 优先；仅 boolean `bmvEnabled` 会与加载态混淆。
 const bmvFlagResolution = computed<"loading" | "enabled" | "disabled">(() => {
   if (props.bmvFlagState === "enabled") return "enabled";
   if (props.bmvFlagState === "disabled") return "disabled";
@@ -87,31 +77,35 @@ const bmvFlagResolution = computed<"loading" | "enabled" | "disabled">(() => {
 const showBmvIntakeCard = computed(
   () => bmvFlagResolution.value === "enabled" && isBmvCustomer.value,
 );
-// BMV 客户但当前租户 flag 未开：渲染降级提示卡片，避免「按钮 disabled
-// + 无入口」的死锁体验。loading 态保持空白以避免页面初始化时闪烁。
+// BMV 客户且租户 flag 关：降级提示；loading 不渲染以减少闪烁。
 const showBmvDisabledNotice = computed(
   () => bmvFlagResolution.value === "disabled" && isBmvCustomer.value,
 );
 const avatarInputId = "basicInfoAvatar";
+const birthDateInputMaxIso = computed(() => utcTodayIsoDateString());
 
 const inputCls = computed(() => [
   "basic-info__input",
   { "basic-info__input--readonly": !isEditing.value },
 ]);
 const selectCls = computed(() => [...inputCls.value, "basic-info__select"]);
+
 /**
- * 将 input 事件的值写入编辑快照对应字段。
+ * 将文本输入写入编辑快照。
+ *
  * @param field - 快照字段名
- * @param e - 原生 input 事件
+ * @param e - input 事件
  */
 function onInput(field: keyof BasicInfoFormSnapshot, e: Event) {
   if (formSnapshot.value)
     formSnapshot.value[field] = (e.target as HTMLInputElement).value;
 }
+
 /**
- * 将 select 事件的值写入编辑快照对应字段。
+ * 将下拉变更写入编辑快照字段。
+ *
  * @param field - 快照字段名
- * @param e - 原生 change 事件
+ * @param e - change 事件
  */
 function onSelect(field: keyof BasicInfoFormSnapshot, e: Event) {
   if (formSnapshot.value)
@@ -119,9 +113,7 @@ function onSelect(field: keyof BasicInfoFormSnapshot, e: Event) {
 }
 
 const visaOpts = computed(() => getVisaTypeOptions(locale.value));
-// BUG-185：BMV 客户的 Visa type 字段绑定的是 raw enum（含历史 `BUSINESS_MANAGER`
-// 等大写值），直接显示会暴露内部 code；统一走 `resolveVisaTypeLabel` 兜底，
-// 命中目录则展示本地化标签，未命中保持原值（如 `new_1year` 等 BMV 专属 plan）。
+// BUG-185：BMV Visa 字段保留 raw enum；用 resolveVisaTypeLabel 展示本地化标签。
 const bmvVisaTypeLabel = computed(() =>
   resolveVisaTypeLabel(displayValues.value?.visaType ?? "", locale.value),
 );
@@ -254,7 +246,9 @@ const bmvVisaTypeLabel = computed(() =>
             name="birthDate"
             :class="inputCls"
             :type="isEditing ? 'date' : 'text'"
+            :lang="locale"
             :value="displayValues.birthDate"
+            :max="isEditing ? birthDateInputMaxIso : undefined"
             :disabled="!isEditing"
             :aria-label="t('customers.detail.basicInfo.fields.birthDate')"
             :aria-disabled="!isEditing"

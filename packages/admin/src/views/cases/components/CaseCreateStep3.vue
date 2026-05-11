@@ -41,6 +41,12 @@ onMounted(async () => {
       {{ t("cases.create.step3.groupInherit") }}
       <strong>{{ props.model.groupInheritanceLabel.value }}</strong>
     </div>
+    <p
+      v-if="!props.model.needsGroupOverrideReason.value"
+      class="cc__muted cc__same-group-cross-hint"
+    >
+      {{ t("cases.create.step3.sameGroupCrossGroupHint") }}
+    </p>
     <div class="cc__fields cc__fields--3">
       <div class="cc__field">
         <label class="cc__label" for="case-create-group">{{
@@ -90,9 +96,10 @@ onMounted(async () => {
         id="case-create-due-picker-mount"
         class="cc__field cc__field--due-mount"
       >
-        <label id="case-create-dueDate-label" class="cc__label">{{
-          t("cases.create.step3.dueDateLabel")
-        }}</label>
+        <label id="case-create-dueDate-label" class="cc__label">
+          {{ t("cases.create.step3.dueDateLabel") }}
+          <span class="req-mark">*</span>
+        </label>
         <a-date-picker
           class="cc__date-picker"
           :model-value="props.model.draft.dueDate || undefined"
@@ -211,6 +218,10 @@ onMounted(async () => {
   flex-direction: column;
   gap: 10px;
   margin-top: 20px;
+}
+
+.cc__same-group-cross-hint {
+  margin: 0 0 16px;
 }
 
 .check-item {

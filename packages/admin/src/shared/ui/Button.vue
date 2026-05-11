@@ -28,6 +28,8 @@ const props = withDefaults(
     square?: boolean;
     loading?: boolean;
     disabled?: boolean;
+    /** 原生 button type；不传则交由浏览器默认（表单内常为 submit）。 */
+    htmlType?: "button" | "submit" | "reset";
   }>(),
   {
     variant: "outlined",
@@ -41,6 +43,7 @@ const isDisabled = computed(() => props.disabled || props.loading);
 
 <template>
   <button
+    :type="htmlType"
     :class="[
       'ui-btn',
       `ui-btn--${variant}`,

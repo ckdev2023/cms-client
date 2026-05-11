@@ -48,6 +48,12 @@ const customerDetail = {
     caseName: "案件名",
     lastCreated: "最新起案",
   },
+  resumeCaseCreate: {
+    banner:
+      "案件の新規作成ウィザードからこの顧客詳細へ遷移しています。不足を補ったあと、ウィザードへ戻って建案を続けられます。",
+    continue: "新規作成ウィザードへ戻る",
+    dismiss: "閉じる",
+  },
   basicInfo: {
     title: "基本情報",
     edit: "編集",

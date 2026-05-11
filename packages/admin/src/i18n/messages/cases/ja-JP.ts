@@ -135,6 +135,8 @@ const casesJaJP = {
       amountPlaceholder: "例: 150,000",
       crossGroupReason: "組外割当の理由",
       crossGroupPlaceholder: "組外割当の理由を記入",
+      sameGroupCrossGroupHint:
+        "グループが主申請者と同じときは「組外対応理由」は表示されません。別グループに変更するときのみ記入してください。",
       autoChecklist: "テンプレートから必要書類リストを自動生成",
       autoTasks: "初期タスクを自動作成",
     },

@@ -44,6 +44,12 @@ const customerDetail = {
     caseName: "案件名称",
     lastCreated: "最近建案",
   },
+  resumeCaseCreate: {
+    banner:
+      "您刚从「新建案件」向导跳转过来。补完资料后可返回向导继续未完成的建案步骤。",
+    continue: "返回新建向导",
+    dismiss: "关闭提示",
+  },
   basicInfo: {
     title: "基础信息",
     edit: "编辑",

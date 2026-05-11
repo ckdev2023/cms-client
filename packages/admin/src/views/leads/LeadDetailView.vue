@@ -271,6 +271,7 @@ function tryUseToast() {
     :intended-case-type="lead.intendedCaseType"
     :owner-user-id="lead.ownerId || currentUserId || ''"
     :group-id="lead.groupId"
+    :converted-customer-id="lead.conversion.convertedCustomer?.id"
     :submitting="convertSubmitting"
     :error="convertCaseError"
     @confirm="handleConvertCaseConfirm"

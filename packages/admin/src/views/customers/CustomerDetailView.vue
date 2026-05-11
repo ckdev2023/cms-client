@@ -10,6 +10,7 @@ import CustomerCasesTab from "./components/CustomerCasesTab.vue";
 import CustomerContactsTab from "./components/CustomerContactsTab.vue";
 import CustomerCommsTab from "./components/CustomerCommsTab.vue";
 import CustomerLogsTab from "./components/CustomerLogsTab.vue";
+import CustomerResumeCaseCreateBanner from "./components/CustomerResumeCaseCreateBanner.vue";
 import CustomerToast from "./components/CustomerToast.vue";
 import { useCustomerCreateCaseGateModel } from "./model/useCustomerCreateCaseGateModel";
 import { useCustomerDetailModel } from "./model/useCustomerDetailModel";
@@ -17,6 +18,7 @@ import { createCustomerRepository } from "./model/CustomerRepository";
 import { useCustomerToast } from "./model/useCustomerToast";
 import { buildCaseCreateRoute } from "../cases/query";
 import type { CaseCreateQueryParams } from "../cases/query";
+import { useResumeCaseCreateBanner } from "./model/useResumeCaseCreateBanner";
 import { DETAIL_TABS, type CustomerBmvProfile, type DetailTab } from "./types";
 import {
   resolveGroupLabel,
@@ -30,18 +32,28 @@ const route = useRoute();
 const router = useRouter();
 const repository = createCustomerRepository();
 
+const customerId = computed(() =>
+  typeof route.params.id === "string" ? route.params.id : "",
+);
+
+const {
+  refreshResumeCaseCreateHash,
+  showResumeCaseCreateBanner,
+  continueResumeCaseCreate,
+  dismissResumeCaseCreate,
+} = useResumeCaseCreateBanner(customerId);
+
 const bmvEnabled = ref<boolean | undefined>(undefined);
 const bmvFlagState = computed<"enabled" | "disabled" | undefined>(() => {
   if (bmvEnabled.value === undefined) return undefined;
   return bmvEnabled.value ? "enabled" : "disabled";
 });
+
 onMounted(async () => {
+  refreshResumeCaseCreateHash();
   bmvEnabled.value = await repository.isBmvEnabled();
 });
 
-const customerId = computed(() =>
-  typeof route.params.id === "string" ? route.params.id : "",
-);
 const routeTab = computed(() => {
   const tab = route.query.tab;
   return typeof tab === "string" ? tab : undefined;
@@ -231,6 +243,12 @@ function handleRetry(): void {
 <template>
   <div class="customer-detail-view">
     <template v-if="customer">
+      <CustomerResumeCaseCreateBanner
+        :visible="showResumeCaseCreateBanner"
+        @continue="continueResumeCaseCreate"
+        @dismiss="dismissResumeCaseCreate"
+      />
+
       <Card padding="lg">
         <CustomerDetailHeader
           :customer="customer"

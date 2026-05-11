@@ -400,6 +400,8 @@ const leadsEnUS = {
         "The Business Manager visa feature is not enabled for this organization. Ask an administrator to turn on the BMV feature flag, or pick a different case type for now.",
       unknown:
         "BMV intake prerequisites are not satisfied. See the customer record for details.",
+      gotoCustomerIntakeLink:
+        "Open customer record · questionnaire / quote / signing / intake (Basic info tab) →",
     },
   },
   statusTransition: {

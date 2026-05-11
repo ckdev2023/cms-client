@@ -16,6 +16,8 @@ import type { ServerBlocker } from "../model/LeadRepository";
  */
 const props = defineProps<{
   blockers: ServerBlocker[];
+  /** 客户承接卡深链；有值时在列表下方展示可点击入口。 */
+  recoveryCustomerHref?: string;
 }>();
 
 const { t } = useI18n();
@@ -48,6 +50,14 @@ const messageKeys = computed(() =>
         {{ t(key) }}
       </li>
     </ul>
+    <a
+      v-if="props.recoveryCustomerHref"
+      class="bmv-gate-blocker-list__link"
+      :href="props.recoveryCustomerHref"
+      data-testid="bmv-gate-recovery-link"
+    >
+      {{ t("leads.errors.bmvGate.gotoCustomerIntakeLink") }}
+    </a>
   </section>
 </template>
 
@@ -85,5 +95,16 @@ const messageKeys = computed(() =>
 
 .bmv-gate-blocker-list__item {
   line-height: var(--leading-sm, 1.4);
+}
+
+.bmv-gate-blocker-list__link {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+}
+
+.bmv-gate-blocker-list__link:hover {
+  text-decoration: underline;
 }
 </style>

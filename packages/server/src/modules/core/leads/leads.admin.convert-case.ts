@@ -3,12 +3,18 @@ import type { Pool } from "pg";
 
 import type { Lead, LeadQueryRow } from "../../portal/model/portalEntities";
 import { mapLeadRow } from "../../portal/model/portalEntities";
-import { createDefaultCustomerBmvProfile } from "../customers/customers.dto-mappers";
+import {
+  createDefaultCustomerBmvProfile,
+  resolveCustomerBmvProfile,
+} from "../customers/customers.dto-mappers";
+import type { CustomerBmvProfile } from "../customers/customers.types";
+import { checkBmvCaseCreationGate } from "../cases/cases.types-bmv-gate";
 import { isBmvCaseTypeCode } from "../cases/cases.template-bmv";
 import { getCaseTypeLabelJa } from "../cases/caseTypeLabels.ja";
 import type { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
+import { normalizeObject } from "../../../infra/utils/normalize";
 import { LEAD_COLS, type LeadConvertCaseInput } from "./leads.admin.types";
 
 export const CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE =
@@ -42,6 +48,16 @@ export async function convertCase(
 ): Promise<{ lead: Lead; caseId: string }> {
   const lead = await deps.getLeadOrThrow(ctx, leadId);
   const customerId = assertConvertCasePreconditions(lead);
+
+  if (lead.status === "signed") {
+    await ensureBmvCaseGatePassesForSignedLead(
+      deps.pool,
+      ctx,
+      lead.id,
+      customerId,
+      input.caseTypeCode,
+    );
+  }
 
   const isBmv = isBmvCaseTypeCode(input.caseTypeCode);
   const caseName = composeCaseName(lead, input.caseTypeCode);
@@ -181,6 +197,79 @@ function assertConvertCasePreconditions(lead: Lead): string {
     throw new BadRequestException("Lead is already converted to a case");
   }
   return lead.convertedCustomerId;
+}
+
+/**
+ * 「签约并开始建档」路径：CRM 线索已 signed 时补齐 `bmvProfile`，使能通过 BMV 建案门禁。
+ * @param existing - 客户端当前承接档案快照
+ * @param leadId - 来源线索 ID（写入 sourceLeadId）
+ * @param recordedAtIso - 缺少时间戳字段时填入的占位 ISO 时间
+ * @returns 合并后的经营管理签档案
+ */
+export function synthesizeBmvProfileForSignedLeadAdminConvert(
+  existing: CustomerBmvProfile,
+  leadId: string,
+  recordedAtIso: string,
+): CustomerBmvProfile {
+  return {
+    ...existing,
+    questionnaireStatus: "returned",
+    quoteStatus: "confirmed",
+    signStatus: "signed",
+    intakeStatus: "ready_for_case_creation",
+    questionnaireReturnedAt: existing.questionnaireReturnedAt ?? recordedAtIso,
+    quoteConfirmedAt: existing.quoteConfirmedAt ?? recordedAtIso,
+    signedAt: existing.signedAt ?? recordedAtIso,
+    sourceLeadId: leadId,
+  };
+}
+
+async function ensureBmvCaseGatePassesForSignedLead(
+  pool: Pool,
+  ctx: RequestContext,
+  leadId: string,
+  customerId: string,
+  caseTypeCode: string,
+): Promise<void> {
+  if (!isBmvCaseTypeCode(caseTypeCode)) return;
+
+  const tenantDb = createTenantDb(pool, ctx.orgId, ctx.userId);
+  const row = await tenantDb.query<{ base_profile: unknown }>(
+    `select base_profile from customers where id = $1 limit 1`,
+    [customerId],
+  );
+  const baseProfile = normalizeObject(row.rows.at(0)?.base_profile);
+  const bmvProfile = resolveCustomerBmvProfile(baseProfile);
+
+  const gate = checkBmvCaseCreationGate({
+    caseTypeCode,
+    customerId,
+    bmvQuestionnaireStatus: bmvProfile.questionnaireStatus,
+    bmvQuoteStatus: bmvProfile.quoteStatus,
+    bmvSignStatus: bmvProfile.signStatus,
+    bmvIntakeStatus: bmvProfile.intakeStatus,
+  });
+  if (gate.allowed) return;
+
+  const recordedAtIso = new Date().toISOString();
+  const patched = synthesizeBmvProfileForSignedLeadAdminConvert(
+    bmvProfile,
+    leadId,
+    recordedAtIso,
+  );
+
+  await tenantDb.query(
+    `update customers
+     set base_profile = jsonb_set(
+           coalesce(base_profile, '{}'::jsonb),
+           '{bmvProfile}',
+           $2::jsonb,
+           true
+         ),
+         updated_at = now()
+     where id = $1`,
+    [customerId, JSON.stringify(patched)],
+  );
 }
 
 function normalizeCaseNo(value: unknown): string | null {

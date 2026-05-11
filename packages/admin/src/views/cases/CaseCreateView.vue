@@ -39,6 +39,7 @@ import {
 import { createMockCaseRepository } from "./repository";
 import { CREATE_CASE_STEPS } from "./constants";
 import "./case-create-shared.css";
+import { persistResumeCaseCreateHash } from "../../shared/navigation/sessionResumeKeys";
 
 /** 案件新建页：四步表单向导、来源上下文、party picker modal、toast。 */
 const { t, locale } = useI18n();
@@ -167,6 +168,7 @@ function navigateToList() {
 function navigateToCustomer() {
   const cid = model.primaryCustomer.value?.id;
   if (!cid) return;
+  persistResumeCaseCreateHash();
   window.location.href = buildCustomerDetailHref(cid);
 }
 
@@ -176,6 +178,7 @@ function navigateToCustomer() {
 function navigateToCustomerBmvIntake() {
   const cid = model.primaryCustomer.value?.id;
   if (!cid) return;
+  persistResumeCaseCreateHash();
   window.location.href =
     buildCustomerDetailHref(cid) + "?tab=basic#bmv-intake-card";
 }

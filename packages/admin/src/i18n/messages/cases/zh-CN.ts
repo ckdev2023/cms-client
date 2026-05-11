@@ -133,6 +133,8 @@ const casesZhCN = {
       amountPlaceholder: "例: 150,000",
       crossGroupReason: "跨组原因",
       crossGroupPlaceholder: "请说明跨组指派原因",
+      sameGroupCrossGroupHint:
+        "若分组与主申请人一致，不会产生「跨组原因」字段；仅当您更换为其他分组时，才需填写跨组原因。",
       autoChecklist: "根据模板自动生成资料清单",
       autoTasks: "自动创建初始任务",
     },

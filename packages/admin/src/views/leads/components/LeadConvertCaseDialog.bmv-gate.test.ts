@@ -133,7 +133,25 @@ describe("LeadConvertCaseDialog — inline error rendering (R2-B-5)", () => {
     expect(wrapper.emitted("clearError")).toBeTruthy();
   });
 
-  it("still emits confirm when the user retries after the error", async () => {
+  it("shows BMV recovery deep-link when convertedCustomerId is provided", () => {
+    const error: LeadConvertCaseFailure = {
+      kind: "bmvGate",
+      serverErrorCode: "CASE_BMV_GATE_BLOCKED",
+      blockers: [{ code: "BMV_NOT_SIGNED" }],
+    };
+    mountDialog({
+      error,
+      convertedCustomerId: "cust-resume-01",
+      ownerUserId: TEST_USER_ID,
+    });
+
+    const link = q("[data-testid='bmv-gate-recovery-link']");
+    expect(link).not.toBeNull();
+    expect(link?.getAttribute("href")).toContain("cust-resume-01");
+    expect(link?.getAttribute("href")).toContain("#/customers/");
+  });
+
+  it("主按钮在必填项满足但未清除门禁错误时应保持禁用，清除 error 后方可提交", async () => {
     const error: LeadConvertCaseFailure = {
       kind: "bmvGate",
       serverErrorCode: "CASE_BMV_GATE_BLOCKED",
@@ -148,6 +166,15 @@ describe("LeadConvertCaseDialog — inline error rendering (R2-B-5)", () => {
 
     const buttons = qAll(".convert-case-dialog__actions button");
     const confirmBtn = buttons[buttons.length - 1] as HTMLButtonElement;
+    expect(confirmBtn.disabled).toBe(true);
+    confirmBtn.click();
+    await wrapper.vm.$nextTick();
+    expect(wrapper.emitted("confirm")).toBeFalsy();
+
+    await wrapper.setProps({ error: null });
+    await wrapper.vm.$nextTick();
+
+    expect(confirmBtn.disabled).toBe(false);
     confirmBtn.click();
     await wrapper.vm.$nextTick();
 

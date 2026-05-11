@@ -385,6 +385,8 @@ const leadsZhCN = {
       featureDisabled:
         "经营管理签功能未在本租户启用，请联系管理员开启 BMV 功能开关，或先选择其他案件类型继续办案。",
       unknown: "经营管理签承接前置条件未满足，请回到客户档案查看详情。",
+      gotoCustomerIntakeLink:
+        "前往客户档案 · 问卷 / 报价 / 签约 / 承接（基础信息 Tab） →",
     },
   },
   statusTransition: {

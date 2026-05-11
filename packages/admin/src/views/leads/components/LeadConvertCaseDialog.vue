@@ -19,6 +19,8 @@ const props = defineProps<{
   intendedCaseType?: string;
   ownerUserId?: string;
   groupId?: string;
+  /** 已关联的客户 ID；BMV 阻断时用于生成「前往客户档案」深链。 */
+  convertedCustomerId?: string;
   submitting?: boolean;
   /**
    * 上一次提交失败的结构化错误。提供时弹窗保持打开，
@@ -98,10 +100,18 @@ const bmvGateBlockers = computed(() =>
   props.error?.kind === "bmvGate" ? props.error.blockers : null,
 );
 
+const bmvRecoveryCustomerHref = computed(() => {
+  const id = props.convertedCustomerId?.trim();
+  if (!id) return "";
+  return `#/customers/${encodeURIComponent(id)}?tab=basic#bmv-intake-card`;
+});
+
 const genericErrorMessage = computed(() => {
   if (props.error?.kind !== "generic") return null;
   return t(props.error.messageKey);
 });
+
+const confirmBlockedByError = computed(() => props.error?.kind === "bmvGate");
 
 /** 确認提交轉案件表單 */
 function handleConfirm(): void {
@@ -135,6 +145,7 @@ function handleConfirm(): void {
         <BmvGateBlockerList
           v-if="bmvGateBlockers"
           :blockers="bmvGateBlockers"
+          :recovery-customer-href="bmvRecoveryCustomerHref"
         />
 
         <p
@@ -222,7 +233,7 @@ function handleConfirm(): void {
             variant="filled"
             tone="primary"
             size="sm"
-            :disabled="!canConfirm || submitting"
+            :disabled="!canConfirm || submitting || confirmBlockedByError"
             @click="handleConfirm"
           >
             {{ t("leads.detail.convertCaseDialog.confirmBtn") }}

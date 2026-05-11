@@ -138,8 +138,8 @@ const form = reactive(props.followupForm);
             variant="filled"
             tone="primary"
             size="sm"
+            html-type="submit"
             :disabled="!canSubmitFollowup"
-            @click="$emit('submitFollowup')"
           >
             {{ t("leads.detail.followupsTab.submit") }}
           </Button>

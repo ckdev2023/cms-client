@@ -49,6 +49,12 @@ const customerDetail = {
     caseName: "Case name",
     lastCreated: "Last created",
   },
+  resumeCaseCreate: {
+    banner:
+      "You opened this customer profile from the new-case wizard. After updating required items, you can jump back and continue drafting.",
+    continue: "Back to new-case wizard",
+    dismiss: "Dismiss",
+  },
   basicInfo: {
     title: "Basic info",
     edit: "Edit",

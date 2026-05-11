@@ -136,6 +136,8 @@ const casesEnUS = {
       amountPlaceholder: "e.g. 150,000",
       crossGroupReason: "Cross-group reason",
       crossGroupPlaceholder: "Explain the cross-group assignment",
+      sameGroupCrossGroupHint:
+        "When the selected group matches the primary applicant's group, the cross-group reason field is hidden. Fill it only if you assign another group.",
       autoChecklist: "Auto-generate document checklist from template",
       autoTasks: "Auto-create initial tasks",
     },
