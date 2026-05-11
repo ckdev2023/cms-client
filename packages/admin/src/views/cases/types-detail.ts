@@ -47,7 +47,8 @@ export interface ProviderProgress {
    */
   label: string;
   /**
-   * 国际化键：`cases.detail.providers.${providerRole}`
+   * 国际化键：`cases.detail.providers.${providerRole}`；
+   * 经管签且 `employer` 时为 `cases.detail.providers.employerBmv`。
    */
   labelKey: string;
   /**

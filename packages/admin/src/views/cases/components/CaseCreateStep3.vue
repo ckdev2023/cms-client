@@ -86,7 +86,10 @@ onMounted(async () => {
           </option>
         </select>
       </div>
-      <div class="cc__field">
+      <div
+        id="case-create-due-picker-mount"
+        class="cc__field cc__field--due-mount"
+      >
         <label id="case-create-dueDate-label" class="cc__label">{{
           t("cases.create.step3.dueDateLabel")
         }}</label>
@@ -95,6 +98,8 @@ onMounted(async () => {
           :model-value="props.model.draft.dueDate || undefined"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
+          popup-container="#case-create-due-picker-mount"
+          position="top"
           aria-labelledby="case-create-dueDate-label"
           @change="handleDueDateChange"
         />
@@ -193,6 +198,12 @@ onMounted(async () => {
 
 .cc__date-picker {
   width: 100%;
+}
+
+.cc__field--due-mount {
+  position: relative;
+  z-index: 0;
+  overflow: visible;
 }
 
 .checks {

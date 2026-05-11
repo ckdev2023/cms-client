@@ -46,14 +46,28 @@ if (!permStore.loaded.value && !permStore.loading.value) {
 }
 
 /**
- * 根据路由名称与 params 生成渲染 key；query 变化不影响 key，避免无意义的重挂载。
+ * 根据路由生成主区域 `:key`。默认忽略 query-only 变更，以便列表筛选、Tab 切换等
+ * `router.replace(query)` 不抢焦点不重挂载。
+ *
+ * 例外：`/cases/create` 的步骤向导依赖 `route.query` 与 `#family-bulk`，若仅在同一
+ * matched 记录下变更 query/hash 而不重挂载，`CaseCreateView` 内 `parseCaseCreateQuery`
+ * 只会在首次挂载时生效，会继续沿用上一条入口的客户与家族批量上下文。
  *
  * @param to - 目标路由位置
- * @returns 由路由名和 params 拼接的字符串 key
+ * @returns 用于 `<component :is>` 的渲染 key 字符串
  */
 function viewKeyOf(to: RouteLocationNormalized): string {
-  const name = to.matched.at(-1)?.name?.toString() ?? to.path;
-  return `${name}|${JSON.stringify(to.params)}`;
+  const matchedName = to.matched.at(-1)?.name;
+  const name =
+    typeof matchedName === "string"
+      ? matchedName
+      : typeof matchedName === "symbol"
+        ? matchedName.toString()
+        : "";
+  if (to.path === "/cases/create") {
+    return `case-create|${to.fullPath}|${to.hash}`;
+  }
+  return `${name || to.path}|${JSON.stringify(to.params)}`;
 }
 
 const currentViewKey = ref(viewKeyOf(router.currentRoute.value));
@@ -119,7 +133,7 @@ function scrollToTop(): void {
 
 /**
  * 根据当前路由同步主区域渲染的页面组件与渲染 key。
- * key 仅包含路由名 + params，query-only 变化不触发重挂载。
+ * key 通常为路由名 + params；query-only 变化不触发重挂载（`/cases/create` 除外）。
  * @param to - 目标路由位置，默认为当前路由
  */
 function syncRouteView(
@@ -137,9 +151,8 @@ const stopRouteSync = router.afterEach(async (to, from) => {
   search.closePalette();
   syncRouteView(to);
   closeMobileNav();
-  // 仅在真正的页面切换（路由名或 params 变化）时才把焦点重置到主内容区，
-  // 避免列表筛选/搜索通过 router.replace 同步 query 时把焦点从输入框抢走，
-  // 进而打断用户连续输入。query-only 变化保留当前焦点。
+  // 仅在「视图 key」变化时才把焦点重置到主内容区；列表筛选等 query-only
+  // 跳转保留焦点。`/cases/create` 的 query/hash 变化会触发重挂载，也需聚焦主区。
   const viewChanged = viewKeyOf(to) !== viewKeyOf(from);
   if (!viewChanged) return;
   await nextTick();

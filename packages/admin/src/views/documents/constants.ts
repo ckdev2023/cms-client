@@ -8,6 +8,7 @@ import type {
   WaivedReasonCode,
   WaivedReasonDef,
 } from "./types";
+import { isBizManagementVisaCaseTypeCode } from "../../shared/model/caseTypeI18n";
 
 // ─── Status ──────────────────────────────────────────────────────
 
@@ -217,11 +218,20 @@ export function getStatusLabelKey(status: DocumentItemStatus | string): string {
  * 根据提供方 key 获取 i18n 标签 key。
  *
  * @param provider - 提供方 key 或自由文本
+ * @param options - 可选上下文
+ * @param options.caseTypeCode - 案件类型 code；经管签系列下 `employer_org` 用语义化会社侧文案键
  * @returns i18n 标签 key；未匹配时返回原始值
  */
 export function getProviderLabelKey(
   provider: DocumentProviderType | string,
+  options?: { caseTypeCode?: string | null },
 ): string {
+  if (
+    provider === "employer_org" &&
+    isBizManagementVisaCaseTypeCode(options?.caseTypeCode)
+  ) {
+    return "documents.providers.employerOrgBmv";
+  }
   return (
     DOCUMENT_PROVIDERS[provider as DocumentProviderType]?.labelKey ?? provider
   );

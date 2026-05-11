@@ -522,6 +522,7 @@ const casesZhCN = {
       supporter: "扶养者/保证人",
       office: "事务所内部",
       employer: "受入机构/企业担当",
+      employerBmv: "法人／公司侧",
       agent: "代理人",
       unknown: "未知",
       unspecified: "未指定",

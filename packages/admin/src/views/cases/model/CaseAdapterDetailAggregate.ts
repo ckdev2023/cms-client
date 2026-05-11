@@ -24,6 +24,7 @@ import { buildCustomerLocalizedNames } from "./CaseAdapterCustomerLocale";
 import { buildRelatedPartiesFromDeepLink } from "./CaseAdapterRelatedParties";
 import { buildTeamFromDeepLink } from "./CaseAdapterTeam";
 import { buildTransitionGuards } from "./CaseAdapterTransitionGuards";
+import { isBizManagementVisaCaseTypeCode } from "../../../shared/model/caseTypeI18n";
 
 // ─── Aggregate Slices (p0-fe-002c-01) ────────────────────────────
 
@@ -79,7 +80,8 @@ function resolveProviderRole(raw: string): string {
   return raw !== "" && KNOWN_PROVIDER_ROLES.has(raw) ? raw : "unspecified";
 }
 
-function adaptProviderProgress(raw: unknown[]) {
+function adaptProviderProgress(raw: unknown[], caseTypeCode: string) {
+  const bmv = isBizManagementVisaCaseTypeCode(caseTypeCode);
   return raw
     .map((p) => {
       const pr = asRecord(p);
@@ -89,9 +91,14 @@ function adaptProviderProgress(raw: unknown[]) {
       const total = readNumber(pr, "total");
       if ((role === "unknown" || role === "unspecified") && total === 0)
         return null;
+      const baseKey = `cases.detail.providers.${role}`;
+      const labelKey =
+        bmv && role === "employer"
+          ? "cases.detail.providers.employerBmv"
+          : baseKey;
       return {
         label: rawRole,
-        labelKey: `cases.detail.providers.${role}`,
+        labelKey,
         providerRole: role,
         done: readNumber(pr, "done"),
         total,
@@ -460,9 +467,13 @@ function assembleDetail(slices: AggregateSlices, m: DerivedMetrics) {
   const stageId = resolveStageId(readString(caseRecord, "stage"));
   const dueAt = readNullableString(caseRecord, "dueAt");
   const vh = buildValidationHint(m.blockingCount, m.warningCount);
+  const caseTypeCode = readString(caseRecord, "caseTypeCode");
   return {
     ...buildDetailHeader(id, stageId, dueAt, m, caseRecord, deepLink),
-    providerProgress: adaptProviderProgress(slices.providerProgressRaw),
+    providerProgress: adaptProviderProgress(
+      slices.providerProgressRaw,
+      caseTypeCode,
+    ),
     risk: buildRiskBlock(
       m.blockingCount,
       m.unpaidAmount,

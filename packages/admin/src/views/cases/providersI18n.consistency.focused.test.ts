@@ -52,3 +52,13 @@ describe("providers i18n consistency (cases ↔ documents)", () => {
     });
   }
 });
+
+describe("BMV-specific employer labeling (cases ↔ documents)", () => {
+  for (const locale of LOCALES) {
+    it(`${locale.name}: employerBmv pair matches`, () => {
+      expect(locale.cases.detail.providers.employerBmv).toBe(
+        locale.docs.providers.employerOrgBmv,
+      );
+    });
+  }
+});

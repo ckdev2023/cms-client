@@ -59,6 +59,7 @@ const {
   isStorageRootConfigured,
   documentTemplateMissing: toRef(() => props.detail.documentTemplateMissing),
   caseNo: toRef(() => props.detail.caseNo),
+  caseTypeCode: toRef(() => props.detail.caseType),
   onWriteSuccess: () => emit("refresh"),
 });
 

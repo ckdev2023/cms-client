@@ -88,6 +88,7 @@ const documentsZhCN = {
     mainApplicant: "主申请人",
     dependentGuarantor: "扶养者/保证人",
     employerOrg: "受入机构/企业担当",
+    employerOrgBmv: "法人／公司侧",
     officeInternal: "事务所内部",
   },
   storageGate: {

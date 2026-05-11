@@ -57,6 +57,39 @@ const PROVIDED_BY_ROLE_PROVIDER_MAP: Record<string, DocumentProviderType> = {
 };
 
 /**
+ * 058 回填将 `owner_side=customer` 一律标成 supporter；
+ * 经营管理签会社侧资料蓝图为 employer，易被误归为扶养者·保证人。
+ */
+const BMV_EMPLOYER_CHECKLIST_CODES: ReadonlySet<string> = new Set([
+  "bmv-company-registry",
+  "bmv-office-lease",
+  "bmv-capital-proof",
+  "bmv-office-photos",
+  "bmv-financial-statement",
+  "bmv-tax-certificate",
+  "bmv-seal-certificate",
+  "bmv-bank-statement",
+]);
+
+function resolveBmvCompanyEmployerBucket(
+  checklistItemCode: string | null | undefined,
+  providedByRole: string | null | undefined,
+  ownerSide: string,
+): DocumentProviderType | null {
+  if (
+    !checklistItemCode ||
+    !BMV_EMPLOYER_CHECKLIST_CODES.has(checklistItemCode)
+  ) {
+    return null;
+  }
+  const role = providedByRole?.trim() ?? "";
+  if (role === "employer") return null;
+  if (role === "supporter") return "employer_org";
+  if (!role && ownerSide === "customer") return "employer_org";
+  return null;
+}
+
+/**
  * 后端 `document_items` 行（与 `documentItems.service.ts` `DocumentItem` 对齐）。
  */
 export interface DocumentItemDtoLike {
@@ -148,12 +181,21 @@ export function mapOwnerSideToProvider(
  *
  * @param providedByRole - 后端 `document_items.provided_by_role`（可能为 null）
  * @param ownerSide - 后端 `document_items.owner_side` 值
+ * @param checklistItemCode - 蓝图项编号；用于经管签会社资料误标 supporter 的纠偏
  * @returns 资料提供方枚举
  */
 export function resolveProvider(
   providedByRole: string | null | undefined,
   ownerSide: string,
+  checklistItemCode?: string | null,
 ): DocumentProviderType {
+  const bmvEmployer = resolveBmvCompanyEmployerBucket(
+    checklistItemCode,
+    providedByRole,
+    ownerSide,
+  );
+  if (bmvEmployer) return bmvEmployer;
+
   if (providedByRole) {
     const mapped = PROVIDED_BY_ROLE_PROVIDER_MAP[providedByRole];
     if (mapped) return mapped;
@@ -218,7 +260,11 @@ export function adaptDocumentItem(
     name: row.name,
     caseId: row.caseId,
     caseName,
-    provider: resolveProvider(row.providedByRole, row.ownerSide),
+    provider: resolveProvider(
+      row.providedByRole,
+      row.ownerSide,
+      row.checklistItemCode,
+    ),
     status,
     dueDate,
     dueDateLabel: dueDate ?? "—",

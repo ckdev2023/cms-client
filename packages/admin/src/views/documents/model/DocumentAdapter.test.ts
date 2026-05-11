@@ -64,6 +64,18 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
     expect(resolveProvider("employer", "employer")).toBe("employer_org");
   });
 
+  it("resolveProvider maps misclassified BMV company items away from dependent bucket", () => {
+    expect(
+      resolveProvider("supporter", "customer", "bmv-company-registry"),
+    ).toBe("employer_org");
+    expect(resolveProvider(null, "customer", "bmv-office-lease")).toBe(
+      "employer_org",
+    );
+    expect(
+      resolveProvider("employer", "customer", "bmv-financial-statement"),
+    ).toBe("employer_org");
+  });
+
   it("resolveProvider falls back to ownerSide when providedByRole is null/empty/unknown (向后兼容旧数据)", () => {
     expect(resolveProvider(null, "applicant")).toBe("main_applicant");
     expect(resolveProvider(undefined, "customer")).toBe("dependent_guarantor");
@@ -104,6 +116,20 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
       NOW,
     );
     expect(item.provider).toBe("dependent_guarantor");
+  });
+
+  it("BMV checklist codes mis-tagged supporter bucket employer_org (058 backfill quirk)", () => {
+    const item = adaptDocumentItem(
+      {
+        ...ROW,
+        ownerSide: "customer",
+        providedByRole: "supporter",
+        checklistItemCode: "bmv-capital-proof",
+      },
+      () => undefined,
+      NOW,
+    );
+    expect(item.provider).toBe("employer_org");
   });
 
   it("falls back to ownerSide when providedByRole is null (legacy 数据 / 058 迁移前)", () => {

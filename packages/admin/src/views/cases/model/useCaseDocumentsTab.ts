@@ -47,6 +47,8 @@ export interface UseCaseDocumentsTabDeps {
   repository?: DocumentRepository;
   /** 案件业务编号（用于路径建议）。 */
   caseNo?: Ref<string | undefined>;
+  /** 案件类型 code（与详情 `caseType` 同源）；经管签下用于雇主侧资料分组业务化标签。 */
+  caseTypeCode?: Ref<string | undefined>;
   /**
    * 写操作（审核 / 退回 / 催办 / 登记 / 引用 / 豁免 / 取消豁免 / 添加项）成功后触发，
    * 用于让父级 `CaseDetailView` 同步刷新顶部「按提供方完成率」卡片与 Tab 计数器
@@ -73,6 +75,7 @@ const PROVIDER_GROUP_ORDER: Record<string, number> = {
 function buildGrouping(
   listModel: ReturnType<typeof useDocumentListModel>,
   t: T,
+  caseTypeCode: Ref<string | undefined>,
 ) {
   const detailItems = computed(() => toCaseDetailItems(listModel.items.value));
   const documentGroups = computed<DocumentGroup[]>(() => {
@@ -90,8 +93,9 @@ function buildGrouping(
       if (pa !== pb) return pa - pb;
       return a.localeCompare(b);
     });
+    const code = caseTypeCode.value;
     return entries.map(([p, gItems]) => ({
-      group: t(getProviderLabelKey(p)),
+      group: t(getProviderLabelKey(p, { caseTypeCode: code })),
       count: `${gItems.length} 件`,
       items: gItems,
     }));
@@ -228,6 +232,7 @@ function buildRowHandlers(
   register: ReturnType<typeof useRegisterDocumentModel>,
   ws: WaiveState,
   t: T,
+  caseTypeCode: Ref<string | undefined>,
 ) {
   return {
     handleRowApprove: (item: DocumentItem) => {
@@ -243,7 +248,11 @@ function buildRowHandlers(
       if (li)
         await review.confirmRemind({
           id: li.id,
-          name: t(getProviderLabelKey(li.provider)),
+          name: t(
+            getProviderLabelKey(li.provider, {
+              caseTypeCode: caseTypeCode.value,
+            }),
+          ),
         });
     },
     handleRowRegister: (item: DocumentItem) => {
@@ -415,9 +424,12 @@ function makeRefresh(
  * @param deps - 依赖注入
  * @returns 列表 model、分组、审核/登记 model 与事件处理器
  */
+// eslint-disable-next-line max-lines-per-function -- wiring：列表刷新、分组与审核动作共享闭包
 export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
   const { t } = useI18n();
   const toast = useToast();
+  const caseTypeCodeRef =
+    deps.caseTypeCode ?? ref<string | undefined>(undefined);
   const repo = deps.repository ?? createDocumentRepository();
   const listModel = useDocumentListModel({
     repository: repo,
@@ -431,7 +443,11 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
     listModel.refresh({ caseId });
   });
 
-  const { detailItems, documentGroups } = buildGrouping(listModel, t);
+  const { detailItems, documentGroups } = buildGrouping(
+    listModel,
+    t,
+    caseTypeCodeRef,
+  );
   const hasApiData = computed(() => listModel.source.value === "api");
   const viewState = buildViewState(listModel, deps);
   const refresh = makeRefresh(listModel, fetchRate, deps.onWriteSuccess);
@@ -456,7 +472,7 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
     review,
     register,
     addItem,
-    ...buildRowHandlers(find, review, register, ws, t),
+    ...buildRowHandlers(find, review, register, ws, t, caseTypeCodeRef),
     handleRowUnwaive: buildUnwaiveHandler(find, repo, toast, t, onErr, refresh),
     handleConfirmWaive: buildWaiveHandler(
       ws,

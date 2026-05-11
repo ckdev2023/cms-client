@@ -93,6 +93,7 @@ const documentsEnUS = {
     mainApplicant: "Main applicant",
     dependentGuarantor: "Dependent / guarantor",
     employerOrg: "Employer / organization contact",
+    employerOrgBmv: "Company / corporate materials",
     officeInternal: "Office internal",
   },
   storageGate: {

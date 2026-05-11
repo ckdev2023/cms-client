@@ -74,6 +74,22 @@ describe("documents/constants", () => {
     expect(getProviderLabelKey("main_applicant")).toBe(
       "documents.providers.mainApplicant",
     );
+    expect(
+      getProviderLabelKey("employer_org", {
+        caseTypeCode: "business_manager_visa",
+      }),
+    ).toBe("documents.providers.employerOrgBmv");
+    expect(getProviderLabelKey("employer_org", { caseTypeCode: "bmv" })).toBe(
+      "documents.providers.employerOrgBmv",
+    );
+    expect(
+      getProviderLabelKey("employer_org", {
+        caseTypeCode: "business-management-visa",
+      }),
+    ).toBe("documents.providers.employerOrgBmv");
+    expect(getProviderLabelKey("employer_org", { caseTypeCode: "visa" })).toBe(
+      "documents.providers.employerOrg",
+    );
     expect(getWaivedReasonLabelKey("other")).toBe(
       "documents.waive.reasons.other",
     );

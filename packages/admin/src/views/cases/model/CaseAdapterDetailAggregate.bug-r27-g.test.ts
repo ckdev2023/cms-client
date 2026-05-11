@@ -121,6 +121,73 @@ describe("adaptProviderProgress labelKey (R27-G / T3.1)", () => {
     expect(p.total).toBe(4);
   });
 
+  it("BMV caseType maps employer progress labelKey to employerBmv", () => {
+    const result = adaptCaseDetailAggregate({
+      case: {
+        id: "case-bmv-progress",
+        stage: "S1",
+        caseTypeCode: "business_manager_visa",
+      },
+      deepLink: null,
+      counts: null,
+      billing: null,
+      latestValidation: null,
+      latestSubmission: null,
+      latestReview: null,
+      documentProgressByProvider: [
+        { providerRole: "employer", total: 5, done: 0 },
+      ],
+    })!;
+    expect(result.detail.providerProgress).toHaveLength(1);
+    const p = result.detail.providerProgress[0];
+    expect(p.labelKey).toBe("cases.detail.providers.employerBmv");
+    expect(p.providerRole).toBe("employer");
+  });
+
+  it("biz_mgmt prefix maps employer to employerBmv labelKey", () => {
+    const result = adaptCaseDetailAggregate({
+      case: {
+        id: "case-bmv-prefix",
+        stage: "S2",
+        caseTypeCode: "biz_mgmt_4m",
+      },
+      deepLink: null,
+      counts: null,
+      billing: null,
+      latestValidation: null,
+      latestSubmission: null,
+      latestReview: null,
+      documentProgressByProvider: [
+        { providerRole: "employer", total: 1, done: 1 },
+      ],
+    })!;
+    expect(result!.detail.providerProgress[0].labelKey).toBe(
+      "cases.detail.providers.employerBmv",
+    );
+  });
+
+  it("overview template id bmv maps employer to employerBmv labelKey", () => {
+    const result = adaptCaseDetailAggregate({
+      case: {
+        id: "case-bmv-umbrella",
+        stage: "S1",
+        caseTypeCode: "bmv",
+      },
+      deepLink: null,
+      counts: null,
+      billing: null,
+      latestValidation: null,
+      latestSubmission: null,
+      latestReview: null,
+      documentProgressByProvider: [
+        { providerRole: "employer", total: 2, done: 0 },
+      ],
+    })!;
+    expect(result!.detail.providerProgress[0].labelKey).toBe(
+      "cases.detail.providers.employerBmv",
+    );
+  });
+
   it("empty providerRole string → fallback to unspecified", () => {
     const result = adaptCaseDetailAggregate(
       buildAggregate([{ providerRole: "", total: 2, done: 1 }]),

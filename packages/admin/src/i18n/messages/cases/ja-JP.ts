@@ -546,6 +546,7 @@ const casesJaJP = {
       supporter: "扶養者・保証人",
       office: "事務所内部",
       employer: "受入機関・企業担当",
+      employerBmv: "法人・会社側",
       agent: "代理人",
       unknown: "不明",
       unspecified: "未指定",

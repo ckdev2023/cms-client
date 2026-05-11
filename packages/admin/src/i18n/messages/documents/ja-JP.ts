@@ -97,6 +97,7 @@ const documentsJaJP = {
     mainApplicant: "主申請者",
     dependentGuarantor: "扶養者・保証人",
     employerOrg: "受入機関・企業担当",
+    employerOrgBmv: "法人・会社側",
     officeInternal: "事務所内部",
   },
   storageGate: {

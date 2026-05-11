@@ -45,6 +45,7 @@ async function mountShell(options: Parameters<typeof mount>[1] = {}) {
       { path: "/cases", component: casesRouteStub, meta: { navKey: "cases" } },
       {
         path: "/cases/create",
+        name: "case-create",
         component: casesRouteStub,
         meta: { navKey: "cases" },
       },
@@ -231,6 +232,17 @@ describe("AppShell", () => {
 
     expect(w.find("main .stub-route-view--home").exists()).toBe(false);
     expect(w.find("main .stub-route-view--cases").exists()).toBe(true);
+  });
+
+  it("remounts case-create between query-only navigations", async () => {
+    const { router } = await mountShell();
+    await router.push("/cases/create?customerId=cust-a");
+    await flushPromises();
+    expect(casesMountCount).toBe(1);
+
+    await router.push("/cases/create?customerId=cust-b");
+    await flushPromises();
+    expect(casesMountCount).toBe(2);
   });
 
   it("does not remount the view when only query changes", async () => {
