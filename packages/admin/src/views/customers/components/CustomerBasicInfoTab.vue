@@ -12,6 +12,7 @@ import {
   resolveVisaTypeLabel,
 } from "../../../shared/model/visaTypeOptions";
 import { utcTodayIsoDateString } from "../../../shared/model/dateTodayIsoUtc";
+import { CUSTOMER_BIRTHDATE_MIN_ISO } from "../../../shared/model/customerBirthDateBounds";
 import { resolveGroupValue } from "../../../shared/model/useGroupOptions";
 import { useCustomerBasicInfoModel } from "../model/useCustomerBasicInfoModel";
 import { customerRequiresBmv } from "../model/useCustomerCreateCaseGateModel";
@@ -83,6 +84,7 @@ const showBmvDisabledNotice = computed(
 );
 const avatarInputId = "basicInfoAvatar";
 const birthDateInputMaxIso = computed(() => utcTodayIsoDateString());
+const birthDateInputMinIso = CUSTOMER_BIRTHDATE_MIN_ISO;
 
 const inputCls = computed(() => [
   "basic-info__input",
@@ -249,6 +251,7 @@ const bmvVisaTypeLabel = computed(() =>
             :lang="locale"
             :value="displayValues.birthDate"
             :max="isEditing ? birthDateInputMaxIso : undefined"
+            :min="isEditing ? birthDateInputMinIso : undefined"
             :disabled="!isEditing"
             :aria-label="t('customers.detail.basicInfo.fields.birthDate')"
             :aria-disabled="!isEditing"

@@ -55,6 +55,12 @@ const customerDetail = {
     continue: "Back to new-case wizard",
     dismiss: "Dismiss",
   },
+  resumeLeadCaseCreate: {
+    banner:
+      "You opened this customer profile from a lead's “Sign & start case intake” step. After finishing what's missing, jump back to that lead and continue creating the case.",
+    continue: "Back to lead intake",
+    dismiss: "Dismiss",
+  },
   basicInfo: {
     title: "Basic info",
     edit: "Edit",

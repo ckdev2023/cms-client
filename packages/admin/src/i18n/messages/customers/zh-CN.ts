@@ -50,6 +50,12 @@ const customerDetail = {
     continue: "返回新建向导",
     dismiss: "关闭提示",
   },
+  resumeLeadCaseCreate: {
+    banner:
+      "您刚从线索「签约并开始建档」跳转过来。补完资料后可返回该线索继续创建案件。",
+    continue: "返回线索继续建档",
+    dismiss: "关闭提示",
+  },
   basicInfo: {
     title: "基础信息",
     edit: "编辑",

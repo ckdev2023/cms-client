@@ -222,6 +222,9 @@ const leadsEnUS = {
       conclusionLabel: "Conclusion: ",
       nextActionLabel: "Next step: ",
       nextFollowUpLabel: "Next follow-up: ",
+      submitFailedTitle: "Could not save follow-up",
+      submitFailedDesc:
+        "Something went wrong with the network or service. Please try again.",
     },
     conversionTab: {
       dedupClean:
@@ -402,6 +405,7 @@ const leadsEnUS = {
         "BMV intake prerequisites are not satisfied. See the customer record for details.",
       gotoCustomerIntakeLink:
         "Open customer record · questionnaire / quote / signing / intake (Basic info tab) →",
+      openSectionLink: "Open →",
     },
   },
   statusTransition: {

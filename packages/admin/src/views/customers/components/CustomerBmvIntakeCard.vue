@@ -48,6 +48,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
 <template>
   <section
     v-if="intakeCard"
+    id="bmv-intake-card"
     class="bmv-intake-card"
     :aria-label="t('customers.detail.bmvIntake.ariaLabel')"
   >
@@ -95,7 +96,11 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
       </div>
     </div>
 
-    <div v-if="actions" class="bmv-intake-card__actions">
+    <div
+      v-if="actions"
+      id="bmv-intake-actions"
+      class="bmv-intake-card__actions"
+    >
       <div
         v-for="action in actions"
         :key="action.key"
@@ -144,6 +149,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
 
     <section
       v-if="intakeCard.quoteHistory.length"
+      id="bmv-intake-quote"
       class="bmv-intake-card__section"
     >
       <h5 class="bmv-intake-card__section-title">
@@ -176,6 +182,7 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
 
     <section
       v-if="intakeCard.surveyDataSummary"
+      id="bmv-intake-survey"
       class="bmv-intake-card__section"
     >
       <h5 class="bmv-intake-card__section-title">
@@ -289,212 +296,4 @@ const { actions, feedbackTone, feedbackMessageKey } = useCustomerBmvActionModel(
   </section>
 </template>
 
-<style scoped>
-.bmv-intake-card {
-  display: grid;
-  gap: 16px;
-  padding: 16px;
-  border: 1px solid rgba(3, 105, 161, 0.12);
-  border-radius: var(--radius-lg, 16px);
-  background: linear-gradient(180deg, rgba(239, 246, 255, 0.9), #fff);
-}
-
-.bmv-intake-card__header,
-.bmv-intake-card__step,
-.bmv-intake-card__highlight,
-.bmv-intake-card__note {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.bmv-intake-card__eyebrow,
-.bmv-intake-card__label {
-  margin: 0;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-}
-
-.bmv-intake-card__title,
-.bmv-intake-card__value,
-.bmv-intake-card__timeline-value,
-.bmv-intake-card__note {
-  margin: 0;
-  color: var(--color-text-1);
-}
-
-.bmv-intake-card__title {
-  margin-top: 4px;
-  font-size: var(--font-size-md);
-  font-weight: var(--font-weight-semibold);
-}
-
-.bmv-intake-card__highlights,
-.bmv-intake-card__steps,
-.bmv-intake-card__actions {
-  display: grid;
-  gap: 12px;
-}
-
-.bmv-intake-card__highlight,
-.bmv-intake-card__step,
-.bmv-intake-card__action {
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border-1);
-}
-
-.bmv-intake-card__action {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.bmv-intake-card__action-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.bmv-intake-card__action-title,
-.bmv-intake-card__action-hint,
-.bmv-intake-card__action-state {
-  margin: 0;
-}
-
-.bmv-intake-card__action-title {
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-1);
-}
-
-.bmv-intake-card__action-hint,
-.bmv-intake-card__action-state {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-
-.bmv-intake-card__action-state--success {
-  color: var(--color-success, #15803d);
-}
-
-.bmv-intake-card__action-state--danger {
-  color: var(--color-danger, #dc2626);
-}
-
-.bmv-intake-card__value {
-  max-width: 420px;
-  text-align: right;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-}
-
-.bmv-intake-card__timeline {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 12px;
-  margin: 0;
-}
-
-.bmv-intake-card__timeline-item {
-  padding: 12px;
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg-1);
-  border: 1px solid var(--color-border-1);
-}
-
-.bmv-intake-card__timeline-value {
-  margin-top: 6px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.bmv-intake-card__note {
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border-1);
-  font-size: var(--font-size-sm);
-}
-
-.bmv-intake-card__section {
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border-1);
-}
-
-.bmv-intake-card__section-title {
-  margin: 0 0 8px;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-1);
-}
-
-.bmv-intake-card__quote-list,
-.bmv-intake-card__reminder-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.bmv-intake-card__quote-item,
-.bmv-intake-card__reminder-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-1);
-}
-.bmv-intake-card__quote-version {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-weight: var(--font-weight-semibold);
-  min-width: 80px;
-}
-.bmv-intake-card__quote-detail {
-  font-size: var(--font-size-sm);
-}
-.bmv-intake-card__quote-detail--muted {
-  color: var(--color-text-3);
-  font-size: var(--font-size-xs);
-}
-.bmv-intake-card__survey-meta {
-  margin: 0 0 8px;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-.bmv-intake-card__survey-fields,
-.bmv-intake-card__case-stage {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(168px, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-.bmv-intake-card__survey-field,
-.bmv-intake-card__case-stage-item {
-  padding: 8px;
-  border-radius: var(--radius-md);
-  background-color: var(--color-bg-1);
-  border: 1px solid var(--color-border-1);
-}
-.bmv-intake-card__transition {
-  padding-top: 12px;
-  border-top: 1px solid var(--color-border-1);
-  display: flex;
-  justify-content: flex-end;
-}
-@media (max-width: 767px) {
-  .bmv-intake-card__header,
-  .bmv-intake-card__step,
-  .bmv-intake-card__highlight,
-  .bmv-intake-card__action,
-  .bmv-intake-card__note {
-    flex-direction: column;
-  }
-
-  .bmv-intake-card__value {
-    max-width: none;
-    text-align: left;
-  }
-}
-</style>
+<style scoped src="./customer-bmv-intake-card.css"></style>

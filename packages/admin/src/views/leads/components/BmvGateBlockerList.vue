@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { resolveLeadBmvBlockerI18nKeys } from "../model/LeadBmvGateBinding";
+import { resolveLeadBmvBlockerI18nKey } from "../model/LeadBmvGateBinding";
 import type { ServerBlocker } from "../model/LeadRepository";
+import { buildLeadBmvCustomerIntakeHref } from "../model/leadBmvCustomerDeepLink";
+import {
+  persistLeadCaseCreateResume,
+  type LeadCaseCreateResumePayload,
+} from "../../../shared/navigation/sessionResumeKeys";
 
 /**
  * BMV 建案门禁阻断列表渲染组件。
@@ -16,20 +21,61 @@ import type { ServerBlocker } from "../model/LeadRepository";
  */
 const props = defineProps<{
   blockers: ServerBlocker[];
-  /** 客户承接卡深链；有值时在列表下方展示可点击入口。 */
-  recoveryCustomerHref?: string;
+  /** 已关联客户；有值时为每条阻断渲染「去处理」深链。 */
+  customerId?: string;
+  /** 从线索转案件进入时在跳转前写入 session，便于客户页回到线索继续建档。 */
+  resumeLeadCaseContext?: LeadCaseCreateResumePayload | null;
 }>();
 
 const { t } = useI18n();
 
-const messageKeys = computed(() =>
-  resolveLeadBmvBlockerI18nKeys(props.blockers),
-);
+const distinctBlockers = computed(() => {
+  const seen = new Set<string>();
+  const out: ServerBlocker[] = [];
+  for (const b of props.blockers) {
+    const code = b.code?.trim();
+    if (!code || seen.has(code)) continue;
+    seen.add(code);
+    out.push(b);
+  }
+  return out;
+});
+
+/**
+ * 在跳转至客户详情 hash 前按需写入「回到线索继续转案件」上下文，并更新
+ * `window.location.hash`。
+ *
+ * @param href - 以 `#` 开头的 hash 路由目标
+ */
+function navigateHashHref(href: string): void {
+  if (props.resumeLeadCaseContext) {
+    persistLeadCaseCreateResume(props.resumeLeadCaseContext);
+  }
+  window.location.hash = href.startsWith("#") ? href : `#${href}`;
+}
+
+/**
+ * 按阻断码生成单条清单项对应的客户承接深链。
+ *
+ * @param code - 服务端阻断码
+ * @returns hash 路由 href；无客户 ID 时返回 `#`
+ */
+function blockerHref(code: string): string {
+  const cid = props.customerId?.trim();
+  if (!cid) return "#";
+  return buildLeadBmvCustomerIntakeHref(cid, code);
+}
+
+const defaultIntakeHref = computed(() => {
+  const cid = props.customerId?.trim();
+  if (!cid) return "";
+  return buildLeadBmvCustomerIntakeHref(cid);
+});
 </script>
 
 <template>
   <section
-    v-if="messageKeys.length > 0"
+    v-if="distinctBlockers.length > 0"
     class="bmv-gate-blocker-list"
     role="alert"
     aria-live="assertive"
@@ -43,18 +89,30 @@ const messageKeys = computed(() =>
     </p>
     <ul class="bmv-gate-blocker-list__items">
       <li
-        v-for="(key, idx) in messageKeys"
-        :key="key + ':' + idx"
+        v-for="(blocker, idx) in distinctBlockers"
+        :key="blocker.code + ':' + idx"
         class="bmv-gate-blocker-list__item"
       >
-        {{ t(key) }}
+        <span class="bmv-gate-blocker-list__text">{{
+          t(resolveLeadBmvBlockerI18nKey(blocker.code))
+        }}</span>
+        <a
+          v-if="customerId?.trim()"
+          class="bmv-gate-blocker-list__item-link"
+          :href="blockerHref(blocker.code)"
+          data-testid="bmv-gate-blocker-item-link"
+          @click.prevent="navigateHashHref(blockerHref(blocker.code))"
+        >
+          {{ t("leads.errors.bmvGate.openSectionLink") }}
+        </a>
       </li>
     </ul>
     <a
-      v-if="props.recoveryCustomerHref"
+      v-if="defaultIntakeHref"
       class="bmv-gate-blocker-list__link"
-      :href="props.recoveryCustomerHref"
+      :href="defaultIntakeHref"
       data-testid="bmv-gate-recovery-link"
+      @click.prevent="navigateHashHref(defaultIntakeHref)"
     >
       {{ t("leads.errors.bmvGate.gotoCustomerIntakeLink") }}
     </a>
@@ -88,13 +146,30 @@ const messageKeys = computed(() =>
   margin: 0;
   padding-left: 18px;
   display: grid;
-  gap: 4px;
+  gap: 6px;
   font-size: var(--font-size-sm);
   color: var(--color-text-1);
 }
 
 .bmv-gate-blocker-list__item {
   line-height: var(--leading-sm, 1.4);
+  list-style: disc;
+}
+
+.bmv-gate-blocker-list__text {
+  margin-right: 6px;
+}
+
+.bmv-gate-blocker-list__item-link {
+  font-size: var(--font-size-xs, 12px);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.bmv-gate-blocker-list__item-link:hover {
+  text-decoration: underline;
 }
 
 .bmv-gate-blocker-list__link {

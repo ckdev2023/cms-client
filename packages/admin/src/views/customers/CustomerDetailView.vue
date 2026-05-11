@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import Card from "../../shared/ui/Card.vue";
@@ -11,6 +11,7 @@ import CustomerContactsTab from "./components/CustomerContactsTab.vue";
 import CustomerCommsTab from "./components/CustomerCommsTab.vue";
 import CustomerLogsTab from "./components/CustomerLogsTab.vue";
 import CustomerResumeCaseCreateBanner from "./components/CustomerResumeCaseCreateBanner.vue";
+import CustomerResumeLeadCaseBanner from "./components/CustomerResumeLeadCaseBanner.vue";
 import CustomerToast from "./components/CustomerToast.vue";
 import { useCustomerCreateCaseGateModel } from "./model/useCustomerCreateCaseGateModel";
 import { useCustomerDetailModel } from "./model/useCustomerDetailModel";
@@ -19,6 +20,7 @@ import { useCustomerToast } from "./model/useCustomerToast";
 import { buildCaseCreateRoute } from "../cases/query";
 import type { CaseCreateQueryParams } from "../cases/query";
 import { useResumeCaseCreateBanner } from "./model/useResumeCaseCreateBanner";
+import { useResumeLeadCaseCreateBanner } from "./model/useResumeLeadCaseCreateBanner";
 import { DETAIL_TABS, type CustomerBmvProfile, type DetailTab } from "./types";
 import {
   resolveGroupLabel,
@@ -43,6 +45,13 @@ const {
   dismissResumeCaseCreate,
 } = useResumeCaseCreateBanner(customerId);
 
+const {
+  refreshResumeLeadCaseCreateHash,
+  showResumeLeadCaseCreateBanner,
+  continueResumeLeadCaseCreate,
+  dismissResumeLeadCaseCreate,
+} = useResumeLeadCaseCreateBanner(customerId);
+
 const bmvEnabled = ref<boolean | undefined>(undefined);
 const bmvFlagState = computed<"enabled" | "disabled" | undefined>(() => {
   if (bmvEnabled.value === undefined) return undefined;
@@ -51,7 +60,13 @@ const bmvFlagState = computed<"enabled" | "disabled" | undefined>(() => {
 
 onMounted(async () => {
   refreshResumeCaseCreateHash();
+  refreshResumeLeadCaseCreateHash();
   bmvEnabled.value = await repository.isBmvEnabled();
+});
+
+watch(customerId, () => {
+  refreshResumeCaseCreateHash();
+  refreshResumeLeadCaseCreateHash();
 });
 
 const routeTab = computed(() => {
@@ -247,6 +262,11 @@ function handleRetry(): void {
         :visible="showResumeCaseCreateBanner"
         @continue="continueResumeCaseCreate"
         @dismiss="dismissResumeCaseCreate"
+      />
+      <CustomerResumeLeadCaseBanner
+        :visible="showResumeLeadCaseCreateBanner"
+        @continue="continueResumeLeadCaseCreate"
+        @dismiss="dismissResumeLeadCaseCreate"
       />
 
       <Card padding="lg">

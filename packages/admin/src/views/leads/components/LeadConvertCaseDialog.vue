@@ -13,9 +13,12 @@ import { getGroupOptions } from "../../../shared/model/useGroupOptions";
 import type { LeadConvertCaseInput } from "../model/LeadAdapter";
 import type { LeadConvertCaseFailure } from "../model/useLeadDetailModel";
 import BmvGateBlockerList from "./BmvGateBlockerList.vue";
+import type { LeadCaseCreateResumePayload } from "../../../shared/navigation/sessionResumeKeys";
 
 /** 线索转案件弹窗，选择案件类型、负责人、组 */
 const props = defineProps<{
+  /** 当前线索 ID；BMV 阻断跳转客户后用于恢复转案件弹窗。 */
+  leadId?: string;
   intendedCaseType?: string;
   ownerUserId?: string;
   groupId?: string;
@@ -100,11 +103,14 @@ const bmvGateBlockers = computed(() =>
   props.error?.kind === "bmvGate" ? props.error.blockers : null,
 );
 
-const bmvRecoveryCustomerHref = computed(() => {
-  const id = props.convertedCustomerId?.trim();
-  if (!id) return "";
-  return `#/customers/${encodeURIComponent(id)}?tab=basic#bmv-intake-card`;
-});
+const resumeLeadCaseContext = computed<LeadCaseCreateResumePayload | null>(
+  () => {
+    const lid = props.leadId?.trim();
+    const cid = props.convertedCustomerId?.trim();
+    if (!lid || !cid) return null;
+    return { leadId: lid, customerId: cid };
+  },
+);
 
 const genericErrorMessage = computed(() => {
   if (props.error?.kind !== "generic") return null;
@@ -145,7 +151,8 @@ function handleConfirm(): void {
         <BmvGateBlockerList
           v-if="bmvGateBlockers"
           :blockers="bmvGateBlockers"
-          :recovery-customer-href="bmvRecoveryCustomerHref"
+          :customer-id="convertedCustomerId"
+          :resume-lead-case-context="resumeLeadCaseContext"
         />
 
         <p

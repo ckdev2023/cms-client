@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, reactive } from "vue";
+import { computed, toRef } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
@@ -17,6 +17,7 @@ const props = defineProps<{
   followupForm: FollowupFormFields;
   canSubmitFollowup: boolean;
   readonly: boolean;
+  submitting?: boolean;
 }>();
 
 defineEmits<{
@@ -41,7 +42,7 @@ function channelChipClass(channel: FollowupChannel): string {
   return meta?.chipClass ?? "bg-gray-100 text-gray-700";
 }
 
-const form = reactive(props.followupForm);
+const form = toRef(props, "followupForm");
 </script>
 
 <template>
@@ -139,6 +140,7 @@ const form = reactive(props.followupForm);
             tone="primary"
             size="sm"
             html-type="submit"
+            :loading="submitting"
             :disabled="!canSubmitFollowup"
           >
             {{ t("leads.detail.followupsTab.submit") }}

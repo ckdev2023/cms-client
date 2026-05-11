@@ -222,6 +222,9 @@ const leadsJaJP = {
       conclusionLabel: "結論：",
       nextActionLabel: "次のステップ：",
       nextFollowUpLabel: "次回フォロー：",
+      submitFailedTitle: "フォロー記録を保存できませんでした",
+      submitFailedDesc:
+        "通信環境またはサービスの都合で保存に失敗しました。時間をおいて再試行してください。",
     },
     conversionTab: {
       dedupClean:
@@ -407,6 +410,7 @@ const leadsJaJP = {
         "経営管理ビザ承継の前提条件を満たしていません。顧客カードで詳細を確認してください。",
       gotoCustomerIntakeLink:
         "顧客カードを開く（基本情報・アンケート／見積／契約／承継）→",
+      openSectionLink: "対応へ →",
     },
   },
   statusTransition: {

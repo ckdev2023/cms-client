@@ -47,7 +47,7 @@ onMounted(async () => {
     >
       {{ t("cases.create.step3.sameGroupCrossGroupHint") }}
     </p>
-    <div class="cc__fields cc__fields--3">
+    <div class="cc__fields cc__fields--assignment">
       <div class="cc__field">
         <label class="cc__label" for="case-create-group">{{
           t("cases.create.step3.groupLabel")
@@ -94,7 +94,7 @@ onMounted(async () => {
       </div>
       <div
         id="case-create-due-picker-mount"
-        class="cc__field cc__field--due-mount"
+        class="cc__field cc__field--due-mount cc__field--full"
       >
         <label id="case-create-dueDate-label" class="cc__label">
           {{ t("cases.create.step3.dueDateLabel") }}
@@ -111,8 +111,6 @@ onMounted(async () => {
           @change="handleDueDateChange"
         />
       </div>
-    </div>
-    <div class="cc__fields" style="margin-top: 16px">
       <div class="cc__field">
         <label class="cc__label" for="case-create-amount">{{
           t("cases.create.step3.amountLabel")
@@ -132,8 +130,7 @@ onMounted(async () => {
     </div>
     <div
       v-if="props.model.needsGroupOverrideReason.value"
-      class="cc__field"
-      style="margin-top: 16px"
+      class="cc__field cc__field--full-width"
     >
       <label class="cc__label" for="case-create-groupOverrideReason">
         {{ t("cases.create.step3.crossGroupReason") }}
@@ -153,37 +150,39 @@ onMounted(async () => {
         "
       />
     </div>
-    <div class="checks">
-      <label class="check-item">
-        <span class="ui-checkbox-hit">
-          <input
-            type="checkbox"
-            name="autoChecklist"
-            :checked="props.model.draft.autoChecklist"
-            @change="
-              props.model.setAutoChecklist(
-                ($event.target as HTMLInputElement).checked,
-              )
-            "
-          />
-        </span>
-        {{ t("cases.create.step3.autoChecklist") }}
-      </label>
-      <label class="check-item">
-        <span class="ui-checkbox-hit">
-          <input
-            type="checkbox"
-            name="autoTasks"
-            :checked="props.model.draft.autoTasks"
-            @change="
-              props.model.setAutoTasks(
-                ($event.target as HTMLInputElement).checked,
-              )
-            "
-          />
-        </span>
-        {{ t("cases.create.step3.autoTasks") }}
-      </label>
+    <div class="cc__checks-wrap">
+      <div class="checks">
+        <label class="check-item">
+          <span class="ui-checkbox-hit">
+            <input
+              type="checkbox"
+              name="autoChecklist"
+              :checked="props.model.draft.autoChecklist"
+              @change="
+                props.model.setAutoChecklist(
+                  ($event.target as HTMLInputElement).checked,
+                )
+              "
+            />
+          </span>
+          {{ t("cases.create.step3.autoChecklist") }}
+        </label>
+        <label class="check-item">
+          <span class="ui-checkbox-hit">
+            <input
+              type="checkbox"
+              name="autoTasks"
+              :checked="props.model.draft.autoTasks"
+              @change="
+                props.model.setAutoTasks(
+                  ($event.target as HTMLInputElement).checked,
+                )
+              "
+            />
+          </span>
+          {{ t("cases.create.step3.autoTasks") }}
+        </label>
+      </div>
     </div>
   </div>
 </template>
@@ -217,7 +216,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  margin-top: 20px;
 }
 
 .cc__same-group-cross-hint {

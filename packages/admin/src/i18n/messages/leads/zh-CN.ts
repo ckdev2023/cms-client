@@ -220,6 +220,8 @@ const leadsZhCN = {
       conclusionLabel: "结论：",
       nextActionLabel: "下一步：",
       nextFollowUpLabel: "下次跟进：",
+      submitFailedTitle: "跟进记录保存失败",
+      submitFailedDesc: "网络异常或服务暂时不可用，请稍后重试。",
     },
     conversionTab: {
       dedupClean: "未检测到重复记录。此线索的电话/邮箱未匹配到已有线索或客户。",
@@ -387,6 +389,7 @@ const leadsZhCN = {
       unknown: "经营管理签承接前置条件未满足，请回到客户档案查看详情。",
       gotoCustomerIntakeLink:
         "前往客户档案 · 问卷 / 报价 / 签约 / 承接（基础信息 Tab） →",
+      openSectionLink: "去处理 →",
     },
   },
   statusTransition: {

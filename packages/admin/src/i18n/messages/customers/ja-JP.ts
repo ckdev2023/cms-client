@@ -54,6 +54,12 @@ const customerDetail = {
     continue: "新規作成ウィザードへ戻る",
     dismiss: "閉じる",
   },
+  resumeLeadCaseCreate: {
+    banner:
+      "リードの「契約・建案開始」画面から当顧客詳細へ遷移しています。不足を補ったあと、リードに戻って案件作成を続けられます。",
+    continue: "リードへ戻って建案を続ける",
+    dismiss: "閉じる",
+  },
   basicInfo: {
     title: "基本情報",
     edit: "編集",

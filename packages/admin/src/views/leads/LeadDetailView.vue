@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute, useRouter, type LocationQuery } from "vue-router";
 import Card from "../../shared/ui/Card.vue";
 import Button from "../../shared/ui/Button.vue";
 import LeadDetailHeader from "./components/LeadDetailHeader.vue";
@@ -38,6 +38,24 @@ const router = useRouter();
 const currentUserId = useCurrentUserId();
 
 const leadId = computed(() => route.params.id as string);
+const routeQuery = computed(() => route.query);
+
+/**
+ * 合并更新当前线索详情页的路由查询参数；`undefined` 表示移除该键。
+ *
+ * @param patch - 局部 query 覆盖
+ */
+function replaceLeadDetailQuery(
+  patch: Record<string, string | undefined>,
+): void {
+  const next: LocationQuery = { ...route.query };
+  for (const [k, v] of Object.entries(patch)) {
+    if (v === undefined) delete next[k];
+    else next[k] = v;
+  }
+  void router.replace({ query: next });
+}
+
 const {
   activeTab,
   lead,
@@ -62,13 +80,17 @@ const {
   convertCase,
   confirmConvertDedup,
   dismissConvertDedup,
+  submitting: followupSubmitting,
   updateSubmitting,
   transitionSubmitting,
   markLostSubmitting,
   updateLead,
   transitionStatus,
   markLost,
-} = useLeadDetailModel(leadId);
+} = useLeadDetailModel(leadId, {
+  routeQuery,
+  replaceQuery: replaceLeadDetailQuery,
+});
 
 const { apiOwnerOptions, apiGroupOptions } = useLeadCatalogOptions(locale);
 
@@ -105,6 +127,31 @@ function openConvertCaseDialog(): void {
   convertCaseError.value = null;
   showConvertCaseDialog.value = true;
 }
+
+async function handleSubmitFollowup(): Promise<void> {
+  const ready = canSubmitFollowup.value;
+  const result = await submitFollowup();
+  if (!ready) return;
+  if (result === null) {
+    toast?.add({
+      title: t("leads.detail.followupsTab.submitFailedTitle"),
+      description: t("leads.detail.followupsTab.submitFailedDesc"),
+      tone: "error",
+    });
+  }
+}
+
+watch(
+  () => [route.query.resumeConvert, route.query.tab, lead.value?.id] as const,
+  () => {
+    if (!lead.value) return;
+    if (route.query.resumeConvert !== "1") return;
+    if (route.query.tab !== "conversion") return;
+    openConvertCaseDialog();
+    replaceLeadDetailQuery({ resumeConvert: undefined });
+  },
+  { immediate: true },
+);
 
 const { handleViewCustomer, handleViewCase } = useLeadHeaderNavigation({
   lead,
@@ -220,8 +267,9 @@ function tryUseToast() {
           :followups="lead.followups"
           :followup-form="followupForm"
           :can-submit-followup="canSubmitFollowup"
+          :submitting="followupSubmitting"
           :readonly="isReadonly"
-          @submit-followup="submitFollowup"
+          @submit-followup="handleSubmitFollowup"
           @reset-followup="resetFollowupForm"
         />
         <LeadConversationsTab
@@ -268,6 +316,7 @@ function tryUseToast() {
 
   <LeadConvertCaseDialog
     v-if="showConvertCaseDialog && lead"
+    :lead-id="lead.id"
     :intended-case-type="lead.intendedCaseType"
     :owner-user-id="lead.ownerId || currentUserId || ''"
     :group-id="lead.groupId"
@@ -359,129 +408,4 @@ function tryUseToast() {
   </Teleport>
 </template>
 
-<style scoped>
-.lead-detail-view {
-  display: grid;
-  gap: 20px;
-}
-
-.lead-detail-view__tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 1px solid var(--color-border-1);
-  overflow-x: auto;
-}
-
-.lead-detail-view__tab {
-  padding: 10px 20px;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: var(--font-size-base);
-  line-height: var(--leading-base);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.lead-detail-view__tab:hover {
-  color: var(--color-text-1);
-}
-
-.lead-detail-view__tab.active {
-  color: var(--color-primary-6);
-  border-bottom-color: var(--color-primary-6);
-  font-weight: var(--font-weight-bold);
-}
-
-.lead-detail-view__panel {
-  display: grid;
-  gap: 16px;
-}
-
-.lead-detail-view__loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  color: var(--color-text-3);
-  font-size: var(--font-size-sm);
-}
-
-.lead-detail-view__not-found {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 64px 24px;
-  text-align: center;
-  color: var(--color-text-3);
-}
-
-.lead-detail-view__not-found a {
-  color: var(--color-primary-6);
-  text-decoration: none;
-  font-weight: var(--font-weight-semibold);
-}
-
-.lead-detail-view__not-found a:hover {
-  text-decoration: underline;
-}
-
-.lead-detail-view__dedup-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
-  background: var(--color-bg-modal-scrim);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-
-.lead-detail-view__dedup-dialog {
-  background: var(--color-bg-1);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-modal);
-  padding: 24px;
-  max-width: 480px;
-  width: 100%;
-}
-
-.lead-detail-view__dedup-title {
-  margin: 0 0 8px;
-  font-size: var(--font-size-xl);
-  line-height: var(--leading-xl);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-warning-text);
-}
-
-.lead-detail-view__dedup-desc {
-  margin: 0 0 16px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-3);
-}
-
-.lead-detail-view__dedup-list {
-  margin: 0 0 16px;
-  padding: 0 0 0 16px;
-  font-size: var(--font-size-sm);
-  color: var(--color-text-2);
-}
-
-.lead-detail-view__dedup-list li {
-  margin-bottom: 4px;
-}
-
-.lead-detail-view__dedup-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-</style>
+<style scoped src="./lead-detail-view.css"></style>

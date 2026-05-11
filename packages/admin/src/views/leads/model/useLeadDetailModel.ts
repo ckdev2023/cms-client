@@ -6,6 +6,7 @@ import {
   type Ref,
   type ComputedRef,
 } from "vue";
+import type { LocationQuery } from "vue-router";
 import type {
   BannerPresetKey,
   FollowupChannel,
@@ -31,6 +32,7 @@ import {
   toConvertCaseFailure,
   type LeadConvertCaseFailure,
 } from "./LeadConvertCaseFailure";
+import { createLeadDetailActiveTab } from "./leadDetailActiveTab";
 
 export type { LeadMutationFailure } from "./useLeadMutationActions";
 
@@ -84,7 +86,7 @@ export interface UseLeadDetailModelDeps {
   /**
    *
    */
-  routeQuery?: Ref<Record<string, string | string[] | null | undefined>>;
+  routeQuery?: Ref<LocationQuery> | ComputedRef<LocationQuery>;
   /**
    *
    */
@@ -439,14 +441,7 @@ export function useLeadDetailModel(
   deps: UseLeadDetailModelDeps = {},
 ) {
   const repo = deps.repo ?? createLeadRepository();
-  const initialTab = (() => {
-    const tab = deps.routeQuery?.value?.tab;
-    const tabStr = typeof tab === "string" ? tab : "";
-    return (LEAD_DETAIL_TABS as readonly string[]).includes(tabStr)
-      ? (tabStr as LeadDetailTab)
-      : "info";
-  })();
-  const activeTab = ref<LeadDetailTab>(initialTab);
+  const activeTab = createLeadDetailActiveTab(deps.routeQuery);
   const submitting = ref(false);
 
   const { lead, loading, error, fetchDetail } = useLeadFetch(leadId, repo);
