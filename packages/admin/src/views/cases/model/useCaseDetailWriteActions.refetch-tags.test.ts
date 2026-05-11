@@ -121,11 +121,35 @@ describe("RefetchTag — onPartialSuccess dispatch", () => {
 
   it("publishMessage triggers messages + logEntries", async () => {
     const { wa, onPartialSuccess } = makeWriteActions();
+    expect(wa.publishMessageSuccessNonce.value).toBe(0);
     await wa.publishMessage({ content: "hello", channelChoice: "internal" });
+    expect(wa.publishMessageSuccessNonce.value).toBe(1);
     expect(onPartialSuccess).toHaveBeenCalledTimes(1);
     expect(onPartialSuccess.mock.calls[0][0]).toEqual(
       setOf("messages", "logEntries"),
     );
+  });
+
+  it("failed publishMessage does not bump publishMessageSuccessNonce", async () => {
+    const repo = stubRepo({
+      createCommunicationLog: vi.fn(async (): Promise<{ id: string }> => {
+        throw new Error("network");
+      }),
+    });
+    const wa = createWriteActions({
+      repo,
+      getCaseId: () => "case-01",
+      getReadonly: () => false,
+      onSuccess: vi.fn(async () => {}),
+      onPartialSuccess: vi.fn(async () => {}),
+      onRiskModalClose: () => {},
+    });
+    const ok = await wa.publishMessage({
+      content: "hello",
+      channelChoice: "internal",
+    });
+    expect(ok).toBe(false);
+    expect(wa.publishMessageSuccessNonce.value).toBe(0);
   });
 
   it("createReminder triggers deadlines + logEntries", async () => {

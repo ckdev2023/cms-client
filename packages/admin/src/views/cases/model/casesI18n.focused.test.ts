@@ -231,6 +231,7 @@ describe("cases i18n — messages tab labels", () => {
     "publish",
     "reply",
     "edit",
+    "replyDraftHeader",
     "empty",
     "filterTitle",
     "filterReset",

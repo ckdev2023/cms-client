@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseMessagesTab from "./CaseMessagesTab.vue";
@@ -21,9 +21,16 @@ const CHIP_STUB = {
   props: ["tone"],
 };
 
-function mountTab(readonly = false) {
+function mountTab(
+  readonly = false,
+  detail = CASE_DETAIL_SAMPLES.work,
+  extraProps: {
+    publishSuccessNonce?: number;
+    writeSubmitting?: boolean;
+  } = {},
+) {
   return mount(CaseMessagesTab, {
-    props: { detail: CASE_DETAIL_SAMPLES.work, readonly },
+    props: { readonly, detail, ...extraProps },
     global: {
       plugins: [i18n],
       stubs: { Card: CARD_STUB, Chip: CHIP_STUB },
@@ -32,6 +39,22 @@ function mountTab(readonly = false) {
 }
 
 describe("BUG-216 CaseMessagesTab publish", () => {
+  beforeEach(() => {
+    const proto = HTMLElement.prototype as unknown as {
+      scrollIntoView?: () => void;
+    };
+    if (typeof proto.scrollIntoView !== "function") {
+      proto.scrollIntoView = () => {};
+    }
+    vi.spyOn(HTMLElement.prototype, "scrollIntoView").mockImplementation(
+      () => {},
+    );
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it("publish button is disabled when composer is empty", () => {
     const w = mountTab();
     const btn = w.find("[data-testid='messages-publish-btn']");
@@ -99,12 +122,25 @@ describe("BUG-216 CaseMessagesTab publish", () => {
     }
   });
 
-  it("composer clears after successful publish", async () => {
+  it("composer clears only after publish success (nonce bump)", async () => {
     const w = mountTab();
     const textarea = w.find("[data-testid='messages-composer']");
     await textarea.setValue("will be cleared");
     await w.find("[data-testid='messages-publish-btn']").trigger("click");
+    expect((textarea.element as HTMLTextAreaElement).value).toBe(
+      "will be cleared",
+    );
+    await w.setProps({ publishSuccessNonce: 1 });
     expect((textarea.element as HTMLTextAreaElement).value).toBe("");
+  });
+
+  it("publish stays disabled while writeSubmitting", async () => {
+    const w = mountTab(false, CASE_DETAIL_SAMPLES.work, {
+      writeSubmitting: true,
+    });
+    await w.find("[data-testid='messages-composer']").setValue("x");
+    const btn = w.find("[data-testid='messages-publish-btn']");
+    expect(btn.attributes("disabled")).toBeDefined();
   });
 
   it("readonly mode hides composer entirely", () => {
@@ -118,5 +154,40 @@ describe("BUG-216 CaseMessagesTab publish", () => {
     const btn = w.find("[data-testid='messages-publish-btn']");
     await btn.trigger("click");
     expect(w.emitted("publish-message")).toBeFalsy();
+  });
+
+  it("shows filter empty state when messages exist but none match filter", async () => {
+    const w = mountTab(false, CASE_DETAIL_SAMPLES.correction);
+    expect(w.find("[data-testid='messages-filter-empty']").exists()).toBe(
+      false,
+    );
+    await w.find("#msgFilter-internal").trigger("change");
+    expect(w.find("[data-testid='messages-filter-empty']").exists()).toBe(true);
+    expect(w.text()).toContain("当前筛选下暂无匹配记录");
+  });
+
+  it("reply prepends quoted draft to composer and syncs channel select", async () => {
+    const w = mountTab();
+    const src = CASE_DETAIL_SAMPLES.work.messages.find((m) => !m.actionLabel)!;
+    await w.find("[data-testid='messages-reply-btn']").trigger("click");
+    const ta = w.find("[data-testid='messages-composer']")
+      .element as HTMLTextAreaElement;
+    expect(ta.value).toContain("Suzuki");
+    expect(ta.value).toContain(`> ${src.body.split("\n")[0]}`);
+    const select = w.find("[data-testid='messages-channel-select']")
+      .element as HTMLSelectElement;
+    expect(select.value).toBe("phone");
+  });
+
+  it("edit loads message body into composer and syncs channel select", async () => {
+    const w = mountTab();
+    const src = CASE_DETAIL_SAMPLES.work.messages.find((m) => !m.actionLabel)!;
+    await w.find("[data-testid='messages-edit-btn']").trigger("click");
+    const ta = w.find("[data-testid='messages-composer']")
+      .element as HTMLTextAreaElement;
+    expect(ta.value).toBe(src.body);
+    const select = w.find("[data-testid='messages-channel-select']")
+      .element as HTMLSelectElement;
+    expect(select.value).toBe("phone");
   });
 });

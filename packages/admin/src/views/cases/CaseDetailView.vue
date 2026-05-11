@@ -85,6 +85,7 @@ const {
   showRiskModal,
   isBmvCase,
   writeFeedback,
+  publishMessageSuccessNonce,
   clearWriteFeedback,
   switchTab,
   openRiskModal,
@@ -805,6 +806,8 @@ async function onFormGenSubmit(payload: {
           v-else-if="activeTab === 'messages'"
           :detail="detail"
           :readonly="isReadonly"
+          :publish-success-nonce="publishMessageSuccessNonce"
+          :write-submitting="writeFeedback.submitting"
           @publish-message="onPublishMessage"
         />
         <CaseLogTab

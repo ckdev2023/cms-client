@@ -393,6 +393,7 @@ function createDetailModelResult(input: {
     refetch: input.refetch,
 
     writeFeedback: input.writeActions.writeFeedback,
+    publishMessageSuccessNonce: input.writeActions.publishMessageSuccessNonce,
     clearWriteFeedback: input.writeActions.clearWriteFeedback,
     isBmvCase,
     transitionStage: input.writeActions.transitionStage,
