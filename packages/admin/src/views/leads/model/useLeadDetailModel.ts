@@ -33,6 +33,7 @@ import {
   type LeadConvertCaseFailure,
 } from "./LeadConvertCaseFailure";
 import { createLeadDetailActiveTab } from "./leadDetailActiveTab";
+import { watchLeadDetailInvalidTabQuery } from "./leadDetailQueryTabSanitize";
 
 export type { LeadMutationFailure } from "./useLeadMutationActions";
 
@@ -443,6 +444,8 @@ export function useLeadDetailModel(
   const repo = deps.repo ?? createLeadRepository();
   const activeTab = createLeadDetailActiveTab(deps.routeQuery);
   const submitting = ref(false);
+
+  watchLeadDetailInvalidTabQuery(deps.routeQuery, deps.replaceQuery);
 
   const { lead, loading, error, fetchDetail } = useLeadFetch(leadId, repo);
 

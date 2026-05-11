@@ -83,6 +83,54 @@ describe("useLeadDetailModel — tab deep link", () => {
     expect(model.activeTab.value).toBe("info");
   });
 
+  it("removes invalid route.query.tab via replaceQuery when provided", async () => {
+    const routeQuery = ref<LocationQuery>({
+      tab: "nonexistent",
+      other: "keep",
+    });
+    const replaceQuery = vi.fn((patch: Record<string, string | undefined>) => {
+      const next = { ...routeQuery.value };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k];
+        else next[k] = v;
+      }
+      routeQuery.value = next;
+    });
+    useLeadDetailModel(ref("following"), {
+      repo: createStubRepo(),
+      routeQuery,
+      replaceQuery,
+    });
+    await flush();
+    expect(replaceQuery).toHaveBeenCalledWith({ tab: undefined });
+    expect(routeQuery.value.tab).toBeUndefined();
+    expect(routeQuery.value.other).toBe("keep");
+  });
+
+  it("normalizes invalid tab to conversion when resumeConvert=1", async () => {
+    const routeQuery = ref<LocationQuery>({
+      tab: "nonexistent",
+      resumeConvert: "1",
+    });
+    const replaceQuery = vi.fn((patch: Record<string, string | undefined>) => {
+      const next = { ...routeQuery.value };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete next[k];
+        else next[k] = v;
+      }
+      routeQuery.value = next;
+    });
+    const model = useLeadDetailModel(ref("following"), {
+      repo: createStubRepo(),
+      routeQuery,
+      replaceQuery,
+    });
+    await flush();
+    expect(replaceQuery).toHaveBeenCalledWith({ tab: "conversion" });
+    expect(model.activeTab.value).toBe("conversion");
+    expect(routeQuery.value.resumeConvert).toBe("1");
+  });
+
   it("falls back to 'info' when route.query.tab is absent", async () => {
     const routeQuery = ref<LocationQuery>({});
     const model = useLeadDetailModel(ref("following"), {

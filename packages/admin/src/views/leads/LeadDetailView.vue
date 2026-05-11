@@ -20,6 +20,7 @@ import {
   useLeadDetailModel,
   type LeadConvertCaseFailure,
 } from "./model/useLeadDetailModel";
+import { resumeConvertDeepLinkOutcome } from "./model/leadResumeConvertCaseGate";
 import { useLeadCatalogOptions } from "./model/useLeadCatalogOptions";
 import { useLeadHeaderDialogs } from "./model/useLeadHeaderDialogs";
 import { useLeadHeaderNavigation } from "./model/useLeadHeaderNavigation";
@@ -142,11 +143,20 @@ async function handleSubmitFollowup(): Promise<void> {
 }
 
 watch(
-  () => [route.query.resumeConvert, route.query.tab, lead.value?.id] as const,
+  () =>
+    [
+      route.query.resumeConvert,
+      route.query.tab,
+      lead.value?.id,
+      lead.value?.conversion.convertedCase?.id,
+    ] as const,
   () => {
-    if (!lead.value) return;
-    if (route.query.resumeConvert !== "1") return;
-    if (route.query.tab !== "conversion") return;
+    const outcome = resumeConvertDeepLinkOutcome(lead.value, route.query);
+    if (outcome === "ignore") return;
+    if (outcome === "strip_only") {
+      replaceLeadDetailQuery({ resumeConvert: undefined });
+      return;
+    }
     openConvertCaseDialog();
     replaceLeadDetailQuery({ resumeConvert: undefined });
   },
