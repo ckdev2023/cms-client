@@ -66,7 +66,7 @@ flowchart LR
 
 | 入口 | 路由 / 行为 | 说明 |
 |------|-------------|------|
-| 仪表盘快捷「新建线索」 | `#/leads?action=new` | `QuickActionsPanel.vue`；列表挂载后打开新建弹窗并 **`replace` 清除 `action`**（见 `leadCreateEntry.ts`） |
+| 仪表盘快捷「新建咨询线索」 | 先 `push` `#/leads?action=new`，列表挂载后 **`replace` 清除 `action`** | `QuickActionsPanel.vue` → `name: leads, query: action=new`；稳定态地址为 **`#/leads`**（无 query），新建弹窗保持打开（见 `leadCreateEntry.ts`） |
 | 顶部栏新建线索 | `#/leads?action=new` | `TopBar.vue` |
 | 仪表盘快捷「新建客户」 | `#/customers?action=new`（或 `#new`） | `CustomerListView` 打开新建客户流程 |
 | 仪表盘快捷「新建案件」 | `#/cases/create` | 无客户上下文时的空白建案起点 |
@@ -156,14 +156,22 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ### 3.3 转化信息 Tab — 两步转化
 
+**简体中文 UI 与 API（MCP 点选时按界面文案找按钮）**
+
+| 规格 / API | 当前简体中文界面（约） |
+|------------|------------------------|
+| `POST .../convert-customer` | **「仅建立客户档案」** → 「确认创建客户」 |
+| `POST .../convert-case` | **「签约并开始建档」**（或头部同文案）→ 选案件类型等 → 「确认创建案件」 |
+| 合并一步（先客户再弹建案） | 转化 Tab 内 **「签约并开始建档」** 卡片：若尚未有客户，实现上仍会先建档再建案；与 ADR「可先只做 convert-customer」并存时，优先用 **「仅建立客户档案」** 再点 **「签约并开始建档」** 完成两步 Network 断言 |
+
 1. **转客户**  
-   - 打开「转客户」对话框 → 确认  
+   - 打开 **「仅建立客户档案」** 对话框 → **「确认创建客户」**  
    - 期望：**`POST /api/admin/leads/:id/convert-customer`** → **201**  
    - 数据：`leads.converted_customer_id` 有值；客户列表可增加一条  
 
 2. **转案件**  
    - 前置：**已有 converted customer**（ADR）；若 **BMV 等业务闸口**未满足，服务端可能返回带 blocker 的错误响应，UI 可能引导跳转客户页补资料（见 §4.5）  
-   - 打开「转案件」对话框 → 选择案件类型、负责人等 → 确认  
+   - 打开 **「签约并开始建档」** → 选择案件类型、负责人等 → **「确认创建案件」**  
    - 期望：**`POST /api/admin/leads/:id/convert-case`** → **201**  
    - 数据：`leads.converted_case_id` 有值；`leads.status === converted_case`  
    - 跳转：头部「查看客户」「查看案件」可用（`useLeadHeaderNavigation` → `customer-detail` / `case-detail`）
@@ -278,7 +286,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 | 步骤 | 动作 | 断言 |
 |------|------|------|
-| T1b-1 | `#/` → 快捷「新建线索」 | 落地 `#/leads?action=new` 且自动弹出新建对话框 |
+| T1b-1 | `#/` → 快捷 **「新建咨询线索」** | 自动弹出新建对话框；**稳定态**地址为 **`#/leads`**（`action=new` 已由 `syncLeadCreateEntryFromRoute` **replace** 清除，与 §1.4 一致） |
 | T1b-2 | 后续同 T1 | 与 T1 相同 Network 断言 |
 
 ### 场景 T2 — 转客户后刷新 / 重复提交韧性
@@ -370,6 +378,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 | 2026-05-11 | 初版：汇总 04/06 规格、ADR 两步转化、Admin 路由与客户侧建案分支、MCP 场景矩阵 |
 | 2026-05-11 | 增补：代码契约入口；仪表盘 / TopBar 起点；`?tab=` 合法值；**Lead API 速查表**；**HEADER_BUTTON_PRESETS** 矩阵；跟进 **POST**、编辑 **PATCH**；会话 Tab R4-B-1 说明；sessionStorage **双线恢复**（`resumeLeadCaseCreate` vs `resumeCaseCreateHash`）与 **`CustomerResumeCaseCreateBanner`**；BMV 闸口闭环；**建案四步**与 **`#family-bulk`**；§5.1 家族 **CaseParty**；权限与 RBAC；T1b/T3b/T7–T9；T3-4 向导恢复 |
 | 2026-05-11 | **§10**：T1 / T3（四步向导 + T3-sub 中断恢复）/ T3b / T4 的 **Chrome DevTools MCP 可重复脚本**与 **执行优先级** |
+| 2026-05-11 | MCP 实走查：对齐 **T1 / T1b / T5 / T3-1**；修正 **T1b** 稳定态 hash；**§1.4** 仪表盘按钮名；**§3.3 / §10.3** 补充简体 UI 与 `convert-*` API 映射 |
 
 ---
 
@@ -419,7 +428,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 |------|------------|------|
 | 1 | `navigate_page` `{ "type": "url", "url": "{BASE_URL}/#/leads" }` | 进入线索列表 |
 | 2 | `take_snapshot` | 获取列表页 `uid` |
-| 3 | `click` | 打开「新建线索」（或仪表盘 `#/` 快捷等价 **T1b**：`#/leads?action=new`） |
+| 3 | `click` | 打开「新建线索」（或仪表盘 `#/` 快捷 **T1b**：与 §1.4 相同，稳定态 **`#/leads`** + 弹窗） |
 | 4 | `take_snapshot` → `fill` / `fill_form` / `type_text` | 填满必填项；电话/邮箱尽量 **唯一**，减少 dedup 弹窗 |
 | 5 | `click` | 提交创建 |
 | 6 | `list_network_requests` | 断言存在 **`POST`** `.../admin/leads`（或项目前缀等价路径）且 **201**；若有 dedup，断言 **`GET`** `.../dedup` **200** |
@@ -427,9 +436,9 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 | 8 | `click` | 「调整状态」直到可达 **`signed`**（或规格允许的最终解锁态）；每步后 `list_network_requests` 断言 **`PATCH`** `.../leads/{id}/status` **200** |
 | 9 | （可选）`navigate_page` `{ "type": "url", "url": "{BASE_URL}/#/leads/{LEAD_ID}?tab=followups" }` → 提交一条跟进 | 断言 **`POST`** `.../followups` **200/201** |
 | 10 | `navigate_page` `{ "type": "url", "url": "{BASE_URL}/#/leads/{LEAD_ID}?tab=conversion" }` | 深度链接进转化 Tab（§2.1） |
-| 11 | `take_snapshot` → `click` | 「转客户」→ 确认 |
+| 11 | `take_snapshot` → `click` | **「仅建立客户档案」** → **「确认创建客户」**（§3.3 文案） |
 | 12 | `list_network_requests` | **`POST`** `.../convert-customer` **201** |
-| 13 | `take_snapshot` → `click` | 「转案件」→ 在对话框内选类型/负责人等 → 确认 |
+| 13 | `take_snapshot` → `click` | **「签约并开始建档」** → 在对话框内选类型/负责人等 → **「确认创建案件」** |
 | 14 | `list_network_requests` | **`POST`** `.../convert-case` **201** |
 | 15 | `take_snapshot` | 头部应出现「查看客户」「查看案件」（preset **convertedCase**，§3.1） |
 | 16 | `click`「查看客户」 | `evaluate_script` `() => location.hash` 断言匹配 `#/customers/{CUSTOMER_ID}` |

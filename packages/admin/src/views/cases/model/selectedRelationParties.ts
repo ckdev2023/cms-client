@@ -111,5 +111,16 @@ export function mapSelectedRelationsToParties(
     });
   }
 
+  if (
+    parties.length > 0 &&
+    parties.every((p) => !FAMILY_APPLICANT_ROLES.includes(p.role))
+  ) {
+    const first = parties[0];
+    parties[0] = {
+      ...first,
+      role: "配偶",
+    };
+  }
+
   return parties;
 }
