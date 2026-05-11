@@ -119,6 +119,7 @@ const CREATE_INPUT = {
   customerId: CUSTOMER_ID,
   caseTypeCode: "visa",
   ownerUserId: USER_ID,
+  forceCreate: true,
 };
 
 void test("BUG-159: resolveCustomerGroupId SQL 同时按 g.name 与 g.id::text 匹配", async () => {

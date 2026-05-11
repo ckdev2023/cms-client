@@ -1,6 +1,7 @@
 import customerDetail from "./customers/ja-JP";
 import customerList from "./customers/ja-JP-list";
 import billing from "./billing/ja-JP";
+import caseTemplates from "./case-templates/ja-JP";
 import cases from "./cases/ja-JP";
 import conversations from "./conversations/ja-JP";
 import documents from "./documents/ja-JP";
@@ -48,6 +49,7 @@ const jaJP = {
         tasks: "タスク・リマインド",
         documents: "資料センター",
         billing: "請求・財務",
+        caseTemplates: "案件テンプレート",
         settings: "システム設定",
       },
     },
@@ -128,6 +130,7 @@ const jaJP = {
     detail: customerDetail,
   },
   billing,
+  caseTemplates,
   cases,
   conversations,
   documents,

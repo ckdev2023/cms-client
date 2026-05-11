@@ -49,6 +49,7 @@ void describe("§12 visa_plan / quote_price: create persists fields", () => {
       ownerUserId: USER_ID,
       visaPlan: "new_1year",
       quotePrice: 350000,
+      forceCreate: true,
     });
     assert.equal(c.visaPlan, "new_1year");
     assert.equal(c.quotePrice, 350000);
@@ -72,6 +73,7 @@ void describe("§12 visa_plan / quote_price: create persists fields", () => {
       customerId: "cust-1",
       caseTypeCode: "visa",
       ownerUserId: USER_ID,
+      forceCreate: true,
     });
     assert.equal(c.visaPlan, null);
     assert.equal(c.quotePrice, null);
@@ -191,6 +193,7 @@ void describe("§13 pre-sign gate: create BMV case gated by questionnaire + quot
           customerId: "cust-1",
           caseTypeCode: BMV_CASE_TYPE_CODE,
           ownerUserId: USER_ID,
+          forceCreate: true,
         }),
       (err: Error) => {
         const response = (err as { response?: unknown }).response;

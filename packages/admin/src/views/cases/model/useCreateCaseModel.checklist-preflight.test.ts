@@ -1,0 +1,99 @@
+import { describe, expect, it, vi } from "vitest";
+import {
+  useCreateCaseModel,
+  type UseCreateCaseModelDeps,
+} from "./useCreateCaseModel";
+import {
+  SAMPLE_CREATE_CUSTOMERS,
+  SAMPLE_CREATE_TEMPLATES,
+  FAMILY_SCENARIO,
+} from "../fixtures-create";
+import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../constants";
+import type { CaseRepository } from "./CaseRepository";
+
+function createDeps(
+  overrides: Partial<UseCreateCaseModelDeps> = {},
+): UseCreateCaseModelDeps {
+  return {
+    templates: () => SAMPLE_CREATE_TEMPLATES,
+    customers: () => SAMPLE_CREATE_CUSTOMERS,
+    familyScenario: () => FAMILY_SCENARIO,
+    ownerOptions: () => CASE_OWNER_OPTIONS,
+    groupOptions: () => CASE_GROUP_OPTIONS,
+    sourceContext: { customerId: "cust-001", familyBulkMode: false },
+    defaultGroup: "tokyo-1",
+    defaultOwner: "suzuki",
+    ...overrides,
+  };
+}
+
+function stubRepoWithChecklistCount(count: number): CaseRepository {
+  return {
+    previewChecklistCount: vi.fn(async () => count),
+    createCase: vi.fn(async () => ({ id: "CASE-001" })),
+    createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+  } as unknown as CaseRepository;
+}
+
+function fillDraftForSubmit(m: ReturnType<typeof useCreateCaseModel>) {
+  m.setDueDate("2026-05-01");
+  m.setAmount("120000");
+}
+
+describe("useCreateCaseModel: checklist preflight", () => {
+  it("blocks canSubmit when checklist preview returns 0", async () => {
+    const repo = stubRepoWithChecklistCount(0);
+    const m = useCreateCaseModel(createDeps({ repo }));
+    fillDraftForSubmit(m);
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("empty");
+    });
+
+    expect(m.checklistPreview.checklistEmpty.value).toBe(true);
+    expect(m.canSubmit.value).toBe(false);
+  });
+
+  it("allows canSubmit when checklist preview returns > 0", async () => {
+    const repo = stubRepoWithChecklistCount(5);
+    const m = useCreateCaseModel(createDeps({ repo }));
+    fillDraftForSubmit(m);
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("ok");
+    });
+
+    expect(m.checklistPreview.checklistEmpty.value).toBe(false);
+    expect(m.canSubmit.value).toBe(true);
+  });
+
+  it("exposes checklistPreview state on the model", () => {
+    const repo = stubRepoWithChecklistCount(3);
+    const m = useCreateCaseModel(createDeps({ repo }));
+
+    expect(m.checklistPreview).toBeDefined();
+    expect(m.checklistPreview.checklistCount).toBeDefined();
+    expect(m.checklistPreview.previewState).toBeDefined();
+    expect(m.checklistPreview.checklistEmpty).toBeDefined();
+  });
+
+  it("does not block canSubmit on preview error (graceful degradation)", async () => {
+    const repo = {
+      previewChecklistCount: vi.fn(async () => {
+        throw new Error("network error");
+      }),
+      createCase: vi.fn(async () => ({ id: "CASE-002" })),
+      createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+    } as unknown as CaseRepository;
+
+    const m = useCreateCaseModel(createDeps({ repo }));
+    fillDraftForSubmit(m);
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("error");
+    });
+
+    expect(m.checklistPreview.checklistEmpty.value).toBe(false);
+    expect(m.canSubmit.value).toBe(true);
+  });
+});

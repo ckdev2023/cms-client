@@ -172,6 +172,11 @@ const casesEnUS = {
         "Ensure the intake process has reached 'ready for case creation' status.",
       goToCustomer: "Go to customer detail",
     },
+    checklistPreflight: {
+      emptyWarning:
+        "No checklist template configured for this visa type. Please contact an administrator to set up the template.",
+      loading: "Checking checklist template…",
+    },
     summary: {
       template: "Case template",
       title: "Case title",
@@ -708,6 +713,10 @@ const casesEnUS = {
         templateMissing: {
           title: "Document template not configured",
           desc: "No document template is configured for this visa type. Please contact the administrator to set it up.",
+          bootstrapCta: "Generate checklist from template",
+          bootstrapSuccess:
+            "Document checklist generated successfully ({count} items).",
+          bootstrapError: "Failed to generate checklist.",
         },
       },
       section: {
@@ -1061,6 +1070,12 @@ const casesEnUS = {
       "This workflow step transition is not allowed from the current step.",
     reminderCreationFailed:
       "Failed to create renewal reminders. Please try again later.",
+    checklistEmpty:
+      "No checklist template configured for this visa type. Please configure case_templates in the admin panel first.",
+    checklistBootstrapNotEmpty:
+      "This case already has document items. Bootstrap is only available when the checklist is empty.",
+    checklistBootstrapStageInvalid:
+      "Checklist bootstrap is only allowed in stages S1 or S2.",
     waitingPaymentBillingRequired:
       "Please add at least one due billing record in the Billing tab before transitioning to Waiting Payment.",
     stageBillingRecordRequired:

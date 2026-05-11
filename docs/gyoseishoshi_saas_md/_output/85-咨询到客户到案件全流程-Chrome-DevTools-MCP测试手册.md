@@ -255,7 +255,43 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 | 资料清单 | 依赖 `case_templates` / 资料模板 seed；未配置时空态文案（走查见历史 `_output/62~66` 报告） |
 | 默认任务 | 常见为两条待办种子任务（以服务端实现为准）；任务 Tab 可数 |
 
-### 5.1 家族案件与关系人（规格提醒）
+### 5.1 案件类型码归一化（Canonical）与资料模板匹配
+
+Admin 向导的 `templateId`（如 `family`、`bmv`）与 `case_templates` 表 `case_type` 列（如 `dependent_visa`、`business_manager_visa`）存在别名关系。服务端通过 `canonicalizeCaseTypeCode`（`caseTypeCanonical.ts`）将向导 ID 归一化后查询模板。
+
+**Wizard ID → Canonical (Seed) 对照矩阵**
+
+| Wizard ID (Admin) | Canonical (Seed `case_type`) | Seed 存在 |
+|---|---|---|
+| `family` | `dependent_visa` | ✓ |
+| `family_stay` | `dependent_visa` | ✓ |
+| `work` | `work` | ✓ |
+| `bmv` | `business_manager_visa` | ✓ |
+| `biz_mgmt_cert_4m` | `business_manager_visa` | ✓（BMV 回退） |
+| `biz_mgmt_cert_1y` | `business_manager_visa` | ✓（BMV 回退） |
+| `biz_mgmt_renewal` | `business_manager_visa` | ✓（BMV 回退） |
+| `eng_humanities_intl_cert` | `eng_humanities_intl` | ✗ |
+| `eng_humanities_intl_renewal` | `eng_humanities_intl` | ✗ |
+| `intra_company_transfer` | `intra_company_transfer` | ✗ |
+| `company_setup` | `company_setup` | ✗ |
+
+**排障要点**：
+
+- 「资料清单为空」首先检查 `case_templates` 表是否包含对应 canonical `case_type` 且 `active_flag = true`。
+- 「Seed 存在 = ✗」的类型当前不会命中任何模板——建案后资料 Tab 空态属**预期**而非缺陷。
+- `documentTemplateMissing` 聚合字段与建案使用**同一归一化路径**；若库内有模板但聚合仍报缺失，检查 canonical 映射是否一致。
+- 前端 `caseTypeI18n.ts` 也对 BMV 系列做归一化——服务端 canonical 与前端 i18n 已对齐。
+
+### 5.2 建案资料清单生成路径
+
+建案时 `resolveChecklistItems` 的解析顺序：
+1. **`case_templates`** — 按 canonical `case_type` 查 `active_flag = true` 行，解析 `requirement_blueprint` 条目
+2. **Legacy `TemplatesResolver`** — 仅 `case_templates` 未命中时尝试
+3. **空清单** — 两者均无 → 0 条 `document_items`；若 `forceCreate` 未设置，返回 **400**（`CASE_CHECKLIST_EMPTY`）
+
+**线索转化路径已统一**：`leads.service` 的 `createCaseInTx` 现在通过 `resolveChecklistForConversion`（`leads.service.checklist-support.ts`）调用同一 `resolveChecklistItems` 路径，确保「管理端建案」与「线索转化建案」生成一致的 `document_items`。
+
+### 5.3 家族案件与关系人（规格提醒）
 
 [04 §4.1](../P0/04-核心流程与状态流转.md) 要求：家族签 / 扶养类案件须绑定关键关系人（扶养者 / 保证人等）为 **`CaseParty`**。MCP 在「家族批量建案」或案件新建 Step2 应断言：**关联人已选齐**且创建请求含预期 party 上下文（具体字段以当前 API 契约为准）。
 
@@ -265,7 +301,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ## 6. Chrome DevTools MCP：推荐测试矩阵
 
-分场景的 **逐步 MCP 工具序列（可重复执行）** 见 **§10**。
+分场景的 **逐步 MCP 工具序列（可重复执行）** 见 **§11**。
 
 下列每条可作为一次 **独立 MCP session** 的脚本大纲。工具层面建议固定观测：**Console**、**Network（Fetch/XHR）**、**Application → Session Storage**、**关键节点的 accessibility snapshot / screenshot**。
 
@@ -354,10 +390,11 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ## 7. 环境与数据前置
 
-1. **账号**：具备 `customer.view`、`case.view`、`case.create` 等权限的 staff（路由 meta 见 `router/index.ts`）；咨询列表 **`/leads`** 本身未声明 `requiredPermission`，但若全流程跳转案件 / 客户页，仍需上述权限。  
-2. **Seed**：`case_templates` / 资料模板若为空，资料 Tab 为空态属**预期**，与业务缺口区分见 `_output/62`、`63`。  
+1. **账号**：具备 `customer.view`、`case.view`、`case.create` 等权限的 staff（路由 meta 见 `router/index.ts`）；咨询列表 **`/leads`** 本身未声明 `requiredPermission`，但若全流程跳转案件 / 客户页，仍需上述权限。若测试案件资料蓝图管理页（`#/settings/case-templates`），还需 `settings.write` 权限。  
+2. **Seed / case_templates**：`case_templates` 表为资料清单 SSOT；seed 覆盖 `dependent_visa`、`work`、`business_manager_visa` 三种 canonical 类型（见 `seedCaseTemplates.ts`）。向导 ID 如 `family`、`bmv` 需经归一化映射后才能命中——详见 §5.1 对照矩阵。**Seed 未覆盖**的类型（`eng_humanities_intl`、`intra_company_transfer`、`company_setup`）建案后资料清单为空属**预期**。  
 3. **并发**：同一浏览器会话测试多条线索时使用唯一电话/邮箱，避免 dedup 对话框阻断主线。  
-4. **写入分组 vs 筛选分组**：非超管账号「写入」下拉分组可能与「筛选候选」不一致（RBAC 预期）；见历史走查 **75** `NEW-V6-4`，避免 MCP 误判为缺陷。
+4. **写入分组 vs 筛选分组**：非超管账号「写入」下拉分组可能与「筛选候选」不一致（RBAC 预期）；见历史走查 **75** `NEW-V6-4`，避免 MCP 误判为缺陷。  
+5. **线索转化建案**：`leads.service` 转化路径现在与 `CasesService.create` 使用同一 `resolveChecklistItems` — 转化后创建的案件也会生成 `document_items`。若转化后资料为空，排查思路同 §5.1。
 
 ---
 
@@ -371,22 +408,59 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ---
 
-## 9. 修订记录
+## 9. 案件资料蓝图与新增 API 速查
+
+### 9.1 案件资料蓝图管理 API（`/api/case-templates`）
+
+Admin 新增「案件资料蓝图」只读管理页（`#/settings/case-templates`），对应后端 `CaseTemplatesController`。
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/case-templates` | `case.view` | 列表；支持 `?caseType=` 和 `?includeInactive=true`（仅 manager） |
+| GET | `/api/case-templates/:id` | `case.view` | 单条详情 |
+| POST | `/api/case-templates` | `settings.write` | 新增蓝图 |
+| PATCH | `/api/case-templates/:id` | `settings.write` | 更新蓝图（含 toggle `activeFlag`） |
+
+**DTO 关键字段**：`caseType`（canonical 类型码）、`applicationType`（可选，当前建案未贯通）、`blueprintItemCount`（从 `requirement_blueprint` 解析的条目数）、`activeFlag`。
+
+### 9.2 建案资料预览与补救 API
+
+| 方法 | 路径 | 权限 | 说明 |
+|------|------|------|------|
+| GET | `/api/cases/checklist-preview?caseTypeCode=xxx` | `case.create` | 返回 `{ caseTypeCode, count }` — 建案前预览将生成多少资料条目 |
+| POST | `/api/cases/:id/checklist/bootstrap-from-template` | `case.edit` | 为**已存在但 0 条 `document_items`** 的案件从模板补生成资料清单；仅限 S1/S2 阶段 |
+
+**`checklist-preview`** — Admin 建案向导在 Step1 切换案件类型时自动调用；若 `count === 0`，「创建」按钮禁用并显示提示。
+
+**`bootstrap-from-template`** — 案件详情资料 Tab 在 `documentTemplateMissing` 状态下显示「从模板生成资料清单」按钮；成功后刷新 aggregate。
+
+### 9.3 新增错误码
+
+| 错误码 | 触发条件 |
+|--------|----------|
+| `CASE_CHECKLIST_EMPTY` | 建案时 `resolveChecklistItems` 返回 0 条且未设置 `forceCreate` |
+| `CASE_CHECKLIST_BOOTSTRAP_NOT_EMPTY` | 调用 bootstrap 时案件已有 `document_items` |
+| `CASE_CHECKLIST_BOOTSTRAP_STAGE_INVALID` | 调用 bootstrap 时案件阶段 ≥ S3 |
+
+---
+
+## 10. 修订记录
 
 | 日期 | 说明 |
 |------|------|
 | 2026-05-11 | 初版：汇总 04/06 规格、ADR 两步转化、Admin 路由与客户侧建案分支、MCP 场景矩阵 |
 | 2026-05-11 | 增补：代码契约入口；仪表盘 / TopBar 起点；`?tab=` 合法值；**Lead API 速查表**；**HEADER_BUTTON_PRESETS** 矩阵；跟进 **POST**、编辑 **PATCH**；会话 Tab R4-B-1 说明；sessionStorage **双线恢复**（`resumeLeadCaseCreate` vs `resumeCaseCreateHash`）与 **`CustomerResumeCaseCreateBanner`**；BMV 闸口闭环；**建案四步**与 **`#family-bulk`**；§5.1 家族 **CaseParty**；权限与 RBAC；T1b/T3b/T7–T9；T3-4 向导恢复 |
-| 2026-05-11 | **§10**：T1 / T3（四步向导 + T3-sub 中断恢复）/ T3b / T4 的 **Chrome DevTools MCP 可重复脚本**与 **执行优先级** |
-| 2026-05-11 | MCP 实走查：对齐 **T1 / T1b / T5 / T3-1**；修正 **T1b** 稳定态 hash；**§1.4** 仪表盘按钮名；**§3.3 / §10.3** 补充简体 UI 与 `convert-*` API 映射 |
+| 2026-05-11 | **§11**：T1 / T3（四步向导 + T3-sub 中断恢复）/ T3b / T4 的 **Chrome DevTools MCP 可重复脚本**与 **执行优先级** |
+| 2026-05-11 | MCP 实走查：对齐 **T1 / T1b / T5 / T3-1**；修正 **T1b** 稳定态 hash；**§1.4** 仪表盘按钮名；**§3.3 / §11.3** 补充简体 UI 与 `convert-*` API 映射 |
+| 2026-05-11 | **§5.1–5.2 / §7 / §9**：追加 Wizard ID → Canonical 类型码对照矩阵、资料清单解析路径、线索转化统一、`case_templates` 管理 API（`/api/case-templates`）、`checklist-preview` / `bootstrap-from-template` 端点、新增错误码说明 |
 
 ---
 
-## 10. 可重复 MCP 脚本（Chrome DevTools MCP）
+## 11. 可重复 MCP 脚本（Chrome DevTools MCP）
 
 本节把 **T1 / T3（含四步向导）/ T3b / T4** 写成 agent 可按顺序调用的 **固定工具序列**；与 §6 表格一一对应，并补上 MCP 侧约束（`uid`、Network 窗口、`sessionStorage`）。
 
-### 10.1 推荐执行顺序（优先级）
+### 11.1 推荐执行顺序（优先级）
 
 | 顺序 | 场景 | 说明 |
 |------|------|------|
@@ -397,7 +471,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 **小结**：先 **T1** 锁定咨询→客户→案件契约，再 **T3** 覆盖建案向导，再 **T3b** 覆盖家族批量入口，最后 **T4** 做有条件增强。
 
-### 10.2 全局约定
+### 11.2 全局约定
 
 **占位符**（每次会话替换；T1 跑完后可把响应或 URL 里的 id 填入）：
 
@@ -420,7 +494,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ---
 
-### 10.3 脚本 T1 — 全链路（线索 → 两步转化 → 跳转客户/案件）
+### 11.3 脚本 T1 — 全链路（线索 → 两步转化 → 跳转客户/案件）
 
 **目标**：与 §6「场景 T1」一致；Network 断言 `POST/PATCH` 状态码。
 
@@ -449,7 +523,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ---
 
-### 10.4 脚本 T3 — 客户详情 → 建案向导（四步）→ 案件详情
+### 11.4 脚本 T3 — 客户详情 → 建案向导（四步）→ 案件详情
 
 **前置**：`{CUSTOMER_ID}`（来自 T1、T9 新建客户、或 seed）。
 
@@ -482,7 +556,7 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 
 ---
 
-### 10.5 脚本 T3b — 关联人 Tab → 批量建案 → 同一套四步向导
+### 11.5 脚本 T3b — 关联人 Tab → 批量建案 → 同一套四步向导
 
 **前置**：`{CUSTOMER_ID}` 在 **关联人** Tab 下存在 **≥1** 可勾选联系人。
 
@@ -493,11 +567,11 @@ Admin 使用 `createWebHashHistory()`，路径形如 `https://<host>/#/leads`、
 | 3 | `take_snapshot` | 勾选 **≥1** 联系人 |
 | 4 | `click` | 「批量建案」 |
 | 5 | `evaluate_script` `() => location.hash` | 断言包含 **`#family-bulk`**；query 含 **`relationIds`**、**`selectedRelations`**（§4.6） |
-| 6～ | **同 §10.4 步骤 4～12** | 四步完成后落地 `#/cases/{CASE_ID}`；可选 Network 中断言创建 body 带关联人上下文 |
+| 6～ | **同 §11.4 步骤 4～12** | 四步完成后落地 `#/cases/{CASE_ID}`；可选 Network 中断言创建 body 带关联人上下文 |
 
 ---
 
-### 10.6 脚本 T4 — BMV / 闸口 / 双线 resume（按条件执行）
+### 11.6 脚本 T4 — BMV / 闸口 / 双线 resume（按条件执行）
 
 **说明**：T4-2～T4-4 依赖 **BMV 客户** 或 **可触发的转案件闸口**；执行前在数据中确认，否则仅执行 **T4-1**。
 

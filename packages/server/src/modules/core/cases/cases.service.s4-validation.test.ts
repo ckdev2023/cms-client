@@ -93,6 +93,7 @@ void test("create rejects invalid priority enum", async () => {
         caseTypeCode: "visa",
         ownerUserId: USER_ID,
         priority: "invalid",
+        forceCreate: true,
       }),
     /Invalid priority/,
   );
@@ -106,6 +107,7 @@ void test("create rejects invalid riskLevel enum", async () => {
         caseTypeCode: "visa",
         ownerUserId: USER_ID,
         riskLevel: "invalid",
+        forceCreate: true,
       }),
     /Invalid riskLevel/,
   );

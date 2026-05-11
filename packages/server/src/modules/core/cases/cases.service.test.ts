@@ -172,6 +172,7 @@ const CREATE_INPUT = {
   customerId: "cust-1",
   caseTypeCode: "visa",
   ownerUserId: USER_ID,
+  forceCreate: true,
 };
 
 // ── create (no template) ──
@@ -309,6 +310,7 @@ void test("create: throws on insert failure", async () => {
         customerId: "c",
         caseTypeCode: "t",
         ownerUserId: "u",
+        forceCreate: true,
       }),
     (e) => {
       assert.ok(e instanceof Error);

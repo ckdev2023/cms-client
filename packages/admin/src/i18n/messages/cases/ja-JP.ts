@@ -170,6 +170,11 @@ const casesJaJP = {
         "受付プロセスが「建案可能」状態になっていることを確認してください。",
       goToCustomer: "顧客詳細へ",
     },
+    checklistPreflight: {
+      emptyWarning:
+        "このビザ種別にはチェックリストテンプレートが設定されていません。管理画面で設定してください。",
+      loading: "チェックリストテンプレートを確認中…",
+    },
     summary: {
       template: "案件テンプレート",
       title: "案件タイトル",
@@ -705,6 +710,9 @@ const casesJaJP = {
         templateMissing: {
           title: "書類テンプレート未設定",
           desc: "この在留資格には書類テンプレートが設定されていません。管理者にお問い合わせください。",
+          bootstrapCta: "テンプレートからチェックリストを生成",
+          bootstrapSuccess: "書類チェックリストを生成しました（{count} 件）。",
+          bootstrapError: "チェックリストの生成に失敗しました。",
         },
       },
       section: {
@@ -1059,6 +1067,12 @@ const casesJaJP = {
       "現在のステップではこのワークフロー遷移は許可されていません。",
     reminderCreationFailed:
       "更新リマインダーの作成に失敗しました。しばらくしてから再試行してください。",
+    checklistEmpty:
+      "このビザ種別にはチェックリストテンプレートが設定されていないため、案件を作成できません。管理画面で case_templates を設定してから再試行してください。",
+    checklistBootstrapNotEmpty:
+      "この案件にはすでに書類項目があります。チェックリストが空の場合のみ生成できます。",
+    checklistBootstrapStageInvalid:
+      "チェックリストの生成はステージ S1 または S2 でのみ許可されています。",
     waitingPaymentBillingRequired:
       "請求タブに未払い請求を追加してから、支払い待ちフェーズへ進めてください。",
     stageBillingRecordRequired:

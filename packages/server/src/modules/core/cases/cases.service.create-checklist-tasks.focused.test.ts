@@ -123,6 +123,7 @@ const CREATE_INPUT = {
   customerId: "cust-1",
   caseTypeCode: BMV_CASE_TYPE_CODE,
   ownerUserId: USR,
+  forceCreate: true,
 };
 
 // §1  BUG-194 根因诊断

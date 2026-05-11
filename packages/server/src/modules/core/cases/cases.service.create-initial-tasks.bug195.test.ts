@@ -113,6 +113,7 @@ const CREATE_INPUT = {
   customerId: "cust-1",
   caseTypeCode: BMV_CASE_TYPE_CODE,
   ownerUserId: USR,
+  forceCreate: true,
 };
 
 void describe("BUG-195: runCreateTransaction 末尾插入初始任务", () => {

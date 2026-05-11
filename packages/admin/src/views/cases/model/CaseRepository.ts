@@ -33,6 +33,7 @@ import {
 } from "./CaseRepositorySupport";
 import {
   createAcknowledgeBillingRisk,
+  createBootstrapChecklist,
   createCreateCase,
   createCreateCaseParty,
   createDeleteCase,
@@ -59,6 +60,7 @@ import {
   createGetValidationData,
   createGetBillingData,
   createListDocumentTemplates,
+  createPreviewChecklistCount,
 } from "./CaseRepositoryReadSide";
 import {
   createCompleteTask,
@@ -243,6 +245,12 @@ export interface CaseRepository {
   createCaseParty(input: CasePartyCreateInput): Promise<CaseMutationResult>;
 
   /**
+   * 为空 document_items 案件从模板补生成资料清单。
+   * 数据源：`POST /api/cases/:id/checklist/bootstrap-from-template`。
+   */
+  bootstrapChecklist(caseId: string): Promise<CaseMutationResult>;
+
+  /**
    * P1 重试创建续签提醒。
    * 数据源：`POST /api/cases/:id/retry-reminder-creation`。
    */
@@ -299,6 +307,12 @@ export interface CaseRepository {
   ): Promise<WriteResultWithId>;
 
   /**
+   * 资料清单预览：返回给定 caseTypeCode 的 checklist 条数。
+   * 数据源：`GET /api/cases/checklist-preview?caseTypeCode=xxx`。
+   */
+  previewChecklistCount(caseTypeCode: string): Promise<number>;
+
+  /**
    * 获取文書模板列表。
    * 数据源：`GET /api/document-templates?caseType=xxx`。
    */
@@ -352,6 +366,7 @@ export function createCaseRepository(
     updatePostApprovalStage: createUpdatePostApprovalStage(runtime),
     transitionWorkflowStep: createTransitionWorkflowStep(runtime),
     deleteCase: createDeleteCase(runtime),
+    bootstrapChecklist: createBootstrapChecklist(runtime),
     getMessages: createGetMessages(runtime),
     getLogEntries: createGetLogEntries(runtime),
     getDocumentItems: createGetDocumentItems(runtime),
@@ -374,5 +389,6 @@ export function createCaseRepository(
     completeTask: createCompleteTask(runtime),
     createSubmissionPackage: createCreateSubmissionPackage(runtime),
     listDocumentTemplates: createListDocumentTemplates(runtime),
+    previewChecklistCount: createPreviewChecklistCount(runtime),
   };
 }

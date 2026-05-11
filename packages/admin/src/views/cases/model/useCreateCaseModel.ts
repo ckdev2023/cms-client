@@ -260,6 +260,7 @@ export {
   checkCreatePreSignGate,
   PRE_SIGN_GATE_BLOCKER_CODES,
 } from "./useCreateCasePreSignGate";
+import { useCreateCaseChecklistPreview } from "./useCreateCaseChecklistPreview";
 
 function createValidation(
   draft: CreateCaseDraftState,
@@ -269,6 +270,7 @@ function createValidation(
   familyApplicants: ComputedRef<CreateCaseRelatedParty[]>,
   needsGroupOverrideReason: ComputedRef<boolean>,
   preSignGate: ComputedRef<CreatePreSignGateResult>,
+  checklistEmpty: ComputedRef<boolean>,
 ) {
   const canProceedStep1 = computed(
     () =>
@@ -300,7 +302,10 @@ function createValidation(
     canProceed,
     canGoNext: computed(() => canProceed(draft.currentStep)),
     canSubmit: computed(
-      () => canProceedStep3.value && preSignGate.value.passed,
+      () =>
+        canProceedStep3.value &&
+        preSignGate.value.passed &&
+        !checklistEmpty.value,
     ),
     isLastStep: computed(() => draft.currentStep === 4),
     isFirstStep: computed(() => draft.currentStep === 1),
@@ -370,6 +375,7 @@ import { createSetters, createMutators } from "./useCreateCaseModelActions";
 function wireDerived(
   deps: UseCreateCaseModelDeps,
   s: ReturnType<typeof initState>,
+  repo: CaseRepository,
 ) {
   const {
     draft,
@@ -393,6 +399,8 @@ function wireDerived(
     tpl.isFamilyBulkScenario,
   );
   const preSignGate = createPreSignGateComputed(draft, primaryCustomer);
+  const caseTypeCodeRef = computed(() => draft.templateId);
+  const checklistPreview = useCreateCaseChecklistPreview(caseTypeCodeRef, repo);
   const val = createValidation(
     draft,
     tpl.effectiveTitle,
@@ -401,6 +409,7 @@ function wireDerived(
     fam.familyApplicants,
     tpl.needsGroupOverrideReason,
     preSignGate,
+    checklistPreview.checklistEmpty,
   );
   const grp = createGroupFamilyActions(
     deps,
@@ -420,6 +429,7 @@ function wireDerived(
     val,
     grp,
     preSignGate,
+    checklistPreview,
   };
 }
 
@@ -428,7 +438,7 @@ function wireModel(
   s: ReturnType<typeof initState>,
   repo: CaseRepository,
 ) {
-  const d = wireDerived(deps, s);
+  const d = wireDerived(deps, s, repo);
   const sub = createSubmitFlow({
     repo,
     draft: d.draft,
@@ -447,6 +457,7 @@ function wireModel(
     ...d.val,
     ...d.grp,
     preSignGate: d.preSignGate,
+    checklistPreview: d.checklistPreview,
     ...createSetters(d.draft),
     ...createMutators(
       d.draft,

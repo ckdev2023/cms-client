@@ -80,10 +80,11 @@ describe("nav-config", () => {
     expect(allItems.find((i) => i.key === "settings")).toBeUndefined();
   });
 
-  it("getVisibleNavGroups drops empty groups for non-admin users", () => {
+  it("getVisibleNavGroups hides adminOnly items in system group for non-admin users", () => {
     const groups = getVisibleNavGroups(false);
-    const groupKeys = groups.map((g) => g.key);
-    expect(groupKeys).not.toContain("system");
+    const systemGroup = groups.find((g) => g.key === "system");
+    const systemItems = systemGroup?.items ?? [];
+    expect(systemItems.find((i) => i.key === "settings")).toBeUndefined();
   });
 
   it("getVisibleNavGroups hides items when requiredPermission is not satisfied", () => {

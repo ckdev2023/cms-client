@@ -3,6 +3,7 @@ import {
   ConflictException,
   Inject,
   Injectable,
+  Optional,
 } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
@@ -14,6 +15,16 @@ import {
   isBmvLead,
   queryConvertDedup,
 } from "./leads.service.convert-support";
+import {
+  TEMPLATES_RESOLVER,
+  type TemplatesResolver,
+} from "../../core/cases/cases.service.types-internal";
+import type { ChecklistItem } from "../../core/cases/cases.service.write-ops";
+import {
+  insertDocumentItemsInTx,
+  resolveChecklistForConversion,
+  writeCaseCreatedTimelineInTx,
+} from "./leads.service.checklist-support";
 
 /** Lead 创建入参。 */
 export type LeadCreateInput = {
@@ -109,8 +120,14 @@ export class LeadsService {
   /**
    * サービスインスタンスを作成する。
    * @param pool PostgreSQL 接続プール
+   * @param templatesResolver 模板解析服务（可选，未注入时转化不生成资料清单）
    */
-  constructor(@Inject(Pool) private readonly pool: Pool) {}
+  constructor(
+    @Inject(Pool) private readonly pool: Pool,
+    @Optional()
+    @Inject(TEMPLATES_RESOLVER)
+    private readonly templatesResolver?: TemplatesResolver,
+  ) {}
 
   /**
    * Lead を作成する（初期 org_id は空）。
@@ -253,7 +270,12 @@ export class LeadsService {
     const lead = await this.getRequiredLead(id);
     this.assertLeadConvertible(lead, input);
     await this.ensureConvertDedup(lead, input);
-    return this.runConvertTransaction(id, lead, input);
+    const checklistItems = await resolveChecklistForConversion(
+      this.pool,
+      this.templatesResolver,
+      input,
+    );
+    return this.runConvertTransaction(id, lead, input, checklistItems);
   }
 
   // ── Private helpers ──
@@ -294,12 +316,20 @@ export class LeadsService {
     id: string,
     lead: Lead,
     input: LeadConvertInput,
+    checklistItems: ChecklistItem[],
   ): Promise<{ lead: Lead; caseId: string }> {
     const client = await this.pool.connect();
     const isBmv = isBmvLead(lead);
     try {
       await client.query("BEGIN");
       const caseId = await this.createCaseInTx(client, input);
+      await insertDocumentItemsInTx(
+        client,
+        input.orgId,
+        caseId,
+        checklistItems,
+      );
+      await writeCaseCreatedTimelineInTx(client, input, caseId);
       const updatedRow = await this.updateConvertedLeadInTx(
         client,
         id,

@@ -40,6 +40,8 @@ const {
   hasApiData,
   viewState,
   apiCompletionRate,
+  bootstrapping,
+  handleBootstrapChecklist,
   review,
   register,
   addItem,
@@ -163,6 +165,17 @@ const groupStats = computed(() =>
         <span class="docs-tab__empty-desc">
           {{ t("cases.detail.documents.empty.templateMissing.desc") }}
         </span>
+        <div v-if="!readonly" class="docs-tab__empty-actions">
+          <Button
+            variant="filled"
+            tone="primary"
+            size="sm"
+            :disabled="bootstrapping"
+            @click="handleBootstrapChecklist"
+          >
+            {{ t("cases.detail.documents.empty.templateMissing.bootstrapCta") }}
+          </Button>
+        </div>
       </div>
     </Card>
 

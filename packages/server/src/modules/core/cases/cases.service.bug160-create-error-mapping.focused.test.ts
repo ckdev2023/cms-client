@@ -64,6 +64,7 @@ const BASE_INPUT = {
   customerId: CUSTOMER_ID,
   caseTypeCode: "visa",
   ownerUserId: USER_ID,
+  forceCreate: true,
 };
 
 // ─── (a) biz_mgmt_4m + 空 baseProfile → 400 CASE_BMV_GATE_BLOCKED ───

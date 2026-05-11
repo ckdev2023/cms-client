@@ -3,14 +3,20 @@ import { ref, nextTick } from "vue";
 import { flushPromises } from "@vue/test-utils";
 import type { DocumentRepository } from "../../documents/model/DocumentRepositoryTypes";
 import type { DocumentListItem } from "../../documents/types";
+import type { CaseRepository } from "./CaseRepository";
+
+const toastAdd = vi.fn();
 
 vi.mock("vue-i18n", () => ({
-  useI18n: () => ({ t: (k: string) => k }),
+  useI18n: () => ({
+    t: (k: string, p?: Record<string, unknown>) =>
+      p ? `${k}:${JSON.stringify(p)}` : k,
+  }),
 }));
 
 vi.mock("../../../shared/model/useToast", () => ({
   useToast: () => ({
-    add: vi.fn(),
+    add: toastAdd,
     items: ref([]),
     remove: vi.fn(),
   }),
@@ -121,5 +127,138 @@ describe("useCaseDocumentsTab — viewState", () => {
     });
 
     expect(tab.viewState.value).toBe("templateMissing");
+  });
+});
+
+function stubCaseRepository(
+  overrides: Partial<CaseRepository> = {},
+): CaseRepository {
+  return {
+    listCases: vi.fn(),
+    getSummaryCards: vi.fn().mockReturnValue([]),
+    getDetail: vi.fn(),
+    getDetailAggregate: vi.fn(),
+    createCase: vi.fn(),
+    updateCase: vi.fn(),
+    transitionCase: vi.fn(),
+    transitionPhase: vi.fn(),
+    acknowledgeBillingRisk: vi.fn(),
+    updatePostApprovalStage: vi.fn(),
+    transitionWorkflowStep: vi.fn(),
+    deleteCase: vi.fn(),
+    bootstrapChecklist: vi.fn().mockResolvedValue({ count: 3 }),
+    getMessages: vi.fn(),
+    getLogEntries: vi.fn(),
+    getDocumentItems: vi.fn(),
+    getGeneratedDocuments: vi.fn(),
+    getValidationData: vi.fn(),
+    getBillingData: vi.fn(),
+    getBillingTabAggregate: vi.fn(),
+    getSubmissionPackages: vi.fn(),
+    getDoubleReviewEntries: vi.fn(),
+    getTasks: vi.fn(),
+    getDeadlines: vi.fn(),
+    createCaseParty: vi.fn(),
+    retryReminderCreation: vi.fn(),
+    createCommunicationLog: vi.fn(),
+    createGeneratedDocument: vi.fn(),
+    finalizeGeneratedDocument: vi.fn(),
+    exportGeneratedDocument: vi.fn(),
+    createReminder: vi.fn(),
+    createTask: vi.fn(),
+    completeTask: vi.fn(),
+    createSubmissionPackage: vi.fn(),
+    listDocumentTemplates: vi.fn(),
+    previewChecklistCount: vi.fn(),
+    ...overrides,
+  } as unknown as CaseRepository;
+}
+
+describe("useCaseDocumentsTab — bootstrap checklist", () => {
+  it("exposes bootstrapping ref and handleBootstrapChecklist function", () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(true),
+      repository: stubRepository([]),
+      caseRepository: stubCaseRepository(),
+    });
+
+    expect(tab.bootstrapping.value).toBe(false);
+    expect(typeof tab.handleBootstrapChecklist).toBe("function");
+  });
+
+  it("calls caseRepository.bootstrapChecklist and shows success toast", async () => {
+    toastAdd.mockClear();
+    const caseRepo = stubCaseRepository();
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(true),
+      repository: stubRepository([]),
+      caseRepository: caseRepo,
+    });
+
+    await tab.handleBootstrapChecklist();
+    await flushPromises();
+
+    expect(caseRepo.bootstrapChecklist).toHaveBeenCalledWith("case-1");
+    expect(toastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        title: expect.stringContaining("bootstrapSuccess"),
+      }),
+    );
+  });
+
+  it("shows error toast when bootstrap fails", async () => {
+    toastAdd.mockClear();
+    const caseRepo = stubCaseRepository({
+      bootstrapChecklist: vi
+        .fn()
+        .mockRejectedValue(new Error("Template not found")),
+    });
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(true),
+      repository: stubRepository([]),
+      caseRepository: caseRepo,
+    });
+
+    await tab.handleBootstrapChecklist();
+    await flushPromises();
+
+    expect(toastAdd).toHaveBeenCalledWith(
+      expect.objectContaining({
+        tone: "error",
+      }),
+    );
+  });
+
+  it("sets bootstrapping=true during the call", async () => {
+    let resolveBootstrap: (v: { count: number }) => void = () => {};
+    const bootstrapPromise = new Promise<{ count: number }>((r) => {
+      resolveBootstrap = r;
+    });
+    const caseRepo = stubCaseRepository({
+      bootstrapChecklist: vi.fn().mockReturnValue(bootstrapPromise),
+    });
+
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(true),
+      repository: stubRepository([]),
+      caseRepository: caseRepo,
+    });
+
+    const p = tab.handleBootstrapChecklist();
+    await nextTick();
+    expect(tab.bootstrapping.value).toBe(true);
+
+    resolveBootstrap({ count: 5 });
+    await p;
+    await nextTick();
+    expect(tab.bootstrapping.value).toBe(false);
   });
 });

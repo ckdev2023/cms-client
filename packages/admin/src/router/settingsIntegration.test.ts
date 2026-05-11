@@ -153,9 +153,13 @@ describe("/settings — nav visibility by role", () => {
     expect(allItems.find((i) => i.key === "settings")).toBeUndefined();
   });
 
-  it("non-admin does not see system group at all", () => {
+  it("non-admin still sees system group (case-templates is not adminOnly)", () => {
     const groups = getVisibleNavGroups(false);
-    expect(groups.find((g) => g.key === "system")).toBeUndefined();
+    const systemGroup = groups.find((g) => g.key === "system");
+    expect(systemGroup).toBeDefined();
+    expect(
+      systemGroup!.items.find((i) => i.key === "settings"),
+    ).toBeUndefined();
   });
 });
 
@@ -231,10 +235,10 @@ describe("SideNav — /settings visibility", () => {
     expect(itemTexts).not.toContain("系统设置");
   });
 
-  it("non-admin user does not see system group heading", async () => {
+  it("non-admin user still sees system group heading (case-templates visible)", async () => {
     const w = await mountSideNav(false);
     const titles = w.findAll(".nav-group-title").map((el) => el.text());
-    expect(titles).not.toContain("系统");
+    expect(titles).toContain("系统");
   });
 
   it("admin user sees system group heading", async () => {

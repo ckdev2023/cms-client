@@ -93,6 +93,7 @@ const BASE_INPUT = {
   customerId: CUSTOMER_ID,
   caseTypeCode: "business_manager_visa",
   ownerUserId: USER_ID,
+  forceCreate: true,
 };
 
 void test("BMV case type + flag disabled → 400 CASE_BMV_FEATURE_DISABLED", async () => {

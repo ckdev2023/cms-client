@@ -122,6 +122,7 @@ function makeCaseRow(owner_user_id: string) {
 const BASE_INPUT = {
   customerId: CUSTOMER_ID,
   caseTypeCode: "visa",
+  forceCreate: true,
 };
 
 const OWNER_RESOLVE_SQL_FRAGMENT = "lower(email) = lower($1) or name = $1";

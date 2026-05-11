@@ -40,7 +40,6 @@ export const CASE_WRITE_ERROR_CODES = {
   INVALID_ENUM: "CASE_INVALID_ENUM",
   NOT_FOUND: "CASE_NOT_FOUND",
   REF_NOT_FOUND: "CASE_REF_NOT_FOUND",
-
   PARTY_PARENT_NOT_FOUND: "CASE_PARTY_PARENT_NOT_FOUND",
   PARTY_NOT_FOUND: "CASE_PARTY_NOT_FOUND",
   PARTY_INVALID_TYPE: "CASE_PARTY_INVALID_TYPE",
@@ -49,13 +48,14 @@ export const CASE_WRITE_ERROR_CODES = {
     "CASE_FAILURE_CLOSEOUT_ATTRIBUTION_REQUIRED",
   CLOSE_REASON_REQUIRED: "CASE_CLOSE_REASON_REQUIRED",
   CREATE_FAILED: "CASE_CREATE_FAILED",
+  CHECKLIST_EMPTY: "CASE_CHECKLIST_EMPTY",
+  CHECKLIST_BOOTSTRAP_NOT_EMPTY: "CASE_CHECKLIST_BOOTSTRAP_NOT_EMPTY",
+  CHECKLIST_BOOTSTRAP_STAGE_INVALID: "CASE_CHECKLIST_BOOTSTRAP_STAGE_INVALID",
   WAITING_PAYMENT_BILLING_REQUIRED: "CASE_WAITING_PAYMENT_BILLING_REQUIRED",
   STAGE_BILLING_RECORD_REQUIRED: "CASE_STAGE_BILLING_RECORD_REQUIRED",
 } as const;
 
-// ────────────────────────────────────────────────────────────────
-// validation-runs / review-records / submission-packages 错误码
-// 从 case 视角统一定义，admin adapter 映射为 i18n key。
+// validation-runs / review-records / submission-packages 错误码（admin adapter 映射为 i18n key）
 export const VALIDATION_SUBMISSION_ERROR_CODES = {
   VR_CASE_NOT_FOUND: "VR_CASE_NOT_FOUND",
   VR_CASE_S9_READONLY: "VR_CASE_S9_READONLY",
@@ -122,6 +122,7 @@ export type CaseCreateInput = {
    * 对齐 P0 权威基线 §3.2：跨组建案必须留痕（操作人、时间、原因）。
    */
   crossGroupReason?: string | null;
+  forceCreate?: boolean;
 };
 
 /** 更新案件请求参数。 */

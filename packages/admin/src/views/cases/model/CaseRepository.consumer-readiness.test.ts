@@ -109,6 +109,13 @@ const _assertExportResult: ReturnType<
   ? true
   : never = true;
 
+type _BootstrapReturn = ReturnType<CaseRepository["bootstrapChecklist"]>;
+type _AssertBootstrapReturn =
+  _BootstrapReturn extends Promise<CaseMutationResult>
+    ? true
+    : "bootstrapChecklist must return Promise<CaseMutationResult>";
+const _assertBootstrapResult: _AssertBootstrapReturn = true;
+
 type _SummaryCardsParam = Parameters<CaseRepository["getSummaryCards"]>[0];
 type _AssertSummaryTakesItems = CaseListItem[] extends _SummaryCardsParam
   ? true
@@ -134,6 +141,7 @@ void [
   _assertTemplatesResult,
   _assertFinalizeResult,
   _assertExportResult,
+  _assertBootstrapResult,
   _assertSummaryParam,
   _assertSummaryReturn,
 ];
@@ -151,6 +159,7 @@ const REPOSITORY_REQUIRED_METHODS = [
   "updatePostApprovalStage",
   "transitionWorkflowStep",
   "deleteCase",
+  "bootstrapChecklist",
   "getMessages",
   "getLogEntries",
   "getDocumentItems",
@@ -171,6 +180,7 @@ const REPOSITORY_REQUIRED_METHODS = [
   "completeTask",
   "createSubmissionPackage",
   "listDocumentTemplates",
+  "previewChecklistCount",
   "finalizeGeneratedDocument",
   "exportGeneratedDocument",
 ] as const;

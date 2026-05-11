@@ -182,6 +182,13 @@ export const navGroups: NavGroup[] = [
     title: "系统",
     items: [
       {
+        key: "caseTemplates",
+        label: "案件资料蓝图",
+        to: "/case-templates",
+        icon: "clipboard",
+        requiredPermission: "case.view",
+      },
+      {
         key: "settings",
         label: "系统设置",
         to: "/settings",

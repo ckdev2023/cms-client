@@ -121,6 +121,7 @@ const BASE_INPUT = {
   customerId: CUSTOMER_ID,
   caseTypeCode: "visa",
   ownerUserId: "   ",
+  forceCreate: true,
 };
 
 void test("[BUG-181] quotePrice > 0 + 无既有 plan → 插入一行 billing_records + timeline + sync 缓存", async () => {

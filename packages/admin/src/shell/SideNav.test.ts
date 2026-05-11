@@ -374,11 +374,13 @@ describe("SideNav", () => {
     expect(itemTexts).not.toContain("系统设置");
   });
 
-  it("hides the system group heading for non-admin users", async () => {
+  it("system group visible for non-admin (case-templates is not adminOnly)", async () => {
     window.localStorage.removeItem(ADMIN_SESSION_STORAGE_KEY);
     adminSessionController.reset();
     const w = await mountWithRouter();
     const titles = w.findAll(".nav-group-title").map((el) => el.text());
-    expect(titles).not.toContain("系统");
+    expect(titles).toContain("系统");
+    const items = w.findAll(".nav-item").map((el) => el.text());
+    expect(items).not.toContain("系统设置");
   });
 });

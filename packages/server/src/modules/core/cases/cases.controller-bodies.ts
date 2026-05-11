@@ -31,6 +31,12 @@ export type CreateCaseBody = {
   groupId?: unknown;
   crossGroupReason?: unknown;
   visaPlan?: unknown;
+  forceCreate?: unknown;
+};
+
+/** 资料清单预览查询参数。 */
+export type ChecklistPreviewQuery = {
+  caseTypeCode: unknown;
 };
 
 /** 更新案件请求体。 */

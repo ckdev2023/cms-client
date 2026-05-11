@@ -1,8 +1,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useToast } from "../../../shared/model/useToast";
-import type { DocumentItem } from "../types-detail";
-import type { DocumentGroup } from "../types-detail";
+import type { DocumentItem, DocumentGroup } from "../types-detail";
 import type {
   DocumentListItem,
   WaivedReasonCode,
@@ -24,6 +23,8 @@ import { toCaseDetailItems } from "../../documents/model/DocumentDetailItemAdapt
 import type { DocumentRepository } from "../../documents/model/DocumentRepositoryTypes";
 import type { UseToastReturn } from "../../../shared/model/useToast";
 import { compareDocumentListItemsForChecklistStableOrder } from "./caseDocumentsChecklistSort";
+import { createCaseRepository, type CaseRepository } from "./CaseRepository";
+import { buildBootstrapHandler } from "./useCaseDocumentsTabBootstrap";
 
 type ListDetailPair = { list: DocumentListItem; detail: DocumentItem };
 
@@ -59,6 +60,8 @@ export interface UseCaseDocumentsTabDeps {
    * NEW-V11-1 修复：缺少此回调会让 Tab 计数器与详情列表口径分裂。
    */
   onWriteSuccess?: () => void;
+  /** 可选注入 CaseRepository（测试用）。 */
+  caseRepository?: CaseRepository;
 }
 
 type T = ReturnType<typeof useI18n>["t"];
@@ -282,14 +285,6 @@ function buildRowHandlers(
   };
 }
 
-function buildConfirmReference(
-  review: ReturnType<typeof useDocumentReviewModel>,
-) {
-  return async () => {
-    await review.confirmReference();
-  };
-}
-
 function buildAddItem(
   repo: DocumentRepository,
   toast: UseToastReturn,
@@ -415,18 +410,6 @@ function buildWriteModels(
   return { review, register, addItem, onErr };
 }
 
-function makeRefresh(
-  listModel: ReturnType<typeof useDocumentListModel>,
-  fetchRate: (id?: string) => Promise<void>,
-  onWriteSuccess?: () => void,
-): () => void {
-  return () => {
-    listModel.refresh();
-    void fetchRate();
-    onWriteSuccess?.();
-  };
-}
-
 /**
  * 案件详情资料清单 Tab 的组合式 model。
  *
@@ -459,7 +442,19 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
   );
   const hasApiData = computed(() => listModel.source.value === "api");
   const viewState = buildViewState(listModel, deps);
-  const refresh = makeRefresh(listModel, fetchRate, deps.onWriteSuccess);
+  const refresh = () => {
+    listModel.refresh();
+    void fetchRate();
+    deps.onWriteSuccess?.();
+  };
+  const caseRepo = deps.caseRepository ?? createCaseRepository();
+  const { bootstrapping, handleBootstrapChecklist } = buildBootstrapHandler(
+    deps.caseId,
+    caseRepo,
+    toast,
+    t,
+    refresh,
+  );
   const { review, register, addItem, onErr } = buildWriteModels(
     deps,
     listModel,
@@ -478,6 +473,8 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
     hasApiData,
     viewState,
     apiCompletionRate: apiRate,
+    bootstrapping,
+    handleBootstrapChecklist,
     review,
     register,
     addItem,
@@ -492,7 +489,7 @@ export function useCaseDocumentsTab(deps: UseCaseDocumentsTabDeps) {
       onErr,
       refresh,
     ),
-    handleConfirmReference: buildConfirmReference(review),
+    handleConfirmReference: () => review.confirmReference(),
     handleRegisterClick: (id: string) => register.openModal(id),
     handleAddItemClick: (caseId: string) => addItem.openModal(caseId),
   };

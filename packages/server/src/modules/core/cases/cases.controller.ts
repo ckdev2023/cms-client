@@ -22,11 +22,13 @@ import {
   parseCaseRiskBucket,
   parseOptionalString,
   parseOptionalNullableString,
-  parseOptionalNullableNumber,
-  parseObject,
   parsePage,
   parseLimit,
 } from "./cases.parsers";
+import {
+  parseCreateCaseBody,
+  parseUpdateCaseBody,
+} from "./cases.controller-parsers";
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
@@ -39,6 +41,7 @@ import { CasesService } from "./cases.service";
 import type {
   HttpRequest,
   CreateCaseBody,
+  ChecklistPreviewQuery,
   UpdateCaseBody,
   TransitionBody,
   BillingRiskAckBody,
@@ -51,77 +54,14 @@ import type {
 const UuidParam = () => Param("id", new ParseUUIDPipe());
 
 /**
- * UpdateCaseBody → CaseUpdateInput 変換。
- * @param body 更新請求体
- * @returns CaseUpdateInput
- */
-function parseUpdateCaseBody(body: UpdateCaseBody) {
-  return {
-    caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
-    ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
-    groupId: parseOptionalNullableString(body.groupId, "groupId"),
-    groupTransferReason: parseOptionalNullableString(
-      body.groupTransferReason,
-      "groupTransferReason",
-    ),
-    dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
-    metadata: parseObject(body.metadata),
-    caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
-    caseName: parseOptionalNullableString(body.caseName, "caseName"),
-    caseSubtype: parseOptionalNullableString(body.caseSubtype, "caseSubtype"),
-    applicationType: parseOptionalNullableString(
-      body.applicationType,
-      "applicationType",
-    ),
-    companyId: parseOptionalNullableString(body.companyId, "companyId"),
-    priority: parseOptionalString(body.priority, "priority"),
-    riskLevel: parseOptionalString(body.riskLevel, "riskLevel"),
-    assistantUserId: parseOptionalNullableString(
-      body.assistantUserId,
-      "assistantUserId",
-    ),
-    sourceChannel: parseOptionalNullableString(
-      body.sourceChannel,
-      "sourceChannel",
-    ),
-    signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
-    acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
-    submissionDate: parseOptionalNullableString(
-      body.submissionDate,
-      "submissionDate",
-    ),
-    resultDate: parseOptionalNullableString(body.resultDate, "resultDate"),
-    residenceExpiryDate: parseOptionalNullableString(
-      body.residenceExpiryDate,
-      "residenceExpiryDate",
-    ),
-    archivedAt: parseOptionalNullableString(body.archivedAt, "archivedAt"),
-    resultOutcome: parseOptionalNullableString(
-      body.resultOutcome,
-      "resultOutcome",
-    ),
-    quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
-    visaPlan: parseOptionalNullableString(body.visaPlan, "visaPlan"),
-    overseasVisaStartAt: parseOptionalNullableString(
-      body.overseasVisaStartAt,
-      "overseasVisaStartAt",
-    ),
-    entryConfirmedAt: parseOptionalNullableString(
-      body.entryConfirmedAt,
-      "entryConfirmedAt",
-    ),
-  };
-}
-
-/**
  * Cases CRUD 接口。
  */
 @Controller("cases")
 export class CasesController {
   /**
-   * 构造函数。
-   * @param casesService 案件服务
-   * @param permissionsService 权限服务
+   * DI 構築。
+   * @param casesService 案件サービス
+   * @param permissionsService 権限サービス
    */
   constructor(
     @Inject(CasesService)
@@ -131,77 +71,49 @@ export class CasesController {
   ) {}
 
   /**
-   * 创建案件。
-   * @param req HTTP 请求
-   * @param body 创建请求体
-   * @returns 创建成功的案件
+   * 案件作成。
+   * @param req HTTP リクエスト
+   * @param body 作成リクエスト
+   * @returns 作成済み案件
    */
   @RequirePermission(PERMISSION_CODES.CASE_CREATE)
   @Post()
   async create(@Req() req: HttpRequest, @Body() body: CreateCaseBody) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
-
     if (!this.permissionsService.canCreateCase(ctx.role)) {
       throw new ForbiddenException("Insufficient permissions to create case");
     }
-
-    return this.casesService.create(ctx, {
-      customerId: requireString(body.customerId, "customerId"),
-      caseTypeCode: requireString(body.caseTypeCode, "caseTypeCode"),
-      ownerUserId: requireString(body.ownerUserId, "ownerUserId"),
-      groupId: parseOptionalNullableString(body.groupId, "groupId"),
-      stage: parseOptionalString(body.stage, "stage"),
-      status: parseOptionalString(body.status, "status"),
-      dueAt: parseOptionalNullableString(body.dueAt, "dueAt"),
-      metadata: parseObject(body.metadata),
-      caseNo: parseOptionalNullableString(body.caseNo, "caseNo"),
-      caseName: parseOptionalNullableString(body.caseName, "caseName"),
-      caseSubtype: parseOptionalNullableString(body.caseSubtype, "caseSubtype"),
-      applicationType: parseOptionalNullableString(
-        body.applicationType,
-        "applicationType",
-      ),
-      companyId: parseOptionalNullableString(body.companyId, "companyId"),
-      priority: parseOptionalString(body.priority, "priority"),
-      riskLevel: parseOptionalString(body.riskLevel, "riskLevel"),
-      assistantUserId: parseOptionalNullableString(
-        body.assistantUserId,
-        "assistantUserId",
-      ),
-      sourceChannel: parseOptionalNullableString(
-        body.sourceChannel,
-        "sourceChannel",
-      ),
-      signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
-      acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
-      submissionDate: parseOptionalNullableString(
-        body.submissionDate,
-        "submissionDate",
-      ),
-      resultDate: parseOptionalNullableString(body.resultDate, "resultDate"),
-      residenceExpiryDate: parseOptionalNullableString(
-        body.residenceExpiryDate,
-        "residenceExpiryDate",
-      ),
-      resultOutcome: parseOptionalNullableString(
-        body.resultOutcome,
-        "resultOutcome",
-      ),
-      quotePrice: parseOptionalNullableNumber(body.quotePrice, "quotePrice"),
-      visaPlan: parseOptionalNullableString(body.visaPlan, "visaPlan"),
-      crossGroupReason: parseOptionalNullableString(
-        body.crossGroupReason,
-        "crossGroupReason",
-      ),
-    });
+    return this.casesService.create(ctx, parseCreateCaseBody(body));
   }
 
   /**
-   * 案件列表。
-   * @param req HTTP 请求
-   * @param query 查询参数
-   * @returns 案件列表
+   * 資料チェックリスト件数プレビュー。
+   * @param req HTTP リクエスト
+   * @param query クエリパラメータ
+   * @returns チェックリスト件数
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_CREATE)
+  @Get("checklist-preview")
+  async checklistPreview(
+    @Req() req: HttpRequest,
+    @Query() query: ChecklistPreviewQuery,
+  ) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+    const caseTypeCode = requireString(query.caseTypeCode, "caseTypeCode");
+    const count = await this.casesService.previewChecklistCount(
+      ctx,
+      caseTypeCode,
+    );
+    return { caseTypeCode, count };
+  }
+
+  /**
+   * 案件一覧取得。
+   * @param req HTTP リクエスト
+   * @param query フィルタ条件
+   * @returns 案件一覧
    */
   @RequirePermission(PERMISSION_CODES.CASE_VIEW)
   @Get()
@@ -462,6 +374,23 @@ export class CasesController {
     return this.casesService.transitionWorkflowStep(ctx, id, {
       toStepCode: requireString(body.toStepCode, "toStepCode"),
     });
+  }
+
+  /**
+   * 为空 document_items 案件从模板补生成资料清单。
+   * @param req HTTP 请求
+   * @param id 案件 ID
+   * @returns 写入条数
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post(":id/checklist/bootstrap-from-template")
+  async bootstrapChecklist(@Req() req: HttpRequest, @UuidParam() id: string) {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    await this.assertCanEditCase(ctx, id);
+
+    return this.casesService.bootstrapChecklist(ctx, id);
   }
 
   /**

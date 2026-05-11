@@ -66,6 +66,23 @@ export function parseOptionalNullableNumber(
 }
 
 /**
+ * Parses an optional boolean field; returns undefined when absent.
+ * @param value - raw request input
+ * @param field - field name used in error message
+ * @returns the validated boolean or undefined
+ */
+export function parseOptionalBoolean(
+  value: unknown,
+  field: string,
+): boolean | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === "boolean") return value;
+  if (value === "true") return true;
+  if (value === "false") return false;
+  throw new BadRequestException(`Invalid ${field}`);
+}
+
+/**
  * Validates that value is a plain object; returns undefined when absent.
  * @param value - raw request input
  * @returns the validated record or undefined

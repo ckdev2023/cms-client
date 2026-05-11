@@ -1,5 +1,6 @@
 import customerDetail from "./customers/zh-CN";
 import billing from "./billing/zh-CN";
+import caseTemplates from "./case-templates/zh-CN";
 import cases from "./cases/zh-CN";
 import conversations from "./conversations/zh-CN";
 import documents from "./documents/zh-CN";
@@ -47,6 +48,7 @@ const zhCN = {
         tasks: "任务与提醒",
         documents: "资料中心",
         billing: "收费与财务",
+        caseTemplates: "案件资料蓝图",
         settings: "系统设置",
       },
     },
@@ -143,11 +145,7 @@ const zhCN = {
         },
       },
       scopeLabel: "数据范围",
-      scope: {
-        mine: "我的",
-        group: "本组",
-        all: "全所（管理员）",
-      },
+      scope: { mine: "我的", group: "本组", all: "全所（管理员）" },
       searchPlaceholder: "搜索：客户名 / フリガナ / 电话 / 邮箱",
       filters: {
         groupAll: "所属分组：全部",
@@ -308,6 +306,7 @@ const zhCN = {
     detail: customerDetail,
   },
   billing,
+  caseTemplates,
   cases,
   conversations,
   documents,

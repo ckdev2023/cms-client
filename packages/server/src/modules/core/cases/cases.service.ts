@@ -120,6 +120,7 @@ import {
   executeStageTransition,
   executeUpdateCase,
   executeWorkflowStepTransition,
+  insertDocumentItems,
   insertStageHistory,
 } from "./cases.service.write-ops";
 import {
@@ -138,6 +139,8 @@ import { validateStageTransition } from "./cases.service.transition-gates";
 // ────────────────────────────────────────────────────────────────
 // 公共 API 重新导出（保留对外契约稳定）
 // ────────────────────────────────────────────────────────────────
+
+const BOOTSTRAP_ALLOWED_STAGES = new Set(["S1", "S2"]);
 
 export { CASE_COLS, CASE_COLS_PREFIXED, SUMMARY_JOINS, SUMMARY_EXTRA_COLS };
 export {
@@ -225,6 +228,12 @@ export class CasesService {
         input.caseTypeCode,
         caseTemplateResolver,
       );
+      if (checklistItems.length === 0 && !input.forceCreate) {
+        throw new BadRequestException({
+          code: CASE_WRITE_ERROR_CODES.CHECKLIST_EMPTY,
+          message: `No checklist template found for caseTypeCode="${input.caseTypeCode}". Configure a case_template or pass forceCreate=true.`,
+        });
+      }
       const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
       return await tenantDb.transaction((tx) =>
         runCreateCaseTransaction(tx, ctx, input, checklistItems),
@@ -833,6 +842,101 @@ export class CasesService {
     return tenantDb.transaction(async (tx) =>
       recalcSupplementCount(tx, caseId),
     );
+  }
+
+  /**
+   * 为已存在但 document_items 为空的案件，从模板补生成资料清单。
+   *
+   * 前置条件：
+   *   - document_items 必须为空（幂等：已有则拒绝）
+   *   - 阶段必须 ∈ {S1, S2}（已推进到后续阶段不应再回填）
+   *   - 调用者需持有 CASE_EDIT 权限（controller 端校验）
+   *
+   * 事务内写入 document_items + timeline，不影响 case 主表。
+   *
+   * @param ctx 请求上下文
+   * @param caseId 案件 ID
+   * @returns 写入的 checklist 条数
+   */
+  async bootstrapChecklist(
+    ctx: RequestContext,
+    caseId: string,
+  ): Promise<{ count: number }> {
+    const current = await this.get(ctx, caseId);
+    if (!current) throw new NotFoundException("Case not found or deleted");
+
+    const stage = current.stage ?? current.status;
+    if (!BOOTSTRAP_ALLOWED_STAGES.has(stage)) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.CHECKLIST_BOOTSTRAP_STAGE_INVALID,
+        message: `Checklist bootstrap is only allowed in stages S1/S2, current stage is "${stage}".`,
+      });
+    }
+
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const existingCount = await tenantDb.query<{ count: string }>(
+      `SELECT count(*) AS count FROM document_items WHERE case_id = $1`,
+      [caseId],
+    );
+    if (parseInt(existingCount.rows[0]?.count ?? "0", 10) > 0) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.CHECKLIST_BOOTSTRAP_NOT_EMPTY,
+        message:
+          "Case already has document items. Bootstrap is only allowed when the checklist is empty.",
+      });
+    }
+
+    const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
+      findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
+    const items = await resolveChecklistItems(
+      this.templatesResolver,
+      ctx,
+      current.caseTypeCode,
+      caseTemplateResolver,
+    );
+    if (items.length === 0) {
+      throw new BadRequestException({
+        code: CASE_WRITE_ERROR_CODES.CHECKLIST_EMPTY,
+        message: `No checklist template found for caseTypeCode="${current.caseTypeCode}".`,
+      });
+    }
+
+    await tenantDb.transaction(async (tx) => {
+      await insertDocumentItems(tx, ctx.orgId, caseId, items);
+      await writeTimelineInTx(tx, ctx, {
+        entityType: "case",
+        entityId: caseId,
+        action: "case.checklist_bootstrapped",
+        payload: {
+          caseTypeCode: current.caseTypeCode,
+          itemCount: items.length,
+          source: "bootstrap_from_template",
+        },
+      });
+    });
+
+    return { count: items.length };
+  }
+
+  /**
+   * 预览指定 caseTypeCode 的资料清单条数（只读，不落库）。
+   * @param ctx 请求上下文
+   * @param caseTypeCode 案件类型代码
+   * @returns checklist 条目数
+   */
+  async previewChecklistCount(
+    ctx: RequestContext,
+    caseTypeCode: string,
+  ): Promise<number> {
+    const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
+      findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
+    const items = await resolveChecklistItems(
+      this.templatesResolver,
+      ctx,
+      caseTypeCode,
+      caseTemplateResolver,
+    );
+    return items.length;
   }
 
   /**

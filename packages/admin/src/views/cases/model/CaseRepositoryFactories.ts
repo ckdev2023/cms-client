@@ -259,6 +259,30 @@ export function createCreateCaseParty(runtime: CaseRepositoryRuntime) {
 }
 
 /**
+ * 创建 checklist bootstrap 闭包。
+ * @param runtime - 仓库运行时上下文
+ * @returns 接收案件 ID 并从模板补生成资料清单
+ */
+export function createBootstrapChecklist(runtime: CaseRepositoryRuntime) {
+  return async (caseId: string): Promise<CaseMutationResult> => {
+    const normalizedId = caseId.trim();
+    if (!normalizedId) {
+      throw new CaseRepositoryError({
+        code: "VALIDATION_ERROR",
+        message: "Missing case ID",
+      });
+    }
+    return requestAndAdapt({
+      runtime,
+      url: `${runtime.apiPath}/${normalizedId}/checklist/bootstrap-from-template`,
+      method: "POST",
+      adapt: adaptCaseMutationResult,
+      errorMessage: "Failed to bootstrap checklist from template",
+    });
+  };
+}
+
+/**
  * 创建续签提醒重试闭包。
  * @param runtime - 仓库运行时上下文
  * @returns 接收案件 ID 并触发提醒重建

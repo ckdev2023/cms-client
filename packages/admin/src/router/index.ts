@@ -178,6 +178,18 @@ export const router = createRouter({
       }),
     },
     {
+      path: "/case-templates",
+      name: "case-templates",
+      component: () =>
+        import("../views/case-templates/CaseTemplatesListView.vue"),
+      meta: withShellMeta({
+        navKey: "caseTemplates",
+        groupKey: "system",
+        titleKey: "shell.nav.items.caseTemplates",
+        requiredPermission: "case.view",
+      }),
+    },
+    {
       path: "/settings",
       name: "settings",
       component: () => import("../views/settings/SettingsView.vue"),

@@ -165,6 +165,11 @@ const casesZhCN = {
       recoveryIntake: "请确认客户承接流程已进入「可建案」状态。",
       goToCustomer: "前往客户详情",
     },
+    checklistPreflight: {
+      emptyWarning:
+        "该签证类型尚未配置资料清单模板，无法创建案件。请联系管理员在后台配置模板。",
+      loading: "正在检查资料清单模板…",
+    },
     summary: {
       template: "案件模板",
       title: "案件标题",
@@ -681,6 +686,9 @@ const casesZhCN = {
         templateMissing: {
           title: "资料模板未配置",
           desc: "当前签证类型尚未配置资料模板，请联系管理员维护。",
+          bootstrapCta: "从模板生成资料清单",
+          bootstrapSuccess: "资料清单已成功生成（{count} 条）。",
+          bootstrapError: "生成资料清单失败。",
         },
       },
       section: {
@@ -1016,6 +1024,12 @@ const casesZhCN = {
     wfStepBillingGateBlocked: "尾款未结清，不能发送 COE。请先完成尾款收取。",
     wfStepNotAllowed: "当前步骤不允许此业务子步骤流转。",
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
+    checklistEmpty:
+      "该签证类型尚未配置资料清单模板，无法创建案件。请先在管理后台配置 case_templates 后重试。",
+    checklistBootstrapNotEmpty:
+      "该案件已有资料项，仅当资料清单为空时可使用模板生成。",
+    checklistBootstrapStageInvalid:
+      "仅在 S1 或 S2 阶段才可从模板生成资料清单。",
     waitingPaymentBillingRequired:
       "请先在收费 Tab 添加至少一条待收费记录，再推进到待缴费阶段。",
     stageBillingRecordRequired:

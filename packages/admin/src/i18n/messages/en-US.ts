@@ -1,6 +1,7 @@
 import customerDetail from "./customers/en-US";
 import customerList from "./customers/en-US-list";
 import billing from "./billing/en-US";
+import caseTemplates from "./case-templates/en-US";
 import cases from "./cases/en-US";
 import conversations from "./conversations/en-US";
 import documents from "./documents/en-US";
@@ -48,6 +49,7 @@ const enUS = {
         tasks: "Tasks & reminders",
         documents: "Document center",
         billing: "Billing & finance",
+        caseTemplates: "Case templates",
         settings: "System Settings",
       },
     },
@@ -127,6 +129,7 @@ const enUS = {
     detail: customerDetail,
   },
   billing,
+  caseTemplates,
   cases,
   conversations,
   documents,

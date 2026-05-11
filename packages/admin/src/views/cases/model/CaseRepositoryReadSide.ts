@@ -375,3 +375,25 @@ export function createListDocumentTemplates(runtime: CaseRepositoryRuntime) {
     });
   };
 }
+
+/**
+ * 创建资料清单条数预览闭包（建案前置校验用）。
+ * @param runtime - 仓库运行时上下文
+ * @returns 接收 caseTypeCode 返回 checklist 条数
+ */
+export function createPreviewChecklistCount(runtime: CaseRepositoryRuntime) {
+  return async (caseTypeCode: string): Promise<number> => {
+    if (!caseTypeCode.trim()) return 0;
+    const result = await requestAndAdapt<{ count: number }>({
+      runtime,
+      url: `${runtime.apiPath}/checklist-preview?caseTypeCode=${encodeURIComponent(caseTypeCode)}`,
+      method: "GET",
+      adapt: (value) => {
+        const obj = value as Record<string, unknown>;
+        return { count: typeof obj.count === "number" ? obj.count : 0 };
+      },
+      errorMessage: "Invalid checklist preview response",
+    });
+    return result.count;
+  };
+}
