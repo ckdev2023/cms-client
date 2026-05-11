@@ -1,4 +1,11 @@
-import { computed, reactive, ref, type ComputedRef, type Ref } from "vue";
+import {
+  computed,
+  reactive,
+  ref,
+  watch,
+  type ComputedRef,
+  type Ref,
+} from "vue";
 import type {
   CaseCreateCustomerOption,
   CaseCreateSourceContext,
@@ -279,7 +286,7 @@ function createValidation(
       () =>
         canProceedStep3.value &&
         preSignGate.value.passed &&
-        checklistPreviewState.value === "ok",
+        (checklistPreviewState.value === "ok" || !draft.autoChecklist),
     ),
     isLastStep: computed(() => draft.currentStep === 4),
     isFirstStep: computed(() => draft.currentStep === 1),
@@ -467,6 +474,14 @@ export function useCreateCaseModel(deps: UseCreateCaseModelDeps) {
   if (s.draft.familyBulkMode && parts.isFamilyTemplate.value) {
     parts.seedFamilyBulkParties();
   }
+  let prevStep = s.draft.currentStep;
+  watch(
+    () => s.draft.currentStep,
+    (step) => {
+      if (step === 2 && prevStep === 1) void parts.checklistPreview.refresh();
+      prevStep = step;
+    },
+  );
   return {
     draft: s.draft,
     primaryCustomer: s.primaryCustomer,

@@ -40,18 +40,19 @@ void describe("canonicalizeCaseTypeCode", () => {
     );
   });
 
-  void test("eng_humanities_intl_cert → eng_humanities_intl", () => {
+  void test("eng_humanities_intl_cert → work (work visa seed template)", () => {
+    assert.equal(canonicalizeCaseTypeCode("eng_humanities_intl_cert"), "work");
+  });
+
+  void test("eng_humanities_intl_renewal → work", () => {
     assert.equal(
-      canonicalizeCaseTypeCode("eng_humanities_intl_cert"),
-      "eng_humanities_intl",
+      canonicalizeCaseTypeCode("eng_humanities_intl_renewal"),
+      "work",
     );
   });
 
-  void test("eng_humanities_intl_renewal → eng_humanities_intl", () => {
-    assert.equal(
-      canonicalizeCaseTypeCode("eng_humanities_intl_renewal"),
-      "eng_humanities_intl",
-    );
+  void test("eng_humanities_intl → work", () => {
+    assert.equal(canonicalizeCaseTypeCode("eng_humanities_intl"), "work");
   });
 
   void test("work stays as-is", () => {

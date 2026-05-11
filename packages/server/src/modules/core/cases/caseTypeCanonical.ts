@@ -14,9 +14,10 @@ const CASE_TYPE_ALIAS_MAP: Record<string, string> = {
   // BMV 总览 wizard id → canonical seed
   bmv: BMV_CASE_TYPE,
 
-  // eng 系列（Admin wizard id → canonical group；无独立种子时以 group 聚合）
-  eng_humanities_intl_cert: "eng_humanities_intl",
-  eng_humanities_intl_renewal: "eng_humanities_intl",
+  // eng 系列：Admin 向导细分 id → seed `case_templates.case_type`（见 seedCaseTemplates「work」）
+  eng_humanities_intl_cert: "work",
+  eng_humanities_intl_renewal: "work",
+  eng_humanities_intl: "work",
 };
 
 /**
@@ -47,8 +48,8 @@ export function canonicalizeCaseTypeCode(code: string): string {
  * | biz_mgmt_cert_4m             | business_manager_visa     | ✓ (回退)  |
  * | biz_mgmt_cert_1y             | business_manager_visa     | ✓ (回退)  |
  * | biz_mgmt_renewal             | business_manager_visa     | ✓ (回退)  |
- * | eng_humanities_intl_cert      | eng_humanities_intl       | ✗         |
- * | eng_humanities_intl_renewal   | eng_humanities_intl       | ✗         |
+ * | eng_humanities_intl_cert      | work（技人国 seed）       | ✓         |
+ * | eng_humanities_intl_renewal   | work                      | ✓         |
  * | intra_company_transfer       | intra_company_transfer    | ✗         |
  * | company_setup                | company_setup             | ✗         |
  */
@@ -77,13 +78,13 @@ export const WIZARD_SEED_MATRIX: readonly {
   },
   {
     wizardId: "eng_humanities_intl_cert",
-    canonical: "eng_humanities_intl",
-    seedExists: false,
+    canonical: "work",
+    seedExists: true,
   },
   {
     wizardId: "eng_humanities_intl_renewal",
-    canonical: "eng_humanities_intl",
-    seedExists: false,
+    canonical: "work",
+    seedExists: true,
   },
   {
     wizardId: "intra_company_transfer",

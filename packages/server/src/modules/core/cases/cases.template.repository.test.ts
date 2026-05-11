@@ -416,6 +416,17 @@ void describe("resolveCaseTypeCandidates", () => {
     ]);
   });
 
+  void test("returns [raw, work] for 技人国向导 id（命中 work 种子蓝图）", () => {
+    assert.deepEqual(resolveCaseTypeCandidates("eng_humanities_intl_cert"), [
+      "eng_humanities_intl_cert",
+      "work",
+    ]);
+    assert.deepEqual(resolveCaseTypeCandidates("eng_humanities_intl_renewal"), [
+      "eng_humanities_intl_renewal",
+      "work",
+    ]);
+  });
+
   void test("returns single element for unknown types", () => {
     assert.deepEqual(resolveCaseTypeCandidates("totally_unknown"), [
       "totally_unknown",

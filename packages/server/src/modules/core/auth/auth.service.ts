@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
 import crypto, { randomBytes, scrypt as scryptCallback } from "node:crypto";
@@ -28,6 +29,20 @@ type LoginUserQueryRow = {
   status: string;
   password_hash: string | null;
 };
+
+const LOGIN_USER_SQL = `
+        select u.id,
+               u.org_id,
+               u.name,
+               u.email,
+               r.code as role,
+               u.status,
+               u.password_hash
+        from users u
+        join roles r on r.id = u.role_id
+        where lower(u.email) = lower($1)
+        limit 2
+      `;
 
 /**
  *
@@ -68,6 +83,24 @@ export class AuthService {
    */
   constructor(@Inject(Pool) private readonly pool: Pool) {}
 
+  private async fetchLoginCandidates(
+    email: string,
+  ): Promise<LoginUserQueryRow[]> {
+    try {
+      const result = await this.pool.query<LoginUserQueryRow>(LOGIN_USER_SQL, [
+        email,
+      ]);
+      return result.rows;
+    } catch (cause) {
+      if (isAuthDatabaseConnectivityFailure(cause)) {
+        throw new ServiceUnavailableException(
+          "Authentication database is unavailable",
+        );
+      }
+      throw cause;
+    }
+  }
+
   /**
    * 校验邮箱密码并签发后台 JWT。
    *
@@ -81,28 +114,13 @@ export class AuthService {
       throw new BadRequestException("Email and password are required");
     }
 
-    const result = await this.pool.query<LoginUserQueryRow>(
-      `
-        select u.id,
-               u.org_id,
-               u.name,
-               u.email,
-               r.code as role,
-               u.status,
-               u.password_hash
-        from users u
-        join roles r on r.id = u.role_id
-        where lower(u.email) = lower($1)
-        limit 2
-      `,
-      [email],
-    );
+    const rows = await this.fetchLoginCandidates(email);
 
-    if (result.rows.length !== 1) {
+    if (rows.length !== 1) {
       throw new UnauthorizedException("Invalid email or password");
     }
 
-    const userRow = result.rows[0];
+    const userRow = rows[0];
     if (userRow.status !== "active") {
       throw new UnauthorizedException("Invalid email or password");
     }
@@ -180,6 +198,42 @@ function mapLoginUser(row: LoginUserQueryRow, role: Role): AdminLoginUser {
 
 function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
+}
+
+const NETWORK_LAYER_ERROR_CODES = new Set([
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "EPIPE",
+  "EAI_AGAIN",
+]);
+
+function authDbErrorCodeImpliesConnectivityFailure(code: string): boolean {
+  if (NETWORK_LAYER_ERROR_CODES.has(code)) return true;
+  return code.length >= 2 && code.startsWith("08");
+}
+
+function authDbMessageImpliesConnectivityFailure(message: string): boolean {
+  const m = message.toLowerCase();
+  return (
+    m.includes("connect econnrefused") ||
+    m.includes("connection terminated unexpectedly") ||
+    m.includes("server closed the connection unexpectedly")
+  );
+}
+
+function isAuthDatabaseConnectivityFailure(cause: unknown): boolean {
+  if (!cause || typeof cause !== "object") return false;
+  const err = cause as NodeJS.ErrnoException & {
+    code?: unknown;
+    message?: unknown;
+  };
+  const code = typeof err.code === "string" ? err.code : "";
+  if (authDbErrorCodeImpliesConnectivityFailure(code)) return true;
+  const msg = err.message;
+  return (
+    typeof msg === "string" && authDbMessageImpliesConnectivityFailure(msg)
+  );
 }
 
 async function derivePasswordKey(

@@ -1,5 +1,6 @@
 import { ref, watch, computed, type Ref, type ComputedRef } from "vue";
 import type { CaseRepository } from "./CaseRepository";
+import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
 
 /** checklist 预览状态。 */
 export type ChecklistPreviewState =
@@ -9,14 +10,14 @@ export type ChecklistPreviewState =
   | "empty"
   | "error";
 
-/**
- *
- */
+/** Composable {@link useCreateCaseChecklistPreview} 的返回值。 */
 export interface ChecklistPreviewResult {
   /** 当前 caseTypeCode 的 checklist 条数（未请求时为 null）。 */
   checklistCount: Ref<number | null>;
   /** `requiredFlag === true` 的条目数（未请求时为 null）。 */
   checklistRequiredCount: Ref<number | null>;
+  /** 与服务端 `checklist-preview?includeItems=1` 对齐的条目（请求前或失败时为空）。 */
+  checklistItems: Ref<ChecklistPreviewLineItem[]>;
   /** 预览状态。 */
   previewState: ComputedRef<ChecklistPreviewState>;
   /** checklist 为 0 时为 true（加载中或未请求则为 false）。 */
@@ -26,11 +27,11 @@ export interface ChecklistPreviewResult {
 }
 
 /**
- * 在案件创建流程中预览 checklist 条数——模板切换时自动拉取。
+ * 在案件创建流程中预览 checklist — 模板切换时自动拉取条数与条目明细。
  *
  * @param caseTypeCode - 响应式的案件类型代码（由 draft.templateId 派生）
  * @param repo - CaseRepository 实例
- * @returns 预览状态与条数 ref
+ * @returns 预览状态、条数与条目 ref
  */
 export function useCreateCaseChecklistPreview(
   caseTypeCode: Ref<string> | ComputedRef<string>,
@@ -38,6 +39,7 @@ export function useCreateCaseChecklistPreview(
 ): ChecklistPreviewResult {
   const checklistCount = ref<number | null>(null);
   const checklistRequiredCount = ref<number | null>(null);
+  const checklistItems = ref<ChecklistPreviewLineItem[]>([]);
   const loading = ref(false);
   const errored = ref(false);
 
@@ -46,18 +48,22 @@ export function useCreateCaseChecklistPreview(
     if (!c) {
       checklistCount.value = null;
       checklistRequiredCount.value = null;
+      checklistItems.value = [];
       return;
     }
     loading.value = true;
     errored.value = false;
+    checklistItems.value = [];
     try {
       const r = await repo.previewChecklistCount(c);
       checklistCount.value = r.count;
       checklistRequiredCount.value = r.requiredCount;
+      checklistItems.value = r.items ?? [];
     } catch {
       errored.value = true;
       checklistCount.value = null;
       checklistRequiredCount.value = null;
+      checklistItems.value = [];
     } finally {
       loading.value = false;
     }
@@ -81,6 +87,7 @@ export function useCreateCaseChecklistPreview(
   return {
     checklistCount,
     checklistRequiredCount,
+    checklistItems,
     previewState,
     checklistEmpty,
     refresh: () => fetchPreview(),

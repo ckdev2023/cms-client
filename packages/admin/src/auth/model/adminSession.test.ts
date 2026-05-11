@@ -350,6 +350,29 @@ describe("createAdminSessionController", () => {
     expect(storage.getItem(ADMIN_SESSION_STORAGE_KEY)).toBeNull();
   });
 
+  it("loginAdmin maps 503 responses to SERVICE_UNAVAILABLE", async () => {
+    const controller = createAdminSessionController();
+    const storage = createStorage();
+    const request = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ message: "dependency check failed" }), {
+        status: 503,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(
+      loginAdmin(
+        { email: "admin@example.com", password: "pw" },
+        { controller, storage, request },
+      ),
+    ).rejects.toMatchObject({
+      name: "AdminLoginRequestError",
+      code: "SERVICE_UNAVAILABLE",
+      status: 503,
+    });
+    expect(controller.isAuthenticated.value).toBe(false);
+  });
+
   it("expires an in-memory JWT session when accessed after exp", () => {
     let nowMs = 1_000;
     const controller = createAdminSessionController({ now: () => nowMs });

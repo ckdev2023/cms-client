@@ -41,6 +41,27 @@ import {
   requestAndAdapt,
   type CaseRepositoryRuntime,
 } from "./CaseRepositorySupport";
+import { adaptChecklistPreviewLine } from "./adaptChecklistPreviewLine";
+import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
+
+function parseChecklistPreviewResponsePayload(value: unknown): {
+  count: number;
+  requiredCount: number;
+  items: ChecklistPreviewLineItem[];
+} {
+  const obj = value as Record<string, unknown>;
+  const count = typeof obj.count === "number" ? obj.count : 0;
+  const requiredCount =
+    typeof obj.requiredCount === "number" ? obj.requiredCount : 0;
+  const rawItems = obj.items;
+  const items =
+    Array.isArray(rawItems) && rawItems.length > 0
+      ? rawItems
+          .map((row) => adaptChecklistPreviewLine(row))
+          .filter((x): x is ChecklistPreviewLineItem => x !== null)
+      : [];
+  return { count, requiredCount, items };
+}
 
 const EMPTY_VALIDATION: ValidationData = {
   lastTime: "",
@@ -384,19 +405,18 @@ export function createListDocumentTemplates(runtime: CaseRepositoryRuntime) {
 export function createPreviewChecklistCount(runtime: CaseRepositoryRuntime) {
   return async (
     caseTypeCode: string,
-  ): Promise<{ count: number; requiredCount: number }> => {
-    if (!caseTypeCode.trim()) return { count: 0, requiredCount: 0 };
-    return requestAndAdapt<{ count: number; requiredCount: number }>({
+  ): Promise<{
+    count: number;
+    requiredCount: number;
+    items?: ChecklistPreviewLineItem[];
+  }> => {
+    if (!caseTypeCode.trim()) return { count: 0, requiredCount: 0, items: [] };
+
+    return requestAndAdapt({
       runtime,
-      url: `${runtime.apiPath}/checklist-preview?caseTypeCode=${encodeURIComponent(caseTypeCode)}`,
+      url: `${runtime.apiPath}/checklist-preview?caseTypeCode=${encodeURIComponent(caseTypeCode)}&includeItems=1`,
       method: "GET",
-      adapt: (value) => {
-        const obj = value as Record<string, unknown>;
-        const count = typeof obj.count === "number" ? obj.count : 0;
-        const requiredCount =
-          typeof obj.requiredCount === "number" ? obj.requiredCount : 0;
-        return { count, requiredCount };
-      },
+      adapt: parseChecklistPreviewResponsePayload,
       errorMessage: "Invalid checklist preview response",
     });
   };

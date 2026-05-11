@@ -37,6 +37,8 @@ export type CreateCaseBody = {
 /** 资料清单预览查询参数。 */
 export type ChecklistPreviewQuery = {
   caseTypeCode: unknown;
+  /** 传入 `true` / `"true"` / `"1"` 时响应包含条目明细（与建案入库 checklist 同源）。 */
+  includeItems?: unknown;
 };
 
 /** 更新案件请求体。 */

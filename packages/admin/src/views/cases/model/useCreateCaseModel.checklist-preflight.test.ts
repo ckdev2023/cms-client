@@ -54,6 +54,19 @@ describe("useCreateCaseModel: checklist preflight", () => {
     expect(m.canSubmit.value).toBe(false);
   });
 
+  it("allows canSubmit when preview is empty but autoChecklist is off", async () => {
+    const repo = stubRepoWithChecklistCount(0);
+    const m = useCreateCaseModel(createDeps({ repo }));
+    m.setAutoChecklist(false);
+    fillDraftForSubmit(m);
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("empty");
+    });
+
+    expect(m.canSubmit.value).toBe(true);
+  });
+
   it("allows canSubmit when checklist preview returns > 0", async () => {
     const repo = stubRepoWithChecklistCount(5);
     const m = useCreateCaseModel(createDeps({ repo }));
@@ -65,6 +78,39 @@ describe("useCreateCaseModel: checklist preflight", () => {
 
     expect(m.checklistPreview.checklistEmpty.value).toBe(false);
     expect(m.canSubmit.value).toBe(true);
+  });
+
+  it("refetches checklist preview when advancing from step 1 to 2", async () => {
+    const previewChecklistCount = vi
+      .fn()
+      .mockResolvedValueOnce({ count: 0, requiredCount: 0, items: [] })
+      .mockResolvedValueOnce({
+        count: 5,
+        requiredCount: 4,
+        items: [],
+      });
+    const repo = {
+      previewChecklistCount,
+      createCase: vi.fn(async () => ({ id: "CASE-001" })),
+      createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+    } as unknown as CaseRepository;
+
+    const m = useCreateCaseModel(createDeps({ repo }));
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("empty");
+    });
+    expect(previewChecklistCount).toHaveBeenCalledTimes(1);
+
+    m.goNext();
+
+    await vi.waitFor(() => {
+      expect(m.draft.currentStep).toBe(2);
+    });
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("ok");
+    });
+    expect(previewChecklistCount).toHaveBeenCalledTimes(2);
   });
 
   it("exposes checklistPreview state on the model", () => {
@@ -96,5 +142,25 @@ describe("useCreateCaseModel: checklist preflight", () => {
 
     expect(m.checklistPreview.checklistEmpty.value).toBe(false);
     expect(m.canSubmit.value).toBe(false);
+  });
+
+  it("allows canSubmit on preview error when autoChecklist is off", async () => {
+    const repo = {
+      previewChecklistCount: vi.fn(async () => {
+        throw new Error("network error");
+      }),
+      createCase: vi.fn(async () => ({ id: "CASE-002" })),
+      createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+    } as unknown as CaseRepository;
+
+    const m = useCreateCaseModel(createDeps({ repo }));
+    m.setAutoChecklist(false);
+    fillDraftForSubmit(m);
+
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("error");
+    });
+
+    expect(m.canSubmit.value).toBe(true);
   });
 });

@@ -936,7 +936,19 @@ export class CasesService {
   async previewChecklistCount(
     ctx: RequestContext,
     caseTypeCode: string,
-  ): Promise<{ count: number; requiredCount: number }> {
+    options?: { includeItems?: boolean },
+  ): Promise<{
+    count: number;
+    requiredCount: number;
+    items?: {
+      code: string;
+      name: string;
+      ownerSide: string;
+      category: string | null;
+      requiredFlag: boolean;
+      providedByRole: string | null;
+    }[];
+  }> {
     const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
       findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
     const items = await resolveChecklistItems(
@@ -946,7 +958,19 @@ export class CasesService {
       caseTemplateResolver,
     );
     const requiredCount = items.filter((i) => i.requiredFlag === true).length;
-    return { count: items.length, requiredCount };
+    const base = { count: items.length, requiredCount };
+    if (!options?.includeItems) return base;
+    return {
+      ...base,
+      items: items.map((item) => ({
+        code: item.code,
+        name: item.name,
+        ownerSide: item.ownerSide ?? "applicant",
+        category: item.category ?? null,
+        requiredFlag: item.requiredFlag === true,
+        providedByRole: item.providedByRole ?? null,
+      })),
+    };
   }
 
   /**

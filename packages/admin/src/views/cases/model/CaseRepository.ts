@@ -78,6 +78,7 @@ import type { CommunicationLogCreateInput } from "./CaseAdapterMessageWriteBuild
 import type { GeneratedDocumentCreateInput } from "./CaseAdapterGeneratedDocumentWriteBuilders";
 import type { ReminderCreateInput } from "./CaseAdapterReminderWriteBuilders";
 import type { TaskCreateInput } from "./CaseAdapterTaskWriteBuilders";
+import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
 
 // ─── Responsibility Boundary ────────────────────────────────────
 // CaseRepository is request-orchestration only:
@@ -310,9 +311,11 @@ export interface CaseRepository {
    * 资料清单预览：返回给定 caseTypeCode 的 checklist 条数与必须项条数。
    * 数据源：`GET /api/cases/checklist-preview?caseTypeCode=xxx`。
    */
-  previewChecklistCount(
-    caseTypeCode: string,
-  ): Promise<{ count: number; requiredCount: number }>;
+  previewChecklistCount(caseTypeCode: string): Promise<{
+    count: number;
+    requiredCount: number;
+    items?: ChecklistPreviewLineItem[];
+  }>;
 
   /**
    * 获取文書模板列表。
@@ -337,6 +340,7 @@ export interface CaseRepository {
 }
 
 export { CaseRepositoryError };
+export type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
 
 /**
  * 创建基于 HTTP 请求的真实 CaseRepository。

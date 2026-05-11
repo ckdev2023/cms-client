@@ -120,6 +120,7 @@ const casesZhCN = {
         "依据所选模板自动生成 · 用于预审与提交检查；正式建档后以日文官方名（行政书士标准）登记",
       documentPreviewSummary: "{total} 项 · {required} 必须",
       documentPreviewEmpty: "请先在第 1 步选择案件模板",
+      documentPreviewLoading: "正在从案件资料蓝图加载清单预览…",
       documentPreviewServerEmpty:
         "服务端资料清单预检未命中模板（0 条）。下方仅为向导内示意清单；未完成配置前无法在末尾步骤提交创建。请到「案件资料蓝图」维护或由管理员执行初始化脚本写入模板。",
       requiredBadge: "必须",

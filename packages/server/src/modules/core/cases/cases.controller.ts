@@ -102,9 +102,26 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const caseTypeCode = requireString(query.caseTypeCode, "caseTypeCode");
-    const { count, requiredCount } =
-      await this.casesService.previewChecklistCount(ctx, caseTypeCode);
-    return { caseTypeCode, count, requiredCount };
+    const rawInc = query.includeItems;
+    const includeItems =
+      rawInc === true || rawInc === "true" || rawInc === "1" || rawInc === 1;
+    const preview = await this.casesService.previewChecklistCount(
+      ctx,
+      caseTypeCode,
+      { includeItems },
+    );
+    return includeItems
+      ? {
+          caseTypeCode,
+          count: preview.count,
+          requiredCount: preview.requiredCount,
+          items: preview.items ?? [],
+        }
+      : {
+          caseTypeCode,
+          count: preview.count,
+          requiredCount: preview.requiredCount,
+        };
   }
 
   /**

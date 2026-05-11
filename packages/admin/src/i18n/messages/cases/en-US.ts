@@ -123,6 +123,7 @@ const casesEnUS = {
         "Auto-generated from the selected template for pre-submission review; the actual checklist uses Japanese official names after case creation.",
       documentPreviewSummary: "{total} items · {required} required",
       documentPreviewEmpty: "Pick a case template in Step 1 first",
+      documentPreviewLoading: "Loading checklist preview from Case Templates…",
       documentPreviewServerEmpty:
         "Server checklist preview found no rows (0). The list below is only an illustrative wizard outline until templates are configured; submission stays blocked at the final step. Configure Case Templates or run the seed/init script.",
       requiredBadge: "Required",

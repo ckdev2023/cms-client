@@ -35,11 +35,13 @@ function handleDueDateChange(value: string | number | Date | undefined): void {
 
 onMounted(async () => {
   await nextTick();
-  const label = document.getElementById("case-create-dueDate-label");
-  const input = label?.parentElement?.querySelector(
+  const mount = document.querySelector(".cc__field--due-mount");
+  const input = mount?.querySelector(
     "input.arco-picker-start-time",
-  ) as HTMLElement | null;
+  ) as HTMLInputElement | null;
   if (input) {
+    input.id = "case-create-dueDate";
+    input.name = "dueDate";
     input.setAttribute("aria-label", t("cases.create.step3.dueDateLabel"));
   }
 });
@@ -104,7 +106,7 @@ onMounted(async () => {
         </select>
       </div>
       <div class="cc__field cc__field--due-mount cc__field--full">
-        <label id="case-create-dueDate-label" class="cc__label">
+        <label class="cc__label" for="case-create-dueDate">
           {{ t("cases.create.step3.dueDateLabel") }}
           <span class="req-mark">*</span>
         </label>
@@ -115,7 +117,6 @@ onMounted(async () => {
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
           position="bl"
-          aria-labelledby="case-create-dueDate-label"
           @change="handleDueDateChange"
         />
       </div>

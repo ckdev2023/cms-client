@@ -402,11 +402,19 @@ const summaryItems = computed(() => {
       </button>
     </div>
 
-    <Card v-show="model.draft.currentStep === 1" padding="lg">
+    <Card
+      v-show="model.draft.currentStep === 1"
+      padding="lg"
+      data-testid="case-create-step-1-panel"
+    >
       <CaseCreateStep1 :model="model" :templates="templates" />
     </Card>
 
-    <Card v-show="model.draft.currentStep === 2" padding="lg">
+    <Card
+      v-show="model.draft.currentStep === 2"
+      padding="lg"
+      data-testid="case-create-step-2-panel"
+    >
       <CaseCreateStep2
         :model="model"
         :customer-options="customerSelectOptions"
@@ -418,7 +426,11 @@ const summaryItems = computed(() => {
       />
     </Card>
 
-    <Card v-show="model.draft.currentStep === 3" padding="lg">
+    <Card
+      v-show="model.draft.currentStep === 3"
+      padding="lg"
+      data-testid="case-create-step-3-panel"
+    >
       <CaseCreateStep3
         :model="model"
         :owner-options="ownerOptions"
@@ -426,7 +438,11 @@ const summaryItems = computed(() => {
       />
     </Card>
 
-    <Card v-show="model.draft.currentStep === 4" padding="lg">
+    <Card
+      v-show="model.draft.currentStep === 4"
+      padding="lg"
+      data-testid="case-create-step-4-panel"
+    >
       <CaseCreateStep4
         :model="model"
         :submitted="submitted"

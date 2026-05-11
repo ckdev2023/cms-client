@@ -3,12 +3,19 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
+import type { DocumentProviderType } from "../../documents/types";
 import CaseCreateStep2ChecklistServerBanner from "./CaseCreateStep2ChecklistServerBanner.vue";
+import CaseCreateStep2DocumentPreview from "./CaseCreateStep2DocumentPreview.vue";
 import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 import type { PartyPickerMode } from "../model/useCasePartyPicker";
 import type { CaseCreateCustomerOption } from "../types";
-import { resolveTemplateLabel } from "../types-create";
+import {
+  resolveTemplateLabel,
+  type CaseTemplateRequirementSection,
+} from "../types-create";
+import { buildChecklistPreviewSections } from "../model/buildChecklistPreviewSections";
+import { resolveCaseCreateRequirementSummary } from "../model/caseCreateRequirementSummary";
 
 /** 步骤二：主申请人、关联人管理、资料清单预览。 */
 const { t, te, locale } = useI18n();
@@ -55,6 +62,35 @@ const primaryGroupDisplay = computed(() => {
 
 type SectionIcon = "applicant" | "supporter" | "office" | "folder";
 
+type PreviewRow = {
+  id: string;
+  label: string;
+  required: boolean;
+  conditionalTag?: string;
+};
+
+type PreviewSectionVM = {
+  key: string;
+  icon: SectionIcon;
+  title: string;
+  items: PreviewRow[];
+};
+
+/**
+ * Step2 预览卡片区段图标：服务端的 `DocumentProviderType` 语义映射。
+ * @param provider 资料提供方枚举
+ * @returns 图标语义类别
+ */
+function resolveProviderSectionIcon(
+  provider: DocumentProviderType,
+): SectionIcon {
+  if (provider === "main_applicant") return "applicant";
+  if (provider === "dependent_guarantor") return "supporter";
+  if (provider === "employer_org") return "supporter";
+  if (provider === "office_internal") return "office";
+  return "folder";
+}
+
 /**
  * 资料预览分组图标：由 zh 标题关键字映射。
  * @param zhTitle 子分组中文标题（label.zh）
@@ -67,49 +103,97 @@ function resolveSectionIcon(zhTitle: string): SectionIcon {
   return "folder";
 }
 
-/** 资料清单整体统计：用于头部 summary chip（与服务端 blueprint 对齐）。 */
-const requirementSummary = computed(() => {
-  const tpl = props.model.currentTemplate.value;
-  if (!tpl) return { total: 0, required: 0, sections: 0 };
-
-  let total = 0;
-  let required = 0;
-  for (const sec of tpl.sections) {
-    total += sec.items.length;
-    for (const it of sec.items) if (it.required) required += 1;
+/**
+ * 累计 fixtures 模板分段内的资料项总数与必填项数。
+ *
+ * @param sections 模板分段列表
+ * @returns 总条数与必填条数
+ */
+function countFixtureItemTotals(
+  sections: readonly CaseTemplateRequirementSection[],
+) {
+  let fixtureTotal = 0;
+  let fixtureRequired = 0;
+  for (const sec of sections) {
+    fixtureTotal += sec.items.length;
+    for (const it of sec.items) if (it.required) fixtureRequired += 1;
   }
-
-  const preview = props.model.checklistPreview;
-  const srvTotal = preview.checklistCount.value;
-  const srvRequired = preview.checklistRequiredCount.value;
-  const st = preview.previewState.value;
-
-  if (st === "ok" && srvTotal !== null) {
-    return {
-      total: srvTotal,
-      required: srvRequired ?? required,
-      sections: tpl.sections.length,
-    };
-  }
-  if (st === "empty") {
-    return { total: 0, required: 0, sections: tpl.sections.length };
-  }
-
-  return { total, required, sections: tpl.sections.length };
-});
+  return { fixtureTotal, fixtureRequired };
+}
 
 /**
- * 统计子分组下的必须项数量。
- * @param items 资料项列表
- * @returns 必须项条数
+ * 合并清单预览与 fixtures，供 Step2 摘要 chip 使用。
+ *
+ * @param model 建案模型
+ * @returns 总条数、必填条数与分段数快照
  */
-function sectionRequiredCount(
-  items: ReadonlyArray<{ required: boolean }>,
-): number {
-  let count = 0;
-  for (const it of items) if (it.required) count += 1;
-  return count;
+function resolveStep2RequirementSummary(model: CreateCaseModel) {
+  const tpl = model.currentTemplate.value;
+  if (!tpl) return { total: 0, required: 0, sections: 0 };
+
+  const { fixtureTotal, fixtureRequired } = countFixtureItemTotals(
+    tpl.sections,
+  );
+  const preview = model.checklistPreview;
+  return resolveCaseCreateRequirementSummary({
+    fixtureTotal,
+    fixtureRequired,
+    sectionCount: tpl.sections.length,
+    srvTotal: preview?.checklistCount?.value ?? null,
+    srvRequired: preview?.checklistRequiredCount?.value ?? null,
+    previewState: preview?.previewState?.value,
+  });
 }
+
+/** 资料清单整体统计：用于头部 summary chip（与服务端 blueprint 对齐）。 */
+const requirementSummary = computed(() =>
+  resolveStep2RequirementSummary(props.model),
+);
+
+/** 与服务端 checklist-preview 条目同源时的规范分段。 */
+const checklistPreviewSectionsFromApi = computed(() => {
+  const lines = props.model.checklistPreview?.checklistItems?.value ?? [];
+  if (!lines.length) return [];
+  return buildChecklistPreviewSections(lines, props.model.draft?.templateId, t);
+});
+
+const documentPreviewLoading = computed(
+  () => props.model.checklistPreview?.previewState?.value === "loading",
+);
+
+/** 统一「资料清单预览」分段模型：优先 API 蓝图，缺省回退至 fixtures。 */
+const documentPreviewSections = computed<PreviewSectionVM[] | null>(() => {
+  if (documentPreviewLoading.value) return null;
+
+  const apiSeq = checklistPreviewSectionsFromApi.value;
+  if (apiSeq.length > 0) {
+    return apiSeq.map((sec) => ({
+      key: `api-${sec.provider}`,
+      icon: resolveProviderSectionIcon(sec.provider),
+      title: sec.title,
+      items: sec.items.map((it) => ({
+        id: it.code,
+        label: it.name,
+        required: it.requiredFlag,
+      })),
+    }));
+  }
+
+  const tpl = props.model.currentTemplate.value;
+  if (!tpl) return [];
+
+  return tpl.sections.map((sec, si) => ({
+    key: `tpl-${si}`,
+    icon: resolveSectionIcon(sec.title.zh),
+    title: resolveTemplateLabel(sec.title, locale.value),
+    items: sec.items.map((it) => ({
+      id: it.id,
+      label: resolveTemplateLabel(it.label, locale.value),
+      required: it.required,
+      conditionalTag: it.conditionalTag,
+    })),
+  }));
+});
 </script>
 
 <template>
@@ -260,171 +344,12 @@ function sectionRequiredCount(
 
     <CaseCreateStep2ChecklistServerBanner :model="model" />
 
-    <section class="preview" data-testid="document-preview">
-      <header class="preview__header">
-        <div class="preview__heading">
-          <h3 class="preview__title">
-            {{ t("cases.create.step2.documentPreview") }}
-          </h3>
-          <p class="preview__hint">
-            {{ t("cases.create.step2.documentPreviewHint") }}
-          </p>
-        </div>
-        <Chip
-          v-if="requirementSummary.total > 0"
-          tone="primary"
-          size="md"
-          data-testid="document-preview-summary"
-        >
-          {{
-            t("cases.create.step2.documentPreviewSummary", {
-              total: requirementSummary.total,
-              required: requirementSummary.required,
-            })
-          }}
-        </Chip>
-      </header>
-
-      <div v-if="model.currentTemplate.value" class="preview__sections">
-        <article
-          v-for="(sec, si) in model.currentTemplate.value.sections"
-          :key="si"
-          class="preview-card"
-        >
-          <header class="preview-card__header">
-            <span
-              class="preview-card__icon"
-              :data-icon="resolveSectionIcon(sec.title.zh)"
-              aria-hidden="true"
-            >
-              <svg
-                v-if="resolveSectionIcon(sec.title.zh) === 'applicant'"
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4 4-7 8-7s8 3 8 7" />
-              </svg>
-              <svg
-                v-else-if="resolveSectionIcon(sec.title.zh) === 'supporter'"
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="9" cy="8" r="3.2" />
-                <circle cx="17" cy="9.5" r="2.6" />
-                <path d="M2.5 20c0-3.4 3-5.8 6.5-5.8s6.5 2.4 6.5 5.8" />
-                <path d="M15 20c0-2.6 2-4.6 5-4.6" />
-              </svg>
-              <svg
-                v-else-if="resolveSectionIcon(sec.title.zh) === 'office'"
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <rect x="3" y="7" width="18" height="13" rx="2" />
-                <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-                <path d="M3 13h18" />
-              </svg>
-              <svg
-                v-else
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <path
-                  d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"
-                />
-              </svg>
-            </span>
-            <h4 class="preview-card__title">
-              {{ resolveTemplateLabel(sec.title, locale) }}
-            </h4>
-            <span class="preview-card__count">
-              {{ sec.items.length }}
-              <span class="preview-card__count-sep">·</span>
-              <span class="preview-card__count-required">{{
-                sectionRequiredCount(sec.items)
-              }}</span>
-            </span>
-          </header>
-          <ul class="preview-card__list">
-            <li
-              v-for="item in sec.items"
-              :key="item.id"
-              class="preview-item"
-              :data-required="item.required"
-            >
-              <span class="preview-item__bullet" aria-hidden="true">
-                <svg
-                  viewBox="0 0 24 24"
-                  width="14"
-                  height="14"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2.4"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                >
-                  <path d="M5 12.5l4 4L19 7" />
-                </svg>
-              </span>
-              <span class="preview-item__body">
-                <span class="preview-item__label">{{
-                  resolveTemplateLabel(item.label, locale)
-                }}</span>
-                <span
-                  v-if="item.conditionalTag"
-                  class="preview-item__condition"
-                >
-                  {{ item.conditionalTag }}
-                </span>
-              </span>
-              <Chip
-                v-if="item.required"
-                tone="warning"
-                size="micro"
-                class="preview-item__chip"
-              >
-                {{ t("cases.create.step2.requiredBadge") }}
-              </Chip>
-              <Chip
-                v-else
-                tone="neutral"
-                size="micro"
-                class="preview-item__chip"
-              >
-                {{ t("cases.create.step2.optionalBadge") }}
-              </Chip>
-            </li>
-          </ul>
-        </article>
-      </div>
-      <div v-else class="preview__empty">
-        {{ t("cases.create.step2.documentPreviewEmpty") }}
-      </div>
-    </section>
+    <CaseCreateStep2DocumentPreview
+      :loading="documentPreviewLoading"
+      :sections="documentPreviewSections"
+      :summary-total="requirementSummary.total"
+      :summary-required="requirementSummary.required"
+    />
   </div>
 </template>
 

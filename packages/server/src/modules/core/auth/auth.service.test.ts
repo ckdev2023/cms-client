@@ -2,7 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import type { Pool } from "pg";
 
-import { BadRequestException, UnauthorizedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  UnauthorizedException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 
 import { AuthService, hashPassword, verifyPassword } from "./auth.service";
 import {
@@ -120,5 +124,21 @@ void test("AuthService.login rejects blank credentials", async () => {
   await assert.rejects(
     () => service.login({ email: " ", password: " " }),
     BadRequestException,
+  );
+});
+
+void test("AuthService.login surfaces database connectivity failures as ServiceUnavailableException", async () => {
+  const rejection = Object.assign(new Error("connect ECONNREFUSED"), {
+    code: "ECONNREFUSED",
+  });
+  const service = new AuthService(makePool(() => Promise.reject(rejection)));
+
+  await assert.rejects(
+    () =>
+      service.login({
+        email: SAMPLE_USER_ROW.email,
+        password: validInput,
+      }),
+    ServiceUnavailableException,
   );
 });

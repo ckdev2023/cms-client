@@ -61,6 +61,14 @@ async function handleSubmit() {
       return;
     }
 
+    if (
+      error instanceof AdminLoginRequestError &&
+      error.code === "SERVICE_UNAVAILABLE"
+    ) {
+      setSubmitError(t("auth.login.serviceUnavailable"));
+      return;
+    }
+
     setSubmitError(t("auth.login.requestFailed"));
   } finally {
     finishSubmitting();

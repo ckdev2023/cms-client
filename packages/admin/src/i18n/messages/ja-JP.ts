@@ -10,6 +10,7 @@ import settings from "./settings/ja-JP";
 import tasks from "./tasks/ja-JP";
 import dashboardWorkItems from "./work-items/ja-JP";
 import dashboardWorkItem from "./dashboard-work-item/ja-JP";
+import auth from "./auth/ja-JP";
 import { shellSearchJaJP } from "./shell-search/ja-JP";
 
 const jaJP = {
@@ -94,37 +95,7 @@ const jaJP = {
       "{section} のサイドバー遷移を有効に保ち、正式モジュール実装まで未一致ルート警告を出さないためのプレースホルダーです。",
     pathLabel: "現在のパス",
   },
-  auth: {
-    login: {
-      metaTitle: "ログイン",
-      badge: "Admin Sign In",
-      title: "Gyosei OS にログイン",
-      subtitle:
-        "管理画面アカウントでワークスペース、顧客、案件、資料センターへ進みます。",
-      helperTitle: "ログイン後に続けられる作業",
-      helperItems: {
-        workspace: "今日のタスク、期限超過、リスク案件をまとめて確認",
-        customers: "顧客・相談・案件の継続フォロー",
-        documents: "資料センターと請求関連ページの確認",
-      },
-      formTitle: "管理画面ログイン",
-      formDescription:
-        "メールアドレスとパスワードを入力して admin アプリへ進んでください。",
-      emailLabel: "メールアドレス",
-      emailPlaceholder: "name{'@'}firm.jp",
-      passwordLabel: "パスワード",
-      passwordPlaceholder: "パスワードを入力",
-      submit: "ログイン",
-      validation: "メールアドレスとパスワードを入力してください",
-      invalidCredentials: "メールアドレスまたはパスワードが正しくありません。",
-      requestFailed:
-        "ログインに失敗しました。しばらくしてから再試行してください。",
-      sessionExpiredNotice:
-        "セッションの有効期限が切れました。もう一度ログインしてください。",
-      loggedOutNotice: "ログアウトしました。",
-      demoHint: "有効な管理画面アカウントでログインしてください。",
-    },
-  },
+  auth,
   customers: {
     list: customerList,
     detail: customerDetail,

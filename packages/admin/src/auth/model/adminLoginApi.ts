@@ -55,6 +55,7 @@ export interface AdminLoginResponse {
 type AdminLoginErrorCode =
   | "NETWORK"
   | "UNAUTHORIZED"
+  | "SERVICE_UNAVAILABLE"
   | "BAD_RESPONSE"
   | "INVALID_RESPONSE";
 
@@ -176,14 +177,22 @@ export async function requestAdminLogin(
 
   const body = await readResponseBody(response);
   if (!response.ok) {
+    const code =
+      response.status === 401
+        ? "UNAUTHORIZED"
+        : response.status === 503 || response.status === 502
+          ? "SERVICE_UNAVAILABLE"
+          : "BAD_RESPONSE";
     throw new AdminLoginRequestError({
-      code: response.status === 401 ? "UNAUTHORIZED" : "BAD_RESPONSE",
+      code,
       status: response.status,
       message:
         readMessageFromBody(body) ??
         (response.status === 401
           ? "Invalid email or password"
-          : `Login request failed with status ${response.status}`), // i18n-skip
+          : response.status === 503 || response.status === 502
+            ? "Authentication service unavailable" // i18n-skip
+            : `Login request failed with status ${response.status}`), // i18n-skip
     });
   }
 

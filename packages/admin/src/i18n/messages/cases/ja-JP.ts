@@ -122,6 +122,8 @@ const casesJaJP = {
         "選択テンプレートから自動生成 ・ 提出前チェック用 ・ 案件作成後は日本語の正式名称で登録",
       documentPreviewSummary: "{total} 項目 ・ 必須 {required}",
       documentPreviewEmpty: "ステップ 1 でテンプレートを選択してください",
+      documentPreviewLoading:
+        "案件資料ブループリントからプレビューを読み込み中です…",
       documentPreviewServerEmpty:
         "サーバー側のチェックリスト事前確認が 0 件です。下記はウィザード上の参考リストであり、テンプレート未設定の間は最終ステップで作成できません。「案件資料ブループリント」の設定または管理者によるシード実行が必要です。",
       requiredBadge: "必須",
