@@ -16,46 +16,17 @@ import {
   APPLICATION_TYPE_LABELS,
   type ApplicationType,
 } from "../types-create";
-// ─── Source Context → Customer Option Synthesis (p0-fe-010-02) ──
-/**
- * 当 `sourceContext.customerId` 存在且客户不在 create customer list 中时，
- * 从 source context 携带的默认值合成一个 `CaseCreateCustomerOption`，
- * 确保 group 继承、标题派生与主申请人预选正常工作。
- *
- * 至少需要 `customerId` 与 `customerName`；缺少 name 则返回 `null`。
- *
- * @param ctx - 来源上下文
- * @returns 合成的客户选项；缺少 name 时返回 `null`
- */
-function synthesizeCustomerFromSourceContext(
-  ctx: CaseCreateSourceContext,
-): CaseCreateCustomerOption | null {
-  if (!ctx.customerId || !ctx.customerName) return null;
-  return {
-    id: ctx.customerId,
-    name: ctx.customerName,
-    kana: ctx.customerKana ?? "",
-    group: ctx.customerGroup ?? "",
-    groupLabel: ctx.customerGroupLabel ?? "",
-    roleHint: "cases.create.step2.primaryRole",
-    summary: "",
-    contact: ctx.customerContact ?? "",
-    bmvQuestionnaireStatus: ctx.bmvQuestionnaireStatus ?? null,
-    bmvQuoteStatus: ctx.bmvQuoteStatus ?? null,
-    bmvSignStatus: ctx.bmvSignStatus ?? null,
-    bmvIntakeStatus: ctx.bmvIntakeStatus ?? null,
-  };
-}
+import { synthesizeCustomerFromSourceContext } from "./useCreateCaseModelSourceCustomer";
 import {
   FAMILY_APPLICANT_ROLES,
   FAMILY_SUPPORTER_ROLES,
   mapSelectedRelationsToParties,
 } from "./selectedRelationParties";
 import type { CaseRepository } from "./CaseRepository";
-import { createCaseRepository } from "./CaseRepository";
+import { resolveCaseCreateRepo } from "./useCreateCaseModelRepo";
 import { createSubmitFlow } from "./useCreateCaseModelSubmit";
 export type { CreateCaseDraftState } from "../types";
-export { synthesizeCustomerFromSourceContext };
+export { synthesizeCustomerFromSourceContext } from "./useCreateCaseModelSourceCustomer";
 /** 案件新建 composable 的依赖注入接口。 */
 export interface UseCreateCaseModelDeps {
   /** 案件模板列表提供函数 */
@@ -260,7 +231,10 @@ export {
   checkCreatePreSignGate,
   PRE_SIGN_GATE_BLOCKER_CODES,
 } from "./useCreateCasePreSignGate";
-import { useCreateCaseChecklistPreview } from "./useCreateCaseChecklistPreview";
+import {
+  useCreateCaseChecklistPreview,
+  type ChecklistPreviewState,
+} from "./useCreateCaseChecklistPreview";
 
 function createValidation(
   draft: CreateCaseDraftState,
@@ -270,7 +244,7 @@ function createValidation(
   familyApplicants: ComputedRef<CreateCaseRelatedParty[]>,
   needsGroupOverrideReason: ComputedRef<boolean>,
   preSignGate: ComputedRef<CreatePreSignGateResult>,
-  checklistEmpty: ComputedRef<boolean>,
+  checklistPreviewState: ComputedRef<ChecklistPreviewState>,
 ) {
   const canProceedStep1 = computed(
     () =>
@@ -305,7 +279,7 @@ function createValidation(
       () =>
         canProceedStep3.value &&
         preSignGate.value.passed &&
-        !checklistEmpty.value,
+        checklistPreviewState.value === "ok",
     ),
     isLastStep: computed(() => draft.currentStep === 4),
     isFirstStep: computed(() => draft.currentStep === 1),
@@ -369,6 +343,7 @@ function createGroupFamilyActions(
 }
 
 import { createSetters, createMutators } from "./useCreateCaseModelActions";
+import { createTryPreselectPrimary } from "./useCreateCaseModelPreselect";
 
 // ─── Composable Assembly ────────────────────────────────────────
 
@@ -409,7 +384,7 @@ function wireDerived(
     fam.familyApplicants,
     tpl.needsGroupOverrideReason,
     preSignGate,
-    checklistPreview.checklistEmpty,
+    checklistPreview.previewState,
   );
   const grp = createGroupFamilyActions(
     deps,
@@ -450,7 +425,21 @@ function wireModel(
     familyApplicants: d.fam.familyApplicants,
     familySupporters: d.fam.familySupporters,
     templateLabel: d.tpl.templateLabel,
+    checklistPreview: d.checklistPreview,
   });
+  const mutators = createMutators(
+    d.draft,
+    d.primaryCustomer,
+    d.additionalParties,
+    d.templatesById,
+    d.grp,
+    d.val.canProceed,
+  );
+  const tryPreselectPrimary = createTryPreselectPrimary(
+    deps.sourceContext.customerId,
+    d.primaryCustomer,
+    mutators.setPrimaryCustomer,
+  );
   return {
     ...d.tpl,
     ...d.fam,
@@ -459,26 +448,19 @@ function wireModel(
     preSignGate: d.preSignGate,
     checklistPreview: d.checklistPreview,
     ...createSetters(d.draft),
-    ...createMutators(
-      d.draft,
-      d.primaryCustomer,
-      d.additionalParties,
-      d.templatesById,
-      d.grp,
-      d.val.canProceed,
-    ),
+    ...mutators,
+    tryPreselectPrimary,
     ...sub,
   };
 }
 
 /**
  * 案件新建 Draft Model。
- *
- * @param deps - 数据源与来源上下文。
- * @returns 草稿状态、派生值与操作集合。
+ * @param deps - 数据源与来源上下文
+ * @returns 草稿状态、派生值与操作集合
  */
 export function useCreateCaseModel(deps: UseCreateCaseModelDeps) {
-  const repo = deps.repo ?? createCaseRepository();
+  const repo = resolveCaseCreateRepo(deps.repo);
   const s = initState(deps);
   const parts = wireModel(deps, s, repo);
   parts.syncInheritedGroup(true);
@@ -494,6 +476,4 @@ export function useCreateCaseModel(deps: UseCreateCaseModelDeps) {
     ...parts,
   };
 }
-
-/** useCreateCaseModel 返回值类型，用于子组件 props 声明。 */
-export type CreateCaseModel = ReturnType<typeof useCreateCaseModel>;
+export type CreateCaseModel = ReturnType<typeof useCreateCaseModel>; // eslint-disable-line jsdoc/require-jsdoc -- 类型别名

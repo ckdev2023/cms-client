@@ -3,6 +3,7 @@ import {
   bootstrapLocalAdmin,
   readLocalAdminBootstrapInput,
 } from "../modules/core/auth/localAdminBootstrap";
+import { seedCaseTemplates } from "./seedCaseTemplates";
 
 async function main() {
   const input = readLocalAdminBootstrapInput();
@@ -10,6 +11,17 @@ async function main() {
 
   try {
     const result = await bootstrapLocalAdmin(pool, input);
+    const caseTplClient = await pool.connect();
+    try {
+      await caseTplClient.query("BEGIN");
+      await seedCaseTemplates(caseTplClient, input.orgId);
+      await caseTplClient.query("COMMIT");
+    } catch (cause) {
+      await caseTplClient.query("ROLLBACK");
+      throw cause;
+    } finally {
+      caseTplClient.release();
+    }
     process.stdout.write("[local-admin] ready\n");
     process.stdout.write(`db: ${result.dbUrl}\n`);
     process.stdout.write(`orgId: ${result.orgId}\n`);

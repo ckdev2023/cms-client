@@ -3515,6 +3515,189 @@ void test("getDetailAggregate returns full aggregate DTO", async () => {
   assert.equal(result.billing.billingRiskAcknowledged, false);
 });
 
+void test("getDetailAggregate sets checklistBootstrapAvailable when checklist empty and template has items", async () => {
+  const summaryRow = {
+    ...makeCaseRow({
+      case_type_code: "dependent_visa",
+      stage: "S1",
+      status: "S1",
+    }),
+    customer_name: "Bob",
+    group_name: "G",
+    owner_display_name: "O",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "0",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+  const templateRow = {
+    id: "tpl-1",
+    case_type: "dependent_visa",
+    application_type: null,
+    requirement_blueprint: [{ code: "passport", name: "Passport" }],
+    active_flag: true,
+  };
+
+  const pool = makePool((sql) => {
+    if (sql.includes("from cases cs") && sql.includes("customer_name")) {
+      return ok([summaryRow]);
+    }
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("case_templates")) return ok([templateRow]);
+    if (sql.includes("provided_by_role") && sql.includes("group by"))
+      return ok([]);
+    if (sql.includes("from residence_periods")) return ok([]);
+    if (sql.includes("result_status") && sql.includes("validation_runs")) {
+      return ok([]);
+    }
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([]);
+    if (sql.includes("review_records") && sql.includes("decision")) {
+      return ok([]);
+    }
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.documentTemplateMissing, false);
+  assert.equal(result.checklistBootstrapAvailable, true);
+});
+
+void test("getDetailAggregate does not offer checklist bootstrap when template row missing", async () => {
+  const summaryRow = {
+    ...makeCaseRow({ case_type_code: "dependent_visa" }),
+    customer_name: "Bob",
+    group_name: "G",
+    owner_display_name: "O",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "0",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+
+  const pool = makePool((sql) => {
+    if (sql.includes("from cases cs") && sql.includes("customer_name")) {
+      return ok([summaryRow]);
+    }
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("case_templates")) return ok([]);
+    if (sql.includes("provided_by_role") && sql.includes("group by"))
+      return ok([]);
+    if (sql.includes("from residence_periods")) return ok([]);
+    if (sql.includes("result_status") && sql.includes("validation_runs")) {
+      return ok([]);
+    }
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([]);
+    if (sql.includes("review_records") && sql.includes("decision")) {
+      return ok([]);
+    }
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.documentTemplateMissing, true);
+  assert.equal(result.checklistBootstrapAvailable, false);
+});
+
+void test("getDetailAggregate does not offer checklist bootstrap outside S1/S2", async () => {
+  const summaryRow = {
+    ...makeCaseRow({
+      case_type_code: "dependent_visa",
+      stage: "S3",
+      status: "S3",
+    }),
+    customer_name: "Bob",
+    group_name: "G",
+    owner_display_name: "O",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "0",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+  const templateRow = {
+    id: "tpl-1",
+    case_type: "dependent_visa",
+    application_type: null,
+    requirement_blueprint: [{ code: "passport", name: "Passport" }],
+    active_flag: true,
+  };
+
+  const pool = makePool((sql) => {
+    if (sql.includes("from cases cs") && sql.includes("customer_name")) {
+      return ok([summaryRow]);
+    }
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("case_templates")) return ok([templateRow]);
+    if (sql.includes("provided_by_role") && sql.includes("group by"))
+      return ok([]);
+    if (sql.includes("from residence_periods")) return ok([]);
+    if (sql.includes("result_status") && sql.includes("validation_runs")) {
+      return ok([]);
+    }
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([]);
+    if (sql.includes("review_records") && sql.includes("decision")) {
+      return ok([]);
+    }
+    return ok();
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.checklistBootstrapAvailable, false);
+});
+
 void test("getDetailAggregate handles no validation/submission/review", async () => {
   const summaryRow = {
     ...makeCaseRow(),

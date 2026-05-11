@@ -390,7 +390,7 @@ Admin 向导的 `templateId`（如 `family`、`bmv`）与 `case_templates` 表 `
 
 ## 7. 环境与数据前置
 
-1. **账号**：具备 `customer.view`、`case.view`、`case.create` 等权限的 staff（路由 meta 见 `router/index.ts`）；咨询列表 **`/leads`** 本身未声明 `requiredPermission`，但若全流程跳转案件 / 客户页，仍需上述权限。若测试案件资料蓝图管理页（`#/settings/case-templates`），还需 `settings.write` 权限。  
+1. **账号**：具备 `customer.view`、`case.view`、`case.create` 等权限的 staff（路由 meta 见 `router/index.ts`）；咨询列表 **`/leads`** 本身未声明 `requiredPermission`，但若全流程跳转案件 / 客户页，仍需上述权限。若测试案件资料蓝图管理页（`#/case-templates`），还需 `settings.write` 权限。  
 2. **Seed / case_templates**：`case_templates` 表为资料清单 SSOT；seed 覆盖 `dependent_visa`、`work`、`business_manager_visa` 三种 canonical 类型（见 `seedCaseTemplates.ts`）。向导 ID 如 `family`、`bmv` 需经归一化映射后才能命中——详见 §5.1 对照矩阵。**Seed 未覆盖**的类型（`eng_humanities_intl`、`intra_company_transfer`、`company_setup`）建案后资料清单为空属**预期**。  
 3. **并发**：同一浏览器会话测试多条线索时使用唯一电话/邮箱，避免 dedup 对话框阻断主线。  
 4. **写入分组 vs 筛选分组**：非超管账号「写入」下拉分组可能与「筛选候选」不一致（RBAC 预期）；见历史走查 **75** `NEW-V6-4`，避免 MCP 误判为缺陷。  
@@ -412,7 +412,7 @@ Admin 向导的 `templateId`（如 `family`、`bmv`）与 `case_templates` 表 `
 
 ### 9.1 案件资料蓝图管理 API（`/api/case-templates`）
 
-Admin 新增「案件资料蓝图」只读管理页（`#/settings/case-templates`），对应后端 `CaseTemplatesController`。
+Admin 新增「案件资料蓝图」只读管理页（`#/case-templates`），对应后端 `CaseTemplatesController`。
 
 | 方法 | 路径 | 权限 | 说明 |
 |------|------|------|------|

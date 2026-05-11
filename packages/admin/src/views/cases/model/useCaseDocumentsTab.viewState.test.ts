@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { flushPromises } from "@vue/test-utils";
-import type { DocumentRepository } from "../../documents/model/DocumentRepositoryTypes";
+import type {
+  DocumentRepository,
+  DocumentRepositoryErrorCode,
+} from "../../documents/model/DocumentRepositoryTypes";
+import { DocumentRepositoryError } from "../../documents/model/DocumentRepositoryTypes";
 import type { DocumentListItem } from "../../documents/types";
 import type { CaseRepository } from "./CaseRepository";
 
@@ -36,6 +40,20 @@ function stubRepository(items: DocumentListItem[] = []): DocumentRepository {
       .fn()
       .mockResolvedValue({ collected: 0, total: 0, percent: 0, label: "0/0" }),
     createItem: vi.fn(),
+  };
+}
+
+function repositoryWithListFailure(
+  code: DocumentRepositoryErrorCode,
+): DocumentRepository {
+  const base = stubRepository([]);
+  return {
+    ...base,
+    listDocuments: vi
+      .fn()
+      .mockRejectedValue(
+        new DocumentRepositoryError({ code, message: "list-fail" }),
+      ),
   };
 }
 
@@ -118,6 +136,30 @@ describe("useCaseDocumentsTab — viewState", () => {
     expect(tab.viewState.value).toBe("ready");
   });
 
+  it("prefers empty state when checklistBootstrapAvailable even if documentTemplateMissing", () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(true),
+      checklistBootstrapAvailable: ref(true),
+      repository: stubRepository([]),
+    });
+
+    expect(tab.viewState.value).toBe("empty");
+  });
+
+  it("storageGateBlocked when checklistBootstrapAvailable but storage root not configured", () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(false),
+      documentTemplateMissing: ref(true),
+      checklistBootstrapAvailable: ref(true),
+      repository: stubRepository([]),
+    });
+
+    expect(tab.viewState.value).toBe("storageGateBlocked");
+  });
+
   it("templateMissing takes precedence over storageGateBlocked", () => {
     const tab = useCaseDocumentsTab({
       caseId: ref("case-1"),
@@ -127,6 +169,50 @@ describe("useCaseDocumentsTab — viewState", () => {
     });
 
     expect(tab.viewState.value).toBe("templateMissing");
+  });
+});
+
+describe("useCaseDocumentsTab — document list fetch errors", () => {
+  it("exposes requestFailed when listDocuments rejects with NETWORK", async () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(false),
+      repository: repositoryWithListFailure("NETWORK"),
+    });
+
+    await flushPromises();
+    await nextTick();
+
+    expect(tab.listModel.errorCode.value).toBe("requestFailed");
+  });
+
+  it("exposes unauthorized when listDocuments rejects with UNAUTHORIZED", async () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(false),
+      repository: repositoryWithListFailure("UNAUTHORIZED"),
+    });
+
+    await flushPromises();
+    await nextTick();
+
+    expect(tab.listModel.errorCode.value).toBe("unauthorized");
+  });
+
+  it("exposes badResponse when listDocuments rejects with BAD_RESPONSE", async () => {
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-1"),
+      isStorageRootConfigured: ref(true),
+      documentTemplateMissing: ref(false),
+      repository: repositoryWithListFailure("BAD_RESPONSE"),
+    });
+
+    await flushPromises();
+    await nextTick();
+
+    expect(tab.listModel.errorCode.value).toBe("badResponse");
   });
 });
 
@@ -179,7 +265,7 @@ describe("useCaseDocumentsTab — bootstrap checklist", () => {
     const tab = useCaseDocumentsTab({
       caseId: ref("case-1"),
       isStorageRootConfigured: ref(true),
-      documentTemplateMissing: ref(true),
+      documentTemplateMissing: ref(false),
       repository: stubRepository([]),
       caseRepository: stubCaseRepository(),
     });
@@ -194,7 +280,7 @@ describe("useCaseDocumentsTab — bootstrap checklist", () => {
     const tab = useCaseDocumentsTab({
       caseId: ref("case-1"),
       isStorageRootConfigured: ref(true),
-      documentTemplateMissing: ref(true),
+      documentTemplateMissing: ref(false),
       repository: stubRepository([]),
       caseRepository: caseRepo,
     });
@@ -220,7 +306,7 @@ describe("useCaseDocumentsTab — bootstrap checklist", () => {
     const tab = useCaseDocumentsTab({
       caseId: ref("case-1"),
       isStorageRootConfigured: ref(true),
-      documentTemplateMissing: ref(true),
+      documentTemplateMissing: ref(false),
       repository: stubRepository([]),
       caseRepository: caseRepo,
     });
@@ -247,7 +333,7 @@ describe("useCaseDocumentsTab — bootstrap checklist", () => {
     const tab = useCaseDocumentsTab({
       caseId: ref("case-1"),
       isStorageRootConfigured: ref(true),
-      documentTemplateMissing: ref(true),
+      documentTemplateMissing: ref(false),
       repository: stubRepository([]),
       caseRepository: caseRepo,
     });

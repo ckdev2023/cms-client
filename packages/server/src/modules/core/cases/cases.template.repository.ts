@@ -3,8 +3,8 @@ import type { Pool } from "pg";
 
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
-import { BMV_CASE_TYPE, isBmvCaseTypeCode } from "./cases.template-bmv";
 import type { ChecklistItem } from "./cases.service.write-ops";
+import { canonicalizeCaseTypeCode } from "./caseTypeCanonical";
 
 export type CaseTemplateRow = {
   id: string;
@@ -19,19 +19,17 @@ export type CaseTemplateResolveResult =
   | { found: false };
 
 /**
- * 解析 caseTypeCode → 实际查询的 case_type 候选列表。
+ * 解析 caseTypeCode → 実際查询的 case_type 候選列表（去重・保序）。
  *
- * BMV 系列子类型（biz_mgmt_*）当前共享一份 `business_manager_visa` 模板蓝图，
- * 因此先按原始 code 精确查询，未命中再回退到 BMV 总表。
+ * 優先度：raw → canonical（別名表 + BMV 回退）。
+ * canonical が raw と同一の場合は重複を除外し単要素で返す。
  *
  * @param caseTypeCode 入参案件类型 code
  */
-function resolveCaseTypeCandidates(caseTypeCode: string): string[] {
-  if (caseTypeCode === BMV_CASE_TYPE) return [BMV_CASE_TYPE];
-  if (isBmvCaseTypeCode(caseTypeCode)) {
-    return [caseTypeCode, BMV_CASE_TYPE];
-  }
-  return [caseTypeCode];
+export function resolveCaseTypeCandidates(caseTypeCode: string): string[] {
+  const canonical = canonicalizeCaseTypeCode(caseTypeCode);
+  if (canonical === caseTypeCode) return [caseTypeCode];
+  return [caseTypeCode, canonical];
 }
 
 /**
@@ -61,17 +59,16 @@ export async function findActiveCaseTemplateByCaseType(
       `SELECT id, case_type, application_type, requirement_blueprint, active_flag
        FROM case_templates
        WHERE ${whereClause}
-       ORDER BY created_at DESC
-       LIMIT 1`,
+       ORDER BY created_at DESC`,
       params,
     );
 
     if (result.rows.length === 0) continue;
 
-    const items = parseRequirementBlueprint(
-      result.rows[0].requirement_blueprint,
-    );
-    return { found: true, items };
+    for (const row of result.rows) {
+      const items = parseRequirementBlueprint(row.requirement_blueprint);
+      if (items.length > 0) return { found: true, items };
+    }
   }
 
   return { found: false };

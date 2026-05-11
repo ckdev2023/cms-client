@@ -180,4 +180,81 @@ describe("CaseTemplatesRepository", () => {
       repo.create({ templateName: "X", caseType: "bmv" }),
     ).rejects.toThrow();
   });
+
+  it("getCaseTypeOptions adapts server response", async () => {
+    const repo = createCaseTemplatesRepository({
+      request: mockFetch({
+        items: [
+          { code: "dependent_visa", sort: 0 },
+          { code: "work", sort: 1 },
+          { code: "business_manager_visa", sort: 2 },
+        ],
+      }),
+      getToken: () => "test-token",
+    });
+
+    const result = await repo.getCaseTypeOptions();
+    expect(result).toHaveLength(3);
+    expect(result[0]).toEqual({ code: "dependent_visa", sort: 0 });
+    expect(result[2]).toEqual({ code: "business_manager_visa", sort: 2 });
+  });
+
+  it("getCaseTypeOptions returns empty array for invalid response", async () => {
+    const repo = createCaseTemplatesRepository({
+      request: mockFetch({ unexpected: true }),
+      getToken: () => "test-token",
+    });
+
+    await expect(repo.getCaseTypeOptions()).rejects.toThrow();
+  });
+
+  it("get fetches detail with requirementBlueprint", async () => {
+    let calledUrl = "";
+    const repo = createCaseTemplatesRepository({
+      request: async (url: string | URL | Request) => {
+        calledUrl = typeof url === "string" ? url : String(url);
+        return {
+          ok: true,
+          status: 200,
+          text: async () =>
+            JSON.stringify({
+              id: "t-1",
+              orgId: "org-1",
+              templateName: "Blueprint Template",
+              caseType: "dependent_visa",
+              applicationType: null,
+              requirementBlueprint: { items: [{ code: "passport" }] },
+              defaultTasksBlueprint: null,
+              blueprintItemCount: 1,
+              reviewRequiredFlag: true,
+              billingGateMode: "block",
+              activeFlag: true,
+              createdAt: "2026-01-01T00:00:00.000Z",
+              updatedAt: "2026-01-01T00:00:00.000Z",
+            }),
+          headers: new Headers(),
+        } as Response;
+      },
+      getToken: () => "test-token",
+    });
+
+    const result = await repo.get("t-1");
+    expect(calledUrl).toContain("/t-1");
+    expect(result.id).toBe("t-1");
+    expect(result.templateName).toBe("Blueprint Template");
+    expect(result.requirementBlueprint).toEqual({
+      items: [{ code: "passport" }],
+    });
+    expect(result.defaultTasksBlueprint).toBeNull();
+    expect(result.blueprintItemCount).toBe(1);
+  });
+
+  it("get throws on 404 response", async () => {
+    const repo = createCaseTemplatesRepository({
+      request: mockFetch({ message: "Not Found" }, 404),
+      getToken: () => "test-token",
+    });
+
+    await expect(repo.get("non-existent")).rejects.toThrow();
+  });
 });

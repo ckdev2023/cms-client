@@ -41,6 +41,7 @@ import {
 } from "./cases.service.timeline";
 import type { TemplatesResolver } from "./cases.service.types-internal";
 import type { CaseTemplateResolveResult } from "./cases.template.repository";
+import { canonicalizeCaseTypeCode } from "./caseTypeCanonical";
 
 const logger = new Logger("CaseCreateFlow");
 
@@ -51,6 +52,48 @@ export type CaseTemplateResolver = (
   ctx: RequestContext,
   caseTypeCode: string,
 ) => Promise<CaseTemplateResolveResult>;
+
+function legacyChecklistResolveKeys(caseTypeCode: string): string[] {
+  const keys = [caseTypeCode];
+  const canonical = canonicalizeCaseTypeCode(caseTypeCode);
+  if (canonical !== caseTypeCode) keys.push(canonical);
+  return keys;
+}
+
+/**
+ * legacy `TemplatesResolver` 路径：按 wizard id → canonical 顺序尝试，
+ * 与 `findActiveCaseTemplateByCaseType` 的候选顺序对齐。
+ * @param resolver 模板解析器
+ * @param ctx 请求上下文
+ * @param caseTypeCode 案件类型码（向导 id 或 canonical）
+ * @returns checklist 条目；均未命中时为空数组
+ */
+async function resolveChecklistViaLegacyTemplates(
+  resolver: TemplatesResolver,
+  ctx: RequestContext,
+  caseTypeCode: string,
+): Promise<ChecklistItem[]> {
+  for (const key of legacyChecklistResolveKeys(caseTypeCode)) {
+    let resolved = await resolver.resolve(ctx, {
+      kind: "document_checklist",
+      key,
+    });
+
+    if (resolved.mode !== "template" || !resolved.used) {
+      resolved = await resolver.resolve(ctx, {
+        kind: "case_type",
+        key,
+      });
+    }
+
+    if (resolved.mode === "template" && resolved.used) {
+      const mapped = mapRawConfigToChecklist(resolved.config);
+      if (mapped.length > 0) return mapped;
+    }
+  }
+
+  return [];
+}
 
 function mapRawConfigToChecklist(
   config: Record<string, unknown>,
@@ -89,7 +132,8 @@ function mapRawConfigToChecklist(
  * 预解析资料清单模板。
  *
  * 优先查询 `case_templates` 表（新真源），命中则直接返回；
- * 未命中回退到 legacy `TemplatesResolver`（保留 BMV 兼容路径）；
+ * 未命中回退到 legacy `TemplatesResolver`，按 **wizard id → canonicalizeCaseTypeCode 别名**
+ * 顺序尝试 `document_checklist` / `case_type` 两类 key；
  * 两者均未命中返回空数组并 warn 日志。
  * @param resolver
  * @param ctx
@@ -109,26 +153,17 @@ export async function resolveChecklistItems(
     }
   }
 
-  let resolved = await resolver.resolve(ctx, {
-    kind: "document_checklist",
-    key: caseTypeCode,
-  });
+  const legacyItems = await resolveChecklistViaLegacyTemplates(
+    resolver,
+    ctx,
+    caseTypeCode,
+  );
+  if (legacyItems.length > 0) return legacyItems;
 
-  if (resolved.mode !== "template" || !resolved.used) {
-    resolved = await resolver.resolve(ctx, {
-      kind: "case_type",
-      key: caseTypeCode,
-    });
-  }
-
-  if (resolved.mode !== "template" || !resolved.used) {
-    logger.warn(
-      `templateMissing: no checklist template found for caseType="${caseTypeCode}" org="${ctx.orgId}"`,
-    );
-    return [];
-  }
-
-  return mapRawConfigToChecklist(resolved.config);
+  logger.warn(
+    `templateMissing: no checklist template found for caseType="${caseTypeCode}" org="${ctx.orgId}"`,
+  );
+  return [];
 }
 
 /**

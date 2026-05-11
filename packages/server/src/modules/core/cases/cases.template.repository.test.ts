@@ -1,7 +1,10 @@
 import { describe, test } from "node:test";
 import assert from "node:assert/strict";
 
-import { findActiveCaseTemplateByCaseType } from "./cases.template.repository";
+import {
+  findActiveCaseTemplateByCaseType,
+  resolveCaseTypeCandidates,
+} from "./cases.template.repository";
 import type { RequestContext } from "../tenancy/requestContext";
 
 const ORG = "00000000-0000-4000-8000-000000000000";
@@ -214,7 +217,7 @@ void describe("findActiveCaseTemplateByCaseType", () => {
     assert.equal(callCount, 1);
   });
 
-  void test("returns empty items when requirement_blueprint is null", async () => {
+  void test("returns found=false when only templates have empty blueprint", async () => {
     const pool = makePool(() =>
       ok([
         {
@@ -233,8 +236,189 @@ void describe("findActiveCaseTemplateByCaseType", () => {
       "family_stay",
     );
 
+    assert.equal(result.found, false);
+  });
+
+  void test("prefers older template row when newest active row has empty blueprint", async () => {
+    const goodBlueprint = {
+      version: 1,
+      items: [
+        {
+          checklistItemCode: "dv-from-old-row",
+          name: "旧版但有条目",
+          category: "personal",
+          requiredFlag: true,
+          ownerSide: "applicant",
+        },
+      ],
+    };
+
+    const pool = makePool(() =>
+      ok([
+        {
+          id: "tpl-new-empty",
+          case_type: "dependent_visa",
+          application_type: null,
+          requirement_blueprint: { version: 1, items: [] },
+          active_flag: true,
+        },
+        {
+          id: "tpl-old-good",
+          case_type: "dependent_visa",
+          application_type: null,
+          requirement_blueprint: goodBlueprint,
+          active_flag: true,
+        },
+      ]),
+    );
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "dependent_visa",
+    );
+
     assert.equal(result.found, true);
     const items = (result as { found: true; items: unknown[] }).items;
-    assert.equal(items.length, 0);
+    assert.equal(items.length, 1);
+    assert.equal((items[0] as { code: string }).code, "dv-from-old-row");
+  });
+
+  void test("falls back to canonical dependent_visa for alias 'family'", async () => {
+    const blueprint = {
+      version: 1,
+      items: [
+        {
+          checklistItemCode: "dv-passport-copy",
+          name: "パスポートコピー",
+          category: "personal",
+          requiredFlag: true,
+          ownerSide: "applicant",
+        },
+      ],
+    };
+    const queries: { sql: string; params: unknown[] | undefined }[] = [];
+    let callCount = 0;
+    const pool = makePool((sql, params) => {
+      queries.push({ sql, params });
+      callCount += 1;
+      if (callCount === 1) return ok([]);
+      return ok([
+        {
+          id: "tpl-dv",
+          case_type: "dependent_visa",
+          application_type: null,
+          requirement_blueprint: blueprint,
+          active_flag: true,
+        },
+      ]);
+    });
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "family",
+    );
+
+    assert.equal(result.found, true);
+    const items = (result as { found: true; items: unknown[] }).items;
+    assert.equal(items.length, 1);
+    assert.equal((items[0] as { code: string }).code, "dv-passport-copy");
+    assert.deepEqual(queries[0].params, ["family"]);
+    assert.deepEqual(queries[1].params, ["dependent_visa"]);
+  });
+
+  void test("falls back to canonical dependent_visa for alias 'family_stay'", async () => {
+    const blueprint = {
+      version: 1,
+      items: [
+        {
+          checklistItemCode: "dv-photo",
+          name: "証明写真",
+          category: "personal",
+          requiredFlag: true,
+          ownerSide: "applicant",
+        },
+      ],
+    };
+    let callCount = 0;
+    const pool = makePool(() => {
+      callCount += 1;
+      if (callCount === 1) return ok([]);
+      return ok([
+        {
+          id: "tpl-dv2",
+          case_type: "dependent_visa",
+          application_type: null,
+          requirement_blueprint: blueprint,
+          active_flag: true,
+        },
+      ]);
+    });
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "family_stay",
+    );
+
+    assert.equal(result.found, true);
+    const items = (result as { found: true; items: unknown[] }).items;
+    assert.equal(items.length, 1);
+    assert.equal((items[0] as { code: string }).code, "dv-photo");
+  });
+
+  void test("no seed type still returns found=false", async () => {
+    let callCount = 0;
+    const pool = makePool(() => {
+      callCount += 1;
+      return ok([]);
+    });
+
+    const result = await findActiveCaseTemplateByCaseType(
+      pool as never,
+      makeCtx(),
+      "intra_company_transfer",
+    );
+
+    assert.equal(result.found, false);
+    assert.equal(callCount, 1);
+  });
+});
+
+void describe("resolveCaseTypeCandidates", () => {
+  void test("returns [raw] when raw equals canonical", () => {
+    assert.deepEqual(resolveCaseTypeCandidates("work"), ["work"]);
+    assert.deepEqual(resolveCaseTypeCandidates("business_manager_visa"), [
+      "business_manager_visa",
+    ]);
+  });
+
+  void test("returns [raw, canonical] for alias types", () => {
+    assert.deepEqual(resolveCaseTypeCandidates("family"), [
+      "family",
+      "dependent_visa",
+    ]);
+    assert.deepEqual(resolveCaseTypeCandidates("family_stay"), [
+      "family_stay",
+      "dependent_visa",
+    ]);
+  });
+
+  void test("returns [raw, BMV] for BMV subtypes", () => {
+    assert.deepEqual(resolveCaseTypeCandidates("biz_mgmt_cert_4m"), [
+      "biz_mgmt_cert_4m",
+      "business_manager_visa",
+    ]);
+    assert.deepEqual(resolveCaseTypeCandidates("biz_mgmt_renewal"), [
+      "biz_mgmt_renewal",
+      "business_manager_visa",
+    ]);
+  });
+
+  void test("returns single element for unknown types", () => {
+    assert.deepEqual(resolveCaseTypeCandidates("totally_unknown"), [
+      "totally_unknown",
+    ]);
   });
 });

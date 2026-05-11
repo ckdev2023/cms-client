@@ -372,6 +372,7 @@ export type CaseDetailAggregateDto = {
   successCloseoutCheck?: _SuccessCloseoutCheckResult | null;
   failureCloseoutCheck?: _FailureCloseoutCheckResult | null;
   documentTemplateMissing?: boolean;
+  checklistBootstrapAvailable?: boolean;
 };
 
 /** 创建校验运行请求参数。 */

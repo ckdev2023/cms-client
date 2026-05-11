@@ -555,3 +555,23 @@
 .preview-item__chip {
   flex-shrink: 0;
 }
+
+.case-create-checklist-preflight {
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-md);
+}
+
+.case-create-checklist-preflight--warn {
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  background: rgba(254, 252, 232, 0.85);
+  color: var(--color-text-1);
+}
+
+.case-create-checklist-preflight--danger {
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(254, 242, 242, 0.85);
+  color: var(--color-danger-text);
+}

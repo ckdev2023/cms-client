@@ -3,9 +3,10 @@ import { ref, nextTick } from "vue";
 import { useCreateCaseChecklistPreview } from "./useCreateCaseChecklistPreview";
 import type { CaseRepository } from "./CaseRepository";
 
-function stubRepo(count: number) {
+function stubRepo(count: number, requiredCount?: number) {
+  const rq = requiredCount ?? count;
   return {
-    previewChecklistCount: vi.fn(async () => count),
+    previewChecklistCount: vi.fn(async () => ({ count, requiredCount: rq })),
   } as unknown as CaseRepository;
 }
 
@@ -27,6 +28,7 @@ describe("useCreateCaseChecklistPreview", () => {
     await nextTick();
 
     expect(result.checklistCount.value).toBe(5);
+    expect(result.checklistRequiredCount.value).toBe(5);
     expect(result.previewState.value).toBe("ok");
     expect(result.checklistEmpty.value).toBe(false);
   });
@@ -40,6 +42,7 @@ describe("useCreateCaseChecklistPreview", () => {
     await nextTick();
 
     expect(result.checklistCount.value).toBe(0);
+    expect(result.checklistRequiredCount.value).toBe(0);
     expect(result.previewState.value).toBe("empty");
     expect(result.checklistEmpty.value).toBe(true);
   });
@@ -53,13 +56,18 @@ describe("useCreateCaseChecklistPreview", () => {
     await nextTick();
 
     expect(result.checklistCount.value).toBeNull();
+    expect(result.checklistRequiredCount.value).toBeNull();
     expect(result.previewState.value).toBe("error");
     expect(result.checklistEmpty.value).toBe(false);
   });
 
   it("re-fetches when caseTypeCode changes", async () => {
     const code = ref("family");
-    const spy = vi.fn(async (c: string) => (c === "family" ? 3 : 0));
+    const spy = vi.fn(async (c: string) =>
+      c === "family"
+        ? { count: 3, requiredCount: 2 }
+        : { count: 0, requiredCount: 0 },
+    );
     const repo = { previewChecklistCount: spy } as unknown as CaseRepository;
     const result = useCreateCaseChecklistPreview(code, repo);
 
@@ -83,6 +91,7 @@ describe("useCreateCaseChecklistPreview", () => {
 
     await nextTick();
     expect(result.checklistCount.value).toBeNull();
+    expect(result.checklistRequiredCount.value).toBeNull();
     expect(result.previewState.value).toBe("idle");
   });
 });

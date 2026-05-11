@@ -88,10 +88,10 @@ export class CasesController {
   }
 
   /**
-   * 資料チェックリスト件数プレビュー。
+   * 資料チェックリスト件数プレビュー（総件数および必須件数）。
    * @param req HTTP リクエスト
    * @param query クエリパラメータ
-   * @returns チェックリスト件数
+   * @returns caseTypeCode / count / requiredCount
    */
   @RequirePermission(PERMISSION_CODES.CASE_CREATE)
   @Get("checklist-preview")
@@ -102,11 +102,9 @@ export class CasesController {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
     const caseTypeCode = requireString(query.caseTypeCode, "caseTypeCode");
-    const count = await this.casesService.previewChecklistCount(
-      ctx,
-      caseTypeCode,
-    );
-    return { caseTypeCode, count };
+    const { count, requiredCount } =
+      await this.casesService.previewChecklistCount(ctx, caseTypeCode);
+    return { caseTypeCode, count, requiredCount };
   }
 
   /**

@@ -42,6 +42,10 @@ function createBulkRepo(opts?: {
     repo: {
       createCase: createCaseSpy,
       createCaseParty: createPartySpy,
+      previewChecklistCount: vi.fn(async () => ({
+        count: 10,
+        requiredCount: 8,
+      })),
     } as unknown as CaseRepository,
     createCaseSpy,
     createPartySpy,

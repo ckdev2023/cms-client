@@ -18,6 +18,7 @@ import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { hasRequiredRole } from "../auth/roles";
 import type { RequestContext } from "../tenancy/requestContext";
+import { CANONICAL_CASE_TYPE_OPTIONS } from "../cases/caseTypeCanonical";
 import { CaseTemplatesService } from "./caseTemplates.service";
 
 type HttpRequest = { requestContext?: RequestContext };
@@ -126,6 +127,15 @@ export class CaseTemplatesController {
       caseType: optionalString(query.caseType, "caseType"),
       includeInactive,
     });
+  }
+
+  /**
+   *
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_VIEW)
+  @Get("case-type-options")
+  getCaseTypeOptions() {
+    return { items: CANONICAL_CASE_TYPE_OPTIONS };
   }
 
   /**

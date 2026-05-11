@@ -35,6 +35,10 @@ function stubRepo(
     repo: {
       createCase: spy,
       createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+      previewChecklistCount: vi.fn(async () => ({
+        count: 10,
+        requiredCount: 8,
+      })),
     } as unknown as CaseRepository,
     spy,
   };
@@ -47,6 +51,7 @@ function successRepo(id = "CASE-NEW-001") {
 function createDeps(
   overrides: Partial<UseCreateCaseModelDeps> = {},
 ): UseCreateCaseModelDeps {
+  const { repo, ...rest } = overrides;
   return {
     templates: () => SAMPLE_CREATE_TEMPLATES,
     customers: () => SAMPLE_CREATE_CUSTOMERS,
@@ -56,7 +61,17 @@ function createDeps(
     sourceContext: { customerId: "cust-001", familyBulkMode: false },
     defaultGroup: "tokyo-1",
     defaultOwner: "suzuki",
-    ...overrides,
+    ...rest,
+    repo:
+      repo ??
+      ({
+        previewChecklistCount: vi.fn(async () => ({
+          count: 10,
+          requiredCount: 8,
+        })),
+        createCase: vi.fn(async () => ({ id: "case-stub" })),
+        createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+      } as unknown as CaseRepository),
   };
 }
 
@@ -233,6 +248,9 @@ describe("create flow end-to-end (p0-fe-007-03)", () => {
 
     m.setDueDate("2026-06-01");
     m.setAmount("200000");
+    await vi.waitFor(() => {
+      expect(m.checklistPreview.previewState.value).toBe("ok");
+    });
     expect(m.canSubmit.value).toBe(true);
 
     const result = await m.submit();
@@ -289,10 +307,15 @@ describe("create flow end-to-end (p0-fe-007-03)", () => {
         }),
     );
     const m = createSubmittableModel({ repo });
+    await vi.waitFor(() =>
+      expect(m.checklistPreview.previewState.value).toBe("ok"),
+    );
+    await vi.waitFor(() => expect(m.canSubmit.value).toBe(true));
 
     const p1 = m.submit();
     const p2 = m.submit();
 
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
     resolve!({ id: "CASE-ONLY-ONCE" });
     const [r1, r2] = await Promise.all([p1, p2]);
 

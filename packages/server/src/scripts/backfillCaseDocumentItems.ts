@@ -13,7 +13,10 @@
  */
 
 import { createPgPool } from "../infra/db/createPgPool";
-import { parseRequirementBlueprint } from "../modules/core/cases/cases.template.repository";
+import {
+  parseRequirementBlueprint,
+  resolveCaseTypeCandidates,
+} from "../modules/core/cases/cases.template.repository";
 import type { ChecklistItem } from "../modules/core/cases/cases.service.write-ops";
 
 /**
@@ -26,28 +29,24 @@ export type BackfillCaseRow = {
   requirement_blueprint: unknown;
 };
 
-// BMV 子类型（biz_mgmt_*）当前共享 case_type='business_manager_visa' 模板蓝图，
-// 因此先按精确 case_type 匹配，匹配不到时 BMV 系列回退到总表。
-export const BACKFILL_QUERY = `
-  SELECT c.id AS case_id, c.org_id, c.case_type_code,
-         coalesce(t_exact.requirement_blueprint, t_bmv.requirement_blueprint)
-           AS requirement_blueprint
+export const BACKFILL_CASES_QUERY = `
+  SELECT c.id AS case_id, c.org_id, c.case_type_code
   FROM cases c
-  LEFT JOIN case_templates t_exact
-    ON t_exact.org_id = c.org_id
-   AND t_exact.case_type = c.case_type_code
-   AND t_exact.active_flag = true
-  LEFT JOIN case_templates t_bmv
-    ON t_bmv.org_id = c.org_id
-   AND t_bmv.case_type = 'business_manager_visa'
-   AND t_bmv.active_flag = true
-   AND (c.case_type_code LIKE 'biz_mgmt%')
-   AND t_exact.id IS NULL
   WHERE NOT EXISTS (
     SELECT 1 FROM document_items di
      WHERE di.case_id = c.id
   )
     AND coalesce(c.metadata->>'_status','') IS DISTINCT FROM 'deleted'
+`;
+
+export const TEMPLATE_BY_CANDIDATES_QUERY = `
+  SELECT requirement_blueprint
+  FROM case_templates
+  WHERE org_id = $1
+    AND case_type = ANY($2::text[])
+    AND active_flag = true
+  ORDER BY array_position($2::text[], case_type), created_at DESC
+  LIMIT 1
 `;
 
 /**
@@ -60,12 +59,56 @@ export function buildItemsFromBlueprint(blueprint: unknown): ChecklistItem[] {
   return parseRequirementBlueprint(blueprint);
 }
 
-type PgClient = {
+/**
+ *
+ */
+export type PgClient = {
   query: (
     sql: string,
     params?: unknown[],
   ) => Promise<{ rows: Record<string, unknown>[] }>;
 };
+
+/**
+ * resolveCaseTypeCandidates と同一ロジックでテンプレートを解決し BackfillCaseRow 配列を返す。
+ *
+ * (org_id, case_type_code) 単位でキャッシュするため同一組み合わせのクエリは 1 回のみ。
+ * @param client DB接続クライアント
+ * @returns 解決済みの BackfillCaseRow 配列
+ */
+export async function resolveBackfillRows(
+  client: PgClient,
+): Promise<BackfillCaseRow[]> {
+  const { rows: cases } = await client.query(BACKFILL_CASES_QUERY);
+
+  const blueprintCache = new Map<string, unknown>();
+  const result: BackfillCaseRow[] = [];
+
+  for (const c of cases) {
+    const caseId = c.case_id as string;
+    const orgId = c.org_id as string;
+    const caseTypeCode = c.case_type_code as string;
+    const cacheKey = `${orgId}:${caseTypeCode}`;
+
+    if (!blueprintCache.has(cacheKey)) {
+      const candidates = resolveCaseTypeCandidates(caseTypeCode);
+      const { rows: tplRows } = await client.query(
+        TEMPLATE_BY_CANDIDATES_QUERY,
+        [orgId, candidates],
+      );
+      blueprintCache.set(cacheKey, tplRows[0]?.requirement_blueprint ?? null);
+    }
+
+    result.push({
+      case_id: caseId,
+      org_id: orgId,
+      case_type_code: caseTypeCode,
+      requirement_blueprint: blueprintCache.get(cacheKey) ?? null,
+    });
+  }
+
+  return result;
+}
 
 /**
  * document_items が存在しない case に対し、テンプレート blueprint から項目を一括挿入する。
@@ -128,7 +171,7 @@ async function main() {
   const client = await pool.connect();
 
   try {
-    const { rows } = await client.query<BackfillCaseRow>(BACKFILL_QUERY);
+    const rows = await resolveBackfillRows(client);
     const { updated, skipped } = await applyBackfill(client, rows, dryRun);
     const mode = dryRun ? "dry-run" : "committed";
     process.stdout.write(

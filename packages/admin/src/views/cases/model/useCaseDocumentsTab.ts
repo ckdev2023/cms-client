@@ -47,6 +47,8 @@ export interface UseCaseDocumentsTabDeps {
   isStorageRootConfigured: Ref<boolean>;
   /** 服务端指示该案件签证类型是否缺少资料模板配置。 */
   documentTemplateMissing?: Ref<boolean>;
+  /** 服务端指示是否允许从资料蓝图补生成清单（与 `documentTemplateMissing` 不一致时以本字段为准展示 CTA）。 */
+  checklistBootstrapAvailable?: Ref<boolean>;
   /** 可选注入 repository（测试用）。 */
   repository?: DocumentRepository;
   /** 案件业务编号（用于路径建议）。 */
@@ -358,7 +360,8 @@ function buildViewState(
     const items = listModel.items.value;
     if (items.length > 0) return "ready";
     const templateMissing = deps.documentTemplateMissing?.value ?? false;
-    if (templateMissing) return "templateMissing";
+    const bootstrap = deps.checklistBootstrapAvailable?.value ?? false;
+    if (templateMissing && !bootstrap) return "templateMissing";
     if (!deps.isStorageRootConfigured.value) return "storageGateBlocked";
     return "empty";
   });

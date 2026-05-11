@@ -13,6 +13,7 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 
+import { resolveCaseTypeCandidates } from "../cases/cases.template.repository";
 import type { ReminderScheduleBlueprintItem } from "../cases/cases.types-template-blueprints";
 import {
   DEFAULT_REMINDER_SCHEDULE,
@@ -622,17 +623,25 @@ export class ResidencePeriodsService {
     orgId: string,
     caseId: string,
   ): Promise<readonly ReminderScheduleBlueprintItem[]> {
+    const caseRow = await tx.query<{ case_type_code: string }>(
+      `select case_type_code from cases where id = $1 and org_id = $2`,
+      [caseId, orgId],
+    );
+    const caseTypeCode = caseRow.rows.at(0)?.case_type_code;
+    if (!caseTypeCode) return DEFAULT_REMINDER_SCHEDULE;
+
+    const candidates = resolveCaseTypeCandidates(caseTypeCode);
+
     const result = await tx.query<BlueprintQueryRow>(
       `
         select ct.reminder_schedule_blueprint
         from case_templates ct
-        join cases c on c.case_type_code = ct.case_type and c.org_id = ct.org_id
-        where c.id = $1 and c.org_id = $2
+        where ct.case_type = ANY($1) and ct.org_id = $2
           and ct.active_flag = true
-        order by ct.updated_at desc
+        order by array_position($1, ct.case_type), ct.updated_at desc
         limit 1
       `,
-      [caseId, orgId],
+      [candidates, orgId],
     );
     const row = result.rows.at(0);
     if (!row?.reminder_schedule_blueprint) return DEFAULT_REMINDER_SCHEDULE;

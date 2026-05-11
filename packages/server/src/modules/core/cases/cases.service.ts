@@ -464,6 +464,7 @@ export class CasesService {
 
     const mappedCounts = mapDetailCountsRow(counts);
     let documentTemplateMissing = false;
+    let checklistBootstrapAvailable = false;
     if (mappedCounts.documentItemsTotal === 0) {
       try {
         const tplResult = await findActiveCaseTemplateByCaseType(
@@ -472,8 +473,14 @@ export class CasesService {
           caseEntity.caseTypeCode,
         );
         documentTemplateMissing = !tplResult.found;
+        const stage = caseEntity.stage ?? caseEntity.status;
+        checklistBootstrapAvailable =
+          tplResult.found &&
+          tplResult.items.length > 0 &&
+          BOOTSTRAP_ALLOWED_STAGES.has(stage);
       } catch {
         documentTemplateMissing = false;
+        checklistBootstrapAvailable = false;
       }
     }
 
@@ -491,6 +498,7 @@ export class CasesService {
       successCloseoutCheck,
       failureCloseoutCheck: failureCheck.isFailurePath ? failureCheck : null,
       documentTemplateMissing,
+      checklistBootstrapAvailable,
     };
   }
 
@@ -919,15 +927,16 @@ export class CasesService {
   }
 
   /**
-   * 预览指定 caseTypeCode 的资料清单条数（只读，不落库）。
+   * 预览指定 caseTypeCode 的资料清单规模（只读，不落库）。
+   * 与建案时 `resolveChecklistItems` 同源，保证条数/必须数与正式生成一致。
    * @param ctx 请求上下文
    * @param caseTypeCode 案件类型代码
-   * @returns checklist 条目数
+   * @returns 总条数与必须项条数
    */
   async previewChecklistCount(
     ctx: RequestContext,
     caseTypeCode: string,
-  ): Promise<number> {
+  ): Promise<{ count: number; requiredCount: number }> {
     const caseTemplateResolver = (rCtx: RequestContext, code: string) =>
       findActiveCaseTemplateByCaseType(this.pool, rCtx, code);
     const items = await resolveChecklistItems(
@@ -936,7 +945,8 @@ export class CasesService {
       caseTypeCode,
       caseTemplateResolver,
     );
-    return items.length;
+    const requiredCount = items.filter((i) => i.requiredFlag === true).length;
+    return { count: items.length, requiredCount };
   }
 
   /**

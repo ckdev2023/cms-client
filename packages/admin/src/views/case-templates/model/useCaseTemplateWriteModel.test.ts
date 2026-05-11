@@ -28,9 +28,15 @@ function makeRepo(
 ): CaseTemplatesRepository {
   return {
     list: async () => ({ items: [] }),
+    get: async () => ({
+      ...makeItem(),
+      requirementBlueprint: null,
+      defaultTasksBlueprint: null,
+    }),
     create: async () => makeItem({ id: "t-new" }),
     update: async (_id, params) =>
       makeItem({ ...params, id: "t-1" } as Partial<CaseTemplateItem>),
+    getCaseTypeOptions: async () => [],
     ...overrides,
   };
 }

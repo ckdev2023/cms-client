@@ -123,6 +123,8 @@ const casesEnUS = {
         "Auto-generated from the selected template for pre-submission review; the actual checklist uses Japanese official names after case creation.",
       documentPreviewSummary: "{total} items · {required} required",
       documentPreviewEmpty: "Pick a case template in Step 1 first",
+      documentPreviewServerEmpty:
+        "Server checklist preview found no rows (0). The list below is only an illustrative wizard outline until templates are configured; submission stays blocked at the final step. Configure Case Templates or run the seed/init script.",
       requiredBadge: "Required",
       optionalBadge: "Optional",
     },
@@ -176,6 +178,8 @@ const casesEnUS = {
       emptyWarning:
         "No checklist template configured for this visa type. Please contact an administrator to set up the template.",
       loading: "Checking checklist template…",
+      errorWarning:
+        "Could not load the checklist preflight. Check your connection and reload, or contact an administrator. Submit is disabled until preflight succeeds.",
     },
     summary: {
       template: "Case template",
@@ -705,11 +709,21 @@ const casesEnUS = {
       referenceSelf: "Registered in this item",
       referenceFrom: "Referenced from: {source}",
       copyPath: "Copy path",
+      retryLoad: "Retry loading",
+      loadError: {
+        unauthorized:
+          "Could not load the document checklist: you may need to sign in again.",
+        requestFailed:
+          "Could not load the document checklist: network or service error. Please try again.",
+        badResponse:
+          "Could not load the document checklist: unexpected server response. Please try again later.",
+      },
       empty: {
         title: "No documents registered yet",
         desc: 'This case has no document requirements. Use "Register documents" or "Add manually" to start building the document checklist.',
         registerCta: "Register documents",
         addCta: "Add manually",
+        bootstrapFromTemplateCta: "Generate checklist from template",
         templateMissing: {
           title: "Document template not configured",
           desc: "No document template is configured for this visa type. Please contact the administrator to set it up.",
@@ -1002,6 +1016,7 @@ const casesEnUS = {
       hum_renewal: "Engineer/Specialist (Renewal)",
       eng_humanities_intl_cert: "Engineer/Specialist (CoE)",
       eng_humanities_intl_renewal: "Engineer/Specialist (Renewal)",
+      eng_humanities_intl: "Engineer/Specialist in Humanities",
       intra_company: "Intra-Company Transfer",
       intra_company_transfer: "Intra-Company Transfer",
       company_setup: "Company Establishment",

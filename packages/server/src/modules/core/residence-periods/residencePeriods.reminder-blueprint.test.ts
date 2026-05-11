@@ -87,6 +87,12 @@ type ReminderScenarioOptions = {
 
 function createReminderService(options: ReminderScenarioOptions) {
   return createService((sql, params) => {
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("from cases") && sql.includes("customer_id")) {
       return Promise.resolve({
         rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],
@@ -270,4 +276,85 @@ void test("payload_snapshot includes residencePeriodId, validUntil, daysBefore, 
     assert.equal(payload.statusOfResidence, "経営・管理");
     assert.equal(typeof payload.daysBefore, "number");
   }
+});
+
+void test("fetchReminderBlueprint resolves alias case_type_code (family → dependent_visa) to template", async () => {
+  const customBlueprint = [
+    {
+      daysBefore: 60,
+      channel: "in_app",
+      recipientType: "owner",
+      label: "60日前",
+    },
+  ];
+  const insertedReminders: unknown[][] = [];
+
+  const svc = createService((sql, params) => {
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "family" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from cases") && sql.includes("customer_id")) {
+      return Promise.resolve({
+        rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from customers")) {
+      return Promise.resolve({ rows: [{ id: CUSTOMER_ID }], rowCount: 1 });
+    }
+    if (
+      sql.includes("update residence_periods") &&
+      sql.includes("set is_current = false")
+    ) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+    if (sql.includes("insert into residence_periods")) {
+      return Promise.resolve({ rows: [makeResidencePeriodRow()], rowCount: 1 });
+    }
+    if (sql.includes("from case_templates")) {
+      return Promise.resolve({
+        rows: [{ reminder_schedule_blueprint: customBlueprint }],
+        rowCount: 1,
+      });
+    }
+    if (
+      sql.includes("update reminders") &&
+      sql.includes("set send_status = 'canceled'")
+    ) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    if (sql.includes("select owner_user_id") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ owner_user_id: USER_ID }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into reminders")) {
+      insertedReminders.push(params ?? []);
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+    if (
+      sql.includes("update residence_periods") &&
+      sql.includes("reminder_created")
+    ) {
+      return Promise.resolve({ rows: [], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc.create(makeCtx(), CREATE_INPUT);
+
+  assert.equal(
+    insertedReminders.length,
+    1,
+    "alias case_type_code should resolve to template with 1 blueprint item",
+  );
+  const dedupeKey = insertedReminders[0]?.[8] as string;
+  assert.ok(
+    dedupeKey.includes(":60"),
+    "should use custom 60-day offset from alias-resolved template",
+  );
 });

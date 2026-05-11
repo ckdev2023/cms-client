@@ -158,11 +158,40 @@ export type CaseTemplateUpdateParams = {
 /**
  *
  */
+/**
+ *
+ */
+export type CaseTypeOption = {
+  /**
+   *
+   */
+  code: string;
+  /**
+   *
+   */
+  sort: number;
+};
+
+/**
+ * 单条模板详情 — 比列表条目多出 requirementBlueprint 与 defaultTasksBlueprint。
+ */
+export type CaseTemplateDetail = CaseTemplateItem & {
+  requirementBlueprint: unknown;
+  defaultTasksBlueprint: unknown;
+};
+
+/**
+ *
+ */
 export interface CaseTemplatesRepository {
   /**
    *
    */
   list(params?: CaseTemplatesListParams): Promise<CaseTemplateListResult>;
+  /**
+   *
+   */
+  get(id: string): Promise<CaseTemplateDetail>;
   /**
    *
    */
@@ -174,6 +203,10 @@ export interface CaseTemplatesRepository {
     id: string,
     params: CaseTemplateUpdateParams,
   ): Promise<CaseTemplateItem>;
+  /**
+   *
+   */
+  getCaseTypeOptions(): Promise<CaseTypeOption[]>;
 }
 
 function str(v: unknown, fallback = ""): string {
@@ -211,6 +244,34 @@ function adaptItem(raw: unknown): CaseTemplateItem | null {
   };
 }
 
+function adaptCaseTypeOptions(raw: unknown): CaseTypeOption[] | null {
+  if (!raw || typeof raw !== "object") return null;
+  const r = raw as Record<string, unknown>;
+  if (!Array.isArray(r.items)) return null;
+  return r.items
+    .filter(
+      (item): item is Record<string, unknown> =>
+        !!item &&
+        typeof item === "object" &&
+        typeof (item as Record<string, unknown>).code === "string",
+    )
+    .map((item) => ({
+      code: item.code as string,
+      sort: typeof item.sort === "number" ? item.sort : 0,
+    }));
+}
+
+function adaptDetail(raw: unknown): CaseTemplateDetail | null {
+  const item = adaptItem(raw);
+  if (!item) return null;
+  const r = raw as Record<string, unknown>;
+  return {
+    ...item,
+    requirementBlueprint: r.requirementBlueprint ?? null,
+    defaultTasksBlueprint: r.defaultTasksBlueprint ?? null,
+  };
+}
+
 function adaptList(raw: unknown): CaseTemplateListResult | null {
   if (!raw || typeof raw !== "object") return null;
   const r = raw as Record<string, unknown>;
@@ -239,6 +300,17 @@ export type CaseTemplatesRepositoryFactoryInput = {
   apiPath?: string;
 };
 
+function buildListUrl(
+  runtime: RepositoryRuntime,
+  params?: CaseTemplatesListParams,
+): string {
+  const qs = new URLSearchParams();
+  if (params?.caseType) qs.set("caseType", params.caseType);
+  if (params?.includeInactive) qs.set("includeInactive", "true");
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return `${runtime.apiPath}${suffix}`;
+}
+
 /**
  * 案件資料蓝图仓储工厂。
  *
@@ -258,41 +330,47 @@ export function createCaseTemplatesRepository(
   });
 
   return {
-    async list(params) {
-      const qs = new URLSearchParams();
-      if (params?.caseType) qs.set("caseType", params.caseType);
-      if (params?.includeInactive) qs.set("includeInactive", "true");
-      const suffix = qs.toString() ? `?${qs.toString()}` : "";
-
-      return requestAndAdapt({
+    list: (params) =>
+      requestAndAdapt({
         runtime,
-        url: `${runtime.apiPath}${suffix}`,
+        url: buildListUrl(runtime, params),
         method: "GET",
         adapt: adaptList,
         errorMessage: "Invalid case templates list response",
-      });
-    },
-
-    async create(params) {
-      return requestAndAdapt({
+      }),
+    get: (id) =>
+      requestAndAdapt({
+        runtime,
+        url: `${runtime.apiPath}/${id}`,
+        method: "GET",
+        adapt: adaptDetail,
+        errorMessage: "Invalid case template detail response",
+      }),
+    create: (params) =>
+      requestAndAdapt({
         runtime,
         url: runtime.apiPath,
         method: "POST",
         body: params,
         adapt: adaptItem,
         errorMessage: "Invalid case template create response",
-      });
-    },
-
-    async update(id, params) {
-      return requestAndAdapt({
+      }),
+    update: (id, params) =>
+      requestAndAdapt({
         runtime,
         url: `${runtime.apiPath}/${id}`,
         method: "PATCH",
         body: params,
         adapt: adaptItem,
         errorMessage: "Invalid case template update response",
-      });
-    },
+      }),
+    getCaseTypeOptions: () =>
+      requestAndAdapt({
+        runtime,
+        url: `${runtime.apiPath}/case-type-options`,
+        method: "GET",
+        adapt: adaptCaseTypeOptions,
+        errorMessage: "Invalid case type options response",
+      }),
   };
 }

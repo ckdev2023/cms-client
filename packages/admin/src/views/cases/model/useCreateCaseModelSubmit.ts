@@ -1,4 +1,5 @@
-import { ref, type ComputedRef, type Ref } from "vue";
+import { nextTick, ref, type ComputedRef, type Ref } from "vue";
+import type { ChecklistPreviewResult } from "./useCreateCaseChecklistPreview";
 import type {
   CaseCreateCustomerOption,
   CreateCaseDraftState,
@@ -14,6 +15,29 @@ import {
   type CreateCaseDraftSnapshot,
 } from "./CaseAdapterWriteBuilders";
 import { defaultQuickCreateCustomer } from "./quickCreateCustomer";
+
+async function yieldChecklistPreviewMicrotasks(): Promise<void> {
+  await nextTick();
+  await Promise.resolve();
+}
+
+async function awaitChecklistPreviewReady(
+  draft: CreateCaseDraftState,
+  preview: ChecklistPreviewResult,
+): Promise<void> {
+  if (!draft.templateId?.trim()) return;
+  let idleRefreshDone = false;
+  for (let i = 0; i < 200; i++) {
+    const s = preview.previewState.value;
+    if (s === "ok" || s === "empty" || s === "error") return;
+    if (s === "idle" && !idleRefreshDone) {
+      idleRefreshDone = true;
+      await preview.refresh();
+    }
+    await nextTick();
+    await Promise.resolve();
+  }
+}
 /**
  * 草稿状態から提出用のプレーンなスナップショットを生成する。
  *
@@ -323,6 +347,8 @@ export interface SubmitFlowInput {
   familySupporters: ComputedRef<readonly CreateCaseRelatedParty[]>;
   /** 当前模板显示标签。 */
   templateLabel: ComputedRef<string>;
+  /** 资料清单预检（提交前需先 settle，避免 canSubmit 仍为 false）。 */
+  checklistPreview: ChecklistPreviewResult;
 }
 
 async function executeSingleSubmit(
@@ -404,6 +430,8 @@ export function createSubmitFlow(input: SubmitFlowInput) {
   const state = { submitResult, partyWarnings, bulkResults };
 
   async function submit(): Promise<CaseMutationResult | null> {
+    await yieldChecklistPreviewMicrotasks();
+    await awaitChecklistPreviewReady(input.draft, input.checklistPreview);
     if (!input.canSubmit.value || submitting.value) return null;
     submitting.value = true;
     submitError.value = null;

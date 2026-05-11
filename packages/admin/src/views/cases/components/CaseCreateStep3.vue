@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, nextTick } from "vue";
+import { onMounted, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CaseGroupOption, CaseOwnerOption } from "../types";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
@@ -13,6 +13,16 @@ const props = defineProps<{
   groupOptions?: readonly CaseGroupOption[];
 }>();
 
+/** 受控面板：离开本步或选定日期后收起，避免弹出层残留在后续步骤上（Step 仍用 v-show 挂载）。 */
+const dueDatePopupVisible = ref(false);
+
+watch(
+  () => props.model.draft.currentStep,
+  () => {
+    dueDatePopupVisible.value = false;
+  },
+);
+
 /**
  * 同步 DatePicker 选中的截止日期到建案表单。
  *
@@ -20,6 +30,7 @@ const props = defineProps<{
  */
 function handleDueDateChange(value: string | number | Date | undefined): void {
   props.model.setDueDate(typeof value === "string" ? value : "");
+  dueDatePopupVisible.value = false;
 }
 
 onMounted(async () => {
@@ -92,10 +103,7 @@ onMounted(async () => {
           </option>
         </select>
       </div>
-      <div
-        id="case-create-due-picker-mount"
-        class="cc__field cc__field--due-mount cc__field--full"
-      >
+      <div class="cc__field cc__field--due-mount cc__field--full">
         <label id="case-create-dueDate-label" class="cc__label">
           {{ t("cases.create.step3.dueDateLabel") }}
           <span class="req-mark">*</span>
@@ -103,10 +111,10 @@ onMounted(async () => {
         <a-date-picker
           class="cc__date-picker"
           :model-value="props.model.draft.dueDate || undefined"
+          v-model:popup-visible="dueDatePopupVisible"
           format="YYYY-MM-DD"
           value-format="YYYY-MM-DD"
-          popup-container="#case-create-due-picker-mount"
-          position="top"
+          position="bl"
           aria-labelledby="case-create-dueDate-label"
           @change="handleDueDateChange"
         />

@@ -120,6 +120,9 @@ export const BASE_INPUT: ResidencePeriodCreateInput = {
 };
 
 function routeCaseAndCustomerLookups(sql: string): MaybeQueryResult {
+  if (sql.includes("case_type_code") && sql.includes("from cases")) {
+    return ok([{ case_type_code: "business_manager_visa" }]);
+  }
   if (sql.includes("from cases") && sql.includes("customer_id")) {
     return ok([{ id: CASE_ID, customer_id: CUSTOMER_ID }]);
   }

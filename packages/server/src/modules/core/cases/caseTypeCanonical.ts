@@ -96,3 +96,24 @@ export const WIZARD_SEED_MATRIX: readonly {
     seedExists: false,
   },
 ] as const;
+
+/**
+ * 运营可选的 canonical 案件类型（去重、排序后）。
+ *
+ * 单一事实来源：与 WIZARD_SEED_MATRIX 的 canonical 列对齐。
+ * 新增 case_type 时，同时更新 WIZARD_SEED_MATRIX 即可自动出现在此列表中。
+ */
+export const CANONICAL_CASE_TYPE_OPTIONS: readonly {
+  code: string;
+  sort: number;
+}[] = (() => {
+  const seen = new Set<string>();
+  const result: { code: string; sort: number }[] = [];
+  for (const entry of WIZARD_SEED_MATRIX) {
+    if (!seen.has(entry.canonical)) {
+      seen.add(entry.canonical);
+      result.push({ code: entry.canonical, sort: result.length });
+    }
+  }
+  return result;
+})();

@@ -99,6 +99,12 @@ void test("ResidencePeriodsService.create inserts row, clears previous current a
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc, timeline } = createService((sql, params) => {
     calls.push({ sql, params });
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("from cases") && sql.includes("customer_id")) {
       return Promise.resolve({
         rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],
@@ -172,6 +178,12 @@ void test("ResidencePeriodsService.create does not set reminder_created when isC
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc } = createService((sql, params) => {
     calls.push({ sql, params });
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("from cases") && sql.includes("customer_id")) {
       return Promise.resolve({
         rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],
@@ -216,6 +228,12 @@ void test("ResidencePeriodsService.create does not set reminder_created when isC
 void test("ResidencePeriodsService.update replaces reminder schedule and writes timeline", async () => {
   const { svc, timeline } = createService((sql, _params) => {
     void _params;
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("from residence_periods") && sql.includes("for update")) {
       return Promise.resolve({ rows: [makeResidencePeriodRow()], rowCount: 1 });
     }
@@ -322,6 +340,12 @@ void test("ResidencePeriodsService.update passes entryDate through to SQL", asyn
   const calls: { sql: string; params?: unknown[] }[] = [];
   const { svc } = createService((sql, params) => {
     calls.push({ sql, params });
+    if (sql.includes("case_type_code") && sql.includes("from cases")) {
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
+    }
     if (sql.includes("from residence_periods") && sql.includes("for update")) {
       return Promise.resolve({
         rows: [makeResidencePeriodRow({ entry_date: null })],

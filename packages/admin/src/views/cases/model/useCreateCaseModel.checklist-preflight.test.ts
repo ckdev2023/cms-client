@@ -29,7 +29,7 @@ function createDeps(
 
 function stubRepoWithChecklistCount(count: number): CaseRepository {
   return {
-    previewChecklistCount: vi.fn(async () => count),
+    previewChecklistCount: vi.fn(async () => ({ count, requiredCount: count })),
     createCase: vi.fn(async () => ({ id: "CASE-001" })),
     createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
   } as unknown as CaseRepository;
@@ -73,11 +73,12 @@ describe("useCreateCaseModel: checklist preflight", () => {
 
     expect(m.checklistPreview).toBeDefined();
     expect(m.checklistPreview.checklistCount).toBeDefined();
+    expect(m.checklistPreview.checklistRequiredCount).toBeDefined();
     expect(m.checklistPreview.previewState).toBeDefined();
     expect(m.checklistPreview.checklistEmpty).toBeDefined();
   });
 
-  it("does not block canSubmit on preview error (graceful degradation)", async () => {
+  it("blocks canSubmit on preview error until preflight succeeds", async () => {
     const repo = {
       previewChecklistCount: vi.fn(async () => {
         throw new Error("network error");
@@ -94,6 +95,6 @@ describe("useCreateCaseModel: checklist preflight", () => {
     });
 
     expect(m.checklistPreview.checklistEmpty.value).toBe(false);
-    expect(m.canSubmit.value).toBe(true);
+    expect(m.canSubmit.value).toBe(false);
   });
 });

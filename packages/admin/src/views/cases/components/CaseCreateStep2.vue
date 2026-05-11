@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
+import CaseCreateStep2ChecklistServerBanner from "./CaseCreateStep2ChecklistServerBanner.vue";
 import { resolveGroupLabel } from "../../../shared/model/groupOptions";
 import type { CreateCaseModel } from "../model/useCreateCaseModel";
 import type { PartyPickerMode } from "../model/useCasePartyPicker";
@@ -13,14 +14,9 @@ import { resolveTemplateLabel } from "../types-create";
 const { t, te, locale } = useI18n();
 
 /**
- * 角色字面解析：当 `value` 为已注册 i18n key 时返回当前 locale 翻译，
- * 否则原样返回（兼容快速新建时用户自填的角色字面，如 "扶养者"、"配偶"）。
- *
- * 修复 BUG-152：服务端拉取 / sourceContext 合成的客户 roleHint 现统一为
- * `cases.create.step2.primaryRole`，渲染时按当前语言翻译，避免硬编码 JA。
- *
- * @param value - 角色字面或 i18n key
- * @returns 渲染用本地化字符串
+ * BUG-152：roleHint 多为 i18n key；字面角色原文返回。
+ * @param value 角色字面或 i18n key
+ * @returns 本地化展示字符串
  */
 function resolveRoleLabel(value: string | undefined | null): string {
   if (!value) return "";
@@ -41,9 +37,8 @@ const emit = defineEmits<{
 }>();
 
 /**
- * 从下拉列表中选择已有客户作为主申请人。
- *
- * @param e - 原生 change 事件
+ * 下拉切换主申请人（已有客户）。
+ * @param e 原生 change 事件
  */
 function onPrimarySelect(e: Event) {
   const id = (e.target as HTMLSelectElement).value;
@@ -51,10 +46,7 @@ function onPrimarySelect(e: Event) {
   props.model.setPrimaryCustomer(c);
 }
 
-/**
- * 选中主申请人卡片的分组标签：始终基于 raw `group` 字段实时解析，
- * 以便 locale 切换或 `/api/groups` 别名晚到时仍能保持本地化（BUG-139）。
- */
+/** BUG-139：分组标签按原始 group + locale 实时解析。 */
 const primaryGroupDisplay = computed(() => {
   const group = props.model.primaryCustomer.value?.group;
   if (!group) return "";
@@ -64,15 +56,9 @@ const primaryGroupDisplay = computed(() => {
 type SectionIcon = "applicant" | "supporter" | "office" | "folder";
 
 /**
- * 资料清单子分组图标语义：按 zh 标题关键字推断，三语共用。
- *
- * - 主申请人 → applicant
- * - 扶养者/保证人/雇主/sponsor → supporter
- * - 事务所内部/office → office
- * - 兜底 → folder
- *
- * @param zhTitle - 子分组的中文标题（来自模板 i18n label.zh）
- * @returns 图标 token，决定 `<svg>` 选择与背景色
+ * 资料预览分组图标：由 zh 标题关键字映射。
+ * @param zhTitle 子分组中文标题（label.zh）
+ * @returns 图标语义类别（用于选择对应 SVG）
  */
 function resolveSectionIcon(zhTitle: string): SectionIcon {
   if (/主申请人|申请人/.test(zhTitle)) return "applicant";
@@ -81,24 +67,41 @@ function resolveSectionIcon(zhTitle: string): SectionIcon {
   return "folder";
 }
 
-/** 资料清单整体统计：用于头部 summary chip。 */
+/** 资料清单整体统计：用于头部 summary chip（与服务端 blueprint 对齐）。 */
 const requirementSummary = computed(() => {
   const tpl = props.model.currentTemplate.value;
   if (!tpl) return { total: 0, required: 0, sections: 0 };
+
   let total = 0;
   let required = 0;
   for (const sec of tpl.sections) {
     total += sec.items.length;
     for (const it of sec.items) if (it.required) required += 1;
   }
+
+  const preview = props.model.checklistPreview;
+  const srvTotal = preview.checklistCount.value;
+  const srvRequired = preview.checklistRequiredCount.value;
+  const st = preview.previewState.value;
+
+  if (st === "ok" && srvTotal !== null) {
+    return {
+      total: srvTotal,
+      required: srvRequired ?? required,
+      sections: tpl.sections.length,
+    };
+  }
+  if (st === "empty") {
+    return { total: 0, required: 0, sections: tpl.sections.length };
+  }
+
   return { total, required, sections: tpl.sections.length };
 });
 
 /**
- * 单个子分组的统计（已选模板下 items 中的必须项数量）。
- *
- * @param items - 子分组下的资料项列表
- * @returns 必须项的数量
+ * 统计子分组下的必须项数量。
+ * @param items 资料项列表
+ * @returns 必须项条数
  */
 function sectionRequiredCount(
   items: ReadonlyArray<{ required: boolean }>,
@@ -254,6 +257,8 @@ function sectionRequiredCount(
     >
       {{ t("cases.create.step2.relatedAdd") }}
     </Button>
+
+    <CaseCreateStep2ChecklistServerBanner :model="model" />
 
     <section class="preview" data-testid="document-preview">
       <header class="preview__header">

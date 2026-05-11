@@ -120,6 +120,8 @@ const casesZhCN = {
         "依据所选模板自动生成 · 用于预审与提交检查；正式建档后以日文官方名（行政书士标准）登记",
       documentPreviewSummary: "{total} 项 · {required} 必须",
       documentPreviewEmpty: "请先在第 1 步选择案件模板",
+      documentPreviewServerEmpty:
+        "服务端资料清单预检未命中模板（0 条）。下方仅为向导内示意清单；未完成配置前无法在末尾步骤提交创建。请到「案件资料蓝图」维护或由管理员执行初始化脚本写入模板。",
       requiredBadge: "必须",
       optionalBadge: "可选",
     },
@@ -169,6 +171,8 @@ const casesZhCN = {
       emptyWarning:
         "该签证类型尚未配置资料清单模板，无法创建案件。请联系管理员在后台配置模板。",
       loading: "正在检查资料清单模板…",
+      errorWarning:
+        "无法加载资料清单预检，请检查网络后刷新页面，或联系管理员。提交已暂时禁用。",
     },
     summary: {
       template: "案件模板",
@@ -678,11 +682,20 @@ const casesZhCN = {
       referenceSelf: "本资料项登记",
       referenceFrom: "引用自：{source}",
       copyPath: "复制路径",
+      retryLoad: "重试加载",
+      loadError: {
+        unauthorized:
+          "资料清单加载失败：权限不足或会话已失效，请重新登录后再试。",
+        requestFailed: "资料清单加载失败：网络或服务暂时不可用，请稍后重试。",
+        badResponse:
+          "资料清单加载失败：服务器返回异常数据，请稍后重试或联系管理员。",
+      },
       empty: {
         title: "暂无资料登记",
         desc: "该案件尚未添加任何资料需求。请通过「登记资料」或「手动添加」开始建立资料清单。",
         registerCta: "登记资料",
         addCta: "手动添加",
+        bootstrapFromTemplateCta: "从模板生成资料清单",
         templateMissing: {
           title: "资料模板未配置",
           desc: "当前签证类型尚未配置资料模板，请联系管理员维护。",
@@ -971,6 +984,7 @@ const casesZhCN = {
       hum_renewal: "技人国（更新）",
       eng_humanities_intl_cert: "技人国（认定）",
       eng_humanities_intl_renewal: "技人国（更新）",
+      eng_humanities_intl: "技人国（技术・人文知识・国际业务）",
       intra_company: "企業内转勤",
       intra_company_transfer: "企業内转勤",
       company_setup: "公司设立",

@@ -35,6 +35,10 @@ function stubRepo(
     repo: {
       createCase: spy,
       createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+      previewChecklistCount: vi.fn(async () => ({
+        count: 10,
+        requiredCount: 8,
+      })),
     } as unknown as CaseRepository,
     spy,
   };
@@ -47,6 +51,7 @@ function successRepo(id = "CASE-NEW-001") {
 function createDeps(
   overrides: Partial<UseCreateCaseModelDeps> = {},
 ): UseCreateCaseModelDeps {
+  const { repo, ...rest } = overrides;
   return {
     templates: () => SAMPLE_CREATE_TEMPLATES,
     customers: () => SAMPLE_CREATE_CUSTOMERS,
@@ -56,7 +61,17 @@ function createDeps(
     sourceContext: { customerId: "cust-001", familyBulkMode: false },
     defaultGroup: "tokyo-1",
     defaultOwner: "suzuki",
-    ...overrides,
+    ...rest,
+    repo:
+      repo ??
+      ({
+        previewChecklistCount: vi.fn(async () => ({
+          count: 10,
+          requiredCount: 8,
+        })),
+        createCase: vi.fn(async () => ({ id: "case-stub" })),
+        createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+      } as unknown as CaseRepository),
   };
 }
 
@@ -203,7 +218,7 @@ describe("submit loading lifecycle (p0-fe-007-01)", () => {
     );
     const m = createSubmittableModel({ repo });
     const p = m.submit();
-    expect(m.submitting.value).toBe(true);
+    await vi.waitFor(() => expect(m.submitting.value).toBe(true));
     resolve!({ id: "CASE-001" });
     await p;
     expect(m.submitting.value).toBe(false);
@@ -362,8 +377,11 @@ describe("submit guards (p0-fe-007-01)", () => {
 
     const p1 = m.submit();
     const p2 = m.submit();
-    expect(resolveCount).toBe(1);
-    expect(spy).toHaveBeenCalledTimes(1);
+
+    await vi.waitFor(() => {
+      expect(resolveCount).toBe(1);
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
 
     resolve!({ id: "CASE-001" });
     const [r1, r2] = await Promise.all([p1, p2]);

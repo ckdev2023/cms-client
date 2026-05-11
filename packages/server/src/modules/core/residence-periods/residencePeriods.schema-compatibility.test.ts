@@ -84,6 +84,12 @@ void test(
       if (sql.includes("information_schema.columns")) {
         return Promise.resolve({ rows: [], rowCount: 0 });
       }
+      if (sql.includes("case_type_code") && sql.includes("from cases")) {
+        return Promise.resolve({
+          rows: [{ case_type_code: "business_manager_visa" }],
+          rowCount: 1,
+        });
+      }
       if (sql.includes("from cases") && sql.includes("customer_id")) {
         return Promise.resolve({
           rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],
@@ -158,6 +164,12 @@ void test(
       calls.push({ sql, params });
       if (sql.includes("information_schema.columns")) {
         return Promise.resolve({ rows: [], rowCount: 0 });
+      }
+      if (sql.includes("case_type_code") && sql.includes("from cases")) {
+        return Promise.resolve({
+          rows: [{ case_type_code: "business_manager_visa" }],
+          rowCount: 1,
+        });
       }
       if (
         sql.includes("from residence_periods") &&

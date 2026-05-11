@@ -24,6 +24,61 @@ function makeLegacyResolver(response: unknown): TemplatesResolver {
 }
 
 void describe("preflight: resolveChecklistItems empty guard integration", () => {
+  void test("legacy resolver retries canonical key when wizard id misses", async () => {
+    const templateResolver: CaseTemplateResolver = () =>
+      Promise.resolve({ found: false as const });
+
+    const calls: string[] = [];
+    const legacy = {
+      resolve: (
+        _ctx: RequestContext,
+        input: { kind: string; key: string },
+      ): Promise<unknown> => {
+        calls.push(`${input.kind}:${input.key}`);
+        if (input.kind === "document_checklist" && input.key === "family") {
+          return Promise.resolve({ mode: "legacy", used: false });
+        }
+        if (input.kind === "case_type" && input.key === "family") {
+          return Promise.resolve({ mode: "legacy", used: false });
+        }
+        if (
+          input.kind === "document_checklist" &&
+          input.key === "dependent_visa"
+        ) {
+          return Promise.resolve({
+            mode: "template",
+            used: true,
+            config: {
+              requirementBlueprint: [
+                {
+                  checklistItemCode: "dv-from-canonical-legacy",
+                  name: "Canonical legacy doc",
+                  ownerSide: "applicant",
+                  requiredFlag: true,
+                },
+              ],
+            },
+          });
+        }
+        return Promise.resolve({ mode: "legacy", used: false });
+      },
+    } as TemplatesResolver;
+
+    const items = await resolveChecklistItems(
+      legacy,
+      makeCtx(),
+      "family",
+      templateResolver,
+    );
+
+    assert.equal(items.length, 1);
+    assert.equal(items[0].code, "dv-from-canonical-legacy");
+    assert.ok(
+      calls.includes("document_checklist:dependent_visa"),
+      `expected canonical legacy attempt, got: ${calls.join(";")}`,
+    );
+  });
+
   void test("returns empty array when both resolvers miss — caller can reject", async () => {
     const templateResolver: CaseTemplateResolver = () =>
       Promise.resolve({ found: false as const });

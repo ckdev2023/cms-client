@@ -330,6 +330,7 @@ function buildWorkSample(): CaseDetail {
     reviewEnabled: false,
     riskConfirmationRecord: null,
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",
@@ -1091,6 +1092,7 @@ function buildFamilySample(): CaseDetail {
     reviewEnabled: false,
     riskConfirmationRecord: null,
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",
@@ -1578,6 +1580,7 @@ function buildGateFailSample(): CaseDetail {
     reviewEnabled: false,
     riskConfirmationRecord: null,
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2012,6 +2015,7 @@ function buildArrearsSample(): CaseDetail {
       amount: "¥120,000",
     },
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2449,6 +2453,7 @@ function buildCorrectionSample(): CaseDetail {
     reviewEnabled: false,
     riskConfirmationRecord: null,
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",
@@ -2852,6 +2857,7 @@ function buildArchivedSample(): CaseDetail {
     reviewEnabled: false,
     riskConfirmationRecord: null,
     documentTemplateMissing: false,
+    checklistBootstrapAvailable: false,
     documents: [
       {
         group: "主申请人提供",

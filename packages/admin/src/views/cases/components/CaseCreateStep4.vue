@@ -33,6 +33,33 @@ const emit = defineEmits<{
       @go-to-customer="emit('goToCustomer')"
     />
 
+    <div
+      v-if="!submitted && model.checklistPreview.previewState.value === 'empty'"
+      class="checklist-preflight checklist-preflight--warn"
+      role="status"
+      data-testid="case-create-checklist-preflight-empty"
+    >
+      {{ t("cases.create.checklistPreflight.emptyWarning") }}
+    </div>
+    <div
+      v-if="!submitted && model.checklistPreview.previewState.value === 'error'"
+      class="checklist-preflight checklist-preflight--danger"
+      role="alert"
+      data-testid="case-create-checklist-preflight-error"
+    >
+      {{ t("cases.create.checklistPreflight.errorWarning") }}
+    </div>
+    <div
+      v-if="
+        !submitted && model.checklistPreview.previewState.value === 'loading'
+      "
+      class="checklist-preflight checklist-preflight--muted"
+      role="status"
+      data-testid="case-create-checklist-preflight-loading"
+    >
+      {{ t("cases.create.checklistPreflight.loading") }}
+    </div>
+
     <div v-if="submitted" class="success">
       <div class="success__title">
         {{ t("cases.create.step4.successTitle") }}
@@ -94,6 +121,32 @@ const emit = defineEmits<{
 </template>
 
 <style scoped>
+.checklist-preflight {
+  padding: 14px 16px;
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-md);
+}
+
+.checklist-preflight--warn {
+  border: 1px solid rgba(234, 179, 8, 0.45);
+  background: rgba(254, 252, 232, 0.85);
+  color: var(--color-text-1);
+}
+
+.checklist-preflight--danger {
+  border: 1px solid rgba(220, 38, 38, 0.35);
+  background: rgba(254, 242, 242, 0.85);
+  color: var(--color-danger-text);
+}
+
+.checklist-preflight--muted {
+  border: 1px solid var(--color-border-1);
+  background: var(--color-bg-1);
+  color: var(--color-text-2);
+}
+
 .success {
   padding: 20px;
   border: 1px solid rgba(22, 163, 74, 0.3);

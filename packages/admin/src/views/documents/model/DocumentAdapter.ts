@@ -58,9 +58,10 @@ const PROVIDED_BY_ROLE_PROVIDER_MAP: Record<string, DocumentProviderType> = {
 
 /**
  * 058 回填将 `owner_side=customer` 一律标成 supporter；
- * 经营管理签会社侧资料蓝图为 employer，易被误归为扶养者·保证人。
+ * 「会社側」資料在蓝图中常为 `providedByRole=employer`，却被误归为扶养者·保证人；
+ * 经管签（064）已 DB 纠错；前端需兼容仍未跑迁移或历史遗留行。
  */
-const BMV_EMPLOYER_CHECKLIST_CODES: ReadonlySet<string> = new Set([
+const COMPANY_SIDE_EMPLOYER_CHECKLIST_CODES: ReadonlySet<string> = new Set([
   "bmv-company-registry",
   "bmv-office-lease",
   "bmv-capital-proof",
@@ -69,16 +70,21 @@ const BMV_EMPLOYER_CHECKLIST_CODES: ReadonlySet<string> = new Set([
   "bmv-tax-certificate",
   "bmv-seal-certificate",
   "bmv-bank-statement",
+  "work-employment-contract",
+  "work-company-registry",
+  "work-company-profile",
+  "work-financial-statement",
+  "work-category-proof",
 ]);
 
-function resolveBmvCompanyEmployerBucket(
+function resolveCompanySideEmployerBucket(
   checklistItemCode: string | null | undefined,
   providedByRole: string | null | undefined,
   ownerSide: string,
 ): DocumentProviderType | null {
   if (
     !checklistItemCode ||
-    !BMV_EMPLOYER_CHECKLIST_CODES.has(checklistItemCode)
+    !COMPANY_SIDE_EMPLOYER_CHECKLIST_CODES.has(checklistItemCode)
   ) {
     return null;
   }
@@ -181,7 +187,7 @@ export function mapOwnerSideToProvider(
  *
  * @param providedByRole - 后端 `document_items.provided_by_role`（可能为 null）
  * @param ownerSide - 后端 `document_items.owner_side` 值
- * @param checklistItemCode - 蓝图项编号；用于经管签会社资料误标 supporter 的纠偏
+ * @param checklistItemCode - 蓝图项编号；用于经管签 / 技人国会社侧资料误标 supporter 的纠偏
  * @returns 资料提供方枚举
  */
 export function resolveProvider(
@@ -189,12 +195,12 @@ export function resolveProvider(
   ownerSide: string,
   checklistItemCode?: string | null,
 ): DocumentProviderType {
-  const bmvEmployer = resolveBmvCompanyEmployerBucket(
+  const companyEmployer = resolveCompanySideEmployerBucket(
     checklistItemCode,
     providedByRole,
     ownerSide,
   );
-  if (bmvEmployer) return bmvEmployer;
+  if (companyEmployer) return companyEmployer;
 
   if (providedByRole) {
     const mapped = PROVIDED_BY_ROLE_PROVIDER_MAP[providedByRole];

@@ -1516,6 +1516,8 @@ export interface CaseDetail {
   documents: DocumentGroup[];
   /** 服务端指示该案件的签证类型是否缺少资料模板配置。 */
   documentTemplateMissing: boolean;
+  /** 资料为空时可一键从激活模板补生成清单（S1/S2 且模板有可解析条目）。 */
+  checklistBootstrapAvailable: boolean;
   /**
    *
    */

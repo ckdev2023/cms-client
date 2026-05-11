@@ -1,7 +1,13 @@
-import { describe, it } from "node:test";
+import { describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
 
-import { buildItemsFromBlueprint } from "./backfillCaseDocumentItems";
+import {
+  buildItemsFromBlueprint,
+  resolveBackfillRows,
+  BACKFILL_CASES_QUERY,
+  TEMPLATE_BY_CANDIDATES_QUERY,
+  type PgClient,
+} from "./backfillCaseDocumentItems";
 
 void describe("buildItemsFromBlueprint", () => {
   void it("returns items from {version,items} wrapped blueprint", () => {
@@ -116,5 +122,165 @@ void describe("buildItemsFromBlueprint", () => {
 
     assert.equal(items.length, 1);
     assert.equal(items[0].code, "alt_code");
+  });
+});
+
+void describe("resolveBackfillRows", () => {
+  const DEPENDENT_VISA_BLUEPRINT = {
+    version: 1,
+    items: [
+      { code: "dv_passport", name: "パスポート", ownerSide: "applicant" },
+    ],
+  };
+
+  function createMockClient(
+    cases: { case_id: string; org_id: string; case_type_code: string }[],
+    templates: Map<string, unknown>,
+  ): PgClient {
+    type QueryResult = { rows: Record<string, unknown>[] };
+    const queryFn = mock.fn(
+      (sql: string, params?: unknown[]): Promise<QueryResult> => {
+        if (sql === BACKFILL_CASES_QUERY) {
+          return Promise.resolve({
+            rows: cases as Record<string, unknown>[],
+          });
+        }
+        if (sql === TEMPLATE_BY_CANDIDATES_QUERY) {
+          const p = params ?? [];
+          const candidates = p[1] as string[];
+          for (const c of candidates) {
+            const key = `${p[0] as string}:${c}`;
+            if (templates.has(key)) {
+              return Promise.resolve({
+                rows: [{ requirement_blueprint: templates.get(key) }] as Record<
+                  string,
+                  unknown
+                >[],
+              });
+            }
+          }
+          return Promise.resolve({ rows: [] });
+        }
+        return Promise.resolve({ rows: [] });
+      },
+    );
+    return { query: queryFn };
+  }
+
+  void it("resolves family alias to dependent_visa template", async () => {
+    const org = "org-1";
+    const tplMap = new Map<string, unknown>();
+    tplMap.set(`${org}:dependent_visa`, DEPENDENT_VISA_BLUEPRINT);
+
+    const client = createMockClient(
+      [{ case_id: "c-1", org_id: org, case_type_code: "family" }],
+      tplMap,
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].case_id, "c-1");
+    assert.deepEqual(rows[0].requirement_blueprint, DEPENDENT_VISA_BLUEPRINT);
+  });
+
+  void it("resolves family_stay alias to dependent_visa template", async () => {
+    const org = "org-1";
+    const tplMap = new Map<string, unknown>();
+    tplMap.set(`${org}:dependent_visa`, DEPENDENT_VISA_BLUEPRINT);
+
+    const client = createMockClient(
+      [{ case_id: "c-2", org_id: org, case_type_code: "family_stay" }],
+      tplMap,
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0].requirement_blueprint, DEPENDENT_VISA_BLUEPRINT);
+  });
+
+  void it("prefers exact match over canonical fallback", async () => {
+    const org = "org-1";
+    const exactBlueprint = {
+      version: 1,
+      items: [{ code: "exact", name: "exact" }],
+    };
+    const tplMap = new Map<string, unknown>();
+    tplMap.set(`${org}:family`, exactBlueprint);
+    tplMap.set(`${org}:dependent_visa`, DEPENDENT_VISA_BLUEPRINT);
+
+    const client = createMockClient(
+      [{ case_id: "c-3", org_id: org, case_type_code: "family" }],
+      tplMap,
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0].requirement_blueprint, exactBlueprint);
+  });
+
+  void it("resolves biz_mgmt subtypes to business_manager_visa", async () => {
+    const org = "org-1";
+    const bmvBlueprint = {
+      version: 1,
+      items: [{ code: "bmv_doc", name: "BMV" }],
+    };
+    const tplMap = new Map<string, unknown>();
+    tplMap.set(`${org}:business_manager_visa`, bmvBlueprint);
+
+    const client = createMockClient(
+      [{ case_id: "c-4", org_id: org, case_type_code: "biz_mgmt_cert_4m" }],
+      tplMap,
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 1);
+    assert.deepEqual(rows[0].requirement_blueprint, bmvBlueprint);
+  });
+
+  void it("returns null blueprint when no template matches", async () => {
+    const client = createMockClient(
+      [{ case_id: "c-5", org_id: "org-1", case_type_code: "unknown_type" }],
+      new Map(),
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 1);
+    assert.equal(rows[0].requirement_blueprint, null);
+  });
+
+  void it("caches template lookups per (org_id, case_type_code)", async () => {
+    const org = "org-1";
+    const tplMap = new Map<string, unknown>();
+    tplMap.set(`${org}:dependent_visa`, DEPENDENT_VISA_BLUEPRINT);
+
+    const client = createMockClient(
+      [
+        { case_id: "c-6", org_id: org, case_type_code: "family" },
+        { case_id: "c-7", org_id: org, case_type_code: "family" },
+      ],
+      tplMap,
+    );
+
+    const rows = await resolveBackfillRows(client);
+
+    assert.equal(rows.length, 2);
+    assert.deepEqual(rows[0].requirement_blueprint, DEPENDENT_VISA_BLUEPRINT);
+    assert.deepEqual(rows[1].requirement_blueprint, DEPENDENT_VISA_BLUEPRINT);
+
+    const templateCalls = (
+      client.query as unknown as ReturnType<typeof mock.fn>
+    ).mock.calls.filter(
+      (call) => (call.arguments[0] as string) === TEMPLATE_BY_CANDIDATES_QUERY,
+    );
+    assert.equal(
+      templateCalls.length,
+      1,
+      "template query called only once for same (org, type)",
+    );
   });
 });

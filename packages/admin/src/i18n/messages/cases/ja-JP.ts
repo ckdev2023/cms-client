@@ -122,6 +122,8 @@ const casesJaJP = {
         "選択テンプレートから自動生成 ・ 提出前チェック用 ・ 案件作成後は日本語の正式名称で登録",
       documentPreviewSummary: "{total} 項目 ・ 必須 {required}",
       documentPreviewEmpty: "ステップ 1 でテンプレートを選択してください",
+      documentPreviewServerEmpty:
+        "サーバー側のチェックリスト事前確認が 0 件です。下記はウィザード上の参考リストであり、テンプレート未設定の間は最終ステップで作成できません。「案件資料ブループリント」の設定または管理者によるシード実行が必要です。",
       requiredBadge: "必須",
       optionalBadge: "任意",
     },
@@ -174,6 +176,8 @@ const casesJaJP = {
       emptyWarning:
         "このビザ種別にはチェックリストテンプレートが設定されていません。管理画面で設定してください。",
       loading: "チェックリストテンプレートを確認中…",
+      errorWarning:
+        "チェックリストの事前確認を読み込めませんでした。接続を確認して再読み込みするか、管理者に連絡してください。成功するまで送信は無効です。",
     },
     summary: {
       template: "案件テンプレート",
@@ -702,11 +706,21 @@ const casesJaJP = {
       referenceSelf: "本書類項目で登録",
       referenceFrom: "参照元：{source}",
       copyPath: "パスをコピー",
+      retryLoad: "再読み込み",
+      loadError: {
+        unauthorized:
+          "書類チェックリストを読み込めませんでした。権限がないか、ログインの有効期限が切れている可能性があります。",
+        requestFailed:
+          "書類チェックリストを読み込めませんでした。ネットワークまたはサービスが一時的に利用できません。しばらくしてから再試行してください。",
+        badResponse:
+          "書類チェックリストを読み込めませんでした。サーバーから不正な応答が返りました。時間をおいて再試行するか、管理者にお問い合わせください。",
+      },
       empty: {
         title: "書類登録なし",
         desc: "この案件にはまだ書類の登録がありません。「書類登録」または「手動追加」で書類チェックリストを作成してください。",
         registerCta: "書類登録",
         addCta: "手動追加",
+        bootstrapFromTemplateCta: "テンプレートからチェックリストを生成",
         templateMissing: {
           title: "書類テンプレート未設定",
           desc: "この在留資格には書類テンプレートが設定されていません。管理者にお問い合わせください。",
@@ -997,6 +1011,7 @@ const casesJaJP = {
       hum_renewal: "技人国（更新）",
       eng_humanities_intl_cert: "技人国（認定）",
       eng_humanities_intl_renewal: "技人国（更新）",
+      eng_humanities_intl: "技術・人文知識・国際業務",
       intra_company: "企業内転勤",
       intra_company_transfer: "企業内転勤",
       company_setup: "会社設立",

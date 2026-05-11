@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   canonicalizeCaseTypeCode,
   WIZARD_SEED_MATRIX,
+  CANONICAL_CASE_TYPE_OPTIONS,
 } from "./caseTypeCanonical";
 import { BMV_CASE_TYPE } from "./cases.template-bmv";
 
@@ -124,5 +125,30 @@ void describe("WIZARD_SEED_MATRIX", () => {
         );
       }
     }
+  });
+});
+
+void describe("CANONICAL_CASE_TYPE_OPTIONS", () => {
+  void test("has unique canonical codes from WIZARD_SEED_MATRIX", () => {
+    const expected = [...new Set(WIZARD_SEED_MATRIX.map((e) => e.canonical))];
+    const actual = CANONICAL_CASE_TYPE_OPTIONS.map((o) => o.code);
+    assert.deepEqual(actual, expected);
+  });
+
+  void test("sort values are sequential starting from 0", () => {
+    for (let i = 0; i < CANONICAL_CASE_TYPE_OPTIONS.length; i++) {
+      assert.equal(
+        CANONICAL_CASE_TYPE_OPTIONS[i].sort,
+        i,
+        `expected sort=${String(i)} for code="${CANONICAL_CASE_TYPE_OPTIONS[i].code}"`,
+      );
+    }
+  });
+
+  void test("includes all seed case types", () => {
+    const codes = new Set(CANONICAL_CASE_TYPE_OPTIONS.map((o) => o.code));
+    assert.ok(codes.has("dependent_visa"));
+    assert.ok(codes.has("work"));
+    assert.ok(codes.has("business_manager_visa"));
   });
 });

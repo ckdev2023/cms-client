@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { useCaseTemplatesListModel } from "./useCaseTemplatesListModel";
+import {
+  useCaseTemplatesListModel,
+  mergeCaseTypeOptions,
+} from "./useCaseTemplatesListModel";
 import type {
   CaseTemplatesRepository,
   CaseTemplateItem,
   CaseTemplateListResult,
+  CaseTypeOption,
 } from "./CaseTemplatesRepository";
 
 function makeItem(overrides: Partial<CaseTemplateItem> = {}): CaseTemplateItem {
@@ -23,9 +27,15 @@ function makeItem(overrides: Partial<CaseTemplateItem> = {}): CaseTemplateItem {
   };
 }
 
+const DEFAULT_CANONICAL: CaseTypeOption[] = [
+  { code: "dependent_visa", sort: 0 },
+  { code: "work", sort: 1 },
+  { code: "business_manager_visa", sort: 2 },
+];
+
 function makeRepo(
   result: CaseTemplateListResult = { items: [] },
-  shouldFail = false,
+  opts: { shouldFail?: boolean; canonical?: CaseTypeOption[] } = {},
 ): CaseTemplatesRepository & { callCount: number } {
   let callCount = 0;
   return {
@@ -34,15 +44,58 @@ function makeRepo(
     },
     list: async () => {
       callCount++;
-      if (shouldFail) {
+      if (opts.shouldFail) {
         throw new Error("network error");
       }
       return result;
     },
+    get: async () => ({
+      ...makeItem(),
+      requirementBlueprint: null,
+      defaultTasksBlueprint: null,
+    }),
     create: async () => makeItem(),
     update: async () => makeItem(),
+    getCaseTypeOptions: async () => opts.canonical ?? DEFAULT_CANONICAL,
   };
 }
+
+describe("mergeCaseTypeOptions", () => {
+  it("returns canonical codes in sort order", () => {
+    const result = mergeCaseTypeOptions(
+      [
+        { code: "work", sort: 1 },
+        { code: "dependent_visa", sort: 0 },
+      ],
+      [],
+    );
+    expect(result).toEqual(["dependent_visa", "work"]);
+  });
+
+  it("appends data codes not in canonical list", () => {
+    const result = mergeCaseTypeOptions(
+      [{ code: "dependent_visa", sort: 0 }],
+      ["dependent_visa", "custom_type"],
+    );
+    expect(result).toEqual(["dependent_visa", "custom_type"]);
+  });
+
+  it("handles empty canonical list", () => {
+    const result = mergeCaseTypeOptions([], ["b", "a"]);
+    expect(result).toEqual(["a", "b"]);
+  });
+
+  it("deduplicates data codes present in canonical", () => {
+    const result = mergeCaseTypeOptions(
+      [
+        { code: "a", sort: 0 },
+        { code: "b", sort: 1 },
+      ],
+      ["a", "b", "c"],
+    );
+    expect(result).toEqual(["a", "b", "c"]);
+  });
+});
 
 describe("useCaseTemplatesListModel", () => {
   it("loads items on initialization", async () => {
@@ -61,7 +114,7 @@ describe("useCaseTemplatesListModel", () => {
   });
 
   it("sets error code on failure", async () => {
-    const repo = makeRepo({ items: [] }, true);
+    const repo = makeRepo({ items: [] }, { shouldFail: true });
     const model = useCaseTemplatesListModel({ repository: repo });
 
     await new Promise((r) => setTimeout(r, 10));
@@ -70,13 +123,46 @@ describe("useCaseTemplatesListModel", () => {
     expect(model.errorCode.value).toBe("request_failed");
   });
 
-  it("caseTypeOptions derived from items", async () => {
+  it("caseTypeOptions merges canonical with data codes", async () => {
+    const items = [
+      makeItem({ id: "t-1", caseType: "dependent_visa" }),
+      makeItem({ id: "t-2", caseType: "custom_legacy" }),
+    ];
+    const repo = makeRepo({ items }, { canonical: DEFAULT_CANONICAL });
+    const model = useCaseTemplatesListModel({ repository: repo });
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(model.caseTypeOptions.value).toEqual([
+      "dependent_visa",
+      "work",
+      "business_manager_visa",
+      "custom_legacy",
+    ]);
+  });
+
+  it("caseTypeOptions shows canonical even with empty data", async () => {
+    const repo = makeRepo({ items: [] }, { canonical: DEFAULT_CANONICAL });
+    const model = useCaseTemplatesListModel({ repository: repo });
+
+    await new Promise((r) => setTimeout(r, 10));
+
+    expect(model.caseTypeOptions.value).toEqual([
+      "dependent_visa",
+      "work",
+      "business_manager_visa",
+    ]);
+  });
+
+  it("caseTypeOptions falls back to data codes when canonical fetch fails", async () => {
     const items = [
       makeItem({ id: "t-1", caseType: "dependent_visa" }),
       makeItem({ id: "t-2", caseType: "business_manager_visa" }),
-      makeItem({ id: "t-3", caseType: "dependent_visa" }),
     ];
     const repo = makeRepo({ items });
+    repo.getCaseTypeOptions = async () => {
+      throw new Error("fetch failed");
+    };
     const model = useCaseTemplatesListModel({ repository: repo });
 
     await new Promise((r) => setTimeout(r, 10));

@@ -1,6 +1,6 @@
 /**
  * integration-pg — backfillCaseDocumentItems
- * 真 PG smoke: BACKFILL_QUERY + applyBackfill が document_items を
+ * 真 PG smoke: resolveBackfillRows + applyBackfill が document_items を
  * requirement_blueprint から正しく再構築することを検証。
  */
 
@@ -16,8 +16,7 @@ import {
 
 import {
   applyBackfill,
-  BACKFILL_QUERY,
-  type BackfillCaseRow,
+  resolveBackfillRows,
 } from "../../../src/scripts/backfillCaseDocumentItems";
 
 before(async () => {
@@ -202,8 +201,8 @@ void test("applyBackfill creates 11 document_items from work template blueprint"
   await insertCase(CASE_A, "work");
   await insertTemplate(TEMPLATE_ID, "work", WORK_BLUEPRINT);
 
-  const { rows } = await pool.query<BackfillCaseRow>(BACKFILL_QUERY);
-  assert.ok(rows.length >= 1, "BACKFILL_QUERY returns at least one row");
+  const rows = await resolveBackfillRows(pool);
+  assert.ok(rows.length >= 1, "resolveBackfillRows returns at least one row");
 
   const target = rows.find((r) => r.case_id === CASE_A);
   assert.ok(target, "Should include CASE_A");
@@ -222,7 +221,7 @@ void test("applyBackfill dry-run does not write document_items to DB", async () 
   await insertCase(CASE_A, "work");
   await insertTemplate(TEMPLATE_ID, "work", WORK_BLUEPRINT);
 
-  const { rows } = await pool.query<BackfillCaseRow>(BACKFILL_QUERY);
+  const rows = await resolveBackfillRows(pool);
 
   const stdoutChunks: string[] = [];
   const originalWrite = process.stdout.write.bind(process.stdout);
@@ -249,9 +248,9 @@ void test("applyBackfill dry-run does not write document_items to DB", async () 
   assert.equal(docCount, 0, "doc_count should still be 0 after dry-run");
 });
 
-// ── 3. case already has doc_items → BACKFILL_QUERY NOT EXISTS 過濾 → 不重複挿入 ──
+// ── 3. case already has doc_items → BACKFILL_CASES_QUERY NOT EXISTS 過濾 → 不重複挿入 ──
 
-void test("BACKFILL_QUERY excludes cases that already have document_items (idempotent)", async () => {
+void test("resolveBackfillRows excludes cases that already have document_items (idempotent)", async () => {
   const pool = getTestPool();
   await seedBase();
   await insertCase(CASE_B, "work");
@@ -263,12 +262,12 @@ void test("BACKFILL_QUERY excludes cases that already have document_items (idemp
   await insertDocumentItem(CASE_B, "degree_cert", "卒業証明書");
   await insertDocumentItem(CASE_B, "employment_contract", "雇用契約書");
 
-  const { rows } = await pool.query<BackfillCaseRow>(BACKFILL_QUERY);
+  const rows = await resolveBackfillRows(pool);
   const match = rows.find((r) => r.case_id === CASE_B);
   assert.equal(
     match,
     undefined,
-    "CASE_B should NOT appear in BACKFILL_QUERY results",
+    "CASE_B should NOT appear in resolveBackfillRows results",
   );
 
   await applyBackfill(pool, rows, false);

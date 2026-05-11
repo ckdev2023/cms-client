@@ -5,17 +5,27 @@ import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
 import CaseTemplateCreateDialog from "./CaseTemplateCreateDialog.vue";
 import { createCaseTemplatesRepository } from "./model/CaseTemplatesRepository";
-import type { CaseTemplateCreateParams } from "./model/CaseTemplatesRepository";
+import type {
+  CaseTemplateCreateParams,
+  CaseTemplateDetail,
+} from "./model/CaseTemplatesRepository";
 import { useCaseTemplatesListModel } from "./model/useCaseTemplatesListModel";
 import { useCaseTemplateWriteModel } from "./model/useCaseTemplateWriteModel";
 import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
+import { getDefaultPermissionsStore } from "../../shared/model/PermissionsStore";
 
 /** 案件資料蓝图列表页 — 展示全量蓝图模板，支持按案件类型筛选、启停切换及新建模板。 */
 const { t } = useI18n();
 
 const repository = createCaseTemplatesRepository();
+const permissionsStore = getDefaultPermissionsStore();
 const includeInactive = ref(false);
 const filterCaseType = ref("");
+
+/** 与后端 POST/PATCH `case-templates` 一致：`settings.write`。 */
+const canEditTemplates = computed(
+  () => permissionsStore.loaded.value && permissionsStore.has("settings.write"),
+);
 
 /**
  * 组装当前列表查询参数。
@@ -52,13 +62,27 @@ const displayItems = computed(() => {
 
 // ── create dialog ─────────────────────────────────────
 const showCreateDialog = ref(false);
+const loadingSource = ref(false);
+const sourceDetail = ref<CaseTemplateDetail | null>(null);
 
-/**
- * 打开新建模板对话框并清除旧错误状态。
- */
+/** 打开新建模板对话框并重置复制来源状态。 */
 function openCreateDialog() {
   writeModel.clearError();
+  sourceDetail.value = null;
+  loadingSource.value = false;
   showCreateDialog.value = true;
+}
+
+async function handleRequestSource(id: string) {
+  loadingSource.value = true;
+  sourceDetail.value = null;
+  try {
+    sourceDetail.value = await repository.get(id);
+  } catch {
+    sourceDetail.value = null;
+  } finally {
+    loadingSource.value = false;
+  }
 }
 
 async function handleCreateSubmit(params: CaseTemplateCreateParams) {
@@ -103,6 +127,26 @@ function caseTypeLabel(code: string): string {
   const translated = t(key);
   return translated !== key ? translated : code;
 }
+
+const BILLING_GATE_MODE_I18N_KEYS = ["warn", "block", "none"] as const;
+
+/**
+ * 收费闸口模式枚举值 → 与新建弹窗一致的 i18n 标签。
+ * @param mode 后端/仓库返回的 billingGateMode
+ * @returns 本地化后的闸口模式标签；未知值时原样返回 mode
+ */
+function billingGateLabel(mode: string): string {
+  const raw = mode.trim().toLowerCase();
+  const slug = raw === "off" ? "none" : raw;
+  const key = `caseTemplates.createDialog.billingGateModes.${slug}`;
+  if (
+    !(BILLING_GATE_MODE_I18N_KEYS as readonly string[]).includes(slug) &&
+    t(key) === key
+  ) {
+    return mode;
+  }
+  return t(key);
+}
 </script>
 
 <template>
@@ -111,7 +155,7 @@ function caseTypeLabel(code: string): string {
       :title="t('caseTemplates.title')"
       :subtitle="t('caseTemplates.subtitle')"
       :breadcrumbs="[
-        { label: t('shell.nav.items.dashboard'), href: '/' },
+        { label: t('shell.nav.items.dashboard'), href: '#/' },
         { label: t('shell.nav.groups.system') },
         { label: t('caseTemplates.breadcrumb') },
       ]"
@@ -136,7 +180,7 @@ function caseTypeLabel(code: string): string {
           variant="outlined"
           size="sm"
           data-testid="list-retry-button"
-          @click="listModel.refresh()"
+          @click="listModel.refresh(currentListParams())"
         >
           {{ t("caseTemplates.state.retry") }}
         </Button>
@@ -198,9 +242,11 @@ function caseTypeLabel(code: string): string {
       </div>
 
       <Button
+        v-if="canEditTemplates"
         variant="filled"
         tone="primary"
         size="sm"
+        html-type="button"
         data-testid="create-template-button"
         @click="openCreateDialog"
       >
@@ -289,7 +335,7 @@ function caseTypeLabel(code: string): string {
               </td>
               <td>
                 <span class="ct-list-view__chip ct-list-view__chip--subtle">
-                  {{ item.billingGateMode }}
+                  {{ billingGateLabel(item.billingGateMode) }}
                 </span>
               </td>
               <td>
@@ -313,8 +359,10 @@ function caseTypeLabel(code: string): string {
               </td>
               <td class="ct-list-view__cell-actions">
                 <Button
+                  v-if="canEditTemplates"
                   variant="ghost"
                   size="sm"
+                  html-type="button"
                   :loading="togglingId === item.id"
                   :data-testid="`toggle-active-${item.id}`"
                   @click="handleToggleActive(item)"
@@ -332,16 +380,18 @@ function caseTypeLabel(code: string): string {
       </div>
     </div>
 
-    <!-- create dialog -->
-    <Teleport to="body">
-      <CaseTemplateCreateDialog
-        v-if="showCreateDialog"
-        :saving="writeModel.saving.value"
-        :error-code="writeModel.errorCode.value"
-        @submit="handleCreateSubmit"
-        @cancel="showCreateDialog = false"
-      />
-    </Teleport>
+    <CaseTemplateCreateDialog
+      v-if="showCreateDialog"
+      :saving="writeModel.saving.value"
+      :error-code="writeModel.errorCode.value"
+      :case-type-options="listModel.caseTypeOptions.value"
+      :source-templates="listModel.items.value"
+      :loading-source="loadingSource"
+      :source-detail="sourceDetail"
+      @submit="handleCreateSubmit"
+      @cancel="showCreateDialog = false"
+      @request-source="handleRequestSource"
+    />
   </div>
 </template>
 

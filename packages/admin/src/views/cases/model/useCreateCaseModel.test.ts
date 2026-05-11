@@ -5,7 +5,7 @@
 //   composables.
 // ────────────────────────────────────────────────────────────────
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   buildCaseTitle,
   useCreateCaseModel,
@@ -17,10 +17,20 @@ import {
   FAMILY_SCENARIO,
 } from "../fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../constants";
+import type { CaseRepository } from "./CaseRepository";
+
+function defaultCaseRepoForWizardTests(): CaseRepository {
+  return {
+    previewChecklistCount: vi.fn(async () => ({ count: 10, requiredCount: 8 })),
+    createCase: vi.fn(async () => ({ id: "case-stub" })),
+    createCaseParty: vi.fn(async () => ({ id: "party-stub" })),
+  } as unknown as CaseRepository;
+}
 
 function createDeps(
   overrides: Partial<UseCreateCaseModelDeps> = {},
 ): UseCreateCaseModelDeps {
+  const { repo, ...rest } = overrides;
   return {
     templates: () => SAMPLE_CREATE_TEMPLATES,
     customers: () => SAMPLE_CREATE_CUSTOMERS,
@@ -30,7 +40,8 @@ function createDeps(
     sourceContext: { familyBulkMode: false },
     defaultGroup: "tokyo-1",
     defaultOwner: "suzuki",
-    ...overrides,
+    ...rest,
+    repo: repo ?? defaultCaseRepoForWizardTests(),
   };
 }
 
@@ -354,11 +365,14 @@ describe("useCreateCaseModel", () => {
       m.setGroupOverrideReason("客户要求");
       expect(m.canProceedStep3.value).toBe(true);
     });
-    it("canSubmit tracks step 3", () => {
+    it("canSubmit tracks step 3", async () => {
       const m = createModel();
       expect(m.canSubmit.value).toBe(false);
       m.setDueDate("2026-05-01");
       m.setAmount("120000");
+      await vi.waitFor(() => {
+        expect(m.checklistPreview.previewState.value).toBe("ok");
+      });
       expect(m.canSubmit.value).toBe(true);
     });
   });

@@ -120,6 +120,24 @@ void test("list includeInactive=true effective for owner role", async () => {
   assert.equal(calledInput?.includeInactive, true);
 });
 
+// ─── case-type-options ───────────────────────────────────────────
+
+void test("getCaseTypeOptions returns canonical options", () => {
+  const ctrl = makeController();
+  const result = ctrl.getCaseTypeOptions();
+  assert.ok(Array.isArray(result.items));
+  assert.ok(result.items.length > 0);
+  assert.ok(
+    result.items.every(
+      (item: { code: string; sort: number }) =>
+        typeof item.code === "string" && typeof item.sort === "number",
+    ),
+  );
+  const codes = result.items.map((i: { code: string }) => i.code);
+  assert.ok(codes.includes("dependent_visa"));
+  assert.ok(codes.includes("business_manager_visa"));
+});
+
 // ─── get ─────────────────────────────────────────────────────────
 
 void test("get returns dto", async () => {

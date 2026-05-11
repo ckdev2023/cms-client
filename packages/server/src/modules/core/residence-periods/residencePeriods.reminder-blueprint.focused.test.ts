@@ -141,6 +141,8 @@ void describe("generation timing: cancel-before-create cycle", () => {
   void test("existing pending reminders are canceled before new ones are created", async () => {
     const callOrder: string[] = [];
     const { svc } = createService((sql) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from cases") && sql.includes("customer_id"))
         return ok([{ id: CASE_ID, customer_id: CUSTOMER_ID }]);
       if (sql.includes("from customers")) return ok([{ id: CUSTOMER_ID }]);
@@ -188,6 +190,8 @@ void describe("generation timing: cancel-before-create cycle", () => {
   void test("cancel targets correct dedupe_key pattern", async () => {
     let cancelParams: unknown[] | undefined;
     const { svc } = createService((sql, params) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from cases") && sql.includes("customer_id"))
         return ok([{ id: CASE_ID, customer_id: CUSTOMER_ID }]);
       if (sql.includes("from customers")) return ok([{ id: CUSTOMER_ID }]);
@@ -235,6 +239,8 @@ void describe("generation timing: owner resolution", () => {
     const OWNER_ID = "00000000-0000-4000-8000-000000000099";
     const insertedReminders: unknown[][] = [];
     const { svc } = createService((sql, params) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from cases") && sql.includes("customer_id"))
         return ok([{ id: CASE_ID, customer_id: CUSTOMER_ID }]);
       if (sql.includes("from customers")) return ok([{ id: CUSTOMER_ID }]);
@@ -276,6 +282,8 @@ void describe("generation timing: owner resolution", () => {
   void test("returns false (no reminders) when case owner cannot be resolved", async () => {
     const insertedReminders: unknown[][] = [];
     const { svc } = createService((sql, params) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from cases") && sql.includes("customer_id"))
         return ok([{ id: CASE_ID, customer_id: CUSTOMER_ID }]);
       if (sql.includes("from customers")) return ok([{ id: CUSTOMER_ID }]);

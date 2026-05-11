@@ -21,6 +21,11 @@ function makeHappyPathQueryFn(
   }>,
 ) {
   return (sql: string, params?: unknown[]) => {
+    if (sql.includes("case_type_code") && sql.includes("from cases"))
+      return Promise.resolve({
+        rows: [{ case_type_code: "business_manager_visa" }],
+        rowCount: 1,
+      });
     if (sql.includes("from cases") && sql.includes("customer_id"))
       return Promise.resolve({
         rows: [{ id: CASE_ID, customer_id: CUSTOMER_ID }],

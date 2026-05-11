@@ -105,6 +105,8 @@ void describe("failure rollback: SAVEPOINT contains reminder INSERT failure", ()
 void describe("failure rollback: update with reminder sync failure", () => {
   void test("update succeeds with reminderCreated=false when reminder INSERT fails", async () => {
     const { svc } = createService((sql) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from residence_periods") && sql.includes("for update"))
         return ok([makeResidencePeriodRow()]);
       if (
@@ -149,6 +151,8 @@ void describe("failure rollback: update with reminder sync failure", () => {
 
   void test("update timeline is still written after SAVEPOINT rollback", async () => {
     const { svc, timeline } = createService((sql) => {
+      if (sql.includes("case_type_code") && sql.includes("from cases"))
+        return ok([{ case_type_code: "business_manager_visa" }]);
       if (sql.includes("from residence_periods") && sql.includes("for update"))
         return ok([makeResidencePeriodRow()]);
       if (

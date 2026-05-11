@@ -27,7 +27,12 @@ vi.mock("../../../shared/model/useOrgSettings", () => ({
 
 vi.mock("../model/useCaseDocumentsTab", () => ({
   useCaseDocumentsTab: () => ({
-    listModel: { loading: ref(false), items: ref([]) },
+    listModel: {
+      loading: ref(false),
+      items: ref([]),
+      errorCode: ref(null),
+      refresh: vi.fn(),
+    },
     documentGroups: ref<DocumentGroup[]>([]),
     hasApiData: ref(false),
     viewState: ref("empty"),

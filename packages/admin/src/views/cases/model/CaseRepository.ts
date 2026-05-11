@@ -307,10 +307,12 @@ export interface CaseRepository {
   ): Promise<WriteResultWithId>;
 
   /**
-   * 资料清单预览：返回给定 caseTypeCode 的 checklist 条数。
+   * 资料清单预览：返回给定 caseTypeCode 的 checklist 条数与必须项条数。
    * 数据源：`GET /api/cases/checklist-preview?caseTypeCode=xxx`。
    */
-  previewChecklistCount(caseTypeCode: string): Promise<number>;
+  previewChecklistCount(
+    caseTypeCode: string,
+  ): Promise<{ count: number; requiredCount: number }>;
 
   /**
    * 获取文書模板列表。

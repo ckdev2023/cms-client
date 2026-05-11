@@ -86,6 +86,14 @@ const model = useCreateCaseModel({
   locale: () => locale.value,
 });
 
+watch(
+  () => customerDropdown.customers.value,
+  (customers) => {
+    model.tryPreselectPrimary(customers);
+  },
+  { flush: "post" },
+);
+
 const picker = useCasePartyPicker({
   existingCustomers: () => customerDropdown.customers.value,
 });

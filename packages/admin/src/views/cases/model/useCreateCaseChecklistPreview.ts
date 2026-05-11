@@ -15,6 +15,8 @@ export type ChecklistPreviewState =
 export interface ChecklistPreviewResult {
   /** 当前 caseTypeCode 的 checklist 条数（未请求时为 null）。 */
   checklistCount: Ref<number | null>;
+  /** `requiredFlag === true` 的条目数（未请求时为 null）。 */
+  checklistRequiredCount: Ref<number | null>;
   /** 预览状态。 */
   previewState: ComputedRef<ChecklistPreviewState>;
   /** checklist 为 0 时为 true（加载中或未请求则为 false）。 */
@@ -35,6 +37,7 @@ export function useCreateCaseChecklistPreview(
   repo: CaseRepository,
 ): ChecklistPreviewResult {
   const checklistCount = ref<number | null>(null);
+  const checklistRequiredCount = ref<number | null>(null);
   const loading = ref(false);
   const errored = ref(false);
 
@@ -42,15 +45,19 @@ export function useCreateCaseChecklistPreview(
     const c = code ?? (caseTypeCode as Ref<string>).value;
     if (!c) {
       checklistCount.value = null;
+      checklistRequiredCount.value = null;
       return;
     }
     loading.value = true;
     errored.value = false;
     try {
-      checklistCount.value = await repo.previewChecklistCount(c);
+      const r = await repo.previewChecklistCount(c);
+      checklistCount.value = r.count;
+      checklistRequiredCount.value = r.requiredCount;
     } catch {
       errored.value = true;
       checklistCount.value = null;
+      checklistRequiredCount.value = null;
     } finally {
       loading.value = false;
     }
@@ -73,6 +80,7 @@ export function useCreateCaseChecklistPreview(
 
   return {
     checklistCount,
+    checklistRequiredCount,
     previewState,
     checklistEmpty,
     refresh: () => fetchPreview(),

@@ -76,6 +76,18 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
     ).toBe("employer_org");
   });
 
+  it("resolveProvider maps misclassified work-visa company items away from dependent bucket (058 quirk)", () => {
+    expect(
+      resolveProvider("supporter", "customer", "work-employment-contract"),
+    ).toBe("employer_org");
+    expect(resolveProvider(null, "customer", "work-company-registry")).toBe(
+      "employer_org",
+    );
+    expect(
+      resolveProvider("employer", "customer", "work-financial-statement"),
+    ).toBe("employer_org");
+  });
+
   it("resolveProvider falls back to ownerSide when providedByRole is null/empty/unknown (向后兼容旧数据)", () => {
     expect(resolveProvider(null, "applicant")).toBe("main_applicant");
     expect(resolveProvider(undefined, "customer")).toBe("dependent_guarantor");
@@ -125,6 +137,20 @@ describe("DocumentAdapter (BUG-079: API 接入)", () => {
         ownerSide: "customer",
         providedByRole: "supporter",
         checklistItemCode: "bmv-capital-proof",
+      },
+      () => undefined,
+      NOW,
+    );
+    expect(item.provider).toBe("employer_org");
+  });
+
+  it("work-visa company checklist codes mis-tagged supporter bucket employer_org (058 backfill quirk)", () => {
+    const item = adaptDocumentItem(
+      {
+        ...ROW,
+        ownerSide: "customer",
+        providedByRole: "supporter",
+        checklistItemCode: "work-employment-contract",
       },
       () => undefined,
       NOW,
