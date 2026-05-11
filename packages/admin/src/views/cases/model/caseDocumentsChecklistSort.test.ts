@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 import type { DocumentListItem } from "../../documents/types";
-import { compareDocumentListItemsForChecklistStableOrder } from "./caseDocumentsChecklistSort";
+import {
+  compareChecklistSlugStableOrder,
+  compareDocumentListItemsForChecklistStableOrder,
+} from "./caseDocumentsChecklistSort";
+
+describe("caseDocumentsChecklistSort — compareChecklistSlugStableOrder", () => {
+  it("orders by ASCII slug lexicographically; empty slug last", () => {
+    expect(compareChecklistSlugStableOrder("zebra", "apple")).toBeGreaterThan(
+      0,
+    );
+    expect(compareChecklistSlugStableOrder("apple", "zebra")).toBeLessThan(0);
+    expect(compareChecklistSlugStableOrder("", "x")).toBeGreaterThan(0);
+    expect(compareChecklistSlugStableOrder("x", "")).toBeLessThan(0);
+  });
+});
 
 function stubListItem(
   partial: Pick<DocumentListItem, "id" | "name" | "provider"> &

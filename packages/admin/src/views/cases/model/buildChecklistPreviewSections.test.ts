@@ -43,4 +43,41 @@ describe("buildChecklistPreviewSections", () => {
       "在留資格認定/変更許可申請書",
     ]);
   });
+
+  it("同一提供方段内按 checklist slug 稳定序排序，与详情 Tab 口径一致（非 API 行序）", () => {
+    const t = (k: string) => k;
+    const lines: ChecklistPreviewLineItem[] = [
+      {
+        code: "fs-passport-copy",
+        name: "パスポートコピー",
+        ownerSide: "applicant",
+        category: "personal",
+        requiredFlag: true,
+        providedByRole: "applicant",
+      },
+      {
+        code: "fs-marriage-cert-copy",
+        name: "婚姻証明書（戸籍謄本）",
+        ownerSide: "applicant",
+        category: "personal",
+        requiredFlag: true,
+        providedByRole: "applicant",
+      },
+      {
+        code: "fs-photos",
+        name: "証明写真（4cm×3cm）",
+        ownerSide: "applicant",
+        category: "personal",
+        requiredFlag: true,
+        providedByRole: "applicant",
+      },
+    ];
+    const sections = buildChecklistPreviewSections(lines, "family", t);
+    expect(sections).toHaveLength(1);
+    expect(sections[0]!.items.map((i) => i.code)).toEqual([
+      "fs-marriage-cert-copy",
+      "fs-passport-copy",
+      "fs-photos",
+    ]);
+  });
 });
