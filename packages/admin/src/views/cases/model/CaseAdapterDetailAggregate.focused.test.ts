@@ -1,9 +1,5 @@
-// ── Test Ownership: p0-fe-002c-04 ──────────────────────────────
-// Focused: snapshot + empty state + structural integrity.
-// Related: *.readonly.test, *.test, *.slices.test, *.main-chain.test.
-// Excludes: list mappers, mutation results, write builders,
-//   or repository orchestration.
-// ────────────────────────────────────────────────────────────────
+// p0-fe-002c-04 — focused snapshot, empty-state, structural integrity;
+// excludes list mappers, mutations, repos. Related: *.readonly, *.slices.
 
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
@@ -223,21 +219,29 @@ describe("full main-chain snapshot (p0-fe-002c-04)", () => {
   });
 
   it("provider progress from all 3 providers", () => {
-    expect(result.detail.providerProgress).toHaveLength(3);
-    expect(result.detail.providerProgress[0]).toEqual({
-      label: "applicant",
-      labelKey: "cases.detail.providers.applicant",
-      providerRole: "applicant",
-      done: 6,
-      total: 10,
-    });
-    expect(result.detail.providerProgress[2]).toEqual({
-      label: "employer",
-      labelKey: "cases.detail.providers.employer",
-      providerRole: "employer",
-      done: 1,
-      total: 2,
-    });
+    expect(result.detail.providerProgress).toEqual([
+      expect.objectContaining({
+        label: "applicant",
+        labelKey: "cases.detail.providers.applicant",
+        providerRole: "applicant",
+        done: 6,
+        total: 10,
+      }),
+      expect.objectContaining({
+        label: "employer",
+        labelKey: "cases.detail.providers.employer",
+        providerRole: "employer",
+        done: 1,
+        total: 2,
+      }),
+      expect.objectContaining({
+        label: "office",
+        labelKey: "cases.detail.providers.office",
+        providerRole: "office",
+        done: 5,
+        total: 8,
+      }),
+    ]);
   });
 
   it("overview actions unchanged", () => {
@@ -476,22 +480,19 @@ describe("relatedParties auto-injection from deepLink (p1-6)", () => {
     expect(result.detail.relatedParties).toEqual([]);
   });
 
-  it("derives initials from multi-word Japanese name", () => {
-    const result = adaptCaseDetailAggregate(
-      buildFullAggregate({
-        deepLink: { ...FULL_DEEP_LINK, customerName: "田中 太郎" },
-      }),
-    )!;
-    expect(result.detail.relatedParties[0].initials).toBe("田太");
-    expect(result.detail.relatedParties[0].name).toBe("田中 太郎");
-  });
-
-  it("derives initials from single-word name", () => {
-    const result = adaptCaseDetailAggregate(
-      buildFullAggregate({
-        deepLink: { ...FULL_DEEP_LINK, customerName: "Admin" },
-      }),
-    )!;
-    expect(result.detail.relatedParties[0].initials).toBe("AD");
-  });
+  it.each([
+    ["田中 太郎", "田太", "田中 太郎"],
+    ["Admin", "AD", "Admin"],
+  ])(
+    "derives initials from customer name %#",
+    (customerName, expectedInitials, expectedFullName) => {
+      const result = adaptCaseDetailAggregate(
+        buildFullAggregate({
+          deepLink: { ...FULL_DEEP_LINK, customerName },
+        }),
+      )!;
+      expect(result.detail.relatedParties[0].initials).toBe(expectedInitials);
+      expect(result.detail.relatedParties[0].name).toBe(expectedFullName);
+    },
+  );
 });

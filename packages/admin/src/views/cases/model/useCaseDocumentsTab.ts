@@ -64,15 +64,15 @@ export interface UseCaseDocumentsTabDeps {
 type T = ReturnType<typeof useI18n>["t"];
 
 /**
- * 资料分组的固定显示顺序，与「按提供方完成率」顶部卡片（按 `provided_by_role`
- * 字母序：`applicant` → `office` → `supporter`）保持一致；未列出的 provider
- * 排在尾部，仍按字母序兜底。
+ * 资料分组顺序，与 `CaseAdapterDetailAggregate` 的 `providerProgress` 展示顺序
+ * （及概览「按提供方完成率」）一致：主申请人 → 扶养担保侧 → 会社侧 → 事务所内部。
+ * 未列出的 provider 排在尾部，仍按字母序兜底。
  */
 const PROVIDER_GROUP_ORDER: Record<string, number> = {
-  main_applicant: 1,
-  office_internal: 2,
-  dependent_guarantor: 3,
-  employer_org: 4,
+  main_applicant: 10,
+  dependent_guarantor: 20,
+  employer_org: 30,
+  office_internal: 40,
 };
 
 function buildGrouping(

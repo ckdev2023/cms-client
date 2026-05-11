@@ -14,6 +14,7 @@ import type {
 import { isUuid } from "../tenancy/uuid";
 import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import { resolveRequestedCaseStage } from "./cases.service.write-helpers";
+import { expandCaseListSearchVariants } from "./cases.case-list-search-variants";
 
 /** {@link buildCaseListFilterPrefixed} 可选项。 */
 export type CaseListFilterOptions = {
@@ -155,16 +156,24 @@ function appendSearchCondition(
   options: CaseListFilterOptions,
 ): void {
   if (!search) return;
-  params.push(`%${search}%`);
-  const idx = `$${String(params.length)}`;
-  const targets = [
-    `${prefix}case_name ilike ${idx}`,
-    `${prefix}case_no ilike ${idx}`,
-  ];
-  if (options.customerAlias) {
-    targets.push(`${customerNameExpr(options.customerAlias)} ilike ${idx}`);
+
+  const expanded = expandCaseListSearchVariants(search);
+  const branches: string[] = [];
+
+  for (const term of expanded) {
+    params.push(`%${term}%`);
+    const idx = `$${String(params.length)}`;
+    const targets = [
+      `${prefix}case_name ilike ${idx}`,
+      `${prefix}case_no ilike ${idx}`,
+    ];
+    if (options.customerAlias) {
+      targets.push(`${customerNameExpr(options.customerAlias)} ilike ${idx}`);
+    }
+    branches.push(`(${targets.join(" or ")})`);
   }
-  where.push(`(${targets.join(" or ")})`);
+
+  where.push(`(${branches.join(" or ")})`);
 }
 
 function appendVisibilityConditionPrefixed(

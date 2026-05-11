@@ -123,3 +123,42 @@ describe("useCaseDocumentsTab — checklist-stable order within provider group",
     ]);
   });
 });
+
+describe("useCaseDocumentsTab — checklist group order across providers", () => {
+  it("orders groups applicant → employer org → office internal regardless of API row order", async () => {
+    const items: DocumentListItem[] = [
+      stubListItem({
+        id: "e1",
+        name: "E",
+        provider: "employer_org",
+        checklistItemCode: "corp-a",
+      }),
+      stubListItem({
+        id: "m1",
+        name: "M",
+        provider: "main_applicant",
+        checklistItemCode: "app-a",
+      }),
+      stubListItem({
+        id: "o1",
+        name: "O",
+        provider: "office_internal",
+        checklistItemCode: "off-a",
+      }),
+    ];
+    const repo = stubRepository({
+      listDocuments: vi.fn().mockResolvedValue({ items, total: items.length }),
+    });
+    const tab = useCaseDocumentsTab({
+      caseId: ref("case-x"),
+      isStorageRootConfigured: ref(true),
+      repository: repo,
+    });
+    await flushPromises();
+    expect(tab.documentGroups.value.map((g) => g.group)).toEqual([
+      "documents.providers.mainApplicant",
+      "documents.providers.employerOrg",
+      "documents.providers.officeInternal",
+    ]);
+  });
+});

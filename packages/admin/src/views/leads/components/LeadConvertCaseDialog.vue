@@ -30,6 +30,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   confirm: [input: LeadConvertCaseInput];
   close: [];
+  clearError: [];
 }>();
 
 const { t, locale } = useI18n();
@@ -77,6 +78,15 @@ watch(
   () => props.groupId,
   (val) => {
     if (!groupDirty.value) form.groupId = val ?? "";
+  },
+);
+
+watch(
+  () => form.caseTypeCode,
+  () => {
+    if (props.error) {
+      emit("clearError");
+    }
   },
 );
 

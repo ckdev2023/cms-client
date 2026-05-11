@@ -274,6 +274,7 @@ function tryUseToast() {
     :submitting="convertSubmitting"
     :error="convertCaseError"
     @confirm="handleConvertCaseConfirm"
+    @clear-error="convertCaseError = null"
     @close="closeConvertCaseDialog"
   />
 

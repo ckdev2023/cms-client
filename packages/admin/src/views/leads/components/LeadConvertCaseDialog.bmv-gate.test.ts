@@ -110,6 +110,29 @@ describe("LeadConvertCaseDialog — inline error rendering (R2-B-5)", () => {
     expect(wrapper.emitted("close")).toBeTruthy();
   });
 
+  it("emits clearError when case type changes after a BMV gate failure", async () => {
+    const error: LeadConvertCaseFailure = {
+      kind: "bmvGate",
+      serverErrorCode: "CASE_BMV_GATE_BLOCKED",
+      blockers: [{ code: "BMV_NOT_SIGNED" }],
+    };
+    const wrapper = mountDialog({
+      ownerUserId: TEST_USER_ID,
+      intendedCaseType: "business-management-visa",
+      error,
+    });
+    await wrapper.vm.$nextTick();
+
+    const select = document.body.querySelector(
+      "#convert-case-type",
+    ) as HTMLSelectElement;
+    select.value = "dependent_visa";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.emitted("clearError")).toBeTruthy();
+  });
+
   it("still emits confirm when the user retries after the error", async () => {
     const error: LeadConvertCaseFailure = {
       kind: "bmvGate",

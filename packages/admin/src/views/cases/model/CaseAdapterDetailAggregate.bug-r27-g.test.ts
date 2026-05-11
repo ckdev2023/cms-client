@@ -58,7 +58,29 @@ describe("adaptProviderProgress labelKey (R27-G / T3.1)", () => {
     expect(p.label).toBe("weirdValue");
   });
 
-  it("all six known roles produce correct labelKey", () => {
+  it("sorts provider progress by canonical role order regardless of DTO order", () => {
+    const result = adaptCaseDetailAggregate({
+      case: { id: "case-pp-order", stage: "S1", caseTypeCode: "visa" },
+      deepLink: null,
+      counts: null,
+      billing: null,
+      latestValidation: null,
+      latestSubmission: null,
+      latestReview: null,
+      documentProgressByProvider: [
+        { providerRole: "office", total: 1, done: 0 },
+        { providerRole: "employer", total: 2, done: 1 },
+        { providerRole: "applicant", total: 3, done: 2 },
+      ],
+    })!;
+    expect(result.detail.providerProgress.map((p) => p.providerRole)).toEqual([
+      "applicant",
+      "employer",
+      "office",
+    ]);
+  });
+
+  it("all six known roles produce correct labelKey in canonical display order", () => {
     const roles = [
       "applicant",
       "supporter",
@@ -67,14 +89,23 @@ describe("adaptProviderProgress labelKey (R27-G / T3.1)", () => {
       "agent",
       "unknown",
     ];
+    const expectedOrder = [
+      "applicant",
+      "supporter",
+      "employer",
+      "office",
+      "agent",
+      "unknown",
+    ];
     const entries = roles.map((r) => ({ providerRole: r, total: 1, done: 0 }));
     const result = adaptCaseDetailAggregate(buildAggregate(entries))!;
     expect(result.detail.providerProgress).toHaveLength(6);
-    for (let i = 0; i < roles.length; i++) {
+    for (let i = 0; i < expectedOrder.length; i++) {
+      const role = expectedOrder[i]!;
       expect(result.detail.providerProgress[i].labelKey).toBe(
-        `cases.detail.providers.${roles[i]}`,
+        `cases.detail.providers.${role}`,
       );
-      expect(result.detail.providerProgress[i].providerRole).toBe(roles[i]);
+      expect(result.detail.providerProgress[i].providerRole).toBe(role);
     }
   });
 

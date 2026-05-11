@@ -37,6 +37,15 @@ describe("matchesCaseFilters", () => {
     ).toBe(true);
   });
 
+  it("search 经营管理 matches 経営管理 title variant", () => {
+    expect(
+      matchesCaseFilters(
+        { ...item, name: "経営管理（認定4M）— Test" },
+        { ...defaults, search: "经营管理" },
+      ),
+    ).toBe(true);
+  });
+
   it("filters by stage", () => {
     expect(matchesCaseFilters(item, { ...defaults, stage: item.stageId })).toBe(
       true,

@@ -14,6 +14,17 @@ void test("search clause matches case_name and case_no when no customer alias", 
   assert.deepEqual(params, ["%ABC%"]);
 });
 
+void test("经营管理 search expands 経営 variant with OR branches", () => {
+  const { whereClause, params } = buildCaseListFilter({ search: "经营管理" });
+  assert.deepEqual(params, ["%经营管理%", "%経営管理%"]);
+  assert.ok(
+    /\$1\b/.test(whereClause) && /\$2\b/.test(whereClause),
+    "expects two positional params for CN/JP variants",
+  );
+  assert.match(whereClause, /case_no ilike \$1/);
+  assert.match(whereClause, /case_no ilike \$2/);
+});
+
 void test("search clause additionally matches customer display name when customerAlias provided", () => {
   const { whereClause, params } = buildCaseListFilterPrefixed(
     { search: "R6" },

@@ -80,9 +80,23 @@ function resolveProviderRole(raw: string): string {
   return raw !== "" && KNOWN_PROVIDER_ROLES.has(raw) ? raw : "unspecified";
 }
 
+/**
+ * 与案件资料 Tab（`useCaseDocumentsTab` 的 `PROVIDER_GROUP_ORDER`）一致：
+ * 申请人 → 扶养/担保侧 → 雇用者・会社侧 → 事务所内部 → 代理等。
+ */
+const PROVIDER_PROGRESS_DISPLAY_ORDER: Record<string, number> = {
+  applicant: 10,
+  supporter: 20,
+  employer: 30,
+  office: 40,
+  agent: 50,
+  unknown: 60,
+  unspecified: 70,
+};
+
 function adaptProviderProgress(raw: unknown[], caseTypeCode: string) {
   const bmv = isBizManagementVisaCaseTypeCode(caseTypeCode);
-  return raw
+  const rows = raw
     .map((p) => {
       const pr = asRecord(p);
       if (!pr) return null;
@@ -105,6 +119,17 @@ function adaptProviderProgress(raw: unknown[], caseTypeCode: string) {
       };
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);
+  rows.sort((a, b) => {
+    const oa =
+      PROVIDER_PROGRESS_DISPLAY_ORDER[a.providerRole] ??
+      Number.MAX_SAFE_INTEGER;
+    const ob =
+      PROVIDER_PROGRESS_DISPLAY_ORDER[b.providerRole] ??
+      Number.MAX_SAFE_INTEGER;
+    if (oa !== ob) return oa - ob;
+    return a.providerRole.localeCompare(b.providerRole);
+  });
+  return rows;
 }
 
 // ─── Tab Counts (p0-fe-002c-02) ──────────────────────────────────

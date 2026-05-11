@@ -1,8 +1,8 @@
 import type { CaseListFiltersState, CaseListItem } from "../types";
 import { resolveCaseListGroupFilterForApi } from "../../../shared/model/useGroupOptions";
+import { expandCaseListSearchVariants } from "./caseListSearchVariants";
 
 function matchesSearch(item: CaseListItem, query: string): boolean {
-  const q = query.toLowerCase();
   const haystack = [
     item.name,
     item.applicant,
@@ -12,7 +12,9 @@ function matchesSearch(item: CaseListItem, query: string): boolean {
   ]
     .join(" ")
     .toLowerCase();
-  return haystack.includes(q);
+  return expandCaseListSearchVariants(query).some((v) =>
+    haystack.includes(v.toLowerCase()),
+  );
 }
 
 const FIELD_MATCHERS: [keyof CaseListFiltersState, keyof CaseListItem][] = [
