@@ -119,6 +119,7 @@ void test("CustomersService.create inserts row with generated customer number an
   >;
   assert.equal(persistedProfile.name_cn, "Alice");
   assert.match(String(persistedProfile.customerNumber), /^CUS-\d{6}-0008$/);
+  assert.equal(persistedProfile.ownerUserId, ctx.userId);
   assert.equal(insertParams[3], "[]");
 
   assert.equal(timelineWrites.length, 1);

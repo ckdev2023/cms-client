@@ -49,6 +49,7 @@ import {
   normalizeDistinctIds,
   validateBaseProfile,
 } from "./customers.utils";
+import { buildValidatedNewCustomerBaseProfile } from "./customers.create-base-profile";
 import { mergeLocalizedNamesIntoProfile } from "./customers.localized-names";
 import type {
   CustomerBmvView,
@@ -109,11 +110,12 @@ export class CustomersService {
     input: CustomerCreateInput,
   ): Promise<Customer> {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const mergedProfile = mergeLocalizedNamesIntoProfile(
+    const baseProfile = buildValidatedNewCustomerBaseProfile(
+      input.type,
       input.baseProfile ?? {},
       input.localizedNames,
+      ctx.userId,
     );
-    const baseProfile = validateBaseProfile(input.type, mergedProfile);
     const contacts = input.contacts ?? [];
     const customer = await tenantDb.transaction((tx) =>
       createCustomerWithNumbering(tx, {

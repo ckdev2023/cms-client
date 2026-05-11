@@ -10,7 +10,10 @@ import {
   normalizeCustomerBmvProfile,
   resolveCustomerBmvIntakeStatus,
 } from "./customers.dto-mappers";
-import { validateBaseProfile } from "./customers.utils";
+import {
+  applyDefaultCustomerOwnerIfMissing,
+  validateBaseProfile,
+} from "./customers.utils";
 
 const customer: Customer = {
   id: "cust-001",
@@ -424,4 +427,16 @@ void test("mapCustomerToDetailDto returns null for missing optional fields", () 
   assert.equal(detail.sourceType, null);
   assert.equal(detail.visaType, null);
   assert.equal(detail.referrerName, null);
+});
+
+void test("applyDefaultCustomerOwnerIfMissing sets ownerUserId when absent", () => {
+  const out = applyDefaultCustomerOwnerIfMissing({ name_cn: "A" }, "u-1");
+  assert.equal(out.ownerUserId, "u-1");
+  assert.equal(out.name_cn, "A");
+});
+
+void test("applyDefaultCustomerOwnerIfMissing keeps owner_user_id snake case", () => {
+  const inProfile = { name_cn: "B", owner_user_id: " u-legacy " };
+  const out = applyDefaultCustomerOwnerIfMissing(inProfile, "u-ignored");
+  assert.deepEqual(out, inProfile);
 });

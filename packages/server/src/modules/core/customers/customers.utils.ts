@@ -46,6 +46,28 @@ export const CUSTOMER_NAME_FIELDS = [
 export const CUSTOMER_KANA_FIELDS = ["kana", "furigana"] as const;
 
 export const CUSTOMER_OWNER_FIELDS = ["owner_user_id", "ownerUserId"] as const;
+
+/**
+ * 若档案中尚无有效负责人字段，则将创建人设为默认负责人。
+ * Admin 直连创建客户时需与线索转化路径对齐，否则「我的」范围筛选不到新客户。
+ *
+ * @param baseProfile - 已与 localizedNames 等合并后的基础档案
+ * @param defaultOwnerUserId - 当前操作者用户 ID
+ * @returns 可能补全 `ownerUserId` 后的档案副本
+ */
+export function applyDefaultCustomerOwnerIfMissing(
+  baseProfile: Record<string, unknown>,
+  defaultOwnerUserId: string,
+): Record<string, unknown> {
+  for (const key of CUSTOMER_OWNER_FIELDS) {
+    const value = baseProfile[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return baseProfile;
+    }
+  }
+  return { ...baseProfile, ownerUserId: defaultOwnerUserId };
+}
+
 export const CUSTOMER_GROUP_FIELDS = ["group", "group_id", "groupId"] as const;
 const CUSTOMER_COLLABORATOR_FIELDS = [
   "collaborator_user_ids",
