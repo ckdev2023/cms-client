@@ -112,14 +112,16 @@ onMounted(async () => {
         />
       </div>
       <div class="cc__field">
-        <label class="cc__label" for="case-create-amount">{{
-          t("cases.create.step3.amountLabel")
-        }}</label>
+        <label class="cc__label" for="case-create-amount">
+          {{ t("cases.create.step3.amountLabel") }}
+          <span class="req-mark">*</span>
+        </label>
         <input
           id="case-create-amount"
           name="amount"
           type="text"
           class="cc__input"
+          aria-required="true"
           :value="props.model.draft.amount"
           :placeholder="t('cases.create.step3.amountPlaceholder')"
           @input="
