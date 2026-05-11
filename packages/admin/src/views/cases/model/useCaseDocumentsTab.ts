@@ -23,6 +23,9 @@ import { createDocumentRepository } from "../../documents/model/DocumentReposito
 import { toCaseDetailItems } from "../../documents/model/DocumentDetailItemAdapter";
 import type { DocumentRepository } from "../../documents/model/DocumentRepositoryTypes";
 import type { UseToastReturn } from "../../../shared/model/useToast";
+import { compareDocumentListItemsForChecklistStableOrder } from "./caseDocumentsChecklistSort";
+
+type ListDetailPair = { list: DocumentListItem; detail: DocumentItem };
 
 /**
  *
@@ -79,12 +82,13 @@ function buildGrouping(
 ) {
   const detailItems = computed(() => toCaseDetailItems(listModel.items.value));
   const documentGroups = computed<DocumentGroup[]>(() => {
-    const grouped = new Map<string, DocumentItem[]>();
+    const grouped = new Map<string, ListDetailPair[]>();
     const items = listModel.items.value;
+    const details = detailItems.value;
     for (let i = 0; i < items.length; i++) {
       const key = items[i].provider;
       if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(detailItems.value[i]);
+      grouped.get(key)!.push({ list: items[i], detail: details[i] });
     }
     const entries = Array.from(grouped.entries());
     entries.sort(([a], [b]) => {
@@ -94,11 +98,16 @@ function buildGrouping(
       return a.localeCompare(b);
     });
     const code = caseTypeCode.value;
-    return entries.map(([p, gItems]) => ({
-      group: t(getProviderLabelKey(p, { caseTypeCode: code })),
-      count: `${gItems.length} 件`,
-      items: gItems,
-    }));
+    return entries.map(([p, pairs]) => {
+      const sorted = [...pairs].sort((x, y) =>
+        compareDocumentListItemsForChecklistStableOrder(x.list, y.list),
+      );
+      return {
+        group: t(getProviderLabelKey(p, { caseTypeCode: code })),
+        count: `${sorted.length} 件`,
+        items: sorted.map((pair) => pair.detail),
+      };
+    });
   });
   return { detailItems, documentGroups };
 }
