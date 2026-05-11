@@ -3,7 +3,6 @@ import { computed, ref, watch, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
-import Button from "../../shared/ui/Button.vue";
 import Chip from "../../shared/ui/Chip.vue";
 import Card from "../../shared/ui/Card.vue";
 import {
@@ -24,6 +23,7 @@ import CaseCreateStep3 from "./components/CaseCreateStep3.vue";
 import CaseCreateStep4 from "./components/CaseCreateStep4.vue";
 import CaseCreateModal from "./components/CaseCreateModal.vue";
 import CaseCreateToast from "./components/CaseCreateToast.vue";
+import CaseCreateWizardFooter from "./components/CaseCreateWizardFooter.vue";
 import { useCreateCaseModel } from "./model/useCreateCaseModel";
 import { useCasePartyPicker } from "./model/useCasePartyPicker";
 import type { PartyPickerMode } from "./model/useCasePartyPicker";
@@ -113,6 +113,12 @@ function showToast(title: string, desc = "") {
 
 const submitted = computed(() => model.submitResult.value !== null);
 const createdCaseId = computed(() => model.submitResult.value?.id ?? "");
+
+const showFooterGoToCustomerResumeLink = computed(
+  () =>
+    Boolean(sourceContext.customerId && model.primaryCustomer.value?.id) &&
+    !submitted.value,
+);
 
 async function handleSubmit() {
   const result = await model.submit();
@@ -425,51 +431,24 @@ const summaryItems = computed(() => {
       />
     </Card>
 
-    <div v-if="!submitted" class="cc__footer">
-      <div class="cc__footer-inner">
-        <span class="cc__footer-hint">
-          {{
-            t("cases.create.navigation.stepHint", {
-              current: model.draft.currentStep,
-              total: 4,
-            })
-          }}
-          <span
-            v-if="
-              model.preSignGate.value.active && !model.preSignGate.value.passed
-            "
-            class="cc__footer-gate-warn"
-            data-testid="footer-gate-warn"
-          >
-            — {{ t("cases.create.preSignGate.blockedTitle") }}
-          </span>
-        </span>
-        <div class="cc__footer-actions">
-          <Button v-if="!model.isFirstStep.value" @click="model.goPrev()">
-            {{ t("cases.create.navigation.prev") }}
-          </Button>
-          <Button
-            v-if="!model.isLastStep.value"
-            variant="filled"
-            tone="primary"
-            :disabled="!model.canGoNext.value"
-            @click="model.goNext()"
-          >
-            {{ nextLabel }}
-          </Button>
-          <Button
-            v-if="model.isLastStep.value"
-            variant="filled"
-            tone="primary"
-            :disabled="!model.canSubmit.value"
-            :loading="model.submitting.value"
-            @click="handleSubmit"
-          >
-            {{ t("cases.create.navigation.submit") }}
-          </Button>
-        </div>
-      </div>
-    </div>
+    <CaseCreateWizardFooter
+      v-if="!submitted"
+      :current-step="model.draft.currentStep"
+      :gate-blocked="
+        model.preSignGate.value.active && !model.preSignGate.value.passed
+      "
+      :show-go-to-customer-resume="showFooterGoToCustomerResumeLink"
+      :is-first-step="model.isFirstStep.value"
+      :is-last-step="model.isLastStep.value"
+      :can-go-next="model.canGoNext.value"
+      :can-submit="model.canSubmit.value"
+      :submitting="model.submitting.value"
+      :next-label="nextLabel"
+      @prev="model.goPrev()"
+      @next="model.goNext()"
+      @submit="handleSubmit"
+      @go-to-customer="navigateToCustomer"
+    />
 
     <CaseCreateModal
       :open="picker.isOpen.value"

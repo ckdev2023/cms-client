@@ -20,7 +20,7 @@ async function mountView(query: LocationQueryRaw) {
   const wrapper = shallowMount(CaseCreateView, {
     global: {
       plugins: [i18n, router],
-      stubs: { teleport: true },
+      stubs: { teleport: true, CaseCreateWizardFooter: false },
     },
   });
 
@@ -73,5 +73,30 @@ describe("CaseCreateView pre-sign gate warning", () => {
     expect(wrapper.find('[data-testid="footer-gate-warn"]').exists()).toBe(
       true,
     );
+  });
+
+  it("shows footer go-to-customer resume link when opened from customer context", async () => {
+    const { wrapper } = await mountView(
+      buildCaseCreateQuery({
+        customerId: "cust-footer-resume-1",
+        customerName: "Resume Link Customer",
+      }),
+    );
+
+    expect(
+      wrapper
+        .find('[data-testid="case-create-footer-go-to-customer"]')
+        .exists(),
+    ).toBe(true);
+  });
+
+  it("hides footer go-to-customer resume link without customerId in query", async () => {
+    const { wrapper } = await mountView({});
+
+    expect(
+      wrapper
+        .find('[data-testid="case-create-footer-go-to-customer"]')
+        .exists(),
+    ).toBe(false);
   });
 });
