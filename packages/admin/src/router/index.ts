@@ -2,6 +2,8 @@ import { createRouter, createWebHashHistory, type RouteMeta } from "vue-router";
 import { isAdminAuthenticated, isAdminRole } from "../auth/model/adminSession";
 import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
 import { resolveAdminAuthGuard } from "./authGuard";
+import { resolveDetachedHashBasenameHref } from "./hashDetachedPathnameNormalize";
+import { hashNavigationDesyncedFromRouter } from "./hashNavigationSync";
 
 const placeholderRoutes: ReadonlyArray<{
   path: string;
@@ -225,4 +227,29 @@ router.beforeEach((to) => {
     isAdminRole(),
     hasPermission,
   );
+});
+
+router.onError((error) => {
+  // eslint-disable-next-line no-console -- 路由懒加载失败需在控制台保留原始错误便于排查
+  console.error(error);
+  const current = router.currentRoute.value;
+  if (
+    typeof window !== "undefined" &&
+    hashNavigationDesyncedFromRouter(window.location, current.fullPath)
+  ) {
+    void router.replace(current.fullPath).catch(() => undefined);
+  }
+});
+
+router.afterEach(() => {
+  if (typeof window.history.replaceState !== "function") {
+    return;
+  }
+  const nextHref = resolveDetachedHashBasenameHref(
+    window.location,
+    import.meta.env.BASE_URL,
+  );
+  if (nextHref && nextHref !== window.location.href) {
+    window.history.replaceState(window.history.state, "", nextHref);
+  }
 });

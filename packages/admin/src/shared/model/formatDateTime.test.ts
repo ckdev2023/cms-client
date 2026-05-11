@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatDateTime } from "./formatDateTime";
+import { formatDateTime, formatLocaleDateShort } from "./formatDateTime";
 
 describe("formatDateTime", () => {
   it("returns empty string for null/undefined/empty", () => {
@@ -38,5 +38,26 @@ describe("formatDateTime", () => {
     const result = formatDateTime("2026-04-28", "en-US");
     expect(result).toBeTruthy();
     expect(result).toContain("2026");
+  });
+});
+
+describe("formatLocaleDateShort", () => {
+  it("returns em dash for null/undefined/empty", () => {
+    expect(formatLocaleDateShort(null, "en-US")).toBe("—");
+    expect(formatLocaleDateShort(undefined, "en-US")).toBe("—");
+    expect(formatLocaleDateShort("", "en-US")).toBe("—");
+  });
+
+  it("formats date for en-US without CJK calendar tokens", () => {
+    const result = formatLocaleDateShort("2026-05-11T00:00:00.000Z", "en-US");
+    expect(result).toMatch(/May/i);
+    expect(result).toContain("2026");
+    expect(result).not.toMatch(/年/);
+  });
+
+  it("formats date for zh-CN with locale-appropriate numerics", () => {
+    const result = formatLocaleDateShort("2026-05-11T00:00:00.000Z", "zh-CN");
+    expect(result).toContain("2026");
+    expect(result).toMatch(/5/);
   });
 });

@@ -13,9 +13,10 @@ import { useCaseTemplatesListModel } from "./model/useCaseTemplatesListModel";
 import { useCaseTemplateWriteModel } from "./model/useCaseTemplateWriteModel";
 import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
 import { getDefaultPermissionsStore } from "../../shared/model/PermissionsStore";
+import { formatLocaleDateShort } from "../../shared/model/formatDateTime";
 
 /** 案件資料蓝图列表页 — 展示全量蓝图模板，支持按案件类型筛选、启停切换及新建模板。 */
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const repository = createCaseTemplatesRepository();
 const permissionsStore = getDefaultPermissionsStore();
@@ -105,16 +106,7 @@ async function handleToggleActive(item: (typeof displayItems.value)[0]) {
  * @returns 本地化日期文本
  */
 function formatDate(iso: string): string {
-  if (!iso) return "—";
-  try {
-    return new Date(iso).toLocaleDateString(undefined, {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  } catch {
-    return iso;
-  }
+  return formatLocaleDateShort(iso, locale.value);
 }
 
 /**
