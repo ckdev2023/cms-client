@@ -37,6 +37,7 @@ describe("adaptCaseBillingData — payments merge (§3.4)", () => {
     })!;
     expect(result.payments).toHaveLength(1);
     expect(result.payments[0].kind).toBe("plan");
+    expect(result.payments[0].billingPlanId).toBe("bp-001");
     expect(result.received).toBe("¥50,000");
   });
 

@@ -282,7 +282,7 @@ const columns: ResponsiveColumn[] = [
               </td>
               <td class="bt__td bt__col--actions">
                 <button
-                  v-if="row.status !== 'paid'"
+                  v-if="row.status !== 'paid' && row.caseId"
                   class="bt__action-btn"
                   type="button"
                   @click="$emit('register-payment', row.caseId, row.id)"

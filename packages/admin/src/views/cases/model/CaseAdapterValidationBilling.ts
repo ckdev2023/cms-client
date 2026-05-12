@@ -227,6 +227,7 @@ const PAYMENT_ROW_KIND_TYPE_LABELS: Record<PaymentRowKind, string> = {
 function adaptBillingPlanToPaymentRow(value: unknown): PaymentRow | null {
   const r = asRecord(value);
   if (!r) return null;
+  const planId = readNullableString(r, "id");
   const amountDue = readNumber(r, "amountDue");
   const status = readString(r, "status") || "due";
   const dueDate = readNullableString(r, "dueDate");
@@ -240,6 +241,7 @@ function adaptBillingPlanToPaymentRow(value: unknown): PaymentRow | null {
     status,
     statusLabel: BILLING_STATUS_LABELS[status] ?? status,
     kind: "plan",
+    billingPlanId: planId ?? undefined,
   };
 }
 

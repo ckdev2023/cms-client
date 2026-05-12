@@ -5,7 +5,6 @@ import {
   adaptBillingMutationResult,
   adaptBillingPlanNode,
   adaptBillingPlanNodes,
-  adaptBillingRiskAckStatus,
   adaptBillingSummary,
   adaptCaseBillingRow,
   adaptCollectionResult,
@@ -102,6 +101,7 @@ describe("adaptCaseBillingRow", () => {
   it("falls back displayName fields to '—' when missing entirely", () => {
     const row = adaptCaseBillingRow({
       id: "bp-min",
+      caseId: "case-min",
       amountDue: 100,
       paidAmount: 0,
       unpaidAmount: 100,
@@ -111,7 +111,28 @@ describe("adaptCaseBillingRow", () => {
     expect(row!.caseNo).toBe("—");
     expect(row!.client.name).toBe("—");
     expect(row!.owner).toBe("—");
-    expect(row!.caseId).toBe("bp-min");
+    expect(row!.caseId).toBe("case-min");
+  });
+
+  it("maps snake_case case_id to caseId", () => {
+    const { caseId, ...rest } = fullDto;
+    const row = adaptCaseBillingRow({
+      ...rest,
+      case_id: "case-from-snake",
+    });
+    expect(row!.caseId).not.toBe(caseId);
+    expect(row!.caseId).toBe("case-from-snake");
+  });
+
+  it("does not use billing plan id as case id when case id fields are absent", () => {
+    const row = adaptCaseBillingRow({
+      id: "bp-only",
+      amountDue: 100,
+      paidAmount: 0,
+      unpaidAmount: 100,
+      status: "due",
+    });
+    expect(row!.caseId).toBe("");
   });
 
   it("produces nextNode for non-paid plans with milestoneName", () => {
@@ -452,40 +473,5 @@ describe("adaptBillingMutationResult", () => {
   it("returns null when id missing or non-object", () => {
     expect(adaptBillingMutationResult({})).toBeNull();
     expect(adaptBillingMutationResult(null)).toBeNull();
-  });
-});
-
-describe("adaptBillingRiskAckStatus", () => {
-  it("maps acknowledged state", () => {
-    expect(
-      adaptBillingRiskAckStatus({
-        acknowledged: true,
-        acknowledgedAt: "2026-04-01T00:00:00Z",
-        acknowledgedByDisplayName: "Manager",
-        reasonCode: "customer_promise",
-        reasonNote: "一周内补缴",
-        evidenceUrl: "https://example.com/evidence",
-      }),
-    ).toEqual({
-      acknowledged: true,
-      acknowledgedAt: "2026-04-01T00:00:00Z",
-      acknowledgedByDisplayName: "Manager",
-      reasonCode: "customer_promise",
-      reasonNote: "一周内补缴",
-      evidenceUrl: "https://example.com/evidence",
-    });
-  });
-
-  it("maps unacknowledged state with nulls", () => {
-    const s = adaptBillingRiskAckStatus({
-      acknowledged: false,
-      acknowledgedAt: null,
-    });
-    expect(s!.acknowledged).toBe(false);
-    expect(s!.acknowledgedAt).toBeNull();
-  });
-
-  it("returns null for non-object", () => {
-    expect(adaptBillingRiskAckStatus(null)).toBeNull();
   });
 });

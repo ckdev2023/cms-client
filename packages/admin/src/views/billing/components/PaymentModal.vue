@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { BillingPlanNode } from "../types";
 import type { CreatePaymentInput } from "../model/BillingAdapterUrls";
@@ -36,6 +36,13 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const modal = usePaymentModal();
+/** 仅当节点应收 > 0 时绑定 max，避免 `:max="undefined"` 在 DOM 上形成异常数值约束（如无障碍树 valuemax=0）。 */
+const paymentAmountMaxAttrs = computed(() => {
+  const n = modal.selectedNode.value;
+  return n != null && n.amount > 0 ? { max: n.amount } : {};
+});
+/** 嵌套在普通对象内的 ref 在模板里不易追踪；computed 保证节点列表更新后下拉会重绘。 */
+const availableBillingNodes = computed(() => modal.availableNodes.value);
 const loadingNodes = ref(false);
 const nodeError = ref<string | null>(null);
 const submitting = ref(false);
@@ -158,12 +165,7 @@ function handleClose() {
                 type="number"
                 class="pm-input"
                 min="1"
-                :max="
-                  modal.selectedNode.value &&
-                  modal.selectedNode.value.amount > 0
-                    ? modal.selectedNode.value.amount
-                    : undefined
-                "
+                v-bind="paymentAmountMaxAttrs"
                 :placeholder="
                   t('billing.paymentModal.fields.amountPlaceholder')
                 "
@@ -206,7 +208,7 @@ function handleClose() {
                   {{ t("billing.paymentModal.fields.nodePlaceholder") }}
                 </option>
                 <option
-                  v-for="node in modal.availableNodes.value"
+                  v-for="node in availableBillingNodes"
                   :key="node.id"
                   :value="node.id"
                 >

@@ -442,6 +442,8 @@ export interface PaymentRow {
   strikethrough?: boolean;
   /** milestone 本地化 i18n key，例如 `billing.milestone.case_fee`；未命中映射时为 `undefined`。 */
   typeI18nKey?: string;
+  /** 收费计划节点 ID（`kind === "plan"` 时由适配层填入，用于 deep-link 预选节点）。 */
+  billingPlanId?: string;
 }
 
 /**

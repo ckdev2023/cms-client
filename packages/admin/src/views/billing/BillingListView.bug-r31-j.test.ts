@@ -2,12 +2,14 @@ import { describe, it, expect, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { useBillingDeepLink } from "./model/useBillingDeepLink";
 
-function createDeps(initialQuery = "") {
-  const caseQuery = ref(initialQuery);
+function createDeps(initialCase = "", initialBillingPlan = "") {
+  const caseQuery = ref(initialCase);
+  const billingPlanQuery = ref(initialBillingPlan);
   const search = ref("");
-  const openPaymentModal = vi.fn<(caseId: string) => void>();
+  const openPaymentModal =
+    vi.fn<(caseId: string, billingPlanId?: string) => void>();
   const clearQuery = vi.fn();
-  return { caseQuery, search, openPaymentModal, clearQuery };
+  return { caseQuery, billingPlanQuery, search, openPaymentModal, clearQuery };
 }
 
 describe("useBillingDeepLink — R31-J deep link from case detail to billing", () => {
@@ -82,5 +84,15 @@ describe("useBillingDeepLink — R31-J deep link from case detail to billing", (
     useBillingDeepLink(deps);
 
     expect(deps.search.value).toBe("CASE-DL-001");
+  });
+
+  it("forwards billingPlanQuery to openPaymentModal when present", () => {
+    const deps = createDeps("CASE-202605-0001", "bp-plan-99");
+    useBillingDeepLink(deps);
+
+    expect(deps.openPaymentModal).toHaveBeenCalledWith(
+      "CASE-202605-0001",
+      "bp-plan-99",
+    );
   });
 });

@@ -224,7 +224,8 @@ export function adaptCaseBillingRow(value: unknown): CaseBillingRow | null {
   if (!r) return null;
   const id = readString(r, "id");
   if (!id) return null;
-  const caseId = readNullableString(r, "caseId") ?? id;
+  const caseId =
+    readNullableString(r, "caseId") ?? readNullableString(r, "case_id") ?? "";
   const display = readDisplayFields(r);
 
   const amountDue = readNumber(r, "amountDue");

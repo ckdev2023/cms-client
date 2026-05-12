@@ -104,7 +104,7 @@ const fmtAmount = (v: number): string => v.toLocaleString("ja-JP");
         />
       </label>
       <button
-        v-if="row.status !== 'paid'"
+        v-if="row.status !== 'paid' && row.caseId"
         class="bill-card__action-btn"
         type="button"
         @click="$emit('registerPayment', row.caseId, row.id)"

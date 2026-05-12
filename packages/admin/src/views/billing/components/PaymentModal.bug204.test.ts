@@ -71,6 +71,16 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
     expect(amountInput.attributes("max")).toBe("70000");
   });
 
+  it("renders select options for each unpaid billing node", async () => {
+    const wrapper = await mountAndOpen([
+      makeNode({ id: "n1", name: "case_fee" }),
+      makeNode({ id: "n2", name: "final_payment", status: "paid" }),
+    ]);
+    const options = wrapper.find("select.pm-input--select").findAll("option");
+    expect(options.length).toBe(2);
+    expect(options[1]!.attributes("value")).toBe("n1");
+  });
+
   it("has no max when auto-selected node has zero amount (placeholder fee)", async () => {
     const wrapper = await mountAndOpen([
       makeNode({ id: "n0", amount: 0, dueDate: "" }),

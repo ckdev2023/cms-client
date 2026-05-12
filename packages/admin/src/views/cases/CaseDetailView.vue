@@ -50,6 +50,7 @@ import {
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
 import { useCaseFormsExportPolling } from "./model/useCaseFormsExportPolling";
+import type { PaymentRow } from "./types-detail";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
@@ -362,9 +363,17 @@ function onPhaseSubmit(payload: {
   });
 }
 
-/** 跳转到收费页面，打开回款登记。 */
-function onOpenCollection(): void {
-  router.push({ path: "/billing", query: { case: caseId.value } });
+/**
+ * 从案件详情 deep-link 打开回款登记（可选携带预选收费节点）。
+ *
+ * @param row - 收费表格行；来自 `plan` 时可带 `billingPlanId` 以预选节点。
+ */
+function onOpenCollection(row?: PaymentRow): void {
+  const q: Record<string, string> = { case: caseId.value };
+  if (row?.billingPlanId) {
+    q.billingPlan = row.billingPlanId;
+  }
+  router.push({ path: "/billing", query: q });
 }
 
 /** 跳转到收费页面，查看收据。 */
