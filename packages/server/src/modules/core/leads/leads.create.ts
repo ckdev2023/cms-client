@@ -6,11 +6,39 @@ import type { Lead } from "../../portal/model/portalEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import type { TenantDbTx } from "../tenancy/tenantDb";
 
-import { LEAD_COLS, type LeadCreateInput } from "./leads.admin.types";
+import {
+  FOLLOWUP_COLS,
+  LEAD_COLS,
+  type LeadCreateInput,
+} from "./leads.admin.types";
+import {
+  mapLeadSourceChannelToFollowupChannel,
+  type LeadFollowupQueryRow,
+} from "./leadEntities";
 import {
   generateNextLeadNumber,
   isLeadNumberConflict,
 } from "./leads.numbering";
+
+async function insertInitialLeadFollowupIfNeeded(
+  tx: TenantDbTx,
+  ctx: RequestContext,
+  leadId: string,
+  input: LeadCreateInput,
+): Promise<void> {
+  const nextAction = input.nextAction?.trim() ?? "";
+  const nextAtRaw = input.nextFollowUpAt?.trim() ?? "";
+  const nextAt = nextAtRaw || null;
+  if (!nextAction && !nextAt) return;
+
+  const summary = nextAction || "已约定下次跟进时间（创建线索时）";
+  const channel = mapLeadSourceChannelToFollowupChannel(input.sourceChannel);
+  await tx.query<LeadFollowupQueryRow>(
+    `insert into lead_followups (lead_id, channel, summary, conclusion, next_action, next_follow_up_at, created_by)
+     values ($1, $2, $3, null, $4, $5::timestamptz, $6) returning ${FOLLOWUP_COLS}`,
+    [leadId, channel, summary, nextAction || null, nextAt, ctx.userId],
+  );
+}
 
 const INSERT_SQL = `insert into leads (
   org_id, assigned_org_id, lead_no, name, phone, email,
@@ -73,7 +101,9 @@ export async function insertLeadWithNumbering(
       );
       const row = result.rows.at(0);
       if (!row) throw new BadRequestException("Failed to create lead");
-      return mapLeadRow(row);
+      const lead = mapLeadRow(row);
+      await insertInitialLeadFollowupIfNeeded(tx, ctx, lead.id, input);
+      return lead;
     } catch (error) {
       if (attempt === 0 && isLeadNumberConflict(error)) continue;
       throw error;

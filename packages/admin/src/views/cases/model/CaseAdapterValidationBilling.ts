@@ -18,6 +18,7 @@ import {
   readString,
 } from "./CaseAdapterShared";
 import { resolveMilestoneI18nKey } from "./billingMilestoneI18n";
+import { mapPassedValidationCheckI18nKeys } from "./mapPassedValidationCheckI18nKeys";
 
 export { resolveMilestoneI18nKey } from "./billingMilestoneI18n";
 
@@ -76,8 +77,14 @@ function adaptGateItemDto(
   const r = asRecord(value);
   if (!r) return null;
 
-  const titleKey = readOptionalString(r, "titleKey");
-  const messageKey = readOptionalString(r, "messageKey");
+  const passed = r.passed === true;
+  const rawTitleKey = readOptionalString(r, "titleKey");
+  const rawMessageKey = readOptionalString(r, "messageKey");
+  const { titleKey, messageKey } = mapPassedValidationCheckI18nKeys(
+    rawTitleKey,
+    rawMessageKey,
+    passed,
+  );
   const title = resolveGateTitle(r, titleKey);
   if (!titleKey && !title) return null;
 

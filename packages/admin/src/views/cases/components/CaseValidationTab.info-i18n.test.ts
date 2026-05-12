@@ -76,8 +76,8 @@ const RAW_KEY_PATTERN = /cases\.\w+\.\w+/;
 const I18N_INFO_ITEM: GateItem = {
   gate: "C",
   title: "",
-  titleKey: "cases.validation.checks.generated_documents_present.title",
-  noteKey: "cases.validation.checks.generated_documents_present.message",
+  titleKey: "cases.validation.checks.generated_documents_present.okTitle",
+  noteKey: "cases.validation.checks.generated_documents_present.okMessage",
 };
 
 const LEGACY_INFO_ITEM: GateItem = {
@@ -90,12 +90,12 @@ describe("CaseValidationTab info branch i18n", () => {
   describe("i18n keyed info item — zh-CN", () => {
     it("renders translated title", () => {
       const html = mountTab("zh-CN", [I18N_INFO_ITEM]).html();
-      expect(html).toContain("需要至少生成一份文书");
+      expect(html).toContain("文书生成条件已满足");
     });
 
     it("renders translated note", () => {
       const html = mountTab("zh-CN", [I18N_INFO_ITEM]).html();
-      expect(html).toContain("提交前需要至少生成一份文书");
+      expect(html).toContain("至少已生成一份文书。");
     });
 
     it("does not leak raw i18n keys", () => {
@@ -107,12 +107,12 @@ describe("CaseValidationTab info branch i18n", () => {
   describe("i18n keyed info item — ja-JP", () => {
     it("renders translated title", () => {
       const html = mountTab("ja-JP", [I18N_INFO_ITEM]).html();
-      expect(html).toContain("文書が1件以上必要");
+      expect(html).toContain("文書生成の要件を満たしています");
     });
 
     it("renders translated note", () => {
       const html = mountTab("ja-JP", [I18N_INFO_ITEM]).html();
-      expect(html).toContain("提出前に少なくとも1件の文書を生成してください");
+      expect(html).toContain("少なくとも1件の文書が生成されています。");
     });
 
     it("does not leak raw i18n keys", () => {
@@ -124,14 +124,12 @@ describe("CaseValidationTab info branch i18n", () => {
   describe("i18n keyed info item — en-US", () => {
     it("renders translated title", () => {
       const html = mountTab("en-US", [I18N_INFO_ITEM]).html();
-      expect(html).toContain("At least one document required");
+      expect(html).toContain("Generated document requirement satisfied");
     });
 
     it("renders translated note", () => {
       const html = mountTab("en-US", [I18N_INFO_ITEM]).html();
-      expect(html).toContain(
-        "At least one generated document is required before submission",
-      );
+      expect(html).toContain("At least one generated document exists.");
     });
 
     it("does not leak raw i18n keys", () => {

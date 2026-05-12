@@ -820,6 +820,7 @@ const casesZhCN = {
           supplementaryInfo: "补充说明",
           onlyTip: "仅提示",
           noBlockers: "校验通过，无阻断项",
+          neverValidatedHint: "请点击上方「重新检查」运行门禁校验后查看结果。",
           advanceStageButton: "下一步：推进至 {nextStage}",
           advanceStageDisabled: {
             mustHandleBlocker: "存在未处理的阻断项，请先解决后再推进。",
@@ -834,6 +835,8 @@ const casesZhCN = {
             "仅当案件进入 S6（提交准备）或 S7（已提交）阶段后才能创建提交包。",
           locked: "已锁定",
           empty: "暂无提交包记录",
+          techIdSuffixLabel: "系统内部编号（尾号 {tail}）",
+          copyFullTechId: "复制完整编号",
         },
         correction: {
           kicker: "补正包",
@@ -1162,10 +1165,14 @@ const casesZhCN = {
       generated_documents_present: {
         title: "需要至少生成一份文书",
         message: "提交前需要至少生成一份文书",
+        okTitle: "文书生成条件已满足",
+        okMessage: "至少已生成一份文书。",
       },
       generated_documents_finalized: {
         title: "所有文书需定稿",
         message: "所有生成的文书必须为定稿或已导出状态",
+        okTitle: "文书定稿条件已满足",
+        okMessage: "所有已生成文书均已定稿或已导出。",
       },
     },
     refReport: "详细请参阅检查报告",

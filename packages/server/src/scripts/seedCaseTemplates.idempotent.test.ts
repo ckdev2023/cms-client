@@ -72,17 +72,18 @@ void describe("seedCaseTemplates idempotent upsert", () => {
     );
   });
 
-  void test("all three templates are upserted", async () => {
+  void test("all four templates are upserted", async () => {
     const { client, store } = makeFakeClient(new Map());
 
     await seedCaseTemplates(client as never, ORG_ID);
 
-    assert.equal(store.size, 3, "should insert exactly 3 templates");
+    assert.equal(store.size, 4, "should insert exactly 4 templates");
 
     const caseTypes = [...store.values()].map((r) => r.case_type as string);
     assert.ok(caseTypes.includes("dependent_visa"));
     assert.ok(caseTypes.includes("work"));
     assert.ok(caseTypes.includes("business_manager_visa"));
+    assert.ok(caseTypes.includes("permanent"));
   });
 
   void test("running twice produces identical results (true idempotency)", async () => {

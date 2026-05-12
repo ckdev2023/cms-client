@@ -63,10 +63,6 @@ const KNOWN_DEAD_BUTTONS = new Map<string, { max: number; bug: string }>([
   ["views/cases/components/CaseFormsTab.vue", { max: 4, bug: "BUG-214" }],
   ["views/cases/components/CaseMessagesTab.vue", { max: 4, bug: "BUG-216" }],
   ["views/cases/components/CaseDeadlinesTab.vue", { max: 1, bug: "BUG-215" }],
-  [
-    "views/customers/components/CustomerCommsTab.vue",
-    { max: 1, bug: "button inside <a> — false positive" },
-  ],
   ["views/HomeView.vue", { max: 3, bug: "foundation showcase — decorative" }],
   [
     "views/leads/components/LeadConvertedRecords.vue",

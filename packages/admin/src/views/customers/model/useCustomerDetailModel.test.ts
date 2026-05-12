@@ -66,6 +66,52 @@ describe("useCustomerDetailModel", () => {
     expect(errorCode.value).toBe("notFound");
   });
 
+  it("maps 400 Customer not found (Nest BadRequest) to notFound", async () => {
+    const id = ref("00000000-0000-0000-0000-000000000000");
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockRejectedValue(
+        new CustomerRepositoryError({
+          code: "VALIDATION_ERROR",
+          message: "Customer not found",
+          status: 400,
+        }),
+      ),
+    });
+    const { customer, notFound, errorCode } = useCustomerDetailModel({
+      customerId: id,
+      repository,
+    });
+
+    await flushPromises();
+
+    expect(customer.value).toBeNull();
+    expect(notFound.value).toBe(true);
+    expect(errorCode.value).toBe("notFound");
+  });
+
+  it("maps 400 Invalid id (malformed UUID) to notFound", async () => {
+    const id = ref("not-a-uuid");
+    const repository = createRepository({
+      getCustomerDetail: vi.fn().mockRejectedValue(
+        new CustomerRepositoryError({
+          code: "VALIDATION_ERROR",
+          message: "Invalid id",
+          status: 400,
+        }),
+      ),
+    });
+    const { customer, notFound, errorCode } = useCustomerDetailModel({
+      customerId: id,
+      repository,
+    });
+
+    await flushPromises();
+
+    expect(customer.value).toBeNull();
+    expect(notFound.value).toBe(true);
+    expect(errorCode.value).toBe("notFound");
+  });
+
   it("maps unauthorized repository errors to unauthorized", async () => {
     const id = ref("cust-001");
     const repository = createRepository({

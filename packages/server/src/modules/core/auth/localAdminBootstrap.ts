@@ -5,7 +5,10 @@ import { parseRole, type Role } from "./roles";
 
 const DEFAULT_LOCAL_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const DEFAULT_LOCAL_USER_ID = "00000000-0000-4000-8000-000000000011";
-const DEFAULT_LOCAL_GROUP_ID = "00000000-0000-4000-8000-000000000020";
+
+/** 与 `db:init-local-admin` 默认分组一致；重置业务数据脚本依赖此 ID。 */
+export const DEFAULT_LOCAL_GROUP_ID =
+  "00000000-0000-4000-8000-000000000020" as const;
 const DEFAULT_LOCAL_ORG_NAME = "Local Demo Office";
 const DEFAULT_LOCAL_USER_NAME = "Local Admin";
 const DEFAULT_LOCAL_USER_EMAIL = "admin@local.test";

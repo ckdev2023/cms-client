@@ -102,10 +102,10 @@ describe("adaptGateItemDto — titleKey / messageKey i18n path", () => {
     expect(result!.info).toHaveLength(1);
     const item = result!.info[0];
     expect(item.titleKey).toBe(
-      "cases.validation.checks.generated_documents_present.title",
+      "cases.validation.checks.generated_documents_present.okTitle",
     );
     expect(item.noteKey).toBe(
-      "cases.validation.checks.generated_documents_present.message",
+      "cases.validation.checks.generated_documents_present.okMessage",
     );
   });
 });

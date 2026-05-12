@@ -43,13 +43,17 @@ export async function syncBillingCacheForCase(
   const totalReceived = Number(validPaymentResult.rows[0]?.total_received ?? 0);
   const unpaid = Math.max(totalDue - totalReceived, 0);
 
-  const depositSettled = billingResult.rows
-    .filter((r) => isDepositMilestone(r.milestone_name))
-    .every((r) => r.status === "paid");
+  const depositRows = billingResult.rows.filter((r) =>
+    isDepositMilestone(r.milestone_name),
+  );
+  const depositSettled =
+    depositRows.length === 0 || depositRows.every((r) => r.status === "paid");
 
-  const finalPaymentSettled = billingResult.rows
-    .filter((r) => isFinalPaymentMilestone(r.milestone_name))
-    .every((r) => r.status === "paid");
+  const finalRows = billingResult.rows.filter((r) =>
+    isFinalPaymentMilestone(r.milestone_name),
+  );
+  const finalPaymentSettled =
+    finalRows.length > 0 && finalRows.every((r) => r.status === "paid");
 
   await tx.query(
     `update cases set

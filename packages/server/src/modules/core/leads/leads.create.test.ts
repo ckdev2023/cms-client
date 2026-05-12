@@ -167,4 +167,62 @@ void describe("LeadsAdminService.create", () => {
     assert.equal(timeline.calls[0].action, "lead.created");
     assert.equal(timeline.calls[0].entityId, LEAD_ID);
   });
+
+  void test("inserts initial lead_followup when nextAction or nextFollowUpAt provided", async () => {
+    const calls: { sql: string; params?: unknown[] }[] = [];
+    const pool = makePool((sql, params) => {
+      calls.push({ sql, params });
+      if (sql.includes("max_seq")) {
+        return Promise.resolve({ rows: [{ max_seq: "5" }], rowCount: 1 });
+      }
+      if (sql.includes("insert into leads")) {
+        return Promise.resolve({
+          rows: [
+            leadRow({
+              name: "Follow Lead",
+              lead_no: "LEAD-202605-0007",
+              org_id: ORG_A,
+              assigned_org_id: ORG_A,
+              owner_user_id: USER_A,
+              status: "new",
+            }),
+          ],
+          rowCount: 1,
+        });
+      }
+      if (sql.includes("insert into lead_followups")) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: "00000000-0000-4000-8000-f01100000001",
+              lead_id: LEAD_ID,
+              channel: "phone",
+              summary: "明日までに見積送付",
+              conclusion: null,
+              next_action: "明日までに見積送付",
+              next_follow_up_at: null,
+              created_by: USER_A,
+              created_at: "2026-05-12T10:00:00.000Z",
+            },
+          ],
+          rowCount: 1,
+        });
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    });
+
+    await svc(pool).create(makeCtx(), {
+      name: "Follow Lead",
+      sourceChannel: "phone",
+      nextAction: "明日までに見積送付",
+    });
+
+    const fu = calls.find((c) => c.sql.includes("insert into lead_followups"));
+    assert.ok(fu, "must insert initial followup");
+    const p = fu.params ?? [];
+    assert.equal(p[1], "phone");
+    assert.equal(p[2], "明日までに見積送付");
+    assert.equal(p[4], null);
+    assert.equal(p[5], USER_A);
+  });
 });

@@ -853,6 +853,8 @@ const casesEnUS = {
           supplementaryInfo: "Additional info",
           onlyTip: "FYI",
           noBlockers: "Validation passed, no blockers",
+          neverValidatedHint:
+            "Use “Re-check” above to run the gates and view results.",
           advanceStageButton: "Next step: advance to {nextStage}",
           advanceStageDisabled: {
             mustHandleBlocker:
@@ -870,6 +872,8 @@ const casesEnUS = {
             "Submission packages can only be created once the case reaches S6 (submission prep) or S7 (submitted).",
           locked: "Locked",
           empty: "No submission packages yet",
+          techIdSuffixLabel: "System ID (suffix {tail})",
+          copyFullTechId: "Copy full ID",
         },
         correction: {
           kicker: "Correction package",
@@ -1225,11 +1229,15 @@ const casesEnUS = {
         title: "At least one document required",
         message:
           "At least one generated document is required before submission",
+        okTitle: "Generated document requirement satisfied",
+        okMessage: "At least one generated document exists.",
       },
       generated_documents_finalized: {
         title: "All documents must be finalized",
         message:
           "All generated documents must be final or exported before submission",
+        okTitle: "Finalization requirement satisfied",
+        okMessage: "All generated documents are final or exported.",
       },
     },
     refReport: "See the validation report for details",

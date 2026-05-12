@@ -1,0 +1,58 @@
+/* 提交包 / 补正包技术编号行：由 CaseValidationTab 与 CaseValidationTechIdDisplay 共用（非 scoped）。 */
+.vt__pkg-technical-id {
+  margin-top: 4px;
+  font-size: var(--font-size-xs);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  line-height: var(--leading-sm);
+  color: var(--color-text-3);
+  word-break: break-all;
+}
+.vt__pkg-technical-ref {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.vt__pkg-technical-ref .vt__pkg-technical-id {
+  margin-top: 0;
+}
+.vt__pkg-technical-ref--corr {
+  margin-top: 0;
+}
+.vt__pkg-copy-tech-id {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  color: var(--color-primary-6);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.vt__pkg-copy-tech-id:hover {
+  color: var(--color-primary-7);
+}
+.vt__pkg-copy-tech-id:focus-visible {
+  outline: 2px solid var(--color-primary-6);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+.vt__pkg-id {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-1);
+}
+.vt__pkg-id--technical {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  font-family:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    "Courier New", monospace;
+  color: var(--color-text-2);
+  word-break: break-all;
+}

@@ -11,7 +11,6 @@ import type {
   LeadDetail,
   LeadFollowupRecord,
   LeadLogEntry,
-  FollowupChannel,
   BannerPresetKey,
   HeaderButtonPresetKey,
 } from "../types-detail";
@@ -27,6 +26,7 @@ import { formatLeadLogPayload } from "./LeadLogPayloadFormatter";
 import { sanitizeWalkthroughTags } from "./walkthroughTags";
 import { normalizeBusinessType } from "../../../shared/i18n/businessTypes";
 import { isLeadCreationPathSource } from "./leadOptionLabels";
+import { mapLeadFollowupChannelFromApi } from "./leadFollowupChannelApi";
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return value && typeof value === "object" && !Array.isArray(value)
@@ -307,7 +307,8 @@ function adaptFollowupDto(value: unknown): LeadFollowupRecord | null {
   const summary = readString(r, "summary");
   if (!summary) return null;
 
-  const channel = readString(r, "channel") as FollowupChannel;
+  const apiChannel = readString(r, "channel");
+  const channel = mapLeadFollowupChannelFromApi(apiChannel || "other");
   return {
     channel,
     channelLabel: getFollowupChannelLabel(channel),

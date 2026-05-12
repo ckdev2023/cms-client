@@ -73,6 +73,38 @@ function matchesViewerOwner(
   );
 }
 
+/**
+ * 当前登录用户信息未带出 primary group（后端 `/api/users` 亦无分组字段）
+ * 时，从一页内「由我负责」客户的 `customer.group` 取众数，供摘要「本组客户」与
+ * `matchesViewerGroup` 使用；无法在页内推导时返回 `null`。
+ *
+ * @param customers - 可作为样本的客户行（常为当前页的可见列表）
+ * @param viewerOwnerName - 当前查看人姓名（与 session / `customer.owner.name` 对齐）
+ * @returns 众数分组显示名；无有效分组样本时返回 `null`
+ */
+export function inferViewerPrimaryGroupAmongOwnedCustomers(
+  customers: ReadonlyArray<CustomerSummary>,
+  viewerOwnerName: string,
+): string | null {
+  const trimmedViewer = viewerOwnerName.trim();
+  if (!trimmedViewer) return null;
+  const ctx: CustomerViewerContext = {
+    ownerName: trimmedViewer,
+    group: "",
+  };
+  const tally = new Map<string, number>();
+  for (const c of customers) {
+    if (!matchesViewerOwner(c, ctx)) continue;
+    const g = c.group.trim();
+    if (!g) continue;
+    tally.set(g, (tally.get(g) ?? 0) + 1);
+  }
+  if (tally.size === 0) return null;
+  return [...tally.entries()].sort(
+    (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+  )[0]![0];
+}
+
 function matchesViewerGroup(
   customer: CustomerSummary,
   viewer: CustomerViewerContext,

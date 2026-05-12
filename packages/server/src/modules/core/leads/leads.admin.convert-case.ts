@@ -11,10 +11,12 @@ import type { CustomerBmvProfile } from "../customers/customers.types";
 import { checkBmvCaseCreationGate } from "../cases/cases.types-bmv-gate";
 import { isBmvCaseTypeCode } from "../cases/cases.template-bmv";
 import { getCaseTypeLabelJa } from "../cases/caseTypeLabels.ja";
+import { ensureAtLeastOneBillingRecordForCase } from "../cases/cases.service.timeline";
 import type { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
-import { createTenantDb } from "../tenancy/tenantDb";
+import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
+import { mapLeadFollowupChannelToCommunicationChannel } from "./leadEntities";
 import { LEAD_COLS, type LeadConvertCaseInput } from "./leads.admin.types";
 
 export const CONVERT_CASE_REQUIRES_CUSTOMER_ERROR_CODE =
@@ -67,6 +69,7 @@ export async function convertCase(
     ownerUserId: input.ownerUserId,
     groupId: input.groupId ?? lead.groupId ?? undefined,
     caseName,
+    quotePrice: lead.quoteAmount ?? undefined,
   });
   const caseId = caseEntity.id;
   const caseNo = normalizeCaseNo(caseEntity.caseNo);
@@ -85,6 +88,7 @@ export async function convertCase(
     leadId,
     leadNo: lead.leadNo,
     isBmv,
+    quoteAmount: lead.quoteAmount,
   });
 
   await deps.writeAudit(ctx, leadId, "converted_case", {
@@ -104,19 +108,37 @@ type PostCreateBookkeepingPayload = {
   leadId: string;
   leadNo: string | null;
   isBmv: boolean;
+  quoteAmount: number | null;
 };
 
+async function ensureBillingRecordAfterConvert(
+  db: TenantDb,
+  ctx: RequestContext,
+  caseId: string,
+  quoteAmount: number | null,
+): Promise<void> {
+  await db.transaction((tx) =>
+    ensureAtLeastOneBillingRecordForCase(tx, ctx, caseId, quoteAmount),
+  );
+}
+
 async function runPostCreateBookkeeping(
-  db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  db: TenantDb,
   ctx: RequestContext,
   payload: PostCreateBookkeepingPayload,
 ): Promise<void> {
-  const { caseId, customerId, leadId, leadNo, isBmv } = payload;
+  const { caseId, customerId, leadId, leadNo, isBmv, quoteAmount } = payload;
   await ensurePrimaryApplicantCaseParty(db, ctx, caseId, customerId);
   if (isBmv) {
     await initializeBmvProfile(db, customerId, leadId);
   }
+  await ensureBillingRecordAfterConvert(db, ctx, caseId, quoteAmount);
   await backfillConversationLinks(db, { customerId, caseId, leadId });
+  await backfillCommunicationLogsFromLeadFollowups(db, ctx, {
+    leadId,
+    caseId,
+    customerId,
+  });
   await writeCaseConvertedFromLeadTimeline(db, ctx, {
     caseId,
     leadId,
@@ -334,6 +356,122 @@ async function backfillConversationLinks(
     );
   } catch {
     // best-effort backfill; swallow constraint errors
+  }
+}
+
+type LeadFollowupBackfillRow = {
+  channel: string;
+  summary: string | null;
+  conclusion: string | null;
+  next_action: string | null;
+  next_follow_up_at: unknown;
+  created_by: string | null;
+  created_at: unknown;
+};
+
+function normalizeOptionalText(value: unknown): string {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" || typeof value === "bigint") {
+    return String(value).trim();
+  }
+  if (typeof value === "boolean") return value ? "true" : "false";
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+  return "";
+}
+
+function toTimestampParam(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    return value.toISOString();
+  }
+  if (typeof value === "string") {
+    const t = value.trim();
+    return t.length > 0 ? t : null;
+  }
+  return null;
+}
+
+function composeFollowupFullContent(
+  conclusion: string | null,
+  nextAction: string | null,
+): string | null {
+  const parts: string[] = [];
+  const c = normalizeOptionalText(conclusion);
+  const n = normalizeOptionalText(nextAction);
+  if (c.length > 0) parts.push(`结论：${c}`);
+  if (n.length > 0) parts.push(`下一步：${n}`);
+  return parts.length > 0 ? parts.join("\n") : null;
+}
+
+/**
+ * 线索已产生的跟进记录迁移至 `communication_logs`，使客户页「沟通记录」与咨询阶段连贯。
+ *
+ * @param db - 租户范围内带 RLS 的数据库访问对象
+ * @param db.query - 参数化 SQL 执行函数
+ * @param ctx - 请求上下文（orgId）
+ * @param payload - 回填参数
+ * @param payload.leadId - 源线索 ID
+ * @param payload.caseId - 新建案件 ID
+ * @param payload.customerId - 客户 ID
+ */
+async function backfillCommunicationLogsFromLeadFollowups(
+  db: { query: (sql: string, params: unknown[]) => Promise<unknown> },
+  ctx: RequestContext,
+  payload: { leadId: string; caseId: string; customerId: string },
+): Promise<void> {
+  const { leadId, caseId, customerId } = payload;
+  try {
+    const res = (await db.query(
+      `select channel, summary, conclusion, next_action, next_follow_up_at, created_by, created_at
+         from lead_followups
+        where lead_id = $1
+        order by created_at asc`,
+      [leadId],
+    )) as { rows?: LeadFollowupBackfillRow[] };
+    const rows = res.rows ?? [];
+    for (const row of rows) {
+      const summary =
+        normalizeOptionalText(row.summary) || "线索跟进（自咨询迁移）";
+      const fullContent = composeFollowupFullContent(
+        row.conclusion,
+        row.next_action,
+      );
+      const nextFollow = toTimestampParam(row.next_follow_up_at);
+      const hasNextAction = normalizeOptionalText(row.next_action).length > 0;
+      const followUpRequired =
+        (nextFollow !== null && nextFollow.length > 0) || hasNextAction;
+      const channelType = mapLeadFollowupChannelToCommunicationChannel(
+        row.channel,
+      );
+      await db.query(
+        `insert into communication_logs (
+           org_id, case_id, customer_id, channel_type, direction,
+           content_summary, full_content, visible_to_client,
+           created_by, follow_up_required, follow_up_due_at, created_at
+         ) values (
+           $1, $2, $3, $4, 'outbound',
+           $5, $6, false,
+           $7, $8, $9, $10
+         )`,
+        [
+          ctx.orgId,
+          caseId,
+          customerId,
+          channelType,
+          summary,
+          fullContent,
+          row.created_by,
+          followUpRequired,
+          nextFollow,
+          row.created_at,
+        ],
+      );
+    }
+  } catch {
+    // best-effort；避免因历史数据列异常阻塞建档
   }
 }
 

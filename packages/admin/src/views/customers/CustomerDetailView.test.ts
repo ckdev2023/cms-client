@@ -135,6 +135,11 @@ async function mountView(customerId = "cust-001") {
         name: "case-create",
         component: { template: "<div />" },
       },
+      {
+        path: "/conversations",
+        name: "conversations",
+        component: { template: "<div />" },
+      },
     ],
   });
 

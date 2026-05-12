@@ -7,6 +7,7 @@ import Chip from "../../../shared/ui/Chip.vue";
 import CaseValidationSupport from "./CaseValidationSupport.vue";
 import GateItemVue from "./GateItem.vue";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
+import CaseValidationTechIdDisplay from "./CaseValidationTechIdDisplay.vue";
 
 import type { CaseDetail, GateItem, ValidationData } from "../types-detail";
 import type { CaseDetailTab } from "../types";
@@ -59,6 +60,18 @@ function itemClass(item: GateItem): string {
 function hasValidationItems(detail: CaseDetail): boolean {
   const v = detail.validation;
   return v.blocking.length > 0 || v.warnings.length > 0 || v.info.length > 0;
+}
+
+/**
+ * 是否已有至少一条校验运行的记录的时间戳。
+ * 区别于「最近一次运行结果为空卡点」：`adaptCaseValidationData` 在未跑过校验时三项皆空且无时间。
+ *
+ * @param v - 校验数据
+ * @returns 当存在 `lastTimeIso` 或可读的 `lastTime` 时为 `true`
+ */
+function hasCommittedValidationRun(v: ValidationData): boolean {
+  if (v.lastTimeIso?.trim()) return true;
+  return Boolean(v.lastTime?.trim());
 }
 
 /**
@@ -193,7 +206,10 @@ const canAdvanceStage = computed(
             </div>
           </template>
 
-          <div class="vt__last-time">
+          <div
+            v-if="hasCommittedValidationRun(detail.validation)"
+            class="vt__last-time"
+          >
             {{ resolveLastTime(detail.validation, locale) }}
           </div>
 
@@ -263,7 +279,10 @@ const canAdvanceStage = computed(
             </div>
           </template>
 
-          <div v-else class="vt__empty-gates">
+          <div
+            v-else-if="hasCommittedValidationRun(detail.validation)"
+            class="vt__empty-gates"
+          >
             <svg
               width="32"
               height="32"
@@ -278,6 +297,27 @@ const canAdvanceStage = computed(
               <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <p>{{ t("cases.detail.validation.tab.gateCard.noBlockers") }}</p>
+          </div>
+
+          <div v-else class="vt__empty-gates vt__empty-gates--pending">
+            <svg
+              width="32"
+              height="32"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="10" />
+              <path d="M12 6v6l4 2" />
+            </svg>
+            <p>{{ t("cases.detail.overview.risk.notValidated") }}</p>
+            <p class="vt__empty-gates__hint">
+              {{ t("cases.detail.validation.tab.gateCard.neverValidatedHint") }}
+            </p>
           </div>
 
           <template #footer>
@@ -335,8 +375,11 @@ const canAdvanceStage = computed(
               :key="pkg.id"
               class="vt__pkg"
             >
-              <div class="vt__pkg-id">{{ pkg.id }}</div>
-              <div class="vt__pkg-meta">{{ pkg.summary }}</div>
+              <div class="vt__pkg-title">{{ pkg.summary }}</div>
+              <CaseValidationTechIdDisplay
+                :tech-id="pkg.id"
+                context="submission"
+              />
               <div class="vt__pkg-info">
                 <span>{{ pkg.date }}</span>
                 <Chip :tone="pkg.locked ? 'neutral' : 'primary'">
@@ -384,7 +427,10 @@ const canAdvanceStage = computed(
             {{ t("cases.detail.validation.tab.correction.title") }}
           </h2>
           <div class="vt__corr">
-            <div class="vt__pkg-id">{{ detail.correctionPackage.id }}</div>
+            <CaseValidationTechIdDisplay
+              :tech-id="detail.correctionPackage.id"
+              context="correction"
+            />
             <div class="vt__pkg-meta">
               {{ detail.correctionPackage.status }}
             </div>

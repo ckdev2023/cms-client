@@ -41,13 +41,13 @@ const nodeError = ref<string | null>(null);
 const submitting = ref(false);
 
 watch(
-  () => props.open,
-  async (val) => {
-    if (val && props.caseId) {
+  () => [props.open, props.caseId] as const,
+  async ([open, caseId]) => {
+    if (open && caseId) {
       loadingNodes.value = true;
       nodeError.value = null;
       try {
-        const nodes = await props.getBillingPlanNodes(props.caseId);
+        const nodes = await props.getBillingPlanNodes(caseId);
         modal.open(nodes);
         if (props.defaultBillingPlanId) {
           const exists = modal.availableNodes.value.some(
@@ -62,8 +62,8 @@ watch(
       } finally {
         loadingNodes.value = false;
       }
-    } else if (!val && modal.isOpen.value) {
-      modal.close();
+    } else if (!open) {
+      if (modal.isOpen.value) modal.close();
       nodeError.value = null;
       submitting.value = false;
     }
@@ -158,7 +158,12 @@ function handleClose() {
                 type="number"
                 class="pm-input"
                 min="1"
-                :max="modal.selectedNode.value?.amount ?? undefined"
+                :max="
+                  modal.selectedNode.value &&
+                  modal.selectedNode.value.amount > 0
+                    ? modal.selectedNode.value.amount
+                    : undefined
+                "
                 :placeholder="
                   t('billing.paymentModal.fields.amountPlaceholder')
                 "

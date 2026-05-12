@@ -108,6 +108,43 @@ export function isLeadFollowupChannel(
   );
 }
 
+/**
+ * 将线索跟进渠道映射为 `communication_logs.channel_type`。
+ *
+ * @param channel - `lead_followups.channel` の生値
+ * @returns 沟通渠道コード（未認識時は `other`）
+ */
+export function mapLeadFollowupChannelToCommunicationChannel(
+  channel: string,
+): string {
+  if (channel === "onsite") return "meeting";
+  if (
+    channel === "phone" ||
+    channel === "email" ||
+    channel === "wechat" ||
+    channel === "line" ||
+    channel === "other"
+  ) {
+    return channel;
+  }
+  return "other";
+}
+
+/**
+ * 将线索营销来源 `source_channel` 粗映射为建档时的首条跟进渠道。
+ *
+ * @param source - `leads.source_channel`（如 `phone` / `walkin` / `web`）
+ * @returns `lead_followups.channel` 合法值
+ */
+export function mapLeadSourceChannelToFollowupChannel(
+  source: string | null | undefined,
+): LeadFollowupChannel {
+  const s = typeof source === "string" ? source.trim().toLowerCase() : "";
+  if (s === "phone") return "phone";
+  if (s === "walkin") return "onsite";
+  return "other";
+}
+
 // ── LeadFollowup Entity ──
 
 /**

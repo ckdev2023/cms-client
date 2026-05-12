@@ -4,23 +4,24 @@ const customerList = {
   placeholderMessage: "The customer list is coming soon.",
   addCustomer: "Add customer",
   summaryTitle: "Customer overview",
-  summarySubtitle: "Quick snapshot of your customers and case workload.",
+  summarySubtitle:
+    "Same summary layout as other modules. Counts reflect only loaded rows on the current page (they change with filters and pagination); they are not firm-wide totals—use the list footer counts as ground truth.",
   summary: {
     mine: {
       label: "My customers",
-      hint: "Customers assigned to the current user — check who needs follow-up today.",
+      hint: "Among visible rows on this page, customers owned by me.",
     },
     group: {
       label: "Team customers",
-      hint: "All customers in the team — useful for leads to plan allocation and reassignment.",
+      hint: 'Among visible rows, rows whose group matches the mode group inferred from customers I own on this page; can be smaller than "My customers" if I span multiple groups.',
     },
     active: {
       label: "Active cases",
-      hint: "Customers with at least one in-progress case — prioritize recent communications and supplements.",
+      hint: "Among visible rows, customers with at least one open case.",
     },
     noActive: {
       label: "No active cases",
-      hint: "Customers without an open case — good candidates for follow-up visits and re-engagement.",
+      hint: "Among visible rows, customers with no open case.",
     },
   },
   scopeLabel: "Data scope",

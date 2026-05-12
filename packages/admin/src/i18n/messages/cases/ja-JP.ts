@@ -850,6 +850,8 @@ const casesJaJP = {
           supplementaryInfo: "補足",
           onlyTip: "参考のみ",
           noBlockers: "チェック通過、ブロッカーなし",
+          neverValidatedHint:
+            "上の「再チェック」でゲートを実行すると結果が表示されます。",
           advanceStageButton: "次のステップ：{nextStage} に進める",
           advanceStageDisabled: {
             mustHandleBlocker:
@@ -866,6 +868,8 @@ const casesJaJP = {
             "案件が S6（提出準備）または S7（提出済）に到達してからパッケージを作成できます。",
           locked: "ロック済み",
           empty: "提出パッケージなし",
+          techIdSuffixLabel: "システム内部ID（末尾 {tail}）",
+          copyFullTechId: "ID全体をコピー",
         },
         correction: {
           kicker: "補正パッケージ",
@@ -1224,11 +1228,16 @@ const casesJaJP = {
       generated_documents_present: {
         title: "文書が1件以上必要",
         message: "提出前に少なくとも1件の文書を生成してください",
+        okTitle: "文書生成の要件を満たしています",
+        okMessage: "少なくとも1件の文書が生成されています。",
       },
       generated_documents_finalized: {
         title: "全文書の確定が必要",
         message:
           "生成されたすべての文書が確定済みまたはエクスポート済みである必要があります",
+        okTitle: "文書確定の要件を満たしています",
+        okMessage:
+          "生成されたすべての文書が確定済みまたはエクスポート済みです。",
       },
     },
     refReport: "詳細は検証レポートを参照",

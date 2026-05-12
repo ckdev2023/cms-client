@@ -22,6 +22,9 @@ import {
   LEAD_LIST_PARAM_KEYS,
   LEAD_LIST_HTTP_FIELD_MAP,
 } from "./LeadAdapterTypes";
+import { mapLeadFollowupChannelToApi } from "./leadFollowupChannelApi";
+
+export { mapLeadFollowupChannelToApi };
 
 // ─── URL / Path builders ────────────────────────────────────────
 
@@ -158,8 +161,6 @@ export function filtersToListParams(
   };
 }
 
-// ─── Internal helpers ───────────────────────────────────────────
-
 function trimOrUndefined(value: string | undefined): string | undefined {
   if (value === undefined) return undefined;
   const trimmed = value.trim();
@@ -267,7 +268,7 @@ export function buildLeadFollowupPayload(
   input: LeadFollowupInput,
 ): Record<string, unknown> {
   return {
-    channel: input.channel,
+    channel: mapLeadFollowupChannelToApi(input.channel),
     summary: input.summary.trim(),
     conclusion: trimOrUndefined(input.conclusion),
     nextAction: trimOrUndefined(input.nextAction),
@@ -328,7 +329,7 @@ export function buildBulkFollowupPayload(
 ): Record<string, unknown> {
   return {
     leadIds: input.leadIds,
-    channel: input.channel,
+    channel: mapLeadFollowupChannelToApi(input.channel),
     summary: input.summary.trim(),
     nextAction: trimOrUndefined(input.nextAction),
     nextFollowUpAt: trimOrUndefined(input.nextFollowUp),

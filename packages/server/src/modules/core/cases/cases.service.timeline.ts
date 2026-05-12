@@ -125,6 +125,61 @@ export async function insertInitialBillingPlanFromQuote(
 }
 
 /**
+ * Lead 转案等路径下，无报价或 quotePrice 未写入时不会触发
+ * `insertInitialBillingPlanFromQuote`，但 R31-K 仍要求案件至少存在一行
+ * `billing_records` 方可推进至 S5/S6/S7。
+ *
+ * 在 case 尚无任何计费行时插入一行 `case_fee`：`amount_due` 取有效报价
+ * 金额，否则为 0（占位，便于在收费 Tab 补录真实金额与回款）。
+ *
+ * @param tx 事务连接
+ * @param ctx 请求上下文
+ * @param caseId 案件 ID
+ * @param quoteAmount 咨询侧报价（可空）
+ */
+export async function ensureAtLeastOneBillingRecordForCase(
+  tx: TenantDbTx,
+  ctx: RequestContext,
+  caseId: string,
+  quoteAmount: number | null,
+): Promise<void> {
+  const existing = await tx.query<{ id: string }>(
+    `select id from billing_records where case_id = $1 limit 1`,
+    [caseId],
+  );
+  if (existing.rows.length > 0) return;
+
+  const amountDue =
+    quoteAmount !== null && Number.isFinite(quoteAmount) && quoteAmount > 0
+      ? quoteAmount
+      : 0;
+
+  const result = await tx.query<{ id: string }>(
+    `insert into billing_records
+       (org_id, case_id, milestone_name, amount_due, status, gate_effect_mode)
+     values ($1, $2, $3, $4, 'due', 'warn')
+     returning id`,
+    [ctx.orgId, caseId, INITIAL_QUOTE_BILLING_MILESTONE, amountDue],
+  );
+  const billingPlanId = result.rows.at(0)?.id;
+  if (!billingPlanId) return;
+
+  await writeTimelineInTx(tx, ctx, {
+    entityType: "billing_plan",
+    entityId: billingPlanId,
+    action: "billing_plan.created",
+    payload: {
+      caseId,
+      milestoneName: INITIAL_QUOTE_BILLING_MILESTONE,
+      amountDue,
+      source: "lead_convert_billing_fallback",
+    },
+  });
+
+  await syncBillingCacheForCase(tx, caseId);
+}
+
+/**
  *
  * @param tx
  * @param ctx

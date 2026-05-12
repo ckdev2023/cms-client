@@ -117,6 +117,7 @@ void describe("WIZARD_SEED_MATRIX", () => {
       "dependent_visa",
       "work",
       "business_manager_visa",
+      "permanent",
     ]);
     for (const entry of WIZARD_SEED_MATRIX) {
       if (entry.seedExists) {
@@ -151,5 +152,6 @@ void describe("CANONICAL_CASE_TYPE_OPTIONS", () => {
     assert.ok(codes.has("dependent_visa"));
     assert.ok(codes.has("work"));
     assert.ok(codes.has("business_manager_visa"));
+    assert.ok(codes.has("permanent"));
   });
 });

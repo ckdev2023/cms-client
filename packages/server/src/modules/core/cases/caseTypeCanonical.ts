@@ -44,6 +44,7 @@ export function canonicalizeCaseTypeCode(code: string): string {
  * |------------------------------|---------------------------|-----------|
  * | family                       | dependent_visa            | ✓         |
  * | work                         | work                      | ✓         |
+ * | permanent                    | permanent                 | ✓         |
  * | bmv                          | business_manager_visa     | ✓         |
  * | biz_mgmt_cert_4m             | business_manager_visa     | ✓ (回退)  |
  * | biz_mgmt_cert_1y             | business_manager_visa     | ✓ (回退)  |
@@ -60,6 +61,7 @@ export const WIZARD_SEED_MATRIX: readonly {
 }[] = [
   { wizardId: "family", canonical: "dependent_visa", seedExists: true },
   { wizardId: "work", canonical: "work", seedExists: true },
+  { wizardId: "permanent", canonical: "permanent", seedExists: true },
   { wizardId: "bmv", canonical: "business_manager_visa", seedExists: true },
   {
     wizardId: "biz_mgmt_cert_4m",

@@ -43,10 +43,29 @@ function resolveCustomerDetailTab(raw: string | null | undefined): DetailTab {
   return DEFAULT_CUSTOMER_DETAIL_TAB;
 }
 
+/**
+ * 服务端 GET /customers/:id 在「不存在/无权限视作 null」与非法 UUID 时返回 400（非 404），
+ * 此处映射为详情页的「未找到」语义，与 `customers.detail.notFound` 文案一致。
+ *
+ * @param error - 客户仓储在拉取详情失败时抛出的错误
+ * @returns 是否应按「未找到客户」语义处理（展示 `notFound` 状态）
+ */
+function isMissingOrInvalidCustomerDetailId(
+  error: CustomerRepositoryError,
+): boolean {
+  if (error.code !== "VALIDATION_ERROR" || error.status !== 400) return false;
+  const normalized = error.message.trim().toLowerCase();
+  return (
+    normalized.includes("customer not found") ||
+    normalized.includes("invalid id")
+  );
+}
+
 function mapCustomerDetailError(error: unknown): CustomerDetailModelErrorCode {
   if (error instanceof CustomerRepositoryError) {
     if (error.code === "UNAUTHORIZED") return "unauthorized";
     if (error.status === 404) return "notFound";
+    if (isMissingOrInvalidCustomerDetailId(error)) return "notFound";
   }
   return "requestFailed";
 }

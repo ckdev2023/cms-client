@@ -23,6 +23,7 @@ const DOC_TPL_BMV_CANONICAL_2 = "00000000-0000-4000-a000-000000000641";
 const DOC_TPL_COMPANY_SETUP = "00000000-0000-4000-a000-000000000650";
 const DOC_TPL_HIGHLY_SKILLED = "00000000-0000-4000-a000-000000000660";
 const DOC_TPL_PERMANENT = "00000000-0000-4000-a000-000000000670";
+const DOC_TPL_PERMANENT_2 = "00000000-0000-4000-a000-000000000671";
 const DOC_TPL_OTHER = "00000000-0000-4000-a000-000000000680";
 
 type DocTemplateSeed = {
@@ -168,6 +169,12 @@ export const DOC_TEMPLATE_SEEDS: DocTemplateSeed[] = [
     id: DOC_TPL_PERMANENT,
     caseType: "permanent",
     templateName: "申請理由書",
+    docType: "reason_statement",
+  },
+  {
+    id: DOC_TPL_PERMANENT_2,
+    caseType: "permanent",
+    templateName: "理由書（永住）",
     docType: "reason_statement",
   },
   {

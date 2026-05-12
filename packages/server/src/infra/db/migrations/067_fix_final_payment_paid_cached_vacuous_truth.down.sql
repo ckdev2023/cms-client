@@ -1,0 +1,1 @@
+-- noop: cache repair is not safely reversible without restoring prior billing_records truth + backups.

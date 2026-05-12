@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   deriveCustomerSummaryStats,
+  inferViewerPrimaryGroupAmongOwnedCustomers,
   useCustomerFilters,
 } from "./useCustomerFilters";
 import type {
@@ -237,6 +238,51 @@ describe("useCustomerFilters", () => {
     const f = create();
     f.ownerFilter.value = "nonexistent";
     expect(f.applyFilters(CUSTOMERS)).toHaveLength(2);
+  });
+});
+
+describe("inferViewerPrimaryGroupAmongOwnedCustomers", () => {
+  it("returns the mode among customers owned by the viewer", () => {
+    const rows: CustomerSummary[] = [
+      customer({
+        id: "a",
+        owner: { initials: "LA", name: "Local Admin" },
+        group: "东京一组",
+      }),
+      customer({
+        id: "b",
+        owner: { initials: "LA", name: "Local Admin" },
+        group: "东京一组",
+      }),
+      customer({
+        id: "c",
+        owner: { initials: "LA", name: "Local Admin" },
+        group: "大阪组",
+      }),
+      customer({
+        id: "x",
+        owner: { initials: "OT", name: "Other Owner" },
+        group: "东京一组",
+      }),
+    ];
+    expect(
+      inferViewerPrimaryGroupAmongOwnedCustomers(rows, "Local Admin"),
+    ).toBe("东京一组");
+  });
+
+  it("returns null when no owned row has non-empty group", () => {
+    expect(
+      inferViewerPrimaryGroupAmongOwnedCustomers(
+        [
+          customer({
+            id: "a",
+            owner: { initials: "LA", name: "Local Admin" },
+            group: "",
+          }),
+        ],
+        "Local Admin",
+      ),
+    ).toBe(null);
   });
 });
 

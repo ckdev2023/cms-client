@@ -2,11 +2,13 @@ import type { PoolClient } from "pg";
 
 import { BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/business-manager-visa";
 import { FAMILY_STAY_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/family-stay";
+import { PERMANENT_RESIDENCE_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/permanent-residence";
 import { WORK_VISA_REQUIREMENT_BLUEPRINT } from "./__data__/caseTemplateBlueprints/work";
 
 const CASE_TEMPLATE_FAMILY_STAY_ID = "00000000-0000-4000-a000-000000000700";
 const CASE_TEMPLATE_WORK_ID = "00000000-0000-4000-a000-000000000701";
 const CASE_TEMPLATE_BMV_ID = "00000000-0000-4000-a000-000000000702";
+const CASE_TEMPLATE_PR_ID = "00000000-0000-4000-a000-000000000703";
 
 type CaseTemplateSeed = {
   id: string;
@@ -38,12 +40,19 @@ const CASE_TEMPLATE_SEEDS: CaseTemplateSeed[] = [
     applicationType: null,
     requirementBlueprint: BUSINESS_MANAGER_VISA_REQUIREMENT_BLUEPRINT,
   },
+  {
+    id: CASE_TEMPLATE_PR_ID,
+    templateName: "永住許可標準テンプレート",
+    caseType: "permanent",
+    applicationType: null,
+    requirementBlueprint: PERMANENT_RESIDENCE_REQUIREMENT_BLUEPRINT,
+  },
 ];
 
 export { CASE_TEMPLATE_SEEDS };
 
 /**
- * 批量插入 case_templates 种子数据（家族滞在 + 技人国 + 経営管理）。
+ * 批量插入 case_templates 种子数据（家族滞在 + 技人国 + 経営管理 + 永住）。
  *
  * @param client - 事务内 PoolClient
  * @param orgId - 种子数据归属 org id

@@ -8,6 +8,7 @@ import "./styles/shell.css";
 import App from "./App.vue";
 import { i18n } from "./i18n";
 import { router } from "./router";
+import { installHashHistoryBrowserSync } from "./router/hashHistoryBrowserSync";
 import { pinia } from "./store";
 import { setupTitleSync } from "./titleSync";
 
@@ -18,5 +19,6 @@ app.use(pinia).use(router).use(i18n).use(ArcoVue);
 setupTitleSync(router);
 
 router.isReady().then(() => {
+  installHashHistoryBrowserSync(router);
   app.mount("#app");
 });

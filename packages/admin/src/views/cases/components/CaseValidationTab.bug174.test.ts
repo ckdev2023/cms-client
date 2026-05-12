@@ -72,11 +72,32 @@ function buildFullDetail(): CaseDetail {
   };
 }
 
-function buildEmptyDetail(): CaseDetail {
+function buildPassedNoGateItemsDetail(): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
     validation: {
-      lastTime: "N/A",
+      lastTime: "2026/01/02 09:30",
+      lastTimeIso: "2026-01-02T00:30:00.000Z",
+      blocking: [],
+      warnings: [],
+      info: [],
+    },
+    submissionPackages: [],
+    correctionPackage: null,
+  };
+}
+
+/**
+ * 尚无校验运行时（与 adaptCaseValidationData 空列表一致）
+ *
+ * @returns 不含任何校验运行时间戳的案件详情骨架
+ */
+function buildNeverValidatedDetail(): CaseDetail {
+  return {
+    ...CASE_DETAIL_SAMPLES.work,
+    validation: {
+      lastTime: "",
+      lastTimeIso: "",
       blocking: [],
       warnings: [],
       info: [],
@@ -121,6 +142,8 @@ const ZH_LABELS = [
   "补充说明",
   "仅提示",
   "校验通过，无阻断项",
+  "尚未运行校验",
+  "请点击上方「重新检查」运行门禁校验后查看结果。",
   "提交包（历史快照）",
   "新建提交包",
   "已锁定",
@@ -130,9 +153,53 @@ const ZH_LABELS = [
   "关联原提交包：",
   "补正截止：",
   "补正项：",
+  "系统内部编号",
+  "复制完整编号",
 ];
 
 describe("BUG-174 CaseValidationTab i18n: no Chinese leakage in en-US / ja-JP", () => {
+  it("submission package card shows summary as title and id as secondary", () => {
+    const wrapper = mountComponent("en-US", buildFullDetail());
+    expect(wrapper.find(".vt__pkg-title").text()).toBe("12 docs");
+    expect(wrapper.find(".vt__pkg-technical-id").text()).toBe("SUB-001");
+  });
+
+  it("submission package UUID shows tail label and copy in zh-CN", () => {
+    const detail = buildFullDetail();
+    detail.submissionPackages = [
+      {
+        id: "ed82a8dd-f088-473d-b66b-5db38980d430",
+        status: "submitted",
+        locked: true,
+        date: "2026/04/06",
+        summary: "#1 初回提出",
+      },
+    ];
+    const wrapper = mountComponent("zh-CN", detail);
+    expect(wrapper.find(".vt__pkg-technical-id").text()).toBe(
+      "系统内部编号（尾号 8980d430）",
+    );
+    expect(wrapper.find(".vt__pkg-copy-tech-id").text()).toBe("复制完整编号");
+  });
+
+  it("submission package UUID shows English copy and copy control", () => {
+    const detail = buildFullDetail();
+    detail.submissionPackages = [
+      {
+        id: "ed82a8dd-f088-473d-b66b-5db38980d430",
+        status: "submitted",
+        locked: true,
+        date: "2026/04/06",
+        summary: "#1 initial",
+      },
+    ];
+    const wrapper = mountComponent("en-US", detail);
+    expect(wrapper.find(".vt__pkg-technical-id").text()).toBe(
+      "System ID (suffix 8980d430)",
+    );
+    expect(wrapper.find(".vt__pkg-copy-tech-id").text()).toBe("Copy full ID");
+  });
+
   it("zh-CN renders expected labels (full data)", () => {
     const html = mountComponent("zh-CN", buildFullDetail()).html();
     expect(html).toContain("提交前检查");
@@ -156,10 +223,17 @@ describe("BUG-174 CaseValidationTab i18n: no Chinese leakage in en-US / ja-JP", 
     expect(html).toContain("补正项：Source cert mismatch");
   });
 
-  it("zh-CN empty state renders noBlockers + empty pkg message", () => {
-    const html = mountComponent("zh-CN", buildEmptyDetail()).html();
+  it("zh-CN empty gate lists after a run renders noBlockers + empty pkg message", () => {
+    const html = mountComponent("zh-CN", buildPassedNoGateItemsDetail()).html();
     expect(html).toContain("校验通过，无阻断项");
     expect(html).toContain("暂无提交包记录");
+  });
+
+  it("zh-CN never-validated renders overview copy + hint", () => {
+    const html = mountComponent("zh-CN", buildNeverValidatedDetail()).html();
+    expect(html).toContain("尚未运行校验");
+    expect(html).toContain("请点击上方「重新检查」运行门禁校验后查看结果。");
+    expect(html).not.toContain("校验通过，无阻断项");
   });
 
   it("en-US renders English copy (full data)", () => {
@@ -185,18 +259,35 @@ describe("BUG-174 CaseValidationTab i18n: no Chinese leakage in en-US / ja-JP", 
     expect(html).toContain("Correction items: Source cert mismatch");
   });
 
-  it("en-US empty state renders English labels", () => {
-    const html = mountComponent("en-US", buildEmptyDetail()).html();
+  it("en-US passed run with empty gate lists renders English labels", () => {
+    const html = mountComponent("en-US", buildPassedNoGateItemsDetail()).html();
     expect(html).toContain("Validation passed, no blockers");
     expect(html).toContain("No submission packages yet");
   });
 
+  it("en-US never-validated renders English overview copy + hint", () => {
+    const html = mountComponent("en-US", buildNeverValidatedDetail()).html();
+    expect(html).toContain("Not yet validated");
+    expect(html).toContain(
+      "Use “Re-check” above to run the gates and view results.",
+    );
+    expect(html).not.toContain("Validation passed, no blockers");
+  });
+
   it("en-US contains no Chinese-only labels", () => {
     const htmlFull = mountComponent("en-US", buildFullDetail()).html();
-    const htmlEmpty = mountComponent("en-US", buildEmptyDetail()).html();
+    const htmlPassedEmpty = mountComponent(
+      "en-US",
+      buildPassedNoGateItemsDetail(),
+    ).html();
+    const htmlNever = mountComponent(
+      "en-US",
+      buildNeverValidatedDetail(),
+    ).html();
     for (const leak of ZH_LABELS) {
       expect(htmlFull).not.toContain(leak);
-      expect(htmlEmpty).not.toContain(leak);
+      expect(htmlPassedEmpty).not.toContain(leak);
+      expect(htmlNever).not.toContain(leak);
     }
   });
 
@@ -223,27 +314,52 @@ describe("BUG-174 CaseValidationTab i18n: no Chinese leakage in en-US / ja-JP", 
     expect(html).toContain("補正項目：Source cert mismatch");
   });
 
-  it("ja-JP empty state renders Japanese labels", () => {
-    const html = mountComponent("ja-JP", buildEmptyDetail()).html();
+  it("ja-JP passed run with empty gate lists renders Japanese labels", () => {
+    const html = mountComponent("ja-JP", buildPassedNoGateItemsDetail()).html();
     expect(html).toContain("チェック通過、ブロッカーなし");
     expect(html).toContain("提出パッケージなし");
   });
 
+  it("ja-JP never-validated renders overview copy + hint", () => {
+    const html = mountComponent("ja-JP", buildNeverValidatedDetail()).html();
+    expect(html).toContain("未検証");
+    expect(html).toContain(
+      "上の「再チェック」でゲートを実行すると結果が表示されます。",
+    );
+    expect(html).not.toContain("チェック通過、ブロッカーなし");
+  });
+
   it("ja-JP contains no Chinese-only labels", () => {
     const htmlFull = mountComponent("ja-JP", buildFullDetail()).html();
-    const htmlEmpty = mountComponent("ja-JP", buildEmptyDetail()).html();
+    const htmlPassedEmpty = mountComponent(
+      "ja-JP",
+      buildPassedNoGateItemsDetail(),
+    ).html();
+    const htmlNever = mountComponent(
+      "ja-JP",
+      buildNeverValidatedDetail(),
+    ).html();
     for (const leak of ZH_LABELS) {
       expect(htmlFull).not.toContain(leak);
-      expect(htmlEmpty).not.toContain(leak);
+      expect(htmlPassedEmpty).not.toContain(leak);
+      expect(htmlNever).not.toContain(leak);
     }
   });
 
   it("readonly mode hides recheck and create buttons across locales", () => {
-    const htmlEn = mountComponent("en-US", buildEmptyDetail(), true).html();
+    const htmlEn = mountComponent(
+      "en-US",
+      buildPassedNoGateItemsDetail(),
+      true,
+    ).html();
     expect(htmlEn).not.toContain("Re-check");
     expect(htmlEn).not.toContain("Create package");
 
-    const htmlJa = mountComponent("ja-JP", buildEmptyDetail(), true).html();
+    const htmlJa = mountComponent(
+      "ja-JP",
+      buildPassedNoGateItemsDetail(),
+      true,
+    ).html();
     expect(htmlJa).not.toContain("再チェック");
     expect(htmlJa).not.toContain("パッケージ作成");
   });

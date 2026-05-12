@@ -1,25 +1,31 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
+import { RouterLink } from "vue-router";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
-import type { CommFilter, CustomerComm } from "../types";
+import type { CommChannel, CommFilter, CustomerComm } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { getCommChannelLabel } from "../types";
 import { useCustomerCommsModel } from "../model/useCustomerCommsModel";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 
-/** 沟通记录 Tab：展示按可见范围筛选的沟通时间线，保留"记录沟通"入口占位。 */
+/** 沟通记录 Tab：展示按可见范围筛选的沟通时间线；新开沟通经会话面板进行。 */
 const props = defineProps<{
   customerId: string;
   repository: Pick<CustomerRepository, "listComms">;
 }>();
 
 const { t, locale } = useI18n();
+
+const customerConversationsRoute = computed(() => ({
+  name: "conversations" as const,
+  query: { customerId: props.customerId.trim() },
+}));
 
 const customerIdRef = computed(() => props.customerId);
 const {
@@ -76,6 +82,17 @@ function visibilityLabel(c: CustomerComm) {
 function fmtDateTime(iso: string): string {
   return formatDateTime(iso, locale.value) || "—";
 }
+
+/**
+ * 与案件详情沟通 Tab 一致：`channelType=email` 的系统沟通归类为自动邮件。
+ *
+ * @param type - 沟通渠道（与后端 `channelType` 对齐）
+ * @returns 当前界面语言下的渠道展示文案
+ */
+function channelTypeLabel(type: CommChannel): string {
+  if (type === "email") return t("cases.detail.messages.types.auto_email");
+  return getCommChannelLabel(type);
+}
 </script>
 
 <template>
@@ -113,17 +130,36 @@ function fmtDateTime(iso: string): string {
             :aria-label="t('customers.detail.commsTab.filterLabel')"
             @update:model-value="setCommFilter"
           />
-          <a
-            :href="`#/conversations?customerId=${props.customerId}`"
-            class="comms-tab__conv-link"
+          <RouterLink
+            v-slot="{ navigate }"
+            :to="customerConversationsRoute"
+            custom
           >
-            <Button variant="outlined" tone="primary" size="sm">
+            <Button
+              variant="outlined"
+              tone="primary"
+              size="sm"
+              role="link"
+              @click="navigate"
+            >
               {{ t("customers.detail.commsTab.viewConversations") }}
             </Button>
-          </a>
-          <Button variant="filled" tone="primary" size="sm" disabled>
-            {{ t("customers.detail.commsTab.addComm") }}
-          </Button>
+          </RouterLink>
+          <RouterLink
+            v-slot="{ navigate }"
+            :to="customerConversationsRoute"
+            custom
+          >
+            <Button
+              variant="filled"
+              tone="primary"
+              size="sm"
+              role="link"
+              @click="navigate"
+            >
+              {{ t("customers.detail.commsTab.addComm") }}
+            </Button>
+          </RouterLink>
         </div>
       </div>
 
@@ -148,7 +184,7 @@ function fmtDateTime(iso: string): string {
           <div class="comms-tab__item-header">
             <span class="comms-tab__item-summary">{{ c.summary }}</span>
             <div class="comms-tab__item-meta">
-              <Chip>{{ getCommChannelLabel(c.type) }}</Chip>
+              <Chip>{{ channelTypeLabel(c.type) }}</Chip>
               <Chip :tone="visibilityTone(c)">
                 {{ visibilityLabel(c) }}
               </Chip>
@@ -227,10 +263,6 @@ function fmtDateTime(iso: string): string {
   gap: 8px;
   flex-shrink: 0;
   flex-wrap: wrap;
-}
-
-.comms-tab__conv-link {
-  text-decoration: none;
 }
 
 .comms-tab__state {

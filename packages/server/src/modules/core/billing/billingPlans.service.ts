@@ -17,6 +17,7 @@ import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { customerNameExpr } from "../../../infra/db/customerNameExpr";
 import { syncBillingCacheForCase } from "./billingGuards";
 import { writeTimelineInTx } from "./timelineHelpers";
+import { buildBillingPlanListWhere } from "./billingPlans.listWhere";
 
 /** Database row shape for billing_records. */
 export type BillingPlanQueryRow = {
@@ -96,30 +97,6 @@ const STATUS_TRANSITIONS: Partial<Record<string, string[]>> = {
   partial: ["paid", "overdue"],
   overdue: ["partial", "paid"],
 };
-
-function buildListWhere(orgId: string, input: BillingPlanListInput) {
-  const w: string[] = [];
-  const p: unknown[] = [];
-  const eq = (col: string, val: unknown) => {
-    p.push(val);
-    w.push(`${col} = $${String(p.length)}`);
-  };
-  eq("br.org_id", orgId);
-  if (input.caseId) eq("br.case_id", input.caseId);
-  if (input.status) eq("br.status", input.status);
-  if (input.groupId) eq("c.group_id", input.groupId);
-  if (input.ownerId) eq("c.owner_user_id", input.ownerId);
-  if (input.q) {
-    p.push(input.q);
-    const qi = `$${String(p.length)}`;
-    const like = (col: string) =>
-      `lower(${col}) like '%' || lower(${qi}) || '%'`;
-    w.push(
-      `(${[like("c.case_no"), like("c.case_name"), like("cu.base_profile->>'displayName'"), like("br.milestone_name")].join(" or ")})`,
-    );
-  }
-  return { whereClause: `where ${w.join(" and ")}`, params: p };
-}
 
 function toTimestampStringOrNull(value: unknown): string | null {
   if (value === null || value === undefined) return null;
@@ -300,7 +277,13 @@ export class BillingPlansService {
     const page = Math.max(input.page ?? 1, 1);
     const offset = (page - 1) * limit;
 
-    const { whereClause, params } = buildListWhere(ctx.orgId, input);
+    const { whereClause, params } = buildBillingPlanListWhere(ctx.orgId, {
+      caseId: input.caseId,
+      status: input.status,
+      groupId: input.groupId,
+      ownerId: input.ownerId,
+      q: input.q,
+    });
 
     const countResult = await tenantDb.query<{ count: string }>(
       `select count(*) as count from ${BILLING_PLAN_LIST_FROM} ${whereClause}`,

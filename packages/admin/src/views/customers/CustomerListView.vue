@@ -27,7 +27,10 @@ import { useCustomerCreateForm } from "./model/useCustomerCreateForm";
 import { useCustomerToast } from "./model/useCustomerToast";
 import { useCustomerCreatedHighlight } from "./model/useCustomerCreatedHighlight";
 import { useCustomerDrafts } from "./model/useCustomerDrafts";
-import { deriveCustomerSummaryStats } from "./model/useCustomerFilters";
+import {
+  deriveCustomerSummaryStats,
+  inferViewerPrimaryGroupAmongOwnedCustomers,
+} from "./model/useCustomerFilters";
 import { useCustomerListModel } from "./model/useCustomerListModel";
 import { createCustomerRepository } from "./model/CustomerRepository";
 import { useAdminSession } from "../../auth/model/adminSession";
@@ -46,19 +49,6 @@ const ownerOptions = computed<SelectOption[]>(() =>
   getActiveUserOptions().map(({ value, label }) => ({ value, label })),
 );
 const listModel = useCustomerListModel({ repository });
-
-// BUG-155：摘要卡片"我的客户/本组客户"必须以当前登录管理员的身份判定，
-// 否则会与服务端 `scope=mine`（按 `owner_user_id === currentUser`）口径
-// 错位，造成卡片 0 而列表 2 条的视觉矛盾。无 session（如某些测试场景）
-// 时回退到 fixture viewer，保持既有 fixture 测试与原型行为不变。
-const viewer = computed<CustomerViewerContext>(() => {
-  const user = currentUser.value;
-  if (!user || !user.name.trim()) return CURRENT_VIEWER;
-  return {
-    ownerName: user.name,
-    group: CURRENT_VIEWER.group,
-  };
-});
 const {
   filters,
   filteredCustomers,
@@ -85,6 +75,29 @@ const {
   bulkAssignOwner,
   bulkChangeGroup,
 } = listModel;
+
+// BUG-155：`ownerName` 须与 session 对齐；会话无 primary group、`/users` DTO 也无分组时，
+// 从当前页由我负责的客户 `group` 取众数，避免「本组客户」卡在 fixture（与真实名单错位）。
+const viewerProfile = computed<CustomerViewerContext>(() => {
+  const user = currentUser.value;
+  if (!user || !user.name.trim()) return CURRENT_VIEWER;
+  return {
+    ownerName: user.name,
+    group: CURRENT_VIEWER.group,
+  };
+});
+
+const viewer = computed<CustomerViewerContext>(() => {
+  const base = viewerProfile.value;
+  const fromPage = inferViewerPrimaryGroupAmongOwnedCustomers(
+    filteredCustomers.value,
+    base.ownerName,
+  );
+  return {
+    ownerName: base.ownerName,
+    group: (fromPage ?? base.group).trim() || base.group,
+  };
+});
 
 const summaryCards = computed<SummaryCardData[]>(() => {
   const stats = deriveCustomerSummaryStats(

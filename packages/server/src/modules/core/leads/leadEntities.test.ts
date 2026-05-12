@@ -4,6 +4,8 @@ import assert from "node:assert/strict";
 import {
   isLeadP0Status,
   isLeadFollowupChannel,
+  mapLeadFollowupChannelToCommunicationChannel,
+  mapLeadSourceChannelToFollowupChannel,
   mapLeadFollowupRow,
   mapLeadLogRow,
   LEAD_P0_STATUSES,
@@ -121,6 +123,32 @@ void test("isLeadFollowupChannel returns false for unknown values", () => {
   assert.equal(isLeadFollowupChannel("sms"), false);
   assert.equal(isLeadFollowupChannel(""), false);
   assert.equal(isLeadFollowupChannel(null), false);
+});
+
+void test("mapLeadFollowupChannelToCommunicationChannel maps onsite to meeting", () => {
+  assert.equal(
+    mapLeadFollowupChannelToCommunicationChannel("onsite"),
+    "meeting",
+  );
+});
+
+void test("mapLeadFollowupChannelToCommunicationChannel preserves known channels", () => {
+  for (const ch of ["phone", "email", "wechat", "line", "other"] as const) {
+    assert.equal(mapLeadFollowupChannelToCommunicationChannel(ch), ch);
+  }
+});
+
+void test("mapLeadFollowupChannelToCommunicationChannel falls back to other", () => {
+  assert.equal(mapLeadFollowupChannelToCommunicationChannel("sms"), "other");
+  assert.equal(mapLeadFollowupChannelToCommunicationChannel(""), "other");
+});
+
+void test("mapLeadSourceChannelToFollowupChannel maps marketing sources", () => {
+  assert.equal(mapLeadSourceChannelToFollowupChannel("phone"), "phone");
+  assert.equal(mapLeadSourceChannelToFollowupChannel("walkin"), "onsite");
+  assert.equal(mapLeadSourceChannelToFollowupChannel("web"), "other");
+  assert.equal(mapLeadSourceChannelToFollowupChannel("referral"), "other");
+  assert.equal(mapLeadSourceChannelToFollowupChannel(null), "other");
 });
 
 // ── mapLeadFollowupRow ──

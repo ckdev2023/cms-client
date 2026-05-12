@@ -31,6 +31,7 @@ import {
 import { checkFailureCloseout } from "./cases.types-failure-closeout";
 import { PermissionsService } from "../auth/permissions.service";
 import { BillingPlansService } from "../billing/billingPlans.service";
+import { syncBillingCacheForCase } from "../billing/billingGuards";
 import { PaymentRecordsService } from "../billing/paymentRecords.service";
 import type { CaseBillingTabAggregate } from "./cases.types-billing";
 import type { RequestContext } from "../tenancy/requestContext";
@@ -835,6 +836,7 @@ export class CasesService {
           effects,
         ),
       });
+      await syncBillingCacheForCase(tx, id);
       return updated;
     });
   }

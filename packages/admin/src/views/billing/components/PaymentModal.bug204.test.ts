@@ -70,4 +70,15 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
     );
     expect(amountInput.attributes("max")).toBe("70000");
   });
+
+  it("has no max when auto-selected node has zero amount (placeholder fee)", async () => {
+    const wrapper = await mountAndOpen([
+      makeNode({ id: "n0", amount: 0, dueDate: "" }),
+    ]);
+
+    const amountInput = wrapper.find<HTMLInputElement>(
+      'input[type="number"].pm-input',
+    );
+    expect(amountInput.attributes("max")).toBeUndefined();
+  });
 });

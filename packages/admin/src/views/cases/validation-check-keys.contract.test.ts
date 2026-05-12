@@ -44,6 +44,24 @@ describe("validation check i18n keys — three-locale parity", () => {
         expect(typeof value).toBe("string");
         expect((value as string).length).toBeGreaterThan(0);
       });
+
+      it(`${name}: validation.checks.${code}.okTitle is a non-empty string`, () => {
+        const value = resolveKey(
+          messages as unknown as Record<string, unknown>,
+          `validation.checks.${code}.okTitle`,
+        );
+        expect(typeof value).toBe("string");
+        expect((value as string).length).toBeGreaterThan(0);
+      });
+
+      it(`${name}: validation.checks.${code}.okMessage is a non-empty string`, () => {
+        const value = resolveKey(
+          messages as unknown as Record<string, unknown>,
+          `validation.checks.${code}.okMessage`,
+        );
+        expect(typeof value).toBe("string");
+        expect((value as string).length).toBeGreaterThan(0);
+      });
     }
   }
 });

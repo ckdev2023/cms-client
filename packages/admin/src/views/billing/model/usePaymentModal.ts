@@ -44,6 +44,7 @@ function buildValidation(
   const amountExceedsNode = computed(
     () =>
       !!selectedNode.value &&
+      selectedNode.value.amount > 0 &&
       parsedAmount.value > 0 &&
       parsedAmount.value > selectedNode.value.amount,
   );

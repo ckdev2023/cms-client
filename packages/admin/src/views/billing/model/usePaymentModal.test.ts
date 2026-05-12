@@ -186,6 +186,21 @@ describe("usePaymentModal", () => {
     expect(m.amountExceedsNode.value).toBe(false);
   });
 
+  it("amountExceedsNode is false when node amount is zero (placeholder fee)", () => {
+    const m = usePaymentModal();
+    m.open([
+      {
+        id: "zero-node",
+        name: "case_fee",
+        amount: 0,
+        dueDate: "",
+        status: "due",
+      },
+    ]);
+    m.fields.value.amount = "330000";
+    expect(m.amountExceedsNode.value).toBe(false);
+  });
+
   it("selectedNode reflects the chosen node", () => {
     const m = usePaymentModal();
     m.open(NODES_ALL_UNPAID);

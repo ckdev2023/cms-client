@@ -1,5 +1,6 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { RouterLink, createMemoryHistory, createRouter } from "vue-router";
 import { i18n, setAppLocale } from "../../../i18n";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import CustomerCommsTab from "./CustomerCommsTab.vue";
@@ -24,6 +25,30 @@ function createRepository(
   };
 }
 
+async function mountCustomerCommsTab(props: {
+  customerId: string;
+  repository: Pick<CustomerRepository, "listComms">;
+}) {
+  const router = createRouter({
+    history: createMemoryHistory(),
+    routes: [
+      { path: "/", name: "home", component: { template: "<div/>" } },
+      {
+        path: "/conversations",
+        name: "conversations",
+        component: { template: "<div/>" },
+      },
+    ],
+  });
+  await router.push("/");
+  await router.isReady();
+  const wrapper = mount(CustomerCommsTab, {
+    props,
+    global: { plugins: [i18n, router] },
+  });
+  return { wrapper, router };
+}
+
 describe("CustomerCommsTab", () => {
   beforeEach(() => {
     setAppLocale("en-US");
@@ -31,9 +56,9 @@ describe("CustomerCommsTab", () => {
 
   it("renders communications from repository", async () => {
     const repository = createRepository();
-    const wrapper = mount(CustomerCommsTab, {
-      props: { customerId: "cust-001", repository },
-      global: { plugins: [i18n] },
+    const { wrapper } = await mountCustomerCommsTab({
+      customerId: "cust-001",
+      repository,
     });
 
     await flushPromises();
@@ -41,6 +66,31 @@ describe("CustomerCommsTab", () => {
     expect(repository.listComms).toHaveBeenCalledWith("cust-001");
     expect(wrapper.text()).toContain("确认补件时间表");
     expect(wrapper.text()).toContain("Client-visible");
+  });
+
+  it("shows auto-email channel label for email type (aligned with case messages)", async () => {
+    const repository = createRepository({
+      listComms: vi.fn().mockResolvedValue([
+        {
+          id: "comm-email",
+          type: "email",
+          visibility: "internal",
+          occurredAt: "2026-05-12T09:47:00.000Z",
+          actor: "Local Admin",
+          summary: "初回説明",
+          detail: "",
+          nextAction: "",
+        },
+      ]),
+    });
+    const { wrapper } = await mountCustomerCommsTab({
+      customerId: "cust-001",
+      repository,
+    });
+
+    await flushPromises();
+
+    expect(wrapper.text()).toContain("Auto emails");
   });
 
   it.each([
@@ -52,9 +102,9 @@ describe("CustomerCommsTab", () => {
     async ({ locale, notExpected }) => {
       setAppLocale(locale);
       const repository = createRepository();
-      const wrapper = mount(CustomerCommsTab, {
-        props: { customerId: "cust-001", repository },
-        global: { plugins: [i18n] },
+      const { wrapper } = await mountCustomerCommsTab({
+        customerId: "cust-001",
+        repository,
       });
 
       await flushPromises();
@@ -73,9 +123,9 @@ describe("CustomerCommsTab", () => {
         .mockRejectedValueOnce(new Error("boom"))
         .mockResolvedValueOnce([]),
     });
-    const wrapper = mount(CustomerCommsTab, {
-      props: { customerId: "cust-001", repository },
-      global: { plugins: [i18n] },
+    const { wrapper } = await mountCustomerCommsTab({
+      customerId: "cust-001",
+      repository,
     });
 
     await flushPromises();
@@ -89,5 +139,33 @@ describe("CustomerCommsTab", () => {
 
     expect(repository.listComms).toHaveBeenCalledTimes(2);
     expect(wrapper.text()).not.toContain("Could not load communications");
+  });
+
+  it("targets conversations route for navigation buttons", async () => {
+    const repository = createRepository({
+      listComms: vi.fn().mockResolvedValue([]),
+    });
+    const { wrapper, router } = await mountCustomerCommsTab({
+      customerId: "cust-xyz  ",
+      repository,
+    });
+
+    await flushPromises();
+
+    const routed = wrapper.findAllComponents(RouterLink);
+    expect(routed.length).toBe(2);
+    const expectedTo = {
+      name: "conversations",
+      query: { customerId: "cust-xyz" },
+    };
+    expect(routed[0]!.props("to")).toEqual(expectedTo);
+    expect(routed[1]!.props("to")).toEqual(expectedTo);
+
+    await routed[1]!.find("button").trigger("click");
+    await flushPromises();
+    expect(router.currentRoute.value.name).toBe("conversations");
+    expect(router.currentRoute.value.query).toEqual({
+      customerId: "cust-xyz",
+    });
   });
 });

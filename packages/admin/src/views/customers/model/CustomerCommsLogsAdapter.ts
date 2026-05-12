@@ -11,13 +11,16 @@ import {
   pickOptionalString,
   readStringField,
 } from "./CustomerAdapterShared";
+import {
+  resolveCommunicationLogActor,
+  resolveCommunicationLogNextAction,
+} from "./customerCommunicationLogAdapt";
 
 const COMM_CHANNEL_FIELDS = ["channelType", "channel_type"];
 const COMM_SUMMARY_FIELDS = ["contentSummary", "content_summary", "subject"];
 const COMM_DETAIL_FIELDS = ["fullContent", "full_content"];
 const COMM_CREATED_AT_FIELDS = ["createdAt", "created_at"];
-const COMM_CREATED_BY_FIELDS = ["createdBy", "created_by"];
-const COMM_FOLLOW_UP_FIELDS = ["followUpDueAt", "follow_up_due_at"];
+
 const TIMELINE_CREATED_AT_FIELDS = ["createdAt", "created_at"];
 const TIMELINE_ACTOR_FIELDS = [
   "actorDisplayName",
@@ -381,10 +384,7 @@ export function adaptCommunicationLogDto(value: unknown): CustomerComm | null {
 
   const summary = pickOptionalString(record, COMM_SUMMARY_FIELDS) ?? "沟通记录";
   const detail = pickOptionalString(record, COMM_DETAIL_FIELDS) ?? "";
-  const nextAction =
-    record.followUpRequired === true || record.follow_up_required === true
-      ? (pickOptionalString(record, COMM_FOLLOW_UP_FIELDS) ?? "跟进待办")
-      : "";
+  const nextAction = resolveCommunicationLogNextAction(record, detail);
 
   return {
     id,
@@ -393,7 +393,7 @@ export function adaptCommunicationLogDto(value: unknown): CustomerComm | null {
       record.visibleToClient ?? record.visible_to_client,
     ),
     occurredAt,
-    actor: pickOptionalString(record, COMM_CREATED_BY_FIELDS) ?? "System",
+    actor: resolveCommunicationLogActor(record),
     summary,
     detail,
     nextAction,
@@ -464,15 +464,14 @@ export function adaptTimelineBmvCommListResult(
   const adapted: CustomerComm[] = [];
   for (const item of items) {
     const record = asRecord(item);
-    if (!record) return null;
+    if (!record) continue;
 
     const action = readStringField(record, "action");
-    if (!action) return null;
-    if (!isBmvTimelineAction(action)) continue;
+    if (!action || !isBmvTimelineAction(action)) continue;
 
     const id = readStringField(record, "id");
     const occurredAt = pickOptionalString(record, TIMELINE_CREATED_AT_FIELDS);
-    if (!id || !occurredAt) return null;
+    if (!id || !occurredAt) continue;
 
     const payload = readPayloadRecord(record.payload);
     adapted.push({
