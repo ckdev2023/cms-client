@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import type { BillingPlanNode } from "../types";
 import type { CreatePaymentInput } from "../model/BillingAdapterUrls";
@@ -47,6 +47,15 @@ const loadingNodes = ref(false);
 const nodeError = ref<string | null>(null);
 const submitting = ref(false);
 
+/**
+ * 弹窗多在 deep-link 首帧打开；先让 Vue 与微任务队列落稳再拉节点，避免与路由/会话注入竞态。
+ */
+async function alignSessionBeforeBillingRead(): Promise<void> {
+  await nextTick();
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 watch(
   () => [props.open, props.caseId] as const,
   async ([open, caseId]) => {
@@ -54,7 +63,8 @@ watch(
       loadingNodes.value = true;
       nodeError.value = null;
       try {
-        const nodes = await props.getBillingPlanNodes(caseId);
+        await alignSessionBeforeBillingRead();
+        const nodes = await props.getBillingPlanNodes(caseId.trim());
         modal.open(nodes);
         if (props.defaultBillingPlanId) {
           const exists = modal.availableNodes.value.some(

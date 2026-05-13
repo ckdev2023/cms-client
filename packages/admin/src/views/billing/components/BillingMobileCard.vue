@@ -14,7 +14,7 @@ defineProps<{
 
 defineEmits<{
   toggle: [id: string, checked: boolean];
-  registerPayment: [caseId: string, billingPlanId: string];
+  "register-payment": [payload: { caseId: string; billingPlanId: string }];
 }>();
 
 const { t } = useI18n();
@@ -107,7 +107,12 @@ const fmtAmount = (v: number): string => v.toLocaleString("ja-JP");
         v-if="row.status !== 'paid' && row.caseId"
         class="bill-card__action-btn"
         type="button"
-        @click="$emit('registerPayment', row.caseId, row.id)"
+        @click="
+          $emit('register-payment', {
+            caseId: row.caseId,
+            billingPlanId: row.id,
+          })
+        "
       >
         {{ t("billing.list.actions.registerPayment") }}
       </button>

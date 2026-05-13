@@ -134,18 +134,20 @@ const paymentDefaultBillingPlanId = ref("");
 /**
  * 打开回款登记弹窗。
  *
- * @param caseId - 案件 ID
- * @param billingPlanId - 可选收费计划 ID
+ * @param payload - `{ caseId, billingPlanId? }` 或兼容旧签名的案件 ID 字符串
+ * @param legacyBillingPlanId - 旧签名第二参：当 `payload` 为字符串时的可选默认收费计划 ID
  */
-/**
- * 打开回款登记弹窗。
- *
- * @param caseId - 案件 ID
- * @param billingPlanId - 可选的默认收费计划 ID
- */
-function openPaymentModal(caseId: string, billingPlanId?: string) {
-  paymentCaseId.value = caseId;
-  paymentDefaultBillingPlanId.value = billingPlanId ?? "";
+function openPaymentModal(
+  payload: { caseId: string; billingPlanId?: string } | string,
+  legacyBillingPlanId?: string,
+) {
+  if (typeof payload === "string") {
+    paymentCaseId.value = payload;
+    paymentDefaultBillingPlanId.value = legacyBillingPlanId ?? "";
+  } else {
+    paymentCaseId.value = payload.caseId;
+    paymentDefaultBillingPlanId.value = payload.billingPlanId ?? "";
+  }
   paymentModalOpen.value = true;
 }
 
@@ -163,7 +165,11 @@ useBillingDeepLink({
   caseQuery: deepLinkCaseQuery,
   billingPlanQuery: deepLinkBillingPlanQuery,
   search: filters.search,
-  openPaymentModal,
+  openPaymentModal: (caseId, billingPlanId) =>
+    openPaymentModal({
+      caseId,
+      billingPlanId: billingPlanId ?? "",
+    }),
   clearQuery: () => {
     router.replace({ path: "/billing" });
   },
@@ -358,6 +364,7 @@ function handlePaymentLogPageChange(page: number) {
     </div>
 
     <PaymentModal
+      v-if="paymentModalOpen && paymentCaseId"
       :open="paymentModalOpen"
       :case-id="paymentCaseId"
       :default-billing-plan-id="paymentDefaultBillingPlanId"

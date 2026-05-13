@@ -31,7 +31,7 @@ const props = withDefaults(
 defineEmits<{
   "toggle-row": [id: string, checked: boolean];
   "toggle-all": [checked: boolean];
-  "register-payment": [caseId: string, billingPlanId: string];
+  "register-payment": [payload: { caseId: string; billingPlanId: string }];
   "risk-ack": [caseId: string];
 }>();
 
@@ -285,7 +285,12 @@ const columns: ResponsiveColumn[] = [
                   v-if="row.status !== 'paid' && row.caseId"
                   class="bt__action-btn"
                   type="button"
-                  @click="$emit('register-payment', row.caseId, row.id)"
+                  @click="
+                    $emit('register-payment', {
+                      caseId: row.caseId,
+                      billingPlanId: row.id,
+                    })
+                  "
                 >
                   {{ t("billing.list.actions.registerPayment") }}
                 </button>
@@ -302,9 +307,7 @@ const columns: ResponsiveColumn[] = [
         :selected="selectedIds.has(row.id)"
         :selectable="isSelectable(row)"
         @toggle="(id, checked) => $emit('toggle-row', id, checked)"
-        @register-payment="
-          (caseId, planId) => $emit('register-payment', caseId, planId)
-        "
+        @register-payment="(p) => $emit('register-payment', p)"
       />
     </template>
 
@@ -321,179 +324,4 @@ const columns: ResponsiveColumn[] = [
   </ResponsiveTable>
 </template>
 
-<style scoped>
-.billing-table {
-  width: 100%;
-}
-.billing-table__grid {
-  width: 100%;
-  text-align: left;
-  border-collapse: collapse;
-}
-.bt__th {
-  padding: 10px 16px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-  border-bottom: 1px solid var(--color-border-1);
-  white-space: nowrap;
-}
-.bt__td {
-  padding: 12px 16px;
-  font-size: var(--font-size-sm);
-  line-height: var(--leading-sm);
-  color: var(--color-text-1);
-  border-bottom: 1px solid var(--color-border-1);
-  vertical-align: middle;
-}
-.bt__row:hover .bt__td {
-  background-color: var(--color-bg-overlay-hover);
-}
-.bt__row--overdue {
-  background: rgba(220, 38, 38, 0.04);
-}
-.bt__col--checkbox {
-  width: 44px;
-  text-align: center;
-}
-.bulk-empty-hint {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  background: var(--color-bg-overlay-hover, rgba(0, 0, 0, 0.02));
-  border-bottom: 1px solid var(--color-border-1);
-}
-.bt__checkbox {
-  accent-color: var(--color-primary-6);
-  cursor: pointer;
-}
-.bt__checkbox--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-.bt__col--group,
-.bt__col--status {
-  width: 100px;
-}
-.bt__col--amount {
-  width: 100px;
-  text-align: right;
-  font-weight: var(--font-weight-semibold);
-  font-variant-numeric: tabular-nums;
-}
-.bt__col--risk-ack {
-  width: 160px;
-}
-.bt__risk-ack-btn {
-  all: unset;
-  cursor: pointer;
-  display: inline-flex;
-}
-.bt__col--actions {
-  width: 100px;
-  text-align: center;
-}
-.bt__action-btn {
-  all: unset;
-  display: inline-flex;
-  align-items: center;
-  min-height: 32px;
-  box-sizing: border-box;
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-primary-6);
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: var(--radius-md);
-  transition: background var(--transition-fast);
-}
-.bt__action-btn:hover {
-  background: rgba(59, 130, 246, 0.08);
-}
-.bt__case-name {
-  font-weight: var(--font-weight-extrabold);
-  color: var(--color-text-1);
-}
-.bt__case-no {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-  margin-top: 2px;
-  font-weight: var(--font-weight-semibold);
-}
-.bt__client-name,
-.bt__client-type {
-  font-weight: var(--font-weight-semibold);
-}
-.bt__client-name {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-1);
-}
-.bt__client-type {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-3);
-}
-.bt__amount--positive {
-  color: var(--color-success);
-}
-.bt__amount--zero {
-  color: var(--color-text-3);
-}
-.bt__amount--danger {
-  color: var(--color-danger);
-  font-weight: var(--font-weight-semibold);
-}
-.bt__amount--warning {
-  color: var(--color-warning-text);
-}
-.bt__node-name {
-  font-size: var(--font-size-sm);
-}
-.bt__node-name--overdue {
-  color: var(--color-danger-text);
-  font-weight: var(--font-weight-extrabold);
-}
-.bt__node-date,
-.bt__node-empty {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-.bt__node-date {
-  font-size: var(--font-size-xs);
-}
-.bt__node-date--overdue {
-  color: var(--color-danger-text);
-}
-.bt__node-empty {
-  font-size: var(--font-size-sm);
-}
-.billing-table__empty {
-  padding: 64px 16px;
-  text-align: center;
-}
-.billing-table__empty-title {
-  font-size: var(--font-size-md);
-  line-height: var(--leading-md);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  margin: 0 0 4px;
-}
-.billing-table__empty-sub {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-3);
-  margin: 0;
-}
-@media (max-width: 767px) {
-  .bt__col--hide-sm {
-    display: none;
-  }
-}
-@media (max-width: 1023px) {
-  .bt__col--hide-md {
-    display: none;
-  }
-}
-</style>
+<style scoped src="./BillingTable.scoped.css"></style>

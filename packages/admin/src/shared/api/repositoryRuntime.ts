@@ -234,6 +234,7 @@ async function requestJson(input: {
       method: input.method,
       headers: buildRequestHeaders(input.token, input.body !== undefined),
       body: input.body !== undefined ? JSON.stringify(input.body) : undefined,
+      ...(input.method === "GET" ? { cache: "no-store" as RequestCache } : {}),
     });
   } catch (cause) {
     throw new RepositoryError({
