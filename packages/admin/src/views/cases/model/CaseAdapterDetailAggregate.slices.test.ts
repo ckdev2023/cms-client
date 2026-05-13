@@ -57,6 +57,7 @@ const MOCK_BILLING = {
   unpaidAmount: 50000,
   depositPaid: true,
   finalPaymentPaid: false,
+  finalPaymentMilestoneMatched: true,
   billingRiskAcknowledged: false,
   billingRiskAcknowledgedAt: null,
   billingRiskAckReasonCode: null,
@@ -351,6 +352,7 @@ describe("slice field consumption contracts", () => {
       "unpaidAmount",
       "depositPaid",
       "finalPaymentPaid",
+      "finalPaymentMilestoneMatched",
       "billingRiskAcknowledged",
       "billingRiskAcknowledgedAt",
       "billingRiskAckReasonCode",
@@ -457,24 +459,16 @@ describe("billing received computation", () => {
 });
 
 describe("billing quotePrice edge cases", () => {
-  it("handles quotePrice: null from server", () => {
-    const result = adaptCaseDetailAggregate(
-      buildAggregate({
-        billing: { ...MOCK_BILLING, quotePrice: null },
-      }),
-    )!;
-    expect(result.detail.billingAmount).toBe("—");
-    expect(result.detail.billing.total).toBe("—");
-  });
-
-  it("handles quotePrice: 0 from server", () => {
-    const result = adaptCaseDetailAggregate(
-      buildAggregate({
-        billing: { ...MOCK_BILLING, quotePrice: 0 },
-      }),
-    )!;
-    expect(result.detail.billingAmount).toBe("—");
-    expect(result.detail.billing.total).toBe("—");
+  it("handles quotePrice null and zero from server", () => {
+    for (const quotePrice of [null, 0] as const) {
+      const result = adaptCaseDetailAggregate(
+        buildAggregate({
+          billing: { ...MOCK_BILLING, quotePrice },
+        }),
+      )!;
+      expect(result.detail.billingAmount).toBe("—");
+      expect(result.detail.billing.total).toBe("—");
+    }
   });
 });
 

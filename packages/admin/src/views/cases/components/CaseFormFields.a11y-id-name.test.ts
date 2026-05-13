@@ -80,9 +80,8 @@ describe("CaseFormGenerateModal labels have for attributes (R27-O)", () => {
   }
 
   it.each([
-    ["form-gen-templateId", "templateId"],
     ["form-gen-docTitle", "docTitle"],
-    ["form-gen-outputFormat", "outputFormat"],
+    ["form-gen-fileUrl", "fileUrl"],
   ])("label[for=%s] points to input with name=%s", (id, name) => {
     const w = mountModal();
     const input = w.find(`#${id}`);

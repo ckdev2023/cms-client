@@ -31,6 +31,7 @@ const FULL_CASE_ROW = {
   riskLevel: "low",
   applicationType: "変更",
   acceptedAt: "2026-04-01T00:00:00.000Z",
+  jurisdictionAuthority: "東京入管局（品川）",
 };
 
 const FULL_DEEP_LINK = {
@@ -168,8 +169,9 @@ describe("info tab field values (p0-fe-006a-02)", () => {
     expect(result.detail.targetDateInput).toBe("2026-09-01");
   });
 
-  it("agency defaults to empty string (no server field)", () => {
-    expect(result.detail.agency).toBe("");
+  it("agency mirrors jurisdictionAuthority from case record", () => {
+    expect(result.detail.agency).toBe("東京入管局（品川）");
+    expect(result.detail.jurisdictionAuthority).toBe("東京入管局（品川）");
   });
 });
 

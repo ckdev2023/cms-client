@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildCreateGeneratedDocumentPayload,
+  buildGeneratedDocumentDeleteUrl,
   buildGeneratedDocumentsPostUrl,
   type GeneratedDocumentCreateInput,
 } from "./CaseAdapterGeneratedDocumentWriteBuilders";
@@ -19,33 +20,48 @@ describe("buildCreateGeneratedDocumentPayload", () => {
     });
   });
 
-  it("includes templateId when provided", () => {
+  it("includes fileUrl when provided", () => {
     const payload = buildCreateGeneratedDocumentPayload({
       ...BASE,
-      templateId: "tpl-abc",
+      fileUrl: "https://example.com/doc.pdf",
     });
-    expect(payload.templateId).toBe("tpl-abc");
+    expect(payload.fileUrl).toBe("https://example.com/doc.pdf");
   });
 
-  it("includes null templateId when explicitly set", () => {
+  it("omits fileUrl when null", () => {
     const payload = buildCreateGeneratedDocumentPayload({
       ...BASE,
-      templateId: null,
+      fileUrl: null,
     });
-    expect(payload.templateId).toBeNull();
+    expect(payload).not.toHaveProperty("fileUrl");
   });
 
-  it("includes outputFormat when provided", () => {
-    const payload = buildCreateGeneratedDocumentPayload({
-      ...BASE,
-      outputFormat: "docx",
-    });
-    expect(payload.outputFormat).toBe("docx");
-  });
-
-  it("omits outputFormat when not provided", () => {
+  it("omits fileUrl when not provided", () => {
     const payload = buildCreateGeneratedDocumentPayload(BASE);
-    expect(payload).not.toHaveProperty("outputFormat");
+    expect(payload).not.toHaveProperty("fileUrl");
+  });
+
+  it("includes templateId when provided as non-empty string", () => {
+    const payload = buildCreateGeneratedDocumentPayload({
+      ...BASE,
+      templateId: "tpl-xyz",
+    });
+    expect(payload.templateId).toBe("tpl-xyz");
+  });
+
+  it("omits templateId when null, undefined, or empty", () => {
+    expect(
+      buildCreateGeneratedDocumentPayload({ ...BASE, templateId: null }),
+    ).not.toHaveProperty("templateId");
+    expect(buildCreateGeneratedDocumentPayload(BASE)).not.toHaveProperty(
+      "templateId",
+    );
+    expect(
+      buildCreateGeneratedDocumentPayload({
+        ...BASE,
+        templateId: "",
+      }),
+    ).not.toHaveProperty("templateId");
   });
 });
 
@@ -59,6 +75,20 @@ describe("buildGeneratedDocumentsPostUrl", () => {
   it("handles trailing slash", () => {
     expect(buildGeneratedDocumentsPostUrl("/api/cases/")).toBe(
       "/api/generated-documents",
+    );
+  });
+});
+
+describe("buildGeneratedDocumentDeleteUrl", () => {
+  it("derives DELETE URL from /api/cases", () => {
+    expect(buildGeneratedDocumentDeleteUrl("/api/cases", "gd-abc")).toBe(
+      "/api/generated-documents/gd-abc",
+    );
+  });
+
+  it("encodes doc id", () => {
+    expect(buildGeneratedDocumentDeleteUrl("/api/cases", "a/b")).toBe(
+      "/api/generated-documents/a%2Fb",
     );
   });
 });

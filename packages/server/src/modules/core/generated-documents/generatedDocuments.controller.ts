@@ -1,8 +1,8 @@
 import {
   BadRequestException,
   Body,
-  ConflictException,
   Controller,
+  Delete,
   ForbiddenException,
   Get,
   GoneException,
@@ -17,7 +17,6 @@ import {
   StreamableFile,
   UnauthorizedException,
 } from "@nestjs/common";
-import crypto from "node:crypto";
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
@@ -26,15 +25,11 @@ import { CasesService } from "../cases/cases.service";
 import { GENERATED_DOCUMENT_ERROR_CODES } from "../cases/cases.types-generated-docs";
 import type { RequestContext } from "../tenancy/requestContext";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
-import {
-  GENERATED_DOC_EXPORT_QUEUE,
-  type GeneratedDocExportJobPayload,
-} from "../jobs/handlers/generatedDocExportHandler";
+import { isValidExternalUrl } from "./generatedDocuments.helpers";
 import {
   REDIS_CLIENT,
   type RedisClient,
 } from "../../../infra/redis/createRedisClient";
-import { RedisQueue } from "../../../infra/queue/redisQueue";
 import {
   STORAGE_ADAPTER,
   type StorageAdapter,
@@ -111,16 +106,14 @@ function parseLimit(value: unknown): number | undefined {
  */
 @Controller("generated-documents")
 export class GeneratedDocumentsController {
-  private readonly queue: RedisQueue;
-
   /**
    * DI コンストラクタ。
    *
    * @param generatedDocumentsService - 生成文書サービス
    * @param casesService - 案件サービス
    * @param permissionsService - 権限サービス
-   * @param redisClient - Redis クライアント
-   * @param storageAdapter - 文書ファイルのストレージアダプター（ローカルまたは S3）
+   * @param _redisClient - Redis クライアント（保留注入以兼容 Module providers）
+   * @param storageAdapter - 文書ファイルのストレージアダプター（レガシーダウンロード用）
    */
   constructor(
     @Inject(GeneratedDocumentsService)
@@ -130,12 +123,10 @@ export class GeneratedDocumentsController {
     @Inject(PermissionsService)
     private readonly permissionsService: PermissionsService,
     @Inject(REDIS_CLIENT)
-    redisClient: RedisClient,
+    _redisClient: RedisClient,
     @Inject(STORAGE_ADAPTER)
     private readonly storageAdapter: StorageAdapter,
-  ) {
-    this.queue = new RedisQueue(redisClient);
-  }
+  ) {}
 
   /**
    * 列出指定案件的生成文书（须父案件 view 权限）。
@@ -182,8 +173,8 @@ export class GeneratedDocumentsController {
   /**
    * 下载生成文书的文件内容（须父案件 view 权限）。
    *
-   * 仅在 `status = 'exported'` 且 `file_url` 为有效 storage key 时返回内容。
-   * 历史 placeholder URL 返回 410 Gone。
+   * 仅限遗留导出数据：`status = 'exported'` 且 `file_url` 为内部 storage key。
+   * 外部资源链接（http/https）不通过此端点下载，前端直接打开外链。
    *
    * @param req - HTTP 请求
    * @param id - 生成文書 ID
@@ -204,17 +195,31 @@ export class GeneratedDocumentsController {
 
     await this.assertCanViewParentCase(ctx, dto.caseId);
 
-    if (dto.status !== "exported" || !dto.fileUrl) {
+    if (!dto.fileUrl) {
       throw new NotFoundException(
         GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_NOT_AVAILABLE +
-          ": Generated document is not yet exported",
+          ": No file associated with this document",
+      );
+    }
+
+    if (isExternalUrl(dto.fileUrl)) {
+      throw new BadRequestException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_USE_EXTERNAL_URL +
+          ": This document uses an external URL; open it directly instead of downloading",
+      );
+    }
+
+    if (dto.status !== "exported") {
+      throw new NotFoundException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_NOT_AVAILABLE +
+          ": File download is only available for legacy exported documents",
       );
     }
 
     if (dto.fileUrl.startsWith("placeholder://")) {
       throw new GoneException(
         GENERATED_DOCUMENT_ERROR_CODES.GD_FILE_PLACEHOLDER_LEGACY +
-          ": Legacy placeholder file is no longer available; please re-export",
+          ": Legacy placeholder file is no longer available",
       );
     }
 
@@ -310,6 +315,13 @@ export class GeneratedDocumentsController {
       );
     }
 
+    if (!isValidExternalUrl(existing.fileUrl)) {
+      throw new BadRequestException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_EXTERNAL_URL_REQUIRED +
+          ": file_url must be a valid http(s) external URL before finalizing",
+      );
+    }
+
     const dto = await this.generatedDocumentsService.update(
       ctx,
       id,
@@ -330,18 +342,15 @@ export class GeneratedDocumentsController {
   }
 
   /**
-   * 导出生成文書 — 入队异步渲染，立即返回 `exporting` 状态。
+   * 删除草稿生成文书（须案件 edit 权限；仅 `draft` 可删）。
    *
-   * 幂等守卫：已在 `exporting` 状态时返回 409。
-   * 重试入口：`export_failed` 状态允许重新入队。
-   *
-   * @param req - HTTP 请求
-   * @param id - 生成文書 ID
-   * @returns 更新后 DTO
+   * @param req HTTP 请求对象。
+   * @param id 生成文书 ID。
+   * @returns 已删除资源 ID。
    */
   @RequirePermission(PERMISSION_CODES.CASE_EDIT)
-  @Post(":id/export")
-  async export(@Req() req: HttpRequest, @Param("id") id: string) {
+  @Delete(":id")
+  async remove(@Req() req: HttpRequest, @Param("id") id: string) {
     const ctx = req.requestContext;
     if (!ctx) throw new UnauthorizedException("Missing request context");
 
@@ -350,49 +359,30 @@ export class GeneratedDocumentsController {
 
     await this.assertCanEditParentCase(ctx, existing.caseId);
 
-    if (existing.status === "exporting") {
-      throw new ConflictException(
-        GENERATED_DOCUMENT_ERROR_CODES.GD_EXPORT_IN_PROGRESS +
-          ": Export is already in progress",
-      );
-    }
+    await this.generatedDocumentsService.deleteDraft(ctx, existing);
+    return { id: existing.id };
+  }
 
-    const dto = await this.generatedDocumentsService.update(
-      ctx,
-      id,
-      { status: "exporting" },
-      { skipTimelineWrite: true },
+  /**
+   * 导出端点（已弃用）— 返回 410 Gone。
+   *
+   * @deprecated 导出流水线已弃用。外部文书登记主路径为 draft → final，
+   * file_url 存放运营资源服务器上的外链，不再提供系统内导出。
+   * @param req - HTTP 请求
+   * @returns never — 始终抛出 GoneException
+   */
+  @RequirePermission(PERMISSION_CODES.CASE_EDIT)
+  @Post(":id/export")
+  // eslint-disable-next-line @typescript-eslint/require-await
+  async export(@Req() req: HttpRequest): Promise<never> {
+    const ctx = req.requestContext;
+    if (!ctx) throw new UnauthorizedException("Missing request context");
+
+    throw new GoneException(
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      GENERATED_DOCUMENT_ERROR_CODES.GD_EXPORT_DEPRECATED +
+        ": The export pipeline has been deprecated; register external document URLs instead",
     );
-
-    const jobPayload: GeneratedDocExportJobPayload = {
-      orgId: ctx.orgId,
-      userId: ctx.userId,
-      generatedDocumentId: id,
-      caseId: existing.caseId,
-      templateId: existing.templateId,
-      templateVersionNo: existing.templateVersionNoSnapshot,
-      outputFormat: existing.outputFormat,
-      title: existing.title,
-    };
-
-    await this.queue.enqueue<GeneratedDocExportJobPayload>(
-      GENERATED_DOC_EXPORT_QUEUE,
-      {
-        id: crypto.randomUUID(),
-        name: "generated_doc_export",
-        payload: jobPayload,
-        createdAt: new Date().toISOString(),
-      },
-    );
-
-    await this.generatedDocumentsService.writeTimeline(ctx, {
-      caseId: existing.caseId,
-      generatedDocumentId: id,
-      action: "generated_document.export_queued",
-      extra: { title: existing.title },
-    });
-
-    return dto;
   }
 
   private async assertCanViewParentCase(
@@ -459,6 +449,10 @@ export class GeneratedDocumentsController {
     }
     return caseEntity;
   }
+}
+
+function isExternalUrl(url: string): boolean {
+  return url.startsWith("http://") || url.startsWith("https://");
 }
 
 function resolveExtensionFromFormat(format: string): string {

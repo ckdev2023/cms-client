@@ -305,6 +305,8 @@ const casesZhCN = {
         CASE_TRANSITION_CONFLICT: "阶段已被其他操作变更，请刷新后重试",
         CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
           "存在未确认的收费风险，请先确认风险",
+        CASE_GATE_C_OPEN_TASKS:
+          "尚有未完成的任务，请先完成或取消任务后再提交入管局。",
         CASE_BILLING_RISK_ACK_FAILED: "收费风险确认失败",
         CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
           "下签后存在未确认的收费风险",
@@ -315,7 +317,9 @@ const casesZhCN = {
       },
       guards: {
         successCloseoutBlocked:
-          "存在 {amount} 未收余款且未登记欠款风险确认，请先到「提交前检查」登记或到「收费」结清尾款",
+          "存在 {amount} 未收余款且未登记欠款风险确认，请先到「门禁与提交」登记或到「收费」结清尾款",
+        coeAdvanceBlocked:
+          "无法进入 COE 寄送阶段：请先在「收费」配置尾款类节点并结清尾款；若仍有未收余额，请先在「门禁与提交」登记欠款风险确认。",
       },
     },
     terminalStage: {
@@ -412,17 +416,21 @@ const casesZhCN = {
         teamEmpty: "暂无团队成员",
         teamRoleOwner: "负责人",
         teamRoleAssistant: "协办人",
-        validationTitle: "提交前校验",
+        validationTitle: "门禁与提交",
         validationAction: "查看校验与提交包",
+        validationUnavailableTerminal:
+          "已结案案件不可打开「门禁与提交」页签；可查看日志、文书与收费等留存内容。",
       },
       workflowStep: {
-        title: "经营管理签 · 业务子步骤",
+        title: "业务子步骤",
         currentLabel: "当前步骤",
         stageGroup: "{stage} 阶段",
         completed: "已完成",
         current: "进行中",
         upcoming: "待执行",
         failed: "失败",
+        skipped: "不适用",
+        aborted: "未达成（拒签）",
         stageParallel: "管理层阶段：{stage}",
       },
       surveyQuote: {
@@ -440,13 +448,18 @@ const casesZhCN = {
         paymentStatus: "收费状态",
         paymentCleared: "尾款已结清",
         paymentOutstanding: "尾款未结清",
+        paymentMilestoneMissing: "未配置尾款收费节点",
         outstandingAmount: "待收：{amount}",
         coeGateStatus: "COE 门禁",
         coeReady: "可以发送 COE",
         coeBlocked: "COE 被阻断 — 请先完成收费",
         sendCoe: "发送 COE",
         sendCoeHint: "推进业务子步骤到 COE 已发送。需先结清尾款。",
+        sendCoeHintMilestoneMissing:
+          "请先在「收费」中新增名称含「尾款」的收款节点（或与合约一致的 final／結果后报酬节点），再发送 COE。",
         blockerPayment: "尾款尚未结清，不能发送 COE。",
+        blockerMilestoneMissing:
+          "尚无尾款类收费节点，无法与财务数据对齐；请添加节点后再试。",
         blockerBillingRisk: "存在未确认的欠款风险，不能发送 COE。",
         confirmTitle: "确认发送 COE",
         confirmDesc: "此操作将推进业务子步骤到 COE 已发送，操作不可撤销。",
@@ -466,7 +479,7 @@ const casesZhCN = {
         deadlineUrgent: "紧急 — 7 日内到期",
         noDeadline: "未设置期限",
         resubmitAction: "准备补正提交",
-        resubmitHint: "打开提交前检查 Tab，开始准备补正提交包。",
+        resubmitHint: "打开「门禁与提交」页签，开始准备补正提交包。",
       },
       reminderFailure: {
         title: "提醒创建失败",
@@ -560,7 +573,9 @@ const casesZhCN = {
       riskTags: {
         title: "风险标签",
         empty: "暂无风险标签",
-        placeholder: "风险标签功能将在后续版本上线",
+        levelHint:
+          "与案件列表「风险」列一致：由案件 riskLevel 映射为正常 / 需关注 / 高风险。",
+        placeholder: "更多自定义风险标签将在后续版本上线。",
       },
     },
     billing: {
@@ -619,41 +634,47 @@ const casesZhCN = {
     },
     forms: {
       title: "文书管理",
-      generateAction: "生成文书",
+      registerAction: "登记文书",
+      generateAction: "登记文书",
       kickerTemplates: "可用模板",
-      kickerGenerated: "已生成文书",
-      finalizeAction: "定稿",
-      finalizeConfirm: "确认定稿？定稿后文书将被锁定。",
-      exportAction: "导出",
-      exportAgainAction: "再次导出",
+      kickerGenerated: "已登记文书",
+      finalizeAction: "确认已就绪",
+      finalizeConfirm:
+        "确认该文书已在外部资源服务器就位？确认后登记内容将锁定，可用于提交包引用。",
+      finalizeRequiresExternalUrlHint:
+        "请先在登记表单中填写有效的文书外部链接（https:// 或 http://），再确认已就绪。",
+      submissionGateHint:
+        "提交前检查要求每条已登记文书均为「已确认」。登记后请补齐有效外链并点击「确认已就绪」；多余草稿可删除。",
+      deleteDraftAction: "删除草稿",
+      deleteDraftConfirm: "确定删除该草稿文书？删除后不可恢复。",
+      openLinkAction: "打开链接",
+      copyLinkAction: "复制链接",
       versionHistoryAction: "版本历史",
       status: {
         draft: "草稿",
-        final: "已定稿",
+        final: "已确认",
         exporting: "导出中…",
         exported: "已导出",
         export_failed: "导出失败",
       },
-      retryExportAction: "重试导出",
       placeholderBadge: "占位文件 · 待 D2 渲染落地",
       downloadAction: "下载文件",
       metaApprovedAt: "{action}：{name} · {time}",
-      empty: "暂无可用文书模板或生成记录",
+      empty: "暂无可用文书模板或登记记录",
+      templatesLoading: "正在加载文书模板…",
       generateModal: {
-        title: "生成文书",
+        title: "登记文书",
         fields: {
-          templateId: "文书模板",
-          templatePlaceholder: "请选择模板（可留空创建空白草稿）",
-          templateEmpty:
-            "该签证类型暂未配置文书模板，请联系管理员维护，或选择无模板草稿继续",
-          optionalHint: "未选择模板时将创建空白草稿",
           docTitle: "文书标题",
           docTitlePlaceholder: "例如：申请理由书",
-          outputFormat: "输出格式",
+          fileUrl: "外部资源 URL",
+          fileUrlPlaceholder: "例如：https://drive.google.com/...",
+          fileUrlHint:
+            "填写外部资源服务器上的成品文书链接，确认已就绪前必须补齐",
         },
         cancel: "取消",
-        submitting: "生成中…",
-        submit: "生成",
+        submitting: "登记中…",
+        submit: "登记",
       },
       docType: {
         reason_statement: "申请理由书",
@@ -799,10 +820,26 @@ const casesZhCN = {
           "当前案件还在提交前或补正处理阶段，因此这里暂不展示 COE 发送、海外贴签和返签结果。切换到相应样例后可查看完整流程。",
         notePostSubmission:
           "案件已提交至入管局，正在等待审查结果。下签后将进入 COE 发送、海外贴签等后续流程。",
+        noteImmigrationRejected:
+          "入管局审查结果为不许可（在留资格不予认定）。本案不发生 COE 发送与海外贴签流程。请通过失败结案与日志完成归因归档，并核对收费与退费约定。",
         noteAwaitingCoe:
           "案件已获批准，正在等待尾款结清后发送 COE（在留资格认定证明书）。",
+        noteAwaitingCoeMilestoneMissing:
+          "案件已获批准。当前尚未在「收费」中配置尾款类收款节点，COE 发送前的财务门禁无法对齐数据。请新增名称含「尾款」或与合约一致的 final／結果后报酬等节点后，再结清费用并发送 COE。",
+        noteAwaitingCoePaymentOutstanding:
+          "案件已获批准。尾款尚未结清，结清入账后将可发送 COE（在留资格认定证明书）。请在「收费」中登记收款或核对账单状态。",
+        noteAwaitingCoeBillingRiskUnacknowledged:
+          "案件已获批准。存在未结清费用且欠款风险尚未确认。请在本标签页下方的「欠款风险确认」版块登记欠款风险确认，或在「收费」标签页结清欠费后再发送 COE。",
         noteAwaitingVisaStamp:
-          "COE 已发送，申请人正在海外办理签证贴签手续，等待入境确认。",
+          "COE 已发送。请跟进申请人在海外领馆办理返签／贴签及入境安排。",
+        noteDomesticTypicalSansCoeChain:
+          "该案种在完成入管许可后的典型情形多在国内交付与收尾，一般不涉及在留资格认定证明书的海外邮寄以及海外领馆返签／贴签。请照常推进尾款、资料移交与客户指引；确有跨境贴签等例外时请与担当确认口径并留痕。",
+        noteOverseasVisaApplying:
+          "当前为海外返签（领馆签证）手续阶段：请跟进受理、贴签与入境结果，并在系统内及时登记。",
+        noteVisaRejected:
+          "海外领事馆的签证结果为拒签（或未获发签证）。请通过失败结案与日志完成归因归档，并核对收费与退费约定。",
+        noteFailureClosed:
+          "案件已失败结案并归档。请通过失败结案信息与日志核对归因，并确认收费与退费约定。",
         noteCompleted: "下签后流程已完成，入境已确认或案件已归档。",
       },
       tab: {
@@ -867,12 +904,13 @@ const casesZhCN = {
       S5: "提交前检查",
       S6: "可安排提交",
       S7: "已提交待回执",
+      S7_post_approval: "认定后：COE・海外贴签跟踪",
       S8: "结果待确认",
       S9: "已归档",
     },
     detailTabs: {
       overview: "概览",
-      validation: "提交前检查",
+      validation: "门禁与提交",
       documents: "资料清单",
       tasks: "任务",
       info: "基础信息",
@@ -942,9 +980,9 @@ const casesZhCN = {
       APPROVED: "已批准",
       REJECTED: "已拒否",
       WAITING_PAYMENT: "等待尾款",
-      COE_SENT: "在留已发送",
-      VISA_APPLYING: "签证申请中",
-      SUCCESS: "成功",
+      COE_SENT: "COE寄送",
+      VISA_APPLYING: "海外返签申请中",
+      SUCCESS: "入境成功",
       VISA_REJECTED: "签证拒否",
       RESIDENCE_PERIOD_RECORDED: "在留期间已登记",
       RENEWAL_REMINDER_SCHEDULED: "更新提醒已设定",
@@ -962,7 +1000,7 @@ const casesZhCN = {
       SUPPLEMENT_PROCESSING: "补正处理中",
       APPROVED: "已下签",
       WAITING_PAYMENT: "等待尾款",
-      COE_SENT: "COE已发送",
+      COE_SENT: "COE寄送",
       VISA_APPLYING: "海外返签申请中",
       ENTRY_SUCCESS: "入境成功",
       VISA_REJECTED: "签证拒否",
@@ -1016,6 +1054,8 @@ const casesZhCN = {
     gateValidationRunStale: "校验结果已过期，请重新执行提交前检查。",
     gateReviewNotApproved: "复核未通过，请等待复核人审批。",
     gateCBillingRiskUnacknowledged: "存在未确认的欠款风险，请先确认收费风险。",
+    gateCOpenTasks:
+      "尚有未完成的任务，请到「任务」页签逐项完成或取消后再提交入管局。",
     billingRiskAckFailed: "欠款风险确认失败，请检查输入后重试。",
     postApprovalStageInvalid: "下签后阶段不合法。",
     postApprovalBillingBlocked:
@@ -1082,6 +1122,9 @@ const casesZhCN = {
     gdInvalidTransition: "此状态流转不允许（例如：已导出 → 草稿）。",
     gdInvalidOutputFormat: "不支持的输出格式。",
     gdTitleRequired: "文书标题为必填项。",
+    gdExternalUrlRequired:
+      "确认已就绪前须填写有效的文书外部链接（https:// 或 http://）。请补全后重试。",
+    gdDeleteOnlyDraft: "仅草稿文书可以删除；已确认的文书请保留审计记录。",
   },
   log: {
     category: {
@@ -1148,7 +1191,8 @@ const casesZhCN = {
       submissionPackageUpdated: "提交包已更新",
       generatedDocumentCreated: "文书生成{colonSuffix}",
       generatedDocumentUpdated: "文书更新{colonSuffix}",
-      generatedDocumentFinalized: "文书定稿{colonSuffix}",
+      generatedDocumentFinalized: "文书已确认{colonSuffix}",
+      generatedDocumentDeleted: "文书草稿已删除{colonSuffix}",
       generatedDocumentExported: "文书导出{colonSuffix}",
       generatedDocumentExportQueued: "文书排队导出{colonSuffix}",
       generatedDocumentExportFailed: "文书导出失败{colonSuffix}",
@@ -1169,10 +1213,11 @@ const casesZhCN = {
         okMessage: "至少已生成一份文书。",
       },
       generated_documents_finalized: {
-        title: "所有文书需定稿",
-        message: "所有生成的文书必须为定稿或已导出状态",
-        okTitle: "文书定稿条件已满足",
-        okMessage: "所有已生成文书均已定稿或已导出。",
+        title: "所有文书需已确认（外部资源就位）",
+        message:
+          "所有已登记文书须为「已确认」状态（或历史「已导出」记录），方可通过此项检查。",
+        okTitle: "文书确认条件已满足",
+        okMessage: "所有已登记文书均已确认或已满足检查要求。",
       },
     },
     refReport: "详细请参阅检查报告",

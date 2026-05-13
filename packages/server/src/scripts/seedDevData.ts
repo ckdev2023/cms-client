@@ -46,6 +46,8 @@ const SEED_CUSTOMER_ID = "00000000-0000-4000-a000-000000000001";
 const SEED_CASE_A_ID = "00000000-0000-4000-a000-000000000010";
 const SEED_CASE_B_ID = "00000000-0000-4000-a000-000000000011";
 const SEED_CASE_BMV_ID = "00000000-0000-4000-a000-000000000012";
+const SEED_CASE_SCRATCH_OVERSEAS_COE_ID =
+  "00000000-0000-4000-a000-000000000013";
 
 const DOC_ITEM_PENDING = "00000000-0000-4000-a000-000000000100";
 const DOC_ITEM_WAITING = "00000000-0000-4000-a000-000000000101";
@@ -60,6 +62,9 @@ const TMPL_RELEASE_DOC_CHECKLIST_ID = "00000000-0000-4000-a000-000000000501";
 const DOC_FILE_ID = "00000000-0000-4000-a000-000000000200";
 const DOC_ASSET_ID = "00000000-0000-4000-a000-000000000300";
 const DOC_REF_ID = "00000000-0000-4000-a000-000000000400";
+
+const SEED_BILLING_SCRATCH_OVERSEAS_FINAL_ID =
+  "00000000-0000-4000-a000-000000000701";
 
 async function seedCustomer(client: PoolClient) {
   await client.query(
@@ -129,6 +134,64 @@ async function seedCases(client: PoolClient) {
       SEED_USER_ID,
       "CASE-DEV-003",
       "経営管理（認定4M）— 田中太郎",
+    ],
+  );
+}
+
+/**
+ * 大阪デモ用：S7 / WAITING_PAYMENT / 海外 COE・返签主轴の从零スクラッチ案件 +
+ * 尾款 milestone（aggregate の尾款门禁・validation 面板の回帰用）。
+ *
+ * @param client - トランザクション内の DB クライアント
+ */
+async function seedScratchOverseasCoeDemo(client: PoolClient) {
+  await client.query(
+    `INSERT INTO cases (
+       id, org_id, customer_id, case_type_code, status, stage,
+       owner_user_id, case_no, case_name, business_phase,
+       application_flow_type, metadata,
+       current_workflow_step_code,
+       quote_price, deposit_paid_cached, final_payment_paid_cached,
+       billing_unpaid_amount_cached,
+       jurisdiction_authority
+     )
+     VALUES (
+       $1, $2, $3,
+       'engineer_humanities_intl_visa',
+       'S7', 'S7',
+       $4, $5, $6,
+       'WAITING_PAYMENT',
+       'coe_overseas',
+       '{}'::jsonb,
+       'WAITING_PAYMENT',
+       480000, true, false,
+       240000,
+       '大阪入国管理局（COE・海外返签デモ・seed）'
+     )
+     ON CONFLICT (id) DO UPDATE SET
+       case_type_code = EXCLUDED.case_type_code,
+       case_name = EXCLUDED.case_name`,
+    [
+      SEED_CASE_SCRATCH_OVERSEAS_COE_ID,
+      SEED_ORG_ID,
+      SEED_CUSTOMER_ID,
+      SEED_USER_ID,
+      "CASE-DEV-004",
+      "大阪デモ・COE送付〜海外贴签〜入境（从零测试）",
+    ],
+  );
+
+  await client.query(
+    `INSERT INTO billing_records (
+       id, org_id, case_id, milestone_name, amount_due, status,
+       billing_type, gate_effect_mode
+     )
+     VALUES ($1, $2, $3, 'final_payment', 240000, 'due', 'standard', 'block')
+     ON CONFLICT (id) DO NOTHING`,
+    [
+      SEED_BILLING_SCRATCH_OVERSEAS_FINAL_ID,
+      SEED_ORG_ID,
+      SEED_CASE_SCRATCH_OVERSEAS_COE_ID,
     ],
   );
 }
@@ -356,6 +419,7 @@ export function buildSeedSteps(): SeedStep[] {
     ["devUsers", seedDevUsers],
     ["customer", seedCustomer],
     ["cases", seedCases],
+    ["scratchOverseasCoeDemo", seedScratchOverseasCoeDemo],
     ["documentItems", seedDocumentItems],
     ["documentAsset", seedDocumentAsset],
     ["documentFile", seedDocumentFile],
@@ -403,7 +467,7 @@ async function main() {
     } else {
       await client.query("COMMIT");
       process.stdout.write(
-        `[seed-dev] done — 7 fixture users, 3 cases, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(CASE_TEMPLATE_SEEDS.length)} case templates, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
+        `[seed-dev] done — 7 fixture users, 4 cases (incl. 1 COE overseas-flow scratch), 1 scratch final-payment billing row, 6 doc items, 1 asset, 1 cross-case link, 1 document_checklist template, ${String(CASE_TEMPLATE_SEEDS.length)} case templates, ${String(DOC_TEMPLATE_SEEDS.length)} document templates, 1 app_user + 1 portal lead + 2 conversations + 4 messages (H-10)\n`,
       );
     }
   } catch (error) {

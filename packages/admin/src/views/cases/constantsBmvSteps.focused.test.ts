@@ -5,24 +5,9 @@ import {
   getBmvStageGroups,
   getBmvStepI18nKey,
   getBmvStepLabel,
-  type BmvWorkflowStepDef,
   type BmvStageGroup,
 } from "./constantsBmvSteps";
 import type { WorkflowStepSummary } from "./types-detail";
-
-type StepStatus = "completed" | "current" | "upcoming" | "failed";
-
-function stepStatus(
-  step: BmvWorkflowStepDef,
-  workflowStep: WorkflowStepSummary,
-): StepStatus {
-  const currentOrder = workflowStep.sortOrder;
-  if (step.code === workflowStep.stepCode) {
-    return workflowStep.isFailureStep ? "failed" : "current";
-  }
-  if (step.sortOrder < currentOrder) return "completed";
-  return "upcoming";
-}
 
 function isGroupActive(
   group: BmvStageGroup,
@@ -224,104 +209,6 @@ describe("stage grouping (p1-fe-002-03)", () => {
     for (const group of groups) {
       expect(group.stageI18nKey).toBe(`cases.constants.stages.${group.stage}`);
     }
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  CURRENT STATE HIGHLIGHTING — stepStatus algorithm
-// ═══════════════════════════════════════════════════════════════════
-
-describe("stepStatus algorithm (p1-fe-002-03)", () => {
-  it("current step returns 'current'", () => {
-    const ws = makeWorkflowStep({ stepCode: "UNDER_REVIEW", sortOrder: 5 });
-    const step = BMV_WORKFLOW_STEP_MAP.get("UNDER_REVIEW")!;
-    expect(stepStatus(step, ws)).toBe("current");
-  });
-
-  it("step before current returns 'completed'", () => {
-    const ws = makeWorkflowStep({ stepCode: "UNDER_REVIEW", sortOrder: 5 });
-    const step = BMV_WORKFLOW_STEP_MAP.get("WAITING_MATERIAL")!;
-    expect(stepStatus(step, ws)).toBe("completed");
-  });
-
-  it("step after current returns 'upcoming'", () => {
-    const ws = makeWorkflowStep({ stepCode: "UNDER_REVIEW", sortOrder: 5 });
-    const step = BMV_WORKFLOW_STEP_MAP.get("APPROVED")!;
-    expect(stepStatus(step, ws)).toBe("upcoming");
-  });
-
-  it("VISA_REJECTED as current returns 'failed' (isFailureStep=true)", () => {
-    const ws = makeWorkflowStep({
-      stepCode: "VISA_REJECTED",
-      sortOrder: 13,
-      isFailureStep: true,
-    });
-    const step = BMV_WORKFLOW_STEP_MAP.get("VISA_REJECTED")!;
-    expect(stepStatus(step, ws)).toBe("failed");
-  });
-
-  it("non-failure current step does not return 'failed'", () => {
-    const ws = makeWorkflowStep({ stepCode: "APPROVED", sortOrder: 8 });
-    const step = BMV_WORKFLOW_STEP_MAP.get("APPROVED")!;
-    expect(stepStatus(step, ws)).toBe("current");
-  });
-
-  it("when at first step, no steps are completed", () => {
-    const ws = makeWorkflowStep({
-      stepCode: "WAITING_MATERIAL",
-      sortOrder: 1,
-    });
-    const statuses = BMV_WORKFLOW_STEPS.map((s) => stepStatus(s, ws));
-    expect(statuses.filter((s) => s === "completed")).toHaveLength(0);
-    expect(statuses[0]).toBe("current");
-    expect(statuses.slice(1).every((s) => s === "upcoming")).toBe(true);
-  });
-
-  it("when at last non-failure step, all prior steps are completed", () => {
-    const ws = makeWorkflowStep({
-      stepCode: "RENEWAL_REMINDER_SCHEDULED",
-      sortOrder: 15,
-    });
-    const statuses = BMV_WORKFLOW_STEPS.map((s) => stepStatus(s, ws));
-    const completed = statuses.filter((s) => s === "completed");
-    expect(completed).toHaveLength(14);
-    expect(statuses[statuses.length - 1]).toBe("current");
-  });
-
-  it("at VISA_REJECTED, earlier steps are completed, later non-failure are upcoming", () => {
-    const ws = makeWorkflowStep({
-      stepCode: "VISA_REJECTED",
-      sortOrder: 13,
-      isFailureStep: true,
-    });
-    const statuses = BMV_WORKFLOW_STEPS.map((s) => ({
-      code: s.code,
-      status: stepStatus(s, ws),
-    }));
-
-    const beforeRejected = statuses.filter((s) => s.status === "completed");
-    expect(beforeRejected.length).toBe(12);
-
-    const current = statuses.find((s) => s.code === "VISA_REJECTED")!;
-    expect(current.status).toBe("failed");
-
-    const afterRejected = statuses.filter((s) => s.status === "upcoming");
-    expect(afterRejected.length).toBe(2);
-    expect(afterRejected.map((s) => s.code)).toEqual([
-      "RESIDENCE_PERIOD_RECORDED",
-      "RENEWAL_REMINDER_SCHEDULED",
-    ]);
-  });
-
-  it("mid-flow step (APPLYING sortOrder=4) produces correct status split", () => {
-    const ws = makeWorkflowStep({ stepCode: "APPLYING", sortOrder: 4 });
-    const statuses = BMV_WORKFLOW_STEPS.map((s) => stepStatus(s, ws));
-    const completed = statuses.filter((s) => s === "completed").length;
-    const current = statuses.filter((s) => s === "current").length;
-    const upcoming = statuses.filter((s) => s === "upcoming").length;
-    expect(completed).toBe(3);
-    expect(current).toBe(1);
-    expect(upcoming).toBe(11);
   });
 });
 

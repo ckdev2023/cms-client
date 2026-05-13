@@ -5,6 +5,7 @@ import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseDetail, DoubleReviewEntry } from "../types-detail";
+import { resolvePostApprovalCoeNoteKeySuffix } from "../model/caseValidationPostApprovalCoeNote";
 
 /** 提交前检查与审核复核支持面板。 */
 const props = defineProps<{
@@ -37,44 +38,9 @@ function verdictTone(entry: DoubleReviewEntry): ChipTone {
   return VERDICT_TONE[entry.verdictBadge] ?? "neutral";
 }
 
-const POST_SUBMISSION_PHASES = new Set([
-  "UNDER_REVIEW",
-  "NEED_SUPPLEMENT",
-  "SUPPLEMENT_PROCESSING",
-]);
-
-const AWAITING_COE_PHASES = new Set([
-  "APPROVED",
-  "REJECTED",
-  "WAITING_PAYMENT",
-]);
-
-const AWAITING_VISA_STAMP_PHASES = new Set([
-  "COE_SENT",
-  "VISA_APPLYING",
-  "VISA_REJECTED",
-]);
-
-const COMPLETED_PHASES = new Set([
-  "SUCCESS",
-  "ENTRY_SUCCESS",
-  "RESIDENCE_PERIOD_RECORDED",
-  "RENEWAL_REMINDER_SCHEDULED",
-  "CLOSED_SUCCESS",
-  "CLOSED_FAILED",
-]);
-
-/**
- * 根据 businessPhase 和 stageCode 选择下签后文案 i18n key 后缀。
- */
-const coeNoteKeySuffix = computed<string>(() => {
-  const phase = props.detail.businessPhase;
-  if (COMPLETED_PHASES.has(phase)) return "noteCompleted";
-  if (AWAITING_VISA_STAMP_PHASES.has(phase)) return "noteAwaitingVisaStamp";
-  if (AWAITING_COE_PHASES.has(phase)) return "noteAwaitingCoe";
-  if (POST_SUBMISSION_PHASES.has(phase)) return "notePostSubmission";
-  return "notePreSubmission";
-});
+const coeNoteKeySuffix = computed<string>(() =>
+  resolvePostApprovalCoeNoteKeySuffix(props.detail),
+);
 </script>
 
 <template>

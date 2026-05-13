@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   findActiveCaseTemplateByCaseType,
+  resolveTemplateApplicationType,
   resolveCaseTypeCandidates,
 } from "./cases.template.repository";
 import type { RequestContext } from "../tenancy/requestContext";
@@ -431,5 +432,44 @@ void describe("resolveCaseTypeCandidates", () => {
     assert.deepEqual(resolveCaseTypeCandidates("totally_unknown"), [
       "totally_unknown",
     ]);
+  });
+});
+
+void describe("resolveTemplateApplicationType", () => {
+  void test("returns trimmed application_type from newest template row", async () => {
+    let saw = false;
+    const pool = makePool((sql) => {
+      assert.ok(sql.toLowerCase().includes("application_type"));
+      assert.ok(sql.toLowerCase().includes("case_templates"));
+      saw = true;
+      return ok([{ application_type: "  initial_fill " }]);
+    });
+    const result = await resolveTemplateApplicationType(
+      pool as never,
+      makeCtx(),
+      "visa",
+    );
+    assert.equal(result, "initial_fill");
+    assert.ok(saw);
+  });
+
+  void test("returns null when template rows have blank application_type", async () => {
+    const pool = makePool(() => ok([{ application_type: null }]));
+    const result = await resolveTemplateApplicationType(
+      pool as never,
+      makeCtx(),
+      "solo",
+    );
+    assert.equal(result, null);
+  });
+
+  void test("returns null when no template rows", async () => {
+    const pool = makePool(() => ok([]));
+    const result = await resolveTemplateApplicationType(
+      pool as never,
+      makeCtx(),
+      "solo",
+    );
+    assert.equal(result, null);
   });
 });

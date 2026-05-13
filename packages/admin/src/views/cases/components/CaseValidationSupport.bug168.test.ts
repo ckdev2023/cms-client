@@ -23,6 +23,7 @@ function makeI18n(locale: Locale) {
 function buildDetailWithReview(): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    caseType: "work",
     doubleReview: [
       {
         initials: "TN",
@@ -56,6 +57,7 @@ function buildDetailWithReview(): CaseDetail {
 function buildDetailEmpty(): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    caseType: "work",
     doubleReview: [],
     reviewEnabled: false,
     riskConfirmationRecord: null,
@@ -131,7 +133,7 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     expect(html).toContain("Confirmed at");
     expect(html).toContain("Amount involved");
     expect(html).toContain("Post-Approval");
-    expect(html).toContain("COE / Overseas Visa / Re-entry Result");
+    expect(html).toContain("COE / Overseas stamping / Visa and entry outcomes");
   });
 
   it("en-US empty state renders correct English labels", () => {
@@ -162,7 +164,7 @@ describe("BUG-168 CaseValidationSupport i18n: no Chinese leakage in en-US / ja-J
     expect(html).toContain("確認日時");
     expect(html).toContain("関連金額");
     expect(html).toContain("許可後処理");
-    expect(html).toContain("COE / 海外ビザ貼付 / 再入国結果");
+    expect(html).toContain("COE / 海外ビザ貼付 / 査証・入国結果");
   });
 
   it("ja-JP empty state renders correct Japanese labels", () => {

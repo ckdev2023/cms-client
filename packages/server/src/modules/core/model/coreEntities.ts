@@ -195,12 +195,12 @@ export type Case = {
   billingRiskAckEvidenceUrl: string | null;
   overseasVisaStartAt: string | null;
   entryConfirmedAt: string | null;
+  jurisdictionAuthority: string | null;
   businessPhase: string;
   currentWorkflowStepCode: string | null;
   createdAt: string;
   updatedAt: string;
 };
-
 /**
  * CaseTemplate 核心对象（案件模板，P0 §3.8）。
  *

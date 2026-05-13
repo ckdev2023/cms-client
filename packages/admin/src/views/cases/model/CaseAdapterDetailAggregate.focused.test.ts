@@ -483,6 +483,7 @@ describe("relatedParties auto-injection from deepLink (p1-6)", () => {
   it.each([
     ["田中 太郎", "田太", "田中 太郎"],
     ["Admin", "AD", "Admin"],
+    ["[E2E]大阪模拟客户", "大阪", "[E2E]大阪模拟客户"],
   ])(
     "derives initials from customer name %#",
     (customerName, expectedInitials, expectedFullName) => {

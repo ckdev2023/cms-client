@@ -39,6 +39,8 @@ export interface UpdateCaseFormValues {
   signedAt: string;
   /** 受理日期。 */
   acceptedAt: string;
+  /** 管辖入管等机构名称。 */
+  jurisdictionAuthority: string;
   /** 递交日期。 */
   submissionDate: string;
   /** 结果日期（下签 / 不许可等）。 */
@@ -84,6 +86,7 @@ export const UPDATE_PATCH_NULLABLE_FIELDS = [
   "sourceChannel",
   "signedAt",
   "acceptedAt",
+  "jurisdictionAuthority",
   "submissionDate",
   "resultDate",
   "residenceExpiryDate",
@@ -199,6 +202,7 @@ export function buildUpdateCasePayload(
     sourceChannel: normalizeNullableString(input.sourceChannel),
     signedAt: normalizeNullableString(input.signedAt),
     acceptedAt: normalizeNullableString(input.acceptedAt),
+    jurisdictionAuthority: normalizeNullableString(input.jurisdictionAuthority),
     submissionDate: normalizeNullableString(input.submissionDate),
     resultDate: normalizeNullableString(input.resultDate),
     residenceExpiryDate: normalizeNullableString(input.residenceExpiryDate),

@@ -227,7 +227,8 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
             title: "Application Form",
             version_no: 1,
             output_format: "pdf",
-            status: "approved",
+            status: "final",
+            file_url: "https://ext.example.com/docs/app-form.pdf",
           },
         ],
         rowCount: 1,
@@ -261,6 +262,24 @@ void test("SubmissionPackagesService.create inserts package items and writes tim
     calls.some((call) =>
       call.sql.includes("insert into submission_package_items"),
     ),
+  );
+  assert.ok(
+    calls.some(
+      (c) =>
+        c.sql.includes("update cases") &&
+        c.sql.includes("jurisdiction_authority") &&
+        c.params?.[0] === "Tokyo Immigration",
+    ),
+    "expects jurisdiction_authority synced from submission authorityName when case jurisdiction empty",
+  );
+  assert.ok(
+    calls.some(
+      (c) =>
+        c.sql.includes("update cases") &&
+        c.sql.includes("submission_date") &&
+        c.sql.includes("accepted_at"),
+    ),
+    "expects initial submission to backfill submission_date and accepted_at on case when empty",
   );
 });
 
@@ -318,6 +337,38 @@ void test("SubmissionPackagesService.create advances case to S7 when current sta
   assert.deepEqual(cases.transitions, [
     { caseId: CASE_ID, input: { toStage: "S7" } },
   ]);
+});
+
+void test("SubmissionPackagesService.create rejects S6 gate when case has open tasks", async () => {
+  const { svc } = createService((sql) => {
+    if (sql.includes("from tasks") && sql.includes("status not in")) {
+      return Promise.resolve({
+        rows: [{ id: "00000000-0000-4000-8000-0000000000ee" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  }, "S6");
+
+  await assert.rejects(
+    () =>
+      svc.create(makeCtx(), {
+        caseId: CASE_ID,
+        authorityName: "Tokyo Immigration",
+        submittedAt: "2026-04-01T10:00:00.000Z",
+        items: [{ itemType: "document_requirement", refId: REQUIREMENT_ID }],
+      }),
+    /CASE_GATE_C_OPEN_TASKS|completed or cancelled/,
+  );
 });
 
 void test("SubmissionPackagesService.create rejects supplement without relatedSubmissionId", async () => {
@@ -569,6 +620,160 @@ void test("SubmissionPackagesService.get returns package with items", async () =
   const found = await svc.get(makeCtx("viewer"), PACKAGE_ID);
   assert.ok(found);
   assert.equal(found.items.length, 1);
+});
+
+void test("buildSnapshotPayload includes fileUrl for generated_document_version", async () => {
+  const snapshotCaptures: unknown[] = [];
+  const { svc } = createService((sql, params) => {
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    if (sql.includes("coalesce(max(submission_no), 0) + 1")) {
+      return Promise.resolve({
+        rows: [{ next_submission_no: "1" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_packages")) {
+      return Promise.resolve({
+        rows: [
+          makeSubmissionPackageRow({ validation_run_id: params?.[5] ?? null }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from generated_documents")) {
+      return Promise.resolve({
+        rows: [
+          {
+            id: GENERATED_DOC_ID,
+            title: "Application Form",
+            version_no: 1,
+            output_format: "external",
+            status: "final",
+            file_url: "https://ext.example.com/docs/app-form.pdf",
+          },
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_package_items")) {
+      const payload = params?.[3];
+      if (typeof payload === "string") {
+        snapshotCaptures.push(JSON.parse(payload));
+      }
+      return Promise.resolve({
+        rows: [
+          makeSubmissionPackageItemRow({
+            item_type: "generated_document_version",
+            ref_id: GENERATED_DOC_ID,
+            snapshot_payload: payload ? JSON.parse(payload as string) : null,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    authorityName: "Tokyo Immigration",
+    submittedAt: "2026-04-01T10:00:00.000Z",
+    items: [
+      { itemType: "generated_document_version", refId: GENERATED_DOC_ID },
+    ],
+  });
+
+  assert.equal(snapshotCaptures.length, 1);
+  const snap = snapshotCaptures[0] as Record<string, unknown>;
+  assert.equal(snap.id, GENERATED_DOC_ID);
+  assert.equal(snap.title, "Application Form");
+  assert.equal(snap.fileUrl, "https://ext.example.com/docs/app-form.pdf");
+  assert.equal(snap.status, "final");
+  assert.equal(snap.outputFormat, "external");
+  assert.equal(snap.versionNo, 1);
+});
+
+void test("buildSnapshotPayload captures null fileUrl for legacy generated docs", async () => {
+  const snapshotCaptures: unknown[] = [];
+  const { svc } = createService((sql, params) => {
+    if (sql.includes("from validation_runs")) {
+      return Promise.resolve({
+        rows: [{ id: VALIDATION_RUN_ID, result_status: "passed" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("select id from cases")) {
+      return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+    }
+    if (sql.includes("coalesce(max(submission_no), 0) + 1")) {
+      return Promise.resolve({
+        rows: [{ next_submission_no: "1" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_packages")) {
+      return Promise.resolve({
+        rows: [
+          makeSubmissionPackageRow({ validation_run_id: params?.[5] ?? null }),
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("from generated_documents")) {
+      return Promise.resolve({
+        rows: [
+          {
+            id: GENERATED_DOC_ID,
+            title: "Legacy Doc",
+            version_no: 1,
+            output_format: "pdf",
+            status: "exported",
+            file_url: null,
+          },
+        ],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into submission_package_items")) {
+      const payload = params?.[3];
+      if (typeof payload === "string") {
+        snapshotCaptures.push(JSON.parse(payload));
+      }
+      return Promise.resolve({
+        rows: [
+          makeSubmissionPackageItemRow({
+            item_type: "generated_document_version",
+            ref_id: GENERATED_DOC_ID,
+            snapshot_payload: payload ? JSON.parse(payload as string) : null,
+          }),
+        ],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await svc.create(makeCtx(), {
+    caseId: CASE_ID,
+    authorityName: "Tokyo Immigration",
+    submittedAt: "2026-04-01T10:00:00.000Z",
+    items: [
+      { itemType: "generated_document_version", refId: GENERATED_DOC_ID },
+    ],
+  });
+
+  assert.equal(snapshotCaptures.length, 1);
+  const snap = snapshotCaptures[0] as Record<string, unknown>;
+  assert.equal(snap.fileUrl, null);
+  assert.equal(snap.status, "exported");
 });
 
 void test("SubmissionPackagesService.list filters by org and caseId", async () => {

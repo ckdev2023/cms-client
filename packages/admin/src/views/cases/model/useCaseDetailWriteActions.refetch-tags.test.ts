@@ -57,7 +57,7 @@ function stubRepo(overrides: Partial<CaseRepository> = {}): CaseRepository {
     createReminder: vi.fn(async () => ({ id: "r1", success: true })),
     createGeneratedDocument: vi.fn(async () => ({ id: "gd1" })),
     finalizeGeneratedDocument: vi.fn(async () => ({ id: "gd1" })),
-    exportGeneratedDocument: vi.fn(async () => ({ id: "gd1" })),
+    deleteDraftGeneratedDocument: vi.fn(async () => ({ id: "gd1" })),
     createTask: vi.fn(async () => ({ id: "tk1" })),
     createSubmissionPackage: vi.fn(async () => ({ id: "sp1" })),
     ...overrides,
@@ -91,8 +91,7 @@ describe("RefetchTag — onPartialSuccess dispatch", () => {
     const { wa, onPartialSuccess, onSuccess } = makeWriteActions();
     await wa.createGeneratedDocument({
       title: "test",
-      templateId: null,
-      outputFormat: "pdf",
+      fileUrl: "https://example.com/doc.pdf",
     });
     expect(onPartialSuccess).toHaveBeenCalledTimes(1);
     expect(onPartialSuccess.mock.calls[0][0]).toEqual(
@@ -110,9 +109,9 @@ describe("RefetchTag — onPartialSuccess dispatch", () => {
     );
   });
 
-  it("exportGeneratedDocument triggers forms + logEntries", async () => {
+  it("deleteDraftGeneratedDocument triggers forms + logEntries", async () => {
     const { wa, onPartialSuccess } = makeWriteActions();
-    await wa.exportGeneratedDocument("gd-01");
+    await wa.deleteDraftGeneratedDocument("gd-02");
     expect(onPartialSuccess).toHaveBeenCalledTimes(1);
     expect(onPartialSuccess.mock.calls[0][0]).toEqual(
       setOf("forms", "logEntries"),
@@ -254,8 +253,7 @@ describe("RefetchTag — fallback to onSuccess", () => {
     const { wa, onSuccess } = makeWriteActions({ skipPartial: true });
     await wa.createGeneratedDocument({
       title: "test",
-      templateId: null,
-      outputFormat: "pdf",
+      fileUrl: "https://example.com/doc.pdf",
     });
     expect(onSuccess).toHaveBeenCalledTimes(1);
   });

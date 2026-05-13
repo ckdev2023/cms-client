@@ -11,7 +11,10 @@
  */
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 
-import type { CaseBillingSummary, CaseDeepLinkContext } from "./cases.types";
+import type {
+  CaseDeepLinkContext,
+  CaseLatestSubmissionSummary,
+} from "./cases.types";
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
 import type { Case } from "../model/coreEntities";
 import type { TenantDb } from "../tenancy/tenantDb";
@@ -34,6 +37,7 @@ import {
   type LatestReviewRow,
   type LatestSubmissionRow,
   type LatestValidationRow,
+  toTimestampString,
   toTimestampStringOrNull,
 } from "./cases.service.row-mappers";
 import type {
@@ -130,7 +134,8 @@ export async function queryLatestSubmission(
 ): Promise<LatestSubmissionRow | undefined> {
   const result = await tenantDb.query<LatestSubmissionRow>(
     `
-      select id, submission_no, submission_kind, submitted_at, related_submission_id
+      select id, submission_no, submission_kind, submitted_at, related_submission_id,
+             authority_name
       from submission_packages
       where case_id = $1
       order by submitted_at desc
@@ -139,6 +144,94 @@ export async function queryLatestSubmission(
     [id],
   );
   return result.rows.at(0);
+}
+
+/**
+ * initial 提交包最早的 `submitted_at`（兼容 latest 已为 supplement 时受理日兜底）。
+ * @param tenantDb
+ * @param caseId
+ */
+export async function queryInitialSubmissionSubmittedAt(
+  tenantDb: TenantDb,
+  caseId: string,
+): Promise<string | undefined> {
+  const result = await tenantDb.query<{ submitted_at: unknown }>(
+    `
+      select submitted_at
+      from submission_packages
+      where case_id = $1 and submission_kind = $2
+      order by submitted_at asc
+      limit 1
+    `,
+    [caseId, "initial"],
+  );
+  const row = result.rows.at(0);
+  if (!row) return undefined;
+  const iso = toTimestampString(row.submitted_at).trim();
+  return iso !== "" ? iso : undefined;
+}
+
+/**
+ * `cases.jurisdiction_authority` 未维护时由最近一次提交包 `authority_name` 回填。
+ * @param caseEntity
+ * @param latestSubmission
+ */
+export function mergeJurisdictionFromLatestSubmissionForAggregate(
+  caseEntity: Case,
+  latestSubmission: CaseLatestSubmissionSummary | null,
+): Case {
+  const current = caseEntity.jurisdictionAuthority?.trim() ?? "";
+  if (current !== "") return caseEntity;
+  const fb = latestSubmission?.authorityName?.trim() ?? "";
+  if (!fb) return caseEntity;
+  return { ...caseEntity, jurisdictionAuthority: fb };
+}
+
+/**
+ * 详情聚合读写模型回填： jurisdiction / applicationType（模板） /
+ * acceptedAt（首次提交时点） / dueAt（自 submission_date）— 不改变 DB，
+ * 仅影响 `GET /cases/:id/aggregate` 的 `case` 快照。
+ *
+ * @param caseEntity DB 映射后的 Case
+ * @param latestSubmission 最近一次提交包摘要
+ * @param templateApplicationType 模板兜底申请类型枚举值
+ * @param initialSubmissionSubmittedAt initial 的首包 submitted_at ISO（或由 latestSubmission 传入）
+ */
+// eslint-disable-next-line complexity -- 聚合快照回填分支较多，保持单函数便于单测对照 DTO
+export function enrichCaseAggregateReadModelCase(
+  caseEntity: Case,
+  latestSubmission: CaseLatestSubmissionSummary | null,
+  templateApplicationType: string | null,
+  initialSubmissionSubmittedAt: string | undefined,
+): Case {
+  let merged = mergeJurisdictionFromLatestSubmissionForAggregate(
+    caseEntity,
+    latestSubmission,
+  );
+
+  const tplApp = templateApplicationType?.trim() ?? "";
+  if (!merged.applicationType?.trim()) {
+    if (tplApp !== "") merged = { ...merged, applicationType: tplApp };
+  }
+
+  const acceptedTrim = merged.acceptedAt?.trim() ?? "";
+  if (!acceptedTrim) {
+    const fb = initialSubmissionSubmittedAt?.trim();
+    if (fb) merged = { ...merged, acceptedAt: fb };
+  }
+
+  let dueEffective = merged.dueAt?.trim() ?? "";
+  const subDt = merged.submissionDate?.trim() ?? "";
+  if (!dueEffective && subDt !== "") {
+    merged = { ...merged, dueAt: subDt };
+    dueEffective = subDt;
+  }
+  if (!dueEffective && latestSubmission) {
+    const subAt = latestSubmission.submittedAt.trim();
+    if (subAt) merged = { ...merged, dueAt: subAt };
+  }
+
+  return merged;
 }
 
 /**
@@ -303,22 +396,6 @@ export async function aggregateCaseBillingSummaryFull(
     planCount: Number(row.plan_count),
     paymentCount: Number(row.payment_count),
     overduePlanCount: Number(row.overdue_plan_count),
-  };
-}
-
-/**
- *
- * @param caseEntity
- */
-export function deriveBillingSummary(caseEntity: Case): CaseBillingSummary {
-  return {
-    quotePrice: caseEntity.quotePrice,
-    depositPaid: caseEntity.depositPaidCached,
-    finalPaymentPaid: caseEntity.finalPaymentPaidCached,
-    unpaidAmount: caseEntity.billingUnpaidAmountCached,
-    billingRiskAcknowledged: caseEntity.billingRiskAcknowledgedBy !== null,
-    billingRiskAcknowledgedAt: caseEntity.billingRiskAcknowledgedAt ?? null,
-    billingRiskAckReasonCode: caseEntity.billingRiskAckReasonCode ?? null,
   };
 }
 

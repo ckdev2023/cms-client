@@ -23,6 +23,7 @@ export type CreateCaseBody = {
   sourceChannel?: unknown;
   signedAt?: unknown;
   acceptedAt?: unknown;
+  jurisdictionAuthority?: unknown;
   submissionDate?: unknown;
   resultDate?: unknown;
   residenceExpiryDate?: unknown;
@@ -58,6 +59,7 @@ export type UpdateCaseBody = {
   sourceChannel?: unknown;
   signedAt?: unknown;
   acceptedAt?: unknown;
+  jurisdictionAuthority?: unknown;
   submissionDate?: unknown;
   resultDate?: unknown;
   residenceExpiryDate?: unknown;

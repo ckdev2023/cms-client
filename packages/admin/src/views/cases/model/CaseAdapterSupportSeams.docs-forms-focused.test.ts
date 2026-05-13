@@ -392,6 +392,64 @@ describe("forms tab summary display (p0-fe-006b-03)", () => {
     expect(result.generated[0].downloadUrl).toBeNull();
   });
 
+  it("status='final' + http(s) fileUrl → resourceOpenUrl 为外链", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "final",
+          fileUrl: "https://drive.google.com/doc-1",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].resourceOpenUrl).toBe(
+      "https://drive.google.com/doc-1",
+    );
+    expect(result.generated[0].downloadUrl).toBeNull();
+  });
+
+  it("status='exported' + http(s) fileUrl → resourceOpenUrl 为外链, downloadUrl=null", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "exported",
+          fileUrl: "https://example.com/doc.pdf",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].resourceOpenUrl).toBe(
+      "https://example.com/doc.pdf",
+    );
+    expect(result.generated[0].downloadUrl).toBeNull();
+  });
+
+  it("status='draft' + http(s) fileUrl → resourceOpenUrl=null（草稿不暴露外链）", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          status: "draft",
+          fileUrl: "https://example.com/doc.pdf",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].resourceOpenUrl).toBeNull();
+  });
+
+  it("status='exported' + storage key fileUrl → downloadUrl 指向流式接口, resourceOpenUrl=null", () => {
+    const result = adaptCaseFormsData({
+      items: [
+        genDoc({
+          id: "gd-legacy-01",
+          status: "exported",
+          fileUrl: "generated-documents/org-1/gd-legacy-01/v1.docx",
+        }),
+      ],
+    })!;
+    expect(result.generated[0].downloadUrl).toBe(
+      "/api/generated-documents/gd-legacy-01/file",
+    );
+    expect(result.generated[0].resourceOpenUrl).toBeNull();
+  });
+
   it("approvedBy/approvedAt exposed and formatted; null preserved", () => {
     const result = adaptCaseFormsData({
       items: [

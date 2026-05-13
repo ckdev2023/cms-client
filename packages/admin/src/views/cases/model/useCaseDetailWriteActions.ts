@@ -252,7 +252,11 @@ function doCreateReminder(
 function doCreateGeneratedDocument(
   deps: ActionCoreDeps,
   run: RunFn,
-  payload: { title: string; templateId: string | null; outputFormat: string },
+  payload: {
+    title: string;
+    fileUrl?: string | null;
+    templateId?: string | null;
+  },
 ): Promise<boolean> {
   return run(
     () =>
@@ -260,8 +264,8 @@ function doCreateGeneratedDocument(
         .createGeneratedDocument({
           caseId: deps.getCaseId(),
           title: payload.title,
+          fileUrl: payload.fileUrl,
           templateId: payload.templateId,
-          outputFormat: payload.outputFormat,
         })
         .then(() => undefined),
     TAGS_FORMS,
@@ -279,13 +283,13 @@ function doFinalizeGeneratedDocument(
   );
 }
 
-function doExportGeneratedDocument(
+function doDeleteDraftGeneratedDocument(
   deps: ActionCoreDeps,
   run: RunFn,
   docId: string,
 ): Promise<boolean> {
   return run(
-    () => deps.repo.exportGeneratedDocument(docId).then(() => undefined),
+    () => deps.repo.deleteDraftGeneratedDocument(docId).then(() => undefined),
     TAGS_FORMS,
   );
 }
@@ -413,13 +417,13 @@ function buildAllWriteActions(
     }) => doCreateReminder(core, run, payload),
     createGeneratedDocument: (payload: {
       title: string;
-      templateId: string | null;
-      outputFormat: string;
+      fileUrl?: string | null;
+      templateId?: string | null;
     }) => doCreateGeneratedDocument(core, run, payload),
     finalizeGeneratedDocument: (docId: string) =>
       doFinalizeGeneratedDocument(core, run, docId),
-    exportGeneratedDocument: (docId: string) =>
-      doExportGeneratedDocument(core, run, docId),
+    deleteDraftGeneratedDocument: (docId: string) =>
+      doDeleteDraftGeneratedDocument(core, run, docId),
     createTask: (payload: {
       title: string;
       description?: string;

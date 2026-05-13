@@ -16,6 +16,7 @@ import {
 } from "./CaseAdapterMessageWriteBuilders";
 import {
   buildCreateGeneratedDocumentPayload,
+  buildGeneratedDocumentDeleteUrl,
   buildGeneratedDocumentsPostUrl,
   type GeneratedDocumentCreateInput,
 } from "./CaseAdapterGeneratedDocumentWriteBuilders";
@@ -234,16 +235,6 @@ function buildGeneratedDocumentFinalizeUrl(
   );
 }
 
-function buildGeneratedDocumentExportUrl(
-  casesApiPath: string,
-  docId: string,
-): string {
-  return (
-    casesApiPath.replace(/\/cases\/?$/, "") +
-    `/generated-documents/${encodeURIComponent(docId)}/export`
-  );
-}
-
 /**
  * 创建 `finalizeGeneratedDocument` 写入函数。
  *
@@ -264,18 +255,20 @@ export function createFinalizeGeneratedDocument(
 }
 
 /**
- * 创建 `exportGeneratedDocument` 写入函数。
+ * 删除草稿生成文书。
  *
  * @param runtime - 案件仓储运行时
- * @returns 发起 `POST /generated-documents/:id/export` 的函数
+ * @returns 发起 `DELETE /generated-documents/:id` 的函数
  */
-export function createExportGeneratedDocument(runtime: CaseRepositoryRuntime) {
+export function createDeleteDraftGeneratedDocument(
+  runtime: CaseRepositoryRuntime,
+) {
   return async (docId: string): Promise<WriteResultWithId> =>
     requestAndAdapt({
       runtime,
-      url: buildGeneratedDocumentExportUrl(runtime.apiPath, docId),
-      method: "POST",
+      url: buildGeneratedDocumentDeleteUrl(runtime.apiPath, docId),
+      method: "DELETE",
       adapt: adaptWriteResult,
-      errorMessage: "Invalid export generated document response",
+      errorMessage: "Invalid delete generated document response",
     });
 }

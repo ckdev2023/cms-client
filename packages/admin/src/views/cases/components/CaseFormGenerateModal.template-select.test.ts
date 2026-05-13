@@ -1,6 +1,5 @@
 // ── Test Ownership ──────────────────────────────────────────────
-// Owner: fe-modal — template select rendering, empty-list fallback,
-//        submit payload containing templateId
+// Owner: fe-modal — fileUrl field rendering, submit payload containing fileUrl
 // ────────────────────────────────────────────────────────────────
 
 import { describe, it, expect, afterEach } from "vitest";
@@ -8,7 +7,6 @@ import { mount, VueWrapper } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseFormGenerateModal from "./CaseFormGenerateModal.vue";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
-import type { FormTemplate } from "../types-detail";
 
 const BUTTON_STUB = {
   template:
@@ -24,16 +22,6 @@ function makeI18n() {
     messages: { "zh-CN": { cases: casesZhCN } },
   });
 }
-
-const SAMPLE_TEMPLATES: FormTemplate[] = [
-  {
-    id: "tpl-1",
-    name: "在留資格認定証明書",
-    meta: "ja · v1",
-    actionLabel: "生成",
-  },
-  { id: "tpl-2", name: "申請理由書", meta: "ja · v1", actionLabel: "生成" },
-];
 
 let wrapper: VueWrapper | null = null;
 
@@ -56,87 +44,48 @@ afterEach(() => {
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  Template select — renders options from prop
+//  fileUrl field — renders input
 // ═══════════════════════════════════════════════════════════════════
 
-describe("CaseFormGenerateModal template select — with templates", () => {
-  it("renders an <option> for each template", () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const options = select.findAll("option");
-    // placeholder + 2 templates
-    expect(options).toHaveLength(3);
-    expect(options[1].text()).toBe("在留資格認定証明書");
-    expect(options[2].text()).toBe("申請理由書");
+describe("CaseFormGenerateModal fileUrl field", () => {
+  it("renders a fileUrl input field", () => {
+    const w = mountModal();
+    const input = w.find("[data-testid='form-gen-file-url-input']");
+    expect(input.exists()).toBe(true);
+    expect(input.attributes("type")).toBe("url");
   });
 
-  it("template select is enabled when templates are provided", () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    expect((select.element as HTMLSelectElement).disabled).toBe(false);
+  it("fileUrl input is empty on first open", () => {
+    const w = mountModal({ caseName: "Test Case" });
+    const input = w.find("[data-testid='form-gen-file-url-input']")
+      .element as HTMLInputElement;
+    expect(input.value).toBe("");
   });
 
-  it("option values match template ids", () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const options = select.findAll("option");
-    expect(options[0].element.value).toBe("");
-    expect(options[1].element.value).toBe("tpl-1");
-    expect(options[2].element.value).toBe("tpl-2");
+  it("displays hint text below fileUrl input", () => {
+    const w = mountModal();
+    const hint = w.find("[data-testid='form-gen-file-url-hint']");
+    expect(hint.exists()).toBe(true);
+    expect(hint.text()).toBeTruthy();
+  });
+
+  it("fileUrl input is disabled when submitting", () => {
+    const w = mountModal({ submitting: true });
+    const input = w.find("[data-testid='form-gen-file-url-input']");
+    expect((input.element as HTMLInputElement).disabled).toBe(true);
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  Template select — empty list fallback
+//  Submit payload — fileUrl included
 // ═══════════════════════════════════════════════════════════════════
 
-describe("CaseFormGenerateModal template select — empty list fallback", () => {
-  it("shows templateEmpty copy when templates is empty", () => {
-    const w = mountModal({ templates: [] });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const options = select.findAll("option");
-    expect(options).toHaveLength(1);
-    expect(options[0].text()).toBe(
-      "该签证类型暂未配置文书模板，请联系管理员维护，或选择无模板草稿继续",
-    );
-  });
+describe("CaseFormGenerateModal submit — fileUrl in payload", () => {
+  it("payload includes fileUrl when user fills in a URL", async () => {
+    const w = mountModal({ caseName: "Test Case" });
+    const urlInput = w.find("[data-testid='form-gen-file-url-input']");
+    await urlInput.setValue("https://example.com/doc.pdf");
 
-  it("select is NOT disabled when templates is empty (R39-D)", () => {
-    const w = mountModal({ templates: [] });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    expect((select.element as HTMLSelectElement).disabled).toBe(false);
-  });
-
-  it("select is NOT disabled when templates prop is not provided (R39-D)", () => {
-    const w = mountModal();
-    const select = w.find("[data-testid='form-gen-template-select']");
-    expect((select.element as HTMLSelectElement).disabled).toBe(false);
-  });
-
-  it("select is disabled when submitting, regardless of templates (R39-D)", () => {
-    const w = mountModal({ templates: [], submitting: true });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    expect((select.element as HTMLSelectElement).disabled).toBe(true);
-  });
-
-  it("shows only the placeholder when templates prop is not provided", () => {
-    const w = mountModal();
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const options = select.findAll("option");
-    expect(options).toHaveLength(1);
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  Submit payload — templateId included
-// ═══════════════════════════════════════════════════════════════════
-
-describe("CaseFormGenerateModal submit — templateId in payload", () => {
-  it("payload includes templateId=null when no template selected", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
-    });
     const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
     await submitBtn.trigger("click");
 
@@ -144,52 +93,28 @@ describe("CaseFormGenerateModal submit — templateId in payload", () => {
     expect(events).toHaveLength(1);
     expect(events[0][0]).toMatchObject({
       title: "Test Case",
-      templateId: null,
-      outputFormat: "docx",
+      fileUrl: "https://example.com/doc.pdf",
     });
   });
 
-  it("payload includes selected templateId after selection", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
-    });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-2");
-
+  it("payload includes empty fileUrl when user leaves it blank", async () => {
+    const w = mountModal({ caseName: "Test Case" });
     const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
     await submitBtn.trigger("click");
 
     const events = w.emitted("submit")!;
     expect(events).toHaveLength(1);
     expect(events[0][0]).toMatchObject({
-      title: "申請理由書",
-      templateId: "tpl-2",
-      outputFormat: "docx",
+      title: "Test Case",
+      fileUrl: "",
     });
   });
 
-  it("payload includes templateId=null when empty list and placeholder is shown", async () => {
-    const w = mountModal({ templates: [], caseName: "Test Case" });
-    const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
-    await submitBtn.trigger("click");
+  it("resets fileUrl when modal reopens", async () => {
+    const w = mountModal({ caseName: "Test Case" });
+    const urlInput = w.find("[data-testid='form-gen-file-url-input']");
+    await urlInput.setValue("https://example.com/doc.pdf");
 
-    const events = w.emitted("submit")!;
-    expect(events).toHaveLength(1);
-    expect(events[0][0]).toMatchObject({
-      templateId: null,
-    });
-  });
-
-  it("resets templateId when modal reopens", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
-    });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-1");
-
-    // Close and reopen
     await w.setProps({ open: false });
     await w.setProps({ open: true });
 
@@ -198,197 +123,71 @@ describe("CaseFormGenerateModal submit — templateId in payload", () => {
 
     const events = w.emitted("submit")!;
     const lastPayload = events[events.length - 1][0];
-    expect(lastPayload).toMatchObject({ templateId: null });
+    expect(lastPayload).toMatchObject({ fileUrl: "" });
   });
 });
 
 // ═══════════════════════════════════════════════════════════════════
-//  placeholder copy — two-state: templatePlaceholder vs templateEmpty
+//  Title field — pre-fills from caseName
 // ═══════════════════════════════════════════════════════════════════
 
-describe("CaseFormGenerateModal — placeholder copy two-state", () => {
-  it("shows templatePlaceholder when templates are provided", () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const placeholder = select.findAll("option")[0];
-    expect(placeholder.text()).toBe("请选择模板（可留空创建空白草稿）");
+describe("CaseFormGenerateModal title field", () => {
+  it("title pre-fills with caseName", () => {
+    const w = mountModal({ caseName: "テスト案件" });
+    const input = w.find("[data-testid='form-gen-title-input']")
+      .element as HTMLInputElement;
+    expect(input.value).toBe("テスト案件");
   });
 
-  it("shows templateEmpty when templates array is empty", () => {
-    const w = mountModal({ templates: [] });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const placeholder = select.findAll("option")[0];
-    expect(placeholder.text()).toBe(
-      "该签证类型暂未配置文书模板，请联系管理员维护，或选择无模板草稿继续",
-    );
-  });
-
-  it("shows templateEmpty when templates prop is not provided", () => {
-    const w = mountModal();
-    const select = w.find("[data-testid='form-gen-template-select']");
-    const placeholder = select.findAll("option")[0];
-    expect(placeholder.text()).toBe(
-      "该签证类型暂未配置文书模板，请联系管理员维护，或选择无模板草稿继续",
-    );
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  initialTemplateId — pre-selects template on open (R37-K)
-// ═══════════════════════════════════════════════════════════════════
-
-describe("CaseFormGenerateModal — initialTemplateId prop (R37-K)", () => {
-  it("pre-selects the template matching initialTemplateId on open", () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      initialTemplateId: "tpl-2",
-      caseName: "Test",
-    });
-    const select = w.find("[data-testid='form-gen-template-select']")
-      .element as HTMLSelectElement;
-    expect(select.value).toBe("tpl-2");
-  });
-
-  it("submit payload contains the pre-selected templateId", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      initialTemplateId: "tpl-1",
-      caseName: "Test",
-    });
-    const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
-    await submitBtn.trigger("click");
-
-    const events = w.emitted("submit")!;
-    expect(events).toHaveLength(1);
-    expect(events[0][0]).toMatchObject({ templateId: "tpl-1" });
-  });
-
-  it("falls back to null when initialTemplateId is not provided", () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test",
-    });
-    const select = w.find("[data-testid='form-gen-template-select']")
-      .element as HTMLSelectElement;
-    expect(select.value).toBe("");
-  });
-
-  it("resets to initialTemplateId (not previous selection) on reopen", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      initialTemplateId: "tpl-1",
-      caseName: "Test",
-    });
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-2");
+  it("title resets to caseName on reopen", async () => {
+    const w = mountModal({ caseName: "Test Case" });
+    const input = w.find("[data-testid='form-gen-title-input']");
+    await input.setValue("Custom Title");
 
     await w.setProps({ open: false });
-    await w.setProps({ open: true, initialTemplateId: "tpl-1" });
-
-    const selectEl = w.find("[data-testid='form-gen-template-select']")
-      .element as HTMLSelectElement;
-    expect(selectEl.value).toBe("tpl-1");
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  R39-D — optionalHint visibility & empty-template submit
-// ═══════════════════════════════════════════════════════════════════
-
-describe("CaseFormGenerateModal — optionalHint (R39-D)", () => {
-  it("displays optionalHint text when templates are provided", () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES });
-    const hint = w.find("[data-testid='form-gen-optional-hint']");
-    expect(hint.exists()).toBe(true);
-    expect(hint.text()).toBe("未选择模板时将创建空白草稿");
-  });
-
-  it("displays optionalHint text when templates list is empty", () => {
-    const w = mountModal({ templates: [] });
-    const hint = w.find("[data-testid='form-gen-optional-hint']");
-    expect(hint.exists()).toBe(true);
-    expect(hint.text()).toBe("未选择模板时将创建空白草稿");
-  });
-
-  it("submit with empty templates sends templateId=null", async () => {
-    const w = mountModal({ templates: [], caseName: "R39-D" });
-    const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
-    await submitBtn.trigger("click");
-
-    const events = w.emitted("submit")!;
-    expect(events).toHaveLength(1);
-    expect(events[0][0]).toMatchObject({ templateId: null });
-  });
-});
-
-// ═══════════════════════════════════════════════════════════════════
-//  V9 修复：默认输出格式 + 选模板后标题跟随
-// ═══════════════════════════════════════════════════════════════════
-
-describe("CaseFormGenerateModal — V9 default outputFormat & template title sync", () => {
-  it("defaults outputFormat to docx (PDF stub 不再是默认值)", async () => {
-    const w = mountModal({ templates: SAMPLE_TEMPLATES, caseName: "Test" });
-    const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
-    await submitBtn.trigger("click");
-    const events = w.emitted("submit")!;
-    expect(events[0][0]).toMatchObject({ outputFormat: "docx" });
-  });
-
-  it("title auto-fills from template name when user picks a template", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
-    });
-
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-2");
+    await w.setProps({ open: true });
 
     const titleInput = w.find("[data-testid='form-gen-title-input']")
       .element as HTMLInputElement;
-    expect(titleInput.value).toBe("申請理由書");
-  });
-
-  it("title falls back to caseName when user clears template selection", async () => {
-    const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
-    });
-
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-2");
-
-    let titleInput = w.find("[data-testid='form-gen-title-input']")
-      .element as HTMLInputElement;
-    expect(titleInput.value).toBe("申請理由書");
-
-    await select.setValue("");
-    titleInput = w.find("[data-testid='form-gen-title-input']")
-      .element as HTMLInputElement;
     expect(titleInput.value).toBe("Test Case");
   });
+});
 
-  it("does NOT overwrite user's manually-edited title when template changes", async () => {
+describe("CaseFormGenerateModal presetTemplate", () => {
+  it("title pre-fills from presetTemplate.name over caseName", () => {
     const w = mountModal({
-      templates: SAMPLE_TEMPLATES,
-      caseName: "Test Case",
+      caseName: "Parent Case Title",
+      presetTemplate: { id: "tpl-a", name: "履歴書" },
     });
+    const input = w.find("[data-testid='form-gen-title-input']")
+      .element as HTMLInputElement;
+    expect(input.value).toBe("履歴書");
+  });
 
-    const titleInput = w.find("[data-testid='form-gen-title-input']");
-    await titleInput.setValue("我的自定义标题");
-
-    const select = w.find("[data-testid='form-gen-template-select']");
-    await select.setValue("tpl-2");
-
-    expect((titleInput.element as HTMLInputElement).value).toBe(
-      "我的自定义标题",
-    );
-
+  it("submit payload includes templateId when presetTemplate is set", async () => {
+    const w = mountModal({
+      caseName: "Ignored",
+      presetTemplate: { id: "tpl-99", name: "申請理由書" },
+    });
     const submitBtn = w.find("[data-testid='form-gen-submit-btn']");
     await submitBtn.trigger("click");
+
     const events = w.emitted("submit")!;
     expect(events[0][0]).toMatchObject({
-      title: "我的自定义标题",
-      templateId: "tpl-2",
+      title: "申請理由書",
+      fileUrl: "",
+      templateId: "tpl-99",
     });
+  });
+
+  it("omit templateId when no presetTemplate", async () => {
+    const w = mountModal({ caseName: "Only Case" });
+    await w.find("[data-testid='form-gen-submit-btn']").trigger("click");
+    const payload = (w.emitted("submit") as unknown[][])[0]![0] as Record<
+      string,
+      unknown
+    >;
+    expect(payload).not.toHaveProperty("templateId");
+    expect(payload.title).toBe("Only Case");
   });
 });

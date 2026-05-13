@@ -2,7 +2,8 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
-import { getStageI18nKey } from "../constants";
+import { resolveStageLabelI18nKey } from "../constants";
+import { resolveBmvWorkflowStepDisplayLabel } from "../constantsBmvSteps";
 import type { CaseDetail } from "../types-detail";
 
 /** 概览顶部 4 张统计卡片：阶段 / 截止 / 进度 / 收费。 */
@@ -13,7 +14,10 @@ const props = defineProps<{
 }>();
 
 const stageValue = computed(() => {
-  const key = getStageI18nKey(props.detail.stageCode);
+  const key = resolveStageLabelI18nKey(
+    props.detail.stageCode,
+    props.detail.workflowStep?.stepCode,
+  );
   return key ? t(key) : props.detail.stage;
 });
 
@@ -30,6 +34,18 @@ const isPreWaitingPaymentEmpty = computed(() => {
     props.detail.billing.payments.length === 0
   );
 });
+
+/**
+ * 概览卡片中并行展示的 BMV 子步骤名称（随界面语言解析）。
+ *
+ * @param ws - 当前案件的 `workflowStep`（必有）
+ * @returns 展示用子步骤文案
+ */
+function bmvWorkflowStepDisplayLabel(
+  ws: NonNullable<CaseDetail["workflowStep"]>,
+): string {
+  return resolveBmvWorkflowStepDisplayLabel(t, ws);
+}
 </script>
 
 <template>
@@ -76,7 +92,7 @@ const isPreWaitingPaymentEmpty = computed(() => {
             →
           </span>
           <span class="overview-stat-cards__parallel-step-label">
-            {{ detail.workflowStep.stepLabel }}
+            {{ bmvWorkflowStepDisplayLabel(detail.workflowStep) }}
           </span>
           <span class="overview-stat-cards__parallel-step-stage">
             {{ detail.workflowStep.parentStage }}

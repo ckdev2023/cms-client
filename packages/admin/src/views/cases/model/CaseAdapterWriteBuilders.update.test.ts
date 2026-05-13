@@ -33,6 +33,7 @@ describe("buildUpdateCaseInputFromDraft", () => {
     sourceChannel: "web",
     signedAt: "2026-01-01",
     acceptedAt: "2026-01-15",
+    jurisdictionAuthority: "",
     submissionDate: "",
     resultDate: "",
     residenceExpiryDate: "",
@@ -202,6 +203,7 @@ describe("buildUpdateCaseInputFromDraft", () => {
       sourceChannel: "referral",
       signedAt: "2026-06-01",
       acceptedAt: "2026-06-15",
+      jurisdictionAuthority: "名古屋入管",
       submissionDate: "2026-07-01",
       resultDate: "2026-08-01",
       residenceExpiryDate: "2029-06-01",
@@ -232,6 +234,7 @@ describe("buildUpdateCaseInputFromDraft", () => {
     expect(input.sourceChannel).toBe("referral");
     expect(input.signedAt).toBe("2026-06-01");
     expect(input.acceptedAt).toBe("2026-06-15");
+    expect(input.jurisdictionAuthority).toBe("名古屋入管");
     expect(input.submissionDate).toBe("2026-07-01");
     expect(input.resultDate).toBe("2026-08-01");
     expect(input.residenceExpiryDate).toBe("2029-06-01");
@@ -290,6 +293,7 @@ describe("UPDATE_PATCH field constants", () => {
       "sourceChannel",
       "signedAt",
       "acceptedAt",
+      "jurisdictionAuthority",
       "submissionDate",
       "resultDate",
       "residenceExpiryDate",

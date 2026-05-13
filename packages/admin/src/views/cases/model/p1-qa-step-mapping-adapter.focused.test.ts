@@ -23,11 +23,13 @@ import {
 describe("buildFinalPaymentGate isolation (p1-qa-001-01)", () => {
   const cleared = {
     finalPaymentPaid: true,
+    finalPaymentMilestoneMatched: true,
     unpaidAmount: 0,
     billingRiskAck: false,
   };
   const outstanding = {
     finalPaymentPaid: false,
+    finalPaymentMilestoneMatched: true,
     unpaidAmount: 200000,
     billingRiskAck: false,
   };
@@ -75,6 +77,7 @@ describe("buildFinalPaymentGate isolation (p1-qa-001-01)", () => {
   it("blocked with billing_risk_unacknowledged when unpaid + not ack'd", () => {
     const gate = buildFinalPaymentGate("WAITING_PAYMENT", true, {
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 100000,
       billingRiskAck: false,
     });
@@ -86,6 +89,7 @@ describe("buildFinalPaymentGate isolation (p1-qa-001-01)", () => {
   it("no billing_risk blocker when unpaidAmount is 0", () => {
     const gate = buildFinalPaymentGate("WAITING_PAYMENT", true, {
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 0,
       billingRiskAck: false,
     });
@@ -96,6 +100,7 @@ describe("buildFinalPaymentGate isolation (p1-qa-001-01)", () => {
   it("no billing_risk blocker when risk is acknowledged", () => {
     const gate = buildFinalPaymentGate("WAITING_PAYMENT", true, {
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 50000,
       billingRiskAck: true,
     });
@@ -108,6 +113,18 @@ describe("buildFinalPaymentGate isolation (p1-qa-001-01)", () => {
       buildFinalPaymentGate("WAITING_PAYMENT", true, outstanding)!
         .outstandingLabel,
     ).toBe("¥200,000");
+  });
+
+  it("blocked with final_payment_milestone_missing when no final milestone row", () => {
+    const gate = buildFinalPaymentGate("WAITING_PAYMENT", true, {
+      finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: false,
+      unpaidAmount: 0,
+      billingRiskAck: false,
+    })!;
+    expect(gate.blockers).toHaveLength(1);
+    expect(gate.blockers[0].code).toBe("final_payment_milestone_missing");
+    expect(gate.finalPaymentMilestoneMatched).toBe(false);
   });
 
   it("outstandingLabel empty when paid", () => {

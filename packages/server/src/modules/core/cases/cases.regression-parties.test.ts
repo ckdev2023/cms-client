@@ -61,6 +61,7 @@ const BASE: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  jurisdictionAuthority: null,
   businessPhase: "CONSULTING",
   currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",

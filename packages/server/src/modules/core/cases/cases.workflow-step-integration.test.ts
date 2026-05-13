@@ -62,6 +62,7 @@ function buildMockCase(overrides: Partial<Case> = {}): Case {
     billingRiskAckEvidenceUrl: null,
     overseasVisaStartAt: null,
     entryConfirmedAt: null,
+    jurisdictionAuthority: null,
     businessPhase: "CONSULTING",
     currentWorkflowStepCode: null,
     createdAt: "2025-01-01T00:00:00Z",

@@ -257,6 +257,8 @@ export type CaseBillingSummary = {
   quotePrice: number | null;
   depositPaid: boolean;
   finalPaymentPaid: boolean;
+  /** 是否存在 milestone 名称匹配尾款关键词的 billing_records（与 syncBillingCache / COE 守卫一致）。 */
+  finalPaymentMilestoneMatched: boolean;
   unpaidAmount: number;
   billingRiskAcknowledged: boolean;
   billingRiskAcknowledgedAt: string | null;

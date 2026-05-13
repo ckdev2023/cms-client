@@ -7,7 +7,10 @@ import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import PageHeader from "../../shared/ui/PageHeader.vue";
 import Button from "../../shared/ui/Button.vue";
-import { getGroupOptions } from "../../shared/model/useGroupOptions";
+import {
+  getActiveGroupOptions,
+  getGroupOptions,
+} from "../../shared/model/useGroupOptions";
 import { getActiveUserOptions } from "../../shared/model/useOrgUserOptions";
 import CustomerSummaryCards from "./components/CustomerSummaryCards.vue";
 import CustomerFilters from "./components/CustomerFilters.vue";
@@ -42,8 +45,13 @@ const router = useRouter();
 
 const repository = createCustomerRepository();
 const { currentUser } = useAdminSession();
-const groupOptions = computed<SelectOption[]>(() =>
+/** 筛选/列表展示：含已停用分组，便于筛出历史客户。 */
+const filterGroupOptions = computed<SelectOption[]>(() =>
   getGroupOptions("filter", locale.value),
+);
+/** 新建客户 / 批量改组：仅可选当前启用分组，避免写入已停用 slug（建案报 CASE_GROUP_NOT_FOUND）。 */
+const writeGroupOptions = computed<SelectOption[]>(() =>
+  getActiveGroupOptions(locale.value),
 );
 const ownerOptions = computed<SelectOption[]>(() =>
   getActiveUserOptions().map(({ value, label }) => ({ value, label })),
@@ -174,7 +182,7 @@ async function handleChangeGroup(groupId: string) {
   if (count === 0) return;
 
   const label =
-    groupOptions.value.find((g) => g.value === groupId)?.label ?? groupId;
+    writeGroupOptions.value.find((g) => g.value === groupId)?.label ?? groupId;
   const updated = await bulkChangeGroup(groupId);
   if (updated === 0) return;
 
@@ -376,7 +384,7 @@ watch(
       :active-cases-filter="filters.activeCases"
       :filtered-count="filteredCustomers.length"
       :options-loading="loading"
-      :group-options="groupOptions"
+      :group-options="filterGroupOptions"
       :owner-options="ownerOptions"
       @update:scope="setScope($event)"
       @update:search="setSearch($event)"
@@ -391,7 +399,7 @@ watch(
         :selected-count="selectedCount"
         :loading="bulkLoading"
         :owner-options="ownerOptions"
-        :group-options="groupOptions"
+        :group-options="writeGroupOptions"
         @clear="clearSelection"
         @assign-owner="handleAssignOwner"
         @change-group="handleChangeGroup"
@@ -426,7 +434,7 @@ watch(
       :can-create="canCreate"
       :show-dedupe="showDedupe"
       :dedupe-matches="dedupeMatches"
-      :group-options="groupOptions"
+      :group-options="writeGroupOptions"
       :checking-duplicates="checkingDuplicates"
       :dedupe-error-code="dedupeErrorCode"
       :submitting="submitting"

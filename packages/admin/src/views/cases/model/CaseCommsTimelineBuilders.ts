@@ -296,6 +296,13 @@ const TIMELINE_MESSAGE_BUILDERS: Record<string, TimelineMessageBuilder> = {
       params: { suffix, colonSuffix: formatColonSuffix(suffix) },
     };
   },
+  "generated_document.deleted": (p) => {
+    const suffix = pickFirst(p, ["title", "templateName", "name"]);
+    return {
+      key: "cases.log.timeline.generatedDocumentDeleted",
+      params: { suffix, colonSuffix: formatColonSuffix(suffix) },
+    };
+  },
   "generated_document.exported": (p) => {
     const suffix = pickFirst(p, ["title", "templateName", "name"]);
     return {

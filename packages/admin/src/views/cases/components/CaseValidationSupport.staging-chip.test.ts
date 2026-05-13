@@ -29,6 +29,7 @@ function makeI18n(locale: Locale) {
 function buildDetail(phase: string): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    caseType: "work",
     businessPhase: phase,
     doubleReview: [],
     reviewEnabled: false,

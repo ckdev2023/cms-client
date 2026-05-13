@@ -33,7 +33,9 @@ function createFullRepoStub() {
   const finalizeGeneratedDocument = vi
     .fn()
     .mockResolvedValue({ id: "doc-fin" });
-  const exportGeneratedDocument = vi.fn().mockResolvedValue({ id: "doc-exp" });
+  const deleteDraftGeneratedDocument = vi
+    .fn()
+    .mockResolvedValue({ id: "doc-del" });
   const listDocumentTemplates = vi.fn().mockResolvedValue([]);
   const getDetailAggregate = vi.fn().mockResolvedValue(buildActiveAggregate());
 
@@ -65,7 +67,7 @@ function createFullRepoStub() {
     createReminder,
     createGeneratedDocument,
     finalizeGeneratedDocument,
-    exportGeneratedDocument,
+    deleteDraftGeneratedDocument,
     listDocumentTemplates,
   } as unknown as CaseRepository;
 
@@ -75,7 +77,7 @@ function createFullRepoStub() {
     createReminder,
     createGeneratedDocument,
     finalizeGeneratedDocument,
-    exportGeneratedDocument,
+    deleteDraftGeneratedDocument,
     listDocumentTemplates,
     getDetailAggregate,
   };
@@ -167,8 +169,7 @@ describe("CaseDetailView wiring contract — createGeneratedDocument (BUG-228)",
 
     await model.createGeneratedDocument({
       title: "申請書",
-      templateId: null,
-      outputFormat: "pdf",
+      fileUrl: "https://example.com/doc.pdf",
     });
     await flushFetch();
 
@@ -176,8 +177,27 @@ describe("CaseDetailView wiring contract — createGeneratedDocument (BUG-228)",
     expect(createGeneratedDocument).toHaveBeenCalledWith({
       caseId: "CASE-W1",
       title: "申請書",
-      templateId: null,
-      outputFormat: "pdf",
+      fileUrl: "https://example.com/doc.pdf",
+    });
+  });
+
+  it("createGeneratedDocument 传入 templateId 时转发至 repo", async () => {
+    const { repo, createGeneratedDocument } = createFullRepoStub();
+    const model = useCaseDetailModel(ref("CASE-W1"), { repo });
+    await flushFetch();
+
+    await model.createGeneratedDocument({
+      title: "履歴書",
+      fileUrl: "",
+      templateId: "tpl-001",
+    });
+    await flushFetch();
+
+    expect(createGeneratedDocument).toHaveBeenCalledWith({
+      caseId: "CASE-W1",
+      title: "履歴書",
+      fileUrl: "",
+      templateId: "tpl-001",
     });
   });
 });
@@ -226,9 +246,9 @@ describe("CaseDetailView wiring contract — finalizeGeneratedDocument", () => {
   });
 });
 
-describe("CaseDetailView wiring contract — exportGeneratedDocument", () => {
-  it("exportGeneratedDocument 调用 repo.exportGeneratedDocument 并 refetch forms + logEntries", async () => {
-    const { repo, exportGeneratedDocument } = createFullRepoStub();
+describe("CaseDetailView wiring contract — deleteDraftGeneratedDocument", () => {
+  it("deleteDraftGeneratedDocument 调用 repo.deleteDraftGeneratedDocument 并 refetch forms + logEntries", async () => {
+    const { repo, deleteDraftGeneratedDocument } = createFullRepoStub();
     const model = useCaseDetailModel(ref("CASE-W1"), { repo });
     await flushFetch();
 
@@ -238,11 +258,11 @@ describe("CaseDetailView wiring contract — exportGeneratedDocument", () => {
     const logCallsBefore = (repo.getLogEntries as ReturnType<typeof vi.fn>).mock
       .calls.length;
 
-    await model.exportGeneratedDocument("doc-456");
+    await model.deleteDraftGeneratedDocument("doc-del-1");
     await flushFetch();
 
-    expect(exportGeneratedDocument).toHaveBeenCalledTimes(1);
-    expect(exportGeneratedDocument).toHaveBeenCalledWith("doc-456");
+    expect(deleteDraftGeneratedDocument).toHaveBeenCalledTimes(1);
+    expect(deleteDraftGeneratedDocument).toHaveBeenCalledWith("doc-del-1");
 
     expect(
       (repo.getGeneratedDocuments as ReturnType<typeof vi.fn>).mock.calls
@@ -253,8 +273,8 @@ describe("CaseDetailView wiring contract — exportGeneratedDocument", () => {
     ).toBeGreaterThan(logCallsBefore);
   });
 
-  it("exportGeneratedDocument readonly 时不调用 repo", async () => {
-    const { repo, exportGeneratedDocument } = createFullRepoStub();
+  it("deleteDraftGeneratedDocument readonly 时不调用 repo", async () => {
+    const { repo, deleteDraftGeneratedDocument } = createFullRepoStub();
     (repo.getDetailAggregate as ReturnType<typeof vi.fn>).mockResolvedValue(
       createMockAggregate(createMockDetail({ readonly: true }), {
         tabCounts: { ...ZERO_TAB_COUNTS },
@@ -263,10 +283,10 @@ describe("CaseDetailView wiring contract — exportGeneratedDocument", () => {
     const model = useCaseDetailModel(ref("CASE-RO"), { repo });
     await flushFetch();
 
-    const ok = await model.exportGeneratedDocument("doc-y");
+    const ok = await model.deleteDraftGeneratedDocument("doc-x");
 
     expect(ok).toBe(false);
-    expect(exportGeneratedDocument).not.toHaveBeenCalled();
+    expect(deleteDraftGeneratedDocument).not.toHaveBeenCalled();
   });
 });
 
@@ -282,7 +302,7 @@ describe("CaseDetailView template static wiring scan", () => {
     { component: "CaseDeadlinesTab", event: "open-create-deadline" },
     { component: "CaseFormsTab", event: "open-generate-modal" },
     { component: "CaseFormsTab", event: "finalize" },
-    { component: "CaseFormsTab", event: "export" },
+    { component: "CaseFormsTab", event: "delete-draft" },
     { component: "CaseTasksTab", event: "open-create-task" },
   ];
 
@@ -304,8 +324,8 @@ describe("CaseDetailView template static wiring scan", () => {
     component: string;
     prop: string;
   }> = [
-    { component: "CaseFormGenerateModal", prop: ":templates" },
-    { component: "CaseFormGenerateModal", prop: ":initial-template-id" },
+    { component: "CaseFormGenerateModal", prop: ":case-name" },
+    { component: "CaseFormGenerateModal", prop: ":preset-template" },
   ];
 
   for (const { component, prop } of REQUIRED_PROPS) {

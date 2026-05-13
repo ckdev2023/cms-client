@@ -451,6 +451,8 @@ export interface CaseUpdateInput {
   overseasVisaStartAt?: string | null;
   /** P1: 入境确认日期。 */
   entryConfirmedAt?: string | null;
+  /** 管辖入管等机构名称（与 info tab 管辖机构一致）。 */
+  jurisdictionAuthority?: string | null;
 }
 
 /** 阶段流转输入。 */
@@ -487,12 +489,10 @@ export {
 export interface CaseWorkflowStepTransitionInput {
   toStepCode: string;
 }
-
 /** 写入操作统一返回结構。 */
 export interface CaseMutationResult {
   id: string;
 }
-
 export {
   CASE_WRITE_ERROR_I18N_MAP,
   resolveWriteErrorI18nKey,

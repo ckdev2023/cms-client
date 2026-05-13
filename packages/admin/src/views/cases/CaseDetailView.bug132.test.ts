@@ -17,7 +17,7 @@ import { createI18n } from "vue-i18n";
 import casesZhCN from "../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../i18n/messages/cases/en-US";
-import { CASE_STAGE_IDS, getStageI18nKey } from "./constants";
+import { CASE_STAGE_IDS, resolveStageLabelI18nKey } from "./constants";
 import { createMockDetail } from "./model/useCaseDetailModel.test-support";
 import type { CaseDetail, CaseStageId } from "./types";
 
@@ -75,7 +75,10 @@ function buildStageLabelFromDetail(detail: CaseDetail | null, locale: Locale) {
   const detailRef = ref<CaseDetail | null>(detail);
   return computed(() => {
     if (!detailRef.value) return "";
-    const key = getStageI18nKey(detailRef.value.stageCode);
+    const key = resolveStageLabelI18nKey(
+      detailRef.value.stageCode,
+      detailRef.value.workflowStep?.stepCode,
+    );
     return key ? t(key) : detailRef.value.stage;
   });
 }
@@ -91,6 +94,42 @@ function buildReadonlyBannerFromDetail(
 }
 
 describe("CaseDetailView BUG-132 — stage Chip 与 readonlyBanner 走 i18n", () => {
+  describe("BMV S7 认定后阶段文案（与 COE／海外査証子步骤对齐）", () => {
+    it("zh-CN × S7 × WAITING_PAYMENT → S7_post_approval 正文", () => {
+      const detail = createMockDetail({
+        stageCode: "S7",
+        workflowStep: {
+          stepCode: "WAITING_PAYMENT",
+          stepLabel: "等待尾款",
+          parentStage: "S7",
+          parentStageLabel: "",
+          sortOrder: 9,
+          isFailureStep: false,
+        },
+      });
+      const stageLabel = buildStageLabelFromDetail(detail, "zh-CN");
+      expect(stageLabel.value).toBe("认定后：COE・海外贴签跟踪");
+    });
+
+    it("en-US × S7 × COE_SENT → S7_post_approval", () => {
+      const detail = createMockDetail({
+        stageCode: "S7",
+        workflowStep: {
+          stepCode: "COE_SENT",
+          stepLabel: "COE sent",
+          parentStage: "S7",
+          parentStageLabel: "",
+          sortOrder: 10,
+          isFailureStep: false,
+        },
+      });
+      const stageLabel = buildStageLabelFromDetail(detail, "en-US");
+      expect(stageLabel.value).toBe(
+        "Post-approval: COE & overseas visa tracking",
+      );
+    });
+  });
+
   describe("stageLabel 解析合约（镜像 phaseLabel）", () => {
     for (const locale of ["zh-CN", "en-US", "ja-JP"] as const) {
       for (const stageId of CASE_STAGE_IDS) {

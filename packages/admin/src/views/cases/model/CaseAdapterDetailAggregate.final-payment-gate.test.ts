@@ -48,6 +48,7 @@ function billingFixture(overrides: Record<string, unknown> = {}) {
     totalReceived: 300000,
     depositPaid: true,
     finalPaymentPaid: false,
+    finalPaymentMilestoneMatched: true,
     billingRiskAcknowledged: false,
     billingRiskAcknowledgedAt: null,
     billingRiskAckReasonCode: null,
@@ -137,6 +138,20 @@ describe("finalPaymentGate activation (p1-fe-004-01)", () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe("finalPaymentGate blockers (p1-fe-004-01)", () => {
+  it("blocked with final_payment_milestone_missing when aggregate reports no final milestone", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate("WAITING_PAYMENT", {
+        finalPaymentMilestoneMatched: false,
+        unpaidAmount: 0,
+        billingRiskAcknowledged: true,
+      }),
+    )!;
+    const gate = result.detail.finalPaymentGate!;
+    expect(gate.blockers).toHaveLength(1);
+    expect(gate.blockers[0].code).toBe("final_payment_milestone_missing");
+    expect(gate.finalPaymentMilestoneMatched).toBe(false);
+  });
+
   it("blocked with final_payment_outstanding when finalPaymentPaid=false", () => {
     const result = adaptCaseDetailAggregate(buildAggregate("WAITING_PAYMENT"))!;
     const gate = result.detail.finalPaymentGate!;

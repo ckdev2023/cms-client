@@ -19,6 +19,7 @@ import { resolveLocalizedCustomerName } from "../model/CaseAdapterCustomerLocale
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail } from "../types-detail";
 import type { WriteActionFeedback } from "../model/useCaseDetailWriteActions";
+import { isRenderableFinalPaymentGate } from "../model/CaseAdapterFinalPaymentGate";
 
 /** 概览 Tab：组合统计卡、下一动作、时间线、侧边栏与各类提示横幅。 */
 const { locale } = useI18n();
@@ -51,6 +52,12 @@ const localizedClientName = computed(() =>
     locale.value,
   ),
 );
+
+const renderableFinalPaymentGate = computed(() =>
+  isRenderableFinalPaymentGate(props.detail.finalPaymentGate)
+    ? props.detail.finalPaymentGate
+    : null,
+);
 </script>
 
 <template>
@@ -79,8 +86,8 @@ const localizedClientName = computed(() =>
     />
 
     <CaseFinalPaymentCoeGate
-      v-if="detail.finalPaymentGate"
-      :gate="detail.finalPaymentGate"
+      v-if="renderableFinalPaymentGate"
+      :gate="renderableFinalPaymentGate"
       :write-feedback="writeFeedback"
       :readonly="readonly ?? detail.readonly"
       @advance-to-coe="emit('advanceToCoe')"
@@ -132,6 +139,7 @@ const localizedClientName = computed(() =>
 
       <CaseOverviewSidebar
         :detail="detail"
+        :is-terminal="isTerminal"
         @switch-tab="(tab) => emit('switchTab', tab)"
       />
     </div>

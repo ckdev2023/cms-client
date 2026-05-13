@@ -257,6 +257,10 @@ export function resolveCaseUpdateFields(input: CaseUpdateInput, current: Case) {
       input.entryConfirmedAt,
       current.entryConfirmedAt,
     ),
+    jurisdictionAuthority: pickDefined(
+      input.jurisdictionAuthority,
+      current.jurisdictionAuthority,
+    ),
   };
 }
 
@@ -482,6 +486,7 @@ export function buildInsertCaseParams(
     input.resultOutcome ?? null,
     input.quotePrice ?? null,
     input.visaPlan ?? null,
+    input.jurisdictionAuthority ?? null,
     resolveInitialBusinessPhase(workflowStage),
   ];
 }

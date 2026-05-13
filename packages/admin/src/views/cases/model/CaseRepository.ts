@@ -69,8 +69,8 @@ import {
   createCreateReminder,
   createCreateSubmissionPackage,
   createCreateTask,
+  createDeleteDraftGeneratedDocument,
   createFinalizeGeneratedDocument,
-  createExportGeneratedDocument,
   type SubmissionPackageCreateInput,
   type WriteResultWithId,
 } from "./CaseRepositoryWriteSide";
@@ -333,10 +333,10 @@ export interface CaseRepository {
   finalizeGeneratedDocument(id: string): Promise<WriteResultWithId>;
 
   /**
-   * 导出生成文書。
-   * 数据源：`POST /api/generated-documents/:id/export`。
+   * 删除草稿状态的生成文书。
+   * 数据源：`DELETE /api/generated-documents/:id`。
    */
-  exportGeneratedDocument(id: string): Promise<WriteResultWithId>;
+  deleteDraftGeneratedDocument(id: string): Promise<WriteResultWithId>;
 }
 
 export { CaseRepositoryError };
@@ -389,7 +389,7 @@ export function createCaseRepository(
     createCommunicationLog: createCreateCommunicationLog(runtime),
     createGeneratedDocument: createCreateGeneratedDocument(runtime),
     finalizeGeneratedDocument: createFinalizeGeneratedDocument(runtime),
-    exportGeneratedDocument: createExportGeneratedDocument(runtime),
+    deleteDraftGeneratedDocument: createDeleteDraftGeneratedDocument(runtime),
     createReminder: createCreateReminder(runtime),
     createTask: createCreateTask(runtime),
     completeTask: createCompleteTask(runtime),

@@ -1,0 +1,183 @@
+.forms-tab {
+  display: grid;
+  gap: 20px;
+}
+.forms-tab :deep(.ui-card__header) {
+  padding: 14px 20px;
+}
+.forms-tab__title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  color: var(--color-text-1);
+}
+.forms-tab__section {
+  padding: 0 20px 12px;
+}
+.forms-tab__section--border {
+  border-top: 1px solid var(--color-border-1);
+}
+.forms-tab__kicker {
+  padding: 16px 0 8px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.forms-tab__gate-hint {
+  margin: 0 0 4px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-3);
+}
+.forms-tab__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+}
+.forms-tab__row + .forms-tab__row {
+  border-top: 1px solid var(--color-border-1);
+}
+.forms-tab__row-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+.forms-tab__row-icon {
+  flex-shrink: 0;
+}
+.forms-tab__name {
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-1);
+}
+.forms-tab__meta {
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  color: var(--color-text-3);
+  margin-top: 2px;
+}
+.forms-tab__row-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.forms-tab__download-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-6);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.forms-tab__download-link:hover {
+  text-decoration: underline;
+}
+.forms-tab__download-link:focus-visible {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.forms-tab__link-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-primary-6);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.forms-tab__link-btn:hover:not(:disabled) {
+  text-decoration: underline;
+}
+.forms-tab__link-btn:focus-visible:not(:disabled) {
+  outline: 2px solid var(--color-primary-outline);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+.forms-tab__link-btn:disabled {
+  color: var(--color-text-3);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.forms-tab__icon--success {
+  color: var(--color-success, #22c55e);
+}
+.forms-tab__icon--warning {
+  color: var(--color-warning);
+}
+.forms-tab__icon--primary {
+  color: var(--color-primary-6);
+}
+.forms-tab__icon--danger {
+  color: var(--color-danger-vivid);
+}
+.forms-tab__icon--muted {
+  color: var(--color-text-3);
+}
+.forms-tab__placeholder-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-3);
+  background: var(--color-bg-3);
+  white-space: nowrap;
+}
+
+@media (max-width: 767px) {
+  .forms-tab__row {
+    flex-wrap: wrap;
+  }
+  .forms-tab__row-actions {
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .forms-tab__btn-label {
+    display: none;
+  }
+  .forms-tab__row-actions .forms-tab__link-btn {
+    font-size: 0;
+  }
+  .forms-tab__row-actions .forms-tab__link-btn::before {
+    content: "⏱";
+    font-size: var(--font-size-base);
+  }
+}
+.forms-tab__empty--loading {
+  padding: 28px 20px;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+}
+.forms-tab__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px;
+  color: var(--color-text-3);
+}
+.forms-tab__empty p {
+  margin: 0;
+  font-size: var(--font-size-base);
+  line-height: var(--leading-base);
+  font-weight: var(--font-weight-semibold);
+}

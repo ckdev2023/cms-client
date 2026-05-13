@@ -50,3 +50,16 @@ export function hasForms(detail: CaseDetail, isReadonly: boolean): boolean {
     detail.forms.generated.length > 0
   );
 }
+
+/**
+ * 草稿是否满足「确认已就绪」前置条件：须具备非占位的 http(s) 外链 fileUrl（与后端 finalize 一致）。
+ *
+ * @param doc - 已生成文書 view-model
+ * @returns 是否允许点击「确认已就绪」
+ */
+export function canFinalizeDraftGeneratedDoc(doc: FormGenerated): boolean {
+  if (doc.backendStatus !== "draft") return false;
+  const u = doc.fileUrl?.trim();
+  if (!u || doc.fileUrlIsPlaceholder) return false;
+  return u.startsWith("http://") || u.startsWith("https://");
+}

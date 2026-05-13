@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   BadRequestException,
   ForbiddenException,
+  GoneException,
   NotFoundException,
   UnauthorizedException,
 } from "@nestjs/common";
@@ -10,7 +11,10 @@ import {
 import { PermissionsService } from "../auth/permissions.service";
 import type { Case } from "../model/coreEntities";
 import type { GeneratedDocument } from "../model/documentEntities";
-import type { GeneratedDocumentDto } from "../cases/cases.types-generated-docs";
+import {
+  GENERATED_DOCUMENT_ERROR_CODES,
+  type GeneratedDocumentDto,
+} from "../cases/cases.types-generated-docs";
 import { CasesService } from "../cases/cases.service";
 import { GeneratedDocumentsController } from "./generatedDocuments.controller";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
@@ -94,6 +98,7 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  jurisdictionAuthority: null,
   businessPhase: "CONSULTING",
   currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -111,7 +116,7 @@ function gdEntity(
     title: "申請書",
     versionNo: 1,
     outputFormat: "pdf",
-    fileUrl: null,
+    fileUrl: "https://example.com/doc.pdf",
     status: "draft",
     generatedBy: USER_ID,
     approvedBy: null,
@@ -344,144 +349,93 @@ void test("finalize rejects S9 case", async () => {
   );
 });
 
-// ─── export: happy path ─────────────────────────────────────────
+// ─── finalize: external URL validation (B2) ─────────────────────
 
-void test("export calls update with status=exporting and skipTimelineWrite", async () => {
-  let input: Record<string, unknown> | undefined;
-  let opts: Record<string, unknown> | undefined;
+void test("finalize rejects when fileUrl is null", async () => {
   const c = ctrl({
-    entity: gdEntity({ status: "final", outputFormat: "pdf" }),
-    svc: {
-      update: (
-        _c: unknown,
-        _id: string,
-        i: Record<string, unknown>,
-        o?: Record<string, unknown>,
-      ) => {
-        input = i;
-        opts = o;
-        return Promise.resolve(gdDto({ status: "exporting" }));
-      },
-    },
-  });
-  const r = await c.export(staffReq as never, GD_ID);
-  assert.equal(r.status, "exporting");
-  assert.ok(input, "update must have been called");
-  assert.equal(input.status, "exporting");
-  assert.equal(input.fileUrl, undefined);
-  assert.deepEqual(opts, { skipTimelineWrite: true });
-});
-
-// ─── export: timeline written with export_queued action ─────────
-
-void test("export writes export_queued timeline", async () => {
-  const tlCalls: Record<string, unknown>[] = [];
-  const c = ctrl({
-    entity: gdEntity({ status: "final" }),
-    svc: {
-      update: () => Promise.resolve(gdDto({ status: "exporting" })),
-      writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
-        tlCalls.push(i);
-        return Promise.resolve();
-      },
-    },
-  });
-  await c.export(staffReq as never, GD_ID);
-  assert.equal(tlCalls.length, 1);
-  assert.equal(tlCalls[0].action, "generated_document.export_queued");
-});
-
-// ─── export: 409 when already exporting ──────────────────────────
-
-void test("export returns 409 when already exporting", async () => {
-  const c = ctrl({
-    entity: gdEntity({ status: "exporting" }),
+    entity: gdEntity({ fileUrl: null }),
   });
   await assert.rejects(
-    () => c.export(staffReq as never, GD_ID),
+    () => c.finalize(staffReq as never, GD_ID),
     (e) => {
+      assert.ok(e instanceof BadRequestException);
       assert.ok(
-        e instanceof Error && e.constructor.name === "ConflictException",
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_EXTERNAL_URL_REQUIRED,
+        ),
       );
       return true;
     },
   );
 });
 
-// ─── export: allows retry from export_failed ─────────────────────
-
-void test("export allows retry from export_failed status", async () => {
+void test("finalize rejects when fileUrl is not http(s)", async () => {
   const c = ctrl({
-    entity: gdEntity({ status: "export_failed" }),
-    svc: {
-      update: () => Promise.resolve(gdDto({ status: "exporting" })),
-    },
-  });
-  const r = await c.export(staffReq as never, GD_ID);
-  assert.equal(r.status, "exporting");
-});
-
-// ─── export: auth guard ──────────────────────────────────────────
-
-void test("export requires request context", async () => {
-  const c = ctrl({});
-  await assert.rejects(
-    () => c.export({} as never, GD_ID),
-    UnauthorizedException,
-  );
-});
-
-void test("export throws NotFoundException when doc missing", async () => {
-  const c = ctrl({ svc: { get: () => Promise.resolve(null) } });
-  await assert.rejects(
-    () => c.export(staffReq as never, GD_ID),
-    NotFoundException,
-  );
-});
-
-void test("export rejects S9 case", async () => {
-  const s9: Case = { ...mockCase, stage: "S9", status: "S9" };
-  const c = ctrl({
-    entity: gdEntity({ status: "final" }),
-    cs: { get: () => Promise.resolve(s9) },
+    entity: gdEntity({ fileUrl: "storage-key/abc.pdf" }),
   });
   await assert.rejects(
-    () => c.export(staffReq as never, GD_ID),
+    () => c.finalize(staffReq as never, GD_ID),
     (e) => {
       assert.ok(e instanceof BadRequestException);
-      assert.ok(e.message.includes("S9"));
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_EXTERNAL_URL_REQUIRED,
+        ),
+      );
       return true;
     },
   );
 });
 
-void test("export throws ForbiddenException when canEditCase denies", async () => {
+void test("finalize rejects when fileUrl is placeholder://", async () => {
   const c = ctrl({
-    entity: gdEntity({ status: "final" }),
-    perm: { canEditCase: () => false },
+    entity: gdEntity({ fileUrl: "placeholder://pending" }),
   });
   await assert.rejects(
-    () => c.export(staffReq as never, GD_ID),
-    ForbiddenException,
+    () => c.finalize(staffReq as never, GD_ID),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_EXTERNAL_URL_REQUIRED,
+        ),
+      );
+      return true;
+    },
   );
 });
 
-// ─── export: timeline payload includes title ─────────────────────
-
-void test("export timeline payload includes title in extra", async () => {
-  let tlInput: Record<string, unknown> | undefined;
+void test("finalize accepts valid https fileUrl", async () => {
   const c = ctrl({
-    entity: gdEntity({ status: "final", title: "申請書" }),
-    svc: {
-      update: () => Promise.resolve(gdDto({ status: "exporting" })),
-      writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
-        tlInput = i;
-        return Promise.resolve();
-      },
-    },
+    entity: gdEntity({ fileUrl: "https://storage.example.com/doc.pdf" }),
   });
-  await c.export(staffReq as never, GD_ID);
-  assert.ok(tlInput);
-  const extra = tlInput.extra as Record<string, unknown>;
-  assert.equal(extra.title, "申請書");
+  const r = await c.finalize(staffReq as never, GD_ID);
+  assert.equal(r.status, "final");
+});
+
+void test("finalize accepts valid http fileUrl", async () => {
+  const c = ctrl({
+    entity: gdEntity({ fileUrl: "http://internal.example.com/doc.pdf" }),
+  });
+  const r = await c.finalize(staffReq as never, GD_ID);
+  assert.equal(r.status, "final");
+});
+
+// ─── export: deprecated (410 Gone) ──────────────────────────────
+
+void test("export returns 410 Gone (deprecated)", async () => {
+  const c = ctrl({
+    entity: gdEntity({ status: "final" }),
+  });
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  await assert.rejects(() => c.export(staffReq as never), GoneException);
+});
+
+void test("export requires request context even though deprecated", async () => {
+  const c = ctrl({});
+  await assert.rejects(
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
+    () => c.export({} as never),
+    UnauthorizedException,
+  );
 });

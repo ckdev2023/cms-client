@@ -93,3 +93,14 @@ describe("CaseInfoTab role i18n — plain text role passes through", () => {
     expect(roleEl.text()).toBe("扶養者");
   });
 });
+
+describe("CaseInfoTab — risk level chip (list parity)", () => {
+  it("shows mapped risk label from detail.riskLevel", () => {
+    const detail = { ...CASE_DETAIL_SAMPLES.work };
+    const w = mountTab(detail, "zh-CN");
+    const chip = w.find(".info-tab__risk-chip");
+    expect(chip.exists()).toBe(true);
+    expect(chip.attributes("data-risk-status")).toBe("normal");
+    expect(chip.text()).toBe("正常");
+  });
+});

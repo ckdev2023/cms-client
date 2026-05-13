@@ -64,6 +64,7 @@ export type CaseQueryRow = {
   billing_risk_ack_evidence_url: string | null;
   overseas_visa_start_at: unknown;
   entry_confirmed_at: unknown;
+  jurisdiction_authority: string | null;
   business_phase: string;
   current_workflow_step_code: string | null;
   created_at: unknown;
@@ -131,6 +132,7 @@ export type LatestSubmissionRow = {
   submission_kind: string;
   submitted_at: unknown;
   related_submission_id: string | null;
+  authority_name: string | null;
 };
 
 /**
@@ -307,6 +309,7 @@ export function mapCaseRow(row: CaseQueryRow): Case {
     residenceExpiryDate: toTimestampStringOrNull(row.residence_expiry_date),
     archivedAt: toTimestampStringOrNull(row.archived_at),
     ...mapCaseP0Fields(row),
+    jurisdictionAuthority: row.jurisdiction_authority ?? null,
     businessPhase: row.business_phase,
     currentWorkflowStepCode: row.current_workflow_step_code ?? null,
     createdAt: toTimestampString(row.created_at),
@@ -373,6 +376,7 @@ export function mapLatestSubmissionRow(
     submissionKind: row.submission_kind,
     submittedAt: toTimestampString(row.submitted_at),
     relatedSubmissionId: row.related_submission_id ?? null,
+    authorityName: row.authority_name ?? null,
   };
 }
 

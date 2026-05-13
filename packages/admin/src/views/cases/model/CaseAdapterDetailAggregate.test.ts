@@ -79,6 +79,7 @@ const MOCK_BILLING = {
   unpaidAmount: 50000,
   depositPaid: true,
   finalPaymentPaid: false,
+  finalPaymentMilestoneMatched: true,
   billingRiskAcknowledged: false,
   billingRiskAcknowledgedAt: null,
   billingRiskAckReasonCode: null,
@@ -98,6 +99,7 @@ const MOCK_SUBMISSION = {
   submissionKind: "initial",
   submittedAt: "2026-03-15T00:00:00.000Z",
   relatedSubmissionId: null,
+  authorityName: null,
 };
 
 const MOCK_REVIEW = {
@@ -228,8 +230,11 @@ describe("aggregate contract freeze", () => {
     expect(BILLING_SLICE_CONSUMED_FIELDS).toContain("unpaidAmount");
     expect(BILLING_SLICE_CONSUMED_FIELDS).toContain("depositPaid");
     expect(BILLING_SLICE_CONSUMED_FIELDS).toContain("finalPaymentPaid");
+    expect(BILLING_SLICE_CONSUMED_FIELDS).toContain(
+      "finalPaymentMilestoneMatched",
+    );
     expect(BILLING_SLICE_CONSUMED_FIELDS).toContain("billingRiskAcknowledged");
-    expect(BILLING_SLICE_CONSUMED_FIELDS).toHaveLength(7);
+    expect(BILLING_SLICE_CONSUMED_FIELDS).toHaveLength(8);
   });
 
   it("LATEST_VALIDATION_SLICE_CONSUMED_FIELDS matches CaseLatestValidationSummary", () => {

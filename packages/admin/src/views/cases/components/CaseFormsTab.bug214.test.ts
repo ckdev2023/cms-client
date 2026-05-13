@@ -55,10 +55,9 @@ function mountTab(
 
 const HARDCODED_ZH_ONLY = [
   "可用模板",
-  "已生成文书",
-  "导出",
+  "已登记文书",
   "版本历史",
-  "暂无可用文书模板或生成记录",
+  "暂无可用文书模板或登记记录",
 ];
 
 describe("BUG-214 CaseFormsTab i18n", () => {
@@ -66,7 +65,7 @@ describe("BUG-214 CaseFormsTab i18n", () => {
     const w = mountTab("zh-CN", casesZhCN);
     const text = w.text();
     expect(text).toContain("文书管理");
-    expect(text).toContain("生成文书");
+    expect(text).toContain("登记文书");
     expect(text).not.toContain("cases.detail.forms.title");
   });
 
@@ -77,7 +76,7 @@ describe("BUG-214 CaseFormsTab i18n", () => {
       expect(text).not.toContain(zh);
     }
     expect(text).toContain("文書管理");
-    expect(text).toContain("文書を生成");
+    expect(text).toContain("文書を登録");
   });
 
   it("en-US does not leak Chinese or Japanese hardcoded text", () => {
@@ -87,22 +86,37 @@ describe("BUG-214 CaseFormsTab i18n", () => {
       expect(text).not.toContain(zh);
     }
     expect(text).toContain("Document Management");
-    expect(text).toContain("Generate Document");
+    expect(text).toContain("Register Document");
   });
 
-  it("generate button emits open-generate-modal on click", async () => {
+  it("template row emits open-generate-modal with selected template", async () => {
+    const w = mountTab();
+    const tpl = CASE_DETAIL_SAMPLES.work.forms.templates[0]!;
+    const rowBtns = w.findAll("button").filter((b) => b.text() === "登记文书");
+    expect(rowBtns.length).toBeGreaterThanOrEqual(2);
+    const rowBtn = rowBtns[1];
+    expect(rowBtn).toBeTruthy();
+    await rowBtn!.trigger("click");
+    const ev = w.emitted("open-generate-modal")!;
+    expect(ev).toHaveLength(1);
+    expect(ev[0]![0]).toEqual(tpl);
+  });
+
+  it("register button emits open-generate-modal on click", async () => {
     const w = mountTab();
     const buttons = w.findAll("button");
-    const genBtn = buttons.find((b) => b.text().includes("生成文书"));
+    const genBtn = buttons.find((b) => b.text().includes("登记文书"));
     expect(genBtn).toBeTruthy();
     await genBtn!.trigger("click");
-    expect(w.emitted("open-generate-modal")).toBeTruthy();
+    const ev = w.emitted("open-generate-modal")!;
+    expect(ev).toHaveLength(1);
+    expect(ev[0]).toEqual([]);
   });
 
-  it("generate button is hidden in readonly mode", () => {
+  it("register button is hidden in readonly mode", () => {
     const w = mountTab("zh-CN", casesZhCN, true);
     const buttons = w.findAll("button");
-    const genBtn = buttons.find((b) => b.text().includes("生成文书"));
+    const genBtn = buttons.find((b) => b.text().includes("登记文书"));
     expect(genBtn).toBeUndefined();
   });
 
@@ -116,17 +130,17 @@ describe("BUG-214 CaseFormsTab i18n", () => {
       {
         locale: "zh-CN",
         messages: casesZhCN,
-        expected: "暂无可用文书模板或生成记录",
+        expected: "暂无可用文书模板或登记记录",
       },
       {
         locale: "ja-JP",
         messages: casesJaJP,
-        expected: "利用可能なテンプレートまたは生成記録がありません",
+        expected: "利用可能なテンプレートまたは登録記録がありません",
       },
       {
         locale: "en-US",
         messages: casesEnUS,
-        expected: "No templates or generated documents available",
+        expected: "No templates or registered documents available",
       },
     ];
 

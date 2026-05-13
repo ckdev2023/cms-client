@@ -7,6 +7,7 @@ const TERMINAL_ACCESSIBLE_TABS: ReadonlySet<CaseDetailTab> = new Set([
   "overview",
   "forms",
   "documents",
+  "billing",
 ]);
 
 /**
@@ -14,7 +15,7 @@ const TERMINAL_ACCESSIBLE_TABS: ReadonlySet<CaseDetailTab> = new Set([
  *
  * @param tabKey - tab 键名
  * @param terminal - 是否处于终态
- * @returns 终态下仅 log / overview / forms / documents 可访问（后两者 readonly）；非终态全部可访问
+ * @returns 终态下 log / overview / forms / documents / billing 可访问（与概览「查看收费」一致，写入仍受案件 readonly 约束）；非终态全部可访问
  */
 export function isTabAccessibleInTerminal(
   tabKey: CaseDetailTab,
@@ -50,7 +51,7 @@ export function useCaseDetailGuard(detail: Ref<CaseDetail | null>) {
    * 判断指定 tab 在当前案件状态下是否可访问。
    *
    * @param tabKey - tab 键名
-   * @returns 终态下仅 log / overview / forms / documents 可访问（后两者 readonly）；非终态全部可访问
+   * @returns 终态下 log / overview / forms / documents / billing 可访问（forms/documents/billing 等为 readonly）；非终态全部可访问
    */
   function isTabAccessible(tabKey: CaseDetailTab): boolean {
     return isTabAccessibleInTerminal(tabKey, isTerminal.value);

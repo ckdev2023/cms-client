@@ -299,10 +299,21 @@ interface DerivedMetrics {
   quotePrice: number;
   depositPaid: boolean;
   finalPaymentPaid: boolean;
+  /** 与 `CaseBillingSummary.finalPaymentMilestoneMatched` 一致；缺失时默认 true（旧 fixture 兼容）。 */
+  finalPaymentMilestoneMatched: boolean;
   totalReceived: number;
   blockingCount: number;
   warningCount: number;
   billingRiskAck: boolean;
+}
+
+function readFinalPaymentMilestoneMatched(
+  billing: Record<string, unknown> | null,
+): boolean {
+  if (!billing) return true;
+  const v = billing["finalPaymentMilestoneMatched"];
+  if (v === false) return false;
+  return true;
 }
 
 function deriveCaseMetrics(slices: AggregateSlices): DerivedMetrics {
@@ -324,6 +335,7 @@ function deriveCaseMetrics(slices: AggregateSlices): DerivedMetrics {
     finalPaymentPaid: billing
       ? readBoolean(billing, "finalPaymentPaid")
       : false,
+    finalPaymentMilestoneMatched: readFinalPaymentMilestoneMatched(billing),
     totalReceived,
     blockingCount: latestValidation
       ? readNumber(latestValidation, "blockingCount")
@@ -408,6 +420,7 @@ function buildDetailHeader(
   const dKey = "cases.detail.overview.deadlineMeta";
   const fDue = dueAt ? formatDate(dueAt) : "";
   const caseNo = extractCaseNo(caseRecord);
+  const jurisdictionAuthority = readString(caseRecord, "jurisdictionAuthority");
   return {
     id,
     caseNo,
@@ -420,7 +433,7 @@ function buildDetailHeader(
     ),
     client: dlStr(deepLink, "customerName"),
     owner: dlStr(deepLink, "ownerDisplayName"),
-    agency: "",
+    agency: jurisdictionAuthority,
     stage: resolveStageLabel(stageId),
     stageCode: stageId,
     stageMeta: stageId,
@@ -450,7 +463,7 @@ function buildDetailHeader(
     riskLevel: readString(caseRecord, "riskLevel"),
     ownerUserId: dlStr(deepLink, "ownerUserId"),
     assistantUserId: dlStr(deepLink, "assistantUserId"),
-    jurisdictionAuthority: readString(caseRecord, "jurisdictionAuthority"),
+    jurisdictionAuthority,
     remark: readString(caseRecord, "remark"),
     customerLocalizedNames: buildCustomerLocalizedNames(deepLink),
   };
@@ -475,6 +488,7 @@ function buildP1WithGuards(
   );
   const isBmv = p1.workflowStep != null || p1.visaPlan != null;
   const bp = readString(caseRecord, "businessPhase");
+  const workflowStepCode = p1.workflowStep?.stepCode ?? null;
   return {
     ...p1,
     transitionGuards: buildTransitionGuards(
@@ -482,6 +496,9 @@ function buildP1WithGuards(
       m.unpaidAmount,
       m.billingRiskAck,
       isBmv,
+      workflowStepCode,
+      m.finalPaymentPaid,
+      m.finalPaymentMilestoneMatched,
     ),
   };
 }

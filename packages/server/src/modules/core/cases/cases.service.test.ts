@@ -58,6 +58,7 @@ function makeCaseRow(overrides: Record<string, unknown> = {}) {
     source_channel: null,
     signed_at: null,
     accepted_at: null,
+    jurisdiction_authority: null,
     submission_date: null,
     result_date: null,
     residence_expiry_date: null,
@@ -1199,6 +1200,38 @@ void test("transition: S6→S7 passes when unpaid but billing risk acknowledged"
     { toStatus: "S7" },
   );
   assert.equal(transitioned.stage, "S7");
+});
+
+void test("transition: S6→S7 rejects when open case tasks exist", async () => {
+  const pool = makePool((sql, p) => {
+    if (sql.includes("from cases") && p?.[0] === CASE_ID)
+      return ok([makeCaseRow({ status: "S6" })]);
+    if (sql.includes("from validation_runs"))
+      return ok([
+        {
+          id: "vr-1",
+          result_status: "passed",
+          executed_at: "2026-04-20T00:00:00.000Z",
+        },
+      ]);
+    if (sql.includes("as stale")) return ok([{ stale: false }]);
+    if (
+      sql.includes("from tasks") &&
+      sql.includes("case_id") &&
+      sql.includes("status not in")
+    ) {
+      return ok([{ id: "task-open-1" }]);
+    }
+    return ok();
+  });
+
+  await assert.rejects(
+    () =>
+      svc(pool, makeTemplates()).transition(makeCtx(), CASE_ID, {
+        toStatus: "S7",
+      }),
+    /CASE_GATE_C_OPEN_TASKS|completed or cancelled/,
+  );
 });
 
 void test("transition: S6→S7 passes when no unpaid balance", async () => {
@@ -3204,6 +3237,7 @@ void test("mapLatestSubmissionRow maps submission package summary", () => {
     submission_kind: "supplement",
     submitted_at: "2026-04-20T10:00:00.000Z",
     related_submission_id: "sp-0",
+    authority_name: "名古屋出入国在留管理局",
   });
   assert.ok(result);
   assert.equal(result.id, "sp-1");
@@ -3211,6 +3245,7 @@ void test("mapLatestSubmissionRow maps submission package summary", () => {
   assert.equal(result.submissionKind, "supplement");
   assert.equal(result.submittedAt, "2026-04-20T10:00:00.000Z");
   assert.equal(result.relatedSubmissionId, "sp-0");
+  assert.equal(result.authorityName, "名古屋出入国在留管理局");
 });
 
 void test("mapLatestSubmissionRow returns null for undefined", () => {
@@ -3224,10 +3259,12 @@ void test("mapLatestSubmissionRow handles string submission_no", () => {
     submission_kind: "initial",
     submitted_at: "2026-04-21T10:00:00.000Z",
     related_submission_id: null,
+    authority_name: null,
   });
   assert.ok(result);
   assert.equal(result.submissionNo, 3);
   assert.equal(result.relatedSubmissionId, null);
+  assert.equal(result.authorityName, null);
 });
 
 // ── read model contract: mapLatestReviewRow ──
@@ -3457,6 +3494,7 @@ void test("getDetailAggregate returns full aggregate DTO", async () => {
     submission_kind: "initial",
     submitted_at: "2026-04-19T10:00:00.000Z",
     related_submission_id: null,
+    authority_name: "Tokyo Card Office",
   };
   const reviewRow = {
     id: "rr-1",
@@ -3481,6 +3519,11 @@ void test("getDetailAggregate returns full aggregate DTO", async () => {
       return ok([reviewRow]);
     if (sql.includes("provided_by_role") && sql.includes("group by"))
       return ok(docProgressRows);
+    if (
+      sql.includes("count(*)::text as count") &&
+      sql.includes("milestone_name")
+    )
+      return ok([{ count: "1" }]);
     return ok();
   });
 
@@ -3506,13 +3549,170 @@ void test("getDetailAggregate returns full aggregate DTO", async () => {
   assert.equal(result.latestValidation.warningCount, 1);
   assert.ok(result.latestSubmission);
   assert.equal(result.latestSubmission.submissionKind, "initial");
+  assert.equal(result.latestSubmission.authorityName, "Tokyo Card Office");
+  assert.equal(result.case.jurisdictionAuthority, "Tokyo Card Office");
   assert.ok(result.latestReview);
   assert.equal(result.latestReview.decision, "approved");
   assert.equal(result.documentProgressByProvider.length, 2);
   assert.equal(result.documentProgressByProvider[0]?.providerRole, "applicant");
   assert.equal(result.billing.quotePrice, 150000);
   assert.equal(result.billing.unpaidAmount, 50000);
+  assert.equal(result.billing.finalPaymentMilestoneMatched, true);
   assert.equal(result.billing.billingRiskAcknowledged, false);
+  assert.equal(
+    result.case.acceptedAt,
+    "2026-04-19T10:00:00.000Z",
+    "acceptedAt backfilled from initial submission when accepted_at unset",
+  );
+  assert.ok(
+    (result.case.dueAt ?? "").includes("2026-04-19"),
+    "dueAt enriched from submission submitted_at when due_at unset",
+  );
+});
+
+void test("getDetailAggregate preserves case jurisdictionAuthority when submission names differ authority", async () => {
+  const summaryRow = {
+    ...makeCaseRow({ jurisdiction_authority: "大阪入管" }),
+    customer_name: "Bob",
+    group_name: "G",
+    owner_display_name: "O",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "1",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "1",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+  const submissionRow = {
+    id: "sp-9",
+    submission_no: 1,
+    submission_kind: "initial",
+    submitted_at: "2026-04-19T10:00:00.000Z",
+    related_submission_id: null,
+    authority_name: "東京入管",
+  };
+
+  const pool = makePool((sql) => {
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([submissionRow]);
+    return ok([]);
+  });
+
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.case.jurisdictionAuthority, "大阪入管");
+  assert.equal(result.latestSubmission?.authorityName, "東京入管");
+});
+
+void test("getDetailAggregate fills empty applicationType from case_templates snapshot", async () => {
+  const summaryRow = {
+    ...makeCaseRow({ application_type: null }),
+    customer_name: "Ann",
+    group_name: null,
+    owner_display_name: "Staff",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "0",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "0",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+  const pool = makePool((sql) => {
+    const s = sql.toLowerCase();
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (s.includes("select application_type") && s.includes("case_templates"))
+      return ok([{ application_type: "template_enum_x" }]);
+    return ok([]);
+  });
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.equal(result.case.applicationType, "template_enum_x");
+});
+
+void test("getDetailAggregate prefers submission_date over submission submitted_at for dueAt", async () => {
+  const summaryRow = {
+    ...makeCaseRow({
+      due_at: null,
+      submission_date: "2026-06-02",
+      accepted_at: "2026-01-02T12:00:00.000Z",
+    }),
+    customer_name: "Ben",
+    group_name: null,
+    owner_display_name: "Staff",
+    assistant_display_name: null,
+  };
+  const countsRow = {
+    document_items_total: "1",
+    document_items_done: "0",
+    questionnaire_items_total: "0",
+    questionnaire_items_done: "0",
+    case_parties: "0",
+    tasks: "0",
+    tasks_pending: "0",
+    communication_logs: "0",
+    submission_packages: "1",
+    generated_documents: "0",
+    validation_runs: "0",
+    review_records: "0",
+    billing_records: "0",
+    payment_records: "0",
+  };
+  const submissionRow = {
+    id: "sp-d",
+    submission_no: 1,
+    submission_kind: "initial",
+    submitted_at: "2026-04-05T02:00:00.000Z",
+    related_submission_id: null,
+    authority_name: null,
+  };
+  const pool = makePool((sql) => {
+    if (sql.includes("customer_name")) return ok([summaryRow]);
+    if (sql.includes("document_items_total")) return ok([countsRow]);
+    if (sql.includes("submission_packages") && sql.includes("submission_kind"))
+      return ok([submissionRow]);
+    return ok([]);
+  });
+  const result = await svc(pool, makeTemplates()).getDetailAggregate(
+    makeCtx(),
+    CASE_ID,
+  );
+  assert.ok(result);
+  assert.ok((result.case.dueAt ?? "").includes("2026-06-02"));
+  assert.ok(
+    !(result.case.dueAt ?? "").includes("2026-04-05"),
+    "must not prefer submitted_at ahead of persisted submission_date",
+  );
 });
 
 void test("getDetailAggregate sets checklistBootstrapAvailable when checklist empty and template has items", async () => {

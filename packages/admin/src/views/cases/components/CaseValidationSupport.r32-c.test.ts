@@ -23,6 +23,7 @@ function makeI18n(locale: Locale) {
 function buildDetail(reviewEnabled: boolean): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    caseType: "work",
     doubleReview: [],
     reviewEnabled,
     riskConfirmationRecord: null,

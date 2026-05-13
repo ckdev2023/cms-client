@@ -4,9 +4,29 @@ import {
   buildTransitionGuards,
 } from "./CaseAdapterDetailAggregate";
 
+function tg(
+  businessPhase: string,
+  unpaidAmount: number,
+  billingRiskAck: boolean,
+  isBmv: boolean,
+  workflowStepCode: string | null = null,
+  finalPaymentPaid = true,
+  finalPaymentMilestoneMatched = true,
+) {
+  return buildTransitionGuards(
+    businessPhase,
+    unpaidAmount,
+    billingRiskAck,
+    isBmv,
+    workflowStepCode,
+    finalPaymentPaid,
+    finalPaymentMilestoneMatched,
+  );
+}
+
 describe("buildTransitionGuards", () => {
   it("returns guard for RESIDENCE_PERIOD_RECORDED when BMV + SUCCESS + unpaid + no risk ack", () => {
-    const guards = buildTransitionGuards("SUCCESS", 50000, false, true);
+    const guards = tg("SUCCESS", 50000, false, true);
     expect(guards).toEqual({
       RESIDENCE_PERIOD_RECORDED: {
         key: "cases.detail.phaseMenu.guards.successCloseoutBlocked",
@@ -16,23 +36,71 @@ describe("buildTransitionGuards", () => {
   });
 
   it("returns empty when unpaidAmount is 0", () => {
-    const guards = buildTransitionGuards("SUCCESS", 0, false, true);
-    expect(guards).toEqual({});
+    expect(tg("SUCCESS", 0, false, true)).toEqual({});
   });
 
   it("returns empty when billingRiskAck is true", () => {
-    const guards = buildTransitionGuards("SUCCESS", 50000, true, true);
-    expect(guards).toEqual({});
+    expect(tg("SUCCESS", 50000, true, true)).toEqual({});
   });
 
   it("returns empty when not BMV", () => {
-    const guards = buildTransitionGuards("SUCCESS", 50000, false, false);
-    expect(guards).toEqual({});
+    expect(tg("SUCCESS", 50000, false, false)).toEqual({});
   });
 
-  it("returns empty when businessPhase is not SUCCESS", () => {
-    const guards = buildTransitionGuards("APPROVED", 50000, false, true);
-    expect(guards).toEqual({});
+  it("returns empty when businessPhase is not SUCCESS (no residence-period guard)", () => {
+    expect(tg("APPROVED", 50000, false, true)).toEqual({});
+  });
+
+  it("WAITING_PAYMENT + BMV + 尾款门禁未满足 → guard COE_SENT", () => {
+    const guards = tg(
+      "WAITING_PAYMENT",
+      50000,
+      false,
+      true,
+      "WAITING_PAYMENT",
+      false,
+      true,
+    );
+    expect(guards.COE_SENT).toEqual({
+      key: "cases.detail.phaseMenu.guards.coeAdvanceBlocked",
+      params: { amount: "¥50,000" },
+    });
+  });
+
+  it("WAITING_PAYMENT + 尾款节点未配置 → guard COE_SENT", () => {
+    const guards = tg(
+      "WAITING_PAYMENT",
+      0,
+      false,
+      true,
+      "WAITING_PAYMENT",
+      false,
+      false,
+    );
+    expect(guards.COE_SENT?.key).toBe(
+      "cases.detail.phaseMenu.guards.coeAdvanceBlocked",
+    );
+    expect(guards.COE_SENT?.params).toEqual({});
+  });
+
+  it("WAITING_PAYMENT + 尾款已清 → no COE_SENT guard", () => {
+    expect(
+      tg("WAITING_PAYMENT", 0, false, true, "WAITING_PAYMENT", true, true),
+    ).toEqual({});
+  });
+
+  it("WAITING_PAYMENT + 非 BMV → no COE_SENT guard", () => {
+    expect(
+      tg(
+        "WAITING_PAYMENT",
+        50000,
+        false,
+        false,
+        "WAITING_PAYMENT",
+        false,
+        true,
+      ),
+    ).toEqual({});
   });
 });
 

@@ -315,11 +315,12 @@ function createFormTemplatesSlice(
   const effectiveCaseType = computed(() =>
     isReadonly.value ? "" : (detail.value?.caseType ?? ""),
   );
-  const { templates: formTemplates } = useCaseFormTemplates({
-    repo,
-    caseType: effectiveCaseType,
-    language: templateLanguage,
-  });
+  const { templates: formTemplates, loading: formTemplatesLoading } =
+    useCaseFormTemplates({
+      repo,
+      caseType: effectiveCaseType,
+      language: templateLanguage,
+    });
 
   const enrichedDetail = computed<CaseDetail | null>(() => {
     const d = detail.value;
@@ -327,7 +328,7 @@ function createFormTemplatesSlice(
     return { ...d, forms: { ...d.forms, templates: formTemplates.value } };
   });
 
-  return { formTemplates, enrichedDetail };
+  return { formTemplates, formTemplatesLoading, enrichedDetail };
 }
 
 function setupDetailLifecycle(
@@ -358,6 +359,26 @@ function createTabSwitcher(
   };
 }
 
+function buildDetailModelPublicActions(wa: DetailWriteActions) {
+  return {
+    transitionStage: wa.transitionStage,
+    transitionWorkflowStep: wa.transitionWorkflowStep,
+    advancePostApprovalStage: wa.advancePostApprovalStage,
+    acknowledgeBillingRisk: wa.acknowledgeBillingRisk,
+    updateCaseFields: wa.updateCaseFields,
+    retryReminderCreation: wa.retryReminderCreation,
+    failureClose: wa.failureClose,
+    createSubmissionPackage: wa.createSubmissionPackage,
+    publishMessage: wa.publishMessage,
+    createReminder: wa.createReminder,
+    createGeneratedDocument: wa.createGeneratedDocument,
+    finalizeGeneratedDocument: wa.finalizeGeneratedDocument,
+    deleteDraftGeneratedDocument: wa.deleteDraftGeneratedDocument,
+    createTask: wa.createTask,
+    completeTask: wa.completeTask,
+  };
+}
+
 function createDetailModelResult(input: {
   state: DetailState;
   riskModal: RiskModalController;
@@ -366,6 +387,7 @@ function createDetailModelResult(input: {
   writeActions: DetailWriteActions;
   phaseMenu: PhaseTransitionMenuState;
   formTemplates: Ref<FormTemplate[]>;
+  formTemplatesLoading: Ref<boolean>;
   enrichedDetail: Ref<CaseDetail | null>;
 }) {
   const isBmvCase = computed(
@@ -391,26 +413,12 @@ function createDetailModelResult(input: {
     openRiskModal: input.riskModal.openRiskModal,
     closeRiskModal: input.riskModal.closeRiskModal,
     refetch: input.refetch,
-
+    formTemplatesLoading: input.formTemplatesLoading,
     writeFeedback: input.writeActions.writeFeedback,
     publishMessageSuccessNonce: input.writeActions.publishMessageSuccessNonce,
     clearWriteFeedback: input.writeActions.clearWriteFeedback,
     isBmvCase,
-    transitionStage: input.writeActions.transitionStage,
-    transitionWorkflowStep: input.writeActions.transitionWorkflowStep,
-    advancePostApprovalStage: input.writeActions.advancePostApprovalStage,
-    acknowledgeBillingRisk: input.writeActions.acknowledgeBillingRisk,
-    updateCaseFields: input.writeActions.updateCaseFields,
-    retryReminderCreation: input.writeActions.retryReminderCreation,
-    failureClose: input.writeActions.failureClose,
-    createSubmissionPackage: input.writeActions.createSubmissionPackage,
-    publishMessage: input.writeActions.publishMessage,
-    createReminder: input.writeActions.createReminder,
-    createGeneratedDocument: input.writeActions.createGeneratedDocument,
-    finalizeGeneratedDocument: input.writeActions.finalizeGeneratedDocument,
-    exportGeneratedDocument: input.writeActions.exportGeneratedDocument,
-    createTask: input.writeActions.createTask,
-    completeTask: input.writeActions.completeTask,
+    ...buildDetailModelPublicActions(input.writeActions),
 
     phaseMenu: input.phaseMenu,
     isTerminalPhase: computed(() =>
@@ -456,12 +464,13 @@ export function useCaseDetailModel(
     onRiskModalClose: () => riskModal.closeRiskModal(),
   });
 
-  const { formTemplates, enrichedDetail } = createFormTemplatesSlice(
-    repo,
-    state.detail,
-    state.isReadonly,
-    deps.templateLanguage,
-  );
+  const { formTemplates, formTemplatesLoading, enrichedDetail } =
+    createFormTemplatesSlice(
+      repo,
+      state.detail,
+      state.isReadonly,
+      deps.templateLanguage,
+    );
 
   const phaseMenu = useCasePhaseTransitionMenu({
     detail: state.detail,
@@ -480,6 +489,7 @@ export function useCaseDetailModel(
     writeActions,
     phaseMenu,
     formTemplates,
+    formTemplatesLoading,
     enrichedDetail,
   });
 }

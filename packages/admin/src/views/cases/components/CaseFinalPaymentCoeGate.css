@@ -1,0 +1,189 @@
+.fpg__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+.fpg__header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-2);
+}
+.fpg__title {
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-1);
+}
+.fpg__gate-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-bold);
+  border-radius: var(--radius-full);
+}
+.fpg__gate-badge--success {
+  background: rgba(22, 163, 74, 0.1);
+  color: var(--color-success, #16a34a);
+  border: 1px solid rgba(22, 163, 74, 0.18);
+}
+.fpg__gate-badge--blocked {
+  background: rgba(220, 38, 38, 0.1);
+  color: var(--color-danger-text);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+}
+
+/* ── Status rows ── */
+.fpg__status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--color-border-1);
+}
+.fpg__status-row:last-of-type {
+  border-bottom: none;
+}
+.fpg__status-label {
+  flex-shrink: 0;
+  min-width: 100px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.fpg__status-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.fpg__status-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+.fpg__status-dot--success {
+  background: var(--color-success, #16a34a);
+}
+.fpg__status-dot--warning {
+  background: #f59e0b;
+}
+.fpg__status-dot--danger {
+  background: var(--color-danger, #dc2626);
+}
+.fpg__status-text--success {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-success, #16a34a);
+}
+.fpg__status-text--warning {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-warning-text);
+}
+.fpg__status-text--danger {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-danger-text);
+}
+.fpg__outstanding-amount {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
+  padding: 1px 6px;
+  background: rgba(245, 158, 11, 0.08);
+  border-radius: var(--radius-full);
+}
+
+/* ── Blockers ── */
+.fpg__blockers {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(220, 38, 38, 0.03);
+  border: 1px solid rgba(220, 38, 38, 0.08);
+  border-radius: var(--radius-md);
+}
+.fpg__blocker-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-danger-text);
+}
+.fpg__blocker-item svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+/* ── Error banner ── */
+.fpg__error-banner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: rgba(220, 38, 38, 0.06);
+  border: 1px solid rgba(220, 38, 38, 0.12);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-danger-text);
+}
+.fpg__error-banner svg {
+  flex-shrink: 0;
+}
+
+/* ── Actions ── */
+.fpg__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+/* ── Hint ── */
+.fpg__hint {
+  margin: 12px 0 0;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-3);
+}
+
+/* ── Confirm dialog ── */
+.fpg__confirm-overlay {
+  margin-top: 16px;
+  padding: 16px;
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-lg);
+}
+.fpg__confirm-title {
+  margin: 0 0 6px;
+  font-size: var(--font-size-md);
+  line-height: var(--leading-md);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-1);
+}
+.fpg__confirm-desc {
+  margin: 0 0 16px;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-3);
+  line-height: var(--leading-relaxed);
+}
+.fpg__confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}

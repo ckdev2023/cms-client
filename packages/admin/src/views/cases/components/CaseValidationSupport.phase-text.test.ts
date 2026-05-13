@@ -20,13 +20,24 @@ function makeI18n(locale: Locale) {
   return createI18n({ legacy: false, locale, messages: FULL_MESSAGES });
 }
 
-function buildDetail(phase: string): CaseDetail {
+function buildDetail(
+  phase: string,
+  extras?: Pick<CaseDetail, "failureCloseout" | "caseType"> &
+    Partial<CaseDetail>,
+): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    /** 与聚合层一致的种类码；契约样本 `caseType` 字段仍为展示名时由 `titleFallbackParts` 为准。 */
+    caseType: "work",
+    titleFallbackParts: {
+      ...CASE_DETAIL_SAMPLES.work.titleFallbackParts,
+      caseTypeCode: "work",
+    },
     businessPhase: phase,
     doubleReview: [],
     reviewEnabled: false,
     riskConfirmationRecord: null,
+    ...extras,
   };
 }
 
@@ -50,8 +61,12 @@ function mountSupport(locale: Locale, detail: CaseDetail) {
   });
 }
 
-function getPostApprovalNote(locale: Locale, phase: string): string {
-  return mountSupport(locale, buildDetail(phase))
+function getPostApprovalNote(
+  locale: Locale,
+  phase: string,
+  extras?: Pick<CaseDetail, "failureCloseout">,
+): string {
+  return mountSupport(locale, buildDetail(phase, extras))
     .find(".valsup__post-note")
     .text();
 }
@@ -59,8 +74,16 @@ function getPostApprovalNote(locale: Locale, phase: string): string {
 const POST_APPROVAL_KEYS = [
   "notePreSubmission",
   "notePostSubmission",
+  "noteImmigrationRejected",
   "noteAwaitingCoe",
+  "noteAwaitingCoeMilestoneMissing",
+  "noteAwaitingCoePaymentOutstanding",
+  "noteAwaitingCoeBillingRiskUnacknowledged",
   "noteAwaitingVisaStamp",
+  "noteDomesticTypicalSansCoeChain",
+  "noteOverseasVisaApplying",
+  "noteVisaRejected",
+  "noteFailureClosed",
   "noteCompleted",
 ] as const;
 
@@ -118,8 +141,26 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
     }
   });
 
+  describe("immigration REJECTED → noteImmigrationRejected", () => {
+    it("REJECTED → noteImmigrationRejected (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "REJECTED");
+      expect(text).toContain("不许可");
+      expect(text).not.toContain("已获批准");
+    });
+
+    it("REJECTED → noteImmigrationRejected (ja-JP)", () => {
+      const text = getPostApprovalNote("ja-JP", "REJECTED");
+      expect(text).toContain("不許可");
+    });
+
+    it("REJECTED → noteImmigrationRejected (en-US)", () => {
+      const text = getPostApprovalNote("en-US", "REJECTED");
+      expect(text).toContain("did not grant");
+    });
+  });
+
   describe("awaiting-COE phases → noteAwaitingCoe", () => {
-    const phases = ["APPROVED", "REJECTED", "WAITING_PAYMENT"];
+    const phases = ["APPROVED", "WAITING_PAYMENT"];
 
     for (const phase of phases) {
       it(`${phase} → noteAwaitingCoe (zh-CN)`, () => {
@@ -142,24 +183,200 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
     });
   });
 
-  describe("awaiting-visa-stamp phases → noteAwaitingVisaStamp", () => {
-    const phases = ["COE_SENT", "VISA_APPLYING", "VISA_REJECTED"];
+  describe("awaiting COE + finalPaymentGate → specialized post-approval notes", () => {
+    const milestoneBlocked = {
+      paymentCleared: false,
+      finalPaymentMilestoneMatched: false,
+      outstandingLabel: "",
+      canAdvanceToCoe: false,
+      blockers: [
+        {
+          code: "final_payment_milestone_missing" as const,
+          label: "final_payment_milestone_missing",
+        },
+      ],
+    };
 
-    for (const phase of phases) {
-      it(`${phase} → noteAwaitingVisaStamp (zh-CN)`, () => {
-        const text = getPostApprovalNote("zh-CN", phase);
-        expect(text).toContain("COE 已发送");
-      });
-    }
+    const outstandingBlocked = {
+      paymentCleared: false,
+      finalPaymentMilestoneMatched: true,
+      outstandingLabel: "¥50,000",
+      canAdvanceToCoe: false,
+      blockers: [
+        {
+          code: "final_payment_outstanding" as const,
+          label: "final_payment_outstanding",
+        },
+      ],
+    };
 
-    it("COE_SENT → noteAwaitingVisaStamp (ja-JP)", () => {
+    const riskBlocked = {
+      paymentCleared: false,
+      finalPaymentMilestoneMatched: true,
+      outstandingLabel: "¥40,000",
+      canAdvanceToCoe: false,
+      blockers: [
+        {
+          code: "final_payment_outstanding" as const,
+          label: "final_payment_outstanding",
+        },
+        {
+          code: "billing_risk_unacknowledged" as const,
+          label: "billing_risk_unacknowledged",
+        },
+      ],
+    };
+
+    it("WAITING_PAYMENT + milestone missing → specialized copy (zh-CN)", () => {
+      const text = mountSupport(
+        "zh-CN",
+        buildDetail("WAITING_PAYMENT", { finalPaymentGate: milestoneBlocked }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("尚未");
+      expect(text).toContain("收费");
+      expect(text).toContain("COE");
+    });
+
+    it("WAITING_PAYMENT + outstanding → specialized copy (zh-CN)", () => {
+      const text = mountSupport(
+        "zh-CN",
+        buildDetail("WAITING_PAYMENT", {
+          finalPaymentGate: outstandingBlocked,
+        }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("尾款尚未结清");
+    });
+
+    it("WAITING_PAYMENT + outstanding + risk → risk-first specialized copy (zh-CN)", () => {
+      const text = mountSupport(
+        "zh-CN",
+        buildDetail("WAITING_PAYMENT", { finalPaymentGate: riskBlocked }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("欠款风险尚未确认");
+    });
+
+    it("WAITING_PAYMENT + canAdvanceToCoe → generic awaiting COE (zh-CN)", () => {
+      const text = mountSupport(
+        "zh-CN",
+        buildDetail("WAITING_PAYMENT", {
+          finalPaymentGate: {
+            paymentCleared: true,
+            finalPaymentMilestoneMatched: true,
+            outstandingLabel: "",
+            canAdvanceToCoe: true,
+            blockers: [],
+          },
+        }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("尾款结清后发送 COE");
+    });
+
+    it("en-US milestone missing — no Han script leakage", () => {
+      const text = mountSupport(
+        "en-US",
+        buildDetail("WAITING_PAYMENT", { finalPaymentGate: milestoneBlocked }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toMatch(/approved/i);
+      expect(text).not.toMatch(/\p{Script=Han}/u);
+    });
+  });
+
+  describe("WAITING_PAYMENT — COE path vs renewal / domestic default", () => {
+    it("biz_mgmt_renewal + WAITING_PAYMENT uses domestic wording (zh-CN)", () => {
+      const base = buildDetail("WAITING_PAYMENT");
+      const text = mountSupport("zh-CN", {
+        ...base,
+        caseType: "biz_mgmt_renewal",
+        titleFallbackParts: {
+          ...base.titleFallbackParts,
+          caseTypeCode: "biz_mgmt_renewal",
+        },
+      })
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("国内");
+      expect(text).not.toContain("COE");
+    });
+
+    it("work_visa_renewal + WAITING_PAYMENT uses domestic wording (zh-CN)", () => {
+      const text = mountSupport(
+        "zh-CN",
+        buildDetail("WAITING_PAYMENT", {
+          caseType: "work_visa_renewal",
+          titleFallbackParts: {
+            ...CASE_DETAIL_SAMPLES.work.titleFallbackParts,
+            caseTypeCode: "work_visa_renewal",
+          },
+        }),
+      )
+        .find(".valsup__post-note")
+        .text();
+      expect(text).toContain("国内");
+      expect(text).not.toContain("COE");
+    });
+  });
+
+  describe("COE_SENT → noteAwaitingVisaStamp", () => {
+    it("COE_SENT (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "COE_SENT");
+      expect(text).toContain("COE 已发送");
+      expect(text).toContain("海外领馆");
+    });
+
+    it("COE_SENT (ja-JP)", () => {
       const text = getPostApprovalNote("ja-JP", "COE_SENT");
       expect(text).toContain("COE は送付済み");
     });
 
-    it("COE_SENT → noteAwaitingVisaStamp (en-US)", () => {
+    it("COE_SENT (en-US)", () => {
       const text = getPostApprovalNote("en-US", "COE_SENT");
       expect(text).toContain("COE has been dispatched");
+    });
+  });
+
+  describe("VISA_APPLYING → noteOverseasVisaApplying", () => {
+    it("VISA_APPLYING (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "VISA_APPLYING");
+      expect(text).toContain("海外返签");
+      expect(text).toContain("贴签");
+    });
+
+    it("VISA_APPLYING (ja-JP)", () => {
+      const text = getPostApprovalNote("ja-JP", "VISA_APPLYING");
+      expect(text).toContain("海外査証");
+    });
+
+    it("VISA_APPLYING (en-US)", () => {
+      const text = getPostApprovalNote("en-US", "VISA_APPLYING");
+      expect(text.toLowerCase()).toContain("overseas");
+      expect(text.toLowerCase()).toContain("consular");
+    });
+  });
+
+  describe("VISA_REJECTED phase → noteVisaRejected", () => {
+    it("VISA_REJECTED → noteVisaRejected (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "VISA_REJECTED");
+      expect(text).toContain("拒签");
+    });
+
+    it("VISA_REJECTED → noteVisaRejected (ja-JP)", () => {
+      const text = getPostApprovalNote("ja-JP", "VISA_REJECTED");
+      expect(text).toContain("不許可");
+    });
+
+    it("VISA_REJECTED → noteVisaRejected (en-US)", () => {
+      const text = getPostApprovalNote("en-US", "VISA_REJECTED");
+      expect(text).toContain("refusal");
     });
   });
 
@@ -170,7 +387,6 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
       "RESIDENCE_PERIOD_RECORDED",
       "RENEWAL_REMINDER_SCHEDULED",
       "CLOSED_SUCCESS",
-      "CLOSED_FAILED",
     ];
 
     for (const phase of phases) {
@@ -188,6 +404,57 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
     it("CLOSED_SUCCESS → noteCompleted (en-US)", () => {
       const text = getPostApprovalNote("en-US", "CLOSED_SUCCESS");
       expect(text).toContain("complete");
+    });
+  });
+
+  describe("CLOSED_FAILED + failureCloseout → post-approval note", () => {
+    const fcVisa = {
+      isFailurePath: true,
+      reasonCode: "VISA_REJECTED",
+      reasonLabel: "海外返签拒否",
+      canDirectClose: true,
+      closeReasonRequired: false,
+    } as const;
+
+    const fcImmigration = {
+      isFailurePath: true,
+      reasonCode: "APPLICATION_REJECTED",
+      reasonLabel: "入管申請拒否",
+      canDirectClose: true,
+      closeReasonRequired: false,
+    } as const;
+
+    it("CLOSED_FAILED + VISA_REJECTED → noteVisaRejected (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "CLOSED_FAILED", {
+        failureCloseout: fcVisa,
+      });
+      expect(text).toContain("拒签");
+      expect(text).not.toContain("已完成");
+    });
+
+    it("CLOSED_FAILED + APPLICATION_REJECTED → noteImmigrationRejected (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "CLOSED_FAILED", {
+        failureCloseout: fcImmigration,
+      });
+      expect(text).toContain("不许可");
+    });
+
+    it("CLOSED_FAILED without reasonCode → noteFailureClosed (zh-CN)", () => {
+      const text = getPostApprovalNote("zh-CN", "CLOSED_FAILED", {
+        failureCloseout: {
+          isFailurePath: true,
+          reasonCode: null,
+          reasonLabel: null,
+          canDirectClose: false,
+          closeReasonRequired: true,
+        },
+      });
+      expect(text).toContain("失败结案");
+    });
+
+    it("CLOSED_FAILED without failureCloseout → noteFailureClosed (en-US)", () => {
+      const text = getPostApprovalNote("en-US", "CLOSED_FAILED");
+      expect(text.toLowerCase()).toContain("failure");
     });
   });
 

@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { GoneException } from "@nestjs/common";
 
 import { PermissionsService } from "../auth/permissions.service";
 import type { Case } from "../model/coreEntities";
@@ -72,6 +73,7 @@ const mockCase: Case = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  jurisdictionAuthority: null,
   businessPhase: "CONSULTING",
   currentWorkflowStepCode: null,
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -89,7 +91,7 @@ function gdEntity(
     title: "申請書",
     versionNo: 1,
     outputFormat: "pdf",
-    fileUrl: null,
+    fileUrl: "https://example.com/doc.pdf",
     status: "draft",
     generatedBy: USER_ID,
     approvedBy: null,
@@ -222,47 +224,12 @@ void test("finalize timeline title matches entity even with different value", as
   assert.equal(extra.title, "理由書 v2");
 });
 
-// ─── export: timeline extra includes title ───────────────────────
+// ─── export: deprecated (no timeline written) ───────────────────
 
-void test("export timeline extra.title equals existing.title", async () => {
-  let tlInput: Record<string, unknown> | undefined;
+void test("export is deprecated and throws GoneException", async () => {
   const c = ctrl({
     entity: gdEntity({ status: "final", title: "雇用契約書" }),
-    svc: {
-      update: () => Promise.resolve(gdDto({ status: "exporting" })),
-      writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
-        tlInput = i;
-        return Promise.resolve();
-      },
-    },
   });
-  await c.export(staffReq as never, GD_ID);
-  assert.ok(tlInput, "writeTimeline must have been called");
-  assert.equal(tlInput.action, "generated_document.export_queued");
-  const extra = tlInput.extra as Record<string, unknown>;
-  assert.ok(extra, "extra must be present");
-  assert.equal(extra.title, "雇用契約書");
-});
-
-void test("export timeline extra contains title (export_queued action)", async () => {
-  let tlInput: Record<string, unknown> | undefined;
-  const c = ctrl({
-    entity: gdEntity({
-      status: "final",
-      title: "事業計画書",
-      outputFormat: "docx",
-    }),
-    svc: {
-      update: () => Promise.resolve(gdDto({ status: "exporting" })),
-      writeTimeline: (_c: unknown, i: Record<string, unknown>) => {
-        tlInput = i;
-        return Promise.resolve();
-      },
-    },
-  });
-  await c.export(staffReq as never, GD_ID);
-  assert.ok(tlInput);
-  assert.equal(tlInput.action, "generated_document.export_queued");
-  const extra = tlInput.extra as Record<string, unknown>;
-  assert.equal(extra.title, "事業計画書");
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  await assert.rejects(() => c.export(staffReq as never), GoneException);
 });

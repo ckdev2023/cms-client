@@ -105,7 +105,6 @@ describe("H2: terminal tab guard — click blocking", () => {
     "tasks",
     "info",
     "deadlines",
-    "billing",
     "messages",
   ];
 
@@ -147,7 +146,7 @@ describe("H2: terminal tab guard — click blocking", () => {
     },
   );
 
-  it.each(["forms", "documents"] as CaseDetailTab[])(
+  it.each(["forms", "documents", "billing"] as CaseDetailTab[])(
     "onTabClick('%s') on archived case: guard allows switch (readonly)",
     async (tabKey) => {
       const repo = buildTerminalRepo();
@@ -244,7 +243,6 @@ describe("H2: terminal tab guard — ?tab=tasks deep-link redirect", () => {
     "tasks",
     "info",
     "deadlines",
-    "billing",
     "messages",
   ] as CaseDetailTab[])(
     "archived case with initialTab='%s': redirect to 'log'",
@@ -266,7 +264,7 @@ describe("H2: terminal tab guard — ?tab=tasks deep-link redirect", () => {
     },
   );
 
-  it.each(["forms", "documents"] as CaseDetailTab[])(
+  it.each(["forms", "documents", "billing"] as CaseDetailTab[])(
     "archived case with initialTab='%s': stays (readonly accessible)",
     async (tabKey) => {
       const repo = buildTerminalRepo();
@@ -435,8 +433,13 @@ describe("H2: CaseDetailView template — tab guard wiring", () => {
     expect(src).toContain('switchTab("log")');
   });
 
-  it("watch also replaces router query to tab=log", () => {
-    expect(src).toContain('buildCaseDetailQuery({ tab: "log" })');
+  it("guard watch redirects with switchTab only (URL synced via model onTabChange)", () => {
+    const snippet = src.slice(
+      src.indexOf("[() => detail.value, activeTab]"),
+      src.indexOf("[() => detail.value, activeTab]") + 500,
+    );
+    expect(snippet).toContain('switchTab("log")');
+    expect(snippet).not.toContain("buildCaseDetailQuery");
   });
 
   it("onTabClick checks guard before switching", () => {

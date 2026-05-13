@@ -8,6 +8,7 @@ import {
 } from "./cases.parsers";
 
 import type { CreateCaseBody, UpdateCaseBody } from "./cases.controller-bodies";
+import type { CaseUpdateInput } from "./cases.types";
 
 /**
  * CreateCaseBody → CaseCreateInput 変換。
@@ -44,6 +45,10 @@ export function parseCreateCaseBody(body: CreateCaseBody) {
     ),
     signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
     acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
+    jurisdictionAuthority: parseOptionalNullableString(
+      body.jurisdictionAuthority,
+      "jurisdictionAuthority",
+    ),
     submissionDate: parseOptionalNullableString(
       body.submissionDate,
       "submissionDate",
@@ -69,10 +74,19 @@ export function parseCreateCaseBody(body: CreateCaseBody) {
 
 /**
  * UpdateCaseBody → CaseUpdateInput 変換。
- * @param body 更新請求体
- * @returns CaseUpdateInput
+ * @param body 更新请求体
+ * @returns 変換済み CaseUpdateInput
  */
-export function parseUpdateCaseBody(body: UpdateCaseBody) {
+export function parseUpdateCaseBody(body: UpdateCaseBody): CaseUpdateInput {
+  return {
+    ...parseUpdateCaseBodyPrimaryFields(body),
+    ...parseUpdateCaseBodyMoreFields(body),
+  };
+}
+
+function parseUpdateCaseBodyPrimaryFields(
+  body: UpdateCaseBody,
+): Partial<CaseUpdateInput> {
   return {
     caseTypeCode: parseOptionalString(body.caseTypeCode, "caseTypeCode"),
     ownerUserId: parseOptionalString(body.ownerUserId, "ownerUserId"),
@@ -91,6 +105,13 @@ export function parseUpdateCaseBody(body: UpdateCaseBody) {
       "applicationType",
     ),
     companyId: parseOptionalNullableString(body.companyId, "companyId"),
+  };
+}
+
+function parseUpdateCaseBodyMoreFields(
+  body: UpdateCaseBody,
+): Partial<CaseUpdateInput> {
+  return {
     priority: parseOptionalString(body.priority, "priority"),
     riskLevel: parseOptionalString(body.riskLevel, "riskLevel"),
     assistantUserId: parseOptionalNullableString(
@@ -103,6 +124,10 @@ export function parseUpdateCaseBody(body: UpdateCaseBody) {
     ),
     signedAt: parseOptionalNullableString(body.signedAt, "signedAt"),
     acceptedAt: parseOptionalNullableString(body.acceptedAt, "acceptedAt"),
+    jurisdictionAuthority: parseOptionalNullableString(
+      body.jurisdictionAuthority,
+      "jurisdictionAuthority",
+    ),
     submissionDate: parseOptionalNullableString(
       body.submissionDate,
       "submissionDate",

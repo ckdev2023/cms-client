@@ -5,10 +5,11 @@ import Button from "../../../shared/ui/Button.vue";
 import type { CaseDetailTab } from "../types";
 import type { CaseDetail, TeamMember } from "../types-detail";
 
-/** 概览右侧边栏：阻断与风险摘要、案件团队、提交前校验提示。 */
+/** 概览右侧边栏：阻断与风险摘要、案件团队、「门禁与提交」入口提示。 */
 const { t } = useI18n();
 defineProps<{
   detail: CaseDetail;
+  isTerminal?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -218,6 +219,12 @@ function teamGradient(member: TeamMember): string {
         tone="primary"
         size="sm"
         class="overview-sidebar__validation-hint-btn"
+        :disabled="isTerminal"
+        :title="
+          isTerminal
+            ? t('cases.detail.overview.sidebar.validationUnavailableTerminal')
+            : undefined
+        "
         @click="emit('switchTab', 'validation')"
       >
         {{ t("cases.detail.overview.sidebar.validationAction") }}

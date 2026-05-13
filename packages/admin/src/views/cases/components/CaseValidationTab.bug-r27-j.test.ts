@@ -23,6 +23,11 @@ function makeI18n(locale: Locale) {
 function buildDetail(overrides: Partial<CaseDetail>): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
+    caseType: "work",
+    titleFallbackParts: {
+      ...CASE_DETAIL_SAMPLES.work.titleFallbackParts,
+      caseTypeCode: "work",
+    },
     doubleReview: [],
     reviewEnabled: false,
     riskConfirmationRecord: null,
@@ -99,6 +104,16 @@ describe("BUG-R27-J — CaseValidationSupport coeCard.note branches by phase", (
     expect(html).toContain("已获批准");
   });
 
+  it("REJECTED phase (immigration) → noteImmigrationRejected", () => {
+    const detail = buildDetail({
+      stageCode: "S8",
+      businessPhase: "REJECTED",
+    });
+    const html = mountSupport("zh-CN", detail).html();
+    expect(html).toContain("不许可");
+    expect(html).not.toContain("已获批准");
+  });
+
   it("COE_SENT phase → noteAwaitingVisaStamp", () => {
     const detail = buildDetail({
       stageCode: "S8",
@@ -109,13 +124,14 @@ describe("BUG-R27-J — CaseValidationSupport coeCard.note branches by phase", (
     expect(html).toContain("海外");
   });
 
-  it("VISA_APPLYING phase → noteAwaitingVisaStamp", () => {
+  it("VISA_APPLYING phase → noteOverseasVisaApplying", () => {
     const detail = buildDetail({
       stageCode: "S8",
       businessPhase: "VISA_APPLYING",
     });
     const html = mountSupport("zh-CN", detail).html();
-    expect(html).toContain("COE 已发送");
+    expect(html).toContain("海外返签");
+    expect(html).not.toContain("COE 已发送。请跟进申请人");
   });
 
   it("CLOSED_SUCCESS phase → noteCompleted", () => {
@@ -127,13 +143,14 @@ describe("BUG-R27-J — CaseValidationSupport coeCard.note branches by phase", (
     expect(html).toContain("已完成");
   });
 
-  it("CLOSED_FAILED phase → noteCompleted", () => {
+  it("CLOSED_FAILED phase without attribution → noteFailureClosed", () => {
     const detail = buildDetail({
       stageCode: "S9",
       businessPhase: "CLOSED_FAILED",
     });
     const html = mountSupport("zh-CN", detail).html();
-    expect(html).toContain("已完成");
+    expect(html).toContain("失败结案");
+    expect(html).not.toContain("下签后流程已完成");
   });
 
   it("S7 phase (UNDER_REVIEW) in en-US → notePostSubmission", () => {

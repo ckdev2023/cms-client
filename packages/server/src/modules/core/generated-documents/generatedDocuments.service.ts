@@ -260,6 +260,44 @@ export class GeneratedDocumentsService {
     });
   }
 
+  /**
+   * 删除一条草稿状态的生成文书（final/exported 等不可删除）。
+   *
+   * @param ctx - 请求上下文。
+   * @param existing - 已由控制器加载并完成案件 edit 权限校验的实体。
+   */
+  async deleteDraft(
+    ctx: RequestContext,
+    existing: GeneratedDocument,
+  ): Promise<void> {
+    if (existing.status !== "draft") {
+      throw new BadRequestException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_DELETE_ONLY_DRAFT +
+          ": Only draft generated documents can be deleted",
+      );
+    }
+    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
+    const del = await tenantDb.query<{ id: string }>(
+      `delete from generated_documents where id = $1 and org_id = $2 and status = 'draft' returning id`,
+      [existing.id, ctx.orgId],
+    );
+    if (del.rows.length === 0) {
+      throw new NotFoundException(
+        GENERATED_DOCUMENT_ERROR_CODES.GD_NOT_FOUND +
+          ": Generated document not found or no longer draft",
+      );
+    }
+    await this.timelineService.write(ctx, {
+      entityType: "case",
+      entityId: existing.caseId,
+      action: "generated_document.deleted",
+      payload: {
+        generatedDocumentId: existing.id,
+        title: existing.title,
+      },
+    });
+  }
+
   private async requireDto(
     ctx: RequestContext,
     id: string,

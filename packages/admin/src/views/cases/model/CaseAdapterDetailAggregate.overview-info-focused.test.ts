@@ -1,7 +1,6 @@
 // Owner: p0-fe-006a-03 — overview/info tabs focused tests.
 // Locks display values, null/empty degradation, readonly.
 // Excludes: frozen snapshots, per-slice/group, list mappers, write builders.
-
 import { describe, expect, it } from "vitest";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import {
@@ -28,6 +27,7 @@ const CASE_ROW_FULL = {
   riskLevel: "low",
   applicationType: "認定",
   acceptedAt: "2026-03-10T00:00:00.000Z",
+  jurisdictionAuthority: "大阪入管局",
 };
 
 const DEEP_LINK_FULL = {
@@ -343,8 +343,8 @@ describe("info tab field display (p0-fe-006a-03)", () => {
     expect(result.detail.targetDate).toContain("2026");
   });
 
-  it("agency is empty string (no server mapping)", () => {
-    expect(result.detail.agency).toBe("");
+  it("agency mirrors jurisdictionAuthority from case record", () => {
+    expect(result.detail.agency).toBe("大阪入管局");
   });
 
   it("relatedParties auto-injects primary applicant from deepLink", () => {
@@ -457,7 +457,6 @@ describe("overview empty state degradation (p0-fe-006a-03)", () => {
 });
 
 // ─── Empty / null value degradation — info tab ──────────────────
-
 describe("info tab empty state degradation (p0-fe-006a-03)", () => {
   const result = adaptCaseDetailAggregate(buildEmpty())!;
 

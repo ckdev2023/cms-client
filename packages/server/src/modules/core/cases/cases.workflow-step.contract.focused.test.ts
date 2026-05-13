@@ -80,7 +80,7 @@ void describe("CaseWorkflowStep type contract", () => {
   void test("billingGate can carry block mode with milestone", () => {
     const step: CaseWorkflowStep = {
       stepCode: "COE_SENT",
-      label: "COE已发送",
+      label: "COE寄送",
       parentStage: "S7",
       sortOrder: 10,
       canLoopTo: null,

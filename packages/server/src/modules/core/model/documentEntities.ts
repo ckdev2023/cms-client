@@ -129,7 +129,13 @@ export type DocumentTemplate = {
 };
 
 /**
- * P0 GeneratedDocument（生成文书 — 文書 tab 消费）。
+ * P0 GeneratedDocument（生成文書 — 文書 tab 消费）。
+ *
+ * 主路径（外部文书登记）：运营在外部资源服务器上传成品文书后，
+ * 将 URL 登记到本系统。流转为 draft → final（终态）。
+ *
+ * 遗留路径：系统内模板生成 + 导出流水线，状态含
+ * exporting / exported / export_failed，仅用于历史数据只读兼容。
  */
 export type GeneratedDocument = {
   id: string;
@@ -138,9 +144,17 @@ export type GeneratedDocument = {
   templateId: string | null;
   title: string;
   versionNo: number;
+  /** 主路径为 `external`；遗留为 pdf / docx / xlsx。 */
   outputFormat: string;
+  /**
+   * 主路径：外部资源 URL（http(s)://...）。
+   * 遗留路径（status=exported）：内部存储 key，供 GET :id/file 下载。
+   */
   fileUrl: string | null;
-  /** draft → final → exported。 */
+  /**
+   * 主路径：draft → final（终态）。
+   * 遗留态：exporting / exported / export_failed — 新流程不应产生。
+   */
   status: string;
   generatedBy: string | null;
   approvedBy: string | null;

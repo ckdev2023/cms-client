@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { BadRequestException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { Pool } from "pg";
 
+import type { GeneratedDocument } from "../model/documentEntities";
 import { GeneratedDocumentsService } from "./generatedDocuments.service";
 import type { TimelineService } from "../timeline/timeline.service";
 import { GENERATED_DOCUMENT_ERROR_CODES } from "../cases/cases.types-generated-docs";
@@ -100,10 +101,20 @@ void test("update allows final → final", async () => {
   assert.ok(dto);
 });
 
-void test("update allows final → exporting", async () => {
+void test("update rejects final → exporting (final is terminal)", async () => {
   const svc = makeServiceWithExistingStatus("final");
-  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
-  assert.ok(dto);
+  await assert.rejects(
+    () => svc.update(ctx(), GD_ID, { status: "exporting" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION,
+        ),
+      );
+      return true;
+    },
+  );
 });
 
 void test("update allows exporting → exported", async () => {
@@ -118,10 +129,20 @@ void test("update allows exporting → export_failed", async () => {
   assert.ok(dto);
 });
 
-void test("update allows export_failed → exporting (retry)", async () => {
+void test("update rejects export_failed → exporting (legacy state frozen)", async () => {
   const svc = makeServiceWithExistingStatus("export_failed");
-  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
-  assert.ok(dto);
+  await assert.rejects(
+    () => svc.update(ctx(), GD_ID, { status: "exporting" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION,
+        ),
+      );
+      return true;
+    },
+  );
 });
 
 void test("update allows exported → exported", async () => {
@@ -361,4 +382,75 @@ void test("create without templateId skips template validation", async () => {
   assert.ok(dto);
   assert.equal(dto.templateVersionNoSnapshot, null);
   assert.equal(dto.templateDocType, null);
+});
+
+const draftEntity: GeneratedDocument = {
+  id: GD_ID,
+  orgId: ORG_ID,
+  caseId: CASE_ID,
+  templateId: null,
+  title: "申請書",
+  versionNo: 1,
+  outputFormat: "pdf",
+  fileUrl: null,
+  status: "draft",
+  generatedBy: USER_ID,
+  approvedBy: null,
+  generatedAt: "2026-01-01T00:00:00.000Z",
+  approvedAt: null,
+  templateVersionNoSnapshot: null,
+  templateDocType: null,
+};
+
+void test("deleteDraft deletes draft row and writes timeline", async () => {
+  let timelineAction = "";
+  const pool = makePool((sql, params) => {
+    if (sql.includes("delete from generated_documents")) {
+      assert.ok(params);
+      assert.equal(params[0], GD_ID);
+      assert.equal(params[1], ORG_ID);
+      return ok([{ id: GD_ID }]);
+    }
+    return ok([]);
+  });
+  const timeline = {
+    write: (_ctx: unknown, entry: { action: string }) => {
+      timelineAction = entry.action;
+      return Promise.resolve();
+    },
+  } as unknown as TimelineService;
+  const svc = new GeneratedDocumentsService(pool, timeline);
+  await svc.deleteDraft(ctx(), draftEntity);
+  assert.equal(timelineAction, "generated_document.deleted");
+});
+
+void test("deleteDraft rejects non-draft status (GD_DELETE_ONLY_DRAFT)", async () => {
+  const svc = new GeneratedDocumentsService(
+    makePool(() => ok([])),
+    makeTimeline(),
+  );
+  await assert.rejects(
+    () => svc.deleteDraft(ctx(), { ...draftEntity, status: "final" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(GENERATED_DOCUMENT_ERROR_CODES.GD_DELETE_ONLY_DRAFT),
+      );
+      return true;
+    },
+  );
+});
+
+void test("deleteDraft throws NotFound when delete affects zero rows", async () => {
+  const pool = makePool((sql) => {
+    if (sql.includes("delete from generated_documents")) {
+      return ok([]);
+    }
+    return ok([]);
+  });
+  const svc = new GeneratedDocumentsService(pool, makeTimeline());
+  await assert.rejects(
+    () => svc.deleteDraft(ctx(), draftEntity),
+    NotFoundException,
+  );
 });

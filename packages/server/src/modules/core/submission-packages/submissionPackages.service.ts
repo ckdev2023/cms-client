@@ -380,6 +380,42 @@ export class SubmissionPackagesService {
         throw new BadRequestException("Failed to create submission package");
       const createdPackage = mapSubmissionPackageRow(packageRow);
 
+      const trimmedAuthority =
+        typeof input.authorityName === "string"
+          ? input.authorityName.trim()
+          : "";
+      if (trimmedAuthority !== "") {
+        await tx.query(
+          `
+          update cases
+          set jurisdiction_authority = $1,
+              updated_at = now()
+          where org_id = $2
+            and id = $3
+            and coalesce(trim(jurisdiction_authority), '') = ''
+          `,
+          [trimmedAuthority, ctx.orgId, input.caseId],
+        );
+      }
+
+      if (
+        submissionKind === "initial" &&
+        typeof createdPackage.submittedAt === "string" &&
+        createdPackage.submittedAt.trim() !== ""
+      ) {
+        const submittedIso = createdPackage.submittedAt.trim();
+        await tx.query(
+          `
+          update cases
+          set submission_date = coalesce(submission_date, $1::timestamptz::date),
+              accepted_at = coalesce(accepted_at, $1::timestamptz),
+              updated_at = now()
+          where org_id = $2 and id = $3
+          `,
+          [submittedIso, ctx.orgId, input.caseId],
+        );
+      }
+
       const items: SubmissionPackageItem[] = [];
       for (const item of input.items) {
         const snapshotPayload = await this.buildSnapshotPayload(
@@ -931,9 +967,10 @@ export class SubmissionPackagesService {
         version_no: number;
         output_format: string;
         status: string;
+        file_url: string | null;
       }>(
         `
-          select id, title, version_no, output_format, status
+          select id, title, version_no, output_format, status, file_url
           from generated_documents
           where id = $1 and org_id = $2 and case_id = $3
           limit 1
@@ -952,6 +989,7 @@ export class SubmissionPackagesService {
         versionNo: row.version_no,
         outputFormat: row.output_format,
         status: row.status,
+        fileUrl: row.file_url,
       };
     }
 

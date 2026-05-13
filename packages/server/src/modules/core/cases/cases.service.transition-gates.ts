@@ -23,6 +23,7 @@ import {
 } from "./cases.types-residence-closeout";
 import { canBypassSuccessCloseoutForFailure } from "./cases.types-failure-closeout";
 import { queryCurrentResidencePeriod } from "./cases.service.detail-queries";
+import { assertGateCNoOpenCaseTasks } from "./cases.service.gate-c-open-tasks";
 import { DEFAULT_CASE_TRANSITIONS } from "./cases.service.write-helpers";
 import type { TemplatesResolver } from "./cases.service.types-internal";
 
@@ -287,14 +288,12 @@ async function validateReadyForSubmission(
 }
 
 /**
- * Gate-C（S6→S7）：生成 SubmissionPackage 前校验。
- * - 最新 ValidationRun 必须 passed 且 non-stale
- * - 模板启用复核时 ReviewRecord=approved
- * - 存在欠款余额时必须已完成风险确认
- * @param pool
- * @param templatesResolver
- * @param ctx
- * @param c
+ * Gate-C（S6→S7）：VR/复核/欠款风险 + 案件 tasks 须全部完结。
+ *
+ * @param pool - 数据库连接池
+ * @param templatesResolver - 模板解析器
+ * @param ctx - 租户请求上下文
+ * @param c - 案件实体
  */
 async function validateGateC(
   pool: Pool,
@@ -316,6 +315,8 @@ async function validateGateC(
       `${CASE_WRITE_ERROR_CODES.GATE_C_BILLING_RISK_UNACKNOWLEDGED}: S6→S7 requires billing risk acknowledgment before formal submission when there is unpaid balance`,
     );
   }
+
+  await assertGateCNoOpenCaseTasks(pool, ctx, c.id);
 }
 
 /**

@@ -22,6 +22,7 @@ const CASE_ROW_FULL = {
   riskLevel: "low",
   applicationType: "認定",
   acceptedAt: "2026-03-10T00:00:00.000Z",
+  jurisdictionAuthority: "大阪入管局",
 };
 
 const DEEP_LINK_FULL = {
@@ -248,7 +249,7 @@ describe("S9 readonly — info tab (p0-fe-006a-03)", () => {
     expect(result.detail.applicationType).toBe("認定");
     expect(result.detail.acceptedDate).not.toBe("");
     expect(result.detail.targetDate).not.toBe("");
-    expect(result.detail.agency).toBe("");
+    expect(result.detail.agency).toBe("大阪入管局");
   });
 
   it("info consumed fields all defined in S9", () => {

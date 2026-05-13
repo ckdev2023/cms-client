@@ -87,7 +87,7 @@ describe("useCaseDetailGuard", () => {
       expect(guard.isTabAccessible("deadlines")).toBe(true);
     });
 
-    it("terminal case (CLOSED_SUCCESS): log, overview, forms, documents accessible", () => {
+    it("terminal case (CLOSED_SUCCESS): log, overview, forms, documents, billing accessible", () => {
       const { guard } = createGuard({
         readonly: true,
         businessPhase: "CLOSED_SUCCESS",
@@ -96,15 +96,15 @@ describe("useCaseDetailGuard", () => {
       expect(guard.isTabAccessible("log")).toBe(true);
       expect(guard.isTabAccessible("forms")).toBe(true);
       expect(guard.isTabAccessible("documents")).toBe(true);
+      expect(guard.isTabAccessible("billing")).toBe(true);
       expect(guard.isTabAccessible("tasks")).toBe(false);
-      expect(guard.isTabAccessible("billing")).toBe(false);
       expect(guard.isTabAccessible("messages")).toBe(false);
       expect(guard.isTabAccessible("validation")).toBe(false);
       expect(guard.isTabAccessible("info")).toBe(false);
       expect(guard.isTabAccessible("deadlines")).toBe(false);
     });
 
-    it("terminal case (CLOSED_FAILED): log, overview, forms, documents accessible", () => {
+    it("terminal case (CLOSED_FAILED): log, overview, forms, documents, billing accessible", () => {
       const { guard } = createGuard({
         readonly: true,
         businessPhase: "CLOSED_FAILED",
@@ -113,6 +113,7 @@ describe("useCaseDetailGuard", () => {
       expect(guard.isTabAccessible("log")).toBe(true);
       expect(guard.isTabAccessible("forms")).toBe(true);
       expect(guard.isTabAccessible("documents")).toBe(true);
+      expect(guard.isTabAccessible("billing")).toBe(true);
       expect(guard.isTabAccessible("tasks")).toBe(false);
     });
 
@@ -132,6 +133,7 @@ describe("useCaseDetailGuard", () => {
       expect(guard.isTabAccessible("log")).toBe(true);
       expect(guard.isTabAccessible("forms")).toBe(true);
       expect(guard.isTabAccessible("documents")).toBe(true);
+      expect(guard.isTabAccessible("billing")).toBe(true);
     });
   });
 

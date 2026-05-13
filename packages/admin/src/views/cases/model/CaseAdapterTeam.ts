@@ -1,15 +1,20 @@
 import type { TeamMember } from "../types-detail";
-import { readNullableString, readString } from "./CaseAdapterShared";
+import {
+  readNullableString,
+  readString,
+  stripBracketPrefixesForInitials,
+} from "./CaseAdapterShared";
 
 const TEAM_GRADIENT_OWNER = "from-[var(--primary)] to-[var(--primary-hover)]";
 const TEAM_GRADIENT_ASSISTANT = "from-[var(--success)] to-[#28a745]";
 
 function deriveInitials(name: string): string {
-  const parts = name.trim().split(/\s+/);
+  const cleaned = stripBracketPrefixesForInitials(name);
+  const parts = cleaned.trim().split(/\s+/);
   if (parts.length >= 2) {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
-  return name.slice(0, 2).toUpperCase() || "??";
+  return cleaned.slice(0, 2).toUpperCase() || "??";
 }
 
 /**

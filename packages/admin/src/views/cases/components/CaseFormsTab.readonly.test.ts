@@ -29,17 +29,19 @@ function makeI18n() {
           detail: {
             forms: {
               title: "文书管理",
-              generateAction: "生成文书",
+              registerAction: "登记文书",
+              generateAction: "登记文书",
               kickerTemplates: "可用模板",
-              kickerGenerated: "已生成文书",
-              finalizeAction: "定稿",
-              exportAction: "导出",
-              exportAgainAction: "再次导出",
+              kickerGenerated: "已登记文书",
+              finalizeAction: "确认已就绪",
+              openLinkAction: "打开链接",
+              copyLinkAction: "复制链接",
               versionHistoryAction: "版本历史",
-              empty: "暂无可用文书模板或生成记录",
+              empty: "暂无可用文书模板或登记记录",
+              templatesLoading: "正在加载文书模板…",
               status: {
                 draft: "草稿",
-                final: "已定稿",
+                final: "已确认",
                 exporting: "导出中…",
                 exported: "已导出",
                 export_failed: "导出失败",
@@ -47,7 +49,6 @@ function makeI18n() {
               docType: {
                 application_form: "申请书",
               },
-              retryExportAction: "重试导出",
               downloadAction: "下载文件",
               metaApprovedAt: "{action}：{name} · {time}",
             },
@@ -85,6 +86,7 @@ function buildGeneratedDoc(
     fileUrl: null,
     fileUrlIsPlaceholder: false,
     downloadUrl: null,
+    resourceOpenUrl: null,
     approvedBy: null,
     approvedAt: null,
     ...overrides,
@@ -100,9 +102,13 @@ function buildDetail(
   } as unknown as CaseDetail;
 }
 
-function mountTab(detail: CaseDetail, readonly: boolean) {
+function mountTab(
+  detail: CaseDetail,
+  readonly: boolean,
+  opts?: { templatesLoading?: boolean },
+) {
   return mount(CaseFormsTab, {
-    props: { detail, readonly },
+    props: { detail, readonly, ...opts },
     global: {
       plugins: [makeI18n()],
       stubs: { Card: CARD_STUB, Button: BUTTON_STUB, Chip: CHIP_STUB },
@@ -111,7 +117,7 @@ function mountTab(detail: CaseDetail, readonly: boolean) {
 }
 
 describe("CaseFormsTab S9 readonly — write actions hidden", () => {
-  it("readonly=true: header generate button is not rendered", () => {
+  it("readonly=true: header register button is not rendered", () => {
     const detail = buildDetail(
       [buildTemplate()],
       [buildGeneratedDoc({ backendStatus: "draft" })],
@@ -119,7 +125,7 @@ describe("CaseFormsTab S9 readonly — write actions hidden", () => {
     const w = mountTab(detail, true);
 
     const buttons = w.findAll("button");
-    const genBtn = buttons.find((b) => b.text().includes("生成文书"));
+    const genBtn = buttons.find((b) => b.text().includes("登记文书"));
     expect(genBtn).toBeUndefined();
   });
 
@@ -143,22 +149,18 @@ describe("CaseFormsTab S9 readonly — write actions hidden", () => {
     expect(w.find("[data-testid='finalize-btn']").exists()).toBe(false);
   });
 
-  it("readonly=true: export button is not rendered for final docs", () => {
+  it("readonly=true: open-resource-link is still visible for final + 外链 docs", () => {
     const detail = buildDetail(
       [],
-      [buildGeneratedDoc({ backendStatus: "final" })],
+      [
+        buildGeneratedDoc({
+          backendStatus: "final",
+          resourceOpenUrl: "https://example.com/doc.pdf",
+        }),
+      ],
     );
     const w = mountTab(detail, true);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
-  });
-
-  it("readonly=true: re-export button is not rendered for exported docs", () => {
-    const detail = buildDetail(
-      [],
-      [buildGeneratedDoc({ backendStatus: "exported" })],
-    );
-    const w = mountTab(detail, true);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
+    expect(w.find("[data-testid='open-resource-link']").exists()).toBe(true);
   });
 
   it("readonly=true: all write buttons hidden across mixed statuses", () => {
@@ -173,16 +175,10 @@ describe("CaseFormsTab S9 readonly — write actions hidden", () => {
     const w = mountTab(detail, true);
 
     expect(w.find("[data-testid='finalize-btn']").exists()).toBe(false);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
 
     const allButtons = w.findAll("button");
-    const genBtn = allButtons.find((b) => b.text().includes("生成文书"));
+    const genBtn = allButtons.find((b) => b.text().includes("登记文书"));
     expect(genBtn).toBeUndefined();
-
-    const tplActionBtn = allButtons.find((b) =>
-      b.text().includes("選択して生成"),
-    );
-    expect(tplActionBtn).toBeUndefined();
   });
 
   it("readonly=true: no open-generate-modal / finalize / export events emittable", () => {
@@ -258,6 +254,45 @@ describe("CaseFormsTab S9 readonly — read-only content still visible", () => {
 
     expect(w.find(".forms-tab__empty").exists()).toBe(true);
     expect(w.findAll(".forms-tab__name").length).toBe(0);
+  });
+});
+
+describe("CaseFormsTab templates loading", () => {
+  it("templatesLoading=true and empty forms → loading region (not empty state)", () => {
+    const detail = buildDetail([], []);
+    const w = mountTab(detail, false, { templatesLoading: true });
+
+    const el = w.find('[data-testid="forms-templates-loading"]');
+    expect(el.exists()).toBe(true);
+    expect(el.attributes("role")).toBe("status");
+    expect(el.text()).toContain("加载文书模板");
+    expect(
+      w.find(".forms-tab__empty:not(.forms-tab__empty--loading)").exists(),
+    ).toBe(false);
+  });
+
+  it("templatesLoading=true but generated docs exist → main content (not loading)", () => {
+    const detail = buildDetail(
+      [],
+      [buildGeneratedDoc({ backendStatus: "draft" })],
+    );
+    const w = mountTab(detail, false, { templatesLoading: true });
+
+    expect(w.find('[data-testid="forms-templates-loading"]').exists()).toBe(
+      false,
+    );
+    expect(w.find(".forms-tab__empty").exists()).toBe(false);
+    expect(w.findAll(".forms-tab__name").length).toBeGreaterThan(0);
+  });
+
+  it("templatesLoading=true readonly and empty → empty state (not loading)", () => {
+    const detail = buildDetail([], []);
+    const w = mountTab(detail, true, { templatesLoading: true });
+
+    expect(w.find('[data-testid="forms-templates-loading"]').exists()).toBe(
+      false,
+    );
+    expect(w.find(".forms-tab__empty").exists()).toBe(true);
   });
 });
 

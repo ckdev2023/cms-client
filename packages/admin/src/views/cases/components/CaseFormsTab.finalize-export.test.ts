@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseFormsTab from "./CaseFormsTab.vue";
+import { canFinalizeDraftGeneratedDoc } from "./CaseFormsTab.helpers";
 import type { CaseDetail, FormGenerated } from "../types-detail";
 
 const CARD_STUB = {
@@ -10,7 +11,7 @@ const CARD_STUB = {
 };
 
 const BUTTON_STUB = {
-  template: "<button v-bind='$attrs'><slot /></button>",
+  template: "<button v-bind='$attrs' :disabled='disabled'><slot /></button>",
   props: ["variant", "tone", "size", "pill", "disabled"],
 };
 
@@ -29,22 +30,27 @@ function makeI18n() {
           detail: {
             forms: {
               title: "文书管理",
-              generateAction: "生成文书",
+              registerAction: "登记文书",
+              generateAction: "登记文书",
               kickerTemplates: "可用模板",
-              kickerGenerated: "已生成文书",
-              finalizeAction: "定稿",
-              exportAction: "导出",
-              exportAgainAction: "再次导出",
+              kickerGenerated: "已登记文书",
+              finalizeAction: "确认已就绪",
+              finalizeRequiresExternalUrlHint:
+                "请先在登记表单中填写有效的文书外部链接（https:// 或 http://），再确认已就绪。",
+              submissionGateHint: "hint",
+              deleteDraftAction: "删除草稿",
+              deleteDraftConfirm: "确认删除？",
+              openLinkAction: "打开链接",
+              copyLinkAction: "复制链接",
               versionHistoryAction: "版本历史",
-              empty: "暂无可用文书模板或生成记录",
+              empty: "暂无可用文书模板或登记记录",
               status: {
                 draft: "草稿",
-                final: "已定稿",
+                final: "已确认",
                 exporting: "导出中…",
                 exported: "已导出",
                 export_failed: "导出失败",
               },
-              retryExportAction: "重试导出",
               placeholderBadge: "占位文件 · 待 D2 渲染落地",
               downloadAction: "下载文件",
               metaApprovedAt: "{action}：{name} · {time}",
@@ -69,6 +75,7 @@ function buildGeneratedDoc(
     fileUrl: null,
     fileUrlIsPlaceholder: false,
     downloadUrl: null,
+    resourceOpenUrl: null,
     approvedBy: null,
     approvedAt: null,
     ...overrides,
@@ -91,37 +98,65 @@ function mountTab(detail: CaseDetail, readonly = false) {
   });
 }
 
-describe("CaseFormsTab finalize/export button visibility", () => {
-  it("draft 状态显示定稿按钮，不显示导出按钮", () => {
+describe("CaseFormsTab finalize button visibility", () => {
+  it("draft 状态显示「确认已就绪」按钮；无外链时禁用", () => {
     const w = mountTab(
       buildDetail([buildGeneratedDoc({ backendStatus: "draft" })]),
     );
-    expect(w.find("[data-testid='finalize-btn']").exists()).toBe(true);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
+    const btn = w.find("[data-testid='finalize-btn']");
+    expect(btn.exists()).toBe(true);
+    expect(btn.attributes("disabled")).toBeDefined();
   });
 
-  it("final 状态显示导出按钮，不显示定稿按钮", () => {
+  it("draft + 有效 https 外链时「确认已就绪」按钮可点", () => {
+    const w = mountTab(
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "draft",
+          fileUrl: "https://drive.example.com/doc",
+        }),
+      ]),
+    );
+    const btn = w.find("[data-testid='finalize-btn']");
+    expect(btn.exists()).toBe(true);
+    expect(btn.attributes("disabled")).toBeUndefined();
+  });
+
+  it("final 状态不显示「确认已就绪」按钮", () => {
     const w = mountTab(
       buildDetail([buildGeneratedDoc({ backendStatus: "final" })]),
     );
     expect(w.find("[data-testid='finalize-btn']").exists()).toBe(false);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(true);
-    expect(w.find("[data-testid='export-btn']").text()).toContain("导出");
-    expect(w.find("[data-testid='export-btn']").text()).not.toContain(
-      "再次导出",
-    );
   });
 
-  it("exported 状态显示再次导出按钮，不显示定稿按钮", () => {
+  it("final + 外链显示打开链接", () => {
     const w = mountTab(
-      buildDetail([buildGeneratedDoc({ backendStatus: "exported" })]),
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "final",
+          resourceOpenUrl: "https://example.com/doc.pdf",
+        }),
+      ]),
     );
-    expect(w.find("[data-testid='finalize-btn']").exists()).toBe(false);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(true);
-    expect(w.find("[data-testid='export-btn']").text()).toContain("再次导出");
+    const link = w.find("[data-testid='open-resource-link']");
+    expect(link.exists()).toBe(true);
+    expect(link.attributes("href")).toBe("https://example.com/doc.pdf");
+    expect(link.attributes("target")).toBe("_blank");
   });
 
-  it("readonly 模式下不显示定稿和导出按钮", () => {
+  it("final + 外链显示复制链接按钮", () => {
+    const w = mountTab(
+      buildDetail([
+        buildGeneratedDoc({
+          backendStatus: "final",
+          resourceOpenUrl: "https://example.com/doc.pdf",
+        }),
+      ]),
+    );
+    expect(w.find("[data-testid='copy-resource-link']").exists()).toBe(true);
+  });
+
+  it("readonly 模式下不显示「确认已就绪」按钮", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({ backendStatus: "draft" }),
@@ -130,15 +165,18 @@ describe("CaseFormsTab finalize/export button visibility", () => {
       true,
     );
     expect(w.find("[data-testid='finalize-btn']").exists()).toBe(false);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
   });
 });
 
-describe("CaseFormsTab finalize/export event dispatch", () => {
-  it("点击定稿按钮 emit finalize 事件并携带 docId", async () => {
+describe("CaseFormsTab finalize event dispatch", () => {
+  it("点击「确认已就绪」按钮 emit finalize 事件并携带 docId", async () => {
     const w = mountTab(
       buildDetail([
-        buildGeneratedDoc({ id: "doc-fin-1", backendStatus: "draft" }),
+        buildGeneratedDoc({
+          id: "doc-fin-1",
+          backendStatus: "draft",
+          fileUrl: "https://example.com/doc.pdf",
+        }),
       ]),
     );
     await w.find("[data-testid='finalize-btn']").trigger("click");
@@ -146,44 +184,35 @@ describe("CaseFormsTab finalize/export event dispatch", () => {
     expect(w.emitted("finalize")![0]).toEqual(["doc-fin-1"]);
   });
 
-  it("点击导出按钮 emit export 事件并携带 docId", async () => {
-    const w = mountTab(
-      buildDetail([
-        buildGeneratedDoc({ id: "doc-exp-1", backendStatus: "final" }),
-      ]),
-    );
-    await w.find("[data-testid='export-btn']").trigger("click");
-    expect(w.emitted("export")).toHaveLength(1);
-    expect(w.emitted("export")![0]).toEqual(["doc-exp-1"]);
-  });
-
   it("多行各自 emit 正确的 docId", async () => {
     const w = mountTab(
       buildDetail([
-        buildGeneratedDoc({ id: "d1", backendStatus: "draft" }),
-        buildGeneratedDoc({ id: "d2", backendStatus: "final" }),
-        buildGeneratedDoc({ id: "d3", backendStatus: "exported" }),
+        buildGeneratedDoc({
+          id: "d1",
+          backendStatus: "draft",
+          fileUrl: "https://a.example/x",
+        }),
+        buildGeneratedDoc({
+          id: "d2",
+          backendStatus: "draft",
+          fileUrl: "https://b.example/y",
+        }),
       ]),
     );
     const finBtns = w.findAll("[data-testid='finalize-btn']");
-    const expBtns = w.findAll("[data-testid='export-btn']");
 
-    expect(finBtns).toHaveLength(1);
-    expect(expBtns).toHaveLength(2);
+    expect(finBtns).toHaveLength(2);
 
     await finBtns[0].trigger("click");
     expect(w.emitted("finalize")![0]).toEqual(["d1"]);
 
-    await expBtns[0].trigger("click");
-    expect(w.emitted("export")![0]).toEqual(["d2"]);
-
-    await expBtns[1].trigger("click");
-    expect(w.emitted("export")![1]).toEqual(["d3"]);
+    await finBtns[1].trigger("click");
+    expect(w.emitted("finalize")![1]).toEqual(["d2"]);
   });
 });
 
-describe("CaseFormsTab download link & exporting/export_failed UI", () => {
-  it("exported + downloadUrl 显示下载链接（指向 server 流式接口）", () => {
+describe("CaseFormsTab download link & resource open UI", () => {
+  it("exported + downloadUrl 显示下载链接（指向 server 流式接口 — legacy）", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({
@@ -249,30 +278,20 @@ describe("CaseFormsTab download link & exporting/export_failed UI", () => {
     expect(w.find("[data-testid='download-link']").exists()).toBe(true);
   });
 
-  it("exporting 状态显示导出中指示器", () => {
+  it("final + 外链 resourceOpenUrl 显示打开链接而非下载链接", () => {
     const w = mountTab(
       buildDetail([
         buildGeneratedDoc({
-          backendStatus: "exporting",
-          tone: "warning",
+          backendStatus: "final",
+          tone: "success",
+          fileUrl: "https://drive.google.com/doc-1",
+          resourceOpenUrl: "https://drive.google.com/doc-1",
         }),
       ]),
     );
-    expect(w.find("[data-testid='exporting-indicator']").exists()).toBe(true);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
-  });
-
-  it("export_failed 状态显示重试按钮", () => {
-    const w = mountTab(
-      buildDetail([
-        buildGeneratedDoc({
-          backendStatus: "export_failed",
-          tone: "danger",
-        }),
-      ]),
-    );
-    expect(w.find("[data-testid='retry-export-btn']").exists()).toBe(true);
-    expect(w.find("[data-testid='export-btn']").exists()).toBe(false);
+    expect(w.find("[data-testid='open-resource-link']").exists()).toBe(true);
+    expect(w.find("[data-testid='copy-resource-link']").exists()).toBe(true);
+    expect(w.find("[data-testid='download-link']").exists()).toBe(false);
   });
 });
 
@@ -305,5 +324,80 @@ describe("CaseFormsTab approval meta refresh", () => {
     );
     const metaText = w.find(".forms-tab__meta").text();
     expect(metaText).toBe("PDF · 2026-05-01");
+  });
+});
+
+describe("canFinalizeDraftGeneratedDoc", () => {
+  it("draft + https 外链 → true", () => {
+    expect(
+      canFinalizeDraftGeneratedDoc(
+        buildGeneratedDoc({
+          fileUrl: "https://x.example/a",
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it("draft + http 外链 → true", () => {
+    expect(
+      canFinalizeDraftGeneratedDoc(
+        buildGeneratedDoc({ fileUrl: "http://intranet.local/a" }),
+      ),
+    ).toBe(true);
+  });
+
+  it("draft + 内部 storage key → false", () => {
+    expect(
+      canFinalizeDraftGeneratedDoc(
+        buildGeneratedDoc({
+          fileUrl: "generated-documents/org/a/v1.pdf",
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("draft + null fileUrl → false", () => {
+    expect(canFinalizeDraftGeneratedDoc(buildGeneratedDoc())).toBe(false);
+  });
+
+  it("draft + placeholder fileUrl → false", () => {
+    expect(
+      canFinalizeDraftGeneratedDoc(
+        buildGeneratedDoc({
+          fileUrl: "placeholder://x",
+          fileUrlIsPlaceholder: true,
+        }),
+      ),
+    ).toBe(false);
+  });
+
+  it("final 状态 → false", () => {
+    expect(
+      canFinalizeDraftGeneratedDoc(
+        buildGeneratedDoc({
+          backendStatus: "final",
+          fileUrl: "https://x.example/a",
+        }),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("CaseFormsTab delete draft button", () => {
+  it("草稿且非只读时渲染删除草稿按钮", () => {
+    const w = mountTab(buildDetail([buildGeneratedDoc()]));
+    expect(w.find("[data-testid='delete-draft-btn']").exists()).toBe(true);
+  });
+
+  it("只读时不渲染删除草稿按钮", () => {
+    const w = mountTab(buildDetail([buildGeneratedDoc()]), true);
+    expect(w.find("[data-testid='delete-draft-btn']").exists()).toBe(false);
+  });
+
+  it("已确认文书不渲染删除草稿按钮", () => {
+    const w = mountTab(
+      buildDetail([buildGeneratedDoc({ backendStatus: "final" })]),
+    );
+    expect(w.find("[data-testid='delete-draft-btn']").exists()).toBe(false);
   });
 });

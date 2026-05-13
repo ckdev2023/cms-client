@@ -58,8 +58,8 @@ export async function insertCase(
     `insert into cases (org_id, customer_id, case_type_code, status, stage, group_id, owner_user_id, due_at, metadata,
       case_no, case_name, case_subtype, application_type, company_id, priority, risk_level,
       assistant_user_id, source_channel, signed_at, accepted_at, submission_date, result_date, residence_expiry_date,
-      result_outcome, quote_price, visa_plan, business_phase)
-     values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27) returning ${CASE_COLS}`,
+      result_outcome, quote_price, visa_plan, jurisdiction_authority, business_phase)
+     values ($1,$2,$3,$4,$5,$6,$7,$8,$9::jsonb,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28) returning ${CASE_COLS}`,
     params,
   );
   const row = result.rows.at(0);
@@ -127,6 +127,7 @@ export async function executeUpdateCase(
          result_date = $19, residence_expiry_date = $20, archived_at = $21,
          result_outcome = $22, quote_price = $23, visa_plan = $24,
          overseas_visa_start_at = $25, entry_confirmed_at = $26,
+         jurisdiction_authority = $27,
          updated_at = now()
      where id = $1 and coalesce(metadata->>'_status', '') is distinct from 'deleted'
      returning ${CASE_COLS}`,
@@ -157,6 +158,7 @@ export async function executeUpdateCase(
       f.visaPlan,
       f.overseasVisaStartAt,
       f.entryConfirmedAt,
+      f.jurisdictionAuthority,
     ],
   );
   const row = result.rows.at(0);

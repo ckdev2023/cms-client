@@ -103,12 +103,11 @@ const _assertFinalizeResult: ReturnType<
 > extends Promise<WriteResultWithId>
   ? true
   : never = true;
-const _assertExportResult: ReturnType<
-  CaseRepository["exportGeneratedDocument"]
+const _assertDeleteDraftResult: ReturnType<
+  CaseRepository["deleteDraftGeneratedDocument"]
 > extends Promise<WriteResultWithId>
   ? true
   : never = true;
-
 type _BootstrapReturn = ReturnType<CaseRepository["bootstrapChecklist"]>;
 type _AssertBootstrapReturn =
   _BootstrapReturn extends Promise<CaseMutationResult>
@@ -140,7 +139,7 @@ void [
   _assertFormsResult,
   _assertTemplatesResult,
   _assertFinalizeResult,
-  _assertExportResult,
+  _assertDeleteDraftResult,
   _assertBootstrapResult,
   _assertSummaryParam,
   _assertSummaryReturn,
@@ -182,7 +181,7 @@ const REPOSITORY_REQUIRED_METHODS = [
   "listDocumentTemplates",
   "previewChecklistCount",
   "finalizeGeneratedDocument",
-  "exportGeneratedDocument",
+  "deleteDraftGeneratedDocument",
 ] as const;
 
 describe("CaseRepository interface surface (p0-fe-002f-04)", () => {
@@ -377,6 +376,7 @@ describe("p0-fe-005 consumer readiness — create (p0-fe-002f-04)", () => {
       sourceChannel: "",
       signedAt: "",
       acceptedAt: "",
+      jurisdictionAuthority: "",
       submissionDate: "",
       resultDate: "",
       residenceExpiryDate: "",
@@ -425,11 +425,11 @@ describe("p0-fe-007 consumer readiness — detail tabs (p0-fe-002f-04)", () => {
     expect(typeof repo.getGeneratedDocuments).toBe("function");
   });
 
-  it("document templates, finalize, and export available via repository methods", () => {
+  it("document templates, finalize, delete draft available via repository methods", () => {
     const repo = createCaseRepository({ request: fetch, getToken: () => "t" });
     expect(typeof repo.listDocumentTemplates).toBe("function");
     expect(typeof repo.finalizeGeneratedDocument).toBe("function");
-    expect(typeof repo.exportGeneratedDocument).toBe("function");
+    expect(typeof repo.deleteDraftGeneratedDocument).toBe("function");
   });
 
   it("validation/billing/submission/review available via dedicated repository methods (p0-fe-006b-02)", () => {

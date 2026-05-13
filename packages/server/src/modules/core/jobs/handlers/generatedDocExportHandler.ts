@@ -1,3 +1,8 @@
+/**
+ * @deprecated 导出流水线已弃用。外部文书登记主路径为 draft → final，
+ * file_url 存放运营资源服务器上的外链，不再提供系统内导出。
+ * 此模块仅保留以兼容遗留数据和已有引用，不再注册新 worker。
+ */
 import type { Pool } from "pg";
 import crypto from "node:crypto";
 
@@ -5,6 +10,7 @@ import { RedisQueue, type QueueJob } from "../../../../infra/queue/redisQueue";
 import type { StorageAdapter } from "../../../../infra/storage/storageAdapter";
 import { createTenantDb } from "../../tenancy/tenantDb";
 
+/** @deprecated 队列名常量保留以兼容外部引用，worker 不再消费此队列。 */
 export const GENERATED_DOC_EXPORT_QUEUE = "generated_doc_export_jobs";
 
 const NOTIFICATION_QUEUE = "notification_jobs";

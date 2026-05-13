@@ -74,6 +74,7 @@ function makeQueue(capturedEnqueues: unknown[]) {
 }
 
 void test("GENERATED_DOC_EXPORT_QUEUE constant is correct", () => {
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
   assert.equal(GENERATED_DOC_EXPORT_QUEUE, "generated_doc_export_jobs");
 });
 

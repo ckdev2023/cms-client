@@ -249,7 +249,7 @@ function stubCaseRepository(
     createCommunicationLog: vi.fn(),
     createGeneratedDocument: vi.fn(),
     finalizeGeneratedDocument: vi.fn(),
-    exportGeneratedDocument: vi.fn(),
+    deleteDraftGeneratedDocument: vi.fn(),
     createReminder: vi.fn(),
     createTask: vi.fn(),
     completeTask: vi.fn(),

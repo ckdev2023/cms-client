@@ -14,6 +14,7 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   CASE_GATE_VALIDATION_RUN_STALE: "gateValidationRunStale",
   CASE_GATE_REVIEW_NOT_APPROVED: "gateReviewNotApproved",
   CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED: "gateCBillingRiskUnacknowledged",
+  CASE_GATE_C_OPEN_TASKS: "gateCOpenTasks",
   CASE_BILLING_RISK_ACK_FAILED: "billingRiskAckFailed",
   CASE_POST_APPROVAL_STAGE_INVALID: "postApprovalStageInvalid",
   CASE_POST_APPROVAL_BILLING_BLOCKED: "postApprovalBillingBlocked",
@@ -73,6 +74,8 @@ export const CASE_WRITE_ERROR_I18N_MAP: Record<string, string> = {
   GD_INVALID_TRANSITION: "gdInvalidTransition",
   GD_INVALID_OUTPUT_FORMAT: "gdInvalidOutputFormat",
   GD_TITLE_REQUIRED: "gdTitleRequired",
+  GD_EXTERNAL_URL_REQUIRED: "gdExternalUrlRequired",
+  GD_DELETE_ONLY_DRAFT: "gdDeleteOnlyDraft",
 };
 
 /**

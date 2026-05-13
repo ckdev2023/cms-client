@@ -229,6 +229,7 @@ export const BILLING_SLICE_CONSUMED_FIELDS = [
   "unpaidAmount",
   "depositPaid",
   "finalPaymentPaid",
+  "finalPaymentMilestoneMatched",
   "billingRiskAcknowledged",
   "billingRiskAcknowledgedAt",
   "billingRiskAckReasonCode",
@@ -341,7 +342,7 @@ export const OVERVIEW_SUMMARY_CARD_DEFS = [
  * info tab 案件属性卡消费的 CaseDetail 字段。
  *
  * 来源均为 adapter `buildDetailHeader` 产出；
- * `agency` 当前无 server Case 字段映射，默认空字符串。
+ * `agency` 与 info tab「管辖机构」展示一致，取自 case `jurisdictionAuthority`。
  */
 export const INFO_TAB_CASE_ATTRIBUTES_FIELDS = [
   "id",

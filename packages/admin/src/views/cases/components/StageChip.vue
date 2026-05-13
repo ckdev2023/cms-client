@@ -31,6 +31,11 @@ const props = withDefaults(
   defineProps<{
     /** Stage code（`S1..S9`）或 free-text stage 文案。 */
     code: CaseStageId | string | null | undefined;
+    /**
+     * 覆盖 `code` 对应的阶段全文 i18n 键（如 BMV S7 认定后跟踪）。
+     * 不传时仍使用 `getStageI18nKey(code)`。
+     */
+    labelI18nKey?: string | null;
     /** 渲染粒度，默认 `full`。 */
     precision?: StagePrecision;
     /** 是否渲染 Chip 圆点提示态（透传 `Chip.dot`）。 */
@@ -38,7 +43,7 @@ const props = withDefaults(
     /** code 为空时的兜底展示，默认 `—`。 */
     fallback?: string;
   }>(),
-  { precision: "full", dot: false, fallback: "—" },
+  { precision: "full", dot: false, fallback: "—", labelI18nKey: null },
 );
 
 const { t } = useI18n();
@@ -61,7 +66,7 @@ const tone = computed<ChipTone>(() => {
 const fullLabel = computed<string>(() => {
   const code = normalizedCode.value;
   if (!code) return "";
-  const key = getStageI18nKey(code);
+  const key = props.labelI18nKey?.trim() || getStageI18nKey(code);
   return key ? t(key) : getStageLabel(code);
 });
 

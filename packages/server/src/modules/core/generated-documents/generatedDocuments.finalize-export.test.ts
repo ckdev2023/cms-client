@@ -167,16 +167,12 @@ void test("finalize rejects exported → draft (rollback not allowed)", async ()
   );
 });
 
-// ─── Finalize: idempotency ───────────────────────────────────────
-
 void test("finalize is idempotent: final → final succeeds", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("final", tl);
   const dto = await svc.update(ctx(), GD_ID, { status: "final" });
   assert.ok(dto);
 });
-
-// ─── Finalize: approved_by auto-fill ─────────────────────────────
 
 void test("finalize (draft → final) SQL includes approved_by and approved_at", async () => {
   const tl = makeSpyTimeline();
@@ -242,13 +238,21 @@ void test("finalize (final → final) does NOT overwrite approved_by", async () 
   );
 });
 
-// ─── Export: status machine ──────────────────────────────────────
-
-void test("export (final → exporting) succeeds", async () => {
+void test("export rejects final → exporting (final is terminal)", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("final", tl);
-  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
-  assert.ok(dto);
+  await assert.rejects(
+    () => svc.update(ctx(), GD_ID, { status: "exporting" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION,
+        ),
+      );
+      return true;
+    },
+  );
 });
 
 void test("export (exporting → exported) succeeds", async () => {
@@ -265,11 +269,21 @@ void test("export (exporting → export_failed) succeeds", async () => {
   assert.ok(dto);
 });
 
-void test("export retry (export_failed → exporting) succeeds", async () => {
+void test("export rejects export_failed → exporting (legacy state frozen)", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("export_failed", tl);
-  const dto = await svc.update(ctx(), GD_ID, { status: "exporting" });
-  assert.ok(dto);
+  await assert.rejects(
+    () => svc.update(ctx(), GD_ID, { status: "exporting" }),
+    (e) => {
+      assert.ok(e instanceof BadRequestException);
+      assert.ok(
+        e.message.includes(
+          GENERATED_DOCUMENT_ERROR_CODES.GD_INVALID_TRANSITION,
+        ),
+      );
+      return true;
+    },
+  );
 });
 
 void test("export rejects draft → exported (must finalize first)", async () => {
@@ -306,16 +320,12 @@ void test("export rejects final → exported (must go through exporting)", async
   );
 });
 
-// ─── Export: idempotency (exported → exported) ───────────────────
-
 void test("export is idempotent: exported → exported succeeds", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("exported", tl);
   const dto = await svc.update(ctx(), GD_ID, { status: "exported" });
   assert.ok(dto);
 });
-
-// ─── Timeline: generic updated event on finalize ─────────────────
 
 void test("finalize writes generated_document.updated timeline event", async () => {
   const tl = makeSpyTimeline();
@@ -329,8 +339,6 @@ void test("finalize writes generated_document.updated timeline event", async () 
   assert.equal(tl.calls[0].entityId, CASE_ID);
   assert.deepEqual(tl.calls[0].payload.changes, { status: "final" });
 });
-
-// ─── Timeline: skipTimelineWrite suppresses the .updated event ───
 
 void test("update with skipTimelineWrite=true writes no timeline event", async () => {
   const tl = makeSpyTimeline();
@@ -369,13 +377,11 @@ void test("update with skipTimelineWrite=false still writes timeline", async () 
   assert.equal(tl.calls[0].action, "generated_document.updated");
 });
 
-// ─── Timeline: generic updated event on export ───────────────────
-
-void test("export writes generated_document.updated timeline event", async () => {
+void test("legacy export completion writes timeline event", async () => {
   const tl = makeSpyTimeline();
-  const svc = makeServiceForStatus("final", tl);
+  const svc = makeServiceForStatus("exporting", tl);
 
-  await svc.update(ctx(), GD_ID, { status: "exporting" });
+  await svc.update(ctx(), GD_ID, { status: "exported" });
 
   assert.equal(tl.calls.length, 1, "exactly one timeline event");
   assert.equal(tl.calls[0].action, "generated_document.updated");
@@ -396,7 +402,6 @@ void test("two consecutive exports produce two timeline writes", async () => {
   assert.equal(tl.calls[0].payload.generatedDocumentId, GD_ID);
   assert.equal(tl.calls[1].payload.generatedDocumentId, GD_ID);
 });
-
 void test("rejected transition does not write timeline", async () => {
   const tl = makeSpyTimeline();
   const svc = makeServiceForStatus("draft", tl);
@@ -405,8 +410,6 @@ void test("rejected transition does not write timeline", async () => {
 
   assert.equal(tl.calls.length, 0, "no timeline on rejected transition");
 });
-
-// ─── Permission matrix: canFinalizeCase ──────────────────────────
 
 const NULLS = {
   groupId: null,
@@ -439,6 +442,7 @@ const NULLS = {
   billingRiskAckEvidenceUrl: null,
   overseasVisaStartAt: null,
   entryConfirmedAt: null,
+  jurisdictionAuthority: null,
   currentWorkflowStepCode: null,
 } as const;
 
@@ -470,7 +474,6 @@ void test("canFinalizeCase: manager can finalize any case", () => {
   const c = { ...baseMockCase, ownerUserId: OTHER_USER_ID };
   assert.equal(perm.canFinalizeCase(USER_ID, "manager", c), true);
 });
-
 void test("canFinalizeCase: owner can finalize own case", () => {
   const perm = new PermissionsService();
   assert.equal(perm.canFinalizeCase(USER_ID, "owner", baseMockCase), true);
@@ -480,7 +483,6 @@ void test("canFinalizeCase: case owner (staff role) can finalize", () => {
   const c = { ...baseMockCase, ownerUserId: USER_ID };
   assert.equal(perm.canFinalizeCase(USER_ID, "staff", c), true);
 });
-
 void test("canFinalizeCase: assistant (non-owner staff) cannot finalize", () => {
   const perm = new PermissionsService();
   const c = {
@@ -490,7 +492,6 @@ void test("canFinalizeCase: assistant (non-owner staff) cannot finalize", () => 
   };
   assert.equal(perm.canFinalizeCase(USER_ID, "staff", c), false);
 });
-
 void test("canFinalizeCase: viewer and unrelated staff cannot finalize", () => {
   const perm = new PermissionsService();
   const c = { ...baseMockCase, ownerUserId: OTHER_USER_ID };

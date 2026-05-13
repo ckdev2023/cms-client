@@ -21,10 +21,10 @@ const VALID_OUTPUT_FORMATS = new Set(["pdf", "docx", "xlsx"]);
 
 const STATUS_TRANSITIONS: Record<string, Set<string>> = {
   draft: new Set(["draft", "final"]),
-  final: new Set(["final", "exporting"]),
+  final: new Set(["final"]),
   exporting: new Set(["exported", "export_failed"]),
   exported: new Set(["exported"]),
-  export_failed: new Set(["exporting"]),
+  export_failed: new Set(["export_failed"]),
 };
 
 /** 生成文书数据库行类型。 */
@@ -178,6 +178,21 @@ export function buildUpdateSets(
   }
 
   return { sets, params };
+}
+
+/**
+ * `file_url` が有効な外部 http(s) URL であるかを判定する。
+ * `null`・空文字・`placeholder://` はいずれも無効。
+ *
+ * @param url - 検査対象の URL 文字列
+ * @returns `http://` または `https://` で始まる有効な URL の場合 `true`
+ */
+export function isValidExternalUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  const trimmed = url.trim();
+  if (trimmed.length === 0) return false;
+  if (trimmed.startsWith("placeholder://")) return false;
+  return trimmed.startsWith("http://") || trimmed.startsWith("https://");
 }
 
 function tsString(value: unknown, field: string): string {

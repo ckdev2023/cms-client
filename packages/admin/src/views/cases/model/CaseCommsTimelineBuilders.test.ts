@@ -126,6 +126,27 @@ describe("CaseCommsTimelineBuilders", () => {
     });
   });
 
+  describe("generated_document.deleted", () => {
+    it("returns generatedDocumentDeleted key with title suffix", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.deleted",
+        { title: "申請理由書" },
+      );
+      expect(result.key).toBe("cases.log.timeline.generatedDocumentDeleted");
+      expect(result.params).toMatchObject({ suffix: "申請理由書" });
+      expect(result.params!.colonSuffix).toBe("：申請理由書");
+    });
+
+    it("drops colon when payload is empty", () => {
+      const result = buildCaseTimelineMessageResult(
+        "generated_document.deleted",
+        {},
+      );
+      expect(result.params).toMatchObject({ suffix: "" });
+      expect(result.params!.colonSuffix).toBe("");
+    });
+  });
+
   describe("generated_document.exported", () => {
     it("returns generatedDocumentExported key with title suffix", () => {
       const result = buildCaseTimelineMessageResult(

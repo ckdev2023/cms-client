@@ -39,9 +39,10 @@ import {
   BADGE_TONE_MAP,
   getPhaseI18nKey,
   getPhaseBadge,
-  getStageI18nKey,
+  resolveStageLabelI18nKey,
 } from "./constants";
 import { formatCaseIdentity } from "./caseIdentity";
+import { resolveBmvWorkflowStepDisplayLabel } from "./constantsBmvSteps";
 import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
 import {
   buildFallbackName,
@@ -49,8 +50,7 @@ import {
 } from "../../shared/model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
-import { useCaseFormsExportPolling } from "./model/useCaseFormsExportPolling";
-import type { PaymentRow } from "./types-detail";
+import type { FormTemplate, PaymentRow } from "./types-detail";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
@@ -77,7 +77,6 @@ const {
   tabs,
   detail,
   enrichedDetail,
-  formTemplates,
   notFound,
   notFoundReason,
   isReadonly,
@@ -100,11 +99,12 @@ const {
   createReminder,
   createGeneratedDocument,
   finalizeGeneratedDocument,
-  exportGeneratedDocument,
+  deleteDraftGeneratedDocument,
   createTask,
   completeTask,
   phaseMenu,
   isTerminalPhase: isTerminal,
+  formTemplatesLoading,
   refetch,
 } = useCaseDetailModel(caseId, {
   routeTab,
@@ -118,7 +118,7 @@ const validationActions = useCaseValidationActions({
   onRerunSuccess: () => void refetch(),
   onCreateSpSuccess: () => {
     void refetch();
-    switchTab("validation");
+    guardedSwitchTab("validation");
   },
   onReviewRequestSuccess: () => void refetch(),
   onRiskAckSuccess: () => {
@@ -128,8 +128,6 @@ const validationActions = useCaseValidationActions({
 });
 
 const guard = useCaseDetailGuard(detail);
-
-useCaseFormsExportPolling(detail, refetch);
 
 const clientDisplayName = computed(() => {
   const d = detail.value;
@@ -187,7 +185,6 @@ watch(
     if (!detail.value) return;
     if (!guard.isTabAccessible(activeTab.value)) {
       switchTab("log");
-      router.replace({ query: buildCaseDetailQuery({ tab: "log" }) });
     }
   },
   { immediate: true },
@@ -258,6 +255,18 @@ function onTabClick(tabKey: (typeof tabs)[number]["key"]): void {
   switchTab(tabKey);
 }
 
+/**
+ * 子组件程序化跳转 Tab 时复用与 Tab 条相同的终态守门，避免无效 `?tab=` 与视图抖动。
+ * @param tab - 目标 tab
+ */
+function guardedSwitchTab(tab: (typeof tabs)[number]["key"]): void {
+  if (!guard.isTabAccessible(tab)) {
+    switchTab("log");
+    return;
+  }
+  switchTab(tab);
+}
+
 const phaseTone = computed<ChipTone>(() => {
   if (!detail.value) return "neutral";
   return badgeToTone(getPhaseBadge(detail.value.businessPhase));
@@ -282,8 +291,17 @@ const displayTitle = computed(() => {
 
 const stageLabel = computed(() => {
   if (!detail.value) return "";
-  const key = getStageI18nKey(detail.value.stageCode);
+  const key = resolveStageLabelI18nKey(
+    detail.value.stageCode,
+    detail.value.workflowStep?.stepCode,
+  );
   return key ? t(key) : detail.value.stage;
+});
+
+const bmvWorkflowStepChipLabel = computed(() => {
+  const ws = detail.value?.workflowStep;
+  if (!ws) return "";
+  return resolveBmvWorkflowStepDisplayLabel(t, ws);
 });
 
 /**
@@ -457,34 +475,57 @@ async function onDeadlineSubmit(payload: {
 
 const formGenModalOpen = ref(false);
 const formGenModalSubmitting = ref(false);
-const formGenInitialTemplateId = ref<string | null>(null);
+const formGenModalPreset = ref<FormTemplate | null>(null);
 
 /**
- * 打开生成文书弹窗。
- * @param templateId 预选模板 ID
+ * 打开登记文书弹窗。
+ *
+ * @param template - 可选；从模板行入口打开时传入该行模板，用于预填标题并提交 templateId。
  */
-function openGenerateFormModal(templateId?: string): void {
-  formGenInitialTemplateId.value = templateId ?? null;
+function openGenerateFormModal(template?: FormTemplate): void {
+  formGenModalPreset.value = template ?? null;
   formGenModalOpen.value = true;
 }
 
 /**
- * 提交文书生成表单。
+ * 关闭登记文书弹窗并清除模板上下文，避免下一次从顶部入口误用上一次模板。
+ */
+function closeGenerateFormModal(): void {
+  formGenModalOpen.value = false;
+  formGenModalPreset.value = null;
+}
+
+/**
+ * 删除草稿文书（需浏览器确认）。
  *
- * @param payload - 文书生成数据
+ * @param docId - 生成文书 ID
+ */
+async function onDeleteDraftGeneratedDoc(docId: string): Promise<void> {
+  if (!window.confirm(t("cases.detail.forms.deleteDraftConfirm"))) return;
+  await deleteDraftGeneratedDocument(docId);
+}
+
+/**
+ * 提交文书登记表单。
+ *
+ * @param payload - 文书登记数据
  * @param payload.title - 标题
- * @param payload.templateId - 模板 ID
- * @param payload.outputFormat - 输出格式
+ * @param payload.fileUrl - 外部资源 URL
+ * @param payload.templateId - 可选；从模板行打开时由弹窗填入，发往 `POST /generated-documents`
  */
 async function onFormGenSubmit(payload: {
   title: string;
-  templateId: string | null;
-  outputFormat: string;
+  fileUrl: string;
+  templateId?: string;
 }): Promise<void> {
   formGenModalSubmitting.value = true;
-  const ok = await createGeneratedDocument(payload);
+  const ok = await createGeneratedDocument({
+    title: payload.title,
+    fileUrl: payload.fileUrl,
+    ...(payload.templateId ? { templateId: payload.templateId } : {}),
+  });
   formGenModalSubmitting.value = false;
-  if (ok) formGenModalOpen.value = false;
+  if (ok) closeGenerateFormModal();
 }
 </script>
 
@@ -501,7 +542,17 @@ async function onFormGenSubmit(payload: {
         ]"
       >
         <template #badge>
-          <StageChip :code="detail.stageCode" precision="both" dot />
+          <StageChip
+            :code="detail.stageCode"
+            :label-i18n-key="
+              resolveStageLabelI18nKey(
+                detail.stageCode,
+                detail.workflowStep?.stepCode,
+              )
+            "
+            precision="both"
+            dot
+          />
           <Chip :tone="phaseTone" dot>
             {{ phaseLabel }}
           </Chip>
@@ -511,7 +562,7 @@ async function onFormGenSubmit(payload: {
             dot
           >
             {{ detail.workflowStep.parentStage }} →
-            {{ detail.workflowStep.stepLabel }}
+            {{ bmvWorkflowStepChipLabel }}
           </Chip>
         </template>
         <template #meta>
@@ -774,7 +825,7 @@ async function onFormGenSubmit(payload: {
           :readonly="isReadonly"
           :is-terminal="isTerminal"
           :can-run-validation="false"
-          @switch-tab="switchTab"
+          @switch-tab="guardedSwitchTab"
           @advance-to-coe="transitionWorkflowStep('COE_SENT')"
           @retry-reminder="retryReminderCreation()"
           @failure-close="failureCloseCase()"
@@ -800,9 +851,10 @@ async function onFormGenSubmit(payload: {
           v-else-if="activeTab === 'forms'"
           :detail="enrichedDetail ?? detail"
           :readonly="isReadonly"
+          :templates-loading="formTemplatesLoading"
           @open-generate-modal="openGenerateFormModal"
           @finalize="finalizeGeneratedDocument"
-          @export="exportGeneratedDocument"
+          @delete-draft="onDeleteDraftGeneratedDoc"
         />
         <CaseTasksTab
           v-else-if="activeTab === 'tasks'"
@@ -833,7 +885,7 @@ async function onFormGenSubmit(payload: {
           :create-sp-loading="validationActions.createSpLoading.value"
           :review-loading="validationActions.reviewLoading.value"
           :advance-stage-loading="writeFeedback.submitting"
-          @switch-tab="switchTab"
+          @switch-tab="guardedSwitchTab"
           @open-risk-modal="openRiskModal"
           @rerun-validation="validationActions.rerunValidation"
           @create-submission-package="openSpCreateModal"
@@ -887,10 +939,9 @@ async function onFormGenSubmit(payload: {
       <CaseFormGenerateModal
         :open="formGenModalOpen"
         :case-name="detail.title"
-        :templates="formTemplates"
-        :initial-template-id="formGenInitialTemplateId"
+        :preset-template="formGenModalPreset"
         :submitting="formGenModalSubmitting"
-        @close="formGenModalOpen = false"
+        @close="closeGenerateFormModal"
         @submit="onFormGenSubmit"
       />
 

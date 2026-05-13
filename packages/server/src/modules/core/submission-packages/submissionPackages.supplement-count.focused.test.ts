@@ -284,6 +284,7 @@ void describe("BMV submission payload — document_requirement snapshot", () => 
               version_no: 2,
               output_format: "pdf",
               status: "final",
+              file_url: "https://ext.example.com/docs/coe-application.pdf",
             },
           ],
           rowCount: 1,

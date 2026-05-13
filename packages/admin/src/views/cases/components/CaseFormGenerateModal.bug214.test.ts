@@ -60,8 +60,12 @@ describe("BUG-214 CaseFormGenerateModal", () => {
 
   it("emits submit with correct payload on click", async () => {
     const w = mountModal();
-    const input = w.find("[data-testid='form-gen-title-input']");
-    await input.setValue("生成テスト");
+    const titleInput = w.find("[data-testid='form-gen-title-input']");
+    await titleInput.setValue("生成テスト");
+
+    const urlInput = w.find("[data-testid='form-gen-file-url-input']");
+    await urlInput.setValue("https://example.com/doc.pdf");
+
     const btn = w.find("[data-testid='form-gen-submit-btn']");
     await btn.trigger("click");
 
@@ -70,12 +74,10 @@ describe("BUG-214 CaseFormGenerateModal", () => {
     expect(events!.length).toBe(1);
     const payload = events![0][0] as {
       title: string;
-      templateId: string | null;
-      outputFormat: string;
+      fileUrl: string;
     };
     expect(payload.title).toBe("生成テスト");
-    expect(payload.templateId).toBeNull();
-    expect(payload.outputFormat).toBe("docx");
+    expect(payload.fileUrl).toBe("https://example.com/doc.pdf");
   });
 
   it("emits close when cancel is clicked", async () => {
@@ -87,21 +89,15 @@ describe("BUG-214 CaseFormGenerateModal", () => {
     expect(w.emitted("close")).toBeTruthy();
   });
 
-  it("template select is enabled even without templates (R39-D)", () => {
+  it("fileUrl input is present", () => {
     const w = mountModal();
-    const select = w.find("[data-testid='form-gen-template-select']");
-    expect(select.attributes("disabled")).toBeUndefined();
+    const input = w.find("[data-testid='form-gen-file-url-input']");
+    expect(input.exists()).toBe(true);
   });
 
   it("submit is disabled when submitting=true", () => {
     const w = mountModal({ submitting: true });
     const btn = w.find("[data-testid='form-gen-submit-btn']");
     expect(btn.attributes("disabled")).toBeDefined();
-  });
-
-  it("format select defaults to docx (V9: PDF stub 未稳定前不作为默认)", () => {
-    const w = mountModal();
-    const select = w.find("[data-testid='form-gen-format-select']");
-    expect((select.element as HTMLSelectElement).value).toBe("docx");
   });
 });

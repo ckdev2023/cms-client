@@ -21,7 +21,6 @@ describe("CaseRepository.createGeneratedDocument", () => {
     const result = await repo.createGeneratedDocument({
       caseId: "case-123",
       title: "テスト文書",
-      outputFormat: "pdf",
     });
 
     expect(result.id).toBe("gd-001");
@@ -34,10 +33,9 @@ describe("CaseRepository.createGeneratedDocument", () => {
     const sentBody = JSON.parse(opts.body as string) as Record<string, unknown>;
     expect(sentBody.caseId).toBe("case-123");
     expect(sentBody.title).toBe("テスト文書");
-    expect(sentBody.outputFormat).toBe("pdf");
   });
 
-  it("sends templateId=null when explicitly set", async () => {
+  it("sends fileUrl when provided", async () => {
     const request = mockFetch(201, { id: "gd-002" });
     const repo = createCaseRepository({
       request,
@@ -48,8 +46,7 @@ describe("CaseRepository.createGeneratedDocument", () => {
     await repo.createGeneratedDocument({
       caseId: "case-456",
       title: "文書タイトル",
-      templateId: null,
-      outputFormat: "docx",
+      fileUrl: "https://example.com/doc.pdf",
     });
 
     const sentBody = JSON.parse(
@@ -57,8 +54,27 @@ describe("CaseRepository.createGeneratedDocument", () => {
     ) as Record<string, unknown>;
     expect(sentBody.caseId).toBe("case-456");
     expect(sentBody.title).toBe("文書タイトル");
-    expect(sentBody.templateId).toBeNull();
-    expect(sentBody.outputFormat).toBe("docx");
+    expect(sentBody.fileUrl).toBe("https://example.com/doc.pdf");
+  });
+
+  it("includes templateId in JSON body when provided", async () => {
+    const request = mockFetch(201, { id: "gd-004" });
+    const repo = createCaseRepository({
+      request,
+      getToken: () => "tok",
+      apiPath: "/api/cases",
+    });
+
+    await repo.createGeneratedDocument({
+      caseId: "case-789",
+      title: "T",
+      templateId: "dtpl-001",
+    });
+
+    const sentBody = JSON.parse(
+      (request.mock.calls[0] as [string, RequestInit])[1].body as string,
+    ) as Record<string, unknown>;
+    expect(sentBody.templateId).toBe("dtpl-001");
   });
 
   it("includes authorization header", async () => {

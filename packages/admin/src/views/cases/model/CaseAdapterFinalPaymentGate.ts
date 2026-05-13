@@ -23,6 +23,7 @@ const COE_GATE_RELEVANT_STEPS: ReadonlySet<string> = new Set([
  * @param metrics.finalPaymentPaid - 尾款是否已清
  * @param metrics.unpaidAmount - 未付金额
  * @param metrics.billingRiskAck - 欠款风险是否已确认
+ * @param metrics.finalPaymentMilestoneMatched - 是否已配置尾款类收费节点（名称匹配 server 口径）
  * @returns 门禁状态；不适用时返回 null
  */
 export function buildFinalPaymentGate(
@@ -30,6 +31,7 @@ export function buildFinalPaymentGate(
   isBmv: boolean,
   metrics: {
     finalPaymentPaid: boolean;
+    finalPaymentMilestoneMatched: boolean;
     unpaidAmount: number;
     billingRiskAck: boolean;
   },
@@ -39,10 +41,17 @@ export function buildFinalPaymentGate(
 
   const blockers: FinalPaymentBlocker[] = [];
   if (!metrics.finalPaymentPaid) {
-    blockers.push({
-      code: "final_payment_outstanding",
-      label: "final_payment_outstanding",
-    });
+    if (!metrics.finalPaymentMilestoneMatched) {
+      blockers.push({
+        code: "final_payment_milestone_missing",
+        label: "final_payment_milestone_missing",
+      });
+    } else {
+      blockers.push({
+        code: "final_payment_outstanding",
+        label: "final_payment_outstanding",
+      });
+    }
   }
   if (metrics.unpaidAmount > 0 && !metrics.billingRiskAck) {
     blockers.push({
@@ -53,6 +62,7 @@ export function buildFinalPaymentGate(
 
   return {
     paymentCleared: metrics.finalPaymentPaid,
+    finalPaymentMilestoneMatched: metrics.finalPaymentMilestoneMatched,
     outstandingLabel:
       metrics.unpaidAmount > 0
         ? `¥${metrics.unpaidAmount.toLocaleString()}`
@@ -60,4 +70,21 @@ export function buildFinalPaymentGate(
     canAdvanceToCoe: blockers.length === 0,
     blockers,
   };
+}
+
+/**
+ * 判断尾款/Coe 门禁对象是否具备完整字段，可供概览卡片安全渲染。
+ *
+ * @param gate - 详情上的门禁快照（异常 payload 可能为空对象）
+ * @returns 当且仅当具备布尔 `canAdvanceToCoe` 与数组 `blockers` 时为 true
+ */
+export function isRenderableFinalPaymentGate(
+  gate: FinalPaymentGateInfo | null | undefined,
+): gate is FinalPaymentGateInfo {
+  return (
+    gate != null &&
+    typeof gate === "object" &&
+    typeof gate.canAdvanceToCoe === "boolean" &&
+    Array.isArray(gate.blockers)
+  );
 }

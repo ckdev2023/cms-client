@@ -17,11 +17,13 @@ import {
   buildSupplementRoundInfo,
   buildReminderFailureInfo,
 } from "./CaseAdapterSupplementReminder";
+import { isBizManagementVisaCaseTypeCode } from "../../../shared/model/caseTypeI18n";
 import {
   asRecord,
   formatDate,
   readNullableString,
   readNumber,
+  readString,
   resolveStageId,
   resolveStageLabel,
 } from "./CaseAdapterShared";
@@ -42,6 +44,8 @@ export interface P1DerivedMetrics {
   quotePrice: number;
   /** 尾款是否已支付。 */
   finalPaymentPaid: boolean;
+  /** 是否存在尾款类收费节点（与 server 聚合 billing 一致）。 */
+  finalPaymentMilestoneMatched: boolean;
   /** 未收金额。 */
   unpaidAmount: number;
   /** 是否已进行欠款风险确认。 */
@@ -95,7 +99,7 @@ const BMV_STEP_BLUEPRINT: ReadonlyArray<{
   },
   {
     stepCode: "COE_SENT",
-    label: "COE已发送",
+    label: "COE寄送",
     parentStage: "S7",
     sortOrder: 10,
   },
@@ -133,6 +137,44 @@ const BMV_STEP_BLUEPRINT: ReadonlyArray<{
 
 const BMV_STEP_MAP = new Map(BMV_STEP_BLUEPRINT.map((s) => [s.stepCode, s]));
 const FAILURE_STEP_CODES: ReadonlySet<string> = new Set(["VISA_REJECTED"]);
+
+/** `businessPhase` 与业务子步骤 `code` 不一致时的别名（如 `SUCCESS` → `ENTRY_SUCCESS`）。 */
+const BUSINESS_PHASE_WORKFLOW_FALLBACK: Readonly<Record<string, string>> = {
+  SUCCESS: "ENTRY_SUCCESS",
+};
+
+function isP1WorkflowCaseType(caseTypeCode: string): boolean {
+  if (isBizManagementVisaCaseTypeCode(caseTypeCode)) return true;
+  const n = caseTypeCode.trim().toLowerCase().replace(/-/g, "_");
+  return n === "work";
+}
+
+/**
+ * 当服务端未返回 `currentWorkflowStepCode` 时，对 P1 流程案件依 `businessPhase` 推断子步骤。
+ *
+ * @param caseRecord - 案件 DTO
+ * @returns 推断得到的子步骤代码；无法推断时为 `null`
+ */
+export function resolveWorkflowStepCode(
+  caseRecord: Record<string, unknown>,
+): string | null {
+  const raw = readNullableString(caseRecord, "currentWorkflowStepCode");
+  if (raw && BMV_STEP_MAP.has(raw)) {
+    return raw;
+  }
+
+  const caseTypeCode = readString(caseRecord, "caseTypeCode");
+  if (!isP1WorkflowCaseType(caseTypeCode)) {
+    return null;
+  }
+
+  const bp = readNullableString(caseRecord, "businessPhase");
+  if (!bp) {
+    return null;
+  }
+  const candidate = BUSINESS_PHASE_WORKFLOW_FALLBACK[bp] ?? bp;
+  return BMV_STEP_MAP.has(candidate) ? candidate : null;
+}
 
 const STATUS_TONE_MAP: Record<
   SurveyQuoteStatusKey,
@@ -199,10 +241,12 @@ function buildFailureCloseoutInfo(
   };
 }
 
-function buildBmvFields(caseRecord: Record<string, unknown>) {
-  const stepCode = readNullableString(caseRecord, "currentWorkflowStepCode");
+function buildBmvFields(
+  caseRecord: Record<string, unknown>,
+  resolvedWorkflowStepCode: string | null,
+) {
   return {
-    workflowStep: buildWorkflowStepSummary(stepCode),
+    workflowStep: buildWorkflowStepSummary(resolvedWorkflowStepCode),
     visaPlan: readNullableString(caseRecord, "visaPlan"),
     supplementCount: readNumber(caseRecord, "supplementCount"),
     resultOutcome: readNullableString(caseRecord, "resultOutcome"),
@@ -260,12 +304,23 @@ function buildQuoteStatus(
   };
 }
 
+/**
+ * 详情页「签约前门禁」：仅案件仍在 S1 时有意义；进入 S2 以后案件已成立，
+ * 继续展示「不能签约建案」会误导办案人员（走查：S7 仍显示门禁未通过）。
+ *
+ * @param survey - 问卷进度摘要；非 completed 时记一条阻断。
+ * @param quote - 报价状态摘要；非 completed 时记一条阻断。
+ * @param isBmv - 是否为 BMV / 问卷报价链路案件；否则不展示 pre-sign。
+ * @param stageId - 管理层阶段 `S1`–`S9`；仅 `S1` 返回门禁对象。
+ * @returns 阻断列表与是否通过；非 BMV 或非 S1 时返回 `null`。
+ */
 function buildPreSignGate(
   survey: SurveyQuoteStatus | null,
   quote: SurveyQuoteStatus | null,
   isBmv: boolean,
+  stageId: CaseStageId,
 ): PreSignGateInfo | null {
-  if (!isBmv) return null;
+  if (!isBmv || stageId !== "S1") return null;
   const blockers: PreSignBlocker[] = [];
   if (!survey || survey.statusKey !== "completed") {
     blockers.push({ code: "survey_incomplete", label: "survey_incomplete" });
@@ -293,7 +348,8 @@ export function buildP1Fields(
   failureCloseoutCheck: Record<string, unknown> | null,
   stageId: CaseStageId,
 ) {
-  const bmv = buildBmvFields(caseRecord);
+  const resolvedWorkflowStepCode = resolveWorkflowStepCode(caseRecord);
+  const bmv = buildBmvFields(caseRecord, resolvedWorkflowStepCode);
   const isBmv = bmv.workflowStep != null || bmv.visaPlan != null;
   const isReadonly = stageId === "S9";
   const questionnaireTotal = slices.counts
@@ -316,17 +372,14 @@ export function buildP1Fields(
       metrics.quotePrice > 0 ? `¥${metrics.quotePrice.toLocaleString()}` : "",
     surveyStatus,
     quoteStatus,
-    preSignGate: buildPreSignGate(surveyStatus, quoteStatus, isBmv),
+    preSignGate: buildPreSignGate(surveyStatus, quoteStatus, isBmv, stageId),
     failureCloseout: buildFailureCloseoutInfo(failureCloseoutCheck),
-    finalPaymentGate: buildFinalPaymentGate(
-      readNullableString(caseRecord, "currentWorkflowStepCode"),
-      isBmv,
-      {
-        finalPaymentPaid: metrics.finalPaymentPaid,
-        unpaidAmount: metrics.unpaidAmount,
-        billingRiskAck: metrics.billingRiskAck,
-      },
-    ),
+    finalPaymentGate: buildFinalPaymentGate(resolvedWorkflowStepCode, isBmv, {
+      finalPaymentPaid: metrics.finalPaymentPaid,
+      finalPaymentMilestoneMatched: metrics.finalPaymentMilestoneMatched,
+      unpaidAmount: metrics.unpaidAmount,
+      billingRiskAck: metrics.billingRiskAck,
+    }),
     residencePeriod: buildResidencePeriodPanel(slices.currentResidencePeriod),
     reminderSchedule: buildReminderSchedulePanel(slices.currentResidencePeriod),
     successCloseout: buildSuccessCloseoutInfo(slices.successCloseoutCheck),

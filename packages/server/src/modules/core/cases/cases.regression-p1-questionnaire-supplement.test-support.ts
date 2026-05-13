@@ -64,6 +64,8 @@ const BASE_CASE_ROW: Record<string, unknown> = {
   billing_risk_ack_evidence_url: null,
   overseas_visa_start_at: null,
   entry_confirmed_at: null,
+  jurisdiction_authority: null,
+  business_phase: "CONSULTING",
   current_workflow_step_code: null,
   created_at: "2026-01-01T00:00:00.000Z",
   updated_at: "2026-01-01T00:00:00.000Z",

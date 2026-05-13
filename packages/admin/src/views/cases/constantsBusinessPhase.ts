@@ -186,6 +186,12 @@ const PHASE_EXTRAS: Record<
     badge: "badge-blue",
     label: "准备中",
   },
+  /** BMV `currentWorkflowStepCode` 与 SUCCESS 语义对齐时的兜底别名。 */
+  ENTRY_SUCCESS: {
+    i18nKey: PHASE_DEFS.SUCCESS.i18nKey,
+    badge: PHASE_DEFS.SUCCESS.badge,
+    label: PHASE_DEFS.SUCCESS.label,
+  },
 };
 
 /**

@@ -102,6 +102,7 @@ function canonicalBmvAggregateDto(
       unpaidAmount: 200000,
       depositPaid: true,
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       billingRiskAcknowledged: false,
       billingRiskAcknowledgedAt: null,
       billingRiskAckReasonCode: null,
@@ -288,8 +289,15 @@ describe("§4 aggregate adapter — survey / quote / pre-sign gate (p1-qa-002-02
     expect(result!.detail.quoteStatus!.statusKey).toBe("completed");
   });
 
-  it("BMV case with incomplete survey has blocked pre-sign gate", () => {
+  it("BMV case past S1 does not surface pre-sign gate on detail", () => {
     const result = adaptCaseDetailAggregate(canonicalBmvAggregateDto());
+    expect(result!.detail.preSignGate).toBeNull();
+  });
+
+  it("BMV case with incomplete survey has blocked pre-sign gate", () => {
+    const result = adaptCaseDetailAggregate(
+      canonicalBmvAggregateDto({ stage: "S1" }),
+    );
     expect(result!.detail.preSignGate).not.toBeNull();
     expect(result!.detail.preSignGate!.passed).toBe(false);
     expect(result!.detail.preSignGate!.blockers.length).toBeGreaterThan(0);
@@ -301,7 +309,7 @@ describe("§4 aggregate adapter — survey / quote / pre-sign gate (p1-qa-002-02
   it("BMV case with all completed has passed pre-sign gate", () => {
     const result = adaptCaseDetailAggregate(
       canonicalBmvAggregateDto(
-        {},
+        { stage: "S1" },
         {
           counts: {
             documentItemsTotal: 10,
@@ -355,6 +363,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
     expect(
       buildFinalPaymentGate("APPROVED", false, {
         finalPaymentPaid: false,
+        finalPaymentMilestoneMatched: true,
         unpaidAmount: 100000,
         billingRiskAck: false,
       }),
@@ -365,6 +374,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
     expect(
       buildFinalPaymentGate("UNDER_REVIEW", true, {
         finalPaymentPaid: false,
+        finalPaymentMilestoneMatched: true,
         unpaidAmount: 100000,
         billingRiskAck: false,
       }),
@@ -374,6 +384,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
   it("APPROVED step with unpaid final returns blockers", () => {
     const gate = buildFinalPaymentGate("APPROVED", true, {
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 100000,
       billingRiskAck: false,
     });
@@ -390,6 +401,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
   it("WAITING_PAYMENT step with paid final returns no blockers", () => {
     const gate = buildFinalPaymentGate("WAITING_PAYMENT", true, {
       finalPaymentPaid: true,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 0,
       billingRiskAck: false,
     });
@@ -402,6 +414,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
   it("outstandingLabel is formatted when unpaid > 0", () => {
     const gate = buildFinalPaymentGate("APPROVED", true, {
       finalPaymentPaid: false,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 50000,
       billingRiskAck: true,
     });
@@ -411,6 +424,7 @@ describe("§5 final payment / COE gate (p1-qa-002-02)", () => {
   it("outstandingLabel is empty when fully paid", () => {
     const gate = buildFinalPaymentGate("APPROVED", true, {
       finalPaymentPaid: true,
+      finalPaymentMilestoneMatched: true,
       unpaidAmount: 0,
       billingRiskAck: false,
     });

@@ -177,6 +177,22 @@
   background: var(--color-bg-1);
   border: 2px solid var(--color-border-2);
 }
+.wf-section__step--skipped .wf-section__step-icon {
+  background: var(--color-bg-3);
+  border: 2px dashed var(--color-border-2);
+}
+.wf-section__step--aborted .wf-section__step-icon {
+  background: rgba(245, 158, 11, 0.08);
+  border: 2px dashed rgba(245, 158, 11, 0.45);
+}
+.wf-section__skip-dash {
+  display: block;
+  width: 8px;
+  height: 2px;
+  border-radius: var(--radius-full);
+  background: var(--color-text-3);
+  opacity: 0.45;
+}
 .wf-section__step--failed .wf-section__step-icon {
   background: var(--color-danger, #dc2626);
   color: #fff;
@@ -207,6 +223,14 @@
   color: var(--color-text-3);
   opacity: 0.65;
 }
+.wf-section__step--skipped .wf-section__step-label {
+  color: var(--color-text-3);
+  opacity: 0.5;
+}
+.wf-section__step--aborted .wf-section__step-label {
+  color: var(--color-warning-text);
+  opacity: 0.85;
+}
 .wf-section__step--failed .wf-section__step-label {
   color: var(--color-danger-text);
   font-weight: var(--font-weight-bold);
@@ -232,6 +256,17 @@
   background: var(--color-bg-3);
   color: var(--color-text-3);
   opacity: 0.65;
+}
+.wf-section__step-badge--skipped {
+  background: var(--color-bg-3);
+  color: var(--color-text-3);
+  opacity: 0.55;
+  border: 1px dashed var(--color-border-2);
+}
+.wf-section__step-badge--aborted {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--color-warning-text);
+  border: 1px dashed rgba(245, 158, 11, 0.35);
 }
 .wf-section__step-badge--failed {
   background: rgba(220, 38, 38, 0.1);

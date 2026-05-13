@@ -73,6 +73,7 @@ void describe("supplement submission end-to-end flow", () => {
               version_no: 2,
               output_format: "pdf",
               status: "final",
+              file_url: "https://ext.example.com/docs/reason-statement.pdf",
             },
           ],
           rowCount: 1,

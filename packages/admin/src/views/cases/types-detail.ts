@@ -730,9 +730,14 @@ export interface FormGenerated {
   fileUrlIsPlaceholder: boolean;
   /**
    * ブラウザでダウンロード可能な URL — server `/generated-documents/:id/file` 経由のストリーミング。
-   * status=`exported` かつ fileUrl 有効時のみ非 null。
+   * status=`exported` かつ fileUrl が storage key の場合のみ非 null（レガシー）。
    */
   downloadUrl: string | null;
+  /**
+   * 外部リソース URL — status=`final` かつ fileUrl が http(s) 外部リンクの場合に設定。
+   * UI は「リンクを開く」「リンクをコピー」で利用する。
+   */
+  resourceOpenUrl: string | null;
   /** 確定/出力操作者の表示名。 */
   approvedBy: string | null;
   /** 確定/出力日時（フォーマット済み表示用文字列）。 */
@@ -1011,6 +1016,7 @@ export interface WorkflowStepSummary {
 /** 尾款门禁阻断项代码。 */
 export type FinalPaymentBlockerCode =
   | "final_payment_outstanding"
+  | "final_payment_milestone_missing"
   | "billing_risk_unacknowledged";
 
 /**
@@ -1029,6 +1035,8 @@ export interface FinalPaymentBlocker {
 export interface FinalPaymentGateInfo {
   /** 尾款是否已全额结清。 */
   paymentCleared: boolean;
+  /** 是否存在尾款类收费节点（名称含尾款/final/結果 关键词）。 */
+  finalPaymentMilestoneMatched: boolean;
   /** 未结清金额展示标签（如 "¥50,000"），已结清时为空。 */
   outstandingLabel: string;
   /** 是否可推进到 COE_SENT（尾款已清 + 无未确认欠款风险）。 */

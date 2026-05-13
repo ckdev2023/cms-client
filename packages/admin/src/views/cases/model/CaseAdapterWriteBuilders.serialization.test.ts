@@ -333,6 +333,7 @@ describe("update draft → payload round-trip edge cases", () => {
     sourceChannel: "web",
     signedAt: "2026-01-01",
     acceptedAt: "2026-01-15",
+    jurisdictionAuthority: "",
     submissionDate: "",
     resultDate: "",
     residenceExpiryDate: "",

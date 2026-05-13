@@ -1,4 +1,5 @@
 import type { CaseStageId } from "./types";
+import type { WorkflowStepSummary } from "./types-detail";
 
 /**
  *
@@ -96,7 +97,7 @@ export const BMV_WORKFLOW_STEPS: readonly BmvWorkflowStepDef[] = [
   },
   {
     code: "COE_SENT",
-    label: "COE已发送",
+    label: "COE寄送",
     i18nKey: "cases.constants.bmvSteps.COE_SENT",
     parentStage: "S7",
     sortOrder: 10,
@@ -138,6 +139,17 @@ export const BMV_WORKFLOW_STEPS: readonly BmvWorkflowStepDef[] = [
     sortOrder: 15,
   },
 ] as const;
+
+/**
+ * COE／海外贴签受理之后、「入境成功」分支上的后续子步骤。
+ *
+ * 与 server `OVERSEAS_STEP_TRANSITIONS` 一致：结案于 `VISA_REJECTED` 时这些步骤既不是「进行中」也不得标为「已完成」。
+ */
+export const BMV_POST_VISA_ENTRY_SUCCESS_BRANCH: ReadonlySet<string> = new Set([
+  "ENTRY_SUCCESS",
+  "RESIDENCE_PERIOD_RECORDED",
+  "RENEWAL_REMINDER_SCHEDULED",
+]);
 
 export const BMV_WORKFLOW_STEP_MAP = new Map(
   BMV_WORKFLOW_STEPS.map((s) => [s.code, s]),
@@ -201,4 +213,59 @@ export function getBmvStepI18nKey(stepCode: string): string {
  */
 export function getBmvStepLabel(stepCode: string): string {
   return BMV_WORKFLOW_STEP_MAP.get(stepCode)?.label ?? stepCode;
+}
+
+/**
+ * BMV 工作流子步骤在 UI 上的展示文案：优先走 `cases.constants.bmvSteps.{code}`，否则回退 `stepLabel`。
+ *
+ * @param translate - vue-i18n 翻译函数 `t`
+ * @param workflowStep - 当前子步骤摘要（含 `stepCode` / `stepLabel`）
+ * @returns 本地化后的子步骤名称
+ */
+export function resolveBmvWorkflowStepDisplayLabel(
+  translate: (key: string) => string,
+  workflowStep: Pick<WorkflowStepSummary, "stepCode" | "stepLabel">,
+): string {
+  const code = workflowStep.stepCode;
+  if (!code) return workflowStep.stepLabel;
+  return (
+    translate(`cases.constants.bmvSteps.${code}`) || workflowStep.stepLabel
+  );
+}
+
+/**
+ *
+ */
+export type BmvWorkflowStepDisplayStatus =
+  | "completed"
+  | "current"
+  | "upcoming"
+  | "failed"
+  | "skipped"
+  | "aborted";
+
+/**
+ * 业务子步骤在进度条上的展示状态（与 `CaseWorkflowStepSection` 一致）。
+ *
+ * @param step - BMV 子步骤定义
+ * @param workflowStep - 当前案件的工作流摘要
+ * @returns 该步骤在 UI 上的状态枚举
+ */
+export function computeBmvWorkflowStepDisplayStatus(
+  step: BmvWorkflowStepDef,
+  workflowStep: WorkflowStepSummary,
+): BmvWorkflowStepDisplayStatus {
+  if (step.code === workflowStep.stepCode) {
+    return workflowStep.isFailureStep ? "failed" : "current";
+  }
+  const atVisaRejected = workflowStep.stepCode === "VISA_REJECTED";
+  if (atVisaRejected && step.code === "VISA_APPLYING") {
+    return "aborted";
+  }
+  if (atVisaRejected && BMV_POST_VISA_ENTRY_SUCCESS_BRANCH.has(step.code)) {
+    return "skipped";
+  }
+  const currentOrder = workflowStep.sortOrder;
+  if (step.sortOrder < currentOrder) return "completed";
+  return "upcoming";
 }

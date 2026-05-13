@@ -24,19 +24,21 @@ describe("isTabAccessibleInTerminal (pure function)", () => {
     }
   });
 
-  it.each(["log", "overview", "forms", "documents"] as CaseDetailTab[])(
-    "終態下 %s 可访问",
-    (tabKey) => {
-      expect(isTabAccessibleInTerminal(tabKey, true)).toBe(true);
-    },
-  );
+  it.each([
+    "log",
+    "overview",
+    "forms",
+    "documents",
+    "billing",
+  ] as CaseDetailTab[])("終態下 %s 可访问", (tabKey) => {
+    expect(isTabAccessibleInTerminal(tabKey, true)).toBe(true);
+  });
 
   it.each([
     "validation",
     "tasks",
     "info",
     "deadlines",
-    "billing",
     "messages",
   ] as CaseDetailTab[])("終態下 %s 不可访问", (tabKey) => {
     expect(isTabAccessibleInTerminal(tabKey, true)).toBe(false);
@@ -63,6 +65,11 @@ describe("CaseDetailView template — terminal tab disabling wiring", () => {
 
   it("script 定义 findNextAccessibleTab 函数", () => {
     expect(src).toContain("function findNextAccessibleTab(");
+  });
+
+  it("概览/校验子面板程序化跳转使用 guardedSwitchTab（与终态守门一致）", () => {
+    expect(src).toContain("function guardedSwitchTab");
+    expect(src).toContain('@switch-tab="guardedSwitchTab"');
   });
 });
 

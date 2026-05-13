@@ -318,6 +318,8 @@ const casesEnUS = {
           "Phase has been changed by another operation; please refresh and retry",
         CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
           "Unacknowledged billing risk; please confirm the risk first",
+        CASE_GATE_C_OPEN_TASKS:
+          "Open tasks remain; complete or cancel them before submitting to immigration",
         CASE_BILLING_RISK_ACK_FAILED: "Billing risk acknowledgment failed",
         CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
           "Unacknowledged billing risk in post-approval phase",
@@ -329,7 +331,9 @@ const casesEnUS = {
       },
       guards: {
         successCloseoutBlocked:
-          "Outstanding balance of {amount} with unacknowledged billing risk. Please register in Pre-submission Check or settle in Billing",
+          "Outstanding balance of {amount} with unacknowledged billing risk. Please register under Gates & submission or settle in Billing",
+        coeAdvanceBlocked:
+          "Cannot move to COE mailing: configure the final-payment billing milestone and clear payment in Billing; if a balance remains, record the receivables risk acknowledgement under Gates & submission first.",
       },
     },
     terminalStage: {
@@ -430,17 +434,21 @@ const casesEnUS = {
         teamEmpty: "No team members",
         teamRoleOwner: "Owner",
         teamRoleAssistant: "Assistant",
-        validationTitle: "Pre-submission check",
+        validationTitle: "Gates & submission",
         validationAction: "View validation & packages",
+        validationUnavailableTerminal:
+          "Closed cases cannot open the Gates & submission tab. Use Log, Forms, Documents, or Billing instead.",
       },
       workflowStep: {
-        title: "Business Visa · Workflow Steps",
+        title: "Workflow substeps",
         currentLabel: "Current step",
         stageGroup: "{stage} stage",
         completed: "Completed",
         current: "In progress",
         upcoming: "Upcoming",
         failed: "Failed",
+        skipped: "Not reached",
+        aborted: "Not completed (refusal)",
         stageParallel: "Management stage: {stage}",
       },
       surveyQuote: {
@@ -458,6 +466,7 @@ const casesEnUS = {
         paymentStatus: "Payment status",
         paymentCleared: "Final payment collected",
         paymentOutstanding: "Final payment outstanding",
+        paymentMilestoneMissing: "No final-payment billing milestone",
         outstandingAmount: "Outstanding: {amount}",
         coeGateStatus: "COE gate",
         coeReady: "Ready to send COE",
@@ -465,7 +474,11 @@ const casesEnUS = {
         sendCoe: "Send COE",
         sendCoeHint:
           "Advances the workflow to COE Sent. Requires final payment cleared.",
+        sendCoeHintMilestoneMissing:
+          "Add a billing milestone whose name includes the final-payment keyword (e.g. 尾款 / final / 結果), then record collection before sending COE.",
         blockerPayment: "Final payment must be cleared before sending COE.",
+        blockerMilestoneMissing:
+          "No final-payment milestone is configured; billing cannot be aligned with the COE gate. Add or rename a milestone first.",
         blockerBillingRisk:
           "Billing risk must be acknowledged before sending COE.",
         confirmTitle: "Confirm COE send",
@@ -488,7 +501,7 @@ const casesEnUS = {
         noDeadline: "No deadline set",
         resubmitAction: "Prepare supplement resubmission",
         resubmitHint:
-          "Opens the validation tab to start preparing the supplement submission package.",
+          "Open the Gates & submission tab to start preparing the supplement submission package.",
       },
       reminderFailure: {
         title: "Reminder Creation Failed",
@@ -586,7 +599,10 @@ const casesEnUS = {
       riskTags: {
         title: "Risk tags",
         empty: "No risk tags",
-        placeholder: "Risk tags will be available in a future release",
+        levelHint:
+          "Matches the Risk column on the case list: derived from case riskLevel (normal / attention / critical).",
+        placeholder:
+          "More customizable risk tags will arrive in a future release.",
       },
     },
     billing: {
@@ -645,42 +661,47 @@ const casesEnUS = {
     },
     forms: {
       title: "Document Management",
-      generateAction: "Generate Document",
+      registerAction: "Register Document",
+      generateAction: "Register Document",
       kickerTemplates: "Available templates",
-      kickerGenerated: "Generated documents",
-      finalizeAction: "Finalize",
-      finalizeConfirm: "Confirm finalization? This document will be locked.",
-      exportAction: "Download",
-      exportAgainAction: "Download again",
+      kickerGenerated: "Registered documents",
+      finalizeAction: "Confirm ready",
+      finalizeConfirm:
+        "Confirm this document is available on the external resource server? The registration will be locked and can be referenced by submission packages.",
+      finalizeRequiresExternalUrlHint:
+        "Enter a valid external document URL (https:// or http://) in the registration form first, then confirm readiness.",
+      submissionGateHint:
+        'Pre-submission checks require every registered document to be confirmed. After registering, add a valid external link and click "Confirm ready"; delete extra drafts if needed.',
+      deleteDraftAction: "Delete draft",
+      deleteDraftConfirm: "Delete this draft document? This cannot be undone.",
+      openLinkAction: "Open link",
+      copyLinkAction: "Copy link",
       versionHistoryAction: "Version history",
       status: {
         draft: "Draft",
-        final: "Finalized",
+        final: "Confirmed",
         exporting: "Exporting…",
         exported: "Exported",
         export_failed: "Export failed",
       },
-      retryExportAction: "Retry export",
       placeholderBadge: "Placeholder · pending D2 render",
       downloadAction: "Download file",
       metaApprovedAt: "{action}: {name} · {time}",
-      empty: "No templates or generated documents available",
+      empty: "No templates or registered documents available",
+      templatesLoading: "Loading document templates…",
       generateModal: {
-        title: "Generate document",
+        title: "Register document",
         fields: {
-          templateId: "Template",
-          templatePlaceholder:
-            "Select a template (leave empty to create blank draft)",
-          templateEmpty:
-            "No document templates configured for this visa type. Please contact the admin, or proceed with a blank draft",
-          optionalHint: "Submitting without a template creates a blank draft",
           docTitle: "Document title",
           docTitlePlaceholder: "e.g. Application statement",
-          outputFormat: "Output format",
+          fileUrl: "External resource URL",
+          fileUrlPlaceholder: "e.g. https://drive.google.com/...",
+          fileUrlHint:
+            "URL of the finalized document on your external resource server. Required before you can confirm readiness.",
         },
         cancel: "Cancel",
-        submitting: "Generating…",
-        submit: "Generate",
+        submitting: "Registering…",
+        submit: "Register",
       },
       docType: {
         reason_statement: "Reason Statement",
@@ -825,16 +846,32 @@ const casesEnUS = {
       },
       postApproval: {
         kicker: "Post-Approval",
-        title: "COE / Overseas Visa / Re-entry Result",
+        title: "COE / Overseas stamping / Visa and entry outcomes",
         stagingChip: "Case has not reached this stage",
         notePreSubmission:
-          "This case is still in the pre-submission or supplement stage, so COE dispatch, overseas visa stamping, and re-entry results are not shown here. Switch to the relevant sample to see the full flow.",
+          "This case is still in the pre-submission or supplement stage, so COE dispatch, overseas stamping, and downstream visa / entry outcomes are not shown here. Switch to the relevant sample to see the full flow.",
         notePostSubmission:
-          "The case has been submitted to the immigration bureau and is awaiting review results. Post-approval steps (COE dispatch, visa stamping, etc.) will follow.",
+          "The case has been submitted to the immigration bureau and is awaiting review results. Post-approval steps (COE dispatch, embassy / consulate stamping, etc.) will follow.",
+        noteImmigrationRejected:
+          "The immigration bureau did not grant status (application not approved). COE dispatch and overseas consulate stamping do not apply. Use failure close-out and the timeline for attribution, and reconcile billing/refunds as agreed.",
         noteAwaitingCoe:
           "The case has been approved. COE (Certificate of Eligibility) will be dispatched after final payment is cleared.",
+        noteAwaitingCoeMilestoneMissing:
+          "The case has been approved. No final-payment billing milestone is configured yet, so the pre-dispatch gate cannot align with billing data. Add a milestone whose title includes final payment (or the agreed results/fee label), then clear fees and dispatch the COE.",
+        noteAwaitingCoePaymentOutstanding:
+          "The case has been approved. Final payment is not cleared yet; you can dispatch the COE after payment is recorded. Record the collection or reconcile status under Billing.",
+        noteAwaitingCoeBillingRiskUnacknowledged:
+          "The case has been approved. There are outstanding fees and billing risk has not been acknowledged. Use the Billing risk acknowledgment section below on this tab to record acknowledgement, or clear the balance under the Billing tab before dispatching the COE.",
         noteAwaitingVisaStamp:
-          "COE has been dispatched. The applicant is processing the overseas visa stamp and awaiting entry confirmation.",
+          "COE has been dispatched. Track the applicant's overseas consular visa application, stamping, and travel plans.",
+        noteDomesticTypicalSansCoeChain:
+          "For this matter type the usual post-permit wrap-up is domestic billing, handing over documents and briefing the applicant—rather than postage of an eligibility certificate and an embassy visa stamp overseas. Coordinate any uncommon cross-border stamping path with counsel and keep an audit trail.",
+        noteOverseasVisaApplying:
+          "The case is in the overseas consular visa step after COE. Follow application, stamping, refusal, and entry outcomes, and record results here.",
+        noteVisaRejected:
+          "The consulate visa step ended in refusal (or visa not issued). Use failure close-out and the timeline to record attribution, and reconcile billing/refunds as agreed.",
+        noteFailureClosed:
+          "This case was closed as a failure and archived. Use the failure close-out summary and timeline to confirm attribution, then reconcile billing and refunds as agreed.",
         noteCompleted:
           "Post-approval flow is complete. Entry has been confirmed or the case is archived.",
       },
@@ -904,12 +941,13 @@ const casesEnUS = {
       S5: "Pre-submission check",
       S6: "Ready to submit",
       S7: "Submitted, awaiting receipt",
+      S7_post_approval: "Post-approval: COE & overseas visa tracking",
       S8: "Awaiting result",
       S9: "Archived",
     },
     detailTabs: {
       overview: "Overview",
-      validation: "Pre-submission check",
+      validation: "Gates & submission",
       documents: "Documents",
       tasks: "Tasks",
       info: "Basic info",
@@ -979,9 +1017,9 @@ const casesEnUS = {
       APPROVED: "Approved",
       REJECTED: "Rejected",
       WAITING_PAYMENT: "Awaiting final payment",
-      COE_SENT: "COE sent",
-      VISA_APPLYING: "Visa applying",
-      SUCCESS: "Success",
+      COE_SENT: "COE dispatch",
+      VISA_APPLYING: "Overseas visa applying",
+      SUCCESS: "Entry confirmed",
       VISA_REJECTED: "Visa rejected",
       RESIDENCE_PERIOD_RECORDED: "Residence period recorded",
       RENEWAL_REMINDER_SCHEDULED: "Renewal reminder set",
@@ -999,7 +1037,7 @@ const casesEnUS = {
       SUPPLEMENT_PROCESSING: "Supplement processing",
       APPROVED: "Approved",
       WAITING_PAYMENT: "Awaiting final payment",
-      COE_SENT: "COE sent",
+      COE_SENT: "COE dispatch",
       VISA_APPLYING: "Overseas visa applying",
       ENTRY_SUCCESS: "Entry confirmed",
       VISA_REJECTED: "Visa rejected",
@@ -1057,6 +1095,8 @@ const casesEnUS = {
       "Review not approved. Please wait for reviewer approval.",
     gateCBillingRiskUnacknowledged:
       "Unacknowledged billing risk. Please confirm the billing risk first.",
+    gateCOpenTasks:
+      "Open tasks remain. Go to the Tasks tab, complete or cancel each task, then retry submission.",
     billingRiskAckFailed:
       "Billing risk acknowledgment failed. Please check your input and try again.",
     postApprovalStageInvalid: "Invalid post-approval stage.",
@@ -1145,6 +1185,10 @@ const casesEnUS = {
       "This status transition is not allowed (e.g. exported → draft).",
     gdInvalidOutputFormat: "Unsupported output format.",
     gdTitleRequired: "Document title is required.",
+    gdExternalUrlRequired:
+      "A valid external document URL (https:// or http://) is required before confirming readiness. Please add it and try again.",
+    gdDeleteOnlyDraft:
+      "Only draft documents can be deleted; confirmed documents are kept for audit.",
   },
   log: {
     category: {
@@ -1211,7 +1255,8 @@ const casesEnUS = {
       submissionPackageUpdated: "Submission package updated",
       generatedDocumentCreated: "Document generated{colonSuffix}",
       generatedDocumentUpdated: "Document updated{colonSuffix}",
-      generatedDocumentFinalized: "Document finalized{colonSuffix}",
+      generatedDocumentFinalized: "Document confirmed{colonSuffix}",
+      generatedDocumentDeleted: "Document draft deleted{colonSuffix}",
       generatedDocumentExported: "Document exported{colonSuffix}",
       generatedDocumentExportQueued: "Document export queued{colonSuffix}",
       generatedDocumentExportFailed: "Document export failed{colonSuffix}",
@@ -1233,11 +1278,12 @@ const casesEnUS = {
         okMessage: "At least one generated document exists.",
       },
       generated_documents_finalized: {
-        title: "All documents must be finalized",
+        title: "All documents must be confirmed (external-ready)",
         message:
-          "All generated documents must be final or exported before submission",
-        okTitle: "Finalization requirement satisfied",
-        okMessage: "All generated documents are final or exported.",
+          "Every registered document must be in Confirmed status (or meet the check via legacy Exported records).",
+        okTitle: "Document confirmation requirement satisfied",
+        okMessage:
+          "All registered documents are confirmed or satisfy this check.",
       },
     },
     refReport: "See the validation report for details",

@@ -123,7 +123,7 @@ export const BMV_WORKFLOW_STEPS_BLUEPRINT: WorkflowStepBlueprint[] = [
   },
   {
     stepCode: "COE_SENT",
-    label: "COE已发送",
+    label: "COE寄送",
     parentStage: "S7",
     sortOrder: 10,
     canLoopTo: null,

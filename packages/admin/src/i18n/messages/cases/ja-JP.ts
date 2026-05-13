@@ -316,6 +316,8 @@ const casesJaJP = {
           "フェーズが別の操作で変更されました。画面を更新して再試行してください",
         CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED:
           "未確認の請求リスクがあります。先にリスクを確認してください",
+        CASE_GATE_C_OPEN_TASKS:
+          "未完了のタスクがあります。完了または取消してから入管提出に進んでください",
         CASE_BILLING_RISK_ACK_FAILED: "請求リスクの確認に失敗しました",
         CASE_POST_APPROVAL_BILLING_RISK_UNACKNOWLEDGED:
           "許可後フェーズに未確認の請求リスクがあります",
@@ -327,7 +329,9 @@ const casesJaJP = {
       },
       guards: {
         successCloseoutBlocked:
-          "未収残高 {amount} があり、請求リスク確認が未登録です。「提出前チェック」で登録するか、「請求」で残金を精算してください",
+          "未収残高 {amount} があり、請求リスク確認が未登録です。「ゲート確認・提出」で登録するか、「請求」で残金を精算してください",
+        coeAdvanceBlocked:
+          "COE 送付フェーズへ進めません。「請求」で残金相当のマイルストーンを設定し精算してください。未収がある場合は「ゲート確認・提出」で未収リスク確認を登録してください。",
       },
     },
     terminalStage: {
@@ -428,17 +432,21 @@ const casesJaJP = {
         teamEmpty: "チームメンバーなし",
         teamRoleOwner: "担当者",
         teamRoleAssistant: "アシスタント",
-        validationTitle: "提出前チェック",
+        validationTitle: "ゲート確認・提出",
         validationAction: "検証と提出パッケージを見る",
+        validationUnavailableTerminal:
+          "終了済み案件では「ゲート確認・提出」タブは開けません。ログ・文書・資料・請求などの参照のみ可能です。",
       },
       workflowStep: {
-        title: "経営管理ビザ · 業務サブステップ",
+        title: "業務サブステップ",
         currentLabel: "現在のステップ",
         stageGroup: "{stage} ステージ",
         completed: "完了",
         current: "進行中",
         upcoming: "未着手",
         failed: "失敗",
+        skipped: "該当なし",
+        aborted: "未完了（拒否）",
         stageParallel: "管理ステージ：{stage}",
       },
       surveyQuote: {
@@ -456,6 +464,7 @@ const casesJaJP = {
         paymentStatus: "請求状況",
         paymentCleared: "残金精算済み",
         paymentOutstanding: "残金未精算",
+        paymentMilestoneMissing: "残金ノード未設定",
         outstandingAmount: "未収：{amount}",
         coeGateStatus: "COE ゲート",
         coeReady: "COE 送付可能",
@@ -463,7 +472,11 @@ const casesJaJP = {
         sendCoe: "COE を送付",
         sendCoeHint:
           "ワークフローステップを COE 送付済みに進めます。残金精算が必要です。",
+        sendCoeHintMilestoneMissing:
+          "「請求・料金」で名称に「尾款」「final」「結果」を含む残金ノードを作成し、入金登録を行ってから COE を送付してください。",
         blockerPayment: "残金が未精算のため、COE を送付できません。",
+        blockerMilestoneMissing:
+          "残金に該当する請求ノードがありません。ノードを追加または名称を整備してから再度お試しください。",
         blockerBillingRisk:
           "未確認の請求リスクがあるため、COE を送付できません。",
         confirmTitle: "COE 送付の確認",
@@ -486,7 +499,7 @@ const casesJaJP = {
         noDeadline: "期限未設定",
         resubmitAction: "補正再提出を準備",
         resubmitHint:
-          "提出前チェックタブを開き、補正提出パッケージの準備を開始します。",
+          "「ゲート確認・提出」タブを開き、補正提出パッケージの準備を開始します。",
       },
       reminderFailure: {
         title: "リマインダー作成失敗",
@@ -585,7 +598,10 @@ const casesJaJP = {
       riskTags: {
         title: "リスクタグ",
         empty: "リスクタグなし",
-        placeholder: "リスクタグ機能は今後のバージョンで公開予定です",
+        levelHint:
+          "案件一覧の「リスク」列と同じ基準で、案件の riskLevel から 正常 / 要注意 / 高リスク に映射します。",
+        placeholder:
+          "より細かいカスタム・リスクタグは今後のバージョンで追加予定です。",
       },
     },
     billing: {
@@ -644,41 +660,48 @@ const casesJaJP = {
     },
     forms: {
       title: "文書管理",
-      generateAction: "文書を生成",
+      registerAction: "文書を登録",
+      generateAction: "文書を登録",
       kickerTemplates: "利用可能なテンプレート",
-      kickerGenerated: "生成済み文書",
-      finalizeAction: "確定",
-      finalizeConfirm: "確定しますか？この文書はロックされます。",
-      exportAction: "エクスポート",
-      exportAgainAction: "再エクスポート",
+      kickerGenerated: "登録済み文書",
+      finalizeAction: "準備完了を確認",
+      finalizeConfirm:
+        "外部リソースに文書が反映済みであることを確認しますか？確認後は登録内容がロックされ、提出パッケージから参照できます。",
+      finalizeRequiresExternalUrlHint:
+        "先に有効な外部リンク（https:// または http://）を登録してから、準備完了を確認してください。",
+      submissionGateHint:
+        "提出前チェックでは、登録済みの各文書が「確認済み」である必要があります。登録後は外部リンクを補い「準備完了を確認」を押してください。不要な下書きは削除できます。",
+      deleteDraftAction: "下書きを削除",
+      deleteDraftConfirm:
+        "この下書き文書を削除しますか？削除後は元に戻せません。",
+      openLinkAction: "リンクを開く",
+      copyLinkAction: "リンクをコピー",
       versionHistoryAction: "バージョン履歴",
       status: {
         draft: "下書き",
-        final: "確定済み",
+        final: "確認済み",
         exporting: "出力中…",
         exported: "出力済み",
         export_failed: "出力失敗",
       },
-      retryExportAction: "再出力",
       placeholderBadge: "プレースホルダ · D2レンダリング待ち",
       downloadAction: "ダウンロード",
       metaApprovedAt: "{action}：{name} · {time}",
-      empty: "利用可能なテンプレートまたは生成記録がありません",
+      empty: "利用可能なテンプレートまたは登録記録がありません",
+      templatesLoading: "文書テンプレートを読み込み中…",
       generateModal: {
-        title: "書類生成",
+        title: "文書登録",
         fields: {
-          templateId: "テンプレート",
-          templatePlaceholder: "テンプレートを選択（空欄で空の下書きを作成）",
-          templateEmpty:
-            "このビザ種別にはまだ文書テンプレートが設定されていません。管理者にお問い合わせいただくか、テンプレートなしで下書きを作成してください",
-          optionalHint: "テンプレート未選択の場合は空の下書きが作成されます",
           docTitle: "書類タイトル",
           docTitlePlaceholder: "例: 申請理由書",
-          outputFormat: "出力形式",
+          fileUrl: "外部リソースURL",
+          fileUrlPlaceholder: "例: https://drive.google.com/...",
+          fileUrlHint:
+            "外部リソースサーバー上の完成文書のURLを入力してください。準備完了を確認する前に入力が必要です。",
         },
         cancel: "キャンセル",
-        submitting: "生成中…",
-        submit: "生成",
+        submitting: "登録中…",
+        submit: "登録",
       },
       docType: {
         reason_statement: "申請理由書",
@@ -822,16 +845,32 @@ const casesJaJP = {
       },
       postApproval: {
         kicker: "許可後処理",
-        title: "COE / 海外ビザ貼付 / 再入国結果",
+        title: "COE / 海外ビザ貼付 / 査証・入国結果",
         stagingChip: "この案件はまだ当該段階に達していません",
         notePreSubmission:
-          "この案件はまだ提出前または補正処理段階にあるため、COE 送付・海外ビザ貼付・再入国結果はここに表示されません。該当するサンプルに切り替えると完全なフローを確認できます。",
+          "この案件はまだ提出前または補正処理段階にあるため、COE 送付・海外での査証・貼付およびその後の結果はここに表示されません。該当するサンプルに切り替えると完全なフローを確認できます。",
         notePostSubmission:
           "案件は入管局に提出済みです。審査結果を待っています。許可後に COE 送付・海外ビザ貼付等の後続処理に進みます。",
+        noteImmigrationRejected:
+          "入管審査の結果は不許可（在留資格の認定なし）です。COE 送付や海外での査証・貼付のフローは発生しません。失敗クローズとタイムラインで原因記録・アーカイブを進め、報酬・返金の約定を確認してください。",
         noteAwaitingCoe:
           "案件は許可済みです。残金精算後に COE（在留資格認定証明書）を送付します。",
+        noteAwaitingCoeMilestoneMissing:
+          "案件は許可済みです。請求に残金相当のマイルストーンが未設定のため、COE 送付前のゲートとデータが突合できません。「請求」で残金（final／結果後報酬など、契約どおりの名称）の項目を追加してから、入金を確認し COE を送付してください。",
+        noteAwaitingCoePaymentOutstanding:
+          "案件は許可済みです。残金未精算のため、入金が確認でき次第 COE（在留資格認定証明書）を送付できます。「請求」で入金登録または状態を確認してください。",
+        noteAwaitingCoeBillingRiskUnacknowledged:
+          "案件は許可済みです。未収が残っており未収リスクの確認が済んでいません。当ページ下部の「未収リスク確認記録」で登録するか、「料金」タブで未収を解消してから COE を送付してください。",
         noteAwaitingVisaStamp:
-          "COE は送付済みです。申請者は海外でビザ貼付手続き中です。入国確認を待っています。",
+          "COE は送付済みです。海外での査証申請・貼付・渡航までをフォローしてください。",
+        noteDomesticTypicalSansCoeChain:
+          "本案件種別では許可後の一般的な運用は国内側の清算・資料引渡・本人案内までが中心で、在留資格認定証明書の海外送付と在外公館での査証・貼付まで組み込まない構成がよく見られます。必要なときだけ担当指示で例外運用も確認してください。",
+        noteOverseasVisaApplying:
+          "COE 送付後の海外査証（ビザ）段階です。申請・貼付・不許可・入国の状況をフォローし、結果を記録してください。",
+        noteVisaRejected:
+          "在外公館での査証の結果が不許可（または査証未取得）となった可能性があります。失敗クローズとタイムラインで原因記録・アーカイブを進め、報酬・返金の約定を確認してください。",
+        noteFailureClosed:
+          "本案は失敗により終了しアーカイブ済みです。失敗収束情報とログで帰因を確認し、請求・返金の取り決めを照合してください。",
         noteCompleted:
           "許可後のフローは完了しました。入国確認済みまたはアーカイブ済みです。",
       },
@@ -900,12 +939,13 @@ const casesJaJP = {
       S5: "提出前チェック",
       S6: "提出手配可能",
       S7: "提出済み・受領待ち",
+      S7_post_approval: "認定後：COE・海外査証フォロー",
       S8: "結果待ち",
       S9: "アーカイブ済み",
     },
     detailTabs: {
       overview: "概要",
-      validation: "提出前チェック",
+      validation: "ゲート確認・提出",
       documents: "必要書類",
       tasks: "タスク",
       info: "基本情報",
@@ -975,9 +1015,9 @@ const casesJaJP = {
       APPROVED: "許可済み",
       REJECTED: "不許可",
       WAITING_PAYMENT: "残金待ち",
-      COE_SENT: "在留送付済み",
-      VISA_APPLYING: "ビザ申請中",
-      SUCCESS: "成功",
+      COE_SENT: "COE送付",
+      VISA_APPLYING: "海外ビザ申請中",
+      SUCCESS: "入国確認済み",
       VISA_REJECTED: "ビザ不許可",
       RESIDENCE_PERIOD_RECORDED: "在留期間記録済み",
       RENEWAL_REMINDER_SCHEDULED: "更新リマインダー設定済み",
@@ -995,7 +1035,7 @@ const casesJaJP = {
       SUPPLEMENT_PROCESSING: "補正処理中",
       APPROVED: "許可済み",
       WAITING_PAYMENT: "残金待ち",
-      COE_SENT: "COE送付済み",
+      COE_SENT: "COE送付",
       VISA_APPLYING: "海外ビザ申請中",
       ENTRY_SUCCESS: "入国確認済み",
       VISA_REJECTED: "ビザ不許可",
@@ -1053,6 +1093,8 @@ const casesJaJP = {
       "レビューが未承認です。レビュアーの承認をお待ちください。",
     gateCBillingRiskUnacknowledged:
       "未確認の請求リスクがあります。先に請求リスクを確認してください。",
+    gateCOpenTasks:
+      "未完了のタスクがあります。「タスク」タブで完了または取消してから提出に進んでください。",
     billingRiskAckFailed:
       "請求リスク確認に失敗しました。入力を確認して再試行してください。",
     postApprovalStageInvalid: "不正な承認後ステージです。",
@@ -1144,6 +1186,10 @@ const casesJaJP = {
       "このステータス遷移は許可されていません（例：エクスポート済み→下書き）。",
     gdInvalidOutputFormat: "出力形式がサポートされていません。",
     gdTitleRequired: "文書タイトルは必須です。",
+    gdExternalUrlRequired:
+      "準備完了を確認する前に、有効な外部リンク（https:// または http://）が必要です。入力してから再試行してください。",
+    gdDeleteOnlyDraft:
+      "削除できるのは下書きのみです。確認済みの文書は監査のため保持されます。",
   },
   log: {
     category: {
@@ -1210,7 +1256,8 @@ const casesJaJP = {
       submissionPackageUpdated: "提出パッケージ更新",
       generatedDocumentCreated: "文書生成{colonSuffix}",
       generatedDocumentUpdated: "文書更新{colonSuffix}",
-      generatedDocumentFinalized: "文書確定{colonSuffix}",
+      generatedDocumentFinalized: "文書確認済み{colonSuffix}",
+      generatedDocumentDeleted: "文書下書きを削除しました{colonSuffix}",
       generatedDocumentExported: "文書エクスポート{colonSuffix}",
       generatedDocumentExportQueued:
         "文書のエクスポートをキュー登録{colonSuffix}",
@@ -1232,12 +1279,12 @@ const casesJaJP = {
         okMessage: "少なくとも1件の文書が生成されています。",
       },
       generated_documents_finalized: {
-        title: "全文書の確定が必要",
+        title: "全文書の確認済みが必要",
         message:
-          "生成されたすべての文書が確定済みまたはエクスポート済みである必要があります",
-        okTitle: "文書確定の要件を満たしています",
+          "登録されたすべての文書が「確認済み」であること、または従来の「出力済み」記録で要件を満たすことが必要です。",
+        okTitle: "文書確認の要件を満たしています",
         okMessage:
-          "生成されたすべての文書が確定済みまたはエクスポート済みです。",
+          "登録されたすべての文書が確認済み、またはチェック要件を満たしています。",
       },
     },
     refReport: "詳細は検証レポートを参照",

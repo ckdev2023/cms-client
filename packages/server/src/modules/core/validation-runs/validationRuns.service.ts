@@ -329,8 +329,8 @@ function buildValidationChecks(
         "cases.validation.checks.generated_documents_finalized.message",
       message:
         counts.blockedGeneratedDocumentCount === 0
-          ? "All generated documents are final or exported"
-          : "All generated documents must be final or exported before submission",
+          ? "All registered documents are finalized"
+          : "All registered documents must be finalized before submission",
       meta: {
         blockedGeneratedDocumentCount: counts.blockedGeneratedDocumentCount,
       },

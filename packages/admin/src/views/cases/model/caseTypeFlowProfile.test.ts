@@ -20,6 +20,48 @@ describe("resolveCaseTypeFlowProfile", () => {
     });
   });
 
+  it("hum → hasCoeFlow true, gates false", () => {
+    expect(resolveCaseTypeFlowProfile("hum")).toEqual({
+      hasCoeFlow: true,
+      hasFinalPaymentGate: false,
+      hasSurveyQuote: false,
+    });
+  });
+
+  it("work → hasCoeFlow true, gates false", () => {
+    expect(resolveCaseTypeFlowProfile("work")).toEqual({
+      hasCoeFlow: true,
+      hasFinalPaymentGate: false,
+      hasSurveyQuote: false,
+    });
+  });
+
+  it("hum_renewal → hasCoeFlow false, gates false", () => {
+    expect(resolveCaseTypeFlowProfile("hum_renewal")).toEqual({
+      hasCoeFlow: false,
+      hasFinalPaymentGate: false,
+      hasSurveyQuote: false,
+    });
+  });
+
+  it("engineer_humanities_intl_visa → hasCoeFlow true, gates false", () => {
+    expect(resolveCaseTypeFlowProfile("engineer_humanities_intl_visa")).toEqual(
+      {
+        hasCoeFlow: true,
+        hasFinalPaymentGate: false,
+        hasSurveyQuote: false,
+      },
+    );
+  });
+
+  it("eng_humanities_intl_renewal → hasCoeFlow false, gates false", () => {
+    expect(resolveCaseTypeFlowProfile("eng_humanities_intl_renewal")).toEqual({
+      hasCoeFlow: false,
+      hasFinalPaymentGate: false,
+      hasSurveyQuote: false,
+    });
+  });
+
   it("biz_mgmt (bare) → all flags true", () => {
     const profile = resolveCaseTypeFlowProfile("biz_mgmt");
     expect(profile).toEqual({
@@ -40,15 +82,6 @@ describe("resolveCaseTypeFlowProfile", () => {
 
   it("family → all flags false", () => {
     const profile = resolveCaseTypeFlowProfile("family");
-    expect(profile).toEqual({
-      hasCoeFlow: false,
-      hasFinalPaymentGate: false,
-      hasSurveyQuote: false,
-    });
-  });
-
-  it("hum → all flags false", () => {
-    const profile = resolveCaseTypeFlowProfile("hum");
     expect(profile).toEqual({
       hasCoeFlow: false,
       hasFinalPaymentGate: false,

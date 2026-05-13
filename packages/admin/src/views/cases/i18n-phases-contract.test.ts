@@ -16,6 +16,7 @@ import casesJaJP from "../../i18n/messages/cases/ja-JP";
 import {
   BUSINESS_PHASES,
   BUSINESS_PHASE_MAP,
+  getPhaseBadge,
   getPhaseI18nKey,
   getPhaseLabel,
 } from "./constants";
@@ -75,6 +76,12 @@ describe("phase i18n keys (T-17)", () => {
     expect(getPhaseI18nKey("")).toBe("");
   });
 
+  it("ENTRY_SUCCESS resolves through PHASE_EXTRAS to SUCCESS badge & i18n", () => {
+    expect(getPhaseI18nKey("ENTRY_SUCCESS")).toBe(getPhaseI18nKey("SUCCESS"));
+    expect(getPhaseBadge("ENTRY_SUCCESS")).toBe(getPhaseBadge("SUCCESS"));
+    expect(getPhaseLabel("ENTRY_SUCCESS")).toBe(getPhaseLabel("SUCCESS"));
+  });
+
   it("getPhaseLabel returns fallback label for known phases", () => {
     for (const phase of BUSINESS_PHASES) {
       expect(getPhaseLabel(phase)).toBeTruthy();
@@ -120,6 +127,30 @@ describe("bmvSteps i18n keys (T-17)", () => {
         expect(value, `${locale.name} missing bmvSteps.${key}`).toBeTruthy();
         expect(typeof value).toBe("string");
       }
+    },
+  );
+});
+
+describe("phases ↔ bmvSteps alignment (COE / overseas visa / entry result)", () => {
+  /** 业务阶段名与进度条子步骤文案一致，避免状态流转与安全提示口径分裂。 */
+  it.each(LOCALES.map((l) => [l.name, l.messages] as const))(
+    "%s: COE_SENT and VISA_APPLYING phases match bmvSteps",
+    (_, messages) => {
+      expect(messages.constants.phases.COE_SENT).toBe(
+        messages.constants.bmvSteps.COE_SENT,
+      );
+      expect(messages.constants.phases.VISA_APPLYING).toBe(
+        messages.constants.bmvSteps.VISA_APPLYING,
+      );
+    },
+  );
+
+  it.each(LOCALES.map((l) => [l.name, l.messages] as const))(
+    "%s: SUCCESS phase matches ENTRY_SUCCESS bmvStep (返签結果・入境確認)",
+    (_, messages) => {
+      expect(messages.constants.phases.SUCCESS).toBe(
+        messages.constants.bmvSteps.ENTRY_SUCCESS,
+      );
     },
   );
 });

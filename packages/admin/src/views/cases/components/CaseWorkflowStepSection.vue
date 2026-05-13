@@ -5,9 +5,13 @@ import Card from "../../../shared/ui/Card.vue";
 import type { WorkflowStepSummary } from "../types-detail";
 import {
   getBmvStageGroups,
+  computeBmvWorkflowStepDisplayStatus,
+  resolveBmvWorkflowStepDisplayLabel,
+  type BmvWorkflowStepDisplayStatus,
   type BmvStageGroup,
   type BmvWorkflowStepDef,
 } from "../constantsBmvSteps";
+import { resolveStageLabelI18nKey } from "../constants";
 
 /** 工作流步骤区块：展示 BMV 子步骤分组、当前状态与补正轮次。 */
 const { t } = useI18n();
@@ -27,20 +31,14 @@ const SUPPLEMENT_STEP_CODES = new Set([
 
 const stageGroups = computed<BmvStageGroup[]>(() => getBmvStageGroups());
 
-type StepStatus = "completed" | "current" | "upcoming" | "failed";
-
 /**
- * 计算单个步骤在当前案件中的状态。
- * @param step - 工作流步骤定义。
- * @returns 步骤状态。
+ * 将当前案件状态映射为单个子步骤的展示状态（委托 {@link computeBmvWorkflowStepDisplayStatus}）。
+ *
+ * @param step - BMV 子步骤定义
+ * @returns 展示状态
  */
-function stepStatus(step: BmvWorkflowStepDef): StepStatus {
-  const currentOrder = props.workflowStep.sortOrder;
-  if (step.code === props.workflowStep.stepCode) {
-    return props.workflowStep.isFailureStep ? "failed" : "current";
-  }
-  if (step.sortOrder < currentOrder) return "completed";
-  return "upcoming";
+function stepStatus(step: BmvWorkflowStepDef): BmvWorkflowStepDisplayStatus {
+  return computeBmvWorkflowStepDisplayStatus(step, props.workflowStep);
 }
 
 /**
@@ -48,7 +46,7 @@ function stepStatus(step: BmvWorkflowStepDef): StepStatus {
  * @param status - 步骤状态。
  * @returns 对应的 i18n 文案。
  */
-function stepStatusLabel(status: StepStatus): string {
+function stepStatusLabel(status: BmvWorkflowStepDisplayStatus): string {
   return t(`cases.detail.overview.workflowStep.${status}`);
 }
 
@@ -82,6 +80,16 @@ function groupStatus(group: BmvStageGroup): GroupStatus {
   if (isGroupActive(group)) return "active";
   if (isGroupCompleted(group)) return "completed";
   return "upcoming";
+}
+
+/**
+ * 管理层大阶段标题的 i18n 键（BMV S7 与 COE／海外査証子步骤对齐）。
+ *
+ * @param group - 子步骤所属管理层分组
+ * @returns `cases.constants.stages.*` 下的键名
+ */
+function groupStageTitleI18nKey(group: BmvStageGroup): string {
+  return resolveStageLabelI18nKey(group.stage, props.workflowStep.stepCode);
 }
 </script>
 
@@ -117,7 +125,14 @@ function groupStatus(group: BmvStageGroup): GroupStatus {
         >
           {{ managementStage }}
           <span class="wf-section__stage-pill-label">
-            {{ t(`cases.constants.stages.${managementStage}`) }}
+            {{
+              t(
+                resolveStageLabelI18nKey(
+                  managementStage,
+                  workflowStep.stepCode,
+                ),
+              )
+            }}
           </span>
         </span>
         <span
@@ -144,13 +159,7 @@ function groupStatus(group: BmvStageGroup): GroupStatus {
             <span v-else class="wf-section__pulse-dot" />
           </span>
           {{ t("cases.detail.overview.workflowStep.currentLabel") }}:
-          {{
-            t(
-              workflowStep.stepCode
-                ? `cases.constants.bmvSteps.${workflowStep.stepCode}`
-                : "",
-            ) || workflowStep.stepLabel
-          }}
+          {{ resolveBmvWorkflowStepDisplayLabel(t, workflowStep) }}
         </span>
       </div>
     </div>
@@ -165,7 +174,7 @@ function groupStatus(group: BmvStageGroup): GroupStatus {
         <div class="wf-section__stage-label">
           <span class="wf-section__stage-code">{{ group.stage }}</span>
           <span class="wf-section__stage-name">
-            {{ t(group.stageI18nKey) || group.stage }}
+            {{ t(groupStageTitleI18nKey(group)) || group.stage }}
           </span>
           <span
             v-if="isGroupActive(group)"
@@ -218,6 +227,16 @@ function groupStatus(group: BmvStageGroup): GroupStatus {
               >
                 <path d="M18 6L6 18M6 6l12 12" />
               </svg>
+              <span
+                v-else-if="stepStatus(step) === 'skipped'"
+                class="wf-section__skip-dash"
+                aria-hidden="true"
+              />
+              <span
+                v-else-if="stepStatus(step) === 'aborted'"
+                class="wf-section__skip-dash"
+                aria-hidden="true"
+              />
               <!-- Upcoming: hollow circle -->
               <span v-else class="wf-section__hollow-dot" />
             </span>

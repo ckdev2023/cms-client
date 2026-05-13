@@ -349,7 +349,7 @@ describe("workflow step summary resolution (p1-fe-001-03)", () => {
       }),
     )!;
     expect(result.detail.workflowStep!.stepCode).toBe("COE_SENT");
-    expect(result.detail.workflowStep!.stepLabel).toBe("COE已发送");
+    expect(result.detail.workflowStep!.stepLabel).toBe("COE寄送");
     expect(result.detail.workflowStep!.parentStage).toBe("S7");
     expect(result.detail.workflowStep!.sortOrder).toBe(10);
   });
@@ -436,5 +436,52 @@ describe("workflow step summary resolution (p1-fe-001-03)", () => {
       }),
     )!;
     expect(result.detail.workflowStep).toBeNull();
+  });
+});
+
+describe("P1 workflow fallback from businessPhase when step code missing (p1-fe-001-03)", () => {
+  it("work visa: null currentWorkflowStepCode + WAITING_PAYMENT → step + COE 尾款门禁", () => {
+    const result = adaptCaseDetailAggregate(
+      buildBmvAggregate({
+        case: buildBmvCaseRow({
+          caseTypeCode: "work",
+          currentWorkflowStepCode: null,
+          businessPhase: "WAITING_PAYMENT",
+          stage: "S7",
+          visaPlan: null,
+        }),
+      }),
+    )!;
+    expect(result.detail.workflowStep?.stepCode).toBe("WAITING_PAYMENT");
+    expect(result.detail.finalPaymentGate).not.toBeNull();
+    expect(result.detail.finalPaymentGate?.canAdvanceToCoe).toBe(false);
+  });
+
+  it("BMV: null step + businessPhase WAITING_PAYMENT still resolves", () => {
+    const result = adaptCaseDetailAggregate(
+      buildBmvAggregate({
+        case: buildBmvCaseRow({
+          currentWorkflowStepCode: null,
+          businessPhase: "WAITING_PAYMENT",
+          stage: "S7",
+        }),
+      }),
+    )!;
+    expect(result.detail.workflowStep?.stepCode).toBe("WAITING_PAYMENT");
+  });
+
+  it("SUCCESS → ENTRY_SUCCESS for work visa when step column empty", () => {
+    const result = adaptCaseDetailAggregate(
+      buildBmvAggregate({
+        case: buildBmvCaseRow({
+          caseTypeCode: "work",
+          currentWorkflowStepCode: null,
+          businessPhase: "SUCCESS",
+          stage: "S8",
+          visaPlan: null,
+        }),
+      }),
+    )!;
+    expect(result.detail.workflowStep?.stepCode).toBe("ENTRY_SUCCESS");
   });
 });

@@ -18,7 +18,7 @@ const BMV_CASE_ROW = {
   orgId: "org-1",
   customerId: "cust-sq01",
   caseTypeCode: "business_manager_visa",
-  stage: "S3",
+  stage: "S1",
   groupId: "group-sq01",
   ownerUserId: "user-sq01",
   dueAt: "2026-08-01",
@@ -273,6 +273,15 @@ describe("quotePriceRaw and quotePriceLabel (p1-fe-003-01)", () => {
 // ═══════════════════════════════════════════════════════════════════
 
 describe("preSignGate derivation (p1-fe-003-01)", () => {
+  it("null when management stage is past S1", () => {
+    const result = adaptCaseDetailAggregate(
+      buildAggregate({
+        case: { ...BMV_CASE_ROW, stage: "S7" },
+      }),
+    )!;
+    expect(result.detail.preSignGate).toBeNull();
+  });
+
   it("blocked when survey in_progress and quote completed", () => {
     const result = adaptCaseDetailAggregate(buildAggregate())!;
     expect(result.detail.preSignGate).not.toBeNull();

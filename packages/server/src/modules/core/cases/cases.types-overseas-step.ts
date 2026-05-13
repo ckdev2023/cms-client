@@ -364,7 +364,7 @@ export type OverseasStepTimelinePayload = {
  * | 步骤            | action                                | payload.to          | 描述              |
  * |----------------|---------------------------------------|---------------------|-------------------|
  * | COE_SENT       | case.workflow_step_transitioned       | COE_SENT            | 认定证明书已送付   |
- * | VISA_APPLYING  | case.workflow_step_transitioned       | VISA_APPLYING       | 海外签证申请中     |
+ * | VISA_APPLYING  | case.workflow_step_transitioned       | VISA_APPLYING       | 海外签证流程中（`overseas_visa_start_at` 列首次打戳；`writeOverseasStepTimeline` 不追加本条） |
  * | ENTRY_SUCCESS  | case.workflow_step_transitioned       | ENTRY_SUCCESS       | 入境成功确认       |
  * | VISA_REJECTED  | case.workflow_step_transitioned       | VISA_REJECTED       | 签证申请被拒否     |
  * | COE_SENT       | case.post_approval_stage_changed      | coe_sent            | (legacy) COE 送付  |
@@ -376,7 +376,7 @@ export type OverseasStepTimelinePayload = {
  * | 事件               | action                        | payload                          |
  * |-------------------|-------------------------------|----------------------------------|
  * | 签证拒否结案归因    | case.overseas_visa_rejected   | { stepCode, resultOutcome, ... } |
- * | 入境确认打戳       | case.overseas_entry_confirmed | { entryConfirmedAt }             |
+ * | 入境确认           | case.overseas_entry_confirmed | { entryConfirmedAt }（仅 ENTRY_SUCCESS 之后由 `writeOverseasStepTimeline` 写入） |
  */
 export type OverseasStepTimelineSpec = {
   COE_SENT: {
@@ -388,10 +388,6 @@ export type OverseasStepTimelineSpec = {
     primaryAction: "case.workflow_step_transitioned";
     legacyAction: "case.post_approval_stage_changed";
     payload: OverseasStepTimelinePayload;
-    autoStampTimeline: {
-      action: "case.overseas_entry_confirmed";
-      payload: { overseasVisaStartAt: string };
-    };
   };
   ENTRY_SUCCESS: {
     primaryAction: "case.workflow_step_transitioned";

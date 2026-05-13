@@ -7,6 +7,7 @@ import {
   INFO_TAB_CASE_ATTRIBUTES_FIELDS,
   INFO_TAB_READONLY_RULES,
 } from "../model/CaseAdapterDetailContracts";
+import { resolveRiskStatus } from "../model/CaseAdapterShared";
 
 /** 基本信息 Tab：展示案件属性、相关方与只读字段状态。 */
 const { t, te } = useI18n();
@@ -22,6 +23,14 @@ const isBmvCase = computed(
 
 const caseIdDisplay = computed(
   () => props.detail.caseNo || props.detail.id || "—",
+);
+
+const riskStatus = computed(() =>
+  resolveRiskStatus(props.detail.riskLevel ?? ""),
+);
+
+const riskLevelLabel = computed(() =>
+  t(`cases.list.riskLabels.${riskStatus.value}`),
 );
 
 const caseTypeDisplay = computed(() =>
@@ -245,14 +254,18 @@ void _contractGuard;
           <h3 class="info-tab__section-title" style="margin-bottom: 12px">
             {{ t("cases.detail.info.riskTags.title") }}
           </h3>
-          <div class="info-tab__placeholder">
-            <span class="info-tab__placeholder-text">
-              {{ t("cases.detail.info.riskTags.empty") }}
-            </span>
-            <span class="info-tab__placeholder-sub">
-              {{ t("cases.detail.info.riskTags.placeholder") }}
+          <div class="info-tab__risk-summary">
+            <span
+              class="info-tab__risk-chip"
+              :data-risk-status="riskStatus"
+              :title="t('cases.detail.info.riskTags.levelHint')"
+            >
+              {{ riskLevelLabel }}
             </span>
           </div>
+          <p class="info-tab__placeholder-sub info-tab__risk-extra">
+            {{ t("cases.detail.info.riskTags.placeholder") }}
+          </p>
         </Card>
       </div>
     </div>
@@ -420,5 +433,41 @@ void _contractGuard;
   font-size: var(--font-size-sm);
   line-height: var(--leading-sm);
   color: var(--color-text-2);
+}
+
+.info-tab__risk-summary {
+  padding: 4px 0 8px;
+}
+
+.info-tab__risk-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  font-size: var(--font-size-sm);
+  line-height: var(--leading-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-1);
+  background: var(--color-bg-3);
+  border: 1px solid var(--color-border-2);
+  border-radius: var(--radius-full);
+}
+
+.info-tab__risk-chip[data-risk-status="normal"] {
+  color: var(--color-text-2);
+}
+
+.info-tab__risk-chip[data-risk-status="attention"] {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.info-tab__risk-chip[data-risk-status="critical"] {
+  border-color: rgba(220, 38, 38, 0.45);
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.info-tab__risk-extra {
+  margin: 0;
+  text-align: center;
 }
 </style>

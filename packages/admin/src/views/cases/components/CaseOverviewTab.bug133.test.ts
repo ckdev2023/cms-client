@@ -19,7 +19,7 @@ import { createI18n } from "vue-i18n";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../i18n/messages/cases/en-US";
-import { CASE_STAGE_IDS, getStageI18nKey } from "../constants";
+import { CASE_STAGE_IDS, resolveStageLabelI18nKey } from "../constants";
 import { createMockDetail } from "../model/useCaseDetailModel.test-support";
 import type { CaseDetail, CaseStageId } from "../types";
 
@@ -75,12 +75,33 @@ function buildStageValue(detail: CaseDetail, locale: Locale) {
   const i18n = makeI18n(locale);
   const t = i18n.global.t.bind(i18n.global);
   return computed(() => {
-    const key = getStageI18nKey(detail.stageCode);
+    const key = resolveStageLabelI18nKey(
+      detail.stageCode,
+      detail.workflowStep?.stepCode,
+    );
     return key ? t(key) : detail.stage;
   });
 }
 
 describe("CaseOverviewTab BUG-133 — 概览卡 stage 值走 i18n（含终态 S9）", () => {
+  describe("BMV S7 认定后与详情页 stageLabel 一致", () => {
+    it("zh-CN × S7 × VISA_APPLYING → 跟踪认定后文书", () => {
+      const detail = createMockDetail({
+        stageCode: "S7",
+        workflowStep: {
+          stepCode: "VISA_APPLYING",
+          stepLabel: "海外返签申请中",
+          parentStage: "S7",
+          parentStageLabel: "",
+          sortOrder: 11,
+          isFailureStep: false,
+        },
+      });
+      const stageValue = buildStageValue(detail, "zh-CN");
+      expect(stageValue.value).toBe("认定后：COE・海外贴签跟踪");
+    });
+  });
+
   describe("stageValue 解析合约（镜像 CaseDetailView#stageLabel）", () => {
     for (const locale of ["zh-CN", "en-US", "ja-JP"] as const) {
       for (const stageId of CASE_STAGE_IDS) {

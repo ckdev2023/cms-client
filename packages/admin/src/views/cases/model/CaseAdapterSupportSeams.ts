@@ -284,6 +284,29 @@ function buildDownloadUrl(id: string): string | null {
   return `/api/generated-documents/${encodeURIComponent(id)}/file`;
 }
 
+function isExternalUrl(url: string | null): boolean {
+  if (!url) return false;
+  return url.startsWith("http://") || url.startsWith("https://");
+}
+
+function resolveDocUrls(
+  id: string,
+  status: string,
+  fileUrl: string | null,
+): { downloadUrl: string | null; resourceOpenUrl: string | null } {
+  const placeholder = isPlaceholderUrl(fileUrl);
+  const external = isExternalUrl(fileUrl);
+  if (placeholder || !fileUrl)
+    return { downloadUrl: null, resourceOpenUrl: null };
+
+  const downloadUrl =
+    status === "exported" && !external ? buildDownloadUrl(id) : null;
+  const resourceOpenUrl =
+    external && (status === "final" || status === "exported") ? fileUrl : null;
+
+  return { downloadUrl, resourceOpenUrl };
+}
+
 function adaptGeneratedDocumentDto(
   value: unknown,
   locale?: string,
@@ -296,11 +319,7 @@ function adaptGeneratedDocumentDto(
 
   const status = readString(r, "status");
   const fileUrl = readNullableString(r, "fileUrl");
-  const placeholder = isPlaceholderUrl(fileUrl);
-  const downloadUrl =
-    !placeholder && fileUrl && status === "exported"
-      ? buildDownloadUrl(id)
-      : null;
+  const { downloadUrl, resourceOpenUrl } = resolveDocUrls(id, status, fileUrl);
 
   return {
     id: id || "",
@@ -309,8 +328,9 @@ function adaptGeneratedDocumentDto(
     tone: GEN_DOC_STATUS_TONES[status] ?? "muted",
     backendStatus: resolveBackendStatus(status),
     fileUrl,
-    fileUrlIsPlaceholder: placeholder,
+    fileUrlIsPlaceholder: isPlaceholderUrl(fileUrl),
     downloadUrl,
+    resourceOpenUrl,
     approvedBy: readNullableString(r, "approvedByDisplayName"),
     approvedAt: formatDateOrDateTime(
       readNullableString(r, "approvedAt"),

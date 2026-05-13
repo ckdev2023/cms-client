@@ -20,6 +20,7 @@ export const CASE_WRITE_ERROR_CODES = {
   GATE_VALIDATION_RUN_STALE: "CASE_GATE_VALIDATION_RUN_STALE",
   GATE_REVIEW_NOT_APPROVED: "CASE_GATE_REVIEW_NOT_APPROVED",
   GATE_C_BILLING_RISK_UNACKNOWLEDGED: "CASE_GATE_C_BILLING_RISK_UNACKNOWLEDGED",
+  GATE_C_OPEN_TASKS: "CASE_GATE_C_OPEN_TASKS",
   BILLING_RISK_ACK_FAILED: "CASE_BILLING_RISK_ACK_FAILED",
   POST_APPROVAL_STAGE_INVALID: "CASE_POST_APPROVAL_STAGE_INVALID",
   POST_APPROVAL_BILLING_BLOCKED: "CASE_POST_APPROVAL_BILLING_BLOCKED",
@@ -55,33 +56,10 @@ export const CASE_WRITE_ERROR_CODES = {
   STAGE_BILLING_RECORD_REQUIRED: "CASE_STAGE_BILLING_RECORD_REQUIRED",
 } as const;
 
-// validation-runs / review-records / submission-packages 错误码（admin adapter 映射为 i18n key）
-export const VALIDATION_SUBMISSION_ERROR_CODES = {
-  VR_CASE_NOT_FOUND: "VR_CASE_NOT_FOUND",
-  VR_CASE_S9_READONLY: "VR_CASE_S9_READONLY",
-  VR_NOT_FOUND: "VR_NOT_FOUND",
-  RR_CASE_NOT_FOUND: "RR_CASE_NOT_FOUND",
-  RR_CASE_S9_READONLY: "RR_CASE_S9_READONLY",
-  RR_NOT_FOUND: "RR_NOT_FOUND",
-  RR_INVALID_DECISION: "RR_INVALID_DECISION",
-  RR_VALIDATION_RUN_NOT_LATEST: "RR_VALIDATION_RUN_NOT_LATEST",
-  SP_CASE_NOT_FOUND: "SP_CASE_NOT_FOUND",
-  SP_NOT_FOUND: "SP_NOT_FOUND",
-  SP_CASE_STAGE_INVALID: "SP_CASE_STAGE_INVALID",
-  SP_SUPPLEMENT_REQUIRES_RELATED: "SP_SUPPLEMENT_REQUIRES_RELATED",
-  SP_INITIAL_NO_RELATED: "SP_INITIAL_NO_RELATED",
-  SP_RELATED_NOT_FOUND: "SP_RELATED_NOT_FOUND",
-  SP_RELATED_NOT_LATEST: "SP_RELATED_NOT_LATEST",
-  SP_RELATED_ALREADY_BRANCHED: "SP_RELATED_ALREADY_BRANCHED",
-  SP_CHAIN_DEPTH_EXCEEDED: "SP_CHAIN_DEPTH_EXCEEDED",
-  SP_INVALID_SUBMISSION_KIND: "SP_INVALID_SUBMISSION_KIND",
-  SP_INVALID_ITEM_TYPE: "SP_INVALID_ITEM_TYPE",
-  SP_DUPLICATE_ITEM: "SP_DUPLICATE_ITEM",
-  SP_MISSING_MINIMUM_FIELDS: "SP_MISSING_MINIMUM_FIELDS",
-} as const;
-/** Validation/submission 错误码联合类型。 */
-export type ValidationSubmissionErrorCode =
-  (typeof VALIDATION_SUBMISSION_ERROR_CODES)[keyof typeof VALIDATION_SUBMISSION_ERROR_CODES];
+export {
+  VALIDATION_SUBMISSION_ERROR_CODES,
+  type ValidationSubmissionErrorCode,
+} from "./cases.types-validation-submission";
 
 /** Case 写操作错误码联合类型。 */
 export type CaseWriteErrorCode =
@@ -111,6 +89,7 @@ export type CaseCreateInput = {
   sourceChannel?: string | null;
   signedAt?: string | null;
   acceptedAt?: string | null;
+  jurisdictionAuthority?: string | null;
   submissionDate?: string | null;
   resultDate?: string | null;
   residenceExpiryDate?: string | null;
@@ -143,6 +122,7 @@ export type CaseUpdateInput = {
   sourceChannel?: string | null;
   signedAt?: string | null;
   acceptedAt?: string | null;
+  jurisdictionAuthority?: string | null;
   submissionDate?: string | null;
   resultDate?: string | null;
   residenceExpiryDate?: string | null;
@@ -160,7 +140,6 @@ export type CaseUpdateInput = {
   /** 转组原因 — 当 groupId 变更时必填。 */
   groupTransferReason?: string | null;
 };
-
 /**
  * 状态变更请求参数。
  *
@@ -172,7 +151,6 @@ export type CaseTransitionInput = {
   /** 进入 S9 时的结案原因（非 S9 目标时可省略）。 */
   closeReason?: string | null;
 };
-
 export type { CaseBillingRiskAckInput } from "./cases.types-billing";
 
 /**
@@ -307,6 +285,8 @@ export type CaseLatestSubmissionSummary = {
   submissionKind: string;
   submittedAt: string;
   relatedSubmissionId: string | null;
+  /** 提出先等机构名称 — 为空时聚合读模型可对 `case.jurisdictionAuthority` 做展示兜底。 */
+  authorityName: string | null;
 };
 
 /**

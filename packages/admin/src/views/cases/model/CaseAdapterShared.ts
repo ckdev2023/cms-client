@@ -155,6 +155,22 @@ export function isDeadlineDanger(
 }
 
 /**
+ * 去掉显示名前缀中连续的 `[…]` 标记（如测试用 `[E2E]`），供头像缩写计算使用。
+ *
+ * @param raw - 原始显示名
+ * @returns 去掉前缀后的字符串；若 strip 后为空则回退为 `raw.trim()`
+ */
+export function stripBracketPrefixesForInitials(raw: string): string {
+  let s = raw.trim();
+  let prev = "";
+  while (s !== prev) {
+    prev = s;
+    s = s.replace(/^\[[^\]]+\]\s*/, "").trim();
+  }
+  return s || raw.trim();
+}
+
+/**
  * 将风险等级字符串映射为三级风险状态。
  *
  * @param riskLevel - 服务端返回的风险等级

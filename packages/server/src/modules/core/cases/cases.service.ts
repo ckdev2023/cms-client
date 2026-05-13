@@ -79,19 +79,24 @@ import {
 import {
   aggregateCaseBillingSummaryFull,
   assertClosedSuccessGate,
-  deriveBillingSummary,
   deriveDeepLink,
+  enrichCaseAggregateReadModelCase,
   logSettledErrors,
   queryCurrentResidencePeriod,
   queryDetailCaseRow,
   queryDetailCounts,
   queryDocProgressByProvider,
+  queryInitialSubmissionSubmittedAt,
   queryLatestReview,
   queryLatestSubmission,
   queryLatestValidation,
   settledValueOrDefault,
   settledValueOrUndefined,
 } from "./cases.service.detail-queries";
+import {
+  deriveBillingSummary,
+  queryFinalPaymentMilestoneMatched,
+} from "./cases.service.billing-summary";
 import {
   assertCloseReasonForFailedPhase,
   assertValidPhaseTransitionInput,
@@ -128,7 +133,10 @@ import {
   resolveChecklistItems,
   runCreateCaseTransaction,
 } from "./cases.service.create-flow";
-import { findActiveCaseTemplateByCaseType } from "./cases.template.repository";
+import {
+  findActiveCaseTemplateByCaseType,
+  resolveTemplateApplicationType,
+} from "./cases.template.repository";
 import {
   assertCoeSendBillingGate,
   assertPostApprovalBillingGate,
@@ -425,7 +433,7 @@ export class CasesService {
    * admin detail 页面消费此方法，避免多轮 HTTP 请求拼装。
    * 子查询使用 Promise.allSettled 降级：任一子查询失败仍返回部分数据（BUG-064）。
    */
-  // eslint-disable-next-line max-lines-per-function
+  // eslint-disable-next-line max-lines-per-function, complexity, max-statements -- aggregate 组装点集中；拆分成本高、回归面大
   async getDetailAggregate(
     ctx: RequestContext,
     id: string,
@@ -485,14 +493,65 @@ export class CasesService {
       }
     }
 
+    const latestSubmissionSummary = mapLatestSubmissionRow(latestSubmission);
+
+    let templateApplicationType: string | null = null;
+    if (!caseEntity.applicationType?.trim()) {
+      try {
+        templateApplicationType = await resolveTemplateApplicationType(
+          this.pool,
+          ctx,
+          caseEntity.caseTypeCode,
+        );
+      } catch {
+        templateApplicationType = null;
+      }
+    }
+
+    let initialSubmissionSubmittedAt: string | undefined;
+    if (!caseEntity.acceptedAt?.trim()) {
+      if (latestSubmissionSummary?.submissionKind === "initial") {
+        const iso = latestSubmissionSummary.submittedAt.trim();
+        initialSubmissionSubmittedAt = iso !== "" ? iso : undefined;
+      } else {
+        try {
+          initialSubmissionSubmittedAt =
+            await queryInitialSubmissionSubmittedAt(tenantDb, id);
+        } catch {
+          initialSubmissionSubmittedAt = undefined;
+        }
+      }
+    }
+
+    const caseForAggregate = enrichCaseAggregateReadModelCase(
+      caseEntity,
+      latestSubmissionSummary,
+      templateApplicationType,
+      initialSubmissionSubmittedAt,
+    );
+
+    let finalPaymentMilestoneMatched = true;
+    try {
+      finalPaymentMilestoneMatched = await queryFinalPaymentMilestoneMatched(
+        tenantDb,
+        id,
+      );
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.error(
+        `[CasesService.getDetailAggregate] sub-query "finalPaymentMilestone" failed for case ${id}: ${msg}`,
+      );
+    }
+
     return {
-      case: caseEntity,
+      case: caseForAggregate,
       counts: mappedCounts,
       latestValidation: mapLatestValidationRow(latestValidation),
-      latestSubmission: mapLatestSubmissionRow(latestSubmission),
+      latestSubmission: latestSubmissionSummary,
       latestReview: mapLatestReviewRow(latestReview),
       documentProgressByProvider: mapDocProgressByProviderRows(docProgress),
-      billing: deriveBillingSummary(caseEntity),
+      billing: deriveBillingSummary(caseEntity, finalPaymentMilestoneMatched),
       deepLink: deriveDeepLink(caseEntity, caseRow),
       workflowStep: resolveWorkflowStepSummary(caseEntity),
       currentResidencePeriod,

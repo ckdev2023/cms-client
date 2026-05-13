@@ -74,6 +74,38 @@ export async function findActiveCaseTemplateByCaseType(
   return { found: false };
 }
 
+/**
+ * 读取当前租户下与该案件类型匹配的最新启用模板上的 `application_type`。
+ * 不要求 blueprint 有可解析条目，用于聚合读模型回填「申请类型」展示。
+ * @param pool
+ * @param ctx
+ * @param caseTypeCode
+ */
+export async function resolveTemplateApplicationType(
+  pool: Pool,
+  ctx: RequestContext,
+  caseTypeCode: string,
+): Promise<string | null> {
+  const tenantDb = createTenantDb(pool, ctx.orgId, ctx.userId);
+  const candidates = resolveCaseTypeCandidates(caseTypeCode);
+  for (const candidate of candidates) {
+    const result = await tenantDb.query<{ application_type: string | null }>(
+      `
+        select application_type
+        from case_templates
+        where case_type = $1 and active_flag = true
+        order by created_at desc
+        limit 1
+      `,
+      [candidate],
+    );
+    const row = result.rows.at(0);
+    const v = row?.application_type?.trim() ?? "";
+    if (v) return v;
+  }
+  return null;
+}
+
 export function parseRequirementBlueprint(raw: unknown): ChecklistItem[] {
   if (!raw) return [];
 

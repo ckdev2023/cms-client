@@ -1,91 +1,71 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, computed } from "vue";
+import { ref, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
-import type { FormTemplate } from "../types-detail";
 
-/** 生成文書弹窗：选择模板、填写标题和输出格式后提交生成。 */
+/** 登记文書弹窗：填写标题和外部资源 URL 后提交登记。 */
 const { t } = useI18n();
+
+/** 文书登记弹窗上下文：所选模板名称作为默认文书标题，`id` 随提交发往后端 `templateId`。 */
+interface CaseFormGeneratePresetTemplate {
+  /**
+   *
+   */
+  id: string;
+  /**
+   *
+   */
+  name: string;
+}
 
 interface CaseFormGenerateModalProps {
   open?: boolean;
   caseName?: string;
   submitting?: boolean;
-  templates?: FormTemplate[];
-  initialTemplateId?: string | null;
+  /** 从模板行打开时传入；顶部「登记文书」不传。 */
+  presetTemplate?: CaseFormGeneratePresetTemplate | null;
 }
 
 const props = defineProps<CaseFormGenerateModalProps>();
 
 const emit = defineEmits<{
   close: [];
-  submit: [
-    payload: { title: string; templateId: string | null; outputFormat: string },
-  ];
+  submit: [payload: { title: string; fileUrl: string; templateId?: string }];
 }>();
 
 const backdropRef = ref<HTMLElement | null>(null);
 
 const localTitle = ref("");
-const localOutputFormat = ref("docx");
-const localTemplateId = ref<string | null>(null);
-const titleManuallyEdited = ref(false);
-
-const resolvedTemplates = computed(() => props.templates ?? []);
-const hasTemplates = computed(() => resolvedTemplates.value.length > 0);
+const localFileUrl = ref("");
 
 watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
-      localTitle.value = props.caseName ?? "";
-      localOutputFormat.value = "docx";
-      localTemplateId.value = props.initialTemplateId ?? null;
-      titleManuallyEdited.value = false;
+      localTitle.value =
+        props.presetTemplate?.name?.trim() || props.caseName?.trim() || "";
+      localFileUrl.value = "";
       nextTick(() => backdropRef.value?.focus());
     }
   },
   { immediate: true },
 );
 
-watch(localTemplateId, (templateId) => {
-  if (titleManuallyEdited.value) return;
-  if (templateId) {
-    const tpl = resolvedTemplates.value.find((t) => t.id === templateId);
-    if (tpl) {
-      localTitle.value = tpl.name;
-      return;
-    }
-  }
-  localTitle.value = props.caseName ?? "";
-});
-
-/**
- * 提交可用性判定。
- *
- * @returns 标题非空且未提交中时为 `true`
+/** 校验当前是否允许提交（标题非空且未处于提交中）。
+ * @returns 是否可点击提交
  */
 function canSubmit(): boolean {
   return localTitle.value.trim().length > 0 && !props.submitting;
 }
 
-/**
- * 处理标题输入事件，标记用户已手动编辑，防止后续选模板覆盖输入。
- *
- * @param event 文书标题输入框的 input 事件
- */
-function onTitleInput(event: Event): void {
-  localTitle.value = (event.target as HTMLInputElement).value;
-  titleManuallyEdited.value = true;
-}
-
-/** 提交生成文書表单。 */
+/** 提交登记表单：发出 `submit` 事件并携带标题与外部 URL。 */
 function handleSubmit(): void {
   if (!canSubmit()) return;
+  const tplId = props.presetTemplate?.id?.trim();
   emit("submit", {
     title: localTitle.value.trim(),
-    templateId: localTemplateId.value,
-    outputFormat: localOutputFormat.value,
+    fileUrl: localFileUrl.value.trim(),
+    ...(tplId ? { templateId: tplId } : {}),
   });
 }
 </script>
@@ -136,47 +116,6 @@ function handleSubmit(): void {
         </header>
 
         <div class="form-gen-modal__body">
-          <label class="form-gen-modal__field" for="form-gen-templateId">
-            <span class="form-gen-modal__label">
-              {{ t("cases.detail.forms.generateModal.fields.templateId") }}
-            </span>
-            <select
-              id="form-gen-templateId"
-              name="templateId"
-              class="form-gen-modal__select"
-              :disabled="props.submitting"
-              :value="localTemplateId ?? ''"
-              data-testid="form-gen-template-select"
-              @change="
-                localTemplateId =
-                  ($event.target as HTMLSelectElement).value || null
-              "
-            >
-              <option value="">
-                {{
-                  hasTemplates
-                    ? t(
-                        "cases.detail.forms.generateModal.fields.templatePlaceholder",
-                      )
-                    : t("cases.detail.forms.generateModal.fields.templateEmpty")
-                }}
-              </option>
-              <option
-                v-for="tpl in resolvedTemplates"
-                :key="tpl.id"
-                :value="tpl.id"
-              >
-                {{ tpl.name }}
-              </option>
-            </select>
-            <p
-              class="form-gen-modal__hint"
-              data-testid="form-gen-optional-hint"
-            >
-              {{ t("cases.detail.forms.generateModal.fields.optionalHint") }}
-            </p>
-          </label>
-
           <label class="form-gen-modal__field" for="form-gen-docTitle">
             <span class="form-gen-modal__label">
               {{ t("cases.detail.forms.generateModal.fields.docTitle") }}
@@ -189,31 +128,34 @@ function handleSubmit(): void {
               :placeholder="
                 t('cases.detail.forms.generateModal.fields.docTitlePlaceholder')
               "
-              :value="localTitle"
+              v-model="localTitle"
               :disabled="props.submitting"
               data-testid="form-gen-title-input"
-              @input="onTitleInput($event)"
             />
           </label>
 
-          <label class="form-gen-modal__field" for="form-gen-outputFormat">
+          <label class="form-gen-modal__field" for="form-gen-fileUrl">
             <span class="form-gen-modal__label">
-              {{ t("cases.detail.forms.generateModal.fields.outputFormat") }}
+              {{ t("cases.detail.forms.generateModal.fields.fileUrl") }}
             </span>
-            <select
-              id="form-gen-outputFormat"
-              name="outputFormat"
-              class="form-gen-modal__select"
-              :value="localOutputFormat"
-              :disabled="props.submitting"
-              data-testid="form-gen-format-select"
-              @change="
-                localOutputFormat = ($event.target as HTMLSelectElement).value
+            <input
+              id="form-gen-fileUrl"
+              name="fileUrl"
+              type="url"
+              class="form-gen-modal__input"
+              :placeholder="
+                t('cases.detail.forms.generateModal.fields.fileUrlPlaceholder')
               "
+              v-model="localFileUrl"
+              :disabled="props.submitting"
+              data-testid="form-gen-file-url-input"
+            />
+            <p
+              class="form-gen-modal__hint"
+              data-testid="form-gen-file-url-hint"
             >
-              <option value="pdf">PDF</option>
-              <option value="docx">DOCX</option>
-            </select>
+              {{ t("cases.detail.forms.generateModal.fields.fileUrlHint") }}
+            </p>
           </label>
         </div>
 
