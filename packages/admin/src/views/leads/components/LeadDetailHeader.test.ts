@@ -51,6 +51,21 @@ describe("LeadDetailHeader", () => {
     ).toBe("面包屑导航");
   });
 
+  it("localizes status chip next to lead name (en-US, not hardcoded zh)", () => {
+    setAppLocale("en-US");
+    const wrapper = mount(LeadDetailHeader, {
+      global: { plugins: [i18n] },
+      props: {
+        lead: LEAD_DETAIL_SAMPLES.following,
+        avatarInitials: "李",
+        buttonStates: HEADER_BUTTON_PRESETS.normal,
+      },
+    });
+
+    expect(wrapper.text()).toContain("Following");
+    expect(wrapper.text()).not.toContain("跟进中");
+  });
+
   describe("R2-B-6 view-customer / view-case 事件分流", () => {
     it("converted-customer 状态下「查看客户」按钮 emit viewCustomer 而非 convertCustomer", async () => {
       setAppLocale("zh-CN");

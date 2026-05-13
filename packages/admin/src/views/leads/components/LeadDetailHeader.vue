@@ -4,7 +4,6 @@ import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import Chip from "../../../shared/ui/Chip.vue";
 import type { LeadDetail, HeaderButtonStates, LeadStatus } from "../types";
-import { getLeadStatusLabel } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 import { resolveOwnerDisplayLabel } from "../../../shared/model/useOwnerOptions";
 
@@ -198,7 +197,7 @@ function statusTone(
         <h1 class="detail-header__name">
           {{ lead.name }}
           <Chip :tone="statusTone(lead.status)">
-            {{ getLeadStatusLabel(lead.status) }}
+            {{ t(`leads.list.status.${lead.status}`) }}
           </Chip>
         </h1>
 

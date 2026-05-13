@@ -61,6 +61,7 @@ function handleConfirm(): void {
         class="lead-change-status-dialog"
         role="dialog"
         aria-modal="true"
+        :aria-busy="submitting ? true : undefined"
         data-testid="lead-change-status-dialog"
       >
         <h3 class="lead-change-status-dialog__title">
@@ -106,13 +107,15 @@ function handleConfirm(): void {
         </label>
 
         <div class="lead-change-status-dialog__actions">
-          <Button size="sm" @click="$emit('close')">
+          <Button html-type="button" size="sm" @click="$emit('close')">
             {{ t("leads.detail.convertDedup.cancel") }}
           </Button>
           <Button
+            html-type="button"
             variant="filled"
             tone="primary"
             size="sm"
+            :loading="submitting"
             :disabled="!canConfirm"
             data-testid="lead-change-status-dialog-confirm"
             @click="handleConfirm"
