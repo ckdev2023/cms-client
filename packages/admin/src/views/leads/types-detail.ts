@@ -67,6 +67,8 @@ export function getFollowupChannelLabel(
 
 /** */
 export interface LeadFollowupRecord {
+  /** 服务端跟进行 ID，列表 key 依赖此字段保持稳定。 */
+  id?: string;
   /** */
   channel: FollowupChannel;
   /** */

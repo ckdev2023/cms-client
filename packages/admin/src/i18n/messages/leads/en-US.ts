@@ -120,8 +120,11 @@ const leadsEnUS = {
         namePlaceholder: "Enter name",
         phone: "Phone",
         phonePlaceholder: "Mobile / landline",
+        invalidPhoneHint:
+          "Does not match validation: JP domestic number or '+81'; digits plus optional spaces/hyphens only.",
         email: "Email",
         emailPlaceholder: "Email address",
+        invalidEmailHint: "Invalid email format.",
         source: "Source",
         sourcePlaceholder: "Select source",
         referrer: "Referrer",

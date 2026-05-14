@@ -11,10 +11,10 @@ function emptyForm(): RegisterPaymentFormFields {
 }
 
 /**
- * 过滤未结清节点；仅剩一个时返回自动选中 ID。
+ * 过滤未结清的收费计划；仅剩一条时返回自动选中 ID。
  *
- * @param nodes - 收费计划节点列表
- * @returns 未结清节点与自动选中 ID
+ * @param nodes - 收费计划行列表（通常每案一条）
+ * @returns 未结清计划与自动选中 ID
  */
 function resolveNodes(nodes?: BillingPlanNode[]) {
   const unpaid = (nodes ?? []).filter((n) => n.status !== "paid");
@@ -25,7 +25,7 @@ function resolveNodes(nodes?: BillingPlanNode[]) {
  * 构建回款表单校验计算属性。
  *
  * @param fields - 表单字段 ref
- * @param availableNodes - 可用节点 ref
+ * @param availableNodes - 未结清收费计划 ref
  * @returns 校验相关计算属性
  */
 function buildValidation(
@@ -55,7 +55,9 @@ function buildValidation(
     () =>
       parsedAmount.value > 0 &&
       fields.value.date !== "" &&
-      !needsNodeSelection.value,
+      !needsNodeSelection.value &&
+      availableNodes.value.length > 0 &&
+      fields.value.billingPlanId !== "",
   );
   return {
     parsedAmount,
@@ -69,7 +71,7 @@ function buildValidation(
 /**
  * 登记回款弹窗状态管理。
  *
- * 提供默认节点选择、金额超限提示（软警告）、多节点未选择阻断、提交可用态。
+ * 提供默认收费计划选择、金额超限提示（软警告）、多笔遗留未清计划未选阻断、提交可用态。
  *
  * @returns 弹窗开关、表单状态、校验计算属性与操作方法
  */
@@ -80,9 +82,9 @@ export function usePaymentModal() {
   const validation = buildValidation(fields, availableNodes);
 
   /**
-   * 打开弹窗并初始化节点列表。
+   * 打开弹窗并初始化可选收费计划列表。
    *
-   * @param nodes - 可选的收费计划节点
+   * @param nodes - 可选的收费计划行（多行仅兼容历史数据）
    */
   function open(nodes?: BillingPlanNode[]) {
     const { unpaid, autoId } = resolveNodes(nodes);

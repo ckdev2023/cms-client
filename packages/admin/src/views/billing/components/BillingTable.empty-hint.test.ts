@@ -56,7 +56,7 @@ describe("BillingTable — bulk empty hint", () => {
     const hint = wrapper.find(".bulk-empty-hint");
     expect(hint.exists()).toBe(true);
     expect(hint.attributes("role")).toBe("note");
-    expect(hint.text()).toBe("当前没有逾期节点，无法发起批量催款");
+    expect(hint.text()).toBe("当前没有逾期应收，无法发起批量催款");
   });
 
   it("does not show empty hint when selectableCount > 0", () => {
@@ -81,7 +81,7 @@ describe("BillingTable — bulk empty hint", () => {
     const selectAll = wrapper.find("thead input[type='checkbox']");
     expect(selectAll.exists()).toBe(true);
     expect(selectAll.attributes("title")).toBe(
-      "当前没有逾期节点，无法发起批量催款",
+      "当前没有逾期应收，无法发起批量催款",
     );
   });
 
@@ -100,19 +100,19 @@ describe("BillingTable — bulk empty hint", () => {
     const wrapper = mountTable(rows, 0);
 
     expect(wrapper.find(".bulk-empty-hint").text()).toBe(
-      "当前没有逾期节点，无法发起批量催款",
+      "当前没有逾期应收，无法发起批量催款",
     );
 
     setAppLocale("ja-JP");
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".bulk-empty-hint").text()).toBe(
-      "現在、延滞中の収費ノードがないため、一括催促はできません",
+      "現在、延滞中の請求がないため、一括督促はできません",
     );
 
     setAppLocale("en-US");
     await wrapper.vm.$nextTick();
     expect(wrapper.find(".bulk-empty-hint").text()).toBe(
-      "No overdue billing nodes — bulk collection is unavailable",
+      "No overdue receivables — bulk collection is unavailable",
     );
   });
 });

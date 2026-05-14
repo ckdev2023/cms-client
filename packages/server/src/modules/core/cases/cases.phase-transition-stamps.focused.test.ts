@@ -5,6 +5,7 @@ import { resolvePhaseStampEffects } from "./cases.service";
 import {
   CASE_ID,
   billingRow,
+  isBillingReceivableExistenceQuery,
   makeCaseRow,
   makeCtx,
   makePool,
@@ -108,8 +109,13 @@ void describe("transitionPhase: SQL 写入操作时间戳 (BUG-098)", () => {
     const stampedAt = "2026-04-29T11:00:00.000Z";
     const pool = makePool((sql, p) => {
       calls.push({ sql: sql.trim(), params: p });
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       // BUG-111 default-deny：用 gate=off 的尾款节点关闭 gate，专注 stamp 行为
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("off", "due", "0")]);
       if (sql.includes("update cases") && sql.includes("business_phase = $2"))
         return ok([
@@ -286,7 +292,12 @@ void describe("transitionPhase: SQL 写入操作时间戳 (BUG-098)", () => {
     const existingStamp = "2026-04-15T00:00:00.000Z";
     const pool = makePool((sql, p) => {
       calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("off", "due", "0")]);
       if (sql.includes("update cases") && sql.includes("business_phase = $2"))
         return ok([
@@ -326,7 +337,12 @@ void describe("transitionPhase: SQL 写入操作时间戳 (BUG-098)", () => {
     const calls: { sql: string; params?: unknown[] }[] = [];
     const pool = makePool((sql, p) => {
       calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("off", "due", "0")]);
       if (sql.includes("update cases") && sql.includes("business_phase = $2"))
         return ok([

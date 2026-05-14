@@ -248,7 +248,7 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
       )
         .find(".valsup__post-note")
         .text();
-      expect(text).toContain("尾款尚未结清");
+      expect(text).toContain("本案应收尚未结清");
     });
 
     it("WAITING_PAYMENT + outstanding + risk → risk-first specialized copy (zh-CN)", () => {
@@ -276,7 +276,7 @@ describe("CaseValidationSupport — coeNoteKeySuffix phase-text mapping", () => 
       )
         .find(".valsup__post-note")
         .text();
-      expect(text).toContain("尾款结清后发送 COE");
+      expect(text).toContain("正在等待本案应收结清后发送");
     });
 
     it("en-US milestone missing — no Han script leakage", () => {

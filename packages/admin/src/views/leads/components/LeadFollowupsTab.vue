@@ -177,8 +177,8 @@ const form = toRef(props, "followupForm");
 
   <div v-else class="followup-timeline">
     <div
-      v-for="(fu, idx) in followups"
-      :key="idx"
+      v-for="fu in followups"
+      :key="fu.id ?? `${fu.time}::${fu.summary}::${fu.channel}`"
       class="followup-timeline__item"
     >
       <div class="followup-timeline__dot" />

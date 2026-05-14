@@ -5,6 +5,7 @@ import { CASE_WRITE_ERROR_CODES } from "./cases.types";
 import {
   CASE_ID,
   billingRow,
+  isBillingReceivableExistenceQuery,
   makeCaseRow,
   makeCtx,
   makePool,
@@ -26,7 +27,11 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
         sql.includes("status = 'due'")
       )
         return ok([]);
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([makeCaseRow({ business_phase: "APPROVED" })]);
@@ -56,7 +61,11 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
         sql.includes("status = 'due'")
       )
         return ok([{ "1": 1 }]);
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([]);
       if (sql.includes("update cases") && sql.includes("business_phase = $2"))
         return ok([makeCaseRow({ business_phase: "WAITING_PAYMENT" })]);
@@ -80,7 +89,12 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
         sql.includes("status = 'due'")
       )
         return ok([]);
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("off", "paid", "0")]);
       if (sql.includes("update cases") && sql.includes("business_phase = $2"))
         return ok([makeCaseRow({ business_phase: "COE_SENT" })]);

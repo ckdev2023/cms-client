@@ -219,10 +219,33 @@ void test("getSummary applies q search filter across D3 columns", async () => {
     main.sql.includes("lower(br.milestone_name)"),
     "q searches milestone_name",
   );
+  assert.ok(main.params?.includes("tanaka"), "q includes exact id match param");
   assert.ok(
     main.params?.includes("%tanaka%"),
     "q param lowercased with wildcards",
   );
+});
+
+void test("getSummary q filter matches case id like billing-plans list", async () => {
+  const captured: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    captured.push({ sql, params });
+    if (sql.includes("set_config")) {
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    }
+    return Promise.resolve({ rows: [summaryRow()], rowCount: 1 });
+  });
+
+  const caseId = "9d35f392-fc7b-481d-9844-ba2972161f6e";
+  await svc(pool).getSummary(makeCtx(), { q: caseId });
+
+  const main = captured.find((c) => c.sql.includes("total_due"));
+  assert.ok(main);
+  assert.ok(
+    main.sql.includes("lower(c.id::text)"),
+    "q includes case id equality for UUID deep-link parity",
+  );
+  assert.ok(main.params?.includes(caseId.toLowerCase()));
 });
 
 void test("getSummary applies from/to date range filters", async () => {

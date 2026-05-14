@@ -100,12 +100,12 @@ describe("usePaymentModal", () => {
     expect(m.canSubmit.value).toBe(false);
   });
 
-  it("canSubmit is true when amount and date are filled (no nodes)", () => {
+  it("canSubmit is false when amount and date are filled but no billing plan to attach", () => {
     const m = usePaymentModal();
     m.open([]);
     m.fields.value.amount = "100000";
     m.fields.value.date = "2026-04-13";
-    expect(m.canSubmit.value).toBe(true);
+    expect(m.canSubmit.value).toBe(false);
   });
 
   it("canSubmit is false when multiple unpaid nodes and none selected", () => {

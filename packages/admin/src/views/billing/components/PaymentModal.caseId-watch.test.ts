@@ -16,10 +16,37 @@ function makeNode(overrides: Partial<BillingPlanNode> = {}): BillingPlanNode {
 }
 
 describe("PaymentModal — caseId/open watch ordering", () => {
+  it("loads nodes on mount when open and caseId are already set (v-if open)", async () => {
+    const getBillingPlanNodes = vi
+      .fn()
+      .mockResolvedValue([makeNode({ id: "immediate-node" })]);
+
+    mount(PaymentModal, {
+      props: {
+        open: true,
+        caseId: "case-mount-1",
+        getBillingPlanNodes,
+        createPayment: vi.fn().mockResolvedValue({ ok: true }),
+      },
+      global: {
+        plugins: [i18n],
+        stubs: { Teleport: true },
+      },
+    });
+
+    await flushPromises();
+
+    expect(getBillingPlanNodes).toHaveBeenCalledTimes(1);
+    expect(getBillingPlanNodes).toHaveBeenCalledWith("case-mount-1");
+  });
+
   it("loads nodes when caseId arrives after open", async () => {
     const getBillingPlanNodes = vi
       .fn()
-      .mockResolvedValue([makeNode({ id: "late" })]);
+      .mockResolvedValue([
+        makeNode({ id: "late-a" }),
+        makeNode({ id: "late-b", amount: 50_000 }),
+      ]);
 
     const wrapper = mount(PaymentModal, {
       props: {

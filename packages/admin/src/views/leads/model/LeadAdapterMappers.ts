@@ -310,6 +310,7 @@ function adaptFollowupDto(value: unknown): LeadFollowupRecord | null {
   const apiChannel = readString(r, "channel");
   const channel = mapLeadFollowupChannelFromApi(apiChannel || "other");
   return {
+    id: readString(r, "id") || undefined,
     channel,
     channelLabel: getFollowupChannelLabel(channel),
     summary,

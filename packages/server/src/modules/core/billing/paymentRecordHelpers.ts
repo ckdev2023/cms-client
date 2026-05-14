@@ -155,6 +155,9 @@ export function validatePaymentMethod(
 /**
  * 根据已收金额与应收金额推导收费计划状态。
  *
+ * 当 amountDue ≤ 0（占位或未录入应收）时，不应仅凭「已收 ≥ 应收」判为 paid；
+ * 有回款则 partial，无回款则 due。
+ *
  * @param totalReceived - 累计有效回款
  * @param amountDue - 应收金额
  * @returns 新状态：paid / partial / due
@@ -163,7 +166,11 @@ export function deriveBillingStatus(
   totalReceived: number,
   amountDue: number,
 ): string {
-  if (totalReceived >= amountDue && totalReceived > 0) return "paid";
+  if (amountDue <= 0) {
+    if (totalReceived <= 0) return "due";
+    return "partial";
+  }
+  if (totalReceived >= amountDue) return "paid";
   if (totalReceived > 0) return "partial";
   return "due";
 }

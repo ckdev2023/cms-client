@@ -43,7 +43,7 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
     expect(amountInput.attributes("max")).toBe("50000");
   });
 
-  it("has no max when no node is selected (multiple nodes, none chosen)", async () => {
+  it("未选计划仍绑定宽松 max（多节点时 selectedNode=null；不配 max 会令 Chromium valuemax=0 × min=1）", async () => {
     const wrapper = await mountAndOpen([
       makeNode({ id: "n1", amount: 30_000 }),
       makeNode({ id: "n2", amount: 70_000 }),
@@ -52,7 +52,7 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
     const amountInput = wrapper.find<HTMLInputElement>(
       'input[type="number"].pm-input',
     );
-    expect(amountInput.attributes("max")).toBeUndefined();
+    expect(amountInput.attributes("max")).toBe(String(Number.MAX_SAFE_INTEGER));
   });
 
   it("updates max when user selects a different node", async () => {
@@ -74,14 +74,16 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
   it("renders select options for each unpaid billing node", async () => {
     const wrapper = await mountAndOpen([
       makeNode({ id: "n1", name: "case_fee" }),
-      makeNode({ id: "n2", name: "final_payment", status: "paid" }),
+      makeNode({ id: "n3", name: "final_payment", amount: 80_000 }),
+      makeNode({ id: "n2", name: "interim", status: "paid" }),
     ]);
     const options = wrapper.find("select.pm-input--select").findAll("option");
-    expect(options.length).toBe(2);
+    expect(options.length).toBe(3);
     expect(options[1]!.attributes("value")).toBe("n1");
+    expect(options[2]!.attributes("value")).toBe("n3");
   });
 
-  it("has no max when auto-selected node has zero amount (placeholder fee)", async () => {
+  it("绑宽松 max 当自动选中节点应收为 0（避免 Chromium spinbutton valuemax=0）", async () => {
     const wrapper = await mountAndOpen([
       makeNode({ id: "n0", amount: 0, dueDate: "" }),
     ]);
@@ -89,6 +91,6 @@ describe("PaymentModal — BUG-204 amount max constraint", () => {
     const amountInput = wrapper.find<HTMLInputElement>(
       'input[type="number"].pm-input',
     );
-    expect(amountInput.attributes("max")).toBeUndefined();
+    expect(amountInput.attributes("max")).toBe(String(Number.MAX_SAFE_INTEGER));
   });
 });

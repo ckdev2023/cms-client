@@ -33,7 +33,8 @@ function makeMockPool(
     if (sql === "BEGIN" || sql === "COMMIT" || sql === "ROLLBACK") {
       return Promise.resolve({ rows: [] });
     }
-    if (sql.includes("insert into organizations")) {
+    const s = sql.toLowerCase();
+    if (s.includes("insert into organizations")) {
       return Promise.resolve({
         rows: [
           {
@@ -43,12 +44,18 @@ function makeMockPool(
         ],
       });
     }
-    if (sql.includes("select id from roles")) {
+    if (s.includes("insert into roles")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("insert into role_permissions")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("select id from roles")) {
       return Promise.resolve({
         rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
       });
     }
-    if (sql.includes("insert into users")) {
+    if (s.includes("insert into users")) {
       return Promise.resolve({
         rows: [
           {
@@ -61,18 +68,18 @@ function makeMockPool(
         ],
       });
     }
-    if (sql.includes("insert into groups")) {
+    if (s.includes("insert into groups")) {
       return Promise.resolve({
         rows: [{ id: "00000000-0000-4000-8000-000000000020" }],
       });
     }
-    if (sql.includes("insert into user_group_memberships")) {
+    if (s.includes("insert into user_group_memberships")) {
       return Promise.resolve({ rows: [] });
     }
-    if (sql.includes("update organizations") && sql.includes("storageRoot")) {
+    if (s.includes("update organizations") && s.includes("storageroot")) {
       return Promise.resolve({ rows: opts.storageRootExists ? [] : [{}] });
     }
-    if (sql.includes("insert into feature_flags")) {
+    if (s.includes("insert into feature_flags")) {
       return Promise.resolve({ rows: [] });
     }
     throw new Error(`Unexpected SQL: ${sql}`);
@@ -207,16 +214,37 @@ void test("bootstrapLocalAdmin upserts org, user, group, membership, storageRoot
   assert.equal(calls[0]?.sql, "BEGIN");
   assert.equal(calls.at(-1)?.sql, "COMMIT");
 
-  const sqlOrder = calls
-    .map((c) => c.sql)
-    .filter((s) => s !== "BEGIN" && s !== "COMMIT");
-  assert.ok(sqlOrder[0]?.includes("insert into organizations"));
-  assert.ok(sqlOrder[1]?.includes("select id from roles"));
-  assert.ok(sqlOrder[2]?.includes("insert into users"));
-  assert.ok(sqlOrder[3]?.includes("insert into groups"));
-  assert.ok(sqlOrder[4]?.includes("insert into user_group_memberships"));
-  assert.ok(sqlOrder[5]?.includes("update organizations"));
-  assert.ok(sqlOrder[6]?.includes("insert into feature_flags"));
+  const nonTx = calls.filter((c) => c.sql !== "BEGIN" && c.sql !== "COMMIT");
+  const lower = (c: { sql: string }) => c.sql.toLowerCase();
+  const orgIdx = nonTx.findIndex((c) =>
+    lower(c).includes("insert into organizations"),
+  );
+  const rolesSeedIdx = nonTx.findIndex((c) =>
+    lower(c).includes("insert into roles"),
+  );
+  const userIdx = nonTx.findIndex((c) =>
+    lower(c).includes("insert into users"),
+  );
+  assert.ok(orgIdx >= 0);
+  assert.ok(rolesSeedIdx >= 0);
+  assert.ok(userIdx >= 0);
+  assert.ok(orgIdx < rolesSeedIdx);
+  assert.ok(rolesSeedIdx < userIdx);
+  assert.ok(
+    nonTx.some((c) => lower(c).includes("insert into role_permissions")),
+  );
+  assert.ok(nonTx.some((c) => lower(c).includes("insert into groups")));
+  assert.ok(
+    nonTx.some((c) => lower(c).includes("insert into user_group_memberships")),
+  );
+  assert.ok(
+    nonTx.some(
+      (c) =>
+        lower(c).includes("update organizations") &&
+        lower(c).includes("storageroot"),
+    ),
+  );
+  assert.ok(nonTx.some((c) => lower(c).includes("insert into feature_flags")));
 
   const featureFlagInsert = calls.find((c) =>
     c.sql.includes("insert into feature_flags"),
@@ -272,20 +300,27 @@ void test("bootstrapLocalAdmin rolls back when user upsert fails", async () => {
   const calls: string[] = [];
   const pool = makePoolWithClient((sql) => {
     calls.push(sql);
+    const s = sql.toLowerCase();
     if (sql === "BEGIN" || sql === "ROLLBACK") {
       return Promise.resolve({ rows: [] });
     }
-    if (sql.includes("insert into organizations")) {
+    if (s.includes("insert into organizations")) {
       return Promise.resolve({
         rows: [{ id: "org-1", name: "Local Demo Office" }],
       });
     }
-    if (sql.includes("select id from roles")) {
+    if (s.includes("insert into roles")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("insert into role_permissions")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("select id from roles")) {
       return Promise.resolve({
         rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
       });
     }
-    if (sql.includes("insert into users")) {
+    if (s.includes("insert into users")) {
       return Promise.reject(new Error("boom"));
     }
     throw new Error(`Unexpected SQL: ${sql}`);
@@ -304,10 +339,11 @@ void test("bootstrapLocalAdmin rolls back when group upsert fails", async () => 
   const calls: string[] = [];
   const pool = makePoolWithClient((sql) => {
     calls.push(sql);
+    const s = sql.toLowerCase();
     if (sql === "BEGIN" || sql === "ROLLBACK") {
       return Promise.resolve({ rows: [] });
     }
-    if (sql.includes("insert into organizations")) {
+    if (s.includes("insert into organizations")) {
       return Promise.resolve({
         rows: [
           {
@@ -317,12 +353,18 @@ void test("bootstrapLocalAdmin rolls back when group upsert fails", async () => 
         ],
       });
     }
-    if (sql.includes("select id from roles")) {
+    if (s.includes("insert into roles")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("insert into role_permissions")) {
+      return Promise.resolve({ rows: [] });
+    }
+    if (s.includes("select id from roles")) {
       return Promise.resolve({
         rows: [{ id: "00000000-0000-4000-8000-0000000000aa" }],
       });
     }
-    if (sql.includes("insert into users")) {
+    if (s.includes("insert into users")) {
       return Promise.resolve({
         rows: [
           {
@@ -335,7 +377,7 @@ void test("bootstrapLocalAdmin rolls back when group upsert fails", async () => 
         ],
       });
     }
-    if (sql.includes("insert into groups")) {
+    if (s.includes("insert into groups")) {
       return Promise.reject(new Error("group insert failed"));
     }
     throw new Error(`Unexpected SQL: ${sql}`);

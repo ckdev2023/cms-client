@@ -11,7 +11,7 @@ import { usePaymentModal } from "../model/usePaymentModal";
 import Button from "../../../shared/ui/Button.vue";
 
 /**
- * 登记回款弹窗：接收 caseId，打开时拉取节点，提交走 createPayment → toast → refresh。
+ * 登记回款弹窗：接收 caseId，打开时拉取收费计划，提交走 createPayment → toast → refresh。
  */
 const props = withDefaults(
   defineProps<{
@@ -36,19 +36,23 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const modal = usePaymentModal();
-/** 仅当节点应收 > 0 时绑定 max，避免 `:max="undefined"` 在 DOM 上形成异常数值约束（如无障碍树 valuemax=0）。 */
+/** Chromium：number 不配 max 时常将 spinbutton valuemax 暴露为 0，与固定 min=1 叠在一起会拦住合法回款。金额输入始终绑定 max：选中节点应收 > 0 时封顶为该额，否则用大数（含「计划尚未拉取 / 多节点未选 / 节点金额为 0」；超限提示与服务端仍收口）。 */
+const PAYMENT_AMOUNT_MAX_WHEN_NODE_UNPRICED = Number.MAX_SAFE_INTEGER;
 const paymentAmountMaxAttrs = computed(() => {
   const n = modal.selectedNode.value;
-  return n != null && n.amount > 0 ? { max: n.amount } : {};
+  if (n != null && n.amount > 0) {
+    return { max: n.amount };
+  }
+  return { max: PAYMENT_AMOUNT_MAX_WHEN_NODE_UNPRICED };
 });
-/** 嵌套在普通对象内的 ref 在模板里不易追踪；computed 保证节点列表更新后下拉会重绘。 */
+/** 嵌套在普通对象内的 ref 在模板里不易追踪；computed 保证未结清列表更新后下拉会重绘。 */
 const availableBillingNodes = computed(() => modal.availableNodes.value);
 const loadingNodes = ref(false);
 const nodeError = ref<string | null>(null);
 const submitting = ref(false);
 
 /**
- * 弹窗多在 deep-link 首帧打开；先让 Vue 与微任务队列落稳再拉节点，避免与路由/会话注入竞态。
+ * 弹窗多在 deep-link 首帧打开；先让 Vue 与微任务队列落稳再拉收费计划，避免与路由/会话注入竞态。
  */
 async function alignSessionBeforeBillingRead(): Promise<void> {
   await nextTick();
@@ -85,6 +89,7 @@ watch(
       submitting.value = false;
     }
   },
+  { immediate: true },
 );
 
 async function handleSubmit() {
@@ -203,8 +208,8 @@ function handleClose() {
               />
             </div>
 
-            <!-- 关联收费节点 -->
-            <div class="pm-field">
+            <!-- 关联收费计划（仅多行遗留数据时展示选择器） -->
+            <div v-if="availableBillingNodes.length > 1" class="pm-field">
               <label class="pm-label" for="payment-billingPlanId">{{
                 t("billing.paymentModal.fields.node")
               }}</label>

@@ -125,10 +125,13 @@ function applyFilters(
     where.push(`c.owner_user_id = $${String(params.length)}`);
   }
   if (input.q && input.q.length > 0) {
-    params.push(`%${input.q.toLowerCase()}%`);
-    const qi = `$${String(params.length)}`;
+    const qNorm = input.q.trim().toLowerCase();
+    params.push(qNorm);
+    const exactCaseId = `$${String(params.length)}`;
+    params.push(`%${qNorm}%`);
+    const likePattern = `$${String(params.length)}`;
     where.push(
-      `(lower(c.case_no) like ${qi} or lower(c.case_name) like ${qi} or lower(cu.base_profile->>'displayName') like ${qi} or lower(br.milestone_name) like ${qi})`,
+      `(lower(c.id::text) = ${exactCaseId} or lower(c.case_no) like ${likePattern} or lower(c.case_name) like ${likePattern} or lower(cu.base_profile->>'displayName') like ${likePattern} or lower(br.milestone_name) like ${likePattern})`,
     );
   }
   if (input.from) {

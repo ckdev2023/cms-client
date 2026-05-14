@@ -1,7 +1,15 @@
 import type { Pool, PoolClient } from "pg";
 
 import { hashPassword } from "./auth.service";
+import { getSystemRolePermissions } from "./permissions.codes";
 import { parseRole, type Role } from "./roles";
+
+const SYSTEM_ROLE_CODES: readonly Role[] = [
+  "owner",
+  "manager",
+  "staff",
+  "viewer",
+];
 
 const DEFAULT_LOCAL_ORG_ID = "00000000-0000-4000-8000-000000000010";
 const DEFAULT_LOCAL_USER_ID = "00000000-0000-4000-8000-000000000011";
@@ -121,6 +129,7 @@ export async function bootstrapLocalAdmin(
     await client.query("BEGIN");
 
     const organization = await upsertOrganization(client, input);
+    await ensureSystemRolesForOrg(client, organization.id);
     const user = await upsertAdminUser(client, input, organization.id);
     const groupId = await upsertDefaultGroup(client, organization.id);
     await upsertDefaultMembership(client, user.id, groupId);
@@ -168,6 +177,53 @@ async function upsertOrganization(
   const row = result.rows.at(0);
   if (!row) throw new Error("Failed to initialize local organization");
   return row;
+}
+
+/**
+ * 保证 org 具备与 migration 050/063 一致的内建角色与 role_permissions。
+ * 用于 org 在 050 之后才创建的场景（例如全新本地库 + db:init-local-admin）。
+ *
+ * @param client - PostgreSQL 客户端（事务内）
+ * @param orgId - 组织 ID
+ */
+async function ensureSystemRolesForOrg(
+  client: PoolClient,
+  orgId: string,
+): Promise<void> {
+  await client.query(
+    `
+      insert into roles (org_id, code, name, description, is_system)
+      select $1::uuid, v.code, v.name, v.description, true
+      from (values
+        ('owner', 'Owner', 'Full administrative access'),
+        ('manager', 'Manager', 'Team and case management'),
+        ('staff', 'Staff', 'Day-to-day case operations'),
+        ('viewer', 'Viewer', 'Read-only access')
+      ) as v(code, name, description)
+      on conflict (org_id, code) do nothing
+    `,
+    [orgId],
+  );
+
+  for (const code of SYSTEM_ROLE_CODES) {
+    const roleRes = await client.query<{ id: string }>(
+      `select id from roles where org_id = $1 and code = $2 and is_system = true limit 1`,
+      [orgId, code],
+    );
+    const roleId = roleRes.rows.at(0)?.id;
+    if (!roleId) {
+      throw new Error(
+        `Failed to ensure system role "${code}" for org ${orgId}`,
+      );
+    }
+    for (const perm of getSystemRolePermissions(code)) {
+      await client.query(
+        `insert into role_permissions (role_id, permission) values ($1, $2)
+         on conflict do nothing`,
+        [roleId, perm],
+      );
+    }
+  }
 }
 
 async function upsertAdminUser(

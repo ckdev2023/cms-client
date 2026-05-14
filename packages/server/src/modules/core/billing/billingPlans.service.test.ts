@@ -2,11 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import type { Pool } from "pg";
 
-import {
-  BillingPlansService,
-  mapBillingPlanRow,
-  mapBillingPlanWithPaymentsRow,
-} from "./billingPlans.service";
+import { BillingPlansService } from "./billingPlans.service";
 import type { RequestContext } from "../tenancy/requestContext";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -92,87 +88,12 @@ function svc(pool: Pool) {
   return new BillingPlansService(pool);
 }
 
-void test("mapBillingPlanRow maps database row to BillingPlan", () => {
-  const plan = mapBillingPlanRow(makeBillingPlanRow());
-  assert.equal(plan.id, BILLING_PLAN_ID);
-  assert.equal(plan.caseId, CASE_ID);
-  assert.equal(plan.amountDue, 1200.5);
-  assert.equal(plan.dueDate, "2026-06-01");
-  assert.equal(plan.status, "due");
-  assert.equal(plan.gateEffectMode, "warn");
-});
-
-void test("mapBillingPlanRow handles null optional fields", () => {
-  const plan = mapBillingPlanRow(
-    makeBillingPlanRow({
-      milestone_name: null,
-      due_date: null,
-      remark: null,
-    }),
-  );
-  assert.equal(plan.milestoneName, null);
-  assert.equal(plan.dueDate, null);
-  assert.equal(plan.remark, null);
-});
-
-void test("mapBillingPlanWithPaymentsRow maps extended fields", () => {
-  const dto = mapBillingPlanWithPaymentsRow(makeBillingPlanWithPaymentsRow());
-  assert.equal(dto.id, BILLING_PLAN_ID);
-  assert.equal(dto.caseId, CASE_ID);
-  assert.equal(dto.amountDue, 1200.5);
-  assert.equal(dto.paidAmount, 300);
-  assert.equal(dto.unpaidAmount, 900.5);
-  assert.equal(dto.caseNo, "CASE-001");
-  assert.equal(dto.caseName, "Test Case");
-  assert.equal(dto.customerName, "田中太郎");
-  assert.equal(dto.groupId, "group-1");
-  assert.equal(dto.ownerUserId, "owner-1");
-  assert.equal(dto.ownerDisplayName, "鈴木花子");
-});
-
-void test("mapBillingPlanWithPaymentsRow clamps unpaidAmount to zero", () => {
-  const dto = mapBillingPlanWithPaymentsRow(
-    makeBillingPlanWithPaymentsRow({
-      amount_due: "100",
-      paid_amount: "150",
-    }),
-  );
-  assert.equal(dto.paidAmount, 150);
-  assert.equal(dto.unpaidAmount, 0);
-});
-
-void test("mapBillingPlanWithPaymentsRow handles null owner/customer", () => {
-  const dto = mapBillingPlanWithPaymentsRow(
-    makeBillingPlanWithPaymentsRow({
-      owner_user_id: null,
-      owner_display_name: null,
-      customer_name: null,
-      case_no: null,
-      case_name: null,
-      group_id: null,
-    }),
-  );
-  assert.equal(dto.ownerUserId, null);
-  assert.equal(dto.ownerDisplayName, null);
-  assert.equal(dto.customerName, null);
-  assert.equal(dto.caseNo, null);
-  assert.equal(dto.caseName, null);
-  assert.equal(dto.groupId, null);
-});
-
-void test("mapBillingPlanWithPaymentsRow handles zero paid_amount", () => {
-  const dto = mapBillingPlanWithPaymentsRow(
-    makeBillingPlanWithPaymentsRow({ paid_amount: "0" }),
-  );
-  assert.equal(dto.paidAmount, 0);
-  assert.equal(dto.unpaidAmount, 1200.5);
-});
-
 void test("BillingPlansService.create inserts row and writes timeline in tx", async () => {
   const { calls, createQueryFn } = makeTrackedPool();
   const pool = makePool(
     createQueryFn({
       "select id from cases": () => ({ rows: [{ id: CASE_ID }], rowCount: 1 }),
+      "::text as count": () => ({ rows: [{ count: "0" }], rowCount: 1 }),
       "insert into billing_records": () => ({
         rows: [makeBillingPlanRow()],
         rowCount: 1,
@@ -220,6 +141,7 @@ void test("BillingPlansService.create accepts block gateEffectMode", async () =>
   const pool = makePool(
     createQueryFn({
       "select id from cases": () => ({ rows: [{ id: CASE_ID }], rowCount: 1 }),
+      "::text as count": () => ({ rows: [{ count: "0" }], rowCount: 1 }),
       "insert into billing_records": () => ({
         rows: [makeBillingPlanRow({ gate_effect_mode: "block" })],
         rowCount: 1,
@@ -265,6 +187,24 @@ void test("BillingPlansService.create rejects cross-tenant caseId", async () => 
       assert.ok(err instanceof Error);
       assert.ok(err.message.includes("cases"));
       return true;
+    },
+  );
+});
+
+void test("BillingPlansService.create rejects duplicate billing plan for same case", async () => {
+  const pool = makePool(
+    makeTrackedPool().createQueryFn({
+      "select id from cases": () => ({ rows: [{ id: CASE_ID }], rowCount: 1 }),
+      "::text as count": () => ({ rows: [{ count: "1" }], rowCount: 1 }),
+    }),
+  );
+
+  await assert.rejects(
+    () => svc(pool).create(makeCtx(), { caseId: CASE_ID, amountDue: 100 }),
+    {
+      name: "BadRequestException",
+      message:
+        "Case already has a billing plan; only one lump-sum receivable is allowed per case",
     },
   );
 });

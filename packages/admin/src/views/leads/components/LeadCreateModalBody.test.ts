@@ -101,3 +101,50 @@ describe("LeadCreateModalBody — i18n option labels", () => {
     expect(allText).toContain("日语");
   });
 });
+
+describe("LeadCreateModalBody — contact validation hints", () => {
+  const tPhoneHint = () =>
+    i18n.global.t("leads.list.createModal.fields.invalidPhoneHint");
+  const tEmailHint = () =>
+    i18n.global.t("leads.list.createModal.fields.invalidEmailHint");
+
+  it("shows invalid phone hint when phone is non-empty but invalid", () => {
+    setAppLocale("zh-CN");
+    const wrapper = mount(LeadCreateModalBody, {
+      global: { plugins: [i18n] },
+      props: {
+        fields: { name: "T", phone: "+8190BAD01", email: "" } as never,
+      },
+    });
+
+    expect(wrapper.text()).toContain(tPhoneHint());
+  });
+
+  it("shows invalid email hint when email is non-empty but invalid", () => {
+    setAppLocale("zh-CN");
+    const wrapper = mount(LeadCreateModalBody, {
+      global: { plugins: [i18n] },
+      props: {
+        fields: {
+          name: "T",
+          phone: "",
+          email: "not-an-email-address",
+        } as never,
+      },
+    });
+
+    expect(wrapper.text()).toContain(tEmailHint());
+  });
+
+  it("does not show invalid phone hint when phone is empty", () => {
+    setAppLocale("zh-CN");
+    const wrapper = mount(LeadCreateModalBody, {
+      global: { plugins: [i18n] },
+      props: {
+        fields: { name: "T", phone: "", email: "good@example.com" } as never,
+      },
+    });
+
+    expect(wrapper.text()).not.toContain(tPhoneHint());
+  });
+});

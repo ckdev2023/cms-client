@@ -270,7 +270,8 @@ describe("LeadAdapterMappers", () => {
         }),
       );
 
-      const time = result?.detail.followups[0].time ?? "";
+      const fu = result?.detail.followups[0];
+      const time = fu?.time ?? "";
       expect(time.startsWith("今天")).toBe(true);
       expect(time).not.toContain("T");
       expect(time).not.toContain("Z");

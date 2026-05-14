@@ -101,6 +101,7 @@ function makeTrackedQueryFn(
 void test("syncBillingCache: BillingPlansService.create triggers cache sync", async () => {
   const { calls, queryFn } = makeTrackedQueryFn({
     "select id from cases": () => ({ rows: [{ id: CASE_ID }], rowCount: 1 }),
+    "::text as count": () => ({ rows: [{ count: "0" }], rowCount: 1 }),
     "insert into billing_records": () => ({
       rows: [makeBillingPlanRow()],
       rowCount: 1,
@@ -365,12 +366,13 @@ void test("syncBillingCache: reversed payment rolls back billing_unpaid_amount_c
   );
 });
 
-void test("syncBillingCache: serial writes to same case are idempotent (cache called once per write)", async () => {
+void test("syncBillingCache: each create on its own case triggers exactly one cache sync", async () => {
   const cacheCallCounts: number[] = [];
+  const CASE_ID_B = "case-b";
 
   const makeQueryFnForCreate = () => {
     let localCacheCalls = 0;
-    const queryFn: PoolClientLike["query"] = (sql) => {
+    const queryFn: PoolClientLike["query"] = (sql, params) => {
       if (
         sql.includes("update cases set") &&
         sql.includes("billing_unpaid_amount_cached")
@@ -378,11 +380,19 @@ void test("syncBillingCache: serial writes to same case are idempotent (cache ca
         localCacheCalls++;
       }
       if (sql.includes("select id from cases")) {
-        return Promise.resolve({ rows: [{ id: CASE_ID }], rowCount: 1 });
+        const id = params?.[0] as string;
+        return Promise.resolve({ rows: [{ id }], rowCount: 1 });
+      }
+      if (sql.includes("::text as count")) {
+        return Promise.resolve({ rows: [{ count: "0" }], rowCount: 1 });
       }
       if (sql.includes("insert into billing_records")) {
+        const cid =
+          Array.isArray(params) && params.length > 1
+            ? String(params[1])
+            : CASE_ID;
         return Promise.resolve({
-          rows: [makeBillingPlanRow()],
+          rows: [makeBillingPlanRow({ case_id: cid })],
           rowCount: 1,
         });
       }
@@ -403,7 +413,7 @@ void test("syncBillingCache: serial writes to same case are idempotent (cache ca
 
   const run2 = makeQueryFnForCreate();
   await new BillingPlansService(makePool(run2.queryFn)).create(makeCtx(), {
-    caseId: CASE_ID,
+    caseId: CASE_ID_B,
     amountDue: 700,
   });
   cacheCallCounts.push(run2.getCacheCount());

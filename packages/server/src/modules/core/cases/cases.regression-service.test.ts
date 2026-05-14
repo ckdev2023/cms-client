@@ -9,6 +9,7 @@ import { PermissionsService } from "../auth/permissions.service";
 import type { Case } from "../model/coreEntities";
 import { CasesController } from "./cases.controller";
 import { CasesService, POST_APPROVAL_STAGES } from "./cases.service";
+import { isBillingReceivableExistenceQuery } from "./cases.final-payment-coe-guard.focused.test-support";
 
 const baseMockCase: Case = {
   id: "case-1",
@@ -346,21 +347,24 @@ void test("§11 postApprovalStage: rejects invalid stage", async () => {
 
 void test("§11 postApprovalStage: coe_sent blocked when gate=block", async () => {
   const pool = makePool((sql, p) => {
+    if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
     if (sql.includes("from cases") && p?.[0] === CASE_ID)
       return ok([makeCaseRow()]);
-    if (sql.includes("from billing_records") && sql.includes("尾款"))
+    if (
+      sql.includes(
+        "select id, amount_due, status, milestone_name, gate_effect_mode",
+      )
+    )
       return ok([
         {
+          id: "11111111-2222-4333-8444-555555555555",
           amount_due: "250000",
           status: "partial",
           milestone_name: "尾款",
           gate_effect_mode: "block",
         },
       ]);
-    if (
-      sql.includes("from payment_records pr") &&
-      sql.includes("billing_records br")
-    )
+    if (sql.includes("from payment_records pr") && sql.includes("any("))
       return ok([{ total_received: "100000" }]);
     return ok();
   });

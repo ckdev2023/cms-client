@@ -39,14 +39,13 @@ describe("PaymentModal — 回款金额 input 的 max 绑定", () => {
     await flushPromises();
     await w.vm.$nextTick();
     const select = w.find("#payment-billingPlanId");
-    expect(select.exists()).toBe(true);
-    expect(select.element.value).toBe("n1");
+    expect(select.exists()).toBe(false);
     const input = w.find("#payment-amount");
     expect(input.exists()).toBe(true);
     expect(input.attributes("max")).toBe("350000");
   });
 
-  it("节点应收为 0 时不设置 max（避免 min>max 阻碍输入）", async () => {
+  it("节点应收为 0 时绑定宽松 max（避免 Chromium 无障碍 valuemax=0 × min=1 阻碍输入）", async () => {
     const { w, caseId } = mountThenOpenCase([
       {
         id: "zero-fee",
@@ -60,6 +59,31 @@ describe("PaymentModal — 回款金额 input 的 max 绑定", () => {
     await flushPromises();
     await w.vm.$nextTick();
     const input = w.find("#payment-amount");
-    expect(input.attributes("max")).toBeUndefined();
+    expect(input.attributes("max")).toBe(String(Number.MAX_SAFE_INTEGER));
+  });
+
+  it("多节点且尚未选择计划时仍有宽松 max（避免 selectedNode=null 不配 max → valuemax=0）", async () => {
+    const nodes = [
+      {
+        id: "a",
+        name: "case_fee",
+        amount: 0,
+        dueDate: "",
+        status: "due",
+      },
+      {
+        id: "b",
+        name: "case_fee",
+        amount: 100,
+        dueDate: "",
+        status: "due",
+      },
+    ];
+    const { w, caseId } = mountThenOpenCase(nodes);
+    await w.setProps({ caseId });
+    await flushPromises();
+    await w.vm.$nextTick();
+    const input = w.find("#payment-amount");
+    expect(input.attributes("max")).toBe(String(Number.MAX_SAFE_INTEGER));
   });
 });

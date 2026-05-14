@@ -15,6 +15,7 @@ import {
   mapDocProgressByProviderRows,
 } from "./cases.service";
 import { type RequestContext } from "../tenancy/requestContext";
+import { isBillingReceivableExistenceQuery } from "./cases.final-payment-coe-guard.focused.test-support";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
 const USER_ID = "00000000-0000-4000-8000-000000000001";
@@ -1625,7 +1626,11 @@ void test(
     const calls: { sql: string; params?: unknown[] }[] = [];
     const pool = makePool((sql, p) => {
       calls.push({ sql: sql.trim(), params: p });
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok();
       if (sql.includes("update cases") && sql.includes("metadata"))
         return ok([
@@ -1694,9 +1699,15 @@ void test("updatePostApprovalStage: stamps overseas_visa_start_at on first entry
 
 void test("updatePostApprovalStage: blocks coe_sent when final payment gate is block", async () => {
   const pool = makePool((sql, p) => {
-    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+    if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+    if (
+      sql.includes(
+        "select id, amount_due, status, milestone_name, gate_effect_mode",
+      )
+    ) {
       return ok([
         {
+          id: "11111111-2222-4333-8444-555555555555",
           amount_due: "250000",
           status: "partial",
           milestone_name: "尾款",
@@ -1704,10 +1715,7 @@ void test("updatePostApprovalStage: blocks coe_sent when final payment gate is b
         },
       ]);
     }
-    if (
-      sql.includes("from payment_records pr") &&
-      sql.includes("billing_records br")
-    ) {
+    if (sql.includes("from payment_records pr") && sql.includes("any(")) {
       return ok([{ total_received: "100000" }]);
     }
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
@@ -1727,9 +1735,15 @@ void test("updatePostApprovalStage: blocks coe_sent when final payment gate is b
 
 void test("updatePostApprovalStage: requires billing risk ack for warn gate", async () => {
   const pool = makePool((sql, p) => {
-    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+    if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+    if (
+      sql.includes(
+        "select id, amount_due, status, milestone_name, gate_effect_mode",
+      )
+    ) {
       return ok([
         {
+          id: "11111111-2222-4333-8444-555555555555",
           amount_due: "250000",
           status: "partial",
           milestone_name: "尾款",
@@ -1737,10 +1751,7 @@ void test("updatePostApprovalStage: requires billing risk ack for warn gate", as
         },
       ]);
     }
-    if (
-      sql.includes("from payment_records pr") &&
-      sql.includes("billing_records br")
-    ) {
+    if (sql.includes("from payment_records pr") && sql.includes("any(")) {
       return ok([{ total_received: "100000" }]);
     }
     if (sql.includes("from cases") && p?.[0] === CASE_ID) {
@@ -1764,9 +1775,15 @@ void test("updatePostApprovalStage: allows coe_sent for warn gate after billing 
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, p) => {
     calls.push({ sql: sql.trim(), params: p });
-    if (sql.includes("from billing_records") && sql.includes("尾款")) {
+    if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+    if (
+      sql.includes(
+        "select id, amount_due, status, milestone_name, gate_effect_mode",
+      )
+    ) {
       return ok([
         {
+          id: "11111111-2222-4333-8444-555555555555",
           amount_due: "250000",
           status: "partial",
           milestone_name: "尾款",
@@ -1774,10 +1791,7 @@ void test("updatePostApprovalStage: allows coe_sent for warn gate after billing 
         },
       ]);
     }
-    if (
-      sql.includes("from payment_records pr") &&
-      sql.includes("billing_records br")
-    ) {
+    if (sql.includes("from payment_records pr") && sql.includes("any(")) {
       return ok([{ total_received: "100000" }]);
     }
     if (sql.includes("update cases") && sql.includes("metadata")) {

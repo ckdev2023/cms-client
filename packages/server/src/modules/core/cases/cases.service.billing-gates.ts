@@ -8,7 +8,7 @@
  * - `assertCoeSendBillingGate` — businessPhase 推进 → COE_SENT
  * - `assertWaitingPaymentBillingGate` — businessPhase 推进 → WAITING_PAYMENT
  * - `assertWorkflowStepBillingGate` — BMV 子步骤 billingGate 双路径（block/warn）
- * - `hasFinalPaymentBillingRecords` — final-payment milestone 存在性
+ * - `hasCaseBillingReceivable` — 案件是否存在 billing_records（P0 每案一次性应收）
  */
 import { BadRequestException } from "@nestjs/common";
 
@@ -20,22 +20,19 @@ import { decideFinalPaymentGuard } from "./cases.types-final-payment";
 import { type BmvWorkflowStep } from "./cases.workflow-step";
 import { BMV_STEP_LOOKUP } from "./cases.workflow-step-readmodel";
 
-async function hasFinalPaymentBillingRecords(
+async function hasCaseBillingReceivable(
   tx: TenantDbTx,
   caseId: string,
 ): Promise<boolean> {
-  const result = await tx.query<Record<string, unknown>>(
-    `select amount_due, status, milestone_name, gate_effect_mode
-     from billing_records
-     where case_id = $1 and (
-       lower(milestone_name) like '%尾款%'
-       or lower(milestone_name) like '%final%'
-       or lower(milestone_name) like '%結果%'
-     )
-     limit 1`,
+  const result = await tx.query<{ ok: boolean }>(
+    `select exists (
+       select 1
+       from billing_records
+       where case_id = $1
+     ) as ok`,
     [caseId],
   );
-  return result.rows.length > 0;
+  return result.rows[0]?.ok;
 }
 
 /**
@@ -47,12 +44,12 @@ export async function runCoeSendBillingGate(
   tx: TenantDbTx,
   current: Case,
 ): Promise<void> {
-  const hasPlans = await hasFinalPaymentBillingRecords(tx, current.id);
-  if (!hasPlans) {
+  const hasReceivable = await hasCaseBillingReceivable(tx, current.id);
+  if (!hasReceivable) {
     throw new BadRequestException(
       CASE_WRITE_ERROR_CODES.POST_APPROVAL_BILLING_BLOCKED +
-        `: Final payment milestone is missing. ` +
-        `Please create a final-payment billing record before sending COE.`,
+        `: No billing receivable exists for this case. ` +
+        `Please create the lump-sum billing record before sending COE.`,
     );
   }
 

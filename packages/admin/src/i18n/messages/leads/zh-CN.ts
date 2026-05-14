@@ -119,8 +119,11 @@ const leadsZhCN = {
         namePlaceholder: "请输入姓名",
         phone: "电话",
         phonePlaceholder: "手机/座机",
+        invalidPhoneHint:
+          "号码格式不符合校验：日本国内号码或「+81」开头，仅用数字（及空格、连字符）。",
         email: "邮箱",
         emailPlaceholder: "邮箱地址",
+        invalidEmailHint: "邮箱格式不正确。",
         source: "来源",
         sourcePlaceholder: "请选择来源",
         referrer: "介绍人",

@@ -113,7 +113,6 @@ function toggleAccountPanel(): void {
           class="topbar-search-trigger"
           aria-controls="global-search-palette"
           aria-haspopup="dialog"
-          :aria-label="t('shell.topbar.globalSearch')"
           @click="$emit('openSearchPalette')"
           @keydown.enter.prevent="$emit('openSearchPalette')"
         >

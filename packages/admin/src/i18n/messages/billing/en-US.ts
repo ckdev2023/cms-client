@@ -34,7 +34,7 @@ const billingEnUS = {
       amountDue: "Due (¥)",
       amountReceived: "Received (¥)",
       amountOutstanding: "Outstanding (¥)",
-      nextNode: "Next billing node",
+      nextNode: "Receivable summary",
       status: "Payment status",
       actions: "Actions",
     },
@@ -66,7 +66,7 @@ const billingEnUS = {
       unit: "items",
       clear: "Clear",
       collect: "Generate collection tasks",
-      emptyHint: "No overdue billing nodes — bulk collection is unavailable",
+      emptyHint: "No overdue receivables — bulk collection is unavailable",
     },
     pagination: {
       summary: "Showing {start}–{end} of {total}",
@@ -120,7 +120,7 @@ const billingEnUS = {
       amount: "Amount (¥)",
       date: "Date",
       caseName: "Case",
-      node: "Billing node",
+      node: "Billing plan",
       receipt: "Receipt",
       recordStatus: "Status",
       operator: "Operator",
@@ -181,16 +181,17 @@ const billingEnUS = {
   paymentModal: {
     title: "Record payment",
     closeAriaLabel: "Close",
-    hint: "Fill in payment details. Amount and date are required.",
+    hint: "Enter payment details. Each case has a single lump-sum receivable. Amount and date are required.",
     fields: {
       amount: "Amount (¥)",
       amountPlaceholder: "Enter payment amount",
       amountWarning:
-        "Amount exceeds the node's outstanding balance. Consider splitting into separate entries.",
+        "Amount exceeds the outstanding balance for this receivable. Consider splitting entries or verifying the total.",
       date: "Date",
-      node: "Billing plan node",
-      nodePlaceholder: "Select a billing node",
-      nodeError: "Multiple outstanding nodes found. Please select one first.",
+      node: "Billing plan",
+      nodePlaceholder: "Select a billing plan",
+      nodeError:
+        "Multiple open receivables found. Please select one billing plan first.",
       receipt: "Payment receipt",
       receiptPlaceholder: "Receipt number or filename (optional)",
       receiptHint: "Supports images or PDF. Can be added later.",
@@ -200,7 +201,7 @@ const billingEnUS = {
     cancel: "Cancel",
     submit: "Record payment",
     submitting: "Submitting…",
-    loadingNodes: "Loading billing nodes…",
+    loadingNodes: "Loading billing details…",
     submitError: "Failed to record payment. Please try again.",
   },
   milestone: {

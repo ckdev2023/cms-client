@@ -133,6 +133,49 @@ void test("PaymentRecordsService.create inserts row, writes timeline, and recalc
   assert.equal(billingUpdateCall?.params?.[1], "partial");
 });
 
+void test("PaymentRecordsService.create keeps billing partial when amountDue is zero (placeholder plan)", async () => {
+  const calls: { sql: string; params?: unknown[] }[] = [];
+  const pool = makePool((sql, params) => {
+    calls.push({ sql: sql.trim(), params });
+    if (sql.includes("from billing_records") && sql.includes("for update")) {
+      return Promise.resolve({
+        rows: [makeBillingRecordRow({ amount_due: "0", status: "due" })],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("insert into payment_records")) {
+      return Promise.resolve({
+        rows: [makePaymentRecordRow({ amount_received: "150000.00" })],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("sum(amount_received)")) {
+      return Promise.resolve({
+        rows: [{ total_received: "150000.00" }],
+        rowCount: 1,
+      });
+    }
+    if (sql.includes("update billing_records")) {
+      return Promise.resolve({
+        rows: [makeBillingRecordRow({ amount_due: "0", status: "partial" })],
+        rowCount: 1,
+      });
+    }
+    return Promise.resolve({ rows: [], rowCount: 0 });
+  });
+
+  await new PaymentRecordsService(pool).create(makeCtx(), {
+    billingPlanId: BILLING_RECORD_ID,
+    amountReceived: 150_000,
+    receivedAt: "2026-02-01T00:00:00.000Z",
+  });
+
+  const billingUpdateCall = calls.find((call) =>
+    call.sql.includes("update billing_records"),
+  );
+  assert.equal(billingUpdateCall?.params?.[1], "partial");
+});
+
 void test("PaymentRecordsService.create settles billing record when cumulative payments cover amountDue", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {

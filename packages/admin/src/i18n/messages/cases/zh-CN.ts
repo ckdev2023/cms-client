@@ -317,9 +317,9 @@ const casesZhCN = {
       },
       guards: {
         successCloseoutBlocked:
-          "存在 {amount} 未收余款且未登记欠款风险确认，请先到「门禁与提交」登记或到「收费」结清尾款",
+          "存在 {amount} 未收余款且未登记欠款风险确认，请先到「门禁与提交」登记或到「收费」结清费用",
         coeAdvanceBlocked:
-          "无法进入 COE 寄送阶段：请先在「收费」配置尾款类节点并结清尾款；若仍有未收余额，请先在「门禁与提交」登记欠款风险确认。",
+          "无法进入 COE 寄送阶段：请先在「收费」登记并结清本案一次性应收；若仍有未收余额，请先在「门禁与提交」登记欠款风险确认。",
       },
     },
     terminalStage: {
@@ -382,7 +382,7 @@ const casesZhCN = {
       },
       billingGuard: {
         waitingPaymentEmpty:
-          "该案已进入待尾款阶段，但尚未登记任何回款。请到「收费」Tab 登记尾款",
+          "该案已进入待回款阶段，但尚未登记任何回款。请到「收费」Tab 登记回款",
         noBillingRecord: "财务状况未登记，建议在收费 Tab 补录",
       },
       timeline: {
@@ -444,22 +444,22 @@ const casesZhCN = {
         statusCompleted: "已完成",
       },
       finalPaymentGate: {
-        title: "尾款门禁与 COE",
+        title: "收费门禁与 COE",
         paymentStatus: "收费状态",
-        paymentCleared: "尾款已结清",
-        paymentOutstanding: "尾款未结清",
-        paymentMilestoneMissing: "未配置尾款收费节点",
+        paymentCleared: "应收已结清",
+        paymentOutstanding: "应收未结清",
+        paymentMilestoneMissing: "未登记案件一次性应收",
         outstandingAmount: "待收：{amount}",
         coeGateStatus: "COE 门禁",
         coeReady: "可以发送 COE",
         coeBlocked: "COE 被阻断 — 请先完成收费",
         sendCoe: "发送 COE",
-        sendCoeHint: "推进业务子步骤到 COE 已发送。需先结清尾款。",
+        sendCoeHint: "推进业务子步骤到 COE 已发送。需先结清本案应收。",
         sendCoeHintMilestoneMissing:
-          "请先在「收费」中新增名称含「尾款」的收款节点（或与合约一致的 final／結果后报酬节点），再发送 COE。",
-        blockerPayment: "尾款尚未结清，不能发送 COE。",
+          "请先在「收费」中登记本案一次性应收并结清后，再发送 COE。",
+        blockerPayment: "本案应收尚未结清，不能发送 COE。",
         blockerMilestoneMissing:
-          "尚无尾款类收费节点，无法与财务数据对齐；请添加节点后再试。",
+          "尚未登记案件一次性应收，无法在发送 COE 前对齐财务数据；请在「收费」中补录后再试。",
         blockerBillingRisk: "存在未确认的欠款风险，不能发送 COE。",
         confirmTitle: "确认发送 COE",
         confirmDesc: "此操作将推进业务子步骤到 COE 已发送，操作不可撤销。",
@@ -823,17 +823,17 @@ const casesZhCN = {
         noteImmigrationRejected:
           "入管局审查结果为不许可（在留资格不予认定）。本案不发生 COE 发送与海外贴签流程。请通过失败结案与日志完成归因归档，并核对收费与退费约定。",
         noteAwaitingCoe:
-          "案件已获批准，正在等待尾款结清后发送 COE（在留资格认定证明书）。",
+          "案件已获批准，正在等待本案应收结清后发送 COE（在留资格认定证明书）。",
         noteAwaitingCoeMilestoneMissing:
-          "案件已获批准。当前尚未在「收费」中配置尾款类收款节点，COE 发送前的财务门禁无法对齐数据。请新增名称含「尾款」或与合约一致的 final／結果后报酬等节点后，再结清费用并发送 COE。",
+          "案件已获批准。当前尚未在「收费」中登记本案一次性应收，COE 发送前的财务门禁无法对齐数据。请先登记应收并结清费用后再发送 COE。",
         noteAwaitingCoePaymentOutstanding:
-          "案件已获批准。尾款尚未结清，结清入账后将可发送 COE（在留资格认定证明书）。请在「收费」中登记收款或核对账单状态。",
+          "案件已获批准。本案应收尚未结清，入账后将可发送 COE（在留资格认定证明书）。请在「收费」中登记回款或核对状态。",
         noteAwaitingCoeBillingRiskUnacknowledged:
           "案件已获批准。存在未结清费用且欠款风险尚未确认。请在本标签页下方的「欠款风险确认」版块登记欠款风险确认，或在「收费」标签页结清欠费后再发送 COE。",
         noteAwaitingVisaStamp:
           "COE 已发送。请跟进申请人在海外领馆办理返签／贴签及入境安排。",
         noteDomesticTypicalSansCoeChain:
-          "该案种在完成入管许可后的典型情形多在国内交付与收尾，一般不涉及在留资格认定证明书的海外邮寄以及海外领馆返签／贴签。请照常推进尾款、资料移交与客户指引；确有跨境贴签等例外时请与担当确认口径并留痕。",
+          "该案种在完成入管许可后的典型情形多在国内交付与收尾，一般不涉及在留资格认定证明书的海外邮寄以及海外领馆返签／贴签。请照常推进费用结清、资料移交与客户指引；确有跨境贴签等例外时请与担当确认口径并留痕。",
         noteOverseasVisaApplying:
           "当前为海外返签（领馆签证）手续阶段：请跟进受理、贴签与入境结果，并在系统内及时登记。",
         noteVisaRejected:
@@ -979,7 +979,7 @@ const casesZhCN = {
       SUPPLEMENT_PROCESSING: "补充处理中",
       APPROVED: "已批准",
       REJECTED: "已拒否",
-      WAITING_PAYMENT: "等待尾款",
+      WAITING_PAYMENT: "等待回款",
       COE_SENT: "COE寄送",
       VISA_APPLYING: "海外返签申请中",
       SUCCESS: "入境成功",
@@ -999,7 +999,7 @@ const casesZhCN = {
       NEED_SUPPLEMENT: "需要补正",
       SUPPLEMENT_PROCESSING: "补正处理中",
       APPROVED: "已下签",
-      WAITING_PAYMENT: "等待尾款",
+      WAITING_PAYMENT: "等待回款",
       COE_SENT: "COE寄送",
       VISA_APPLYING: "海外返签申请中",
       ENTRY_SUCCESS: "入境成功",
@@ -1059,7 +1059,7 @@ const casesZhCN = {
     billingRiskAckFailed: "欠款风险确认失败，请检查输入后重试。",
     postApprovalStageInvalid: "下签后阶段不合法。",
     postApprovalBillingBlocked:
-      "尾款未结清，不能推进到此阶段。请先完成尾款收取。",
+      "费用未结清，不能推进到此阶段。请先完成回款登记。",
     postApprovalBillingRiskUnacknowledged:
       "存在未确认的欠款风险，不能推进。请先确认收费风险。",
     crossGroupReasonRequired: "跨组建案必须填写原因。",
@@ -1079,7 +1079,7 @@ const casesZhCN = {
     preSignGateQuoteUnconfirmed: "报价尚未确认，不能签约建案。",
     surveyUpdateFailed: "问卷状态更新失败，请稍后重试。",
     quoteUpdateFailed: "报价确认失败，请稍后重试。",
-    wfStepBillingGateBlocked: "尾款未结清，不能发送 COE。请先完成尾款收取。",
+    wfStepBillingGateBlocked: "费用未结清，不能发送 COE。请先完成回款登记。",
     wfStepNotAllowed: "当前步骤不允许此业务子步骤流转。",
     reminderCreationFailed: "续签提醒创建失败，请稍后重试。",
     checklistEmpty:
@@ -1305,7 +1305,7 @@ const casesZhCN = {
   coach: {
     docManagement: "资料管理",
     runValidation: "执行检查",
-    registerFinalPayment: "登记尾款",
+    registerFinalPayment: "登记回款",
     sendCollectionReminder: "发送催款提醒",
     viewSubmissionStatus: "查看提交状态",
     checkMessages: "查看沟通记录",

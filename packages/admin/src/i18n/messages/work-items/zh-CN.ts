@@ -27,7 +27,7 @@ const dashboardWorkItems = {
         title: "确认高桥优收费凭证是否到账",
         meta: {
           caseId: "CASE-2398",
-          owner: "收费节点",
+          owner: "收费应收",
           time: "今天 17:00",
         },
         desc: "若仍未到账，需要在待回款列表中登记催款任务。",
@@ -102,7 +102,7 @@ const dashboardWorkItems = {
           risk: "欠款风险",
           amount: "待收金额：JPY 180,000",
         },
-        desc: "收费节点已到但仍未结清，需登记催款并暂停非必要推进。",
+        desc: "约定付款日已到但仍未结清，需登记催款并暂停非必要推进。",
         statusLabel: "高风险",
         action: "登记回款",
       },

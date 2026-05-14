@@ -120,8 +120,11 @@ const leadsJaJP = {
         namePlaceholder: "氏名を入力",
         phone: "電話番号",
         phonePlaceholder: "携帯 / 固定電話",
+        invalidPhoneHint:
+          "形式が検証ルールと一致していません。「+81」または国内番号として、数字（および空白・ハイフン）のみで入力してください。",
         email: "メール",
         emailPlaceholder: "メールアドレス",
+        invalidEmailHint: "メールの形式が正しくありません。",
         source: "流入元",
         sourcePlaceholder: "流入元を選択",
         referrer: "紹介者",

@@ -28,7 +28,7 @@ export type PaymentRecordStatus = "valid" | "voided" | "reversed";
 export type PaymentMethod = "bank_transfer" | "cash" | "credit_card" | "other";
 
 /**
- * BillingPlan 核心对象（P0 §3.20 收费计划节点）。
+ * BillingPlan 核心对象（P0 §3.20）：案件一次性应收计划（每 case 至多一行）。
  */
 export type BillingPlan = {
   id: string;

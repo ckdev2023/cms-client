@@ -101,6 +101,21 @@ export function ok(rows: unknown[] = [], rowCount = rows.length) {
   return Promise.resolve({ rows, rowCount });
 }
 
+/**
+ * 识别 `cases.service.billing-gates` 中 `hasCaseBillingReceivable` 使用的 exists 探测 SQL。
+ * 对 `transitionPhase`/`updatePostApprovalStage` 命中 COE 门卫的 stub 应优先返回 `{ ok: boolean }`。
+ *
+ * @param sql 事务内执行的 SQL 文本。
+ * @returns 是否为 billing 存在性探测语句。
+ */
+export function isBillingReceivableExistenceQuery(sql: string): boolean {
+  return (
+    /\bselect\s+exists\s*\(/i.test(sql) &&
+    sql.includes("billing_records") &&
+    sql.includes("case_id = $1")
+  );
+}
+
 function isTxSql(sql: string) {
   return /^(begin|commit|rollback|select set_config)/.test(
     sql.trim().toLowerCase(),
@@ -170,6 +185,7 @@ export function billingRow(
   milestone = "尾款",
 ) {
   return {
+    id: "11111111-2222-4333-8444-555555555555",
     amount_due: amount,
     status,
     milestone_name: milestone,

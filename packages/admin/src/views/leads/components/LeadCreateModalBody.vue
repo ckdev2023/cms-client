@@ -14,6 +14,10 @@ import type {
 } from "../types";
 import { LEAD_SOURCE_OPTIONS, LANGUAGE_OPTIONS } from "../fixtures";
 import { getBusinessTypeSelectOptions } from "../../../shared/i18n/businessTypes";
+import {
+  isValidEmail,
+  isValidPhone,
+} from "../../../shared/util/contactValidators";
 
 /** 新建线索弹窗表单主体：字段输入、来源联动与去重提示。 */
 const { t, locale } = useI18n();
@@ -36,6 +40,16 @@ defineEmits<{
 }>();
 
 const showReferrer = computed(() => props.fields?.source === "referral");
+
+const phoneInvalid = computed(() => {
+  const p = props.fields?.phone?.trim() ?? "";
+  return Boolean(p && !isValidPhone(p));
+});
+
+const emailInvalid = computed(() => {
+  const e = props.fields?.email?.trim() ?? "";
+  return Boolean(e && !isValidEmail(e));
+});
 
 const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 </script>
@@ -95,6 +109,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             type="tel"
             autocomplete="tel"
             class="lead-modal-body__input"
+            :aria-invalid="phoneInvalid"
             :value="fields?.phone"
             :placeholder="t('leads.list.createModal.fields.phonePlaceholder')"
             @input="$emit('update:field', 'phone', inputValue($event))"
@@ -102,6 +117,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               $emit('dedup-check', fields?.phone ?? '', fields?.email ?? '')
             "
           />
+          <p
+            v-if="phoneInvalid"
+            class="lead-modal-body__hint lead-modal-body__hint--invalid"
+          >
+            {{ t("leads.list.createModal.fields.invalidPhoneHint") }}
+          </p>
         </div>
         <div class="lead-modal-body__field">
           <label class="lead-modal-body__label" for="lead-create-email">
@@ -113,6 +134,7 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
             type="email"
             autocomplete="email"
             class="lead-modal-body__input"
+            :aria-invalid="emailInvalid"
             :value="fields?.email"
             :placeholder="t('leads.list.createModal.fields.emailPlaceholder')"
             @input="$emit('update:field', 'email', inputValue($event))"
@@ -120,6 +142,12 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
               $emit('dedup-check', fields?.phone ?? '', fields?.email ?? '')
             "
           />
+          <p
+            v-if="emailInvalid"
+            class="lead-modal-body__hint lead-modal-body__hint--invalid"
+          >
+            {{ t("leads.list.createModal.fields.invalidEmailHint") }}
+          </p>
         </div>
       </div>
 
@@ -409,6 +437,10 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
   margin: 0;
   font-size: var(--font-size-xs, 12px);
   color: var(--color-text-4, #999);
+}
+
+.lead-modal-body__hint--invalid {
+  color: #dc2626;
 }
 
 .lead-modal-body__input {

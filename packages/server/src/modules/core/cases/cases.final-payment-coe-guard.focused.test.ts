@@ -5,6 +5,7 @@ import {
   CASE_ID,
   USER_ID,
   billingRow,
+  isBillingReceivableExistenceQuery,
   makeCaseRow,
   makeCtx,
   makePool,
@@ -24,7 +25,11 @@ void describe("post-approval coe_sent: pass scenarios", () => {
     { skip: "billing gate now enforced, test pending update" },
     async () => {
       const pool = makePool((sql, p) => {
-        if (sql.includes("from billing_records") && sql.includes("尾款"))
+        if (
+          sql.includes(
+            "select id, amount_due, status, milestone_name, gate_effect_mode",
+          )
+        )
           return ok([]);
         if (sql.includes("update cases") && sql.includes("metadata"))
           return ok([
@@ -49,7 +54,12 @@ void describe("post-approval coe_sent: pass scenarios", () => {
 
   void test("allows coe_sent when final payment fully settled", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("block", "paid", "200000")]);
       if (sql.includes("update cases") && sql.includes("metadata"))
         return ok([
@@ -74,12 +84,14 @@ void describe("post-approval coe_sent: pass scenarios", () => {
 
   void test("allows coe_sent for warn gate after billing risk acknowledged", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("warn", "due", "200000")]);
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("warn", "due", "200000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("update cases") && sql.includes("metadata"))
         return ok([
@@ -109,7 +121,12 @@ void describe("post-approval coe_sent: pass scenarios", () => {
 
   void test("allows coe_sent when all billing records are gate_effect_mode=off", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("off", "due", "200000")]);
       if (sql.includes("update cases") && sql.includes("metadata"))
         return ok([
@@ -135,12 +152,14 @@ void describe("post-approval coe_sent: pass scenarios", () => {
 void describe("post-approval coe_sent: block scenarios", () => {
   void test("blocks coe_sent when final payment unpaid with block mode", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("block", "due", "250000")]);
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("block", "due", "250000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("50000")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([makeCaseRow()]);
@@ -170,12 +189,14 @@ void describe("post-approval coe_sent: block scenarios", () => {
 
   void test("blocks coe_sent even after risk ack when mode=block (P1 hard gate)", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("block", "due", "200000")]);
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("block", "due", "200000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([
@@ -205,12 +226,14 @@ void describe("post-approval coe_sent: block scenarios", () => {
 
   void test("requires billing risk ack for warn mode", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("warn", "due", "200000")]);
+      if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("warn", "due", "200000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([makeCaseRow()]);
@@ -239,42 +262,6 @@ void describe("post-approval coe_sent: block scenarios", () => {
   });
 });
 
-void describe("post-approval: non-coe_sent bypasses guard", () => {
-  for (const stage of [
-    "waiting_final_payment",
-    "overseas_visa_applying",
-    "entry_success",
-  ]) {
-    void test(`${stage} bypasses billing guard even with unpaid balance`, async () => {
-      const pool = makePool((sql, p) => {
-        if (sql.includes("update cases") && sql.includes("metadata"))
-          return ok([
-            makeCaseRow({
-              post_approval_stage: stage,
-              metadata: { post_approval_stage: stage },
-              ...(stage === "overseas_visa_applying"
-                ? { overseas_visa_start_at: "2026-04-01T00:00:00.000Z" }
-                : {}),
-              ...(stage === "entry_success"
-                ? { entry_confirmed_at: "2026-04-15T00:00:00.000Z" }
-                : {}),
-            }),
-          ]);
-        if (sql.includes("from cases") && p?.[0] === CASE_ID)
-          return ok([makeCaseRow()]);
-        return ok();
-      });
-
-      const c = await svc(pool, makeTemplates()).updatePostApprovalStage(
-        makeCtx(),
-        CASE_ID,
-        { stage },
-      );
-      assert.equal(c.postApprovalStage, stage);
-    });
-  }
-});
-
 // ═══════════════════════════════════════════════════════════════
 // B. transitionWorkflowStep → COE_SENT path
 // ═══════════════════════════════════════════════════════════════
@@ -282,7 +269,11 @@ void describe("post-approval: non-coe_sent bypasses guard", () => {
 void describe("workflow step COE_SENT: pass scenarios", () => {
   void test("allows COE_SENT when no billing records", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([]);
       if (
         sql.includes("update cases") &&
@@ -306,7 +297,11 @@ void describe("workflow step COE_SENT: pass scenarios", () => {
 
   void test("allows COE_SENT when final payment settled", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
         return ok([billingRow("block", "paid", "200000")]);
       if (
         sql.includes("update cases") &&
@@ -332,12 +327,13 @@ void describe("workflow step COE_SENT: pass scenarios", () => {
 void describe("workflow step COE_SENT: block scenarios", () => {
   void test("blocks COE_SENT when final payment unpaid with block mode", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("block", "due", "200000")]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("block", "due", "200000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([
@@ -369,12 +365,13 @@ void describe("workflow step COE_SENT: block scenarios", () => {
 
   void test("blueprint block escalates billing warn to block", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("warn", "due", "150000")]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("warn", "due", "150000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([
@@ -402,12 +399,13 @@ void describe("workflow step COE_SENT: block scenarios", () => {
 
   void test("block ignores risk ack in workflow step path", async () => {
     const pool = makePool((sql, p) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款"))
-        return ok([billingRow("block", "due", "200000")]);
       if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
+        return ok([billingRow("block", "due", "200000")]);
+      if (sql.includes("from payment_records pr") && sql.includes("any("))
         return ok([paymentRow("0")]);
       if (sql.includes("from cases") && p?.[0] === CASE_ID)
         return ok([

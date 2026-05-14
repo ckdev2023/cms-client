@@ -162,7 +162,7 @@ function isInactive(entry: PaymentLogEntry): boolean {
             <div class="payment-log__case-no">{{ entry.caseNo }}</div>
           </td>
 
-          <!-- 关联收费节点 -->
+          <!-- 关联收费计划 -->
           <td
             :class="[
               'payment-log__td payment-log__col--hide-sm payment-log__col--node',

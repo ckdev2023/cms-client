@@ -1,0 +1,156 @@
+{
+  "readme": "Chrome DevTools MCP / 人工走查共用：咨询→多轮跟进→转客户→转案件→多任务→收费。REPLACE_RUN_SALT 可用于邮箱等非电话字段的去重占位（建议小写字母数字）。电话字段必须使用 REPLACE_PHONE_DIGITS：替换为一段纯数字盐（示例 8 位十进制），因 Admin 对日本号码校验仅允许数字与可选空格、连字符。",
+  "meta": {
+    "scenarioId": "E2E-MULTI-FOLLOWUP-MULTI-TASK-BILLING",
+    "localeDefault": "zh-CN",
+    "runSaltPlaceholder": "REPLACE_RUN_SALT",
+    "phoneDigitsPlaceholder": "REPLACE_PHONE_DIGITS",
+    "pairedDoc": "../86-咨询客户案件-多跟进多任务收费-MCP测试包.md"
+  },
+  "lead": {
+    "contactName": "MCP演练 佐藤一郎",
+    "phoneTemplate": "+819090REPLACE_PHONE_DIGITS",
+    "emailTemplate": "mcpREPLACE_RUN_SALT.lead+u@example.com",
+    "sourceType": "介绍",
+    "referrerName": "测试渠道-王介绍",
+    "businessTypeHint": "与当前环境可用的意向业务下拉项一致即可；无法用代码写死时请走 UI 任选一项已存在模板能命中的类型（参见 pairedDoc Wizard 矩阵）。",
+    "groupHint": "选用测试账号下有权限的一个 Group（与责任人一致可减少权限噪声）。",
+    "ownerHint": "选用可与登录用户一致或可指派的 Owner。",
+    "initialRemark": "[MCP数据集] 咨询建档：经管/家族场景择一跑通转化即可。",
+    "tagsSuggested": ["mcp-canary", "multitouch-e2e"]
+  },
+  "statusPath": {
+    "description": "每条 transition 成功后应看到 PATCH .../leads/:id/status 2xx",
+    "transitions": [
+      {
+        "to": "following",
+        "note": "首次沟通后进入跟进中"
+      },
+      {
+        "to": "pending_sign",
+        "note": "方案已谈妥，待发合约"
+      },
+      {
+        "to": "signed",
+        "note": "合约已签署，解锁转化按钮高亮（signedNotConverted）"
+      }
+    ]
+  },
+  "followUps": [
+    {
+      "sequence": 1,
+      "channelUi": "电话",
+      "channelFormValue": "phone",
+      "channelApiOutbound": "phone",
+      "summary": "首轮：客户了解家族滞在基本要求与周期。",
+      "conclusion": "意向明确；需补充扶养者住民票。",
+      "nextAction": "邮件发送资料提纲（手动）并发问卷链接占位",
+      "nextFollowUpDatetimeHint": "+7 days 工作日上午",
+      "simulatedBusinessDayOffset": "T+0（建线索当日）"
+    },
+    {
+      "sequence": 2,
+      "channelUi": "邮件",
+      "channelFormValue": "email",
+      "channelApiOutbound": "email",
+      "summary": "次轮：客户回传部分扫描件与疑问清单。",
+      "conclusion": "材料不齐；已定下次面谈。",
+      "nextAction": "约线下说明合同条款",
+      "nextFollowUpDatetimeHint": "+10 days",
+      "simulatedBusinessDayOffset": "T+2"
+    },
+    {
+      "sequence": 3,
+      "channelUi": "面谈",
+      "channelFormValue": "meeting",
+      "channelApiOutbound": "onsite",
+      "summary": "第三轮面谈：逐项确认扶养关系与在日日程。",
+      "conclusion": "风险点已口述说明；同意进入合约流程。",
+      "nextAction": "发送签约指引与收费标准说明",
+      "nextFollowUpDatetimeHint": "+3 days",
+      "simulatedBusinessDayOffset": "T+9"
+    },
+    {
+      "sequence": 4,
+      "channelUi": "IM",
+      "channelFormValue": "im",
+      "channelApiOutbound": "other",
+      "summary": "签约前微调：追加一位家属是否同案的确认。",
+      "conclusion": "暂不同案，先主申请人单案建档。",
+      "nextAction": "无（等待 signed 后转化）",
+      "nextFollowUpDatetimeHint": "可选清空或签约当日",
+      "simulatedBusinessDayOffset": "T+11"
+    }
+  ],
+  "conversion": {
+    "convertCustomer": {
+      "uiPath": "转化信息 Tab → 仅建立客户档案 → 确认创建客户",
+      "expectNetwork": "POST /api/admin/leads/:id/convert-customer 2xx",
+      "dedupConfirm": false
+    },
+    "convertCase": {
+      "uiPath": "签约并开始建档 → 完成向导四步 → 确认创建案件",
+      "deepLinkAlternative": "#/leads/:id?tab=conversion&resumeConvert=1",
+      "expectNetwork": "POST /api/admin/leads/:id/convert-case 2xx",
+      "wizardTemplateExample": {
+        "label": "若走家族滞在占位",
+        "adminTemplateId": "family",
+        "canonicalCaseTypeSeed": "dependent_visa"
+      }
+    }
+  },
+  "caseTasks": {
+    "description": "案件详情 → 任务区域 → 新建任务（Modal POST /api/tasks）； priorities 对齐 TaskPriorityChoice",
+    "items": [
+      {
+        "title": "[跟进] 收齐扶养者住民票原件及翻译件",
+        "description": "客户侧责任人：扶养者本人；截止日期前催一次。",
+        "priority": "high",
+        "dueAtRelative": "+14 days"
+      },
+      {
+        "title": "[内勤] 核对入管式样书最新版",
+        "description": "与模板库条目交叉检查；记录在案件备注。",
+        "priority": "normal",
+        "dueAtRelative": "+21 days"
+      },
+      {
+        "title": "[低风险] 归档咨询阶段往来邮件",
+        "description": "迁卷宗前完成；可后置。",
+        "priority": "low",
+        "dueAtRelative": "+30 days"
+      }
+    ],
+    "optionalCompleteOne": {
+      "titleToComplete": "[内勤] 核对入管式样书最新版",
+      "expectNetwork": "任务完成对应的 PATCH 或 POST（以运行时 Network 面板为准）"
+    }
+  },
+  "billing": {
+    "entryFromCaseDetail": "案件详情「收费」Tab；登记回款跳转 billing 路由见 CaseDetailView：/billing?case=:caseId",
+    "globalListPath": "#/billing（若环境使用 hash history 则前缀加 host）",
+    "planSeedHint": "若空态提示需先在案件中配置收费计划：在收费 Tab / 计划中创建一条里程碑应收（文案因实现略有差异）。",
+    "payments": [
+      {
+        "sequence": 1,
+        "label": "定金 / 首付款",
+        "amountYen": 150000,
+        "note": "[MCP] 第一次回款——客户银行转账（测试）"
+      },
+      {
+        "sequence": 2,
+        "label": "进度款（部分）",
+        "amountYen": 220000,
+        "note": "[MCP] 第二次回款——同日合并测多笔流水占位"
+      }
+    ],
+    "assertionsUi": [
+      "案件收费 Tab：已收合计 = 两次金额之和（或等价展示）",
+      "全局收费列表可按案件检索到该案的未结清→部分结清的演变（依实现）"
+    ]
+  },
+  "conversationsTab": {
+    "scope": "omit_or_separate_run",
+    "reason": "P0 会话 Tab 可能空闲态为非集成信号；不把「暂无会话」当失败——见手册 85 §3.6"
+  }
+}

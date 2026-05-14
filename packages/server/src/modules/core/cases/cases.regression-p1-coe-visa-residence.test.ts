@@ -96,13 +96,14 @@ void describe("§18 COE_SENT final payment guard contract", () => {
 void describe("§18 service: COE_SENT workflow-step billing gate", () => {
   void test("transitionWorkflowStep blocks unpaid final payment in block mode", async () => {
     const pool = makePool((sql, params) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      ) {
         return ok([billingRow("block", "due", "250000")]);
       }
-      if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
-      ) {
+      if (sql.includes("from payment_records pr") && sql.includes("any(")) {
         return ok([paymentRow("50000")]);
       }
       if (sql.includes("from cases") && params?.[0] === CASE_ID) {
@@ -139,13 +140,14 @@ void describe("§18 service: COE_SENT workflow-step billing gate", () => {
 
   void test("COE_SENT escalates warn guard to block because blueprint mode is block", async () => {
     const pool = makePool((sql, params) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      ) {
         return ok([billingRow("warn", "due", "200000")]);
       }
-      if (
-        sql.includes("from payment_records pr") &&
-        sql.includes("billing_records br")
-      ) {
+      if (sql.includes("from payment_records pr") && sql.includes("any(")) {
         return ok([paymentRow("0")]);
       }
       if (sql.includes("from cases") && params?.[0] === CASE_ID) {
@@ -182,7 +184,11 @@ void describe("§18 service: COE_SENT workflow-step billing gate", () => {
 
   void test("COE_SENT passes when final payment is settled", async () => {
     const pool = makePool((sql, params) => {
-      if (sql.includes("from billing_records") && sql.includes("尾款")) {
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      ) {
         return ok([billingRow("block", "paid", "200000")]);
       }
       if (sql.includes("from cases") && params?.[0] === CASE_ID) {

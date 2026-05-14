@@ -56,7 +56,7 @@ describe("TopBar", () => {
     expect(trigger.element.tagName).toBe("BUTTON");
     expect(trigger.attributes("aria-controls")).toBe("global-search-palette");
     expect(trigger.attributes("aria-haspopup")).toBe("dialog");
-    expect(trigger.attributes("aria-label")).toBe("全局搜索");
+    expect(trigger.attributes("aria-label")).toBeUndefined();
     expect(trigger.find(".topbar-search-placeholder").text()).toBe(
       "搜索：客户 / 案件 / 资料 / 文书...",
     );

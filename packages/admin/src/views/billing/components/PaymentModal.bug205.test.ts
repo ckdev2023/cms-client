@@ -43,11 +43,14 @@ function readNodeOptionTexts(wrapper: ReturnType<typeof mount>): string[] {
 
 describe("PaymentModal — BUG-205 empty dueDate trailing ()", () => {
   it("shows (dueDate) when dueDate is present", async () => {
-    const wrapper = await mountAndOpen([makeNode({ dueDate: "2026/05/01" })]);
+    const wrapper = await mountAndOpen([
+      makeNode({ id: "a", dueDate: "2026/05/01" }),
+      makeNode({ id: "b", dueDate: "2026/05/02", amount: 50_000 }),
+    ]);
 
     const texts = readNodeOptionTexts(wrapper);
-    expect(texts).toHaveLength(1);
     expect(texts[0]).toContain("(2026/05/01)");
+    expect(texts[1]).toContain("(2026/05/02)");
   });
 
   it("does not render trailing () when dueDate is empty string", async () => {

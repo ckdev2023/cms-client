@@ -1,7 +1,8 @@
 # 咨询 → 客户 → 案件 全流程分析与 Chrome DevTools MCP 测试手册
 
-> **用途**：为使用 **Chrome DevTools MCP** 做端到端走查时提供「流程真相源 + 路由/API 映射 + 分场景断言清单」。  
+> **用途**：为使用 **Chrome DevTools MCP** 做端到端走查时提供「流程真相源 + 路由/API 映射 + 分场景断言清单**。  
 > **日期**：2026-05-11  
+> **扩展（多跟进 / 多任务 / 收费数据包）**：见 [86-咨询客户案件-多跟进多任务收费-MCP测试包.md](./86-咨询客户案件-多跟进多任务收费-MCP测试包.md) 与 [`fixtures/mcp-e2e-multitouch-multi-task.bundle.json`](./fixtures/mcp-e2e-multitouch-multi-task.bundle.json)。  
 > **权威业务引用**（不得与之矛盾）：  
 > - [P0/04-核心流程与状态流转.md](../P0/04-核心流程与状态流转.md)（主链路、§4.1 咨询转案件）  
 > - [P0/06-页面规格/咨询线索.md](../P0/06-页面规格/咨询线索.md)（Lead 页面动作、§4 转客户/转案件）  

@@ -34,7 +34,7 @@ export type BillingPlanQueryRow = {
   updated_at: unknown;
 };
 
-/** Input for creating a billing plan node. */
+/** Input for creating a lump-sum billing plan (one receivable per case). */
 export type BillingPlanCreateInput = {
   caseId: string;
   milestoneName?: string | null;
@@ -44,7 +44,7 @@ export type BillingPlanCreateInput = {
   remark?: string | null;
 };
 
-/** Input for updating a billing plan node. */
+/** Input for updating a billing plan. */
 export type BillingPlanUpdateInput = {
   milestoneName?: string | null;
   amountDue?: number;
@@ -188,7 +188,7 @@ export class BillingPlansService {
   constructor(@Inject(Pool) private readonly pool: Pool) {}
 
   /**
-   * 新建收费节点（事务内写入 timeline + 同步缓存）。
+   * 新建一次性收费计划（每案件仅允许一行 billing_records；事务内写入 timeline + 同步缓存）。
    *
    * @param ctx 请求上下文
    * @param input 创建参数
@@ -205,6 +205,17 @@ export class BillingPlansService {
     const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
     return tenantDb.transaction(async (tx) => {
       await this.assertCaseBelongsToOrg(tx, input.caseId);
+
+      const dup = await tx.query<{ count: string }>(
+        `select count(*)::text as count from ${BILLING_TABLE} where case_id = $1`,
+        [input.caseId],
+      );
+      const existing = Number.parseInt(dup.rows[0]?.count ?? "0", 10);
+      if (existing > 0) {
+        throw new BadRequestException(
+          "Case already has a billing plan; only one lump-sum receivable is allowed per case",
+        );
+      }
 
       const result = await tx.query<BillingPlanQueryRow>(
         `insert into ${BILLING_TABLE} (
@@ -245,10 +256,10 @@ export class BillingPlansService {
   }
 
   /**
-   * 按 ID 查询收费节点。
+   * 按 ID 查询收费计划。
    *
    * @param ctx 请求上下文
-   * @param id 收费节点 ID
+   * @param id 收费计划 ID
    * @returns BillingPlan 或 null
    */
   async get(ctx: RequestContext, id: string): Promise<BillingPlan | null> {
@@ -308,7 +319,7 @@ export class BillingPlansService {
    * 更新非状态字段（事务内 select for update + timeline + 缓存同步）。
    *
    * @param ctx 请求上下文
-   * @param id 收费节点 ID
+   * @param id 收费计划 ID
    * @param input 更新参数
    * @returns 更新后的 BillingPlan
    */
@@ -368,7 +379,7 @@ export class BillingPlansService {
    * 状态变迁（事务内 select for update + timeline + 缓存同步）。
    *
    * @param ctx 请求上下文
-   * @param id 收费节点 ID
+   * @param id 收费计划 ID
    * @param input 目标状态
    * @returns 变迁后的 BillingPlan
    */
