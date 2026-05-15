@@ -152,8 +152,9 @@ export type BillingPlanWithPaymentsRow = BillingPlanQueryRow & {
 export function mapBillingPlanWithPaymentsRow(
   row: BillingPlanWithPaymentsRow,
 ): CaseBillingPlanDto {
-  const amountDue = Number(row.amount_due);
+  const rawAmountDue = Number(row.amount_due);
   const paidAmount = Number(row.paid_amount);
+  const amountDue = rawAmountDue > 0 ? rawAmountDue : paidAmount;
   return {
     id: row.id,
     caseId: row.case_id,

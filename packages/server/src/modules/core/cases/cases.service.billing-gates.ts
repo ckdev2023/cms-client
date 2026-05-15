@@ -111,7 +111,8 @@ export async function assertCoeSendBillingGate(
  * businessPhase 维度推进到 WAITING_PAYMENT 时的收费记录守卫。
  *
  * 触发条件：仅当 toPhase === WAITING_PAYMENT 时执行；其他 phase 立即放行。
- * 检查 billing_records 是否存在该 case 的至少 1 条 status=due 记录。
+ * 检查 billing_records 是否存在该 case 的至少 1 条仍有未结清应收的记录
+ * （status ∈ due / partial / overdue；与收费汇总「待收」口径一致）。
  * @param tx
  * @param current
  * @param toPhase
@@ -124,14 +125,14 @@ export async function assertWaitingPaymentBillingGate(
   if (toPhase !== "WAITING_PAYMENT") return;
   const result = await tx.query<Record<string, unknown>>(
     `select 1 from billing_records
-     where case_id = $1 and status = 'due'
+     where case_id = $1 and status in ('due', 'partial', 'overdue')
      limit 1`,
     [current.id],
   );
   if (result.rows.length === 0) {
     throw new BadRequestException(
       CASE_WRITE_ERROR_CODES.WAITING_PAYMENT_BILLING_REQUIRED +
-        `: At least one billing record with status=due is required before transitioning to WAITING_PAYMENT.`,
+        `: At least one outstanding billing record (due/partial/overdue) is required before transitioning to WAITING_PAYMENT.`,
     );
   }
 }

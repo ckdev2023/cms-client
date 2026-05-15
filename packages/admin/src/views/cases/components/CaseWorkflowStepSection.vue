@@ -56,6 +56,9 @@ function stepStatusLabel(status: BmvWorkflowStepDisplayStatus): string {
  * @returns 是否为当前激活分组。
  */
 function isGroupActive(group: BmvStageGroup): boolean {
+  if (props.workflowStep.workflowStepInactiveAtTerminalFailure) {
+    return false;
+  }
   return group.steps.some((s) => s.code === props.workflowStep.stepCode);
 }
 
@@ -77,6 +80,12 @@ type GroupStatus = "active" | "completed" | "upcoming";
  * @returns 分组状态。
  */
 function groupStatus(group: BmvStageGroup): GroupStatus {
+  if (
+    props.workflowStep.workflowStepInactiveAtTerminalFailure &&
+    group.steps.some((s) => s.code === props.workflowStep.stepCode)
+  ) {
+    return "completed";
+  }
   if (isGroupActive(group)) return "active";
   if (isGroupCompleted(group)) return "completed";
   return "upcoming";
@@ -139,6 +148,8 @@ function groupStageTitleI18nKey(group: BmvStageGroup): string {
           class="wf-section__current-badge"
           :class="{
             'wf-section__current-badge--failed': workflowStep.isFailureStep,
+            'wf-section__current-badge--inactive':
+              workflowStep.workflowStepInactiveAtTerminalFailure,
           }"
           data-testid="workflow-current-badge"
         >
@@ -156,10 +167,26 @@ function groupStageTitleI18nKey(group: BmvStageGroup): string {
             >
               <path d="M18 6L6 18M6 6l12 12" />
             </svg>
+            <span
+              v-else-if="workflowStep.workflowStepInactiveAtTerminalFailure"
+              class="wf-section__inactive-terminal-dot"
+            />
             <span v-else class="wf-section__pulse-dot" />
           </span>
-          {{ t("cases.detail.overview.workflowStep.currentLabel") }}:
-          {{ resolveBmvWorkflowStepDisplayLabel(t, workflowStep) }}
+          <template v-if="workflowStep.workflowStepInactiveAtTerminalFailure">
+            {{
+              t(
+                "cases.detail.overview.workflowStep.currentHeadlineInactiveFailure",
+                {
+                  step: resolveBmvWorkflowStepDisplayLabel(t, workflowStep),
+                },
+              )
+            }}
+          </template>
+          <template v-else>
+            {{ t("cases.detail.overview.workflowStep.currentLabel") }}:
+            {{ resolveBmvWorkflowStepDisplayLabel(t, workflowStep) }}
+          </template>
         </span>
       </div>
     </div>

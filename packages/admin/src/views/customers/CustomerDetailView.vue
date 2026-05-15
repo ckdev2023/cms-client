@@ -35,7 +35,10 @@ const router = useRouter();
 const repository = createCustomerRepository();
 
 const customerId = computed(() =>
-  typeof route.params.id === "string" ? route.params.id : "",
+  route.matched.at(-1)?.name === "customer-detail" &&
+  typeof route.params.id === "string"
+    ? route.params.id
+    : "",
 );
 
 const {

@@ -4,7 +4,7 @@
 //   - parseCaseListQuery / buildCaseListQuery    → list page URL ↔ filter state
 //   - parseCaseDetailQuery / buildCaseDetailQuery → detail page URL ↔ tab state
 //   - buildCaseDetailHref / buildCaseDetailRoute  → cross-module → case detail link
-//   - buildCustomerDetailHref                     → case detail → customer back-link
+//   - buildCustomerDetailHref / buildCustomerDetailHrefFromCase → `caseDetailCustomerHref.ts`（由本文件 re-export）
 //
 // Create query functions live in query-create.ts (extracted by p0-fe-010-01)
 // and are re-exported here for backward compatibility:
@@ -365,24 +365,10 @@ export function buildCaseListRoute(
   return route;
 }
 
-/**
- * 构造客户详情页的 hash href（案件详情 → 客户回链）。
- *
- * @param customerId - 客户 ID
- * @param tab - 可选的目标 tab（如 `"cases"`），省略或 `"basic"` 时不附加 query
- * @returns 可直接用于 `<a href>` 的 hash 路径；空 ID 返回客户列表
- */
-export function buildCustomerDetailHref(
-  customerId: string,
-  tab?: string,
-): string {
-  if (!customerId) return "#/customers";
-  const base = `#/customers/${encodeURIComponent(customerId)}`;
-  if (tab && tab !== "basic") {
-    return `${base}?tab=${tab}`;
-  }
-  return base;
-}
+export {
+  buildCustomerDetailHref,
+  buildCustomerDetailHrefFromCase,
+} from "./caseDetailCustomerHref";
 
 // ─── Cross-Module Link Contract (frozen by p0-fe-012-01) ─────────
 // 冻结 customers / documents / dashboard / shared panels 指向

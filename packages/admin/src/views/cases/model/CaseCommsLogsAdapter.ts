@@ -125,16 +125,17 @@ export function resolveMessageType(
 
 function resolveFollowUpAction(
   record: Record<string, unknown>,
+  locale?: string,
 ): string | undefined {
   const followUpRequired =
     record.followUpRequired === true || record.follow_up_required === true;
-  return followUpRequired
-    ? (pickOptionalString(record, FOLLOW_UP_DUE_FIELDS) ?? "跟進待")
-    : undefined;
+  if (!followUpRequired) return undefined;
+  const due = pickOptionalString(record, FOLLOW_UP_DUE_FIELDS);
+  if (!due) return "跟进待";
+  return formatDateTime(due, locale) || due;
 }
 
 function resolveDisplayTime(iso: string, locale: string | undefined): string {
-  if (!locale) return iso;
   return formatDateTime(iso, locale) || iso;
 }
 
@@ -142,7 +143,7 @@ function resolveDisplayTime(iso: string, locale: string | undefined): string {
  * 适配单条沟通记录 DTO 为案件消息模型。
  *
  * @param value - 后端 /api/communication-logs 返回的单条记录
- * @param locale - BCP 47 locale；传入时 `time` 为格式化后的展示时间，不传时回退为原始 ISO
+ * @param locale - BCP 47 locale；不传或为空时使用运行时默认语言；始终输出本地化日期时间（非裸 ISO）
  * @returns 适配成功后的 MessageItem；无法识别时返回 null
  */
 export function adaptCaseMessageDto(
@@ -179,7 +180,7 @@ export function adaptCaseMessageDto(
     body,
     time: resolveDisplayTime(createdAt, locale),
     timeIso: createdAt,
-    actionLabel: resolveFollowUpAction(record),
+    actionLabel: resolveFollowUpAction(record, locale),
   };
 }
 
@@ -187,7 +188,7 @@ export function adaptCaseMessageDto(
  * 适配沟通记录列表响应为消息数组。
  *
  * @param value - 后端返回的沟通记录列表（数组或带 items 的分页对象）
- * @param locale - BCP 47 locale；传入时 `time` 为格式化后的展示时间，不传时回退为原始 ISO
+ * @param locale - BCP 47 locale；不传或为空时使用运行时默认语言；始终输出本地化日期时间（非裸 ISO）
  * @returns 适配后的消息数组；无法识别时返回 null
  */
 export function adaptCaseMessageListResult(

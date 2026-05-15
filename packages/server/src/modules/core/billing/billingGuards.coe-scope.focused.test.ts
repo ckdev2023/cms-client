@@ -106,6 +106,45 @@ void test("checkFinalPaymentGuard: keyword final row narrows scope when multiple
   assert.equal(r.gateEffectMode, "block");
 });
 
+void test("checkFinalPaymentGuard: amountDue 0 with valid payments is settled (stale partial status)", async () => {
+  const tx = {
+    query(sql: string) {
+      type Row = {
+        rows: Record<string, unknown>[];
+        rowCount: number;
+      };
+      if (
+        sql.includes("from billing_records") &&
+        sql.includes("where case_id") &&
+        !sql.includes("payment_records")
+      ) {
+        return Promise.resolve({
+          rows: [
+            {
+              id: BP_LUMP,
+              amount_due: "0",
+              status: "partial",
+              milestone_name: "case_fee",
+              gate_effect_mode: "warn",
+            },
+          ],
+          rowCount: 1,
+        } satisfies Row);
+      }
+      if (sql.includes("payment_records") && sql.includes("any(")) {
+        return Promise.resolve({
+          rows: [{ total_received: "550000" }],
+          rowCount: 1,
+        } satisfies Row);
+      }
+      return Promise.resolve({ rows: [], rowCount: 0 });
+    },
+  } as unknown as TenantDbTx;
+
+  const r = await checkFinalPaymentGuard(tx, CASE_ID);
+  assert.equal(r?.settled, true);
+});
+
 void test("checkFinalPaymentGuard: returns null when scoped rows all have gate off", async () => {
   const tx = {
     query(sql: string) {

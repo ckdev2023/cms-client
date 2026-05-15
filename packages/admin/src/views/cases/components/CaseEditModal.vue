@@ -9,6 +9,7 @@ import {
   resolveGroupValue,
   resolveGroupLabel,
 } from "../../../shared/model/useGroupOptions";
+import { normalizeCaseRiskLevelForPatch } from "../model/CaseAdapterWriteBuilders.update";
 
 /** 案件编辑弹窗：修改案件名、期限、风险等级等核心字段。 */
 const { t, locale } = useI18n();
@@ -64,7 +65,9 @@ const backdropRef = ref<HTMLElement | null>(null);
 const localCaseName = ref(props.caseName ?? "");
 const localDueAt = ref(props.dueAt ?? "");
 const localAcceptedAt = ref(props.acceptedAt ?? "");
-const localRiskLevel = ref(props.riskLevel ?? "");
+const localRiskLevel = ref(
+  normalizeCaseRiskLevelForPatch(props.riskLevel ?? ""),
+);
 const localOwnerUserId = ref(props.ownerUserId ?? "");
 const localAssistantUserId = ref(props.assistantUserId ?? "");
 const localGroupId = ref(resolveInitialGroupId(props.groupId));
@@ -79,7 +82,9 @@ watch(
       localCaseName.value = props.caseName ?? "";
       localDueAt.value = props.dueAt ?? "";
       localAcceptedAt.value = props.acceptedAt ?? "";
-      localRiskLevel.value = props.riskLevel ?? "";
+      localRiskLevel.value = normalizeCaseRiskLevelForPatch(
+        props.riskLevel ?? "",
+      );
       localOwnerUserId.value = props.ownerUserId ?? "";
       localAssistantUserId.value = props.assistantUserId ?? "";
       localGroupId.value = resolveInitialGroupId(props.groupId);
@@ -261,10 +266,10 @@ function handleSave(): void {
                 <option value="low">
                   {{ t("cases.detail.editModal.riskOptions.low") }}
                 </option>
-                <option value="normal">
+                <option value="none">
                   {{ t("cases.detail.editModal.riskOptions.normal") }}
                 </option>
-                <option value="attention">
+                <option value="medium">
                   {{ t("cases.detail.editModal.riskOptions.attention") }}
                 </option>
                 <option value="high">

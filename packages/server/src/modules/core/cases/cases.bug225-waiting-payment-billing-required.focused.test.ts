@@ -15,18 +15,21 @@ import {
 } from "./cases.final-payment-coe-guard.focused.test-support";
 
 // ════════════════════════════════════════════════════════════════
-// BUG-225: APPROVED → WAITING_PAYMENT 必须存在至少一条 status=due 的
-// billing_records，否则阻断。
+// BUG-225: APPROVED → WAITING_PAYMENT 必须存在至少一条仍有未结清应收的
+// billing_records（due / partial / overdue），否则阻断。
 // ════════════════════════════════════════════════════════════════
+
+function isWaitingPaymentBillingGateQuery(sql: string): boolean {
+  return (
+    sql.includes("from billing_records") &&
+    sql.includes("status in ('due', 'partial', 'overdue')")
+  );
+}
 
 void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
   void test("blocks APPROVED → WAITING_PAYMENT when no billing records exist", async () => {
     const pool = makePool((sql, p) => {
-      if (
-        sql.includes("from billing_records") &&
-        sql.includes("status = 'due'")
-      )
-        return ok([]);
+      if (isWaitingPaymentBillingGateQuery(sql)) return ok([]);
       if (
         sql.includes(
           "select id, amount_due, status, milestone_name, gate_effect_mode",
@@ -47,7 +50,7 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
         assert.match(err.message, /CASE_WAITING_PAYMENT_BILLING_REQUIRED/);
         assert.match(
           err.message,
-          /At least one billing record with status=due is required/,
+          /At least one outstanding billing record \(due\/partial\/overdue\) is required/,
         );
         return true;
       },
@@ -56,11 +59,7 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
 
   void test("allows APPROVED → WAITING_PAYMENT when at least one due billing record exists", async () => {
     const pool = makePool((sql, p) => {
-      if (
-        sql.includes("from billing_records") &&
-        sql.includes("status = 'due'")
-      )
-        return ok([{ "1": 1 }]);
+      if (isWaitingPaymentBillingGateQuery(sql)) return ok([{ "1": 1 }]);
       if (
         sql.includes(
           "select id, amount_due, status, milestone_name, gate_effect_mode",
@@ -82,13 +81,59 @@ void describe("transitionPhase: WAITING_PAYMENT billing gate (BUG-225)", () => {
     assert.equal(c.businessPhase, "WAITING_PAYMENT");
   });
 
-  void test("gate does not fire for non-WAITING_PAYMENT targets", async () => {
+  void test("allows APPROVED → WAITING_PAYMENT when billing record is partial (not only due)", async () => {
     const pool = makePool((sql, p) => {
+      if (isWaitingPaymentBillingGateQuery(sql)) return ok([{ "1": 1 }]);
       if (
-        sql.includes("from billing_records") &&
-        sql.includes("status = 'due'")
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
       )
         return ok([]);
+      if (sql.includes("update cases") && sql.includes("business_phase = $2"))
+        return ok([makeCaseRow({ business_phase: "WAITING_PAYMENT" })]);
+      if (sql.includes("from cases") && p?.[0] === CASE_ID)
+        return ok([makeCaseRow({ business_phase: "APPROVED" })]);
+      return ok();
+    });
+
+    const c = await svc(pool, makeTemplates()).transitionPhase(
+      makeCtx(),
+      CASE_ID,
+      { toPhase: "WAITING_PAYMENT" },
+    );
+    assert.equal(c.businessPhase, "WAITING_PAYMENT");
+  });
+
+  void test("blocks APPROVED → WAITING_PAYMENT when only paid billing records exist", async () => {
+    const pool = makePool((sql, p) => {
+      if (isWaitingPaymentBillingGateQuery(sql)) return ok([]);
+      if (
+        sql.includes(
+          "select id, amount_due, status, milestone_name, gate_effect_mode",
+        )
+      )
+        return ok([]);
+      if (sql.includes("from cases") && p?.[0] === CASE_ID)
+        return ok([makeCaseRow({ business_phase: "APPROVED" })]);
+      return ok();
+    });
+
+    await assert.rejects(
+      () =>
+        svc(pool, makeTemplates()).transitionPhase(makeCtx(), CASE_ID, {
+          toPhase: "WAITING_PAYMENT",
+        }),
+      (err: Error) => {
+        assert.match(err.message, /CASE_WAITING_PAYMENT_BILLING_REQUIRED/);
+        return true;
+      },
+    );
+  });
+
+  void test("gate does not fire for non-WAITING_PAYMENT targets", async () => {
+    const pool = makePool((sql, p) => {
+      if (isWaitingPaymentBillingGateQuery(sql)) return ok([]);
       if (isBillingReceivableExistenceQuery(sql)) return ok([{ ok: true }]);
       if (
         sql.includes(

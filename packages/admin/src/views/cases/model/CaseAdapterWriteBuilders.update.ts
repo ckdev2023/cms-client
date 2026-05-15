@@ -7,6 +7,21 @@ import {
 } from "./CaseAdapterWriteBuilders.shared";
 
 /**
+ * 将错误或过时的 UI 枚举映射为服务端 `CASE_RISK_LEVELS`：`none`|`low`|`medium`|`high`。
+ *
+ * @param value - 已 trim 的非空风险等级字符串
+ * @returns 与服务端一致的枚举值
+ */
+export function normalizeCaseRiskLevelForPatch(value: string): string {
+  const v = value.trim();
+  if (!v) return v;
+  if (v === "normal") return "none";
+  if (v === "attention") return "medium";
+  if (v === "critical") return "high";
+  return v;
+}
+
+/**
  * 案件编辑表单的字段取值——全部字符串；空串 = 无值（nullable 字段会被归一化为 `null`，
  * 非空可选字段会被省略）。
  *
@@ -29,7 +44,7 @@ export interface UpdateCaseFormValues {
   caseSubtype: string;
   /** 优先级（normal / high 等，枚举由服务端约束）。 */
   priority: string;
-  /** 风险等级。 */
+  /** 风险等级（与服务端一致：`none`|`low`|`medium`|`high`）。 */
   riskLevel: string;
   /** 协办人用户 ID。 */
   assistantUserId: string;
@@ -197,7 +212,11 @@ export function buildUpdateCasePayload(
     caseSubtype: normalizeNullableString(input.caseSubtype),
     applicationType: normalizeNullableString(input.applicationType),
     priority: normalizeOptionalString(input.priority),
-    riskLevel: normalizeOptionalString(input.riskLevel),
+    riskLevel: (() => {
+      const raw = normalizeOptionalString(input.riskLevel);
+      if (raw === undefined) return undefined;
+      return normalizeCaseRiskLevelForPatch(raw);
+    })(),
     assistantUserId: normalizeNullableString(input.assistantUserId),
     sourceChannel: normalizeNullableString(input.sourceChannel),
     signedAt: normalizeNullableString(input.signedAt),

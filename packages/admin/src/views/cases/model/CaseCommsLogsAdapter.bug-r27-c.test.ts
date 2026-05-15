@@ -35,17 +35,17 @@ describe("CaseCommsLogsAdapter — R27-C time formatting", () => {
     expect(result!.timeIso).toBe("2026-05-03T03:39:36.420Z");
   });
 
-  it("falls back to raw ISO when locale is not provided", () => {
+  it("formats time with runtime default locale when locale is not provided", () => {
     const result = adaptCaseMessageDto(BASE_RECORD);
     expect(result).not.toBeNull();
-    expect(result!.time).toBe("2026-05-03T03:39:36.420Z");
+    expect(result!.time).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(result!.timeIso).toBe("2026-05-03T03:39:36.420Z");
   });
 
-  it("falls back to raw ISO when locale is undefined", () => {
+  it("formats time with runtime default when locale is undefined", () => {
     const result = adaptCaseMessageDto(BASE_RECORD, undefined);
     expect(result).not.toBeNull();
-    expect(result!.time).toBe("2026-05-03T03:39:36.420Z");
+    expect(result!.time).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(result!.timeIso).toBe("2026-05-03T03:39:36.420Z");
   });
 
@@ -63,6 +63,7 @@ describe("CaseCommsLogsAdapter — R27-C time formatting", () => {
     const result = adaptCaseMessageListResult(list);
     expect(result).not.toBeNull();
     expect(result).toHaveLength(1);
-    expect(result![0].time).toBe("2026-05-03T03:39:36.420Z");
+    expect(result![0].time).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result![0].timeIso).toBe("2026-05-03T03:39:36.420Z");
   });
 });

@@ -138,6 +138,64 @@ const BMV_STEP_BLUEPRINT: ReadonlyArray<{
 const BMV_STEP_MAP = new Map(BMV_STEP_BLUEPRINT.map((s) => [s.stepCode, s]));
 const FAILURE_STEP_CODES: ReadonlySet<string> = new Set(["VISA_REJECTED"]);
 
+/** 认定后跟踪期子步骤：结案后若仍滞留于此，会与「已归档」状态矛盾，需对齐或冻结展示。 */
+const POST_APPROVAL_STALE_WORKFLOW_STEPS: ReadonlySet<string> = new Set([
+  "WAITING_PAYMENT",
+  "COE_SENT",
+  "VISA_APPLYING",
+]);
+
+function visaRejectedLikeFailure(
+  failureCloseoutCheck: Record<string, unknown> | null,
+  caseRecord: Record<string, unknown>,
+): boolean {
+  if (failureCloseoutCheck && failureCloseoutCheck.isFailurePath === true) {
+    const attribution = asRecord(failureCloseoutCheck.attribution);
+    const code = attribution
+      ? readNullableString(attribution, "reasonCode")
+      : null;
+    if (code === "VISA_REJECTED" || code === "APPLICATION_REJECTED") {
+      return true;
+    }
+    if (code != null) {
+      return false;
+    }
+  }
+  const ro = readNullableString(caseRecord, "resultOutcome");
+  return ro === "visa_rejected";
+}
+
+function reconcileWorkflowStepForTerminalPhases(
+  caseRecord: Record<string, unknown>,
+  resolvedStepCode: string | null,
+  failureCloseoutCheck: Record<string, unknown> | null,
+): { code: string | null; inactiveAtTerminalFailure: boolean } {
+  if (
+    !resolvedStepCode ||
+    !POST_APPROVAL_STALE_WORKFLOW_STEPS.has(resolvedStepCode)
+  ) {
+    return { code: resolvedStepCode, inactiveAtTerminalFailure: false };
+  }
+
+  const bp = readString(caseRecord, "businessPhase");
+
+  if (bp === "CLOSED_FAILED") {
+    if (visaRejectedLikeFailure(failureCloseoutCheck, caseRecord)) {
+      return { code: "VISA_REJECTED", inactiveAtTerminalFailure: false };
+    }
+    return { code: resolvedStepCode, inactiveAtTerminalFailure: true };
+  }
+
+  if (bp === "CLOSED_SUCCESS") {
+    return {
+      code: "RENEWAL_REMINDER_SCHEDULED",
+      inactiveAtTerminalFailure: false,
+    };
+  }
+
+  return { code: resolvedStepCode, inactiveAtTerminalFailure: false };
+}
+
 /** `businessPhase` 与业务子步骤 `code` 不一致时的别名（如 `SUCCESS` → `ENTRY_SUCCESS`）。 */
 const BUSINESS_PHASE_WORKFLOW_FALLBACK: Readonly<Record<string, string>> = {
   SUCCESS: "ENTRY_SUCCESS",
@@ -203,11 +261,13 @@ export const EMPTY_LISTS = {
 
 function buildWorkflowStepSummary(
   stepCode: string | null,
+  opts?: { workflowStepInactiveAtTerminalFailure?: boolean },
 ): WorkflowStepSummary | null {
   if (!stepCode) return null;
   const bp = BMV_STEP_MAP.get(stepCode);
   if (!bp) return null;
   const parentStageId = resolveStageId(bp.parentStage);
+  const inactive = opts?.workflowStepInactiveAtTerminalFailure === true;
   return {
     stepCode: bp.stepCode,
     stepLabel: bp.label,
@@ -215,6 +275,7 @@ function buildWorkflowStepSummary(
     parentStageLabel: resolveStageLabel(parentStageId),
     sortOrder: bp.sortOrder,
     isFailureStep: FAILURE_STEP_CODES.has(bp.stepCode),
+    ...(inactive ? { workflowStepInactiveAtTerminalFailure: true } : {}),
   };
 }
 
@@ -244,9 +305,13 @@ function buildFailureCloseoutInfo(
 function buildBmvFields(
   caseRecord: Record<string, unknown>,
   resolvedWorkflowStepCode: string | null,
+  workflowStepOpts?: { workflowStepInactiveAtTerminalFailure?: boolean },
 ) {
   return {
-    workflowStep: buildWorkflowStepSummary(resolvedWorkflowStepCode),
+    workflowStep: buildWorkflowStepSummary(
+      resolvedWorkflowStepCode,
+      workflowStepOpts,
+    ),
     visaPlan: readNullableString(caseRecord, "visaPlan"),
     supplementCount: readNumber(caseRecord, "supplementCount"),
     resultOutcome: readNullableString(caseRecord, "resultOutcome"),
@@ -331,6 +396,26 @@ function buildPreSignGate(
   return { passed: blockers.length === 0, blockers };
 }
 
+function resolveBmvWorkflowFields(
+  caseRecord: Record<string, unknown>,
+  failureCloseoutCheck: Record<string, unknown> | null,
+) {
+  const resolvedWorkflowStepCode = resolveWorkflowStepCode(caseRecord);
+  const reconciled = reconcileWorkflowStepForTerminalPhases(
+    caseRecord,
+    resolvedWorkflowStepCode,
+    failureCloseoutCheck,
+  );
+  const bmv = buildBmvFields(
+    caseRecord,
+    reconciled.code,
+    reconciled.inactiveAtTerminalFailure
+      ? { workflowStepInactiveAtTerminalFailure: true }
+      : undefined,
+  );
+  return { reconciled, bmv };
+}
+
 /**
  * 基于 aggregate 主链数据补充 P1/BMV 专属字段。
  *
@@ -348,8 +433,10 @@ export function buildP1Fields(
   failureCloseoutCheck: Record<string, unknown> | null,
   stageId: CaseStageId,
 ) {
-  const resolvedWorkflowStepCode = resolveWorkflowStepCode(caseRecord);
-  const bmv = buildBmvFields(caseRecord, resolvedWorkflowStepCode);
+  const { reconciled, bmv } = resolveBmvWorkflowFields(
+    caseRecord,
+    failureCloseoutCheck,
+  );
   const isBmv = bmv.workflowStep != null || bmv.visaPlan != null;
   const isReadonly = stageId === "S9";
   const questionnaireTotal = slices.counts
@@ -374,7 +461,7 @@ export function buildP1Fields(
     quoteStatus,
     preSignGate: buildPreSignGate(surveyStatus, quoteStatus, isBmv, stageId),
     failureCloseout: buildFailureCloseoutInfo(failureCloseoutCheck),
-    finalPaymentGate: buildFinalPaymentGate(resolvedWorkflowStepCode, isBmv, {
+    finalPaymentGate: buildFinalPaymentGate(reconciled.code, isBmv, {
       finalPaymentPaid: metrics.finalPaymentPaid,
       finalPaymentMilestoneMatched: metrics.finalPaymentMilestoneMatched,
       unpaidAmount: metrics.unpaidAmount,

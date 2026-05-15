@@ -2,9 +2,14 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseBillingTab from "./components/CaseBillingTab.vue";
+import CaseFinalPaymentCoeGate from "./components/CaseFinalPaymentCoeGate.vue";
 import CaseTasksTab from "./components/CaseTasksTab.vue";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
-import type { CaseDetail, PaymentRow } from "./types-detail";
+import type {
+  CaseDetail,
+  FinalPaymentGateInfo,
+  PaymentRow,
+} from "./types-detail";
 import casesZhCN from "../../i18n/messages/cases/zh-CN";
 
 const i18n = createI18n({
@@ -115,6 +120,42 @@ describe("BUG-196 CaseBillingTab emits", () => {
       .findAll(".billing-tab__link")
       .filter((el) => el.text().includes("登记回款"));
     expect(inlinePayBtns.length).toBe(0);
+  });
+});
+
+const OUTSTANDING_GATE: FinalPaymentGateInfo = {
+  paymentCleared: false,
+  finalPaymentMilestoneMatched: true,
+  outstandingLabel: "¥240,000",
+  canAdvanceToCoe: false,
+  blockers: [{ code: "final_payment_outstanding", label: "" }],
+};
+
+function mountFinalPaymentGate(readonly = false) {
+  return mount(CaseFinalPaymentCoeGate, {
+    props: { gate: OUTSTANDING_GATE, readonly },
+    global: {
+      plugins: [i18n],
+      stubs: { Card: CARD_STUB, Button: BUTTON_STUB },
+    },
+  });
+}
+
+describe("CaseFinalPaymentCoeGate — open-collection deep-link parity", () => {
+  it("record-payment CTA emits open-collection (no args) for /billing navigation", async () => {
+    const w = mountFinalPaymentGate(false);
+    const btn = w.find('[data-testid="final-payment-open-collection"]');
+    expect(btn.exists()).toBe(true);
+    await btn.trigger("click");
+    expect(w.emitted("open-collection")).toBeTruthy();
+    expect(w.emitted("open-collection")![0]).toEqual([]);
+  });
+
+  it("hides record-payment CTA when readonly", () => {
+    const w = mountFinalPaymentGate(true);
+    expect(
+      w.find('[data-testid="final-payment-open-collection"]').exists(),
+    ).toBe(false);
   });
 });
 

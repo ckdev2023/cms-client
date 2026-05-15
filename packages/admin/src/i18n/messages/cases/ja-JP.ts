@@ -440,6 +440,7 @@ const casesJaJP = {
       workflowStep: {
         title: "業務サブステップ",
         currentLabel: "現在のステップ",
+        currentHeadlineInactiveFailure: "失敗クローズ時点の進捗：{step}",
         stageGroup: "{stage} ステージ",
         completed: "完了",
         current: "進行中",
@@ -471,7 +472,9 @@ const casesJaJP = {
         coeBlocked: "COE ブロック中 — 先に支払いを完了してください",
         sendCoe: "COE を送付",
         sendCoeHint:
-          "ワークフローステップを COE 送付済みに進めます。残金精算が必要です。",
+          "請求側で残金精算とリスク確認（プロンプトが出た場合）を済ませてから COE を送付してください。",
+        sendCoeHintReady:
+          "請求ゲートを通過済みです。送信するとワークフローが COE 送付済みに進みます。",
         sendCoeHintMilestoneMissing:
           "「請求・料金」で名称に「尾款」「final」「結果」を含む残金ノードを作成し、入金登録を行ってから COE を送付してください。",
         blockerPayment: "残金が未精算のため、COE を送付できません。",

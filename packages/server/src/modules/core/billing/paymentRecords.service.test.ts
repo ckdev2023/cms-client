@@ -133,7 +133,7 @@ void test("PaymentRecordsService.create inserts row, writes timeline, and recalc
   assert.equal(billingUpdateCall?.params?.[1], "partial");
 });
 
-void test("PaymentRecordsService.create keeps billing partial when amountDue is zero (placeholder plan)", async () => {
+void test("PaymentRecordsService.create sets billing paid when amountDue is zero and payment received (placeholder plan)", async () => {
   const calls: { sql: string; params?: unknown[] }[] = [];
   const pool = makePool((sql, params) => {
     calls.push({ sql: sql.trim(), params });
@@ -157,7 +157,7 @@ void test("PaymentRecordsService.create keeps billing partial when amountDue is 
     }
     if (sql.includes("update billing_records")) {
       return Promise.resolve({
-        rows: [makeBillingRecordRow({ amount_due: "0", status: "partial" })],
+        rows: [makeBillingRecordRow({ amount_due: "0", status: "paid" })],
         rowCount: 1,
       });
     }
@@ -173,7 +173,7 @@ void test("PaymentRecordsService.create keeps billing partial when amountDue is 
   const billingUpdateCall = calls.find((call) =>
     call.sql.includes("update billing_records"),
   );
-  assert.equal(billingUpdateCall?.params?.[1], "partial");
+  assert.equal(billingUpdateCall?.params?.[1], "paid");
 });
 
 void test("PaymentRecordsService.create settles billing record when cumulative payments cover amountDue", async () => {

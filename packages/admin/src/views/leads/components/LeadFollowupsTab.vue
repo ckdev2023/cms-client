@@ -3,6 +3,7 @@ import { computed, toRef } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
 import Button from "../../../shared/ui/Button.vue";
+import { formatDateTime } from "../../../shared/model/formatDateTime";
 import type {
   LeadFollowupRecord,
   FollowupChannel,
@@ -25,7 +26,7 @@ defineEmits<{
   resetFollowup: [];
 }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 
 const channels: readonly FollowupChannelMeta[] = FOLLOWUP_CHANNELS;
 
@@ -43,6 +44,19 @@ function channelChipClass(channel: FollowupChannel): string {
 }
 
 const form = toRef(props, "followupForm");
+
+/**
+ * 「下次跟进」展示：接口多为 ISO，转为当前界面语言的本地日期时间；无法解析时保留原文。
+ *
+ * @param raw - 原始日期时间字符串
+ * @returns 展示用本地化字符串；空白或不可解析时尽量保留 `raw`
+ */
+function formatNextFollowUpDisplay(raw: string): string {
+  const s = raw.trim();
+  if (!s) return raw;
+  const formatted = formatDateTime(s, locale.value);
+  return formatted || raw;
+}
 </script>
 
 <template>
@@ -220,7 +234,7 @@ const form = toRef(props, "followupForm");
                 <span class="followup-timeline__detail-label">
                   {{ t("leads.detail.followupsTab.nextFollowUpLabel") }}
                 </span>
-                {{ fu.nextFollowUp }}
+                {{ formatNextFollowUpDisplay(fu.nextFollowUp) }}
               </div>
             </div>
           </div>

@@ -81,21 +81,68 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
     </div>
 
     <div class="lead-modal-body__fields">
-      <div class="lead-modal-body__field">
-        <label class="lead-modal-body__label" for="lead-create-name">
-          {{ t("leads.list.createModal.fields.name") }}
-          <span class="lead-modal-body__required">*</span>
-        </label>
-        <input
-          id="lead-create-name"
-          name="name"
-          type="text"
-          autocomplete="name"
-          class="lead-modal-body__input"
-          :value="fields?.name"
-          :placeholder="t('leads.list.createModal.fields.namePlaceholder')"
-          @input="$emit('update:field', 'name', inputValue($event))"
-        />
+      <div class="lead-modal-body__row">
+        <div class="lead-modal-body__field">
+          <label class="lead-modal-body__label" for="lead-create-name">
+            {{ t("leads.list.createModal.fields.name") }}
+            <span class="lead-modal-body__required">*</span>
+          </label>
+          <input
+            id="lead-create-name"
+            name="name"
+            type="text"
+            autocomplete="name"
+            class="lead-modal-body__input"
+            :value="fields?.name"
+            :placeholder="t('leads.list.createModal.fields.namePlaceholder')"
+            @input="$emit('update:field', 'name', inputValue($event))"
+          />
+        </div>
+        <div class="lead-modal-body__field">
+          <label class="lead-modal-body__label" for="lead-create-source">
+            {{ t("leads.list.createModal.fields.source") }}
+          </label>
+          <select
+            id="lead-create-source"
+            name="source"
+            class="lead-modal-body__input lead-modal-body__select"
+            :value="fields?.source"
+            @change="
+              $emit(
+                'update:field',
+                'source',
+                ($event.target as HTMLSelectElement).value,
+              )
+            "
+          >
+            <option value="">
+              {{ t("leads.list.createModal.fields.sourcePlaceholder") }}
+            </option>
+            <option
+              v-for="opt in LEAD_SOURCE_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ t(opt.label) }}
+            </option>
+          </select>
+        </div>
+        <div v-if="showReferrer" class="lead-modal-body__field">
+          <label class="lead-modal-body__label" for="lead-create-referrer">
+            {{ t("leads.list.createModal.fields.referrer") }}
+          </label>
+          <input
+            id="lead-create-referrer"
+            name="referrer"
+            type="text"
+            class="lead-modal-body__input"
+            :value="fields?.referrer"
+            :placeholder="
+              t('leads.list.createModal.fields.referrerPlaceholder')
+            "
+            @input="$emit('update:field', 'referrer', inputValue($event))"
+          />
+        </div>
       </div>
 
       <div class="lead-modal-body__row">
@@ -153,54 +200,6 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
 
       <div class="lead-modal-body__row">
         <div class="lead-modal-body__field">
-          <label class="lead-modal-body__label" for="lead-create-source">
-            {{ t("leads.list.createModal.fields.source") }}
-          </label>
-          <select
-            id="lead-create-source"
-            name="source"
-            class="lead-modal-body__input lead-modal-body__select"
-            :value="fields?.source"
-            @change="
-              $emit(
-                'update:field',
-                'source',
-                ($event.target as HTMLSelectElement).value,
-              )
-            "
-          >
-            <option value="">
-              {{ t("leads.list.createModal.fields.sourcePlaceholder") }}
-            </option>
-            <option
-              v-for="opt in LEAD_SOURCE_OPTIONS"
-              :key="opt.value"
-              :value="opt.value"
-            >
-              {{ t(opt.label) }}
-            </option>
-          </select>
-        </div>
-        <div v-if="showReferrer" class="lead-modal-body__field">
-          <label class="lead-modal-body__label" for="lead-create-referrer">
-            {{ t("leads.list.createModal.fields.referrer") }}
-          </label>
-          <input
-            id="lead-create-referrer"
-            name="referrer"
-            type="text"
-            class="lead-modal-body__input"
-            :value="fields?.referrer"
-            :placeholder="
-              t('leads.list.createModal.fields.referrerPlaceholder')
-            "
-            @input="$emit('update:field', 'referrer', inputValue($event))"
-          />
-        </div>
-      </div>
-
-      <div class="lead-modal-body__row">
-        <div class="lead-modal-body__field">
           <label class="lead-modal-body__label" for="lead-create-businessType">
             {{ t("leads.list.createModal.fields.businessType") }}
           </label>
@@ -233,9 +232,9 @@ const inputValue = (e: Event) => (e.target as HTMLInputElement).value;
           <label class="lead-modal-body__label" for="lead-create-group">
             {{ t("leads.list.createModal.fields.group") }}
           </label>
-          <p class="lead-modal-body__hint">
+          <!-- <p class="lead-modal-body__hint">
             {{ t("shared.groupOptions.writeHint") }}
-          </p>
+          </p> -->
           <select
             id="lead-create-group"
             name="group"

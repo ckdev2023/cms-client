@@ -119,6 +119,18 @@ describe("CaseEditModal (BUG-224)", () => {
     expect((el.element as HTMLSelectElement).value).toBe("tokyo-1");
   });
 
+  it("pre-fills riskLevel: legacy alias normal maps to select none", () => {
+    const w = mountModal({ riskLevel: "normal" });
+    const el = w.find("#case-edit-riskLevel").element as HTMLSelectElement;
+    expect(el.value).toBe("none");
+  });
+
+  it("pre-fills riskLevel: legacy alias attention maps to select medium", () => {
+    const w = mountModal({ riskLevel: "attention" });
+    const el = w.find("#case-edit-riskLevel").element as HTMLSelectElement;
+    expect(el.value).toBe("medium");
+  });
+
   it("emits save with all 10 fields in payload", async () => {
     const w = mountModal();
 

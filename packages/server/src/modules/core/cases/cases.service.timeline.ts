@@ -69,7 +69,8 @@ export async function writeTimelineInTx(
  * @param caseId 新建案件 ID
  * @param quotePrice 报价金额（null/undefined/<=0 时跳过）
  */
-const INITIAL_QUOTE_BILLING_MILESTONE = "case_fee";
+/** P0 一次性应收稳定里程碑码（与 migration 041、COE 里程碑匹配一致）。 */
+export const CASE_FEE_BILLING_MILESTONE = "case_fee" as const;
 
 /**
  *
@@ -104,7 +105,7 @@ export async function insertInitialBillingPlanFromQuote(
        (org_id, case_id, milestone_name, amount_due, status, gate_effect_mode)
      values ($1, $2, $3, $4, 'due', 'warn')
      returning id`,
-    [ctx.orgId, caseId, INITIAL_QUOTE_BILLING_MILESTONE, quotePrice],
+    [ctx.orgId, caseId, CASE_FEE_BILLING_MILESTONE, quotePrice],
   );
   const billingPlanId = result.rows.at(0)?.id;
   if (!billingPlanId) return;
@@ -115,7 +116,7 @@ export async function insertInitialBillingPlanFromQuote(
     action: "billing_plan.created",
     payload: {
       caseId,
-      milestoneName: INITIAL_QUOTE_BILLING_MILESTONE,
+      milestoneName: CASE_FEE_BILLING_MILESTONE,
       amountDue: quotePrice,
       source: "case_create_quote_price",
     },
@@ -159,7 +160,7 @@ export async function ensureAtLeastOneBillingRecordForCase(
        (org_id, case_id, milestone_name, amount_due, status, gate_effect_mode)
      values ($1, $2, $3, $4, 'due', 'warn')
      returning id`,
-    [ctx.orgId, caseId, INITIAL_QUOTE_BILLING_MILESTONE, amountDue],
+    [ctx.orgId, caseId, CASE_FEE_BILLING_MILESTONE, amountDue],
   );
   const billingPlanId = result.rows.at(0)?.id;
   if (!billingPlanId) return;
@@ -170,7 +171,7 @@ export async function ensureAtLeastOneBillingRecordForCase(
     action: "billing_plan.created",
     payload: {
       caseId,
-      milestoneName: INITIAL_QUOTE_BILLING_MILESTONE,
+      milestoneName: CASE_FEE_BILLING_MILESTONE,
       amountDue,
       source: "lead_convert_billing_fallback",
     },

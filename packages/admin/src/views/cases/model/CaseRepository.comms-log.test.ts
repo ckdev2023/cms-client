@@ -58,7 +58,7 @@ describe("CaseRepository messages/log (p0-fe-002e-01)", () => {
     });
 
     const repo = createCaseRepository({ request, getToken: () => "t" });
-    const messages = await repo.getMessages("case-001");
+    const messages = await repo.getMessages("case-001", "zh-CN");
 
     expect(messages).toHaveLength(2);
     expect(messages[0].id).toBe("comm-1");
@@ -67,7 +67,8 @@ describe("CaseRepository messages/log (p0-fe-002e-01)", () => {
     expect(messages[0].author).toBe("Tanaka Yuki");
     expect(messages[1].id).toBe("comm-2");
     expect(messages[1].type).toBe("auto_email");
-    expect(messages[1].actionLabel).toBe("2026-04-01T00:00:00.000Z");
+    expect(messages[1].actionLabel).toMatch(/2026\/04\/01/);
+    expect(messages[1].actionLabel).not.toContain("T");
   });
 
   it("getMessages returns empty array for blank caseId without fetching", async () => {

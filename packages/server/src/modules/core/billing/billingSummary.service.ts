@@ -69,7 +69,12 @@ export class BillingSummaryService {
 
     const sql = `
       select
-        coalesce(sum(br.amount_due), 0) as total_due,
+        coalesce(sum(
+          case
+            when coalesce(br.amount_due, 0) > 0 then br.amount_due
+            else coalesce(bp.paid, 0)
+          end
+        ), 0) as total_due,
         coalesce(sum(bp.paid), 0) as total_received,
         coalesce(sum(
           case when br.due_date < ${nowExpr}

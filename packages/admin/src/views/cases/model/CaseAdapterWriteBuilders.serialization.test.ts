@@ -12,6 +12,7 @@ import {
   buildBillingRiskAckPayload,
   buildCreateCaseInputFromDraft,
   buildCreateCasePayload,
+  normalizeCaseRiskLevelForPatch,
   buildPostApprovalPayload,
   buildTransitionPayload,
   buildUpdateCaseInputFromDraft,
@@ -24,6 +25,33 @@ import {
 
 describe("serialization rules", () => {
   const REQ = { customerId: "c1", caseTypeCode: "v", ownerUserId: "u1" };
+
+  it("buildUpdateCasePayload maps legacy riskLevel aliases to server CASE_RISK_LEVELS", () => {
+    expect(buildUpdateCasePayload({ riskLevel: "normal" }).riskLevel).toBe(
+      "none",
+    );
+    expect(buildUpdateCasePayload({ riskLevel: "attention" }).riskLevel).toBe(
+      "medium",
+    );
+    expect(buildUpdateCasePayload({ riskLevel: "critical" }).riskLevel).toBe(
+      "high",
+    );
+    expect(buildUpdateCasePayload({ riskLevel: "low" }).riskLevel).toBe("low");
+    expect(buildUpdateCasePayload({ riskLevel: "none" }).riskLevel).toBe(
+      "none",
+    );
+    expect(buildUpdateCasePayload({ riskLevel: "medium" }).riskLevel).toBe(
+      "medium",
+    );
+    expect(buildUpdateCasePayload({ riskLevel: "high" }).riskLevel).toBe(
+      "high",
+    );
+  });
+
+  it("normalizeCaseRiskLevelForPatch trims once for non-empty aliases", () => {
+    expect(normalizeCaseRiskLevelForPatch("  normal  ")).toBe("none");
+    expect(normalizeCaseRiskLevelForPatch("attention")).toBe("medium");
+  });
 
   it("undefined → omitted across all builders", () => {
     const create = buildCreateCasePayload(REQ);

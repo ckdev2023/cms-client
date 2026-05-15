@@ -1,18 +1,28 @@
 import type { BillingGateEffectMode } from "../model/billingEntities";
 import type { TenantDbTx } from "../tenancy/tenantDb";
 
-type BillingSummaryRow = {
+type BillingPlanGuardRow = {
+  id: string;
   amount_due: string | number;
   status: string;
   milestone_name: string | null;
   gate_effect_mode: string;
 };
 
-type BillingPlanGuardRow = BillingSummaryRow & { id: string };
-
 type ValidPaymentSumRow = {
   total_received: string | number;
 };
+
+/**
+ *
+ */
+export type FinalPaymentGuardResult =
+  | { settled: true }
+  | {
+      settled: false;
+      unpaid: number;
+      gateEffectMode: BillingGateEffectMode;
+    };
 
 /**
  * 判定 COE 等后置一步骤收费守卫应覆盖哪些 BillingPlan 行。
@@ -40,6 +50,59 @@ function resolveFinalSettlementScope<
 }
 
 /**
+ * COE 尾款/一次性应收结清判定（与 {@link checkFinalPaymentGuard} 一致），可复用预取的 billing 行。
+ *
+ * @param tx - DB 事务连接
+ * @param caseId - 案件 ID
+ * @param rows - 该案件 billing_records 列（含 id）
+ * @returns 需要参与守卫且非全 off 时为结清/未结清结果；否则 null（走 status 回退）
+ */
+async function resolveScopedFinalPaymentSettlement(
+  tx: TenantDbTx,
+  caseId: string,
+  rows: BillingPlanGuardRow[],
+): Promise<FinalPaymentGuardResult | null> {
+  if (rows.length === 0) return null;
+
+  const scopeRows = resolveFinalSettlementScope(rows);
+  if (scopeRows.length === 0) return null;
+
+  const allOff = scopeRows.every((r) => r.gate_effect_mode === "off");
+  if (allOff) return null;
+
+  const allPaid = scopeRows.every((r) => r.status === "paid");
+  if (allPaid) return { settled: true };
+
+  const totalDue = scopeRows.reduce((sum, r) => sum + Number(r.amount_due), 0);
+
+  const scopeIds = scopeRows.map((r) => r.id);
+  const payResult = await tx.query<ValidPaymentSumRow>(
+    `select coalesce(sum(pr.amount_received), 0) as total_received
+     from payment_records pr
+     where pr.case_id = $1 and pr.record_status = 'valid'
+       and pr.billing_record_id = any($2::uuid[])`,
+    [caseId, scopeIds],
+  );
+
+  const received = Number(payResult.rows[0]?.total_received ?? 0);
+  const unpaid = Math.max(totalDue - received, 0);
+  if (unpaid <= 0 && (totalDue > 0 || received > 0)) {
+    return { settled: true };
+  }
+
+  const gateMode = scopeRows.find((r) => r.gate_effect_mode === "block")
+    ?.gate_effect_mode
+    ? "block"
+    : "warn";
+
+  return {
+    settled: false,
+    unpaid,
+    gateEffectMode: gateMode as BillingGateEffectMode,
+  };
+}
+
+/**
  * 从 billing_records + payment_records(record_status='valid') 聚合，
  * 同步案件缓存字段：deposit_paid_cached / final_payment_paid_cached / billing_unpaid_amount_cached。
  *
@@ -50,8 +113,8 @@ export async function syncBillingCacheForCase(
   tx: TenantDbTx,
   caseId: string,
 ): Promise<void> {
-  const billingResult = await tx.query<BillingSummaryRow>(
-    `select amount_due, status, milestone_name, gate_effect_mode
+  const billingResult = await tx.query<BillingPlanGuardRow>(
+    `select amount_due, status, milestone_name, gate_effect_mode, id
      from billing_records where case_id = $1`,
     [caseId],
   );
@@ -76,10 +139,20 @@ export async function syncBillingCacheForCase(
   const depositSettled =
     depositRows.length === 0 || depositRows.every((r) => r.status === "paid");
 
-  const finalSettlementRows = resolveFinalSettlementScope(billingResult.rows);
-  const finalPaymentSettled =
-    finalSettlementRows.length > 0 &&
-    finalSettlementRows.every((r) => r.status === "paid");
+  const scopedSettlement = await resolveScopedFinalPaymentSettlement(
+    tx,
+    caseId,
+    billingResult.rows,
+  );
+  let finalPaymentSettled: boolean;
+  if (scopedSettlement !== null) {
+    finalPaymentSettled = scopedSettlement.settled;
+  } else {
+    const finalSettlementRows = resolveFinalSettlementScope(billingResult.rows);
+    finalPaymentSettled =
+      finalSettlementRows.length > 0 &&
+      finalSettlementRows.every((r) => r.status === "paid");
+  }
 
   await tx.query(
     `update cases set
@@ -110,51 +183,8 @@ export async function checkFinalPaymentGuard(
     [caseId],
   );
 
-  if (result.rows.length === 0) return null;
-
-  const scopeRows = resolveFinalSettlementScope(result.rows);
-  if (scopeRows.length === 0) return null;
-
-  const allOff = scopeRows.every((r) => r.gate_effect_mode === "off");
-  if (allOff) return null;
-
-  const allPaid = scopeRows.every((r) => r.status === "paid");
-  if (allPaid) return { settled: true };
-
-  const totalDue = scopeRows.reduce((sum, r) => sum + Number(r.amount_due), 0);
-
-  const scopeIds = scopeRows.map((r) => r.id);
-  const payResult = await tx.query<ValidPaymentSumRow>(
-    `select coalesce(sum(pr.amount_received), 0) as total_received
-     from payment_records pr
-     where pr.case_id = $1 and pr.record_status = 'valid'
-       and pr.billing_record_id = any($2::uuid[])`,
-    [caseId, scopeIds],
-  );
-
-  const received = Number(payResult.rows[0]?.total_received ?? 0);
-  const gateMode = scopeRows.find((r) => r.gate_effect_mode === "block")
-    ?.gate_effect_mode
-    ? "block"
-    : "warn";
-
-  return {
-    settled: false,
-    unpaid: Math.max(totalDue - received, 0),
-    gateEffectMode: gateMode as BillingGateEffectMode,
-  };
+  return resolveScopedFinalPaymentSettlement(tx, caseId, result.rows);
 }
-
-/**
- * COE 尾款守卫检查结果。
- */
-export type FinalPaymentGuardResult =
-  | { settled: true }
-  | {
-      settled: false;
-      unpaid: number;
-      gateEffectMode: BillingGateEffectMode;
-    };
 
 function isDepositMilestone(name: string | null): boolean {
   if (!name) return false;

@@ -111,6 +111,18 @@ void test("mapBillingPlanWithPaymentsRow handles null owner/customer", () => {
   assert.equal(dto.groupId, null);
 });
 
+void test("mapBillingPlanWithPaymentsRow uses paid as due when amount_due is zero but paid > 0", () => {
+  const dto = mapBillingPlanWithPaymentsRow(
+    makeBillingPlanWithPaymentsRow({
+      amount_due: "0",
+      paid_amount: "150000",
+    }),
+  );
+  assert.equal(dto.amountDue, 150000);
+  assert.equal(dto.paidAmount, 150000);
+  assert.equal(dto.unpaidAmount, 0);
+});
+
 void test("mapBillingPlanWithPaymentsRow handles zero paid_amount", () => {
   const dto = mapBillingPlanWithPaymentsRow(
     makeBillingPlanWithPaymentsRow({ paid_amount: "0" }),

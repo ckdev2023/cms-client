@@ -256,7 +256,9 @@ export function computeBmvWorkflowStepDisplayStatus(
   workflowStep: WorkflowStepSummary,
 ): BmvWorkflowStepDisplayStatus {
   if (step.code === workflowStep.stepCode) {
-    return workflowStep.isFailureStep ? "failed" : "current";
+    if (workflowStep.isFailureStep) return "failed";
+    if (workflowStep.workflowStepInactiveAtTerminalFailure) return "skipped";
+    return "current";
   }
   const atVisaRejected = workflowStep.stepCode === "VISA_REJECTED";
   if (atVisaRejected && step.code === "VISA_APPLYING") {
@@ -266,6 +268,9 @@ export function computeBmvWorkflowStepDisplayStatus(
     return "skipped";
   }
   const currentOrder = workflowStep.sortOrder;
+  if (workflowStep.workflowStepInactiveAtTerminalFailure) {
+    if (step.sortOrder > currentOrder) return "skipped";
+  }
   if (step.sortOrder < currentOrder) return "completed";
   return "upcoming";
 }

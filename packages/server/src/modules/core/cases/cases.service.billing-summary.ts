@@ -1,9 +1,11 @@
 import type { Case } from "../model/coreEntities";
 import type { TenantDb } from "../tenancy/tenantDb";
+import { CASE_FEE_BILLING_MILESTONE } from "./cases.service.timeline";
 import type { CaseBillingSummary } from "./cases.types-billing";
 
 /**
- * 是否存在名称匹配尾款关键词的收费计划行（与 `billingGuards` / migration 067 一致）。
+ * 是否存在可用于 COE / 尾款门禁匹配的收费计划行：含 `case_fee`（P0 一次性应收码）
+ * 或名称命中尾款关键词（与 `billingGuards` / migration 067 一致）。
  *
  * @param tenantDb - 租户数据库访问对象
  * @param caseId - 案件 ID
@@ -18,11 +20,12 @@ export async function queryFinalPaymentMilestoneMatched(
      from billing_records
      where case_id = $1
        and (
-         lower(coalesce(milestone_name, '')) like '%尾款%'
+         milestone_name = $2
+         or lower(coalesce(milestone_name, '')) like '%尾款%'
          or lower(coalesce(milestone_name, '')) like '%final%'
          or lower(coalesce(milestone_name, '')) like '%結果%'
        )`,
-    [caseId],
+    [caseId, CASE_FEE_BILLING_MILESTONE],
   );
   const raw = result.rows.at(0)?.count;
   return Number(raw ?? "0") > 0;

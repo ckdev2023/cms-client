@@ -16,6 +16,7 @@ import {
   buildCaseDetailHref,
   buildCaseDetailRoute,
   buildCustomerDetailHref,
+  buildCustomerDetailHrefFromCase,
   CASE_DETAIL_QUERY_PARAM_KEYS,
   _ASSERT_DETAIL_QUERY_FROZEN_KEYS,
   type CaseDetailQueryParams,
@@ -152,6 +153,33 @@ describe("buildCustomerDetailHref", () => {
 
   it("URI-encodes customerId with special characters", () => {
     expect(buildCustomerDetailHref("cust/001")).toBe("#/customers/cust%2F001");
+  });
+});
+
+describe("buildCustomerDetailHrefFromCase", () => {
+  it("delegates when customer differs from case id", () => {
+    expect(buildCustomerDetailHrefFromCase("cust-1", "case-99")).toBe(
+      "#/customers/cust-1",
+    );
+  });
+
+  it("falls back to customer list when customerId equals case id", () => {
+    expect(buildCustomerDetailHrefFromCase("case-uu", "case-uu")).toBe(
+      "#/customers",
+    );
+  });
+
+  it("falls back to customer list when customerId is blank", () => {
+    expect(buildCustomerDetailHrefFromCase("", "case-uu")).toBe("#/customers");
+  });
+
+  it("passes tab when safe", () => {
+    expect(buildCustomerDetailHrefFromCase("cust-2", "case-uu", "cases")).toBe(
+      "#/customers/cust-2?tab=cases",
+    );
+    expect(buildCustomerDetailHrefFromCase("case-uu", "case-uu", "cases")).toBe(
+      "#/customers",
+    );
   });
 });
 

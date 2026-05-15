@@ -113,6 +113,29 @@ describe("stepStatus algorithm (p1-fe-002-03)", () => {
     expect(afterRejected.length).toBe(0);
   });
 
+  it("inactive at terminal failure: current row shows skipped (not in progress)", () => {
+    const ws = makeWorkflowStep({
+      stepCode: "COE_SENT",
+      sortOrder: 10,
+      workflowStepInactiveAtTerminalFailure: true,
+    });
+    const step = BMV_WORKFLOW_STEP_MAP.get("COE_SENT")!;
+    expect(computeBmvWorkflowStepDisplayStatus(step, ws)).toBe("skipped");
+  });
+
+  it("inactive at terminal failure: downstream steps skipped (not upcoming)", () => {
+    const ws = makeWorkflowStep({
+      stepCode: "COE_SENT",
+      sortOrder: 10,
+      workflowStepInactiveAtTerminalFailure: true,
+    });
+    const statuses = BMV_WORKFLOW_STEPS.filter((s) => s.sortOrder > 10).map(
+      (s) => computeBmvWorkflowStepDisplayStatus(s, ws),
+    );
+    expect(statuses.every((st) => st === "skipped")).toBe(true);
+    expect(statuses.some((st) => st === "upcoming")).toBe(false);
+  });
+
   it("mid-flow step (APPLYING sortOrder=4) produces correct status split", () => {
     const ws = makeWorkflowStep({ stepCode: "APPLYING", sortOrder: 4 });
     const statuses = BMV_WORKFLOW_STEPS.map((s) =>

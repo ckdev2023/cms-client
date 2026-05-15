@@ -133,6 +133,11 @@ void test("getSummary JOIN cases excludes soft-deleted cases", async () => {
     ),
     "summary JOIN cases must filter out soft-deleted cases",
   );
+  assert.ok(
+    main.sql.includes("coalesce(br.amount_due, 0) > 0") &&
+      main.sql.includes("else coalesce(bp.paid, 0)"),
+    "total_due falls back to per-row paid when amount_due is zero",
+  );
 });
 
 void test("getSummary applies status filter in SQL", async () => {

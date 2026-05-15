@@ -33,7 +33,7 @@ import { resolveLocalizedCustomerName } from "./model/CaseAdapterCustomerLocale"
 import {
   buildCaseDetailQuery,
   buildCaseListHref,
-  buildCustomerDetailHref,
+  buildCustomerDetailHrefFromCase,
 } from "./query";
 import {
   BADGE_TONE_MAP,
@@ -67,7 +67,12 @@ const router = useRouter();
 function counterLabel(c: TabCounter): string {
   return c.i18nKey ? t(c.i18nKey, c.i18nParams ?? {}) : c.label;
 }
-const caseId = computed(() => route.params.id as string);
+const caseId = computed(() =>
+  route.matched.at(-1)?.name === "case-detail" &&
+  typeof route.params.id === "string"
+    ? route.params.id
+    : "",
+);
 const routeTab = computed(() => {
   const raw = route.query.tab;
   return typeof raw === "string" ? raw : undefined;
@@ -382,21 +387,49 @@ function onPhaseSubmit(payload: {
 }
 
 /**
+ * 构造 `/billing` deep-link：`case` 为案件主键；`hint` 为人类可读关键字（便于列表搜索框展示）；
+ * `collect=1` 在显式登记回款时附带（或由 `billingPlan` 间接附带）。
+ *
+ * @param row - 收费表格行；来自 `plan` 时可带 `billingPlanId` 以预选节点。
+ * @param options - 可选配置。
+ * @param options.openCollectModal - 为 `true` 时在 query 中附加 `collect=1`，用于打开收费页的登记回款弹窗。
+ * @returns 路由 query 对象
+ */
+function billingDeepLinkQuery(
+  row?: PaymentRow,
+  options?: { openCollectModal?: boolean },
+): Record<string, string> {
+  const q: Record<string, string> = { case: caseId.value };
+  const hint = detail.value?.caseNo?.trim();
+  if (hint) {
+    q.hint = hint;
+  }
+  if (row?.billingPlanId) {
+    q.billingPlan = row.billingPlanId;
+  }
+  const openCollect =
+    Boolean(options?.openCollectModal) || Boolean(row?.billingPlanId);
+  if (openCollect) {
+    q.collect = "1";
+  }
+  return q;
+}
+
+/**
  * 从案件详情 deep-link 打开回款登记（可选携带预选收费节点）。
  *
  * @param row - 收费表格行；来自 `plan` 时可带 `billingPlanId` 以预选节点。
  */
 function onOpenCollection(row?: PaymentRow): void {
-  const q: Record<string, string> = { case: caseId.value };
-  if (row?.billingPlanId) {
-    q.billingPlan = row.billingPlanId;
-  }
-  router.push({ path: "/billing", query: q });
+  router.push({
+    path: "/billing",
+    query: billingDeepLinkQuery(row, { openCollectModal: true }),
+  });
 }
 
 /** 跳转到收费页面，查看收据。 */
 function onViewReceipt(): void {
-  router.push({ path: "/billing", query: { case: caseId.value } });
+  router.push({ path: "/billing", query: billingDeepLinkQuery() });
 }
 
 const taskModalOpen = ref(false);
@@ -558,7 +591,13 @@ async function onFormGenSubmit(payload: {
           </Chip>
           <Chip
             v-if="isBmvCase && detail.workflowStep"
-            :tone="detail.workflowStep.isFailureStep ? 'danger' : 'primary'"
+            :tone="
+              detail.workflowStep.isFailureStep
+                ? 'danger'
+                : detail.workflowStep.workflowStepInactiveAtTerminalFailure
+                  ? 'neutral'
+                  : 'primary'
+            "
             dot
           >
             {{ detail.workflowStep.parentStage }} →
@@ -584,7 +623,9 @@ async function onFormGenSubmit(payload: {
                 />
               </svg>
               <a
-                :href="buildCustomerDetailHref(detail.customerId)"
+                :href="
+                  buildCustomerDetailHrefFromCase(detail.customerId, detail.id)
+                "
                 class="case-detail-view__meta-link"
               >
                 {{ clientDisplayName }}
@@ -826,6 +867,7 @@ async function onFormGenSubmit(payload: {
           :is-terminal="isTerminal"
           :can-run-validation="false"
           @switch-tab="guardedSwitchTab"
+          @open-collection="onOpenCollection"
           @advance-to-coe="transitionWorkflowStep('COE_SENT')"
           @retry-reminder="retryReminderCreation()"
           @failure-close="failureCloseCase()"

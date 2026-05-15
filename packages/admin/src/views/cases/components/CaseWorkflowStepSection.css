@@ -57,6 +57,18 @@
   color: var(--color-danger-text);
   border-color: rgba(220, 38, 38, 0.18);
 }
+.wf-section__current-badge--inactive {
+  background: var(--color-bg-3);
+  color: var(--color-text-2);
+  border-color: var(--color-border-2);
+}
+.wf-section__inactive-terminal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--color-text-4);
+}
 .wf-section__current-badge-icon {
   display: inline-flex;
   align-items: center;

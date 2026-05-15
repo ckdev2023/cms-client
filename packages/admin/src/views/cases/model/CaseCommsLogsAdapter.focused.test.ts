@@ -117,15 +117,17 @@ describe("messages tab display values (p0-fe-006c-03)", () => {
         followUpRequired: true,
         followUpDueAt: "2026-05-01T00:00:00.000Z",
       }),
+      "zh-CN",
     )!;
-    expect(m.actionLabel).toBe("2026-05-01T00:00:00.000Z");
+    expect(m.actionLabel).toMatch(/2026\/05\/01/);
+    expect(m.actionLabel).not.toContain("T");
   });
 
-  it("follow-up action shows 跟進待 when date absent", () => {
+  it("follow-up action shows 跟进待 when date absent", () => {
     const m = adaptCaseMessageDto(
       commLog({ followUpRequired: true, followUpDueAt: null }),
     )!;
-    expect(m.actionLabel).toBe("跟進待");
+    expect(m.actionLabel).toBe("跟进待");
   });
 
   it("no follow-up → actionLabel undefined", () => {

@@ -420,6 +420,8 @@ export {
   buildCaseBillingTabAggregateUrl,
 } from "./CaseAdapterValidationBilling";
 
+export { applyBillingSummaryFullToBillingData } from "./applyBillingSummaryFullToBillingData";
+
 // ─── Tasks adapter (p0-fe-006d-01) ──────────────────────────────
 
 const TASK_DONE_STATUSES = new Set(["completed", "cancelled"]);

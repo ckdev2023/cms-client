@@ -93,8 +93,8 @@ describe("CaseEditModal priority/risk i18n (R27-H)", () => {
       expect(opts).toEqual([
         { value: "", text: "--" },
         { value: "low", text: "低风险" },
-        { value: "normal", text: "正常" },
-        { value: "attention", text: "需关注" },
+        { value: "none", text: "正常" },
+        { value: "medium", text: "需关注" },
         { value: "high", text: "高风险" },
       ]);
     });
@@ -119,8 +119,8 @@ describe("CaseEditModal priority/risk i18n (R27-H)", () => {
       expect(opts).toEqual([
         { value: "", text: "--" },
         { value: "low", text: "低リスク" },
-        { value: "normal", text: "正常" },
-        { value: "attention", text: "要注意" },
+        { value: "none", text: "正常" },
+        { value: "medium", text: "要注意" },
         { value: "high", text: "高リスク" },
       ]);
     });
@@ -145,8 +145,8 @@ describe("CaseEditModal priority/risk i18n (R27-H)", () => {
       expect(opts).toEqual([
         { value: "", text: "--" },
         { value: "low", text: "Low" },
-        { value: "normal", text: "Normal" },
-        { value: "attention", text: "Needs attention" },
+        { value: "none", text: "Normal" },
+        { value: "medium", text: "Needs attention" },
         { value: "high", text: "High risk" },
       ]);
     });

@@ -1,6 +1,6 @@
 // ── Test Ownership ──────────────────────────────────────────────
 // Owner: R31-A — riskLevel="low" 选项扩展与回填
-// Locks: riskOptions 包含 low/normal/attention/high 四级；
+// Locks: riskOptions 包含 low/none/medium/high 四级（与服务端 CASE_RISK_LEVELS 对齐）；
 //   props.riskLevel="low" 回填后 select.value 为 "low"；
 //   save payload 正确携带 riskLevel="low"。
 // ────────────────────────────────────────────────────────────────
@@ -74,14 +74,14 @@ describe("CaseEditModal riskLevel='low' backfill (R31-A)", () => {
     expect(opts).toContain("low");
   });
 
-  it("riskOptions has exactly 4 levels: low, normal, attention, high", () => {
+  it("riskOptions has exactly 4 levels: low, none, medium, high", () => {
     const w = mountModal();
     const opts = w
       .find("#case-edit-riskLevel")
       .findAll("option")
       .map((o) => o.element.value)
       .filter((v) => v !== "");
-    expect(opts).toEqual(["low", "normal", "attention", "high"]);
+    expect(opts).toEqual(["low", "none", "medium", "high"]);
   });
 
   for (const locale of ["zh-CN", "ja-JP", "en-US"] as const) {

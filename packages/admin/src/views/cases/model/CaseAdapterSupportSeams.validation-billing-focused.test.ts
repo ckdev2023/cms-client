@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import {
   adaptCaseValidationData,
   adaptCaseBillingData,
+  applyBillingSummaryFullToBillingData,
 } from "./CaseAdapterSupportSeams";
 
 // ─── Shared fixtures ─────────────────────────────────────────────
@@ -329,6 +330,72 @@ describe("billing tab summary display (p0-fe-006b-03)", () => {
       plans: [billingPlan({ milestoneName: "" })],
     })!;
     expect(result.payments[0].type).toBe("収費ノード");
+  });
+});
+
+describe("applyBillingSummaryFullToBillingData (billing-tab aggregate summary)", () => {
+  it("overlays stat totals from CaseBillingSummaryFull while keeping payment rows", () => {
+    const base = adaptCaseBillingData({
+      plans: [billingPlan({ amountDue: 100000 })],
+      payments: [],
+    })!;
+    const merged = applyBillingSummaryFullToBillingData(base, {
+      totalDue: 250000,
+      totalReceived: 80000,
+      unpaidAmount: 170000,
+    });
+    expect(merged.total).toBe("¥250,000");
+    expect(merged.received).toBe("¥80,000");
+    expect(merged.outstanding).toBe("¥170,000");
+    expect(merged.payments).toEqual(base.payments);
+  });
+
+  it("totalDue≤0 uses quotePrice for total header when billing sum is zero but quote exists", () => {
+    const base = adaptCaseBillingData({
+      plans: [billingPlan({ amountDue: 0 })],
+      payments: [],
+    })!;
+    expect(base.total).toBe("—");
+    const merged = applyBillingSummaryFullToBillingData(base, {
+      totalDue: 0,
+      quotePrice: 480000,
+      totalReceived: 0,
+      unpaidAmount: 0,
+    });
+    expect(merged.total).toBe("¥480,000");
+  });
+
+  it("totalDue≤0 uses totalReceived when no quote and arrears cleared (plans sum to zero)", () => {
+    const emptyPlans = adaptCaseBillingData({
+      plans: [],
+      payments: [
+        {
+          id: "pr-1",
+          amountReceived: 300000,
+          receivedAt: "2026-05-14T12:00:00.000Z",
+          recordStatus: "valid",
+          milestoneName: "入金",
+        },
+      ],
+    })!;
+    expect(emptyPlans.total).toBe("—");
+    const merged = applyBillingSummaryFullToBillingData(emptyPlans, {
+      totalDue: 0,
+      totalReceived: 300000,
+      unpaidAmount: 0,
+    });
+    expect(merged.total).toBe("¥300,000");
+    expect(merged.received).toBe("¥300,000");
+    expect(merged.outstanding).toBe("¥0");
+  });
+
+  it("non-object summary leaves base untouched", () => {
+    const base = adaptCaseBillingData({
+      plans: [billingPlan()],
+    })!;
+    expect(applyBillingSummaryFullToBillingData(base, null)).toBe(base);
+    expect(applyBillingSummaryFullToBillingData(base, undefined)).toBe(base);
+    expect(applyBillingSummaryFullToBillingData(base, [])).toBe(base);
   });
 });
 

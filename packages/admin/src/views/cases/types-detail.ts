@@ -1003,6 +1003,11 @@ export interface WorkflowStepSummary {
   sortOrder: number;
   /** 是否为失败终态步骤（`VISA_REJECTED`）。 */
   isFailureStep: boolean;
+  /**
+   * 失败结案（`CLOSED_FAILED`）后服务端仍返回认定后「可推进」子步骤代码；
+   * 业务子步骤区不再将该步标为「进行中」，并调整组样式与汇总文案。
+   */
+  workflowStepInactiveAtTerminalFailure?: boolean;
 }
 
 // ─── P1 Final Payment & COE Gate ──────────────────────────────────

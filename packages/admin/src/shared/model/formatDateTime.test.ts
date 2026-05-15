@@ -8,6 +8,18 @@ describe("formatDateTime", () => {
     expect(formatDateTime("", "en-US")).toBe("");
   });
 
+  it("treats blank locale as runtime default for valid timestamps", () => {
+    const result = formatDateTime("2026-04-28T10:30:00Z", "");
+    expect(result).toBeTruthy();
+    expect(result).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
+  it("formats with runtime default when locale is omitted", () => {
+    const result = formatDateTime("2026-04-28T10:30:00Z");
+    expect(result).toBeTruthy();
+    expect(result).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+  });
+
   it("returns empty string for invalid ISO", () => {
     expect(formatDateTime("not-a-date", "en-US")).toBe("");
   });

@@ -442,6 +442,7 @@ const casesEnUS = {
       workflowStep: {
         title: "Workflow substeps",
         currentLabel: "Current step",
+        currentHeadlineInactiveFailure: "Progress at failure closeout: {step}",
         stageGroup: "{stage} stage",
         completed: "Completed",
         current: "In progress",
@@ -473,7 +474,9 @@ const casesEnUS = {
         coeBlocked: "COE blocked — complete payment first",
         sendCoe: "Send COE",
         sendCoeHint:
-          "Advances the workflow to COE Sent. Requires final payment cleared.",
+          "Clear final payment (and acknowledge any billing-risk warning, if prompted) before sending COE.",
+        sendCoeHintReady:
+          "Billing gates are cleared; sending COE will advance the workflow to COE Sent.",
         sendCoeHintMilestoneMissing:
           "Add a billing milestone whose name includes the final-payment keyword (e.g. 尾款 / final / 結果), then record collection before sending COE.",
         blockerPayment: "Final payment must be cleared before sending COE.",

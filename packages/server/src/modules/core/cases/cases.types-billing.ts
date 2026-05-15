@@ -351,7 +351,8 @@ export type CaseBillingSummaryRangeQuery = {
  * 映射端点：`GET /api/billing-summary` 返回值。
  *
  * 字段语义：
- * - `totalDue`：命中过滤条件的 billing_records.amount_due 之和
+ * - `totalDue`：命中过滤条件的各 billing 计划行「有效应收」之和——
+ *   若该行 `amount_due > 0` 则取 `amount_due`，否则回退为该行的 valid 回款合计（避免计划金额未录入但已登记回款时汇总卡显示总应收为 0）
  * - `totalReceived`：命中过滤条件的 valid payment_records.amount_received 之和
  * - `totalOutstanding`：max(totalDue - totalReceived, 0)
  * - `overdueAmount`：实时计算（D2 决议）——

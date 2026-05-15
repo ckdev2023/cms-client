@@ -73,7 +73,8 @@ describe("adaptCaseMessageDto", () => {
     expect(result!.typeLabel).toBe("電話記録");
     expect(result!.author).toBe("Tanaka Yuki");
     expect(result!.body).toBe("Discussed document requirements");
-    expect(result!.time).toBe("2026-03-15T10:00:00.000Z");
+    expect(result!.time).not.toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(result!.timeIso).toBe("2026-03-15T10:00:00.000Z");
     expect(result!.actionLabel).toBeUndefined();
   });
 
@@ -112,12 +113,16 @@ describe("adaptCaseMessageDto", () => {
   });
 
   it("includes actionLabel when followUpRequired is true", () => {
-    const result = adaptCaseMessageDto({
-      ...baseCommLog,
-      followUpRequired: true,
-      followUpDueAt: "2026-04-01T00:00:00.000Z",
-    });
-    expect(result!.actionLabel).toBe("2026-04-01T00:00:00.000Z");
+    const result = adaptCaseMessageDto(
+      {
+        ...baseCommLog,
+        followUpRequired: true,
+        followUpDueAt: "2026-04-01T00:00:00.000Z",
+      },
+      "zh-CN",
+    );
+    expect(result!.actionLabel).toMatch(/2026\/04\/01/);
+    expect(result!.actionLabel).not.toContain("T");
   });
 
   it("uses fallback actionLabel when followUp date is null", () => {
@@ -126,7 +131,7 @@ describe("adaptCaseMessageDto", () => {
       followUpRequired: true,
       followUpDueAt: null,
     });
-    expect(result!.actionLabel).toBe("跟進待");
+    expect(result!.actionLabel).toBe("跟进待");
   });
 
   it("falls back to subject when contentSummary is empty", () => {
@@ -488,11 +493,8 @@ describe("adaptCaseLogListResult", () => {
     expect(result![0].text).toBe("cases.log.timeline.caseCreated");
   });
 
-  it("returns null for non-array/non-object input", () => {
+  it("returns null for invalid shapes; empty array for empty list", () => {
     expect(adaptCaseLogListResult("bad")).toBeNull();
-  });
-
-  it("returns empty array for empty input", () => {
     expect(adaptCaseLogListResult([])).toEqual([]);
   });
 });

@@ -155,8 +155,9 @@ export function validatePaymentMethod(
 /**
  * 根据已收金额与应收金额推导收费计划状态。
  *
- * 当 amountDue ≤ 0（占位或未录入应收）时，不应仅凭「已收 ≥ 应收」判为 paid；
- * 有回款则 partial，无回款则 due。
+ * 当 amountDue ≤ 0（占位或未录入应收）时：无回款保持 due；
+ * 已有回款则判为 paid，以便 `final_payment_paid_cached` / COE 门与实收对齐
+ *（避免 status 长期停在 partial 导致尾款门禁死锁）。
  *
  * @param totalReceived - 累计有效回款
  * @param amountDue - 应收金额
@@ -168,7 +169,7 @@ export function deriveBillingStatus(
 ): string {
   if (amountDue <= 0) {
     if (totalReceived <= 0) return "due";
-    return "partial";
+    return "paid";
   }
   if (totalReceived >= amountDue) return "paid";
   if (totalReceived > 0) return "partial";

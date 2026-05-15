@@ -27,7 +27,7 @@ const props = withDefaults(
 );
 const emit = defineEmits<{
   (e: "advance-to-coe"): void;
-  (e: "switch-tab", tab: string): void;
+  (e: "open-collection"): void;
 }>();
 const showConfirm = ref(false);
 const isSubmitting = computed(() => props.writeFeedback.submitting);
@@ -259,9 +259,10 @@ function cancelConfirm(): void {
       <Button
         v-if="!gate.paymentCleared && !readonly"
         size="sm"
-        @click="emit('switch-tab', 'billing')"
+        data-testid="final-payment-open-collection"
+        @click="emit('open-collection')"
       >
-        {{ t("cases.constants.detailTabs.billing") }}
+        {{ t("cases.detail.billing.recordPayment") }}
         <svg
           width="14"
           height="14"
@@ -312,7 +313,7 @@ function cancelConfirm(): void {
       {{
         t(
           gate.canAdvanceToCoe
-            ? "cases.detail.overview.finalPaymentGate.sendCoeHint"
+            ? "cases.detail.overview.finalPaymentGate.sendCoeHintReady"
             : !gate.finalPaymentMilestoneMatched
               ? "cases.detail.overview.finalPaymentGate.sendCoeHintMilestoneMissing"
               : "cases.detail.overview.finalPaymentGate.sendCoeHint",

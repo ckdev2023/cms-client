@@ -23,6 +23,7 @@ import {
   adaptCaseTaskList,
   adaptCaseValidationData,
   adaptDocumentTemplateList,
+  applyBillingSummaryFullToBillingData,
   buildCaseBillingPlansUrl,
   buildCaseBillingTabAggregateUrl,
   buildCaseDocumentItemsUrl,
@@ -203,10 +204,12 @@ function adaptBillingTabAggregateResponse(body: unknown): BillingData | null {
   if (!body || typeof body !== "object" || Array.isArray(body)) return null;
   const r = body as Record<string, unknown>;
 
-  return adaptCaseBillingData({
+  const base = adaptCaseBillingData({
     plans: extractItemsArray(r.plans),
     payments: extractItemsArray(r.recentPayments),
   });
+  if (!base) return null;
+  return applyBillingSummaryFullToBillingData(base, r.summary);
 }
 
 /**

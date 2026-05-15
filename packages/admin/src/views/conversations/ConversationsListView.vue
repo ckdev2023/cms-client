@@ -196,7 +196,9 @@ onMounted(() => {
       {{ error }}
     </div>
 
-    <div v-else-if="loading" class="conv-list-view__loading">Loading…</div>
+    <div v-else-if="loading" class="conv-list-view__loading">
+      {{ t("shared.loading") }}
+    </div>
 
     <template v-else-if="items.length > 0">
       <table class="conv-list-view__table">

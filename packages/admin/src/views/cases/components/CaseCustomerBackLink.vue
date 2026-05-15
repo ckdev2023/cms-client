@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import { buildCustomerDetailHref } from "../query";
+import { buildCustomerDetailHrefFromCase } from "../query";
 
 /** 客户回链：在案件概览中返回所属客户详情页。 */
 const { t } = useI18n();
 
 defineProps<{
   customerId: string;
+  casePk: string;
   client: string;
   groupName?: string | null;
 }>();
@@ -32,7 +33,10 @@ defineProps<{
     <span class="customer-link__label">
       {{ t("cases.detail.overview.customerLabel") }}
     </span>
-    <a :href="buildCustomerDetailHref(customerId)" class="customer-link__href">
+    <a
+      :href="buildCustomerDetailHrefFromCase(customerId, casePk)"
+      class="customer-link__href"
+    >
       {{ client }}
     </a>
     <span v-if="groupName" class="customer-link__group">

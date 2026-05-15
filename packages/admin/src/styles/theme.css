@@ -108,18 +108,18 @@ body,
     var(--font-family-base), var(--font-family-cjk-sc),
     var(--font-family-cjk-jp), var(--font-family-fallback);
 
-  /* Typescale (canonical) */
-  --font-size-sm: 13px;
-  --font-size-base: 14px;
-  --font-size-md: 15px;
-  --font-size-lg: 16px;
-  --font-size-xl: 18px;
-  --font-size-2xl: 22px;
-  --font-size-3xl: 28px;
-  --font-size-display-1: 36px;
-  --font-size-display-2: 40px;
+  /* Typescale (canonical) — elevated baseline for long-form / CJK readability */
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-md: 17px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 25px;
+  --font-size-3xl: 31px;
+  --font-size-display-1: 38px;
+  --font-size-display-2: 42px;
 
-  --font-size-xs: 12px;
+  --font-size-xs: 13px;
 
   --font-weight-normal: 400;
   --font-weight-medium: 500;
@@ -134,20 +134,20 @@ body,
   --letter-spacing-caps: 0.08em;
 
   /* Leading (line-height) — per-size canonical binding */
-  --leading-xs: 1.4;
-  --leading-sm: 1.45;
-  --leading-base: 1.45;
-  --leading-md: 1.45;
-  --leading-lg: 1.4;
-  --leading-xl: 1.3;
-  --leading-2xl: 1.2;
-  --leading-3xl: 1.15;
+  --leading-xs: 1.45;
+  --leading-sm: 1.48;
+  --leading-base: 1.5;
+  --leading-md: 1.5;
+  --leading-lg: 1.42;
+  --leading-xl: 1.32;
+  --leading-2xl: 1.22;
+  --leading-3xl: 1.16;
   --leading-display: 1;
 
   /* Semantic aliases (backward-compat) */
   --leading-tight: 1.2;
-  --leading-normal: 1.45;
-  --leading-relaxed: 1.6;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.62;
 
   /* --- Z-index --- */
   --z-topbar: 40;
@@ -164,6 +164,7 @@ body,
 
 body {
   font-family: var(--font-family);
+  font-size: var(--font-size-base);
   background-color: var(--color-bg-2);
   color: var(--color-text-1);
   line-height: var(--leading-normal);

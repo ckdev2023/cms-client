@@ -3,18 +3,22 @@
  * 零外部依赖，仅使用 `Date.prototype.toLocaleString`。
  *
  * @param iso - ISO 8601 时间戳
- * @param locale - BCP 47 locale（如 `"ja-JP"`、`"zh-CN"`、`"en-US"`）
+ * @param locale - BCP 47 locale（如 `"ja-JP"`、`"zh-CN"`、`"en-US"`）；省略或空字符串时使用运行时默认语言
  * @returns 格式化后的日期时间；无效输入返回 `""`
  */
 export function formatDateTime(
   iso: string | null | undefined,
-  locale: string,
+  locale?: string,
 ): string {
   if (!iso) return "";
   try {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return "";
-    return d.toLocaleString(locale, {
+    const loc =
+      typeof locale === "string" && locale.trim() !== ""
+        ? locale.trim()
+        : undefined;
+    return d.toLocaleString(loc, {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",

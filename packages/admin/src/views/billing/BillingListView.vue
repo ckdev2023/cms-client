@@ -161,9 +161,21 @@ const deepLinkBillingPlanQuery = computed(() => {
   return typeof q === "string" ? q : "";
 });
 
+const deepLinkSearchHintQuery = computed(() => {
+  const q = route.query.hint;
+  return typeof q === "string" ? q : "";
+});
+
+const deepLinkCollectQuery = computed(() => {
+  const q = route.query.collect;
+  return typeof q === "string" ? q : "";
+});
+
 useBillingDeepLink({
   caseQuery: deepLinkCaseQuery,
   billingPlanQuery: deepLinkBillingPlanQuery,
+  collectQuery: deepLinkCollectQuery,
+  searchHintQuery: deepLinkSearchHintQuery,
   search: filters.search,
   openPaymentModal: (caseId, billingPlanId) =>
     openPaymentModal({

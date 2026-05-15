@@ -1,4 +1,11 @@
-import { ref, computed, watch, type Ref } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onScopeDispose,
+  getCurrentScope,
+  type Ref,
+} from "vue";
 import type { CaseDetail, CaseDetailTab } from "../types";
 import type { FormTemplate } from "../types-detail";
 import { CASE_DETAIL_TABS } from "../constants";
@@ -8,7 +15,6 @@ import { resolveDetailTab } from "../query";
 import { createWriteActions } from "./useCaseDetailWriteActions";
 import type { RefetchTag } from "./useCaseDetailRefetchTags";
 import { ALL_TAB_TAGS } from "./useCaseDetailRefetchTags";
-import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
 import { useCaseFormTemplates } from "./useCaseFormTemplates";
 import {
   useCasePhaseTransitionMenu,
@@ -24,22 +30,13 @@ import {
   deriveNotFoundReason,
   type NotFoundReason,
 } from "./useCaseDetailErrorStatus";
+import {
+  applyTabData,
+  type DetailTabDataBundle,
+} from "./caseDetailApplyTabData";
 
 export type { TabCounter } from "./caseDetailTabCounter";
 import type { TabCounter } from "./caseDetailTabCounter";
-
-interface DetailTabDataBundle {
-  documents: CaseDetail["documents"];
-  forms: CaseDetail["forms"];
-  validation: CaseDetail["validation"];
-  billing: CaseDetail["billing"];
-  submissionPackages: CaseDetail["submissionPackages"];
-  doubleReview: CaseDetail["doubleReview"];
-  messages: CaseDetail["messages"];
-  logEntries: CaseDetail["logEntries"];
-  tasks: CaseDetail["tasks"];
-  deadlines: CaseDetail["deadlines"];
-}
 
 const EMPTY_FORMS: CaseDetail["forms"] = { templates: [], generated: [] };
 const EMPTY_VALIDATION: CaseDetail["validation"] = {
@@ -224,17 +221,6 @@ interface DetailLoaderInput {
   locale?: Ref<string>;
 }
 
-function applyTabData(
-  detail: CaseDetail,
-  tabData: Partial<DetailTabDataBundle>,
-): CaseDetail {
-  const merged = { ...detail, ...tabData };
-  if (tabData.logEntries) {
-    merged.timeline = buildOverviewTimelineFromLog(tabData.logEntries);
-  }
-  return merged;
-}
-
 function createDetailLoader(input: DetailLoaderInput) {
   let fetchGeneration = 0;
 
@@ -250,6 +236,14 @@ function createDetailLoader(input: DetailLoaderInput) {
     ).catch(() => null);
     if (gen !== fetchGeneration || !input.detail.value || !tabData) return;
     input.detail.value = applyTabData(input.detail.value, tabData);
+  }
+
+  function invalidateInFlight(): void {
+    fetchGeneration++;
+  }
+
+  if (getCurrentScope()) {
+    onScopeDispose(invalidateInFlight);
   }
 
   async function fetchDetail(): Promise<void> {

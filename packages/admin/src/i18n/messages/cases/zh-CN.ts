@@ -424,6 +424,7 @@ const casesZhCN = {
       workflowStep: {
         title: "业务子步骤",
         currentLabel: "当前步骤",
+        currentHeadlineInactiveFailure: "失败结案时的进度节点：{step}",
         stageGroup: "{stage} 阶段",
         completed: "已完成",
         current: "进行中",
@@ -454,7 +455,10 @@ const casesZhCN = {
         coeReady: "可以发送 COE",
         coeBlocked: "COE 被阻断 — 请先完成收费",
         sendCoe: "发送 COE",
-        sendCoeHint: "推进业务子步骤到 COE 已发送。需先结清本案应收。",
+        sendCoeHint:
+          "请先在收费侧结清本案应收并完成必要确认后再发送 COE；满足条件后即可推进子步骤至「COE 已发送」。",
+        sendCoeHintReady:
+          "收款与门禁已通过，可点此推进业务子步骤至「COE 已发送」；请在确认内容与时机后再操作。",
         sendCoeHintMilestoneMissing:
           "请先在「收费」中登记本案一次性应收并结清后，再发送 COE。",
         blockerPayment: "本案应收尚未结清，不能发送 COE。",

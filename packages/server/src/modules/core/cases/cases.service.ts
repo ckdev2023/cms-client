@@ -523,13 +523,6 @@ export class CasesService {
       }
     }
 
-    const caseForAggregate = enrichCaseAggregateReadModelCase(
-      caseEntity,
-      latestSubmissionSummary,
-      templateApplicationType,
-      initialSubmissionSubmittedAt,
-    );
-
     let finalPaymentMilestoneMatched = true;
     try {
       finalPaymentMilestoneMatched = await queryFinalPaymentMilestoneMatched(
@@ -544,6 +537,32 @@ export class CasesService {
       );
     }
 
+    let billingCaseRow = caseRow;
+    let billingCaseEntity = caseEntity;
+    try {
+      await tenantDb.transaction(async (tx) => {
+        await syncBillingCacheForCase(tx, id);
+      });
+      const syncedRow = await queryDetailCaseRow(tenantDb, id);
+      if (syncedRow) {
+        billingCaseRow = syncedRow;
+        billingCaseEntity = mapCaseRow(syncedRow);
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      // eslint-disable-next-line no-console
+      console.error(
+        `[CasesService.getDetailAggregate] billing cache sync failed for case ${id}: ${msg}`,
+      );
+    }
+
+    const caseForAggregate = enrichCaseAggregateReadModelCase(
+      billingCaseEntity,
+      latestSubmissionSummary,
+      templateApplicationType,
+      initialSubmissionSubmittedAt,
+    );
+
     return {
       case: caseForAggregate,
       counts: mappedCounts,
@@ -551,9 +570,12 @@ export class CasesService {
       latestSubmission: latestSubmissionSummary,
       latestReview: mapLatestReviewRow(latestReview),
       documentProgressByProvider: mapDocProgressByProviderRows(docProgress),
-      billing: deriveBillingSummary(caseEntity, finalPaymentMilestoneMatched),
-      deepLink: deriveDeepLink(caseEntity, caseRow),
-      workflowStep: resolveWorkflowStepSummary(caseEntity),
+      billing: deriveBillingSummary(
+        billingCaseEntity,
+        finalPaymentMilestoneMatched,
+      ),
+      deepLink: deriveDeepLink(billingCaseEntity, billingCaseRow),
+      workflowStep: resolveWorkflowStepSummary(billingCaseEntity),
       currentResidencePeriod,
       successCloseoutCheck,
       failureCloseoutCheck: failureCheck.isFailurePath ? failureCheck : null,

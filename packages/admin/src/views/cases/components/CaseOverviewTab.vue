@@ -34,6 +34,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "switchTab", tab: CaseDetailTab): void;
   (e: "advanceToCoe"): void;
+  (e: "openCollection"): void;
   (e: "retryReminder"): void;
   (e: "failureClose"): void;
 }>();
@@ -65,6 +66,7 @@ const renderableFinalPaymentGate = computed(() =>
     <CaseCustomerBackLink
       v-if="detail.customerId"
       :customer-id="detail.customerId"
+      :case-pk="detail.id"
       :client="localizedClientName"
       :group-name="resolvedGroupName"
     />
@@ -91,7 +93,7 @@ const renderableFinalPaymentGate = computed(() =>
       :write-feedback="writeFeedback"
       :readonly="readonly ?? detail.readonly"
       @advance-to-coe="emit('advanceToCoe')"
-      @switch-tab="(tab) => emit('switchTab', tab as CaseDetailTab)"
+      @open-collection="emit('openCollection')"
     />
 
     <CaseSupplementRoundPanel
