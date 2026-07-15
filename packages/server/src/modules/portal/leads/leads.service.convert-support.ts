@@ -1,7 +1,7 @@
 import type { Pool } from "pg";
 
 import type { Lead } from "../model/portalEntities";
-import type { ConvertDedupHit } from "./leads.service";
+import type { ConvertDedupHit } from "./leads.types";
 
 type LeadDedupMatch = {
   phone: string | null;

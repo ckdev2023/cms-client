@@ -8,7 +8,7 @@ import {
   type TemplatesResolver,
 } from "../../core/cases/public";
 import type { RequestContext } from "../../core/tenancy/requestContext";
-import type { LeadConvertInput } from "./leads.service";
+import type { LeadConvertInput } from "./leads.types";
 
 const logger = new Logger("LeadsService");
 

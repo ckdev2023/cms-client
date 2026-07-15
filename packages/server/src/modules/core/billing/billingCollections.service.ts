@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
-import { CaseAccessService } from "../cases/public";
+import { CASE_EDIT_GUARD, type CaseEditGuard } from "./caseEditGuard";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TasksService } from "../tasks/tasks.service";
@@ -47,7 +47,7 @@ export type CollectionResult = {
 export class BillingCollectionsService {
   constructor(
     @Inject(Pool) private readonly pool: Pool,
-    @Inject(CaseAccessService) private readonly caseAccess: CaseAccessService,
+    @Inject(CASE_EDIT_GUARD) private readonly caseAccess: CaseEditGuard,
     @Inject(TasksService) private readonly tasksService: TasksService,
     @Inject(TimelineService)
     private readonly timelineService: TimelineService,

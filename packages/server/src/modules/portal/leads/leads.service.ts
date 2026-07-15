@@ -1,3 +1,7 @@
+import type { ConvertDedupHit, LeadConvertInput } from "./leads.types";
+
+export type { ConvertDedupHit, LeadConvertInput };
+
 import {
   BadRequestException,
   ConflictException,
@@ -46,16 +50,6 @@ export type LeadAssignInput = {
   assignedUserId: string;
 };
 
-/** Lead 转化入参。 */
-export type LeadConvertInput = {
-  customerId: string;
-  caseTypeCode: string;
-  ownerUserId: string;
-  orgId: string;
-  confirmDedup?: boolean;
-  actorUserId?: string;
-};
-
 /** Lead 列表查询入参。 */
 export type LeadListInput = {
   appUserId?: string;
@@ -63,23 +57,6 @@ export type LeadListInput = {
   assignedOrgId?: string;
   page?: number;
   limit?: number;
-};
-
-/** Dedup 命中结果（用于 409 响应）。 */
-export type ConvertDedupHit = {
-  customers: {
-    id: string;
-    name: string | null;
-    phone: string | null;
-    email: string | null;
-  }[];
-  contactPersons: {
-    id: string;
-    name: string;
-    phone: string | null;
-    email: string | null;
-    customerId: string | null;
-  }[];
 };
 
 const LEAD_COLS = [

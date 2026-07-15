@@ -3,6 +3,7 @@ module.exports = {
     tsConfig: {
       fileName: "tsconfig.json",
     },
+    tsPreCompilationDeps: true,
     doNotFollow: {
       path: "node_modules",
     },
@@ -52,14 +53,29 @@ module.exports = {
         "例外：app.module（DI 组装根）、测试与 test-support/test-fixtures、" +
         "portal/intake/intake.types（与 cases 的双向类型接缝，见 modules-core-no-import-portal 白名单；" +
         "改走 barrel 会形成 intake.types → public → cases.service → intake.types 循环）。" +
-        "迁移期 warn，收口批（S5）升级为 error。",
-      severity: "warn",
+        "S5 收口：全部消费方已迁至 public，规则由 warn 升为 error。",
+      severity: "error",
       from: {
         path: "^src",
         pathNot:
           "^src/(modules/core/cases|app\\.module\\.ts|modules/portal/intake/intake\\.types\\.ts)|\\.test\\.ts$|test-support|test-fixtures",
       },
       to: { path: "^src/modules/core/cases/(?!public/)" },
+    },
+    {
+      name: "billing-no-import-cases",
+      comment:
+        "S5 解环：cases ↔ billing 的模块级双向依赖已解开，方向固定为 " +
+        "cases → billing（收费引擎 billingGuards + BillingPlans/PaymentRecords 服务 + DTO）。" +
+        "billing 需要的案件能力只通过自己声明的窄接口取得（caseEditGuard.ts 的 " +
+        "CASE_EDIT_GUARD，由 app.module 用 useExisting 绑定到 CaseAccessService），" +
+        "沿用 TEMPLATES_RESOLVER 的既有范式。billing 不得再 import cases。",
+      severity: "error",
+      from: {
+        path: "^src/modules/core/billing",
+        pathNot: "\\.test\\.ts$|test-support|test-fixtures",
+      },
+      to: { path: "^src/modules/core/cases" },
     },
     {
       name: "modules-templates-no-import-custom",

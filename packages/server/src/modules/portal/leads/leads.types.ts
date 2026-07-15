@@ -242,3 +242,40 @@ export type LeadConvertToCasePayload = {
   sourceChannel: "lead_convert";
   leadId: string;
 };
+
+// ────────────────────────────────────────────────────────────────
+// 转化契约类型（S5 解环）
+//
+// 这两个类型原定义在 leads.service.ts，而 leads.service 又 import
+// convert-support / checklist-support 的函数，两个 support 再回引这些
+// 类型，形成 type-only 循环。类型是叶子知识，下沉至本模块即解环。
+// （该环此前不可见：dependency-cruiser 默认不追踪 type-only import，
+//   S5 开启 tsPreCompilationDeps 后才暴露。）
+// ────────────────────────────────────────────────────────────────
+
+/** Lead 转化入参。 */
+export type LeadConvertInput = {
+  customerId: string;
+  caseTypeCode: string;
+  ownerUserId: string;
+  orgId: string;
+  confirmDedup?: boolean;
+  actorUserId?: string;
+};
+
+/** Dedup 命中结果（用于 409 响应）。 */
+export type ConvertDedupHit = {
+  customers: {
+    id: string;
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+  }[];
+  contactPersons: {
+    id: string;
+    name: string;
+    phone: string | null;
+    email: string | null;
+    customerId: string | null;
+  }[];
+};

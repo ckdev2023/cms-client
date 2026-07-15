@@ -20,6 +20,7 @@ import {
 } from "./modules/core/cases/cases.service";
 import { BillingCollectionsController } from "./modules/core/billing/billingCollections.controller";
 import { BillingCollectionsService } from "./modules/core/billing/billingCollections.service";
+import { CASE_EDIT_GUARD } from "./modules/core/billing/caseEditGuard";
 import { BillingPlansController } from "./modules/core/billing/billingPlans.controller";
 import { BillingPlansService } from "./modules/core/billing/billingPlans.service";
 import { BillingSummaryController } from "./modules/core/billing/billingSummary.controller";
@@ -247,6 +248,12 @@ import {
     {
       provide: TEMPLATES_RESOLVER,
       useExisting: TemplatesService,
+    },
+    {
+      // S5 解环：billing 只声明它需要的窄接口（CaseEditGuard），
+      // 由此处绑定到 cases 的实现，billing 因此不再 import cases。
+      provide: CASE_EDIT_GUARD,
+      useExisting: CaseAccessService,
     },
     {
       provide: APP_INTERCEPTOR,

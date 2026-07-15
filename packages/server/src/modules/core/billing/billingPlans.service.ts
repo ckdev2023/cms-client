@@ -11,7 +11,7 @@ import type {
   BillingPlan,
   BillingPlanStatus,
 } from "../model/billingEntities";
-import type { CaseBillingPlanDto } from "../cases/public";
+import type { CaseBillingPlanDto } from "./billing.dto-types";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { customerNameExpr } from "../../../infra/db/customerNameExpr";
