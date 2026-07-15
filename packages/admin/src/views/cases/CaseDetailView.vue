@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
-import { computed, ref, watch } from "vue";
+import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../../shared/model/useToast";
@@ -8,16 +8,6 @@ import PageHeader from "../../shared/ui/PageHeader.vue";
 import Chip, { type ChipTone } from "../../shared/ui/Chip.vue";
 import Button from "../../shared/ui/Button.vue";
 import StageChip from "./components/StageChip.vue";
-import CaseOverviewTab from "./detail/tabs/overview/CaseOverviewTab.vue";
-import CaseInfoTab from "./detail/tabs/info/CaseInfoTab.vue";
-import CaseDocumentsTab from "./detail/tabs/documents/CaseDocumentsTab.vue";
-import CaseDeadlinesTab from "./detail/tabs/deadlines/CaseDeadlinesTab.vue";
-import CaseFormsTab from "./detail/tabs/forms/CaseFormsTab.vue";
-import CaseTasksTab from "./detail/tabs/tasks/CaseTasksTab.vue";
-import CaseMessagesTab from "./detail/tabs/comms/CaseMessagesTab.vue";
-import CaseLogTab from "./detail/tabs/comms/CaseLogTab.vue";
-import CaseValidationTab from "./detail/tabs/validation/CaseValidationTab.vue";
-import CaseBillingTab from "./detail/tabs/billing/CaseBillingTab.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
 import CaseEditModal from "./components/CaseEditModal.vue";
 import CaseDeadlineCreateModal from "./detail/tabs/deadlines/CaseDeadlineCreateModal.vue";
@@ -52,12 +42,50 @@ import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
 import type { PaymentRow } from "./detail/tabs/billing/types";
 import type { FormTemplate } from "./detail/tabs/forms/types";
+
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
 const tabRefs = ref<HTMLElement[]>([]);
 const toast = useToast();
 const route = useRoute();
 const router = useRouter();
+
+// ── Tab 组件懒加载（B4）────────────────────────────────────────
+// 10 个 Tab 面板本就由 v-if/v-else-if 按 activeTab 择一渲染，运行时从不同时挂载；
+// 改 defineAsyncComponent 是为拆 chunk：此前 10 个 Tab 全部静态 import，被打进
+// CaseDetailView 这一个 205 kB(gzip 48.8) 的路由 chunk，打开详情页即全量下载。
+// 拆分后进入详情页只加载壳 + 当前 Tab，其余 9 个按需取。
+// 每个 Tab 的 model/adapter 依赖随之一并进入各自 chunk，收益不止组件本身。
+const CaseOverviewTab = defineAsyncComponent(
+  () => import("./detail/tabs/overview/CaseOverviewTab.vue"),
+);
+const CaseInfoTab = defineAsyncComponent(
+  () => import("./detail/tabs/info/CaseInfoTab.vue"),
+);
+const CaseDocumentsTab = defineAsyncComponent(
+  () => import("./detail/tabs/documents/CaseDocumentsTab.vue"),
+);
+const CaseDeadlinesTab = defineAsyncComponent(
+  () => import("./detail/tabs/deadlines/CaseDeadlinesTab.vue"),
+);
+const CaseFormsTab = defineAsyncComponent(
+  () => import("./detail/tabs/forms/CaseFormsTab.vue"),
+);
+const CaseTasksTab = defineAsyncComponent(
+  () => import("./detail/tabs/tasks/CaseTasksTab.vue"),
+);
+const CaseMessagesTab = defineAsyncComponent(
+  () => import("./detail/tabs/comms/CaseMessagesTab.vue"),
+);
+const CaseLogTab = defineAsyncComponent(
+  () => import("./detail/tabs/comms/CaseLogTab.vue"),
+);
+const CaseValidationTab = defineAsyncComponent(
+  () => import("./detail/tabs/validation/CaseValidationTab.vue"),
+);
+const CaseBillingTab = defineAsyncComponent(
+  () => import("./detail/tabs/billing/CaseBillingTab.vue"),
+);
 
 /**
  * 解析 Tab 计数器展示文案，优先使用 i18n 文案。
@@ -1039,174 +1067,4 @@ async function onFormGenSubmit(payload: {
   </div>
 </template>
 
-<style scoped>
-.case-detail-view {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
-}
-
-/* ── Meta line ───────────────────────────────────────── */
-
-.case-detail-view__meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px 12px;
-  margin: 0;
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-}
-
-.case-detail-view__meta-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.case-detail-view__meta-link {
-  color: var(--color-primary-6);
-  text-decoration: none;
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
-.case-detail-view__meta-sep {
-  color: var(--color-text-3);
-}
-
-.case-detail-view__readonly-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: var(--color-bg-3);
-  border: 1px solid var(--color-border-1);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-text-3);
-}
-
-.case-detail-view__readonly-banner svg {
-  flex-shrink: 0;
-}
-
-.case-detail-view__failure-banner {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 12px 16px;
-  background: rgba(220, 38, 38, 0.04);
-  border: 1px solid rgba(220, 38, 38, 0.15);
-  border-radius: var(--radius-lg);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-bold);
-  color: var(--color-danger-text);
-}
-
-.case-detail-view__failure-banner svg {
-  flex-shrink: 0;
-  color: var(--color-danger, #dc2626);
-}
-
-.case-detail-view__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 20px;
-  border-bottom: 1px solid var(--color-border-1);
-  overflow-x: auto;
-  min-width: 0;
-}
-
-.case-detail-view__tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 0;
-  border: none;
-  background: none;
-  font: inherit;
-  font-size: var(--font-size-base);
-  line-height: var(--leading-base);
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-3);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  white-space: nowrap;
-  flex-shrink: 0;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.case-detail-view__tab:hover:not(.case-detail-view__tab--disabled) {
-  color: var(--color-text-1);
-}
-
-.case-detail-view__tab--disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
-}
-
-.case-detail-view__tab.active {
-  color: var(--color-text-1);
-  border-bottom-color: var(--color-text-1);
-  font-weight: var(--font-weight-bold);
-}
-
-.case-detail-view__counter {
-  padding: 1px 7px;
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-sm);
-  line-height: var(--leading-sm);
-  font-weight: var(--font-weight-bold);
-  background: var(--color-text-1);
-  color: #fff;
-  &--warning {
-    background: rgba(245, 158, 11, 0.16);
-    color: var(--color-warning-text);
-  }
-  &--danger {
-    background: rgba(220, 38, 38, 0.1);
-    color: var(--color-danger-text);
-  }
-}
-
-.case-detail-view__panel {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-}
-
-.case-detail-view__loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 64px 24px;
-  color: var(--color-text-3);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold);
-}
-
-.case-detail-view__not-found {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding: 64px 24px;
-  text-align: center;
-  color: var(--color-text-3);
-  & a {
-    color: var(--color-primary-6);
-    text-decoration: none;
-    font-weight: var(--font-weight-semibold);
-  }
-  & a:hover {
-    text-decoration: underline;
-  }
-}
-</style>
+<style scoped src="./CaseDetailView.css"></style>
