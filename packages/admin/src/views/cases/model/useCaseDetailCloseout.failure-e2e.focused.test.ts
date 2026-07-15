@@ -9,7 +9,7 @@ import { nextTick, ref } from "vue";
 
 import type { CaseDetail } from "../types";
 import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { useCaseDetailModel } from "./useCaseDetailModel";
 
 function stubRepo(overrides: Partial<CaseRepository> = {}): CaseRepository {

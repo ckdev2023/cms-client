@@ -26,7 +26,7 @@ import {
   type CaseTransitionInput,
   type CaseUpdateInput,
   type CaseWorkflowStepTransitionInput,
-} from "./CaseAdapter";
+} from "../model/CaseAdapter";
 import {
   CaseRepositoryError,
   requestAndAdapt,

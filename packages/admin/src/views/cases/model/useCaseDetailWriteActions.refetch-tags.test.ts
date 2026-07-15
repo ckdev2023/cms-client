@@ -7,7 +7,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { RefetchTag } from "./useCaseDetailWriteActions";
 import { createWriteActions } from "./useCaseDetailWriteActions";
 

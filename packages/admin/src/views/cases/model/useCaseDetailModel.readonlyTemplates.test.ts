@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 import { useCaseDetailModel } from "./useCaseDetailModel";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
 import {
   createMockAggregate,

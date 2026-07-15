@@ -114,23 +114,11 @@ export default [
     },
   },
   {
-    files: ["src/views/cases/**/*.{ts,tsx,vue}"],
-    rules: {
-      "no-restricted-imports": [
-        "error",
-        {
-          patterns: [
-            {
-              group: ["**/CaseTimelineBuilders", "**/CaseTimelineBuilders.ts"],
-              message:
-                "CaseTimelineBuilders は廃止済み。CaseCommsTimelineBuilders を使用してください（ADR-007）。",
-            },
-          ],
-        },
-      ],
-    },
-  },
-  {
+    // cases 模块的路径封禁集中在此唯一块内。
+    //
+    // 注意（flat config 语义）：同 scope 的多个块若都设 no-restricted-imports，
+    // 后者整体覆盖前者而非合并。此前 CaseTimelineBuilders 封禁重复成两块，
+    // 前一块实为死代码；新增封禁若另起一块会静默废掉既有规则，故必须并入本块。
     files: ["src/views/cases/**/*.{ts,tsx,vue}"],
     rules: {
       "no-restricted-imports": [
@@ -141,6 +129,18 @@ export default [
               group: ["**/CaseTimelineBuilders", "**/CaseTimelineBuilders.ts"],
               message:
                 "CaseTimelineBuilders は削除済み。CaseCommsTimelineBuilders を使用してください（ADR-007）",
+            },
+            {
+              group: [
+                "**/model/CaseRepository",
+                "**/model/CaseRepository.ts",
+                "**/model/CaseRepositoryFactories",
+                "**/model/CaseRepositoryReadSide",
+                "**/model/CaseRepositorySupport",
+                "**/model/CaseRepositoryWriteSide",
+              ],
+              message:
+                "CaseRepository* 已迁至 views/cases/api/（拆分 B1）。请从 api/ 引用；model/ 只保留视图模型与 adapter。",
             },
           ],
         },

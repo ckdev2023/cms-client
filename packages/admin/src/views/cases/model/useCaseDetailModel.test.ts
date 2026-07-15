@@ -9,7 +9,7 @@ import { describe, it, expect, vi } from "vitest";
 import { ref } from "vue";
 import { useCaseDetailModel } from "./useCaseDetailModel";
 import { CASE_DETAIL_TABS } from "../constants";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseDetail } from "../types";
 import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
 import {

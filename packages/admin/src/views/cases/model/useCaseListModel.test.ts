@@ -17,7 +17,7 @@ import {
 } from "../constants";
 import { CASE_SUMMARY_CARD_KEYS } from "./CaseAdapterTypes";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 
 const item = SAMPLE_CASE_LIST[0];
 

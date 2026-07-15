@@ -8,7 +8,7 @@ import {
   FAMILY_SCENARIO,
 } from "../fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../constants";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseCreateInput, CasePartyCreateInput } from "./CaseAdapterTypes";
 import { vi } from "vitest";
 

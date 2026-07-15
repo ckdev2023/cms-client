@@ -9,7 +9,7 @@ import { ref } from "vue";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
-import type { CaseRepository } from "./model/CaseRepository";
+import type { CaseRepository } from "./api/CaseRepository";
 import {
   createMockAggregate,
   createMockDetail,

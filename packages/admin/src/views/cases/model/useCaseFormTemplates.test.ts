@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ref, nextTick } from "vue";
 import { useCaseFormTemplates } from "./useCaseFormTemplates";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { FormTemplate } from "../types-detail";
 
 function makeTemplate(id: string, name: string): FormTemplate {

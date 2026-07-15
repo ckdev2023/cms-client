@@ -25,7 +25,7 @@ import {
   buildCreateCaseInputFromDraft,
   type UpdateCaseDraftSnapshot,
   buildUpdateCaseInputFromDraft,
-} from "./CaseAdapter";
+} from "../model/CaseAdapter";
 
 import type { CaseListItem, CaseSummaryCardData, CaseDetail } from "../types";
 import type {

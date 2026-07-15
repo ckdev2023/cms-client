@@ -13,23 +13,23 @@ import {
   buildCommunicationLogsPostUrl,
   buildCreateCommunicationLogPayload,
   type CommunicationLogCreateInput,
-} from "./CaseAdapterMessageWriteBuilders";
+} from "../model/CaseAdapterMessageWriteBuilders";
 import {
   buildCreateGeneratedDocumentPayload,
   buildGeneratedDocumentDeleteUrl,
   buildGeneratedDocumentsPostUrl,
   type GeneratedDocumentCreateInput,
-} from "./CaseAdapterGeneratedDocumentWriteBuilders";
+} from "../model/CaseAdapterGeneratedDocumentWriteBuilders";
 import {
   buildCreateReminderPayload,
   buildRemindersPostUrl,
   type ReminderCreateInput,
-} from "./CaseAdapterReminderWriteBuilders";
+} from "../model/CaseAdapterReminderWriteBuilders";
 import {
   buildCreateTaskPayload,
   buildTasksPostUrl,
   type TaskCreateInput,
-} from "./CaseAdapterTaskWriteBuilders";
+} from "../model/CaseAdapterTaskWriteBuilders";
 import {
   requestAndAdapt,
   type CaseRepositoryRuntime,

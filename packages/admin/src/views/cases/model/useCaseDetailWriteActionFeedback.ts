@@ -1,4 +1,4 @@
-import { CaseRepositoryError } from "./CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepository";
 import {
   resolveWriteErrorI18nKey,
   isGateBlockError,

@@ -21,9 +21,9 @@ import {
   FAMILY_SCENARIO,
 } from "../fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../constants";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseMutationResult, CaseCreateInput } from "./CaseAdapterTypes";
-import { CaseRepositoryError } from "./CaseRepositorySupport";
+import { CaseRepositoryError } from "../api/CaseRepositorySupport";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 

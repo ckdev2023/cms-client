@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 
 import { useCaseDetailModel } from "./useCaseDetailModel";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import {
   createMockAggregate,
   createMockDetail,

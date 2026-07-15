@@ -25,7 +25,7 @@ import {
   type CaseTransitionInput,
   type CaseUpdateInput,
   type CaseWorkflowStepTransitionInput,
-} from "./CaseAdapter";
+} from "../model/CaseAdapter";
 import {
   CaseRepositoryError,
   createRuntime,
@@ -74,11 +74,11 @@ import {
   type SubmissionPackageCreateInput,
   type WriteResultWithId,
 } from "./CaseRepositoryWriteSide";
-import type { CommunicationLogCreateInput } from "./CaseAdapterMessageWriteBuilders";
-import type { GeneratedDocumentCreateInput } from "./CaseAdapterGeneratedDocumentWriteBuilders";
-import type { ReminderCreateInput } from "./CaseAdapterReminderWriteBuilders";
-import type { TaskCreateInput } from "./CaseAdapterTaskWriteBuilders";
-import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
+import type { CommunicationLogCreateInput } from "../model/CaseAdapterMessageWriteBuilders";
+import type { GeneratedDocumentCreateInput } from "../model/CaseAdapterGeneratedDocumentWriteBuilders";
+import type { ReminderCreateInput } from "../model/CaseAdapterReminderWriteBuilders";
+import type { TaskCreateInput } from "../model/CaseAdapterTaskWriteBuilders";
+import type { ChecklistPreviewLineItem } from "../model/checklistPreview.contract";
 
 // ─── Responsibility Boundary ────────────────────────────────────
 // CaseRepository is request-orchestration only:
@@ -340,7 +340,7 @@ export interface CaseRepository {
 }
 
 export { CaseRepositoryError };
-export type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
+export type { ChecklistPreviewLineItem } from "../model/checklistPreview.contract";
 
 /**
  * 创建基于 HTTP 请求的真实 CaseRepository。

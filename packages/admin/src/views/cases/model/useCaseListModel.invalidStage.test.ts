@@ -10,7 +10,7 @@ import { useCaseListModel } from "./useCaseListModel";
 import { SAMPLE_CASE_LIST } from "../fixtures";
 import type { CaseListItem } from "../types";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 
 async function flushFetch(): Promise<void> {
   await nextTick();

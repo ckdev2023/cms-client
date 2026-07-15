@@ -17,7 +17,7 @@ import type {
   CaseBillingRiskAckInput,
   CaseMutationResult,
 } from "./CaseAdapterTypes";
-import { createCaseRepository } from "./CaseRepository";
+import { createCaseRepository } from "../api/CaseRepository";
 
 /**
  *

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref } from "vue";
 import { useCaseDetailModel } from "./useCaseDetailModel";
 import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseDetail } from "../types";
 import type { LogEntry } from "../types-detail";
 import {

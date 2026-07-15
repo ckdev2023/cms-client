@@ -7,8 +7,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 
-import type { CaseRepository } from "./CaseRepository";
-import { CaseRepositoryError } from "./CaseRepositorySupport";
+import type { CaseRepository } from "../api/CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepositorySupport";
 import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
 import type { CaseDetail } from "../types";
 import { useCaseDetailModel } from "./useCaseDetailModel";

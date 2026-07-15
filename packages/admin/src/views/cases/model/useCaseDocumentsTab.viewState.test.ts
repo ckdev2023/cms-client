@@ -7,7 +7,7 @@ import type {
 } from "../../documents/model/DocumentRepositoryTypes";
 import { DocumentRepositoryError } from "../../documents/model/DocumentRepositoryTypes";
 import type { DocumentListItem } from "../../documents/types";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 
 const toastAdd = vi.fn();
 

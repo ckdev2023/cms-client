@@ -1,6 +1,6 @@
 import type { CaseListFiltersState, CaseListItem } from "../types";
 import { CASE_LIST_SUMMARY_BASIS_CAP } from "../constants";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
 import { resolveCaseListGroupFilterForApi } from "../../../shared/model/useGroupOptions";
 

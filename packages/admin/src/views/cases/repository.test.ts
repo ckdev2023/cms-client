@@ -2,7 +2,7 @@
 // Owner: mock CaseRepository behaviour (createMockCaseRepository),
 //   matchesCaseFilters predicate, and getStageInfo helper.
 // Does NOT test: fixture data shape (→ fixtures.test.ts),
-//   real HTTP repository (→ model/CaseRepository.test.ts),
+//   real HTTP repository (→ api/CaseRepository.test.ts),
 //   adapters, or composable logic.
 // ────────────────────────────────────────────────────────────────
 

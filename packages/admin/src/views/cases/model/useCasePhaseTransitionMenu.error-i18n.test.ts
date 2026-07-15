@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref, type Ref } from "vue";
 import type { CaseDetail } from "../types";
-import type { CaseRepository } from "./CaseRepository";
-import { CaseRepositoryError } from "./CaseRepositorySupport";
+import type { CaseRepository } from "../api/CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepositorySupport";
 import {
   useCasePhaseTransitionMenu,
   extractErrorCode,

@@ -1,5 +1,5 @@
 import { ref, watch, computed, type Ref, type ComputedRef } from "vue";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
 
 /** checklist 预览状态。 */

@@ -10,7 +10,7 @@ import { nextTick, ref } from "vue";
 import type { LocationQuery } from "vue-router";
 import { useCaseListModel } from "./useCaseListModel";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { DEFAULT_CASE_PAGE_SIZE } from "../constants";
 import {
   buildCaseListQuery,

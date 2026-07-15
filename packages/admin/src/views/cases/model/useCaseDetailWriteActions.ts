@@ -3,11 +3,11 @@
 // 职责：feedback 状态管理 + 各 write action 的 async 编排。
 
 import { ref } from "vue";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { MessageChannelChoice } from "./CaseAdapterMessageWriteBuilders";
 import type { DeadlineKindChoice } from "./CaseAdapterReminderWriteBuilders";
 import type { TaskPriorityChoice } from "./CaseAdapterTaskWriteBuilders";
-import type { SubmissionPackageCreateInput } from "./CaseRepositoryWriteSide";
+import type { SubmissionPackageCreateInput } from "../api/CaseRepositoryWriteSide";
 import type { RefetchTag } from "./useCaseDetailRefetchTags";
 import {
   EMPTY_FEEDBACK,

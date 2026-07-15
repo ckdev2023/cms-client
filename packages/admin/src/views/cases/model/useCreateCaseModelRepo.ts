@@ -1,5 +1,5 @@
-import type { CaseRepository } from "./CaseRepository";
-import { createCaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
+import { createCaseRepository } from "../api/CaseRepository";
 
 /**
  * 合并注入的 repo 与默认 checklist 预检实现。

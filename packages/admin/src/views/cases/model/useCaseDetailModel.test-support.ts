@@ -1,6 +1,6 @@
 import { nextTick } from "vue";
 import { vi } from "vitest";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseDetail } from "../types";
 import type { CaseDetailAggregate } from "./CaseAdapterDetailContracts";
 

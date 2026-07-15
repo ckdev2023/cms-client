@@ -5,8 +5,8 @@ import type {
   CreateCaseDraftState,
   CreateCaseRelatedParty,
 } from "../types";
-import type { CaseRepository } from "./CaseRepository";
-import { CaseRepositoryError } from "./CaseRepositorySupport";
+import type { CaseRepository } from "../api/CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepositorySupport";
 import type { CaseMutationResult } from "./CaseAdapterTypes";
 import {
   buildCreateCaseInputFromDraft,

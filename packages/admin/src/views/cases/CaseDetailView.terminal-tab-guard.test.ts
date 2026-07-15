@@ -5,7 +5,7 @@ import { resolve } from "node:path";
 import { CASE_DETAIL_TABS } from "./constants";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
-import type { CaseRepository } from "./model/CaseRepository";
+import type { CaseRepository } from "./api/CaseRepository";
 import type { CaseDetailTab } from "./types";
 import {
   createMockAggregate,

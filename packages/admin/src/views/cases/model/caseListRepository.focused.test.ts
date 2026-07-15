@@ -13,9 +13,12 @@ import { describe, expect, it, vi } from "vitest";
 import { nextTick, ref } from "vue";
 import type { LocationQuery } from "vue-router";
 import { useCaseListModel } from "./useCaseListModel";
-import { createCaseRepository, CaseRepositoryError } from "./CaseRepository";
+import {
+  createCaseRepository,
+  CaseRepositoryError,
+} from "../api/CaseRepository";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseListItem } from "../types";
 import { SAMPLE_CASE_LIST } from "../fixtures";
 

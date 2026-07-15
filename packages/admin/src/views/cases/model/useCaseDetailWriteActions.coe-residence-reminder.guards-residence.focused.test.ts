@@ -13,7 +13,7 @@ import {
   isGateBlockError,
   resolveWriteErrorI18nKey,
 } from "./CaseWriteErrorMapping";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { createWriteActions } from "./useCaseDetailWriteActions";
 
 function stubRepo(overrides: Partial<CaseRepository> = {}): CaseRepository {

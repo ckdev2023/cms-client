@@ -11,7 +11,7 @@ import CaseSummaryCards from "./components/CaseSummaryCards.vue";
 import CaseFilters from "./components/CaseFilters.vue";
 import CaseTable from "./components/CaseTable.vue";
 import CasePagination from "./components/CasePagination.vue";
-import { createCaseRepository } from "./model/CaseRepository";
+import { createCaseRepository } from "./api/CaseRepository";
 import { useCaseListModel } from "./model/useCaseListModel";
 import { buildCaseCreateRoute } from "./query";
 

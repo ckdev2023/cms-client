@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { useCreateCaseChecklistPreview } from "./useCreateCaseChecklistPreview";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
 
 function stubRepo(

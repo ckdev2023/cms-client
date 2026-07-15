@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ref, type Ref } from "vue";
 import type { CaseDetail } from "../types";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import {
   useCasePhaseTransitionMenu,
   getAvailablePhaseTargets,

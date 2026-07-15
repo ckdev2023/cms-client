@@ -11,7 +11,7 @@ import { CASE_DETAIL_TABS } from "./constants";
 import type { CaseDetailTab } from "./types";
 import { isTabAccessibleInTerminal } from "./model/useCaseDetailGuard";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
-import type { CaseRepository } from "./model/CaseRepository";
+import type { CaseRepository } from "./api/CaseRepository";
 import {
   createMockAggregate,
   createMockDetail,

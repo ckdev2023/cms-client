@@ -1,7 +1,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useToast } from "../../../shared/model/useToast";
-import type { DocumentItem, DocumentGroup } from "../types-detail";
+import type { DocumentItem } from "../types-detail";
 import type {
   DocumentListItem,
   WaivedReasonCode,
@@ -19,14 +19,14 @@ import {
 } from "../../documents/model/useRegisterDocumentModel";
 import { useAddDocumentItemModel } from "../../documents/model/useAddDocumentItemModel";
 import { createDocumentRepository } from "../../documents/model/DocumentRepository";
-import { toCaseDetailItems } from "../../documents/model/DocumentDetailItemAdapter";
 import type { DocumentRepository } from "../../documents/model/DocumentRepositoryTypes";
 import type { UseToastReturn } from "../../../shared/model/useToast";
-import { compareDocumentListItemsForChecklistStableOrder } from "./caseDocumentsChecklistSort";
-import { createCaseRepository, type CaseRepository } from "./CaseRepository";
+import {
+  createCaseRepository,
+  type CaseRepository,
+} from "../api/CaseRepository";
 import { buildBootstrapHandler } from "./useCaseDocumentsTabBootstrap";
-
-type ListDetailPair = { list: DocumentListItem; detail: DocumentItem };
+import { buildGrouping } from "./useCaseDocumentsTabGrouping";
 
 /**
  *
@@ -67,55 +67,6 @@ export interface UseCaseDocumentsTabDeps {
 }
 
 type T = ReturnType<typeof useI18n>["t"];
-
-/**
- * 资料分组顺序，与 `CaseAdapterDetailAggregate` 的 `providerProgress` 展示顺序
- * （及概览「按提供方完成率」）一致：主申请人 → 扶养担保侧 → 会社侧 → 事务所内部。
- * 未列出的 provider 排在尾部，仍按字母序兜底。
- */
-const PROVIDER_GROUP_ORDER: Record<string, number> = {
-  main_applicant: 10,
-  dependent_guarantor: 20,
-  employer_org: 30,
-  office_internal: 40,
-};
-
-function buildGrouping(
-  listModel: ReturnType<typeof useDocumentListModel>,
-  t: T,
-  caseTypeCode: Ref<string | undefined>,
-) {
-  const detailItems = computed(() => toCaseDetailItems(listModel.items.value));
-  const documentGroups = computed<DocumentGroup[]>(() => {
-    const grouped = new Map<string, ListDetailPair[]>();
-    const items = listModel.items.value;
-    const details = detailItems.value;
-    for (let i = 0; i < items.length; i++) {
-      const key = items[i].provider;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push({ list: items[i], detail: details[i] });
-    }
-    const entries = Array.from(grouped.entries());
-    entries.sort(([a], [b]) => {
-      const pa = PROVIDER_GROUP_ORDER[a] ?? Number.MAX_SAFE_INTEGER;
-      const pb = PROVIDER_GROUP_ORDER[b] ?? Number.MAX_SAFE_INTEGER;
-      if (pa !== pb) return pa - pb;
-      return a.localeCompare(b);
-    });
-    const code = caseTypeCode.value;
-    return entries.map(([p, pairs]) => {
-      const sorted = [...pairs].sort((x, y) =>
-        compareDocumentListItemsForChecklistStableOrder(x.list, y.list),
-      );
-      return {
-        group: t(getProviderLabelKey(p, { caseTypeCode: code })),
-        count: `${sorted.length} 件`,
-        items: sorted.map((pair) => pair.detail),
-      };
-    });
-  });
-  return { detailItems, documentGroups };
-}
 
 function findListItem(
   item: DocumentItem,

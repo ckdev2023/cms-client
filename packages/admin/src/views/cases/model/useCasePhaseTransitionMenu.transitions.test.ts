@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref, type Ref } from "vue";
 import type { CaseDetail } from "../types";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { useCasePhaseTransitionMenu } from "./useCasePhaseTransitionMenu";
 import { PHASE_TRANSITIONS } from "./businessPhaseTransitions";
 import type { BusinessPhaseId } from "../constantsBusinessPhase";

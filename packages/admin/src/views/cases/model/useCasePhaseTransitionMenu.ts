@@ -3,8 +3,8 @@ import type { CaseDetail } from "../types";
 import type { TransitionGuardReason } from "../types-detail";
 import type { BusinessPhaseId } from "../constantsBusinessPhase";
 import { BUSINESS_PHASES } from "../constantsBusinessPhase";
-import type { CaseRepository } from "./CaseRepository";
-import { CaseRepositoryError } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepository";
 import { getAvailablePhaseTargets } from "./businessPhaseTransitions";
 
 export {

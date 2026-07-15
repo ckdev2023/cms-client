@@ -1,6 +1,6 @@
 import { ref, type Ref } from "vue";
 import type { UseToastReturn } from "../../../shared/model/useToast";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 
 type T = (key: string, params?: Record<string, unknown>) => string;
 

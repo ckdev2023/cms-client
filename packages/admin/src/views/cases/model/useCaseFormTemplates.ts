@@ -1,6 +1,6 @@
 import { ref, watch, type Ref } from "vue";
 import type { FormTemplate } from "../types-detail";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 
 /**
  * 文書模板列表的独立请求 composable。

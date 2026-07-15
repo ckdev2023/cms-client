@@ -37,13 +37,13 @@ import {
   buildCaseSubmissionPackagesUrl,
   buildCaseTasksUrl,
   buildCaseValidationRunsUrl,
-} from "./CaseAdapter";
+} from "../model/CaseAdapter";
 import {
   requestAndAdapt,
   type CaseRepositoryRuntime,
 } from "./CaseRepositorySupport";
-import { adaptChecklistPreviewLine } from "./adaptChecklistPreviewLine";
-import type { ChecklistPreviewLineItem } from "./checklistPreview.contract";
+import { adaptChecklistPreviewLine } from "../model/adaptChecklistPreviewLine";
+import type { ChecklistPreviewLineItem } from "../model/checklistPreview.contract";
 
 function parseChecklistPreviewResponsePayload(value: unknown): {
   count: number;

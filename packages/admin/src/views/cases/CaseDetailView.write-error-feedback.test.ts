@@ -9,8 +9,8 @@ import { ref, watch, nextTick } from "vue";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { useCaseDetailModel } from "./model/useCaseDetailModel";
-import type { CaseRepository } from "./model/CaseRepository";
-import { CaseRepositoryError } from "./model/CaseRepository";
+import type { CaseRepository } from "./api/CaseRepository";
+import { CaseRepositoryError } from "./api/CaseRepository";
 import type { WriteActionFeedback } from "./model/useCaseDetailWriteActions";
 import {
   createMockAggregate,

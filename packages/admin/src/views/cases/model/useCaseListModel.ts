@@ -23,7 +23,7 @@ import {
   isValidStageId,
   parseCaseListQuery,
 } from "../query";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { adaptCaseSummaryCards } from "./CaseAdapterMappers";
 import {
   buildCaseListRequestParams,

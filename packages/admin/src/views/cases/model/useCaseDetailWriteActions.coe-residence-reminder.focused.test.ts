@@ -12,8 +12,8 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { createWriteActions } from "./useCaseDetailWriteActions";
-import { CaseRepositoryError } from "./CaseRepositorySupport";
-import type { CaseRepository } from "./CaseRepository";
+import { CaseRepositoryError } from "../api/CaseRepositorySupport";
+import type { CaseRepository } from "../api/CaseRepository";
 
 // ─── Helpers ──────────────────────────────────────────────────────
 

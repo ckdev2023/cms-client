@@ -37,7 +37,7 @@ function extractImportPaths(filePath: string): string[] {
 describe("architecture guard — repositoryRuntime", () => {
   it("cases wrapper defaults apiPath to /api/cases", async () => {
     const { createRuntime } =
-      await import("./views/cases/model/CaseRepositorySupport");
+      await import("./views/cases/api/CaseRepositorySupport");
     const rt = createRuntime({ getToken: () => "t" });
     expect(rt.apiPath).toBe("/api/cases");
     expect(rt.writeErrorCode).toBe("CASE_WRITE_ERROR");
@@ -71,7 +71,7 @@ describe("architecture guard — repositoryRuntime", () => {
 
   it("cases and billing wrappers produce RepositoryError-compatible errors", async () => {
     const { CaseRepositoryError } =
-      await import("./views/cases/model/CaseRepositorySupport");
+      await import("./views/cases/api/CaseRepositorySupport");
     const { BillingRepositoryError } =
       await import("./views/billing/model/BillingRepositorySupport");
     const { RepositoryError } = await import("./shared/api/repositoryRuntime");

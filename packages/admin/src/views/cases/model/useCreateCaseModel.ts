@@ -29,7 +29,7 @@ import {
   FAMILY_SUPPORTER_ROLES,
   mapSelectedRelationsToParties,
 } from "./selectedRelationParties";
-import type { CaseRepository } from "./CaseRepository";
+import type { CaseRepository } from "../api/CaseRepository";
 import { resolveCaseCreateRepo } from "./useCreateCaseModelRepo";
 import { createSubmitFlow } from "./useCreateCaseModelSubmit";
 export type { CreateCaseDraftState } from "../types";
