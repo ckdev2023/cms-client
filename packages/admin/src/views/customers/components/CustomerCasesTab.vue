@@ -8,11 +8,11 @@ import Chip from "../../../shared/ui/Chip.vue";
 import SegmentedControl, {
   type SegmentOption,
 } from "../../../shared/ui/SegmentedControl.vue";
-import StageChip from "../../cases/components/StageChip.vue";
+import { StageChip } from "../../cases/public";
 import type { CaseFilter, CustomerCase } from "../types";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import { useCustomerCasesModel } from "../model/useCustomerCasesModel";
-import { buildCaseDetailRoute } from "../../cases/query";
+import { buildCaseDetailRoute } from "../../cases/public";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 import {

@@ -8,7 +8,7 @@ import Chip from "../../../shared/ui/Chip.vue";
 import type { CustomerSummary } from "../types";
 import { resolveGroupLabel } from "../../../shared/model/useGroupOptions";
 import { resolveOwnerOption } from "../../../shared/model/useOwnerOptions";
-import { buildCaseListHref, buildCaseCreateHref } from "../../cases/query";
+import { buildCaseListHref, buildCaseCreateHref } from "../../cases/public";
 
 /** 客户表格行：头像、识别名、案件统计、操作按钮；支持草稿行禁用选择。 */
 const { t, locale } = useI18n();

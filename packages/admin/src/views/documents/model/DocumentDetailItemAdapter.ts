@@ -5,7 +5,7 @@ import type {
   DocumentFileVersion,
   DocumentReviewRecord,
   DocumentReminderRecord,
-} from "../../cases/types-detail";
+} from "../../cases/public";
 import type { DocumentFileDto } from "./DocumentRepositoryTypes";
 import {
   DOCUMENT_STATUSES,

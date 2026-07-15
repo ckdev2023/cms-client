@@ -12,7 +12,7 @@ import { useCustomerContactsModel } from "../model/useCustomerContactsModel";
 import {
   buildCaseCreateRoute,
   type CaseCreateQueryParams,
-} from "../../cases/query";
+} from "../../cases/public";
 import CustomerRelationModal from "./CustomerRelationModal.vue";
 /** 关联人 Tab：展示关联人表格，支持搜索、多选与批量操作占位。 */
 const props = withDefaults(

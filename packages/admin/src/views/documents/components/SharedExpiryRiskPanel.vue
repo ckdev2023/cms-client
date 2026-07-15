@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Button from "../../../shared/ui/Button.vue";
 import type { SharedExpiryRiskData } from "../types";
-import { buildCaseDetailHref } from "../../cases/query";
+import { buildCaseDetailHref } from "../../cases/public";
 
 /**
  * 共享版本过期风险面板（P0-CONTRACT §9）。

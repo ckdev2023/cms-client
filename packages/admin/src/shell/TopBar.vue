@@ -6,7 +6,7 @@ import { logoutAdmin } from "../auth/model/adminSession";
 import NavIcon from "./NavIcon.vue";
 import { localeOptions, setAppLocale, type AppLocale } from "../i18n";
 import { getDefaultPermissionsStore } from "../shared/model/PermissionsStore";
-import { buildCaseCreateRoute } from "../views/cases/query";
+import { buildCaseCreateRoute } from "../views/cases/public";
 
 /**
  * 应用顶栏，负责导航入口、全局搜索与语言切换。

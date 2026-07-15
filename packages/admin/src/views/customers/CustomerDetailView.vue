@@ -17,8 +17,8 @@ import { useCustomerCreateCaseGateModel } from "./model/useCustomerCreateCaseGat
 import { useCustomerDetailModel } from "./model/useCustomerDetailModel";
 import { createCustomerRepository } from "./model/CustomerRepository";
 import { useCustomerToast } from "./model/useCustomerToast";
-import { buildCaseCreateRoute } from "../cases/query";
-import type { CaseCreateQueryParams } from "../cases/query";
+import { buildCaseCreateRoute } from "../cases/public";
+import type { CaseCreateQueryParams } from "../cases/public";
 import { useResumeCaseCreateBanner } from "./model/useResumeCaseCreateBanner";
 import { useResumeLeadCaseCreateBanner } from "./model/useResumeLeadCaseCreateBanner";
 import { DETAIL_TABS, type CustomerBmvProfile, type DetailTab } from "./types";

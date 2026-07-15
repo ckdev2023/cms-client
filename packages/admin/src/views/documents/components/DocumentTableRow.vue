@@ -10,7 +10,7 @@ import {
   isFollowUpAllowed,
 } from "../constants";
 import { isSelectableForBatch } from "../validation";
-import { buildCaseDetailHref } from "../../cases/query";
+import { buildCaseDetailHref } from "../../cases/public";
 
 /** 资料表格行：checkbox、资料名、案件链接、状态徽章、截止日与路径展示。 */
 const { t } = useI18n();

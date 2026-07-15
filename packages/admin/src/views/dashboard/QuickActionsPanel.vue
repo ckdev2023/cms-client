@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import { type RouteLocationRaw, useRouter } from "vue-router";
-import { buildCaseCreateRoute } from "../cases/query";
+import { buildCaseCreateRoute } from "../cases/public";
 
 /**
  * 仪表盘快捷操作面板，提供常用入口与时间窗口切换工具。
