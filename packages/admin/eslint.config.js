@@ -142,6 +142,14 @@ export default [
               message:
                 "CaseRepository* 已迁至 views/cases/api/（拆分 B1）。请从 api/ 引用；model/ 只保留视图模型与 adapter。",
             },
+            {
+              // 注意：no-restricted-imports 匹配的是 import 语句里写的字面路径，
+              // 不是解析后的路径。cases 内部写的是 "./types-detail"，用
+              // "**/cases/types-detail" 永远匹配不到——探针实测发现。
+              group: ["**/types-detail", "**/types-detail.ts"],
+              message:
+                "types-detail 类型枢纽已按 Tab 拆解（B3）：Tab 类型→detail/tabs/<tab>/types，聚合根→detail/types-detail-core，原语与枚举→types-core。旧路径已删除，勿重建。",
+            },
           ],
         },
       ],
