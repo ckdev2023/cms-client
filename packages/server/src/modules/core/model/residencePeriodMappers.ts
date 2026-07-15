@@ -1,14 +1,18 @@
 /**
  * residence_periods 行映射叶子模块。
  *
- * 从 `residencePeriods.service.ts` 抽出（拆分批次 S1 解环）：
- * `cases.service.detail-queries` 只需要行映射能力；直接依赖 service 会在
- * cases ↔ residence-periods 之间形成文件级循环（经 cases/public barrel）。
+ * 位置沿革：S1 从 `residencePeriods.service.ts` 抽为叶子模块以解开文件级
+ * 循环；S5 进一步移入 `core/model/` —— 开启 depcruise 的 tsPreCompilationDeps
+ * 后暴露出 cases → residence-periods 的模块级依赖（cases 详情聚合需要映射
+ * 在留期间行）。`ResidencePeriod` 实体本就定义在同目录 coreEntities.ts，
+ * 其行映射理应与实体同处共享内核，供两侧平等取用，而非让 cases 反向依赖
+ * residence-periods 模块。
+ *
  * 本文件保持叶子属性：除实体类型与 Nest 异常外不得 import 任何业务模块。
  */
 import { BadRequestException } from "@nestjs/common";
 
-import type { ResidencePeriod } from "../model/coreEntities";
+import type { ResidencePeriod } from "./coreEntities";
 
 /** residence_periods 查询行结构（列别名见 service 内 RESIDENCE_PERIOD_COLS）。 */
 export type ResidencePeriodQueryRow = {

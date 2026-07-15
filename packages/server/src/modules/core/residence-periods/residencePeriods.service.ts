@@ -25,7 +25,7 @@ import {
   mapResidencePeriodRow,
   toDateOnlyString,
   type ResidencePeriodQueryRow,
-} from "./residencePeriods.row-mappers";
+} from "../model/residencePeriodMappers";
 
 // 行映射已抽至 row-mappers 叶子模块（S1 解环）；此处 re-export 保留既有消费路径。
 export { mapResidencePeriodRow, toDateOnlyString };

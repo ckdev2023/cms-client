@@ -78,6 +78,21 @@ module.exports = {
       to: { path: "^src/modules/core/cases" },
     },
     {
+      name: "cases-no-import-residence-periods",
+      comment:
+        "S5 解环：cases ↔ residence-periods 的模块环已解开，方向固定为 " +
+        "residence-periods → cases/public（模板与类型是 cases 领地）。" +
+        "cases 详情聚合所需的在留期间行映射已移入共享内核 " +
+        "core/model/residencePeriodMappers（ResidencePeriod 实体本就在同目录），" +
+        "两侧平等取用。cases 不得再 import residence-periods。",
+      severity: "error",
+      from: {
+        path: "^src/modules/core/cases",
+        pathNot: "\\.test\\.ts$|test-support|test-fixtures",
+      },
+      to: { path: "^src/modules/core/residence-periods" },
+    },
+    {
       name: "modules-templates-no-import-custom",
       severity: "error",
       from: { path: "^src/modules/templates" },
