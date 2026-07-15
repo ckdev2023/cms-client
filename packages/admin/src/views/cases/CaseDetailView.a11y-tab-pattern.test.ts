@@ -19,12 +19,20 @@ import {
   ZERO_TAB_COUNTS,
 } from "./model/useCaseDetailModel.test-support";
 
-const templatePath = resolve(__dirname, "CaseDetailView.vue");
-const src = readFileSync(templatePath, "utf-8");
+// tablist 标记与键盘导航已抽入 detail/CaseDetailTabBar.vue（B4 第四拍），
+// tabpanel 仍留在壳里——两侧各自断言，别把它们合成一份源码。
+const tabBarSrc = readFileSync(
+  resolve(__dirname, "detail/CaseDetailTabBar.vue"),
+  "utf-8",
+);
+const shellSrc = readFileSync(
+  resolve(__dirname, "CaseDetailView.vue"),
+  "utf-8",
+);
 
 const TAB_KEYS = CASE_DETAIL_TABS.map((t) => t.key);
 
-// 复现 CaseDetailView.findNextAccessibleTab 算法
+// 复现 CaseDetailTabBar.findNextAccessibleTab 算法
 function findNextAccessibleTab(
   tabs: readonly { key: CaseDetailTab }[],
   fromIdx: number,
@@ -43,54 +51,55 @@ function findNextAccessibleTab(
 
 describe("CaseDetailView tablist — ARIA tabindex contract (R27-L)", () => {
   it("tab button 绑定 :tabindex，selected 为 0 / 其他为 -1", () => {
-    expect(src).toContain(":tabindex=");
-    expect(src).toMatch(/tabindex=["']?.*activeTab.*\?.*0.*:.*-1/s);
+    expect(tabBarSrc).toContain(":tabindex=");
+    expect(tabBarSrc).toMatch(/tabindex=["']?.*activeTab.*\?.*0.*:.*-1/s);
   });
 
   it("tab button 绑定 @keydown handler", () => {
-    expect(src).toContain("@keydown=");
-    expect(src).toContain("onTabKeydown");
+    expect(tabBarSrc).toContain("@keydown=");
+    expect(tabBarSrc).toContain("onTabKeydown");
   });
 
-  it("tabindex 三元先判断 guard.isTabAccessible → 不可访问始终 -1", () => {
-    expect(src).toMatch(/isTabAccessible.*\n?\s*\?\s*-1/s);
+  it("tabindex 三元先判断 isTabAccessible → 不可访问始终 -1", () => {
+    expect(tabBarSrc).toMatch(/isTabAccessible.*\n?\s*\?\s*-1/s);
   });
 });
 
 describe("CaseDetailView tablist — ARIA role & attribute completeness", () => {
   it('tablist 容器声明 role="tablist"', () => {
-    expect(src).toContain('role="tablist"');
+    expect(tabBarSrc).toContain('role="tablist"');
   });
 
   it('每个 tab button 声明 role="tab"', () => {
-    expect(src).toContain('role="tab"');
+    expect(tabBarSrc).toContain('role="tab"');
   });
 
   it("tab button 绑定 :aria-selected", () => {
-    expect(src).toContain(":aria-selected=");
-    expect(src).toMatch(/aria-selected=.*activeTab.*tab\.key/s);
+    expect(tabBarSrc).toContain(":aria-selected=");
+    expect(tabBarSrc).toMatch(/aria-selected=.*activeTab.*tab\.key/s);
   });
 
   it("tab button 绑定 :aria-controls → panel id", () => {
-    expect(src).toContain(':aria-controls="`casePanel-${tab.key}`"');
+    expect(tabBarSrc).toContain(':aria-controls="`casePanel-${tab.key}`"');
   });
 
   it("tab button 绑定 :id → tab id", () => {
-    expect(src).toContain(':id="`caseTab-${tab.key}`"');
+    expect(tabBarSrc).toContain(':id="`caseTab-${tab.key}`"');
   });
 
   it("tab button 绑定 :aria-disabled 对不可访问 tab", () => {
-    expect(src).toContain(":aria-disabled=");
-    expect(src).toMatch(/aria-disabled=.*isTabAccessible/s);
+    expect(tabBarSrc).toContain(":aria-disabled=");
+    expect(tabBarSrc).toMatch(/aria-disabled=.*isTabAccessible/s);
   });
 
   it('tabpanel 声明 role="tabpanel" 且 aria-labelledby 关联 tab id', () => {
-    expect(src).toContain('role="tabpanel"');
-    expect(src).toContain(':aria-labelledby="`caseTab-${activeTab}`"');
+    // tabpanel 归壳：tab 条负责 aria-controls → panel id，壳负责反向的 labelledby。
+    expect(shellSrc).toContain('role="tabpanel"');
+    expect(shellSrc).toContain(':aria-labelledby="`caseTab-${activeTab}`"');
   });
 
   it("tablist 声明 aria-label", () => {
-    expect(src).toMatch(/role="tablist"[\s\S]*?:aria-label=/);
+    expect(tabBarSrc).toMatch(/role="tablist"[\s\S]*?:aria-label=/);
   });
 });
 
@@ -300,38 +309,38 @@ describe("CaseDetailView tablist — guard-aware keyboard nav (terminal)", () =>
 
 describe("CaseDetailView tablist — template ref binding", () => {
   it("tab button 声明 ref='tabRefs' 以支持 programmatic focus", () => {
-    expect(src).toContain('ref="tabRefs"');
+    expect(tabBarSrc).toContain('ref="tabRefs"');
   });
 
   it("script 中声明 tabRefs ref", () => {
-    expect(src).toMatch(/tabRefs\s*=\s*ref/);
+    expect(tabBarSrc).toMatch(/tabRefs\s*=\s*ref/);
   });
 
   it("onTabKeydown 函数在 script 中定义", () => {
-    expect(src).toContain("function onTabKeydown(event: KeyboardEvent)");
+    expect(tabBarSrc).toContain("function onTabKeydown(event: KeyboardEvent)");
   });
 
   it("onTabKeydown 处理 ArrowLeft / ArrowRight / Home / End 四个按键", () => {
-    expect(src).toContain('"ArrowRight"');
-    expect(src).toContain('"ArrowLeft"');
-    expect(src).toContain('"Home"');
-    expect(src).toContain('"End"');
+    expect(tabBarSrc).toContain('"ArrowRight"');
+    expect(tabBarSrc).toContain('"ArrowLeft"');
+    expect(tabBarSrc).toContain('"Home"');
+    expect(tabBarSrc).toContain('"End"');
   });
 
   it("onTabKeydown 调用 event.preventDefault()", () => {
-    expect(src).toContain("event.preventDefault()");
+    expect(tabBarSrc).toContain("event.preventDefault()");
   });
 
   it("onTabKeydown 调用 tabRefs 进行 focus", () => {
-    expect(src).toMatch(/tabRefs\.value\[.*\]\?\.focus\(\)/);
+    expect(tabBarSrc).toMatch(/tabRefs\.value\[.*\]\?\.focus\(\)/);
   });
 
   it("onTabKeydown 使用 findNextAccessibleTab 跳过不可访问 tab", () => {
-    expect(src).toContain("findNextAccessibleTab");
+    expect(tabBarSrc).toContain("findNextAccessibleTab");
   });
 
   it("onTabClick 守门：不可访问 tab 不切换", () => {
-    expect(src).toContain("function onTabClick");
-    expect(src).toMatch(/onTabClick[\s\S]*isTabAccessible/);
+    expect(tabBarSrc).toContain("function onTabClick");
+    expect(tabBarSrc).toMatch(/onTabClick[\s\S]*isTabAccessible/);
   });
 });

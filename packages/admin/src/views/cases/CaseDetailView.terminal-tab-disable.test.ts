@@ -14,8 +14,13 @@ import {
 } from "./model/useCaseDetailModel.test-support";
 import type { CaseDetailTab } from "./types";
 
-const templatePath = resolve(__dirname, "CaseDetailView.vue");
-const src = readFileSync(templatePath, "utf-8");
+// tab 条已抽入 detail/CaseDetailTabBar.vue（B4 第四拍）：tab 按钮的守门接线断言
+// 跟着搬到 tabBarSrc；壳只保留 guardedSwitchTab（子面板程序化跳转用）。
+const tabBarSrc = readFileSync(
+  resolve(__dirname, "detail/CaseDetailTabBar.vue"),
+  "utf-8",
+);
+const src = readFileSync(resolve(__dirname, "CaseDetailView.vue"), "utf-8");
 
 describe("isTabAccessibleInTerminal (pure function)", () => {
   it("非终态下所有 tab 都可访问", () => {
@@ -45,26 +50,26 @@ describe("isTabAccessibleInTerminal (pure function)", () => {
   });
 });
 
-describe("CaseDetailView template — terminal tab disabling wiring", () => {
-  it("tab button 绑定 aria-disabled 到 guard.isTabAccessible", () => {
-    expect(src).toContain("aria-disabled");
-    expect(src).toContain("guard.isTabAccessible(tab.key)");
+describe("CaseDetailTabBar template — terminal tab disabling wiring", () => {
+  it("tab button 绑定 aria-disabled 到 isTabAccessible", () => {
+    expect(tabBarSrc).toContain("aria-disabled");
+    expect(tabBarSrc).toContain("isTabAccessible(tab.key)");
   });
 
-  it("tab button 使用 onTabClick 而非 switchTab", () => {
-    expect(src).toContain("onTabClick(tab.key)");
+  it("tab button 使用 onTabClick 而非直接 emit select", () => {
+    expect(tabBarSrc).toContain("onTabClick(tab.key)");
   });
 
   it("tab button 绑定 disabled CSS class", () => {
-    expect(src).toContain("case-detail-view__tab--disabled");
+    expect(tabBarSrc).toContain("case-detail-view__tab--disabled");
   });
 
   it("script 定义 onTabClick 函数", () => {
-    expect(src).toContain("function onTabClick(");
+    expect(tabBarSrc).toContain("function onTabClick(");
   });
 
   it("script 定义 findNextAccessibleTab 函数", () => {
-    expect(src).toContain("function findNextAccessibleTab(");
+    expect(tabBarSrc).toContain("function findNextAccessibleTab(");
   });
 
   it("概览/校验子面板程序化跳转使用 guardedSwitchTab（与终态守门一致）", () => {

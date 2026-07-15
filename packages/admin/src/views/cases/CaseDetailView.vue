@@ -1,11 +1,11 @@
 <script setup lang="ts">
-/* eslint-disable max-lines */
-import { computed, defineAsyncComponent, ref, watch } from "vue";
+import { computed, defineAsyncComponent, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../../shared/model/useToast";
 import CaseDetailHeader from "./detail/CaseDetailHeader.vue";
 import CaseDetailStatusBanners from "./detail/CaseDetailStatusBanners.vue";
+import CaseDetailTabBar from "./detail/CaseDetailTabBar.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
 import CaseEditModal from "./components/CaseEditModal.vue";
 import CaseDeadlineCreateModal from "./detail/tabs/deadlines/CaseDeadlineCreateModal.vue";
@@ -13,10 +13,7 @@ import CaseFormGenerateModal from "./detail/tabs/forms/CaseFormGenerateModal.vue
 import CaseTaskCreateModal from "./detail/tabs/tasks/CaseTaskCreateModal.vue";
 import SubmissionPackageCreateModal from "./detail/tabs/validation/SubmissionPackageCreateModal.vue";
 import PhaseTransitionPopover from "./components/PhaseTransitionPopover.vue";
-import {
-  useCaseDetailModel,
-  type TabCounter,
-} from "./model/useCaseDetailModel";
+import { useCaseDetailModel } from "./model/useCaseDetailModel";
 import { buildCaseDetailQuery, buildCaseListHref } from "./query";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
@@ -25,7 +22,6 @@ import { useCaseDetailBillingLinks } from "./model/useCaseDetailBillingLinks";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
-const tabRefs = ref<HTMLElement[]>([]);
 const toast = useToast();
 const route = useRoute();
 const router = useRouter();
@@ -67,14 +63,6 @@ const CaseBillingTab = defineAsyncComponent(
   () => import("./detail/tabs/billing/CaseBillingTab.vue"),
 );
 
-/**
- * 解析 Tab 计数器展示文案，优先使用 i18n 文案。
- * @param c - Tab 计数器配置。
- * @returns 当前计数器应展示的文本。
- */
-function counterLabel(c: TabCounter): string {
-  return c.i18nKey ? t(c.i18nKey, c.i18nParams ?? {}) : c.label;
-}
 const caseId = computed(() =>
   route.matched.at(-1)?.name === "case-detail" &&
   typeof route.params.id === "string"
@@ -194,62 +182,6 @@ watch(
 );
 
 /**
- * 处理 tab 键盘导航（ArrowLeft/Right/Home/End），跳过终态下不可访问的 tab。
- * @param event - 键盘事件
- */
-function onTabKeydown(event: KeyboardEvent): void {
-  const idx = tabs.findIndex((t) => t.key === activeTab.value);
-  let targetIdx = -1;
-
-  switch (event.key) {
-    case "ArrowRight":
-      targetIdx = findNextAccessibleTab(idx, 1);
-      break;
-    case "ArrowLeft":
-      targetIdx = findNextAccessibleTab(idx, -1);
-      break;
-    case "Home":
-      targetIdx = findNextAccessibleTab(-1, 1);
-      break;
-    case "End":
-      targetIdx = findNextAccessibleTab(tabs.length, -1);
-      break;
-    default:
-      return;
-  }
-  if (targetIdx < 0) return;
-  event.preventDefault();
-  switchTab(tabs[targetIdx].key);
-  tabRefs.value[targetIdx]?.focus();
-}
-
-/**
- * 从指定索引出发，按方向查找下一个可访问的 tab 索引。
- *
- * @param fromIdx - 起始索引
- * @param direction - 搜索方向（1 向右，-1 向左）
- * @returns 可访问的 tab 索引，找不到时返回 -1
- */
-function findNextAccessibleTab(fromIdx: number, direction: 1 | -1): number {
-  const len = tabs.length;
-  for (let i = 1; i <= len; i++) {
-    const candidate = (fromIdx + direction * i + len) % len;
-    if (guard.isTabAccessible(tabs[candidate].key)) return candidate;
-  }
-  return -1;
-}
-
-/**
- * 点击 tab 时守门：不可访问的 tab 不切换。
- *
- * @param tabKey - 目标 tab 键名
- */
-function onTabClick(tabKey: (typeof tabs)[number]["key"]): void {
-  if (!guard.isTabAccessible(tabKey)) return;
-  switchTab(tabKey);
-}
-
-/**
  * 子组件程序化跳转 Tab 时复用与 Tab 条相同的终态守门，避免无效 `?tab=` 与视图抖动。
  * @param tab - 目标 tab
  */
@@ -326,57 +258,13 @@ const { onOpenCollection, onViewReceipt } = useCaseDetailBillingLinks({
 
       <CaseDetailStatusBanners :detail="detail" :readonly="isReadonly" />
 
-      <div
-        class="case-detail-view__tabs"
-        role="tablist"
-        :aria-label="t('cases.detail.tabsLabel')"
-      >
-        <button
-          v-for="tab in tabs"
-          :key="tab.key"
-          ref="tabRefs"
-          type="button"
-          role="tab"
-          :id="`caseTab-${tab.key}`"
-          :aria-controls="`casePanel-${tab.key}`"
-          :class="[
-            'case-detail-view__tab',
-            { active: activeTab === tab.key },
-            {
-              'case-detail-view__tab--disabled': !guard.isTabAccessible(
-                tab.key,
-              ),
-            },
-          ]"
-          :aria-selected="activeTab === tab.key"
-          :aria-disabled="!guard.isTabAccessible(tab.key) || undefined"
-          :tabindex="
-            !guard.isTabAccessible(tab.key)
-              ? -1
-              : tab.key === activeTab
-                ? 0
-                : -1
-          "
-          @click="onTabClick(tab.key)"
-          @keydown="onTabKeydown($event)"
-        >
-          {{ t(tab.i18nKey) }}
-          <span
-            v-if="tabCounters[tab.key]"
-            :class="[
-              'case-detail-view__counter',
-              {
-                'case-detail-view__counter--danger':
-                  tabCounters[tab.key]!.tone === 'danger',
-                'case-detail-view__counter--warning':
-                  tabCounters[tab.key]!.tone === 'warning',
-              },
-            ]"
-          >
-            {{ counterLabel(tabCounters[tab.key]!) }}
-          </span>
-        </button>
-      </div>
+      <CaseDetailTabBar
+        :tabs="tabs"
+        :active-tab="activeTab"
+        :counters="tabCounters"
+        :is-tab-accessible="guard.isTabAccessible"
+        @select="switchTab"
+      />
 
       <section
         class="case-detail-view__panel"

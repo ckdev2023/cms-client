@@ -14,8 +14,14 @@ import {
   ZERO_TAB_COUNTS,
 } from "./model/useCaseDetailModel.test-support";
 
+// B4 第四拍后守门分两处：壳保留「detail+activeTab 变化 → 重定向 log」的 watch，
+// tab 按钮自身的守门接线随 tab 条搬到 detail/CaseDetailTabBar.vue。
 const templatePath = resolve(__dirname, "CaseDetailView.vue");
 const src = readFileSync(templatePath, "utf-8");
+const tabBarSrc = readFileSync(
+  resolve(__dirname, "detail/CaseDetailTabBar.vue"),
+  "utf-8",
+);
 
 function buildTerminalRepo() {
   const detail = createMockDetail({
@@ -443,26 +449,26 @@ describe("H2: CaseDetailView template — tab guard wiring", () => {
   });
 
   it("onTabClick checks guard before switching", () => {
-    expect(src).toContain("guard.isTabAccessible(tabKey)");
-    const onTabClickBlock = src.slice(
-      src.indexOf("function onTabClick("),
-      src.indexOf("function onTabClick(") + 200,
+    expect(tabBarSrc).toContain("props.isTabAccessible(tabKey)");
+    const onTabClickBlock = tabBarSrc.slice(
+      tabBarSrc.indexOf("function onTabClick("),
+      tabBarSrc.indexOf("function onTabClick(") + 200,
     );
-    expect(onTabClickBlock).toContain("if (!guard.isTabAccessible(tabKey))");
+    expect(onTabClickBlock).toContain("if (!props.isTabAccessible(tabKey))");
     expect(onTabClickBlock).toContain("return");
-    expect(onTabClickBlock).toContain("switchTab(tabKey)");
+    expect(onTabClickBlock).toContain('emit("select", tabKey)');
   });
 
   it("tab buttons bind aria-disabled to guard", () => {
-    expect(src).toContain("!guard.isTabAccessible(tab.key)");
-    expect(src).toContain("aria-disabled");
+    expect(tabBarSrc).toContain("!isTabAccessible(tab.key)");
+    expect(tabBarSrc).toContain("aria-disabled");
   });
 
   it("disabled tabs get tabindex=-1", () => {
-    expect(src).toContain("!guard.isTabAccessible(tab.key)");
-    const tabSection = src.slice(
-      src.indexOf('role="tablist"'),
-      src.indexOf("</button>") + 20,
+    expect(tabBarSrc).toContain("!isTabAccessible(tab.key)");
+    const tabSection = tabBarSrc.slice(
+      tabBarSrc.indexOf('role="tablist"'),
+      tabBarSrc.indexOf("</button>") + 20,
     );
     expect(tabSection).toContain("tabindex");
     expect(tabSection).toContain("-1");
