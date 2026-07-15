@@ -14,7 +14,7 @@
     "jsdoc:lang:check": "node ./checkChineseJsdoc.mjs",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
-    "typecheck": "vue-tsc --noEmit",
+    "typecheck": "vue-tsc -b --noEmit",
     "check:deps": "depcruise src --config .dependency-cruiser.js",
     "guard": "npm run check:deps && npm run typecheck && npm run lint && npm run test && npm run build",
     "fix": "npm run format && npm run lint:fix"
