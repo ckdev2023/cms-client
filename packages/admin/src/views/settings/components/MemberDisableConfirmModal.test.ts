@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { shallowMount } from "@vue/test-utils";
 import MemberDisableConfirmModal from "./MemberDisableConfirmModal.vue";
 import { i18n, setAppLocale } from "../../../i18n";

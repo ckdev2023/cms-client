@@ -1,6 +1,9 @@
 import { describe, it, expect, vi } from "vitest";
 import { useDocumentReviewModel } from "./model/useDocumentReviewModel";
-import type { DocumentRepository } from "./model/DocumentRepositoryTypes";
+import type {
+  DocumentRepository,
+  ListDocumentFilesResult,
+} from "./model/DocumentRepositoryTypes";
 
 // ─── Fixtures ─────────────────────────────────────────────────────
 
@@ -21,6 +24,7 @@ function makeRepository(): DocumentRepository {
     transition: vi.fn().mockResolvedValue({ id: "x" }),
     followUp: vi.fn().mockResolvedValue({ id: "x" }),
     waive: vi.fn().mockResolvedValue({ id: "x" }),
+    unwaive: vi.fn<DocumentRepository["unwaive"]>(),
     uploadLocalArchive: vi.fn().mockResolvedValue({ id: "file-1" }),
     listFiles: vi.fn().mockResolvedValue({
       items: [
@@ -133,7 +137,7 @@ describe("SharedExpiryRiskPanel wiring — data from repository", () => {
 describe("SharedExpiryRiskPanel wiring — loading lifecycle", () => {
   it("sets riskLoading=true while fetching", async () => {
     const repo = makeRepository();
-    let resolveFiles!: (v: unknown) => void;
+    let resolveFiles!: (v: ListDocumentFilesResult) => void;
     vi.mocked(repo.listFiles).mockReturnValue(
       new Promise((r) => {
         resolveFiles = r;
@@ -145,7 +149,29 @@ describe("SharedExpiryRiskPanel wiring — loading lifecycle", () => {
     expect(review.riskLoading.value).toBe(true);
     expect(review.riskData.value).toBeNull();
 
-    resolveFiles({ items: [{ id: "file-1", assetId: "asset-2" }], total: 1 });
+    resolveFiles({
+      items: [
+        {
+          id: "file-1",
+          requirementId: "doc-2",
+          fileName: "card.pdf",
+          fileUrl: null,
+          relativePath: null,
+          fileKey: "k",
+          versionNo: 1,
+          storageType: "local_server",
+          reviewStatus: "approved",
+          reviewBy: null,
+          reviewAt: null,
+          expiryDate: "2026-03-31",
+          uploadedBy: null,
+          uploadedAt: "2025-12-01T00:00:00Z",
+          assetId: "asset-2",
+          createdAt: "2025-12-01T00:00:00Z",
+        },
+      ],
+      total: 1,
+    });
     await vi.waitFor(() => expect(review.riskLoading.value).toBe(false));
   });
 

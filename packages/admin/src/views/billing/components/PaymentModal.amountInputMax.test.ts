@@ -63,7 +63,7 @@ describe("PaymentModal — 回款金额 input 的 max 绑定", () => {
   });
 
   it("多节点且尚未选择计划时仍有宽松 max（避免 selectedNode=null 不配 max → valuemax=0）", async () => {
-    const nodes = [
+    const nodes: BillingPlanNode[] = [
       {
         id: "a",
         name: "case_fee",

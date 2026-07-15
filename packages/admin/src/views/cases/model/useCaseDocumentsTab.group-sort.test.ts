@@ -45,10 +45,14 @@ function stubRepository(
     transition: vi.fn(),
     followUp: vi.fn(),
     waive: vi.fn(),
+    unwaive: vi.fn(),
     uploadLocalArchive: vi.fn(),
     listFiles: vi.fn(),
     getCompletionRate: vi.fn().mockResolvedValue(null),
     createItem: vi.fn(),
+    listReferenceCandidates: vi.fn(),
+    linkRef: vi.fn(),
+    getSharedExpiryRisk: vi.fn(),
     ...overrides,
   };
 }

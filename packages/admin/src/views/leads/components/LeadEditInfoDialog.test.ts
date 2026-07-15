@@ -56,6 +56,7 @@ const BASE_LEAD: LeadDetail = {
     group: "tokyo-1",
     owner: "Local Admin",
     language: "zh",
+    tags: [],
     note: "配偶在日永住者",
   },
   followups: [],

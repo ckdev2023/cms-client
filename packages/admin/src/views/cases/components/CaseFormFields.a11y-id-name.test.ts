@@ -5,6 +5,7 @@ import CaseRiskConfirmModal from "./CaseRiskConfirmModal.vue";
 import CaseFormGenerateModal from "../detail/tabs/forms/CaseFormGenerateModal.vue";
 import CaseDeadlineCreateModal from "../detail/tabs/deadlines/CaseDeadlineCreateModal.vue";
 import CaseMessagesTab from "../detail/tabs/comms/CaseMessagesTab.vue";
+import { CASE_DETAIL_SAMPLES } from "../__fixtures__/fixtures-detail";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 
 const BUTTON_STUB = {
@@ -129,7 +130,7 @@ describe("CaseMessagesTab filter radios have id (R27-O)", () => {
         stubs: { Card: CARD_STUB, Chip: CHIP_STUB },
       },
       props: {
-        detail: { id: "c-1", messages: [] },
+        detail: { ...CASE_DETAIL_SAMPLES.work, id: "c-1", messages: [] },
         readonly: false,
       },
       attachTo: document.body,

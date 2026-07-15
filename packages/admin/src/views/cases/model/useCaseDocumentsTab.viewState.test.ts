@@ -34,12 +34,16 @@ function stubRepository(items: DocumentListItem[] = []): DocumentRepository {
     transition: vi.fn(),
     followUp: vi.fn(),
     waive: vi.fn(),
+    unwaive: vi.fn(),
     uploadLocalArchive: vi.fn(),
     listFiles: vi.fn(),
     getCompletionRate: vi
       .fn()
       .mockResolvedValue({ collected: 0, total: 0, percent: 0, label: "0/0" }),
     createItem: vi.fn(),
+    listReferenceCandidates: vi.fn(),
+    linkRef: vi.fn(),
+    getSharedExpiryRisk: vi.fn(),
   };
 }
 

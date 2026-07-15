@@ -12,6 +12,14 @@ import LeadBulkActionBar from "../leads/components/LeadBulkActionBar.vue";
 import LeadTableRow from "../leads/components/LeadTableRow.vue";
 import GroupListPanel from "../settings/components/GroupListPanel.vue";
 import GroupNameModal from "../settings/components/GroupNameModal.vue";
+// 本审计只断言「表单控件有 id 或 name」，props 的具体取值无关紧要，只需是合法对象。
+// 此前是手写的最小字面量，从未被类型检查过，已与 CustomerSummary / LeadSummary /
+// GroupSummary 漂移（缺必填字段，LeadSummary 上甚至有个不存在的 createdAt）。
+// 改用各模块的权威 fixture——与 LeadTableRow.test.ts / CustomerListView.test.ts 同样的用法，
+// 类型正确且不会再漂。
+import { SAMPLE_CUSTOMERS } from "../customers/fixtures";
+import { getLeadSamples } from "../leads/fixtures";
+import { SAMPLE_GROUPS } from "../settings/fixtures";
 
 function assertFormFieldsHaveIdOrName(wrapper: ReturnType<typeof mount>) {
   const fields = wrapper.findAll("input, select, textarea");
@@ -77,21 +85,7 @@ describe("BUG-206: form fields must have id or name attribute", () => {
       const wrapper = mount(CustomerTableRow, {
         global: { plugins: [i18n] },
         props: {
-          customer: {
-            id: "cust-1",
-            displayName: "Test",
-            customerNumber: "C001",
-            furigana: "テスト",
-            totalCases: 1,
-            activeCases: 0,
-            phone: "090-0000-0000",
-            email: "test@example.com",
-            lastContactDate: null,
-            lastContactChannel: null,
-            owner: { name: "admin", initials: "A" },
-            referralSource: null,
-            group: "grp-1",
-          },
+          customer: SAMPLE_CUSTOMERS[0]!,
         },
       });
       assertFormFieldsHaveIdOrName(wrapper);
@@ -133,20 +127,7 @@ describe("BUG-206: form fields must have id or name attribute", () => {
       const wrapper = mount(LeadTableRow, {
         global: { plugins: [i18n] },
         props: {
-          lead: {
-            id: "lead-1",
-            name: "Test Lead",
-            phone: "090-0000-0000",
-            email: "lead@example.com",
-            status: "new" as const,
-            ownerId: "owner-1",
-            groupId: "grp-1",
-            businessType: "visa_change",
-            source: "web",
-            nextFollowUp: null,
-            updatedAt: "2026-04-01",
-            createdAt: "2026-03-01",
-          },
+          lead: getLeadSamples("zh-CN")[0]!,
         },
       });
       assertFormFieldsHaveIdOrName(wrapper);
@@ -158,17 +139,13 @@ describe("BUG-206: form fields must have id or name attribute", () => {
       const wrapper = mount(GroupListPanel, {
         global: { plugins: [i18n] },
         props: {
-          groups: [
-            {
-              id: "grp-1",
-              name: "Tokyo",
-              groupNo: "G001",
-              status: "active",
-              memberCount: 3,
-            },
-          ],
-          statusFilter: "all",
+          groups: SAMPLE_GROUPS,
+          // 此前只传 groups，filteredGroups 走默认 []，面板其实一行都没渲染——
+          // 审计只覆盖到了筛选 select。补齐后列表行也进入审计范围。
+          filteredGroups: SAMPLE_GROUPS,
+          statusFilter: "",
           selectedGroupId: null,
+          isEmpty: false,
         },
       });
       assertFormFieldsHaveIdOrName(wrapper);

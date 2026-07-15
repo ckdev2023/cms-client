@@ -85,14 +85,19 @@ describe("locale helpers", () => {
 });
 
 describe("syncDocumentLanguage", () => {
-  function createDoc() {
+  // syncDocumentLanguage 只调用 documentElement.setAttribute，故这里的替身只实现该
+  // 一个方法；参数类型 Pick<Document, "documentElement"> 要求完整 HTMLElement，
+  // 替身无法也无需满足其余 300+ 成员，仅对 documentElement 做一次窄化断言。
+  function createDoc(): Pick<Document, "documentElement"> & {
+    attrs: Map<string, string>;
+  } {
     const attrs = new Map<string, string>();
     return {
       documentElement: {
         setAttribute(name: string, value: string) {
           attrs.set(name, value);
         },
-      },
+      } as unknown as HTMLElement,
       attrs,
     };
   }

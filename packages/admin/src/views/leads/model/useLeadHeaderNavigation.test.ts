@@ -1,15 +1,16 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, type Mock } from "vitest";
 import { ref } from "vue";
+import type { Router } from "vue-router";
 import { LEAD_DETAIL_SAMPLES } from "../fixtures-detail";
 import { useLeadHeaderNavigation } from "./useLeadHeaderNavigation";
 import type { LeadDetail } from "../types";
 
 interface FakeRouter {
-  push: ReturnType<typeof vi.fn>;
+  push: Mock<Router["push"]>;
 }
 
 function makeFakeRouter(): FakeRouter {
-  return { push: vi.fn().mockResolvedValue(undefined) };
+  return { push: vi.fn<Router["push"]>().mockResolvedValue(undefined) };
 }
 
 describe("useLeadHeaderNavigation (R2-B-6)", () => {

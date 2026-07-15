@@ -38,7 +38,9 @@ function buildDetail(overrides: Partial<CaseDetail> = {}): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
     residencePeriod: {
+      id: "rp-001",
       residenceStatus: "技術・人文知識・国際業務",
+      visaType: "engineer_specialist",
       periodLabel: "1年",
       startDate: "2025-04-01",
       endDate: "2026-03-31",
@@ -46,6 +48,7 @@ function buildDetail(overrides: Partial<CaseDetail> = {}): CaseDetail {
       tone: "success" as const,
       cardNumber: "AB12345678CD",
       entryDate: "2025-04-15",
+      reminderCreated: true,
       recordMeta: "Updated 2025-04-20",
     },
     reminderSchedule: {

@@ -5,6 +5,7 @@ import {
   type BillingRiskAckRepo,
 } from "./useCaseValidationActions";
 import type { ValidationRunsRepository } from "../api/resources/ValidationRunsRepository";
+import type { CaseMutationResult } from "./CaseAdapterTypes";
 import { RepositoryError } from "../../../shared/api/repositoryRuntime";
 
 function createMockRepo(
@@ -54,9 +55,11 @@ describe("useCaseValidationActions — acknowledgeBillingRisk", () => {
   });
 
   it("sets loading during ack and clears on success", async () => {
-    let resolveAck!: (v: unknown) => void;
+    let resolveAck!: (v: CaseMutationResult) => void;
     const riskAckRepo = createMockRiskAckRepo({
-      acknowledgeBillingRisk: vi.fn(
+      acknowledgeBillingRisk: vi.fn<
+        BillingRiskAckRepo["acknowledgeBillingRisk"]
+      >(
         () =>
           new Promise((r) => {
             resolveAck = r;
@@ -76,7 +79,7 @@ describe("useCaseValidationActions — acknowledgeBillingRisk", () => {
     await nextTick();
     expect(riskAckLoading.value).toBe(true);
 
-    resolveAck({ id: "case-1", success: true });
+    resolveAck({ id: "case-1" });
     await promise;
 
     expect(riskAckLoading.value).toBe(false);
@@ -150,8 +153,8 @@ describe("useCaseValidationActions — acknowledgeBillingRisk", () => {
   });
 
   it("ignores concurrent calls while loading", async () => {
-    let resolveAck!: (v: unknown) => void;
-    const ackFn = vi.fn(
+    let resolveAck!: (v: CaseMutationResult) => void;
+    const ackFn = vi.fn<BillingRiskAckRepo["acknowledgeBillingRisk"]>(
       () =>
         new Promise((r) => {
           resolveAck = r;
@@ -172,7 +175,7 @@ describe("useCaseValidationActions — acknowledgeBillingRisk", () => {
 
     expect(ackFn).toHaveBeenCalledTimes(1);
 
-    resolveAck({ id: "case-1", success: true });
+    resolveAck({ id: "case-1" });
     await p1;
   });
 

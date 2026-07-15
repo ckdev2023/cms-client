@@ -10,7 +10,6 @@ function makeValidation(
     blocking: [],
     warnings: [],
     info: [],
-    passed: [],
     ...overrides,
   };
 }

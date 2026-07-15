@@ -20,11 +20,7 @@ function makeI18n(locale: Locale) {
   return createI18n({ legacy: false, locale, messages: FULL_MESSAGES });
 }
 
-function buildDetail(
-  phase: string,
-  extras?: Pick<CaseDetail, "failureCloseout" | "caseType"> &
-    Partial<CaseDetail>,
-): CaseDetail {
+function buildDetail(phase: string, extras?: Partial<CaseDetail>): CaseDetail {
   return {
     ...CASE_DETAIL_SAMPLES.work,
     /** 与聚合层一致的种类码；契约样本 `caseType` 字段仍为展示名时由 `titleFallbackParts` 为准。 */

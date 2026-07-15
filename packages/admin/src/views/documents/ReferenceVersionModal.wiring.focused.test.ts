@@ -1,8 +1,14 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, type Mock } from "vitest";
 import { flushPromises } from "@vue/test-utils";
-import { useDocumentReviewModel } from "./model/useDocumentReviewModel";
+import {
+  useDocumentReviewModel,
+  type ReviewTargetItem,
+} from "./model/useDocumentReviewModel";
 import { useDocumentListModel } from "./model/useDocumentListModel";
-import type { DocumentRepository } from "./model/DocumentRepositoryTypes";
+import type {
+  DocumentRepository,
+  ReferenceCandidateDto,
+} from "./model/DocumentRepositoryTypes";
 import type { DocumentListItem } from "./types";
 
 // ─── Fixtures ─────────────────────────────────────────────────────
@@ -87,6 +93,7 @@ function makeRepository(): DocumentRepository {
     transition: vi.fn().mockResolvedValue({ id: "x", status: "approved" }),
     followUp: vi.fn().mockResolvedValue({ id: "x" }),
     waive: vi.fn().mockResolvedValue({ id: "x", status: "waived" }),
+    unwaive: vi.fn<DocumentRepository["unwaive"]>(),
     uploadLocalArchive: vi.fn().mockResolvedValue({ id: "file-1" }),
     listFiles: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     getCompletionRate: vi
@@ -148,7 +155,7 @@ describe("ReferenceVersionModal wiring — candidates from repository", () => {
 
   it("shows loading state while candidates fetch", async () => {
     const repo = makeRepository();
-    let resolve!: (v: unknown) => void;
+    let resolve!: (v: ReferenceCandidateDto[]) => void;
     vi.mocked(repo.listReferenceCandidates).mockReturnValue(
       new Promise((r) => {
         resolve = r;
@@ -187,7 +194,7 @@ describe("ReferenceVersionModal wiring — link success → item status change",
   let repo: DocumentRepository;
   let listModel: ReturnType<typeof useDocumentListModel>;
   let review: ReturnType<typeof useDocumentReviewModel>;
-  let onRefSuccess: ReturnType<typeof vi.fn>;
+  let onRefSuccess: Mock<(item: ReviewTargetItem) => void>;
 
   beforeEach(async () => {
     repo = makeRepository();
@@ -197,7 +204,7 @@ describe("ReferenceVersionModal wiring — link success → item status change",
     });
     await flushPromises();
 
-    onRefSuccess = vi.fn(() => {
+    onRefSuccess = vi.fn<(item: ReviewTargetItem) => void>(() => {
       vi.mocked(repo.listDocuments).mockResolvedValue({
         items: AFTER_LINK_ITEMS,
         total: AFTER_LINK_ITEMS.length,

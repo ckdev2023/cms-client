@@ -320,7 +320,7 @@ describe("CaseRepository", () => {
       groupLabel: "G",
       ownerId: "o",
       completionLabel: "",
-      validationLabel: { status: "pending", blockingCount: 0 },
+      validationLabel: { status: "pending" as const, blockingCount: 0 },
       updatedAtLabel: "",
       dueDate: "",
       dueDateLabel: "",

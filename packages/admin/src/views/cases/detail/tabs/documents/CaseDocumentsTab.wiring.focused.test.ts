@@ -103,6 +103,7 @@ function makeRepository(): DocumentRepository {
     transition: vi.fn().mockResolvedValue(ITEM_DTO),
     followUp: vi.fn().mockResolvedValue(ITEM_DTO),
     waive: vi.fn().mockResolvedValue(ITEM_DTO),
+    unwaive: vi.fn().mockResolvedValue(ITEM_DTO),
     uploadLocalArchive: vi.fn().mockResolvedValue({
       id: "file-1",
       requirementId: "doc-1",
@@ -127,6 +128,9 @@ function makeRepository(): DocumentRepository {
       id: "new-item-1",
       name: "新規資料",
     }),
+    listReferenceCandidates: vi.fn().mockResolvedValue([]),
+    linkRef: vi.fn(),
+    getSharedExpiryRisk: vi.fn(),
   };
 }
 

@@ -3,6 +3,7 @@ import { mount } from "@vue/test-utils";
 import CaseTemplateCreateDialog from "./CaseTemplateCreateDialog.vue";
 import { i18n } from "../../i18n";
 import type {
+  CaseTemplateCreateParams,
   CaseTemplateDetail,
   CaseTemplateItem,
 } from "./model/CaseTemplatesRepository";
@@ -86,7 +87,8 @@ describe("CaseTemplateCreateDialog", () => {
     await wrapper.find("form").trigger("submit.prevent");
     await wrapper.vm.$nextTick();
 
-    const submitted = wrapper.emitted("submit")?.[0]?.[0];
+    const submitted =
+      wrapper.emitted<[CaseTemplateCreateParams]>("submit")?.[0]?.[0];
     expect(submitted).toMatchObject({
       templateName: "模板 B",
       caseType: "business_manager_visa",
@@ -187,7 +189,8 @@ describe("CaseTemplateCreateDialog", () => {
     await wrapper.find("form").trigger("submit.prevent");
     await wrapper.vm.$nextTick();
 
-    const submitted = wrapper.emitted("submit")?.[0]?.[0];
+    const submitted =
+      wrapper.emitted<[CaseTemplateCreateParams]>("submit")?.[0]?.[0];
     expect(submitted).toMatchObject({
       templateName: "Copied Template",
       caseType: "dependent_visa",

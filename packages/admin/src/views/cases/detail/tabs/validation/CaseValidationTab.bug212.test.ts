@@ -12,14 +12,14 @@ import casesEnUS from "../../../../../i18n/messages/cases/en-US";
 type Locale = "zh-CN" | "ja-JP" | "en-US";
 
 // 完整 cases 命名空间 + shell.topbar.comingSoon（防止子组件按钮 title 落到 raw key）
-const FULL_MESSAGES: Record<Locale, Record<string, unknown>> = {
+const FULL_MESSAGES = {
   "zh-CN": { cases: casesZhCN, shell: { topbar: { comingSoon: "建设中" } } },
   "ja-JP": { cases: casesJaJP, shell: { topbar: { comingSoon: "準備中" } } },
   "en-US": {
     cases: casesEnUS,
     shell: { topbar: { comingSoon: "Coming soon" } },
   },
-};
+} satisfies Record<Locale, Record<string, unknown>>;
 
 function makeI18n(locale: Locale) {
   return createI18n({

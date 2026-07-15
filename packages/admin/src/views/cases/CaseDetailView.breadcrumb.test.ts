@@ -20,7 +20,7 @@ describe("CaseDetailView breadcrumb — formatCaseIdentity integration", () => {
 
   it("falls back to id when caseNo is omitted entirely", () => {
     const detail = createMockDetail({ id: "uuid-abc" });
-    delete (detail as Record<string, unknown>).caseNo;
+    delete detail.caseNo;
     const label = formatCaseIdentity(detail.caseNo, detail.id);
     expect(label).toBe("uuid-abc");
   });

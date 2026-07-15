@@ -28,6 +28,7 @@ function makeTask(overrides: Partial<TaskItem> = {}): TaskItem {
     status: "pending",
     due: "04/20",
     assignee: "TN",
+    assigneeFullName: "",
     color: "success",
     dueColor: "danger",
     ...overrides,

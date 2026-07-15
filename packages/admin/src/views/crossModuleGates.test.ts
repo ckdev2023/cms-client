@@ -225,6 +225,8 @@ function makeCustomerDetail(group: string): CustomerDetail {
     referrerName: "",
     archivedCases: 0,
     caseNames: [],
+    caseTitles: [],
+    caseTypeCodes: [],
     lastCaseCreatedDate: null,
   };
 }
@@ -303,10 +305,15 @@ describe("cross-module — customer basic info group dropdown", () => {
 // 4. Customers — create-case sign gate
 // ---------------------------------------------------------------------------
 
+// bmvEnabled 是三态（true / false / undefined=flag 加载中）。以下三例都在验证
+// 「BMV flag 已开启」下的门禁语义，故显式传 true：此前漏传第二个实参、靠
+// undefined 走到同一分支（resolveBlockedReasonKey 只在 === false 时短路），
+// 结论相同但表达的是加载态。传 true 与原先 undefined 对这三个输入输出完全一致。
 describe("cross-module — customer create-case sign gate", () => {
   it("locks both single and batch create entry points for unsigned BMV customers", () => {
     const gate = buildCustomerCreateCaseGateViewModel(
       SAMPLE_CUSTOMER_DETAILS["cust-004"]!,
+      true,
     );
 
     expect(gate.single.disabled).toBe(true);
@@ -319,6 +326,7 @@ describe("cross-module — customer create-case sign gate", () => {
   it("does not block non-BMV customers from either create entry point", () => {
     const gate = buildCustomerCreateCaseGateViewModel(
       makeCustomerDetail("tokyo-1"),
+      true,
     );
 
     expect(gate.single.disabled).toBe(false);
@@ -333,7 +341,7 @@ describe("cross-module — customer create-case sign gate", () => {
     customer.bmvProfile.signStatus = "signed";
     customer.bmvProfile.intakeStatus = "ready_for_case_creation";
 
-    const gate = buildCustomerCreateCaseGateViewModel(customer);
+    const gate = buildCustomerCreateCaseGateViewModel(customer, true);
 
     expect(gate.single.disabled).toBe(false);
     expect(gate.batch.disabled).toBe(false);

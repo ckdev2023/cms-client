@@ -45,6 +45,7 @@ const BASE_FILE_DTO: DocumentFileDto = {
   expiryDate: "2027-01-01",
   uploadedBy: "user-1",
   uploadedAt: "2026-04-20T10:00:00Z",
+  assetId: null,
   createdAt: "2026-04-20T09:00:00Z",
 };
 

@@ -2,7 +2,10 @@ import { describe, it, expect, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { useCaseValidationActions } from "./useCaseValidationActions";
 import type { ValidationRunsRepository } from "../api/resources/ValidationRunsRepository";
-import type { SubmissionPackagesRepository } from "../api/resources/SubmissionPackagesRepository";
+import type {
+  SubmissionPackageResult,
+  SubmissionPackagesRepository,
+} from "../api/resources/SubmissionPackagesRepository";
 import { RepositoryError } from "../../../shared/api/repositoryRuntime";
 
 function createMockRepo(
@@ -50,9 +53,9 @@ describe("useCaseValidationActions.createSubmissionPackage", () => {
   });
 
   it("sets loading during create and clears on success", async () => {
-    let resolveCreate!: (v: unknown) => void;
+    let resolveCreate!: (v: SubmissionPackageResult) => void;
     const spRepo = createMockSpRepo({
-      create: vi.fn(
+      create: vi.fn<SubmissionPackagesRepository["create"]>(
         () =>
           new Promise((r) => {
             resolveCreate = r;
@@ -170,8 +173,8 @@ describe("useCaseValidationActions.createSubmissionPackage", () => {
   });
 
   it("ignores concurrent calls while loading", async () => {
-    let resolveCreate!: (v: unknown) => void;
-    const createFn = vi.fn(
+    let resolveCreate!: (v: SubmissionPackageResult) => void;
+    const createFn = vi.fn<SubmissionPackagesRepository["create"]>(
       () =>
         new Promise((r) => {
           resolveCreate = r;

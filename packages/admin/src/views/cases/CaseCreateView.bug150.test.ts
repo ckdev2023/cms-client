@@ -82,7 +82,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
   it("returns an empty list when no admin session and no api users are loaded", async () => {
     const wrapper = await mountView();
     const step3 = wrapper.findComponent(CaseCreateStep3);
-    const options = step3.props("ownerOptions") as Array<{ label: string }>;
+    const options = step3.props("ownerOptions");
 
     expect(options).toEqual([]);
   });
@@ -98,11 +98,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
 
     const wrapper = await mountView();
     const step3 = wrapper.findComponent(CaseCreateStep3);
-    const options = step3.props("ownerOptions") as Array<{
-      value: string;
-      label: string;
-      initials: string;
-    }>;
+    const options = step3.props("ownerOptions")!;
 
     expect(options[0]).toMatchObject({
       value: "00000000-0000-4000-8000-000000000099",
@@ -133,10 +129,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
     const wrapper = await mountView();
     await flushPromises();
     const step3 = wrapper.findComponent(CaseCreateStep3);
-    const options = step3.props("ownerOptions") as Array<{
-      value: string;
-      label: string;
-    }>;
+    const options = step3.props("ownerOptions")!;
 
     const adminEntry = options.find((o) => o.label === "Local Admin");
     expect(adminEntry).toBeDefined();
@@ -166,10 +159,7 @@ describe("CaseCreateView BUG-150 owner dropdown includes session user", () => {
     const wrapper = await mountView();
     await flushPromises();
     const step3 = wrapper.findComponent(CaseCreateStep3);
-    const options = step3.props("ownerOptions") as Array<{
-      value: string;
-      label: string;
-    }>;
+    const options = step3.props("ownerOptions")!;
 
     const adminCount = options.filter(
       (o) => o.value === "00000000-0000-4000-8000-000000000099",

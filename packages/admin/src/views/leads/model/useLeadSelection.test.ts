@@ -26,6 +26,7 @@ function lead(id: string): LeadSummary {
     updatedAtLabel: "",
     convertedCustomerId: null,
     convertedCaseId: null,
+    tags: [],
     dedupHint: null,
     rowHighlight: null,
   };

@@ -4,6 +4,7 @@ import type { LeadSummary } from "../types";
 
 function lead(partial: Partial<LeadSummary> & { id: string }): LeadSummary {
   return {
+    leadNo: null,
     name: "",
     phone: "",
     email: "",
@@ -24,6 +25,7 @@ function lead(partial: Partial<LeadSummary> & { id: string }): LeadSummary {
     updatedAtLabel: "",
     convertedCustomerId: null,
     convertedCaseId: null,
+    tags: [],
     dedupHint: null,
     rowHighlight: null,
     ...partial,

@@ -4,12 +4,20 @@ import type { DocumentRepository } from "./DocumentRepositoryTypes";
 
 function stubRepository(): Pick<
   DocumentRepository,
-  "transition" | "waive" | "followUp" | "listReferenceCandidates" | "linkRef"
+  | "transition"
+  | "waive"
+  | "followUp"
+  | "listReferenceCandidates"
+  | "linkRef"
+  | "listFiles"
+  | "getSharedExpiryRisk"
 > {
   return {
     transition: vi.fn().mockResolvedValue({ id: "x", status: "approved" }),
     followUp: vi.fn().mockResolvedValue({ id: "x" }),
     waive: vi.fn().mockResolvedValue({ id: "x", status: "waived" }),
+    listFiles: vi.fn<DocumentRepository["listFiles"]>(),
+    getSharedExpiryRisk: vi.fn<DocumentRepository["getSharedExpiryRisk"]>(),
     listReferenceCandidates: vi.fn().mockResolvedValue([]),
     linkRef: vi.fn().mockResolvedValue({
       id: "ref-1",

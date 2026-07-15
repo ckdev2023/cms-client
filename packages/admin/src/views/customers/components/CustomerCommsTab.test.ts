@@ -1,7 +1,7 @@
 import { flushPromises, mount } from "@vue/test-utils";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { RouterLink, createMemoryHistory, createRouter } from "vue-router";
-import { i18n, setAppLocale } from "../../../i18n";
+import { i18n, setAppLocale, type AppLocale } from "../../../i18n";
 import type { CustomerRepository } from "../model/CustomerRepository";
 import CustomerCommsTab from "./CustomerCommsTab.vue";
 
@@ -93,7 +93,7 @@ describe("CustomerCommsTab", () => {
     expect(wrapper.text()).toContain("Auto emails");
   });
 
-  it.each([
+  it.each<{ locale: AppLocale; notExpected: string }>([
     { locale: "zh-CN", notExpected: "2026-04-01T10:00:00" },
     { locale: "en-US", notExpected: "2026-04-01T10:00:00" },
     { locale: "ja-JP", notExpected: "2026-04-01T10:00:00" },

@@ -20,6 +20,9 @@ function createTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
     sourceType: "reminder",
     sourceId: "rem-001",
     completedAt: null,
+    caseNo: "CASE-202604-0011",
+    caseName: null,
+    assigneeName: "Local Admin",
     createdAt: "2026-04-28T09:00:00.000Z",
     updatedAt: "2026-04-28T09:00:00.000Z",
     ...overrides,
@@ -71,6 +74,9 @@ function createRepoStub(
         status: "completed",
         completedAt: "2026-04-29T12:00:00.000Z",
       }),
+    ),
+    createTask: vi.fn<TaskRepository["createTask"]>(async (input) =>
+      createTask({ title: input.title }),
     ),
   };
 }

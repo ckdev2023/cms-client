@@ -78,10 +78,15 @@ function makeRepository(
     transition: vi.fn(),
     followUp: vi.fn(),
     waive: vi.fn(),
+    unwaive: vi.fn<DocumentRepository["unwaive"]>(),
     uploadLocalArchive: vi.fn(),
     listFiles: vi.fn(),
     getCompletionRate: vi.fn(),
     createItem: vi.fn(),
+    listReferenceCandidates:
+      vi.fn<DocumentRepository["listReferenceCandidates"]>(),
+    linkRef: vi.fn<DocumentRepository["linkRef"]>(),
+    getSharedExpiryRisk: vi.fn<DocumentRepository["getSharedExpiryRisk"]>(),
   } satisfies DocumentRepository;
 }
 

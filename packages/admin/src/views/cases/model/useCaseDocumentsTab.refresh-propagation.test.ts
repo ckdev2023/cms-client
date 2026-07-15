@@ -33,10 +33,14 @@ function stubRepository(
     transition: vi.fn(),
     followUp: vi.fn(),
     waive: vi.fn(),
+    unwaive: vi.fn(),
     uploadLocalArchive: vi.fn(),
     listFiles: vi.fn(),
     getCompletionRate: vi.fn().mockResolvedValue(API_RATE),
     createItem: vi.fn().mockResolvedValue({ id: "item-new" }),
+    listReferenceCandidates: vi.fn(),
+    linkRef: vi.fn(),
+    getSharedExpiryRisk: vi.fn(),
     ...overrides,
   };
 }
@@ -62,7 +66,7 @@ describe("useCaseDocumentsTab — onWriteSuccess (NEW-V11-1 修复)", () => {
 
     tab.handleAddItemClick("case-1");
     tab.addItem.updateField("name", "新增资料");
-    tab.addItem.updateField("ownerSide", "applicant");
+    tab.addItem.updateField("ownerSide", "main_applicant");
     await tab.addItem.submit();
     await flushPromises();
 
@@ -85,7 +89,7 @@ describe("useCaseDocumentsTab — onWriteSuccess (NEW-V11-1 修复)", () => {
 
     tab.handleAddItemClick("case-1");
     tab.addItem.updateField("name", "新增资料");
-    tab.addItem.updateField("ownerSide", "applicant");
+    tab.addItem.updateField("ownerSide", "main_applicant");
     await tab.addItem.submit();
     await flushPromises();
 
@@ -103,7 +107,7 @@ describe("useCaseDocumentsTab — onWriteSuccess (NEW-V11-1 修复)", () => {
 
     tab.handleAddItemClick("case-1");
     tab.addItem.updateField("name", "新增资料");
-    tab.addItem.updateField("ownerSide", "applicant");
+    tab.addItem.updateField("ownerSide", "main_applicant");
     await expect(tab.addItem.submit()).resolves.toBeUndefined();
   });
 });

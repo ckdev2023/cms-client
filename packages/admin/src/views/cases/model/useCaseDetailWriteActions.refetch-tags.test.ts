@@ -69,8 +69,10 @@ function makeWriteActions(opts?: {
   skipPartial?: boolean;
 }) {
   const repo = stubRepo(opts?.repoOverrides);
-  const onSuccess = vi.fn(async () => {});
-  const onPartialSuccess = vi.fn(async () => {});
+  const onSuccess = vi.fn<() => Promise<void>>(async () => {});
+  const onPartialSuccess = vi.fn<
+    (tags: ReadonlySet<RefetchTag>) => Promise<void>
+  >(async () => {});
   const wa = createWriteActions({
     repo,
     getCaseId: () => "case-01",
@@ -156,7 +158,7 @@ describe("RefetchTag — onPartialSuccess dispatch", () => {
     await wa.createReminder({
       targetType: "case",
       remindAt: "2026-06-01",
-      kind: "renewal_90d",
+      kind: "renewal_reminder",
       memo: "test",
     });
     expect(onPartialSuccess).toHaveBeenCalledTimes(1);

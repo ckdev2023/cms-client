@@ -22,7 +22,7 @@ const BACKEND_WAIVE_ALLOWED_SNAPSHOT: readonly string[] = [
 
 describe("waive contract — frontend ↔ backend alignment", () => {
   it("frontend fixture matches backend WAIVE_ALLOWED_FROM_STATUSES snapshot", () => {
-    const frontendSet = new Set(WAIVE_ALLOWED_FROM_STATUSES);
+    const frontendSet = new Set<string>(WAIVE_ALLOWED_FROM_STATUSES);
     const backendSet = new Set(BACKEND_WAIVE_ALLOWED_SNAPSHOT);
 
     const missingInFrontend = BACKEND_WAIVE_ALLOWED_SNAPSHOT.filter(

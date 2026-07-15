@@ -2,13 +2,23 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { mount, type VueWrapper } from "@vue/test-utils";
 import MemberCreateModal from "./MemberCreateModal.vue";
 import { i18n, setAppLocale } from "../../../i18n";
+import type { GroupSummary } from "../types";
 
 const STUB_ROLES = [
   { code: "owner", name: "Owner" },
   { code: "staff", name: "Staff" },
 ];
 
-const STUB_GROUPS = [{ id: "g1", name: "Group A" }];
+const STUB_GROUPS: GroupSummary[] = [
+  {
+    id: "g1",
+    name: "Group A",
+    status: "active",
+    createdAt: "2024-01-15",
+    activeCaseCount: 12,
+    memberCount: 4,
+  },
+];
 
 function mountModal(open = true) {
   return mount(MemberCreateModal, {

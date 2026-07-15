@@ -1,8 +1,14 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { useCaseValidationActions } from "./useCaseValidationActions";
-import type { ValidationRunsRepository } from "../api/resources/ValidationRunsRepository";
-import type { ReviewRecordsRepository } from "../api/resources/ReviewRecordsRepository";
+import type {
+  ValidationRunResult,
+  ValidationRunsRepository,
+} from "../api/resources/ValidationRunsRepository";
+import type {
+  ReviewRecordResult,
+  ReviewRecordsRepository,
+} from "../api/resources/ReviewRecordsRepository";
 
 function createMockRepo(
   overrides: Partial<ValidationRunsRepository> = {},
@@ -30,9 +36,9 @@ describe("useCaseValidationActions", () => {
   });
 
   it("sets loading during rerun and clears on success", async () => {
-    let resolveCreateRun!: (v: unknown) => void;
+    let resolveCreateRun!: (v: ValidationRunResult) => void;
     const repo = createMockRepo({
-      createRun: vi.fn(
+      createRun: vi.fn<ValidationRunsRepository["createRun"]>(
         () =>
           new Promise((r) => {
             resolveCreateRun = r;
@@ -127,8 +133,8 @@ describe("useCaseValidationActions", () => {
   });
 
   it("ignores concurrent calls while loading", async () => {
-    let resolveCreateRun!: (v: unknown) => void;
-    const createRunFn = vi.fn(
+    let resolveCreateRun!: (v: ValidationRunResult) => void;
+    const createRunFn = vi.fn<ValidationRunsRepository["createRun"]>(
       () =>
         new Promise((r) => {
           resolveCreateRun = r;
@@ -178,9 +184,11 @@ describe("useCaseValidationActions", () => {
     });
 
     it("sets loading during request and clears on success", async () => {
-      let resolveCreate!: (v: unknown) => void;
+      let resolveCreate!: (v: ReviewRecordResult) => void;
       const rrRepo = createMockRrRepo({
-        createReviewRequest: vi.fn(
+        createReviewRequest: vi.fn<
+          ReviewRecordsRepository["createReviewRequest"]
+        >(
           () =>
             new Promise((r) => {
               resolveCreate = r;
@@ -258,8 +266,8 @@ describe("useCaseValidationActions", () => {
     });
 
     it("ignores concurrent calls while loading", async () => {
-      let resolveCreate!: (v: unknown) => void;
-      const createFn = vi.fn(
+      let resolveCreate!: (v: ReviewRecordResult) => void;
+      const createFn = vi.fn<ReviewRecordsRepository["createReviewRequest"]>(
         () =>
           new Promise((r) => {
             resolveCreate = r;

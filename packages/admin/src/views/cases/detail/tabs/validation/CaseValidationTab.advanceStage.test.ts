@@ -69,7 +69,7 @@ function mountTab(detail: CaseDetail, locale: Locale = "zh-CN") {
 
 const BLOCKER: GateItem = {
   gate: "A",
-  label: "test blocker",
+  title: "test blocker",
 };
 
 describe("CaseValidationTab — advance stage CTA", () => {

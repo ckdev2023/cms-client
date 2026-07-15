@@ -3,6 +3,7 @@ import { nextTick } from "vue";
 import type {
   SearchHit,
   SearchRepository,
+  SearchResponse,
 } from "../shared/api/searchRepository";
 import { useGlobalSearch } from "./useGlobalSearch";
 
@@ -132,11 +133,11 @@ describe("useGlobalSearch", () => {
   });
 
   it("sets loading=true during search and false after", async () => {
-    let resolveSearch!: (v: unknown) => void;
+    let resolveSearch!: (v: SearchResponse) => void;
     const repo: SearchRepository = {
       search: vi.fn(
         () =>
-          new Promise((r) => {
+          new Promise<SearchResponse>((r) => {
             resolveSearch = r;
           }),
       ),
@@ -289,12 +290,12 @@ describe("useGlobalSearch", () => {
 
   it("discards stale response when new query was submitted", async () => {
     let callCount = 0;
-    let resolveFirst!: (v: unknown) => void;
+    let resolveFirst!: (v: SearchResponse) => void;
     const repo: SearchRepository = {
       search: vi.fn(async (q: string) => {
         callCount++;
         if (callCount === 1) {
-          return new Promise((r) => {
+          return new Promise<SearchResponse>((r) => {
             resolveFirst = r;
           });
         }
