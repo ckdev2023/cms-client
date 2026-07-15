@@ -40,8 +40,8 @@ import {
 } from "../../shared/model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
-import type { PaymentRow } from "./detail/tabs/billing/types";
-import type { FormTemplate } from "./detail/tabs/forms/types";
+import { useCaseDetailModals } from "./model/useCaseDetailModals";
+import { useCaseDetailBillingLinks } from "./model/useCaseDetailBillingLinks";
 
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
@@ -341,253 +341,51 @@ const bmvWorkflowStepChipLabel = computed(() => {
  * 依据失败结案信息触发失败结案操作。
  * @returns 无。
  */
-function failureCloseCase(): void {
-  const fc = detail.value?.failureCloseout;
-  if (!fc) return;
-  const reason = fc.reasonLabel ?? fc.reasonCode ?? undefined;
-  failureClose(reason);
-}
+const {
+  failureCloseCase,
+  editModalOpen,
+  editSaving,
+  onSaveCaseEdit,
+  spCreateModalOpen,
+  openSpCreateModal,
+  closeSpCreateModal,
+  onSubmissionPackageCreate,
+  onPhaseSubmit,
+  taskModalOpen,
+  taskModalSubmitting,
+  openCreateTaskModal,
+  onTaskSubmit,
+  onPublishMessage,
+  deadlineModalOpen,
+  deadlineModalSubmitting,
+  openCreateDeadlineModal,
+  onDeadlineSubmit,
+  formGenModalOpen,
+  formGenModalSubmitting,
+  formGenModalPreset,
+  openGenerateFormModal,
+  closeGenerateFormModal,
+  onDeleteDraftGeneratedDoc,
+  onFormGenSubmit,
+} = useCaseDetailModals({
+  detail,
+  t,
+  updateCaseFields,
+  failureClose,
+  phaseMenu,
+  createTask,
+  createReminder,
+  createGeneratedDocument,
+  deleteDraftGeneratedDocument,
+  publishMessage,
+  validationActions,
+});
 
-const editModalOpen = ref(false);
-const editSaving = ref(false);
-
-const spCreateModalOpen = ref(false);
-/** 打开新建提交包弹窗。 */
-function openSpCreateModal(): void {
-  spCreateModalOpen.value = true;
-}
-/** 关闭新建提交包弹窗。 */
-function closeSpCreateModal(): void {
-  spCreateModalOpen.value = false;
-}
-/**
- * 提交包弹窗确认提交：触发创建 action，无错误则关闭弹窗。
- *
- * @param payload - 弹窗收集到的提交日时与提交对象（机关名）。
- * @param payload.submittedAt - 提交日时 ISO-8601 字符串。
- * @param payload.authorityName - 提交对象（机关名）。
- */
-async function onSubmissionPackageCreate(payload: {
-  submittedAt: string;
-  authorityName: string;
-}): Promise<void> {
-  await validationActions.createSubmissionPackage(payload);
-  if (validationActions.createSpErrorI18nKey.value === null) {
-    closeSpCreateModal();
-  }
-}
-
-async function onSaveCaseEdit(fields: {
-  caseName: string;
-  dueAt: string;
-  acceptedAt: string;
-  riskLevel: string;
-  ownerUserId: string;
-  assistantUserId: string;
-  groupId: string;
-  priority: string;
-  jurisdictionAuthority: string;
-  remark: string;
-}): Promise<void> {
-  editSaving.value = true;
-  const ok = await updateCaseFields({ ...fields });
-  editSaving.value = false;
-  if (ok) editModalOpen.value = false;
-}
-
-/**
- * 提交业务阶段流转请求。
- *
- * @param payload - 流转载荷
- * @param payload.toPhase - 目标阶段
- * @param payload.closeReason - 关闭原因
- * @param payload.resultOutcome - 结果
- */
-function onPhaseSubmit(payload: {
-  toPhase: string;
-  closeReason?: string;
-  resultOutcome?: string;
-}): void {
-  void phaseMenu.performTransition(payload.toPhase, {
-    closeReason: payload.closeReason,
-    resultOutcome: payload.resultOutcome,
-  });
-}
-
-/**
- * 构造 `/billing` deep-link：`case` 为案件主键；`hint` 为人类可读关键字（便于列表搜索框展示）；
- * `collect=1` 在显式登记回款时附带（或由 `billingPlan` 间接附带）。
- *
- * @param row - 收费表格行；来自 `plan` 时可带 `billingPlanId` 以预选节点。
- * @param options - 可选配置。
- * @param options.openCollectModal - 为 `true` 时在 query 中附加 `collect=1`，用于打开收费页的登记回款弹窗。
- * @returns 路由 query 对象
- */
-function billingDeepLinkQuery(
-  row?: PaymentRow,
-  options?: { openCollectModal?: boolean },
-): Record<string, string> {
-  const q: Record<string, string> = { case: caseId.value };
-  const hint = detail.value?.caseNo?.trim();
-  if (hint) {
-    q.hint = hint;
-  }
-  if (row?.billingPlanId) {
-    q.billingPlan = row.billingPlanId;
-  }
-  const openCollect =
-    Boolean(options?.openCollectModal) || Boolean(row?.billingPlanId);
-  if (openCollect) {
-    q.collect = "1";
-  }
-  return q;
-}
-
-/**
- * 从案件详情 deep-link 打开回款登记（可选携带预选收费节点）。
- *
- * @param row - 收费表格行；来自 `plan` 时可带 `billingPlanId` 以预选节点。
- */
-function onOpenCollection(row?: PaymentRow): void {
-  router.push({
-    path: "/billing",
-    query: billingDeepLinkQuery(row, { openCollectModal: true }),
-  });
-}
-
-/** 跳转到收费页面，查看收据。 */
-function onViewReceipt(): void {
-  router.push({ path: "/billing", query: billingDeepLinkQuery() });
-}
-
-const taskModalOpen = ref(false);
-const taskModalSubmitting = ref(false);
-
-/** 打开创建任务弹窗（替代原 router.push 到 /tasks 的死循环）。 */
-function openCreateTaskModal(): void {
-  taskModalOpen.value = true;
-}
-
-/**
- * 提交任务创建表单。
- *
- * @param payload - 任务创建数据
- * @param payload.title - 任务标题
- * @param payload.description - 任务描述
- * @param payload.priority - 优先级
- * @param payload.dueAt - 截止日期
- * @param payload.assigneeUserId - 负责人 ID
- */
-async function onTaskSubmit(payload: {
-  title: string;
-  description?: string;
-  priority: import("./model/CaseAdapterTaskWriteBuilders").TaskPriorityChoice;
-  dueAt?: string;
-  assigneeUserId?: string;
-}): Promise<void> {
-  taskModalSubmitting.value = true;
-  const ok = await createTask(payload);
-  taskModalSubmitting.value = false;
-  if (ok) taskModalOpen.value = false;
-}
-
-/**
- * 发布沟通记录。
- *
- * @param payload - 消息载荷
- * @param payload.content - 内容
- * @param payload.channelChoice - 渠道
- */
-function onPublishMessage(payload: {
-  content: string;
-  channelChoice: import("./model/CaseAdapterMessageWriteBuilders").MessageChannelChoice;
-}): void {
-  void publishMessage(payload);
-}
-
-const deadlineModalOpen = ref(false);
-const deadlineModalSubmitting = ref(false);
-
-/** 打开创建期限弹窗。 */
-function openCreateDeadlineModal(): void {
-  deadlineModalOpen.value = true;
-}
-
-/**
- * 提交期限创建表单。
- *
- * @param payload - 期限表单数据
- * @param payload.targetType - 目标类型
- * @param payload.remindAt - 提醒日期
- * @param payload.kind - 期限分类
- * @param payload.memo - 备注
- */
-async function onDeadlineSubmit(payload: {
-  targetType: "case" | "case_party_residence";
-  remindAt: string;
-  kind: import("./model/CaseAdapterReminderWriteBuilders").DeadlineKindChoice;
-  memo: string;
-}): Promise<void> {
-  deadlineModalSubmitting.value = true;
-  const ok = await createReminder(payload);
-  deadlineModalSubmitting.value = false;
-  if (ok) deadlineModalOpen.value = false;
-}
-
-const formGenModalOpen = ref(false);
-const formGenModalSubmitting = ref(false);
-const formGenModalPreset = ref<FormTemplate | null>(null);
-
-/**
- * 打开登记文书弹窗。
- *
- * @param template - 可选；从模板行入口打开时传入该行模板，用于预填标题并提交 templateId。
- */
-function openGenerateFormModal(template?: FormTemplate): void {
-  formGenModalPreset.value = template ?? null;
-  formGenModalOpen.value = true;
-}
-
-/**
- * 关闭登记文书弹窗并清除模板上下文，避免下一次从顶部入口误用上一次模板。
- */
-function closeGenerateFormModal(): void {
-  formGenModalOpen.value = false;
-  formGenModalPreset.value = null;
-}
-
-/**
- * 删除草稿文书（需浏览器确认）。
- *
- * @param docId - 生成文书 ID
- */
-async function onDeleteDraftGeneratedDoc(docId: string): Promise<void> {
-  if (!window.confirm(t("cases.detail.forms.deleteDraftConfirm"))) return;
-  await deleteDraftGeneratedDocument(docId);
-}
-
-/**
- * 提交文书登记表单。
- *
- * @param payload - 文书登记数据
- * @param payload.title - 标题
- * @param payload.fileUrl - 外部资源 URL
- * @param payload.templateId - 可选；从模板行打开时由弹窗填入，发往 `POST /generated-documents`
- */
-async function onFormGenSubmit(payload: {
-  title: string;
-  fileUrl: string;
-  templateId?: string;
-}): Promise<void> {
-  formGenModalSubmitting.value = true;
-  const ok = await createGeneratedDocument({
-    title: payload.title,
-    fileUrl: payload.fileUrl,
-    ...(payload.templateId ? { templateId: payload.templateId } : {}),
-  });
-  formGenModalSubmitting.value = false;
-  if (ok) closeGenerateFormModal();
-}
+const { onOpenCollection, onViewReceipt } = useCaseDetailBillingLinks({
+  caseId,
+  detail,
+  router,
+});
 </script>
 
 <template>
