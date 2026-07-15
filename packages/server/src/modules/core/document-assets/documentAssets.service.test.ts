@@ -23,6 +23,14 @@ function makeCtx(
   return { orgId: ORG_ID, userId: USER_ID, role };
 }
 
+// mapDocumentAssetRow 以真实时钟判定 isExpired（documentAssets.shared.ts:227
+// 的 `expiryDate < 今天`），固定的未来日期会在越过当日后把断言翻转。
+// 本 fixture 想表达的是「一个未过期的资产」而非某个特定日子，故用相对日期，
+// 与 tests/integration-pg 既有约定一致。
+const FUTURE_EXPIRY_DATE = new Date(Date.now() + 365 * 86_400_000)
+  .toISOString()
+  .slice(0, 10);
+
 function makeAssetRow(
   overrides: Record<string, unknown> = {},
 ): DocumentAssetQueryRow {
@@ -38,7 +46,7 @@ function makeAssetRow(
     active_flag: true,
     created_at: "2026-01-01T00:00:00.000Z",
     updated_at: "2026-01-01T00:00:00.000Z",
-    latest_version_expiry_date: "2027-12-31",
+    latest_version_expiry_date: FUTURE_EXPIRY_DATE,
     referenced_case_count: "3",
     ...overrides,
   };
@@ -77,7 +85,7 @@ void test("mapDocumentAssetRow maps all fields correctly", () => {
   assert.equal(asset.ownerEmployerIdentityKey, null);
   assert.equal(asset.originCaseId, CASE_ID);
   assert.equal(asset.activeFlag, true);
-  assert.equal(asset.latestVersionExpiryDate, "2027-12-31");
+  assert.equal(asset.latestVersionExpiryDate, FUTURE_EXPIRY_DATE);
   assert.equal(asset.referencedCaseCount, 3);
   assert.equal(asset.isExpired, false);
 });

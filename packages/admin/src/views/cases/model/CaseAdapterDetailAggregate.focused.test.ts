@@ -2,6 +2,7 @@
 // excludes list mappers, mutations, repos. Related: *.readonly, *.slices.
 
 import { describe, expect, it } from "vitest";
+import "./casesTestClock";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import {
   CASE_DETAIL_DEEP_LINK_FIELDS,

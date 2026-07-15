@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import "./casesTestClock";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import {
   INFO_TAB_CASE_ATTRIBUTES_FIELDS,

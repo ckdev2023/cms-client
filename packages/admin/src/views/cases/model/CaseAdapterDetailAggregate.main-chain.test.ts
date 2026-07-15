@@ -8,7 +8,8 @@
 //   or repository orchestration.
 // ────────────────────────────────────────────────────────────────
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import "./casesTestClock";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import { resolveLocalizedCustomerName } from "./CaseAdapterCustomerLocale";
 import {
@@ -16,19 +17,6 @@ import {
   CASE_DETAIL_HEADER_MAIN_CHAIN_GROUP_KEYS,
   CASE_DETAIL_HEADER_MAIN_CHAIN_GROUPS,
 } from "./CaseAdapterDetailContracts";
-
-// ─── Pin the fake "now" ──────────────────────────────────────────
-// fixture 日期均以 2026-04 为创作锚点（dueAt=2026-06-01 当时是"远期"）；
-// isDeadlineDanger 以真实时钟 ±7 日判定，不冻结时钟则固定日期会随
-// 时间流逝越过阈值（时间炸弹）。锚点与 residence-reminder.test.ts 一致。
-
-beforeEach(() => {
-  vi.useFakeTimers({ now: new Date("2026-04-26T00:00:00Z") });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 // ─── Shared fixtures ─────────────────────────────────────────────
 

@@ -2,6 +2,7 @@
 // Locks display values, null/empty degradation, readonly.
 // Excludes: frozen snapshots, per-slice/group, list mappers, write builders.
 import { describe, expect, it } from "vitest";
+import "./casesTestClock";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 import {
   INFO_TAB_CASE_ATTRIBUTES_FIELDS,

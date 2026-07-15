@@ -7,7 +7,8 @@
 //   or CaseDeadlinesTab.vue visual rendering.
 // ────────────────────────────────────────────────────────────────
 
-import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
+import { describe, expect, it } from "vitest";
+import "./casesTestClock";
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
 
 // ─── Shared fixtures ─────────────────────────────────────────────
@@ -121,19 +122,6 @@ function buildAggregate(extraOverrides: Record<string, unknown> = {}) {
     ...extraOverrides,
   };
 }
-
-// ─── Pin the fake "now" for deterministic tone tests ─────────────
-// 仅 spy Date.now 不够：computeExpiryDaysFromNow / isDeadlineDanger 通过
-// 无参 `new Date()` 读取当前时间，必须用 useFakeTimers 冻结整个系统时钟，
-// 否则固定日期 fixture 会随真实时间流逝越过 90/30/7 日阈值（时间炸弹）。
-
-beforeEach(() => {
-  vi.useFakeTimers({ now: new Date("2026-04-26T00:00:00Z") });
-});
-
-afterEach(() => {
-  vi.useRealTimers();
-});
 
 // ═══════════════════════════════════════════════════════════════════
 //  RESIDENCE PERIOD PANEL

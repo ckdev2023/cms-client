@@ -5,6 +5,7 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it, vi } from "vitest";
+import "./casesTestClock";
 import { nextTick } from "vue";
 
 import { adaptCaseDetailAggregate } from "./CaseAdapterDetailAggregate";
