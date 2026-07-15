@@ -1,0 +1,36 @@
+# 最小 CI（架构总报告「立即项」）：把本地 husky 门禁搬上服务端。
+# 与本地完全同一入口：npm run guard
+#   = lint:i18n + lint:a11y + mobile:guard + admin:guard + server:guard
+# server:guard 内含 test:integration-pg:ci（docker compose 起 PG16，tmpfs 即用即弃）。
+# node >= 22：test:integration-pg 依赖 node --test 原生 glob（node 21+）。
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HUSKY: "0"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install workspaces
+        run: npm ci
+
+      - name: Guard (i18n / a11y / mobile / admin / server)
+        run: npm run guard
