@@ -11,9 +11,9 @@ import {
   activeCustomerPredicate,
   getCustomerOwnerUserId,
   normalizeDistinctIds,
-  normalizeOptionalString,
   validateBaseProfile,
 } from "./customers.utils";
+import { normalizeOptionalString } from "../../../infra/utils/normalize";
 
 type TimelineWriter = {
   write: (ctx: RequestContext, input: TimelineWriteInput) => Promise<void>;

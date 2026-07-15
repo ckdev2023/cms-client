@@ -1,20 +1,14 @@
-import { normalizeObject } from "../../../infra/utils/normalize";
-import type { ContactPerson, Customer } from "../model/coreEntities";
-import { resolveLocalizedNamesFromProfile } from "./customers.localized-names";
 import {
-  CUSTOMER_BMV_QUESTIONNAIRE_STATUSES,
-  CUSTOMER_BMV_QUOTE_STATUSES,
-  CUSTOMER_BMV_SIGN_STATUSES,
-  CUSTOMER_LOCATIONS,
-  CUSTOMER_RELATION_TYPES,
-} from "./customers.types";
+  normalizeObject,
+  normalizeOptionalString,
+  pickOptionalString,
+} from "../../../infra/utils/normalize";
+import type { ContactPerson, Customer } from "../model/coreEntities";
+import { resolveCustomerBmvProfile } from "../model/customerBmvProfile";
+import { resolveLocalizedNamesFromProfile } from "./customers.localized-names";
+import { CUSTOMER_LOCATIONS, CUSTOMER_RELATION_TYPES } from "./customers.types";
 import { pickSourceType } from "./customers.source-type";
 import type {
-  CustomerBmvIntakeStatus,
-  CustomerBmvProfile,
-  CustomerBmvQuestionnaireStatus,
-  CustomerBmvQuoteStatus,
-  CustomerBmvSignStatus,
   CustomerDetailDto,
   CustomerDtoAggregates,
   CustomerRelationDto,
@@ -25,7 +19,6 @@ import {
   CUSTOMER_GROUP_FIELDS,
   CUSTOMER_KANA_FIELDS,
   CUSTOMER_NAME_FIELDS,
-  normalizeOptionalString,
 } from "./customers.utils";
 
 const CUSTOMER_NUMBER_FIELDS = [
@@ -70,17 +63,6 @@ function isStringArrayMember<T extends string>(
   return members.includes(value as T);
 }
 
-function pickOptionalString(
-  record: Record<string, unknown>,
-  fields: readonly string[],
-): string | null {
-  for (const field of fields) {
-    const value = normalizeOptionalString(record[field]);
-    if (value) return value;
-  }
-  return null;
-}
-
 function pickNestedRecord(
   record: Record<string, unknown>,
   fields: readonly string[],
@@ -90,15 +72,6 @@ function pickNestedRecord(
     if (Object.keys(value).length > 0) return value;
   }
   return {};
-}
-
-function mergeBmvProfileRecord(
-  baseProfile: Record<string, unknown>,
-): Record<string, unknown> {
-  return {
-    ...normalizeObject(baseProfile.bmv_profile),
-    ...normalizeObject(baseProfile.bmvProfile),
-  };
 }
 
 function pickOptionalStringFromContacts(
@@ -179,15 +152,6 @@ function resolveOwnerSummary(
   return { initials, name };
 }
 
-function normalizeBmvStatus<T extends string>(
-  raw: Record<string, unknown>,
-  fields: readonly string[],
-  allowed: readonly T[],
-): T | "not_started" {
-  const value = pickOptionalString(raw, fields) ?? "not_started";
-  return isStringArrayMember(allowed, value) ? value : "not_started";
-}
-
 function resolveCustomerNumber(customer: Customer): string {
   return (
     pickOptionalString(customer.baseProfile, CUSTOMER_NUMBER_FIELDS) ??
@@ -235,157 +199,6 @@ function resolveCustomerGroup(
     ]) ??
     ""
   );
-}
-
-/**
- * 从客户 `baseProfile` 中解析经营管理签档案。
- *
- * @param baseProfile - 客户档案 JSONB 对象
- * @returns 规范化后的经营管理签档案；空缺时返回 `not_started` 默认值
- */
-export function resolveCustomerBmvProfile(
-  baseProfile: Record<string, unknown>,
-): CustomerBmvProfile {
-  return normalizeCustomerBmvProfile(mergeBmvProfileRecord(baseProfile));
-}
-
-/**
- * 创建经营管理签档案默认值。
- *
- * @returns 初始状态下的经营管理签档案
- */
-export function createDefaultCustomerBmvProfile(): CustomerBmvProfile {
-  return {
-    questionnaireStatus: "not_started",
-    quoteStatus: "not_started",
-    signStatus: "not_started",
-    intakeStatus: resolveCustomerBmvIntakeStatus({
-      questionnaireStatus: "not_started",
-      quoteStatus: "not_started",
-      signStatus: "not_started",
-    }),
-    questionnaireSentAt: null,
-    questionnaireReturnedAt: null,
-    quoteGeneratedAt: null,
-    quoteConfirmedAt: null,
-    signedAt: null,
-    note: null,
-    sourceLeadId: null,
-    currentQuoteFormId: null,
-    visaPlan: null,
-    quoteAmount: null,
-  };
-}
-
-/**
- * 根据经营管理签子步骤推导整体 intakeStatus。
- *
- * @param profile - 经营管理签承接流程当前子步骤状态
- * @param profile.questionnaireStatus - 问卷阶段状态
- * @param profile.quoteStatus - 报价阶段状态
- * @param profile.signStatus - 签约阶段状态
- * @returns 由问卷 → 报价 → 签约门禁推导出的整体 intakeStatus
- */
-export function resolveCustomerBmvIntakeStatus(profile: {
-  questionnaireStatus: CustomerBmvQuestionnaireStatus;
-  quoteStatus: CustomerBmvQuoteStatus;
-  signStatus: CustomerBmvSignStatus;
-}): CustomerBmvIntakeStatus {
-  if (
-    profile.questionnaireStatus === "not_started" &&
-    profile.quoteStatus === "not_started" &&
-    profile.signStatus === "not_started"
-  ) {
-    return "not_started";
-  }
-  if (profile.signStatus === "signed") return "ready_for_case_creation";
-  if (profile.questionnaireStatus !== "returned")
-    return "questionnaire_pending";
-  if (
-    profile.quoteStatus === "generated" ||
-    profile.quoteStatus === "confirmed" ||
-    profile.signStatus === "pending"
-  ) {
-    return "sign_pending";
-  }
-  return "quote_pending";
-}
-
-/**
- * 规范化经营管理签承接档案。
- *
- * @param value - 客户基础档案中的 bmvProfile 原始值
- * @returns 规范化后的经营管理签承接档案；空对象时返回 `not_started` 默认值
- */
-export function normalizeCustomerBmvProfile(
-  value: unknown,
-): CustomerBmvProfile {
-  const raw = normalizeObject(value);
-  if (Object.keys(raw).length === 0) return createDefaultCustomerBmvProfile();
-
-  const questionnaireStatus = normalizeBmvStatus(
-    raw,
-    ["questionnaireStatus", "questionnaire_status"],
-    CUSTOMER_BMV_QUESTIONNAIRE_STATUSES,
-  );
-  const quoteStatus = normalizeBmvStatus(
-    raw,
-    ["quoteStatus", "quote_status"],
-    CUSTOMER_BMV_QUOTE_STATUSES,
-  );
-  const signStatus = normalizeBmvStatus(
-    raw,
-    ["signStatus", "sign_status"],
-    CUSTOMER_BMV_SIGN_STATUSES,
-  );
-
-  return {
-    questionnaireStatus,
-    quoteStatus,
-    signStatus,
-    intakeStatus: resolveCustomerBmvIntakeStatus({
-      questionnaireStatus,
-      quoteStatus,
-      signStatus,
-    }),
-    questionnaireSentAt: pickOptionalString(raw, [
-      "questionnaireSentAt",
-      "questionnaire_sent_at",
-    ]),
-    questionnaireReturnedAt: pickOptionalString(raw, [
-      "questionnaireReturnedAt",
-      "questionnaire_returned_at",
-    ]),
-    quoteGeneratedAt: pickOptionalString(raw, [
-      "quoteGeneratedAt",
-      "quote_generated_at",
-    ]),
-    quoteConfirmedAt: pickOptionalString(raw, [
-      "quoteConfirmedAt",
-      "quote_confirmed_at",
-    ]),
-    signedAt: pickOptionalString(raw, ["signedAt", "signed_at"]),
-    note: pickOptionalString(raw, ["note", "memo"]),
-    sourceLeadId: pickOptionalString(raw, ["sourceLeadId", "source_lead_id"]),
-    currentQuoteFormId: pickOptionalString(raw, [
-      "currentQuoteFormId",
-      "current_quote_form_id",
-    ]),
-    visaPlan: pickOptionalString(raw, ["visaPlan", "visa_plan"]),
-    quoteAmount: normalizeOptionalNumber(raw),
-  };
-}
-
-function normalizeOptionalNumber(raw: Record<string, unknown>): number | null {
-  for (const key of ["quoteAmount", "quote_amount"]) {
-    const v = raw[key];
-    if (typeof v === "number" && Number.isFinite(v)) return v;
-    if (typeof v === "string") {
-      const n = Number(v);
-      if (Number.isFinite(n)) return n;
-    }
-  }
-  return null;
 }
 
 /**

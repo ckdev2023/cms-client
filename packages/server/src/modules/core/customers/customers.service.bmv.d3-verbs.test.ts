@@ -4,9 +4,9 @@ import type { Pool } from "pg";
 
 import { PermissionsService } from "../auth/permissions.service";
 import type { CasesService } from "../cases/cases.service";
-import { resolveCustomerBmvProfile } from "./customers.dto-mappers";
+import { resolveCustomerBmvProfile } from "../model/customerBmvProfile";
 import { CustomersService } from "./customers.service";
-import type { CustomerBmvProfile } from "./customers.types";
+import type { CustomerBmvProfile } from "../model/customerBmvProfile";
 
 const ctx = {
   orgId: "00000000-0000-4000-8000-000000000000",

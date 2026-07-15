@@ -23,7 +23,7 @@ import type {
   CustomerBmvQuoteStatus,
   CustomerBmvSignStatus,
   CustomerBmvIntakeStatus,
-} from "../customers/customers.types";
+} from "../model/customerBmvProfile";
 import { isBmvCaseTypeCode } from "./cases.template-bmv";
 
 export const BMV_CASE_CREATION_GATE_CODES = {

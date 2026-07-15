@@ -4,10 +4,12 @@ import assert from "node:assert/strict";
 import type { Customer } from "../model/coreEntities";
 import {
   createDefaultCustomerBmvProfile,
-  mapCustomerToDetailDto,
-  mapCustomerToSummaryDto,
   normalizeCustomerBmvProfile,
   resolveCustomerBmvProfile,
+} from "../model/customerBmvProfile";
+import {
+  mapCustomerToDetailDto,
+  mapCustomerToSummaryDto,
 } from "./customers.dto-mappers";
 
 const baseCustomer: Customer = {

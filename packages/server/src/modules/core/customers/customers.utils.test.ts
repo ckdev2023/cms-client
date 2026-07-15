@@ -4,11 +4,13 @@ import assert from "node:assert/strict";
 import type { ContactPerson, Customer } from "../model/coreEntities";
 import {
   createDefaultCustomerBmvProfile,
+  normalizeCustomerBmvProfile,
+  resolveCustomerBmvIntakeStatus,
+} from "../model/customerBmvProfile";
+import {
   mapContactPersonToCustomerRelationDto,
   mapCustomerToDetailDto,
   mapCustomerToSummaryDto,
-  normalizeCustomerBmvProfile,
-  resolveCustomerBmvIntakeStatus,
 } from "./customers.dto-mappers";
 import {
   applyDefaultCustomerOwnerIfMissing,

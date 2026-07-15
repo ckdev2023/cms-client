@@ -21,11 +21,11 @@ import {
   insertResidencePeriodPlaceholder,
   scheduleRenewalReminderPlaceholders,
 } from "./customers.bmv-transition-helpers";
+import type { CustomerBmvProfile } from "../model/customerBmvProfile";
 import type {
   BmvCaseSummary,
   BmvQuoteHistoryItem,
   BmvReminderSummaryItem,
-  CustomerBmvProfile,
   CustomerBmvView,
   ModifyBmvQuoteInput,
   SaveBmvSurveyInput,

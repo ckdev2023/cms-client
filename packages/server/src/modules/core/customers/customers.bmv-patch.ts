@@ -4,8 +4,11 @@ import type { Pool } from "pg";
 import type { Customer } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
-import { resolveCustomerBmvProfile } from "./customers.dto-mappers";
-import type { CustomerBmvProfile, CustomerQueryRow } from "./customers.types";
+import {
+  resolveCustomerBmvProfile,
+  type CustomerBmvProfile,
+} from "../model/customerBmvProfile";
+import type { CustomerQueryRow } from "./customers.types";
 import {
   CUSTOMER_COLS,
   activeCustomerPredicate,

@@ -93,6 +93,24 @@ module.exports = {
       to: { path: "^src/modules/core/residence-periods" },
     },
     {
+      name: "cases-no-import-customers",
+      comment:
+        "S5 解环：cases ↔ customers 的模块环已解开，方向固定为 " +
+        "customers → cases/public（建案能力是 cases 领地，customers.service 建案走 CasesService）。" +
+        "cases 侧对 customers 的全部依赖恰好只是 BMV 承接档案解析链（refs-resolver 取 " +
+        "resolveCustomerBmvProfile、types-bmv-gate 取四个状态类型），已移入共享内核 " +
+        "core/model/customerBmvProfile —— Customer 实体本就定义在同目录 coreEntities.ts，" +
+        "其 base_profile 子文档的解析理应与实体同处，供 customers / cases / core-leads / " +
+        "portal-leads 四方平等取用（同 residencePeriodMappers 的归属理由）。" +
+        "cases 不得再 import customers。",
+      severity: "error",
+      from: {
+        path: "^src/modules/core/cases",
+        pathNot: "\\.test\\.ts$|test-support|test-fixtures",
+      },
+      to: { path: "^src/modules/core/customers" },
+    },
+    {
       name: "modules-templates-no-import-custom",
       severity: "error",
       from: { path: "^src/modules/templates" },

@@ -1,4 +1,5 @@
 import type { ContactPerson, Customer } from "../model/coreEntities";
+import type { CustomerBmvProfile } from "../model/customerBmvProfile";
 
 /**
  * 数据库查询返回的客户行类型。
@@ -53,91 +54,10 @@ export const CUSTOMER_RELATION_TYPES = [
  */
 export type CustomerRelationType = (typeof CUSTOMER_RELATION_TYPES)[number];
 
-/** 经营管理签承接问卷状态。 */
-export const CUSTOMER_BMV_QUESTIONNAIRE_STATUSES = [
-  "not_started",
-  "sent",
-  "returned",
-] as const;
-
-/**
- *
- */
-export type CustomerBmvQuestionnaireStatus =
-  (typeof CUSTOMER_BMV_QUESTIONNAIRE_STATUSES)[number];
-
-/** 经营管理签报价状态。 */
-export const CUSTOMER_BMV_QUOTE_STATUSES = [
-  "not_started",
-  "generated",
-  "confirmed",
-] as const;
-
-/**
- *
- */
-export type CustomerBmvQuoteStatus =
-  (typeof CUSTOMER_BMV_QUOTE_STATUSES)[number];
-
-/** 经营管理签签约状态。 */
-export const CUSTOMER_BMV_SIGN_STATUSES = [
-  "not_started",
-  "pending",
-  "signed",
-] as const;
-
-/**
- *
- */
-export type CustomerBmvSignStatus = (typeof CUSTOMER_BMV_SIGN_STATUSES)[number];
-
-/** 经营管理签整体承接状态。 */
-export const CUSTOMER_BMV_INTAKE_STATUSES = [
-  "not_started",
-  "questionnaire_pending",
-  "quote_pending",
-  "sign_pending",
-  "ready_for_case_creation",
-] as const;
-
-/**
- *
- */
-export type CustomerBmvIntakeStatus =
-  (typeof CUSTOMER_BMV_INTAKE_STATUSES)[number];
-
 /** 客户负责人摘要。 */
 export type CustomerOwnerSummary = {
   initials: string;
   name: string;
-};
-
-/**
- * 经营管理签承接档案。
- *
- * **冻结决策（D2）**：数据持久化于 `customers.base_profile` JSONB 的
- * `bmvProfile` 键（写入路径见 `customers.bmv.ts`）。不新增 `customers`
- * 顶层列。读路径统一通过 `CustomerSummaryDto.bmvProfile` /
- * `CustomerDetailDto.bmvProfile` / `CustomerBmvView` DTO view 暴露给
- * admin/前端，消费方不应直接解析 `base_profile` JSONB。
- *
- * @see {@link CustomerBmvView} — 聚合端点使用的顶层 DTO view
- */
-export type CustomerBmvProfile = {
-  questionnaireStatus: CustomerBmvQuestionnaireStatus;
-  quoteStatus: CustomerBmvQuoteStatus;
-  signStatus: CustomerBmvSignStatus;
-  intakeStatus: CustomerBmvIntakeStatus;
-  questionnaireSentAt: string | null;
-  questionnaireReturnedAt: string | null;
-  quoteGeneratedAt: string | null;
-  quoteConfirmedAt: string | null;
-  signedAt: string | null;
-  note: string | null;
-  sourceLeadId: string | null;
-  currentQuoteFormId: string | null;
-  visaPlan: string | null;
-  quoteAmount: number | null;
 };
 
 /**

@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { createDefaultCustomerBmvProfile } from "../customers/customers.dto-mappers";
+import { createDefaultCustomerBmvProfile } from "../model/customerBmvProfile";
 import { checkBmvCaseCreationGate } from "../cases/cases.types-bmv-gate";
 import { synthesizeBmvProfileForSignedLeadAdminConvert } from "./leads.admin.convert-case";
 

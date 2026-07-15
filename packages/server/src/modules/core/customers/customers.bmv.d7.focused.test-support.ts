@@ -4,7 +4,7 @@ import type { Pool } from "pg";
 import { PermissionsService } from "../auth/permissions.service";
 import type { CasesService } from "../cases/cases.service";
 import { CustomersService } from "./customers.service";
-import type { CustomerBmvProfile } from "./customers.types";
+import type { CustomerBmvProfile } from "../model/customerBmvProfile";
 
 /** D7 テスト共有リクエストコンテキスト。 */
 export const ctx = {

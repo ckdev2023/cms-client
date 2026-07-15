@@ -2,7 +2,10 @@ import { BadRequestException } from "@nestjs/common";
 
 import type { Customer } from "../model/coreEntities";
 import { requireTimestampString } from "../model/timestamps";
-import { normalizeObject } from "../../../infra/utils/normalize";
+import {
+  normalizeObject,
+  normalizeOptionalString,
+} from "../../../infra/utils/normalize";
 import { CUSTOMER_LOCATIONS, CUSTOMER_SOURCE_TYPES } from "./customers.types";
 import type { CustomerQueryRow } from "./customers.types";
 
@@ -98,17 +101,6 @@ export function mapCustomerRow(row: CustomerQueryRow): Customer {
     createdAt: requireTimestampString(row.created_at, "created_at"),
     updatedAt: requireTimestampString(row.updated_at, "updated_at"),
   };
-}
-
-/**
- * 规范化可选字符串，空白值返回 `null`。
- * @param value 任意输入值
- * @returns 规范化后的字符串或 `null`
- */
-export function normalizeOptionalString(value: unknown): string | null {
-  if (typeof value !== "string") return null;
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : null;
 }
 
 /**

@@ -11,7 +11,7 @@ import {
 } from "@nestjs/common";
 import { Pool, type PoolClient } from "pg";
 
-import { createDefaultCustomerBmvProfile } from "../../core/customers/customers.dto-mappers";
+import { createDefaultCustomerBmvProfile } from "../../core/model/customerBmvProfile";
 import type { Lead, LeadQueryRow } from "../model/portalEntities";
 import { mapLeadRow } from "../model/portalEntities";
 import {

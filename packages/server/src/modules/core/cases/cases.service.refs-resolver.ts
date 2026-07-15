@@ -18,7 +18,7 @@ import { BadRequestException } from "@nestjs/common";
 import type { CaseCreateInput } from "./cases.types";
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
 import { checkBmvCaseCreationGate } from "./cases.types-bmv-gate";
-import { resolveCustomerBmvProfile } from "../customers/customers.dto-mappers";
+import { resolveCustomerBmvProfile } from "../model/customerBmvProfile";
 import type { TenantDbTx } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";
 

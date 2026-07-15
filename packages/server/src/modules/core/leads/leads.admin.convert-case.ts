@@ -6,8 +6,8 @@ import { mapLeadRow } from "../../portal/model/portalEntities";
 import {
   createDefaultCustomerBmvProfile,
   resolveCustomerBmvProfile,
-} from "../customers/customers.dto-mappers";
-import type { CustomerBmvProfile } from "../customers/customers.types";
+} from "../model/customerBmvProfile";
+import type { CustomerBmvProfile } from "../model/customerBmvProfile";
 import {
   checkBmvCaseCreationGate,
   isBmvCaseTypeCode,

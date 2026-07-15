@@ -14,10 +14,10 @@ import {
   activeCustomerPredicate,
   collectComparableNames,
   normalizeComparableString,
-  normalizeOptionalString,
   normalizePhone,
   pushParam,
 } from "./customers.utils";
+import { normalizeOptionalString } from "../../../infra/utils/normalize";
 
 const CUSTOMER_COLLABORATOR_FIELDS = [
   "collaborator_user_ids",
