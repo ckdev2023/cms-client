@@ -3,7 +3,7 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
 import CaseCloseoutChecklist from "./CaseCloseoutChecklist.vue";
-import type { CaseDetail } from "../../../types-detail";
+import type { CaseDetail } from "../../types-detail-core";
 import {
   formatDeadlineItemDesc,
   deadlineItemBarColor,

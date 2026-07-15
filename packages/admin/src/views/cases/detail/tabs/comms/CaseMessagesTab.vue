@@ -3,11 +3,8 @@ import { ref, computed, nextTick, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Chip from "../../../../../shared/ui/Chip.vue";
-import type {
-  CaseDetail,
-  MessageItem,
-  MessageTypeKey,
-} from "../../../types-detail";
+import type { MessageItem, MessageTypeKey } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import { MESSAGE_FILTERS } from "../../../constants";
 import type { MessageChannelChoice } from "../../../model/CaseAdapterMessageWriteBuilders";
 import {

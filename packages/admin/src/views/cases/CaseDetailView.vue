@@ -50,8 +50,8 @@ import {
 } from "../../shared/model/caseTitleFallback";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
-import type { FormTemplate, PaymentRow } from "./types-detail";
-
+import type { PaymentRow } from "./detail/tabs/billing/types";
+import type { FormTemplate } from "./detail/tabs/forms/types";
 /** 案件详情页：承载详情头部、Tab 切换与写操作反馈。 */
 const { t, locale } = useI18n();
 const tabRefs = ref<HTMLElement[]>([]);

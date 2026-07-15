@@ -1,4 +1,4 @@
-import type { TeamMember } from "../types-detail";
+import type { TeamMember } from "../detail/tabs/overview/types";
 import {
   readNullableString,
   readString,

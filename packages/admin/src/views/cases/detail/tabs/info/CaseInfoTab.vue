@@ -2,7 +2,8 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
-import type { CaseDetail, RelatedParty } from "../../../types-detail";
+import type { RelatedParty } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import {
   INFO_TAB_CASE_ATTRIBUTES_FIELDS,
   INFO_TAB_READONLY_RULES,

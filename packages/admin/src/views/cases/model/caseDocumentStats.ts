@@ -1,5 +1,7 @@
-import type { DocumentGroup, DocumentItem } from "../types-detail";
-
+import type {
+  DocumentGroup,
+  DocumentItem,
+} from "../detail/tabs/documents/types";
 /**
  * 按提供方完成率统计。
  */

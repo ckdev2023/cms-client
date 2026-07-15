@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n, type I18n } from "vue-i18n";
 import CaseOverviewTimeline from "./CaseOverviewTimeline.vue";
-import type { TimelineEntry } from "../../../types-detail";
+import type { TimelineEntry } from "./types";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../../../i18n/messages/cases/en-US";

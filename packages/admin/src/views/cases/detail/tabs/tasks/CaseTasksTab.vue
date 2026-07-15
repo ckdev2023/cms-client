@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
-import type { CaseDetail, TaskItem } from "../../../types-detail";
-
+import type { TaskItem } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 /** 任务列表 Tab：展示待办与已完成任务，含到期日与负责人。 */
 const { t } = useI18n();
 defineProps<{

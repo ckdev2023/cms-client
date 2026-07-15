@@ -12,7 +12,7 @@ import ReviewDocumentModal from "../../../../documents/components/ReviewDocument
 import WaiveReasonModal from "../../../../documents/components/WaiveReasonModal.vue";
 import ReferenceVersionModal from "../../../../documents/components/ReferenceVersionModal.vue";
 import AddDocumentItemModal from "../../../../documents/components/AddDocumentItemModal.vue";
-import type { CaseDetail } from "../../../types-detail";
+import type { CaseDetail } from "../../types-detail-core";
 import { useCaseDocumentsTab } from "../../../model/useCaseDocumentsTab";
 import { useCaseDocumentsTabDisplayDerived } from "../../../model/useCaseDocumentsTabDisplayDerived";
 import { useCaseDocumentsTabLoadError } from "../../../model/useCaseDocumentsTabLoadError";

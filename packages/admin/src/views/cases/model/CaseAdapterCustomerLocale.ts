@@ -1,4 +1,4 @@
-import type { CustomerLocalizedNames } from "../types-detail";
+import type { CustomerLocalizedNames } from "../types-core";
 import { readString } from "./CaseAdapterShared";
 
 const EMPTY_LOCALIZED_NAMES: CustomerLocalizedNames = {

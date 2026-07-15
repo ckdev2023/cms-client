@@ -10,8 +10,8 @@ import {
   type I18nAccessor,
 } from "../../../model/CaseTimelineTextResolver";
 import type { CaseDetailTab } from "../../../types";
-import type { TimelineEntry, TimelineTrack } from "../../../types-detail";
-
+import type { TimelineEntry } from "./types";
+import type { TimelineTrack } from "../../../types-core";
 /** 概览页时间线区：双轨（business_phase / stage）+ other 单轨 fallback。 */
 const { t, te, locale } = useI18n();
 const props = defineProps<{

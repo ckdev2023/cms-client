@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
-import type { ReminderFailureInfo } from "../../../types-detail";
+import type { ReminderFailureInfo } from "./types";
 import type { WriteActionFeedback } from "../../../model/useCaseDetailWriteActions";
 
 /** 催办失败横幅：提示失败原因并允许重试催办。 */

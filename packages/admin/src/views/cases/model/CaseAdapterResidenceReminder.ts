@@ -4,11 +4,11 @@
 // 独立ファイルに分離し max-lines を遵守。
 
 import type {
-  ResidencePeriod,
   ReminderSchedule,
+  ResidencePeriod,
   SuccessCloseoutInfo,
   SuccessCloseoutPrecondition,
-} from "../types-detail";
+} from "../detail/tabs/overview/types";
 import {
   asRecord,
   formatDate,

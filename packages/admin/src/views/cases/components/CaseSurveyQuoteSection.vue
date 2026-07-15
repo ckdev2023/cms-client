@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
-import type { CaseDetail } from "../types-detail";
-
+import type { CaseDetail } from "../detail/types-detail-core";
 /** 调查与报价区块：展示调查状态、报价状态与预签门禁。 */
 const { t } = useI18n();
 

@@ -1,4 +1,4 @@
-import type { DeadlineItem } from "../types-detail";
+import type { DeadlineItem } from "../detail/tabs/deadlines/types";
 import {
   asRecord,
   formatDate,

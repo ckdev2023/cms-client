@@ -9,7 +9,10 @@
  */
 import { computed, type Ref } from "vue";
 import type { useI18n } from "vue-i18n";
-import type { DocumentItem, DocumentGroup } from "../types-detail";
+import type {
+  DocumentGroup,
+  DocumentItem,
+} from "../detail/tabs/documents/types";
 import type { DocumentListItem } from "../../documents/types";
 import { getProviderLabelKey } from "../../documents/constants";
 import type { useDocumentListModel } from "../../documents/model/useDocumentListModel";

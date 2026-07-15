@@ -3,7 +3,8 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../../../shared/ui/Chip.vue";
-import type { CaseDetail, PaymentRow } from "../../../types-detail";
+import type { PaymentRow } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import { getBillingStatusI18nKey } from "../../../constants";
 
 /** 收费 Tab：展示费用统计卡片、收款节点表格与发票占位。 */

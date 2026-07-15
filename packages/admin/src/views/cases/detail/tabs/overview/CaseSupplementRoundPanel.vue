@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
-import type { SupplementRoundInfo } from "../../../types-detail";
+import type { SupplementRoundInfo } from "./types";
 import type { CaseDetailTab } from "../../../types";
 
 /** 补正轮次面板：展示补正状态、原因与跳转动作。 */

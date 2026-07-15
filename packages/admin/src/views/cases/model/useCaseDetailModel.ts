@@ -7,7 +7,7 @@ import {
   type Ref,
 } from "vue";
 import type { CaseDetail, CaseDetailTab } from "../types";
-import type { FormTemplate } from "../types-detail";
+import type { FormTemplate } from "../detail/tabs/forms/types";
 import { CASE_DETAIL_TABS } from "../constants";
 import type { CaseRepository } from "../api/CaseRepository";
 import { createCaseRepository } from "../api/CaseRepository";

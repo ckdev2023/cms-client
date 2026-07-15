@@ -2,12 +2,8 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseFormsTab from "./CaseFormsTab.vue";
-import type {
-  CaseDetail,
-  FormGenerated,
-  FormTemplate,
-} from "../../../types-detail";
-
+import type { FormGenerated, FormTemplate } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 const CARD_STUB = {
   template:
     "<section><header><slot name='header' /></header><slot /><footer><slot name='footer' /></footer></section>",

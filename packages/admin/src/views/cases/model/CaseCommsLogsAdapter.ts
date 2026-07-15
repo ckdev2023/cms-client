@@ -1,12 +1,9 @@
 /** CaseCommsLogsAdapter — messages / log 独立 adapter（p0-fe-002e-01 落地）。 */
 
 import type { LogCategoryKey, MessageTypeKey } from "../types";
-import type {
-  LogEntry,
-  MessageItem,
-  TimelineEntry,
-  TimelineTrack,
-} from "../types-detail";
+import type { LogEntry, MessageItem } from "../detail/tabs/comms/types";
+import type { TimelineEntry } from "../detail/tabs/overview/types";
+import type { TimelineTrack } from "../types-core";
 import { formatDateTime } from "../../../shared/model/formatDateTime";
 import { buildCaseTimelineMessageResult } from "./CaseCommsTimelineBuilders";
 import { formatDate } from "./CaseAdapterShared";

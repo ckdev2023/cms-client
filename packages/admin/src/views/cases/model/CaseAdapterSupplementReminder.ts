@@ -3,10 +3,10 @@
 // 独立ファイルに分離し max-lines を遵守。
 
 import type {
+  ReminderFailureInfo,
   SupplementRoundInfo,
   SupplementRoundStatusKey,
-  ReminderFailureInfo,
-} from "../types-detail";
+} from "../detail/tabs/overview/types";
 import {
   formatDate,
   readBoolean,

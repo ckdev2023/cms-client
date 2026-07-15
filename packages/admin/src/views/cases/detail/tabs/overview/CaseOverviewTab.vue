@@ -17,7 +17,7 @@ import CaseCloseReasonModal from "./CaseCloseReasonModal.vue";
 import { resolveGroupLabel } from "../../../../../shared/model/groupOptions";
 import { resolveLocalizedCustomerName } from "../../../model/CaseAdapterCustomerLocale";
 import type { CaseDetailTab } from "../../../types";
-import type { CaseDetail } from "../../../types-detail";
+import type { CaseDetail } from "../../types-detail-core";
 import type { WriteActionFeedback } from "../../../model/useCaseDetailWriteActions";
 import { isRenderableFinalPaymentGate } from "../../../model/CaseAdapterFinalPaymentGate";
 

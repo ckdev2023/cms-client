@@ -1,12 +1,12 @@
 import type { CaseStageId } from "../types";
+import type { FailureCloseoutInfo } from "../detail/tabs/overview/types";
 import type {
-  FailureCloseoutInfo,
   PreSignBlocker,
   PreSignGateInfo,
   SurveyQuoteStatus,
   SurveyQuoteStatusKey,
   WorkflowStepSummary,
-} from "../types-detail";
+} from "../detail/types-detail-p1";
 import { buildFinalPaymentGate } from "./CaseAdapterFinalPaymentGate";
 import {
   buildResidencePeriodPanel,

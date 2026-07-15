@@ -5,7 +5,7 @@ import Chip from "../../../../../shared/ui/Chip.vue";
 import type { ChipTone } from "../../../../../shared/ui/Chip.vue";
 import Button from "../../../../../shared/ui/Button.vue";
 import CaseDocumentDetail from "./CaseDocumentDetail.vue";
-import type { DocumentItem } from "../../../types-detail";
+import type { DocumentItem } from "./types";
 import { getStatusTone } from "../../../../documents/constants";
 
 /** 文書行组件：展示单项文書的状态、名称、路径、行内操作与可展开详情。 */

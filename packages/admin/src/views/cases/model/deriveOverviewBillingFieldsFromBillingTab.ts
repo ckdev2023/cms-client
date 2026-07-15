@@ -1,5 +1,5 @@
-import type { BillingData, CaseDetail } from "../types-detail";
-
+import type { BillingData } from "../detail/tabs/billing/types";
+import type { CaseDetail } from "../detail/types-detail-core";
 function parseYenAmount(raw: string): number {
   const m = /^¥([\d,]+)/.exec(String(raw).trim());
   if (!m) return NaN;

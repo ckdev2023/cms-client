@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Button from "../../../../../shared/ui/Button.vue";
-import type { GateItem } from "../../../types-detail";
-
+import type { GateItem } from "./types";
 /**
  * 提交前检查的单条门禁项渲染组件，blocking / warnings / info 三类共用。
  */

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from "vue";
 import { useI18n } from "vue-i18n";
-import type { TransitionGuardReason } from "../types-detail";
+import type { TransitionGuardReason } from "../detail/types-detail-core";
 import Button from "../../../shared/ui/Button.vue";
 import {
   CANCEL_REASON_PRESETS,

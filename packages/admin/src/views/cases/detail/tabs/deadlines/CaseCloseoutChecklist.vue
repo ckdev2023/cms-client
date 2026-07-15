@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
-import type { SuccessCloseoutInfo } from "../../../types-detail";
-
+import type { SuccessCloseoutInfo } from "../overview/types";
 /** 成功结案核对清单：展示结案前置条件的完成情况。 */
 const { t } = useI18n();
 

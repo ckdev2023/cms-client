@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseValidationSupport from "./CaseValidationSupport.vue";
 import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
-import type { CaseDetail } from "../../../types-detail";
+import type { CaseDetail } from "../../types-detail-core";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../../../i18n/messages/cases/en-US";

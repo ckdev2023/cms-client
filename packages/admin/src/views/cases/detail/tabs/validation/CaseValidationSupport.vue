@@ -4,7 +4,8 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
 import Chip, { type ChipTone } from "../../../../../shared/ui/Chip.vue";
-import type { CaseDetail, DoubleReviewEntry } from "../../../types-detail";
+import type { DoubleReviewEntry } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import { resolvePostApprovalCoeNoteKeySuffix } from "../../../model/caseValidationPostApprovalCoeNote";
 
 /** 提交前检查与审核复核支持面板。 */

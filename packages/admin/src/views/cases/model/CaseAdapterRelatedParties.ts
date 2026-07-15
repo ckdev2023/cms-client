@@ -1,4 +1,4 @@
-import type { RelatedParty } from "../types-detail";
+import type { RelatedParty } from "../detail/tabs/info/types";
 import {
   readString,
   stripBracketPrefixesForInitials,

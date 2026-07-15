@@ -32,11 +32,13 @@ import type {
   DocumentGroup,
   DocumentItem,
   DocumentItemActions,
-  FormsData,
+} from "../detail/tabs/documents/types";
+import type {
   FormGenerated,
+  FormsData,
   GeneratedDocumentBackendStatus,
-  TaskItem,
-} from "../types-detail";
+} from "../detail/tabs/forms/types";
+import type { TaskItem } from "../detail/tabs/tasks/types";
 import {
   asRecord,
   formatDate,
@@ -52,34 +54,29 @@ import { WAIVE_ALLOWED_FROM_STATUSES_SET } from "../../documents/fixtures-waive-
 // ─── Type re-exports ────────────────────────────────────────────
 
 export type {
-  DocumentItem,
-  DocumentGroup,
   DocumentFileVersion,
-  DocumentReviewRecord,
-  DocumentReminderRecord,
+  DocumentGroup,
+  DocumentItem,
   DocumentItemActions,
-} from "../types-detail";
-
+  DocumentReminderRecord,
+  DocumentReviewRecord,
+} from "../detail/tabs/documents/types";
 export type {
-  FormTemplate,
   FormGenerated,
+  FormTemplate,
   FormsData,
   GeneratedDocumentBackendStatus,
-} from "../types-detail";
-
+} from "../detail/tabs/forms/types";
 export type {
-  GateItem,
-  ValidationData,
-  SubmissionPackage,
   CorrectionPackage,
   DoubleReviewEntry,
-} from "../types-detail";
-
-export type { PaymentRow, BillingData } from "../types-detail";
-
-export type { TaskItem } from "../types-detail";
-
-export type { DeadlineItem } from "../types-detail";
+  GateItem,
+  SubmissionPackage,
+  ValidationData,
+} from "../detail/tabs/validation/types";
+export type { BillingData, PaymentRow } from "../detail/tabs/billing/types";
+export type { TaskItem } from "../detail/tabs/tasks/types";
+export type { DeadlineItem } from "../detail/tabs/deadlines/types";
 export * from "./CaseAdapterDeadlineSeams";
 
 // ─── Seam Registry (frozen by p0-fe-002e-03) ────────────────────

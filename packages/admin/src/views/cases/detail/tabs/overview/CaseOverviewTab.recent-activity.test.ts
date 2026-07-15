@@ -6,7 +6,8 @@ import {
   resolveTimelineText,
   type I18nAccessor,
 } from "../../../model/CaseTimelineTextResolver";
-import type { LogEntry, TimelineEntry } from "../../../types-detail";
+import type { LogEntry } from "../comms/types";
+import type { TimelineEntry } from "./types";
 import { createI18n } from "vue-i18n";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";

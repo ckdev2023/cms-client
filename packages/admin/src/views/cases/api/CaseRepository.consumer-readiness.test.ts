@@ -28,13 +28,9 @@ import {
 } from "../model/CaseAdapter";
 
 import type { CaseListItem, CaseSummaryCardData, CaseDetail } from "../types";
-import type {
-  DocumentGroup,
-  FormTemplate,
-  FormsData,
-  MessageItem,
-  LogEntry,
-} from "../types-detail";
+import type { LogEntry, MessageItem } from "../detail/tabs/comms/types";
+import type { DocumentGroup } from "../detail/tabs/documents/types";
+import type { FormTemplate, FormsData } from "../detail/tabs/forms/types";
 import type { WriteResultWithId } from "./CaseRepositoryWriteSide";
 
 type _ListCasesReturn = ReturnType<CaseRepository["listCases"]>;

@@ -1,4 +1,4 @@
-import type { CaseDetail } from "../types-detail";
+import type { CaseDetail } from "../detail/types-detail-core";
 import { resolveCaseTypeFlowProfile } from "./caseTypeFlowProfile";
 
 /**

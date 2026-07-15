@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
-import type { ProviderProgress } from "../../../types-detail";
-
+import type { ProviderProgress } from "./types";
 /** 提供方进度卡片：展示每个提供方的完成度。 */
 const { t, te } = useI18n();
 

@@ -421,50 +421,61 @@ export type {
   CreateCaseRelatedParty,
 } from "./types-create";
 
+export type { BillingData, PaymentRow } from "./detail/tabs/billing/types";
 export type {
-  ProviderProgress,
-  RiskBlock,
-  TimelineEntry,
-  TeamMember,
-  RelatedParty,
-  DeadlineItem,
-  DocumentItem,
-  DocumentGroup,
-  PaymentRow,
-  BillingData,
-  GateItem,
-  ValidationData,
-  SubmissionPackage,
-  CorrectionPackage,
-  DoubleReviewEntry,
-  RiskConfirmationRecord,
-  FormTemplate,
-  FormGenerated,
-  FormsData,
-  TaskItem,
-  MessageTypeKey,
-  MessageItem,
   LogEntry,
+  MessageItem,
+  MessageTypeKey,
+} from "./detail/tabs/comms/types";
+export type { DeadlineItem } from "./detail/tabs/deadlines/types";
+export type {
+  DocumentFileVersion,
+  DocumentGroup,
+  DocumentItem,
+  DocumentItemActions,
+  DocumentReminderRecord,
+  DocumentReviewRecord,
+} from "./detail/tabs/documents/types";
+export type {
+  FormGenerated,
+  FormTemplate,
+  FormsData,
+} from "./detail/tabs/forms/types";
+export type { RelatedParty } from "./detail/tabs/info/types";
+export type {
+  FailureCloseoutInfo,
   OverviewActions,
   PostApprovalFlow,
-  ResidencePeriod,
+  ProviderProgress,
+  ReminderFailureInfo,
   ReminderSchedule,
-  SurveyQuoteStatusKey,
-  SurveyQuoteStatus,
-  PreSignGateInfo,
-  PreSignBlocker,
-  WorkflowStepSummary,
-  FailureCloseoutInfo,
-  CaseDetail,
+  ResidencePeriod,
+  RiskBlock,
+  SupplementRoundInfo,
+  SupplementRoundStatusKey,
+  TeamMember,
+  TimelineEntry,
+} from "./detail/tabs/overview/types";
+export type { TaskItem } from "./detail/tabs/tasks/types";
+export type {
+  CorrectionPackage,
+  DoubleReviewEntry,
+  GateItem,
+  RiskConfirmationRecord,
+  SubmissionPackage,
+  ValidationData,
+} from "./detail/tabs/validation/types";
+export type { CaseDetail } from "./detail/types-detail-core";
+export type {
   CaseCreateCustomerOption,
   FamilyDraftParty,
   FamilyScenario,
-  DocumentFileVersion,
-  DocumentReviewRecord,
-  DocumentReminderRecord,
-  DocumentItemActions,
-  SupplementRoundInfo,
-  SupplementRoundStatusKey,
-  ReminderFailureInfo,
-  CustomerLocalizedNames,
-} from "./types-detail";
+} from "./detail/types-detail-create";
+export type {
+  PreSignBlocker,
+  PreSignGateInfo,
+  SurveyQuoteStatus,
+  SurveyQuoteStatusKey,
+  WorkflowStepSummary,
+} from "./detail/types-detail-p1";
+export type { CustomerLocalizedNames } from "./types-core";

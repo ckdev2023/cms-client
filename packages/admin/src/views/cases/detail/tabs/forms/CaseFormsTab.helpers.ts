@@ -1,6 +1,6 @@
 import type { ChipTone } from "../../../../../shared/ui/Chip.vue";
-import type { CaseDetail, FormGenerated } from "../../../types-detail";
-
+import type { FormGenerated } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 const TONE_ICON_CLASS: Record<string, string> = {
   success: "forms-tab__icon--success",
   warning: "forms-tab__icon--warning",

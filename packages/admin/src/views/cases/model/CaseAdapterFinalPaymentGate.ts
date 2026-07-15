@@ -4,10 +4,9 @@
 // 尾款已清且无欠款风险时方可推进到 COE_SENT。
 
 import type {
-  FinalPaymentGateInfo,
   FinalPaymentBlocker,
-} from "../types-detail";
-
+  FinalPaymentGateInfo,
+} from "../detail/tabs/overview/types";
 /** 需要展示尾款门禁的步骤集合。 */
 const COE_GATE_RELEVANT_STEPS: ReadonlySet<string> = new Set([
   "APPROVED",

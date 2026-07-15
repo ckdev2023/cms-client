@@ -6,7 +6,7 @@ import {
   adaptCaseLogDto,
   resolveTimelineTrack,
 } from "../../../model/CaseCommsLogsAdapter";
-import type { LogEntry } from "../../../types-detail";
+import type { LogEntry } from "../comms/types";
 import { createI18n } from "vue-i18n";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";

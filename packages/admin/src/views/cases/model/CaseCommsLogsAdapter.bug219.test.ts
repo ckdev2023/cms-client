@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { adaptCaseLogDto } from "./CaseCommsLogsAdapter";
-import type { LogEntry } from "../types-detail";
-
+import type { LogEntry } from "../detail/tabs/comms/types";
 function makeTimelineDto(
   action: string,
   payload: Record<string, unknown> = {},

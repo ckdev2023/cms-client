@@ -4,8 +4,7 @@ import {
   BMV_WORKFLOW_STEP_MAP,
   computeBmvWorkflowStepDisplayStatus,
 } from "./constantsBmvSteps";
-import type { WorkflowStepSummary } from "./types-detail";
-
+import type { WorkflowStepSummary } from "./detail/types-detail-p1";
 function makeWorkflowStep(
   overrides: Partial<WorkflowStepSummary> = {},
 ): WorkflowStepSummary {

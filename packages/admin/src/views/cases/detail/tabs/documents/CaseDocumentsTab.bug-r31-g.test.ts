@@ -4,11 +4,8 @@ import { ref, computed } from "vue";
 import { createI18n } from "vue-i18n";
 import CaseDocumentsTab from "./CaseDocumentsTab.vue";
 import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
-import type {
-  CaseDetail,
-  DocumentGroup,
-  DocumentItem,
-} from "../../../types-detail";
+import type { DocumentGroup, DocumentItem } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../../../i18n/messages/cases/en-US";

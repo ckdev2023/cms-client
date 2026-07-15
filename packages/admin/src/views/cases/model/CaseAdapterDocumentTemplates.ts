@@ -2,7 +2,7 @@
  * 文書模板 adapter — 从 CaseAdapterSupportSeams 抽出以遵守 max-lines 约束。
  */
 
-import type { FormTemplate } from "../types-detail";
+import type { FormTemplate } from "../detail/tabs/forms/types";
 import { asRecord, readNumber, readString } from "./CaseAdapterShared";
 
 function readArrayOrItems(value: unknown): unknown[] | null {

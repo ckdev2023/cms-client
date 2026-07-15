@@ -1,5 +1,4 @@
-import type { CaseTypeFlowProfile } from "../types-detail";
-
+import type { CaseTypeFlowProfile } from "../detail/types-detail-core";
 /**
  * 将案件种类代码规范为小写并按连字符规整，用于包含 `renewal` 等后缀的判定。
  *

@@ -3,8 +3,8 @@ import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseFormsTab from "./CaseFormsTab.vue";
 import { canFinalizeDraftGeneratedDoc } from "./CaseFormsTab.helpers";
-import type { CaseDetail, FormGenerated } from "../../../types-detail";
-
+import type { FormGenerated } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 const CARD_STUB = {
   template:
     "<section><header><slot name='header' /></header><slot /><footer><slot name='footer' /></footer></section>",

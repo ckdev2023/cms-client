@@ -1,16 +1,14 @@
+import type { BillingData } from "../detail/tabs/billing/types";
+import type { LogEntry, MessageItem } from "../detail/tabs/comms/types";
+import type { DeadlineItem } from "../detail/tabs/deadlines/types";
+import type { DocumentGroup } from "../detail/tabs/documents/types";
+import type { FormTemplate, FormsData } from "../detail/tabs/forms/types";
+import type { TaskItem } from "../detail/tabs/tasks/types";
 import type {
-  BillingData,
-  DeadlineItem,
-  DocumentGroup,
   DoubleReviewEntry,
-  FormTemplate,
-  FormsData,
-  LogEntry,
-  MessageItem,
   SubmissionPackage,
-  TaskItem,
   ValidationData,
-} from "../types-detail";
+} from "../detail/tabs/validation/types";
 import {
   adaptCaseBillingData,
   adaptCaseDeadlineList,

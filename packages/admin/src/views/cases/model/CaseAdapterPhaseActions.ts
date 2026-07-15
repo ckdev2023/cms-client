@@ -1,6 +1,5 @@
 import type { BusinessPhaseId } from "../constantsBusinessPhase";
-import type { OverviewActions } from "../types-detail";
-
+import type { OverviewActions } from "../detail/tabs/overview/types";
 interface PhaseActionEntry {
   primary: { label: string; tab: string };
   secondary: { label: string; tab: string };

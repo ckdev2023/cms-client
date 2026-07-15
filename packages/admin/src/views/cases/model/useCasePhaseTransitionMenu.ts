@@ -1,6 +1,6 @@
 import { ref, computed, type Ref } from "vue";
 import type { CaseDetail } from "../types";
-import type { TransitionGuardReason } from "../types-detail";
+import type { TransitionGuardReason } from "../detail/types-detail-core";
 import type { BusinessPhaseId } from "../constantsBusinessPhase";
 import { BUSINESS_PHASES } from "../constantsBusinessPhase";
 import type { CaseRepository } from "../api/CaseRepository";

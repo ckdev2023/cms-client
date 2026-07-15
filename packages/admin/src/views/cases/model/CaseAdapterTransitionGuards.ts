@@ -1,4 +1,4 @@
-import type { TransitionGuardReason } from "../types-detail";
+import type { TransitionGuardReason } from "../detail/types-detail-core";
 import { buildFinalPaymentGate } from "./CaseAdapterFinalPaymentGate";
 
 /**

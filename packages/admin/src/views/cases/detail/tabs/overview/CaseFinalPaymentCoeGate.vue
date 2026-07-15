@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
-import type { FinalPaymentGateInfo } from "../../../types-detail";
+import type { FinalPaymentGateInfo } from "./types";
 import type { WriteActionFeedback } from "../../../model/useCaseDetailWriteActions";
 
 /** 最终付款与 COE 发送门禁：承载确认弹层与推进动作。 */

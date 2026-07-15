@@ -9,8 +9,7 @@ import {
   checkCreatePreSignGate,
   PRE_SIGN_GATE_BLOCKER_CODES,
 } from "./useCreateCasePreSignGate";
-import type { CaseCreateCustomerOption } from "../types-detail";
-
+import type { CaseCreateCustomerOption } from "../detail/types-detail-create";
 function makeReadyCustomer(
   overrides: Partial<CaseCreateCustomerOption> = {},
 ): CaseCreateCustomerOption {

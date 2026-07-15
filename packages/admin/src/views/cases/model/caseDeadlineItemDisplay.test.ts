@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { DeadlineItem } from "../types-detail";
+import type { DeadlineItem } from "../detail/tabs/deadlines/types";
 import {
   deadlineItemBarColor,
   deadlineItemChipClass,

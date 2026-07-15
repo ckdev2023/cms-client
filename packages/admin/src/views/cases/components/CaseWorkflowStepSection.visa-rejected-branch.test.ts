@@ -2,8 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseWorkflowStepSection from "./CaseWorkflowStepSection.vue";
-import type { WorkflowStepSummary } from "../types-detail";
-
+import type { WorkflowStepSummary } from "../detail/types-detail-p1";
 /** 经营管理签：`VISA_REJECTED` 终局时，`ENTRY_SUCCESS` 不得误判为已完成。 */
 
 const WF_VISA_REJECTED: WorkflowStepSummary = {

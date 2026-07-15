@@ -1,5 +1,4 @@
-import type { ValidationData } from "../types-detail";
-
+import type { ValidationData } from "../detail/tabs/validation/types";
 const STALE_THRESHOLD_MS = 5_000;
 
 /**

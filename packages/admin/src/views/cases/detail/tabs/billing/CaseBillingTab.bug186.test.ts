@@ -18,7 +18,8 @@ import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseBillingTab from "./CaseBillingTab.vue";
 import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
-import type { CaseDetail, PaymentRow } from "../../../types-detail";
+import type { PaymentRow } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import {
   adaptCaseBillingData,
   resolveMilestoneI18nKey,

@@ -3,8 +3,8 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
 import type { CaseDetailTab } from "../../../types";
-import type { CaseDetail, TeamMember } from "../../../types-detail";
-
+import type { TeamMember } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 /** 概览右侧边栏：阻断与风险摘要、案件团队、「门禁与提交」入口提示。 */
 const { t } = useI18n();
 defineProps<{

@@ -5,7 +5,10 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, it, expect } from "vitest";
-import type { DocumentGroup, DocumentItem } from "../types-detail";
+import type {
+  DocumentGroup,
+  DocumentItem,
+} from "../detail/tabs/documents/types";
 import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
 import {
   computeAllProviderStats,

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
-import type { LogEntry } from "../types-detail";
-
+import type { LogEntry } from "../detail/tabs/comms/types";
 function makeLogEntry(overrides: Partial<LogEntry> = {}): LogEntry {
   return {
     type: "operation",

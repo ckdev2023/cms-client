@@ -4,7 +4,7 @@ import { useCaseDetailModel } from "./useCaseDetailModel";
 import { buildOverviewTimelineFromLog } from "./CaseCommsLogsAdapter";
 import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseDetail } from "../types";
-import type { LogEntry } from "../types-detail";
+import type { LogEntry } from "../detail/tabs/comms/types";
 import {
   createMockAggregate,
   createMockDetail,

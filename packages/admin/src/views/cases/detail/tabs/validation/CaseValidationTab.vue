@@ -9,11 +9,8 @@ import GateItemVue from "./GateItem.vue";
 import { formatDateTime } from "../../../../../shared/model/formatDateTime";
 import CaseValidationTechIdDisplay from "./CaseValidationTechIdDisplay.vue";
 
-import type {
-  CaseDetail,
-  GateItem,
-  ValidationData,
-} from "../../../types-detail";
+import type { GateItem, ValidationData } from "./types";
+import type { CaseDetail } from "../../types-detail-core";
 import type { CaseDetailTab } from "../../../types";
 import { CASE_STAGE_FORWARD_NEXT } from "../../../model/caseStageTransitions";
 

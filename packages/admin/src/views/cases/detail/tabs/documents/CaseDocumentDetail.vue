@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from "vue-i18n";
 import Chip from "../../../../../shared/ui/Chip.vue";
-import type { DocumentItem } from "../../../types-detail";
-
+import type { DocumentItem } from "./types";
 /** 文书展开详情：版本历史、审核记录、催办时间线。 */
 const { t } = useI18n();
 

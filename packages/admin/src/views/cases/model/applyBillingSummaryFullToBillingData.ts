@@ -1,4 +1,4 @@
-import type { BillingData } from "../types-detail";
+import type { BillingData } from "../detail/tabs/billing/types";
 import { asRecord, readNumber } from "./CaseAdapterShared";
 
 function formatYenAmount(amount: number): string {

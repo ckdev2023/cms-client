@@ -3,8 +3,7 @@ import { ref } from "vue";
 import { flushPromises } from "@vue/test-utils";
 import type { DocumentRepository } from "../../../../documents/model/DocumentRepositoryTypes";
 import type { DocumentListItem } from "../../../../documents/types";
-import type { DocumentItem } from "../../../types-detail";
-
+import type { DocumentItem } from "./types";
 vi.mock("vue-i18n", () => ({
   useI18n: () => ({ t: (k: string) => k }),
 }));

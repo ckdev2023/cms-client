@@ -1,5 +1,4 @@
-import type { TransitionGuardReason } from "../types-detail";
-
+import type { TransitionGuardReason } from "../detail/types-detail-core";
 export const CANCEL_REASON_PRESETS = [
   "MID_CASE_WITHDRAWAL",
   "CLIENT_LOST_CONTACT",

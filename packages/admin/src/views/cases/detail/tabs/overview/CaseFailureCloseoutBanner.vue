@@ -2,7 +2,7 @@
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import Button from "../../../../../shared/ui/Button.vue";
-import type { FailureCloseoutInfo } from "../../../types-detail";
+import type { FailureCloseoutInfo } from "./types";
 import type { CaseDetailTab } from "../../../types";
 import type { WriteActionFeedback } from "../../../model/useCaseDetailWriteActions";
 

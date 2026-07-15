@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseDocumentRow from "./CaseDocumentRow.vue";
-import type { DocumentItem } from "../../../types-detail";
+import type { DocumentItem } from "./types";
 import documentsZhCN from "../../../../../i18n/messages/documents/zh-CN";
 import documentsEnUS from "../../../../../i18n/messages/documents/en-US";
 import documentsJaJP from "../../../../../i18n/messages/documents/ja-JP";

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { isValidationStale } from "./validationStaleCheck";
-import type { ValidationData } from "../types-detail";
-
+import type { ValidationData } from "../detail/tabs/validation/types";
 function makeValidation(
   overrides: Partial<ValidationData> = {},
 ): ValidationData {

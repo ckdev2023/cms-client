@@ -1,5 +1,5 @@
 import { computed, type ComputedRef, type Ref } from "vue";
-import type { DocumentGroup } from "../types-detail";
+import type { DocumentGroup } from "../detail/tabs/documents/types";
 import type { CompletionRate } from "../../documents/types";
 import type { CaseDocumentsViewState } from "./useCaseDocumentsTab";
 import {

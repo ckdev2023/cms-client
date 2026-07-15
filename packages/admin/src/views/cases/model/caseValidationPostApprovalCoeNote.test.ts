@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
-import type { CaseDetail } from "../types-detail";
+import type { CaseDetail } from "../detail/types-detail-core";
 import { resolvePostApprovalCoeNoteKeySuffix } from "./caseValidationPostApprovalCoeNote";
 
 function baseWorkDetail(overrides: Partial<CaseDetail> = {}): CaseDetail {

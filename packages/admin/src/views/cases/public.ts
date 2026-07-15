@@ -47,4 +47,4 @@ export type {
   DocumentItemActions,
   DocumentReminderRecord,
   DocumentReviewRecord,
-} from "./types-detail";
+} from "./detail/tabs/documents/types";

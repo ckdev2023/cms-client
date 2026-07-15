@@ -4,8 +4,7 @@ import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
 import { resolveStageLabelI18nKey } from "../../../constants";
 import { resolveBmvWorkflowStepDisplayLabel } from "../../../constantsBmvSteps";
-import type { CaseDetail } from "../../../types-detail";
-
+import type { CaseDetail } from "../../types-detail-core";
 /** 概览顶部 4 张统计卡片：阶段 / 截止 / 进度 / 收费。 */
 const { t } = useI18n();
 const props = defineProps<{

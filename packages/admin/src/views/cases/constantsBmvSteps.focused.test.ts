@@ -7,8 +7,7 @@ import {
   getBmvStepLabel,
   type BmvStageGroup,
 } from "./constantsBmvSteps";
-import type { WorkflowStepSummary } from "./types-detail";
-
+import type { WorkflowStepSummary } from "./detail/types-detail-p1";
 function isGroupActive(
   group: BmvStageGroup,
   workflowStep: WorkflowStepSummary,

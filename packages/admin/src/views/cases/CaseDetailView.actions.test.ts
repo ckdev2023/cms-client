@@ -5,11 +5,9 @@ import CaseBillingTab from "./detail/tabs/billing/CaseBillingTab.vue";
 import CaseFinalPaymentCoeGate from "./detail/tabs/overview/CaseFinalPaymentCoeGate.vue";
 import CaseTasksTab from "./detail/tabs/tasks/CaseTasksTab.vue";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
-import type {
-  CaseDetail,
-  FinalPaymentGateInfo,
-  PaymentRow,
-} from "./types-detail";
+import type { PaymentRow } from "./detail/tabs/billing/types";
+import type { FinalPaymentGateInfo } from "./detail/tabs/overview/types";
+import type { CaseDetail } from "./detail/types-detail-core";
 import casesZhCN from "../../i18n/messages/cases/zh-CN";
 
 const i18n = createI18n({

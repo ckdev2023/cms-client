@@ -3,8 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../../../shared/ui/Button.vue";
 import type { CaseDetailTab } from "../../../types";
-import type { CaseDetail } from "../../../types-detail";
-
+import type { CaseDetail } from "../../types-detail-core";
 /** 概览页"下一关键动作"区：常态显示主/次动作按钮，终态显示结案与收费/退款入口。 */
 const { t } = useI18n();
 const props = defineProps<{

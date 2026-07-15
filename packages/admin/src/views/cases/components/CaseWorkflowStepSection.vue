@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../shared/ui/Card.vue";
-import type { WorkflowStepSummary } from "../types-detail";
+import type { WorkflowStepSummary } from "../detail/types-detail-p1";
 import {
   getBmvStageGroups,
   computeBmvWorkflowStepDisplayStatus,

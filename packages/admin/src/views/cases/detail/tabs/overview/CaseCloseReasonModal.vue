@@ -3,11 +3,7 @@ import { ref, watch, nextTick, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Button from "../../../../../shared/ui/Button.vue";
 import { formatDateTime } from "../../../../../shared/model/formatDateTime";
-import type {
-  FailureCloseoutInfo,
-  SuccessCloseoutInfo,
-} from "../../../types-detail";
-
+import type { FailureCloseoutInfo, SuccessCloseoutInfo } from "./types";
 /** 结案原因弹窗：展示案件归档详情（失败/成功结案信息）。 */
 const { t, locale } = useI18n();
 

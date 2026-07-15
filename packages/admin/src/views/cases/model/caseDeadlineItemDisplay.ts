@@ -1,5 +1,4 @@
-import type { DeadlineItem } from "../types-detail";
-
+import type { DeadlineItem } from "../detail/tabs/deadlines/types";
 const BAR_COLORS: Record<string, string> = {
   danger: "var(--color-danger)",
   warning: "#f59e0b",

@@ -2,13 +2,15 @@
 
 import type {
   BillingData,
-  DoubleReviewEntry,
-  GateItem,
   PaymentRow,
   PaymentRowKind,
+} from "../detail/tabs/billing/types";
+import type {
+  DoubleReviewEntry,
+  GateItem,
   SubmissionPackage,
   ValidationData,
-} from "../types-detail";
+} from "../detail/tabs/validation/types";
 import {
   asRecord,
   formatDate,

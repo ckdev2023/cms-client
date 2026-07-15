@@ -1,7 +1,7 @@
 import { computed, ref, watch, type ComputedRef, type Ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useToast } from "../../../shared/model/useToast";
-import type { DocumentItem } from "../types-detail";
+import type { DocumentItem } from "../detail/tabs/documents/types";
 import type {
   DocumentListItem,
   WaivedReasonCode,

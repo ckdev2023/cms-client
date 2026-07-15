@@ -1,5 +1,5 @@
 import { ref, watch, type Ref } from "vue";
-import type { FormTemplate } from "../types-detail";
+import type { FormTemplate } from "../detail/tabs/forms/types";
 import type { CaseRepository } from "../api/CaseRepository";
 
 /**
