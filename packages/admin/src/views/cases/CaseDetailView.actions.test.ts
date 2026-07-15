@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
-import CaseBillingTab from "./components/CaseBillingTab.vue";
-import CaseFinalPaymentCoeGate from "./components/CaseFinalPaymentCoeGate.vue";
-import CaseTasksTab from "./components/CaseTasksTab.vue";
+import CaseBillingTab from "./detail/tabs/billing/CaseBillingTab.vue";
+import CaseFinalPaymentCoeGate from "./detail/tabs/overview/CaseFinalPaymentCoeGate.vue";
+import CaseTasksTab from "./detail/tabs/tasks/CaseTasksTab.vue";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
 import type {
   CaseDetail,

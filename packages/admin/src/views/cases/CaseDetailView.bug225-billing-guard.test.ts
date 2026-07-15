@@ -69,7 +69,7 @@ describe("BUG-225: WAITING_PAYMENT billing guard", () => {
 
   describe("CaseOverviewStatCards template guard presence", () => {
     const src = readFileSync(
-      resolve(__dirname, "components/CaseOverviewStatCards.vue"),
+      resolve(__dirname, "detail/tabs/overview/CaseOverviewStatCards.vue"),
       "utf-8",
     );
 

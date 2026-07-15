@@ -72,7 +72,7 @@ interface GridViolation {
  */
 const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
   [
-    "views/cases/components/CaseInfoTab.vue",
+    "views/cases/detail/tabs/info/CaseInfoTab.vue",
     { max: 2, note: "S7 — multi-col grids" },
   ],
   [
@@ -88,7 +88,7 @@ const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 1, note: "modal — constrained parent" },
   ],
   [
-    "views/cases/components/CaseCloseReasonModal.vue",
+    "views/cases/detail/tabs/overview/CaseCloseReasonModal.vue",
     { max: 1, note: "modal — constrained parent" },
   ],
   [
@@ -96,31 +96,31 @@ const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 1, note: "S7 — summary 3-col" },
   ],
   [
-    "views/cases/components/CaseOverviewTab.vue",
+    "views/cases/detail/tabs/overview/CaseOverviewTab.vue",
     { max: 1, note: "S7 — 2fr 1fr grid" },
   ],
   [
-    "views/cases/components/CaseOverviewTimeline.vue",
+    "views/cases/detail/tabs/overview/CaseOverviewTimeline.vue",
     { max: 1, note: "S7 — dual-track" },
   ],
   [
-    "views/cases/components/CaseOverviewStatCards.vue",
+    "views/cases/detail/tabs/overview/CaseOverviewStatCards.vue",
     { max: 2, note: "S7 — stat cards grid" },
   ],
   [
-    "views/cases/components/CaseDeadlinesTab.vue",
+    "views/cases/detail/tabs/deadlines/CaseDeadlinesTab.vue",
     { max: 1, note: "S7 — summaries grid" },
   ],
   [
-    "views/cases/components/CaseBillingTab.vue",
+    "views/cases/detail/tabs/billing/CaseBillingTab.vue",
     { max: 1, note: "S7 — stats grid" },
   ],
   [
-    "views/cases/components/CaseMessagesTab.vue",
+    "views/cases/detail/tabs/comms/CaseMessagesTab.vue",
     { max: 1, note: "S7 — sidebar grid" },
   ],
   [
-    "views/cases/components/CaseValidationSupport.vue",
+    "views/cases/detail/tabs/validation/CaseValidationSupport.vue",
     { max: 1, note: "S7 — 2-col grid" },
   ],
   [
@@ -211,11 +211,11 @@ const KNOWN_TABLE_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 1, note: "S3 — migrate to ResponsiveTable" },
   ],
   [
-    "views/cases/components/CaseBillingTab.vue",
+    "views/cases/detail/tabs/billing/CaseBillingTab.vue",
     { max: 1, note: "S3 — billing payment table" },
   ],
   [
-    "views/cases/components/CaseDocumentDetail.vue",
+    "views/cases/detail/tabs/documents/CaseDocumentDetail.vue",
     { max: 1, note: "S3 — version history table" },
   ],
   [

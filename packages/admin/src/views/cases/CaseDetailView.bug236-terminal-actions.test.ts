@@ -10,11 +10,11 @@ import { resolve } from "node:path";
 
 describe("BUG-236: CaseOverviewTab terminal action buttons", () => {
   const nextActionSrc = readFileSync(
-    resolve(__dirname, "components/CaseOverviewNextAction.vue"),
+    resolve(__dirname, "detail/tabs/overview/CaseOverviewNextAction.vue"),
     "utf-8",
   );
   const overviewSrc = readFileSync(
-    resolve(__dirname, "components/CaseOverviewTab.vue"),
+    resolve(__dirname, "detail/tabs/overview/CaseOverviewTab.vue"),
     "utf-8",
   );
 

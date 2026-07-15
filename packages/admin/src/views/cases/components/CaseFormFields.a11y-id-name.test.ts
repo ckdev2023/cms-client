@@ -2,9 +2,9 @@ import { describe, it, expect, afterEach } from "vitest";
 import { mount, VueWrapper } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseRiskConfirmModal from "./CaseRiskConfirmModal.vue";
-import CaseFormGenerateModal from "./CaseFormGenerateModal.vue";
-import CaseDeadlineCreateModal from "./CaseDeadlineCreateModal.vue";
-import CaseMessagesTab from "./CaseMessagesTab.vue";
+import CaseFormGenerateModal from "../detail/tabs/forms/CaseFormGenerateModal.vue";
+import CaseDeadlineCreateModal from "../detail/tabs/deadlines/CaseDeadlineCreateModal.vue";
+import CaseMessagesTab from "../detail/tabs/comms/CaseMessagesTab.vue";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";
 
 const BUTTON_STUB = {
