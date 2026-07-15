@@ -22,7 +22,7 @@ import type {
   PhaseTransitionInput,
 } from "./cases.types";
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 import {
   requiresSuccessCloseoutCheck,
   checkSuccessCloseoutPreconditions,
@@ -107,7 +107,7 @@ import {
   resolvePhaseStampEffects,
   shouldIncrementSupplementCount,
   validateWorkflowStepTransitionTarget,
-} from "./cases.service.phase-effects";
+} from "./flow/phase/phaseEffects";
 import {
   writeOverseasStepTimeline,
   writeTimelineInTx,
@@ -141,8 +141,8 @@ import {
   assertPostApprovalBillingGate,
   assertWaitingPaymentBillingGate,
   assertWorkflowStepBillingGate,
-} from "./cases.service.billing-gates";
-import { validateStageTransition } from "./cases.service.transition-gates";
+} from "./flow/billingGates";
+import { validateStageTransition } from "./flow/stage/stageTransitionGates";
 import { CaseAccessService } from "./access/caseAccess.service";
 
 // ────────────────────────────────────────────────────────────────

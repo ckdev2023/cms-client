@@ -73,7 +73,7 @@ export type {
 } from "../cases.types-template-blueprints";
 
 // ── 流转闸口（submission-packages 专用窄接口）────────────────────
-export { validateTransitionGate } from "../cases.service.transition-gates";
+export { validateTransitionGate } from "../flow/stage/stageTransitionGates";
 
 // ── timeline 辅助（leads 转化建案兜底应收）───────────────────────
 export { ensureAtLeastOneBillingRecordForCase } from "../cases.service.timeline";

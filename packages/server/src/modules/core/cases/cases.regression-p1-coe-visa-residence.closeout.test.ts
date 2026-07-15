@@ -19,7 +19,7 @@ import {
   isValidStepTransition,
   isTerminalStep,
   checkParallelBoundary,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import {
   CASE_ID,
   ORG_ID,

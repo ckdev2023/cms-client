@@ -15,7 +15,7 @@ import {
   BMV_STEP_TRANSITIONS,
   isValidStepTransition,
   type BmvWorkflowStep,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import {
   BMV_CASE_TYPE_CODE,
   BMV_WORKFLOW_STEPS_BLUEPRINT,

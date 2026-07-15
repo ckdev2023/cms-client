@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 import type { Case } from "../model/coreEntities";
 import type { WorkflowStepSummary } from "./cases.types";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 
 /**
  * 读取 workflow step summary，并在缺失时直接失败。

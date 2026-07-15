@@ -34,7 +34,7 @@ import {
   BMV_WORKFLOW_STEP_ENUM,
   isTerminalStep,
   isValidStepTransition,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import { BMV_WORKFLOW_STEPS_BLUEPRINT } from "./cases.template-bmv";
 import { FINAL_PAYMENT_GATE_TRIGGER_STEP } from "./cases.types-final-payment";
 

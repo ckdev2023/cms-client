@@ -9,7 +9,7 @@
  * 权威来源：计划 §3 双层状态机 mermaid 图。
  */
 
-import type { P0Stage } from "./cases.workflow-step";
+import type { P0Stage } from "./flow/workflow-step/workflowStep";
 
 // ── businessPhase 枚举 ──
 

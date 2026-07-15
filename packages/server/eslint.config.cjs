@@ -55,6 +55,41 @@ module.exports = [
       "max-statements": ["error", 30],
       "@typescript-eslint/no-explicit-any": "error",
       "@typescript-eslint/consistent-type-definitions": "off",
+      // cases 拆分 S3：流转轴与 gate 编排已落位 flow/ 子域，旧扁平路径的
+      // 迁移垫片已删除。此处封禁旧路径，防止新代码（或 AI 依据过时记忆）
+      // 重新引入已消失的模块，把结构退回扁平状态。
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/cases.service.transition-gates",
+                "**/cases.service.gate-c-open-tasks",
+              ],
+              message:
+                "已迁至 cases/flow/stage/（S3）：请从 flow/stage/stageTransitionGates 或 flow/stage/gateCOpenTasks 导入。",
+            },
+            {
+              group: ["**/cases.service.phase-effects"],
+              message: "已迁至 cases/flow/phase/phaseEffects（S3）。",
+            },
+            {
+              group: [
+                "**/cases.workflow-step",
+                "**/cases.workflow-step-readmodel",
+              ],
+              message:
+                "已迁至 cases/flow/workflow-step/（S3）：请从 flow/workflow-step/workflowStep 或 flow/workflow-step/workflowStepReadModel 导入。",
+            },
+            {
+              group: ["**/cases.service.billing-gates"],
+              message:
+                "已迁至 cases/flow/billingGates（S3）。注意：gate 编排在 cases/flow，收费引擎仍在 core/billing/billingGuards。",
+            },
+          ],
+        },
+      ],
       "no-restricted-syntax": [
         "error",
         {

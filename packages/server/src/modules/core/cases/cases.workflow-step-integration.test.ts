@@ -10,9 +10,9 @@ import {
   BMV_STEP_TO_STAGE,
   BMV_WORKFLOW_STEP_ENUM,
   blueprintToWorkflowSteps,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import { BMV_WORKFLOW_STEPS_BLUEPRINT } from "./cases.template-bmv";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 
 function buildMockCase(overrides: Partial<Case> = {}): Case {
   return {

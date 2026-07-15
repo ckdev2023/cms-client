@@ -19,7 +19,7 @@
 //   - cases.service.ts（transitionWorkflowStep, updatePostApprovalStage）
 // ────────────────────────────────────────────────────────────────
 
-import type { P0Stage } from "./cases.workflow-step";
+import type { P0Stage } from "./flow/workflow-step/workflowStep";
 
 // ─── 步骤编码常量 ──────────────────────────────────────────────
 

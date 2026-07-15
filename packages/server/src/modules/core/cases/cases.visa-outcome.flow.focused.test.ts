@@ -2,12 +2,12 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 import {
   BMV_STEP_TO_STAGE,
   checkParallelBoundary,
   isValidStepTransition,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import {
   ENTRY_SUCCESS_FOLLOW_UP,
   OVERSEAS_STEP_CODES,

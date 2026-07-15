@@ -15,7 +15,7 @@ import {
   blueprintToWorkflowSteps,
   isTerminalStep,
   isTerminalStage,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import {
   BMV_WORKFLOW_STEPS_BLUEPRINT,
   BMV_WORKFLOW_STEP_CODES,

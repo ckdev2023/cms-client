@@ -14,7 +14,7 @@ import {
   checkSuccessCloseoutPreconditions,
 } from "./cases.types-residence-closeout";
 import type { SuccessCloseoutCheckInput } from "./cases.types-residence-closeout";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 import {
   BMV_CASE_TYPE,
   BMV_WORKFLOW_STEPS_BLUEPRINT,

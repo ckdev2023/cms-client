@@ -33,8 +33,8 @@ import {
   BMV_STEP_TRANSITIONS,
   isValidStepTransition,
   BMV_STEP_TO_STAGE,
-} from "./cases.workflow-step";
-import type { BmvWorkflowStep } from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
+import type { BmvWorkflowStep } from "./flow/workflow-step/workflowStep";
 
 // ── helpers ──
 

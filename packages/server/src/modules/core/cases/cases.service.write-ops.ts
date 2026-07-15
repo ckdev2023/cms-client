@@ -16,7 +16,7 @@ import type { Case } from "../model/coreEntities";
 import type { CaseBillingRiskAckInput, CaseCreateInput } from "./cases.types";
 import type { RequestContext } from "../tenancy/requestContext";
 import type { TenantDbTx } from "../tenancy/tenantDb";
-import type { OverseasStepEffects } from "./cases.service.phase-effects";
+import type { OverseasStepEffects } from "./flow/phase/phaseEffects";
 
 import { CASE_COLS, PHASE_TO_STAGE_SQL } from "./cases.service.sql";
 import { type CaseQueryRow, mapCaseRow } from "./cases.service.row-mappers";
@@ -29,7 +29,7 @@ import {
   resolveCaseUpdateFields,
 } from "./cases.service.write-helpers";
 import { writeTimelineInTx } from "./cases.service.timeline";
-import type { PhaseTransitionSideEffects } from "./cases.service.phase-effects";
+import type { PhaseTransitionSideEffects } from "./flow/phase/phaseEffects";
 import { recalcSupplementCount } from "./casesSupplementCount";
 
 /** checklist 项目（来自模板解析）。 */

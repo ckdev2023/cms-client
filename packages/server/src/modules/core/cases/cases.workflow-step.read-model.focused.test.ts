@@ -6,8 +6,8 @@ import {
   type BmvWorkflowStep,
   BMV_STEP_TO_STAGE,
   BMV_STEP_TRANSITIONS,
-} from "./cases.workflow-step";
-import { resolveWorkflowStepSummary } from "./cases.workflow-step-readmodel";
+} from "./flow/workflow-step/workflowStep";
+import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
 import {
   buildMockCase,
   getWorkflowStepSummaryOrFail,

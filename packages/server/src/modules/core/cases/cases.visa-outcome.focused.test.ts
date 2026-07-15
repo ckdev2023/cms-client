@@ -5,7 +5,7 @@ import {
   checkParallelBoundary,
   isTerminalStep,
   isValidStepTransition,
-} from "./cases.workflow-step";
+} from "./flow/workflow-step/workflowStep";
 import {
   OVERSEAS_STEP_CODES,
   OVERSEAS_TERMINAL_STEPS,

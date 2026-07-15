@@ -16,7 +16,7 @@ import {
   OVERSEAS_TIMELINE_ACTIONS,
   VISA_REJECTED_CLOSURE,
 } from "./cases.types-overseas-step";
-import { isOverseasStepCode } from "./cases.service.phase-effects";
+import { isOverseasStepCode } from "./flow/phase/phaseEffects";
 
 /**
  *

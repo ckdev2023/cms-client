@@ -7,8 +7,8 @@ import {
   checkParallelBoundary,
   isTerminalStep,
   isValidStepTransition,
-} from "../cases/cases.workflow-step";
-import { resolveWorkflowStepSummary } from "../cases/cases.workflow-step-readmodel";
+} from "../cases/flow/workflow-step/workflowStep";
+import { resolveWorkflowStepSummary } from "../cases/flow/workflow-step/workflowStepReadModel";
 import {
   ENTRY_SUCCESS_FOLLOW_UP,
   OVERSEAS_STEP_READ_SNAPSHOTS,

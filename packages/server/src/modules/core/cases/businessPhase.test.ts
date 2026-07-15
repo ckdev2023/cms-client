@@ -12,7 +12,7 @@ import {
   PhaseTransitionError,
   MANUAL_CANCEL_REASON_CODES,
 } from "./businessPhase";
-import { P0_STAGES } from "./cases.workflow-step";
+import { P0_STAGES } from "./flow/workflow-step/workflowStep";
 
 // ── 枚举基本性质 ──
 

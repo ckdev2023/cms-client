@@ -8,7 +8,7 @@ import {
   STAGE_TO_PHASE_DEFAULT,
   isTerminalPhase,
 } from "./businessPhase";
-import { P0_STAGES, isP0Stage } from "./cases.workflow-step";
+import { P0_STAGES, isP0Stage } from "./flow/workflow-step/workflowStep";
 
 void describe("PHASE_TO_STAGE_DEFAULT — phase→stage sync mapping", () => {
   void test("covers all 20 business phases", () => {
