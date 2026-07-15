@@ -1,8 +1,16 @@
 # 最小 CI（架构总报告「立即项」）：把本地 husky 门禁搬上服务端。
 # 与本地完全同一入口：npm run guard
 #   = lint:i18n + lint:a11y + mobile:guard + admin:guard + server:guard
-# server:guard 内含 test:integration-pg:ci（docker compose 起 PG16，tmpfs 即用即弃）。
-# node >= 22：test:integration-pg 依赖 node --test 原生 glob（node 21+）。
+#
+# 环境依赖（与本地开发一致，见根 docker-compose.yml 与 AGENTS.md）：
+#   - postgres:16 映射到 5433 —— server:guard 的 db:migrations:check /
+#     db:migrations:drift 会连它；未起库时 drift 会跳过（warn+exit 0），
+#     但 migrations:check 仍需连接，故 CI 显式提供。
+#   - packages/server/.env —— 被 .gitignore 忽略（不入库，正确做法），
+#     而 db:migrations:* 用 `tsx --env-file=.env` 读取，故 CI 现场生成。
+#     此处仅为一次性容器内的本地测试库口令，非生产密钥。
+#   - server:guard 内含 test:integration-pg:ci，自带 docker compose
+#     起独立 PG（端口 5499，tmpfs 即用即弃），无需在此声明。
 name: CI
 
 on:
@@ -21,6 +29,22 @@ jobs:
     timeout-minutes: 45
     env:
       HUSKY: "0"
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: cms
+          POSTGRES_PASSWORD: cms
+          POSTGRES_DB: cms
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U cms -d cms"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +55,16 @@ jobs:
 
       - name: Install workspaces
         run: npm ci
+
+      - name: Write server .env (gitignored; local test-db values only)
+        run: |
+          cat > packages/server/.env <<'EOF'
+          DB_URL=postgres://cms:cms@localhost:5433/cms
+          REDIS_URL=redis://localhost:6379
+          EOF
+
+      - name: Apply migrations
+        run: npm run server:db:migrate
 
       - name: Guard (i18n / a11y / mobile / admin / server)
         run: npm run guard

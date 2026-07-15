@@ -18,6 +18,58 @@ const MIGRATIONS_DIR = path.resolve(
   "../src/infra/db/migrations",
 );
 
+const CONNECTION_ERROR_CODES = new Set([
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "ETIMEDOUT",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+]);
+
+const CONNECTION_ERROR_MESSAGES = [
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "timeout",
+  "Connection terminated",
+];
+
+/**
+ * 判定是否为「DB 连不上」类错误。
+ *
+ * 注意不能只看 `err.message`：pg-pool 在连接失败时抛出的是 AggregateError，
+ * 其 `message` 为空字符串，错误信息只存在于 `code` 与嵌套的 `errors[]` 中
+ * （表现为 `AggregateError [ECONNREFUSED]:` 后无内容）。仅匹配 message 会
+ * 让本脚本在无 DB 环境下崩溃，违背「DB 不在时 warn 并 exit 0」的契约。
+ * @param err 捕获到的异常
+ * @returns 是否为连接类错误
+ */
+function isConnectionError(err: unknown): boolean {
+  if (typeof err !== "object" || err === null) return false;
+
+  const code: unknown = (err as { code?: unknown }).code;
+  if (typeof code === "string" && CONNECTION_ERROR_CODES.has(code)) return true;
+
+  const msg = err instanceof Error ? err.message : "";
+  if (CONNECTION_ERROR_MESSAGES.some((needle) => msg.includes(needle))) {
+    return true;
+  }
+
+  const nested: unknown = (err as { errors?: unknown }).errors;
+  return Array.isArray(nested) && nested.some(isConnectionError);
+}
+
+/**
+ * 生成可读的错误描述（AggregateError 的 message 为空时回退到 code）。
+ * @param err 捕获到的异常
+ * @returns 描述文本
+ */
+function describeError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (msg) return msg;
+  const code: unknown = (err as { code?: unknown }).code;
+  return typeof code === "string" ? code : "unknown error";
+}
+
 async function main(): Promise<void> {
   const dbUrl = process.env.DB_URL;
   if (!dbUrl) {
@@ -54,16 +106,9 @@ async function main(): Promise<void> {
     );
     process.exitCode = 1;
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : String(err);
-    const isConnectionError =
-      msg.includes("ECONNREFUSED") ||
-      msg.includes("ENOTFOUND") ||
-      msg.includes("timeout") ||
-      msg.includes("Connection terminated");
-
-    if (isConnectionError) {
+    if (isConnectionError(err)) {
       process.stdout.write(
-        `[migration-drift] DB unreachable — skipping drift check (${msg})\n`,
+        `[migration-drift] DB unreachable — skipping drift check (${describeError(err)})\n`,
       );
       return;
     }
