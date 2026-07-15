@@ -5,7 +5,7 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { CASE_SAMPLE_KEYS } from "./constants";
+import { CASE_SAMPLE_KEYS } from "../constants";
 import {
   deriveCaseSummaryCards,
   FAMILY_SCENARIO,
@@ -16,11 +16,11 @@ import {
   SAMPLE_CREATE_TEMPLATES,
   SAMPLE_KEY_TO_CASE_ID,
   SAMPLE_SUMMARY_CARDS,
-} from "./__fixtures__/fixtures";
-import { CASE_DETAIL_SAMPLES } from "./__fixtures__/fixtures-detail";
-import type { CaseListItem } from "./types";
-import { resolveTemplateLabel } from "./types-create";
-import type { I18nLabel } from "./types-create";
+} from "./fixtures";
+import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
+import type { CaseListItem } from "../types";
+import { resolveTemplateLabel } from "../types-create";
+import type { I18nLabel } from "../types-create";
 
 describe("cases/fixtures", () => {
   describe("SAMPLE_CASE_LIST (list)", () => {

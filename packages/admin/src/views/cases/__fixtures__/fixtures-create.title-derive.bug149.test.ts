@@ -14,13 +14,13 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { SAMPLE_CREATE_TEMPLATES } from "./__fixtures__/fixtures";
+import { SAMPLE_CREATE_TEMPLATES } from "./fixtures";
 import {
   APPLICATION_TYPE_LABELS,
   resolveTemplateLabel,
   type ApplicationType,
-} from "./types-create";
-import { buildCaseTitle } from "./model/useCreateCaseModelActions";
+} from "../types-create";
+import { buildCaseTitle } from "../model/useCreateCaseModelActions";
 
 const LOCALES: ReadonlyArray<readonly [string, "zh" | "en" | "ja"]> = [
   ["zh-CN", "zh"],

@@ -7,9 +7,9 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { SAMPLE_CREATE_TEMPLATES } from "./__fixtures__/fixtures";
-import { resolveTemplateLabel } from "./types-create";
-import type { I18nLabel } from "./types-create";
+import { SAMPLE_CREATE_TEMPLATES } from "./fixtures";
+import { resolveTemplateLabel } from "../types-create";
+import type { I18nLabel } from "../types-create";
 
 describe("CaseTemplateDef.subtitle i18n (BUG-144)", () => {
   it("每个模板 subtitle 都是 I18nLabel 对象，且 zh/en/ja 非空", () => {
