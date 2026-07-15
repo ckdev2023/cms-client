@@ -1,11 +1,116 @@
 #!/usr/bin/env sh
-npm run guard && exit 0
+# pre-push：只对本次 push 真正涉及的包跑 guard，没碰的包整包跳过。
+# 检查项一项没减，只是不再为「改了 admin」去跑 mobile 全套和 server 的 docker 集成测试。
+# 全量 guard 由 CI 兜底（.github/workflows/ci.yml 跑同一入口 npm run guard）。
+#
+# 范围取自 git 传给 pre-push 的 stdin（<local_ref> <local_oid> <remote_ref> <remote_oid>），
+# 即「这次真正要推上去的提交」，而不是工作区状态——工作区可能有其他未提交的改动。
 
-npm run fix || exit 1
+is_zero() {
+  case "$1" in *[!0]*) return 1 ;; *) return 0 ;; esac
+}
 
-if ! git diff --quiet; then
-  echo "pre-push: auto-fixed files. Please commit changes and push again."
+files=""
+saw_ref=0
+need_full=0
+
+# `|| [ -n "$_local_ref" ]`：git 总是发送以换行结尾的行，但末行缺换行时
+# read 会返回非零并丢掉整行，导致这里静默降级成全量。
+while read -r _local_ref local_oid _remote_ref remote_oid || [ -n "$_local_ref" ]; do
+  saw_ref=1
+
+  # 删除远端分支：没有内容要检查
+  if is_zero "$local_oid"; then
+    continue
+  fi
+
+  if is_zero "$remote_oid"; then
+    # 远端还没有这个分支：与默认分支的共同祖先比
+    base=$(git merge-base "$local_oid" origin/main 2>/dev/null)
+  else
+    base=$remote_oid
+  fi
+
+  if [ -z "$base" ]; then
+    need_full=1 # 判不出基线，宁可跑全量
+    break
+  fi
+
+  add=$(git diff --name-only "$base" "$local_oid" 2>/dev/null) || need_full=1
+  files=$(printf '%s\n%s' "$files" "$add")
+done
+
+# stdin 为空（例如手动执行本钩子）：无从判定，跑全量
+if [ "$saw_ref" -eq 0 ]; then
+  need_full=1
+fi
+
+run_pkgs=""
+want() {
+  case " $run_pkgs " in
+  *" $1 "*) ;;
+  *) run_pkgs="$run_pkgs $1" ;;
+  esac
+}
+
+if [ "$need_full" -eq 0 ]; then
+  for f in $files; do
+    case "$f" in
+    packages/admin/*) want admin ;;
+    packages/mobile/*) want mobile ;;
+    packages/server/*) want server ;;
+    docs/* | *.md) ;;                    # 文档不影响门禁
+    .github/*) ;;                        # CI 配置由 CI 自己验
+    *) need_full=1 ;;                    # 根级 / scripts/ / 锁文件：影响面不确定，跑全量
+    esac
+  done
+fi
+
+if [ "$need_full" -eq 1 ]; then
+  echo "pre-push: 改动超出单包范围，跑完整 guard"
+  run_pkgs=""
+  want mobile
+  want admin
+  want server
+fi
+
+if [ -z "$run_pkgs" ]; then
+  echo "pre-push: 本次 push 未触及任何受门禁约束的代码，跳过"
+  exit 0
+fi
+
+echo "pre-push: 本次检查范围 →$run_pkgs"
+
+# i18n / a11y 两个根级 lint 各约 0.1s，永远全跑，不值得裁剪
+guard_scoped() {
+  npm run lint:i18n || return 1
+  npm run lint:a11y || return 1
+  for p in $run_pkgs; do
+    npm run "$p:guard" || return 1
+  done
+}
+
+fix_scoped() {
+  for p in $run_pkgs; do
+    npm run "$p:fix" || return 1
+  done
+}
+
+if guard_scoped; then
+  exit 0
+fi
+
+# guard 挂了：可能只是格式问题，试着自动修。
+# 这里比对 fix 前后的工作区差异，而不是 `git diff --quiet`：工作区本来就可能带着
+# 其他未提交的改动，那样会把「fix 什么都没改」误报成「已自动修复格式」。
+before=$(git diff)
+fix_scoped || exit 1
+
+if [ "$before" = "$(git diff)" ]; then
+  # fix 什么都没改 → 不是格式问题，再跑一遍 guard 只会以同样的原因再挂一次
+  echo "pre-push: guard 失败，且无可自动修复的内容 —— 原因见上方报错。"
   exit 1
 fi
 
-npm run guard
+echo "pre-push: 已自动修复格式，请提交后重新 push。"
+exit 1
