@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
 import type { Case, DocumentItem } from "../model/coreEntities";
-import { CasesService } from "../cases/cases.service";
+import { CaseAccessService } from "../cases/public";
 import { ValidationAutoRunService } from "../validation-runs/validationAutoRun.service";
 import { DocumentItemsController } from "./documentItems.controller";
 import { DocumentItemsService } from "./documentItems.service";
@@ -102,7 +102,7 @@ const autoRunCalls: { caseId: string; trigger: string }[] = [];
 function makeController(
   opts: {
     service?: Partial<DocumentItemsService>;
-    cases?: Partial<CasesService>;
+    cases?: Partial<CaseAccessService>;
   } = {},
 ): DocumentItemsController {
   const service = {
@@ -113,7 +113,7 @@ function makeController(
   const cases = {
     get: () => Promise.resolve(mockCase),
     ...opts.cases,
-  } as unknown as CasesService;
+  } as unknown as CaseAccessService;
   const autoRun = {
     schedule: (_ctx: unknown, caseId: string, trigger: string) => {
       autoRunCalls.push({ caseId, trigger });

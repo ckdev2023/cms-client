@@ -13,6 +13,7 @@ import { RequestContextInterceptor } from "./modules/core/auth/requestContext.in
 import { JobsController } from "./modules/core/jobs/jobs.controller";
 import { JobsService } from "./modules/core/jobs/jobs.service";
 import { CasesController } from "./modules/core/cases/cases.controller";
+import { CaseAccessService } from "./modules/core/cases/access/caseAccess.service";
 import {
   CasesService,
   TEMPLATES_RESOLVER,
@@ -194,6 +195,7 @@ import {
     OrganizationsService,
     CustomersService,
     CasesService,
+    CaseAccessService,
     BillingCollectionsService,
     BillingPlansService,
     BillingSummaryService,

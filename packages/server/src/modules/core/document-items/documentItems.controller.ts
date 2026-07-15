@@ -16,7 +16,7 @@ import {
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
-import { CasesService } from "../cases/public";
+import { CaseAccessService } from "../cases/public";
 import {
   DOCUMENT_ITEM_ERROR_CODES,
   DOCUMENT_ITEM_OWNER_SIDES,
@@ -194,14 +194,14 @@ export class DocumentItemsController {
   /**
    * 构造函数。
    * @param documentItemsService 资料项服务实例
-   * @param casesService 案件服务（S9 readonly 守卫）
+   * @param caseAccess 案件访问守门服务（S9 readonly 守卫，S2 起注入守门服务而非 CasesService 门面）
    * @param autoRunService 自动 validation 重算服务
    */
   constructor(
     @Inject(DocumentItemsService)
     private readonly documentItemsService: DocumentItemsService,
-    @Inject(CasesService)
-    private readonly casesService: CasesService,
+    @Inject(CaseAccessService)
+    private readonly caseAccess: CaseAccessService,
     @Inject(ValidationAutoRunService)
     private readonly autoRunService: ValidationAutoRunService,
   ) {}
@@ -460,7 +460,7 @@ export class DocumentItemsController {
     ctx: RequestContext,
     caseId: string,
   ): Promise<void> {
-    const caseEntity = await this.casesService.get(ctx, caseId);
+    const caseEntity = await this.caseAccess.get(ctx, caseId);
     if (!caseEntity) {
       throw new NotFoundException(
         DOCUMENT_ITEM_ERROR_CODES.NOT_FOUND + ": Parent case not found",

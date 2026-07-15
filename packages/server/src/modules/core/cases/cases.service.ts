@@ -1,7 +1,6 @@
 /* eslint-disable max-lines, jsdoc/require-param-description, jsdoc/require-param, jsdoc/require-returns, jsdoc/require-description */
 import {
   BadRequestException,
-  ForbiddenException,
   Inject,
   Injectable,
   NotFoundException,
@@ -144,6 +143,7 @@ import {
   assertWorkflowStepBillingGate,
 } from "./cases.service.billing-gates";
 import { validateStageTransition } from "./cases.service.transition-gates";
+import { CaseAccessService } from "./access/caseAccess.service";
 
 // ────────────────────────────────────────────────────────────────
 // 公共 API 重新导出（保留对外契约稳定）
@@ -195,6 +195,9 @@ export type { TemplatesResolver };
 /** 案件服务，提供案件 CRUD、状态变更与软删除能力。 */
 @Injectable()
 export class CasesService {
+  /** 访问守门委托（S2 抽出）；内部构造以保持本类构造签名不变。 */
+  private readonly caseAccess: CaseAccessService;
+
   /**
    * @param pool 连接池
    * @param templatesResolver 模板解析服务
@@ -219,7 +222,9 @@ export class CasesService {
     @Optional()
     @Inject(FeatureFlagsService)
     private readonly featureFlagsService?: FeatureFlagsService,
-  ) {}
+  ) {
+    this.caseAccess = new CaseAccessService(this.pool, this.permissionsService);
+  }
 
   /** 创建案件（事务内：写入 + document_items + Timeline + 跨组留痕）。
    * @param input
@@ -252,46 +257,22 @@ export class CasesService {
     }
   }
 
-  /** 根据 ID 获取案件详情（过滤已软删除）。
+  /** 根据 ID 获取案件详情（过滤已软删除）。委托 CaseAccessService（S2）。
    * @param id
    * @param ctx 请求上下文 @param id 案件 ID @returns Case 或 null */
   async get(ctx: RequestContext, id: string): Promise<Case | null> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-    const result = await tenantDb.query<CaseQueryRow>(
-      `
-        select ${CASE_COLS}
-        from cases
-        where id = $1 and coalesce(metadata->>'_status', '') is distinct from 'deleted'
-        limit 1
-      `,
-      [id],
-    );
-    const row = result.rows.at(0);
-    return row ? mapCaseRow(row) : null;
+    return this.caseAccess.get(ctx, id);
   }
 
   /**
-   * 断言当前用户可编辑指定案件，否则抛出异常。
+   * 断言当前用户可编辑指定案件，否则抛出异常。委托 CaseAccessService（S2）。
    *
-   * 供跨模块（如 BillingCollectionsService）复用；
-   * case 不存在时抛 NotFoundException，无权限时抛 ForbiddenException。
+   * 跨模块消费方请改为直接注入 CaseAccessService（经 cases/public 导出）；
+   * 本方法保留以维持既有契约，case 不存在时抛 NotFoundException，
+   * 无权限时抛 ForbiddenException。
    */
   async assertCanEditCase(ctx: RequestContext, caseId: string): Promise<void> {
-    if (!this.permissionsService) {
-      throw new Error("PermissionsService is required for assertCanEditCase");
-    }
-    const caseEntity = await this.get(ctx, caseId);
-    if (!caseEntity) throw new NotFoundException("Case not found");
-    if (
-      !this.permissionsService.canEditCase(
-        ctx.userId,
-        ctx.role,
-        ctx.groupId,
-        caseEntity,
-      )
-    ) {
-      throw new ForbiddenException("Insufficient permissions to edit case");
-    }
+    return this.caseAccess.assertCanEditCase(ctx, caseId);
   }
 
   /**

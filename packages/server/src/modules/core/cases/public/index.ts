@@ -13,6 +13,7 @@
 
 // ── 服务 ──────────────────────────────────────────────────────────
 export { CasesService } from "../cases.service";
+export { CaseAccessService } from "../access/caseAccess.service";
 
 // ── 模板解析（跨模块注入令牌与最小接口）──────────────────────────
 export { TEMPLATES_RESOLVER } from "../cases.service.types-internal";

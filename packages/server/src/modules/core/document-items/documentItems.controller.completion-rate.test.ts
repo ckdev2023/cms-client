@@ -4,7 +4,7 @@ import { BadRequestException, UnauthorizedException } from "@nestjs/common";
 
 import { DocumentItemsController } from "./documentItems.controller";
 import { DocumentItemsService } from "./documentItems.service";
-import { CasesService } from "../cases/cases.service";
+import { CaseAccessService } from "../cases/public";
 import { ValidationAutoRunService } from "../validation-runs/validationAutoRun.service";
 
 const ORG_ID = "00000000-0000-4000-8000-000000000000";
@@ -38,7 +38,7 @@ function makeController(
     getCompletionRate: () => Promise.resolve(mockCompletionRate),
     ...opts.service,
   } as unknown as DocumentItemsService;
-  const cases = {} as unknown as CasesService;
+  const cases = {} as unknown as CaseAccessService;
   const autoRun = {
     schedule: () => undefined,
   } as unknown as ValidationAutoRunService;

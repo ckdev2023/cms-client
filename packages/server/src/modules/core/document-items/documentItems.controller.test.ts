@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 
 import type { Case, DocumentItem } from "../model/coreEntities";
-import { CasesService } from "../cases/cases.service";
+import { CaseAccessService } from "../cases/public";
 import { ValidationAutoRunService } from "../validation-runs/validationAutoRun.service";
 import { DocumentItemsController } from "./documentItems.controller";
 import { DocumentItemsService } from "./documentItems.service";
@@ -127,7 +127,7 @@ function makeAutoRun(): ValidationAutoRunService {
 function makeController(
   opts: {
     service?: Partial<DocumentItemsService>;
-    cases?: Partial<CasesService>;
+    cases?: Partial<CaseAccessService>;
     autoRun?: ValidationAutoRunService;
   } = {},
 ): DocumentItemsController {
@@ -140,7 +140,7 @@ function makeController(
   const cases = {
     get: () => Promise.resolve(mockCase),
     ...opts.cases,
-  } as unknown as CasesService;
+  } as unknown as CaseAccessService;
   const autoRun = opts.autoRun ?? makeAutoRun();
   return new DocumentItemsController(service, cases, autoRun);
 }

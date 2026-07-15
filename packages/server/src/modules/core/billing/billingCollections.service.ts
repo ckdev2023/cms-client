@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
-import { CasesService } from "../cases/public";
+import { CaseAccessService } from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TasksService } from "../tasks/tasks.service";
@@ -47,7 +47,7 @@ export type CollectionResult = {
 export class BillingCollectionsService {
   constructor(
     @Inject(Pool) private readonly pool: Pool,
-    @Inject(CasesService) private readonly casesService: CasesService,
+    @Inject(CaseAccessService) private readonly caseAccess: CaseAccessService,
     @Inject(TasksService) private readonly tasksService: TasksService,
     @Inject(TimelineService)
     private readonly timelineService: TimelineService,
@@ -89,7 +89,7 @@ export class BillingCollectionsService {
     const caseNo = caseNoResult.rows.at(0)?.case_no ?? null;
 
     try {
-      await this.casesService.assertCanEditCase(ctx, caseId);
+      await this.caseAccess.assertCanEditCase(ctx, caseId);
     } catch (e) {
       if (e instanceof NotFoundException) {
         return { caseNo, result: "skipped", reason: "case-not-found" };
