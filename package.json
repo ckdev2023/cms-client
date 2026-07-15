@@ -63,6 +63,13 @@
     "packages/mobile/**/*.json": [
       "npm --workspace mobile exec -- prettier --write"
     ],
+    "packages/admin/**/*.{ts,tsx,js,jsx,vue}": [
+      "npm --workspace @cms/admin exec -- prettier --write",
+      "npm --workspace @cms/admin exec -- eslint --fix"
+    ],
+    "packages/admin/**/*.{json,yml,yaml}": [
+      "npm --workspace @cms/admin exec -- prettier --write"
+    ],
     "packages/server/**/*.{ts,tsx,js,jsx,mjs,cjs}": [
       "npm --workspace server exec -- prettier --write",
       "npm --workspace server exec -- eslint --fix"
