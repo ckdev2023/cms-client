@@ -1,0 +1,30 @@
+/* ── Meta line ───────────────────────────────────────── */
+
+.case-detail-view__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-3);
+}
+
+.case-detail-view__meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.case-detail-view__meta-link {
+  color: var(--color-primary-6);
+  text-decoration: none;
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.case-detail-view__meta-sep {
+  color: var(--color-text-3);
+}

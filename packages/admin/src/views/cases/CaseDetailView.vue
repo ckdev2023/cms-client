@@ -4,10 +4,8 @@ import { computed, defineAsyncComponent, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRoute, useRouter } from "vue-router";
 import { useToast } from "../../shared/model/useToast";
-import PageHeader from "../../shared/ui/PageHeader.vue";
-import Chip, { type ChipTone } from "../../shared/ui/Chip.vue";
-import Button from "../../shared/ui/Button.vue";
-import StageChip from "./components/StageChip.vue";
+import CaseDetailHeader from "./detail/CaseDetailHeader.vue";
+import CaseDetailStatusBanners from "./detail/CaseDetailStatusBanners.vue";
 import CaseRiskConfirmModal from "./components/CaseRiskConfirmModal.vue";
 import CaseEditModal from "./components/CaseEditModal.vue";
 import CaseDeadlineCreateModal from "./detail/tabs/deadlines/CaseDeadlineCreateModal.vue";
@@ -19,25 +17,7 @@ import {
   useCaseDetailModel,
   type TabCounter,
 } from "./model/useCaseDetailModel";
-import { resolveLocalizedCustomerName } from "./model/CaseAdapterCustomerLocale";
-import {
-  buildCaseDetailQuery,
-  buildCaseListHref,
-  buildCustomerDetailHrefFromCase,
-} from "./query";
-import {
-  BADGE_TONE_MAP,
-  getPhaseI18nKey,
-  getPhaseBadge,
-  resolveStageLabelI18nKey,
-} from "./constants";
-import { formatCaseIdentity } from "./caseIdentity";
-import { resolveBmvWorkflowStepDisplayLabel } from "./constantsBmvSteps";
-import { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
-import {
-  buildFallbackName,
-  isFallbackTitle,
-} from "../../shared/model/caseTitleFallback";
+import { buildCaseDetailQuery, buildCaseListHref } from "./query";
 import { useCaseDetailGuard } from "./model/useCaseDetailGuard";
 import { useCaseValidationActions } from "./model/useCaseValidationActions";
 import { useCaseDetailModals } from "./model/useCaseDetailModals";
@@ -162,16 +142,6 @@ const validationActions = useCaseValidationActions({
 
 const guard = useCaseDetailGuard(detail);
 
-const clientDisplayName = computed(() => {
-  const d = detail.value;
-  if (!d) return "";
-  return resolveLocalizedCustomerName(
-    d.customerLocalizedNames,
-    d.client,
-    locale.value,
-  );
-});
-
 /**
  * 风险确认后触发计费风险承认。
  *
@@ -222,15 +192,6 @@ watch(
   },
   { immediate: true },
 );
-
-/**
- * 将状态徽标映射为 `Chip` 组件使用的 tone。
- * @param badge - 后端返回的徽标键。
- * @returns 对应的 `ChipTone`。
- */
-function badgeToTone(badge: string): ChipTone {
-  return (BADGE_TONE_MAP[badge] ?? "neutral") as ChipTone;
-}
 
 /**
  * 处理 tab 键盘导航（ArrowLeft/Right/Home/End），跳过终态下不可访问的 tab。
@@ -300,43 +261,6 @@ function guardedSwitchTab(tab: (typeof tabs)[number]["key"]): void {
   switchTab(tab);
 }
 
-const phaseTone = computed<ChipTone>(() => {
-  if (!detail.value) return "neutral";
-  return badgeToTone(getPhaseBadge(detail.value.businessPhase));
-});
-
-const phaseLabel = computed(() => {
-  if (!detail.value) return "";
-  const key = getPhaseI18nKey(detail.value.businessPhase);
-  return key ? t(key) : detail.value.businessPhase;
-});
-
-const displayTitle = computed(() => {
-  const d = detail.value;
-  if (!d) return "";
-  const fp = d.titleFallbackParts;
-  if (!isFallbackTitle(d.title, fp.caseNo, fp.id)) return d.title;
-  const typeKey = getCaseTypeI18nKey(fp.caseTypeCode);
-  const typeLabel = typeKey ? t(typeKey) : "";
-  const translated = typeLabel && typeLabel !== typeKey ? typeLabel : "";
-  return buildFallbackName(fp.applicant, translated, fp.caseNo, fp.id);
-});
-
-const stageLabel = computed(() => {
-  if (!detail.value) return "";
-  const key = resolveStageLabelI18nKey(
-    detail.value.stageCode,
-    detail.value.workflowStep?.stepCode,
-  );
-  return key ? t(key) : detail.value.stage;
-});
-
-const bmvWorkflowStepChipLabel = computed(() => {
-  const ws = detail.value?.workflowStep;
-  if (!ws) return "";
-  return resolveBmvWorkflowStepDisplayLabel(t, ws);
-});
-
 /**
  * 依据失败结案信息触发失败结案操作。
  * @returns 无。
@@ -391,241 +315,16 @@ const { onOpenCollection, onViewReceipt } = useCaseDetailBillingLinks({
 <template>
   <div class="case-detail-view">
     <template v-if="detail">
-      <PageHeader
-        :title="displayTitle"
-        :breadcrumbs="[
-          { label: t('shell.nav.items.dashboard'), href: '#/' },
-          { label: t('shell.nav.groups.business') },
-          { label: t('shell.nav.items.cases'), href: buildCaseListHref() },
-          { label: formatCaseIdentity(detail.caseNo, detail.id) },
-        ]"
-      >
-        <template #badge>
-          <StageChip
-            :code="detail.stageCode"
-            :label-i18n-key="
-              resolveStageLabelI18nKey(
-                detail.stageCode,
-                detail.workflowStep?.stepCode,
-              )
-            "
-            precision="both"
-            dot
-          />
-          <Chip :tone="phaseTone" dot>
-            {{ phaseLabel }}
-          </Chip>
-          <Chip
-            v-if="isBmvCase && detail.workflowStep"
-            :tone="
-              detail.workflowStep.isFailureStep
-                ? 'danger'
-                : detail.workflowStep.workflowStepInactiveAtTerminalFailure
-                  ? 'neutral'
-                  : 'primary'
-            "
-            dot
-          >
-            {{ detail.workflowStep.parentStage }} →
-            {{ bmvWorkflowStepChipLabel }}
-          </Chip>
-        </template>
-        <template #meta>
-          <p class="case-detail-view__meta">
-            <span class="case-detail-view__meta-item">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
-                />
-              </svg>
-              <a
-                :href="
-                  buildCustomerDetailHrefFromCase(detail.customerId, detail.id)
-                "
-                class="case-detail-view__meta-link"
-              >
-                {{ clientDisplayName }}
-              </a>
-            </span>
-            <span class="case-detail-view__meta-sep" aria-hidden="true">|</span>
-            <span class="case-detail-view__meta-item">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path
-                  d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                />
-              </svg>
-              {{ detail.owner }}
-            </span>
-            <span class="case-detail-view__meta-sep" aria-hidden="true">|</span>
-            <span class="case-detail-view__meta-item">
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
-                <path
-                  d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
-                />
-              </svg>
-              {{ detail.agency }}
-            </span>
-          </p>
-        </template>
+      <CaseDetailHeader
+        :detail="detail"
+        :is-bmv-case="isBmvCase"
+        :can-edit="guard.canEdit.value"
+        :can-transition="guard.canTransition.value"
+        @edit="editModalOpen = true"
+        @transition="phaseMenu.openMenu()"
+      />
 
-        <template #actions>
-          <Button
-            size="sm"
-            :disabled="!guard.canEdit.value"
-            :title="
-              guard.canEdit.value
-                ? undefined
-                : t('cases.detail.actions.editInfoDisabledTooltip')
-            "
-            @click="guard.canEdit.value && (editModalOpen = true)"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
-              />
-            </svg>
-            {{ t("cases.detail.actions.editInfo") }}
-          </Button>
-          <Button
-            size="sm"
-            :disabled="true"
-            :title="t('cases.detail.actions.exportZipNotReady')"
-          >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            {{ t("cases.detail.actions.exportZip") }}
-          </Button>
-          <Button
-            variant="filled"
-            tone="primary"
-            size="sm"
-            :disabled="!guard.canTransition.value"
-            :title="
-              guard.canTransition.value
-                ? undefined
-                : t('cases.detail.actions.statusTransitionDisabledTooltip')
-            "
-            @click="guard.canTransition.value && phaseMenu.openMenu()"
-          >
-            {{ t("cases.detail.actions.statusTransition") }}
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </Button>
-        </template>
-      </PageHeader>
-
-      <div
-        v-if="isReadonly"
-        class="case-detail-view__readonly-banner"
-        role="status"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path
-            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-          />
-        </svg>
-        <span>
-          {{ t("cases.detail.readonlyBanner", { stage: stageLabel }) }}
-        </span>
-      </div>
-
-      <div
-        v-if="detail.failureCloseout && !isReadonly"
-        class="case-detail-view__failure-banner"
-        role="status"
-        data-testid="failure-path-banner"
-      >
-        <svg
-          width="18"
-          height="18"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path
-            d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0zM12 9v4M12 17h.01"
-          />
-        </svg>
-        <span>{{ t("cases.detail.failurePathBanner") }}</span>
-      </div>
+      <CaseDetailStatusBanners :detail="detail" :readonly="isReadonly" />
 
       <div
         class="case-detail-view__tabs"
