@@ -22,12 +22,6 @@ import type {
   PhaseTransitionInput,
 } from "./cases.types";
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
-import { resolveWorkflowStepSummary } from "./flow/workflow-step/workflowStepReadModel";
-import {
-  requiresSuccessCloseoutCheck,
-  checkSuccessCloseoutPreconditions,
-} from "./cases.types-residence-closeout";
-import { checkFailureCloseout } from "./cases.types-failure-closeout";
 import { PermissionsService } from "../auth/permissions.service";
 import { BillingPlansService } from "../billing/billingPlans.service";
 import { syncBillingCacheForCase } from "../billing/billingGuards";
@@ -78,24 +72,7 @@ import {
 import {
   aggregateCaseBillingSummaryFull,
   assertClosedSuccessGate,
-  deriveDeepLink,
-  enrichCaseAggregateReadModelCase,
-  logSettledErrors,
-  queryCurrentResidencePeriod,
-  queryDetailCaseRow,
-  queryDetailCounts,
-  queryDocProgressByProvider,
-  queryInitialSubmissionSubmittedAt,
-  queryLatestReview,
-  queryLatestSubmission,
-  queryLatestValidation,
-  settledValueOrDefault,
-  settledValueOrUndefined,
 } from "./cases.service.detail-queries";
-import {
-  deriveBillingSummary,
-  queryFinalPaymentMilestoneMatched,
-} from "./cases.service.billing-summary";
 import {
   assertCloseReasonForFailedPhase,
   assertValidPhaseTransitionInput,
@@ -132,10 +109,7 @@ import {
   resolveChecklistItems,
   runCreateCaseTransaction,
 } from "./cases.service.create-flow";
-import {
-  findActiveCaseTemplateByCaseType,
-  resolveTemplateApplicationType,
-} from "./cases.template.repository";
+import { findActiveCaseTemplateByCaseType } from "./cases.template.repository";
 import {
   assertCoeSendBillingGate,
   assertPostApprovalBillingGate,
@@ -144,12 +118,14 @@ import {
 } from "./flow/billingGates";
 import { validateStageTransition } from "./flow/stage/stageTransitionGates";
 import { CaseAccessService } from "./access/caseAccess.service";
+import {
+  BOOTSTRAP_ALLOWED_STAGES,
+  buildCaseDetailAggregate,
+} from "./query/detailAggregate";
 
 // ────────────────────────────────────────────────────────────────
 // 公共 API 重新导出（保留对外契约稳定）
 // ────────────────────────────────────────────────────────────────
-
-const BOOTSTRAP_ALLOWED_STAGES = new Set(["S1", "S2"]);
 
 export { CASE_COLS, CASE_COLS_PREFIXED, SUMMARY_JOINS, SUMMARY_EXTRA_COLS };
 export {
@@ -414,155 +390,11 @@ export class CasesService {
    * admin detail 页面消费此方法，避免多轮 HTTP 请求拼装。
    * 子查询使用 Promise.allSettled 降级：任一子查询失败仍返回部分数据（BUG-064）。
    */
-  // eslint-disable-next-line max-lines-per-function, complexity, max-statements -- aggregate 组装点集中；拆分成本高、回归面大
   async getDetailAggregate(
     ctx: RequestContext,
     id: string,
   ): Promise<CaseDetailAggregateDto | null> {
-    const tenantDb = createTenantDb(this.pool, ctx.orgId, ctx.userId);
-
-    const caseRow = await queryDetailCaseRow(tenantDb, id);
-    if (!caseRow) return null;
-
-    const caseEntity = mapCaseRow(caseRow);
-    const needsCloseoutCheck = requiresSuccessCloseoutCheck(caseEntity);
-
-    const settled = await Promise.allSettled([
-      queryDetailCounts(tenantDb, id),
-      queryLatestValidation(tenantDb, id),
-      queryLatestSubmission(tenantDb, id),
-      queryLatestReview(tenantDb, id),
-      queryDocProgressByProvider(tenantDb, id),
-      queryCurrentResidencePeriod(tenantDb, id),
-    ]);
-    logSettledErrors(settled, id);
-
-    const counts = settledValueOrUndefined(settled[0]);
-    const latestValidation = settledValueOrUndefined(settled[1]);
-    const latestSubmission = settledValueOrUndefined(settled[2]);
-    const latestReview = settledValueOrUndefined(settled[3]);
-    const docProgress = settledValueOrDefault(settled[4], []);
-    const currentResidencePeriod = settledValueOrDefault(settled[5], null);
-
-    const successCloseoutCheck = needsCloseoutCheck
-      ? checkSuccessCloseoutPreconditions({
-          caseEntity,
-          currentResidencePeriod,
-        })
-      : null;
-    const failureCheck = checkFailureCloseout(caseEntity);
-
-    const mappedCounts = mapDetailCountsRow(counts);
-    let documentTemplateMissing = false;
-    let checklistBootstrapAvailable = false;
-    if (mappedCounts.documentItemsTotal === 0) {
-      try {
-        const tplResult = await findActiveCaseTemplateByCaseType(
-          this.pool,
-          ctx,
-          caseEntity.caseTypeCode,
-        );
-        documentTemplateMissing = !tplResult.found;
-        const stage = caseEntity.stage ?? caseEntity.status;
-        checklistBootstrapAvailable =
-          tplResult.found &&
-          tplResult.items.length > 0 &&
-          BOOTSTRAP_ALLOWED_STAGES.has(stage);
-      } catch {
-        documentTemplateMissing = false;
-        checklistBootstrapAvailable = false;
-      }
-    }
-
-    const latestSubmissionSummary = mapLatestSubmissionRow(latestSubmission);
-
-    let templateApplicationType: string | null = null;
-    if (!caseEntity.applicationType?.trim()) {
-      try {
-        templateApplicationType = await resolveTemplateApplicationType(
-          this.pool,
-          ctx,
-          caseEntity.caseTypeCode,
-        );
-      } catch {
-        templateApplicationType = null;
-      }
-    }
-
-    let initialSubmissionSubmittedAt: string | undefined;
-    if (!caseEntity.acceptedAt?.trim()) {
-      if (latestSubmissionSummary?.submissionKind === "initial") {
-        const iso = latestSubmissionSummary.submittedAt.trim();
-        initialSubmissionSubmittedAt = iso !== "" ? iso : undefined;
-      } else {
-        try {
-          initialSubmissionSubmittedAt =
-            await queryInitialSubmissionSubmittedAt(tenantDb, id);
-        } catch {
-          initialSubmissionSubmittedAt = undefined;
-        }
-      }
-    }
-
-    let finalPaymentMilestoneMatched = true;
-    try {
-      finalPaymentMilestoneMatched = await queryFinalPaymentMilestoneMatched(
-        tenantDb,
-        id,
-      );
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      // eslint-disable-next-line no-console
-      console.error(
-        `[CasesService.getDetailAggregate] sub-query "finalPaymentMilestone" failed for case ${id}: ${msg}`,
-      );
-    }
-
-    let billingCaseRow = caseRow;
-    let billingCaseEntity = caseEntity;
-    try {
-      await tenantDb.transaction(async (tx) => {
-        await syncBillingCacheForCase(tx, id);
-      });
-      const syncedRow = await queryDetailCaseRow(tenantDb, id);
-      if (syncedRow) {
-        billingCaseRow = syncedRow;
-        billingCaseEntity = mapCaseRow(syncedRow);
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      // eslint-disable-next-line no-console
-      console.error(
-        `[CasesService.getDetailAggregate] billing cache sync failed for case ${id}: ${msg}`,
-      );
-    }
-
-    const caseForAggregate = enrichCaseAggregateReadModelCase(
-      billingCaseEntity,
-      latestSubmissionSummary,
-      templateApplicationType,
-      initialSubmissionSubmittedAt,
-    );
-
-    return {
-      case: caseForAggregate,
-      counts: mappedCounts,
-      latestValidation: mapLatestValidationRow(latestValidation),
-      latestSubmission: latestSubmissionSummary,
-      latestReview: mapLatestReviewRow(latestReview),
-      documentProgressByProvider: mapDocProgressByProviderRows(docProgress),
-      billing: deriveBillingSummary(
-        billingCaseEntity,
-        finalPaymentMilestoneMatched,
-      ),
-      deepLink: deriveDeepLink(billingCaseEntity, billingCaseRow),
-      workflowStep: resolveWorkflowStepSummary(billingCaseEntity),
-      currentResidencePeriod,
-      successCloseoutCheck,
-      failureCloseoutCheck: failureCheck.isFailurePath ? failureCheck : null,
-      documentTemplateMissing,
-      checklistBootstrapAvailable,
-    };
+    return buildCaseDetailAggregate(this.pool, ctx, id);
   }
 
   /** 更新案件基本信息（事务内：更新 + Timeline + 转组留痕）。
