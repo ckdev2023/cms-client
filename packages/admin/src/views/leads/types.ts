@@ -1,20 +1,8 @@
-/**
- * 线索状态（03 §3.6）。
- *
- * - `new` — 新咨询
- * - `following` — 跟进中
- * - `pending_sign` — 待签约
- * - `signed` — 已签约
- * - `converted_case` — 已创建案件（原型扩展态，仅 UI 使用）
- * - `lost` — 已流失
- */
-export type LeadStatus =
-  | "new"
-  | "following"
-  | "pending_sign"
-  | "signed"
-  | "converted_case"
-  | "lost";
+// LeadStatus 的定义已下沉至 types-core.ts（types.ts 与 types-detail.ts 的
+// 共同内核，解 type 环）。此处单向 re-export，消费方仍可从 types.ts 取用。
+import type { LeadStatus } from "./types-core";
+
+export type { LeadStatus } from "./types-core";
 
 /**
  * 状态元信息，供 Badge / 行高亮复用。

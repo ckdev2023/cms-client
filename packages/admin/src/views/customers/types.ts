@@ -1,5 +1,6 @@
 import type { CustomerBmvProfile } from "./types-bmv";
 import type { CustomerCreateFormFields } from "./types-customer-fields";
+import type { RelationType } from "./relationTypes";
 
 /**
  *
@@ -283,10 +284,9 @@ export interface CustomerCase {
   updatedAt: string;
 }
 
-/**
- * 关联人关系类型。
- */
-export type RelationType = "spouse" | "parent" | "child" | "agent" | "other";
+// RelationType 的定义已下沉至 relationTypes.ts（与其目录同处，解 type 环）。
+// 此处单向 re-export，消费方仍可从 types.ts 取用。
+export type { RelationType } from "./relationTypes";
 
 /**
  * 客户关联人。

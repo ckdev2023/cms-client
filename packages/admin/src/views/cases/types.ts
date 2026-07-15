@@ -1,17 +1,23 @@
-/* eslint-disable max-lines */
-/**
- *
- */
-export type CaseStageId =
-  | "S1"
-  | "S2"
-  | "S3"
-  | "S4"
-  | "S5"
-  | "S6"
-  | "S7"
-  | "S8"
-  | "S9";
+// 跨 Tab 通用的口径枚举已下沉 types-core.ts（types.ts 与 types-detail.ts 的
+// 共同内核，解 type 环；亦兑现方案书 B2 的「拆 types.ts 核心」）。
+// 此处单向 import + re-export，消费方仍可从 types.ts 取用。
+import type {
+  CaseDetailTab,
+  CaseRoleKey,
+  CaseStageId,
+  GateId,
+  LogCategoryKey,
+} from "./types-core";
+
+export type {
+  BillingStatusKey,
+  CaseDetailTab,
+  CaseRoleKey,
+  CaseSampleKey,
+  CaseStageId,
+  GateId,
+  LogCategoryKey,
+} from "./types-core";
 
 /**
  *
@@ -253,21 +259,6 @@ export interface CaseSummaryCardData {
 /**
  *
  */
-export type CaseDetailTab =
-  | "overview"
-  | "validation"
-  | "documents"
-  | "tasks"
-  | "info"
-  | "forms"
-  | "deadlines"
-  | "billing"
-  | "messages"
-  | "log";
-
-/**
- *
- */
 export interface CaseDetailTabDef {
   /**
    *
@@ -285,10 +276,6 @@ export interface CaseDetailTabDef {
   icon: string;
 }
 
-/**
- *
- */
-export type GateId = "A" | "B" | "C";
 /**
  *
  */
@@ -323,18 +310,6 @@ export interface GateDefinition {
 /**
  *
  */
-export type BillingStatusKey =
-  | "paid"
-  | "partial"
-  | "unpaid"
-  | "arrears"
-  | "waived"
-  | "due"
-  | "overdue";
-
-/**
- *
- */
 export interface BillingStatusDef {
   /**
    *
@@ -351,11 +326,6 @@ export interface BillingStatusDef {
 /**
  *
  */
-export type LogCategoryKey = "all" | "operation" | "review" | "status";
-
-/**
- *
- */
 export interface LogCategoryDef {
   /**
    *
@@ -368,22 +338,6 @@ export interface LogCategoryDef {
   /** 对应的 i18n key：`cases.constants.logCategories.<key>`。 */
   i18nKey: string;
 }
-
-/**
- *
- */
-export type CaseSampleKey =
-  | "work"
-  | "family"
-  | "gate-fail"
-  | "arrears"
-  | "correction"
-  | "archived";
-
-/**
- *
- */
-export type CaseRoleKey = "admin" | "owner" | "assistant" | "finance";
 
 /**
  *

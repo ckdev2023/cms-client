@@ -1,4 +1,12 @@
-import type { RelationType } from "./types";
+/**
+ * 关联人关系类型。
+ *
+ * 定义点沿革：原在 `types.ts`，但本文件（关系类型目录）反向 import 它，
+ * 而 `types.ts` 又 re-export 本文件的目录函数，构成 type 环。开启 depcruise
+ * 的 tsPreCompilationDeps 后该环显形。类型与其目录理应同处，故定义下沉至此，
+ * `types.ts` 单向 re-export，消费方无感。
+ */
+export type RelationType = "spouse" | "parent" | "child" | "agent" | "other";
 
 type RelationTypeLocale = "zh-CN" | "en-US" | "ja-JP";
 

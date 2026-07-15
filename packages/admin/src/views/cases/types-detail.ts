@@ -1,13 +1,15 @@
 /* eslint-disable max-lines */
+// 取自类型内核而非 types.ts —— types.ts re-export 本文件的 21 个符号，
+// 若反向从 types.ts 取核心枚举即构成 type 环（解环见 types-core.ts 文件头）。
 import type {
   BillingStatusKey,
   CaseDetailTab,
   CaseStageId,
   GateId,
   LogCategoryKey,
-} from "./types";
+} from "./types-core";
 
-export type { CaseRoleKey, CaseSampleKey } from "./types";
+export type { CaseRoleKey, CaseSampleKey } from "./types-core";
 
 /**
  * adapter 层面向 UI 的可翻译文本结构，替代裸 `key + params` 散落字段。

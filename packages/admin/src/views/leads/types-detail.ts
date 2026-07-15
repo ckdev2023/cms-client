@@ -1,4 +1,4 @@
-import type { LeadStatus } from "./types";
+import type { LeadStatus } from "./types-core";
 
 /* ------------------------------------------------------------------ */
 /*  详情页 tabs                                                        */
