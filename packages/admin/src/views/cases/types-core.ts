@@ -71,3 +71,44 @@ export type CaseSampleKey =
 
 /** 案件角色键。 */
 export type CaseRoleKey = "admin" | "owner" | "assistant" | "finance";
+
+// ─── 详情链通用原语（B3 自 types-detail.ts 上收）──────────────────
+// 收录理由：这三者被多个 Tab 与聚合根共同依赖，留在 types-detail 会让
+// 「tabs 之间互不 import」无法成立——LogEntry(comms) 需要 TimelineTrack，
+// 而 TimelineEntry(overview) 也需要它；RiskBlock(overview) 与 CaseDetail
+// 都需要 LocalizableText。上收内核后依赖单向：tabs → types-core。
+
+/**
+ * adapter 层面向 UI 的可翻译文本结构，替代裸 `key + params` 散落字段。
+ */
+export interface LocalizableText {
+  /**
+   *
+   */
+  key: string;
+  /**
+   *
+   */
+  params?: Record<string, unknown>;
+}
+
+/**
+ * 顾客多语言名称（R27-S）。
+ *
+ * 来源：server deepLink 中 `customerNameZh` / `customerNameJa` / `customerNameEn`。
+ * 缺失时各字段为空字符串；view 层按 `locale` 取值后 fallback 到 `detail.client`。
+ */
+export interface CustomerLocalizedNames {
+  /** 中文名。 */
+  zh: string;
+  /** 日文名。 */
+  ja: string;
+  /** 英文名。 */
+  en: string;
+}
+
+/**
+ *
+ */
+/** timeline 事件轨道类型——概览双轨渲染使用。 */
+export type TimelineTrack = "business_phase" | "stage" | "other";
