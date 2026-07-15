@@ -18,7 +18,7 @@ import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { hasRequiredRole } from "../auth/roles";
 import type { RequestContext } from "../tenancy/requestContext";
-import { CANONICAL_CASE_TYPE_OPTIONS } from "../cases/caseTypeCanonical";
+import { CANONICAL_CASE_TYPE_OPTIONS } from "../cases/public";
 import { CaseTemplatesService } from "./caseTemplates.service";
 
 type HttpRequest = { requestContext?: RequestContext };

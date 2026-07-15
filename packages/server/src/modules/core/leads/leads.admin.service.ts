@@ -8,7 +8,7 @@ import { Pool } from "pg";
 
 import type { Lead, LeadQueryRow } from "../../portal/model/portalEntities";
 import { mapLeadRow } from "../../portal/model/portalEntities";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import { CustomersService } from "../customers/customers.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";

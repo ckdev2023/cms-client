@@ -11,7 +11,7 @@
  */
 
 import { createPgPool } from "../infra/db/createPgPool";
-import { getCaseTypeLabelJa } from "../modules/core/cases/caseTypeLabels.ja";
+import { getCaseTypeLabelJa } from "../modules/core/cases/public";
 
 /**
  * backfill 対象行の最小投影（cases × leads JOIN 結果から取得）。

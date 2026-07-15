@@ -1,4 +1,4 @@
-import type { RequirementBlueprintItem } from "../../../modules/core/cases/cases.types-template-blueprints";
+import type { RequirementBlueprintItem } from "../../../modules/core/cases/public";
 
 export const WORK_VISA_REQUIREMENT_BLUEPRINT: RequirementBlueprintItem[] = [
   {

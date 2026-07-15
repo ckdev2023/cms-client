@@ -7,7 +7,7 @@ import {
 import { Pool } from "pg";
 
 import type { ValidationRun } from "../model/documentEntities";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";

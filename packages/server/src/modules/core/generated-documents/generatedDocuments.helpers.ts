@@ -8,7 +8,7 @@ import {
   type GeneratedDocumentDto,
   type GeneratedDocumentListInput,
   type GeneratedDocumentUpdateInput,
-} from "../cases/cases.types-generated-docs";
+} from "../cases/public";
 
 const VALID_STATUSES = new Set([
   "draft",

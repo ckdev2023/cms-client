@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { Pool } from "pg";
 
 import type { BillingPlanStatus } from "../model/billingEntities";
-import type { BillingListSummaryDto } from "../cases/cases.types-billing";
+import type { BillingListSummaryDto } from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 

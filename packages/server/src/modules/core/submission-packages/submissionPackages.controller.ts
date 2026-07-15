@@ -18,8 +18,10 @@ import {
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
-import { CasesService } from "../cases/cases.service";
-import { VALIDATION_SUBMISSION_ERROR_CODES } from "../cases/cases.types";
+import {
+  CasesService,
+  VALIDATION_SUBMISSION_ERROR_CODES,
+} from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { SubmissionPackagesService } from "./submissionPackages.service";
 

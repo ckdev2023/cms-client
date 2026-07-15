@@ -1,6 +1,6 @@
 import { BadRequestException } from "@nestjs/common";
 
-import { CASE_TYPE_LABELS_JA } from "../cases/caseTypeLabels.ja";
+import { CASE_TYPE_LABELS_JA } from "../cases/public";
 
 /**
  * 错误码：当 visaType 命中 CASE_TYPE_LABELS_JA 但 statusOfResidence

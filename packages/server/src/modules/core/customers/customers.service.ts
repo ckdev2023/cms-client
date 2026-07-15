@@ -11,7 +11,7 @@ import type { Case, Customer } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import {
   buildCustomerDuplicateWhere,
   buildCustomerListSelect,

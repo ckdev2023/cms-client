@@ -8,9 +8,9 @@ import type { TimelineWriteInput } from "../timeline/timeline.service";
 import {
   checkBmvCaseCreationGate,
   BMV_CASE_CREATION_GATE_CODES,
-} from "../cases/cases.types-bmv-gate";
-import { BMV_CASE_TYPE } from "../cases/cases.template-bmv";
-import type { CaseCreateInput } from "../cases/cases.types";
+  BMV_CASE_TYPE,
+  type CaseCreateInput,
+} from "../cases/public";
 import { createBmvInitialBilling } from "./customers.bmv-billing";
 import { getCurrentBmvProfile, patchBmvProfile } from "./customers.bmv-patch";
 import {

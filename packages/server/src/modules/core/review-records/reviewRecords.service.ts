@@ -6,7 +6,7 @@ import {
 } from "@nestjs/common";
 import { Pool } from "pg";
 
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import type { ReviewRecord } from "../model/documentEntities";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb } from "../tenancy/tenantDb";

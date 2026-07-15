@@ -1,10 +1,12 @@
 import { Logger } from "@nestjs/common";
 import type { Pool, PoolClient } from "pg";
 
-import type { TemplatesResolver } from "../../core/cases/cases.service.types-internal";
-import { resolveChecklistItems } from "../../core/cases/cases.service.create-flow";
-import { findActiveCaseTemplateByCaseType } from "../../core/cases/cases.template.repository";
-import type { ChecklistItem } from "../../core/cases/cases.service.write-ops";
+import {
+  findActiveCaseTemplateByCaseType,
+  resolveChecklistItems,
+  type ChecklistItem,
+  type TemplatesResolver,
+} from "../../core/cases/public";
 import type { RequestContext } from "../../core/tenancy/requestContext";
 import type { LeadConvertInput } from "./leads.service";
 

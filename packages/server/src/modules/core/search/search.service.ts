@@ -1,7 +1,7 @@
 import { Inject, Injectable, Optional } from "@nestjs/common";
 
 import { CustomersService } from "../customers/customers.service";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import { LeadsAdminService } from "../leads/leads.admin.service";
 import { TasksService } from "../tasks/tasks.service";
 import { DocumentItemsService } from "../document-items/documentItems.service";

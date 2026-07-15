@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import type { Pool } from "pg";
 
 import type { Customer } from "../model/coreEntities";
-import { BMV_CASE_TYPE } from "../cases/cases.template-bmv";
+import { BMV_CASE_TYPE } from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import type { TimelineWriteInput } from "../timeline/timeline.service";
 import {

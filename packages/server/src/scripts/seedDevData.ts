@@ -21,7 +21,7 @@ import type { PoolClient } from "pg";
 
 import { createPgPool } from "../infra/db/createPgPool";
 import { readLocalAdminBootstrapInput } from "../modules/core/auth/localAdminBootstrap";
-import { BMV_REQUIREMENT_BLUEPRINT } from "../modules/core/cases/bmvTemplateConfig";
+import { BMV_REQUIREMENT_BLUEPRINT } from "../modules/core/cases/public";
 import {
   SEED_LEAD_PORTAL_ID,
   seedConversationAppUser,

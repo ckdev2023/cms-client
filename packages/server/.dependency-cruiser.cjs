@@ -46,6 +46,22 @@ module.exports = {
       },
     },
     {
+      name: "cases-internals-are-module-private",
+      comment:
+        "S1: core/cases 对外只暴露 public/ 出口；模块外不得 import cases 内部文件。" +
+        "例外：app.module（DI 组装根）、测试与 test-support/test-fixtures、" +
+        "portal/intake/intake.types（与 cases 的双向类型接缝，见 modules-core-no-import-portal 白名单；" +
+        "改走 barrel 会形成 intake.types → public → cases.service → intake.types 循环）。" +
+        "迁移期 warn，收口批（S5）升级为 error。",
+      severity: "warn",
+      from: {
+        path: "^src",
+        pathNot:
+          "^src/(modules/core/cases|app\\.module\\.ts|modules/portal/intake/intake\\.types\\.ts)|\\.test\\.ts$|test-support|test-fixtures",
+      },
+      to: { path: "^src/modules/core/cases/(?!public/)" },
+    },
+    {
       name: "modules-templates-no-import-custom",
       severity: "error",
       from: { path: "^src/modules/templates" },

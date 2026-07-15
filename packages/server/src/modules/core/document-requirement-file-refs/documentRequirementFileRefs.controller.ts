@@ -15,7 +15,7 @@ import {
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import { DocumentItemsService } from "../document-items/documentItems.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { isUuid } from "../tenancy/uuid";

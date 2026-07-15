@@ -2,7 +2,7 @@ import type { TenantDb } from "../tenancy/tenantDb";
 import {
   BMV_CASE_TYPE,
   BMV_REMINDER_SCHEDULE_BLUEPRINT,
-} from "../cases/cases.template-bmv";
+} from "../cases/public";
 
 /** 線索継承字段（group_id + owner_user_id）。 */
 export type LeadInheritance = {

@@ -18,7 +18,7 @@ import type {
 import { CASE_WRITE_ERROR_CODES } from "./cases.types";
 import type { Case } from "../model/coreEntities";
 import type { TenantDb } from "../tenancy/tenantDb";
-import { mapResidencePeriodRow } from "../residence-periods/residencePeriods.service";
+import { mapResidencePeriodRow } from "../residence-periods/residencePeriods.row-mappers";
 import {
   toResidencePeriodSummary,
   type CaseResidencePeriodSummary,

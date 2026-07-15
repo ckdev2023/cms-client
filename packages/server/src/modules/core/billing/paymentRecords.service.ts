@@ -8,7 +8,7 @@ import {
 import { Pool } from "pg";
 
 import { hasRequiredRole } from "../auth/roles";
-import type { CasePaymentRecordDto } from "../cases/cases.types-billing";
+import type { CasePaymentRecordDto } from "../cases/public";
 import type {
   BillingPlan,
   PaymentMethod,

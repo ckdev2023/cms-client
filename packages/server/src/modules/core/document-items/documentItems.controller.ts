@@ -16,7 +16,7 @@ import {
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import {
   DOCUMENT_ITEM_ERROR_CODES,
   DOCUMENT_ITEM_OWNER_SIDES,

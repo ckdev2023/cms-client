@@ -16,12 +16,10 @@ import {
   CasesService,
   TEMPLATES_RESOLVER,
   type TemplatesResolver,
-} from "../cases/cases.service";
-import { validateTransitionGate } from "../cases/cases.service.transition-gates";
-import {
+  validateTransitionGate,
   CASE_WRITE_ERROR_CODES,
   VALIDATION_SUBMISSION_ERROR_CODES,
-} from "../cases/cases.types";
+} from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";

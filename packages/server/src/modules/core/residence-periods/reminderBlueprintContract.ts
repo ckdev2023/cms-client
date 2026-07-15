@@ -24,7 +24,7 @@
 //   - 016_billing_reminders_truth.up.sql chk_reminders_channel
 // ────────────────────────────────────────────────────────────────
 
-import type { ReminderScheduleBlueprintItem } from "../cases/cases.types-template-blueprints";
+import type { ReminderScheduleBlueprintItem } from "../cases/public";
 
 /**
  * P0 降级用默认提醒计划 — 当案件无模板或模板无 blueprint 时使用。

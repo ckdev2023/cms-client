@@ -16,12 +16,11 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 
-import { CASE_WRITE_ERROR_CODES } from "../cases/cases.types";
+import { CASE_WRITE_ERROR_CODES, CasesService } from "../cases/public";
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
 import { PermissionsService } from "../auth/permissions.service";
-import { CasesService } from "../cases/cases.service";
 import type { RequestContext } from "../tenancy/requestContext";
 import { ResidencePeriodsService } from "./residencePeriods.service";
 import { assertStatusOfResidenceMatchesVisaType } from "./residencePeriods.validation";

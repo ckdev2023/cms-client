@@ -17,7 +17,7 @@ import {
   type GeneratedDocumentListInput,
   type GeneratedDocumentListResult,
   type GeneratedDocumentUpdateInput,
-} from "../cases/cases.types-generated-docs";
+} from "../cases/public";
 import {
   type GeneratedDocumentDtoRow,
   type GeneratedDocumentRow,

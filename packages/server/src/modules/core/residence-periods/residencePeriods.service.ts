@@ -13,36 +13,25 @@ import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDbTx } from "../tenancy/tenantDb";
 import { TimelineService } from "../timeline/timeline.service";
 
-import { resolveCaseTypeCandidates } from "../cases/cases.template.repository";
-import type { ReminderScheduleBlueprintItem } from "../cases/cases.types-template-blueprints";
+import {
+  resolveCaseTypeCandidates,
+  type ReminderScheduleBlueprintItem,
+} from "../cases/public";
 import {
   DEFAULT_REMINDER_SCHEDULE,
   resolveReminderPlans,
 } from "./reminderBlueprintContract";
+import {
+  mapResidencePeriodRow,
+  toDateOnlyString,
+  type ResidencePeriodQueryRow,
+} from "./residencePeriods.row-mappers";
+
+// 行映射已抽至 row-mappers 叶子模块（S1 解环）；此处 re-export 保留既有消费路径。
+export { mapResidencePeriodRow, toDateOnlyString };
 
 const RESIDENCE_PERIOD_COLS =
   "id, org_id, case_id, customer_id, visa_type, status_of_residence, period_years, period_label, valid_from::text as valid_from, valid_until::text as valid_until, card_number, is_current, entry_date::text as entry_date, reminder_created, notes, created_by, created_at, updated_at";
-
-type ResidencePeriodQueryRow = {
-  id: string;
-  org_id: string;
-  case_id: string;
-  customer_id: string;
-  visa_type: string;
-  status_of_residence: string;
-  period_years: unknown;
-  period_label: string | null;
-  valid_from: unknown;
-  valid_until: unknown;
-  card_number: string | null;
-  is_current: boolean;
-  entry_date: unknown;
-  reminder_created: boolean;
-  notes: string | null;
-  created_by: string | null;
-  created_at: unknown;
-  updated_at: unknown;
-};
 
 type OwnerQueryRow = {
   owner_user_id: string;
@@ -97,62 +86,6 @@ export type ResidencePeriodListInput = {
   page?: number;
   limit?: number;
 };
-
-/**
- *
- * @param value
- */
-export function toDateOnlyString(value: unknown): string {
-  if (typeof value === "string") return value.slice(0, 10);
-  if (value instanceof Date) {
-    const y = String(value.getFullYear());
-    const m = String(value.getMonth() + 1).padStart(2, "0");
-    const d = String(value.getDate()).padStart(2, "0");
-    return `${y}-${m}-${d}`;
-  }
-  throw new BadRequestException("Invalid date value");
-}
-
-function toTimestampString(value: unknown): string {
-  if (typeof value === "string") return value;
-  if (value instanceof Date) return value.toISOString();
-  throw new BadRequestException("Invalid timestamp value");
-}
-
-function toNullableInteger(value: unknown): number | null {
-  if (value === null || value === undefined) return null;
-  const num = Number(value);
-  return Number.isFinite(num) ? num : null;
-}
-
-/**
- *
- * @param row
- */
-export function mapResidencePeriodRow(
-  row: ResidencePeriodQueryRow,
-): ResidencePeriod {
-  return {
-    id: row.id,
-    orgId: row.org_id,
-    caseId: row.case_id,
-    customerId: row.customer_id,
-    visaType: row.visa_type,
-    statusOfResidence: row.status_of_residence,
-    periodYears: toNullableInteger(row.period_years),
-    periodLabel: row.period_label,
-    validFrom: toDateOnlyString(row.valid_from),
-    validUntil: toDateOnlyString(row.valid_until),
-    cardNumber: row.card_number,
-    isCurrent: row.is_current,
-    entryDate: row.entry_date ? toDateOnlyString(row.entry_date) : null,
-    reminderCreated: row.reminder_created,
-    notes: row.notes,
-    createdBy: row.created_by,
-    createdAt: toTimestampString(row.created_at),
-    updatedAt: toTimestampString(row.updated_at),
-  };
-}
 
 function requireDateOrder(validFrom: string, validUntil: string): void {
   if (validFrom > validUntil) {

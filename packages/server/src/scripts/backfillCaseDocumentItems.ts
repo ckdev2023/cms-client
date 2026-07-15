@@ -16,8 +16,8 @@ import { createPgPool } from "../infra/db/createPgPool";
 import {
   parseRequirementBlueprint,
   resolveCaseTypeCandidates,
-} from "../modules/core/cases/cases.template.repository";
-import type { ChecklistItem } from "../modules/core/cases/cases.service.write-ops";
+  type ChecklistItem,
+} from "../modules/core/cases/public";
 
 /**
  *

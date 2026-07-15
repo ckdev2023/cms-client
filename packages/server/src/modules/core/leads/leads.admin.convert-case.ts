@@ -8,11 +8,13 @@ import {
   resolveCustomerBmvProfile,
 } from "../customers/customers.dto-mappers";
 import type { CustomerBmvProfile } from "../customers/customers.types";
-import { checkBmvCaseCreationGate } from "../cases/cases.types-bmv-gate";
-import { isBmvCaseTypeCode } from "../cases/cases.template-bmv";
-import { getCaseTypeLabelJa } from "../cases/caseTypeLabels.ja";
-import { ensureAtLeastOneBillingRecordForCase } from "../cases/cases.service.timeline";
-import type { CasesService } from "../cases/cases.service";
+import {
+  checkBmvCaseCreationGate,
+  isBmvCaseTypeCode,
+  getCaseTypeLabelJa,
+  ensureAtLeastOneBillingRecordForCase,
+  type CasesService,
+} from "../cases/public";
 import type { RequestContext } from "../tenancy/requestContext";
 import { createTenantDb, type TenantDb } from "../tenancy/tenantDb";
 import { normalizeObject } from "../../../infra/utils/normalize";

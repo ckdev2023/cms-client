@@ -16,7 +16,7 @@ import {
 
 import { RequirePermission } from "../auth/auth.decorators";
 import { PERMISSION_CODES } from "../auth/permissions.codes";
-import { CasesService } from "../cases/cases.service";
+import { CasesService } from "../cases/public";
 import { DOCUMENT_FILE_ERROR_CODES } from "../documents.types";
 import type { DocumentFile } from "../model/coreEntities";
 import type { RequestContext } from "../tenancy/requestContext";

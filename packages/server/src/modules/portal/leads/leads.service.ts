@@ -18,8 +18,8 @@ import {
 import {
   TEMPLATES_RESOLVER,
   type TemplatesResolver,
-} from "../../core/cases/cases.service.types-internal";
-import type { ChecklistItem } from "../../core/cases/cases.service.write-ops";
+  type ChecklistItem,
+} from "../../core/cases/public";
 import {
   insertDocumentItemsInTx,
   resolveChecklistForConversion,
