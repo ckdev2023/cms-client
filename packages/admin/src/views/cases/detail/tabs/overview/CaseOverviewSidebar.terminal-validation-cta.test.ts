@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseOverviewSidebar from "./CaseOverviewSidebar.vue";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 
 const i18n = createI18n({
   legacy: false,

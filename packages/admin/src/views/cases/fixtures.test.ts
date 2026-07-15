@@ -16,8 +16,8 @@ import {
   SAMPLE_CREATE_TEMPLATES,
   SAMPLE_KEY_TO_CASE_ID,
   SAMPLE_SUMMARY_CARDS,
-} from "./fixtures";
-import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
+} from "./__fixtures__/fixtures";
+import { CASE_DETAIL_SAMPLES } from "./__fixtures__/fixtures-detail";
 import type { CaseListItem } from "./types";
 import { resolveTemplateLabel } from "./types-create";
 import type { I18nLabel } from "./types-create";

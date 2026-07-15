@@ -9,7 +9,7 @@ import type {
   DocumentGroup,
   DocumentItem,
 } from "../detail/tabs/documents/types";
-import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../__fixtures__/fixtures-detail";
 import {
   computeAllProviderStats,
   computeCaseDocumentCompletionRate,

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseLogTab from "./CaseLogTab.vue";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 import type { LogEntry } from "./types";
 import type { CaseDetail } from "../../types-detail-core";
 const MESSAGES = {

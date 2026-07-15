@@ -22,13 +22,13 @@ import {
   SAMPLE_CASE_LIST,
   SAMPLE_SUMMARY_CARDS,
   filterByScope,
-} from "./fixtures";
+} from "./__fixtures__/fixtures";
 import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,
   FAMILY_SCENARIO,
-} from "./fixtures-create";
-import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
+} from "./__fixtures__/fixtures-create";
+import { CASE_DETAIL_SAMPLES } from "./__fixtures__/fixtures-detail";
 import { expandCaseListSearchVariants } from "./model/caseListSearchVariants";
 import { resolveCaseListGroupFilterForApi } from "../../shared/model/useGroupOptions";
 

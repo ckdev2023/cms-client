@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import type { LocationQuery } from "vue-router";
 import { useCaseListModel } from "./useCaseListModel";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 import type { CaseListItem } from "../types";
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
 import type { CaseRepository } from "../api/CaseRepository";

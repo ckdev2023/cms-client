@@ -92,17 +92,34 @@ export default {
         "例外：router/index.ts（路由懒加载入口——三个 View 是模块的路由入口点而非" +
         "内部实现，方案书明示「不改路由懒加载入口」，对应 server 侧 app.module.ts " +
         "作为 DI 组装根的豁免）；测试与 test-support。" +
-        "shell/searchFixtures.ts 未豁免：它直引 cases/fixtures，是放在生产路径下的" +
-        "跨模块 fixture 聚合器，本规则以 warn 把它显性挂账，由 B6 的「fixtures " +
-        "仅测试可 import」规则一并收口。" +
-        "迁移期 warn，B6 收口批升 error。",
-      severity: "warn",
+        "B6 收口：原唯一常驻 warn（shell/searchFixtures.ts 跨 5 模块直引各自 " +
+        "fixtures）已改名 searchFixtures.test-support.ts——实测它无任何生产消费方，" +
+        "唯一使用者是 searchRepository.test.ts，改名后归入 test-support 豁免。" +
+        "违规清零，severity 由 warn 升 error。",
+      severity: "error",
       from: {
         path: "^src",
         pathNot:
           "^src/views/cases|^src/router/index\\.ts$|\\.test\\.ts$|test-support|test-fixtures",
       },
       to: { path: "^src/views/cases/(?!public)" },
+    },
+    {
+      name: "cases-fixtures-are-test-only",
+      comment:
+        "B6：views/cases/__fixtures__ 是样例数据，只允许测试 / test-support 引用。" +
+        "例外 views/cases/repository.ts：它导出 createMockCaseRepository，被生产的 " +
+        "CaseCreateView.vue 调用（新建向导的 templates / viewer 仍取自 fixture 而非 " +
+        "API）。这是既有债，属 B5「create/ 成域」的范围，不在 B6 内改动——本规则先把" +
+        "它冻结成唯一显式豁免，阻止新的生产代码再引 fixtures。B5 拆完 create/ 后应" +
+        "删除此豁免。",
+      severity: "error",
+      from: {
+        path: "^src",
+        pathNot:
+          "\\.test\\.ts$|test-support|test-fixtures|^src/views/cases/__fixtures__|^src/views/cases/repository\\.ts$",
+      },
+      to: { path: "^src/views/cases/__fixtures__" },
     },
   ],
 };

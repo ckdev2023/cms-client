@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mount } from "@vue/test-utils";
 import { createI18n } from "vue-i18n";
 import CaseMessagesTab from "./CaseMessagesTab.vue";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import type { MessageChannelChoice } from "../../../model/CaseAdapterMessageWriteBuilders";
 

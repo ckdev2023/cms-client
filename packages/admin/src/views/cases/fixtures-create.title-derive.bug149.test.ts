@@ -14,7 +14,7 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { SAMPLE_CREATE_TEMPLATES } from "./fixtures";
+import { SAMPLE_CREATE_TEMPLATES } from "./__fixtures__/fixtures";
 import {
   APPLICATION_TYPE_LABELS,
   resolveTemplateLabel,

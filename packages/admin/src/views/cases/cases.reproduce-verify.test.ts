@@ -8,7 +8,7 @@
  *   (5d) 每个模板 section title / item label 包含 zh + en + ja
  */
 import { describe, test, expect } from "vitest";
-import { SAMPLE_CREATE_TEMPLATES } from "./fixtures-create";
+import { SAMPLE_CREATE_TEMPLATES } from "./__fixtures__/fixtures-create";
 import {
   BUSINESS_PHASES,
   getPhaseLabel,

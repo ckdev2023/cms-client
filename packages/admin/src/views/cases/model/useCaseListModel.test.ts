@@ -9,7 +9,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import type { LocationQuery } from "vue-router";
 import { useCaseListModel } from "./useCaseListModel";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 import type { CaseListItem, CaseScope } from "../types";
 import {
   DEFAULT_CASE_LIST_FILTERS,

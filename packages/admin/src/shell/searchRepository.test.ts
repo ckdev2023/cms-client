@@ -4,7 +4,7 @@ import {
   createMockSearchRepository,
   type SearchHit,
 } from "../shared/api/searchRepository";
-import { buildDefaultSearchHits } from "./searchFixtures";
+import { buildDefaultSearchHits } from "./searchFixtures.test-support";
 
 const SAMPLE_HITS: SearchHit[] = [
   {

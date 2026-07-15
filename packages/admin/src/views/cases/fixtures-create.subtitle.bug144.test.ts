@@ -7,7 +7,7 @@
 // ────────────────────────────────────────────────────────────────
 
 import { describe, expect, it } from "vitest";
-import { SAMPLE_CREATE_TEMPLATES } from "./fixtures";
+import { SAMPLE_CREATE_TEMPLATES } from "./__fixtures__/fixtures";
 import { resolveTemplateLabel } from "./types-create";
 import type { I18nLabel } from "./types-create";
 

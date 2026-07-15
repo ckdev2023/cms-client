@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CASE_DETAIL_SAMPLES } from "../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../__fixtures__/fixtures-detail";
 import type { CaseDetail } from "../detail/types-detail-core";
 import { resolvePostApprovalCoeNoteKeySuffix } from "./caseValidationPostApprovalCoeNote";
 

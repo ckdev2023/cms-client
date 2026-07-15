@@ -15,7 +15,7 @@ import {
 import type { CaseListItem } from "./types";
 import type { CaseListQueryParams } from "./query";
 import { DEFAULT_CASE_LIST_FILTERS } from "./constants";
-import { SAMPLE_CASE_LIST } from "./fixtures";
+import { SAMPLE_CASE_LIST } from "./__fixtures__/fixtures";
 
 function defaultParams(
   overrides: Partial<CaseListQueryParams> = {},

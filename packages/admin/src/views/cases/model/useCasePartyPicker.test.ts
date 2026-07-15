@@ -11,7 +11,7 @@ import {
   useCasePartyPicker,
   type UseCasePartyPickerDeps,
 } from "./useCasePartyPicker";
-import { SAMPLE_CREATE_CUSTOMERS } from "../fixtures";
+import { SAMPLE_CREATE_CUSTOMERS } from "../__fixtures__/fixtures";
 
 const FIXED_ID = "test-new-id";
 const FIXED_NOW = "2026-04-14T00:00:00.000Z";

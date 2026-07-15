@@ -20,7 +20,7 @@ import {
 import type { CaseListParams, CaseListResult } from "./CaseAdapterTypes";
 import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseListItem } from "../types";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 
 // ─── Helpers ────────────────────────────────────────────────────
 

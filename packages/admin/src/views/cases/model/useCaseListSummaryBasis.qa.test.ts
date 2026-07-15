@@ -9,7 +9,7 @@ import {
   CASE_LIST_SUMMARY_BASIS_CAP,
   DEFAULT_CASE_PAGE_SIZE,
 } from "../constants";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 
 async function flushFetch(): Promise<void> {
   await nextTick();

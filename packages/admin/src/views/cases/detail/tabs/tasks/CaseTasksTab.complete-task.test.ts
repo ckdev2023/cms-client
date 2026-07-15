@@ -4,7 +4,7 @@ import { createI18n } from "vue-i18n";
 import CaseTasksTab from "./CaseTasksTab.vue";
 import type { TaskItem } from "./types";
 import type { CaseDetail } from "../../types-detail-core";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 
 const CARD_STUB = {

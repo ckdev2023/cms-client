@@ -3,7 +3,7 @@ import { mount } from "@vue/test-utils";
 import { ref, computed } from "vue";
 import { createI18n } from "vue-i18n";
 import CaseDocumentsTab from "./CaseDocumentsTab.vue";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 import type { DocumentGroup, DocumentItem } from "./types";
 import type { CaseDetail } from "../../types-detail-core";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";

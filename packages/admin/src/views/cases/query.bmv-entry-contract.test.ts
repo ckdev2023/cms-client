@@ -34,7 +34,7 @@ import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,
   FAMILY_SCENARIO,
-} from "./fixtures-create";
+} from "./__fixtures__/fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "./constants";
 
 // ─── Helpers ─────────────────────────────────────────────────────

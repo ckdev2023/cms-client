@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { matchesCaseFilters } from "./useCaseListModel";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 import type { CaseListFiltersState } from "../types";
 import { DEFAULT_CASE_LIST_FILTERS } from "../constants";
 

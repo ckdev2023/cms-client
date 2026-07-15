@@ -13,7 +13,7 @@ import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,
   FAMILY_SCENARIO,
-} from "../../cases/fixtures-create";
+} from "../../cases/__fixtures__/fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../../cases/constants";
 import { CUSTOMER_CREATE_CASE_ENTRY_CONTRACT } from "./CustomerAdapterTypes";
 

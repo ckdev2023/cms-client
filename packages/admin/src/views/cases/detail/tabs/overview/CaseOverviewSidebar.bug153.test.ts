@@ -21,7 +21,7 @@ import CaseOverviewSidebar from "./CaseOverviewSidebar.vue";
 import casesZhCN from "../../../../../i18n/messages/cases/zh-CN";
 import casesJaJP from "../../../../../i18n/messages/cases/ja-JP";
 import casesEnUS from "../../../../../i18n/messages/cases/en-US";
-import { CASE_DETAIL_SAMPLES } from "../../../fixtures-detail";
+import { CASE_DETAIL_SAMPLES } from "../../../__fixtures__/fixtures-detail";
 import { getPhaseLabel } from "../../../constants";
 import type { CaseDetail } from "../../types-detail-core";
 type Locale = "zh-CN" | "ja-JP" | "en-US";

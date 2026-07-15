@@ -7,7 +7,7 @@ import { CASE_LIST_PARAM_KEYS } from "./CaseAdapterTypes";
 import type { CaseRepository } from "../api/CaseRepository";
 import type { CaseListItem } from "../types";
 import { DEFAULT_CASE_PAGE_SIZE } from "../constants";
-import { SAMPLE_CASE_LIST } from "../fixtures";
+import { SAMPLE_CASE_LIST } from "../__fixtures__/fixtures";
 
 function lastPaginatedListParams(listCases: {
   mock: { calls: unknown[][] };
