@@ -4,7 +4,7 @@ import {
   useCaseValidationActions,
   type BillingRiskAckRepo,
 } from "./useCaseValidationActions";
-import type { ValidationRunsRepository } from "../data/ValidationRunsRepository";
+import type { ValidationRunsRepository } from "../api/resources/ValidationRunsRepository";
 import { RepositoryError } from "../../../shared/api/repositoryRuntime";
 
 function createMockRepo(

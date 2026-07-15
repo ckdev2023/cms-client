@@ -2,15 +2,15 @@ import { ref, type Ref } from "vue";
 import {
   createValidationRunsRepository,
   type ValidationRunsRepository,
-} from "../data/ValidationRunsRepository";
+} from "../api/resources/ValidationRunsRepository";
 import {
   createSubmissionPackagesRepository,
   type SubmissionPackagesRepository,
-} from "../data/SubmissionPackagesRepository";
+} from "../api/resources/SubmissionPackagesRepository";
 import {
   createReviewRecordsRepository,
   type ReviewRecordsRepository,
-} from "../data/ReviewRecordsRepository";
+} from "../api/resources/ReviewRecordsRepository";
 import { RepositoryError } from "../../../shared/api/repositoryRuntime";
 import { resolveWriteErrorI18nKey } from "./CaseWriteErrorMapping";
 import type {

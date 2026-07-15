@@ -1,10 +1,10 @@
-import { getAdminAccessToken } from "../../../auth/model/adminSession";
+import { getAdminAccessToken } from "../../../../auth/model/adminSession";
 import {
   createRepositoryRuntime,
   RepositoryError,
   requestAndAdapt,
   type RepositoryRuntime,
-} from "../../../shared/api/repositoryRuntime";
+} from "../../../../shared/api/repositoryRuntime";
 
 /**
  *

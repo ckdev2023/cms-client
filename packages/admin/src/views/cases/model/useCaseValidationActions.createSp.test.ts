@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
 import { ref, nextTick } from "vue";
 import { useCaseValidationActions } from "./useCaseValidationActions";
-import type { ValidationRunsRepository } from "../data/ValidationRunsRepository";
-import type { SubmissionPackagesRepository } from "../data/SubmissionPackagesRepository";
+import type { ValidationRunsRepository } from "../api/resources/ValidationRunsRepository";
+import type { SubmissionPackagesRepository } from "../api/resources/SubmissionPackagesRepository";
 import { RepositoryError } from "../../../shared/api/repositoryRuntime";
 
 function createMockRepo(
