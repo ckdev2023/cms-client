@@ -33,7 +33,7 @@ packages/admin/src/
 
 ## 2. dependency-cruiser 规则的"实活"分析 **[H]**
 
-`packages/admin/.dependency-cruiser.js` 共声明 11 条规则。按目录是否存在分类：
+`packages/admin/.dependency-cruiser.js` 共声明 **13** 条规则（B2/B6 新增 cases 两条，见表末）。按目录是否存在分类：
 
 | 规则 | from / to | 状态 | 说明 |
 |------|-----------|------|------|
@@ -48,8 +48,12 @@ packages/admin/src/
 | `data-no-app-or-features` | `^src/data` → ... | **休眠** | `data/` 不存在 |
 | `data-no-shared-ui` | `^src/data` → `^src/shared/ui` | **休眠** | 同上 |
 | `billing-no-cases` | `^src/views/billing` → `^src/views/cases` | **活** | 唯一的 view↔view 显式禁令 |
+| `cases-internals-are-module-private` | 非 cases/router/test → `^src/views/cases/(?!public)` | **活** | B2 新增、B6 升 error：cases 对外只经 public.ts |
+| `cases-fixtures-are-test-only` | 非 test/repository → `^src/views/cases/__fixtures__` | **活** | B6 新增：样例数据只许测试引用，唯一豁免 create/repository.ts（B5 随 create/ 成域改指） |
 
-**结论**：admin **没有** mobile 那种 feature/domain/data 强分层；7/11 条规则因目录不存在而不发挥作用。实活规则只有 4 条（`no-circular`、`shared-no-local-outside-shared`、`billing-no-cases`，加 `domain-no-npm` 的 warn 也休眠）。 **[H]**
+**结论**：admin **没有** mobile 那种 feature/domain/data 强分层；7/13 条规则因 `features`/`domain`/`data`/`infra` 目录不存在而当前不发挥作用。实活规则 6 条（`no-circular`、`shared-no-local-outside-shared`、`billing-no-cases`、`cases-internals-are-module-private`、`cases-fixtures-are-test-only`，加 `domain-no-npm` 的 warn 也休眠）。 **[H]**
+
+> **休眠 ≠ 死规则（探针实证，2026-07 复核）**：这 7 条不是抄错路径的垃圾配置，是**前瞻护栏**——`from.path` 恒空故当前无违规源，一旦 admin 引入对应目录立即激活。实测：临时造 `src/features`/`src/domain`/`src/data`/`src/infra` 并注入越界 import，7 条中 7 条（除 `domain-no-npm` 需真 resolve npm 包外）立即 fire。**故不得当作死规则删除**——删了就是拆掉未来分层的防线（正是下方 R1 预警的反面）。ESLint 侧 `eslint.config.js` 的 `src/features/**`（tamagui / `@/data` / `@/infra` 禁令）与 `src/domain|data/**`（`shared/ui` 禁令）两块同理休眠、同理探针可激活，一并保留。
 
 ## 3. 真实跨 view 依赖（违反"feature 互不依赖"理想，但不违反现行规则）**[H]**
 
