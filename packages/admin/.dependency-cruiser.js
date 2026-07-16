@@ -108,16 +108,18 @@ export default {
       name: "cases-fixtures-are-test-only",
       comment:
         "B6：views/cases/__fixtures__ 是样例数据，只允许测试 / test-support 引用。" +
-        "例外 views/cases/repository.ts：它导出 createMockCaseRepository，被生产的 " +
+        "例外 views/cases/create/repository.ts：它导出 createMockCaseRepository，被生产的 " +
         "CaseCreateView.vue 调用（新建向导的 templates / viewer 仍取自 fixture 而非 " +
-        "API）。这是既有债，属 B5「create/ 成域」的范围，不在 B6 内改动——本规则先把" +
-        "它冻结成唯一显式豁免，阻止新的生产代码再引 fixtures。B5 拆完 create/ 后应" +
-        "删除此豁免。",
+        "API）。B5「create/ 成域」按纯结构搬迁执行：repository.ts 实测生产侧只有 " +
+        "CaseCreateView.vue 一个消费方，故随 create/ 迁入，豁免路径同步改指——债被收进 " +
+        "create/ 且仍是唯一显式豁免，阻止新的生产代码再引 fixtures。" +
+        "切断该 fixture 依赖需要 viewer / createTemplates / familyScenario 三处改走 API，" +
+        "属行为变更（另需服务端端点），不在重构批次内；留待单独决策与排期。",
       severity: "error",
       from: {
         path: "^src",
         pathNot:
-          "\\.test\\.ts$|test-support|test-fixtures|^src/views/cases/__fixtures__|^src/views/cases/repository\\.ts$",
+          "\\.test\\.ts$|test-support|test-fixtures|^src/views/cases/__fixtures__|^src/views/cases/create/repository\\.ts$",
       },
       to: { path: "^src/views/cases/__fixtures__" },
     },

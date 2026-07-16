@@ -33,7 +33,7 @@ import {
 import {
   useCreateCaseModel,
   type UseCreateCaseModelDeps,
-} from "../../cases/model/useCreateCaseModel";
+} from "../../cases/create/model/useCreateCaseModel";
 import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,

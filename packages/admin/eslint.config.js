@@ -61,6 +61,27 @@ const CASES_RESTRICTED_PATTERNS = [
     message:
       "BMV 步骤常量与 Workflow/SurveyQuote 两个 Section 已迁至 views/cases/bmv/（拆分 B5）。请从 bmv/ 引用。旧路径已删除，勿重建。",
   },
+  {
+    // 建案向导详情类型：B3 从 types-detail.ts 拆出后暂存 detail/，B5 随 create/ 成域
+    // 迁至 create/types-detail-create.ts（该文件原注释即写明「B5 的暂存处，非最终归宿」）。
+    //
+    // 这是 create/ 搬迁里**唯一**能安全封禁的旧路径：靠 "detail/" 这个字面段区分，
+    // create/ 内部写的是 "../types-detail-create"，不含该段，不会误伤。
+    //
+    // create/ 的其余旧路径一律不封——探针级推理已确认必然误伤：create/ 内部把子目录
+    // 结构原样带走了，CaseCreateView.vue 正当地写 "./components/CaseCreateStep1.vue"、
+    // "./model/useCreateCaseModel"、"./repository"，与旧 cases 根写法**逐字节同形**；
+    // components/ 与 model/ 之间也仍写 "../model/xxx"、"../types-create"。
+    // no-restricted-imports 只看字面量，无从区分新旧（同 __fixtures__ 与 bmv/ 的处境）。
+    // 而旧路径在搬迁后已无文件可解析，vue-tsc -b 会直接报错——本批 56 个残留断链
+    // 正是这样被抓出来的，兜底已经存在，不必为此再劈一层互斥 scope。
+    group: [
+      "**/detail/types-detail-create",
+      "**/detail/types-detail-create.ts",
+    ],
+    message:
+      "建案向导详情类型已随 create/ 成域迁至 views/cases/create/types-detail-create（拆分 B5）。请从 create/ 引用。detail/ 下的暂存副本已删除，勿重建。",
+  },
 ];
 
 /**

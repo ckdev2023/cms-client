@@ -19,8 +19,8 @@ import {
   APPLICATION_TYPE_LABELS,
   resolveTemplateLabel,
   type ApplicationType,
-} from "../types-create";
-import { buildCaseTitle } from "../model/useCreateCaseModelActions";
+} from "../create/types-create";
+import { buildCaseTitle } from "../create/model/useCreateCaseModelActions";
 
 const LOCALES: ReadonlyArray<readonly [string, "zh" | "en" | "ja"]> = [
   ["zh-CN", "zh"],

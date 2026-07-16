@@ -80,7 +80,7 @@ const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 1, note: "S7 — 3-col grid" },
   ],
   [
-    "views/cases/components/CaseCreateModal.vue",
+    "views/cases/create/components/CaseCreateModal.vue",
     { max: 1, note: "modal — constrained parent" },
   ],
   [
@@ -92,7 +92,7 @@ const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 1, note: "modal — constrained parent" },
   ],
   [
-    "views/cases/components/CaseCreateStep4.vue",
+    "views/cases/create/components/CaseCreateStep4.vue",
     { max: 1, note: "S7 — summary 3-col" },
   ],
   [

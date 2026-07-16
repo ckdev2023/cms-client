@@ -130,7 +130,7 @@ export const router = createRouter({
     {
       path: "/cases/create",
       name: "case-create",
-      component: () => import("../views/cases/CaseCreateView.vue"),
+      component: () => import("../views/cases/create/CaseCreateView.vue"),
       meta: withShellMeta({
         navKey: "cases",
         groupKey: "business",

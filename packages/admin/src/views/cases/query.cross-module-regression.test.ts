@@ -41,7 +41,7 @@ import {
   createMockAggregate,
   createMockDetail,
 } from "./model/useCaseDetailModel.test-support";
-import { createMockCaseRepository } from "./repository";
+import { createMockCaseRepository } from "./create/repository";
 import type { CaseDetailTab } from "./types";
 
 // ─── Shared Helpers ──────────────────────────────────────────────

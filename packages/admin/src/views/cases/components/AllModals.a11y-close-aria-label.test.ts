@@ -7,7 +7,7 @@ import CaseTaskCreateModal from "../detail/tabs/tasks/CaseTaskCreateModal.vue";
 import CaseFormGenerateModal from "../detail/tabs/forms/CaseFormGenerateModal.vue";
 import CaseCloseReasonModal from "../detail/tabs/overview/CaseCloseReasonModal.vue";
 import PhaseTransitionPopover from "./PhaseTransitionPopover.vue";
-import CaseCreateModal from "./CaseCreateModal.vue";
+import CaseCreateModal from "../create/components/CaseCreateModal.vue";
 import casesEnUS from "../../../i18n/messages/cases/en-US";
 import casesJaJP from "../../../i18n/messages/cases/ja-JP";
 import casesZhCN from "../../../i18n/messages/cases/zh-CN";

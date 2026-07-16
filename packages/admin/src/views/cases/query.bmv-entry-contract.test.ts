@@ -29,7 +29,7 @@ import {
 import {
   useCreateCaseModel,
   type UseCreateCaseModelDeps,
-} from "./model/useCreateCaseModel";
+} from "./create/model/useCreateCaseModel";
 import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,

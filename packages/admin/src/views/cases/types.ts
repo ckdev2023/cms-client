@@ -419,7 +419,7 @@ export type {
   CaseCreateSelectedRelation,
   CaseCreateSourceContext,
   CreateCaseRelatedParty,
-} from "./types-create";
+} from "./create/types-create";
 
 export type { BillingData, PaymentRow } from "./detail/tabs/billing/types";
 export type {
@@ -470,7 +470,7 @@ export type {
   CaseCreateCustomerOption,
   FamilyDraftParty,
   FamilyScenario,
-} from "./detail/types-detail-create";
+} from "./create/types-detail-create";
 export type {
   PreSignBlocker,
   PreSignGateInfo,

@@ -1,5 +1,5 @@
 import type { CaseTemplateDef } from "../types";
-import type { I18nLabel } from "../types-create";
+import type { I18nLabel } from "../create/types-create";
 
 function il(zh: string, en: string, ja: string): I18nLabel {
   return { zh, en, ja };

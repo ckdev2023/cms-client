@@ -3,7 +3,7 @@ import {
   useCreateCaseModel,
   synthesizeCustomerFromSourceContext,
   type UseCreateCaseModelDeps,
-} from "../../cases/model/useCreateCaseModel";
+} from "../../cases/create/model/useCreateCaseModel";
 import {
   parseCaseCreateQuery,
   buildCaseCreateRoute,
@@ -11,7 +11,7 @@ import {
   buildCustomerDetailHref,
 } from "../../cases/query";
 import type { CaseCreateQueryParams } from "../../cases/query";
-import type { CaseCreateSourceContext } from "../../cases/types-create";
+import type { CaseCreateSourceContext } from "../../cases/create/types-create";
 import {
   SAMPLE_CREATE_CUSTOMERS,
   SAMPLE_CREATE_TEMPLATES,

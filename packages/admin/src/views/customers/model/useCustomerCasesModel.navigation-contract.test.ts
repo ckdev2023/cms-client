@@ -16,7 +16,7 @@ import {
   useCreateCaseModel,
   synthesizeCustomerFromSourceContext,
   type UseCreateCaseModelDeps,
-} from "../../cases/model/useCreateCaseModel";
+} from "../../cases/create/model/useCreateCaseModel";
 import {
   parseCaseCreateQuery,
   buildCaseCreateQuery,
@@ -31,7 +31,7 @@ import {
 } from "../../cases/__fixtures__/fixtures-create";
 import { CASE_GROUP_OPTIONS, CASE_OWNER_OPTIONS } from "../../cases/constants";
 import { CUSTOMER_CREATE_CASE_ENTRY_CONTRACT } from "./CustomerAdapterTypes";
-import type { CaseCreateSourceContext } from "../../cases/types-create";
+import type { CaseCreateSourceContext } from "../../cases/create/types-create";
 
 // ─── Helpers ─────────────────────────────────────────────────────
 

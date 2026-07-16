@@ -19,8 +19,8 @@ import {
 } from "./fixtures";
 import { CASE_DETAIL_SAMPLES } from "./fixtures-detail";
 import type { CaseListItem } from "../types";
-import { resolveTemplateLabel } from "../types-create";
-import type { I18nLabel } from "../types-create";
+import { resolveTemplateLabel } from "../create/types-create";
+import type { I18nLabel } from "../create/types-create";
 
 describe("cases/fixtures", () => {
   describe("SAMPLE_CASE_LIST (list)", () => {

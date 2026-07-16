@@ -38,7 +38,7 @@ import {
 } from "./constants";
 import { BUSINESS_PHASES } from "./constantsBusinessPhase";
 
-export type { CaseCreateQueryParams } from "./query-create";
+export type { CaseCreateQueryParams } from "./create/query-create";
 export {
   CASE_CREATE_QUERY_PARAM_KEYS,
   _ASSERT_CREATE_QUERY_FROZEN_KEYS,
@@ -49,7 +49,7 @@ export {
   buildCaseCreateQuery,
   buildCaseCreateRoute,
   buildCaseCreateHref,
-} from "./query-create";
+} from "./create/query-create";
 
 // ─── Internal Helpers ───────────────────────────────────────────
 

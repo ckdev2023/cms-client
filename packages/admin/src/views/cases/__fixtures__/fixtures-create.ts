@@ -3,7 +3,7 @@ import type {
   CaseTemplateDef,
   FamilyScenario,
 } from "../types";
-import type { I18nLabel } from "../types-create";
+import type { I18nLabel } from "../create/types-create";
 import {
   TMPL_BMV,
   TMPL_BMV_CERT_4M,
