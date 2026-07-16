@@ -12,7 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "jsdoc:lang:check": "node ./checkChineseJsdoc.mjs",
-    "test": "vitest run --coverage",
+    "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "vue-tsc -b --noEmit",
     "check:deps": "depcruise src --config .dependency-cruiser.js",

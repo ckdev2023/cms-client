@@ -9,8 +9,8 @@
 #   - packages/server/.env —— 被 .gitignore 忽略（不入库，正确做法），
 #     而 db:migrations:* 用 `tsx --env-file=.env` 读取，故 CI 现场生成。
 #     此处仅为一次性容器内的本地测试库口令，非生产密钥。
-#   - server:guard 内含 test:integration-pg:ci，自带 docker compose
-#     起独立 PG（端口 5499，tmpfs 即用即弃），无需在此声明。
+# 注：业务单测与 server 集成测试（test:integration-pg:ci）已移除，改人工测试；
+#     guard 现仅保留静态护栏 test 步（admin 19 / server 6 个）。
 name: CI
 
 on:
