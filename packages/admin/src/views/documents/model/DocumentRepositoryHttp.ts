@@ -1,4 +1,4 @@
-import { DocumentRepositoryError } from "./DocumentRepositoryTypes";
+import { DocumentRepositoryError } from "./DocumentRepositoryError";
 
 /**
  * 返回默认 fetch 实现。

@@ -7,8 +7,13 @@ import {
 import {
   toDocumentItemDtoLike,
   toCaseSummaryRow,
+  toFullDocumentItemDto,
+  toDocumentFileDto,
+  parseCompletionRate,
+  parseSharedExpiryRiskData,
   type DocumentItemListResponse,
 } from "./DocumentRepositoryDtos";
+import { DocumentRepositoryError } from "./DocumentRepositoryError";
 import {
   getDefaultRequest,
   buildHeaders,
@@ -17,32 +22,27 @@ import {
   getJson,
 } from "./DocumentRepositoryHttp";
 import type { SharedExpiryRiskData } from "../types";
-import {
-  DocumentRepositoryError,
-  toFullDocumentItemDto,
-  toDocumentFileDto,
-  parseCompletionRate,
-  parseSharedExpiryRiskData,
-  type DocumentRepositoryFactoryInput,
-  type ListDocumentsParams,
-  type TransitionParams,
-  type WaiveParams,
-  type UploadLocalArchiveParams,
-  type CreateItemParams,
-  type LinkRefParams,
-  type DocumentItemDto,
-  type DocumentFileDto,
-  type ListDocumentFilesResult,
-  type PaginatedListResult,
-  type ReferenceCandidateDto,
-  type LinkRefResult,
-  type DocumentRepository,
+import type {
+  DocumentRepositoryFactoryInput,
+  ListDocumentsParams,
+  TransitionParams,
+  WaiveParams,
+  UploadLocalArchiveParams,
+  CreateItemParams,
+  LinkRefParams,
+  DocumentItemDto,
+  DocumentFileDto,
+  ListDocumentFilesResult,
+  PaginatedListResult,
+  ReferenceCandidateDto,
+  LinkRefResult,
+  DocumentRepository,
 } from "./DocumentRepositoryTypes";
 
-export { DocumentRepositoryError } from "./DocumentRepositoryTypes";
+export { DocumentRepositoryError } from "./DocumentRepositoryError";
+export type { DocumentRepositoryErrorCode } from "./DocumentRepositoryError";
 
 export type {
-  DocumentRepositoryErrorCode,
   DocumentRepositoryFactoryInput,
   ListDocumentsParams,
   TransitionParams,
