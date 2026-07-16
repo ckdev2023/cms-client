@@ -76,7 +76,7 @@ const KNOWN_GRID_VIOLATIONS = new Map<string, { max: number; note: string }>([
     { max: 2, note: "S7 — multi-col grids" },
   ],
   [
-    "views/cases/components/CaseSurveyQuoteSection.vue",
+    "views/cases/bmv/CaseSurveyQuoteSection.vue",
     { max: 1, note: "S7 — 3-col grid" },
   ],
   [

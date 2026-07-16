@@ -10,7 +10,7 @@ import {
   type BmvWorkflowStepDisplayStatus,
   type BmvStageGroup,
   type BmvWorkflowStepDef,
-} from "../constantsBmvSteps";
+} from "./constantsBmvSteps";
 import { resolveStageLabelI18nKey } from "../constants";
 
 /** 工作流步骤区块：展示 BMV 子步骤分组、当前状态与补正轮次。 */

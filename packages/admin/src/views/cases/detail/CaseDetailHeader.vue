@@ -15,7 +15,7 @@ import {
   resolveStageLabelI18nKey,
 } from "../constants";
 import { formatCaseIdentity } from "../caseIdentity";
-import { resolveBmvWorkflowStepDisplayLabel } from "../constantsBmvSteps";
+import { resolveBmvWorkflowStepDisplayLabel } from "../bmv/constantsBmvSteps";
 import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";
 import {
   buildFallbackName,

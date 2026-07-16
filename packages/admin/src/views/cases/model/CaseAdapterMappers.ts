@@ -1,5 +1,5 @@
 import type { CaseListItem, CaseSummaryCardData } from "../types";
-import { getBmvStepLabel } from "../constantsBmvSteps";
+import { getBmvStepLabel } from "../bmv/constantsBmvSteps";
 import type { CaseListResult, CaseSummaryResult } from "./CaseAdapterTypes";
 import {
   CASE_SUMMARY_CARD_KEYS,

@@ -1,5 +1,5 @@
-import type { CaseStageId } from "./types";
-import type { WorkflowStepSummary } from "./detail/types-detail-p1";
+import type { CaseStageId } from "../types";
+import type { WorkflowStepSummary } from "../detail/types-detail-p1";
 /**
  *
  */

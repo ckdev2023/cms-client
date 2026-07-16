@@ -22,7 +22,7 @@ import {
   BMV_WORKFLOW_STEPS,
   BMV_WORKFLOW_STEP_MAP,
   getBmvStageGroups,
-} from "./constantsBmvSteps";
+} from "./bmv/constantsBmvSteps";
 import {
   BMV_CASE_RECORD_CONSUMED_FIELDS,
   BMV_DETAIL_TARGET_KEYS,

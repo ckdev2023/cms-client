@@ -37,6 +37,30 @@ const CASES_RESTRICTED_PATTERNS = [
     message:
       "types-detail 类型枢纽已按 Tab 拆解（B3）：Tab 类型→detail/tabs/<tab>/types，聚合根→detail/types-detail-core，原语与枚举→types-core。旧路径已删除，勿重建。",
   },
+  {
+    // BMV 步骤常量原在 cases 根、两个 Section 原在 components/（B5 迁入 bmv/）。
+    //
+    // 只列 "../" 及更深的形式，**故意不列 "./constantsBmvSteps"**：bmv/ 内的兄弟
+    // 文件（CaseWorkflowStepSection.vue 与 3 个 focused 测试）正当地写这个字面量，
+    // 与「cases 根旧路径」完全同形，ESLint 只看字面量、无从区分——同 __fixtures__
+    // 的处境。而从 cases 根再写 "./constantsBmvSteps" 已无文件可解析，vue-tsc/vite
+    // 会直接报错，不需要本规则兜底。
+    //
+    // 两个 Section 则反过来：靠 "components/" 这个字面段与新路径
+    // "../../../bmv/CaseWorkflowStepSection.vue" 区分，不会误伤。
+    group: [
+      "../constantsBmvSteps",
+      "../constantsBmvSteps.ts",
+      "../../constantsBmvSteps",
+      "../../constantsBmvSteps.ts",
+      "../../../constantsBmvSteps",
+      "../../../constantsBmvSteps.ts",
+      "**/components/CaseWorkflowStepSection.vue",
+      "**/components/CaseSurveyQuoteSection.vue",
+    ],
+    message:
+      "BMV 步骤常量与 Workflow/SurveyQuote 两个 Section 已迁至 views/cases/bmv/（拆分 B5）。请从 bmv/ 引用。旧路径已删除，勿重建。",
+  },
 ];
 
 /**
