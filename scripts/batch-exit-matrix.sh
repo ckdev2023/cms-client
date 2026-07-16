@@ -83,6 +83,58 @@ run_cmd() {
   fi
 }
 
+run_server_focused() {
+  local label="$1"
+  shift
+
+  # server 用的是 node:test（`node --import tsx --test`），不是 vitest。
+  #
+  # 此前 b4/b5 这一步写成 `npm --workspace server exec -- vitest run "a|b|c|…"`，
+  # 两处都错，且都是**恒定失败**：
+  #   1) vitest 的位置参数是文件名子串过滤器，不是正则。整条 pipe 串被当作一个字面量
+  #      去匹配路径 → "No test files found" → 退出 1。
+  #   2) 即便拆成多个参数也没用：server 用例是 node:test 写的（`import test from
+  #      "node:test"`），vitest 只会报 "No test suite found in file" → 仍退出 1。
+  # 因此 b4/b5 的 EXIT GATE 长期恒为 BLOCKED，P1 的 server 用例一次都没在这里跑过。
+  # 对照组：b1 用的是 `npm run server:test`，是对的。
+  #
+  # 另一个坑：`node --test 'no-match*.test.ts'` 在无匹配时**退出 0**（探针实测），
+  # 所以必须自己校验每个 pattern 都命中文件——否则写错路径会静默变成「通过」，
+  # 正是本仓反复出现的空转门禁。
+  local pat
+  local globs=()
+  local missing=()
+  for pat in "$@"; do
+    if [[ -z "$(find "$ROOT_DIR/packages/server/$(dirname "$pat")" -maxdepth 1 \
+      -name "$(basename "$pat")*.test.ts" 2>/dev/null)" ]]; then
+      missing+=("$pat")
+    fi
+    globs+=("${pat}*.test.ts")
+  done
+
+  # bash 3.2 + set -u：空数组用 "${arr[@]}" 展开会报 unbound variable，
+  # 故先用 ${#arr[@]} 判空再展开。
+  if [[ ${#missing[@]} -gt 0 ]]; then
+    echo -e "  ${RED}FAILED${RESET}: $label — 以下 pattern 未匹配到任何测试文件："
+    for pat in "${missing[@]}"; do echo -e "    ${RED}-${RESET} $pat"; done
+    record_result "$label" "fail"
+    return 0
+  fi
+
+  if [[ "${DRY_RUN:-}" == "1" ]]; then
+    echo -e "  ${DIM}[dry-run]${RESET} (cd packages/server && node --import tsx --test ${globs[*]})"
+    record_result "$label" "skip"
+    return 0
+  fi
+  echo -e "  ${DIM}\$${RESET} (cd packages/server && node --import tsx --test ${globs[*]})"
+  if (cd "$ROOT_DIR/packages/server" && node --import tsx --test "${globs[@]}"); then
+    record_result "$label" "pass"
+  else
+    record_result "$label" "fail"
+    echo -e "  ${RED}FAILED${RESET}: $label"
+  fi
+}
+
 run_admin_incremental() {
   local label="$1"
   shift
@@ -364,10 +416,23 @@ batch_b4() {
 
   print_gate 3 "增量测试 (P1-A server + admin focused + customer 下游冒烟)"
 
-  run_cmd \
+  run_server_focused \
     "server: P1-A template/questionnaire/workflow/pre-sign" \
-    npm --workspace server exec -- vitest run --reporter=verbose \
-    "src/modules/core/cases/cases.template-foundation|src/modules/core/cases/cases.template-bmv|src/modules/core/cases/bmvTemplateConfig|src/modules/core/cases/cases.types-template-blueprints|src/modules/core/cases/cases.types-bmv-gate|src/modules/core/cases/cases.types-survey-visa-quote|src/modules/core/cases/cases.questionnaire-docs|src/modules/core/cases/cases.pre-sign-gate|src/modules/core/cases/cases.workflow-step|src/modules/core/cases/cases.bmv-submission-cycle|src/modules/core/cases/cases.regression-p1-questionnaire-supplement|src/modules/portal/intake/intake.service|src/modules/portal/intake/intake.types|src/modules/portal/leads/leads.service|src/modules/portal/leads/leads.types"
+    "src/modules/core/cases/cases.template-foundation" \
+    "src/modules/core/cases/cases.template-bmv" \
+    "src/modules/core/cases/bmvTemplateConfig" \
+    "src/modules/core/cases/cases.types-template-blueprints" \
+    "src/modules/core/cases/cases.types-bmv-gate" \
+    "src/modules/core/cases/cases.types-survey-visa-quote" \
+    "src/modules/core/cases/cases.questionnaire-docs" \
+    "src/modules/core/cases/cases.pre-sign-gate" \
+    "src/modules/core/cases/cases.workflow-step" \
+    "src/modules/core/cases/cases.bmv-submission-cycle" \
+    "src/modules/core/cases/cases.regression-p1-questionnaire-supplement" \
+    "src/modules/portal/intake/intake.service" \
+    "src/modules/portal/intake/intake.types" \
+    "src/modules/portal/leads/leads.service" \
+    "src/modules/portal/leads/leads.types"
 
   run_admin_incremental \
     "admin: P1-A BMV/survey/pre-sign/QA focused" \
@@ -403,10 +468,23 @@ batch_b4() {
 inc_b4() {
   print_header "b4 — P1-A (增量)"
 
-  run_cmd \
+  run_server_focused \
     "server: P1-A template/questionnaire/workflow/pre-sign" \
-    npm --workspace server exec -- vitest run --reporter=verbose \
-    "src/modules/core/cases/cases.template-foundation|src/modules/core/cases/cases.template-bmv|src/modules/core/cases/bmvTemplateConfig|src/modules/core/cases/cases.types-template-blueprints|src/modules/core/cases/cases.types-bmv-gate|src/modules/core/cases/cases.types-survey-visa-quote|src/modules/core/cases/cases.questionnaire-docs|src/modules/core/cases/cases.pre-sign-gate|src/modules/core/cases/cases.workflow-step|src/modules/core/cases/cases.bmv-submission-cycle|src/modules/core/cases/cases.regression-p1-questionnaire-supplement|src/modules/portal/intake/intake.service|src/modules/portal/intake/intake.types|src/modules/portal/leads/leads.service|src/modules/portal/leads/leads.types"
+    "src/modules/core/cases/cases.template-foundation" \
+    "src/modules/core/cases/cases.template-bmv" \
+    "src/modules/core/cases/bmvTemplateConfig" \
+    "src/modules/core/cases/cases.types-template-blueprints" \
+    "src/modules/core/cases/cases.types-bmv-gate" \
+    "src/modules/core/cases/cases.types-survey-visa-quote" \
+    "src/modules/core/cases/cases.questionnaire-docs" \
+    "src/modules/core/cases/cases.pre-sign-gate" \
+    "src/modules/core/cases/cases.workflow-step" \
+    "src/modules/core/cases/cases.bmv-submission-cycle" \
+    "src/modules/core/cases/cases.regression-p1-questionnaire-supplement" \
+    "src/modules/portal/intake/intake.service" \
+    "src/modules/portal/intake/intake.types" \
+    "src/modules/portal/leads/leads.service" \
+    "src/modules/portal/leads/leads.types"
 
   run_admin_incremental \
     "admin: P1-A BMV/survey/pre-sign/QA focused" \
@@ -450,10 +528,28 @@ batch_b5() {
 
   print_gate 3 "增量测试 (P1-B server + admin focused + cross-module downstream)"
 
-  run_cmd \
+  run_server_focused \
     "server: P1-B COE/overseas/residence/closeout" \
-    npm --workspace server exec -- vitest run --reporter=verbose \
-    "src/modules/core/cases/cases.types-final-payment|src/modules/core/cases/cases.final-payment-coe-guard|src/modules/core/cases/cases.coe-block-guard|src/modules/core/cases/cases.types-overseas-step|src/modules/core/cases/cases.overseas-step-branching|src/modules/core/cases/cases.overseas-step-stamps|src/modules/core/cases/cases.visa-outcome|src/modules/core/cases/cases.types-residence-closeout|src/modules/core/cases/cases.types-failure-closeout|src/modules/core/cases/cases.closeout-rules|src/modules/core/cases/cases.success-closeout-gate|src/modules/core/cases/cases.regression-p1-coe-visa-residence|src/modules/core/cases/cases.regression-p1-reminder-closeout|src/modules/core/residence-periods/residencePeriods.service|src/modules/core/residence-periods/residencePeriods.focused|src/modules/core/residence-periods/residencePeriods.reminder-blueprint|src/modules/core/residence-periods/reminderBlueprintContract|src/modules/core/reminders/reminders.service|src/modules/core/billing/billingPlans.service|src/modules/core/billing/paymentRecords.service"
+    "src/modules/core/cases/cases.types-final-payment" \
+    "src/modules/core/cases/cases.final-payment-coe-guard" \
+    "src/modules/core/cases/cases.coe-block-guard" \
+    "src/modules/core/cases/cases.types-overseas-step" \
+    "src/modules/core/cases/cases.overseas-step-branching" \
+    "src/modules/core/cases/cases.overseas-step-stamps" \
+    "src/modules/core/cases/cases.visa-outcome" \
+    "src/modules/core/cases/cases.types-residence-closeout" \
+    "src/modules/core/cases/cases.types-failure-closeout" \
+    "src/modules/core/cases/cases.closeout-rules" \
+    "src/modules/core/cases/cases.success-closeout-gate" \
+    "src/modules/core/cases/cases.regression-p1-coe-visa-residence" \
+    "src/modules/core/cases/cases.regression-p1-reminder-closeout" \
+    "src/modules/core/residence-periods/residencePeriods.service" \
+    "src/modules/core/residence-periods/residencePeriods.focused" \
+    "src/modules/core/residence-periods/residencePeriods.reminder-blueprint" \
+    "src/modules/core/residence-periods/reminderBlueprintContract" \
+    "src/modules/core/reminders/reminders.service" \
+    "src/modules/core/billing/billingPlans.service" \
+    "src/modules/core/billing/paymentRecords.service"
 
   run_admin_incremental \
     "admin: P1-B final-payment/closeout/residence/QA focused" \
@@ -491,10 +587,28 @@ batch_b5() {
 inc_b5() {
   print_header "b5 — P1-B (增量)"
 
-  run_cmd \
+  run_server_focused \
     "server: P1-B COE/overseas/residence/closeout" \
-    npm --workspace server exec -- vitest run --reporter=verbose \
-    "src/modules/core/cases/cases.types-final-payment|src/modules/core/cases/cases.final-payment-coe-guard|src/modules/core/cases/cases.coe-block-guard|src/modules/core/cases/cases.types-overseas-step|src/modules/core/cases/cases.overseas-step-branching|src/modules/core/cases/cases.overseas-step-stamps|src/modules/core/cases/cases.visa-outcome|src/modules/core/cases/cases.types-residence-closeout|src/modules/core/cases/cases.types-failure-closeout|src/modules/core/cases/cases.closeout-rules|src/modules/core/cases/cases.success-closeout-gate|src/modules/core/cases/cases.regression-p1-coe-visa-residence|src/modules/core/cases/cases.regression-p1-reminder-closeout|src/modules/core/residence-periods/residencePeriods.service|src/modules/core/residence-periods/residencePeriods.focused|src/modules/core/residence-periods/residencePeriods.reminder-blueprint|src/modules/core/residence-periods/reminderBlueprintContract|src/modules/core/reminders/reminders.service|src/modules/core/billing/billingPlans.service|src/modules/core/billing/paymentRecords.service"
+    "src/modules/core/cases/cases.types-final-payment" \
+    "src/modules/core/cases/cases.final-payment-coe-guard" \
+    "src/modules/core/cases/cases.coe-block-guard" \
+    "src/modules/core/cases/cases.types-overseas-step" \
+    "src/modules/core/cases/cases.overseas-step-branching" \
+    "src/modules/core/cases/cases.overseas-step-stamps" \
+    "src/modules/core/cases/cases.visa-outcome" \
+    "src/modules/core/cases/cases.types-residence-closeout" \
+    "src/modules/core/cases/cases.types-failure-closeout" \
+    "src/modules/core/cases/cases.closeout-rules" \
+    "src/modules/core/cases/cases.success-closeout-gate" \
+    "src/modules/core/cases/cases.regression-p1-coe-visa-residence" \
+    "src/modules/core/cases/cases.regression-p1-reminder-closeout" \
+    "src/modules/core/residence-periods/residencePeriods.service" \
+    "src/modules/core/residence-periods/residencePeriods.focused" \
+    "src/modules/core/residence-periods/residencePeriods.reminder-blueprint" \
+    "src/modules/core/residence-periods/reminderBlueprintContract" \
+    "src/modules/core/reminders/reminders.service" \
+    "src/modules/core/billing/billingPlans.service" \
+    "src/modules/core/billing/paymentRecords.service"
 
   run_admin_incremental \
     "admin: P1-B final-payment/closeout/residence/QA focused" \
