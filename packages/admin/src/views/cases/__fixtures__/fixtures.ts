@@ -1,7 +1,6 @@
 import type {
   CaseListItem,
   CaseOwnerOption,
-  CaseSampleKey,
   CaseScope,
   CaseSummaryCardData,
 } from "../types";
@@ -341,15 +340,6 @@ export const SAMPLE_CASE_LIST: CaseListItem[] = [
 ];
 
 // ─── Sample Key → Case ID ───────────────────────────────────────
-
-export const SAMPLE_KEY_TO_CASE_ID: Record<CaseSampleKey, string> = {
-  work: "CAS-2026-0191",
-  family: "CAS-2026-0232",
-  "gate-fail": "CAS-2026-0204",
-  arrears: "CAS-2026-0240",
-  correction: "CAS-2026-0245",
-  archived: "CAS-2025-1178",
-};
 
 // ─── Summary Cards ──────────────────────────────────────────────
 

@@ -12,12 +12,6 @@ export const WAIVE_ALLOWED_FROM_STATUSES = [
   "expired",
 ] as const;
 
-/**
- *
- */
-export type WaiveAllowedFromStatus =
-  (typeof WAIVE_ALLOWED_FROM_STATUSES)[number];
-
 export const WAIVE_ALLOWED_FROM_STATUSES_SET: ReadonlySet<string> = new Set(
   WAIVE_ALLOWED_FROM_STATUSES,
 );

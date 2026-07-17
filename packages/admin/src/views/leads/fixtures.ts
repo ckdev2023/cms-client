@@ -1,9 +1,4 @@
-import type {
-  DedupPresets,
-  LeadSummary,
-  OwnerOption,
-  SelectOption,
-} from "./types";
+import type { LeadSummary, OwnerOption, SelectOption } from "./types";
 import { getCurrentLocale, type AppLocale } from "../../i18n";
 import { getActiveGroupOptions } from "../../shared/model/useGroupOptions";
 import { BUSINESS_TYPE_OPTIONS_I18N } from "../../shared/i18n/businessTypes";
@@ -59,38 +54,6 @@ export const LANGUAGE_OPTIONS: SelectOption[] = [
 /* ------------------------------------------------------------------ */
 /*  去重预置                                                           */
 /* ------------------------------------------------------------------ */
-
-export const DEDUP_PRESETS: DedupPresets = {
-  phoneMatchLead: {
-    type: "lead",
-    matchField: "phone",
-    matchValue: "080-1234-5678",
-    matchedRecord: {
-      id: "LEAD-2026-0023",
-      name: "田中 花子",
-      phone: "080-1234-5678",
-      group: "东京一组",
-      status: "following",
-      statusLabel: "跟进中",
-    },
-    message:
-      "该电话号码已存在于线索 LEAD-2026-0023（田中 花子），请确认是否继续创建。",
-  },
-  emailMatchCustomer: {
-    type: "customer",
-    matchField: "email",
-    matchValue: "li.na@email.com",
-    matchedRecord: {
-      id: "CUS-2026-0181",
-      name: "李娜",
-      email: "li.na@email.com",
-      group: "东京一组",
-      summary: "已有客户档案，家族滞在更新",
-    },
-    message:
-      "该邮箱已存在于客户档案 CUS-2026-0181（李娜），请确认是否继续创建新咨询。",
-  },
-};
 
 /* ------------------------------------------------------------------ */
 /*  列表页示例数据（8 条，覆盖 SPEC-GAP-MATRIX §8）                     */
@@ -408,7 +371,5 @@ export function getLeadSamples(
     ),
   }));
 }
-
-export const LEAD_SAMPLES: LeadSummary[] = getLeadSamples();
 
 export { LEAD_DETAIL_SAMPLES } from "./fixtures-detail";

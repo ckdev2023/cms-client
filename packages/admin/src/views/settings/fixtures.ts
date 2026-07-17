@@ -6,7 +6,6 @@ import type {
   GroupStatus,
   OrgSettings,
   GroupSummary,
-  RoleVisibilityEntry,
   SelectOption,
   SettingsSubNavItem,
   SettingsToastKey,
@@ -161,14 +160,6 @@ export const PATH_STRATEGY_TEXT_KEY = "settings.storageRoot.pathStrategy";
 // ---------------------------------------------------------------------------
 // Role visibility matrix (P0-CONTRACT §8)
 // ---------------------------------------------------------------------------
-
-export const ROLE_VISIBILITY_MATRIX: RoleVisibilityEntry[] = [
-  { role: "管理員", visible: true, editable: true },
-  { role: "主办人", visible: false, editable: false },
-  { role: "助理", visible: false, editable: false },
-  { role: "销售", visible: false, editable: false },
-  { role: "財務", visible: false, editable: false },
-];
 
 // ---------------------------------------------------------------------------
 // Role chip variants (prototype ROLE_CHIP_STYLES → semantic color keys)
@@ -338,19 +329,6 @@ export const SAMPLE_GROUP_DETAILS: Record<string, GroupDetail> = {
 // ---------------------------------------------------------------------------
 // Sample org settings
 // ---------------------------------------------------------------------------
-
-export const SAMPLE_ORG_SETTINGS: OrgSettings = {
-  visibility: {
-    allowCrossGroupCaseCreate: false,
-    allowPrincipalViewCrossGroupCollab: false,
-  },
-  storageRoot: {
-    rootLabel: "案件資料総盤",
-    rootPath: "\\\\fileserver\\gyosei-docs",
-    updatedBy: "Admin",
-    updatedAt: "2025-03-20 14:30",
-  },
-};
 
 // ---------------------------------------------------------------------------
 // Sample org settings — unconfigured storage root (P0-CONTRACT §7 state 4)

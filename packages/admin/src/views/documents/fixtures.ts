@@ -1,12 +1,5 @@
-import type {
-  DocumentListItem,
-  DocumentSummaryCardData,
-  DocumentSummaryCardKey,
-  ReferenceCandidate,
-  SharedExpiryRiskData,
-} from "./types";
+import type { DocumentListItem, DocumentSummaryCardData } from "./types";
 import { STATUS_SORT_PRIORITY } from "./constants";
-import { isSelectableForBatch } from "./validation";
 
 // ─── Summary Card Derivation (P0-CONTRACT §5) ───────────────────
 
@@ -100,20 +93,6 @@ export function sortDocumentsByDefault<
   return [...items].sort(compareDocumentItems);
 }
 
-// ─── Selectable filter ──────────────────────────────────────────
-
-/**
- * 返回可被批量操作选中的资料项（approved/waived 不可选）。
- *
- * @param items - 资料项列表
- * @returns 可选中的子集
- */
-export function getSelectableItems<T extends Pick<DocumentListItem, "status">>(
-  items: readonly T[],
-): T[] {
-  return items.filter((item) => isSelectableForBatch(item.status));
-}
-
 // ─── Case option derivation ─────────────────────────────────────
 
 /**
@@ -147,18 +126,6 @@ export function deriveCaseOptions(
   }
   return Array.from(seen, ([value, label]) => ({ value, label }));
 }
-
-// ─── Summary Card Key → variant lookup ──────────────────────────
-
-export const SUMMARY_CARD_VARIANTS: Record<
-  DocumentSummaryCardKey,
-  DocumentSummaryCardData["variant"]
-> = {
-  pendingReview: "info",
-  missing: "warning",
-  expired: "danger",
-  sharedExpiryRisk: "neutral",
-};
 
 // ─── Demo Data (covers all 6 statuses, all 4 providers) ─────────
 
@@ -344,62 +311,3 @@ export const SAMPLE_DOCUMENTS: DocumentListItem[] = [
     referenceCount: 2,
   },
 ];
-
-/** テスト契約で使用されるエイリアス。 */
-export { SAMPLE_DOCUMENTS as SAMPLE_DOCUMENT_LIST };
-
-// ─── Pre-computed static summary cards ──────────────────────────
-
-export const SAMPLE_DOCUMENT_SUMMARY_CARDS =
-  deriveDocumentSummaryCards(SAMPLE_DOCUMENTS);
-
-// ─── Static case options (for filters) ──────────────────────────
-
-export const CASE_OPTIONS: CaseOption[] = deriveCaseOptions(SAMPLE_DOCUMENTS);
-
-// ─── Reference candidates (P0-CONTRACT §8.4 demo) ──────────────
-
-export const SAMPLE_REFERENCE_CANDIDATES: ReferenceCandidate[] = [
-  {
-    id: "ref-001",
-    sourceCaseId: "case-002",
-    sourceCaseName: "A2026-002 技人国更新",
-    sourceDocName: "課税証明書（3ヶ月以内）",
-    version: 2,
-    reviewedAt: "2026-03-15",
-    expiryDate: "2026-06-15",
-  },
-  {
-    id: "ref-002",
-    sourceCaseId: "case-003",
-    sourceCaseName: "A2026-003 家族滞在新規",
-    sourceDocName: "課税証明書（3ヶ月以内）",
-    version: 1,
-    reviewedAt: "2026-02-20",
-    expiryDate: "2026-05-20",
-  },
-];
-
-// ─── Shared expiry risk (P0-CONTRACT §9 demo) ───────────────────
-
-export const SAMPLE_RISK_DATA: SharedExpiryRiskData = {
-  versionInfo: "課税証明書（3ヶ月以内） v1 — 有効期限: 2026-03-31（过期）",
-  affectedCases: [
-    {
-      caseId: "case-001",
-      caseName: "A2026-001 経営管理ビザ新規",
-      docName: "課税証明書",
-    },
-    {
-      caseId: "case-002",
-      caseName: "A2026-002 技人国更新",
-      docName: "課税証明書",
-    },
-    {
-      caseId: "case-003",
-      caseName: "A2026-003 家族滞在新規",
-      docName: "課税証明書",
-    },
-  ],
-  suggestedAction: "请通知客户提供新版课税证明，更新后所有引用案件将自动恢复。",
-};
