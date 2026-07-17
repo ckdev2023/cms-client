@@ -8,12 +8,8 @@ import StageChip from "../components/StageChip.vue";
 import type { CaseDetail } from "./types-detail-core";
 import { resolveLocalizedCustomerName } from "../model/CaseAdapterCustomerLocale";
 import { buildCaseListHref, buildCustomerDetailHrefFromCase } from "../query";
-import {
-  BADGE_TONE_MAP,
-  getPhaseI18nKey,
-  getPhaseBadge,
-  resolveStageLabelI18nKey,
-} from "../constants";
+import { BADGE_TONE_MAP, getPhaseI18nKey, getPhaseBadge } from "../constants";
+import { resolveStageLabelI18nKey } from "../caseLabels";
 import { formatCaseIdentity } from "../caseIdentity";
 import { resolveBmvWorkflowStepDisplayLabel } from "../bmv/constantsBmvSteps";
 import { getCaseTypeI18nKey } from "../../../shared/model/caseTypeI18n";

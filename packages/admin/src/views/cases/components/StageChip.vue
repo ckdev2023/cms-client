@@ -14,12 +14,8 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Chip, { type ChipTone } from "../../../shared/ui/Chip.vue";
 import type { CaseStageId } from "../types";
-import {
-  BADGE_TONE_MAP,
-  CASE_STAGES,
-  getStageI18nKey,
-  getStageLabel,
-} from "../constants";
+import { BADGE_TONE_MAP, CASE_STAGES } from "../constants";
+import { getStageI18nKey, getStageLabel } from "../caseLabels";
 
 /**
  * StageChip：跨页面统一 stage 渲染粒度的 Chip 组件，对齐 BUG-182。

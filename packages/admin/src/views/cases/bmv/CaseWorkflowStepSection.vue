@@ -11,7 +11,7 @@ import {
   type BmvStageGroup,
   type BmvWorkflowStepDef,
 } from "./constantsBmvSteps";
-import { resolveStageLabelI18nKey } from "../constants";
+import { resolveStageLabelI18nKey } from "../caseLabels";
 
 /** 工作流步骤区块：展示 BMV 子步骤分组、当前状态与补正轮次。 */
 const { t } = useI18n();

@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import Card from "../../../../../shared/ui/Card.vue";
-import { resolveStageLabelI18nKey } from "../../../constants";
+import { resolveStageLabelI18nKey } from "../../../caseLabels";
 import { resolveBmvWorkflowStepDisplayLabel } from "../../../bmv/constantsBmvSteps";
 import type { CaseDetail } from "../../types-detail-core";
 /** 概览顶部 4 张统计卡片：阶段 / 截止 / 进度 / 收费。 */

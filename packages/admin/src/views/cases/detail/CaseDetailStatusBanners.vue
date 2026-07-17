@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import type { CaseDetail } from "./types-detail-core";
-import { resolveStageLabelI18nKey } from "../constants";
+import { resolveStageLabelI18nKey } from "../caseLabels";
 
 /**
  * 案件详情页状态横幅：只读态与失败结案路径提示。

@@ -1,4 +1,3 @@
-/* eslint-disable max-lines */
 import type {
   BillingStatusDef,
   BillingStatusKey,
@@ -15,8 +14,6 @@ import type {
   CaseStageId,
   CaseValidationStatus,
   CreateCaseStepDef,
-  GateDefinition,
-  GateId,
   LogCategoryDef,
   MessageTypeKey,
 } from "./types";
@@ -187,35 +184,6 @@ export const CASE_DETAIL_TAB_ALIASES: Readonly<Record<string, CaseDetailTab>> =
   {
     timeline: "log",
   } as const;
-
-// ─── Gates ──────────────────────────────────────────────────────
-
-export const CASE_GATES: Record<GateId, GateDefinition> = {
-  A: {
-    id: "A",
-    label: "必须先处理",
-    i18nKey: "cases.constants.gates.A.label",
-    severity: "blocking",
-    desc: "必须先处理的问题",
-    descI18nKey: "cases.constants.gates.A.desc",
-  },
-  B: {
-    id: "B",
-    label: "建议补强",
-    i18nKey: "cases.constants.gates.B.label",
-    severity: "warning",
-    desc: "建议补强的风险项",
-    descI18nKey: "cases.constants.gates.B.desc",
-  },
-  C: {
-    id: "C",
-    label: "补充说明",
-    i18nKey: "cases.constants.gates.C.label",
-    severity: "informational",
-    desc: "不阻断但建议了解",
-    descI18nKey: "cases.constants.gates.C.desc",
-  },
-};
 
 // ─── Billing Statuses ───────────────────────────────────────────
 
@@ -484,91 +452,3 @@ export const DEFAULT_CASE_LIST_FILTERS: CaseListFiltersState = {
   validation: "",
   phase: "",
 };
-
-// ─── Label / i18n Helpers ────────────────────────────────────────
-
-/**
- * 根据阶段 ID 获取 i18n key。
- *
- * @param stageId - 阶段 ID 或自由文本
- * @returns i18n key；未匹配时返回 `""`
- */
-export function getStageI18nKey(stageId: CaseStageId | string): string {
-  return CASE_STAGES[stageId as CaseStageId]?.i18nKey ?? "";
-}
-
-/**
- * BMV：管理层阶段为 `S7` 且子步骤处于在留认定后的 COE／海外査証跟踪时，
- * 与「入管提出后待回执」阶段语义不同，使用独立 i18n 键。
- */
-export const BMV_S7_POST_APPROVAL_WORKFLOW_STEPS = new Set([
-  "WAITING_PAYMENT",
-  "COE_SENT",
-  "VISA_APPLYING",
-]);
-
-/**
- * 解析案件详情等处展示的「管理层阶段」文案 i18n 键（含 BMV S7 上下文分化）。
- *
- * @param stageCode - `S1`–`S9` 等
- * @param workflowStepCode - 业务子步骤代码；非 BMV 或未进入认定后跟踪时可省略
- * @returns `cases.constants.stages.*` 键名
- */
-export function resolveStageLabelI18nKey(
-  stageCode: CaseStageId | string,
-  workflowStepCode?: string | null,
-): string {
-  if (
-    stageCode === "S7" &&
-    workflowStepCode &&
-    BMV_S7_POST_APPROVAL_WORKFLOW_STEPS.has(workflowStepCode)
-  ) {
-    return "cases.constants.stages.S7_post_approval";
-  }
-  return getStageI18nKey(stageCode);
-}
-
-/**
- * 阶段 ID → fallback 标签。
- * @param stageId 阶段 ID 或自由文本
- * @returns fallback 标签；未匹配时返回原始值
- */
-export function getStageLabel(stageId: CaseStageId | string): string {
-  return CASE_STAGES[stageId as CaseStageId]?.label ?? stageId;
-}
-/**
- * 收费状态 → i18n key。
- * @param key 收费状态键或自由文本
- * @returns i18n key；未匹配时返回 `""`
- */
-export function getBillingStatusI18nKey(
-  key: BillingStatusKey | string,
-): string {
-  return BILLING_STATUSES[key as BillingStatusKey]?.i18nKey ?? "";
-}
-/**
- * 收费状态 → fallback 标签。
- * @param key 收费状态键或自由文本
- * @returns fallback 标签；未匹配时返回原始值
- */
-export function getBillingStatusLabel(key: BillingStatusKey | string): string {
-  return BILLING_STATUSES[key as BillingStatusKey]?.label ?? key;
-}
-/**
- * 门禁 ID 转 i18n 键。
- * @param gateId Gate ID 或自由文本
- * @returns i18n key；未匹配时返回 `""`
- */
-export function getGateI18nKey(gateId: GateId | string): string {
-  return CASE_GATES[gateId as GateId]?.i18nKey ?? "";
-}
-/**
- * 门禁 ID 转回退标签。
- * @param gateId Gate ID 或自由文本
- * @returns fallback 标签；未匹配时返回原始值
- */
-export function getGateLabel(gateId: GateId | string): string {
-  return CASE_GATES[gateId as GateId]?.label ?? gateId;
-}
-
-export { getCaseTypeI18nKey } from "../../shared/model/caseTypeI18n";
